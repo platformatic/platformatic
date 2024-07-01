@@ -21,14 +21,15 @@ test('parses composer and client dependencies', async (t) => {
   const mainService = services.find((service) => service.id === 'main')
 
   assert.deepStrictEqual(mainService.dependencies, [
-    { id: 'service-1', url: 'http://service-1.plt.local', local: true },
+    { id: 'service-1', url: 'http://service-1.plt.local', local: true, envVar: null },
     {
       id: 'external-service-1',
       url: 'http://external-dependency-1',
-      local: false
+      local: false,
+      envVar: null
     },
-    { id: 'service-1', url: 'http://service-1.plt.local', local: true },
-    { id: 'service-2', url: 'http://service-2.plt.local', local: true }
+    { id: 'service-1', url: 'http://service-1.plt.local', local: true, envVar: 'PLT_SERVICE1_URL' },
+    { id: 'service-2', url: 'http://service-2.plt.local', local: true, envVar: 'PLT_SERVICE2_URL' }
   ])
   assert.deepStrictEqual(
     Object.fromEntries(mainService.localServiceEnvVars.entries()),
@@ -40,8 +41,8 @@ test('parses composer and client dependencies', async (t) => {
 
   const service1 = services.find((service) => service.id === 'service-1')
   assert.deepStrictEqual(service1.dependencies, [
-    { id: 'service-2', url: 'http://service-2.plt.local', local: true },
-    { id: undefined, url: 'http://external-dependency-1', local: false }
+    { id: 'service-2', url: 'http://service-2.plt.local', local: true, envVar: null },
+    { id: undefined, url: 'http://external-dependency-1', local: false, envVar: null }
   ])
   assert.strictEqual(service1.localServiceEnvVars.size, 0)
 
@@ -58,6 +59,6 @@ test('correct throws on missing dependencies', async (t) => {
 
   await assert.rejects(
     () => runtime._resolveDependencies(),
-    { name: 'FastifyError', message: 'Missing dependency: "service \'composer\' has unknown dependency: \'missing\'. Did you mean \'composer\'?"' }
+    { name: 'FastifyError', message: 'Missing dependency: "service \'composer\' has unknown dependency: \'missing\'."' }
   )
 })

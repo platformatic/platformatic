@@ -18,7 +18,7 @@ function checkDependencies (services) {
 
   for (const service of services) {
     for (const dependency of service.dependencies) {
-      if (!allServices.has(dependency.id)) {
+      if (dependency.local && !allServices.has(dependency.id)) {
         throw new errors.MissingDependencyError(
           missingDependencyErrorMessage(dependency.id, service, services)
         )

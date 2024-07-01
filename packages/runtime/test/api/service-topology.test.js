@@ -46,6 +46,7 @@ test('should get services topology', async (t) => {
         localUrl: 'http://serviceApp.plt.local',
         dependencies: [
           {
+            envVar: 'PLT_WITH_LOGGER_URL',
             id: 'with-logger',
             url: 'http://with-logger.plt.local',
             local: true
