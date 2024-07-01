@@ -136,7 +136,7 @@ function parseLabels (line) {
   }, {})
 }
 
-test.only('should get runtime metrics in a text format with custom labels', async (t) => {
+test('should get runtime metrics in a text format with custom labels', async (t) => {
   const projectDir = join(fixturesDir, 'management-api-custom-labels')
   const configFile = join(projectDir, 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
