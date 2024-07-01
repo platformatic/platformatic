@@ -3,6 +3,7 @@
 const { dirname } = require('node:path')
 const { EventEmitter, once } = require('node:events')
 const { FileWatcher } = require('@platformatic/utils')
+const { getDependencies } = require('@platformatic/service')
 const debounce = require('debounce')
 const { snakeCase } = require('change-case-all')
 const { buildServer } = require('./build-server')
@@ -22,8 +23,9 @@ class PlatformaticApp extends EventEmitter {
   #debouncedRestart
   #hasManagementApi
   #metricsConfig
+  #servicesMeta
 
-  constructor (appConfig, loaderPort, logger, telemetryConfig, serverConfig, hasManagementApi, metricsConfig) {
+  constructor (appConfig, loaderPort, logger, telemetryConfig, serverConfig, hasManagementApi, metricsConfig, servicesMeta) {
     super()
     this.appConfig = appConfig
     this.config = null
@@ -41,6 +43,7 @@ class PlatformaticApp extends EventEmitter {
     this.#telemetryConfig = telemetryConfig
     this.#metricsConfig = metricsConfig
     this.#serverConfig = serverConfig
+    this.#servicesMeta = servicesMeta
 
     /* c8 ignore next 4 */
     this.#debouncedRestart = debounce(() => {
@@ -92,6 +95,19 @@ class PlatformaticApp extends EventEmitter {
     this.emit('restart')
   }
 
+  async getDependencies () {
+    // Load the application code without any environment manipulation just to obtain getDependencies
+    let config
+    try {
+      config = await loadConfig({}, ['-c', this.appConfig.config], {}, false, this.#logger)
+    } catch (err) {
+      this.#logAndExit(err)
+    }
+
+    const resolver = config.app.getDependencies ?? getDependencies
+    return resolver(this.appConfig)
+  }
+
   async start () {
     if (this.#starting || this.#started) {
       throw new errors.ApplicationAlreadyStartedError()
@@ -114,7 +130,9 @@ class PlatformaticApp extends EventEmitter {
         app: this.config.app,
         ...config,
         id: this.appConfig.id,
-        configManager
+        configManager,
+        servicesMeta: this.#servicesMeta,
+        isRuntimeContext: true
       })
     } catch (err) {
       this.#logAndExit(err)

@@ -2,6 +2,7 @@
 /// <reference types="mercurius" />
 /// <reference types="@fastify/swagger" />
 import { FastifyInstance, FastifyBaseLogger } from 'fastify'
+import { type Bus } from '@platformatic/bus'
 import ConfigManager from '@platformatic/config'
 import type { IConfigManagerOptions } from '@platformatic/config'
 import { BaseGenerator } from '@platformatic/generators'
@@ -15,6 +16,10 @@ export import Generator = ServiceGenerator.ServiceGenerator
 export interface PlatformaticApp<T> {
   configManager: ConfigManager<T>
   config: T
+  isRuntimeContext: boolean
+  currentService?: string
+  meta?: Record<string, any>
+  bus?: Bus
 }
 
 export type PlatformaticServiceConfig = PlatformaticService

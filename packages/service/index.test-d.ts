@@ -4,6 +4,7 @@ import ConfigManager from '@platformatic/config'
 import { OpenAPI } from 'openapi-types'
 import type { MercuriusPlugin } from 'mercurius'
 import { PlatformaticService } from './config'
+import { Bus } from '@platformatic/bus'
 import { BaseGenerator } from '@platformatic/generators'
 import {
   start,
@@ -27,6 +28,10 @@ expectType<FastifyInstance>(server)
 expectType<ConfigManager<PlatformaticService>>(server.platformatic.configManager)
 expectType<PlatformaticService>(server.platformatic.configManager.current)
 expectType<PlatformaticService>(server.platformatic.config)
+expectType<boolean>(server.platformatic.isRuntimeContext)
+expectType<string | undefined>(server.platformatic.currentService)
+expectType<Bus | undefined>(server.platformatic.bus)
+expectType<Record<string, any> | undefined>(server.platformatic.meta)
 expectType<OpenAPI.Document>(server.swagger())
 expectType<MercuriusPlugin>(server.graphql)
 expectType<Promise<void>>(server.restart())

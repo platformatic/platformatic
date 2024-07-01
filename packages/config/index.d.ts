@@ -89,3 +89,5 @@ export module errors {
 
 export function printAndExitLoadConfigError (err: any): void
 export function printAndExitValidationError (err: any): void
+
+export const metaKeys: Record<string, any>
