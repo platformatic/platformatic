@@ -1552,8 +1552,8 @@ importers:
         specifier: ^3.4.1
         version: 3.4.1
       '@fastify/restartable':
-        specifier: ^2.2.0
-        version: 2.3.0
+        specifier: ^2.3.1
+        version: 2.3.1
       '@fastify/static':
         specifier: ^7.0.1
         version: 7.0.4
@@ -1630,7 +1630,7 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       fastify:
-        specifier: ^4.26.2
+        specifier: ^4.28.1
         version: 4.28.1
       fastify-metrics:
         specifier: ^11.0.0
@@ -2483,8 +2483,8 @@ packages:
   '@fastify/reply-from@9.8.0':
     resolution: {integrity: sha512-bPNVaFhEeNI0Lyl6404YZaPFokudCplidE3QoOcr78yOy6H9sYw97p5KPYvY/NJNUHfFtvxOaSAHnK+YSiv/Mg==}
 
-  '@fastify/restartable@2.3.0':
-    resolution: {integrity: sha512-I5TSksCEx6+tOSso41pCehXLPi5Das2L27znP35w41ydMLttq1H2e/QtszBQmnaGEIqBM3nkFSzBLAeCj3K27Q==}
+  '@fastify/restartable@2.3.1':
+    resolution: {integrity: sha512-xMy17v36cUJwODkMpgTklHXK+GGA6qhR5/L+2mkKaOL9XhgiaBH5n4RP/xsgdKEVVFhPaxpuCmEjAUg1XbZv8Q==}
 
   '@fastify/send@2.1.0':
     resolution: {integrity: sha512-yNYiY6sDkexoJR0D8IDy3aRP3+L4wdqCpvx5WP+VtEU58sn7USmKynBzDQex5X42Zzvw2gNzzYgP90UfWShLFA==}
@@ -6888,7 +6888,7 @@ snapshots:
       toad-cache: 3.7.0
       undici: 5.28.4
 
-  '@fastify/restartable@2.3.0':
+  '@fastify/restartable@2.3.1':
     dependencies:
       fastify: 4.28.1
 
