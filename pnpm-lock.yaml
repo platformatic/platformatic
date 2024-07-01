@@ -56,7 +56,7 @@ importers:
         version: 10.1.2
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -184,7 +184,7 @@ importers:
         version: 10.1.2
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       license-checker:
         specifier: ^25.0.1
         version: 25.0.1
@@ -242,7 +242,7 @@ importers:
         version: 8.0.1
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -339,7 +339,7 @@ importers:
         version: 8.0.1
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       fastify-tsconfig:
         specifier: ^2.0.0
         version: 2.0.0
@@ -429,7 +429,7 @@ importers:
         version: 3.1.3
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       fastify-openapi-glue:
         specifier: ^4.6.0
         version: 4.6.1
@@ -557,7 +557,7 @@ importers:
         version: 10.1.2
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       json5:
         specifier: ^2.2.3
         version: 2.2.3
@@ -724,7 +724,7 @@ importers:
         version: 2.6.6
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -842,7 +842,7 @@ importers:
         version: 2.6.6
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -944,10 +944,10 @@ importers:
         version: 8.0.1
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       fastify-metrics:
         specifier: ^11.0.0
-        version: 11.0.0(fastify@4.28.0)
+        version: 11.0.0(fastify@4.28.1)
       fastify-plugin:
         specifier: ^4.5.1
         version: 4.5.1
@@ -1096,7 +1096,7 @@ importers:
         version: 4.0.1
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -1136,7 +1136,7 @@ importers:
         version: 0.15.0
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -1179,7 +1179,7 @@ importers:
         version: 10.1.2
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       license-checker:
         specifier: ^25.0.1
         version: 25.0.1
@@ -1342,7 +1342,7 @@ importers:
         version: 2.1.0
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       pino:
         specifier: ^8.19.0
         version: 8.21.0
@@ -1436,7 +1436,7 @@ importers:
         version: 1.0.16
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       fastify-undici-dispatcher:
         specifier: ^0.6.0
         version: 0.6.0
@@ -1631,10 +1631,10 @@ importers:
         version: 8.0.1
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       fastify-metrics:
         specifier: ^11.0.0
-        version: 11.0.0(fastify@4.28.0)
+        version: 11.0.0(fastify@4.28.1)
       fastify-openapi-glue:
         specifier: ^4.4.3
         version: 4.6.1
@@ -1765,7 +1765,7 @@ importers:
         version: 0.15.0
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       ioredis:
         specifier: ^5.3.2
         version: 5.4.1
@@ -1835,7 +1835,7 @@ importers:
         version: 0.15.0
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -1872,7 +1872,7 @@ importers:
         version: 3.19.2
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -1927,7 +1927,7 @@ importers:
         version: 0.15.0
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -1985,7 +1985,7 @@ importers:
         version: 0.15.0
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       mercurius:
         specifier: ^14.0.0
         version: 14.1.0(graphql@16.9.0)
@@ -2048,7 +2048,7 @@ importers:
         version: 0.15.0
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -2082,7 +2082,7 @@ importers:
         version: 0.15.0
       fastify:
         specifier: ^4.26.2
-        version: 4.28.0
+        version: 4.28.1
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
@@ -2428,8 +2428,8 @@ packages:
   '@fastify/accepts@4.3.0':
     resolution: {integrity: sha512-QK4FoqXdwwPmaPOLL6NrxsyaXVvdviYVoS6ltHyOLdFlUyREIaMykHQIp+x0aJz9hB3B3n/Ht6QRdvBeGkptGQ==}
 
-  '@fastify/ajv-compiler@3.5.0':
-    resolution: {integrity: sha512-ebbEtlI7dxXF5ziNdr05mOY8NnDiPB1XvAlLHctRt/Rc+C3LCOVW5imUVX+mhvUhnNzmPBHewUkOFgGlCxgdAA==}
+  '@fastify/ajv-compiler@3.6.0':
+    resolution: {integrity: sha512-LwdXQJjmMD+GwLOkP7TVC68qa+pSSogeWWmznRJ/coyTcfe9qA05AHFSe1eZFwK6q+xVRpChnvFUkf1iYaSZsQ==}
 
   '@fastify/autoload@5.10.0':
     resolution: {integrity: sha512-4A6s86qMbjcpWHmJL7cErtjIxOPuW8c67DLiuO8HoJQxuK97vaptoUnK5BTOwRg1ntYqfc3tjwerTTo5NQ3fEQ==}
@@ -3923,9 +3923,6 @@ packages:
   fast-json-stable-stringify@2.1.0:
     resolution: {integrity: sha512-lhd/wF+Lk98HZoTCtlVraHtfh5XYijIjalXck7saUtuanSDyLMxnHhSXEDJqHxD7msR8D0uCmqlkwjCV8xvwHw==}
 
-  fast-json-stringify@5.16.0:
-    resolution: {integrity: sha512-A4bg6E15QrkuVO3f0SwIASgzMzR6XC4qTyTqhf3hYXy0iazbAdZKwkE+ox4WgzKyzM6ygvbdq3r134UjOaaAnA==}
-
   fast-json-stringify@5.16.1:
     resolution: {integrity: sha512-KAdnLvy1yu/XrRtP+LJnxbBGrhN+xXu+gt3EUvZhYGKCr3lFHq/7UFJHHFgmJKoqlh6B40bZLEv7w46B0mqn1g==}
 
@@ -3984,8 +3981,8 @@ packages:
   fastify-user@0.3.3:
     resolution: {integrity: sha512-M6gUmTPtVaqnuKNv0nHMejJs67AsLduYgKX1yblQkZLq131JRDrGn9ueOHUPRyRK2oLhB0F1PE/AttCiyaz9Ug==}
 
-  fastify@4.28.0:
-    resolution: {integrity: sha512-HhW7UHW07YlqH5qpS0af8d2Gl/o98DhJ8ZDQWHRNDnzeOhZvtreWsX8xanjGgXmkYerGbo8ax/n40Dpwqkot8Q==}
+  fastify@4.28.1:
+    resolution: {integrity: sha512-kFWUtpNr4i7t5vY2EJPCN2KgMVpuqfU4NjnJNCgiNB900oiDeYqaNDRcAfeBbOF5hGixixxcKnOU4KN9z6QncQ==}
 
   fastparallel@2.4.1:
     resolution: {integrity: sha512-qUmhxPgNHmvRjZKBFUNI0oZuuH9OlSIOXmJ98lhKPxMZZ7zS/Fi0wRHOihDSz0R1YiIOjxzOY4bq65YTcdBi2Q==}
@@ -6796,7 +6793,7 @@ snapshots:
       accepts: 1.3.8
       fastify-plugin: 4.5.1
 
-  '@fastify/ajv-compiler@3.5.0':
+  '@fastify/ajv-compiler@3.6.0':
     dependencies:
       ajv: 8.16.0
       ajv-formats: 2.1.1(ajv@8.16.0)
@@ -6847,7 +6844,7 @@ snapshots:
 
   '@fastify/fast-json-stringify-compiler@4.3.0':
     dependencies:
-      fast-json-stringify: 5.16.0
+      fast-json-stringify: 5.16.1
 
   '@fastify/formbody@7.4.0':
     dependencies:
@@ -6893,7 +6890,7 @@ snapshots:
 
   '@fastify/restartable@2.3.0':
     dependencies:
-      fastify: 4.28.0
+      fastify: 4.28.1
 
   '@fastify/send@2.1.0':
     dependencies:
@@ -7151,7 +7148,7 @@ snapshots:
   '@platformatic/graphql-composer@0.7.0':
     dependencies:
       abstract-logger: 0.2.5
-      fastify: 4.28.0
+      fastify: 4.28.1
       graphql: 16.9.0
       mercurius: 14.1.0(graphql@16.9.0)
       metaline: 1.1.0
@@ -8590,16 +8587,6 @@ snapshots:
 
   fast-json-stable-stringify@2.1.0: {}
 
-  fast-json-stringify@5.16.0:
-    dependencies:
-      '@fastify/merge-json-schemas': 0.1.1
-      ajv: 8.16.0
-      ajv-formats: 3.0.1(ajv@8.16.0)
-      fast-deep-equal: 3.1.3
-      fast-uri: 2.4.0
-      json-schema-ref-resolver: 1.0.1
-      rfdc: 1.4.1
-
   fast-json-stringify@5.16.1:
     dependencies:
       '@fastify/merge-json-schemas': 0.1.1
@@ -8635,9 +8622,9 @@ snapshots:
     dependencies:
       reusify: 1.0.4
 
-  fastify-metrics@11.0.0(fastify@4.28.0):
+  fastify-metrics@11.0.0(fastify@4.28.1):
     dependencies:
-      fastify: 4.28.0
+      fastify: 4.28.1
       fastify-plugin: 4.5.1
       prom-client: 15.1.2
 
@@ -8666,21 +8653,21 @@ snapshots:
     dependencies:
       '@fastify/error': 3.4.1
       '@fastify/jwt': 8.0.1
-      fastify: 4.28.0
+      fastify: 4.28.1
       fastify-plugin: 4.5.1
       get-jwks: 8.3.1
     transitivePeerDependencies:
       - encoding
 
-  fastify@4.28.0:
+  fastify@4.28.1:
     dependencies:
-      '@fastify/ajv-compiler': 3.5.0
+      '@fastify/ajv-compiler': 3.6.0
       '@fastify/error': 3.4.1
       '@fastify/fast-json-stringify-compiler': 4.3.0
       abstract-logging: 2.0.1
       avvio: 8.3.2
       fast-content-type-parse: 1.1.0
-      fast-json-stringify: 5.16.0
+      fast-json-stringify: 5.16.1
       find-my-way: 8.2.0
       light-my-request: 5.13.0
       pino: 9.2.0
