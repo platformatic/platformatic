@@ -622,7 +622,7 @@ console.log(await client.getQueryParamsArray({ ids: ['foo', 'bar']}))
   equal(lines[0], '{ message: \'ok\', data: [ \'foo\', \'bar\' ] }')
 })
 
-test.only('integration test for custom headers', async (t) => {
+test('integration test for custom headers', async (t) => {
   const fixturesDir = join(__dirname, 'fixtures', 'custom-headers')
   try {
     await fs.unlink(join(fixturesDir, 'db.sqlite'))

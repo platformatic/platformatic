@@ -52,11 +52,12 @@ You can set headers that will be sent along with all the requests made by the cl
 ```js
 import build from './api.js'
 
-setDefaultHeaders({
-  authorization: 'Bearer MY_TOKEN'
-})
 
-const client = build('http://my-server-url.com')
+const client = build('http://my-server-url.com', {
+  headers: {
+    authorization: 'Bearer MY_TOKEN'
+  }
+})
 
 const movies = await client.getMovies({})
 console.log(movies)
