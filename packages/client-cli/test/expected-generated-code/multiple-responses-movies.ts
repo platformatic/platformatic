@@ -75,9 +75,14 @@ const _getPkgScopeNameVersion = async (url: string, request: Types.GetPkgScopeNa
 export const getPkgScopeNameVersion: Movies['getPkgScopeNameVersion'] = async (request: Types.GetPkgScopeNameVersionRequest): Promise<Types.GetPkgScopeNameVersionResponses> => {
   return await _getPkgScopeNameVersion(baseUrl, request)
 }
-export default function build (url: string, headers: Object = {}) {
+type BuildOptions = {
+  headers?: Object
+}
+export default function build (url: string, options?: BuildOptions) {
   url = sanitizeUrl(url)
-  defaultHeaders = headers
+  if (options?.headers) {
+    defaultHeaders = options.headers
+  }
   return {
     getPkgScopeNameVersion: _getPkgScopeNameVersion.bind(url, ...arguments)
   }

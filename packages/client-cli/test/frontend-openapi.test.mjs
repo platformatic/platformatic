@@ -88,9 +88,11 @@ export const getRedirect = async (request) => {
 }`
   // create factory
   const factoryImplementation = `
-export default function build (url, headers = {}) {
+export default function build (url, options) {
   url = sanitizeUrl(url)
-  defaultHeaders = headers
+  if (options?.headers) {
+    defaultHeaders = options.headers
+  }
   return {
     getCustomSwagger: _getCustomSwagger.bind(url, ...arguments),
     getRedirect: _getRedirect.bind(url, ...arguments),
@@ -101,7 +103,10 @@ export default function build (url, headers = {}) {
   // factory type
   const factoryType = `
 type PlatformaticFrontendClient = Omit<Sample, 'setBaseUrl'>
-export default function build(url: string, headers: Object): PlatformaticFrontendClient`
+type BuildOptions = {
+  headers?: Object
+}
+export default function build(url: string, options?: BuildOptions): PlatformaticFrontendClient`
 
   // Correct CamelCase name
   const camelCase = 'export interface Sample {'
@@ -547,7 +552,7 @@ test('call response.json only for json responses', async (t) => {
   }
 })
 
-test.only('should match expected implementation with typescript', async (t) => {
+test('should match expected implementation with typescript', async (t) => {
   const dir = await moveToTmpdir(after)
   const openAPIfile = join(__dirname, 'fixtures', 'multiple-responses-openapi.json')
   await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend', '--full-response'])
@@ -639,7 +644,9 @@ test.only('integration test for custom headers', async (t) => {
 
 import build from './foobar.mjs'
 const client = build('${app.url}', {
-  authorization: 'Bearer foobar'
+  headers: {
+    authorization: 'Bearer foobar'
+  }
 })
 
 console.log(await client.getReturnHeaders())
