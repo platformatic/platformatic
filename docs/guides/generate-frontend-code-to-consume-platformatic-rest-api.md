@@ -156,7 +156,7 @@ let defaultHeaders = {}
 
 export const setBaseUrl = (newUrl: string) { baseUrl = newUrl };
 
-export const setDefaultHeaders = (headers: Headers): void => { defaultHeaders = headers }
+export const setDefaultHeaders = (headers: Object): void => { defaultHeaders = headers }
 
 export const createMovie: Api['createMovie'] = async (request) => {
   const response = await fetch(`${baseUrl}/movies/`, {

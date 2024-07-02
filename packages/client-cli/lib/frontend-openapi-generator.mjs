@@ -56,7 +56,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
       'export const setBaseUrl = (newUrl: string) : void => { baseUrl = sanitizeUrl(newUrl) }'
     )
     writer.newLine()
-    writer.writeLine('export const setDefaultHeaders = (headers: Headers): void => { defaultHeaders = headers }')
+    writer.writeLine('export const setDefaultHeaders = (headers: Object): void => { defaultHeaders = headers }')
     writer.newLine()
 
     writer.writeLine('type JSON = Record<string, unknown>')
@@ -313,10 +313,11 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
   }
   // create factory
   const factoryBuildFunction = language === 'ts'
-    ? 'export default function build (url: string)'
-    : 'export default function build (url)'
+    ? 'export default function build (url: string, headers: Object = {})'
+    : 'export default function build (url, headers = {})'
   writer.write(factoryBuildFunction).block(() => {
     writer.writeLine('url = sanitizeUrl(url)')
+    writer.writeLine('defaultHeaders = headers')
     writer.write('return').block(() => {
       for (const [idx, op] of allOperations.entries()) {
         const underscoredOperation = `_${op}`
@@ -379,6 +380,6 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
   })
 
   writer.writeLine(`type PlatformaticFrontendClient = Omit<${capitalize(name)}, 'setBaseUrl'>`)
-  writer.writeLine('export default function build(url: string): PlatformaticFrontendClient')
+  writer.writeLine('export default function build(url: string, headers: Object): PlatformaticFrontendClient')
   return interfaces.toString() + writer.toString()
 }

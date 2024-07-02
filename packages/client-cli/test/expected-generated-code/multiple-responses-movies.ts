@@ -13,7 +13,7 @@ function sanitizeUrl(url: string) : string {
 }
 export const setBaseUrl = (newUrl: string) : void => { baseUrl = sanitizeUrl(newUrl) }
 
-export const setDefaultHeaders = (headers: Headers): void => { defaultHeaders = headers }
+export const setDefaultHeaders = (headers: Object): void => { defaultHeaders = headers }
 
 type JSON = Record<string, unknown>
 /* @ts-ignore */
@@ -75,8 +75,9 @@ const _getPkgScopeNameVersion = async (url: string, request: Types.GetPkgScopeNa
 export const getPkgScopeNameVersion: Movies['getPkgScopeNameVersion'] = async (request: Types.GetPkgScopeNameVersionRequest): Promise<Types.GetPkgScopeNameVersionResponses> => {
   return await _getPkgScopeNameVersion(baseUrl, request)
 }
-export default function build (url: string) {
+export default function build (url: string, headers: Object = {}) {
   url = sanitizeUrl(url)
+  defaultHeaders = headers
   return {
     getPkgScopeNameVersion: _getPkgScopeNameVersion.bind(url, ...arguments)
   }

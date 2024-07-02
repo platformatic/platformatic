@@ -151,7 +151,7 @@ let defaultHeaders = ''
 
 export const setBaseUrl = (newUrl: string) : void => { baseUrl = newUrl }
 
-export const setDefaultHeaders = (headers: Headers) => { defaultHeaders = headers }
+export const setDefaultHeaders = (headers: Object) => { defaultHeaders = headers }
 
 const _getMovies = async (url: string, request: Types.GetMoviesRequest) => {
   const response = await fetch(`${url}/movies/?${new URLSearchParams(Object.entries(request || {})).toString()}`)

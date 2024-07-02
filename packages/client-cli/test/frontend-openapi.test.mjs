@@ -88,8 +88,9 @@ export const getRedirect = async (request) => {
 }`
   // create factory
   const factoryImplementation = `
-export default function build (url) {
+export default function build (url, headers = {}) {
   url = sanitizeUrl(url)
+  defaultHeaders = headers
   return {
     getCustomSwagger: _getCustomSwagger.bind(url, ...arguments),
     getRedirect: _getRedirect.bind(url, ...arguments),
@@ -100,7 +101,7 @@ export default function build (url) {
   // factory type
   const factoryType = `
 type PlatformaticFrontendClient = Omit<Sample, 'setBaseUrl'>
-export default function build(url: string): PlatformaticFrontendClient`
+export default function build(url: string, headers: Object): PlatformaticFrontendClient`
 
   // Correct CamelCase name
   const camelCase = 'export interface Sample {'
@@ -546,7 +547,7 @@ test('call response.json only for json responses', async (t) => {
   }
 })
 
-test('should match expected implementation with typescript', async (t) => {
+test.only('should match expected implementation with typescript', async (t) => {
   const dir = await moveToTmpdir(after)
   const openAPIfile = join(__dirname, 'fixtures', 'multiple-responses-openapi.json')
   await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend', '--full-response'])
@@ -616,7 +617,7 @@ console.log(await client.getQueryParamsArray({ ids: ['foo', 'bar']}))
   equal(lines[0], '{ message: \'ok\', data: [ \'foo\', \'bar\' ] }')
 })
 
-test('integration test for custom headers', async (t) => {
+test.only('integration test for custom headers', async (t) => {
   const fixturesDir = join(__dirname, 'fixtures', 'custom-headers')
   try {
     await fs.unlink(join(fixturesDir, 'db.sqlite'))
@@ -636,11 +637,8 @@ test('integration test for custom headers', async (t) => {
   const testFile = `
 'use strict'
 
-import build, { setBaseUrl, setDefaultHeaders, getReturnHeaders } from './foobar.mjs'
-const client = build('${app.url}')
-// const client = build('https://echo.free.beeceptor.com')
-
-setDefaultHeaders({
+import build from './foobar.mjs'
+const client = build('${app.url}', {
   authorization: 'Bearer foobar'
 })
 
