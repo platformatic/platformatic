@@ -1,14 +1,12 @@
 # Many To Many Relationship
 
-Many-to-Many relationship lets you relate each row in one table to many rows in
-another table and vice versa. 
+Many-to-Many relationships allow you to relate each row in one table to many rows in another table and vice versa.
 
-Many-to-many relationship are implemented in SQL via a "join table", a table whose **primary key**
-is composed by the identifier of the two parts of the many-to-many relationship.
+These relationships are implemented in SQL via a "join table," a table whose **primary key** is composed of the identifiers of the two parts of the many-to-many relationship.
 
-Platformatic DB fully support many-to-many relationships on all supported databases.
+Platformatic DB fully supports many-to-many relationships on all supported databases.
 
-## Example
+**Schema**
 
 Consider the following schema (SQLite):
 
@@ -32,6 +30,16 @@ CREATE TABLE editors (
   PRIMARY KEY (page_id, user_id)
 );
 ```
+
+In this schema:
+
+- The `pages` table represents the pages.
+- The `users` table represents the users.
+- The `editors` table is the join table that links `pages` and `users` and includes an additional `role` field.
+
+## Querying Many-to-Many Relationships
+
+Given this schema, you can issue queries to fetch data from the editors table and related `users` and `pages`.
 
 The table `editors` is a "join table" between users and pages.
 Given this schema, you could issue queries like:

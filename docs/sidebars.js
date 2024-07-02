@@ -171,6 +171,7 @@ const sidebars = {
           label: 'Deployment',
           collapsed: true,
           items: [
+            'guides/deployment/overview',
             'guides/deployment/deploy-to-fly-io-with-sqlite',
             'guides/deployment/advanced-fly-io-deployment',
           ],
