@@ -51,6 +51,21 @@ You can set headers that will be sent along with all the requests made by the cl
 
 ```js
 import build from './api.js'
+import { setBaseUrl, getMovies } from './api.js'
+
+setBaseUrl('http://my-server-url.com') // modifies the global `baseUrl` variable
+
+setDefaultHeaders({
+    authorization: 'Bearer MY_TOKEN'
+})
+const movies = await getMovies({})
+console.log(movies)
+```
+
+With the factory approach you'll setup `headers` as option in the `build` method
+
+```js
+import build from './api.js'
 
 
 const client = build('http://my-server-url.com', {
@@ -62,6 +77,8 @@ const client = build('http://my-server-url.com', {
 const movies = await client.getMovies({})
 console.log(movies)
 ```
+
+
 
 ## Generated Code
 
