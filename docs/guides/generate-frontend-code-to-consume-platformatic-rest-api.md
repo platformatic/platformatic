@@ -138,6 +138,7 @@ interface GetMoviesResponseOK {
 
 export interface Api {
   setBaseUrl(baseUrl: string): void;
+  setDefaultHeaders(headers: Object): void;
   getMovies(req: GetMoviesRequest): Promise<Array<GetMoviesResponseOK>>;
   createMovie(req: CreateMovieRequest): Promise<CreateMovieResponseOK>;
   // ... etc.
@@ -151,7 +152,11 @@ Here is part of the generated code
 import type { Api } from './api-types'
 
 let baseUrl = ''
-export function setBaseUrl(newUrl: string) { baseUrl = newUrl };
+let defaultHeaders = {}
+
+export const setBaseUrl = (newUrl: string) { baseUrl = newUrl };
+
+export const setDefaultHeaders = (headers: Object): void => { defaultHeaders = headers }
 
 export const createMovie: Api['createMovie'] = async (request) => {
   const response = await fetch(`${baseUrl}/movies/`, {
