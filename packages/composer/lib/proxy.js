@@ -3,32 +3,40 @@
 const { getGlobalDispatcher } = require('undici')
 const httpProxy = require('@fastify/http-proxy')
 const fp = require('fastify-plugin')
+const { metaKeys } = require('@platformatic/config')
 
 module.exports = fp(async function (app, opts) {
   const config = app.platformatic.config
 
-  for (const { proxy, origin } of opts.services) {
-    if (!proxy) continue
+  for (const service of opts.services) {
+    if (!service.proxy) {
+      continue
+    }
 
+    const { id, origin, proxy } = service
+    const upstream = app.platformatic.meta?.[id]?.[metaKeys.accessPoint] ?? origin
     const prefix = proxy.prefix.at(-1) === '/'
       ? proxy.prefix.slice(0, -1)
       : proxy.prefix
 
-    app.log.info(`Proxying ${prefix} to ${origin}`)
+    app.log.info(`Proxying ${prefix.length ? prefix : '/'} to ${upstream}`)
 
     const dispatcher = getGlobalDispatcher()
 
     await app.register(httpProxy, {
       prefix,
-      upstream: origin,
+      upstream,
       websocket: true,
       undici: dispatcher,
       destroyAgent: false,
       replyOptions: {
         rewriteRequestHeaders: (request, headers) => {
-          const targetUrl = `${origin}${request.url}`
+          const targetUrl = `${upstream}${request.url}`
           const context = request.span?.context
-          const { span, telemetryHeaders } = app.openTelemetry?.startSpanClient(targetUrl, request.method, context) || { span: null, telemetryHeaders: {} }
+          const { span, telemetryHeaders } =
+            app.openTelemetry?.startSpanClient(targetUrl, request.method, context) ||
+            { span: null, telemetryHeaders: {} }
+
           // We need to store the span in a different object
           // to correctly close it in the onResponse hook
           // Note that we have 2 spans:

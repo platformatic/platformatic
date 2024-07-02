@@ -3,9 +3,11 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
+const pino = require('pino')
 const { loadConfig } = require('@platformatic/config')
 const { platformaticService } = require('@platformatic/service')
 const { platformaticDB } = require('@platformatic/db')
+const RuntimeApi = require('../lib/api')
 const { parseInspectorOptions, platformaticRuntime } = require('../lib/config')
 const { wrapConfigInRuntimeConfig } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
@@ -33,6 +35,9 @@ test('performs a topological sort on services depending on allowCycles', async (
   await t.test('does not sort if allowCycles is true', async () => {
     const configFile = join(fixturesDir, 'configs', 'monorepo.json')
     const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+
+    const runtime = new RuntimeApi(loaded.configManager.current, pino(), undefined)
+    await runtime._resolveDependencies()
     const services = loaded.configManager.current.services
 
     assert.strictEqual(services.length, 4)
@@ -45,6 +50,9 @@ test('performs a topological sort on services depending on allowCycles', async (
   await t.test('sorts if allowCycles is false', async () => {
     const configFile = join(fixturesDir, 'configs', 'monorepo-no-cycles.json')
     const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+
+    const runtime = new RuntimeApi(loaded.configManager.current, pino(), undefined)
+    await runtime._resolveDependencies()
     const services = loaded.configManager.current.services
 
     assert.strictEqual(services.length, 4)
@@ -58,7 +66,9 @@ test('performs a topological sort on services depending on allowCycles', async (
     const configFile = join(fixturesDir, 'configs', 'monorepo-create-cycle.json')
 
     await assert.rejects(async () => {
-      await loadConfig({}, ['-c', configFile], platformaticRuntime)
+      const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+      const runtime = new RuntimeApi(loaded.configManager.current, pino(), undefined)
+      await runtime._resolveDependencies()
     })
   })
 
@@ -66,7 +76,9 @@ test('performs a topological sort on services depending on allowCycles', async (
     const configFile = join(fixturesDir, 'leven', 'platformatic.runtime.json')
 
     await assert.rejects(async () => {
-      await loadConfig({}, ['-c', configFile], platformaticRuntime)
+      const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+      const runtime = new RuntimeApi(loaded.configManager.current, pino(), undefined)
+      await runtime._resolveDependencies()
     }, 'service \'rainy-empire\' has unordered dependency: \'deeply-splitte\'. Did you mean \'deeply-spittle\'?')
   })
 })
@@ -74,6 +86,10 @@ test('performs a topological sort on services depending on allowCycles', async (
 test('can resolve service id from client package.json if not provided', async () => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-client-without-id.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+
+  const runtime = new RuntimeApi(config.configManager.current, pino(), undefined)
+  await runtime._resolveDependencies()
+
   const entry = config.configManager.current.serviceMap.get('serviceApp')
 
   assert.strictEqual(entry.dependencies.length, 1)

@@ -5,6 +5,7 @@ const { Store } = require('./lib/store')
 const { loadConfig, printConfigValidationErrors, printAndExitLoadConfigError } = require('./lib/load-config')
 const { getParser, getStringifier } = require('./lib/formats')
 const errors = require('./lib/errors')
+const metaKeys = require('./lib/meta-keys')
 
 module.exports = ConfigManager
 module.exports.ConfigManager = ConfigManager
@@ -15,3 +16,4 @@ module.exports.printAndExitLoadConfigError = printAndExitLoadConfigError
 module.exports.errors = errors
 module.exports.getParser = getParser
 module.exports.getStringifier = getStringifier
+module.exports.metaKeys = metaKeys

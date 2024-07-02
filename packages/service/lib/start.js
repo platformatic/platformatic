@@ -35,6 +35,7 @@ async function buildServer (options, app) {
   }
 
   const config = configManager.current
+  const isRuntimeContext = !!options.isRuntimeContext
 
   // The server now can be not present, so we might need to add logger
   addLoggerToTheConfig(config)
@@ -61,7 +62,21 @@ async function buildServer (options, app) {
     }
     fastifyOptions.genReqId = function (req) { return randomUUID() }
     const root = fastify(fastifyOptions)
-    root.decorate('platformatic', { configManager, config, bus: new Bus(options.id) })
+
+    const platformatic = {
+      configManager,
+      config,
+      isRuntimeContext
+    }
+
+    if (isRuntimeContext) {
+      platformatic.currentService = options.id
+      platformatic.bus = new Bus(options.id)
+      platformatic.meta = options.servicesMeta
+    }
+
+    root.decorate('platformatic', platformatic)
+
     await root.register(app)
     if (!root.hasRoute({ url: '/', method: 'GET' })) {
       await root.register(require('./root-endpoint'), {

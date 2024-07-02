@@ -1,9 +1,11 @@
 'use strict'
 
 const assert = require('assert/strict')
+const { join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
+const { buildServer } = require('../../runtime')
 const {
   createComposer,
   createOpenApiService,
@@ -128,5 +130,24 @@ test('should proxy openapi requests', async (t) => {
     const [expectedForwardedFor] = expectedForwardedHost.split(':')
     assert.equal(returnedHeaders['x-forwarded-host'], expectedForwardedHost)
     assert.equal(returnedHeaders['x-forwarded-for'], expectedForwardedFor)
+  }
+})
+
+test('should use metadata to detect real access point to the composed services', async (t) => {
+  // Initialize the server using a configuration file
+  const app = await buildServer(join(__dirname, 'proxy', 'fixtures', 'tcp', 'platformatic.json'))
+  const entrypointUrl = await app.start()
+  t.after(() => app.close())
+
+  {
+    const { statusCode, body } = await request(entrypointUrl, { method: 'GET', path: '/alpha' })
+    assert.equal(statusCode, 200)
+    assert.deepStrictEqual(await body.json(), { from: 'alpha' })
+  }
+
+  {
+    const { statusCode, body } = await request(entrypointUrl, { method: 'GET', path: '/beta' })
+    assert.equal(statusCode, 200)
+    assert.deepStrictEqual(await body.json(), { from: 'tcp' })
   }
 })

@@ -5,20 +5,30 @@ const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
 const { createFastifyInterceptor } = require('fastify-undici-dispatcher')
 const { PlatformaticApp } = require('./app')
 const errors = require('./errors')
+const { checkDependencies, topologicalSort } = require('./dependencies')
 const { printSchema } = require('graphql')
 const { Bus } = require('@platformatic/bus')
+const { metaKeys } = require('@platformatic/config')
 
 class RuntimeApi {
   #services
   #dispatcher
   #interceptor
   #logger
+  #config
   #bus
+  #servicesMeta
+  #dependenciesResolved
 
   constructor (config, logger, loaderPort, composedInterceptors = []) {
+    this.#config = config
     this.#services = new Map()
     this.#logger = logger
     this.#setupBus()
+    this.#servicesMeta = {
+      [metaKeys.runtimeEntrypoint]: config.entrypoint
+    }
+
     const telemetryConfig = config.telemetry
     const metricsConfig = config.metrics
 
@@ -43,7 +53,7 @@ class RuntimeApi {
         }
       }
 
-      const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig, serverConfig, !!config.managementApi, metricsConfig)
+      const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig, serverConfig, !!config.managementApi, metricsConfig, this.#servicesMeta)
 
       this.#services.set(service.id, app)
     }
@@ -153,6 +163,11 @@ class RuntimeApi {
   }
 
   async startServices () {
+    if (!this.#dependenciesResolved) {
+      await this._resolveDependencies()
+      this.#dependenciesResolved = true
+    }
+
     let entrypointUrl = null
     for (const service of this.#services.values()) {
       await service.start()
@@ -183,6 +198,40 @@ class RuntimeApi {
     }
     await Promise.all(stopServiceReqs)
     this.#bus.broadcast('runtime:services:stopped')
+  }
+
+  async _resolveDependencies () {
+    // Show some sanity warnings to the users
+    if (this.#config.autoload && this.#config.allowCycles) {
+      this.#logger.warn(
+        'Using the "allowCycles" and "autoload" properties together will lead to unpredictable services start order.\n' +
+        'If you need cycles, please use the "services" property. The allowCycles option will be removed in a future version.'
+      )
+    } else if (this.#config.services && !this.#config.allowCycles) {
+      this.#logger.warn(
+        'Using the "services" without the "allowCycles" property will modify the services start order.\n' +
+        'If you don\'t want cycles in your services, please use the "autoload" property.\n' +
+        'The allowCycles option will be removed in a future version.'
+      )
+    }
+
+    for (const service of this.#config.services) {
+      const dependencies = await this.#services.get(service.id).getDependencies()
+      service.dependencies = dependencies
+
+      for (const { envVar, url } of dependencies) {
+        if (envVar) {
+          service.localServiceEnvVars.set(envVar, url)
+        }
+      }
+    }
+
+    checkDependencies(this.#config.services)
+
+    // Perform services sorting if asked to
+    if (!this.#config.allowCycles) {
+      this.#services = topologicalSort(this.#services, this.#config)
+    }
   }
 
   async #restartServices () {
