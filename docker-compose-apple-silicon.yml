@@ -24,7 +24,7 @@ services:
   mysql8:
     ports:
       - "3308:3306"
-    image: "arm64v8/mysql:8-oracle"
+    image: "arm64v8/mysql:9-oracle"
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
       - MYSQL_DATABASE=graph
