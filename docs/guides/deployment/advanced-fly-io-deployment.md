@@ -63,7 +63,7 @@ CMD ["npm", "start"]
 
 4. **Connecting to the Database**
    
-Use the following command from your local machine to connect directly to the database:
+git branUse the following command from your local machine to connect directly to the database:
 
 ```sh
 fly ssh console -C db-cli

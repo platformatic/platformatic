@@ -1,4 +1,128 @@
-# Deploy to Fly.io with SQLite
+# Deploy Platformatic Applications to Fly.io
+
+## Deploying a Platformatic Runtime Application 
+
+This guide provides instructions on deploying a Platformatic Runtime application to Fly.io. With a runtime application, you are deploying your entire application, including all services in the `services` folder.
+
+
+### Dockerfile for Runtime Application
+
+Here is an example Dockerfile for a Platformatic Runtime application:
+
+```dockerfile
+FROM node:20-alpine
+
+ARG VITE_AI_URL
+ENV VITE_AI_URL=$VITE_AI_URL
+
+ENV APP_HOME=/home/app/node/
+
+WORKDIR $APP_HOME
+
+COPY package.json package.json
+COPY package-lock.json package-lock.json
+
+COPY platformatic.runtime.json platformatic.runtime.json
+COPY services services
+
+RUN npm install
+
+# Loop through each service to install dependencies and build
+RUN cd services/ai && \
+  npm install && \
+  npm run build
+
+# Repeat the above command for each service in your services folder
+# Example:
+# RUN cd services/service1 && \
+#  npm install && \
+#  npm run build
+
+EXPOSE 3042
+
+CMD ["npm", "start"]
+```
+
+### Explanation
+- **ARG VITE_AI_URL and ENV VITE_AI_URL**: Sets up environment variables for your application.
+- **WORKDIR $APP_HOM**E: Sets the working directory inside the container.
+- **COPY commands**: Copies the necessary files and folders into the container.
+- **RUN npm install**: Installs the dependencies for all services.
+- **RUN cd services/...**: Installs dependencies and builds each service in the services folder.
+- **EXPOSE 3042**: Exposes the application port.
+- **CMD ["npm", "start"]**: Specifies the command to run all services in the application.
+
+### TypeScript Compilation for Deployment
+
+To compile your TypeScript files before deployment, update your platformatic.runtime.json to include TypeScript settings
+
+```json
+{
+  "plugins": {
+    "paths": [{
+      "path": "plugins",
+      "encapsulate": false
+    }, "routes"],
+    "typescript": {
+      "enabled": "{PLT_TYPESCRIPT}",
+      "outDir": "dist"
+    }
+  }
+}
+```
+
+Ensure `PLT_TYPESCRIPT=true` in your `.env` file for local development. For deployment, set `PLT_TYPESCRIPT=false` to avoid compiling TypeScript at runtime.
+
+Compile your TypeScript source files with:
+
+```sh
+plt runtime compile
+```
+
+This compiles your TypeScript files and outputs them to the specified `outDir`.
+
+### Configure Environment
+
+Start with your local environment. Create a `.env` file and put the following:
+
+```sh
+PORT=3042
+PLT_SERVER_HOSTNAME=127.0.0.1
+PLT_SERVER_LOGGER_LEVEL=debug
+DATABASE_URL=sqlite://.platformatic/data/movie-quotes.runtime
+```
+
+Avoid accidental leaks by ignoring your `.env` file:
+
+```sh 
+echo ".env" >> .gitignore
+```
+
+This same configuration needs to be added to `fly.toml`:
+
+```toml
+[env]
+  PORT = 8080
+  PLT_SERVER_HOSTNAME = "0.0.0.0"
+  PLT_SERVER_LOGGER_LEVEL = "info"
+  DATABASE_URL = "sqlite:///app/.platformatic/data/movie-quotes.runtime"
+```
+
+### Deploy Application 
+
+Before deploying, make sure a `.dockerignore` file is created:
+
+```sh
+cp .gitignore .dockerignore
+```
+
+Finally, deploy the application to Fly.io by running:
+
+```sh
+fly deploy
+```
+
+## Deploy a Platformatic DB Application to Fly.io
 
 To follow this how-to guide, you'll first need to install the Fly CLI and create
 an account by [following this official guide](https://fly.io/docs/hands-on/).
@@ -19,7 +143,7 @@ fly launch --no-deploy --generate-name --region lhr --org personal --path .
 The `fly` CLI should have created a `fly.toml` file in your project
 directory.
 
-## Explicit Builder
+### Explicit Builder
 
 The `fly.toml` file may be missing an explicit builder setting. To have consistent builds, it is best to add a `build` section:
 
@@ -28,7 +152,7 @@ The `fly.toml` file may be missing an explicit builder setting. To have consiste
   builder = "heroku/buildpacks:20"
 ```
 
-## Database Storage
+### Database Storage
 
 Create a volume for database storage, naming it `data`:
 
@@ -85,7 +209,7 @@ Update your  `platformatic.json` configuration file to use environment variables
 }
 ```
 
-## Configure Environment
+### Configure Environment
 
 Start with your local environment, create a `.env` file and put the following:
 
@@ -112,7 +236,7 @@ This same configuration needs to added to `fly.toml`:
   DATABASE_URL = "sqlite:///app/.platformatic/data/movie-quotes.db"
 ```
 
-## TypeScript Compilation for Deployment 
+### TypeScript Compilation for Deployment 
 
 To compile your TypeScript files before deployment, update your `platformatic.json` to include TypeScript settings:
 
@@ -140,7 +264,7 @@ plt service compile
 
 This compiles your TypeScript files and outputs them to the specified `outDir`.
 
-## Deploy application
+### Deploy application
 
 A valid `package.json` will be needed so if you do not have one, generate one by running `npm init`.
 
