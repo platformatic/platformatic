@@ -19,18 +19,11 @@ ENV APP_HOME=/home/app/node/
 
 WORKDIR $APP_HOME
 
-COPY package.json package.json
+COPY . .
 COPY package-lock.json package-lock.json
+RUN npm ci
 
-COPY platformatic.runtime.json platformatic.runtime.json
-COPY services services
-
-RUN npm install
-
-# Loop through each service to install dependencies and build
-RUN cd services/ai && \
-  npm install && \
-  npm run build
+RUN npx platformatic compile
 
 # Repeat the above command for each service in your services folder
 # Example:
