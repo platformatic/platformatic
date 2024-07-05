@@ -20,16 +20,10 @@ ENV APP_HOME=/home/app/node/
 WORKDIR $APP_HOME
 
 COPY . .
-COPY package-lock.json package-lock.json
+COPY package-lock.json package-lock.json ./
 RUN npm ci
 
 RUN npx platformatic compile
-
-# Repeat the above command for each service in your services folder
-# Example:
-# RUN cd services/service1 && \
-#  npm install && \
-#  npm run build
 
 EXPOSE 3042
 
