@@ -12,9 +12,6 @@ Here is an example Dockerfile for a Platformatic Runtime application:
 ```dockerfile
 FROM node:20-alpine
 
-ARG VITE_AI_URL
-ENV VITE_AI_URL=$VITE_AI_URL
-
 ENV APP_HOME=/home/app/node/
 
 WORKDIR $APP_HOME
