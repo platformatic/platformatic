@@ -14,16 +14,31 @@
 
 </div>
 
-<p align="center">
+<h1 align="center">
   <br/>
-  <a href="https://platformatic.dev/">Platformatic</a> open-source tools simplify
-	building and
+  The Open Source Toolkit for Node.js
   <br/>
-  running Node.js applications, with best practices baked in.
-  <br/><br/>
-</p>
+</h1>
 
-## Install
+<div align="center"> 
+
+  __Platformatic__'s Open Source toolkit helps you build modern Node.js  
+  applications without the endless loop of setup and maintenance. 
+</div>
+<br/>
+
+## How does it work?
+Platformatic puts Node development on autopilot, with:
+
+- 🧱 Opinionated structures and composable templates
+- 🔋 Batteries-included API setup
+- 📄 Out-of-the-box documentation, logs, and metrics
+- ⚙️ Shareable and reusable configurations 
+
+## Ready to get started?
+
+### Install
+<hr />
 
 ```bash
 # Create a new application
@@ -33,10 +48,10 @@ npm create platformatic@latest
 npm install platformatic
 ```
 
-Follow our [Quick Start Guide](https://docs.platformatic.dev/docs/getting-started/quick-start-guide)
-guide to get up and running with Platformatic.
+Follow our [Quick Start Guide](https://docs.platformatic.dev/docs/getting-started/quick-start-guide) guide to get up and running with Platformatic.
 
-## Documentation
+### Documentation
+<hr />
 
 - [Overview](https://docs.platformatic.dev/docs/Overview)
 - [Getting Started](https://docs.platformatic.dev/docs/getting-started/quick-start-guide)
@@ -44,13 +59,21 @@ guide to get up and running with Platformatic.
 
 Check out our full documentation at [docs.platformatic.dev](https://docs.platformatic.dev).
 
-## Support
+### Support
+<hr />
+
+Join our community on [Discord](https://discord.gg/platformatic).
+For a dedicated support, explore our [Enterprise Plans](https://www.platformatichq.com)
+
+## Platformatic for Teams 
+<hr />
+
+Find out more about the enterprise command center that simplifies the development, management and oeprations of your Node.js apps at [platformaticHQ.com](https://www.platformatichq.com).
+
+![Command Center](./assets/Hompage_Solution_White.png)
 
 ## Issues
 
 If you run into a bug or have a suggestion for improvement, please raise an 
 [issue on GitHub](https://github.com/platformatic/platformatic/issues/new) or join our [Discord feedback](https://discord.gg/platformatic) channel.
 
-## License
-
-[Apache 2.0](LICENSE)
