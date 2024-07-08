@@ -1386,21 +1386,12 @@ importers:
       '@platformatic/bus':
         specifier: workspace:*
         version: link:../bus
-      '@platformatic/composer':
-        specifier: workspace:*
-        version: link:../composer
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
-      '@platformatic/db':
-        specifier: workspace:*
-        version: link:../db
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
-      '@platformatic/service':
-        specifier: workspace:*
-        version: link:../service
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
@@ -1467,9 +1458,6 @@ importers:
       undici:
         specifier: ^6.9.0
         version: 6.19.2
-      why-is-node-running:
-        specifier: ^2.2.2
-        version: 2.2.2
       ws:
         specifier: ^8.16.0
         version: 8.17.1
@@ -1483,6 +1471,15 @@ importers:
       '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
+      '@platformatic/composer':
+        specifier: workspace:*
+        version: link:../composer
+      '@platformatic/db':
+        specifier: workspace:*
+        version: link:../db
+      '@platformatic/service':
+        specifier: workspace:*
+        version: link:../service
       '@platformatic/sql-graphql':
         specifier: workspace:*
         version: link:../sql-graphql
@@ -1528,6 +1525,9 @@ importers:
       undici-oidc-interceptor:
         specifier: ^0.5.0
         version: 0.5.0
+      why-is-node-running:
+        specifier: ^2.2.2
+        version: 2.2.2
 
   packages/scalar-theme: {}
 

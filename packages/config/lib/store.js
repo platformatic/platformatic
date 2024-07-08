@@ -139,8 +139,11 @@ class Store {
     directory ??= this.#cwd
     const types = this.listTypes()
 
+    const typeSet = new Set()
+
     for (const _ of types) {
       const type = _.configType
+      typeSet.add(type)
       _.filenames = [
         `platformatic.${type}.json`,
         `platformatic.${type}.json5`,
@@ -149,6 +152,25 @@ class Store {
         `platformatic.${type}.toml`,
         `platformatic.${type}.tml`
       ]
+    }
+
+    for (const type of defaultTypes) {
+      if (typeSet.has(type)) {
+        continue
+      }
+      const _ = {
+        configType: type,
+        filenames: [
+          `platformatic.${type}.json`,
+          `platformatic.${type}.json5`,
+          `platformatic.${type}.yaml`,
+          `platformatic.${type}.yml`,
+          `platformatic.${type}.toml`,
+          `platformatic.${type}.tml`
+        ]
+      }
+
+      types.push(_)
     }
 
     types.push({
