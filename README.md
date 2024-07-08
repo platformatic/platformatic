@@ -18,11 +18,14 @@
   <br/>
   The Open Source Toolkit for Node.js
   <br/>
-  </h1>
-  <p align="center"> 
-  __Platformatic's__ Open Source toolkit helps you build modern Node.js <br /> 
-  applications without the endless loop of setup and maintenance. </p>
-<br/><br/>
+</h1>
+
+<div align="center"> 
+
+  __Platformatic__'s Open Source toolkit helps you build modern Node.js  
+  applications without the endless loop of setup and maintenance. 
+</div>
+<br/>
 
 ## How does it work?
 Platformatic puts Node development on autopilot, with:
