@@ -45,6 +45,41 @@ console.log(movies)
 
 You can use both named operations and the factory in the same file. They can work on different hosts, so the factory does _not_ use the global `setBaseUrl` function.
 
+### Default Headers
+
+You can set headers that will be sent along with all the requests made by the client. This is useful, for instance, for authentication.
+
+```js
+import build from './api.js'
+import { setBaseUrl, getMovies } from './api.js'
+
+setBaseUrl('http://my-server-url.com') // modifies the global `baseUrl` variable
+
+setDefaultHeaders({
+    authorization: 'Bearer MY_TOKEN'
+})
+const movies = await getMovies({})
+console.log(movies)
+```
+
+With the factory approach you'll setup `headers` as option in the `build` method
+
+```js
+import build from './api.js'
+
+
+const client = build('http://my-server-url.com', {
+  headers: {
+    authorization: 'Bearer MY_TOKEN'
+  }
+})
+
+const movies = await client.getMovies({})
+console.log(movies)
+```
+
+
+
 ## Generated Code
 
 ### TypeScript Types
@@ -64,6 +99,7 @@ interface GetMoviesResponseOK {
 }
 export interface Api {
   setBaseUrl(newUrl: string) : void;
+  setDefaultHeaders(headers: Object) : void;
   getMovies(req: GetMoviesRequest): Promise<Array<GetMoviesResponseOK>>;
   // ... all operations listed here
 }
@@ -78,8 +114,13 @@ The *javascript* implementation will look like this
 
 ```js
 let baseUrl = ''
+let defaultHeaders = ''
 /**  @type {import('./api-types.d.ts').Api['setBaseUrl']} */
 export const setBaseUrl = (newUrl) => { baseUrl = newUrl }
+
+
+/**  @type {import('./api-types.d.ts').Api['setDefaultHeaders']} */
+export const setDefaultHeaders = (headers) => { defaultHeaders = headers }
 
 /**  @type {import('./api-types.d.ts').Api['getMovies']} */
 export const getMovies = async (request) => {
@@ -124,7 +165,11 @@ import type { Api } from './api-types'
 import type * as Types from './api-types'
 
 let baseUrl = ''
+let defaultHeaders = ''
+
 export const setBaseUrl = (newUrl: string) : void => { baseUrl = newUrl }
+
+export const setDefaultHeaders = (headers: Object) => { defaultHeaders = headers }
 
 const _getMovies = async (url: string, request: Types.GetMoviesRequest) => {
   const response = await fetch(`${url}/movies/?${new URLSearchParams(Object.entries(request || {})).toString()}`)

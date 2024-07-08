@@ -367,6 +367,9 @@ export interface PlatformaticDB {
       username: string;
       password: string;
     };
+    labels?: {
+      [k: string]: string;
+    };
   };
   types?: {
     autogenerate?: boolean;

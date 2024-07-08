@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/client",
-  "version": "1.47.0",
+  "version": "1.49.0",
   "description": "A client for all platformatic backends",
   "main": "index.js",
   "scripts": {
@@ -21,7 +21,7 @@
   "devDependencies": {
     "@platformatic/telemetry": "workspace:*",
     "borp": "^0.15.0",
-    "c8": "^9.1.0",
+    "c8": "^10.0.0",
     "execa": "^8.0.1",
     "fastify": "^4.26.2",
     "snazzy": "^9.0.0",
