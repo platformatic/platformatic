@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 'use strict'
 
-const { metrics, server, plugins, watch, clients, openApiBase, openApiDefs, graphqlBase } = require('@platformatic/service').schema
+const { metrics, server, plugins, watch, clients, openApiBase, openApiDefs, graphqlBase } = require('@platformatic/service').schemas
 const telemetry = require('@platformatic/telemetry').schema
 const pkg = require('../package.json')
 const version = 'v' + pkg.version

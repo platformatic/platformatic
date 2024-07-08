@@ -178,6 +178,7 @@ test('start()', async (t) => {
     const scriptFile = join(fixturesDir, 'starter.js')
     const configFile = join(fixturesDir, 'configs', 'monorepo.json')
     const child = spawn(process.execPath, [scriptFile, configFile])
+    child.stderr.pipe(process.stderr)
     const [exitCode] = await once(child, 'exit')
 
     assert.strictEqual(exitCode, 42)

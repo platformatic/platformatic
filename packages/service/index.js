@@ -102,7 +102,6 @@ async function platformaticService (app, opts) {
 }
 
 platformaticService[Symbol.for('skip-override')] = true
-platformaticService.schema = schema
 platformaticService.configType = 'service'
 platformaticService.configManagerConfig = {
   version,
@@ -148,9 +147,10 @@ platformaticService.configManagerConfig = {
 function _buildServer (options, app) {
   return buildServer(options, app || platformaticService)
 }
-
+module.exports = platformaticService
+module.exports.schema = schema
 module.exports.buildServer = _buildServer
-module.exports.schema = require('./lib/schema')
+module.exports.schemas = require('./lib/schema')
 module.exports.platformaticService = platformaticService
 module.exports.addLoggerToTheConfig = addLoggerToTheConfig
 module.exports.tsCompiler = compiler

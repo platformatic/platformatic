@@ -176,11 +176,10 @@ async function watchServices (app, opts) {
   })
 }
 
-module.exports = {
-  schema,
-  ConfigManager,
-  platformaticComposer,
-  buildServer: buildComposerServer,
-  errors,
-  Generator: require('./lib/generator/composer-generator')
-}
+module.exports = platformaticComposer
+module.exports.schema = schema
+module.exports.platformaticComposer = platformaticComposer
+module.exports.buildServer = buildComposerServer
+module.exports.errors = errors
+module.exports.Generator = require('./lib/generator/composer-generator')
+module.exports.ConfigManager = ConfigManager
