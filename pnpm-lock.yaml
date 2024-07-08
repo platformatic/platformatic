@@ -363,7 +363,7 @@ importers:
         version: 5.5.3
       why-is-node-running:
         specifier: ^2.2.2
-        version: 2.2.2
+        version: 2.3.0
 
   packages/composer:
     dependencies:
@@ -1044,7 +1044,7 @@ importers:
         version: 5.4.0
       why-is-node-running:
         specifier: ^2.2.2
-        version: 2.2.2
+        version: 2.3.0
       yaml:
         specifier: ^2.4.1
         version: 2.4.5
@@ -1108,7 +1108,7 @@ importers:
         version: 0.31.1
       why-is-node-running:
         specifier: ^2.2.2
-        version: 2.2.2
+        version: 2.3.0
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -1145,7 +1145,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.5.3))
       why-is-node-running:
         specifier: ^2.2.2
-        version: 2.2.2
+        version: 2.3.0
 
   packages/deploy-client:
     dependencies:
@@ -1469,7 +1469,7 @@ importers:
         version: 6.19.2
       why-is-node-running:
         specifier: ^2.2.2
-        version: 2.2.2
+        version: 2.3.0
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -1731,7 +1731,7 @@ importers:
         version: 5.4.0
       why-is-node-running:
         specifier: ^2.2.2
-        version: 2.2.2
+        version: 2.3.0
       yaml:
         specifier: ^2.4.1
         version: 2.4.5
@@ -1847,7 +1847,7 @@ importers:
         version: 0.31.1
       why-is-node-running:
         specifier: ^2.2.2
-        version: 2.2.2
+        version: 2.3.0
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -1881,7 +1881,7 @@ importers:
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.5.3))
       why-is-node-running:
         specifier: ^2.2.2
-        version: 2.2.2
+        version: 2.3.0
 
   packages/sql-mapper:
     dependencies:
@@ -2003,7 +2003,7 @@ importers:
         version: 0.31.1
       why-is-node-running:
         specifier: ^2.2.2
-        version: 2.2.2
+        version: 2.3.0
       yaml:
         specifier: ^2.4.1
         version: 2.4.5
@@ -6331,8 +6331,8 @@ packages:
     engines: {node: ^16.13.0 || >=18.0.0}
     hasBin: true
 
-  why-is-node-running@2.2.2:
-    resolution: {integrity: sha512-6tSwToZxTOcotxHeA+qGCq1mVzKR3CwcJGmVcY+QE8SHy6TnpFnh8PAvPNHYr7EcuVeG0QSMxtYCuO1ta/G/oA==}
+  why-is-node-running@2.3.0:
+    resolution: {integrity: sha512-hUrmaWBdVDcxvYqnyh09zunKzROWjbZTiNy8dBEjkS7ehEDQibXJ7XvlmtbwuTclUiIyN+CyXQD4Vmko8fNm8w==}
     engines: {node: '>=8'}
     hasBin: true
 
@@ -11260,7 +11260,7 @@ snapshots:
     dependencies:
       isexe: 3.1.1
 
-  why-is-node-running@2.2.2:
+  why-is-node-running@2.3.0:
     dependencies:
       siginfo: 2.0.0
       stackback: 0.0.2
