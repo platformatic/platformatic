@@ -29,7 +29,7 @@
     "fastify": "^4.26.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "why-is-node-running": "^2.2.2"
+    "why-is-node-running": "^3.0.0"
   },
   "dependencies": {
     "code-block-writer": "^13.0.1",

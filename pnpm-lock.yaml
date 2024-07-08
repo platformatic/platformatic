@@ -362,8 +362,8 @@ importers:
         specifier: ^5.4.2
         version: 5.5.3
       why-is-node-running:
-        specifier: ^2.2.2
-        version: 2.2.2
+        specifier: ^3.0.0
+        version: 3.0.0
 
   packages/composer:
     dependencies:
@@ -1043,8 +1043,8 @@ importers:
         specifier: ^5.3.9
         version: 5.4.0
       why-is-node-running:
-        specifier: ^2.2.2
-        version: 2.2.2
+        specifier: ^3.0.0
+        version: 3.0.0
       yaml:
         specifier: ^2.4.1
         version: 2.4.5
@@ -1107,8 +1107,8 @@ importers:
         specifier: ^0.31.0
         version: 0.31.1
       why-is-node-running:
-        specifier: ^2.2.2
-        version: 2.2.2
+        specifier: ^3.0.0
+        version: 3.0.0
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -1144,8 +1144,8 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.5.3))
       why-is-node-running:
-        specifier: ^2.2.2
-        version: 2.2.2
+        specifier: ^3.0.0
+        version: 3.0.0
 
   packages/deploy-client:
     dependencies:
@@ -1468,8 +1468,8 @@ importers:
         specifier: ^6.9.0
         version: 6.19.2
       why-is-node-running:
-        specifier: ^2.2.2
-        version: 2.2.2
+        specifier: ^3.0.0
+        version: 3.0.0
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -1730,8 +1730,8 @@ importers:
         specifier: ^5.3.9
         version: 5.4.0
       why-is-node-running:
-        specifier: ^2.2.2
-        version: 2.2.2
+        specifier: ^3.0.0
+        version: 3.0.0
       yaml:
         specifier: ^2.4.1
         version: 2.4.5
@@ -1846,8 +1846,8 @@ importers:
         specifier: ^0.31.0
         version: 0.31.1
       why-is-node-running:
-        specifier: ^2.2.2
-        version: 2.2.2
+        specifier: ^3.0.0
+        version: 3.0.0
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -1880,8 +1880,8 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.5.3))
       why-is-node-running:
-        specifier: ^2.2.2
-        version: 2.2.2
+        specifier: ^3.0.0
+        version: 3.0.0
 
   packages/sql-mapper:
     dependencies:
@@ -2002,8 +2002,8 @@ importers:
         specifier: ^0.31.0
         version: 0.31.1
       why-is-node-running:
-        specifier: ^2.2.2
-        version: 2.2.2
+        specifier: ^3.0.0
+        version: 3.0.0
       yaml:
         specifier: ^2.4.1
         version: 2.4.5
@@ -6331,9 +6331,9 @@ packages:
     engines: {node: ^16.13.0 || >=18.0.0}
     hasBin: true
 
-  why-is-node-running@2.2.2:
-    resolution: {integrity: sha512-6tSwToZxTOcotxHeA+qGCq1mVzKR3CwcJGmVcY+QE8SHy6TnpFnh8PAvPNHYr7EcuVeG0QSMxtYCuO1ta/G/oA==}
-    engines: {node: '>=8'}
+  why-is-node-running@3.0.0:
+    resolution: {integrity: sha512-2yG/VDi2bC76rjyeBEV5oBL6XZF1G2C9lvR9JluAV3+gFlHj72KzN93SREMu+6MjS6h0zwc+djjVa0DgwEQq5w==}
+    engines: {node: '>=20.11'}
     hasBin: true
 
   word-wrap@1.2.5:
@@ -11260,7 +11260,7 @@ snapshots:
     dependencies:
       isexe: 3.1.1
 
-  why-is-node-running@2.2.2:
+  why-is-node-running@3.0.0:
     dependencies:
       siginfo: 2.0.0
       stackback: 0.0.2

@@ -35,7 +35,7 @@
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
     "tsd": "^0.31.0",
-    "why-is-node-running": "^2.2.2",
+    "why-is-node-running": "^3.0.0",
     "yaml": "^2.4.1"
   },
   "dependencies": {

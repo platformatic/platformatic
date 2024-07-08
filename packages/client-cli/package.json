@@ -37,7 +37,7 @@
     "standard": "^17.1.0",
     "typescript": "^5.4.2",
     "tsd": "^0.31.0",
-    "why-is-node-running": "^2.2.2"
+    "why-is-node-running": "^3.0.0"
   },
   "dependencies": {
     "@fastify/error": "^3.4.1",
