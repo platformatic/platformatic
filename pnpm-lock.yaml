@@ -1161,9 +1161,6 @@ importers:
       '@platformatic/runtime':
         specifier: workspace:*
         version: link:../runtime
-      '@platformatic/service':
-        specifier: workspace:*
-        version: link:../service
       pretty-bytes:
         specifier: ^6.1.1
         version: 6.1.1
@@ -1174,6 +1171,9 @@ importers:
         specifier: ^6.9.0
         version: 6.19.2
     devDependencies:
+      '@platformatic/service':
+        specifier: workspace:*
+        version: link:../service
       borp:
         specifier: ^0.15.0
         version: 0.15.0
