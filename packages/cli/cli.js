@@ -2,6 +2,7 @@
 
 import { createRequire } from 'node:module'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { readFile } from 'node:fs/promises'
 import commist from 'commist'
 import minimist from 'minimist'
@@ -33,7 +34,7 @@ const help = helpMe({
 async function load (moduleName) {
   const require = createRequire(path.join(process.cwd(), 'package.json'))
   const file = require.resolve(moduleName)
-  return import(file)
+  return import(pathToFileURL(file))
 }
 
 const ensureCommand = async ({ output, help }) => {
