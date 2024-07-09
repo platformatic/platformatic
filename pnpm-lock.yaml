@@ -106,18 +106,12 @@ importers:
       '@platformatic/client-cli':
         specifier: workspace:*
         version: link:../client-cli
-      '@platformatic/composer':
-        specifier: workspace:*
-        version: link:../composer
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
       '@platformatic/control':
         specifier: workspace:*
         version: link:../control
-      '@platformatic/db':
-        specifier: workspace:*
-        version: link:../db
       '@platformatic/deploy-client':
         specifier: workspace:*
         version: link:../deploy-client
@@ -127,9 +121,6 @@ importers:
       '@platformatic/runtime':
         specifier: workspace:*
         version: link:../runtime
-      '@platformatic/service':
-        specifier: workspace:*
-        version: link:../service
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -176,6 +167,15 @@ importers:
         specifier: ^6.9.0
         version: 6.19.2
     devDependencies:
+      '@platformatic/composer':
+        specifier: workspace:*
+        version: link:../composer
+      '@platformatic/db':
+        specifier: workspace:*
+        version: link:../db
+      '@platformatic/service':
+        specifier: workspace:*
+        version: link:../service
       borp:
         specifier: ^0.15.0
         version: 0.15.0
