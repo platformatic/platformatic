@@ -117,6 +117,7 @@ class PlatformaticApp extends EventEmitter {
         configManager
       })
     } catch (err) {
+      process._rawDebug(err)
       this.#logAndExit(err)
     }
 
