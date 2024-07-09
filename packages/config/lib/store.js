@@ -74,9 +74,18 @@ class Store {
     }
 
     const match = $schema?.match(/\/schemas\/(.*)\/(.*)/)
-    if (!app && match) {
-      const type = match[2]
+    let type = match?.[2]
 
+    // Legacy Platformatic apps
+    if (!app && !type && $schema?.indexOf('./') === 0 && !extendedModule) {
+      if (core || db) {
+        type = 'db'
+      } else {
+        type = 'service'
+      }
+    }
+
+    if (!app && type) {
       const toLoad = `https://platformatic.dev/schemas/v${pltVersion}/${type}`
       app = this.#map.get(toLoad)
       if (!app && defaultTypes.includes(type)) {
@@ -88,15 +97,6 @@ class Store {
     // try to load module
     if (!app && extendedModule) {
       app = await loadModule(require, extendedModule)
-    }
-
-    // Legacy Platformatic apps
-    if (!app && $schema?.indexOf('./') === 0) {
-      if (core || db) {
-        app = this.#map.get(`https://platformatic.dev/schemas/v${pltVersion}/db`)
-      } else {
-        app = this.#map.get(`https://platformatic.dev/schemas/v${pltVersion}/service`)
-      }
     }
 
     if (!app) {
