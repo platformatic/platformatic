@@ -36,6 +36,20 @@ CMD ["npm", "start"]
 - **EXPOSE 3042**: Exposes the application port.
 - **CMD ["npm", "start"]**: Specifies the command to run all services in the application.
 
+It's important to create a `.dockerignore` file in your project's root directory. This file should exclude unnecessary files and directories, such as `node_modules`, `dist`, `.env`, and any other files that are not required in the Docker image. By doing so, you can avoid copying large and redundant files into the Docker image, which can significantly reduce the image size and build time.
+
+Here is an example of a sample `.dockerignore` file:
+
+```sh 
+node_modules
+npm-debug.log
+Dockerfile
+.dockerignore
+.env
+*.log
+dist
+```
+
 ### TypeScript Compilation for Deployment
 
 To compile your TypeScript files before deployment, update your platformatic.runtime.json to include TypeScript settings
