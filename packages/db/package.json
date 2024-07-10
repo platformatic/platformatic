@@ -71,6 +71,7 @@
     "@platformatic/sql-openapi": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:*",
+    "@platformatic/ts-compiler": "workspace:*",
     "camelcase": "^6.3.0",
     "close-with-grace": "^1.3.0",
     "code-block-writer": "^13.0.1",

@@ -7,7 +7,7 @@ import { pathToFileURL } from 'url'
 import { loadConfig } from '@platformatic/config'
 import { platformaticDB } from '../index.js'
 import errors from './errors.js'
-import { tsCompiler } from '@platformatic/service'
+import tsCompiler from '@platformatic/ts-compiler'
 import { join, resolve } from 'node:path'
 
 async function execute (logger, seedFile, config) {
@@ -73,7 +73,12 @@ async function seed (_args) {
   }
   // check if we are in Typescript and, in case, compile it
   if (seedFile.endsWith('.ts')) {
-    await tsCompiler.compile(process.cwd(), configManager.current, logger)
+    await tsCompiler.compile({
+      cwd: process.cwd(),
+      logger,
+      tsConfig: configManager.current.plugins?.typescript?.tsConfig,
+      flags: configManager.current.plugins?.typescript?.flags
+    })
     const tsConfigPath = config?.plugins?.typescript?.tsConfig || resolve(process.cwd(), 'tsconfig.json')
     const tsConfig = JSON.parse(await readFile(tsConfigPath, 'utf8'))
     const outDir = tsConfig.compilerOptions.outDir

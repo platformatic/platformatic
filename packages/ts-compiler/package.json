@@ -16,14 +16,14 @@
   "devDependencies": {
     "borp": "^0.15.0",
     "fastify": "^4.26.2",
-    "pino": "^9.2.0",
-    "pino-pretty": "^11.0.0",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
     "typescript": "^5.5.3"
   },
   "dependencies": {
     "@platformatic/utils": "workspace:*",
-    "execa": "^8.0.1"
+    "execa": "^8.0.1",
+    "pino": "^9.2.0",
+    "pino-pretty": "^11.0.0"
   }
 }

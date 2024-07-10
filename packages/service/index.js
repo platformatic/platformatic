@@ -16,6 +16,7 @@ const loadVersions = require('./lib/plugins/versions')
 const upgrade = require('./lib/upgrade')
 const { telemetry } = require('@platformatic/telemetry')
 
+const { buildCompileCmd } = require('./lib/compile')
 const { schema } = require('./lib/schema')
 const { addLoggerToTheConfig } = require('./lib/utils')
 const { start, buildServer } = require('./lib/start')
@@ -154,3 +155,4 @@ module.exports.platformaticService = platformaticService
 module.exports.addLoggerToTheConfig = addLoggerToTheConfig
 module.exports.start = start
 module.exports.Generator = ServiceGenerator
+module.exports.buildCompileCmd = buildCompileCmd

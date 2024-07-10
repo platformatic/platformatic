@@ -915,6 +915,9 @@ importers:
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
+      '@platformatic/ts-compiler':
+        specifier: workspace:*
+        version: link:../ts-compiler
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -2073,6 +2076,12 @@ importers:
       execa:
         specifier: ^8.0.1
         version: 8.0.1
+      pino:
+        specifier: ^9.2.0
+        version: 9.2.0
+      pino-pretty:
+        specifier: ^11.0.0
+        version: 11.2.1
     devDependencies:
       borp:
         specifier: ^0.15.0
@@ -2080,12 +2089,6 @@ importers:
       fastify:
         specifier: ^4.26.2
         version: 4.28.1
-      pino:
-        specifier: ^9.2.0
-        version: 9.2.0
-      pino-pretty:
-        specifier: ^11.0.0
-        version: 11.2.1
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
