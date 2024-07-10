@@ -51,6 +51,7 @@
     "@hapi/topo": "^6.0.2",
     "@platformatic/bus": "workspace:*",
     "@platformatic/config": "workspace:*",
+    "@platformatic/ts-compiler": "workspace:*",
     "@platformatic/generators": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:*",

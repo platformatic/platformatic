@@ -1,16 +1,20 @@
 'use strict'
 
 const fp = require('fastify-plugin')
-const compiler = require('../compile')
+const compiler = require('@platformatic/ts-compiler')
 
 async function setupTsCompiler (app) {
-  // TODO: move params to opts
-
   const configManager = app.platformatic.configManager
   const config = configManager.current
   const workingDir = configManager.dirname
 
-  await compiler.compile(workingDir, config, app.log, { clean: false })
+  await compiler.compile({
+    cwd: workingDir,
+    clean: false,
+    logger: app.log,
+    tsConfig: config.plugins?.typescript?.tsConfig,
+    flags: config.plugins?.typescript?.flags
+  })
 }
 
 module.exports = fp(setupTsCompiler)

@@ -7,12 +7,12 @@ import helpMe from 'help-me'
 import { readFile } from 'fs/promises'
 import { join } from 'desm'
 import { printAndExitLoadConfigError } from '@platformatic/config'
+import { buildCompileCmd } from './lib/compile.js'
 import { generateJsonSchemaConfig } from './lib/gen-schema.js'
 import { bumpVersion } from './lib/bump-version.js'
 import { updateVersion } from './lib/update-version.js'
 import { generateTypes } from './lib/gen-types.mjs'
 import { createService } from './lib/create.mjs'
-import { buildCompileCmd } from './lib/compile.js'
 
 import { start, platformaticService } from './index.js'
 
