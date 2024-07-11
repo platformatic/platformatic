@@ -2,14 +2,15 @@
 
 const tsCompiler = require('@platformatic/ts-compiler')
 const { loadConfig } = require('./load-config')
-const { dirname } = require('node:path')
+const { dirname, join } = require('node:path')
+const { createRequire } = require('node:module')
 
 const pino = require('pino')
 const pretty = require('pino-pretty')
 const { isatty } = require('node:tty')
 
 async function compile (argv, logger) {
-  const { configManager, configType } = await loadConfig({}, argv, {
+  const { configManager, configType, app } = await loadConfig({}, argv, {
     watch: false
   }, false)
   /* c8 ignore next */
@@ -35,37 +36,62 @@ async function compile (argv, logger) {
       const childLogger = logger.child({ name: service.id })
 
       const serviceConfigPath = service.config
-      const { configManager } = await loadConfig({}, ['-c', serviceConfigPath], {
+      const { configManager, app } = await loadConfig({}, ['-c', serviceConfigPath], {
         onMissingEnv (key) {
           return service.localServiceEnvVars.get(key)
         },
         watch: false
       }, false)
 
-      const serviceWasCompiled = await tsCompiler.compile({
-        ...compileOptions,
-        cwd: service.path,
-        // TODO(mcollina): tsConfig and flags are @platformatic/service specific.
-        // we must generalize them
-        tsConfig: configManager.current.plugins?.typescript?.tsConfig,
-        flags: configManager.current.plugins?.typescript?.flags,
-        logger: childLogger
-      })
-      compiled ||= serviceWasCompiled
+      const tsOptions = await extract(configManager, app)
+
+      if (tsOptions) {
+        const serviceWasCompiled = await tsCompiler.compile({
+          ...compileOptions,
+          ...tsOptions,
+          cwd: service.path,
+          logger: childLogger
+        })
+        compiled ||= serviceWasCompiled
+      }
     }
   } else {
-    compiled = await tsCompiler.compile({
-      ...compileOptions,
-      cwd: dirname(configManager.fullPath),
-      // TODO(mcollina): tsConfig and flags are @platformatic/service specific.
-      // we must generalize them
-      tsConfig: configManager.current.plugins?.typescript?.tsConfig,
-      flags: configManager.current.plugins?.typescript?.flags,
-      logger
-    })
+    const tsOptions = await extract(configManager, app)
+    if (tsOptions) {
+      compiled = await tsCompiler.compile({
+        ...compileOptions,
+        ...tsOptions,
+        cwd: dirname(configManager.fullPath),
+        logger
+      })
+    }
   }
 
   return compiled
+}
+
+async function extract (configManager, app) {
+  let extractTypeScriptCompileOptionsFromConfig = app.extractTypeScriptCompileOptionsFromConfig
+
+  if (!extractTypeScriptCompileOptionsFromConfig) {
+    // This is a bit of a hack, but it is needed to avoid a circular dependency
+    // it also allow for customizations if needed
+    const _require = createRequire(join(configManager.dirname, 'package.json'))
+    const toLoad = _require.resolve('@platformatic/service')
+    try {
+      extractTypeScriptCompileOptionsFromConfig = (await import(toLoad)).extractTypeScriptCompileOptionsFromConfig
+    } catch (err) {
+      console.error(err)
+    }
+    // If we can't load `@platformatic/service` we just return null
+    // and we won't be compiling typescript
+  }
+
+  if (!extractTypeScriptCompileOptionsFromConfig) {
+    return null
+  }
+
+  return extractTypeScriptCompileOptionsFromConfig(configManager.current)
 }
 
 module.exports.compile = compile

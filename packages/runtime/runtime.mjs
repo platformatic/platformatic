@@ -45,5 +45,10 @@ export async function run (argv) {
 }
 
 if (isMain(import.meta)) {
-  await run(process.argv.slice(2))
+  try {
+    await run(process.argv.slice(2))
+  } catch (err) {
+    console.error(err)
+    process.exit(1)
+  }
 }

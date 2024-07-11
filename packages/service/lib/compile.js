@@ -32,11 +32,10 @@ function buildCompileCmd (app) {
     )
 
     const compileOptions = {
+      ...extractTypeScriptCompileOptionsFromConfig(config),
       cwd: fullPath,
       logger,
-      clean: _args.includes('--clean'),
-      tsConfig: config.plugins?.typescript?.tsConfig,
-      flags: config.plugins?.typescript?.flags
+      clean: _args.includes('--clean')
     }
 
     if (!await compile(compileOptions)) {
@@ -46,3 +45,12 @@ function buildCompileCmd (app) {
 }
 
 module.exports.buildCompileCmd = buildCompileCmd
+
+function extractTypeScriptCompileOptionsFromConfig (config) {
+  return {
+    tsConfig: config.plugins?.typescript?.tsConfig,
+    flags: config.plugins?.typescript?.flags
+  }
+}
+
+module.exports.extractTypeScriptCompileOptionsFromConfig = extractTypeScriptCompileOptionsFromConfig

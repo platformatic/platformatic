@@ -2,6 +2,7 @@
 
 const fp = require('fastify-plugin')
 const compiler = require('@platformatic/ts-compiler')
+const { extractTypeScriptCompileOptionsFromConfig } = require('../compile')
 
 async function setupTsCompiler (app) {
   const configManager = app.platformatic.configManager
@@ -9,11 +10,10 @@ async function setupTsCompiler (app) {
   const workingDir = configManager.dirname
 
   await compiler.compile({
+    ...extractTypeScriptCompileOptionsFromConfig(config),
     cwd: workingDir,
     clean: false,
-    logger: app.log,
-    tsConfig: config.plugins?.typescript?.tsConfig,
-    flags: config.plugins?.typescript?.flags
+    logger: app.log
   })
 }
 
