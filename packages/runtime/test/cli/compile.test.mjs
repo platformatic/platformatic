@@ -42,8 +42,6 @@ test('compile with tsconfig', async (t) => {
     msg: 'Typescript compilation completed successfully.'
   }]
 
-  console.log(lines)
-
   for (let i = 0; i < expected.length; i++) {
     assert.deepStrictEqual(lines[i].name, expected[i].name)
     assert.deepStrictEqual(lines[i].msg, expected[i].msg)
