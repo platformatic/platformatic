@@ -1,5 +1,5 @@
 import { say } from './say.mjs'
-import path, { basename, join, resolve } from 'node:path'
+import path, { basename, join } from 'node:path'
 import inquirer from 'inquirer'
 import generateName from 'boring-name-generator'
 import { getUsername, getVersion, minimumSupportedNodeVersions, isCurrentVersionSupported, safeMkdir } from './utils.mjs'
@@ -12,11 +12,11 @@ import pretty from 'pino-pretty'
 import { execa } from 'execa'
 import parseArgs from 'minimist'
 import ora from 'ora'
-import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
 import { writeFile } from 'node:fs/promises'
 import { request } from 'undici'
 import { setTimeout } from 'node:timers/promises'
+import resolve from 'resolve'
 
 const MARKETPLACE_HOST = 'https://marketplace.platformatic.dev'
 
@@ -63,12 +63,8 @@ async function importOrLocal ({ pkgManager, name, projectDir, pkg }) {
   try {
     return await import(pkg)
   } catch (err) {
-    // This file does not need to exists, will be created automatically
-    const pkgJsonPath = path.join(projectDir, 'package.json')
-    const _require = createRequire(pkgJsonPath)
-
     try {
-      const fileToImport = _require.resolve(pkg)
+      const fileToImport = resolve.sync(pkg, { basedir: projectDir })
       return await import(pathToFileURL(fileToImport))
     } catch { }
 
@@ -76,7 +72,7 @@ async function importOrLocal ({ pkgManager, name, projectDir, pkg }) {
     await execa(pkgManager, ['install', pkg], { cwd: projectDir })
     spinner.succeed()
 
-    const fileToImport = _require.resolve(pkg)
+    const fileToImport = resolve.sync(pkg, { basedir: projectDir })
     return await import(pathToFileURL(fileToImport))
   }
 }
@@ -136,7 +132,7 @@ async function createApplication (args, logger, pkgManager) {
     default: 'platformatic'
   })
 
-  const projectDir = resolve(process.cwd(), optionsDir.dir)
+  const projectDir = path.resolve(process.cwd(), optionsDir.dir)
   const projectName = basename(projectDir)
 
   await safeMkdir(projectDir)
@@ -296,7 +292,7 @@ async function createStackable (args, logger, pkgManager) {
   await generator.prepare()
   await generator.writeFiles()
 
-  const projectDir = resolve(process.cwd(), generator.config.targetDirectory)
+  const projectDir = path.resolve(process.cwd(), generator.config.targetDirectory)
 
   const { initGitRepository } = await inquirer.prompt({
     type: 'list',
