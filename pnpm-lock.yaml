@@ -797,6 +797,9 @@ importers:
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.1
+      resolve:
+        specifier: ^1.22.8
+        version: 1.22.8
       semver:
         specifier: ^7.6.0
         version: 7.6.2
