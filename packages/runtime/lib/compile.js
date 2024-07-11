@@ -4,6 +4,7 @@ const tsCompiler = require('@platformatic/ts-compiler')
 const { loadConfig } = require('./load-config')
 const { dirname, join } = require('node:path')
 const { createRequire } = require('node:module')
+const { pathToFileURL } = require('node:url')
 
 const pino = require('pino')
 const pretty = require('pino-pretty')
@@ -79,9 +80,8 @@ async function extract (configManager, app) {
     const _require = createRequire(join(configManager.dirname, 'package.json'))
     const toLoad = _require.resolve('@platformatic/service')
     try {
-      extractTypeScriptCompileOptionsFromConfig = (await import(toLoad)).extractTypeScriptCompileOptionsFromConfig
-    } catch (err) {
-      console.error(err)
+      extractTypeScriptCompileOptionsFromConfig = (await import(pathToFileURL(toLoad))).extractTypeScriptCompileOptionsFromConfig
+    } catch {
     }
     // If we can't load `@platformatic/service` we just return null
     // and we won't be compiling typescript
