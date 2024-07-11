@@ -1,11 +1,16 @@
 {
-  "$schema": "https://platformatic.dev/schemas/v1.3.0/runtime",
+  "$schema": "https://platformatic.dev/schemas/v1.40.0/runtime",
   "entrypoint": "b",
   "autoload": {
     "path": "./services",
     "mappings": {
       "a": {
         "id": "a",
+        "config": "platformatic.service.json",
+        "useHttp": true
+      },
+      "c": {
+        "id": "c",
         "config": "platformatic.service.json",
         "useHttp": true
       }

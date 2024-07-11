@@ -39,7 +39,8 @@ class RuntimeApi {
         serverConfig = {
           port: 0,
           host: '127.0.0.1',
-          keepAliveTimeout: 5000
+          keepAliveTimeout: 5000,
+          ...config.server
         }
       }
 

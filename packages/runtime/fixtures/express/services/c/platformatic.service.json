@@ -1,0 +1,15 @@
+{
+  "$schema": "https://platformatic.dev/schemas/v1.3.0/service",
+  "server": {
+    "port": 9854,
+    "logger": {
+      "level": "warn"
+    }
+  },
+  "plugins": {
+    "paths": [{
+      "path": "plugin.js",
+      "encapsulate": false
+    }]
+  }
+}

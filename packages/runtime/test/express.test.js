@@ -30,4 +30,11 @@ test('composer', async (t) => {
     assert.strictEqual(res.statusCode, 200)
     assert.deepStrictEqual(await res.body.json(), { hello: 'world2' })
   }
+
+  {
+    const res = await request(entryUrl + '/hello3')
+
+    assert.strictEqual(res.statusCode, 200)
+    assert.deepStrictEqual(await res.body.json(), { hello: 'world3' })
+  }
 })
