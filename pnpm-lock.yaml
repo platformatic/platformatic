@@ -2082,13 +2082,19 @@ importers:
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.1
+      resolve:
+        specifier: ^1.22.8
+        version: 1.22.8
     devDependencies:
-      borp:
-        specifier: ^0.15.0
-        version: 0.15.0
+      c8:
+        specifier: ^10.0.0
+        version: 10.1.2
       fastify:
         specifier: ^4.26.2
         version: 4.28.1
+      pino-test:
+        specifier: ^1.0.1
+        version: 1.0.1
       snazzy:
         specifier: ^9.0.0
         version: 9.0.0
