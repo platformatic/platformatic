@@ -121,10 +121,7 @@ class PlatformaticApp extends EventEmitter {
     }
 
     if (
-      (
-        config.plugins !== undefined ||
-        config.versions !== undefined
-      ) &&
+      (config.plugins !== undefined) &&
       this.#originalWatch?.enabled !== false
     ) {
       this.#startFileWatching()

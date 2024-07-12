@@ -726,47 +726,6 @@ const clients = {
   }
 }
 
-const version = {
-  type: 'object',
-  properties: {
-    version: { type: 'string' },
-    openapi: {
-      type: 'object',
-      properties: {
-        prefix: {
-          type: 'string'
-        },
-        path: {
-          type: 'string',
-          resolvePath: true
-        }
-      },
-      additionalProperties: false
-    },
-    plugins
-  },
-  required: ['version'],
-  additionalProperties: false
-}
-
-const versions = {
-  type: 'object',
-  properties: {
-    dir: {
-      type: 'string',
-      description: 'The path to the directory containing the versions mappers',
-      resolvePath: true,
-      default: 'versions'
-    },
-    configs: {
-      type: 'array',
-      items: version
-    }
-  },
-  required: ['dir', 'configs'],
-  additionalProperties: false
-}
-
 const platformaticServiceSchema = {
   $id: `https://platformatic.dev/schemas/v${pkg.version}/service`,
   version: pkg.version,
@@ -788,8 +747,7 @@ const platformaticServiceSchema = {
       type: 'string'
     },
     service,
-    clients,
-    versions
+    clients
   },
   additionalProperties: false,
   $defs: openApiDefs
