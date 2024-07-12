@@ -214,7 +214,7 @@ importers:
         version: 2.0.1
       ajv:
         specifier: ^8.12.0
-        version: 8.16.0
+        version: 8.17.1
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -408,7 +408,7 @@ importers:
         version: 1.24.40
       ajv:
         specifier: ^8.12.0
-        version: 8.16.0
+        version: 8.17.1
       commist:
         specifier: ^3.2.0
         version: 3.2.0
@@ -523,7 +523,7 @@ importers:
         version: 2.0.1
       ajv:
         specifier: ^8.12.0
-        version: 8.16.0
+        version: 8.17.1
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
@@ -706,7 +706,7 @@ importers:
         version: link:../service
       ajv:
         specifier: ^8.12.0
-        version: 8.16.0
+        version: 8.17.1
       borp:
         specifier: ^0.15.0
         version: 0.15.0
@@ -827,7 +827,7 @@ importers:
         version: link:../service
       ajv:
         specifier: ^8.12.0
-        version: 8.16.0
+        version: 8.17.1
       borp:
         specifier: ^0.15.0
         version: 0.15.0
@@ -999,7 +999,7 @@ importers:
         version: 3.3.0
       ajv:
         specifier: ^8.12.0
-        version: 8.16.0
+        version: 8.17.1
       bindings:
         specifier: ^1.5.0
         version: 1.5.0
@@ -1601,7 +1601,7 @@ importers:
         version: 8.5.10
       ajv:
         specifier: ^8.12.0
-        version: 8.16.0
+        version: 8.17.1
       cli-progress:
         specifier: ^3.12.0
         version: 3.12.0
@@ -3018,6 +3018,9 @@ packages:
   ajv@8.16.0:
     resolution: {integrity: sha512-F0twR8U1ZU67JIEtekUcLkXkoO5mMMmgGD8sK/xUFzJ805jxHQl92hImFAqqXMyMYjSPOyUPAwHYhB72g5sTXw==}
 
+  ajv@8.17.1:
+    resolution: {integrity: sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g==}
+
   ansi-escapes@4.3.2:
     resolution: {integrity: sha512-gKXj5ALrKWQLsYG9jlTRmR/xKluxHV+Z9QEwNIgCfM1/uwPMCuzVVnh5mwTd+OuBZcwSIMbqssNWRm1lE51QaQ==}
     engines: {node: '>=8'}
@@ -3948,6 +3951,9 @@ packages:
 
   fast-uri@2.4.0:
     resolution: {integrity: sha512-ypuAmmMKInk5q7XcepxlnUWDLWv4GFtaJqAzWKqn62IpQ3pejtr5dTVbt3vwqVaMKmkNR55sTT+CqUKIaT21BA==}
+
+  fast-uri@3.0.1:
+    resolution: {integrity: sha512-MWipKbbYiYI0UC7cl8m/i/IWTqfC8YXsqjzybjddLsFjStroQzsHXkc73JutMvBiXmOvapk+axIl79ig5t55Bw==}
 
   fastest-levenshtein@1.0.16:
     resolution: {integrity: sha512-eRnCtTTtGZFpQCwhJiUOuxPQWRXVKYDn0b2PeHfXL6/Zi53SLAzAHfVhVWK2AryC/WH05kGfxhFIPvTF0SXQzg==}
@@ -6791,8 +6797,8 @@ snapshots:
 
   '@fastify/ajv-compiler@3.6.0':
     dependencies:
-      ajv: 8.16.0
-      ajv-formats: 2.1.1(ajv@8.16.0)
+      ajv: 8.17.1
+      ajv-formats: 2.1.1(ajv@8.17.1)
       fast-uri: 2.4.0
 
   '@fastify/autoload@5.10.0': {}
@@ -7240,9 +7246,9 @@ snapshots:
 
   '@seriousme/openapi-schema-validator@2.2.1':
     dependencies:
-      ajv: 8.16.0
-      ajv-draft-04: 1.0.0(ajv@8.16.0)
-      ajv-formats: 2.1.1(ajv@8.16.0)
+      ajv: 8.17.1
+      ajv-draft-04: 1.0.0(ajv@8.17.1)
+      ajv-formats: 2.1.1(ajv@8.17.1)
       js-yaml: 4.1.0
       minimist: 1.2.8
 
@@ -7445,13 +7451,13 @@ snapshots:
       clean-stack: 2.2.0
       indent-string: 4.0.0
 
-  ajv-draft-04@1.0.0(ajv@8.16.0):
+  ajv-draft-04@1.0.0(ajv@8.17.1):
     optionalDependencies:
-      ajv: 8.16.0
+      ajv: 8.17.1
 
-  ajv-formats@2.1.1(ajv@8.16.0):
+  ajv-formats@2.1.1(ajv@8.17.1):
     optionalDependencies:
-      ajv: 8.16.0
+      ajv: 8.17.1
 
   ajv-formats@3.0.1(ajv@8.16.0):
     optionalDependencies:
@@ -7470,6 +7476,13 @@ snapshots:
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
       uri-js: 4.4.1
+
+  ajv@8.17.1:
+    dependencies:
+      fast-deep-equal: 3.1.3
+      fast-uri: 3.0.1
+      json-schema-traverse: 1.0.0
+      require-from-string: 2.0.2
 
   ansi-escapes@4.3.2:
     dependencies:
@@ -8083,7 +8096,7 @@ snapshots:
 
   env-schema@5.2.1:
     dependencies:
-      ajv: 8.16.0
+      ajv: 8.17.1
       dotenv: 16.4.5
       dotenv-expand: 10.0.0
 
@@ -8611,6 +8624,8 @@ snapshots:
   fast-safe-stringify@2.1.1: {}
 
   fast-uri@2.4.0: {}
+
+  fast-uri@3.0.1: {}
 
   fastest-levenshtein@1.0.16: {}
 
@@ -9874,8 +9889,8 @@ snapshots:
 
   openapi-schema-validator@12.1.3:
     dependencies:
-      ajv: 8.16.0
-      ajv-formats: 2.1.1(ajv@8.16.0)
+      ajv: 8.17.1
+      ajv-formats: 2.1.1(ajv@8.17.1)
       lodash.merge: 4.6.2
       openapi-types: 12.1.3
 
@@ -10896,7 +10911,7 @@ snapshots:
 
   table@6.8.2:
     dependencies:
-      ajv: 8.16.0
+      ajv: 8.17.1
       lodash.truncate: 4.4.2
       slice-ansi: 4.0.0
       string-width: 4.2.3
