@@ -81,6 +81,8 @@ describe('Generator', () => {
     const packageJson = JSON.parse(rg.getFileObject('package.json').contents)
     assert.equal(packageJson.name, 'test-runtime')
     assert.deepStrictEqual(packageJson.workspaces, ['services/*'])
+
+    assert.ok(packageJson.dependencies['@platformatic/runtime'])
   })
 
   test('should have services plugin dependencies in package.json', async () => {
