@@ -18,9 +18,22 @@ WORKDIR $APP_HOME
 
 COPY . .
 COPY package-lock.json package-lock.json ./
+
 RUN npm ci
 
 RUN npx platformatic compile
+
+FROM node:20-alpine
+
+ENV APP_HOME=/home/app/node/
+WORKDIR $APP_HOME
+
+COPY package.json package-lock.json ./
+RUN npm ci --only=production
+
+COPY --from=builder $APP_HOME/dist ./dist
+
+COPY .env ./
 
 EXPOSE 3042
 
@@ -35,6 +48,8 @@ CMD ["npm", "start"]
 - **RUN cd services/...**: Installs dependencies and builds each service in the services folder.
 - **EXPOSE 3042**: Exposes the application port.
 - **CMD ["npm", "start"]**: Specifies the command to run all services in the application.
+- **FROM node:20-alpine**: Specifies the base image for the runtime image.
+- **RUN npm ci**: Installs all dependencies including development dependencies 
 
 It's important to create a `.dockerignore` file in your project's root directory. This file should exclude unnecessary files and directories, such as `node_modules`, `dist`, `.env`, and any other files that are not required in the Docker image. By doing so, you can avoid copying large and redundant files into the Docker image, which can significantly reduce the image size and build time.
 
