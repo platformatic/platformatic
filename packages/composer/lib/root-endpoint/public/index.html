@@ -204,6 +204,12 @@
 
     <script>
       const currentPath = window.location.pathname
+
+      const openApiLink = document.getElementById('openapi-link')
+      openApiLink.href = currentPath + 'documentation'
+
+      const graphqlLink = document.getElementById('graphql-link')
+      graphqlLink.href = currentPath + 'graphiql'
     
       const prefersLightScheme = window.matchMedia('(prefers-color-scheme: light)');
       if (prefersLightScheme.matches) {
