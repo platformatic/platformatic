@@ -1,0 +1,29 @@
+{
+  "name": "@platformatic/rpc",
+  "version": "1.49.1",
+  "description": "A fastify RPC plugin for typescript applications",
+  "main": "index.js",
+  "scripts": {
+    "lint": "standard",
+    "test": "pnpm run lint && borp --concurrency=1 --timeout 120000 && tsd",
+    "cov": "pnpm run lint && borp --concurrency=1 --coverage --timeout 120000 && tsd"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "devDependencies": {
+    "borp": "^0.15.0",
+    "standard": "^17.1.0"
+  },
+  "dependencies": {
+    "typescript": "~5.1.0",
+    "typescript-json-schema": "^0.64.0"
+  }
+}
