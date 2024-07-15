@@ -37,7 +37,6 @@ COPY --from=builder $APP_HOME/dist ./dist
 EXPOSE 3042
 
 CMD ["node", "node_modules/.bin/platformatic", "start"]
-
 ```
 
 ### Explanation
