@@ -1,4 +1,9 @@
-# Deployment
+---
+title: Overview
+label: Overview
+---
+
+# Deployment 
 
 Applications built with Platformatic DB can be deployed to a hosting service
 in the same way as any other Node.js application. This guide covers a few
