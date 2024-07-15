@@ -1,7 +1,6 @@
 {
   "$schema": "https://platformatic.dev/schemas/v1.22.0/runtime",
   "entrypoint": "service-1",
-  "allowCycles": true,
   "hotReload": false,
   "autoload": {
     "path": "./services"

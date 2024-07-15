@@ -1,7 +1,6 @@
 {
     "$schema": "https://platformatic.dev/schemas/v0.20.0/runtime",
     "entrypoint": "serviceApp",
-    "allowCycles": true,
     "hotReload": false,
     "managementApi": false,
     "autoload": {

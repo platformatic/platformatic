@@ -67,34 +67,6 @@ importers:
         specifier: ^6.9.0
         version: 6.19.2
 
-  packages/bus:
-    dependencies:
-      '@fastify/error':
-        specifier: ^3.4.1
-        version: 3.4.1
-    devDependencies:
-      '@matteo.collina/tspl':
-        specifier: ^0.1.1
-        version: 0.1.1
-      borp:
-        specifier: ^0.16.0
-        version: 0.16.0
-      c8:
-        specifier: ^10.0.0
-        version: 10.1.2
-      snazzy:
-        specifier: ^9.0.0
-        version: 9.0.0
-      standard:
-        specifier: ^17.1.0
-        version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.5.3))
-      tsd:
-        specifier: ^0.31.0
-        version: 0.31.1
-      typescript:
-        specifier: ^5.4.2
-        version: 5.5.3
-
   packages/cli:
     dependencies:
       '@fastify/error':
@@ -1386,9 +1358,6 @@ importers:
       '@hapi/topo':
         specifier: ^6.0.2
         version: 6.0.2
-      '@platformatic/bus':
-        specifier: workspace:*
-        version: link:../bus
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
@@ -1572,9 +1541,6 @@ importers:
       '@platformatic/authenticate':
         specifier: workspace:*
         version: link:../authenticate
-      '@platformatic/bus':
-        specifier: workspace:*
-        version: link:../bus
       '@platformatic/client':
         specifier: workspace:*
         version: link:../client

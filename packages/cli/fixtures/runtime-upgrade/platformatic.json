@@ -16,7 +16,6 @@
     }
   },
   "hotReload": true,
-  "allowCycles": false,
   "managementApi": true,
   "services": [
     {
