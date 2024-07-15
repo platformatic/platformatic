@@ -275,6 +275,7 @@ test('generate frontend client from path (name with dashes)', async (t) => {
   await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend', '--name', 'a-custom-name'])
   const implementation = await readFile(join(dir, 'a-custom-name', 'a-custom-name.ts'), 'utf8')
   const types = await readFile(join(dir, 'a-custom-name', 'a-custom-name-types.d.ts'), 'utf8')
+  const typePlatformaticFrontendClient = types.split('\n').find((line) => line.startsWith('type PlatformaticFrontendClient = Omit<ACustomName, \'setBaseUrl\'>'))
 
   const importTemplate = `import type { ACustomName } from './a-custom-name-types'
 import type * as Types from './a-custom-name-types'
@@ -295,6 +296,7 @@ export interface ACustomName {
   equal(implementation.includes(tsImplementationTemplate), true)
   equal(types.includes(typesTemplate), true)
   equal(implementation.includes(importTemplate), true)
+  ok(typePlatformaticFrontendClient)
 })
 
 test('append query parameters to url in non-GET requests', async (t) => {

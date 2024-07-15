@@ -387,7 +387,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
     })
   })
 
-  writer.writeLine(`type PlatformaticFrontendClient = Omit<${capitalize(name)}, 'setBaseUrl'>`)
+  writer.writeLine(`type PlatformaticFrontendClient = Omit<${camelCaseName}, 'setBaseUrl'>`)
   writer.write('type BuildOptions = ').block(() => {
     writer.writeLine('headers?: Object')
   })

@@ -67,6 +67,7 @@ class RuntimeGenerator extends BaseGenerator {
         borp: `${this.pkgData.devDependencies.borp}`
       },
       dependencies: {
+        '@platformatic/runtime': `^${this.platformaticVersion}`,
         platformatic: `^${this.platformaticVersion}`,
         ...this.config.dependencies
       },
