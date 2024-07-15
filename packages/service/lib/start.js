@@ -2,7 +2,6 @@
 
 const { readFile } = require('fs/promises')
 const close = require('close-with-grace')
-const { Bus } = require('@platformatic/bus')
 const { loadConfig, ConfigManager, printConfigValidationErrors, printAndExitLoadConfigError } = require('@platformatic/config')
 const { addLoggerToTheConfig, isDocker } = require('./utils.js')
 const { restartable } = require('@fastify/restartable')
@@ -61,7 +60,7 @@ async function buildServer (options, app) {
     }
     fastifyOptions.genReqId = function (req) { return randomUUID() }
     const root = fastify(fastifyOptions)
-    root.decorate('platformatic', { configManager, config, bus: new Bus(options.id) })
+    root.decorate('platformatic', { configManager, config })
     await root.register(app)
     if (!root.hasRoute({ url: '/', method: 'GET' })) {
       await root.register(require('./root-endpoint'), {
