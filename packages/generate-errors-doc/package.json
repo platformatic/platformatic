@@ -26,7 +26,6 @@
     "@platformatic/db": "workspace:*",
     "@platformatic/db-authorization": "workspace:*",
     "@platformatic/db-core": "workspace:*",
-    "@platformatic/deploy-client": "workspace:*",
     "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/sql-events": "workspace:*",

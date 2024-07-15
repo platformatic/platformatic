@@ -1,16 +1,16 @@
 import { test } from 'node:test'
 import { equal } from 'node:assert'
+import { join } from 'node:path'
+import { tmpdir } from 'node:os'
+import { mkdtemp, rm } from 'node:fs/promises'
 import { timeout } from './timeout.mjs'
 import { isFileAccessible } from '../../src/utils.mjs'
-import { join } from 'node:path'
-import { tmpdir } from 'os'
-import { mkdtemp, rm } from 'fs/promises'
 import {
   executeCreatePlatformatic,
   startMarketplace,
-  getServices,
   keys,
-  walk
+  walk,
+  getServices
 } from './helper.mjs'
 
 let tmpDir
@@ -67,7 +67,10 @@ test('Creates a Platformatic Runtime with two Services', { timeout }, async (t) 
     match: 'Do you want to init the git repository',
     do: [keys.DOWN, keys.ENTER] // yes
   }]
-  await executeCreatePlatformatic(tmpDir, actions, { marketplaceHost })
+  await executeCreatePlatformatic(tmpDir, actions, {
+    marketplaceHost,
+    pkgManager: 'pnpm'
+  })
 
   const baseProjectDir = join(tmpDir, 'platformatic')
   const files = await walk(baseProjectDir)
@@ -79,6 +82,9 @@ test('Creates a Platformatic Runtime with two Services', { timeout }, async (t) 
   equal(await isFileAccessible(join(baseProjectDir, 'README.md')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.git', 'config')), true)
 
+  // using pnpm will create workspace file
+  equal(await isFileAccessible(join(baseProjectDir, 'pnpm-workspace.yaml')), true)
+
   // Here check the generated services
   const services = await getServices(join(baseProjectDir, 'services'))
   equal(services.length, 2)
@@ -87,14 +93,12 @@ test('Creates a Platformatic Runtime with two Services', { timeout }, async (t) 
   equal(await isFileAccessible(join(baseService0Dir, 'README.md')), true)
   equal(await isFileAccessible(join(baseService0Dir, 'routes', 'root.ts')), true)
   equal(await isFileAccessible(join(baseService0Dir, 'plugins', 'example.ts')), true)
-  // TODO: re-enable when we fix this https://github.com/platformatic/platformatic/issues/1657
-  // equal(await isFileAccessible(join(baseService0Dir, 'global.d.ts')), true)
+  equal(await isFileAccessible(join(baseService0Dir, 'global.d.ts')), true)
 
   const baseService1Dir = join(baseProjectDir, 'services', services[1])
   equal(await isFileAccessible(join(baseService1Dir, 'platformatic.json')), true)
   equal(await isFileAccessible(join(baseService1Dir, 'README.md')), true)
   equal(await isFileAccessible(join(baseService1Dir, 'routes', 'root.ts')), true)
   equal(await isFileAccessible(join(baseService1Dir, 'plugins', 'example.ts')), true)
-  // TODO: re-enable when we fix this https://github.com/platformatic/platformatic/issues/1657
-  // equal(await isFileAccessible(join(baseService1Dir, 'global.d.ts')), true)
+  equal(await isFileAccessible(join(baseService1Dir, 'global.d.ts')), true)
 })

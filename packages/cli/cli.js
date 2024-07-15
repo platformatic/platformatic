@@ -14,8 +14,6 @@ import { join } from 'desm'
 import { isColorSupported } from 'colorette'
 import helpMe from 'help-me'
 import { upgrade } from './lib/upgrade.js'
-import { gh } from './lib/gh.js'
-import { deploy } from './lib/deploy.js'
 import { logo } from './lib/ascii.js'
 import {
   runControl,
@@ -62,8 +60,6 @@ program.register('help client', () => client([]))
 program.register('help runtime', async (args) => runRuntime(['help', ...args]))
 program.register('help service', async (args) => runService(['help', ...args]))
 program.register({ command: 'login', strict: true }, login)
-program.register('gh', gh)
-program.register('deploy', deploy)
 
 const args = minimist(process.argv.slice(2), {
   boolean: ['help', 'version'],

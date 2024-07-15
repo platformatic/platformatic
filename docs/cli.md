@@ -106,36 +106,6 @@ Compile all typescript plugins.
 This command will compile the TypeScript plugins for each platformatic application.
 
 
-#### gh
-
-Creates a gh action to deploy platformatic services on workspaces.
-
-``` bash
- $ platformatic gh -t dynamic
-```
-
-Options:
-
-* `-w  --workspace ID` - The workspace ID where the service will be deployed.
-* `-t, --type static/dynamic` - The type of the workspace. Defaults to static.
-* `-c, --config FILE` - Specify a configuration file to use.
-* `-b, --build` - Build the service before deploying (`npm run build`).
-
-If not specified, the configuration will be loaded from any of the following, in the current directory.
-
-* `platformatic.json`, or
-* `platformatic.yml`, or 
-* `platformatic.tml`, or 
-* `platformatic.json`, or
-* `platformatic.yml`, or 
-* `platformatic.tml`
-
-You can find more details about the configuration format here:
-* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
-* [Platformatic Service Configuration](https://docs.platformatic.dev/docs/service/configuration)
-
-
-
 #### inject
 
 Injects a request to the Platformatic runtime service.
@@ -961,8 +931,8 @@ In case of problems, please check that:
 
 * The Platformatic app URL is valid.
 * The Platformatic app whose URL belongs must be up and running.
-* OpenAPI must be enabled (`db.openapi` in your `platformatic.json` is not set to `false`). You can find more details about the db configuration format [here](https://docs.platformatic.dev/docs/reference/db/configuration/#db).
-* CORS must be managed in your Platformatic app (`server.cors.origin.regexp` in your `platformatic.json` is set to `/*/`, for instance). You can find more details about the cors configuration [here](https://docs.platformatic.dev/docs/reference/service/configuration/#server).
+* OpenAPI must be enabled (`db.openapi` in your `platformatic.json` is not set to `false`). You can find more details about the db configuration format [here](https://docs.platformatic.dev/docs/db/configuration).
+* CORS must be managed in your Platformatic app (`server.cors.origin.regexp` in your `platformatic.json` is set to `/*/`, for instance). You can find more details about the cors configuration [here](https://docs.platformatic.dev/docs/service/configuration).
 
 
 ### runtime

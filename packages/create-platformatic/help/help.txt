@@ -1,8 +1,0 @@
-Welcome to Platformatic DB Creator. 
-
-Available commands are:
-  * db
-  * service 
-
-Available options are:
-  * --help - Display this message
