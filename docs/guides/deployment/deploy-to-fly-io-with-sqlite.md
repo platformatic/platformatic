@@ -10,16 +10,17 @@ This guide provides instructions on deploying a Platformatic Runtime application
 Here is an example Dockerfile for a Platformatic Runtime application:
 
 ```dockerfile
-FROM node:20-alpine
+FROM node:20-alpine AS builder
 
 ENV APP_HOME=/home/app/node/
-
 WORKDIR $APP_HOME
 
-COPY . .
-COPY package-lock.json package-lock.json ./
+COPY package.json package-lock.json ./
+COPY services/devotion/package.json services/devotion/package.json
 
-RUN npm ci
+RUN npm ci 
+
+COPY . .
 
 RUN npx platformatic compile
 
@@ -33,11 +34,10 @@ RUN npm ci --only=production
 
 COPY --from=builder $APP_HOME/dist ./dist
 
-COPY .env ./
-
 EXPOSE 3042
 
-CMD ["npm", "start"]
+CMD ["node", "node_modules/.bin/platformatic", "start"]
+
 ```
 
 ### Explanation
