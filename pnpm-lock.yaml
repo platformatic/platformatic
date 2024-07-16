@@ -721,7 +721,7 @@ importers:
         version: 16.4.5
       esmock:
         specifier: ^2.6.4
-        version: 2.6.6
+        version: 2.6.7
       fastify:
         specifier: ^4.26.2
         version: 4.28.1
@@ -842,7 +842,7 @@ importers:
         version: 16.4.5
       esmock:
         specifier: ^2.6.4
-        version: 2.6.6
+        version: 2.6.7
       fastify:
         specifier: ^4.26.2
         version: 4.28.1
@@ -3835,8 +3835,8 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     hasBin: true
 
-  esmock@2.6.6:
-    resolution: {integrity: sha512-Ay1IQ/qbZV1j8IqRY5o4GYNyX8Y6qDJVVYRZtQ0WFOqUPf26++qW/LyNaHrxz79QGB4F1xuDTCPRYA5XRNuqZg==}
+  esmock@2.6.7:
+    resolution: {integrity: sha512-4DmjZ0qQIG+NQV1njHvWrua/cZEuJq56A3pSELT2BjNuol1aads7BluofCbLErdO41Ic1XCd2UMepVLpjL64YQ==}
     engines: {node: '>=14.16.0'}
 
   esniff@2.0.1:
@@ -8518,7 +8518,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  esmock@2.6.6: {}
+  esmock@2.6.7: {}
 
   esniff@2.0.1:
     dependencies:
