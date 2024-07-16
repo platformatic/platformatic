@@ -14,11 +14,8 @@ import { cliPath, start } from './helper.js'
 test('seed and start', async (t) => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
-  t.diagnostic('migrating and seeding')
   const cwd = join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite')
   const seed = join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite', 'seed.js')
-  t.diagnostic(`dbl ${connectionInfo.connectionString}`)
-  t.diagnostic(`cwd ${cwd}`)
 
   await execa('node', [cliPath, 'migrations', 'apply'], {
     cwd,
@@ -39,8 +36,6 @@ test('seed and start', async (t) => {
     assert.match(sanitized, /42/) // custom logger.info line from the seed file
     assert.match(sanitized, /seeding complete/)
   }
-
-  t.diagnostic('starting')
 
   const { child, url } = await start([], {
     cwd,
@@ -88,11 +83,8 @@ test('seed and start', async (t) => {
 test('seed command should throw an error if there are migrations to apply', async (t) => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
-  t.diagnostic('seeding')
   const cwd = join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite')
   const seed = join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite', 'seed.js')
-  t.diagnostic(`dbl ${connectionInfo.connectionString}`)
-  t.diagnostic(`cwd ${cwd}`)
 
   t.after(async () => {
     await dropTestDB()
@@ -114,15 +106,12 @@ test('seed command should throw an error if there are migrations to apply', asyn
 test('valid config files', async (t) => {
   const fixturesDir = join(urlDirname(import.meta.url), '..', 'fixtures')
   const validConfigFiles = await readdir(join(fixturesDir, 'valid-config-files'))
-  t.diagnostic(`valid config files to try: ${validConfigFiles.join(', ')}`)
 
   for (const configFile of validConfigFiles) {
     const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
     const cwd = await mkdtemp(join(tmpdir(), 'seed-'))
-    t.diagnostic(`cwd ${cwd}`)
 
-    t.diagnostic('migrating and seeding')
     await copyFile(join(fixturesDir, 'valid-config-files', configFile), join(cwd, configFile))
     await mkdir(join(cwd, 'migrations'))
     await copyFile(join(fixturesDir, 'sqlite', 'migrations', '001.do.sql'), join(cwd, 'migrations', '001.do.sql'))
@@ -192,11 +181,7 @@ test('missing seed file', async (t) => {
 test('seed and start from cwd', async (t) => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
-  t.diagnostic('migrating and seeding')
   const cwd = join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite')
-
-  t.diagnostic(`dbl ${connectionInfo.connectionString}`)
-  t.diagnostic(`cwd ${cwd}`)
 
   await execa('node', [cliPath, 'migrations', 'apply'], {
     cwd,
@@ -215,8 +200,6 @@ test('seed and start from cwd', async (t) => {
     const sanitized = stripAnsi(stdout)
     assert.match(sanitized, /seeding from .*seed\.js/)
   }
-
-  t.diagnostic('starting')
 
   const { child, url } = await start([], {
     cwd,
