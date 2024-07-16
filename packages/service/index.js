@@ -5,6 +5,7 @@ const { readFile } = require('fs/promises')
 const { join } = require('path')
 
 const compiler = require('./lib/compile')
+const dependencies = require('./lib/dependencies')
 const setupCors = require('./lib/plugins/cors')
 const setupOpenAPI = require('./lib/plugins/openapi.js')
 const setupGraphQL = require('./lib/plugins/graphql.js')
@@ -156,3 +157,4 @@ module.exports.addLoggerToTheConfig = addLoggerToTheConfig
 module.exports.tsCompiler = compiler
 module.exports.start = start
 module.exports.Generator = ServiceGenerator
+Object.assign(module.exports, dependencies)

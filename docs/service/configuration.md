@@ -197,6 +197,8 @@ Enables watching for file changes if set to `true` or `"true"`. It can also be c
   }
   ```
 
+If the runtime `hotReload` value is enabled, then the service will be restarted after loading changed files, otherwise the service will be restarted executing the existing code.
+
 ### `service`
 
 Configure `@platformatic/service` specific settings such as `graphql` or `openapi`:

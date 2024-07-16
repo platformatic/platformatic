@@ -35,6 +35,9 @@ test('compile with tsconfig', async (t) => {
 
   const lines = stdout.split('\n').map(JSON.parse)
   const expected = [{
+    name: 'composer',
+    msg: 'No typescript configuration file was found, skipping compilation.'
+  }, {
     name: 'movies',
     msg: 'Typescript compilation completed successfully.'
   }, {
@@ -65,6 +68,9 @@ test('compile with tsconfig custom flags', async (t) => {
 
   const lines = stdout.split('\n').map(JSON.parse)
   const expected = [{
+    name: 'composer',
+    msg: 'No typescript configuration file was found, skipping compilation.'
+  }, {
     name: 'movies',
     msg: 'Typescript compilation completed successfully.'
   }, {
@@ -126,6 +132,9 @@ test('compile with tsconfig and no .env', async (t) => {
 
   const lines = stdout.split('\n').map(JSON.parse)
   const expected = [{
+    name: 'composer',
+    msg: 'No typescript configuration file was found, skipping compilation.'
+  }, {
     name: 'movies',
     msg: 'Typescript compilation completed successfully.'
   }, {

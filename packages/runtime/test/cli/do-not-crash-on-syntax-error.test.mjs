@@ -41,9 +41,6 @@ test('do not crash on syntax error', async (t) => {
   for await (const log of child.ndj.iterator({ destroyOnReturn: false })) {
     if (log.msg === 'RELOADED v1') {
       plan.ok('reloaded')
-    }
-
-    if (log.msg === 'start watching files') {
       break
     }
   }

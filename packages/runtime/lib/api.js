@@ -5,6 +5,7 @@ const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
 const { createFastifyInterceptor } = require('fastify-undici-dispatcher')
 const { PlatformaticApp } = require('./app')
 const errors = require('./errors')
+const { checkDependencies, topologicalSort } = require('./dependencies')
 const { printSchema } = require('graphql')
 
 class RuntimeApi {
@@ -12,8 +13,11 @@ class RuntimeApi {
   #dispatcher
   #interceptor
   #logger
+  #config
+  #bootstrapDependenciesResolved
 
   constructor (config, logger, loaderPort, composedInterceptors = []) {
+    this.#config = config
     this.#services = new Map()
     this.#logger = logger
 
@@ -151,19 +155,25 @@ class RuntimeApi {
   }
 
   async startServices () {
-    let entrypointUrl = null
+    if (!this.#bootstrapDependenciesResolved) {
+      await this._resolveBootstrapDependencies()
+      this.#bootstrapDependenciesResolved = true
+    }
+
+    let entrypoint
     for (const service of this.#services.values()) {
       await service.start()
 
       if (service.appConfig.entrypoint) {
-        entrypointUrl = service.server.url
+        entrypoint = service
       }
 
       const serviceUrl = new URL(service.appConfig.localUrl)
       this.#interceptor.route(serviceUrl.host, service.server)
     }
 
-    return entrypointUrl
+    await entrypoint?.listen()
+    return entrypoint?.server.url
   }
 
   async stopServices () {
@@ -179,28 +189,50 @@ class RuntimeApi {
         stopServiceReqs.push(service.stop())
       }
     }
+
     await Promise.all(stopServiceReqs)
   }
 
+  async _resolveBootstrapDependencies () {
+    if (this.#config.autoload) {
+      for (const service of this.#config.services) {
+        const dependencies = await this.#services.get(service.id).getBootstrapDependencies()
+        service.dependencies = dependencies
+
+        for (const { envVar, url } of dependencies) {
+          if (envVar) {
+            service.localServiceEnvVars.set(envVar, url)
+          }
+        }
+      }
+
+      checkDependencies(this.#config.services)
+      this.#services = topologicalSort(this.#services, this.#config)
+    }
+
+    return this.#services
+  }
+
   async #restartServices () {
-    let entrypointUrl = null
+    let entrypoint
     for (const service of this.#services.values()) {
       const serviceStatus = service.getStatus()
+
+      if (service.appConfig.entrypoint) {
+        entrypoint = service
+      }
+
       if (serviceStatus === 'starting') {
         await once(service, 'start')
       }
 
-      await service.restart(true)
-
-      if (service.appConfig.entrypoint) {
-        entrypointUrl = service.server.url
-      }
+      await service.restart()
 
       const serviceUrl = new URL(service.appConfig.localUrl)
       this.#interceptor.route(serviceUrl.host, service.server)
     }
 
-    return entrypointUrl
+    return entrypoint?.server.url
   }
 
   #getEntrypointDetails () {

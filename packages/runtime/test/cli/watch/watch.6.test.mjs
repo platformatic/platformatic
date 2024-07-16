@@ -53,10 +53,9 @@ test('watches CommonJS files with hotreload on a single service', async (t) => {
       restartedThirdTime = true
       break
     } else if (log.msg?.match(/listening/)) {
-      await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v3', true))
-
-      // Need this sleep to await for the CI linux machine to start watching
-      await sleep(2000)
+      if (restartedSecondTime) {
+        await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v3', true))
+      }
     }
   }
 

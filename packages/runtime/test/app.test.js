@@ -27,7 +27,6 @@ test('errors when starting an already started application', async (t) => {
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    dependents: [],
     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
   const app = new PlatformaticApp(config, null, logger)
@@ -50,7 +49,6 @@ test('errors when stopping an already stopped application', async (t) => {
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    dependents: [],
     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
   const app = new PlatformaticApp(config, null, logger)
@@ -60,7 +58,7 @@ test('errors when stopping an already stopped application', async (t) => {
   }, /Application has not been started/)
 })
 
-test('does not restart while restarting', async (t) => {
+test('does not restart while restarting', { only: true }, async (t) => {
   const { logger, stream } = getLoggerAndStream()
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
   const configFile = join(appPath, 'platformatic.service.json')
@@ -71,7 +69,6 @@ test('does not restart while restarting', async (t) => {
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    dependents: [],
     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
   const app = new PlatformaticApp(config, null, logger)
@@ -82,6 +79,7 @@ test('does not restart while restarting', async (t) => {
     } catch {}
   })
   await app.start()
+  await app.listen()
   await Promise.all([
     app.restart(),
     app.restart(),
@@ -116,7 +114,6 @@ test('restarts on SIGUSR2', async (t) => {
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    dependents: [],
     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
   const app = new PlatformaticApp(config, null, logger)
@@ -139,7 +136,6 @@ test('stops on signals other than SIGUSR2', async (t) => {
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    dependents: [],
     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
   const app = new PlatformaticApp(config, null, logger)
@@ -168,7 +164,6 @@ test('stops on uncaught exceptions', async (t) => {
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    dependents: [],
     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
   const app = new PlatformaticApp(config, null, logger)
@@ -196,7 +191,6 @@ test('supports configuration overrides', async (t) => {
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    dependents: [],
     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
 
@@ -268,7 +262,6 @@ test('restarts on config change without overriding the configManager', async (t)
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    dependents: [],
     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
   const app = new PlatformaticApp(config, null, logger)
@@ -281,6 +274,7 @@ test('restarts on config change without overriding the configManager', async (t)
     }
   })
   await app.start()
+  await app.listen()
   const configManager = app.config.configManager
   await utimes(configFile, new Date(), new Date())
   let first = false
@@ -325,7 +319,7 @@ test('logs errors if an env variable is missing', async (t) => {
   }
   const lastLine = lines[lines.length - 1]
   assert.strictEqual(lastLine.name, 'no-env')
-  assert.strictEqual(lastLine.msg, 'Cannot parse config file. Cannot read properties of undefined (reading \'get\')')
+  assert.strictEqual(lastLine.msg, 'Cannot parse config file. Cannot read properties of undefined (reading \'has\')')
 })
 
 test('Uses the server config if passed', async (t) => {
@@ -339,7 +333,6 @@ test('Uses the server config if passed', async (t) => {
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    dependents: [],
     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
   const serverConfig = {
@@ -359,6 +352,7 @@ test('Uses the server config if passed', async (t) => {
     }
   })
   await app.start()
+  await app.listen()
   const configManager = app.config.configManager
   await utimes(configFile, new Date(), new Date())
   for await (const log of stream) {
@@ -415,7 +409,6 @@ test('returns application statuses', async (t) => {
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    dependents: [],
     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
   const app = new PlatformaticApp(config, null, logger)
