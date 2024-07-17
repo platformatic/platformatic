@@ -162,4 +162,3 @@ module.exports.getClientId = dependencies.getClientId
 module.exports.getServiceUrl = dependencies.getServiceUrl
 module.exports.parseDependency = dependencies.parseDependency
 module.exports.getBootstrapDependencies = dependencies.getBootstrapDependencies
-module.exports.parseDependency = dependencies.parseDependency

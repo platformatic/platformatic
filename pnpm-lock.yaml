@@ -1288,6 +1288,15 @@ importers:
       '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
+      '@platformatic/composer':
+        specifier: workspace:*
+        version: link:../composer
+      '@platformatic/db':
+        specifier: workspace:*
+        version: link:../db
+      '@platformatic/service':
+        specifier: workspace:*
+        version: link:../service
       '@platformatic/sql-graphql':
         specifier: workspace:*
         version: link:../sql-graphql
