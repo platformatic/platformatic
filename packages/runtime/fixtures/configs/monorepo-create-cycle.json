@@ -1,7 +1,6 @@
 {
   "$schema": "https://platformatic.dev/schemas/v0.20.0/runtime",
   "entrypoint": "with-logger",
-  "allowCycles": false,
   "hotReload": false,
   "autoload": {
     "path": "../monorepo",

@@ -46,7 +46,6 @@
     "@fastify/error": "^3.4.1",
     "@fastify/websocket": "^10.0.0",
     "@hapi/topo": "^6.0.2",
-    "@platformatic/bus": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/ts-compiler": "workspace:*",
     "@platformatic/generators": "workspace:*",

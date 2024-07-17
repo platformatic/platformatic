@@ -4,6 +4,7 @@ const { isKeyEnabled } = require('@platformatic/utils')
 const { readFile } = require('fs/promises')
 const { join } = require('path')
 
+const dependencies = require('./lib/dependencies')
 const setupCors = require('./lib/plugins/cors')
 const setupOpenAPI = require('./lib/plugins/openapi.js')
 const setupGraphQL = require('./lib/plugins/graphql.js')
@@ -157,3 +158,8 @@ module.exports.start = start
 module.exports.Generator = ServiceGenerator
 module.exports.buildCompileCmd = buildCompileCmd
 module.exports.extractTypeScriptCompileOptionsFromConfig = extractTypeScriptCompileOptionsFromConfig
+module.exports.getClientId = dependencies.getClientId
+module.exports.getServiceUrl = dependencies.getServiceUrl
+module.exports.parseDependency = dependencies.parseDependency
+module.exports.getBootstrapDependencies = dependencies.getBootstrapDependencies
+module.exports.parseDependency = dependencies.parseDependency

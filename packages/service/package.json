@@ -59,7 +59,6 @@
     "@fastify/under-pressure": "^8.3.0",
     "@mercuriusjs/federation": "^3.0.0",
     "@platformatic/authenticate": "workspace:*",
-    "@platformatic/bus": "workspace:*",
     "@platformatic/client": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/ts-compiler": "workspace:*",

@@ -19,7 +19,6 @@
       },
       {
         "id": "multi-plugin-service",
-        "origin": "{PLT_ORIGIN_BUT_NOT_PROVIDED}",
         "openapi": {
           "url": "/documentation/json",
           "prefix": "/multi-plugin-service"

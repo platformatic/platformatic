@@ -48,6 +48,9 @@ these default values.
   - **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
   on `127.0.0.1`, and exposed to the other services via that port and on default, it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
 
+If the microservice exports a `getBootstrapDependencies` function, then it will used
+to build a services dependencies graph and services will be reordered and started accordingly.
+
 ### `preload`
 
 The `preload` configuration is intended to be used to register
@@ -73,6 +76,10 @@ the microservice.
 - **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
 on `127.0.0.1`, and exposed to the other services via that port, on default it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
 
+If this property is present, then the services will not be reordered according to the
+`getBootstrapDependencies` function and they will be started in the order they are defined in
+the configuration file.
+
 ### `entrypoint`
 
 The Platformatic Runtime's entrypoint is a microservice that is exposed
@@ -92,20 +99,6 @@ Note that `watch` should be enabled for each individual service in the runtime.
 :::warning
 While hot reloading is useful for development, it is not recommended for use in production.
 :::
-
-### `allowCycles`
-
-An optional boolean, defaulting to `false`, indicating if dependency cycles
-are allowed between microservices managed by the runtime. When the Platformatic
-Runtime parses the provided configuration, it examines the clients of each
-microservice, as well as the services of Platformatic Composer applications to
-build a dependency graph. A topological sort is performed on this dependency
-graph so that each service is started after all of its dependencies have been
-started. If there are cycles, the topological sort fails and the Runtime does
-not start any applications.
-
-If `allowCycles` is `true`, the topological sort is skipped, and the
-microservices are started in the order specified in the configuration file.
 
 ### `telemetry`
 [Open Telemetry](https://opentelemetry.io/) is optionally supported with these settings:

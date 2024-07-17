@@ -1,8 +1,6 @@
 {
   "$schema": "https://platformatic.dev/schemas/v0.20.0/runtime",
-  "entrypoint": "serviceApp",
-  "hotReload": false,
-  "managementApi": false,
+  "entrypoint": "db-app",
   "autoload": {
     "path": "../monorepo",
     "exclude": [
@@ -23,5 +21,12 @@
         "config": "platformatic.db.json"
       }
     }
-  }
+  },
+  "services": [
+    {
+      "id": "with-logger",
+      "path": "../monorepo/serviceAppWithLogger",
+      "config": "platformatic.service.json"
+    }
+  ]
 }

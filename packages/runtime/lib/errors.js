@@ -17,6 +17,7 @@ module.exports = {
   ConfigPathMustBeStringError: createError(`${ERROR_PREFIX}_CONFIG_PATH_MUST_BE_STRING`, 'Config path must be a string'),
   NoConfigFileFoundError: createError(`${ERROR_PREFIX}_NO_CONFIG_FILE_FOUND`, "No config file found for service '%s'"),
   InvalidEntrypointError: createError(`${ERROR_PREFIX}_INVALID_ENTRYPOINT`, "Invalid entrypoint: '%s' does not exist"),
+  InvalidAutoloadWithServicesError: createError(`${ERROR_PREFIX}_INVALID_AUTOLOAD_WITH_SERVICES`, 'Autoload cannot be used when services is defined'),
   MissingDependencyError: createError(`${ERROR_PREFIX}_MISSING_DEPENDENCY`, 'Missing dependency: "%s"'),
   InspectAndInspectBrkError: createError(`${ERROR_PREFIX}_INSPECT_AND_INSPECT_BRK`, '--inspect and --inspect-brk cannot be used together'),
   InspectorPortError: createError(`${ERROR_PREFIX}_INSPECTOR_PORT`, 'Inspector port must be 0 or in range 1024 to 65535'),

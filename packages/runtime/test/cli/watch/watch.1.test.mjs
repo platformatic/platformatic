@@ -21,7 +21,7 @@ test('watches CommonJS files', async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
   console.log(`using ${tmpDir}`)
-  const configFileSrc = join(fixturesDir, 'configs', 'monorepo.json')
+  const configFileSrc = join(fixturesDir, 'configs', 'monorepo-hotreload.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
   const appSrc = join(fixturesDir, 'monorepo')
   const appDst = join(tmpDir, 'monorepo')

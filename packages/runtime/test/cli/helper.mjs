@@ -1,4 +1,3 @@
-import { on } from 'node:events'
 import { Agent, setGlobalDispatcher } from 'undici'
 import { execa } from 'execa'
 import split from 'split2'
@@ -19,33 +18,39 @@ export async function start (...args) {
   const child = execa(process.execPath, [cliPath, 'start', ...args])
   child.stderr.pipe(process.stdout)
 
-  const output = child.stdout.pipe(split(function (line) {
+  // When we fully switch to Node 22, replace with Promise.withResolvers
+  let resolve
+  let reject
+  const promise = new Promise((_resolve, _reject) => {
+    resolve = _resolve
+    reject = _reject
+  })
+
+  const errorTimeout = setTimeout(() => {
+    reject(new Error('Couldn\'t start server'))
+  }, 30000)
+
+  child.ndj = child.stdout.pipe(split(function (line) {
     try {
-      const obj = JSON.parse(line)
-      return obj
+      const message = JSON.parse(line)
+      const mo = message.msg?.match(/server listening at (.+)/i)
+
+      if (mo) {
+        clearTimeout(errorTimeout)
+
+        setTimeout(() => {
+          resolve(mo[1])
+        }, 1000)
+      }
+
+      return message
     } catch (err) {
       console.log('>>', line)
     }
   }))
-  child.ndj = output
 
-  const errorTimeout = setTimeout(() => {
-    throw new Error('Couldn\'t start server')
-  }, 30000)
-
-  for await (const messages of on(output, 'data')) {
-    for (const message of messages) {
-      if (message.msg) {
-        const url = message.url ??
-          message.msg.match(/server listening at (.+)/i)?.[1]
-
-        if (url !== undefined) {
-          clearTimeout(errorTimeout)
-          return { child, url, output }
-        }
-      }
-    }
-  }
+  const url = await promise
+  return { child, url }
 }
 
 export function delDir (tmpDir) {

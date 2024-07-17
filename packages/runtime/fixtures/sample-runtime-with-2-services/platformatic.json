@@ -1,7 +1,6 @@
 {
   "$schema": "https://platformatic.dev/schemas/v1.25.0/runtime",
   "entrypoint": "rival",
-  "allowCycles": false,
   "hotReload": true,
   "autoload": {
     "path": "services",
