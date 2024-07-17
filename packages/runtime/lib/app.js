@@ -3,7 +3,7 @@
 const { dirname } = require('node:path')
 const { EventEmitter, once } = require('node:events')
 const { FileWatcher } = require('@platformatic/utils')
-const { getBootstrapDependencies, getClientId, getServiceUrl } = require('@platformatic/service')
+const { getClientId, getServiceUrl } = require('@platformatic/service')
 const debounce = require('debounce')
 const { snakeCase } = require('change-case-all')
 const { buildServer } = require('./build-server')
@@ -95,8 +95,11 @@ class PlatformaticApp extends EventEmitter {
 
   async getBootstrapDependencies () {
     await this.#loadConfig()
-    const resolver = this.config.app.getBootstrapDependencies ?? getBootstrapDependencies
-    return resolver(this.appConfig, this.config.configManager)
+    const resolver = this.config.app.getBootstrapDependencies
+    if (typeof resolver !== 'function') {
+      return resolver(this.appConfig, this.config.configManager)
+    }
+    return []
   }
 
   async start () {
