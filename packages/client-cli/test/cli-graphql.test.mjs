@@ -36,7 +36,6 @@ test('graphql client generation (javascript)', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url, '--name', 'movies', '--type', 'graphql'])
 
   const readSDL = await fs.readFile(join(dir, 'movies', 'movies.schema.graphql'), 'utf8')
@@ -45,8 +44,6 @@ test('graphql client generation (javascript)', async (t) => {
     const sdl = graphql.printSchema(schema)
     equal(sdl, readSDL)
   }
-
-  t.diagnostic(`server at ${app.url}`)
 
   const toWrite = `
 'use strict'
@@ -107,10 +104,7 @@ test('graphql client generation (typescript)', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
-
-  t.diagnostic(`upstream URL is ${app.url}`)
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -168,7 +162,6 @@ app.listen({ port: 0 });
     url = msg.slice(base.length)
     break
   }
-  t.diagnostic(`client URL is ${url}`)
   const res = await request(url, {
     method: 'POST'
   })
@@ -190,7 +183,6 @@ test('graphql client generation with relations (typescript)', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
 
   const toWrite = `
@@ -293,10 +285,7 @@ test('graphql client generation (javascript) with slash at the end of the URL', 
 
   const dir = await moveToTmpdir(after)
 
-  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
-
-  t.diagnostic(`server at ${app.url}`)
 
   const toWrite = `
 'use strict'
@@ -354,10 +343,7 @@ test('configureClient (typescript)', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
-
-  t.diagnostic(`upstream URL is ${app.url}`)
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -423,7 +409,6 @@ app.listen({ port: 0 });
     url = msg.slice(base.length)
     break
   }
-  t.diagnostic(`client URL is ${url}`)
   const res = await request(url, {
     method: 'POST'
   })
@@ -444,7 +429,6 @@ test('graphql client generation (javascript) from a file', async (t) => {
   await app.start()
 
   const dir = await moveToTmpdir(after)
-  t.diagnostic(`working in ${dir}`)
 
   const sdl = graphql.printSchema(app.graphql.schema)
   const sdlFile = join(dir, 'movies.schema.graphql')
@@ -454,8 +438,6 @@ test('graphql client generation (javascript) from a file', async (t) => {
 
   const readSDL = await fs.readFile(join(dir, 'movies', 'movies.schema.graphql'), 'utf8')
   equal(sdl, readSDL)
-
-  t.diagnostic(`server at ${app.url}`)
 
   const toWrite = `
 'use strict'

@@ -8,9 +8,9 @@ import { mkdtemp, rm } from 'fs/promises'
 import {
   executeCreatePlatformatic,
   startMarketplace,
-  getServices,
   keys,
-  walk
+  walk,
+  getServices
 } from './helper.mjs'
 
 let tmpDir

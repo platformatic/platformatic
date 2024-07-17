@@ -23,8 +23,6 @@ test('graphql client generation (javascript)', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  t.diagnostic(`working in ${dir}`)
-
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
     server: {
@@ -102,8 +100,6 @@ test('graphql client generation (typescript)', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  t.diagnostic(`working in ${dir}`)
-
   const pltServiceConfig = {
     $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
     server: {
@@ -148,8 +144,6 @@ export default myPlugin
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
-
-  t.diagnostic(`upstream URL is ${app.url}`)
 
   const app2 = await buildService('./platformatic.service.json')
   await app2.start()
