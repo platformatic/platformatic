@@ -32,7 +32,6 @@ test('generates only types in target folder with --types-only flag', async (t) =
 
 test('add an initial comment with --types-comment flag', async (t) => {
   const dir = await moveToTmpdir(after)
-  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), desm.join(import.meta.url, 'fixtures', 'movies', 'openapi.json'), '--name', 'movies', '-f', dir, '--types-only', '--types-comment', 'this is an auto-generated file'])
 
   const fileContents = await fs.readFile(join(dir, 'movies.d.ts'), 'utf-8')
