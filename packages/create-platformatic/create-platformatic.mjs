@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { createPlatformatic } from '@platformatic/create-platformatic-auto'
+import { createPlatformatic } from './src/index.mjs'
 import isMain from 'es-main'
 import parseArgs from 'minimist'
 import { readFile } from 'fs/promises'
@@ -30,7 +30,4 @@ if (isMain(import.meta)) {
   await createPlatformatic(_args)
 }
 
-export {
-  createStaticWorkspaceGHAction,
-  createDynamicWorkspaceGHAction
-} from './src/ghaction.mjs'
+export { createPlatformatic }

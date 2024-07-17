@@ -8,9 +8,9 @@ import { readFile, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import {
   executeCreatePlatformatic,
   startMarketplace,
-  getServices,
   keys,
-  walk
+  walk,
+  getServices
 } from './helper.mjs'
 
 let tmpDir
