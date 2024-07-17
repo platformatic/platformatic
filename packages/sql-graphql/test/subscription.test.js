@@ -93,8 +93,6 @@ test('subscription - crud', async t => {
     equal(data.type, 'connection_ack')
   }
 
-  t.diagnostic('sending mutation')
-
   await app.inject({
     method: 'POST',
     url: '/graphql',
@@ -108,8 +106,6 @@ test('subscription - crud', async t => {
       `
     }
   })
-
-  t.diagnostic('mutation sent')
 
   {
     const [chunk] = await once(client, 'data')
@@ -128,8 +124,6 @@ test('subscription - crud', async t => {
     })
   }
 
-  t.diagnostic('updating entity')
-
   await app.inject({
     method: 'POST',
     url: '/graphql',
@@ -143,8 +137,6 @@ test('subscription - crud', async t => {
       `
     }
   })
-
-  t.diagnostic('entity updated')
 
   {
     const [chunk] = await once(client, 'data')
@@ -163,8 +155,6 @@ test('subscription - crud', async t => {
     })
   }
 
-  t.diagnostic('deleting entity')
-
   await app.inject({
     method: 'POST',
     url: '/graphql',
@@ -178,8 +168,6 @@ test('subscription - crud', async t => {
       `
     }
   })
-
-  t.diagnostic('entity deleted')
 
   {
     const [chunk] = await once(client, 'data')
@@ -196,8 +184,6 @@ test('subscription - crud', async t => {
       }
     })
   }
-
-  t.diagnostic('sending mutation')
 
   {
     const [
@@ -226,9 +212,9 @@ test('subscription - crud', async t => {
             }
           }
         })
-        t.diagnostic('mutation sent')
+
         const pages = res.json().data.insertPages
-        t.diagnostic(JSON.stringify(pages, null, 2))
+
         return pages
       })(),
       (async function () {
@@ -242,7 +228,7 @@ test('subscription - crud', async t => {
             break
           }
         }
-        t.diagnostic('received all pages', JSON.stringify(pages, null, 2))
+
         return pages
       })()
     ]))

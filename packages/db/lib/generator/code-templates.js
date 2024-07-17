@@ -44,7 +44,6 @@ let counter = 0
   })
 
   const newDB = \`t-\${process.pid}-\${counter++}\`
-  t.diagnostic('Creating database ' + newDB)
 
   await db.query(sql\`
     CREATE DATABASE \${sql.ident(newDB)}
@@ -58,7 +57,6 @@ let counter = 0
 `,
     post: `
   t.after(async () => {
-    t.diagnostic('Disposing test database ' + newDB)
     await db.query(sql\`
       DROP DATABASE \${sql.ident(newDB)}
     \`)
@@ -88,7 +86,6 @@ let counter = 0
   })
 
   const newDB = \`t-\${process.pid}-\${counter++}\`
-  t.diagnostic('Creating database ' + newDB)
 
   await db.query(sql\`
     CREATE DATABASE \${sql.ident(newDB)}
@@ -102,7 +99,6 @@ let counter = 0
 `,
     post: `
   t.after(async () => {
-    t.diagnostic('Disposing test database ' + newDB)
     await db.query(sql\`
       DROP DATABASE \${sql.ident(newDB)}
     \`)

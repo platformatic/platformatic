@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/bus",
-  "version": "1.49.1",
+  "version": "1.50.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@matteo.collina/tspl": "^0.1.1",
-    "borp": "^0.15.0",
+    "borp": "^0.16.0",
     "c8": "^10.0.0",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",

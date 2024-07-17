@@ -256,7 +256,6 @@ test('no events', async (t) => {
   equal(mapper.mq, mq)
 
   queue.on('data', function (msg) {
-    t.diagnostic(JSON.stringify(msg, null, 2))
     fail('no message')
   })
 
