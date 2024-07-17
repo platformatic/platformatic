@@ -1,6 +1,6 @@
 import { request, moveToTmpdir } from './helper.js'
 import { test, after } from 'node:test'
-import { equal, deepEqual as same, match } from 'node:assert'
+import { equal, deepEqual as same, match, ok } from 'node:assert'
 import { match as matchObj } from '@platformatic/utils'
 import { buildServer } from '@platformatic/db'
 import { buildServer as buildService } from '@platformatic/service'
@@ -28,6 +28,14 @@ test('generates only types in target folder with --types-only flag', async (t) =
   match(fileContents, /export type GetMoviesRequest = {/)
   match(fileContents, /export type GetMoviesResponseOK = Array/)
   match(fileContents, /export type Movies = {/)
+})
+
+test('add an initial comment with --types-comment flag', async (t) => {
+  const dir = await moveToTmpdir(after)
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), desm.join(import.meta.url, 'fixtures', 'movies', 'openapi.json'), '--name', 'movies', '-f', dir, '--types-only', '--types-comment', 'this is an auto-generated file'])
+
+  const fileContents = await fs.readFile(join(dir, 'movies.d.ts'), 'utf-8')
+  ok(fileContents.startsWith('// this is an auto-generated file'))
 })
 
 test('openapi client generation (javascript)', async (t) => {
