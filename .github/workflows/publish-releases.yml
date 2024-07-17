@@ -7,6 +7,11 @@ on:
         description: 'The version number to tag and release'
         required: true
         type: string
+      prerelease:
+        description: "Release as pre-release"
+        required: false
+        type: boolean
+        default: false        
 
 env:
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -55,5 +60,4 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: 'Create release notes'
         run: |
-          npm i @matteo.collina/release-notes -g
-          release-notes -a ${{ secrets.GH_RELEASE_TOKEN }} -t ${{ inputs.version }} -r platformatic -o platformatic
+          pnpx @matteo.collina/release-notes -a ${{ secrets.GH_RELEASE_TOKEN }} -t ${{ inputs.version }} -r platformatic -o platformatic ${{ github.event.inputs.prerelease == 'true' && '-p' || '' }}

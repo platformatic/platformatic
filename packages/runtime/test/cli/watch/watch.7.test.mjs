@@ -22,7 +22,6 @@ function saferm (path) {
 test('watches CommonJS files with hotreload on a single service', async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
-  t.diagnostic(`using ${tmpDir}`)
   const appSrc = join(fixturesDir, 'monorepo', 'serviceAppWithLogger')
   const appDst = join(tmpDir)
   const cjsPluginFilePath = join(appDst, 'plugin.js')

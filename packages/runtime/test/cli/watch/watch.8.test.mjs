@@ -23,7 +23,6 @@ function saferm (path) {
 test('should not watch files if watch = false', async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
-  t.diagnostic(`using ${tmpDir}`)
   const configFileSrc = join(fixturesDir, 'configs', 'monorepo-watch.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo-watch.json')
   const appSrc = join(fixturesDir, 'monorepo-watch')
