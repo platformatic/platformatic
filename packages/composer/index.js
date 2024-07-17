@@ -2,7 +2,7 @@
 
 const deepEqual = require('fast-deep-equal')
 const ConfigManager = require('@platformatic/config')
-const { platformaticService, buildServer } = require('@platformatic/service')
+const { platformaticService, buildServer, parseDependency, getBootstrapDependencies } = require('@platformatic/service')
 
 const { schema } = require('./lib/schema')
 const serviceProxy = require('./lib/proxy')
@@ -73,6 +73,20 @@ platformaticComposer.configManagerConfig = {
     strict: false
   },
   transformConfig: platformaticService.configManagerConfig.transformConfig
+}
+
+// First we compute composed services as dependencies, then we add clients
+platformaticComposer.getBootstrapDependencies = async function _getBootstrapDependencies (service, configManager) {
+  const composedServices = configManager.current.composer?.services
+  const dependencies = []
+
+  if (Array.isArray(composedServices)) {
+    dependencies.push(...await Promise.all(composedServices.map(async (service) => {
+      return parseDependency(configManager, service.id, service.origin)
+    })))
+  }
+
+  return dependencies.concat(await getBootstrapDependencies(service, configManager))
 }
 
 // TODO review no need to be async

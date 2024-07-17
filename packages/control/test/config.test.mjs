@@ -27,7 +27,6 @@ test('should get runtime config by pid', async (t) => {
     `https://platformatic.dev/schemas/v${platformaticVersion}/runtime`
   )
   assert.strictEqual(runtimeConfig.entrypoint, 'service-1')
-  assert.strictEqual(runtimeConfig.allowCycles, true)
   assert.strictEqual(runtimeConfig.hotReload, false)
   assert.deepStrictEqual(runtimeConfig.autoload, {
     path: join(projectDir, 'services'),
@@ -53,7 +52,6 @@ test('should get runtime config by name', async (t) => {
     `https://platformatic.dev/schemas/v${platformaticVersion}/runtime`
   )
   assert.strictEqual(runtimeConfig.entrypoint, 'service-1')
-  assert.strictEqual(runtimeConfig.allowCycles, true)
   assert.strictEqual(runtimeConfig.hotReload, false)
   assert.deepStrictEqual(runtimeConfig.autoload, {
     path: join(projectDir, 'services'),

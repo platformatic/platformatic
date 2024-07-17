@@ -5,20 +5,22 @@ const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
 const { createFastifyInterceptor } = require('fastify-undici-dispatcher')
 const { PlatformaticApp } = require('./app')
 const errors = require('./errors')
+const { checkDependencies, topologicalSort } = require('./dependencies')
 const { printSchema } = require('graphql')
-const { Bus } = require('@platformatic/bus')
 
 class RuntimeApi {
   #services
   #dispatcher
   #interceptor
   #logger
-  #bus
+  #config
+  #bootstrapDependenciesResolved
 
   constructor (config, logger, loaderPort, composedInterceptors = []) {
+    this.#config = config
     this.#services = new Map()
     this.#logger = logger
-    this.#setupBus()
+
     const telemetryConfig = config.telemetry
     const metricsConfig = config.metrics
 
@@ -153,19 +155,25 @@ class RuntimeApi {
   }
 
   async startServices () {
-    let entrypointUrl = null
+    if (!this.#bootstrapDependenciesResolved) {
+      await this._resolveBootstrapDependencies()
+      this.#bootstrapDependenciesResolved = true
+    }
+
+    let entrypoint
     for (const service of this.#services.values()) {
       await service.start()
 
       if (service.appConfig.entrypoint) {
-        entrypointUrl = service.server.url
+        entrypoint = service
       }
 
       const serviceUrl = new URL(service.appConfig.localUrl)
       this.#interceptor.route(serviceUrl.host, service.server)
     }
-    this.#bus.broadcast('runtime:services:started')
-    return entrypointUrl
+
+    await entrypoint?.listen()
+    return entrypoint?.server.url
   }
 
   async stopServices () {
@@ -181,29 +189,50 @@ class RuntimeApi {
         stopServiceReqs.push(service.stop())
       }
     }
+
     await Promise.all(stopServiceReqs)
-    this.#bus.broadcast('runtime:services:stopped')
+  }
+
+  async _resolveBootstrapDependencies () {
+    if (this.#config.autoload) {
+      for (const service of this.#config.services) {
+        const dependencies = await this.#services.get(service.id).getBootstrapDependencies()
+        service.dependencies = dependencies
+
+        for (const { envVar, url } of dependencies) {
+          if (envVar) {
+            service.localServiceEnvVars.set(envVar, url)
+          }
+        }
+      }
+
+      checkDependencies(this.#config.services)
+      this.#services = topologicalSort(this.#services, this.#config)
+    }
+
+    return this.#services
   }
 
   async #restartServices () {
-    let entrypointUrl = null
+    let entrypoint
     for (const service of this.#services.values()) {
       const serviceStatus = service.getStatus()
+
+      if (service.appConfig.entrypoint) {
+        entrypoint = service
+      }
+
       if (serviceStatus === 'starting') {
         await once(service, 'start')
       }
 
-      await service.restart(true)
-
-      if (service.appConfig.entrypoint) {
-        entrypointUrl = service.server.url
-      }
+      await service.restart()
 
       const serviceUrl = new URL(service.appConfig.localUrl)
       this.#interceptor.route(serviceUrl.host, service.server)
     }
-    this.#bus.broadcast('runtime:services:restarted')
-    return entrypointUrl
+
+    return entrypoint?.server.url
   }
 
   #getEntrypointDetails () {
@@ -356,7 +385,6 @@ class RuntimeApi {
     } else {
       await service.start()
     }
-    this.#bus.broadcast('runtime:service:started', id)
   }
 
   async #stopService ({ id }) {
@@ -368,7 +396,6 @@ class RuntimeApi {
     }
 
     await service.stop()
-    this.#bus.broadcast('runtime:service:stopped', id)
   }
 
   async #inject ({ id, injectParams }) {
@@ -387,10 +414,6 @@ class RuntimeApi {
       headers: res.headers,
       body: res.body
     }
-  }
-
-  #setupBus (config) {
-    this.#bus = new Bus('$root')
   }
 }
 

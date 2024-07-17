@@ -69,9 +69,6 @@ const platformaticRuntimeSchema = {
         }
       ]
     },
-    allowCycles: {
-      type: 'boolean'
-    },
     inspectorOptions: {
       type: 'object',
       properties: {

@@ -167,6 +167,9 @@ test('should support custom use transport with a message port logging', async (t
     })
   })
 
+  // Wait for logs to be written
+  await sleep(1000)
+
   const logs = await readFile(logsPath, 'utf8')
   assert.ok(logs.includes('Server listening at'))
 })

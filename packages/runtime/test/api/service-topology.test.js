@@ -44,13 +44,7 @@ test('should get services topology', async (t) => {
         entrypoint: true,
         url: entrypointDetails.url,
         localUrl: 'http://serviceApp.plt.local',
-        dependencies: [
-          {
-            id: 'with-logger',
-            url: 'http://with-logger.plt.local',
-            local: true
-          }
-        ]
+        dependencies: []
       },
       {
         id: 'with-logger',
@@ -71,5 +65,93 @@ test('should get services topology', async (t) => {
         dependencies: []
       }
     ]
+  })
+})
+
+test('should get services topology (composer)', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const entrypointDetails = await app.getEntrypointDetails()
+  const topology = await app.getServices()
+
+  assert.deepStrictEqual(topology, {
+    services: [
+      {
+        id: 'dbApp',
+        type: 'db',
+        status: 'started',
+        version: platformaticVersion,
+        localUrl: 'http://dbApp.plt.local',
+        entrypoint: false,
+        dependencies: []
+      },
+      {
+        id: 'serviceApp',
+        type: 'service',
+        status: 'started',
+        version: platformaticVersion,
+        localUrl: 'http://serviceApp.plt.local',
+        entrypoint: false,
+        dependencies: []
+      },
+      {
+        id: 'with-logger',
+        type: 'service',
+        status: 'started',
+        version: platformaticVersion,
+        localUrl: 'http://with-logger.plt.local',
+        entrypoint: false,
+        dependencies: []
+      },
+      {
+        id: 'multi-plugin-service',
+        type: 'service',
+        status: 'started',
+        version: platformaticVersion,
+        localUrl: 'http://multi-plugin-service.plt.local',
+        entrypoint: false,
+        dependencies: []
+      },
+      {
+        id: 'composerApp',
+        type: 'composer',
+        status: 'started',
+        version: platformaticVersion,
+        localUrl: 'http://composerApp.plt.local',
+        entrypoint: true,
+        dependencies: [
+          {
+            id: 'with-logger',
+            url: 'http://with-logger.plt.local',
+            local: true
+          },
+          {
+            id: 'multi-plugin-service',
+            url: 'http://multi-plugin-service.plt.local',
+            local: true
+          },
+          {
+            id: 'serviceApp',
+            url: 'http://serviceApp.plt.local',
+            local: true
+          },
+          {
+            id: 'external-service',
+            url: 'https://external-service.com',
+            local: false
+          }
+        ],
+        url: entrypointDetails.url
+      }
+    ],
+    entrypoint: 'composerApp'
   })
 })
