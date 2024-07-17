@@ -6,5 +6,3 @@ Available commands:
 * `start` - start the server.
 * `schema config` - generate the schema configuration file.
 * `compile` - compile the typescript files.
-* `versions bump` - bump a new version of the API.
-* `versions update` - update the latest version of the API.

@@ -87,7 +87,6 @@
     "mercurius": "^14.0.0",
     "minimist": "^1.2.8",
     "my-ua-parser": "^2.0.2",
-    "openapi-schema-diff": "^0.0.1",
     "ora": "^6.3.1",
     "pino": "^8.19.0",
     "pino-pretty": "^11.0.0",
