@@ -36,7 +36,6 @@ test('dashes in name', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'uncanny-movies'])
 
   const readSDL = await fs.readFile(join(dir, 'uncanny-movies', 'uncanny-movies.schema.graphql'), 'utf8')
@@ -45,8 +44,6 @@ test('dashes in name', async (t) => {
     const sdl = graphql.printSchema(schema)
     equal(sdl, readSDL)
   }
-
-  t.diagnostic(`server at ${app.url}`)
 
   const toWrite = `
 'use strict'
@@ -107,10 +104,7 @@ test('dashes in name (typescript)', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'uncanny-movies'])
-
-  t.diagnostic(`upstream URL is ${app.url}`)
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -168,7 +162,6 @@ app.listen({ port: 0 });
     url = msg.slice(base.length)
     break
   }
-  t.diagnostic(`client URL is ${url}`)
   const res = await request(url, {
     method: 'POST'
   })
@@ -190,7 +183,6 @@ test('different folder name', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies', '--folder', 'uncanny'])
 
   const readSDL = await fs.readFile(join(dir, 'uncanny', 'movies.schema.graphql'), 'utf8')
@@ -199,8 +191,6 @@ test('different folder name', async (t) => {
     const sdl = graphql.printSchema(schema)
     equal(sdl, readSDL)
   }
-
-  t.diagnostic(`server at ${app.url}`)
 
   const toWrite = `
 'use strict'
@@ -261,7 +251,6 @@ test('tilde in name', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'uncanny~movies'])
 
   const readSDL = await fs.readFile(join(dir, 'uncanny~movies', 'uncanny~movies.schema.graphql'), 'utf8')
@@ -270,8 +259,6 @@ test('tilde in name', async (t) => {
     const sdl = graphql.printSchema(schema)
     equal(sdl, readSDL)
   }
-
-  t.diagnostic(`server at ${app.url}`)
 
   const toWrite = `
 'use strict'
