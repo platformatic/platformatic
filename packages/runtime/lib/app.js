@@ -3,7 +3,6 @@
 const { dirname } = require('node:path')
 const { EventEmitter, once } = require('node:events')
 const { FileWatcher } = require('@platformatic/utils')
-const { getClientId } = require('@platformatic/service')
 const debounce = require('debounce')
 const { snakeCase } = require('change-case-all')
 const { buildServer } = require('./build-server')
@@ -335,12 +334,11 @@ class PlatformaticApp extends EventEmitter {
   #fetchServiceUrl (key, { parent, context: service }) {
     if (service.localServiceEnvVars.has(key)) {
       return service.localServiceEnvVars.get(key)
-    } else if (!key.endsWith('_URL')) {
+    } else if (!key.endsWith('_URL') || !parent.serviceId) {
       return null
     }
 
-    const serviceId = parent.serviceId ?? getClientId(service, parent)
-    return getServiceUrl(serviceId)
+    return getServiceUrl(parent.serviceId)
   }
 
   #startFileWatching () {

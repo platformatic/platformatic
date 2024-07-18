@@ -2,7 +2,7 @@
 
 const deepEqual = require('fast-deep-equal')
 const ConfigManager = require('@platformatic/config')
-const { platformaticService, buildServer, parseDependency, getBootstrapDependencies } = require('@platformatic/service')
+const { platformaticService, buildServer } = require('@platformatic/service')
 
 const { schema } = require('./lib/schema')
 const serviceProxy = require('./lib/proxy')
@@ -75,6 +75,33 @@ platformaticComposer.configManagerConfig = {
   transformConfig: platformaticService.configManagerConfig.transformConfig
 }
 
+function getServiceUrl (id) {
+  return `http://${id}.plt.local`
+}
+
+async function parseDependency (configManager, id, urlString) {
+  let url = getServiceUrl(id)
+
+  if (urlString) {
+    try {
+      const remoteUrl = await configManager.replaceEnv(urlString)
+
+      if (remoteUrl) {
+        url = remoteUrl
+      }
+    } catch (err) {
+      // The MissingValueError is an error coming from pupa
+      // https://github.com/sindresorhus/pupa#missingvalueerror
+      // All other errors are simply re-thrown.
+      if (err.name !== 'MissingValueError' || urlString !== `{${err.key}}`) {
+        throw err
+      }
+    }
+  }
+
+  return { id, url, local: url.endsWith('.plt.local') }
+}
+
 // First we compute composed services as dependencies, then we add clients
 platformaticComposer.getBootstrapDependencies = async function _getBootstrapDependencies (service, configManager) {
   const composedServices = configManager.current.composer?.services
@@ -86,7 +113,7 @@ platformaticComposer.getBootstrapDependencies = async function _getBootstrapDepe
     })))
   }
 
-  return dependencies.concat(await getBootstrapDependencies(service, configManager))
+  return dependencies
 }
 
 // TODO review no need to be async
