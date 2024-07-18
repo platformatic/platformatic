@@ -55,7 +55,7 @@ test('should remove a service', async (t) => {
   }
 })
 
-test.only('should add a new service with new env variables', async (t) => {
+test('should add a new service with new env variables', async (t) => {
   mockNpmJsRequestForPkgs(['@fastify/oauth2', '@fastify/foo-plugin'])
   const dir = await moveToTmpdir(after)
 
