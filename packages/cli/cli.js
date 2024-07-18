@@ -8,7 +8,6 @@ import commist from 'commist'
 import minimist from 'minimist'
 import { run as runRuntime, compile } from '@platformatic/runtime/runtime.mjs'
 import { startCommand } from '@platformatic/runtime'
-import { login } from '@platformatic/authenticate/authenticate.js'
 import { command as client } from '@platformatic/client-cli'
 import { join } from 'desm'
 import { isColorSupported } from 'colorette'
@@ -80,7 +79,6 @@ program.register('help service', async (args) => {
   const { runService } = await load('@platformatic/service/service.mjs')
   return runService(['help', ...args])
 })
-program.register({ command: 'login', strict: true }, login)
 
 const args = minimist(process.argv.slice(2), {
   boolean: ['help', 'version'],

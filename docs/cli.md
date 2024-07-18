@@ -87,7 +87,6 @@ Welcome to Platformatic. Available commands are:
 * `gh` - create a new gh action for Platformatic deployments.
 * `runtime` - start Platformatic Runtime; type `platformatic runtime help` to know more.
 * `start` - start a Platformatic application.
-* `login` - generate a Platformatic login api key.
 * `client` - generate a Platformatic client.
 * `ps` - list all Platformatic runtime applications.
 * `logs` - stream logs for a Platformatic runtime application.
@@ -138,21 +137,6 @@ set the `managementApi` option to `true` in the runtime configuration file.
 
 To get the list of runtimes with enabled management API use the
 `platformatic ctl ps` command.
-
-
-#### login
-
-Generate a Platformatic login api key.
-
-``` bash
- $ platformatic deploy
-```
-
-Options:
-
-* `-c, --config FILE` - Specify a path to a global Platformatic config file. Defaults to `~/.platformatic/config.json`.
-* `--browser` - Automatically open default browser. If process stdout is a TTY, the default is `true`. Otherwise, the default is `false`.
-
 
 #### logs
 

@@ -1,16 +1,5 @@
 # Platformatic Errors 
 
-## @platformatic/authenticate 
-
-### PLT_AUTHENTICATE_UNABLE_TO_CONTACT_LOGIN_SERVICE
-**Message:** Unable to contact login service 
-
-### PLT_AUTHENTICATE_UNKNOWN_MESSAGE_TYPE
-**Message:** Received unknown message type from login service: %s 
-
-### PLT_AUTHENTICATE_CONFIG_OPTION_REQUIRES_PATH_TO_FILE
-**Message:** --config option requires path to a file 
-
 ## @platformatic/client 
 
 ### PLT_CLIENT_OPTIONS_URL_REQUIRED
