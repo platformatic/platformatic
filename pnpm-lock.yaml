@@ -131,7 +131,7 @@ importers:
         version: 1.2.8
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.3.1
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.1
@@ -274,7 +274,7 @@ importers:
         version: 1.2.8
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.3.1
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.1
@@ -431,7 +431,7 @@ importers:
         version: 6.3.1
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.3.1
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.1
@@ -535,7 +535,7 @@ importers:
         version: 2.2.3
       pino:
         specifier: ^8.17.2
-        version: 8.21.0
+        version: 9.3.1
       pino-test:
         specifier: ^1.0.1
         version: 1.0.1
@@ -562,7 +562,7 @@ importers:
         version: 5.0.0
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.3.1
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.1
@@ -656,7 +656,7 @@ importers:
         version: 6.3.1
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.3.1
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.1
@@ -840,7 +840,7 @@ importers:
         version: 6.3.1
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.3.1
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.1
@@ -1162,7 +1162,7 @@ importers:
         version: 4.28.1
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.3.1
       undici:
         specifier: ^6.9.0
         version: 6.19.2
@@ -1259,7 +1259,7 @@ importers:
         version: 1.2.8
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.3.1
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.1
@@ -1478,7 +1478,7 @@ importers:
         version: 6.3.1
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.3.1
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.1
@@ -1880,7 +1880,7 @@ importers:
         version: 8.0.1
       pino:
         specifier: ^9.2.0
-        version: 9.2.0
+        version: 9.3.1
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.1
@@ -5203,6 +5203,10 @@ packages:
 
   pino@9.2.0:
     resolution: {integrity: sha512-g3/hpwfujK5a4oVbaefoJxezLzsDgLcNJeITvC6yrfwYeT9la+edCK42j5QpEQSQCZgTKapXvnQIdgZwvRaZug==}
+    hasBin: true
+
+  pino@9.3.1:
+    resolution: {integrity: sha512-afSfrq/hUiW/MFmQcLEwV9Zh8Ry6MrMTOyBU53o/fc0gEl+1OZ/Fks/xQCM2nOC0C/OfDtQMnT2d8c3kpcfSzA==}
     hasBin: true
 
   pkg-conf@3.1.0:
@@ -10001,6 +10005,20 @@ snapshots:
       thread-stream: 2.7.0
 
   pino@9.2.0:
+    dependencies:
+      atomic-sleep: 1.0.0
+      fast-redact: 3.5.0
+      on-exit-leak-free: 2.1.2
+      pino-abstract-transport: 1.2.0
+      pino-std-serializers: 7.0.0
+      process-warning: 3.0.0
+      quick-format-unescaped: 4.0.4
+      real-require: 0.2.0
+      safe-stable-stringify: 2.4.3
+      sonic-boom: 4.0.1
+      thread-stream: 3.1.0
+
+  pino@9.3.1:
     dependencies:
       atomic-sleep: 1.0.0
       fast-redact: 3.5.0
