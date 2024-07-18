@@ -57,7 +57,6 @@ async function getBootstrapDependencies (service, configManager) {
 
 module.exports = {
   getClientId,
-  getServiceUrl,
   parseDependency,
   getBootstrapDependencies
 }

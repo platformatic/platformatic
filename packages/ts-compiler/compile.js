@@ -10,11 +10,13 @@ async function compile (options = {}) {
   if (tscExecutablePath === undefined) {
     const msg = 'The tsc executable was not found.'
     logger.warn(msg)
+    return false
   }
 
   if (!tsConfigExists) {
     const msg = 'No typescript configuration file was found, skipping compilation.'
     logger.info(msg)
+    return false
   }
 
   try {

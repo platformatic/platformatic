@@ -164,7 +164,7 @@ async function setupAndStartRuntime (config) {
       startErr = err
       if (err.code === 'EADDRINUSE') {
         await runtime.close()
-        if (runtimeConfig.current.server.port > MAX_PORT) throw err
+        if (runtimeConfig.current?.server?.port > MAX_PORT) throw err
         runtimeConfig.current.server.port++
         runtime = await buildRuntime(runtimeConfig)
       } else {
