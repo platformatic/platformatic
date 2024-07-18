@@ -401,6 +401,12 @@ class RuntimeGenerator extends BaseGenerator {
         const newServicePackages = newService.plugins.map((meta) => meta.name)
         const pluginsToRemove = getArrayDifference(oldServicePackages, newServicePackages)
         pluginsToRemove.forEach((p) => delete currentRuntimeDependencies[p])
+      } else {
+        // add service to the generator
+        this.services.push({
+          name: newService.name,
+          service: serviceInstance
+        })
       }
       serviceInstance.setConfig(baseConfig)
       serviceInstance.setConfigFields(newService.fields)

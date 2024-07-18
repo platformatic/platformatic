@@ -97,6 +97,8 @@ test('should add a new service with new env variables', async (t) => {
     services: [serviceData, newService] // the original service was removed
   })
 
+  // update the entrypoint with the new service
+  rg.setEntryPoint('foobar')
   // the new service has been generated
   const serviceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'foobar', 'platformatic.json'), 'utf-8'))
   assert.deepEqual(serviceConfigFile.plugins.packages[0], {
@@ -108,7 +110,6 @@ test('should add a new service with new env variables', async (t) => {
       }
     }
   })
-
   // the runtime .env should be updated
   const runtimeDotEnv = new DotEnvTool({
     path: join(dir, '.env')
@@ -122,6 +123,9 @@ test('should add a new service with new env variables', async (t) => {
   const runtimePackageJson = JSON.parse(await readFile(join(dir, 'package.json'), 'utf-8'))
   assert.ok(runtimePackageJson.dependencies['@fastify/oauth2'])
   assert.ok(runtimePackageJson.dependencies['@fastify/foo-plugin'])
+
+  // the entrypoint should be updated
+  assert.equal(rg.entryPoint.name, 'foobar')
 })
 
 test('should update existing service\'s plugin options', async (t) => {
