@@ -603,9 +603,6 @@ importers:
 
   packages/create-platformatic:
     dependencies:
-      '@platformatic/authenticate':
-        specifier: workspace:*
-        version: link:../authenticate
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config

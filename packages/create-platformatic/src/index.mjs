@@ -6,7 +6,6 @@ import { getUsername, getVersion, minimumSupportedNodeVersions, isCurrentVersion
 import { createGitRepository } from './create-git-repository.mjs'
 import { getPkgManager } from '@platformatic/utils'
 import { StackableGenerator } from '@platformatic/generators'
-import { getUserApiKey } from '@platformatic/authenticate'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
@@ -20,15 +19,10 @@ import resolve from 'resolve'
 
 const MARKETPLACE_HOST = 'https://marketplace.platformatic.dev'
 
-export async function fetchStackables (marketplaceHost, userApiKey) {
+export async function fetchStackables (marketplaceHost) {
   marketplaceHost = marketplaceHost || MARKETPLACE_HOST
 
-  const stackablesRequest = request(marketplaceHost + '/templates', {
-    method: 'GET',
-    headers: {
-      'x-platformatic-user-api-key': userApiKey
-    }
-  })
+  const stackablesRequest = request(marketplaceHost + '/templates')
   const stackablesRequestTimeout = setTimeout(5000, new Error('Request timed out'))
 
   try {
@@ -36,9 +30,6 @@ export async function fetchStackables (marketplaceHost, userApiKey) {
       stackablesRequest,
       stackablesRequestTimeout
     ])
-    if (statusCode === 401 && userApiKey) {
-      return fetchStackables(marketplaceHost)
-    }
     if (statusCode === 200) {
       return (await body.json()).map(stackable => stackable.name)
     }
@@ -159,9 +150,7 @@ async function createApplication (args, logger, pkgManager) {
     await say('Using existing configuration')
   }
 
-  const globalConfigPath = args['global-config']
-  const userApiKey = await getUserApiKey(globalConfigPath).catch(() => {})
-  const stackables = await fetchStackables(args['marketplace-host'], userApiKey)
+  const stackables = await fetchStackables(args['marketplace-host'])
 
   const names = []
 
