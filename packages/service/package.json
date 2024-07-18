@@ -61,6 +61,7 @@
     "@platformatic/authenticate": "workspace:*",
     "@platformatic/client": "workspace:*",
     "@platformatic/config": "workspace:*",
+    "@platformatic/ts-compiler": "workspace:*",
     "@platformatic/generators": "workspace:*",
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/telemetry": "workspace:*",

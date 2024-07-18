@@ -363,12 +363,12 @@ const { schema } = require('@platformatic/service')
 const { version } = require('../package.json')
 
 const ${schemaVarName} = {
-  ...schema.schema,
+  ...schema,
   $id: '${schemaId}',
   title: '${schemaTitle}',
   version,
   properties: {
-    ...schema.schema.properties,
+    ...schema.properties,
     module: { type: 'string' },
     greeting: {
       type: 'object',
@@ -403,12 +403,12 @@ import { readFileSync } from 'node:fs'
 const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
 
 const ${schemaVarName} = {
-  ...schema.schema,
+  ...schema,
   $id: '${schemaId}',
   title: '${schemaTitle}',
   version,
   properties: {
-    ...schema.schema.properties,
+    ...schema.properties,
     module: { type: 'string' },
     greeting: {
       type: 'object',

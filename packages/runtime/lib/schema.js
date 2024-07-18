@@ -2,7 +2,7 @@
 'use strict'
 
 const telemetry = require('@platformatic/telemetry').schema
-const { server } = require('@platformatic/service').schema
+const { schemas: { server } } = require('@platformatic/utils')
 const pkg = require('../package.json')
 const version = 'v' + pkg.version
 const platformaticRuntimeSchema = {

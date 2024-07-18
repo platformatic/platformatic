@@ -1,7 +1,7 @@
 import { schema as serviceSchema } from '../../../../index.js'
 import esMain from 'es-main'
 
-const baseSchema = serviceSchema.schema
+const baseSchema = serviceSchema
 
 export const schema = structuredClone(baseSchema)
 

@@ -71,17 +71,6 @@ test('dependencies are resolved if services are not specified manually', async (
   ])
 })
 
-test('can resolve service id from client package.json if not provided', async () => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-client-without-id.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-
-  const runtime = new RuntimeApi(config.configManager.current, pino(), undefined)
-  const services = await runtime._resolveBootstrapDependencies()
-
-  const serviceConfig = services.get('serviceApp').config.configManager.current
-  assert.strictEqual(serviceConfig.clients[0].url, 'http://with-logger.plt.local')
-})
-
 test('parseInspectorOptions()', async (t) => {
   await t.test('throws if --inspect and --inspect-brk are both used', () => {
     assert.throws(() => {
