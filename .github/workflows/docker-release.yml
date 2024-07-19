@@ -1,5 +1,7 @@
 name: docker release build
 
+# TODO(mcollina): This MUST be fixed before going 2.x, we are publishing latest all the times
+
 on:
   release:
     types: [released]
