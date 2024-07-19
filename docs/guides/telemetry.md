@@ -59,8 +59,6 @@ To make it simple, use `sqlite` and create/apply the default migrations. This DB
 ? Do you want to apply migrations? yes
 ✔ ...done!
 ? Do you want to generate types? no
-? Do you want to create the github action to deploy this application to Platformatic Cloud dynamic workspace? no
-? Do you want to create the github action to deploy this application to Platformatic Cloud static workspace? no
  
 All done! Please open the project directory and check the README.
 Will test this in one example with a Platformatic Composer that proxy requests to a Platformatic Service, which in turn invokes a Platformatic DB.
@@ -108,8 +106,6 @@ Then create a `service` on the `5043` port in the folder using `npx create-platf
 [15:55:35] INFO: Environment file .env successfully created.
 [15:55:35] INFO: Plugins folder "plugins" successfully created.
 [15:55:35] INFO: Routes folder "routes" successfully created.
-? Do you want to create the github action to deploy this application to Platformatic Cloud dynamic workspace? no
-? Do you want to create the github action to deploy this application to Platformatic Cloud static workspace? no
 
 ```
 Open the `platformatic.service.json` file and add the following telemetry configuration (it's exactly the same as `DB`, but with a different `serviceName`)
@@ -181,8 +177,6 @@ Then create a `composer` on the `5044` port in the folder using `npx create-plat
 ? Do you want to run npm install? no
 [16:05:28] INFO: Configuration file platformatic.composer.json successfully created.
 [16:05:28] INFO: Environment file .env successfully created.
-? Do you want to create the github action to deploy this application to Platformatic Cloud dynamic workspace? no
-? Do you want to create the github action to deploy this application to Platformatic Cloud static workspace? no
  
 All done! Please open the project directory and check the README.
 ```

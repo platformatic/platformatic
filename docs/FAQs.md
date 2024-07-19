@@ -5,9 +5,6 @@ label: Welcome to Platformatic
 
 # FAQs
 
-### Does Platformatic support the deployment of js projects to Platformatic Cloud via github action?
-Yes we do! You can see our [generic yml file](https://github.com/platformatic/onestep) and use case on our [docs](https://docs.platformatic.dev/docs/cli#gh)
-
 ### How do I set up a custom authorization strategy in Platformatic?
 To set up a custom authorization strategy in Platformatic, you use the addAuthStrategy method. This method allows you to define how the application should handle user sessions and roles. Here’s an example of setting up a custom authorization strategy:
 
