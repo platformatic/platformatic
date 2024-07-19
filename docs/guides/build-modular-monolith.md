@@ -10,7 +10,6 @@ In this guide we'll create a "modular monolith" Library application. It will be 
 - Customise the composed API that's automatically generated in a Composer service
 - Generate a client for a service's REST API and use it in a Platformatic service to make API requests
 - Add custom functionality to a Composer service's composed API by modifying its routes and responses
-- Deploy a Runtime app to Platformatic Cloud
 
 The architecture for our Library application will look like this:
 
@@ -26,8 +25,6 @@ To follow along with this tutorial, you'll need to have this software installed:
 - [Node.js](https://nodejs.org/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) >= v18.8.0
 - [npm](https://docs.npmjs.com/cli/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) v7 or later
 - A code editor, for example [Visual Studio Code](https://code.visualstudio.com/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog).
-
-If you want to follow along with the [Deploy to Platformatic Cloud](#heading-deploy-to-platformatic-cloud) part of this tutorial, you'll need to create a free [Platformatic Cloud](https://platformatic.cloud), if you don't have one already.
 
 ## Create a Platformatic Runtime app: Library app
 
@@ -78,8 +75,6 @@ Let's enter the following settings for our new service:
   - `3042`
 
 After answering these questions, the creator will create all of the files for the `people-service`. 
-
-When the creator asks if we want to create another service, let's say `no`. Then let's say `yes` both times when it asks if we want to create GitHub Actions to deploy this application to Platformatic Cloud.
 
 Once the creator has finished, our `library-app` directory should look like this:
 
@@ -1114,93 +1109,7 @@ Although the Composer service proxy is a helpful feature, we don't want to use t
   }
 ```
 
-## Deploy to Platformatic Cloud
-
-We've finished building our modular monolith application and we're ready to deploy it to Platformatic Cloud!
-
-## Create an app on Platformatic Cloud
-
-<!-- SCREENSHOT: create-an-app-on-platformati-cloud-01.png -->
-![Create an app on Platformatic Cloud - 01](./build-modular-monolith-images/create-an-app-on-platformati-cloud-01.png)
-
-Let's log in to our [Platformatic Cloud](https://platformatic.cloud) account, then we can click the **Create an app now** button on our Cloud Dashboard page.
-
-We'll enter `library-app` as our application name. Then we can click the **Create Application** button to create our new app.
-
-### Create a static app workspace
-
-<!-- SCREENSHOT: create-a-static-app-workspace-01.png -->
-![Create a static app workspace - 01](./build-modular-monolith-images/create-a-static-app-workspace-01.png)
-
-Let's enter `production` as the name for our workspace, and then click on the **Create Workspace** button.
-
-<!-- SCREENSHOT: create-a-static-app-workspace-02.png -->
-![Create a static app workspace - 02](./build-modular-monolith-images/create-a-static-app-workspace-02.png)
-
-On the next page we'll see the **Workspace ID** and **API key** for our app workspace.
-
-At the bottom of the page, let's click on the link to download and then save an env file that contains those values. We'll use this file with the Platformatic CLI in just a moment to help us deploy our app.
-
-Now we can click on the **Done** button to return to our Cloud dashboard.
-
-### Deploy from the command-line
-
-In our terminal, we can now run this command to deploy our app to Platformatic Cloud:
-
-```bash
-npx platformatic deploy --keys production.plt.txt
-```
-
-### Test the deployed Library app
-
-After our app has been deployed by the Platformatic CLI, we should see a line like this in the logs in our terminal:
-
-```
-Starting application at https://<entrypoint-name>.deploy.space
-```
-
-Now, let's copy that full application URL, and use it to make a request to our app's `/books/` API endpoint:
-
-```bash
-curl <APP_URL>/books/
-
-# Replace <APP_URL> with the URL for your app.
-```
-
-We should then see a response like this:
-
-```json
-[{"id":1,"title":"Fairy Tale","authorId":1,"publishedYear":2022,"createdAt":"1687996697283","updatedAt":"1687996697283","authorName":"Stephen King"},{"id":2,"title":"No One Belongs Here More Than You","authorId":2,"publishedYear":2007,"createdAt":"1687996697289","updatedAt":"1687996697289","authorName":"Miranda July"},{"id":3,"title":"Alice's Adventures in Wonderland","authorId":3,"publishedYear":1865,"createdAt":"1687996697290","updatedAt":"1687996697290","authorName":"Lewis Carroll"}]
-```
-
-Let's also test the `/movies/` API endpoint:
-
-```bash
-curl <APP_URL>/movies/
-
-# Replace <APP_URL> with the URL for your app.
-```
-
-Which should give us a response like this:
-
-```json
-[{"id":1,"title":"Maximum Overdrive","directorId":1,"producerId":4,"releasedYear":1986,"createdAt":"1687996711612","updatedAt":"1687996711612","directorName":"Stephen King","producerName":"Martha Schumacher"},{"id":2,"title":"The Shining","directorId":5,"producerId":1,"releasedYear":1980,"createdAt":"1687996711619","updatedAt":"1687996711619","directorName":"Mick Garris","producerName":"Stephen King"},{"id":3,"title":"Kajillionaire","directorId":2,"producerId":6,"releasedYear":2020,"createdAt":"1687996711621","updatedAt":"1687996711621","directorName":"Miranda July","producerName":"Dede Gardner"}]
-```
-
-Our Library app is now successfully running in production! 🎉
-
-### Automate deployment with GitHub Actions
-
-If we want to automate pull request preview and production deployments of our app to Platformatic Cloud, we can do it with GitHub Actions by:
-
-1. Creating a new repository on GitHub, then committing and push up the code for our Library app.
-2. Following the [Cloud Quick Start Guide](https://docs.platformatic.cloud/docs/quick-start-guide/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) to configure the deployment for our app. We can skip the step for creating a GitHub repository.
-
 ## Next steps
-
-### Deploying production databases
-
-Because we configured all of our Platformatic DB services to use SQLite, when we deployed our Library app with `platformatic deploy` the SQLite database files were deployed too (`db.sqlite`). For a real production application we recommend storing your data separately from your application in a hosted database service such as [Neon](https://neon.tech/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) (Postgres) or [PlanetScale](https://planetscale.com/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) (MySQL).
 
 ### Integrating existing services into a Runtime application
 
@@ -1228,12 +1137,11 @@ If you've followed this tutorial step-by-step, you should now have a Platformati
 
 You can watch Platformatic Runtime and Composer in action in the deep dive videos that our Co-founder and CTO [Matteo Collina](https://twitter.com/matteocollina?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) created for our [Papilio Launch](https://papilio.platformatic.dev/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog):
 
-- [Introducing: Platformatic Runtime](https://www.youtube.com/watch?v=KGzAURD8mcc&list=PL_x4nRdxj60K1zx4pCOEXUTQKkDg8WpCR&index=2?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) and [Deploying Runtime to Cloud](https://www.youtube.com/watch?v=DWPDx19UrFU&list=PL_x4nRdxj60K1zx4pCOEXUTQKkDg8WpCR&index=5?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog)
+- [Introducing: Platformatic Runtime](https://www.youtube.com/watch?v=KGzAURD8mcc&list=PL_x4nRdxj60K1zx4pCOEXUTQKkDg8WpCR&index=2?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog)
 - [Introducing: Platformatic Composer](https://www.youtube.com/watch?v=0DeNIeSnH0E&list=PL_x4nRdxj60K1zx4pCOEXUTQKkDg8WpCR&index=3?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog)
 - [Introducing: Client & Taxonomy](https://www.youtube.com/watch?v=W_bXefh-j4A&list=PL_x4nRdxj60K1zx4pCOEXUTQKkDg8WpCR&index=4?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog)
 
 ### Get started with Platformatic
 
 - Build robust Node.js apps with [our open-source tools](https://docs.platformatic.dev/?utm_campaign=Blog%20post%20-%20Building%20REST%20APIs%20with%20Platformatic%20DB&utm_medium=blog&utm_source=Platformatic%20Blog?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog)
-- Deploy your apps with [Platformatic Cloud Free](https://docs.platformatic.cloud/docs/quick-start-guide/?utm_campaign=Blog%20post%20-%20Building%20REST%20APIs%20with%20Platformatic%20DB&utm_medium=blog&utm_source=Platformatic%20Blog?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog)
 - Join [our community](https://discord.gg/platformatic?utm_campaign=Blog%20post%20-%20Building%20REST%20APIs%20with%20Platformatic%20DB&utm_medium=blog&utm_source=Platformatic%20Blog?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) on Discord

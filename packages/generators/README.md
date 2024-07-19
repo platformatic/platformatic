@@ -21,8 +21,6 @@ The `setConfig({...})` function should be called to set the config generator. `B
 - `initGitRepository`: Inits the git repository
 - `dependencies`: A key value object to add dependencies in `package.json` file
 - `devDependencies`: A key value object to add dev-dependencies in `package.json` file
-- `staticWorkspaceGitHubActions`: Creates the GitHub action to deploy in a static workspace in Platformatic Cloud
-- `dynamicWorkspaceGitHubActions`: Creates the GitHub action to deploy in a dynamic workspace in Platformatic Cloud
 - `env`: A key/value object that will be automatically appended to the generated `.env` file
 ## Usage
 
