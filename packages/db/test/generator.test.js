@@ -28,8 +28,6 @@ describe('generator', () => {
       initGitRepository: false,
       dependencies: { '@platformatic/db': `^${dbApp.platformaticVersion}` },
       devDependencies: {},
-      staticWorkspaceGitHubActions: false,
-      dynamicWorkspaceGitHubActions: false,
       isRuntimeContext: false,
       serviceName: '',
       envPrefix: '',
