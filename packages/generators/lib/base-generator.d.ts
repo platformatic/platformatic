@@ -38,8 +38,6 @@ export namespace BaseGenerator {
     devDependencies?: Dependency
     typescript?: boolean
     initGitRepository?: boolean
-    staticWorkspaceGitHubActions?: boolean
-    dynamicWorkspaceGitHubActions?: boolean
     env?: KeyValue,
     isRuntimeContext?: boolean,
     serviceName?: string,

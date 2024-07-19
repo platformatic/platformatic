@@ -55,8 +55,6 @@ class BaseGenerator extends FileGenerator {
       initGitRepository: false,
       dependencies: {},
       devDependencies: {},
-      staticWorkspaceGitHubActions: false,
-      dynamicWorkspaceGitHubActions: false,
       isRuntimeContext: false,
       serviceName: '',
       envPrefix: '',
