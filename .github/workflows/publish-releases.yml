@@ -55,7 +55,9 @@ jobs:
           git config --global user.email "hello@matteocollina.com"
           git commit -a -m "Bumped ${{ inputs.version }}"
           git push origin HEAD:${{ github.ref }}
-      - run: pnpm -r publish --access public
+        # TODO(mcollina): make the following work for both releases
+      - run: pnpm -r publish --access public --tag ${{ inputs.prerelease == 'true' && 'next' || 'latest' }}
+        if: github.ref == 'refs/heads/main'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: 'Create release notes'
