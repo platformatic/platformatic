@@ -18,7 +18,6 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "@platformatic/authenticate": "workspace:*",
     "@platformatic/client": "workspace:*",
     "@platformatic/client-cli": "workspace:*",
     "@platformatic/composer": "workspace:*",
