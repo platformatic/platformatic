@@ -38,15 +38,9 @@ test('should fetch private stackables from the marketplace', async () => {
     { name: 'private-mock-service-1' }
   ]
 
-  const userApiKey = 'mock-api-key'
-  mockPool.intercept({
-    path: '/templates',
-    headers: {
-      'x-platformatic-user-api-key': userApiKey
-    }
-  }).reply(200, mockStackables)
+  mockPool.intercept({ path: '/templates' }).reply(200, mockStackables)
 
-  const stackables = await fetchStackables(MARKETPLACE_HOST, userApiKey)
+  const stackables = await fetchStackables(MARKETPLACE_HOST)
   deepEqual(stackables, mockStackables.map(s => s.name))
 })
 
@@ -57,17 +51,10 @@ test('should fetch only public stackables if user api key is wrong', async () =>
     { name: 'mock-service-3' }
   ]
 
-  const userApiKey = 'mock-api-key'
-  mockPool.intercept({
-    path: '/templates',
-    headers: {
-      'x-platformatic-user-api-key': userApiKey
-    }
-  }).reply(401)
-
+  mockPool.intercept({ path: '/templates' }).reply(401)
   mockPool.intercept({ path: '/templates' }).reply(200, mockStackables)
 
-  const stackables = await fetchStackables(MARKETPLACE_HOST, userApiKey)
+  const stackables = await fetchStackables(MARKETPLACE_HOST)
   deepEqual(stackables, mockStackables.map(s => s.name))
 })
 
