@@ -5,7 +5,6 @@ const { join } = require('path')
 
 // Add the modules here. Remember to add the dependency to package.json
 const modules = [
-  '@platformatic/authenticate',
   '@platformatic/client',
   '@platformatic/client-cli',
   '@platformatic/composer',

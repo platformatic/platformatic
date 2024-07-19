@@ -43,7 +43,6 @@
   },
   "dependencies": {
     "@fastify/error": "^3.4.1",
-    "@platformatic/authenticate": "workspace:*",
     "@platformatic/client-cli": "workspace:*",
     "@platformatic/composer": "workspace:*",
     "@platformatic/config": "workspace:*",

@@ -7,7 +7,6 @@ import { run as runRuntime, compile } from '@platformatic/runtime/runtime.mjs'
 import { startCommand } from '@platformatic/runtime'
 import { runService } from '@platformatic/service/service.mjs'
 import { runComposer } from '@platformatic/composer/composer.mjs'
-import { login } from '@platformatic/authenticate/authenticate.js'
 import { command as client } from '@platformatic/client-cli'
 import { readFile } from 'fs/promises'
 import { join } from 'desm'
@@ -59,7 +58,6 @@ program.register('help db', async (args) => runDB(['help', ...args]))
 program.register('help client', () => client([]))
 program.register('help runtime', async (args) => runRuntime(['help', ...args]))
 program.register('help service', async (args) => runService(['help', ...args]))
-program.register({ command: 'login', strict: true }, login)
 
 const args = minimist(process.argv.slice(2), {
   boolean: ['help', 'version'],

@@ -8,7 +8,6 @@ Welcome to Platformatic. Available commands are:
 * `gh` - create a new gh action for Platformatic deployments.
 * `runtime` - start Platformatic Runtime; type `platformatic runtime help` to know more.
 * `start` - start a Platformatic application.
-* `login` - generate a Platformatic login api key.
 * `client` - generate a Platformatic client.
 * `ps` - list all Platformatic runtime applications.
 * `logs` - stream logs for a Platformatic runtime application.

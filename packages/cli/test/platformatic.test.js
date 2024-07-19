@@ -52,15 +52,6 @@ test('runtime', async (t) => {
   }
 })
 
-test('login', async (t) => {
-  try {
-    await execa('node', [cliPath, 'login', '--auth-proxy-host', 'http://localhost:3000'])
-    assert.fail('bug')
-  } catch (err) {
-    assert.ok(err.stderr.includes('Unable to authenticate:'))
-  }
-})
-
 test('command not found', async (t) => {
   try {
     await execa('node', [cliPath, 'foo'])
