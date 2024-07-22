@@ -1,0 +1,33 @@
+{
+  "name": "@platformatic/itc",
+  "version": "2.0.0-alpha.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run lint && borp --concurrency=1 --coverage",
+    "lint": "standard"
+  },
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "devDependencies": {
+    "borp": "^0.16.0",
+    "standard": "^17.1.0"
+  },
+  "dependencies": {
+    "@fastify/error": "^3.4.1"
+  },
+  "standard": {
+    "ignore": [
+      "**/dist/*",
+      "**/test/tmp"
+    ]
+  }
+}
