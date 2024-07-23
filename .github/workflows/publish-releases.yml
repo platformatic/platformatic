@@ -56,8 +56,7 @@ jobs:
           git commit -a -m "Bumped ${{ inputs.version }}"
           git push origin HEAD:${{ github.ref }}
         # TODO(mcollina): make the following work for both releases
-      - run: pnpm -r publish --access public --tag ${{ inputs.prerelease == 'true' && 'next' || 'latest' }}
-        if: github.ref == 'refs/heads/main'
+      - run: pnpm -r publish --access public --tag ${{ inputs.prerelease == true && 'next' || 'latest' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: 'Create release notes'
