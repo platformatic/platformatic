@@ -23,5 +23,6 @@
       }
     ]
   },
-  "metrics": false
+  "metrics": false,
+  "watch": true
 }

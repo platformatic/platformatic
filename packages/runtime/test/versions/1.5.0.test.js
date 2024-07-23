@@ -7,7 +7,7 @@ const { platformaticRuntime } = require('../../index.js')
 const { ConfigManager } = require('@platformatic/config')
 const { version } = require('../../package.json')
 
-test('rmeove the watch config', async () => {
+test('remove the watch config', async () => {
   const file = join(__dirname, 'fixtures', '1.4.0.json')
 
   const configManager = new ConfigManager({
