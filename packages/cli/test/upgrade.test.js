@@ -3,9 +3,11 @@ import { test } from 'node:test'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { cp, readFile } from 'node:fs/promises'
+import { cp, readFile, mkdir, symlink } from 'node:fs/promises'
 import { execa } from 'execa'
 import { cliPath } from './helper.js'
+
+const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 let count = 0
 
@@ -22,6 +24,14 @@ test('writes a config file', async (t) => {
     join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'platformatic.db.schema.json'),
     join(dest, 'platformatic.db.schema.json'))
 
+  await mkdir(join(dest, 'node_modules', '@platformatic'), {
+    recursive: true
+  })
+
+  await symlink(
+    join(rootDir, 'node_modules', '@platformatic', 'db'),
+    join(dest, 'node_modules', '@platformatic', 'db'))
+
   const { stdout } = await execa('node', [cliPath, 'upgrade'], {
     cwd: dest
   })
@@ -32,7 +42,7 @@ test('writes a config file', async (t) => {
 
   const config = JSON.parse(await readFile(join(dest, 'platformatic.db.json'), 'utf8'))
 
-  assert.match(config.$schema, new RegExp('https://platformatic.dev/schemas/v\\d+.\\d+.\\d+/db'))
+  assert.match(config.$schema, new RegExp('https://platformatic.dev/schemas/v\\d+.\\d+.\\d+(?:-\\w+\\.\\d+)?/db'))
 })
 
 test('writes a config file with a config option', async (t) => {
@@ -46,11 +56,21 @@ test('writes a config file with a config option', async (t) => {
     join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'platformatic.db.schema.json'),
     join(dest, 'platformatic.db.schema.json'))
 
-  await execa('node', [cliPath, 'upgrade', '-c', join(dest, 'platformatic.db.json')])
+  await mkdir(join(dest, 'node_modules', '@platformatic'), {
+    recursive: true
+  })
+
+  await symlink(
+    join(rootDir, 'node_modules', '@platformatic', 'db'),
+    join(dest, 'node_modules', '@platformatic', 'db'))
+
+  await execa('node', [cliPath, 'upgrade', '-c', join(dest, 'platformatic.db.json')], {
+    cwd: dest
+  })
 
   const config = JSON.parse(await readFile(join(dest, 'platformatic.db.json'), 'utf8'))
 
-  assert.match(config.$schema, new RegExp('https://platformatic.dev/schemas/v\\d+.\\d+.\\d+/db'))
+  assert.match(config.$schema, new RegExp('https://platformatic.dev/schemas/v\\d+.\\d+.\\d+(?:-\\w+\\.\\d+)?/db'))
 })
 
 test('no config file no party', async (t) => {
@@ -71,5 +91,5 @@ test('updates a runtime', async (t) => {
 
   const config = JSON.parse(await readFile(join(dest, 'platformatic.json'), 'utf8'))
 
-  assert.match(config.$schema, new RegExp('https://platformatic.dev/schemas/v\\d+.\\d+.\\d+/runtime'))
+  assert.match(config.$schema, new RegExp('https://platformatic.dev/schemas/v\\d+.\\d+.\\d+(?:-\\w+\\.\\d+)?/runtime'))
 })

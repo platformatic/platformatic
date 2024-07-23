@@ -28,8 +28,6 @@ describe('generator', () => {
       initGitRepository: false,
       dependencies: { '@platformatic/db': `^${dbApp.platformaticVersion}` },
       devDependencies: {},
-      staticWorkspaceGitHubActions: false,
-      dynamicWorkspaceGitHubActions: false,
       isRuntimeContext: false,
       serviceName: '',
       envPrefix: '',
@@ -198,7 +196,6 @@ declare module 'fastify' {
       const exampleTest = dbApp.getFileObject('helper.ts', 'test')
       assert.ok(exampleTest.contents.includes(`
   t.after(async () => {
-    t.diagnostic('Disposing test database ' + newDB)
     await db.query(sql\`
       DROP DATABASE \${sql.ident(newDB)}
     \`)
@@ -218,7 +215,6 @@ declare module 'fastify' {
       const exampleTest = dbApp.getFileObject('helper.ts', 'test')
       assert.ok(exampleTest.contents.includes(`
   t.after(async () => {
-    t.diagnostic('Disposing test database ' + newDB)
     await db.query(sql\`
       DROP DATABASE \${sql.ident(newDB)}
     \`)
@@ -238,7 +234,6 @@ declare module 'fastify' {
       const exampleTest = dbApp.getFileObject('helper.ts', 'test')
       assert.ok(exampleTest.contents.includes(`
   t.after(async () => {
-    t.diagnostic('Disposing test database ' + newDB)
     await db.query(sql\`
       DROP DATABASE \${sql.ident(newDB)}
     \`)

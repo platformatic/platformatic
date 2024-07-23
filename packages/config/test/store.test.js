@@ -1,12 +1,16 @@
 'use strict'
 
 const assert = require('node:assert/strict')
-const { test } = require('node:test')
+const { mkdtemp, rm, mkdir, writeFile } = require('node:fs/promises')
+const os = require('node:os')
+const { test, describe } = require('node:test')
 const { join } = require('node:path')
 const { Store } = require('../')
 const { ConfigManager } = require('../lib/manager')
 
 const { version } = require('../package.json')
+
+const tmpdir = os.tmpdir()
 
 test('Store with builtins', async t => {
   function foo () {
@@ -411,4 +415,61 @@ test('Platformatic DB', async t => {
   store.add(foo)
 
   assert.equal(await store.get({ $schema: './foo', db: {} }), foo, 'should have builtin value')
+})
+
+describe('default modules', () => {
+  for (const type of ['service', 'db', 'composer']) {
+    test(`automatically load ${type}`, async t => {
+      const oldCwd = process.cwd()
+      process.chdir(tmpdir)
+      const cwd = join(tmpdir, await mkdtemp('store-'))
+      process.chdir(cwd)
+      t.after(async () => {
+        process.chdir(oldCwd)
+        await rm(cwd, { recursive: true })
+      })
+
+      await mkdir(join(cwd, 'node_modules', '@platformatic', type), { recursive: true })
+
+      function foo () {
+      }
+
+      foo.schema = {
+        $id: `https://platformatic.dev/schemas/v${version}/${type}`,
+        type: 'object'
+      }
+
+      foo.configType = type
+      foo.configManagerConfig = {
+        schema: foo.schema,
+        allowToWatch: ['.env'],
+        schemaOptions: {
+          useDefaults: true,
+          coerceTypes: true,
+          allErrors: true,
+          strict: false
+        }
+      }
+
+      await writeFile(join(cwd, 'node_modules', '@platformatic', type, 'index.js'), `
+        function foo () {}
+        foo.schema = ${JSON.stringify(foo.schema)}
+        foo.configType = '${type}'
+        foo.configManagerConfig = ${JSON.stringify(foo.configManagerConfig)}
+        module.exports = foo
+      `)
+
+      const store = new Store({ cwd })
+
+      const loaded = await store.get({ $schema: `https://platformatic.dev/schemas/v${version}/${type}` })
+      assert.deepEqual(loaded.schema, foo.schema, 'should have matching schema')
+      assert.equal(loaded.configType, foo.configType, 'should have matching configType')
+      assert.deepEqual(loaded.configManagerConfig, foo.configManagerConfig, 'should have matching configManagerConfig')
+
+      assert.deepEqual(store.listTypes(), [{
+        id: `https://platformatic.dev/schemas/v${version}/${type}`,
+        configType: type
+      }])
+    })
+  }
 })

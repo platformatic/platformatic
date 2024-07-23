@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/generators",
-  "version": "1.45.0",
+  "version": "2.0.0-alpha.1",
   "description": "Main classes and utils for generators.",
   "main": "index.js",
   "scripts": {
@@ -20,8 +20,8 @@
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.7",
-    "borp": "^0.14.0",
-    "c8": "^9.1.0",
+    "borp": "^0.16.0",
+    "c8": "^10.0.0",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
     "tsd": "^0.31.0",

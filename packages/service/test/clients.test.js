@@ -5,7 +5,8 @@ const { test } = require('node:test')
 const { join } = require('node:path')
 const { rm } = require('node:fs/promises')
 const { request } = require('undici')
-const { compile } = require('../lib/compile')
+const { compile } = require('@platformatic/ts-compiler')
+const pino = require('pino')
 const { buildServer } = require('..')
 
 // require('./helper')
@@ -50,7 +51,10 @@ test('client is loaded (ts)', async (t) => {
   } catch {}
 
   console.time('compile')
-  await compile(targetDir, { server: { logger: { level: 'warn' } } })
+  await compile({
+    cwd: targetDir,
+    logger: pino({ level: 'warn' })
+  })
   console.timeEnd('compile')
 
   const app2 = await buildServer(join(targetDir, 'platformatic.service.json'))

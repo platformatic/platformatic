@@ -30,6 +30,8 @@ interface PlatformaticClientOptions {
   fullRequest: boolean;
   throwOnError: boolean;
   headers?: Headers;
+  bodyTimeout?: number;
+  headersTimeout?: number;
   validateResponse?: boolean;
   queryParser?: (query: URLSearchParams) => string
 }

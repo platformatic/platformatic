@@ -12,8 +12,7 @@ test('url-auth-headers with wrong values', async (t) => {
   const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'url-auth-headers', 'platformatic.service.json'))
   await app.start()
 
-  const dir = await moveToTmpdir(after)
-  t.diagnostic(`working in ${dir}`)
+  await moveToTmpdir(after)
 
   let errName, errMessage
   try {
@@ -34,7 +33,6 @@ test('url-auth-headers option with valid values', async (t) => {
   await app.start()
 
   const dir = await moveToTmpdir(after)
-  t.diagnostic(`working in ${dir}`)
 
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/docs', '--name', 'authUrlHeaders', '--url-auth-headers', '{"authorization":"42"}'])
 

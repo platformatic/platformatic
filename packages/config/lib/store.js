@@ -12,6 +12,12 @@ const abstractLogger = require('./logger')
 
 const pltVersion = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8')).version
 
+const defaultTypes = [
+  'service',
+  'db',
+  'composer'
+]
+
 class Store {
   #map = new Map()
   #cwd
@@ -67,35 +73,30 @@ class Store {
       require = createRequire(join(directory, 'noop.js'))
     }
 
-    // try to load module
-    if (!app && extendedModule) {
-      try {
-        app = require(extendedModule)
-      } catch (err) {
-        if (err.code === 'ERR_REQUIRE_ESM') {
-          const toLoad = require.resolve(extendedModule)
-          app = (await import('file://' + toLoad)).default
-        } else {
-          throw err
-        }
-      }
-    }
-
     const match = $schema?.match(/\/schemas\/(.*)\/(.*)/)
-    if (!app && match) {
-      const type = match[2]
-
-      const toLoad = `https://platformatic.dev/schemas/v${pltVersion}/${type}`
-      app = this.#map.get(toLoad)
-    }
+    let type = match?.[2]
 
     // Legacy Platformatic apps
-    if (!app && $schema?.indexOf('./') === 0) {
+    if (!app && !type && $schema?.indexOf('./') === 0 && !extendedModule) {
       if (core || db) {
-        app = this.#map.get(`https://platformatic.dev/schemas/v${pltVersion}/db`)
+        type = 'db'
       } else {
-        app = this.#map.get(`https://platformatic.dev/schemas/v${pltVersion}/service`)
+        type = 'service'
       }
+    }
+
+    if (!app && type) {
+      const toLoad = `https://platformatic.dev/schemas/v${pltVersion}/${type}`
+      app = this.#map.get(toLoad)
+      if (!app && defaultTypes.includes(type)) {
+        app = await loadModule(require, `@platformatic/${type}`)
+        this.add(app)
+      }
+    }
+
+    // try to load module
+    if (!app && extendedModule) {
+      app = await loadModule(require, extendedModule)
     }
 
     if (!app) {
@@ -138,8 +139,11 @@ class Store {
     directory ??= this.#cwd
     const types = this.listTypes()
 
+    const typeSet = new Set()
+
     for (const _ of types) {
       const type = _.configType
+      typeSet.add(type)
       _.filenames = [
         `platformatic.${type}.json`,
         `platformatic.${type}.json5`,
@@ -148,6 +152,25 @@ class Store {
         `platformatic.${type}.toml`,
         `platformatic.${type}.tml`
       ]
+    }
+
+    for (const type of defaultTypes) {
+      if (typeSet.has(type)) {
+        continue
+      }
+      const _ = {
+        configType: type,
+        filenames: [
+          `platformatic.${type}.json`,
+          `platformatic.${type}.json5`,
+          `platformatic.${type}.yaml`,
+          `platformatic.${type}.yml`,
+          `platformatic.${type}.toml`,
+          `platformatic.${type}.tml`
+        ]
+      }
+
+      types.push(_)
     }
 
     types.push({
@@ -237,6 +260,19 @@ class Store {
     })
 
     return { configManager, app }
+  }
+}
+
+async function loadModule (require, extendedModule) {
+  try {
+    return require(extendedModule)
+  } catch (err) {
+    if (err.code === 'ERR_REQUIRE_ESM') {
+      const toLoad = require.resolve(extendedModule)
+      return (await import('file://' + toLoad)).default
+    } else {
+      throw err
+    }
   }
 }
 

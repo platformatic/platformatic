@@ -128,6 +128,7 @@ function _buildServer (options) {
   return buildServer(options, platformaticDB)
 }
 
+module.exports = platformaticDB
 module.exports.buildServer = _buildServer
 module.exports.schema = schema
 module.exports.platformaticDB = platformaticDB

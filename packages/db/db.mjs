@@ -6,7 +6,7 @@ import isMain from 'es-main'
 import helpMe from 'help-me'
 import { readFile } from 'fs/promises'
 import { join } from 'desm'
-import { start, tsCompiler } from '@platformatic/service'
+import { start, buildCompileCmd } from '@platformatic/service'
 import { printAndExitLoadConfigError } from '@platformatic/config'
 import { platformaticDB } from './index.js'
 
@@ -17,7 +17,7 @@ import { printGraphQLSchema, printOpenAPISchema, generateJsonSchemaConfig } from
 import { generateMigration } from './lib/gen-migration.mjs'
 import { createDB } from './lib/create.mjs'
 
-const compile = tsCompiler.buildCompileCmd(platformaticDB)
+const compile = buildCompileCmd(platformaticDB)
 
 const help = helpMe({
   dir: join(import.meta.url, 'help'),

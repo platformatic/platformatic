@@ -7,22 +7,43 @@ const fastify = require('fastify')
 const fp = require('fastify-plugin')
 
 const metricsPlugin = fp(async function (app, opts = {}) {
+  const promClient = require('prom-client')
+
+  const register = new promClient.Registry()
+
   const defaultMetrics = opts.defaultMetrics ?? { enabled: true }
   const prefix = opts.prefix ?? ''
 
+  if (opts.labels) {
+    const labels = opts.labels ?? {}
+    register.setDefaultLabels(labels)
+  }
+
   app.register(require('fastify-metrics'), {
-    defaultMetrics: defaultMetrics || { enabled: true },
+    defaultMetrics: {
+      ...defaultMetrics,
+      register
+    },
     endpoint: null,
     name: 'metrics',
     clearRegisterOnInit: false,
+    promClient: {
+      ...promClient,
+      register
+    },
     routeMetrics: {
       enabled: true,
+      customLabels: {
+        telemetry_id: (req) => req.headers['x-telemetry-id'] ?? 'unknown'
+      },
       overrides: {
         histogram: {
-          name: prefix + 'http_request_duration_seconds'
+          name: prefix + 'http_request_duration_seconds',
+          registers: [register]
         },
         summary: {
-          name: prefix + 'http_request_summary_seconds'
+          name: prefix + 'http_request_summary_seconds',
+          registers: [register]
         }
       }
     }
@@ -34,8 +55,10 @@ const metricsPlugin = fp(async function (app, opts = {}) {
       help: 'request duration in seconds summary for all requests',
       collect: () => {
         process.nextTick(() => httpLatencyMetric.reset())
-      }
+      },
+      registers: [register]
     })
+
     const ignoredMethods = ['HEAD', 'OPTIONS', 'TRACE', 'CONNECT']
     const timers = new WeakMap()
     app.addHook('onRequest', async (req) => {
@@ -66,7 +89,8 @@ const metricsPlugin = fp(async function (app, opts = {}) {
           const result = eventLoopUtilization(endELU, startELU).utilization
           eluMetric.set(result)
           startELU = endELU
-        }
+        },
+        registers: [register]
       })
       app.metrics.client.register.registerMetric(eluMetric)
 
@@ -98,7 +122,8 @@ const metricsPlugin = fp(async function (app, opts = {}) {
 
           previousIdleTime = idleTime
           previousTotalTime = totalTime
-        }
+        },
+        registers: [register]
       })
       app.metrics.client.register.registerMetric(cpuMetric)
     })

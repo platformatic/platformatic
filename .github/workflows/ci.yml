@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - v1.x
     paths-ignore:
       - 'docs/**'
       - '**.md'
@@ -30,7 +31,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - uses: pnpm/action-setup@v4.0.0
       - uses: actions/setup-node@v4
         with:
@@ -43,34 +44,6 @@ jobs:
           retry_on: error
           command: pnpm fetch --ignore-scripts
 
-  ci-deploy-client:
-    needs: setup-node_modules
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
-    strategy:
-      matrix:
-        node-version: [18, 20]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
-    - uses: pnpm/action-setup@v4.0.0
-    - uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
-    - name: pnpm install
-      uses: nick-fields/retry@v3.0.0
-      with:
-        max_attempts: 10
-        timeout_minutes: 15
-        retry_on: error
-        command: pnpm install --frozen-lockfile
-    - name: Run test suite without code coverage
-      run: cd packages/deploy-client && pnpm run nocov
-    - name: License Check
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-      run: cd packages/deploy-client && pnpm run license
-
   ci-create-platformatic:
     needs: setup-node_modules
     runs-on: ${{ matrix.os }}
@@ -80,7 +53,7 @@ jobs:
         node-version: [18, 20]
         os: [ubuntu-latest, windows-latest]
     steps:
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
     - uses: pnpm/action-setup@v4.0.0
     - uses: actions/setup-node@v4
       with:
@@ -102,37 +75,6 @@ jobs:
     - name: Run test suite
       run: cd packages/create-platformatic && pnpm test
 
-  ci-create-platformatic-auto:
-    needs: setup-node_modules
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
-    strategy:
-      matrix:
-        node-version: [18, 20]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
-    - uses: pnpm/action-setup@v4.0.0
-    - uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
-    - name: pnpm install
-      uses: nick-fields/retry@v3.0.0
-      with:
-        max_attempts: 10
-        timeout_minutes: 15
-        retry_on: error
-        command: pnpm install --frozen-lockfile
-    - name: platformatic cli global link
-      run: cd packages/cli && pnpm link --global && cd ../..
-    - name: Setup local git user and email
-      run: |
-        git config --global user.name 'Platformatic Github Actions'
-        git config --global user.email 'info@platformatic.dev'
-    - name: Run test suite
-      run: cd packages/create-platformatic-auto && pnpm test
-
   ci-cli:
     needs: setup-node_modules
     runs-on: ${{ matrix.os }}
@@ -142,7 +84,7 @@ jobs:
         node-version: [18, 20]
         os: [ubuntu-latest, windows-latest]
     steps:
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
     - uses: pnpm/action-setup@v4.0.0
     - uses: actions/setup-node@v4
       with:
@@ -170,7 +112,7 @@ jobs:
         node-version: [18, 20]
         os: [ubuntu-latest, windows-latest]
     steps:
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
     - uses: pnpm/action-setup@v4.0.0
     - uses: actions/setup-node@v4
       with:
@@ -195,7 +137,7 @@ jobs:
         node-version: [18, 20]
         os: [ubuntu-latest]
     steps:
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
     - uses: pnpm/action-setup@v4.0.0
     - uses: actions/setup-node@v4
       with:
@@ -220,7 +162,7 @@ jobs:
         node-version: [18, 20]
         os: [ubuntu-latest, windows-latest]
     steps:
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
     - uses: pnpm/action-setup@v4.0.0
     - uses: ikalnytskyi/action-setup-postgres@v6
     - uses: actions/setup-node@v4
@@ -250,7 +192,7 @@ jobs:
         node-version: [18, 20]
         os: [ubuntu-latest]
     steps:
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
     - uses: pnpm/action-setup@v4.0.0
     - uses: actions/setup-node@v4
       with:
@@ -276,7 +218,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     steps:
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
     - uses: pnpm/action-setup@v4.0.0
     - uses: actions/setup-node@v4
       with:
@@ -322,7 +264,7 @@ jobs:
         node-version: [18, 20]
         os: [ubuntu-latest]
     steps:
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
     - uses: pnpm/action-setup@v4.0.0
     - uses: actions/setup-node@v4
       with:
@@ -360,7 +302,7 @@ jobs:
         node-version: [18, 20]
         os: [ubuntu-latest]
     steps:
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
     - uses: pnpm/action-setup@v4.0.0
     - uses: actions/setup-node@v4
       with:
@@ -384,31 +326,6 @@ jobs:
     - name: Run test suite sql-mapper
       run: cd packages/sql-events && pnpm run test:${{ matrix.db }}
 
-  ci-auth-login:
-    needs: setup-node_modules
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
-    strategy:
-      matrix:
-        node-version: [18, 20]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
-      - uses: pnpm/action-setup@v4.0.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.0
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run test suite
-        run: cd packages/authenticate && pnpm test
-
   ci-control:
     needs: setup-node_modules
     runs-on: ${{matrix.os}}
@@ -418,7 +335,7 @@ jobs:
         node-version: [18, 20]
         os: [ubuntu-latest, windows-latest]
     steps:
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
     - uses: pnpm/action-setup@v4.0.0
     - uses: actions/setup-node@v4
       with:
@@ -443,7 +360,7 @@ jobs:
         node-version: [18, 20]
         os: [ubuntu-latest, windows-latest]
     steps:
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
     - uses: pnpm/action-setup@v4.0.0
     - uses: actions/setup-node@v4
       with:
@@ -468,7 +385,7 @@ jobs:
         node-version: [18, 20]
         os: [ubuntu-latest, windows-latest]
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - uses: pnpm/action-setup@v4.0.0
       - uses: actions/setup-node@v4
         with:
@@ -495,7 +412,7 @@ jobs:
         node-version: [18, 20]
         os: [ubuntu-latest, windows-latest]
     steps:
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
     - uses: pnpm/action-setup@v4.0.0
     - uses: actions/setup-node@v4
       with:
@@ -511,6 +428,31 @@ jobs:
     - name: Run utils package test suite
       run: cd packages/utils && pnpm test
 
+  ci-ts-compiler:
+    needs: setup-node_modules
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        node-version: [18, 20]
+        os: [ubuntu-latest, windows-latest]
+    steps:
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+    - uses: pnpm/action-setup@v4.0.0
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'pnpm'
+    - name: pnpm install
+      uses: nick-fields/retry@v3.0.0
+      with:
+        max_attempts: 10
+        timeout_minutes: 15
+        retry_on: error
+        command: pnpm install --frozen-lockfile
+    - name: Run ts-compiler package test suite
+      run: cd packages/ts-compiler && pnpm test
+
   ci-client:
     needs: setup-node_modules
     runs-on: ${{ matrix.os }}
@@ -520,7 +462,7 @@ jobs:
         node-version: [18, 20]
         os: [ubuntu-latest, windows-latest]
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - uses: pnpm/action-setup@v4.0.0
       - uses: actions/setup-node@v4
         with:
@@ -546,7 +488,7 @@ jobs:
         node-version: [18, 20]
         os: [ubuntu-latest]
     steps:
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
     - uses: pnpm/action-setup@v4.0.0
     - uses: actions/setup-node@v4
       with:
@@ -566,7 +508,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
     - uses: pnpm/action-setup@v4.0.0
     - uses: actions/setup-node@v4
       with:
@@ -580,13 +522,8 @@ jobs:
       run: cd packages/frontend-template && pnpm exec playwright install
     - name: Run Platformatic frontend cli and E2E tests
       run: |
-        node ./packages/cli/cli.js db migrations apply --config=./packages/frontend-template/test/e2e/fixtures/platformatic.e2e.db.json &&
-        node ./packages/cli/cli.js db start --config=./packages/frontend-template/test/e2e/fixtures/platformatic.e2e.db.json &
-        sleep 5 &&
-        rm -rf packages/frontend-template/src/platformatic-generated-code
-        mkdir -p packages/frontend-template/src/platformatic-generated-code &&
-        cd packages/frontend-template/src/platformatic-generated-code &&
-        node ../../../client-cli/cli.mjs http://127.0.0.1:9999 --frontend --language ts &&
+        cd packages/frontend-template
+        pnpm run test:prepare
         pnpm test
   ci-generators:
     needs: setup-node_modules
@@ -597,7 +534,7 @@ jobs:
         node-version: [18, 20]
         os: [ubuntu-latest, windows-latest]
     steps:
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
     - uses: pnpm/action-setup@v4.0.0
     - uses: actions/setup-node@v4
       with:
@@ -622,7 +559,7 @@ jobs:
         node-version: [18, 20]
         os: [ubuntu-latest]
     steps:
-    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
     - uses: pnpm/action-setup@v4.0.0
     - uses: actions/setup-node@v4
       with:

@@ -67,6 +67,7 @@ class RuntimeGenerator extends BaseGenerator {
         borp: `${this.pkgData.devDependencies.borp}`
       },
       dependencies: {
+        '@platformatic/runtime': `^${this.platformaticVersion}`,
         platformatic: `^${this.platformaticVersion}`,
         ...this.config.dependencies
       },
@@ -154,7 +155,6 @@ class RuntimeGenerator extends BaseGenerator {
     const config = {
       $schema: `https://platformatic.dev/schemas/v${this.platformaticVersion}/runtime`,
       entrypoint: this.entryPoint.name,
-      allowCycles: false,
       hotReload: true,
       autoload: {
         path: 'services',
@@ -401,6 +401,12 @@ class RuntimeGenerator extends BaseGenerator {
         const newServicePackages = newService.plugins.map((meta) => meta.name)
         const pluginsToRemove = getArrayDifference(oldServicePackages, newServicePackages)
         pluginsToRemove.forEach((p) => delete currentRuntimeDependencies[p])
+      } else {
+        // add service to the generator
+        this.services.push({
+          name: newService.name,
+          service: serviceInstance
+        })
       }
       serviceInstance.setConfig(baseConfig)
       serviceInstance.setConfigFields(newService.fields)

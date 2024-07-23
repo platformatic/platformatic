@@ -66,10 +66,8 @@ test('should start a prometheus server on port 9090', async (t) => {
     'process_start_time_seconds',
     'service_1_http_request_all_summary_seconds',
     'service_1_http_request_duration_seconds',
-    'service_1_http_request_summary_seconds',
-    'service_2_http_request_all_summary_seconds',
-    'service_2_http_request_duration_seconds',
-    'service_2_http_request_summary_seconds'
+    'service_1_http_request_summary_seconds'
+
   ]
   for (const metricName of expectedMetricNames) {
     assert.ok(metricsNames.includes(metricName))

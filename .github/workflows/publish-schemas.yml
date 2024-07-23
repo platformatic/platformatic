@@ -9,7 +9,7 @@ jobs:
   post:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - uses: pnpm/action-setup@v4.0.0
       - uses: actions/setup-node@v4
         with:
@@ -25,7 +25,6 @@ jobs:
               node packages/service/lib/schema.js > output/service
               node packages/db/lib/schema.js > output/db
               node packages/composer/lib/schema.js > output/composer
-              node packages/authenticate/lib/schema.js > output/login
               node -e "console.log('VERSION=v'+ require('./package.json').version)" >> $GITHUB_OUTPUT
       - name: Pushes to schema store repository
         id: push_directory

@@ -4,7 +4,7 @@
   "services": [
     {
       "id": "serviceApp",
-      "path": "../",
+      "path": "./",
       "config": "platformatic.service.json"
     }
   ]

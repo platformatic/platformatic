@@ -7,6 +7,11 @@ on:
         description: 'The version number to tag and release'
         required: true
         type: string
+      prerelease:
+        description: "Release as pre-release"
+        required: false
+        type: boolean
+        default: false        
 
 env:
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -18,7 +23,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - uses: pnpm/action-setup@v4.0.0
       - uses: actions/setup-node@v4
         with:
@@ -49,11 +54,12 @@ jobs:
           git config --global user.name "mcollina"
           git config --global user.email "hello@matteocollina.com"
           git commit -a -m "Bumped ${{ inputs.version }}"
-          git push origin HEAD:main
-      - run: pnpm -r publish --access public
+          git push origin HEAD:${{ github.ref }}
+        # TODO(mcollina): make the following work for both releases
+      - run: pnpm -r publish --access public --tag ${{ inputs.prerelease == 'true' && 'next' || 'latest' }}
+        if: github.ref == 'refs/heads/main'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: 'Create release notes'
         run: |
-          npm i @matteo.collina/release-notes -g
-          release-notes -a ${{ secrets.GH_RELEASE_TOKEN }} -t ${{ inputs.version }} -r platformatic -o platformatic
+          pnpx @matteo.collina/release-notes -a ${{ secrets.GH_RELEASE_TOKEN }} -t ${{ inputs.version }} -r platformatic -o platformatic ${{ github.event.inputs.prerelease == 'true' && '-p' || '' }} -c ${{ github.ref }}

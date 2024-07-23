@@ -80,7 +80,9 @@ export interface PlatformaticService {
     requestIdLogLabel?: string;
     jsonShorthand?: boolean;
     trustProxy?: boolean | string | string[] | number;
+    http2?: boolean;
     https?: {
+      allowHTTP1?: boolean;
       key:
         | string
         | {
@@ -145,10 +147,17 @@ export interface PlatformaticService {
         port?: number | string;
         hostname?: string;
         endpoint?: string;
-        server?: "own" | "parent";
+        server?: "own" | "parent" | "hide";
+        defaultMetrics?: {
+          enabled: boolean;
+        };
+        prefix?: string;
         auth?: {
           username: string;
           password: string;
+        };
+        labels?: {
+          [k: string]: string;
         };
       };
   telemetry?: OpenTelemetry;
@@ -201,6 +210,9 @@ export interface PlatformaticService {
     path?: string;
     schema?: string;
     url?: string;
+    fullResponse?: boolean;
+    fullRequest?: boolean;
+    validateResponse?: boolean;
   }[];
   versions?: {
     /**
@@ -213,13 +225,9 @@ export interface PlatformaticService {
         prefix?: string;
         path?: string;
       };
-      plugins?:
-        | {
-            [k: string]: unknown;
-          }
-        | {
-            [k: string]: unknown;
-          };
+      plugins?: {
+        [k: string]: unknown;
+      };
     }[];
   };
 }

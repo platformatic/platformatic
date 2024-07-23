@@ -5,385 +5,7 @@
 const pkg = require('../package.json')
 const openApiDefs = require('./openapi-schema-defs')
 const telemetry = require('@platformatic/telemetry').schema
-
-const cors = {
-  type: 'object',
-  $comment: 'See https://github.com/fastify/fastify-cors',
-  properties: {
-    origin: {
-      anyOf: [
-        { type: 'boolean' },
-        { type: 'string' },
-        {
-          type: 'array',
-          items: {
-            anyOf: [{
-              type: 'string'
-            }, {
-              type: 'object',
-              properties: {
-                regexp: {
-                  type: 'string'
-                }
-              },
-              required: ['regexp']
-            }]
-          }
-        },
-        {
-          type: 'object',
-          properties: {
-            regexp: {
-              type: 'string'
-            }
-          },
-          required: ['regexp']
-        }
-      ]
-    },
-    methods: {
-      type: 'array',
-      items: {
-        type: 'string'
-      }
-    },
-    allowedHeaders: {
-      type: 'string',
-      description: 'Comma separated string of allowed headers.'
-    },
-    exposedHeaders: {
-      anyOf: [
-        {
-          type: 'array',
-          items: {
-            type: 'string'
-          }
-        },
-        {
-          type: 'string',
-          description: 'Comma separated string of exposed headers.'
-        }
-      ]
-    },
-    credentials: {
-      type: 'boolean'
-    },
-    maxAge: {
-      type: 'integer'
-    },
-    preflightContinue: {
-      type: 'boolean',
-      default: false
-    },
-    optionsSuccessStatus: {
-      type: 'integer',
-      default: 204
-    },
-    preflight: {
-      type: 'boolean',
-      default: true
-    },
-    strictPreflight: {
-      type: 'boolean',
-      default: true
-    },
-    hideOptionsRoute: {
-      type: 'boolean',
-      default: true
-    }
-  },
-  additionalProperties: false
-}
-
-const server = {
-  type: 'object',
-  properties: {
-    // TODO add support for level
-    hostname: {
-      type: 'string'
-    },
-    port: {
-      anyOf: [
-        { type: 'integer' },
-        { type: 'string' }
-      ]
-    },
-    pluginTimeout: {
-      type: 'integer'
-    },
-    healthCheck: {
-      anyOf: [
-        { type: 'boolean' },
-        {
-          type: 'object',
-          properties: {
-            enabled: { type: 'boolean' },
-            interval: { type: 'integer' }
-          },
-          additionalProperties: true
-        }
-      ]
-    },
-    ignoreTrailingSlash: {
-      type: 'boolean'
-    },
-    ignoreDuplicateSlashes: {
-      type: 'boolean'
-    },
-    connectionTimeout: {
-      type: 'integer'
-    },
-    keepAliveTimeout: {
-      type: 'integer',
-      default: 5000
-    },
-    maxRequestsPerSocket: {
-      type: 'integer'
-    },
-    forceCloseConnections: {
-      anyOf: [
-        { type: 'boolean' },
-        { type: 'string', pattern: '^idle$' }
-      ]
-    },
-    requestTimeout: {
-      type: 'integer'
-    },
-    bodyLimit: {
-      type: 'integer'
-    },
-    maxParamLength: {
-      type: 'integer'
-    },
-    disableRequestLogging: {
-      type: 'boolean'
-    },
-    exposeHeadRoutes: {
-      type: 'boolean'
-    },
-    logger: {
-      anyOf: [
-        { type: 'boolean' },
-        {
-          type: 'object',
-          properties: {
-            level: {
-              type: 'string'
-            },
-            transport: {
-              anyOf: [{
-                type: 'object',
-                properties: {
-                  target: {
-                    type: 'string',
-                    resolveModule: true
-                  },
-                  options: {
-                    type: 'object'
-                  }
-                },
-                additionalProperties: false
-              }, {
-                type: 'object',
-                properties: {
-                  targets: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        target: {
-                          type: 'string',
-                          resolveModule: true
-                        },
-                        options: {
-                          type: 'object'
-                        },
-                        level: {
-                          type: 'string'
-                        },
-                        additionalProperties: false
-                      }
-                    }
-                  },
-                  options: {
-                    type: 'object'
-                  }
-                },
-                additionalProperties: false
-              }]
-            },
-            pipeline: {
-              type: 'object',
-              properties: {
-                target: {
-                  type: 'string',
-                  resolveModule: true
-                },
-                options: {
-                  type: 'object'
-                }
-              },
-              additionalProperties: false
-            }
-          },
-          additionalProperties: true
-        }
-      ]
-    },
-    serializerOpts: {
-      type: 'object',
-      properties: {
-        schema: {
-          type: 'object'
-        },
-        ajv: {
-          type: 'object'
-        },
-        rounding: {
-          type: 'string',
-          enum: ['floor', 'ceil', 'round', 'trunc'],
-          default: 'trunc'
-        },
-        debugMode: {
-          type: 'boolean'
-        },
-        mode: {
-          type: 'string',
-          enum: ['debug', 'standalone']
-        },
-        largeArraySize: {
-          anyOf: [
-            { type: 'integer' },
-            { type: 'string' }
-          ],
-          default: 20000
-        },
-        largeArrayMechanism: {
-          type: 'string',
-          enum: ['default', 'json-stringify'],
-          default: 'default'
-        }
-      }
-    },
-    caseSensitive: {
-      type: 'boolean'
-    },
-    requestIdHeader: {
-      anyOf: [
-        { type: 'string' },
-        { type: 'boolean', const: false }
-      ]
-    },
-    requestIdLogLabel: {
-      type: 'string'
-    },
-    jsonShorthand: {
-      type: 'boolean'
-    },
-    trustProxy: {
-      anyOf: [
-        { type: 'boolean' },
-        { type: 'string' },
-        {
-          type: 'array',
-          items: {
-            type: 'string'
-          }
-        },
-        { type: 'integer' }
-      ]
-    },
-    https: {
-      type: 'object',
-      properties: {
-        key: {
-          anyOf: [
-            {
-              type: 'string'
-            },
-            {
-              type: 'object',
-              properties: {
-                path: {
-                  type: 'string',
-                  resolvePath: true
-                }
-              },
-              additionalProperties: false
-            },
-            {
-              type: 'array',
-              items: {
-                anyOf: [
-                  {
-                    type: 'string'
-                  },
-                  {
-                    type: 'object',
-                    properties: {
-                      path: {
-                        type: 'string',
-                        resolvePath: true
-                      }
-                    },
-                    additionalProperties: false
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        cert: {
-          anyOf: [
-            {
-              type: 'string'
-            },
-            {
-              type: 'object',
-              properties: {
-                path: {
-                  type: 'string',
-                  resolvePath: true
-                }
-              },
-              additionalProperties: false
-            },
-            {
-              type: 'array',
-              items: {
-                anyOf: [
-                  {
-                    type: 'string'
-                  },
-                  {
-                    type: 'object',
-                    properties: {
-                      path: {
-                        type: 'string',
-                        resolvePath: true
-                      }
-                    },
-                    additionalProperties: false
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        requestCert: {
-          type: 'boolean'
-        },
-        rejectUnauthorized: {
-          type: 'boolean'
-        }
-      },
-      additionalProperties: false,
-      required: ['key', 'cert']
-    },
-    cors
-  },
-  additionalProperties: false
-}
+const { server, cors } = require('@platformatic/utils').schemas
 
 const watch = {
   type: 'object',
@@ -577,6 +199,10 @@ const metrics = {
           },
           additionalProperties: false,
           required: ['username', 'password']
+        },
+        labels: {
+          type: 'object',
+          additionalProperties: { type: 'string' }
         }
       },
       additionalProperties: false
@@ -716,47 +342,6 @@ const clients = {
   }
 }
 
-const version = {
-  type: 'object',
-  properties: {
-    version: { type: 'string' },
-    openapi: {
-      type: 'object',
-      properties: {
-        prefix: {
-          type: 'string'
-        },
-        path: {
-          type: 'string',
-          resolvePath: true
-        }
-      },
-      additionalProperties: false
-    },
-    plugins
-  },
-  required: ['version'],
-  additionalProperties: false
-}
-
-const versions = {
-  type: 'object',
-  properties: {
-    dir: {
-      type: 'string',
-      description: 'The path to the directory containing the versions mappers',
-      resolvePath: true,
-      default: 'versions'
-    },
-    configs: {
-      type: 'array',
-      items: version
-    }
-  },
-  required: ['dir', 'configs'],
-  additionalProperties: false
-}
-
 const platformaticServiceSchema = {
   $id: `https://platformatic.dev/schemas/v${pkg.version}/service`,
   version: pkg.version,
@@ -778,12 +363,67 @@ const platformaticServiceSchema = {
       type: 'string'
     },
     service,
-    clients,
-    versions
+    clients
   },
   additionalProperties: false,
   $defs: openApiDefs
 }
+
+/*
+ * Legacy definitions for backwards compatibility.
+ * They are non/enumerable to avoid being included in the schema.
+ */
+Object.defineProperty(platformaticServiceSchema, 'schema', {
+  enumerable: false,
+  value: platformaticServiceSchema
+})
+
+Object.defineProperty(platformaticServiceSchema, 'server', {
+  enumerable: false,
+  value: server
+})
+
+Object.defineProperty(platformaticServiceSchema, 'cors', {
+  enumerable: false,
+  value: cors
+})
+
+Object.defineProperty(platformaticServiceSchema, 'metrics', {
+  enumerable: false,
+  value: metrics
+})
+
+Object.defineProperty(platformaticServiceSchema, 'plugins', {
+  enumerable: false,
+  value: plugins
+})
+
+Object.defineProperty(platformaticServiceSchema, 'watch', {
+  enumerable: false,
+  value: watch
+})
+
+Object.defineProperty(platformaticServiceSchema, 'openApiDefs', {
+  enumerable: false,
+  value: openApiDefs
+})
+
+Object.defineProperty(platformaticServiceSchema, 'openApiBase', {
+  enumerable: false,
+  value: openApiBase
+})
+
+Object.defineProperty(platformaticServiceSchema, 'graphqlBase', {
+  enumerable: false,
+  value: graphqlBase
+})
+
+Object.defineProperty(platformaticServiceSchema, 'clients', {
+  enumerable: false,
+  value: clients
+})
+
+/* end */
 
 module.exports.schema = platformaticServiceSchema
 module.exports.metrics = metrics

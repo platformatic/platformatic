@@ -6,12 +6,23 @@ import { buildServer } from '@platformatic/db'
 import { join } from 'path'
 import * as desm from 'desm'
 import { execa } from 'execa'
-import { promises as fs } from 'fs'
+import { promises as fs, existsSync } from 'fs'
 import split from 'split2'
 import graphql from 'graphql'
 import { copy } from 'fs-extra'
 
 const env = { ...process.env, NODE_V8_COVERAGE: undefined }
+
+function findTSCPath () {
+  let tscPath = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
+
+  // If the local npm installation should use global tsc in the root
+  if (!existsSync(tscPath)) {
+    tscPath = desm.join(import.meta.url, '../../..', 'node_modules', '.bin', 'tsc')
+  }
+
+  return tscPath
+}
 
 test('dashes in name', async (t) => {
   try {
@@ -25,7 +36,6 @@ test('dashes in name', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'uncanny-movies'])
 
   const readSDL = await fs.readFile(join(dir, 'uncanny-movies', 'uncanny-movies.schema.graphql'), 'utf8')
@@ -34,8 +44,6 @@ test('dashes in name', async (t) => {
     const sdl = graphql.printSchema(schema)
     equal(sdl, readSDL)
   }
-
-  t.diagnostic(`server at ${app.url}`)
 
   const toWrite = `
 'use strict'
@@ -96,10 +104,7 @@ test('dashes in name (typescript)', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'uncanny-movies'])
-
-  t.diagnostic(`upstream URL is ${app.url}`)
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -134,7 +139,7 @@ app.listen({ port: 0 });
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
-  const tsc = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
+  const tsc = findTSCPath()
   await execa(tsc, [], { env })
 
   // TODO how can we avoid this copy?
@@ -157,7 +162,6 @@ app.listen({ port: 0 });
     url = msg.slice(base.length)
     break
   }
-  t.diagnostic(`client URL is ${url}`)
   const res = await request(url, {
     method: 'POST'
   })
@@ -179,7 +183,6 @@ test('different folder name', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies', '--folder', 'uncanny'])
 
   const readSDL = await fs.readFile(join(dir, 'uncanny', 'movies.schema.graphql'), 'utf8')
@@ -188,8 +191,6 @@ test('different folder name', async (t) => {
     const sdl = graphql.printSchema(schema)
     equal(sdl, readSDL)
   }
-
-  t.diagnostic(`server at ${app.url}`)
 
   const toWrite = `
 'use strict'
@@ -250,7 +251,6 @@ test('tilde in name', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'uncanny~movies'])
 
   const readSDL = await fs.readFile(join(dir, 'uncanny~movies', 'uncanny~movies.schema.graphql'), 'utf8')
@@ -259,8 +259,6 @@ test('tilde in name', async (t) => {
     const sdl = graphql.printSchema(schema)
     equal(sdl, readSDL)
   }
-
-  t.diagnostic(`server at ${app.url}`)
 
   const toWrite = `
 'use strict'

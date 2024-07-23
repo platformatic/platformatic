@@ -4,6 +4,8 @@ It is possible to use the Platformatic client without the generator.
 
 ## OpenAPI Client
 
+### Basic Usage
+
 ```js
 import { buildOpenAPIClient } from '@platformatic/client'
 
@@ -20,7 +22,9 @@ const res = await client.yourOperationName({ foo: 'bar' })
 console.log(res)
 ```
 
-Once you have a `client` generated from `buildOpenAPIClient`, you can access a mapping between operation IDs and method/path by leveraging the `Symbol.for('plt.operationIdMap')` property.
+### Accessing Operation Mapping
+
+Once you have a `client` generated from `buildOpenAPIClient`, you can access a mapping between operation IDs and method/path by leveraging the `Symbol.for('plt.operationIdMap')` property
 
 ```js
 const client = await buildOpenAPIClient({
@@ -30,20 +34,19 @@ const client = await buildOpenAPIClient({
 const mapping = client[Symbol.for('plt.operationIdMap')]
 
 console.log(mapping)
-
-/**
- * 
- * You should see something like:
- * {
- *  getOperationFoo: { path: '/operation-foo/', method: 'get' },
- *  postOperationBar: { path: '/operation-bar/', method: 'post' },
- * }
- * 
- */
-
 ```
 
-You're also able to pass an asynchronous function that modifies the headers for each request with the `getHeaders` option. This function will be executed before each request, just like the plugin `getHeaders` options. Note that `headers` and `getHeaders` are not mutually exclusive, and can work together:
+**Example Output**
+```json
+{
+  getOperationFoo: { path: '/operation-foo/', method: 'get' },
+  postOperationBar: { path: '/operation-bar/', method: 'post' },
+ }
+```
+
+## Dynamic Headers 
+
+You can pass an asynchronous function to modify the headers for each request with the `getHeaders` option. This function will be executed before each request. Note that `headers` and `getHeaders` can work together:
 
 ```js
 import { buildOpenAPIClient } from '@platformatic/client'
@@ -69,7 +72,28 @@ const res = await client.yourOperationName({ foo: 'bar' })
 console.log(res)
 ```
 
-If you use Typescript you can take advantage of the generated types file:
+## Optional properties
+You can also pass the following properties to `buildOpenAPIClient`:
+```ts
+import { buildOpenAPIClient } from '@platformatic/client'
+
+const client = await buildOpenAPIClient({
+  url: 'string', // the URL of the service to be called
+  path: 'string', // the path to the Open API schema
+  fullResponse: true, // require or not a full response object
+  fullRequest: true, // require or not a full request object
+  throwOnError: true, // if there is an error, the client will throw depending ton this option
+  headers: {}, // additional headers to be passed
+  bodyTimeout: 900000, // body timeout passed to the undici request method
+  headersTimeout: 900000, // headers timeout passed to the undici request method
+  validateResponse: true, // validate or not the response received against the expected schema
+  queryParser: (query) => `${query.toString()}[]` // override the default query parser logic
+})
+```
+
+## TypeScript Support 
+
+If you use Typescript, you can take advantage of the generated types file:
 
 ```ts
 import { buildOpenAPIClient } from '@platformatic/client'
@@ -96,6 +120,8 @@ console.log(res)
 
 
 ## GraphQL Client
+
+To create a GraphQL client, use the `buildGraphQLClient` function:
 
 ```js
 import { buildGraphQLClient } from '@platformatic/client'

@@ -63,9 +63,7 @@ async function buildServer (options, app) {
     root.decorate('platformatic', { configManager, config })
     await root.register(app)
     if (!root.hasRoute({ url: '/', method: 'GET' })) {
-      await root.register(require('./root-endpoint'), {
-        versions: config.versions
-      })
+      await root.register(require('./root-endpoint'))
     }
 
     root.decorate('url', {

@@ -52,6 +52,7 @@ class ConfigManager extends EventEmitter {
     this._providedSchema = !!opts.schema
     this._replaceEnvIgnore = opts.replaceEnvIgnore || []
     this._originalEnv = opts.env || {}
+    this.context = opts.context || {}
     this.env = { ...this._originalEnv }
     this._onMissingEnv = opts.onMissingEnv
     if (typeof opts.transformConfig === 'function') {
@@ -94,14 +95,23 @@ class ConfigManager extends EventEmitter {
 
       for (const key of Object.keys(config)) {
         const value = config[key]
-        config[key] = await this.replaceEnv(value, { env, escapeJSON: false })
+        config[key] = await this.replaceEnv(
+          value,
+          {
+            env,
+            context: opts.context,
+            escapeJSON: false,
+            parent: config,
+            tree: [...opts.tree ?? [], config]
+          }
+        )
       }
       return config
     }
 
     const replaceEnv = ({ key, value }) => {
       if (!value && this._onMissingEnv) {
-        value = this._onMissingEnv(key)
+        value = this._onMissingEnv(key, opts)
       }
 
       // TODO this should handle all the escapes chars
@@ -132,7 +142,8 @@ class ConfigManager extends EventEmitter {
         if (replaceEnv) {
           config = await this.replaceEnv(config, {
             escapeJSON: false,
-            ignore: this._replaceEnvIgnore
+            ignore: this._replaceEnvIgnore,
+            context: this.context
           })
         }
 
@@ -148,7 +159,7 @@ class ConfigManager extends EventEmitter {
         let version = this._configVersion
         if (!version && this.current.$schema?.indexOf('https://platformatic.dev/schemas/') === 0) {
           const url = new URL(this.current.$schema)
-          const res = url.pathname.match(/^\/schemas\/v(\d+\.\d+\.\d+)\/(.*)$/)
+          const res = url.pathname.match(/^\/schemas\/v(\d+\.\d+\.\d+)(?:-\w+\.\d+)?\/(.*)$/)
           version = res[1]
         }
 

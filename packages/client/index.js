@@ -87,7 +87,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
   client[kOperationIdMap] = {}
   client[kHeaders] = options.headers || {}
 
-  let { fullRequest, fullResponse, throwOnError } = options
+  let { fullRequest, fullResponse, throwOnError, bodyTimeout, headersTimeout } = options
   const generatedOperationIds = []
   for (const path of Object.keys(spec.paths)) {
     const pathMeta = spec.paths[path]
@@ -114,7 +114,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
       }
 
       client[kOperationIdMap][operationId] = { path, method }
-      client[operationId] = await buildCallFunction(spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser)
+      client[operationId] = await buildCallFunction(spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout)
     }
   }
   return client
@@ -137,7 +137,7 @@ function hasDuplicatedParameters (methodMeta) {
   return s.size !== methodMeta.parameters.length
 }
 
-async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser) {
+async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout) {
   await $RefParser.dereference(spec)
   const ajv = new Ajv()
   const url = new URL(baseUrl)
@@ -213,10 +213,15 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
     urlToCall.pathname = pathToCall
 
     const { span, telemetryHeaders } = openTelemetry?.startSpanClient(urlToCall.toString(), method, telemetryContext) || { span: null, telemetryHeaders: {} }
+    const telemetryId = openTelemetry?.tracer?.resource?._attributes?.['service.name']
 
     if (this[kGetHeaders]) {
       const options = { url: urlToCall, method, headers, telemetryHeaders, body }
       headers = { ...headers, ...(await this[kGetHeaders](options)) }
+    }
+
+    if (telemetryId) {
+      headers['x-telemetry-id'] = telemetryId
     }
 
     let res
@@ -227,7 +232,9 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
           ...headers,
           ...telemetryHeaders
         },
-        throwOnError
+        throwOnError,
+        bodyTimeout,
+        headersTimeout
       }
       if (canHaveBody) {
         requestOptions.headers['content-type'] = 'application/json; charset=utf-8'
@@ -321,15 +328,23 @@ function isArrayQueryParam ({ schema }) {
 // TODO: For some unknown reason c8 is not picking up the coverage for this function
 async function graphql (url, log, headers, query, variables, openTelemetry, telemetryContext) {
   const { span, telemetryHeaders } = openTelemetry?.startSpanClient(url.toString(), 'POST', telemetryContext) || { span: null, telemetryHeaders: {} }
+  const telemetryId = openTelemetry?.tracer?.resource?._attributes?.['service.name']
+
+  headers = {
+    ...headers,
+    ...telemetryHeaders,
+    'content-type': 'application/json; charset=utf-8'
+  }
+
+  if (telemetryId) {
+    headers['x-telemetry-id'] = telemetryId
+  }
+
   let res
   try {
     res = await request(url, {
       method: 'POST',
-      headers: {
-        ...headers,
-        ...telemetryHeaders,
-        'content-type': 'application/json; charset=utf-8'
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables

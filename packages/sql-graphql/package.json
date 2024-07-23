@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-graphql",
-  "version": "1.45.0",
+  "version": "2.0.0-alpha.1",
   "description": "Map SQL dbs to GraphQL",
   "main": "index.js",
   "types": "index.d.ts",
@@ -31,7 +31,7 @@
     "@platformatic/sql-events": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
-    "borp": "^0.14.0",
+    "borp": "^0.16.0",
     "fastify": "^4.26.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",

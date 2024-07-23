@@ -3,9 +3,9 @@ import { generateOperationId } from '@platformatic/client'
 import { capitalize, toJavaScriptName } from './utils.mjs'
 import { writeOperations } from './openapi-common.mjs'
 
-export function processOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders, validateResponse }) {
+export function processOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders, validateResponse, typesComment }) {
   return {
-    types: generateTypesFromOpenAPI({ schema, name, fullResponse, fullRequest, optionalHeaders }),
+    types: generateTypesFromOpenAPI({ schema, name, fullResponse, fullRequest, optionalHeaders, typesComment }),
     implementation: generateImplementationFromOpenAPI({ name, fullResponse, fullRequest, validateResponse })
   }
 }
@@ -56,7 +56,7 @@ function generateImplementationFromOpenAPI ({ name, fullResponse, fullRequest, v
   return writer.toString()
 }
 
-function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders }) {
+function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders, typesComment }) {
   const camelcasedName = toJavaScriptName(name)
   const capitalizedName = capitalize(camelcasedName)
   const { paths } = schema
@@ -98,6 +98,10 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
     useSingleQuote: true
   })
   /* eslint-enable new-cap */
+
+  if (typesComment) {
+    writer.writeLine(`// ${typesComment}`)
+  }
 
   writer.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
   writer.writeLine('import { type GetHeadersOptions } from \'@platformatic/client\'')

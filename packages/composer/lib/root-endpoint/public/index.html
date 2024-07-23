@@ -204,6 +204,12 @@
 
     <script>
       const currentPath = window.location.pathname
+
+      const openApiLink = document.getElementById('openapi-link')
+      openApiLink.href = currentPath + 'documentation'
+
+      const graphqlLink = document.getElementById('graphql-link')
+      graphqlLink.href = currentPath + 'graphiql'
     
       const prefersLightScheme = window.matchMedia('(prefers-color-scheme: light)');
       if (prefersLightScheme.matches) {
@@ -222,24 +228,6 @@
           document.getElementById('logo').src = 'images/platformatic-logo-dark.svg'
         }
       }
-
-      function join (...paths) {
-        return paths.join('/').replace(/\/+/g, '/')
-      }
-
-      fetch('/_platformatic_versions')
-        .then(response => response.json())
-        .then(({openapi, graphql}) => {
-          if(graphql) {
-            const link = document.getElementById('graphql-link')
-            link.href = currentPath + 'graphiql'
-          }
-
-          if(openapi) {
-            const link = document.getElementById('openapi-link')
-            link.href = currentPath + 'documentation'
-          }
-        })
     </script>
   </body>
 </html>

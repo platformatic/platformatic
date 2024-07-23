@@ -294,10 +294,9 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async (t) =>
 
   await app.ready()
 
-  const isMariaDB = app.platformatic.db.isMariaDB
-
   const timestamp = new Date()
-  const bornAtTimestamp = new Date(Math[isMariaDB ? 'floor' : 'round'](timestamp.getTime() / 1000) * 1000).toISOString()
+  timestamp.setSeconds(0)
+  timestamp.setMilliseconds(0)
 
   {
     const res = await app.inject({
@@ -346,7 +345,7 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async (t) =>
           longText: 'abc',
           bornAtDate: '2021-11-11',
           bornAtTime: '12:42:00',
-          bornAtTimestamp,
+          bornAtTimestamp: timestamp.toISOString(),
           uuid: '12345678-1234-1234-1234-123456789012',
           aReal: 1.2,
           aSmallint: 42,
@@ -392,7 +391,7 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async (t) =>
           longText: 'abc',
           bornAtDate: '2021-11-11',
           bornAtTime: '12:42:00',
-          bornAtTimestamp,
+          bornAtTimestamp: timestamp.toISOString(),
           uuid: '12345678-1234-1234-1234-123456789012',
           aReal: 1.2,
           aSmallint: 42,

@@ -52,8 +52,13 @@ test('build basic client from url', async (t) => {
   // handle non 200 code endpoint
   const expectedImplementation = `
 async function _getRedirect (url, request) {
+  const headers = {
+    ...defaultHeaders
+  }
 
-  const response = await fetch(\`\${url}/redirect\`)
+  const response = await fetch(\`\${url}/redirect\`, {
+    headers
+  })
 
   const jsonResponses = [302, 400]
   if (jsonResponses.includes(response.status)) {
@@ -83,8 +88,11 @@ export const getRedirect = async (request) => {
 }`
   // create factory
   const factoryImplementation = `
-export default function build (url) {
+export default function build (url, options) {
   url = sanitizeUrl(url)
+  if (options?.headers) {
+    defaultHeaders = options.headers
+  }
   return {
     getCustomSwagger: _getCustomSwagger.bind(url, ...arguments),
     getRedirect: _getRedirect.bind(url, ...arguments),
@@ -95,7 +103,10 @@ export default function build (url) {
   // factory type
   const factoryType = `
 type PlatformaticFrontendClient = Omit<Sample, 'setBaseUrl'>
-export default function build(url: string): PlatformaticFrontendClient`
+type BuildOptions = {
+  headers?: Object
+}
+export default function build(url: string, options?: BuildOptions): PlatformaticFrontendClient`
 
   // Correct CamelCase name
   const camelCase = 'export interface Sample {'
@@ -119,6 +130,7 @@ export const getCustomSwagger = async (request) => {
     const typesTemplate = `
 export interface Sample {
   setBaseUrl(newUrl: string) : void;
+  setDefaultHeaders(headers: Object) : void;
   getCustomSwagger(req?: GetCustomSwaggerRequest): Promise<GetCustomSwaggerResponses>;
   getRedirect(req?: GetRedirectRequest): Promise<GetRedirectResponses>;
   getReturnUrl(req?: GetReturnUrlRequest): Promise<GetReturnUrlResponses>;
@@ -246,6 +258,7 @@ export const getHello: Api['getHello'] = async (request: Types.GetHelloRequest):
   const typesTemplate = `
 export interface Api {
   setBaseUrl(newUrl: string) : void;
+  setDefaultHeaders(headers: Object) : void;
   getHello(req?: GetHelloRequest): Promise<GetHelloResponses>;
 }`
 
@@ -262,6 +275,7 @@ test('generate frontend client from path (name with dashes)', async (t) => {
   await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend', '--name', 'a-custom-name'])
   const implementation = await readFile(join(dir, 'a-custom-name', 'a-custom-name.ts'), 'utf8')
   const types = await readFile(join(dir, 'a-custom-name', 'a-custom-name-types.d.ts'), 'utf8')
+  const typePlatformaticFrontendClient = types.split('\n').find((line) => line.startsWith('type PlatformaticFrontendClient = Omit<ACustomName, \'setBaseUrl\'>'))
 
   const importTemplate = `import type { ACustomName } from './a-custom-name-types'
 import type * as Types from './a-custom-name-types'
@@ -273,6 +287,7 @@ export const getHello: ACustomName['getHello'] = async (request: Types.GetHelloR
   const typesTemplate = `
 export interface ACustomName {
   setBaseUrl(newUrl: string) : void;
+  setDefaultHeaders(headers: Object) : void;
   getHello(req?: GetHelloRequest): Promise<GetHelloResponses>;
 }`
 
@@ -281,6 +296,7 @@ export interface ACustomName {
   equal(implementation.includes(tsImplementationTemplate), true)
   equal(types.includes(typesTemplate), true)
   equal(implementation.includes(importTemplate), true)
+  ok(typePlatformaticFrontendClient)
 })
 
 test('append query parameters to url in non-GET requests', async (t) => {
@@ -296,12 +312,19 @@ const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<T
   const searchParams = new URLSearchParams()
   queryParameters.forEach((qp) => {
     if (request[qp]) {
-      searchParams.append(qp, request[qp]?.toString() || '')
-      delete request[qp]
+      if (Array.isArray(request[qp])) {
+        (request[qp] as string[]).forEach((p) => {
+          searchParams.append(qp, p)
+        })
+      } else {
+        searchParams.append(qp, request[qp]?.toString() || '')
+      }
     }
+    delete request[qp]
   })
 
   const headers = {
+    ...defaultHeaders,
     'Content-type': 'application/json; charset=utf-8'
   }
 
@@ -322,9 +345,9 @@ test('handle headers parameters', async (t) => {
   await execa('node', [cliPath, fileName, '--language', 'ts', '--frontend', '--name', 'fontend'])
   const implementation = await readFile(join(dir, 'fontend', 'fontend.ts'), 'utf8')
 
-  const tsImplementationTemplate = `
-const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<Types.PostRootResponses> => {
+  const tsImplementationTemplate = `const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<Types.PostRootResponses> => {
   const headers = {
+    ...defaultHeaders,
     'Content-type': 'application/json; charset=utf-8'
   }
   if (request['level'] !== undefined) {
@@ -340,8 +363,7 @@ const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<T
     method: 'POST',
     body: JSON.stringify(request),
     headers
-  })
-`
+  })`
 
   ok(implementation)
   equal(implementation.includes(tsImplementationTemplate), true)
@@ -356,6 +378,9 @@ test('handle headers parameters in get request', async (t) => {
 
   const tsImplementationTemplate = `
 const _getRoot = async (url: string, request: Types.GetRootRequest): Promise<Types.GetRootResponses> => {
+  const headers = {
+    ...defaultHeaders
+  }
   if (request['level'] !== undefined) {
     headers['level'] = request['level']
     delete request['level']
@@ -365,8 +390,10 @@ const _getRoot = async (url: string, request: Types.GetRootRequest): Promise<Typ
     delete request['foo']
   }
 
-  const response = await fetch(\`\${url}/\`)
-`
+  const response = await fetch(\`\${url}/\`, {
+    headers
+  })`
+
   ok(implementation)
   equal(implementation.includes(tsImplementationTemplate), true)
 })
@@ -380,8 +407,13 @@ test('handle wildcard in path parameter', async (t) => {
 
   const tsImplementationTemplate = `
 async function _getPkgScopeNameRange (url, request) {
+  const headers = {
+    ...defaultHeaders
+  }
 
-  const response = await fetch(\`\${url}/pkg/@\${request['scope']}/\${request['name']}/\${request['range']}/\${request['*']}\`)
+  const response = await fetch(\`\${url}/pkg/@\${request['scope']}/\${request['name']}/\${request['range']}/\${request['*']}\`, {
+    headers
+  })
 `
   ok(implementation)
   equal(implementation.includes(tsImplementationTemplate), true)
@@ -396,7 +428,9 @@ test('do not add headers to fetch if a get request', async (t) => {
   const typeFile = join(dir, 'movies', 'movies.ts')
   const data = await readFile(typeFile, 'utf-8')
   equal(data.includes(`
-  const response = await fetch(\`\${url}/auth/login\`)
+  const response = await fetch(\`\${url}/auth/login\`, {
+    headers
+  })
 
   const textResponses = [200]
   if (textResponses.includes(response.status)) {
@@ -431,7 +465,9 @@ test('support empty response', async (t) => {
 
   // Empty responses led to a full response returns
   equal(implementation.includes(`
-  const response = await fetch(\`\${url}/auth/login\`)
+  const response = await fetch(\`\${url}/auth/login\`, {
+    headers
+  })
 
   const textResponses = [200]
   if (textResponses.includes(response.status)) {
@@ -472,7 +508,9 @@ test('call response.json only for json responses', async (t) => {
     const implementationFile = join(dir, 'movies', 'movies.ts')
     const implementation = await readFile(implementationFile, 'utf-8')
     const expected = `
-  const response = await fetch(\`\${url}/auth/login\`)
+  const response = await fetch(\`\${url}/auth/login\`, {
+    headers
+  })
 
   const textResponses = [200]
   if (textResponses.includes(response.status)) {
@@ -503,7 +541,9 @@ test('call response.json only for json responses', async (t) => {
     const implementationFile = join(dir, 'movies', 'movies.ts')
     const implementation = await readFile(implementationFile, 'utf-8')
     const expected = `
-  const response = await fetch(\`\${url}/hello\`)
+  const response = await fetch(\`\${url}/hello\`, {
+    headers
+  })
 
   if (!response.ok) {
     throw new Error(await response.text())
@@ -522,4 +562,103 @@ test('should match expected implementation with typescript', async (t) => {
   const implementation = await readFile(implementationFile, 'utf-8')
   const expected = await readFile(join(__dirname, 'expected-generated-code', 'multiple-responses-movies.ts'), 'utf-8')
   equal(implementation.replace(/\r/g, ''), expected.replace(/\r/g, '')) // to make windows CI happy
+})
+
+test('serialize correctly array query parameters', async (t) => {
+  const dir = await moveToTmpdir(after)
+  {
+    const openAPIfile = join(__dirname, 'fixtures', 'array-query-parameters-openapi.json')
+    await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend'])
+    const implementationFile = join(dir, 'movies', 'movies.ts')
+    const implementation = await readFile(implementationFile, 'utf-8')
+    const expected = `
+  const queryParameters: (keyof Types.GetMoviesRequest)[]  = ['ids']
+  const searchParams = new URLSearchParams()
+  queryParameters.forEach((qp) => {
+    if (request[qp]) {
+      if (Array.isArray(request[qp])) {
+        (request[qp] as string[]).forEach((p) => {
+          searchParams.append(qp, p)
+        })
+      } else {
+        searchParams.append(qp, request[qp]?.toString() || '')
+      }
+    }
+    delete request[qp]
+  })`
+    equal(implementation.includes(expected), true)
+  }
+})
+
+test('integration test for query parameters', async (t) => {
+  const fixturesDir = join(__dirname, 'fixtures', 'array-query-params')
+  try {
+    await fs.unlink(join(fixturesDir, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+
+  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+  const dir = await moveToTmpdir(after)
+
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'foobar', '--frontend'])
+  const testFile = `
+'use strict'
+
+import build, { setBaseUrl, getQueryParamsArray } from './foobar.mjs'
+const client = build('${app.url}')
+console.log(await client.getQueryParamsArray({ ids: ['foo', 'bar']}))
+`
+
+  await writeFile(join(dir, 'foobar', 'test.mjs'), testFile)
+
+  // execute the command
+  const output = await execa('node', [join(dir, 'foobar', 'test.mjs')])
+  /* eslint-disable no-control-regex */
+  const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
+  equal(lines[0], '{ message: \'ok\', data: [ \'foo\', \'bar\' ] }')
+})
+
+test('integration test for custom headers', async (t) => {
+  const fixturesDir = join(__dirname, 'fixtures', 'custom-headers')
+  try {
+    await fs.unlink(join(fixturesDir, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+
+  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+  const dir = await moveToTmpdir(after)
+
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'foobar', '--frontend'])
+  const testFile = `
+'use strict'
+
+import build from './foobar.mjs'
+const client = build('${app.url}', {
+  headers: {
+    authorization: 'Bearer foobar'
+  }
+})
+
+console.log(await client.getReturnHeaders())
+`
+
+  await writeFile(join(dir, 'foobar', 'test.mjs'), testFile)
+
+  // execute the command
+  const output = await execa('node', [join(dir, 'foobar', 'test.mjs')])
+  /* eslint-disable no-control-regex */
+  const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
+  equal(lines[0], '{ message: \'ok\', data: { authorization: \'Bearer foobar\' } }')
 })

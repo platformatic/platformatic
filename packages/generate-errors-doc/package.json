@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/generate-errors-doc",
-  "version": "1.45.0",
+  "version": "2.0.0-alpha.1",
   "description": "",
   "main": "generate.js",
   "scripts": {
@@ -18,7 +18,6 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "@platformatic/authenticate": "workspace:*",
     "@platformatic/client": "workspace:*",
     "@platformatic/client-cli": "workspace:*",
     "@platformatic/composer": "workspace:*",
@@ -26,7 +25,6 @@
     "@platformatic/db": "workspace:*",
     "@platformatic/db-authorization": "workspace:*",
     "@platformatic/db-core": "workspace:*",
-    "@platformatic/deploy-client": "workspace:*",
     "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/sql-events": "workspace:*",

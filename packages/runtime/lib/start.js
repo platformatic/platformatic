@@ -6,7 +6,6 @@ const { join, resolve, dirname } = require('node:path')
 const { writeFile } = require('node:fs/promises')
 const { pathToFileURL } = require('node:url')
 const { Worker } = require('node:worker_threads')
-const { start: serviceStart } = require('@platformatic/service')
 const { printConfigValidationErrors } = require('@platformatic/config')
 const closeWithGrace = require('close-with-grace')
 const { loadConfig } = require('./load-config')
@@ -16,6 +15,8 @@ const { parseInspectorOptions, wrapConfigInRuntimeConfig } = require('./config')
 const { RuntimeApiClient, getRuntimeLogsDir } = require('./api-client.js')
 const errors = require('./errors')
 const pkg = require('../package.json')
+const pino = require('pino')
+const pretty = require('pino-pretty')
 
 const kLoaderFile = pathToFileURL(join(__dirname, 'loader.mjs')).href
 const kWorkerFile = join(__dirname, 'worker.js')
@@ -128,31 +129,68 @@ async function buildRuntime (configManager, env) {
 async function start (args) {
   const config = await loadConfig({}, args)
 
-  if (config.configType === 'runtime') {
-    config.configManager.args = config.args
-    const app = await buildRuntime(config.configManager)
-    await app.start()
-    return app
+  if (config.configType !== 'runtime') {
+    const configManager = await wrapConfigInRuntimeConfig(config)
+    config.configManager = configManager
   }
 
-  return serviceStart(config.app, args)
+  const app = await buildRuntime(config.configManager)
+  await app.start()
+  return app
+}
+
+async function setupAndStartRuntime (config) {
+  const MAX_PORT = 65535
+  let runtimeConfig
+
+  if (config.configType === 'runtime') {
+    config.configManager.args = config.args
+    runtimeConfig = config.configManager
+  } else {
+    const wrappedConfig = await wrapConfigInRuntimeConfig(config)
+    wrappedConfig.args = config.args
+    runtimeConfig = wrappedConfig
+  }
+
+  let runtime = await buildRuntime(runtimeConfig)
+
+  let address = null
+  let startErr = null
+  const originalPort = runtimeConfig.current.server?.port || 0
+  while (address === null) {
+    try {
+      address = await runtime.start()
+    } catch (err) {
+      startErr = err
+      if (err.code === 'EADDRINUSE') {
+        await runtime.close()
+        if (runtimeConfig.current?.server?.port > MAX_PORT) throw err
+        runtimeConfig.current.server.port++
+        runtime = await buildRuntime(runtimeConfig)
+      } else {
+        throw err
+      }
+    }
+  }
+  if (startErr?.code === 'PLT_RUNTIME_EADDR_IN_USE') {
+    const logger = pino(pretty({
+      translateTime: 'SYS:HH:MM:ss',
+      ignore: 'hostname,pid'
+    }))
+    logger.warn(`Port: ${originalPort} is already in use!`)
+    logger.warn(`Starting service on port: ${runtimeConfig.current.server.port}`)
+  }
+  return { address, runtime }
 }
 
 async function startCommand (args) {
   try {
     const config = await loadConfig({}, args)
-    let runtime
 
-    if (config.configType === 'runtime') {
-      config.configManager.args = config.args
-      runtime = await buildRuntime(config.configManager)
-    } else {
-      const wrappedConfig = await wrapConfigInRuntimeConfig(config)
-      wrappedConfig.args = config.args
-      runtime = await buildRuntime(wrappedConfig)
-    }
+    const startResult = await setupAndStartRuntime(config)
 
-    const res = await runtime.start()
+    const runtime = startResult.runtime
+    const res = startResult.address
 
     closeWithGrace(async (event) => {
       if (event.err instanceof Error) {
@@ -206,4 +244,4 @@ async function startCommand (args) {
   }
 }
 
-module.exports = { buildRuntime, start, startCommand }
+module.exports = { buildRuntime, start, startCommand, setupAndStartRuntime }

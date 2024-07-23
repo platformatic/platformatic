@@ -5,6 +5,7 @@ const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
 const { createFastifyInterceptor } = require('fastify-undici-dispatcher')
 const { PlatformaticApp } = require('./app')
 const errors = require('./errors')
+const { checkDependencies, topologicalSort } = require('./dependencies')
 const { printSchema } = require('graphql')
 
 class RuntimeApi {
@@ -12,15 +13,25 @@ class RuntimeApi {
   #dispatcher
   #interceptor
   #logger
+  #config
+  #bootstrapDependenciesResolved
 
   constructor (config, logger, loaderPort, composedInterceptors = []) {
+    this.#config = config
     this.#services = new Map()
     this.#logger = logger
+
     const telemetryConfig = config.telemetry
+    const metricsConfig = config.metrics
 
     for (let i = 0; i < config.services.length; ++i) {
       const service = config.services[i]
-      const serviceTelemetryConfig = telemetryConfig ? { ...telemetryConfig, serviceName: `${telemetryConfig.serviceName}-${service.id}` } : null
+      const serviceTelemetryConfig = telemetryConfig
+        ? {
+            ...telemetryConfig,
+            serviceName: `${telemetryConfig.serviceName}-${service.id}`
+          }
+        : null
 
       // If the service is an entrypoint and runtime server config is defined, use it.
       let serverConfig = null
@@ -34,7 +45,7 @@ class RuntimeApi {
         }
       }
 
-      const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig, serverConfig, !!config.managementApi)
+      const app = new PlatformaticApp(service, loaderPort, logger, serviceTelemetryConfig, serverConfig, !!config.managementApi, metricsConfig)
 
       this.#services.set(service.id, app)
     }
@@ -105,7 +116,7 @@ class RuntimeApi {
       const res = await this.#runCommandHandler(command, params)
       return { operationId, error: null, data: JSON.stringify(res || null) }
     } catch (err) {
-      return { operationId, error: err.message }
+      return { operationId, error: err.message, code: err.code }
     }
   }
 
@@ -144,18 +155,25 @@ class RuntimeApi {
   }
 
   async startServices () {
-    let entrypointUrl = null
+    if (!this.#bootstrapDependenciesResolved) {
+      await this._resolveBootstrapDependencies()
+      this.#bootstrapDependenciesResolved = true
+    }
+
+    let entrypoint
     for (const service of this.#services.values()) {
       await service.start()
 
       if (service.appConfig.entrypoint) {
-        entrypointUrl = service.server.url
+        entrypoint = service
       }
 
       const serviceUrl = new URL(service.appConfig.localUrl)
       this.#interceptor.route(serviceUrl.host, service.server)
     }
-    return entrypointUrl
+
+    await entrypoint?.listen()
+    return entrypoint?.server.url
   }
 
   async stopServices () {
@@ -171,27 +189,50 @@ class RuntimeApi {
         stopServiceReqs.push(service.stop())
       }
     }
+
     await Promise.all(stopServiceReqs)
   }
 
+  async _resolveBootstrapDependencies () {
+    if (this.#config.autoload) {
+      for (const service of this.#config.services) {
+        const dependencies = await this.#services.get(service.id).getBootstrapDependencies()
+        service.dependencies = dependencies
+
+        for (const { envVar, url } of dependencies) {
+          if (envVar) {
+            service.localServiceEnvVars.set(envVar, url)
+          }
+        }
+      }
+
+      checkDependencies(this.#config.services)
+      this.#services = topologicalSort(this.#services, this.#config)
+    }
+
+    return this.#services
+  }
+
   async #restartServices () {
-    let entrypointUrl = null
+    let entrypoint
     for (const service of this.#services.values()) {
       const serviceStatus = service.getStatus()
+
+      if (service.appConfig.entrypoint) {
+        entrypoint = service
+      }
+
       if (serviceStatus === 'starting') {
         await once(service, 'start')
       }
 
-      await service.restart(true)
-
-      if (service.appConfig.entrypoint) {
-        entrypointUrl = service.server.url
-      }
+      await service.restart()
 
       const serviceUrl = new URL(service.appConfig.localUrl)
       this.#interceptor.route(serviceUrl.host, service.server)
     }
-    return entrypointUrl
+
+    return entrypoint?.server.url
   }
 
   #getEntrypointDetails () {
@@ -308,29 +349,29 @@ class RuntimeApi {
   }
 
   async #getMetrics ({ format }) {
-    let entrypoint = null
+    let metrics = null
+
     for (const service of this.#services.values()) {
-      if (service.appConfig.entrypoint) {
-        entrypoint = service
-        break
+      const serviceId = service.appConfig.id
+      const serviceStatus = service.getStatus()
+      if (serviceStatus !== 'started') {
+        throw new errors.ServiceNotStartedError(serviceId)
+      }
+
+      const promRegister = service.server.metrics?.client?.register
+
+      if (promRegister) {
+        if (metrics === null) {
+          metrics = format === 'json' ? [] : ''
+        }
+        if (format === 'json') {
+          metrics.push(...await promRegister.getMetricsAsJSON())
+        } else {
+          const serviceMetrics = await promRegister.metrics()
+          metrics += serviceMetrics
+        }
       }
     }
-
-    const entrypointStatus = entrypoint.getStatus()
-    if (entrypointStatus !== 'started') {
-      throw new errors.ServiceNotStartedError(entrypoint.id)
-    }
-
-    const promRegister = entrypoint.server.metrics?.client?.register
-    if (!promRegister) {
-      return { metrics: null }
-    }
-
-    // All runtime services shares the same metrics registry.
-    // Getting metrics from the entrypoint returns all metrics.
-    const metrics = format === 'json'
-      ? await promRegister.getMetricsAsJSON()
-      : await promRegister.metrics()
 
     return { metrics }
   }

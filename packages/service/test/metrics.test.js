@@ -339,3 +339,145 @@ function testPrometheusJsonOutput (output) {
     assert.strictEqual(Array.isArray(metric.values), true, 'metric.values is array')
   }
 }
+
+function findFirstPrometheusLineForMetric (metric, output) {
+  const lines = output.split('\n')
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    if (line.startsWith(metric)) {
+      return line
+    }
+  }
+}
+
+function parseLabels (line) {
+  return line.split('{')[1].split('}')[0].split(',').reduce((acc, label) => {
+    const [key, value] = label.split('=')
+    acc[key] = value.replace(/^"(.*)"$/, '$1')
+    return acc
+  }, {})
+}
+
+test('specify custom labels', async (t) => {
+  const app = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 30001
+    },
+    metrics: {
+      labels: {
+        foo: 'bar'
+      }
+    }
+  })
+
+  app.get('/test', async (req, reply) => {
+    return { hello: 'world' }
+  })
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  // needed to reach 100% code cov, otherwise the ELU check won't run
+  await setTimeout(120)
+  // We do a get to trigger the route metrics
+  await request('http://127.0.0.1:30001/test')
+  const res = await (request('http://127.0.0.1:9090/metrics'))
+  const body = await res.body.text()
+  assert.strictEqual(res.statusCode, 200)
+  assert.match(res.headers['content-type'], /^text\/plain/)
+
+  {
+    const cpu = findFirstPrometheusLineForMetric('process_cpu_percent_usage', body)
+    const labels = parseLabels(cpu)
+    assert.strictEqual(labels.foo, 'bar')
+  }
+
+  {
+    const eventLoop = findFirstPrometheusLineForMetric('nodejs_eventloop_utilization', body)
+    const labels = parseLabels(eventLoop)
+    assert.strictEqual(labels.foo, 'bar')
+  }
+
+  {
+    const httpRequestSeconds = findFirstPrometheusLineForMetric('http_request_duration_seconds', body)
+    const labels = parseLabels(httpRequestSeconds)
+    assert.strictEqual(labels.foo, 'bar')
+  }
+
+  {
+    const httpRequestSeconds = findFirstPrometheusLineForMetric('http_request_summary_seconds', body)
+    const labels = parseLabels(httpRequestSeconds)
+    assert.strictEqual(labels.foo, 'bar')
+  }
+  {
+    const httpRequest = findFirstPrometheusLineForMetric('http_request_all_summary_seconds', body)
+    const labels = parseLabels(httpRequest)
+    assert.strictEqual(labels.foo, 'bar')
+  }
+})
+
+test('specify different custom labels on two different services', async (t) => {
+  const app1 = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 3042
+    },
+    metrics: {
+      server: 'own',
+      port: 3042,
+      labels: {
+        foo: 'bar1'
+      }
+    }
+  })
+
+  t.after(async () => {
+    await app1.close()
+  })
+  await app1.start()
+
+  const app2 = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 3043
+    },
+    metrics: {
+      server: 'own',
+      port: 3043,
+      labels: {
+        foo: 'bar2'
+      }
+    }
+  })
+
+  t.after(async () => {
+    await app2.close()
+  })
+  await app2.start()
+
+  // needed to reach 100% code cov, otherwise the ELU check won't run
+  await setTimeout(120)
+
+  {
+    const res = await (request('http://127.0.0.1:3042/metrics'))
+    const body = await res.body.text()
+    assert.strictEqual(res.statusCode, 200)
+    assert.match(res.headers['content-type'], /^text\/plain/)
+    const heapSpace = findFirstPrometheusLineForMetric('nodejs_heap_space_size_total_bytes', body)
+    const labels = parseLabels(heapSpace)
+    assert.strictEqual(labels.foo, 'bar1')
+  }
+
+  {
+    const res = await (request('http://127.0.0.1:3043/metrics'))
+    const body = await res.body.text()
+    assert.strictEqual(res.statusCode, 200)
+    assert.match(res.headers['content-type'], /^text\/plain/)
+    const heapSpace = findFirstPrometheusLineForMetric('nodejs_heap_space_size_total_bytes', body)
+    const labels = parseLabels(heapSpace)
+    assert.strictEqual(labels.foo, 'bar2')
+  }
+})

@@ -144,6 +144,7 @@ test('should trace a client request', async () => {
   equal(spanClient.attributes['server.port'], 3000)
   equal(spanClient.attributes['server.address'], 'localhost')
   equal(spanClient.attributes['url.path'], '/test')
+  equal(spanClient.attributes['url.scheme'], 'http')
 
   // The traceparent header is added to the request and propagated to the server
   equal(receivedHeaders.traceparent, telemetryHeaders.traceparent)
@@ -167,7 +168,7 @@ test('should trace a client request failing', async () => {
   const { propagator } = app.openTelemetry
   const context = propagator.extract(new PlatformaticContext(), { headers: {} }, fastifyTextMapGetter)
 
-  const url = 'http://localhost:3000/test'
+  const url = 'http://localhost/test'
   const { span, telemetryHeaders } = startSpanClient(url, 'GET', context)
   const args = {
     method: 'GET',
@@ -192,10 +193,10 @@ test('should trace a client request failing', async () => {
   equal(spanServer.attributes['http.response.status_code'], 404)
 
   const spanClient = finishedSpans[1]
-  equal(spanClient.name, 'GET http://localhost:3000/test')
+  equal(spanClient.name, 'GET http://localhost/test')
   equal(spanClient.kind, SpanKind.CLIENT)
   equal(spanClient.status.code, SpanStatusCode.ERROR)
-  equal(spanClient.attributes['url.full'], 'http://localhost:3000/test')
+  equal(spanClient.attributes['url.full'], 'http://localhost/test')
   equal(spanClient.attributes['http.response.status_code'], 404)
 })
 

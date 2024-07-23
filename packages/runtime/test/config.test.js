@@ -3,9 +3,11 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
+const pino = require('pino')
 const { loadConfig } = require('@platformatic/config')
 const { platformaticService } = require('@platformatic/service')
 const { platformaticDB } = require('@platformatic/db')
+const RuntimeApi = require('../lib/api')
 const { parseInspectorOptions, platformaticRuntime } = require('../lib/config')
 const { wrapConfigInRuntimeConfig } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
@@ -29,55 +31,44 @@ test('throws if a config file is not found for an individual service', async (t)
   }, /No config file found for service 'docs'/)
 })
 
-test('performs a topological sort on services depending on allowCycles', async (t) => {
-  await t.test('does not sort if allowCycles is true', async () => {
-    const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-    const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-    const services = loaded.configManager.current.services
+test('throws if both autoload and services are provided', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'invalid-autoload-with-services.json')
 
-    assert.strictEqual(services.length, 4)
-    assert.strictEqual(services[0].id, 'db-app')
-    assert.strictEqual(services[1].id, 'serviceApp')
-    assert.strictEqual(services[2].id, 'with-logger')
-    assert.strictEqual(services[3].id, 'multi-plugin-service')
-  })
-
-  await t.test('sorts if allowCycles is false', async () => {
-    const configFile = join(fixturesDir, 'configs', 'monorepo-no-cycles.json')
-    const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-    const services = loaded.configManager.current.services
-
-    assert.strictEqual(services.length, 4)
-    assert.strictEqual(services[0].id, 'dbApp')
-    assert.strictEqual(services[1].id, 'with-logger')
-    assert.strictEqual(services[2].id, 'serviceApp')
-    assert.strictEqual(services[3].id, 'multi-plugin-service')
-  })
-
-  await t.test('throws if a cycle is present when not allowed', async () => {
-    const configFile = join(fixturesDir, 'configs', 'monorepo-create-cycle.json')
-
-    await assert.rejects(async () => {
-      await loadConfig({}, ['-c', configFile], platformaticRuntime)
-    })
-  })
-
-  await t.test('throws by adding the most probable service ', async () => {
-    const configFile = join(fixturesDir, 'leven', 'platformatic.runtime.json')
-
-    await assert.rejects(async () => {
-      await loadConfig({}, ['-c', configFile], platformaticRuntime)
-    }, 'service \'rainy-empire\' has unordered dependency: \'deeply-splitte\'. Did you mean \'deeply-spittle\'?')
-  })
+  await assert.rejects(async () => {
+    await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  }, /Autoload cannot be used when services is defined/)
 })
 
-test('can resolve service id from client package.json if not provided', async () => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-client-without-id.json')
+test('dependencies are not considered if services are specified manually', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-composer-no-autoload.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const entry = config.configManager.current.serviceMap.get('serviceApp')
 
-  assert.strictEqual(entry.dependencies.length, 1)
-  assert.strictEqual(entry.dependencies[0].id, 'with-logger')
+  const runtime = new RuntimeApi(config.configManager.current, pino(), undefined)
+  const services = await runtime._resolveBootstrapDependencies()
+
+  assert.deepStrictEqual(Array.from(services.keys()), [
+    'with-logger',
+    'db-app',
+    'composerApp',
+    'multi-plugin-service',
+    'serviceApp'
+  ])
+})
+
+test('dependencies are resolved if services are not specified manually', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+
+  const runtime = new RuntimeApi(config.configManager.current, pino(), undefined)
+  const services = await runtime._resolveBootstrapDependencies()
+
+  assert.deepStrictEqual(Array.from(services.keys()), [
+    'dbApp',
+    'serviceApp',
+    'with-logger',
+    'multi-plugin-service',
+    'composerApp'
+  ])
 })
 
 test('parseInspectorOptions()', async (t) => {

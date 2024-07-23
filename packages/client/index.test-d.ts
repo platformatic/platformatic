@@ -73,6 +73,8 @@ const client = await buildOpenAPIClient<MyType>({
   throwOnError: false,
   validateResponse: false,
   headers: { foo: 'bar' },
+  bodyTimeout: 900000,
+  headersTimeout: 900000,
   getHeaders: async (options: GetHeadersOptions) => {
     const { url } = options;
     return { href: url.href };

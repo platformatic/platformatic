@@ -2,7 +2,7 @@
 'use strict'
 
 const telemetry = require('@platformatic/telemetry').schema
-const { server } = require('@platformatic/service').schema
+const { schemas: { server } } = require('@platformatic/utils')
 const pkg = require('../package.json')
 const version = 'v' + pkg.version
 const platformaticRuntimeSchema = {
@@ -68,9 +68,6 @@ const platformaticRuntimeSchema = {
           type: 'string'
         }
       ]
-    },
-    allowCycles: {
-      type: 'boolean'
     },
     inspectorOptions: {
       type: 'object',
@@ -170,6 +167,10 @@ const platformaticRuntimeSchema = {
               },
               additionalProperties: false,
               required: ['username', 'password']
+            },
+            labels: {
+              type: 'object',
+              additionalProperties: { type: 'string' }
             }
           },
           additionalProperties: false
