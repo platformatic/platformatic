@@ -18,7 +18,7 @@ test('wrong type', async (t) => {
     return await app.register(client, {
       type: 'foo',
       url: 'http://localhost:3042/documentation/json',
-      name: 'client'
+      name: 'client',
     })
   }, new Error('opts.type must be either "openapi" or "graphql"'))
 })
@@ -44,12 +44,12 @@ test('default decorator', async (t) => {
 
   await app.register(client, {
     type: 'openapi',
-    url: `${targetApp.url}/documentation/json`
+    url: `${targetApp.url}/documentation/json`,
   })
 
   app.post('/movies', async (req, res) => {
     const movie = await req.client.createMovie({
-      title: 'The Matrix'
+      title: 'The Matrix',
     })
     return movie
   })
@@ -60,24 +60,24 @@ test('default decorator', async (t) => {
 
   const movie = await app.inject({
     method: 'POST',
-    path: '/movies'
+    path: '/movies',
   })
 
   assert.deepEqual(movie.json(), {
     id: 1,
-    title: 'The Matrix'
+    title: 'The Matrix',
   })
 
   const movies = await app.inject({
     method: 'GET',
-    path: '/movies'
+    path: '/movies',
   })
 
   assert.deepEqual(movies.json(), [
     {
       id: 1,
-      title: 'The Matrix'
-    }
+      title: 'The Matrix',
+    },
   ])
 })
 
@@ -105,14 +105,14 @@ test('req decorator with OpenAPI and auth', async (t) => {
     url: `${targetApp.url}/documentation/json`,
     async getHeaders (req) {
       return {
-        'x-platformatic-admin-secret': req.headers['x-platformatic-admin-secret']
+        'x-platformatic-admin-secret': req.headers['x-platformatic-admin-secret'],
       }
-    }
+    },
   })
 
   app.post('/', async (req) => {
     const movie = await req.client.createMovie({
-      title: 'The Matrix'
+      title: 'The Matrix',
     })
 
     return movie
@@ -122,14 +122,14 @@ test('req decorator with OpenAPI and auth', async (t) => {
     method: 'POST',
     url: '/',
     headers: {
-      'x-platformatic-admin-secret': 'changeme'
-    }
+      'x-platformatic-admin-secret': 'changeme',
+    },
   })
 
   assert.equal(res.statusCode, 200)
   assert.deepEqual(res.json(), {
     id: 1,
-    title: 'The Matrix'
+    title: 'The Matrix',
   })
 })
 
@@ -155,12 +155,12 @@ test('app decorator with OpenAPI', async (t) => {
   await app.register(client, {
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
-    name: 'client'
+    name: 'client',
   })
 
   app.post('/movies', async (req, res) => {
     const movie = await req.client.createMovie({
-      title: 'The Matrix'
+      title: 'The Matrix',
     })
     return movie
   })
@@ -171,24 +171,24 @@ test('app decorator with OpenAPI', async (t) => {
 
   const movie = await app.inject({
     method: 'POST',
-    path: '/movies'
+    path: '/movies',
   })
 
   assert.deepEqual(movie.json(), {
     id: 1,
-    title: 'The Matrix'
+    title: 'The Matrix',
   })
 
   const movies = await app.inject({
     method: 'GET',
-    path: '/movies'
+    path: '/movies',
   })
 
   assert.deepEqual(movies.json(), [
     {
       id: 1,
-      title: 'The Matrix'
-    }
+      title: 'The Matrix',
+    },
   ])
 })
 
@@ -228,14 +228,14 @@ test('req decorator with OpenAPI', async (t) => {
       assert.deepEqual(options.body, { title: 'The Matrix' })
 
       return {
-        'x-platformatic-admin-secret': req.headers['x-platformatic-admin-secret']
+        'x-platformatic-admin-secret': req.headers['x-platformatic-admin-secret'],
       }
-    }
+    },
   })
 
   app.post('/', async (req) => {
     const movie = await req.client.createMovie({
-      title: 'The Matrix'
+      title: 'The Matrix',
     })
 
     return movie
@@ -245,8 +245,8 @@ test('req decorator with OpenAPI', async (t) => {
     method: 'POST',
     url: '/',
     headers: {
-      'x-platformatic-admin-secret': 'changeme'
-    }
+      'x-platformatic-admin-secret': 'changeme',
+    },
   })
 
   const response = res.json()
@@ -255,7 +255,7 @@ test('req decorator with OpenAPI', async (t) => {
   assert.equal(res.statusCode, 200)
   assert.deepEqual(res.json(), {
     id: 1,
-    title: 'The Matrix'
+    title: 'The Matrix',
   })
 })
 
@@ -282,12 +282,12 @@ test('validate response', async (t) => {
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
     name: 'movies',
-    validateResponse: true
+    validateResponse: true,
   })
 
   app.post('/', async (req) => {
     const movie = await req.movies.createMovie({
-      title: 'The Matrix'
+      title: 'The Matrix',
     })
 
     return movie
@@ -300,18 +300,18 @@ test('validate response', async (t) => {
 
   await app.inject({
     method: 'POST',
-    url: '/'
+    url: '/',
   })
 
   const res = await app.inject({
     method: 'GET',
-    url: '/allMovies'
+    url: '/allMovies',
   })
 
   assert.equal(res.statusCode, 200)
   assert.deepEqual(res.json(), [{
     id: 1,
-    title: 'The Matrix'
+    title: 'The Matrix',
   }])
 })
 
@@ -339,9 +339,9 @@ test('req decorator with GraphQL and auth', async (t) => {
     url: `${targetApp.url}/graphql`,
     async getHeaders (req) {
       return {
-        'x-platformatic-admin-secret': req.headers['x-platformatic-admin-secret']
+        'x-platformatic-admin-secret': req.headers['x-platformatic-admin-secret'],
       }
-    }
+    },
   })
 
   app.post('/', async (req) => {
@@ -355,8 +355,8 @@ test('req decorator with GraphQL and auth', async (t) => {
         }
       `,
       variables: {
-        title: 'The Matrix'
-      }
+        title: 'The Matrix',
+      },
     })
     return movie
   })
@@ -365,14 +365,14 @@ test('req decorator with GraphQL and auth', async (t) => {
     method: 'POST',
     url: '/',
     headers: {
-      'x-platformatic-admin-secret': 'changeme'
-    }
+      'x-platformatic-admin-secret': 'changeme',
+    },
   })
 
   assert.equal(res.statusCode, 200)
   assert.deepEqual(res.json(), {
     id: '1',
-    title: 'The Matrix'
+    title: 'The Matrix',
   })
 })
 
@@ -398,20 +398,20 @@ test('configureClient getHeaders', async (t) => {
   await app.register(client, {
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
-    name: 'movies'
+    name: 'movies',
   })
 
   app.configureMovies({
     async getHeaders (req) {
       return {
-        'x-platformatic-admin-secret': req.headers['x-platformatic-admin-secret']
+        'x-platformatic-admin-secret': req.headers['x-platformatic-admin-secret'],
       }
-    }
+    },
   })
 
   app.post('/', async (req) => {
     const movie = await req.movies.createMovie({
-      title: 'The Matrix'
+      title: 'The Matrix',
     })
 
     return movie
@@ -421,14 +421,14 @@ test('configureClient getHeaders', async (t) => {
     method: 'POST',
     url: '/',
     headers: {
-      'x-platformatic-admin-secret': 'changeme'
-    }
+      'x-platformatic-admin-secret': 'changeme',
+    },
   })
 
   assert.equal(res.statusCode, 200)
   assert.deepEqual(res.json(), {
     id: 1,
-    title: 'The Matrix'
+    title: 'The Matrix',
   })
 })
 
@@ -449,11 +449,11 @@ test('serviceId', async (t) => {
     path: '/movies/',
     method: 'POST',
     body: JSON.stringify({
-      title: 'The Matrix'
-    })
+      title: 'The Matrix',
+    }),
   }).reply(200, {
     id: 1,
-    title: 'The Matrix'
+    title: 'The Matrix',
   })
 
   const app = Fastify()
@@ -461,23 +461,23 @@ test('serviceId', async (t) => {
   await app.register(client, {
     type: 'openapi',
     serviceId: 'movies',
-    path: join(__dirname, 'fixtures', 'movies', 'openapi.json')
+    path: join(__dirname, 'fixtures', 'movies', 'openapi.json'),
   })
 
   app.post('/movies', async (req, res) => {
     const movie = await req.client.createMovie({
-      title: 'The Matrix'
+      title: 'The Matrix',
     })
     return movie
   })
 
   const movie = await app.inject({
     method: 'POST',
-    path: '/movies'
+    path: '/movies',
   })
 
   assert.deepEqual(movie.json(), {
     id: 1,
-    title: 'The Matrix'
+    title: 'The Matrix',
   })
 })

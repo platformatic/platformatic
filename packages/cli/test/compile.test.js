@@ -10,7 +10,7 @@ test('compile typescript', async () => {
   const pathToConfig = join(import.meta.url, './fixtures/typescript/platformatic.db.json')
   await execa('node', [
     cliPath, 'compile',
-    '--config', pathToConfig
+    '--config', pathToConfig,
   ])
 })
 
@@ -19,7 +19,7 @@ test('should not compile typescript plugin and exit with exitCode 1', async () =
   try {
     await execa('node', [
       cliPath, 'compile',
-      '--config', pathToConfig
+      '--config', pathToConfig,
     ])
     assert.fail('should not compile bad typescript plugin')
   } catch (err) {

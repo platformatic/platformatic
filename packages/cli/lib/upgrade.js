@@ -9,13 +9,13 @@ import fjs from 'fast-json-stringify'
 export async function upgrade (argv) {
   const args = parseArgs(argv, {
     alias: {
-      config: 'c'
-    }
+      config: 'c',
+    },
   })
 
   const logger = pino(pretty({
     translateTime: 'SYS:HH:MM:ss',
-    ignore: 'hostname,pid'
+    ignore: 'hostname,pid',
   }))
   try {
     await upgradeApp(args.config, logger)
@@ -28,7 +28,7 @@ export async function upgrade (argv) {
 async function upgradeApp (config, logger) {
   const store = new Store({
     cwd: process.cwd(),
-    logger
+    logger,
   })
   store.add(platformaticRuntime)
 
@@ -38,8 +38,8 @@ async function upgradeApp (config, logger) {
       fixPaths: false,
       onMissingEnv (key) {
         return '{' + key + '}'
-      }
-    }
+      },
+    },
   })
 
   await configManager.parseAndValidate(false)

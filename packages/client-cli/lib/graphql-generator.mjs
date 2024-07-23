@@ -6,7 +6,7 @@ export function processGraphQL ({ schema, name, folder, url }) {
   schema = schema.__schema
   return {
     types: generateTypesFromGraphQL({ schema, name }),
-    implementation: generateImplementationFromGraqhQL({ schema, name, url })
+    implementation: generateImplementationFromGraqhQL({ schema, name, url }),
   }
 }
 
@@ -15,19 +15,18 @@ const skip = new Set([
   'Mutation',
   'Subscription',
   'Boolean',
-  'String'
+  'String',
 ])
 
 function generateTypesFromGraphQL ({ schema, name }) {
   const camelcasedName = toJavaScriptName(name)
   const capitalizedName = capitalize(camelcasedName)
-  /* eslint-disable new-cap */
+
   const writer = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
     useTabs: false,
-    useSingleQuote: true
+    useSingleQuote: true,
   })
-  /* eslint-enable new-cap */
 
   writer.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
   writer.blankLine()
@@ -100,13 +99,12 @@ function generateTypesFromGraphQL ({ schema, name }) {
 
 function generateImplementationFromGraqhQL ({ name, url }) {
   const camelcasedName = toJavaScriptName(name)
-  /* eslint-disable new-cap */
+
   const writer = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
     useTabs: false,
-    useSingleQuote: true
+    useSingleQuote: true,
   })
-  /* eslint-enable new-cap */
 
   // TODO support esm
   writer.writeLine('\'use strict\'')

@@ -74,12 +74,12 @@ app.listen({ port: 0 })
     break
   }
   const res = await request(url, {
-    method: 'POST'
+    method: 'POST',
   })
   const body = await res.body.json()
   same(body, {
     id: 1,
-    title: 'foo'
+    title: 'foo',
   })
 })
 
@@ -128,8 +128,8 @@ app.listen({ port: 0 });
       target: 'es2018',
       moduleResolution: 'NodeNext',
       lib: ['es2018'],
-      esModuleInterop: true
-    }
+      esModuleInterop: true,
+    },
   }, null, 2)
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
@@ -159,12 +159,12 @@ app.listen({ port: 0 });
     break
   }
   const res = await request(url, {
-    method: 'POST'
+    method: 'POST',
   })
   const body = await res.body.json()
   same(body, {
     id: 1,
-    title: 'foo'
+    title: 'foo',
   })
 })
 
@@ -216,12 +216,12 @@ app.listen({ port: 0 })
     break
   }
   const res = await request(url, {
-    method: 'POST'
+    method: 'POST',
   })
   const body = await res.body.json()
   same(body, {
     id: 1,
-    title: 'foo'
+    title: 'foo',
   })
 })
 
@@ -294,12 +294,12 @@ app.listen({ port: 0 })
     break
   }
   const res = await request(url, {
-    method: 'POST'
+    method: 'POST',
   })
   const body = await res.body.json()
   equal(match(body, {
     id: 1,
-    title: 'foo'
+    title: 'foo',
   }), true)
 })
 
@@ -351,8 +351,8 @@ app.listen({ port: 0 });
       target: 'es2018',
       moduleResolution: 'NodeNext',
       lib: ['es2018'],
-      esModuleInterop: true
-    }
+      esModuleInterop: true,
+    },
   }, null, 2)
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
@@ -382,12 +382,12 @@ app.listen({ port: 0 });
     break
   }
   const res = await request(url, {
-    method: 'POST'
+    method: 'POST',
   })
   const body = await res.body.json()
   same(body, {
     id: 1,
-    title: 'foo'
+    title: 'foo',
   })
 })
 
@@ -410,11 +410,11 @@ test('dotenv & config support', async (t) => {
     $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
-      paths: ['./plugin.js']
-    }
+      paths: ['./plugin.js'],
+    },
   }
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
@@ -429,7 +429,7 @@ test('dotenv & config support', async (t) => {
     const envs = dotenv.parse(await fs.readFile(join(dir, '.env')))
     same(envs, {
       FOO: 'bar',
-      PLT_MOVIES_URL: url
+      PLT_MOVIES_URL: url,
     })
   }
 
@@ -437,7 +437,7 @@ test('dotenv & config support', async (t) => {
     const envs = dotenv.parse(await fs.readFile(join(dir, '.env.sample')))
     same(envs, {
       FOO: 'bar',
-      PLT_MOVIES_URL: url
+      PLT_MOVIES_URL: url,
     })
   }
 })
@@ -490,7 +490,7 @@ app.listen({ port: 0 })
   }
   {
     const res = await request(url, {
-      method: 'POST'
+      method: 'POST',
     })
     const body = await res.body.json()
     const matchDate = /[a-z]{3}, \d{2} [a-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT/i
@@ -504,12 +504,12 @@ app.listen({ port: 0 })
         'content-length': '22',
         date: matchDate,
         connection: 'keep-alive',
-        'keep-alive': matchKeepAlive
+        'keep-alive': matchKeepAlive,
       },
       body: {
         id: 1,
-        title: 'foo'
-      }
+        title: 'foo',
+      },
     }), true)
   }
 
@@ -572,12 +572,12 @@ app.listen({ port: 0 })
     break
   }
   const res = await request(url, {
-    method: 'POST'
+    method: 'POST',
   })
   const body = await res.body.json()
   same(body, {
     id: 1,
-    title: 'foo'
+    title: 'foo',
   })
 })
 
@@ -605,7 +605,7 @@ test('name with dashes', async (t) => {
     same(pkg, {
       name: 'uncanny-movies',
       main: './uncanny-movies.cjs',
-      types: './uncanny-movies.d.ts'
+      types: './uncanny-movies.d.ts',
     })
   }
 
@@ -643,12 +643,12 @@ app.listen({ port: 0 })
     break
   }
   const res = await request(url, {
-    method: 'POST'
+    method: 'POST',
   })
   const body = await res.body.json()
   same(body, {
     id: 1,
-    title: 'foo'
+    title: 'foo',
   })
 })
 
@@ -691,8 +691,8 @@ app.listen({ port: 0 });
       target: 'es2018',
       moduleResolution: 'NodeNext',
       lib: ['es2018'],
-      esModuleInterop: true
-    }
+      esModuleInterop: true,
+    },
   }, null, 2)
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
@@ -722,12 +722,12 @@ app.listen({ port: 0 });
     break
   }
   const res = await request(url, {
-    method: 'POST'
+    method: 'POST',
   })
   const body = await res.body.json()
   same(body, {
     id: 1,
-    title: 'foo'
+    title: 'foo',
   })
 })
 
@@ -755,7 +755,7 @@ test('name with tilde', async (t) => {
     same(pkg, {
       name: 'uncanny~movies',
       main: './uncanny~movies.cjs',
-      types: './uncanny~movies.d.ts'
+      types: './uncanny~movies.d.ts',
     })
   }
 
@@ -793,12 +793,12 @@ app.listen({ port: 0 })
     break
   }
   const res = await request(url, {
-    method: 'POST'
+    method: 'POST',
   })
   const body = await res.body.json()
   same(body, {
     id: 1,
-    title: 'foo'
+    title: 'foo',
   })
 })
 
@@ -866,7 +866,7 @@ test('openapi client generation (javascript) from file with fullRequest, fullRes
 
   const fullOptions = [
     ['--full-request', '--full-response'],
-    ['--full']
+    ['--full'],
   ]
   for (const opt of fullOptions) {
     await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', 'full', '--validate-response', '--optional-headers', 'headerId', ...opt])
@@ -920,18 +920,18 @@ test('do not generate implementation file if in platformatic service', async (t)
     $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
-      paths: ['./plugin.js']
-    }
+      paths: ['./plugin.js'],
+    },
   }
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
 
   const fullOptions = [
     ['--full-request', '--full-response'],
-    ['--full']
+    ['--full'],
   ]
   for (const opt of fullOptions) {
     await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', 'full', '--validate-response', '--optional-headers', 'headerId', ...opt])
@@ -1065,14 +1065,14 @@ app.listen({ port: 0 })
   }
   {
     const res = await request(url, {
-      method: 'GET'
+      method: 'GET',
     })
     const body = await res.body.json()
     equal(match(body, { query: { movieId: '123' }, path: { fieldId: 'foo' } }), true)
   }
   {
     const res = await request(url, {
-      method: 'POST'
+      method: 'POST',
     })
     const body = await res.body.json()
     equal(match(body, { path: { fieldId: 'foo' } }), true)

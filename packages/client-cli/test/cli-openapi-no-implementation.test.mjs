@@ -55,11 +55,11 @@ test('openapi client generation (javascript)', async (t) => {
     $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
-      paths: ['./plugin.js']
-    }
+      paths: ['./plugin.js'],
+    },
   }
 
   const plugin = `
@@ -85,12 +85,12 @@ module.exports = async function (app) {
   })
 
   const res = await request(app2.url, {
-    method: 'POST'
+    method: 'POST',
   })
   const body = await res.body.json()
   same(body, {
     id: 1,
-    title: 'foo'
+    title: 'foo',
   })
 })
 
@@ -110,12 +110,12 @@ test('openapi client generation (typescript)', async (t) => {
     $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
       paths: ['./plugin.ts'],
-      typescript: true
-    }
+      typescript: true,
+    },
   }
 
   const plugin = `
@@ -143,8 +143,8 @@ export default myPlugin
       outDir: 'build',
       target: 'es2018',
       moduleResolution: 'NodeNext',
-      lib: ['es2018']
-    }
+      lib: ['es2018'],
+    },
   }, null, 2)
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
@@ -157,12 +157,12 @@ export default myPlugin
   t.after(async () => { await app2.close() })
 
   const res = await request(app2.url, {
-    method: 'POST'
+    method: 'POST',
   })
   const body = await res.body.json()
   same(body, {
     id: 1,
-    title: 'foo'
+    title: 'foo',
   })
 })
 
@@ -185,11 +185,11 @@ test('config support with folder', async (t) => {
     $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
-      paths: ['./plugin.js']
-    }
+      paths: ['./plugin.js'],
+    },
   }
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
@@ -203,8 +203,8 @@ test('config support with folder', async (t) => {
         schema: posix.join('uncanny', 'movies.openapi.json'),
         name: 'movies',
         type: 'openapi',
-        url: '{PLT_MOVIES_URL}'
-      }]
+        url: '{PLT_MOVIES_URL}',
+      }],
     }), true)
   }
 })
@@ -225,12 +225,12 @@ test('openapi client generation (typescript) with --types-only', async (t) => {
     $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
       paths: ['./plugin.ts'],
-      typescript: true
-    }
+      typescript: true,
+    },
   }
 
   const plugin = `
@@ -268,8 +268,8 @@ export default myPlugin
       outDir: 'build',
       target: 'es2018',
       moduleResolution: 'NodeNext',
-      lib: ['es2018']
-    }
+      lib: ['es2018'],
+    },
   }, null, 2)
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
@@ -282,12 +282,12 @@ export default myPlugin
   t.after(async () => { await app2.close() })
 
   const res = await request(app2.url, {
-    method: 'POST'
+    method: 'POST',
   })
   const body = await res.body.json()
   same(body, {
     id: 1,
-    title: 'foo'
+    title: 'foo',
   })
 })
 
@@ -307,12 +307,12 @@ test('openapi client generation (typescript) with --types-only and --folder', as
     $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
       paths: ['./plugin.ts'],
-      typescript: true
-    }
+      typescript: true,
+    },
   }
 
   const plugin = `
@@ -350,8 +350,8 @@ export default myPlugin
       outDir: 'build',
       target: 'es2018',
       moduleResolution: 'NodeNext',
-      lib: ['es2018']
-    }
+      lib: ['es2018'],
+    },
   }, null, 2)
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
@@ -364,12 +364,12 @@ export default myPlugin
   t.after(async () => { await app2.close() })
 
   const res = await request(app2.url, {
-    method: 'POST'
+    method: 'POST',
   })
   const body = await res.body.json()
   same(body, {
     id: 1,
-    title: 'foo'
+    title: 'foo',
   })
 })
 
@@ -392,11 +392,11 @@ test('generate client twice', async (t) => {
     $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
-      paths: ['./plugin.js']
-    }
+      paths: ['./plugin.js'],
+    },
   }
 
   const plugin = `
@@ -427,11 +427,11 @@ test('openapi client generation (javascript) from file', async (t) => {
     $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
-      paths: ['./plugin.js']
-    }
+      paths: ['./plugin.js'],
+    },
   }
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))

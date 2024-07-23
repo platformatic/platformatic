@@ -21,8 +21,8 @@ test('status code !== 200', async (t) => {
     reply.code(500)
     return {
       data: {
-        hello: 'world'
-      }
+        hello: 'world',
+      },
     }
   })
   await fastify.listen({ port: 0 })
@@ -32,7 +32,7 @@ test('status code !== 200', async (t) => {
   })
 
   const client = await buildGraphQLClient({
-    url: `http://localhost:${fastify.server.address().port}/graphql`
+    url: `http://localhost:${fastify.server.address().port}/graphql`,
   })
 
   await assert.rejects(client.graphql({
@@ -45,8 +45,8 @@ test('status code !== 200', async (t) => {
       }
     `,
     variables: {
-      title: 'The Matrix'
-    }
+      title: 'The Matrix',
+    },
   }), new Error('request to client failed'))
 })
 
@@ -55,8 +55,8 @@ test('errors', async (t) => {
   fastify.post('/graphql', async (request, reply) => {
     return {
       errors: [{
-        message: 'hello world'
-      }]
+        message: 'hello world',
+      }],
     }
   })
   await fastify.listen({ port: 0 })
@@ -66,7 +66,7 @@ test('errors', async (t) => {
   })
 
   const client = await buildGraphQLClient({
-    url: `http://localhost:${fastify.server.address().port}/graphql`
+    url: `http://localhost:${fastify.server.address().port}/graphql`,
   })
 
   await assert.rejects(client.graphql({
@@ -79,8 +79,8 @@ test('errors', async (t) => {
       }
     `,
     variables: {
-      title: 'The Matrix'
-    }
+      title: 'The Matrix',
+    },
   }), new Error('hello world'))
 })
 
@@ -103,7 +103,7 @@ test('build basic client from url', async (t) => {
   await app.start()
 
   const client = await buildGraphQLClient({
-    url: `${app.url}/graphql`
+    url: `${app.url}/graphql`,
   })
 
   const movie = await client.graphql({
@@ -116,13 +116,13 @@ test('build basic client from url', async (t) => {
       }
     `,
     variables: {
-      title: 'The Matrix'
-    }
+      title: 'The Matrix',
+    },
   })
 
   assert.deepEqual(movie, {
     id: '1',
-    title: 'The Matrix'
+    title: 'The Matrix',
   })
 
   const movies = await client.graphql({
@@ -137,18 +137,18 @@ test('build basic client from url', async (t) => {
         title
       }
     }
-    `
+    `,
   })
 
   assert.deepEqual(movies, {
     movies: [{
       id: '1',
-      title: 'The Matrix'
+      title: 'The Matrix',
     }],
     getMovieById: {
       id: '1',
-      title: 'The Matrix'
-    }
+      title: 'The Matrix',
+    },
   })
 })
 
@@ -173,8 +173,8 @@ test('build basic client from url with custom headers', async (t) => {
   const client = await buildGraphQLClient({
     url: `${app.url}/graphql`,
     headers: {
-      'x-platformatic-admin-secret': 'changeme'
-    }
+      'x-platformatic-admin-secret': 'changeme',
+    },
   })
 
   const movie = await client.graphql({
@@ -187,13 +187,13 @@ test('build basic client from url with custom headers', async (t) => {
       }
     `,
     variables: {
-      title: 'The Matrix'
-    }
+      title: 'The Matrix',
+    },
   })
 
   assert.deepEqual(movie, {
     id: '1',
-    title: 'The Matrix'
+    title: 'The Matrix',
   })
 
   const movies = await client.graphql({
@@ -208,18 +208,18 @@ test('build basic client from url with custom headers', async (t) => {
         title
       }
     }
-    `
+    `,
   })
 
   assert.deepEqual(movies, {
     movies: [{
       id: '1',
-      title: 'The Matrix'
+      title: 'The Matrix',
     }],
     getMovieById: {
       id: '1',
-      title: 'The Matrix'
-    }
+      title: 'The Matrix',
+    },
   })
 })
 
@@ -242,11 +242,11 @@ test('bad query', async (t) => {
   await app.start()
 
   const client = await buildGraphQLClient({
-    url: `${app.url}/graphql`
+    url: `${app.url}/graphql`,
   })
 
   await assert.rejects(client.graphql({
-    query: 'foo'
+    query: 'foo',
   }))
 })
 
@@ -269,10 +269,10 @@ test('error within resolver', async (t) => {
   await app.start()
 
   const client = await buildGraphQLClient({
-    url: `${app.url}/graphql`
+    url: `${app.url}/graphql`,
   })
 
   await assert.rejects(client.graphql({
-    query: '{ hello }'
+    query: '{ hello }',
   }))
 })

@@ -16,11 +16,11 @@ test('full-request-body', async (t) => {
     $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
-      paths: ['./plugin.js']
-    }
+      paths: ['./plugin.js'],
+    },
   }
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
