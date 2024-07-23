@@ -23,5 +23,5 @@ function isFetchable (service) {
 
 module.exports = {
   prefixWithSlash,
-  isFetchable
+  isFetchable,
 }

@@ -4,7 +4,7 @@ module.exports = async function (app) {
   app.platformatic.addComposerOnRouteHook('/users/{id}', ['GET'], routeOptions => {
     routeOptions.schema.response[200] = {
       description: 'This is a test',
-      type: 'object'
+      type: 'object',
     }
   })
 

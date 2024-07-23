@@ -22,8 +22,8 @@ test('should restart composer if a service has been changed, and update the sche
   const graphql1 = await createGraphqlService(t, {
     schema: schema1,
     resolvers: {
-      Query: { add: (_, { x, y }) => x + y }
-    }
+      Query: { add: (_, { x, y }) => x + y },
+    },
   })
 
   await graphql1.listen()
@@ -37,11 +37,11 @@ test('should restart composer if a service has been changed, and update the sche
           {
             id: 'graphql1',
             origin,
-            graphql: true
-          }
+            graphql: true,
+          },
         ],
-        refreshTimeout: REFRESH_TIMEOUT
-      }
+        refreshTimeout: REFRESH_TIMEOUT,
+      },
     }
   )
 
@@ -51,8 +51,8 @@ test('should restart composer if a service has been changed, and update the sche
   const graphql1a = await createGraphqlService(t, {
     schema: schema2,
     resolvers: {
-      Query: { sum: (_, { a, b }) => a + b }
-    }
+      Query: { sum: (_, { a, b }) => a + b },
+    },
   })
 
   assert.equal(composer.graphqlSupergraph.sdl, schema1)
@@ -71,11 +71,11 @@ test('composer should restart and update schema if one of the services shuts dow
     schema: 'type Query { dice: Int }',
     resolvers: { Query: { dice: () => Math.floor(Math.random() * 6) + 1 } },
     extend: {
-      file: path.join(__dirname, 'fixtures', 'hello.js')
-    }
+      file: path.join(__dirname, 'fixtures', 'hello.js'),
+    },
   })
   const graphql2 = await createGraphqlService(t, {
-    file: path.join(__dirname, 'fixtures', 'dogs.js')
+    file: path.join(__dirname, 'fixtures', 'dogs.js'),
   })
 
   const supergraph1 = dedent`type Query {
@@ -137,16 +137,16 @@ test('composer should restart and update schema if one of the services shuts dow
           {
             id: 'graphql1',
             origin: graphql1Origin,
-            graphql: true
+            graphql: true,
           },
           {
             id: 'graphql2',
             origin: graphql2Origin,
-            graphql: true
-          }
+            graphql: true,
+          },
         ],
-        refreshTimeout: REFRESH_TIMEOUT
-      }
+        refreshTimeout: REFRESH_TIMEOUT,
+      },
     }
   )
 
@@ -169,27 +169,27 @@ test('should not restart if services did not change', async (t) => {
       type Query {
         add(x: Int, y: Int): Int
       }`,
-      resolvers: { Query: { add: (_, { x, y }) => x + y } }
+      resolvers: { Query: { add: (_, { x, y }) => x + y } },
     },
     {
       schema: dedent`
       type Query {
         mul(a: Int, b: Int): Int
       }`,
-      resolvers: { Query: { mul: (_, { a, b }) => a * b } }
+      resolvers: { Query: { mul: (_, { a, b }) => a * b } },
     },
     {
       schema: dedent`
       type Query {
         sub(x: Int, y: Int): Int
       }`,
-      resolvers: { Query: { sub: (_, { x, y }) => x - y } }
+      resolvers: { Query: { sub: (_, { x, y }) => x - y } },
     }]
 
   for (const service of services) {
     service.instance = await createGraphqlService(t, {
       schema: service.schema,
-      resolvers: service.resolvers
+      resolvers: service.resolvers,
     })
     service.origin = await service.instance.listen()
   }
@@ -200,10 +200,10 @@ test('should not restart if services did not change', async (t) => {
         services: services.map((service, i) => ({
           id: 'graphql' + i,
           origin: service.origin,
-          graphql: true
+          graphql: true,
         })),
-        refreshTimeout: REFRESH_TIMEOUT
-      }
+        refreshTimeout: REFRESH_TIMEOUT,
+      },
     }
   )
 
@@ -218,10 +218,10 @@ test('should not restart if services did not change', async (t) => {
 test('should not watch when refreshTimeout is 0', async (t) => {
   const graphql1 = await createGraphqlService(t, {
     schema: 'type Query { cheatingDice: Int }',
-    resolvers: { Query: { cheatingDice: () => 3 } }
+    resolvers: { Query: { cheatingDice: () => 3 } },
   })
   const graphql2 = await createGraphqlService(t, {
-    file: path.join(__dirname, 'fixtures', 'dogs.js')
+    file: path.join(__dirname, 'fixtures', 'dogs.js'),
   })
 
   const supergraph1 = dedent`type Query {
@@ -258,16 +258,16 @@ test('should not watch when refreshTimeout is 0', async (t) => {
           {
             id: 'graphql1',
             origin: graphql1Origin,
-            graphql: true
+            graphql: true,
           },
           {
             id: 'graphql2',
             origin: graphql2Origin,
-            graphql: true
-          }
+            graphql: true,
+          },
         ],
-        refreshTimeout: 0
-      }
+        refreshTimeout: 0,
+      },
     }
   )
 
@@ -289,7 +289,7 @@ test('should not watch if there are no fetchable services', async (t) => {
   const logger = createLoggerSpy()
 
   const composer = await createComposer(t, {
-    composer: { services: [] }
+    composer: { services: [] },
   }, logger)
   await composer.start()
 
@@ -304,7 +304,7 @@ test('should handle errors watching services', async (t) => {
 
   const graphql1 = await createGraphqlService(t, {
     schema: 'type Query { cheatingDice: Int }',
-    resolvers: { Query: { cheatingDice: () => 3 } }
+    resolvers: { Query: { cheatingDice: () => 3 } },
   })
 
   const graphql1Origin = await graphql1.listen()
@@ -316,11 +316,11 @@ test('should handle errors watching services', async (t) => {
           {
             id: 'graphql1',
             origin: graphql1Origin,
-            graphql: true
-          }
+            graphql: true,
+          },
         ],
-        refreshTimeout: REFRESH_TIMEOUT
-      }
+        refreshTimeout: REFRESH_TIMEOUT,
+      },
     }, logger
   )
 

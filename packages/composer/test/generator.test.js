@@ -25,13 +25,13 @@ describe('generator', () => {
         'PORT=3042',
         'PLT_TYPESCRIPT=false',
         'PLT_EXAMPLE_ORIGIN=http://127.0.0.1:3043',
-        ''
+        '',
       ].join('\n'))
     }
 
     {
       svc.setConfig({
-        typescript: true
+        typescript: true,
       })
 
       await svc.prepare()
@@ -74,7 +74,7 @@ declare module 'fastify' {
   test('config', async (t) => {
     const svc = new ComposerGenerator()
     svc.setConfig({
-      typescript: true
+      typescript: true,
     })
     await svc.prepare()
     const platformaticConfigFile = svc.getFileObject('platformatic.json')
@@ -86,21 +86,21 @@ declare module 'fastify' {
           id: 'example',
           origin: '{PLT_EXAMPLE_ORIGIN}',
           openapi: {
-            url: '/documentation/json'
-          }
-        }
+            url: '/documentation/json',
+          },
+        },
       ],
-      refreshTimeout: 1000
+      refreshTimeout: 1000,
     })
     assert.deepEqual(contents.server, {
       hostname: '{PLT_SERVER_HOSTNAME}',
       port: '{PORT}',
-      logger: { level: '{PLT_SERVER_LOGGER_LEVEL}' }
+      logger: { level: '{PLT_SERVER_LOGGER_LEVEL}' },
     })
 
     assert.deepEqual(contents.plugins, {
       paths: [{ path: './plugins', encapsulate: false }, './routes'],
-      typescript: '{PLT_TYPESCRIPT}'
+      typescript: '{PLT_TYPESCRIPT}',
     })
   })
 
@@ -114,21 +114,21 @@ declare module 'fastify' {
             {
               path: 'threshold',
               value: '1',
-              type: 'number'
+              type: 'number',
             },
             {
               path: 'foobar',
               value: '123',
               type: 'number',
-              name: 'FST_PLUGIN_STATIC_FOOBAR'
-            }
-          ]
-        }
+              name: 'FST_PLUGIN_STATIC_FOOBAR',
+            },
+          ],
+        },
       ]
       svc.setConfig({
         isRuntimeContext: true,
         plugin: false,
-        serviceName: 'my-composer'
+        serviceName: 'my-composer',
       })
       await svc.addPackage(packageDefinitions[0])
       await svc.prepare()
@@ -142,10 +142,10 @@ declare module 'fastify' {
             name: '@fastify/compress',
             options: {
               threshold: 1,
-              foobar: '{PLT_MY_COMPOSER_FST_PLUGIN_STATIC_FOOBAR}'
-            }
-          }
-        ]
+              foobar: '{PLT_MY_COMPOSER_FST_PLUGIN_STATIC_FOOBAR}',
+            },
+          },
+        ],
       })
 
       assert.equal(svc.config.env.PLT_MY_COMPOSER_FST_PLUGIN_STATIC_FOOBAR, 123)
@@ -160,10 +160,10 @@ declare module 'fastify' {
             {
               path: 'threshold',
               value: '1',
-              type: 'number'
-            }
-          ]
-        }
+              type: 'number',
+            },
+          ],
+        },
       ]
       await svc.addPackage(packageDefinitions[0])
       await svc.prepare()
@@ -175,19 +175,19 @@ declare module 'fastify' {
         paths: [
           {
             encapsulate: false,
-            path: './plugins'
+            path: './plugins',
           },
-          './routes'
+          './routes',
         ],
         packages: [
           {
             name: '@fastify/compress',
             options: {
-              threshold: 1
-            }
-          }
+              threshold: 1,
+            },
+          },
         ],
-        typescript: '{PLT_TYPESCRIPT}'
+        typescript: '{PLT_TYPESCRIPT}',
       })
     }
   })
@@ -200,12 +200,12 @@ declare module 'fastify' {
         serviceName: 'my-service',
         env: {
           FOO: 'bar',
-          BAZ: 'baz'
-        }
+          BAZ: 'baz',
+        },
       })
       assert.deepEqual(svc.config.env, {
         PLT_MY_SERVICE_FOO: 'bar',
-        PLT_MY_SERVICE_BAZ: 'baz'
+        PLT_MY_SERVICE_BAZ: 'baz',
       })
 
       await svc.prepare()
@@ -216,7 +216,7 @@ declare module 'fastify' {
         PLT_MY_SERVICE_FOO: 'bar',
         PLT_MY_SERVICE_BAZ: 'baz',
         PLT_MY_SERVICE_TYPESCRIPT: false,
-        PLT_MY_SERVICE_EXAMPLE_ORIGIN: 'http://127.0.0.1:3043'
+        PLT_MY_SERVICE_EXAMPLE_ORIGIN: 'http://127.0.0.1:3043',
       })
     })
 
@@ -224,7 +224,7 @@ declare module 'fastify' {
       const svc = new ComposerGenerator()
       svc.setConfig({
         isRuntimeContext: true,
-        serviceName: 'my-service'
+        serviceName: 'my-service',
       })
 
       await svc.prepare()
@@ -238,7 +238,7 @@ declare module 'fastify' {
       const svc = new ComposerGenerator()
       svc.setConfig({
         isRuntimeContext: true,
-        serviceName: 'my-service'
+        serviceName: 'my-service',
       })
 
       await svc.prepare()

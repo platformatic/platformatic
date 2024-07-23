@@ -8,10 +8,10 @@ const graphqlSupergraphSymbol = Symbol('graphqlSupergraph')
 async function composeGraphql (app, opts) {
   app.decorate('graphqlSupergraph', {
     getter () { return this[graphqlSupergraphSymbol] },
-    setter (v) { this[graphqlSupergraphSymbol] = v }
+    setter (v) { this[graphqlSupergraphSymbol] = v },
   })
   app.decorate('graphqlComposerOptions', {
-    getter () { return opts }
+    getter () { return opts },
   })
 
   app.graphqlSupergraph = createSupergraph()

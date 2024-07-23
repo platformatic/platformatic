@@ -49,7 +49,7 @@ module.exports = fp(async function (app, opts) {
             ...headers,
             ...telemetryHeaders,
             'x-forwarded-for': request.ip,
-            'x-forwarded-host': request.hostname
+            'x-forwarded-host': request.hostname,
           }
 
           const telemetryId = config.telemetry?.serviceName
@@ -62,8 +62,8 @@ module.exports = fp(async function (app, opts) {
         onResponse: (request, reply, res) => {
           app.openTelemetry?.endSpanClient(reply.request.proxedCallSpan, { statusCode: reply.statusCode })
           reply.send(res)
-        }
-      }
+        },
+      },
     })
   }
 })

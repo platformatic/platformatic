@@ -40,8 +40,8 @@ test('should fetch the available schemas', async (t) => {
       hostname: '127.0.0.1',
       port: 0,
       logger: {
-        level: 'info'
-      }
+        level: 'info',
+      },
     },
     composer: {
       services: [
@@ -50,22 +50,22 @@ test('should fetch the available schemas', async (t) => {
           origin: 'http://127.0.0.1:' + api1.server.address().port,
           openapi: {
             url: '/documentation/json',
-            file: pathToSchema1
-          }
+            file: pathToSchema1,
+          },
         },
         {
           id: 'api2',
           origin: 'http://127.0.0.1:' + api2.server.address().port,
           openapi: {
             url: '/documentation/json',
-            file: pathToSchema2
-          }
-        }
+            file: pathToSchema2,
+          },
+        },
       ],
-      refreshTimeout: 1000
+      refreshTimeout: 1000,
     },
     types: {},
-    watch: false
+    watch: false,
   }
 
   await writeFile(pathToConfig, JSON.stringify(config))

@@ -8,7 +8,7 @@ class ComposerGenerator extends BaseGenerator {
   constructor (opts) {
     super({
       ...opts,
-      module: '@platformatic/composer'
+      module: '@platformatic/composer',
     })
     this.runtime = null
   }
@@ -18,7 +18,7 @@ class ComposerGenerator extends BaseGenerator {
     return {
       ...defaultBaseConfig,
       plugin: true,
-      tests: true
+      tests: true,
     }
   }
 
@@ -31,13 +31,13 @@ class ComposerGenerator extends BaseGenerator {
             id: 'example',
             origin: `{${this.getEnvVarName('PLT_EXAMPLE_ORIGIN')}}`,
             openapi: {
-              url: '/documentation/json'
-            }
-          }
+              url: '/documentation/json',
+            },
+          },
         ],
-        refreshTimeout: 1000
+        refreshTimeout: 1000,
       },
-      watch: true
+      watch: true,
     }
     if (this.runtime !== null) {
       template.composer.services = this.runtime.services
@@ -47,8 +47,8 @@ class ComposerGenerator extends BaseGenerator {
             id: serviceMeta.name,
             openapi: {
               url: '/documentation/json',
-              prefix: `/${serviceMeta.name}`
-            }
+              prefix: `/${serviceMeta.name}`,
+            },
           }
         })
     }
@@ -58,11 +58,11 @@ class ComposerGenerator extends BaseGenerator {
         paths: [
           {
             path: './plugins',
-            encapsulate: false
+            encapsulate: false,
           },
-          './routes'
+          './routes',
         ],
-        typescript: `{${this.getEnvVarName('PLT_TYPESCRIPT')}}`
+        typescript: `{${this.getEnvVarName('PLT_TYPESCRIPT')}}`,
       }
     }
 
@@ -71,8 +71,8 @@ class ComposerGenerator extends BaseGenerator {
         hostname: '{PLT_SERVER_HOSTNAME}',
         port: '{PORT}',
         logger: {
-          level: '{PLT_SERVER_LOGGER_LEVEL}'
-        }
+          level: '{PLT_SERVER_LOGGER_LEVEL}',
+        },
       }
     }
 
@@ -85,17 +85,17 @@ class ComposerGenerator extends BaseGenerator {
         this.addEnvVars({
           PLT_SERVER_HOSTNAME: this.config.hostname,
           PLT_SERVER_LOGGER_LEVEL: 'info',
-          PORT: 3042
+          PORT: 3042,
         }, { overwrite: false, default: true })
       }
 
       this.addEnvVars({
         PLT_TYPESCRIPT: this.config.typescript,
-        PLT_EXAMPLE_ORIGIN: 'http://127.0.0.1:3043'
+        PLT_EXAMPLE_ORIGIN: 'http://127.0.0.1:3043',
       }, { overwrite: false, default: true })
 
       this.config.dependencies = {
-        '@platformatic/composer': `^${this.platformaticVersion}`
+        '@platformatic/composer': `^${this.platformaticVersion}`,
       }
     }
   }

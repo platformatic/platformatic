@@ -17,7 +17,7 @@ async function loadOpenApiConfig (pathToConfig) {
       return {
         /* c8 ignore next 1 */
         path: err.instancePath === '' ? '/' : err.instancePath,
-        message: err.message + ' ' + JSON.stringify(err.params)
+        message: err.message + ' ' + JSON.stringify(err.params),
       }
     })
     throw new errors.ValidationErrors(validationErrors.map((err) => {

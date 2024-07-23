@@ -12,8 +12,8 @@ setGlobalDispatcher(new Agent({
   keepAliveTimeout: 10,
   keepAliveMaxTimeout: 10,
   tls: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false,
+  },
 }))
 
 const cliPath = join(__dirname, '..', '..', 'composer.mjs')

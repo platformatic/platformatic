@@ -12,13 +12,13 @@ const openApiService = {
     url: { type: 'string' },
     file: { type: 'string', resolvePath: true },
     prefix: { type: 'string' },
-    config: { type: 'string', resolvePath: true }
+    config: { type: 'string', resolvePath: true },
   },
   anyOf: [
     { required: ['url'] },
-    { required: ['file'] }
+    { required: ['file'] },
   ],
-  additionalProperties: false
+  additionalProperties: false,
 }
 
 const entityResolver = {
@@ -28,18 +28,18 @@ const entityResolver = {
     argsAdapter: {
       oneOf: [
         { typeof: 'function' },
-        { type: 'string' }
-      ]
+        { type: 'string' },
+      ],
     },
     partialResults: {
       oneOf: [
         { typeof: 'function' },
-        { type: 'string' }
-      ]
-    }
+        { type: 'string' },
+      ],
+    },
   },
   required: ['name'],
-  additionalProperties: false
+  additionalProperties: false,
 }
 
 const entities = {
@@ -60,10 +60,10 @@ const entities = {
               as: { type: 'string' },
               pkey: { type: 'string' },
               subgraph: { type: 'string' },
-              resolver: entityResolver
+              resolver: entityResolver,
             },
-            required: ['type']
-          }
+            required: ['type'],
+          },
         },
         many: {
           type: 'array',
@@ -75,14 +75,14 @@ const entities = {
               as: { type: 'string' },
               pkey: { type: 'string' },
               subgraph: { type: 'string' },
-              resolver: entityResolver
+              resolver: entityResolver,
             },
-            required: ['type', 'fkey', 'resolver']
-          }
-        }
-      }
-    }
-  }
+            required: ['type', 'fkey', 'resolver'],
+          },
+        },
+      },
+    },
+  },
 }
 
 const graphqlService = {
@@ -95,11 +95,11 @@ const graphqlService = {
         name: { type: 'string' },
         graphqlEndpoint: { type: 'string', default: '/graphql' },
         composeEndpoint: { type: 'string', default: '/.well-known/graphql-composition' },
-        entities
+        entities,
       },
-      additionalProperties: false
-    }
-  ]
+      additionalProperties: false,
+    },
+  ],
 }
 
 const graphqlComposerOptions = {
@@ -111,13 +111,13 @@ const graphqlComposerOptions = {
     defaultArgsAdapter: {
       oneOf: [
         { typeof: 'function' },
-        { type: 'string' }
-      ]
+        { type: 'string' },
+      ],
     },
     entities,
-    addEntitiesResolvers: { type: 'boolean', default: false }
+    addEntitiesResolvers: { type: 'boolean', default: false },
   },
-  additionalProperties: false
+  additionalProperties: false,
 }
 
 const composer = {
@@ -138,41 +138,41 @@ const composer = {
               {
                 type: 'object',
                 properties: {
-                  prefix: { type: 'string' }
+                  prefix: { type: 'string' },
                 },
                 required: ['prefix'],
-                additionalProperties: false
-              }
-            ]
-          }
+                additionalProperties: false,
+              },
+            ],
+          },
         },
         required: ['id'],
-        additionalProperties: false
-      }
+        additionalProperties: false,
+      },
     },
     openapi: openApiBase,
     graphql: graphqlComposerOptions,
     addEmptySchema: { type: 'boolean', default: false },
-    refreshTimeout: { type: 'integer', minimum: 0, default: 1000 }
+    refreshTimeout: { type: 'integer', minimum: 0, default: 1000 },
   },
   required: ['services'],
-  additionalProperties: false
+  additionalProperties: false,
 }
 
 const types = {
   type: 'object',
   properties: {
     autogenerate: {
-      type: 'boolean'
+      type: 'boolean',
     },
     dir: {
       description: 'The path to the directory the types should be generated in.',
       type: 'string',
       default: 'types',
-      resolvePath: true
-    }
+      resolvePath: true,
+    },
   },
-  additionalProperties: false
+  additionalProperties: false,
 }
 
 const platformaticComposerSchema = {
@@ -190,18 +190,18 @@ const platformaticComposerSchema = {
     telemetry,
     watch: {
       anyOf: [watch, {
-        type: 'boolean'
+        type: 'boolean',
       }, {
-        type: 'string'
-      }]
+        type: 'string',
+      }],
     },
     $schema: {
-      type: 'string'
-    }
+      type: 'string',
+    },
   },
   additionalProperties: false,
   required: ['composer'],
-  $defs: openApiDefs
+  $defs: openApiDefs,
 }
 
 module.exports.schema = platformaticComposerSchema

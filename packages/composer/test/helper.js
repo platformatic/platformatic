@@ -14,7 +14,7 @@ const { buildServer } = require('..')
 
 const agent = new Agent({
   keepAliveMaxTimeout: 10,
-  keepAliveTimeout: 10
+  keepAliveTimeout: 10,
 })
 
 setGlobalDispatcher(agent)
@@ -23,16 +23,16 @@ async function createBasicService (t) {
   const app = fastify({
     logger: false,
     keepAliveTimeout: 10,
-    forceCloseConnections: true
+    forceCloseConnections: true,
   })
 
   await app.register(Swagger, {
     openapi: {
       info: {
         title: 'Test',
-        version: '0.1.0'
-      }
-    }
+        version: '0.1.0',
+      },
+    },
   })
 
   /** Serve spec file in yaml and json */
@@ -51,13 +51,13 @@ async function createBasicService (t) {
     schema: {
       response: {
         204: {
-          type: 'null'
+          type: 'null',
         },
         302: {
-          type: 'null'
-        }
-      }
-    }
+          type: 'null',
+        },
+      },
+    },
   }, async () => {})
 
   app.get('/object', {
@@ -66,12 +66,12 @@ async function createBasicService (t) {
         200: {
           type: 'object',
           properties: {
-            text: { type: 'string' }
+            text: { type: 'string' },
           },
-          required: ['text']
-        }
-      }
-    }
+          required: ['text'],
+        },
+      },
+    },
   }, async () => {
     return { text: 'Some text' }
   })
@@ -85,13 +85,13 @@ async function createBasicService (t) {
             nested: {
               type: 'object',
               properties: {
-                text: { type: 'string' }
-              }
-            }
-          }
-        }
-      }
-    }
+                text: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+    },
   }, async () => {
     return { nested: { text: 'Some text' } }
   })
@@ -107,16 +107,16 @@ async function createOpenApiService (t, entitiesNames = [], options = {}) {
   const app = fastify({
     logger: false,
     keepAliveTimeout: 10,
-    forceCloseConnections: true
+    forceCloseConnections: true,
   })
 
   await app.register(Swagger, {
     openapi: {
       info: {
         title: 'Test',
-        version: '0.1.0'
-      }
-    }
+        version: '0.1.0',
+      },
+    },
   })
 
   /** Serve spec file in yaml and json */
@@ -133,7 +133,7 @@ async function createOpenApiService (t, entitiesNames = [], options = {}) {
   app.decorate('getOpenApiSchema', async () => {
     const { body } = await app.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     return JSON.parse(body)
   })
@@ -162,8 +162,8 @@ async function createOpenApiService (t, entitiesNames = [], options = {}) {
       type: 'object',
       properties: {
         id: { type: 'number' },
-        name: { type: 'string' }
-      }
+        name: { type: 'string' },
+      },
     })
 
     app.get(`/${entity}`, {
@@ -171,10 +171,10 @@ async function createOpenApiService (t, entitiesNames = [], options = {}) {
         response: {
           200: {
             type: 'array',
-            items: { $ref: entity }
-          }
-        }
-      }
+            items: { $ref: entity },
+          },
+        },
+      },
     }, async () => {
       return Array.from(storage.values())
     })
@@ -184,13 +184,13 @@ async function createOpenApiService (t, entitiesNames = [], options = {}) {
         body: {
           type: 'object',
           properties: {
-            name: { type: 'string' }
-          }
+            name: { type: 'string' },
+          },
         },
         response: {
-          200: { $ref: entity }
-        }
-      }
+          200: { $ref: entity },
+        },
+      },
     }, async (req) => {
       const entity = req.body
       return saveEntity(entity)
@@ -200,9 +200,9 @@ async function createOpenApiService (t, entitiesNames = [], options = {}) {
       schema: {
         body: { $ref: entity },
         response: {
-          200: { $ref: entity }
-        }
-      }
+          200: { $ref: entity },
+        },
+      },
     }, async (req) => {
       const entity = req.body
       return saveEntity(entity)
@@ -211,9 +211,9 @@ async function createOpenApiService (t, entitiesNames = [], options = {}) {
     app.get(`/${entity}/:id`, {
       schema: {
         response: {
-          200: { $ref: entity }
-        }
-      }
+          200: { $ref: entity },
+        },
+      },
     }, async (req) => {
       return storage.get(parseInt(req.params.id))
     })
@@ -221,9 +221,9 @@ async function createOpenApiService (t, entitiesNames = [], options = {}) {
     app.post(`/${entity}/:id`, {
       schema: {
         response: {
-          200: { $ref: entity }
-        }
-      }
+          200: { $ref: entity },
+        },
+      },
     }, async (req) => {
       const id = req.params.id
       const entity = req.body
@@ -233,9 +233,9 @@ async function createOpenApiService (t, entitiesNames = [], options = {}) {
     app.put(`/${entity}/:id`, {
       schema: {
         response: {
-          200: { $ref: entity }
-        }
-      }
+          200: { $ref: entity },
+        },
+      },
     }, async (req) => {
       const id = req.params.id
       const entity = req.body
@@ -245,9 +245,9 @@ async function createOpenApiService (t, entitiesNames = [], options = {}) {
     app.delete(`/${entity}/:id`, {
       schema: {
         response: {
-          200: { $ref: entity }
-        }
-      }
+          200: { $ref: entity },
+        },
+      },
     }, async (req) => {
       return storage.delete(parseInt(req.params.id))
     })
@@ -306,13 +306,13 @@ async function createComposer (t, composerConfig, logger = false) {
       hostname: '127.0.0.1',
       port: 0,
       keepAliveTimeout: 10,
-      forceCloseConnections: true
+      forceCloseConnections: true,
     },
     composer: { services: [] },
     plugins: {
-      paths: []
+      paths: [],
     },
-    watch: false
+    watch: false,
   }
 
   const config = Object.assign({}, defaultConfig, composerConfig)
@@ -332,9 +332,9 @@ async function testEntityRoutes (origin, entitiesRoutes) {
         method: 'POST',
         path: entityRoute,
         headers: {
-          'content-type': 'application/json'
+          'content-type': 'application/json',
         },
-        body: JSON.stringify({ name: 'test' })
+        body: JSON.stringify({ name: 'test' }),
       })
       await body.text()
       assert.equal(statusCode, 200)
@@ -343,7 +343,7 @@ async function testEntityRoutes (origin, entitiesRoutes) {
     {
       const { statusCode, body } = await request(origin, {
         method: 'GET',
-        path: entityRoute
+        path: entityRoute,
       })
       await body.text()
       assert.equal(statusCode, 200)
@@ -354,9 +354,9 @@ async function testEntityRoutes (origin, entitiesRoutes) {
         method: 'PUT',
         path: entityRoute,
         headers: {
-          'content-type': 'application/json'
+          'content-type': 'application/json',
         },
-        body: JSON.stringify({ name: 'test' })
+        body: JSON.stringify({ name: 'test' }),
       })
       await body.text()
       assert.equal(statusCode, 200)
@@ -365,7 +365,7 @@ async function testEntityRoutes (origin, entitiesRoutes) {
     {
       const { statusCode, body } = await request(origin, {
         method: 'GET',
-        path: `${entityRoute}/1`
+        path: `${entityRoute}/1`,
       })
       await body.text()
       assert.equal(statusCode, 200)
@@ -376,9 +376,9 @@ async function testEntityRoutes (origin, entitiesRoutes) {
         method: 'POST',
         path: `${entityRoute}/2`,
         headers: {
-          'content-type': 'application/json'
+          'content-type': 'application/json',
         },
-        body: JSON.stringify({ name: 'test' })
+        body: JSON.stringify({ name: 'test' }),
       })
       await body.text()
       assert.equal(statusCode, 200)
@@ -389,9 +389,9 @@ async function testEntityRoutes (origin, entitiesRoutes) {
         method: 'PUT',
         path: `${entityRoute}/3`,
         headers: {
-          'content-type': 'application/json'
+          'content-type': 'application/json',
         },
-        body: JSON.stringify({ name: 'test' })
+        body: JSON.stringify({ name: 'test' }),
       })
       await body.text()
       assert.equal(statusCode, 200)
@@ -400,7 +400,7 @@ async function testEntityRoutes (origin, entitiesRoutes) {
     {
       const { statusCode, body } = await request(origin, {
         method: 'DELETE',
-        path: `${entityRoute}/4`
+        path: `${entityRoute}/4`,
       })
       await body.text()
       assert.equal(statusCode, 200)
@@ -412,9 +412,9 @@ async function graphqlRequest ({ query, variables, url, host }) {
   const { body, statusCode } = await request(url || host + '/graphql', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ query, variables })
+    body: JSON.stringify({ query, variables }),
   })
 
   const content = await body.json()
@@ -470,7 +470,7 @@ function createLoggerSpy () {
       this._warn = []
       this._error = []
       this._fatal = []
-    }
+    },
   }
 }
 
@@ -516,5 +516,5 @@ module.exports = {
   createPlatformaticDbService,
   startServices,
   createLoggerSpy,
-  eventToPromise
+  eventToPromise,
 }

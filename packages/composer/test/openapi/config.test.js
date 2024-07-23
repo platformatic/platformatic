@@ -7,7 +7,7 @@ const { test } = require('node:test')
 const { writeFile, mkdtemp } = require('fs/promises')
 const {
   createComposer,
-  createOpenApiService
+  createOpenApiService,
 } = require('../helper')
 
 test('should throw an error if can not read openapi config file', async (t) => {
@@ -27,11 +27,11 @@ test('should throw an error if can not read openapi config file', async (t) => {
               origin: 'http://127.0.0.1:' + api.server.address().port,
               openapi: {
                 url: '/documentation/json',
-                config: openapiConfigFile
-              }
-            }
-          ]
-        }
+                config: openapiConfigFile,
+              },
+            },
+          ],
+        },
       }
     )
     assert.fail('should throw error')
@@ -45,7 +45,7 @@ test('should throw an error if openapi config is not valid', async (t) => {
   await api.listen({ port: 0 })
 
   const openapiConfig = {
-    wrong: 'config'
+    wrong: 'config',
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -62,11 +62,11 @@ test('should throw an error if openapi config is not valid', async (t) => {
               origin: 'http://127.0.0.1:' + api.server.address().port,
               openapi: {
                 url: '/documentation/json',
-                config: openapiConfigFile
-              }
-            }
-          ]
-        }
+                config: openapiConfigFile,
+              },
+            },
+          ],
+        },
       }
     )
     assert.fail('should throw error')

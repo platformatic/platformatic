@@ -7,7 +7,7 @@ const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const {
   createComposer,
   createOpenApiService,
-  testEntityRoutes
+  testEntityRoutes,
 } = require('../helper')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
@@ -24,14 +24,14 @@ test('should add custom composer route to the composed schema', async (t) => {
             id: 'api1',
             origin: 'http://127.0.0.1:' + api.server.address().port,
             openapi: {
-              url: '/documentation/json'
-            }
-          }
-        ]
+              url: '/documentation/json',
+            },
+          },
+        ],
       },
       plugins: {
-        paths: [join(__dirname, 'fixtures', 'plugins', 'custom.js')]
-      }
+        paths: [join(__dirname, 'fixtures', 'plugins', 'custom.js')],
+      },
     }
   )
 
@@ -39,7 +39,7 @@ test('should add custom composer route to the composed schema', async (t) => {
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
