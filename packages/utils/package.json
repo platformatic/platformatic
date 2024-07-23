@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/utils",
-  "version": "1.51.7",
+  "version": "1.51.8",
   "description": "Platformatic DB Utils",
   "main": "index.js",
   "scripts": {

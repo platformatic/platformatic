@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/bus",
-  "version": "1.51.7",
+  "version": "1.51.8",
   "description": "",
   "main": "index.js",
   "scripts": {
