@@ -159,7 +159,7 @@ class ConfigManager extends EventEmitter {
         let version = this._configVersion
         if (!version && this.current.$schema?.indexOf('https://platformatic.dev/schemas/') === 0) {
           const url = new URL(this.current.$schema)
-          const res = url.pathname.match(/^\/schemas\/v(\d+\.\d+\.\d+)\/(.*)$/)
+          const res = url.pathname.match(/^\/schemas\/v(\d+\.\d+\.\d+)(?:-\w+\.\d+)?\/(.*)$/)
           version = res[1]
         }
 
