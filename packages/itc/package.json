@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npm run lint && borp --concurrency=1 --coverage",
+    "test": "npm run lint && borp --concurrency=1 --coverage && tsd",
     "lint": "standard"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
@@ -18,8 +18,10 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
+    "@types/node": "^20.14.11",
     "borp": "^0.16.0",
-    "standard": "^17.1.0"
+    "standard": "^17.1.0",
+    "tsd": "^0.31.0"
   },
   "dependencies": {
     "@fastify/error": "^3.4.1"

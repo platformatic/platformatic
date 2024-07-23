@@ -1143,6 +1143,9 @@ importers:
       standard:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.5.3))
+      tsd:
+        specifier: ^0.31.0
+        version: 0.31.1
 
   packages/runtime:
     dependencies:
