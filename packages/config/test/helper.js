@@ -12,5 +12,5 @@ async function saveConfigToFile (config, filename = 'platformatic.json', seriali
 }
 
 module.exports = {
-  saveConfigToFile
+  saveConfigToFile,
 }

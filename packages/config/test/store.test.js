@@ -18,7 +18,7 @@ test('Store with builtins', async t => {
 
   foo.schema = {
     $id: 'foo',
-    type: 'object'
+    type: 'object',
   }
 
   foo.configType = 'foo'
@@ -29,10 +29,10 @@ test('Store with builtins', async t => {
       useDefaults: true,
       coerceTypes: true,
       allErrors: true,
-      strict: false
+      strict: false,
     },
     transformConfig () {
-    }
+    },
   }
 
   const store = new Store()
@@ -53,7 +53,7 @@ test('Store with builtins', async t => {
   }
   assert.deepEqual(store.listTypes(), [{
     id: 'foo',
-    configType: 'foo'
+    configType: 'foo',
   }])
 })
 
@@ -74,7 +74,7 @@ test('missing configType', async t => {
 
   foo.schema = {
     $id: 'foo',
-    type: 'object'
+    type: 'object',
   }
 
   foo.configManagerConfig = {
@@ -84,10 +84,10 @@ test('missing configType', async t => {
       useDefaults: true,
       coerceTypes: true,
       allErrors: true,
-      strict: false
+      strict: false,
     },
     transformConfig () {
-    }
+    },
   }
 
   const store = new Store()
@@ -100,7 +100,7 @@ test('no configManagerConfig', async t => {
 
   foo.schema = {
     $id: 'foo',
-    type: 'object'
+    type: 'object',
   }
 
   foo.configType = 'foo'
@@ -123,7 +123,7 @@ test('add schema to configManagerConfig', async t => {
 
   foo.schema = {
     $id: 'foo',
-    type: 'object'
+    type: 'object',
   }
 
   foo.configType = 'foo'
@@ -133,10 +133,10 @@ test('add schema to configManagerConfig', async t => {
       useDefaults: true,
       coerceTypes: true,
       allErrors: true,
-      strict: false
+      strict: false,
     },
     transformConfig () {
-    }
+    },
   }
 
   const store = new Store()
@@ -166,29 +166,29 @@ test('schema with no id', async t => {
 
 test('resolve with module', async t => {
   const store = new Store({
-    cwd: join(__dirname, 'fixtures', 'app')
+    cwd: join(__dirname, 'fixtures', 'app'),
   })
 
   assert.equal(await store.get({
     $schema: 'http://something/foo',
-    module: 'foo'
+    module: 'foo',
   }), require('./fixtures/app/node_modules/foo'), 'should resolve module')
 })
 
 test('resolve with extends', async t => {
   const store = new Store({
-    cwd: join(__dirname, 'fixtures', 'app')
+    cwd: join(__dirname, 'fixtures', 'app'),
   })
 
   assert.equal(await store.get({
     $schema: 'http://something/foo',
-    extends: 'foo'
+    extends: 'foo',
   }), require('./fixtures/app/node_modules/foo'), 'should resolve module')
 })
 
 test('rejects with missing extended module', async t => {
   const store = new Store({
-    cwd: join(__dirname, 'fixtures', 'app')
+    cwd: join(__dirname, 'fixtures', 'app'),
   })
 
   try {
@@ -199,12 +199,12 @@ test('rejects with missing extended module', async t => {
 
 test('import', async t => {
   const store = new Store({
-    cwd: join(__dirname, 'fixtures', 'app')
+    cwd: join(__dirname, 'fixtures', 'app'),
   })
 
   assert.equal(await store.get({
     $schema: 'http://something/foo',
-    extends: 'foom'
+    extends: 'foom',
   }), (await import('./fixtures/app/node_modules/foom/foo.js')).default, 'should resolve module')
 })
 
@@ -213,7 +213,7 @@ test('app must be a function', async t => {
 
   foo.schema = {
     $id: 'foo',
-    type: 'object'
+    type: 'object',
   }
 
   foo.configType = 'foo'
@@ -224,10 +224,10 @@ test('app must be a function', async t => {
       useDefaults: true,
       coerceTypes: true,
       allErrors: true,
-      strict: false
+      strict: false,
     },
     transformConfig () {
-    }
+    },
   }
 
   const store = new Store()
@@ -240,7 +240,7 @@ test('loadConfig', async t => {
 
   foo.schema = {
     $id: 'foo',
-    type: 'object'
+    type: 'object',
   }
 
   foo.configType = 'service'
@@ -251,10 +251,10 @@ test('loadConfig', async t => {
       useDefaults: true,
       coerceTypes: true,
       allErrors: true,
-      strict: false
+      strict: false,
     },
     transformConfig () {
-    }
+    },
   }
 
   const cwd = process.cwd()
@@ -278,7 +278,7 @@ test('loadConfig', async t => {
 
   foo.schema = {
     $id: 'foo',
-    type: 'object'
+    type: 'object',
   }
 
   foo.configType = 'service'
@@ -289,10 +289,10 @@ test('loadConfig', async t => {
       useDefaults: true,
       coerceTypes: true,
       allErrors: true,
-      strict: false
+      strict: false,
     },
     transformConfig () {
-    }
+    },
   }
 
   const cwd = process.cwd()
@@ -312,7 +312,7 @@ test('loadConfig', async t => {
 
 test('loadConfig custom module', async t => {
   const store = new Store({
-    cwd: join(__dirname, 'fixtures', 'app')
+    cwd: join(__dirname, 'fixtures', 'app'),
   })
 
   const res = await store.loadConfig()
@@ -325,7 +325,7 @@ test('Version mismatch', async t => {
 
   foo.schema = {
     $id: 'https://platformatic.dev/schemas/v0.42.0/something.json',
-    type: 'object'
+    type: 'object',
   }
 
   foo.configType = 'foo'
@@ -336,10 +336,10 @@ test('Version mismatch', async t => {
       useDefaults: true,
       coerceTypes: true,
       allErrors: true,
-      strict: false
+      strict: false,
     },
     transformConfig () {
-    }
+    },
   }
 
   const store = new Store()
@@ -365,7 +365,7 @@ test('Platformatic Service', async t => {
 
   foo.schema = {
     $id: `https://platformatic.dev/schemas/v${version}/service`,
-    type: 'object'
+    type: 'object',
   }
 
   foo.configType = 'foo'
@@ -376,10 +376,10 @@ test('Platformatic Service', async t => {
       useDefaults: true,
       coerceTypes: true,
       allErrors: true,
-      strict: false
+      strict: false,
     },
     transformConfig () {
-    }
+    },
   }
 
   const store = new Store()
@@ -394,7 +394,7 @@ test('Platformatic DB', async t => {
 
   foo.schema = {
     $id: `https://platformatic.dev/schemas/v${version}/db`,
-    type: 'object'
+    type: 'object',
   }
 
   foo.configType = 'foo'
@@ -405,10 +405,10 @@ test('Platformatic DB', async t => {
       useDefaults: true,
       coerceTypes: true,
       allErrors: true,
-      strict: false
+      strict: false,
     },
     transformConfig () {
-    }
+    },
   }
 
   const store = new Store()
@@ -436,7 +436,7 @@ describe('default modules', () => {
 
       foo.schema = {
         $id: `https://platformatic.dev/schemas/v${version}/${type}`,
-        type: 'object'
+        type: 'object',
       }
 
       foo.configType = type
@@ -447,8 +447,8 @@ describe('default modules', () => {
           useDefaults: true,
           coerceTypes: true,
           allErrors: true,
-          strict: false
-        }
+          strict: false,
+        },
       }
 
       await writeFile(join(cwd, 'node_modules', '@platformatic', type, 'index.js'), `
@@ -468,7 +468,7 @@ describe('default modules', () => {
 
       assert.deepEqual(store.listTypes(), [{
         id: `https://platformatic.dev/schemas/v${version}/${type}`,
-        configType: type
+        configType: type,
       }])
     })
   }
