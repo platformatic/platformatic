@@ -185,7 +185,7 @@ Open `platformatic.composer.js` and change it to the following:
 
 ```json
 {
-  "$schema": "https://platformatic.dev/schemas/v0.32.0/composer",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
   "server": {
     "hostname": "{PLT_SERVER_HOSTNAME}",
     "port": "{PORT}",

@@ -73,8 +73,12 @@ class Store {
       require = createRequire(join(directory, 'noop.js'))
     }
 
-    const match = $schema?.match(/\/schemas\/(.*)\/(.*)/)
+    let match = $schema?.match(/\/schemas\/(.*)\/(.*)/)
     let type = match?.[2]
+    if (!match) {
+      match = $schema?.match(/\/@platformatic\/(.*)\/(.*)\.json/)
+      type = match?.[1]
+    }
 
     // Legacy Platformatic apps
     if (!app && !type && $schema?.indexOf('./') === 0 && !extendedModule) {
@@ -86,7 +90,7 @@ class Store {
     }
 
     if (!app && type) {
-      const toLoad = `https://platformatic.dev/schemas/v${pltVersion}/${type}`
+      const toLoad = `https://schemas.platformatic.dev/@platformatic/${type}/${pltVersion}.json`
       app = this.#map.get(toLoad)
       if (!app && defaultTypes.includes(type)) {
         app = await loadModule(require, `@platformatic/${type}`)

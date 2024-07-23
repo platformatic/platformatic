@@ -23,6 +23,6 @@ test('rmeove the watch config', async () => {
 
   const config = configManager.current
 
-  equal(config.$schema, `https://platformatic.dev/schemas/v${version}/runtime`)
+  equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`)
   equal(config.watch, undefined)
 })

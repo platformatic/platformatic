@@ -393,7 +393,7 @@ To publicly expose the Books service so that we can test it, we need to change t
 // platformatic.runtime.json
 
 {
-  "$schema": "https://platformatic.dev/schemas/v0.27.0/runtime",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
   "entrypoint": "books-service",
   ...
 }
@@ -575,7 +575,7 @@ Let's change the `entrypoint` in `platformatic.runtime.json` to `movies-service`
 // platformatic.runtime.json
 
 {
-  "$schema": "https://platformatic.dev/schemas/v0.27.0/runtime",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
   "entrypoint": "movies-service",
   ...
 }
@@ -635,7 +635,7 @@ Let's open up `services/media-service/platformatic.composer.json` and replace th
 // services/media-service/platformatic.composer.json
 
 {
-  "$schema": "https://platformatic.dev/schemas/v0.27.0/composer",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
   ...,
   "composer": {
     "services": [
@@ -672,7 +672,7 @@ To expose our Media service, let's change the `entrypoint` in `platformatic.runt
 // platformatic.runtime.json
 
 {
-  "$schema": "https://platformatic.dev/schemas/v0.27.0/runtime",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
   "entrypoint": "media-service",
   ...
 }
@@ -769,7 +769,7 @@ Now let's open up `services/media-service/platformatic.composer.json` and config
 // services/media-service/platformatic.composer.json
 
   {
-    "$schema": "https://platformatic.dev/schemas/v0.27.0/composer",
+    "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
     ...,
     "composer": {
       "services": [
@@ -831,7 +831,7 @@ We'll see that this has generated a new directory, `clients/people/`, which cont
 // services/media-service/platformatic.composer.json
 
 {
-  "$schema": "https://platformatic.dev/schemas/v0.28.1/composer",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
   ...,
   "clients": [
     {
@@ -957,7 +957,7 @@ Now we can configure the Media service to load our new plugin. Let's open up `pl
 
 ```json
 {
-  "$schema": "https://platformatic.dev/schemas/v0.28.1/composer",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
   ...,
   "plugins": {
     "paths": [
@@ -1037,7 +1037,7 @@ Let's try this out by adding another service to the `services` in `platformatic.
 // platformatic.composer.json
 
   {
-    "$schema": "https://platformatic.dev/schemas/v0.28.1/composer",
+    "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
     ...,
     "composer": {
       "services": [
@@ -1083,7 +1083,7 @@ Although the Composer service proxy is a helpful feature, we don't want to use t
 // platformatic.composer.json
 
   {
-    "$schema": "https://platformatic.dev/schemas/v0.28.1/composer",
+    "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
     ...,
     "composer": {
       "services": [

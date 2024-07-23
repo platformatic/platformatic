@@ -34,10 +34,10 @@ You can customize your server setup directly within your code by specifying the 
 import { buildServer } from '@platformatic/runtime'
 
 const config = {
-  // $schema: 'https://platformatic.dev/schemas/v0.39.0/runtime',
-  // $schema: 'https://platformatic.dev/schemas/v0.39.0/service',
-  // $schema: 'https://platformatic.dev/schemas/v0.39.0/db',
-  // $schema: 'https://platformatic.dev/schemas/v0.39.0/composer'
+  // $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json',
+  // $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
+  // $schema: 'https://schemas.platformatic.dev/@platformatic/db/1.52.0.json',
+  // $schema: 'https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json'
   ...
 }
 const app = await buildServer(config)

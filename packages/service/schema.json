@@ -1,5 +1,5 @@
 {
-  "$id": "https://platformatic.dev/schemas/v1.49.0/service",
+  "$id": "https://schemas.platformatic.dev/@platformatic/service/1.52.0.json",
   "version": "1.49.0",
   "title": "Platformatic Service",
   "type": "object",

@@ -49,7 +49,7 @@ test('generates the json schema config', async (t) => {
   const configSchema = await readFile(join(cwd, 'platformatic.db.schema.json'), 'utf8')
   const schema = JSON.parse(configSchema)
   const { $id, type } = schema
-  assert.equal($id, `https://platformatic.dev/schemas/v${pkg.version}/db`)
+  assert.equal($id, `https://schemas.platformatic.dev/@platformatic/db/${pkg.version}.json`)
   assert.equal(type, 'object')
 
   const languageservice = jsonLanguageService.getLanguageService({

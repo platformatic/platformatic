@@ -1,5 +1,5 @@
 {
-  "$schema": "https://platformatic.dev/schemas/v1.44.0/composer",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
   "server": {
     "hostname": "127.0.0.1",
     "port": 0,
