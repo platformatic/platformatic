@@ -272,12 +272,12 @@ test('loadConfig', async t => {
   assert.equal(res.app, foo, 'should return app')
 })
 
-test('loadConfig', async t => {
+test('loadConfig with platformatic.yaml', async t => {
   function foo () {
   }
 
   foo.schema = {
-    $id: 'foo',
+    $id: `https://platformatic.dev/schemas/v${version}/service`,
     type: 'object'
   }
 
@@ -296,7 +296,7 @@ test('loadConfig', async t => {
   }
 
   const cwd = process.cwd()
-  process.chdir(join(__dirname, 'fixtures'))
+  process.chdir(join(__dirname, 'fixtures/platformatic-yaml'))
 
   const store = new Store()
   store.add(foo)
