@@ -24,7 +24,7 @@ class ComposerGenerator extends BaseGenerator {
 
   async _getConfigFileContents () {
     const template = {
-      $schema: `https://platformatic.dev/schemas/v${this.platformaticVersion}/composer`,
+      $schema: `https://schemas.platformatic.dev/@platformatic/composer/${this.platformaticVersion}.json`,
       composer: {
         services: [
           {

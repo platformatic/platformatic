@@ -11,10 +11,9 @@ import { readFile } from 'fs/promises'
 test('full-request-body', async (t) => {
   const openapi = desm.join(import.meta.url, 'fixtures', 'full-req-body', 'openapi.json')
   const dir = await moveToTmpdir(after)
-  t.diagnostic(`working in ${dir}`)
 
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0

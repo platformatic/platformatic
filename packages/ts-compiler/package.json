@@ -1,0 +1,31 @@
+{
+  "name": "@platformatic/ts-compiler",
+  "version": "2.0.0-alpha.2",
+  "description": "Compiles TypeScript to JavaScript, Platformatic Edition",
+  "main": "compile.js",
+  "scripts": {
+    "test": "npm run lint && c8 node --test",
+    "lint": "standard | snazzy"
+  },
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "c8": "^10.0.0",
+    "fastify": "^4.26.2",
+    "pino-test": "^1.0.1",
+    "snazzy": "^9.0.0",
+    "standard": "^17.1.0",
+    "typescript": "^5.5.3"
+  },
+  "dependencies": {
+    "@platformatic/utils": "workspace:*",
+    "execa": "^8.0.1",
+    "pino": "^9.2.0",
+    "pino-pretty": "^11.0.0",
+    "resolve": "^1.22.8"
+  }
+}

@@ -5,7 +5,6 @@ const { join } = require('path')
 
 // Add the modules here. Remember to add the dependency to package.json
 const modules = [
-  '@platformatic/authenticate',
   '@platformatic/client',
   '@platformatic/client-cli',
   '@platformatic/composer',
@@ -13,7 +12,6 @@ const modules = [
   '@platformatic/db',
   '@platformatic/db-authorization',
   '@platformatic/db-core',
-  '@platformatic/deploy-client',
   '@platformatic/runtime',
   '@platformatic/service',
   '@platformatic/sql-mapper',
@@ -60,7 +58,7 @@ const createErrorsMD = (errorsByModule) => {
 
 const generateErrorsMDFile = async (errorsByModule) => {
   const errorsMd = createErrorsMD(errorsByModule)
-  const mdPath = join(__dirname, '..', '..', 'docs', 'reference', 'errors.md')
+  const mdPath = join(__dirname, '..', '..', 'docs', 'packages', 'errors.md')
   await writeFile(mdPath, errorsMd)
   console.log(`Errors documentation file generated at ${mdPath}`)
 }

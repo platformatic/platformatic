@@ -1,16 +1,5 @@
 # Platformatic Errors 
 
-## @platformatic/authenticate 
-
-### PLT_AUTHENTICATE_UNABLE_TO_CONTACT_LOGIN_SERVICE
-**Message:** Unable to contact login service 
-
-### PLT_AUTHENTICATE_UNKNOWN_MESSAGE_TYPE
-**Message:** Received unknown message type from login service: %s 
-
-### PLT_AUTHENTICATE_CONFIG_OPTION_REQUIRES_PATH_TO_FILE
-**Message:** --config option requires path to a file 
-
 ## @platformatic/client 
 
 ### PLT_CLIENT_OPTIONS_URL_REQUIRED
@@ -86,6 +75,9 @@ Did you mean PLT_%s?
 ### PLT_CONFIG_NO_CONFIG_FILE_FOUND
 **Message:** no config file found 
 
+### PLT_CONFIG_VERSION_MISSING
+**Message:** version is required if upgrade is specified. 
+
 ## @platformatic/db 
 
 ### PLT_DB_MIGRATE_ERROR
@@ -118,30 +110,10 @@ Did you mean PLT_%s?
 
 **No errors defined** 
 
-## @platformatic/deploy-client 
-
-### PLT_SQL_DEPLOY_CLIENT_REQUEST_FAILED
-**Message:** Request failed with status code: %s %s 
-
-### PLT_SQL_DEPLOY_CLIENT_COULD_NOT_MAKE_PREWARM_CALL
-**Message:** Could not make a prewarm call: %s 
-
-### PLT_SQL_DEPLOY_CLIENT_INVALID_PLATFORMATIC_WORKSPACE_KEY
-**Message:** Invalid platformatic_workspace_key provided 
-
-### PLT_SQL_DEPLOY_CLIENT_COULD_NOT_CREATE_BUNDLE
-**Message:** Could not create a bundle: %s 
-
-### PLT_SQL_DEPLOY_CLIENT_FAILED_TO_UPLOAD_CODE_ARCHIVE
-**Message:** Failed to upload code archive: %s 
-
-### PLT_SQL_DEPLOY_CLIENT_COULD_NOT_CREATE_DEPLOYMENT
-**Message:** Could not create a deployment: %s 
-
-### PLT_SQL_DEPLOY_CLIENT_MISSING_CONFIG_FILE
-**Message:** Missing config file! 
-
 ## @platformatic/runtime 
+
+### PLT_RUNTIME_EADDR_IN_USE
+**Message:** The current port is in use by another application 
 
 ### PLT_RUNTIME_RUNTIME_EXIT
 **Message:** The runtime exited before the operation completed 
@@ -150,7 +122,7 @@ Did you mean PLT_%s?
 **Message:** Unknown Runtime API command "%s" 
 
 ### PLT_RUNTIME_SERVICE_NOT_FOUND
-**Message:** Service with id '%s' not found 
+**Message:** Service not found. Available services are: %s 
 
 ### PLT_RUNTIME_SERVICE_NOT_STARTED
 **Message:** Service with id '%s' is not started 
@@ -196,6 +168,15 @@ Did you mean PLT_%s?
 
 ### PLT_RUNTIME_FAILED_TO_UNLINK_MANAGEMENT_API_SOCKET
 **Message:** Failed to unlink management API socket "%s" 
+
+### PLT_RUNTIME_LOG_FILE_NOT_FOUND
+**Message:** Log file with index %s not found 
+
+### PLT_RUNTIME_REQUIRED_WORKER
+**Message:** The worker parameter is required 
+
+### PLT_RUNTIME_CANNOT_REMOVE_SERVICE_ON_UPDATE
+**Message:** Cannot remove service "%s" when updating a Runtime 
 
 ## @platformatic/service 
 
@@ -244,6 +225,9 @@ Did you mean PLT_%s?
 
 ### PLT_SQL_MAPPER_MISSING_VALUE_FOR_PRIMARY_KEY
 **Message:** Missing value for primary key %s 
+
+### PLT_SQL_MAPPER_MISSING_WHERE_CLAUSE
+**Message:** Missing where clause 
 
 ### PLT_SQL_MAPPER_SQLITE_ONLY_SUPPORTS_AUTO_INCREMENT_ON_ONE_COLUMN
 **Message:** SQLite only supports autoIncrement on one column 

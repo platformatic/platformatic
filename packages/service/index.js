@@ -4,7 +4,6 @@ const { isKeyEnabled } = require('@platformatic/utils')
 const { readFile } = require('fs/promises')
 const { join } = require('path')
 
-const compiler = require('./lib/compile')
 const setupCors = require('./lib/plugins/cors')
 const setupOpenAPI = require('./lib/plugins/openapi.js')
 const setupGraphQL = require('./lib/plugins/graphql.js')
@@ -13,10 +12,10 @@ const setupMetrics = require('./lib/plugins/metrics')
 const setupTsCompiler = require('./lib/plugins/typescript')
 const setupHealthCheck = require('./lib/plugins/health-check')
 const loadPlugins = require('./lib/plugins/plugins')
-const loadVersions = require('./lib/plugins/versions')
 const upgrade = require('./lib/upgrade')
 const { telemetry } = require('@platformatic/telemetry')
 
+const { buildCompileCmd, extractTypeScriptCompileOptionsFromConfig } = require('./lib/compile')
 const { schema } = require('./lib/schema')
 const { addLoggerToTheConfig } = require('./lib/utils')
 const { start, buildServer } = require('./lib/start')
@@ -61,8 +60,7 @@ async function platformaticService (app, opts) {
 
   if (isKeyEnabled('openapi', serviceConfig)) {
     const openapi = serviceConfig.openapi
-    const versions = config.versions
-    app.register(setupOpenAPI, { openapi, versions })
+    app.register(setupOpenAPI, { openapi })
   }
 
   if (isKeyEnabled('graphql', serviceConfig)) {
@@ -85,13 +83,6 @@ async function platformaticService (app, opts) {
     app.register(loadPlugins)
   }
 
-  await app.register(async (app) => {
-    if (config.versions) {
-      // TODO: Add typescript mappers support
-      await app.register(loadVersions)
-    }
-  })
-
   if (isKeyEnabled('cors', config.server)) {
     app.register(setupCors, config.server.cors)
   }
@@ -102,7 +93,6 @@ async function platformaticService (app, opts) {
 }
 
 platformaticService[Symbol.for('skip-override')] = true
-platformaticService.schema = schema
 platformaticService.configType = 'service'
 platformaticService.configManagerConfig = {
   version,
@@ -148,11 +138,13 @@ platformaticService.configManagerConfig = {
 function _buildServer (options, app) {
   return buildServer(options, app || platformaticService)
 }
-
+module.exports = platformaticService
+module.exports.schema = schema
 module.exports.buildServer = _buildServer
-module.exports.schema = require('./lib/schema')
+module.exports.schemas = require('./lib/schema')
 module.exports.platformaticService = platformaticService
 module.exports.addLoggerToTheConfig = addLoggerToTheConfig
-module.exports.tsCompiler = compiler
 module.exports.start = start
 module.exports.Generator = ServiceGenerator
+module.exports.buildCompileCmd = buildCompileCmd
+module.exports.extractTypeScriptCompileOptionsFromConfig = extractTypeScriptCompileOptionsFromConfig

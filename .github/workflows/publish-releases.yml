@@ -7,6 +7,11 @@ on:
         description: 'The version number to tag and release'
         required: true
         type: string
+      prerelease:
+        description: "Release as pre-release"
+        required: false
+        type: boolean
+        default: false        
 
 env:
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -49,11 +54,11 @@ jobs:
           git config --global user.name "mcollina"
           git config --global user.email "hello@matteocollina.com"
           git commit -a -m "Bumped ${{ inputs.version }}"
-          git push origin HEAD:main
-      - run: pnpm -r publish --access public
+          git push origin HEAD:${{ github.ref }}
+        # TODO(mcollina): make the following work for both releases
+      - run: pnpm -r publish --access public --tag ${{ inputs.prerelease == true && 'next' || 'latest' }} --publish-branch ${{ github.ref_name }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: 'Create release notes'
         run: |
-          npm i @matteo.collina/release-notes -g
-          release-notes -a ${{ secrets.GH_RELEASE_TOKEN }} -t ${{ inputs.version }} -r platformatic -o platformatic
+          pnpx @matteo.collina/release-notes -a ${{ secrets.GH_RELEASE_TOKEN }} -t ${{ inputs.version }} -r platformatic -o platformatic ${{ github.event.inputs.prerelease == 'true' && '-p' || '' }} -c ${{ github.ref }}

@@ -23,7 +23,6 @@ function saferm (path) {
 test('should not hot reload files with `--hot-reload false', async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
-  t.diagnostic(`using ${tmpDir}`)
   const configFileSrc = join(fixturesDir, 'configs', 'monorepo.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
   const appSrc = join(fixturesDir, 'monorepo')

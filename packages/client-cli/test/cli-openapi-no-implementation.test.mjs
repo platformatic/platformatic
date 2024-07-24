@@ -1,6 +1,6 @@
 import { request, moveToTmpdir } from './helper.js'
 import { test, after } from 'node:test'
-import { equal, deepEqual as same, match } from 'node:assert'
+import { equal, deepEqual as same, match, ok } from 'node:assert'
 import { match as matchObj } from '@platformatic/utils'
 import { buildServer } from '@platformatic/db'
 import { buildServer as buildService } from '@platformatic/service'
@@ -11,7 +11,6 @@ import { promises as fs } from 'fs'
 
 test('generates only types in target folder with --types-only flag', async (t) => {
   const dir = await moveToTmpdir(after)
-  t.diagnostic(`working in ${dir}`)
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), desm.join(import.meta.url, 'fixtures', 'movies', 'openapi.json'), '--name', 'movies', '-f', dir, '--types-only'])
   const files = await fs.readdir(dir)
   same(files.length, 1)
@@ -31,6 +30,14 @@ test('generates only types in target folder with --types-only flag', async (t) =
   match(fileContents, /export type Movies = {/)
 })
 
+test('add an initial comment with --types-comment flag', async (t) => {
+  const dir = await moveToTmpdir(after)
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), desm.join(import.meta.url, 'fixtures', 'movies', 'openapi.json'), '--name', 'movies', '-f', dir, '--types-only', '--types-comment', 'this is an auto-generated file'])
+
+  const fileContents = await fs.readFile(join(dir, 'movies.d.ts'), 'utf-8')
+  ok(fileContents.startsWith('// this is an auto-generated file'))
+})
+
 test('openapi client generation (javascript)', async (t) => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
@@ -42,11 +49,10 @@ test('openapi client generation (javascript)', async (t) => {
 
   await app.start()
 
-  const dir = await moveToTmpdir(after)
-  t.diagnostic(`working in ${dir}`)
+  await moveToTmpdir(after)
 
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -100,9 +106,8 @@ test('openapi client generation (typescript)', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  t.diagnostic(`working in ${dir}`)
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -174,11 +179,10 @@ test('config support with folder', async (t) => {
     await app.close()
   })
 
-  const dir = await moveToTmpdir(after)
-  t.diagnostic(`working in ${dir}`)
+  await moveToTmpdir(after)
 
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -217,9 +221,8 @@ test('openapi client generation (typescript) with --types-only', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  t.diagnostic(`working in ${dir}`)
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -300,9 +303,8 @@ test('openapi client generation (typescript) with --types-only and --folder', as
 
   const dir = await moveToTmpdir(after)
 
-  t.diagnostic(`working in ${dir}`)
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -385,10 +387,9 @@ test('generate client twice', async (t) => {
   })
 
   const dir = await moveToTmpdir(after)
-  t.diagnostic(`working in ${dir}`)
 
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0
@@ -420,11 +421,10 @@ module.exports = async function (app) {
 test('openapi client generation (javascript) from file', async (t) => {
   const openapi = desm.join(import.meta.url, 'fixtures', 'movies', 'openapi.json')
 
-  const dir = await moveToTmpdir(after)
-  t.diagnostic(`working in ${dir}`)
+  await moveToTmpdir(after)
 
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0

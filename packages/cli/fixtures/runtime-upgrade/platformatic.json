@@ -1,12 +1,6 @@
 {
-  "autoload": {
-    "path": "services",
-    "exclude": [
-      "docs"
-    ]
-  },
   "entrypoint": "piquant-combat",
-  "$schema": "https://platformatic.dev/schemas/v1.33.0/runtime",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
   "server": {
     "hostname": "{PLT_SERVER_HOSTNAME}",
     "port": "{PORT}",
@@ -16,7 +10,6 @@
     }
   },
   "hotReload": true,
-  "allowCycles": false,
   "managementApi": true,
   "services": [
     {

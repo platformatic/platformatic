@@ -1,18 +1,22 @@
 'use strict'
-const { readFile, readdir } = require('node:fs/promises')
+const { readdir } = require('node:fs/promises')
 const { join, resolve: pathResolve } = require('node:path')
-const { closest } = require('fastest-levenshtein')
-const Topo = require('@hapi/topo')
 const ConfigManager = require('@platformatic/config')
 const { schema } = require('./schema')
 const errors = require('./errors')
 const upgrade = require('./upgrade')
+
+const kServicesAutoloaded = Symbol('plt.servicesAutoloaded')
 
 async function _transformConfig (configManager) {
   const config = configManager.current
   const services = config.services ?? []
 
   if (config.autoload) {
+    if (config.services && !config.services[kServicesAutoloaded]) {
+      throw new errors.InvalidAutoloadWithServicesError()
+    }
+
     const { exclude = [], mappings = {} } = config.autoload
     let { path } = config.autoload
 
@@ -53,8 +57,6 @@ async function _transformConfig (configManager) {
     }
   }
 
-  configManager.current.allowCycles = !!configManager.current.allowCycles
-
   configManager.current.serviceMap = new Map()
   configManager.current.inspectorOptions = undefined
 
@@ -69,7 +71,6 @@ async function _transformConfig (configManager) {
     service.entrypoint = service.id === config.entrypoint
     service.hotReload = !!config.hotReload
     service.dependencies = []
-    service.dependents = []
     service.localServiceEnvVars = new Map()
     service.localUrl = `http://${service.id}.plt.local`
 
@@ -85,126 +86,7 @@ async function _transformConfig (configManager) {
   }
 
   configManager.current.services = services
-
-  await parseClientsAndComposer(configManager)
-
-  if (!configManager.current.allowCycles) {
-    topologicalSort(configManager)
-  }
-}
-
-function missingDependencyErrorMessage (clientName, service, configManager) {
-  const closestName = closest(clientName, [...configManager.current.serviceMap.keys()])
-  let errorMsg = `service '${service.id}' has unknown dependency: '${clientName}'.`
-  if (closestName) {
-    errorMsg += ` Did you mean '${closestName}'?`
-  }
-  return errorMsg
-}
-
-async function parseClientsAndComposer (configManager) {
-  for (const service of configManager.current.services) {
-    const cm = new ConfigManager({ source: service.config })
-    const configString = await cm.load()
-    const serviceConfig = cm._parser(configString)
-
-    async function parseConfigUrl (urlString) {
-      if (!urlString) {
-        return { url: null, envVar: null }
-      }
-
-      try {
-        const url = await cm.replaceEnv(urlString)
-        return { url, envVar: null }
-      } catch (err) {
-        // The MissingValueError is an error coming from pupa
-        // https://github.com/sindresorhus/pupa#missingvalueerror
-        // All other errors are simply re-thrown.
-        if (err.name !== 'MissingValueError' || urlString !== `{${err.key}}`) {
-          throw err
-        }
-        return { url: null, envVar: err.key }
-      }
-    }
-
-    async function addServiceDependency (service, dependencyId, urlString) {
-      let { url, envVar } = await parseConfigUrl(urlString)
-      if (url !== null) {
-        service.dependencies.push({ id: dependencyId, url, local: false })
-        return
-      }
-
-      const depService = configManager.current.serviceMap.get(dependencyId)
-      if (depService === undefined) {
-        throw new errors.MissingDependencyError(
-          missingDependencyErrorMessage(dependencyId, service, configManager)
-        )
-      }
-
-      url = `http://${dependencyId}.plt.local`
-
-      if (envVar !== null) {
-        service.localServiceEnvVars.set(envVar, url)
-      }
-
-      depService.dependents.push(service.id)
-      service.dependencies.push({ id: dependencyId, url, local: true })
-    }
-
-    const composedServices = serviceConfig.composer?.services
-    if (Array.isArray(composedServices)) {
-      await Promise.all(
-        composedServices.map(async (composedService) =>
-          addServiceDependency(
-            service,
-            composedService.id,
-            composedService.origin
-          )
-        )
-      )
-    }
-
-    if (Array.isArray(serviceConfig.clients)) {
-      await Promise.all(
-        serviceConfig.clients.map(async (client) => {
-          let clientServiceId = client.serviceId
-          if (!clientServiceId) {
-            try {
-              const clientPath = pathResolve(service.path, client.path)
-              const clientPackageJsonPath = join(clientPath, 'package.json')
-              const clientPackageJSONFile = await readFile(clientPackageJsonPath, 'utf8')
-              const clientPackageJSON = JSON.parse(clientPackageJSONFile)
-              clientServiceId = clientPackageJSON.name ?? ''
-            } catch (err) {
-              if (client.url === undefined || client.name === undefined) {
-                throw err
-              }
-            }
-          }
-          await addServiceDependency(service, clientServiceId, client.url)
-        })
-      )
-    }
-  }
-}
-
-function topologicalSort (configManager) {
-  const { services } = configManager.current
-  const topo = new Topo.Sorter()
-
-  for (const service of services) {
-    const localDependencyIds = service.dependencies
-      .filter(dep => dep.local)
-      .map(dep => dep.id)
-
-    topo.add(service, {
-      group: service.id,
-      after: localDependencyIds,
-      manual: true
-    })
-  }
-
-  configManager.current.services = topo.sort()
+  configManager.current.services[kServicesAutoloaded] = true
 }
 
 async function platformaticRuntime () {
@@ -246,7 +128,6 @@ async function wrapConfigInRuntimeConfig ({ configManager, args }) {
   const wrapperConfig = {
     $schema: schema.$id,
     entrypoint: serviceId,
-    allowCycles: false,
     hotReload: true,
     services: [
       {

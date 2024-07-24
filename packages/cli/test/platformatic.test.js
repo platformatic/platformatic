@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { EOL } from 'node:os'
+import { EOL, tmpdir } from 'node:os'
 import { readFile } from 'node:fs/promises'
 import { join } from 'desm'
 import { execa } from 'execa'
@@ -29,6 +29,8 @@ const helpRuntime = await readFile(join(import.meta.url, '..', '..', 'runtime', 
 // This reads a file from packages/service
 const helpService = await readFile(join(import.meta.url, '..', '..', 'service', 'help', 'help.txt'), 'utf8')
 
+const localTmp = tmpdir()
+
 test('version', async (t) => {
   const { stdout } = await execa('node', [cliPath, '--version'])
   assert.ok(stdout.includes('v' + version))
@@ -49,15 +51,6 @@ test('runtime', async (t) => {
     assert.fail('bug')
   } catch (err) {
     assert.ok(err.stderr.includes('Missing config file'))
-  }
-})
-
-test('login', async (t) => {
-  try {
-    await execa('node', [cliPath, 'login', '--auth-proxy-host', 'http://localhost:3000'])
-    assert.fail('bug')
-  } catch (err) {
-    assert.ok(err.stderr.includes('Unable to authenticate:'))
   }
 })
 
@@ -182,3 +175,24 @@ test('start the database and do a call', async (t) => {
   const body = await res.body.json()
   assert.equal(body.data.saveGraph.name, 'Hello')
 })
+
+for (const type of ['service', 'db', 'composer']) {
+  test('load dependency from folder', async (t) => {
+    const cwd = process.cwd()
+    process.chdir(localTmp)
+    t.after(() => {
+      process.chdir(cwd)
+    })
+    try {
+      await execa('node', [cliPath, type, 'start'], {
+        env: {
+          ...process.env,
+          NODE_PATH: ''
+        }
+      })
+      assert.fail('bug')
+    } catch (err) {
+      assert.ok(err.stderr.includes('Cannot find module'))
+    }
+  })
+}

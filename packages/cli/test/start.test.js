@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import { test } from 'node:test'
 import { spawn } from 'node:child_process'
-import { cp } from 'node:fs/promises'
+import { cp, symlink, mkdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -53,6 +53,14 @@ test('starts a runtime application', async (t) => {
     join(srcDir, 'platformatic.service.json'),
     join(destDir, 'platformatic.service.json')
   )
+
+  await mkdir(join(destDir, 'node_modules', '@platformatic'), {
+    recursive: true
+  })
+
+  await symlink(
+    join(srcDir, '..', '..', 'node_modules', '@platformatic', 'service'),
+    join(destDir, 'node_modules', '@platformatic', 'service'))
 
   const child = spawn(process.execPath, [cliPath, 'start'], {
     cwd: destDir,

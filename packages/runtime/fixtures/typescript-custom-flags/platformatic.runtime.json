@@ -1,7 +1,6 @@
 {
-  "$schema": "https://platformatic.dev/schemas/v0.28.1/runtime",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
   "entrypoint": "composer",
-  "allowCycles": false,
   "hotReload": true,
   "autoload": {
     "path": "services",

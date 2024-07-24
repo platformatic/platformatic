@@ -24,10 +24,9 @@ test('should get runtime config by pid', async (t) => {
   const runtimeConfig = JSON.parse(child.stdout)
   assert.strictEqual(
     runtimeConfig.$schema,
-    `https://platformatic.dev/schemas/v${platformaticVersion}/runtime`
+    `https://schemas.platformatic.dev/@platformatic/runtime/${platformaticVersion}.json`
   )
   assert.strictEqual(runtimeConfig.entrypoint, 'service-1')
-  assert.strictEqual(runtimeConfig.allowCycles, true)
   assert.strictEqual(runtimeConfig.hotReload, false)
   assert.deepStrictEqual(runtimeConfig.autoload, {
     path: join(projectDir, 'services'),
@@ -50,10 +49,9 @@ test('should get runtime config by name', async (t) => {
   const runtimeConfig = JSON.parse(child.stdout)
   assert.strictEqual(
     runtimeConfig.$schema,
-    `https://platformatic.dev/schemas/v${platformaticVersion}/runtime`
+    `https://schemas.platformatic.dev/@platformatic/runtime/${platformaticVersion}.json`
   )
   assert.strictEqual(runtimeConfig.entrypoint, 'service-1')
-  assert.strictEqual(runtimeConfig.allowCycles, true)
   assert.strictEqual(runtimeConfig.hotReload, false)
   assert.deepStrictEqual(runtimeConfig.autoload, {
     path: join(projectDir, 'services'),
@@ -78,7 +76,7 @@ test('should get runtime service config', async (t) => {
 
   const serviceConfig = JSON.parse(child.stdout)
   assert.deepStrictEqual(serviceConfig, {
-    $schema: `https://platformatic.dev/schemas/v${platformaticVersion}/service`,
+    $schema: `https://schemas.platformatic.dev/@platformatic/service/${platformaticVersion}.json`,
     server: {
       hostname: '127.0.0.1',
       port: 0,

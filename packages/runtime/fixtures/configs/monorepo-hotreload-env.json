@@ -1,7 +1,6 @@
 {
-  "$schema": "https://platformatic.dev/schemas/v0.33.0/runtime",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
   "entrypoint": "serviceApp",
-  "allowCycles": true,
   "hotReload": "{PLT_HOT_RELOAD}",
   "autoload": {
     "path": "../monorepo",

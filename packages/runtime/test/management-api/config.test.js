@@ -44,10 +44,9 @@ test('should get runtime config', async (t) => {
   const runtimeConfig = await body.json()
   assert.strictEqual(
     runtimeConfig.$schema,
-    `https://platformatic.dev/schemas/v${platformaticVersion}/runtime`
+    `https://schemas.platformatic.dev/@platformatic/runtime/${platformaticVersion}.json`
   )
   assert.strictEqual(runtimeConfig.entrypoint, 'service-1')
-  assert.strictEqual(runtimeConfig.allowCycles, true)
   assert.strictEqual(runtimeConfig.hotReload, false)
   assert.deepStrictEqual(runtimeConfig.autoload, {
     path: join(projectDir, 'services'),

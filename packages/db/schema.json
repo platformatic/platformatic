@@ -1,5 +1,5 @@
 {
-  "$id": "https://platformatic.dev/schemas/v1.26.0/db",
+  "$id": "https://schemas.platformatic.dev/@platformatic/db/2.0.0-alpha.2.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic DB",
   "type": "object",
@@ -248,9 +248,15 @@
             }
           ]
         },
+        "http2": {
+          "type": "boolean"
+        },
         "https": {
           "type": "object",
           "properties": {
+            "allowHTTP1": {
+              "type": "boolean"
+            },
             "key": {
               "anyOf": [
                 {
@@ -649,6 +655,25 @@
                     ]
                   }
                 },
+                "ignoreRoutes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "method": {
+                        "type": "string"
+                      },
+                      "path": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "method",
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
                 "enabled": {
                   "anyOf": [
                     {
@@ -736,12 +761,12 @@
         },
         "roleKey": {
           "type": "string",
-          "description": "The user metadata key to get user roles",
+          "description": "The user metadata key to store user roles",
           "default": "X-PLATFORMATIC-ROLE"
         },
         "rolePath": {
           "type": "string",
-          "description": "The user metadata path to get user roles"
+          "description": "The user metadata path to store user roles"
         },
         "anonymousRole": {
           "type": "string",
@@ -942,8 +967,24 @@
               "type": "string",
               "enum": [
                 "own",
-                "parent"
+                "parent",
+                "hide"
               ]
+            },
+            "defaultMetrics": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "additionalProperties": false
+            },
+            "prefix": {
+              "type": "string"
             },
             "auth": {
               "type": "object",
@@ -1271,6 +1312,15 @@
           },
           "url": {
             "type": "string"
+          },
+          "fullResponse": {
+            "type": "boolean"
+          },
+          "fullRequest": {
+            "type": "boolean"
+          },
+          "validateResponse": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

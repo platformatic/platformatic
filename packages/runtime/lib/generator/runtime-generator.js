@@ -153,9 +153,8 @@ class RuntimeGenerator extends BaseGenerator {
 
   async _getConfigFileContents () {
     const config = {
-      $schema: `https://platformatic.dev/schemas/v${this.platformaticVersion}/runtime`,
+      $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${this.platformaticVersion}.json`,
       entrypoint: this.entryPoint.name,
-      allowCycles: false,
       hotReload: true,
       autoload: {
         path: 'services',
@@ -402,6 +401,12 @@ class RuntimeGenerator extends BaseGenerator {
         const newServicePackages = newService.plugins.map((meta) => meta.name)
         const pluginsToRemove = getArrayDifference(oldServicePackages, newServicePackages)
         pluginsToRemove.forEach((p) => delete currentRuntimeDependencies[p])
+      } else {
+        // add service to the generator
+        this.services.push({
+          name: newService.name,
+          service: serviceInstance
+        })
       }
       serviceInstance.setConfig(baseConfig)
       serviceInstance.setConfigFields(newService.fields)
@@ -436,7 +441,6 @@ class RuntimeGenerator extends BaseGenerator {
         envTool.addKey(key, value)
       })
     }
-
     // update runtime package.json dependencies
     currrentPackageJson.dependencies = {
       ...currrentPackageJson.dependencies,
@@ -448,6 +452,20 @@ class RuntimeGenerator extends BaseGenerator {
       contents: JSON.stringify(currrentPackageJson, null, 2)
     })
 
+    // set new entrypoint if specified
+    const newEntrypoint = newConfig.entrypoint
+    if (newEntrypoint) {
+      // load platformatic.json runtime config
+      const runtimePkgConfigFileData = JSON.parse(await readFile(join(this.targetDirectory, 'platformatic.json'), 'utf-8'))
+
+      this.setEntryPoint(newEntrypoint)
+      runtimePkgConfigFileData.entrypoint = newEntrypoint
+      this.addFile({
+        path: '',
+        file: 'platformatic.json',
+        contents: JSON.stringify(runtimePkgConfigFileData, null, 2)
+      })
+    }
     await this.writeFiles()
     // save new env
     await envTool.save()

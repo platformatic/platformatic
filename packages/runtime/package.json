@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/runtime",
-  "version": "1.49.1",
+  "version": "2.0.0-alpha.2",
   "description": "",
   "main": "index.js",
   "bin": {
@@ -8,6 +8,7 @@
   },
   "scripts": {
     "test": "npm run lint && borp --concurrency=1 --timeout=180000 && tsd",
+    "gen-schema": "node lib/schema.js > schema.json",
     "coverage": "npm run lint && borp -X=fixtures -X=test -C --concurrency=1 --timeout=120000 && tsd",
     "lint": "standard | snazzy"
   },
@@ -27,7 +28,10 @@
     "@matteo.collina/tspl": "^0.1.1",
     "@platformatic/sql-graphql": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
-    "borp": "^0.15.0",
+    "@platformatic/service": "workspace:*",
+    "@platformatic/composer": "workspace:*",
+    "@platformatic/db": "workspace:*",
+    "borp": "^0.16.0",
     "c8": "^10.0.0",
     "execa": "^8.0.1",
     "express": "^4.18.3",
@@ -46,12 +50,9 @@
     "@fastify/error": "^3.4.1",
     "@fastify/websocket": "^10.0.0",
     "@hapi/topo": "^6.0.2",
-    "@platformatic/bus": "workspace:*",
-    "@platformatic/composer": "workspace:*",
     "@platformatic/config": "workspace:*",
-    "@platformatic/db": "workspace:*",
+    "@platformatic/ts-compiler": "workspace:*",
     "@platformatic/generators": "workspace:*",
-    "@platformatic/service": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "boring-name-generator": "^1.0.3",
@@ -74,7 +75,6 @@
     "semgrator": "^0.3.0",
     "tail-file-stream": "^0.1.0",
     "undici": "^6.9.0",
-    "why-is-node-running": "^2.2.2",
     "ws": "^8.16.0"
   },
   "standard": {

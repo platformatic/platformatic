@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
+  "entrypoint": "composerApp",
+  "hotReload": false,
+  "services": [
+    {
+      "id": "with-logger",
+      "path": "../monorepo/serviceAppWithLogger",
+      "config": "platformatic.service.json"
+    },
+    {
+      "id": "db-app",
+      "path": "../monorepo/dbApp",
+      "config": "platformatic.db.json"
+    },
+    {
+      "id": "composerApp",
+      "path": "../monorepo/composerApp",
+      "config": "platformatic.composer.json"
+    },
+    {
+      "id": "multi-plugin-service",
+      "path": "../monorepo/serviceAppWithMultiplePlugins",
+      "config": "platformatic.service.json"
+    },
+    {
+      "id": "serviceApp",
+      "path": "../monorepo/serviceApp",
+      "config": "platformatic.service.json"
+    }
+  ]
+}

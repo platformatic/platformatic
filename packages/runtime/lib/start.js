@@ -6,7 +6,6 @@ const { join, resolve, dirname } = require('node:path')
 const { writeFile } = require('node:fs/promises')
 const { pathToFileURL } = require('node:url')
 const { Worker } = require('node:worker_threads')
-const { start: serviceStart } = require('@platformatic/service')
 const { printConfigValidationErrors } = require('@platformatic/config')
 const closeWithGrace = require('close-with-grace')
 const { loadConfig } = require('./load-config')
@@ -130,14 +129,14 @@ async function buildRuntime (configManager, env) {
 async function start (args) {
   const config = await loadConfig({}, args)
 
-  if (config.configType === 'runtime') {
-    config.configManager.args = config.args
-    const app = await buildRuntime(config.configManager)
-    await app.start()
-    return app
+  if (config.configType !== 'runtime') {
+    const configManager = await wrapConfigInRuntimeConfig(config)
+    config.configManager = configManager
   }
 
-  return serviceStart(config.app, args)
+  const app = await buildRuntime(config.configManager)
+  await app.start()
+  return app
 }
 
 async function setupAndStartRuntime (config) {
@@ -165,7 +164,7 @@ async function setupAndStartRuntime (config) {
       startErr = err
       if (err.code === 'EADDRINUSE') {
         await runtime.close()
-        if (runtimeConfig.current.server.port > MAX_PORT) throw err
+        if (runtimeConfig.current?.server?.port > MAX_PORT) throw err
         runtimeConfig.current.server.port++
         runtime = await buildRuntime(runtimeConfig)
       } else {
@@ -204,7 +203,7 @@ async function startCommand (args) {
   } catch (err) {
     if (err.code === 'PLT_CONFIG_NO_CONFIG_FILE_FOUND' && args.length === 1) {
       const config = {
-        $schema: `https://platformatic.dev/schemas/v${pkg.version}/service`,
+        $schema: `https://schemas.platformatic.dev/@platformatic/service/${pkg.version}.json`,
         server: {
           hostname: '127.0.0.1',
           port: 3042,

@@ -2,11 +2,10 @@
 'use strict'
 
 const telemetry = require('@platformatic/telemetry').schema
-const { server } = require('@platformatic/service').schema
+const { schemas: { server } } = require('@platformatic/utils')
 const pkg = require('../package.json')
-const version = 'v' + pkg.version
 const platformaticRuntimeSchema = {
-  $id: `https://platformatic.dev/schemas/${version}/runtime`,
+  $id: `https://schemas.platformatic.dev/@platformatic/runtime/${pkg.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
   type: 'object',
   properties: {
@@ -68,9 +67,6 @@ const platformaticRuntimeSchema = {
           type: 'string'
         }
       ]
-    },
-    allowCycles: {
-      type: 'boolean'
     },
     inspectorOptions: {
       type: 'object',

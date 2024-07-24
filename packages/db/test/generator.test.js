@@ -28,8 +28,6 @@ describe('generator', () => {
       initGitRepository: false,
       dependencies: { '@platformatic/db': `^${dbApp.platformaticVersion}` },
       devDependencies: {},
-      staticWorkspaceGitHubActions: false,
-      dynamicWorkspaceGitHubActions: false,
       isRuntimeContext: false,
       serviceName: '',
       envPrefix: '',
@@ -139,7 +137,10 @@ declare module 'fastify' {
     await dbApp.prepare()
     const platformaticConfigFile = dbApp.getFileObject('platformatic.json')
     const contents = JSON.parse(platformaticConfigFile.contents)
-    assert.equal(contents.$schema, `https://platformatic.dev/schemas/v${dbApp.platformaticVersion}/db`)
+    assert.equal(
+      contents.$schema,
+      `https://schemas.platformatic.dev/@platformatic/db/${dbApp.platformaticVersion}.json`
+    )
     assert.deepEqual(contents.server, {
       hostname: '{PLT_SERVER_HOSTNAME}',
       port: '{PORT}',
@@ -198,7 +199,6 @@ declare module 'fastify' {
       const exampleTest = dbApp.getFileObject('helper.ts', 'test')
       assert.ok(exampleTest.contents.includes(`
   t.after(async () => {
-    t.diagnostic('Disposing test database ' + newDB)
     await db.query(sql\`
       DROP DATABASE \${sql.ident(newDB)}
     \`)
@@ -218,7 +218,6 @@ declare module 'fastify' {
       const exampleTest = dbApp.getFileObject('helper.ts', 'test')
       assert.ok(exampleTest.contents.includes(`
   t.after(async () => {
-    t.diagnostic('Disposing test database ' + newDB)
     await db.query(sql\`
       DROP DATABASE \${sql.ident(newDB)}
     \`)
@@ -238,7 +237,6 @@ declare module 'fastify' {
       const exampleTest = dbApp.getFileObject('helper.ts', 'test')
       assert.ok(exampleTest.contents.includes(`
   t.after(async () => {
-    t.diagnostic('Disposing test database ' + newDB)
     await db.query(sql\`
       DROP DATABASE \${sql.ident(newDB)}
     \`)

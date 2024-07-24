@@ -287,8 +287,6 @@ test('extendable', async (t) => {
     }
   }
 
-  t.diagnostic('first request')
-
   {
     const res = await app.inject({
       method: 'POST',
@@ -298,8 +296,6 @@ test('extendable', async (t) => {
 
     same(res.json(), expected)
   }
-
-  t.diagnostic('second request')
 
   {
     const res = await app.inject({

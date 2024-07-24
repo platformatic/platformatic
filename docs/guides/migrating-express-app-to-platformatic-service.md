@@ -110,7 +110,7 @@ To migrate your Express app to Platformatic Service, create a new Platformatic S
 npm create platformatic@latest
 ```
 
-Be sure to select `Service` as the project type. You should also say `yes` when you're asked if you want to create the GitHub Actions workflows for deploying your application to Platformatic Cloud.
+Be sure to select `Service` as the project type.
 
 Once the project has been created, you can delete the example `plugins` and `routes` directories.
 
@@ -182,7 +182,7 @@ Edit your app's `platformatic.runtime.json` and add the `useHttp` option:
 
 ```json
 {
-  "$schema": "https://platformatic.dev/schemas/v1.3.0/runtime",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
   "entrypoint": "b",
   "autoload": {
     "path": "./services",

@@ -55,8 +55,8 @@ class PlatformaticApp extends EventEmitter {
     return 'stopped'
   }
 
-  async restart (force) {
-    if (this.#starting || !this.#started || (!this.#hotReload && !force)) {
+  async restart () {
+    if (this.#starting || !this.#started) {
       return
     }
 
@@ -92,6 +92,15 @@ class PlatformaticApp extends EventEmitter {
     this.emit('restart')
   }
 
+  async getBootstrapDependencies () {
+    await this.#loadConfig()
+    const resolver = this.config.app.getBootstrapDependencies
+    if (typeof resolver === 'function') {
+      return resolver(this.appConfig, this.config.configManager)
+    }
+    return []
+  }
+
   async start () {
     if (this.#starting || this.#started) {
       throw new errors.ApplicationAlreadyStartedError()
@@ -99,7 +108,7 @@ class PlatformaticApp extends EventEmitter {
 
     this.#starting = true
 
-    await this.#initializeConfig()
+    await this.#applyConfig()
     await this.#updateConfig()
 
     const configManager = this.config.configManager
@@ -121,16 +130,13 @@ class PlatformaticApp extends EventEmitter {
     }
 
     if (
-      (
-        config.plugins !== undefined ||
-        config.versions !== undefined
-      ) &&
+      (config.plugins !== undefined) &&
       this.#originalWatch?.enabled !== false
     ) {
       this.#startFileWatching()
     }
 
-    if (this.appConfig.entrypoint || this.appConfig.useHttp) {
+    if (this.appConfig.useHttp) {
       try {
         await this.server.start()
         /* c8 ignore next 5 */
@@ -160,6 +166,15 @@ class PlatformaticApp extends EventEmitter {
     this.#started = false
     this.#starting = false
     this.emit('stop')
+  }
+
+  async listen () {
+    // This server is not an entrypoint or already listened in start. Behave as no-op.
+    if (!this.appConfig.entrypoint || this.appConfig.useHttp) {
+      return
+    }
+
+    await this.server.start()
   }
 
   async handleProcessLevelEvent ({ signal, err }) {
@@ -195,21 +210,28 @@ class PlatformaticApp extends EventEmitter {
     }
   }
 
-  async #initializeConfig () {
+  async #loadConfig () {
     const appConfig = this.appConfig
 
     let _config
     try {
       _config = await loadConfig({}, ['-c', appConfig.config], {
-        onMissingEnv (key) {
-          return appConfig.localServiceEnvVars.get(key)
-        }
+        onMissingEnv: this.#fetchServiceUrl,
+        context: appConfig
       }, true, this.#logger)
     } catch (err) {
       this.#logAndExit(err)
     }
 
     this.config = _config
+  }
+
+  async #applyConfig () {
+    if (!this.config) {
+      await this.#loadConfig()
+    }
+
+    const appConfig = this.appConfig
     const { configManager } = this.config
 
     function applyOverrides () {
@@ -306,6 +328,16 @@ class PlatformaticApp extends EventEmitter {
       : this.#logger
   }
 
+  #fetchServiceUrl (key, { parent, context: service }) {
+    if (service.localServiceEnvVars.has(key)) {
+      return service.localServiceEnvVars.get(key)
+    } else if (!key.endsWith('_URL') || !parent.serviceId) {
+      return null
+    }
+
+    return getServiceUrl(parent.serviceId)
+  }
+
   #startFileWatching () {
     if (this.#fileWatcher) {
       return
@@ -356,6 +388,10 @@ function clearCjsCache () {
       delete require.cache[key]
     }
   })
+}
+
+function getServiceUrl (id) {
+  return `http://${id}.plt.local`
 }
 
 module.exports = { PlatformaticApp }
