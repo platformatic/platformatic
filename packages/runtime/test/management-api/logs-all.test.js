@@ -14,11 +14,11 @@ const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 test('should get all runtime logs', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
 
+  const app = await buildServer(configFile)
   await app.start()
 
   t.after(async () => {
@@ -61,7 +61,6 @@ test('should get all runtime logs', async (t) => {
 test('should get previous runtime logs', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
@@ -78,6 +77,7 @@ test('should get previous runtime logs', async (t) => {
     writeFile(join(prevRuntimeTmpDir, 'logs.5'), 'test-logs-5\n'),
   ])
 
+  const app = await buildServer(configFile)
   await app.start()
 
   t.after(async () => {
