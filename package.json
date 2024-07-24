@@ -7,6 +7,7 @@
     "cleanall": "rm pnpm-lock.yaml && rm -rf node_modules && rm -rf packages/*/node_modules",
     "clean": "rm -rf node_modules && rm -rf packages/*/node_modules",
     "postinstall": "node ./scripts/postinstall.js",
+    "gen-schema": "pnpm -r gen-schema",
     "lint:markdown": "markdownlint-cli2",
     "test:config": "cd packages/config && pnpm test",
     "lint": "pnpm -r --workspace-concurrency=1 lint",

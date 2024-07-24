@@ -39,7 +39,7 @@ Once the new Platformatic app is ready:
 
 ```diff
 {
-  "$schema": "https://platformatic.dev/schemas/v0.24.0/db",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/db/1.52.0.json",
   "server": {
     "hostname": "{PLT_SERVER_HOSTNAME}",
     "port": "{PORT}",

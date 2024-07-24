@@ -52,7 +52,7 @@ test('openapi client generation (javascript)', async (t) => {
   await moveToTmpdir(after)
 
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -107,7 +107,7 @@ test('openapi client generation (typescript)', async (t) => {
   const dir = await moveToTmpdir(after)
 
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -182,7 +182,7 @@ test('config support with folder', async (t) => {
   await moveToTmpdir(after)
 
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -222,7 +222,7 @@ test('openapi client generation (typescript) with --types-only', async (t) => {
   const dir = await moveToTmpdir(after)
 
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -304,7 +304,7 @@ test('openapi client generation (typescript) with --types-only and --folder', as
   const dir = await moveToTmpdir(after)
 
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -389,7 +389,7 @@ test('generate client twice', async (t) => {
   const dir = await moveToTmpdir(after)
 
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -424,7 +424,7 @@ test('openapi client generation (javascript) from file', async (t) => {
   await moveToTmpdir(after)
 
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0,

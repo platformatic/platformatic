@@ -83,7 +83,7 @@ file, **`platformatic.db.json`**:
 
 ```json
 {
-  "$schema": "https://platformatic.dev/schemas/v0.23.2/db",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/db/1.52.0.json",
   "server": {
     "hostname": "{PLT_SERVER_HOSTNAME}",
     "port": "{PORT}",

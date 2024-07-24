@@ -23,7 +23,7 @@ test('remove hotReload', async () => {
 
   const config = configManager.current
 
-  equal(config.$schema, `https://platformatic.dev/schemas/v${version}/service`)
+  equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/service/${version}.json`)
 
   deepEqual(config.plugins, {
     paths: ['plugin.js'],

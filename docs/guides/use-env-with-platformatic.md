@@ -78,7 +78,7 @@ Modify your `platformatic.json` config file to register your new plugin along wi
 // platformatic.json
 
 {
-   "$schema": "https://platformatic.dev/schemas/v1.33.0/db",
+   "$schema": "https://schemas.platformatic.dev/@platformatic/db/1.52.0.json",
    "db": {
      "connectionString": "{PLT_DATABASE_URL}"
    },

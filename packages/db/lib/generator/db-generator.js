@@ -38,7 +38,7 @@ class DBGenerator extends BaseGenerator {
     const version = this.platformaticVersion
 
     const config = {
-      $schema: `https://platformatic.dev/schemas/v${version}/db`,
+      $schema: `https://schemas.platformatic.dev/@platformatic/db/${version}.json`,
       db: {
         connectionString: `{${this.getEnvVarName('DATABASE_URL')}}`,
         graphql: true,

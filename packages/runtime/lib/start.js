@@ -203,7 +203,7 @@ async function startCommand (args) {
   } catch (err) {
     if (err.code === 'PLT_CONFIG_NO_CONFIG_FILE_FOUND' && args.length === 1) {
       const config = {
-        $schema: `https://platformatic.dev/schemas/v${pkg.version}/service`,
+        $schema: `https://schemas.platformatic.dev/@platformatic/service/${pkg.version}.json`,
         server: {
           hostname: '127.0.0.1',
           port: 3042,

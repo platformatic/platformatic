@@ -23,7 +23,7 @@ test('remove hotReload', async () => {
 
   const config = configManager.current
 
-  equal(config.$schema, `https://platformatic.dev/schemas/v${version}/db`)
+  equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/db/${version}.json`)
 
   deepEqual(config.watch, {
     ignore: ['*.sqlite', '*.sqlite-journal'],

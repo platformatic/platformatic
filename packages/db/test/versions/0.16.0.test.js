@@ -23,7 +23,7 @@ test('upgrade from v0.16.0', async () => {
 
   const config = configManager.current
 
-  equal(config.$schema, `https://platformatic.dev/schemas/v${version}/db`)
+  equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/db/${version}.json`)
 
   deepEqual(config.plugins, {
     paths: ['plugin.js'],
@@ -46,7 +46,7 @@ test('typescript', async () => {
 
   const config = configManager.current
 
-  equal(config.$schema, `https://platformatic.dev/schemas/v${version}/db`)
+  equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/db/${version}.json`)
 
   deepEqual(config.plugins, {
     paths: ['plugin.ts'],
@@ -70,7 +70,7 @@ test('no plugin', async () => {
 
   const config = configManager.current
 
-  equal(config.$schema, `https://platformatic.dev/schemas/v${version}/db`)
+  equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/db/${version}.json`)
 
   equal(config.plugins, undefined)
 })

@@ -407,7 +407,7 @@ test('dotenv & config support', async (t) => {
   const dir = await moveToTmpdir(after)
 
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -917,7 +917,7 @@ test('do not generate implementation file if in platformatic service', async (t)
   const dir = await moveToTmpdir(after)
 
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.28.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0,

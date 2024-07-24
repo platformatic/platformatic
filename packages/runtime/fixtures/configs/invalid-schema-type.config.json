@@ -1,5 +1,5 @@
 {
-  "$schema": "https://platformatic.dev/schemas/v0.22.0/trickortreat",
+  "$schema": "https://schemas.platformatic.dev/trickortreat/0.22.0.json",
   "server": {
     "hostname": "127.0.0.1",
     "port": 0,

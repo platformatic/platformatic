@@ -19,7 +19,7 @@ test('generateJsonSchemaConfig generates the file', async (t) => {
   const { required } = schema
   assert.strictEqual(required, undefined)
   const { $id, type } = schema
-  assert.strictEqual($id, `https://platformatic.dev/schemas/v${pkg.version}/service`)
+  assert.strictEqual($id, `https://schemas.platformatic.dev/@platformatic/service/${pkg.version}.json`)
   assert.strictEqual(type, 'object')
 
   const languageservice = jsonLanguageService.getLanguageService({
@@ -31,7 +31,7 @@ test('generateJsonSchemaConfig generates the file', async (t) => {
   languageservice.configure({ allowComments: false, schemas: [{ fileMatch: ['*.data.json'], uri: $id }] })
 
   const jsonContent = `{
-    "$schema": "https://platformatic.dev/schemas/v${pkg.version}/service",
+    "$schema": "https://schemas.platformatic.dev/@platformatic/service/${pkg.version}.json",
     "server": {
       "hostname": "127.0.0.1",
       "port": 3000

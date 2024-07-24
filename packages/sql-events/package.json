@@ -38,8 +38,8 @@
     "@fastify/error": "^3.4.1",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^4.5.1",
-    "mqemitter": "^5.0.0",
-    "mqemitter-redis": "^5.0.0"
+    "mqemitter": "^6.0.0",
+    "mqemitter-redis": "^6.0.0"
   },
   "tsd": {
     "directory": "test/types"

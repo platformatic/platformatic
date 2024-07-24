@@ -163,6 +163,12 @@ class ConfigManager extends EventEmitter {
           version = res[1]
         }
 
+        if (!version && this.current.$schema?.indexOf('https://schemas.platformatic.dev/@platformatic/') === 0) {
+          const url = new URL(this.current.$schema)
+          const res = url.pathname.match(/^\/@platformatic\/[^/]+\/(\d+\.\d+\.\d+(?:-[^/]+)?)\.json$/)
+          version = res[1]
+        }
+
         // Really old Platformatic applications followed this format. This was a bad decision that we
         // keep supporting.
         // TODO(mcollina): remove in a future version

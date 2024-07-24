@@ -1,5 +1,5 @@
 {
-  "$schema": "https://platformatic.dev/schemas/v1.28.1/db",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/db/1.52.0.json",
   "db": {
     "connectionString": "{PLT_PIQUANT_COMBAT_DATABASE_URL}",
     "graphql": true,

@@ -42,7 +42,10 @@ test('writes a config file', async (t) => {
 
   const config = JSON.parse(await readFile(join(dest, 'platformatic.db.json'), 'utf8'))
 
-  assert.match(config.$schema, new RegExp('https://platformatic.dev/schemas/v\\d+.\\d+.\\d+(?:-\\w+\\.\\d+)?/db'))
+  assert.match(
+    config.$schema,
+    new RegExp('https://schemas.platformatic.dev/@platformatic/db/\\d+.\\d+.\\d+(?:-\\w+\\.\\d+)?\\.json')
+  )
 })
 
 test('writes a config file with a config option', async (t) => {
@@ -70,7 +73,10 @@ test('writes a config file with a config option', async (t) => {
 
   const config = JSON.parse(await readFile(join(dest, 'platformatic.db.json'), 'utf8'))
 
-  assert.match(config.$schema, new RegExp('https://platformatic.dev/schemas/v\\d+.\\d+.\\d+(?:-\\w+\\.\\d+)?/db'))
+  assert.match(
+    config.$schema,
+    new RegExp('https://schemas.platformatic.dev/@platformatic/db/\\d+.\\d+.\\d+(?:-\\w+\\.\\d+)?\\.json')
+  )
 })
 
 test('no config file no party', async (t) => {
@@ -91,5 +97,8 @@ test('updates a runtime', async (t) => {
 
   const config = JSON.parse(await readFile(join(dest, 'platformatic.json'), 'utf8'))
 
-  assert.match(config.$schema, new RegExp('https://platformatic.dev/schemas/v\\d+.\\d+.\\d+(?:-\\w+\\.\\d+)?/runtime'))
+  assert.match(
+    config.$schema,
+    new RegExp('https://schemas.platformatic.dev/@platformatic/runtime/\\d+.\\d+.\\d+(?:-\\w+\\.\\d+)?\\.json')
+  )
 })

@@ -24,7 +24,7 @@ test('graphql client generation (javascript)', async (t) => {
   const dir = await moveToTmpdir(after)
 
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -101,7 +101,7 @@ test('graphql client generation (typescript)', async (t) => {
   const dir = await moveToTmpdir(after)
 
   const pltServiceConfig = {
-    $schema: 'https://platformatic.dev/schemas/v0.18.0/service',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0,

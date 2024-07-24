@@ -1,5 +1,5 @@
 {
-  "$schema": "https://platformatic.dev/schemas/v0.20.0/service",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/service/1.52.0.json",
   "server": {
     "hostname": "127.0.0.1",
     "port": 0
@@ -18,5 +18,6 @@
       "path": "./with-logger",
       "url": "{PLT_WITH_LOGGER_URL}"
     }
-  ]
+  ],
+  "watch": { "enabled": true }
 }

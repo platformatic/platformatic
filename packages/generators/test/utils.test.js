@@ -193,9 +193,9 @@ describe('utils', () => {
 
   describe('getServiceTemplateFromSchemaUrl', () => {
     test('should get the right template name from schema url', () => {
-      const composerSchema = 'https://platformatic.dev/schemas/v1.25.0/composer'
-      const serviceSchema = 'https://platformatic.dev/schemas/v1.25.0/service'
-      const dbSchema = 'https://platformatic.dev/schemas/v1.25.0/db'
+      const composerSchema = 'https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json'
+      const serviceSchema = 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json'
+      const dbSchema = 'https://schemas.platformatic.dev/@platformatic/db/1.52.0.json'
 
       assert.equal(getServiceTemplateFromSchemaUrl(composerSchema), '@platformatic/composer')
       assert.equal(getServiceTemplateFromSchemaUrl(serviceSchema), '@platformatic/service')

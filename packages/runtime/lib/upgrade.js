@@ -19,7 +19,7 @@ module.exports = async function upgrade (config, version) {
     result = updated.result
   }
 
-  result.$schema = `https://platformatic.dev/schemas/v${pkg.version}/runtime`
+  result.$schema = `https://schemas.platformatic.dev/@platformatic/runtime/${pkg.version}.json`
 
   return result
 }

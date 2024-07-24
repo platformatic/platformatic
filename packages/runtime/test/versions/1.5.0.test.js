@@ -7,7 +7,7 @@ const { platformaticRuntime } = require('../../index.js')
 const { ConfigManager } = require('@platformatic/config')
 const { version } = require('../../package.json')
 
-test('rmeove the watch config', async () => {
+test('remove the watch config', async () => {
   const file = join(__dirname, 'fixtures', '1.4.0.json')
 
   const configManager = new ConfigManager({
@@ -23,6 +23,6 @@ test('rmeove the watch config', async () => {
 
   const config = configManager.current
 
-  equal(config.$schema, `https://platformatic.dev/schemas/v${version}/runtime`)
+  equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`)
   equal(config.watch, undefined)
 })

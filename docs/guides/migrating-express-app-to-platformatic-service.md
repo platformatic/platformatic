@@ -182,7 +182,7 @@ Edit your app's `platformatic.runtime.json` and add the `useHttp` option:
 
 ```json
 {
-  "$schema": "https://platformatic.dev/schemas/v1.3.0/runtime",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
   "entrypoint": "b",
   "autoload": {
     "path": "./services",

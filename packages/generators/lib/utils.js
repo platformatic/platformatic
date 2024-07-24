@@ -181,8 +181,13 @@ function flattenObject (ob) {
 
 function getServiceTemplateFromSchemaUrl (schemaUrl) {
   const splitted = schemaUrl.split('/')
-  return `@platformatic/${splitted[splitted.length - 1]}`
+
+  if (schemaUrl.startsWith('https://platformatic.dev/schemas')) {
+    return `@platformatic/${splitted[splitted.length - 1]}`
+  }
+  return `@platformatic/${splitted[splitted.length - 2]}`
 }
+
 module.exports = {
   addPrefixToString,
   convertServiceNameToPrefix,

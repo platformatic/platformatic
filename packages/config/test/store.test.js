@@ -46,7 +46,7 @@ test('Store with builtins', async t => {
     assert.equal(err.message, 'Add a module property to the config or add a known $schema.')
   }
   try {
-    await store.get({ $schema: 'https://platformatic.dev/schemas/v0.99.0/something.json' })
+    await store.get({ $schema: 'https://schemas.platformatic.dev/something/0.99.0.json' })
     assert.fail()
   } catch (err) {
     assert.equal(err.message, 'Add a module property to the config or add a known $schema.')
@@ -324,7 +324,7 @@ test('Version mismatch', async t => {
   }
 
   foo.schema = {
-    $id: 'https://platformatic.dev/schemas/v0.42.0/something.json',
+    $id: 'https://schemas.platformatic.dev/something/0.42.0.json',
     type: 'object',
   }
 
@@ -346,7 +346,7 @@ test('Version mismatch', async t => {
   store.add(foo)
 
   try {
-    await store.get({ $schema: 'https://platformatic.dev/schemas/v0.99.0/something.json' })
+    await store.get({ $schema: 'https://schemas.platformatic.dev/something/0.99.0.json' })
     assert.fail()
   } catch (err) {
     assert.equal(err.message, 'Add a module property to the config or add a known $schema.')
@@ -359,7 +359,7 @@ test('schema null', async (t) => {
   assert.equal(store.getVersionFromSchema(null), null)
 })
 
-test('Platformatic Service', async t => {
+test('Platformatic Service with legacy schema', async t => {
   function foo () {
   }
 
@@ -388,12 +388,41 @@ test('Platformatic Service', async t => {
   assert.equal(await store.get({ $schema: './foo' }), foo, 'should have builtin value')
 })
 
+test('Platformatic Service', async t => {
+  function foo () {
+  }
+
+  foo.schema = {
+    $id: `https://schemas.platformatic.dev/@platformatic/service/${version}.json`,
+    type: 'object',
+  }
+
+  foo.configType = 'foo'
+  foo.configManagerConfig = {
+    schema: foo.schema,
+    allowToWatch: ['.env'],
+    schemaOptions: {
+      useDefaults: true,
+      coerceTypes: true,
+      allErrors: true,
+      strict: false,
+    },
+    transformConfig () {
+    },
+  }
+
+  const store = new Store()
+  store.add(foo)
+
+  assert.equal(await store.get({ $schema: './foo' }), foo, 'should have builtin value')
+})
+
 test('Platformatic DB', async t => {
   function foo () {
   }
 
   foo.schema = {
-    $id: `https://platformatic.dev/schemas/v${version}/db`,
+    $id: `https://schemas.platformatic.dev/@platformatic/db/${version}.json`,
     type: 'object',
   }
 
@@ -435,7 +464,7 @@ describe('default modules', () => {
       }
 
       foo.schema = {
-        $id: `https://platformatic.dev/schemas/v${version}/${type}`,
+        $id: `https://schemas.platformatic.dev/@platformatic/${type}/${version}.json`,
         type: 'object',
       }
 
@@ -461,13 +490,13 @@ describe('default modules', () => {
 
       const store = new Store({ cwd })
 
-      const loaded = await store.get({ $schema: `https://platformatic.dev/schemas/v${version}/${type}` })
+      const loaded = await store.get({ $schema: `https://schemas.platformatic.dev/@platformatic/${type}/${version}.json` })
       assert.deepEqual(loaded.schema, foo.schema, 'should have matching schema')
       assert.equal(loaded.configType, foo.configType, 'should have matching configType')
       assert.deepEqual(loaded.configManagerConfig, foo.configManagerConfig, 'should have matching configManagerConfig')
 
       assert.deepEqual(store.listTypes(), [{
-        id: `https://platformatic.dev/schemas/v${version}/${type}`,
+        id: `https://schemas.platformatic.dev/@platformatic/${type}/${version}.json`,
         configType: type,
       }])
     })
