@@ -1521,7 +1521,7 @@ importers:
         version: 4.5.1
       mqemitter:
         specifier: ^6.0.0
-        version: 6.0.0
+        version: 6.0.2
       mqemitter-redis:
         specifier: ^5.0.0
         version: 5.1.0
@@ -4758,8 +4758,8 @@ packages:
     resolution: {integrity: sha512-rqNRQhGgl0W/NV+Zrx0rpAUTZcSlAtivCVUmXBUPcFYt+AeDEpoJgy5eKlFWJP6xnatONL59WIFdV0W6niOMhw==}
     engines: {node: '>=10'}
 
-  mqemitter@6.0.0:
-    resolution: {integrity: sha512-6+dd6arKyuX7c622gLMOSviiAIhORGNCi7r4KTft/XDetuedNZwRZWsED99nDeHPhkaftj7u7SlAbGhpFt319w==}
+  mqemitter@6.0.2:
+    resolution: {integrity: sha512-8RGlznQx/Nb1xC3xKUFXHWov7pn7JdH++YVwlr6SLT6k3ft1h+ImGqZdVudbdKruFckIq9wheq9s4hgCivJDow==}
     engines: {node: '>=16'}
 
   mri@1.2.0:
@@ -9500,7 +9500,7 @@ snapshots:
       fastparallel: 2.4.1
       qlobber: 7.0.1
 
-  mqemitter@6.0.0:
+  mqemitter@6.0.2:
     dependencies:
       fastparallel: 2.4.1
       qlobber: 8.0.1
