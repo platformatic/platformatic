@@ -441,7 +441,6 @@ class RuntimeGenerator extends BaseGenerator {
         envTool.addKey(key, value)
       })
     }
-
     // update runtime package.json dependencies
     currrentPackageJson.dependencies = {
       ...currrentPackageJson.dependencies,
@@ -453,6 +452,20 @@ class RuntimeGenerator extends BaseGenerator {
       contents: JSON.stringify(currrentPackageJson, null, 2)
     })
 
+    // set new entrypoint if specified
+    const newEntrypoint = newConfig.entrypoint
+    if (newEntrypoint) {
+      // load platformatic.json runtime config
+      const runtimePkgConfigFileData = JSON.parse(await readFile(join(this.targetDirectory, 'platformatic.json'), 'utf-8'))
+
+      this.setEntryPoint(newEntrypoint)
+      runtimePkgConfigFileData.entrypoint = newEntrypoint
+      this.addFile({
+        path: '',
+        file: 'platformatic.json',
+        contents: JSON.stringify(runtimePkgConfigFileData, null, 2)
+      })
+    }
     await this.writeFiles()
     // save new env
     await envTool.save()
