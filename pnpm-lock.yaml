@@ -1523,8 +1523,8 @@ importers:
         specifier: ^6.0.0
         version: 6.0.2
       mqemitter-redis:
-        specifier: ^5.0.0
-        version: 5.1.0
+        specifier: ^6.0.0
+        version: 6.0.0
     devDependencies:
       '@matteo.collina/tspl':
         specifier: ^0.1.1
@@ -4162,9 +4162,6 @@ packages:
     resolution: {integrity: sha512-NGnrKwXzSms2qUUih/ILZ5JBqNTSa1+ZmP6flaIp6KmSElgE9qdndzS3cqjrDovwFdmwsGsLdeFgB6suw+1e9g==}
     engines: {node: '>= 0.4'}
 
-  ioredis-auto-pipeline@1.0.2:
-    resolution: {integrity: sha512-Axp07oVqbUAArCuIjlfXfME0/te/R7x43zfeGEpY1UTJjWdTUIw/h+K/LfIkRGCv8aCB4bCypHft8AQZ+1Z7zw==}
-
   ioredis@5.4.1:
     resolution: {integrity: sha512-2YZsvl7jopIa1gaePkeMtd9rAcSjOOjPtpcLlOeusyO+XH2SK5ZcT+UCrElPP+WVIInh2TzeI4XW9ENaSLVVHA==}
     engines: {node: '>=12.22.0'}
@@ -4747,16 +4744,16 @@ packages:
   moo@0.5.2:
     resolution: {integrity: sha512-iSAJLHYKnX41mKcJKjqvnAN9sf0LMDTXDEvFv+ffuRR9a1MIuXLjMNL6EsnDHSkKLTWNqQQ5uo61P4EbU4NU+Q==}
 
-  mqemitter-redis@5.1.0:
-    resolution: {integrity: sha512-gT/oFTawvc1z/+WzSy0JZVyuOLoCgPxR27/n7zYKFGirDGwZU5HBlbf8bUmOdfTfimqB1vetl4eJ7Rd0c1HJrg==}
-
-  mqemitter@4.5.0:
-    resolution: {integrity: sha512-Mp/zytFeIv6piJQkEKnncHcP4R/ErJc5C7dfonkhkNUT2LA/nTayrfNxbipp3M5iCJUTQSUtzfQAQA3XVcKz6w==}
-    engines: {node: '>=10'}
+  mqemitter-redis@6.0.0:
+    resolution: {integrity: sha512-FxhEZXDUqSpe2DmZrbgJ0XKxW0nx/ox6qD7JhCFNRgsodxW1jMjjCxoJt3Kw/vwN/996SziqOkXJRk1zqi35WA==}
 
   mqemitter@5.0.0:
     resolution: {integrity: sha512-rqNRQhGgl0W/NV+Zrx0rpAUTZcSlAtivCVUmXBUPcFYt+AeDEpoJgy5eKlFWJP6xnatONL59WIFdV0W6niOMhw==}
     engines: {node: '>=10'}
+
+  mqemitter@6.0.2:
+    resolution: {integrity: sha512-8RGlznQx/Nb1xC3xKUFXHWov7pn7JdH++YVwlr6SLT6k3ft1h+ImGqZdVudbdKruFckIq9wheq9s4hgCivJDow==}
+    engines: {node: '>=16'}
 
   mqemitter@6.0.2:
     resolution: {integrity: sha512-8RGlznQx/Nb1xC3xKUFXHWov7pn7JdH++YVwlr6SLT6k3ft1h+ImGqZdVudbdKruFckIq9wheq9s4hgCivJDow==}
@@ -5268,10 +5265,6 @@ packages:
   pupa@3.1.0:
     resolution: {integrity: sha512-FLpr4flz5xZTSJxSeaheeMKN/EDzMdK7b8PTOC6a5PYFKTucWbdqjgqaEyH0shFiSJrVB1+Qqi4Tk19ccU6Aug==}
     engines: {node: '>=12.20'}
-
-  qlobber@5.0.3:
-    resolution: {integrity: sha512-wW4GTZPePyh0RgOsM18oDyOUlXfurVRgoNyJfS+y7VWPyd0GYhQp5T2tycZFZjonH+hngxIfklGJhTP/ghidgQ==}
-    engines: {node: '>= 8'}
 
   qlobber@7.0.1:
     resolution: {integrity: sha512-FsFg9lMuMEFNKmTO9nV7tlyPhx8BmskPPjH2akWycuYVTtWaVwhW5yCHLJQ6Q+3mvw5cFX2vMfW2l9z2SiYAbg==}
@@ -5844,10 +5837,6 @@ packages:
   to-fast-properties@2.0.0:
     resolution: {integrity: sha512-/OaKK0xYrs3DmxRYqL/yDc+FxFUVYhDlXMhRmv3z915w2HF1tnN1omB354j8VUGO/hbRzyD6Y3sA7v7GS/ceog==}
     engines: {node: '>=4'}
-
-  to-fast-properties@3.0.1:
-    resolution: {integrity: sha512-/wtNi1tW1F3nf0OL6AqVxGw9Tr1ET70InMhJuVxPwFdGqparF0nQ4UWGLf2DsoI2bFDtthlBnALncZpUzOnsUw==}
-    engines: {node: '>=8'}
 
   to-regex-range@5.0.1:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
@@ -8892,10 +8881,6 @@ snapshots:
       hasown: 2.0.2
       side-channel: 1.0.6
 
-  ioredis-auto-pipeline@1.0.2:
-    dependencies:
-      to-fast-properties: 3.0.1
-
   ioredis@5.4.1:
     dependencies:
       '@ioredis/commands': 1.2.0
@@ -9478,27 +9463,26 @@ snapshots:
 
   moo@0.5.2: {}
 
-  mqemitter-redis@5.1.0:
+  mqemitter-redis@6.0.0:
     dependencies:
       hyperid: 3.2.0
       inherits: 2.0.4
       ioredis: 5.4.1
-      ioredis-auto-pipeline: 1.0.2
-      lru-cache: 7.18.3
-      mqemitter: 4.5.0
+      lru-cache: 10.4.3
+      mqemitter: 6.0.2
       msgpack-lite: 0.1.26
     transitivePeerDependencies:
       - supports-color
-
-  mqemitter@4.5.0:
-    dependencies:
-      fastparallel: 2.4.1
-      qlobber: 5.0.3
 
   mqemitter@5.0.0:
     dependencies:
       fastparallel: 2.4.1
       qlobber: 7.0.1
+
+  mqemitter@6.0.2:
+    dependencies:
+      fastparallel: 2.4.1
+      qlobber: 8.0.1
 
   mqemitter@6.0.2:
     dependencies:
@@ -10070,8 +10054,6 @@ snapshots:
   pupa@3.1.0:
     dependencies:
       escape-goat: 4.0.0
-
-  qlobber@5.0.3: {}
 
   qlobber@7.0.1: {}
 
@@ -10758,8 +10740,6 @@ snapshots:
       os-tmpdir: 1.0.2
 
   to-fast-properties@2.0.0: {}
-
-  to-fast-properties@3.0.1: {}
 
   to-regex-range@5.0.1:
     dependencies:

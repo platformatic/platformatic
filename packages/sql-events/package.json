@@ -38,7 +38,7 @@
     "camelcase": "^6.3.0",
     "fastify-plugin": "^4.5.1",
     "mqemitter": "^6.0.0",
-    "mqemitter-redis": "^5.0.0"
+    "mqemitter-redis": "^6.0.0"
   },
   "tsd": {
     "directory": "test/types"
