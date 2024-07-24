@@ -12,51 +12,54 @@ const metricsPlugin = fp(async function (app, opts = {}) {
   const register = new promClient.Registry()
 
   const defaultMetrics = opts.defaultMetrics ?? { enabled: true }
-  const prefix = opts.prefix ?? ''
 
-  if (opts.labels) {
+  if (opts.labels || opts.prefix) {
     const labels = opts.labels ?? {}
+    if (opts.prefix) {
+      labels.prefix = opts.prefix
+    }
     register.setDefaultLabels(labels)
   }
 
   app.register(require('fastify-metrics'), {
     defaultMetrics: {
       ...defaultMetrics,
-      register,
+      register
     },
     endpoint: null,
     name: 'metrics',
     clearRegisterOnInit: false,
     promClient: {
       ...promClient,
-      register,
+      register
     },
     routeMetrics: {
       enabled: true,
       customLabels: {
-        telemetry_id: (req) => req.headers['x-telemetry-id'] ?? 'unknown',
+        // TODO: check if this is set in prom
+        telemetry_id: (req) => req.headers['x-telemetry-id'] ?? 'unknown'
       },
       overrides: {
         histogram: {
-          name: prefix + 'http_request_duration_seconds',
-          registers: [register],
+          name: 'http_request_duration_seconds',
+          registers: [register]
         },
         summary: {
-          name: prefix + 'http_request_summary_seconds',
-          registers: [register],
-        },
-      },
-    },
+          name: 'http_request_summary_seconds',
+          registers: [register]
+        }
+      }
+    }
   })
 
   app.register(fp(async (app) => {
     const httpLatencyMetric = new app.metrics.client.Summary({
-      name: prefix + 'http_request_all_summary_seconds',
+      name: 'http_request_all_summary_seconds',
       help: 'request duration in seconds summary for all requests',
       collect: () => {
         process.nextTick(() => httpLatencyMetric.reset())
       },
-      registers: [register],
+      registers: [register]
     })
 
     const ignoredMethods = ['HEAD', 'OPTIONS', 'TRACE', 'CONNECT']
@@ -75,7 +78,7 @@ const metricsPlugin = fp(async function (app, opts = {}) {
       }
     })
   }, {
-    encapsulate: false,
+    encapsulate: false
   }))
 
   if (defaultMetrics.enabled) {
@@ -90,7 +93,7 @@ const metricsPlugin = fp(async function (app, opts = {}) {
           eluMetric.set(result)
           startELU = endELU
         },
-        registers: [register],
+        registers: [register]
       })
       app.metrics.client.register.registerMetric(eluMetric)
 
@@ -123,16 +126,17 @@ const metricsPlugin = fp(async function (app, opts = {}) {
           previousIdleTime = idleTime
           previousTotalTime = totalTime
         },
-        registers: [register],
+        registers: [register]
       })
       app.metrics.client.register.registerMetric(cpuMetric)
     })
   }
 
   function cleanMetrics () {
+    const httpMetrics = ['http_request_duration_seconds', 'http_request_summary_seconds', 'http_request_all_summary_seconds']
     const metrics = app.metrics.client.register._metrics
     for (const metricName in metrics) {
-      if (defaultMetrics.enabled || metricName.startsWith(prefix)) {
+      if (defaultMetrics.enabled || httpMetrics.includes(metricName)) {
         delete metrics[metricName]
       }
     }
@@ -151,7 +155,7 @@ const metricsPlugin = fp(async function (app, opts = {}) {
     }
   })
 }, {
-  encapsulate: false,
+  encapsulate: false
 })
 
 // This is a global httpServer to match global
@@ -178,7 +182,7 @@ async function createMetricsServer (app, hostname, port) {
       httpServer.on('request', handler)
       return httpServer
     },
-    logger: app.log.child({ name: 'prometheus' }),
+    logger: app.log.child({ name: 'prometheus' })
   })
 
   app.addHook('onClose', async () => {
@@ -222,7 +226,7 @@ module.exports = fp(async function (app, opts) {
             return reply.code(401).send({ message: 'Unauthorized' })
           }
           return done()
-        },
+        }
       })
       onRequestHook = metricsServer.basicAuth
     }
@@ -242,7 +246,7 @@ module.exports = fp(async function (app, opts) {
         }
         reply.type('text/plain')
         return promRegistry.metrics()
-      },
+      }
     })
   }
 
