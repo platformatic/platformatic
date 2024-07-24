@@ -1377,6 +1377,15 @@ importers:
 
   packages/rpc:
     dependencies:
+      fastify:
+        specifier: ^4.28.1
+        version: 4.28.1
+      fastify-openapi-glue:
+        specifier: ^4.6.1
+        version: 4.6.1
+      fastify-plugin:
+        specifier: ^4.5.1
+        version: 4.5.1
       typescript:
         specifier: ~5.1.0
         version: 5.1.6
@@ -1384,9 +1393,18 @@ importers:
         specifier: ^0.64.0
         version: 0.64.0
     devDependencies:
+      '@fastify/autoload':
+        specifier: ^5.10.0
+        version: 5.10.0
+      '@types/node':
+        specifier: ^20.11.28
+        version: 20.14.10
       borp:
         specifier: ^0.15.0
         version: 0.15.0
+      execa:
+        specifier: ^8.0.1
+        version: 8.0.1
       standard:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/parser@5.62.0(eslint@8.57.0)(typescript@5.5.3))

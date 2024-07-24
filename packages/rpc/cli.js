@@ -100,6 +100,37 @@ function createUpdatedProgram (program, sourceFiles) {
   return newProgram
 }
 
+function unwrapPromiseNode (nodeType) {
+  if (
+    ts.isTypeReferenceNode(nodeType) &&
+    ts.isIdentifier(nodeType.typeName) &&
+    nodeType.typeName.text === 'Promise'
+  ) {
+    const typeArguments = nodeType.typeArguments
+    if (typeArguments && typeArguments.length > 0) {
+      return typeArguments[0]
+    }
+  }
+  return nodeType
+}
+
+function sanitizeVoidType (nodeType) {
+  if (nodeType.kind === ts.SyntaxKind.VoidKeyword) {
+    return ts.factory.createTypeLiteralNode([])
+  }
+  return nodeType
+}
+
+function parseNodeType (nodeType) {
+  // Unwrap Promise type
+  nodeType = unwrapPromiseNode(nodeType)
+
+  // Use empty object type instead of void
+  nodeType = sanitizeVoidType(nodeType)
+
+  return nodeType
+}
+
 function createTransformer () {
   const handlers = []
   const types = new Set()
@@ -131,7 +162,7 @@ function createTransformer () {
                 undefined,
                 ts.factory.createIdentifier(handlerArgsTypeAliasName),
                 undefined,
-                handlersArgsNode.type
+                parseNodeType(handlersArgsNode.type)
               )
               types.add(handlerArgsTypeAliasName)
               children.push(handlerArgsTypeAlias)
@@ -145,7 +176,7 @@ function createTransformer () {
                 undefined,
                 ts.factory.createIdentifier(handlerReturnTypeAliasName),
                 undefined,
-                handlerNode.type
+                parseNodeType(handlerNode.type)
               )
               types.add(handlerReturnTypeAliasName)
               children.push(handlerReturnTypeAlias)

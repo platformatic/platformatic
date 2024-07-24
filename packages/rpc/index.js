@@ -1,17 +1,18 @@
 'use strict'
 
-const { readFile } = require('node:fs/promises')
 const fp = require('fastify-plugin')
 
 module.exports = fp(async function rpcPlugin (fastify, opts) {
+  const openapiSchema = opts.openapiSchema
+  if (!openapiSchema) {
+    throw new Error('openapiSchema option is required')
+  }
+
   const rpcHandlers = {}
 
   fastify.decorate('rpc', (handlerName, handler) => {
     rpcHandlers[handlerName] = handler
   })
-
-  const openapiSchemaFile = await readFile(opts.openapiSchema, 'utf8')
-  const openapiSchema = JSON.parse(openapiSchemaFile)
 
   await fastify.register(await import('fastify-openapi-glue'), {
     specification: openapiSchema,

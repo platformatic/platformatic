@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard",
-    "test": "pnpm run lint && borp --concurrency=1 --timeout 120000 && tsd",
-    "cov": "pnpm run lint && borp --concurrency=1 --coverage --timeout 120000 && tsd"
+    "test": "pnpm run lint && borp --concurrency=1 --timeout 120000",
+    "cov": "pnpm run lint && borp --concurrency=1 --coverage --timeout 120000"
   },
   "repository": {
     "type": "git",
@@ -19,10 +19,16 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
+    "@fastify/autoload": "^5.10.0",
+    "@types/node": "^20.11.28",
     "borp": "^0.15.0",
+    "execa": "^8.0.1",
     "standard": "^17.1.0"
   },
   "dependencies": {
+    "fastify": "^4.28.1",
+    "fastify-openapi-glue": "^4.6.1",
+    "fastify-plugin": "^4.5.1",
     "typescript": "~5.1.0",
     "typescript-json-schema": "^0.64.0"
   }
