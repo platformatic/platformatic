@@ -20,7 +20,7 @@ const modules = [
   '@platformatic/sql-events',
   '@platformatic/sql-json-schema-mapper',
   '@platformatic/telemetry',
-  '@platformatic/utils'
+  '@platformatic/utils',
 ]
 
 const extractErrors = (module) => {

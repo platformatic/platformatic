@@ -19,8 +19,8 @@ if (isMain(import.meta)) {
   const _args = process.argv.slice(2)
   const args = parseArgs(_args, {
     alias: {
-      v: 'version'
-    }
+      v: 'version',
+    },
   })
 
   if (args.version) {

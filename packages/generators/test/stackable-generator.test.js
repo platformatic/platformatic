@@ -19,11 +19,11 @@ afterEach(async () => {
 test('should create a stackable project without typescript', async (t) => {
   const dir = await getTempDir()
   const gen = new StackableGenerator({
-    logger: fakeLogger
+    logger: fakeLogger,
   })
 
   gen.setConfig({
-    targetDirectory: dir
+    targetDirectory: dir,
   })
 
   await gen.run()
@@ -67,12 +67,12 @@ test('should create a stackable project without typescript', async (t) => {
 test('should create a stackable project with typescript', async (t) => {
   const dir = await getTempDir()
   const gen = new StackableGenerator({
-    logger: fakeLogger
+    logger: fakeLogger,
   })
 
   gen.setConfig({
     targetDirectory: dir,
-    typescript: true
+    typescript: true,
   })
 
   await gen.run()

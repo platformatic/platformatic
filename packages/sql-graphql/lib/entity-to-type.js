@@ -5,7 +5,7 @@ const camelcase = require('camelcase')
 const { findNearestString } = require('@platformatic/utils')
 const {
   sqlTypeToGraphQL,
-  fromSelectionSet
+  fromSelectionSet,
 } = require('./utils')
 const errors = require('./errors')
 
@@ -13,13 +13,13 @@ const ascDesc = new graphql.GraphQLEnumType({
   name: 'OrderByDirection',
   values: {
     ASC: { value: 'ASC' },
-    DESC: { value: 'DESC' }
-  }
+    DESC: { value: 'DESC' },
+  },
 })
 
 const limitType = new graphql.GraphQLScalarType({
   name: 'LimitInt',
-  description: 'Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown'
+  description: 'Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown',
 })
 
 function constructGraph (app, entity, opts, ignore) {
@@ -35,7 +35,7 @@ function constructGraph (app, entity, opts, ignore) {
     resolvers,
     federationReplacements,
     federationMetadata,
-    loaders
+    loaders,
   } = opts
 
   const entityFieldsNames = Object.values(entity.fields)
@@ -104,7 +104,7 @@ function constructGraph (app, entity, opts, ignore) {
 
   const type = new graphql.GraphQLObjectType({
     name: entityName,
-    fields
+    fields,
   })
 
   resolvers.Query = resolvers.Query || {}
@@ -131,7 +131,7 @@ function constructGraph (app, entity, opts, ignore) {
         lte: { type: fields[field].type },
         like: { type: fields[field].type },
         in: { type: new graphql.GraphQLList(fields[field].type) },
-        nin: { type: new graphql.GraphQLList(fields[field].type) }
+        nin: { type: new graphql.GraphQLList(fields[field].type) },
       }
     } else {
       graphqlFields = {
@@ -139,14 +139,14 @@ function constructGraph (app, entity, opts, ignore) {
         all: { type: fields[field].type.ofType },
         contains: { type: new graphql.GraphQLList(fields[field].type) },
         contained: { type: new graphql.GraphQLList(fields[field].type) },
-        overlaps: { type: new graphql.GraphQLList(fields[field].type) }
+        overlaps: { type: new graphql.GraphQLList(fields[field].type) },
       }
     }
     acc[field] = {
       type: new graphql.GraphQLInputObjectType({
         name: `${entityName}WhereArguments${field}`,
-        fields: graphqlFields
-      })
+        fields: graphqlFields,
+      }),
     }
     return acc
   }, {})
@@ -159,11 +159,11 @@ function constructGraph (app, entity, opts, ignore) {
         type: new graphql.GraphQLList(new graphql.GraphQLInputObjectType({
           name: `${entityName}WhereArgumentsOr`,
           fields: {
-            ...whereFields
-          }
-        }))
-      }
-    }
+            ...whereFields,
+          },
+        })),
+      },
+    },
   })
 
   queryTopFields[getBy] = {
@@ -172,8 +172,8 @@ function constructGraph (app, entity, opts, ignore) {
       ...(primaryKeys.reduce((acc, primaryKey) => {
         acc[primaryKey] = { type: new graphql.GraphQLNonNull(fields[primaryKey].type) }
         return acc
-      }, {}))
-    }
+      }, {})),
+    },
   }
   loaders.Query[getBy] = {
     loader (queries, ctx) {
@@ -188,8 +188,8 @@ function constructGraph (app, entity, opts, ignore) {
       return loadMany(keys, queries, ctx)
     },
     opts: {
-      cache: false
-    }
+      cache: false,
+    },
   }
 
   const orderByFields = new graphql.GraphQLEnumType({
@@ -198,11 +198,11 @@ function constructGraph (app, entity, opts, ignore) {
       /* istanbul ignore else */
       if (!fields[field].isArray) {
         acc[field] = {
-          value: field
+          value: field,
         }
       }
       return acc
-    }, {})
+    }, {}),
   })
   queryTopFields[plural] = {
     type: new graphql.GraphQLList(type),
@@ -214,12 +214,12 @@ function constructGraph (app, entity, opts, ignore) {
           name: `${entityName}OrderByArguments`,
           fields: {
             field: { type: orderByFields },
-            direction: { type: new graphql.GraphQLNonNull(ascDesc) }
-          }
-        }))
+            direction: { type: new graphql.GraphQLNonNull(ascDesc) },
+          },
+        })),
       },
-      where: { type: whereArgType }
-    }
+      where: { type: whereArgType },
+    },
   }
 
   resolvers.Query[plural] = (_, query, ctx, info) => {
@@ -239,7 +239,7 @@ function constructGraph (app, entity, opts, ignore) {
         acc[field] = meta
       }
       return acc
-    }, {})
+    }, {}),
   })
 
   const count = camelcase(['count', plural])
@@ -247,15 +247,15 @@ function constructGraph (app, entity, opts, ignore) {
   const countType = new graphql.GraphQLObjectType({
     name: `${plural}Count`,
     fields: {
-      total: { type: graphql.GraphQLInt }
-    }
+      total: { type: graphql.GraphQLInt },
+    },
   })
 
   queryTopFields[count] = {
     type: countType,
     args: {
-      where: { type: whereArgType }
-    }
+      where: { type: whereArgType },
+    },
   }
 
   resolvers.Query[count] = async (_, query, ctx, info) => {
@@ -272,8 +272,8 @@ function constructGraph (app, entity, opts, ignore) {
   mutationTopFields[save] = {
     type,
     args: {
-      input: { type: new graphql.GraphQLNonNull(inputType) }
-    }
+      input: { type: new graphql.GraphQLNonNull(inputType) },
+    },
   }
 
   resolvers.Mutation[save] = async (_, { input }, ctx, info) => {
@@ -286,8 +286,8 @@ function constructGraph (app, entity, opts, ignore) {
   mutationTopFields[insert] = {
     type: new graphql.GraphQLList(type),
     args: {
-      inputs: { type: new graphql.GraphQLNonNull(new graphql.GraphQLList(inputType)) }
-    }
+      inputs: { type: new graphql.GraphQLNonNull(new graphql.GraphQLList(inputType)) },
+    },
   }
 
   resolvers.Mutation[insert] = (_, { inputs }, ctx, info) => {
@@ -299,8 +299,8 @@ function constructGraph (app, entity, opts, ignore) {
   mutationTopFields[deleteKey] = {
     type: new graphql.GraphQLList(type),
     args: {
-      where: { type: whereArgType }
-    }
+      where: { type: whereArgType },
+    },
   }
 
   resolvers.Mutation[deleteKey] = (_, args, ctx, info) => {
@@ -310,7 +310,7 @@ function constructGraph (app, entity, opts, ignore) {
 
   federationReplacements.push({
     find: new RegExp(`type ${entityName}`),
-    replace: `type ${entityName} @key(fields: "${primaryKeys}")`
+    replace: `type ${entityName} @key(fields: "${primaryKeys}")`,
   })
 
   if (federationMetadata) {
@@ -328,8 +328,8 @@ function constructGraph (app, entity, opts, ignore) {
         return loadMany(keys, queries, ctx)
       },
       opts: {
-        cache: false
-      }
+        cache: false,
+      },
     }
   }
 
@@ -339,7 +339,7 @@ function constructGraph (app, entity, opts, ignore) {
     loadMany,
     getFields,
     relationalFields,
-    fields
+    fields,
   }
 
   async function loadMany (keys, queries, ctx) {
@@ -357,7 +357,7 @@ function constructGraph (app, entity, opts, ignore) {
           acc[key].in.push(value)
         } else {
           acc[key] = {
-            in: [value]
+            in: [value],
           }
         }
         return acc
@@ -369,7 +369,7 @@ function constructGraph (app, entity, opts, ignore) {
       where,
       fields,
       limit,
-      ctx
+      ctx,
     })
 
     const matchedRaws = []

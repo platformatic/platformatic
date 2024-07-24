@@ -15,7 +15,7 @@ test('should remove a service', async (t) => {
   await cp(fixture, dir, { recursive: true })
 
   const rg = new RuntimeGenerator({
-    targetDirectory: dir
+    targetDirectory: dir,
   })
   await rg.loadFromDir(dir)
   assert.equal(rg.services.length, 2)
@@ -25,14 +25,14 @@ test('should remove a service', async (t) => {
     name: 'foobar',
     template: '@platformatic/service',
     fields: [],
-    plugins: []
+    plugins: [],
   }
   await rg.update({
-    services: [updatedFoobar] // the original service was removed
+    services: [updatedFoobar], // the original service was removed
   })
   // the runtime .env should be updated
   const runtimeDotEnv = new DotEnvTool({
-    path: join(dir, '.env')
+    path: join(dir, '.env'),
   })
 
   await runtimeDotEnv.load()
@@ -63,7 +63,7 @@ test('should add a new service with new env variables', async (t) => {
   await cp(fixture, dir, { recursive: true })
 
   const rg = new RuntimeGenerator({
-    targetDirectory: dir
+    targetDirectory: dir,
   })
   await rg.loadFromDir(dir)
   assert.equal(rg.services.length, 1)
@@ -82,19 +82,19 @@ test('should add a new service with new env variables', async (t) => {
           name: 'FST_PLUGIN_FOO_TEST_VALUE',
           path: 'testValue',
           type: 'string',
-          value: 'foobar'
+          value: 'foobar',
         },
         {
           name: 'FST_PLUGIN_FOO_CREDENTIALS_NAME',
           path: 'credentials.name',
           type: 'string',
-          value: 'johndoe'
-        }
-      ]
-    }]
+          value: 'johndoe',
+        },
+      ],
+    }],
   }
   await rg.update({
-    services: [serviceData, newService] // the original service was removed
+    services: [serviceData, newService], // the original service was removed
   })
 
   // update the entrypoint with the new service
@@ -106,13 +106,13 @@ test('should add a new service with new env variables', async (t) => {
     options: {
       testValue: '{PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE}',
       credentials: {
-        name: '{PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME}'
-      }
-    }
+        name: '{PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME}',
+      },
+    },
   })
   // the runtime .env should be updated
   const runtimeDotEnv = new DotEnvTool({
-    path: join(dir, '.env')
+    path: join(dir, '.env'),
   })
 
   await runtimeDotEnv.load()
@@ -137,7 +137,7 @@ test('should update existing service\'s plugin options', async (t) => {
   await cp(fixture, dir, { recursive: true })
 
   const rg = new RuntimeGenerator({
-    targetDirectory: dir
+    targetDirectory: dir,
   })
   await rg.loadFromDir(dir)
   const oldServiceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8'))
@@ -153,37 +153,37 @@ test('should update existing service\'s plugin options', async (t) => {
           name: 'FST_PLUGIN_OAUTH2_NAME',
           path: 'name',
           type: 'string',
-          value: 'new_oauth2_name'
+          value: 'new_oauth2_name',
         },
         {
           name: 'FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID',
           path: 'credentials.client.id',
           type: 'string',
-          value: 'sample_client_id_updated'
+          value: 'sample_client_id_updated',
         },
         {
           name: 'FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET',
           path: 'credentials.client.secret',
           type: 'string',
-          value: 'sample_client_secret_updated'
+          value: 'sample_client_secret_updated',
         },
         {
           name: 'FST_PLUGIN_OAUTH2_REDIRECT_PATH',
           path: 'startRedirectPath',
           type: 'string',
-          value: '/login/google'
+          value: '/login/google',
         },
         {
           name: 'FST_PLUGIN_OAUTH2_CALLBACK_URI',
           path: 'callbackUri',
           type: 'string',
-          value: 'http://localhost:3000/login/google/callback'
-        }
-      ]
-    }]
+          value: 'http://localhost:3000/login/google/callback',
+        },
+      ],
+    }],
   }
   await rg.update({
-    services: [updatedService] // the original service was removed
+    services: [updatedService], // the original service was removed
   })
 
   // the config file should be left unchanged
@@ -192,7 +192,7 @@ test('should update existing service\'s plugin options', async (t) => {
 
   // the runtime .env should be updated
   const runtimeDotEnv = new DotEnvTool({
-    path: join(dir, '.env')
+    path: join(dir, '.env'),
   })
 
   await runtimeDotEnv.load()
@@ -213,7 +213,7 @@ test('should add new service\'s plugin and options', async (t) => {
   await cp(fixture, dir, { recursive: true })
 
   const rg = new RuntimeGenerator({
-    targetDirectory: dir
+    targetDirectory: dir,
   })
   // create a sample file that will be checked after
   const sampleRouteFilePath = join(dir, 'services', 'rival', 'routes', 'sample.js')
@@ -234,9 +234,9 @@ test('should add new service\'s plugin and options', async (t) => {
             name: 'FST_PLUGIN_PASSPORT_COUNTRY',
             path: 'country',
             type: 'string',
-            value: 'italy'
-          }
-        ]
+            value: 'italy',
+          },
+        ],
       },
       {
         name: '@fastify/oauth2',
@@ -245,44 +245,44 @@ test('should add new service\'s plugin and options', async (t) => {
             name: 'FST_PLUGIN_OAUTH2_NEW_OPTION',
             path: 'new.option',
             type: 'string',
-            value: 'new_options_value'
+            value: 'new_options_value',
           },
           {
             name: 'FST_PLUGIN_OAUTH2_NAME',
             path: 'name',
             type: 'string',
-            value: 'new_oauth2_name'
+            value: 'new_oauth2_name',
           },
           {
             name: 'FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID',
             path: 'credentials.client.id',
             type: 'string',
-            value: 'sample_client_id_updated'
+            value: 'sample_client_id_updated',
           },
           {
             name: 'FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET',
             path: 'credentials.client.secret',
             type: 'string',
-            value: 'sample_client_secret_updated'
+            value: 'sample_client_secret_updated',
           },
           {
             name: 'FST_PLUGIN_OAUTH2_REDIRECT_PATH',
             path: 'startRedirectPath',
             type: 'string',
-            value: '/login/google'
+            value: '/login/google',
           },
           {
             name: 'FST_PLUGIN_OAUTH2_CALLBACK_URI',
             path: 'callbackUri',
             type: 'string',
-            value: 'http://localhost:3000/login/google/callback'
-          }
-        ]
-      }
-    ]
+            value: 'http://localhost:3000/login/google/callback',
+          },
+        ],
+      },
+    ],
   }
   await rg.update({
-    services: [updatedService] // the original service was removed
+    services: [updatedService], // the original service was removed
   })
 
   // the config file should be updated with the new plugin
@@ -302,16 +302,16 @@ test('should add new service\'s plugin and options', async (t) => {
   assert.equal(newServiceConfigFile.plugins.packages.length, 2)
   assert.deepEqual(newServiceConfigFile.plugins.packages[0], {
     name: '@fastify/passport',
-    options: { country: '{PLT_RIVAL_FST_PLUGIN_PASSPORT_COUNTRY}' }
+    options: { country: '{PLT_RIVAL_FST_PLUGIN_PASSPORT_COUNTRY}' },
   })
 
   // the first package has been updated with a new option
   assert.deepEqual(newServiceConfigFile.plugins.packages[1].options.new, {
-    option: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_NEW_OPTION}'
+    option: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_NEW_OPTION}',
   })
   // the runtime .env should be updated
   const runtimeDotEnv = new DotEnvTool({
-    path: join(dir, '.env')
+    path: join(dir, '.env'),
   })
 
   await runtimeDotEnv.load()
@@ -335,7 +335,7 @@ test('should remove a plugin from an existing service', async (t) => {
   await cp(fixture, dir, { recursive: true })
 
   const rg = new RuntimeGenerator({
-    targetDirectory: dir
+    targetDirectory: dir,
   })
   await rg.loadFromDir(dir)
   const oldServiceConfigFile = JSON.parse(await readFile(join(dir, 'services', 'rival', 'platformatic.json'), 'utf-8'))
@@ -351,13 +351,13 @@ test('should remove a plugin from an existing service', async (t) => {
           name: 'FST_PLUGIN_PASSPORT_COUNTRY',
           path: 'country',
           type: 'string',
-          value: 'italy'
-        }
-      ]
-    }]
+          value: 'italy',
+        },
+      ],
+    }],
   }
   await rg.update({
-    services: [updatedService] // the original service was removed
+    services: [updatedService], // the original service was removed
   })
 
   // the config file should be left unchanged
@@ -366,7 +366,7 @@ test('should remove a plugin from an existing service', async (t) => {
 
   // the runtime .env should be updated
   const runtimeDotEnv = new DotEnvTool({
-    path: join(dir, '.env')
+    path: join(dir, '.env'),
   })
 
   await runtimeDotEnv.load()
@@ -394,7 +394,7 @@ test('should remove a plugin from a service and add the same on the other', asyn
   await cp(fixture, dir, { recursive: true })
 
   const rg = new RuntimeGenerator({
-    targetDirectory: dir
+    targetDirectory: dir,
   })
   await rg.loadFromDir(dir)
   assert.equal(rg.services.length, 1)
@@ -411,11 +411,11 @@ test('should remove a plugin from a service and add the same on the other', asyn
             name: 'FST_PLUGIN_PASSPORT_COUNTRY',
             path: 'country',
             type: 'string',
-            value: 'italy'
-          }
-        ]
-      }
-    ]
+            value: 'italy',
+          },
+        ],
+      },
+    ],
   }
   const newService = {
     name: 'foobar',
@@ -429,15 +429,15 @@ test('should remove a plugin from a service and add the same on the other', asyn
             name: 'FST_PLUGIN_FOO_TEST_VALUE',
             path: 'testValue',
             type: 'string',
-            value: 'foobar'
+            value: 'foobar',
           },
           {
             name: 'FST_PLUGIN_FOO_CREDENTIALS_NAME',
             path: 'credentials.name',
             type: 'string',
-            value: 'johndoe'
-          }
-        ]
+            value: 'johndoe',
+          },
+        ],
       },
       {
         name: '@fastify/oauth2',
@@ -446,14 +446,14 @@ test('should remove a plugin from a service and add the same on the other', asyn
             name: 'FST_PLUGIN_OAUTH2_NAME',
             path: 'name',
             type: 'string',
-            value: 'new_oauth2_name'
-          }
-        ]
-      }
-    ]
+            value: 'new_oauth2_name',
+          },
+        ],
+      },
+    ],
   }
   await rg.update({
-    services: [updatedService, newService] // the original service was removed
+    services: [updatedService, newService], // the original service was removed
   })
 
   // the new service has been generated
@@ -463,14 +463,14 @@ test('should remove a plugin from a service and add the same on the other', asyn
     options: {
       testValue: '{PLT_FOOBAR_FST_PLUGIN_FOO_TEST_VALUE}',
       credentials: {
-        name: '{PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME}'
-      }
-    }
+        name: '{PLT_FOOBAR_FST_PLUGIN_FOO_CREDENTIALS_NAME}',
+      },
+    },
   })
 
   // the runtime .env should be updated
   const runtimeDotEnv = new DotEnvTool({
-    path: join(dir, '.env')
+    path: join(dir, '.env'),
   })
 
   await runtimeDotEnv.load()
@@ -493,7 +493,7 @@ test('should handle new fields on new service', async (t) => {
   await cp(fixture, dir, { recursive: true })
 
   const rg = new RuntimeGenerator({
-    targetDirectory: dir
+    targetDirectory: dir,
   })
   await rg.loadFromDir(dir)
   assert.equal(rg.services.length, 1)
@@ -510,11 +510,11 @@ test('should handle new fields on new service', async (t) => {
             name: 'FST_PLUGIN_PASSPORT_COUNTRY',
             path: 'country',
             type: 'string',
-            value: 'italy'
-          }
-        ]
-      }
-    ]
+            value: 'italy',
+          },
+        ],
+      },
+    ],
   }
   const newService = {
     name: 'foobar',
@@ -524,18 +524,18 @@ test('should handle new fields on new service', async (t) => {
         var: 'DATABASE_URL',
         value: 'sqlite://./db.sqlite',
         configValue: 'connectionString',
-        type: 'string'
+        type: 'string',
       },
       {
         var: 'PLT_APPLY_MIGRATIONS',
         value: 'true',
-        type: 'boolean'
-      }
+        type: 'boolean',
+      },
     ],
-    plugins: []
+    plugins: [],
   }
   await rg.update({
-    services: [updatedService, newService] // the original service was removed
+    services: [updatedService, newService], // the original service was removed
   })
 
   // the new service has been generated
@@ -544,7 +544,7 @@ test('should handle new fields on new service', async (t) => {
 
   // the runtime .env should be updated
   const runtimeDotEnv = new DotEnvTool({
-    path: join(dir, '.env')
+    path: join(dir, '.env'),
   })
 
   await runtimeDotEnv.load()

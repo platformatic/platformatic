@@ -9,13 +9,13 @@ class DBGenerator extends BaseGenerator {
   constructor (opts = {}) {
     super({
       ...opts,
-      module: '@platformatic/db'
+      module: '@platformatic/db',
     })
     this.connectionStrings = {
       postgres: 'postgres://postgres:postgres@127.0.0.1:5432/postgres',
       sqlite: 'sqlite://./db.sqlite',
       mysql: 'mysql://root@127.0.0.1:3306/platformatic',
-      mariadb: 'mysql://root@127.0.0.1:3306/platformatic'
+      mariadb: 'mysql://root@127.0.0.1:3306/platformatic',
     }
   }
 
@@ -29,7 +29,7 @@ class DBGenerator extends BaseGenerator {
       tests: true,
       types: true,
       migrations: 'migrations',
-      createMigrations: true
+      createMigrations: true,
     }
   }
 
@@ -43,11 +43,11 @@ class DBGenerator extends BaseGenerator {
         connectionString: `{${this.getEnvVarName('DATABASE_URL')}}`,
         graphql: true,
         openapi: true,
-        schemalock: true
+        schemalock: true,
       },
       watch: {
-        ignore: ['*.sqlite', '*.sqlite-journal']
-      }
+        ignore: ['*.sqlite', '*.sqlite-journal'],
+      },
     }
 
     if (!isRuntimeContext) {
@@ -55,15 +55,15 @@ class DBGenerator extends BaseGenerator {
         hostname: '{PLT_SERVER_HOSTNAME}',
         port: '{PORT}',
         logger: {
-          level: '{PLT_SERVER_LOGGER_LEVEL}'
-        }
+          level: '{PLT_SERVER_LOGGER_LEVEL}',
+        },
       }
     }
 
     if (migrations) {
       config.migrations = {
         dir: migrations,
-        autoApply: `{${this.getEnvVarName('PLT_APPLY_MIGRATIONS')}}`
+        autoApply: `{${this.getEnvVarName('PLT_APPLY_MIGRATIONS')}}`,
       }
     }
 
@@ -71,17 +71,17 @@ class DBGenerator extends BaseGenerator {
       config.plugins = {
         paths: [{
           path: './plugins',
-          encapsulate: false
+          encapsulate: false,
         }, {
-          path: './routes'
+          path: './routes',
         }],
-        typescript: `{${this.getEnvVarName('PLT_TYPESCRIPT')}}`
+        typescript: `{${this.getEnvVarName('PLT_TYPESCRIPT')}}`,
       }
     }
 
     if (types === true) {
       config.types = {
-        autogenerate: true
+        autogenerate: true,
       }
     }
 
@@ -92,21 +92,21 @@ class DBGenerator extends BaseGenerator {
     if (!this.config.isUpdating) {
       this.config.connectionString = this.config.connectionString || this.connectionStrings[this.config.database]
       this.config.dependencies = {
-        '@platformatic/db': `^${this.platformaticVersion}`
+        '@platformatic/db': `^${this.platformaticVersion}`,
       }
 
       if (!this.config.isRuntimeContext) {
         this.addEnvVars({
           PLT_SERVER_HOSTNAME: this.config.hostname,
           PLT_SERVER_LOGGER_LEVEL: 'info',
-          PORT: 3042
+          PORT: 3042,
         }, { overwrite: false, default: true })
       }
 
       this.addEnvVars({
         PLT_TYPESCRIPT: this.config.typescript,
         DATABASE_URL: this.connectionStrings[this.config.database],
-        PLT_APPLY_MIGRATIONS: 'true'
+        PLT_APPLY_MIGRATIONS: 'true',
       }, { overwrite: false, default: true })
     }
   }
@@ -183,7 +183,7 @@ declare module 'fastify' {
       postgres: 'SERIAL',
       sqlite: 'INTEGER',
       mysql: 'INTEGER UNSIGNED AUTO_INCREMENT',
-      mariadb: 'INTEGER UNSIGNED AUTO_INCREMENT'
+      mariadb: 'INTEGER UNSIGNED AUTO_INCREMENT',
     }
 
     return `
@@ -222,14 +222,14 @@ declare module 'fastify' {
         label: 'What is the connection string?',
         default: this.connectionStrings.sqlite,
         type: 'string',
-        configValue: 'connectionString'
+        configValue: 'connectionString',
       },
       {
         var: 'PLT_APPLY_MIGRATIONS',
         label: 'Should migrations be applied automatically on startup?',
         default: true,
-        type: 'boolean'
-      }
+        type: 'boolean',
+      },
     ]
   }
 
@@ -241,7 +241,7 @@ declare module 'fastify' {
         type: 'input',
         name: def.configValue,
         message: def.label,
-        default: def.default
+        default: def.default,
       })
     }
 
@@ -250,7 +250,7 @@ declare module 'fastify' {
       name: 'createMigrations',
       message: 'Do you want to create default migrations?',
       default: true,
-      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }],
     })
   }
 }

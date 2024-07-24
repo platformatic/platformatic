@@ -1,6 +1,6 @@
-import { expectError, expectType } from 'tsd';
-import { LightMyRequestResponse } from 'fastify';
-import { pltRuntimeBuildServer, errors } from '.';
+import { expectError, expectType } from 'tsd'
+import { LightMyRequestResponse } from 'fastify'
+import { pltRuntimeBuildServer, errors } from '.'
 import { FastifyError } from '@fastify/error'
 
 const server: pltRuntimeBuildServer = {
@@ -9,19 +9,18 @@ const server: pltRuntimeBuildServer = {
   restart: async () => { },
   stop: async () => { },
   inject: async () => ({} as LightMyRequestResponse),
-};
+}
 
-expectType<pltRuntimeBuildServer>(server);
-expectError<pltRuntimeBuildServer>({ ...server, address: 42 });
-expectError<pltRuntimeBuildServer>({ ...server, port: 'WRONG' });
-expectError<pltRuntimeBuildServer>({ ...server, restart: 'WRONG' });
-expectError<pltRuntimeBuildServer>({ ...server, stop: 'WRONG' });
-expectError<pltRuntimeBuildServer>({ ...server, inject: 'WRONG' });
+expectType<pltRuntimeBuildServer>(server)
+expectError<pltRuntimeBuildServer>({ ...server, address: 42 })
+expectError<pltRuntimeBuildServer>({ ...server, port: 'WRONG' })
+expectError<pltRuntimeBuildServer>({ ...server, restart: 'WRONG' })
+expectError<pltRuntimeBuildServer>({ ...server, stop: 'WRONG' })
+expectError<pltRuntimeBuildServer>({ ...server, inject: 'WRONG' })
 
 // Errors
 type ErrorWithNoParams = () => FastifyError
 type ErrorWithOneParam = (param: string) => FastifyError
-type ErrorWithOneAnyParam = (param: string) => FastifyError
 type ErrorWithTwoParams = (param1: string, param2: string) => FastifyError
 
 expectType<ErrorWithNoParams>(errors.RuntimeExitedError)
@@ -40,4 +39,3 @@ expectType<ErrorWithNoParams>(errors.InspectorPortError)
 expectType<ErrorWithNoParams>(errors.InspectorHostError)
 expectType<ErrorWithOneParam>(errors.CannotMapSpecifierToAbsolutePathError)
 expectType<ErrorWithNoParams>(errors.NodeInspectorFlagsNotSupportedError)
-

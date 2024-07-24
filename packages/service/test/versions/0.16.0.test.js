@@ -16,7 +16,7 @@ test('upgrade from v0.16.0', async () => {
     fixPaths: false,
     onMissingEnv (key) {
       return ''
-    }
+    },
   })
 
   await configManager.parse()
@@ -26,7 +26,7 @@ test('upgrade from v0.16.0', async () => {
   equal(config.$schema, `https://platformatic.dev/schemas/v${version}/service`)
 
   deepEqual(config.plugins, {
-    paths: ['plugin.js']
+    paths: ['plugin.js'],
   })
 })
 
@@ -39,7 +39,7 @@ test('array of plugins', async () => {
     fixPaths: false,
     onMissingEnv (key) {
       return ''
-    }
+    },
   })
 
   await configManager.parse()
@@ -49,7 +49,7 @@ test('array of plugins', async () => {
   equal(config.$schema, `https://platformatic.dev/schemas/v${version}/service`)
 
   deepEqual(config.plugins, {
-    paths: ['./plugins/index.js', './routes/']
+    paths: ['./plugins/index.js', './routes/'],
   })
 })
 
@@ -62,7 +62,7 @@ test('array of plugins (strings)', async () => {
     fixPaths: false,
     onMissingEnv (key) {
       return ''
-    }
+    },
   })
 
   await configManager.parse()
@@ -72,7 +72,7 @@ test('array of plugins (strings)', async () => {
   equal(config.$schema, `https://platformatic.dev/schemas/v${version}/service`)
 
   deepEqual(config.plugins, {
-    paths: ['./plugins/index.js', './routes/']
+    paths: ['./plugins/index.js', './routes/'],
   })
   equal(config.plugin, undefined)
 })
@@ -86,7 +86,7 @@ test('single string', async () => {
     fixPaths: false,
     onMissingEnv (key) {
       return ''
-    }
+    },
   })
 
   await configManager.parse()
@@ -94,7 +94,7 @@ test('single string', async () => {
   const config = configManager.current
 
   deepEqual(config.plugins, {
-    paths: ['plugin.js']
+    paths: ['plugin.js'],
   })
   equal(config.plugin, undefined)
 })
@@ -108,7 +108,7 @@ test('plugin options', async () => {
     fixPaths: false,
     onMissingEnv (key) {
       return ''
-    }
+    },
   })
 
   await configManager.parse()
@@ -119,10 +119,10 @@ test('plugin options', async () => {
     paths: [{
       path: 'plugin.js',
       options: {
-        something: 'else'
-      }
+        something: 'else',
+      },
     }],
-    stopTimeout: 10000
+    stopTimeout: 10000,
   })
   equal(config.plugin, undefined)
 })
@@ -136,7 +136,7 @@ test('plugin options (array)', async () => {
     fixPaths: false,
     onMissingEnv (key) {
       return ''
-    }
+    },
   })
 
   await configManager.parse()
@@ -147,16 +147,16 @@ test('plugin options (array)', async () => {
     paths: [{
       path: 'plugin.ts',
       options: {
-        something: 'else'
-      }
+        something: 'else',
+      },
     }, {
       path: 'other.js',
       options: {
-        foo: 'bar'
-      }
+        foo: 'bar',
+      },
     }],
     stopTimeout: 10000,
-    typescript: true
+    typescript: true,
   })
   equal(config.plugin, undefined)
 })
@@ -170,7 +170,7 @@ test('yaml loading', async () => {
     fixPaths: false,
     onMissingEnv (key) {
       return ''
-    }
+    },
   })
 
   await configManager.parse()
@@ -178,7 +178,7 @@ test('yaml loading', async () => {
   const config = configManager.current
 
   deepEqual(config.plugins, {
-    paths: ['plugin.js']
+    paths: ['plugin.js'],
   })
   equal(config.plugin, undefined)
 })

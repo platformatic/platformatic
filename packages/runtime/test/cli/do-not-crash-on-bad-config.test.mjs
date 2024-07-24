@@ -31,7 +31,7 @@ test('do not crash on bad config', { skip: true }, async (t) => {
 
   await Promise.all([
     cp(configFileSrc, configFileDst),
-    cp(appSrc, appDst, { recursive: true })
+    cp(appSrc, appDst, { recursive: true }),
   ])
 
   const original = await readFile(serviceConfigFilePath, 'utf8')

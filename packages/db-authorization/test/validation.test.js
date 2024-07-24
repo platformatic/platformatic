@@ -37,7 +37,7 @@ async function createBasicPages (db, sql) {
 
 test('wrong entity name', async () => {
   const app = fastify({
-    pluginTimeout: 3000
+    pluginTimeout: 3000,
   })
   app.register(core, {
     ...connInfo,
@@ -47,11 +47,11 @@ test('wrong entity name', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret'
+      secret: 'supersecret',
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
@@ -61,20 +61,20 @@ test('wrong entity name', async () => {
       find: true,
       delete: false,
       defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID'
+        userId: 'X-PLATFORMATIC-USER-ID',
       },
       save: {
         checks: {
-          userId: 'X-PLATFORMATIC-USER-ID'
-        }
-      }
+          userId: 'X-PLATFORMATIC-USER-ID',
+        },
+      },
     }, {
       role: 'anonymous',
       entity: 'page',
       find: false,
       delete: false,
-      save: false
-    }]
+      save: false,
+    }],
   })
   test.after(() => {
     app.close()
@@ -90,7 +90,7 @@ test('wrong entity name', async () => {
 
 test('missing entity', async () => {
   const app = fastify({
-    pluginTimeout: 3000
+    pluginTimeout: 3000,
   })
   app.register(core, {
     ...connInfo,
@@ -100,11 +100,11 @@ test('missing entity', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret'
+      secret: 'supersecret',
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
@@ -112,8 +112,8 @@ test('missing entity', async () => {
       role: 'anonymous',
       find: false,
       delete: false,
-      save: false
-    }]
+      save: false,
+    }],
   })
   test.after(() => {
     app.close()

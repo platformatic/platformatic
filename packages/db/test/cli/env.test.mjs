@@ -20,13 +20,13 @@ test('env white list', async (t) => {
 
   const { child, url } = await start(
     [
-      '--config', join(import.meta.url, '..', 'fixtures', 'env-whitelist.json')
+      '--config', join(import.meta.url, '..', 'fixtures', 'env-whitelist.json'),
     ],
     {
       env: {
         DATABASE_URL: connectionInfo.connectionString,
-        HOSTNAME: '127.0.0.1'
-      }
+        HOSTNAME: '127.0.0.1',
+      },
     }
   )
 
@@ -43,8 +43,8 @@ test('env white list', async (t) => {
                   title
                 }
               }
-            `
-      })
+            `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'savePage status code')
     const body = await res.body.json()
@@ -68,13 +68,13 @@ test('env white list default values', async (t) => {
 
   const { child, url } = await start(
     [
-      '--config', join(import.meta.url, '..', 'fixtures', 'env-whitelist-default.json')
+      '--config', join(import.meta.url, '..', 'fixtures', 'env-whitelist-default.json'),
     ],
     {
       env: {
         DATABASE_URL: connectionInfo.connectionString,
-        PORT: 10555
-      }
+        PORT: 10555,
+      },
     }
   )
 
@@ -92,8 +92,8 @@ test('env white list default values', async (t) => {
                   title
                 }
               }
-            `
-      })
+            `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'savePage status code')
     const body = await res.body.json()
@@ -120,12 +120,12 @@ test('env white list schema', async (t) => {
     'schema',
     'graphql',
     '--config',
-    join(import.meta.url, '..', 'fixtures', 'env-whitelist.json')
+    join(import.meta.url, '..', 'fixtures', 'env-whitelist.json'),
   ], {
     env: {
       DATABASE_URL: connectionInfo.connectionString,
-      HOSTNAME: '127.0.0.1'
-    }
+      HOSTNAME: '127.0.0.1',
+    },
   })
 
   const snapshot = await import('../../snapshots/test/cli/env.test.mjs')

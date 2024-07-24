@@ -29,8 +29,8 @@ test('creates the spans for the graphql mutation', async (t) => {
     serviceName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   })
 
   app.register(sqlMapper, {
@@ -39,7 +39,7 @@ test('creates the spans for the graphql mutation', async (t) => {
       pass('onDatabaseLoad called')
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
 
   app.register(sqlGraphQL)
@@ -59,17 +59,17 @@ test('creates the spans for the graphql mutation', async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
       data: {
         savePage: {
           id: 1,
-          title: 'Hello'
-        }
-      }
+          title: 'Hello',
+        },
+      },
     }, 'savePage response')
   }
 
@@ -107,8 +107,8 @@ test('creates the spans for errors', { skip: isSQLite }, async (t) => {
     serviceName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   })
 
   app.register(sqlMapper, {
@@ -117,7 +117,7 @@ test('creates the spans for errors', { skip: isSQLite }, async (t) => {
       pass('onDatabaseLoad called')
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
 
   app.register(sqlGraphQL)
@@ -139,8 +139,8 @@ test('creates the spans for errors', { skip: isSQLite }, async (t) => {
               title
             }
           }
-         `
-      }
+         `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
   }
@@ -188,8 +188,8 @@ test('don\'t wrap the schema types starting with __', async (t) => {
     serviceName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   })
 
   app.register(sqlMapper, {
@@ -198,7 +198,7 @@ test('don\'t wrap the schema types starting with __', async (t) => {
       pass('onDatabaseLoad called')
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
 
   app.register(sqlGraphQL)

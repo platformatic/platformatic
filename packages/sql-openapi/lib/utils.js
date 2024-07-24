@@ -29,5 +29,5 @@ function getSchemaOverrideFromOpenApiPathItem (pathItem, method) {
 }
 
 module.exports = {
-  getSchemaOverrideFromOpenApiPathItem
+  getSchemaOverrideFromOpenApiPathItem,
 }

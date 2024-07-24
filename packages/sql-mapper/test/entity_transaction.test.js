@@ -7,7 +7,7 @@ const { connect } = require('..')
 
 const fakeLogger = {
   trace: () => {},
-  error: () => {}
+  error: () => {},
 }
 
 test('entity transactions', async () => {
@@ -36,7 +36,7 @@ test('entity transactions', async () => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
   const pageEntity = mapper.entities.page
 
@@ -50,7 +50,7 @@ test('entity transactions', async () => {
         deepEqual(await pageEntity.save({
           input: { title: 'new page' },
           fields: ['title'],
-          tx
+          tx,
         }), { title: 'new page' })
         const findResult = await pageEntity.find({ fields: ['title'], tx })
         deepEqual(findResult, [{ title: 'foo' }, { title: 'bar' }, { title: 'new page' }])
@@ -74,7 +74,7 @@ test('entity transactions', async () => {
         deepEqual(await pageEntity.save({
           input: { id: 1, title: 'changed' },
           fields: ['id', 'title'],
-          tx
+          tx,
         }), { id: 1, title: 'changed' })
         const findResult = await pageEntity.find({ fields: ['id', 'title'], where: { id: { eq: 1 } }, tx })
         deepEqual(findResult, [{ id: 1, title: 'changed' }])
@@ -96,9 +96,9 @@ test('entity transactions', async () => {
       await mapper.db.tx(async tx => {
         deepEqual(await pageEntity.delete({
           where: {
-            id: { eq: 1 }
+            id: { eq: 1 },
           },
-          tx
+          tx,
         }), [{ id: 1, title: 'foo' }])
         const findResult = await pageEntity.find({ fields: ['id', 'title'], where: { id: { eq: 1 } }, tx })
         deepEqual(findResult, [])
@@ -120,7 +120,7 @@ test('entity transactions', async () => {
         deepEqual(await pageEntity.save({
           input: { title: 'new page' },
           fields: ['title'],
-          tx
+          tx,
         }), { title: 'new page' })
         const countResult = await pageEntity.count({ tx })
         deepEqual(countResult, 3)

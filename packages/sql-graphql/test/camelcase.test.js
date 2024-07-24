@@ -44,7 +44,7 @@ test('subscription - crud when there is a primary key to be camelised', async t 
     async onDatabaseLoad (db, sql) {
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlEvents)
   app.register(sqlGraphQL)
@@ -54,7 +54,7 @@ test('subscription - crud when there is a primary key to be camelised', async t 
   const { client } = createWebSocketClient(t, app)
 
   client.write(JSON.stringify({
-    type: 'connection_init'
+    type: 'connection_init',
   }))
 
   {
@@ -68,8 +68,8 @@ test('subscription - crud when there is a primary key to be camelised', async t 
       pageId: 1,
       type: 'start',
       payload: {
-        query
-      }
+        query,
+      },
     }))
   }
 
@@ -83,8 +83,8 @@ test('subscription - crud when there is a primary key to be camelised', async t 
       pageId: 1,
       type: 'start',
       payload: {
-        query
-      }
+        query,
+      },
     }))
   }
 
@@ -104,8 +104,8 @@ test('subscription - crud when there is a primary key to be camelised', async t 
             pageId
           }
         }
-      `
-    }
+      `,
+    },
   })
 
   {
@@ -117,10 +117,10 @@ test('subscription - crud when there is a primary key to be camelised', async t 
         data: {
           pageSaved: {
             pageId: '1',
-            title: 'Hello World'
-          }
-        }
-      }
+            title: 'Hello World',
+          },
+        },
+      },
     })
   }
 
@@ -134,8 +134,8 @@ test('subscription - crud when there is a primary key to be camelised', async t 
             pageId
           }
         }
-      `
-    }
+      `,
+    },
   })
 
   {
@@ -147,10 +147,10 @@ test('subscription - crud when there is a primary key to be camelised', async t 
         data: {
           pageSaved: {
             pageId: '1',
-            title: 'Il libraccio'
-          }
-        }
-      }
+            title: 'Il libraccio',
+          },
+        },
+      },
     })
   }
 
@@ -164,8 +164,8 @@ test('subscription - crud when there is a primary key to be camelised', async t 
             pageId
           }
         }
-      `
-    }
+      `,
+    },
   })
 
   {
@@ -176,17 +176,17 @@ test('subscription - crud when there is a primary key to be camelised', async t 
       payload: {
         data: {
           pageDeleted: {
-            pageId: '1'
-          }
-        }
-      }
+            pageId: '1',
+          },
+        },
+      },
     })
   }
 
   {
     const [
       received,
-      stored
+      stored,
     ] = await Promise.all(([
       (async function () {
         const res = await app.inject({
@@ -205,10 +205,10 @@ test('subscription - crud when there is a primary key to be camelised', async t 
               inputs: [
                 { title: 'Page 1' },
                 { title: 'Page 2' },
-                { title: 'Page 3' }
-              ]
-            }
-          }
+                { title: 'Page 3' },
+              ],
+            },
+          },
         })
         const pages = res.json().data.insertPages
         return pages
@@ -225,7 +225,7 @@ test('subscription - crud when there is a primary key to be camelised', async t 
           }
         }
         return pages
-      })()
+      })(),
     ]))
 
     same(received, stored)
@@ -253,11 +253,11 @@ test('subscription - crud with a primary key to be camelised, two schemas and a 
           name VARCHAR(42)
         );`)
       }
-    }
+    },
   })
   app.register(sqlEvents)
   app.register(sqlGraphQL, {
-    subscriptionIgnore: ['category']
+    subscriptionIgnore: ['category'],
   })
 
   await app.listen({ port: 0 })
@@ -266,7 +266,7 @@ test('subscription - crud with a primary key to be camelised, two schemas and a 
   t.after(() => client.destroy())
 
   client.write(JSON.stringify({
-    type: 'connection_init'
+    type: 'connection_init',
   }))
 
   {
@@ -285,8 +285,8 @@ test('subscription - crud with a primary key to be camelised, two schemas and a 
       categoryId: 1,
       type: 'start',
       payload: {
-        query
-      }
+        query,
+      },
     }))
   }
 

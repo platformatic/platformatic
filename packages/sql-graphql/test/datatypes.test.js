@@ -34,7 +34,7 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async (t) => {
         a_decimal decimal,
         an_enum simple_enum
       );`)
-    }
+    },
   })
   t.after(() => app.close())
 
@@ -82,8 +82,8 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async (t) => {
               anEnum
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'saveSimpleType status code')
     same(res.json(), {
@@ -102,9 +102,9 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async (t) => {
           aReal: 1.2,
           aSmallint: 42,
           aDecimal: '42',
-          anEnum: 'value1'
-        }
-      }
+          anEnum: 'value1',
+        },
+      },
     }, 'saveSimpleType response')
   }
 
@@ -132,8 +132,8 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async (t) => {
               anEnum
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'getSimpleTypeById status code')
     same(res.json(), {
@@ -152,9 +152,9 @@ test('[PG] simple db simple graphql schema', { skip: !isPg }, async (t) => {
           aReal: 1.2,
           aSmallint: 42,
           aDecimal: 42,
-          anEnum: 'value1'
-        }
-      }
+          anEnum: 'value1',
+        },
+      },
     }, 'getSimpleTypeById response')
   }
 })
@@ -174,7 +174,7 @@ test('[PG] - UUID', { skip: !isPg }, async (t) => {
         id uuid PRIMARY KEY default uuid_generate_v1(),
         title VARCHAR(42)
       );`)
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -194,8 +194,8 @@ test('[PG] - UUID', { skip: !isPg }, async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     id = res.json().data.savePage.id
@@ -203,9 +203,9 @@ test('[PG] - UUID', { skip: !isPg }, async (t) => {
       data: {
         savePage: {
           id,
-          title: 'Hello'
-        }
-      }
+          title: 'Hello',
+        },
+      },
     }, 'savePage response')
   }
 
@@ -221,17 +221,17 @@ test('[PG] - UUID', { skip: !isPg }, async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
       data: {
         getPageById: {
           id,
-          title: 'Hello'
-        }
-      }
+          title: 'Hello',
+        },
+      },
     }, 'pages response')
   }
 
@@ -247,17 +247,17 @@ test('[PG] - UUID', { skip: !isPg }, async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
       data: {
         savePage: {
           id,
-          title: 'Hello World'
-        }
-      }
+          title: 'Hello World',
+        },
+      },
     }, 'savePage response')
   }
 })
@@ -287,7 +287,7 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async (t) =>
         a_decimal decimal,
         an_enum enum ('value1', 'value2')
       );`)
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -332,8 +332,8 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async (t) =>
               anEnum
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'saveSimpleType status code')
     same(res.json(), {
@@ -350,9 +350,9 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async (t) =>
           aReal: 1.2,
           aSmallint: 42,
           aDecimal: '42',
-          anEnum: 'value1'
-        }
-      }
+          anEnum: 'value1',
+        },
+      },
     }, 'saveSimpleType response')
   }
 
@@ -378,8 +378,8 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async (t) =>
               anEnum
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'getSimpleTypeById status code')
     same(res.json(), {
@@ -396,9 +396,9 @@ test('[MySQL] simple db simple graphql schema', { skip: !isMysql }, async (t) =>
           aReal: 1.2,
           aSmallint: 42,
           aDecimal: '42',
-          anEnum: 'value1'
-        }
-      }
+          anEnum: 'value1',
+        },
+      },
     }, 'getSimpleTypeById response')
   }
 })
@@ -420,7 +420,7 @@ test('[MySQL] - UUID', { skip: !isMysql }, async (t) => {
         id uuid PRIMARY KEY default UUID(),
         title VARCHAR(42)
       );`)
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -445,8 +445,8 @@ test('[MySQL] - UUID', { skip: !isMysql }, async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     id = res.json().data.savePage.id
@@ -454,9 +454,9 @@ test('[MySQL] - UUID', { skip: !isMysql }, async (t) => {
       data: {
         savePage: {
           id,
-          title: 'Hello'
-        }
-      }
+          title: 'Hello',
+        },
+      },
     }, 'savePage response')
   }
 
@@ -472,17 +472,17 @@ test('[MySQL] - UUID', { skip: !isMysql }, async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
       data: {
         getPageById: {
           id,
-          title: 'Hello'
-        }
-      }
+          title: 'Hello',
+        },
+      },
     }, 'pages response')
   }
 
@@ -498,17 +498,17 @@ test('[MySQL] - UUID', { skip: !isMysql }, async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
       data: {
         savePage: {
           id,
-          title: 'Hello World'
-        }
-      }
+          title: 'Hello World',
+        },
+      },
     }, 'savePage response')
   }
 })
@@ -533,7 +533,7 @@ test('[SQLite] simple db simple graphql schema', { skip: !isSQLite }, async (t) 
         a_smallint smallint,
         a_decimal decimal
       );`)
-    }
+    },
   })
   t.after(() => app.close())
 
@@ -570,8 +570,8 @@ test('[SQLite] simple db simple graphql schema', { skip: !isSQLite }, async (t) 
               aDecimal
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'saveSimpleType status code')
     same(res.json(), {
@@ -585,9 +585,9 @@ test('[SQLite] simple db simple graphql schema', { skip: !isSQLite }, async (t) 
           uuid: '12345678-1234-1234-1234-123456789012',
           aReal: 1.2,
           aSmallint: 42,
-          aDecimal: '42'
-        }
-      }
+          aDecimal: '42',
+        },
+      },
     }, 'saveSimpleType response')
   }
 
@@ -610,8 +610,8 @@ test('[SQLite] simple db simple graphql schema', { skip: !isSQLite }, async (t) 
               aDecimal
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'getSimpleTypeById status code')
     same(res.json(), {
@@ -625,9 +625,9 @@ test('[SQLite] simple db simple graphql schema', { skip: !isSQLite }, async (t) 
           uuid: '12345678-1234-1234-1234-123456789012',
           aReal: 1.2,
           aSmallint: 42,
-          aDecimal: '42'
-        }
-      }
+          aDecimal: '42',
+        },
+      },
     }, 'getSimpleTypeById response')
   }
 })
@@ -646,7 +646,7 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async (t) => {
         id uuid PRIMARY KEY,
         title VARCHAR(42)
       );`)
-    }
+    },
   })
   app.register(sqlGraphQL)
 
@@ -667,8 +667,8 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     id = res.json().data.savePage.id
@@ -676,9 +676,9 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async (t) => {
       data: {
         savePage: {
           id,
-          title: 'Hello'
-        }
-      }
+          title: 'Hello',
+        },
+      },
     }, 'savePage response')
   }
 
@@ -694,17 +694,17 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
       data: {
         getPageById: {
           id,
-          title: 'Hello'
-        }
-      }
+          title: 'Hello',
+        },
+      },
     }, 'pages response')
   }
 
@@ -720,17 +720,17 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
       data: {
         savePage: {
           id,
-          title: 'Hello World'
-        }
-      }
+          title: 'Hello World',
+        },
+      },
     }, 'savePage response')
   }
 })
@@ -749,7 +749,7 @@ test('BIGINT!', { skip: isSQLite }, async (t) => {
         id SERIAL PRIMARY KEY,
         counter BIGINT
       );`)
-    }
+    },
   })
   t.after(() => app.close())
 
@@ -773,17 +773,17 @@ test('BIGINT!', { skip: isSQLite }, async (t) => {
               counter
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'saveSimpleType status code')
     same(res.json(), {
       data: {
         saveSimpleType: {
           id: '1',
-          counter
-        }
-      }
+          counter,
+        },
+      },
     }, 'saveSimpleType response')
   }
 
@@ -799,17 +799,17 @@ test('BIGINT!', { skip: isSQLite }, async (t) => {
               counter
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'getSimpleTypeById status code')
     same(res.json(), {
       data: {
         getSimpleTypeById: {
           id: 1,
-          counter
-        }
-      }
+          counter,
+        },
+      },
     }, 'getSimpleTypeById response')
   }
 })

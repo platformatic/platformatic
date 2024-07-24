@@ -21,10 +21,10 @@ function setupCache (res, opts) {
       serialize (query) {
         const serialized = {
           ...query,
-          ctx: undefined
+          ctx: undefined,
         }
         return serialized
-      }
+      },
     }, async function (query) {
       const res = await originalFn.call(entity, query)
       return res
@@ -36,7 +36,7 @@ function setupCache (res, opts) {
           return originalFn(query)
         }
         return cache[fnName](query)
-      }
+      },
     })
   }
 

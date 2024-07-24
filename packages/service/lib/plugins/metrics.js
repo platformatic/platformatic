@@ -22,31 +22,31 @@ const metricsPlugin = fp(async function (app, opts = {}) {
   app.register(require('fastify-metrics'), {
     defaultMetrics: {
       ...defaultMetrics,
-      register
+      register,
     },
     endpoint: null,
     name: 'metrics',
     clearRegisterOnInit: false,
     promClient: {
       ...promClient,
-      register
+      register,
     },
     routeMetrics: {
       enabled: true,
       customLabels: {
-        telemetry_id: (req) => req.headers['x-telemetry-id'] ?? 'unknown'
+        telemetry_id: (req) => req.headers['x-telemetry-id'] ?? 'unknown',
       },
       overrides: {
         histogram: {
           name: prefix + 'http_request_duration_seconds',
-          registers: [register]
+          registers: [register],
         },
         summary: {
           name: prefix + 'http_request_summary_seconds',
-          registers: [register]
-        }
-      }
-    }
+          registers: [register],
+        },
+      },
+    },
   })
 
   app.register(fp(async (app) => {
@@ -56,7 +56,7 @@ const metricsPlugin = fp(async function (app, opts = {}) {
       collect: () => {
         process.nextTick(() => httpLatencyMetric.reset())
       },
-      registers: [register]
+      registers: [register],
     })
 
     const ignoredMethods = ['HEAD', 'OPTIONS', 'TRACE', 'CONNECT']
@@ -75,7 +75,7 @@ const metricsPlugin = fp(async function (app, opts = {}) {
       }
     })
   }, {
-    encapsulate: false
+    encapsulate: false,
   }))
 
   if (defaultMetrics.enabled) {
@@ -90,7 +90,7 @@ const metricsPlugin = fp(async function (app, opts = {}) {
           eluMetric.set(result)
           startELU = endELU
         },
-        registers: [register]
+        registers: [register],
       })
       app.metrics.client.register.registerMetric(eluMetric)
 
@@ -123,7 +123,7 @@ const metricsPlugin = fp(async function (app, opts = {}) {
           previousIdleTime = idleTime
           previousTotalTime = totalTime
         },
-        registers: [register]
+        registers: [register],
       })
       app.metrics.client.register.registerMetric(cpuMetric)
     })
@@ -151,7 +151,7 @@ const metricsPlugin = fp(async function (app, opts = {}) {
     }
   })
 }, {
-  encapsulate: false
+  encapsulate: false,
 })
 
 // This is a global httpServer to match global
@@ -178,7 +178,7 @@ async function createMetricsServer (app, hostname, port) {
       httpServer.on('request', handler)
       return httpServer
     },
-    logger: app.log.child({ name: 'prometheus' })
+    logger: app.log.child({ name: 'prometheus' }),
   })
 
   app.addHook('onClose', async () => {
@@ -222,7 +222,7 @@ module.exports = fp(async function (app, opts) {
             return reply.code(401).send({ message: 'Unauthorized' })
           }
           return done()
-        }
+        },
       })
       onRequestHook = metricsServer.basicAuth
     }
@@ -242,7 +242,7 @@ module.exports = fp(async function (app, opts) {
         }
         reply.type('text/plain')
         return promRegistry.metrics()
-      }
+      },
     })
   }
 

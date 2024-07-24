@@ -15,15 +15,15 @@ test('healthcheck route enabled with interval', async (t) => {
       port: 0,
       healthCheck: {
         enabled: true,
-        interval: 2000
-      }
+        interval: 2000,
+      },
     },
     db: {
-      ...connectionInfo
+      ...connectionInfo,
     },
     authorization: {
-      adminSecret: 'secret'
-    }
+      adminSecret: 'secret',
+    },
   }
 
   const configManager = await buildConfigManager(config)
@@ -51,7 +51,7 @@ test('healthcheck route enabled with interval', async (t) => {
       statusCode: 503,
       code: 'FST_UNDER_PRESSURE',
       error: 'Service Unavailable',
-      message: 'Service Unavailable'
+      message: 'Service Unavailable',
     })
   }
 })
@@ -63,14 +63,14 @@ test('healthcheck route enabled without interval', async (t) => {
     server: {
       hostname: '127.0.0.1',
       port: 0,
-      healthCheck: true
+      healthCheck: true,
     },
     db: {
-      ...connectionInfo
+      ...connectionInfo,
     },
     authorization: {
-      adminSecret: 'secret'
-    }
+      adminSecret: 'secret',
+    },
   }
 
   const configManager = await buildConfigManager(config)
@@ -98,7 +98,7 @@ test('healthcheck route enabled without interval', async (t) => {
       statusCode: 503,
       code: 'FST_UNDER_PRESSURE',
       error: 'Service Unavailable',
-      message: 'Service Unavailable'
+      message: 'Service Unavailable',
     })
   }
 })
@@ -109,14 +109,14 @@ test('healthcheck route disabled', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     db: {
-      ...connectionInfo
+      ...connectionInfo,
     },
     authorization: {
-      adminSecret: 'secret'
-    }
+      adminSecret: 'secret',
+    },
   }
 
   const configManager = await buildConfigManager(config)
@@ -142,15 +142,15 @@ test('healthcheck route enabled with interval and maxEventLoopUtilization', asyn
       healthCheck: {
         enabled: true,
         interval: 2000,
-        maxEventLoopUtilization: 0.98
-      }
+        maxEventLoopUtilization: 0.98,
+      },
     },
     db: {
-      ...connectionInfo
+      ...connectionInfo,
     },
     authorization: {
-      adminSecret: 'secret'
-    }
+      adminSecret: 'secret',
+    },
   }
 
   const configManager = await buildConfigManager(config)
@@ -178,7 +178,7 @@ test('healthcheck route enabled with interval and maxEventLoopUtilization', asyn
       statusCode: 503,
       code: 'FST_UNDER_PRESSURE',
       error: 'Service Unavailable',
-      message: 'Service Unavailable'
+      message: 'Service Unavailable',
     })
   }
 })

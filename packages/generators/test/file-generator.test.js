@@ -41,7 +41,7 @@ describe('FileGenerator', () => {
     assert.deepEqual(fg.listFiles(), [
       join('path', 'helloworld.txt'),
       join('path', 'foobar.txt'),
-      join('anotherpath', 'foobar.txt')
+      join('anotherpath', 'foobar.txt'),
     ])
   })
   test('should append file content', async (t) => {
@@ -119,14 +119,14 @@ describe('FileGenerator', () => {
     fg.reset()
     const fileObject = await fg.loadFile({
       path: 'myDir',
-      file: 'helloworld.txt'
+      file: 'helloworld.txt',
     })
 
     assert.deepEqual(fileObject, {
       path: 'myDir',
       file: 'helloworld.txt',
       contents: 'hello world',
-      options: {}
+      options: {},
     })
 
     assert.equal(fg.files.length, 1)
@@ -134,7 +134,7 @@ describe('FileGenerator', () => {
       path: 'myDir',
       file: 'helloworld.txt',
       contents: 'hello world',
-      options: {}
+      options: {},
     })
   })
 })

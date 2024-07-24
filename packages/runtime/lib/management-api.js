@@ -97,7 +97,7 @@ async function managementApiPlugin (app, opts) {
       url: requestUrl || '/',
       headers: request.headers,
       query: request.query,
-      body: request.body
+      body: request.body,
     }
 
     const res = await runtime.inject(id, injectParams)

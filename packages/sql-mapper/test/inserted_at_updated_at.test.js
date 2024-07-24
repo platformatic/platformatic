@@ -7,7 +7,7 @@ const { setTimeout } = require('timers/promises')
 const { connect } = require('..')
 const fakeLogger = {
   trace: () => {},
-  error: () => {}
+  error: () => {},
 }
 
 async function createBasicPages (db, sql) {
@@ -48,7 +48,7 @@ test('inserted_at updated_at happy path', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
 
   const entity = mapper.entities.page
@@ -57,7 +57,7 @@ test('inserted_at updated_at happy path', async () => {
   equal(entity.fields.updated_at.autoTimestamp, true)
 
   const original = await entity.save({
-    input: { title: 'Hello' }
+    input: { title: 'Hello' },
   })
   notEqual(original.insertedAt, null, 'insertedAt')
   notEqual(original.updatedAt, null, 'updatedAt')
@@ -77,7 +77,7 @@ test('inserted_at updated_at happy path', async () => {
   let updated
   {
     const data = await entity.save({
-      input: { id: original.id, title: 'Hello World' }
+      input: { id: original.id, title: 'Hello World' },
     })
     deepEqual(data.insertedAt, original.insertedAt, 'insertedAt')
     notDeepEqual(data.updatedAt, original.updatedAt, 'updatedAt')
@@ -108,7 +108,7 @@ test('bulk insert adds inserted_at updated_at', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
 
   const entity = mapper.entities.page
@@ -118,8 +118,8 @@ test('bulk insert adds inserted_at updated_at', async () => {
       inputs: [
         { title: 'Page 1' },
         { title: 'Page 2' },
-        { title: 'Page 3' }
-      ]
+        { title: 'Page 3' },
+      ],
     })
     for (const page of pages) {
       notEqual(page.insertedAt, null, 'insertedAt')

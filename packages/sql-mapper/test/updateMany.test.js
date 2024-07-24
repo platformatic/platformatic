@@ -8,7 +8,7 @@ const { setTimeout } = require('timers/promises')
 
 const fakeLogger = {
   trace: () => {},
-  error: () => {}
+  error: () => {},
 }
 
 test('updateMany successful', async () => {
@@ -39,7 +39,7 @@ test('updateMany successful', async () => {
           counter INTEGER
         );`)
       }
-    }
+    },
   })
 
   const entity = mapper.entities.post
@@ -47,34 +47,34 @@ test('updateMany successful', async () => {
   const posts = [{
     title: 'Dog',
     longText: 'Foo',
-    counter: 10
+    counter: 10,
   }, {
     title: 'Cat',
     longText: 'Bar',
-    counter: 20
+    counter: 20,
   }, {
     title: 'Mouse',
     longText: 'Baz',
-    counter: 30
+    counter: 30,
   }, {
     title: 'Duck',
     longText: 'A duck tale',
-    counter: 40
+    counter: 40,
   }]
 
   await entity.insert({
-    inputs: posts
+    inputs: posts,
   })
 
   await entity.updateMany({
     where: {
       counter: {
-        gte: 30
-      }
+        gte: 30,
+      },
     },
     input: {
-      title: 'Updated title'
-    }
+      title: 'Updated title',
+    },
   })
 
   const updatedPosts = await entity.find({})
@@ -83,22 +83,22 @@ test('updateMany successful', async () => {
     id: '1',
     title: 'Dog',
     longText: 'Foo',
-    counter: 10
+    counter: 10,
   }, {
     id: '2',
     title: 'Cat',
     longText: 'Bar',
-    counter: 20
+    counter: 20,
   }, {
     id: '3',
     title: 'Updated title',
     longText: 'Baz',
-    counter: 30
+    counter: 30,
   }, {
     id: '4',
     title: 'Updated title',
     longText: 'A duck tale',
-    counter: 40
+    counter: 40,
   }])
 })
 
@@ -130,7 +130,7 @@ test('updateMany will return the updated values', async () => {
           counter INTEGER
         );`)
       }
-    }
+    },
   })
 
   const entity = mapper.entities.post
@@ -138,43 +138,43 @@ test('updateMany will return the updated values', async () => {
   const posts = [{
     title: 'Dog',
     longText: 'Foo',
-    counter: 10
+    counter: 10,
   }, {
     title: 'Cat',
     longText: 'Bar',
-    counter: 20
+    counter: 20,
   }, {
     title: 'Mouse',
     longText: 'Baz',
-    counter: 30
+    counter: 30,
   }, {
     title: 'Duck',
     longText: 'A duck tale',
-    counter: 40
+    counter: 40,
   }]
 
   await entity.insert({
-    inputs: posts
+    inputs: posts,
   })
 
   const updatedPosts = await entity.updateMany({
     where: {
       counter: {
-        gte: 30
-      }
+        gte: 30,
+      },
     },
     input: {
-      title: 'Updated title'
+      title: 'Updated title',
     },
-    fields: ['id', 'counter']
+    fields: ['id', 'counter'],
   })
 
   deepEqual(updatedPosts, [{
     id: '3',
-    counter: 30
+    counter: 30,
   }, {
     id: '4',
-    counter: 40
+    counter: 40,
   }])
 })
 
@@ -206,7 +206,7 @@ test('updateMany missing input', async () => {
           counter INTEGER
         );`)
       }
-    }
+    },
   })
 
   const entity = mapper.entities.post
@@ -214,33 +214,33 @@ test('updateMany missing input', async () => {
   const posts = [{
     title: 'Dog',
     longText: 'Foo',
-    counter: 10
+    counter: 10,
   }, {
     title: 'Cat',
     longText: 'Bar',
-    counter: 20
+    counter: 20,
   }, {
     title: 'Mouse',
     longText: 'Baz',
-    counter: 30
+    counter: 30,
   }, {
     title: 'Duck',
     longText: 'A duck tale',
-    counter: 40
+    counter: 40,
   }]
 
   await entity.insert({
-    inputs: posts
+    inputs: posts,
   })
 
   rejects(entity.updateMany({
     where: {
       counter: {
-        gte: 30
-      }
-    }
+        gte: 30,
+      },
+    },
   }), {
-    message: 'Input not provided.'
+    message: 'Input not provided.',
   })
 })
 
@@ -286,7 +286,7 @@ test('updateMany successful and update updated_at', async () => {
           updated_at TIMESTAMP
         );`)
       }
-    }
+    },
   })
 
   const entity = mapper.entities.post
@@ -294,23 +294,23 @@ test('updateMany successful and update updated_at', async () => {
   const posts = [{
     title: 'Dog',
     longText: 'Foo',
-    counter: 10
+    counter: 10,
   }, {
     title: 'Cat',
     longText: 'Bar',
-    counter: 20
+    counter: 20,
   }, {
     title: 'Mouse',
     longText: 'Baz',
-    counter: 30
+    counter: 30,
   }, {
     title: 'Duck',
     longText: 'A duck tale',
-    counter: 40
+    counter: 40,
   }]
 
   await entity.insert({
-    inputs: posts
+    inputs: posts,
   })
   const createdPost3 = (await entity.find({ where: { id: { eq: '3' } } }))[0]
 
@@ -319,12 +319,12 @@ test('updateMany successful and update updated_at', async () => {
   await entity.updateMany({
     where: {
       counter: {
-        gte: 30
-      }
+        gte: 30,
+      },
     },
     input: {
-      title: 'Updated title'
-    }
+      title: 'Updated title',
+    },
   })
 
   const updatedPost3 = (await entity.find({ where: { id: { eq: '3' } } }))[0]
@@ -361,7 +361,7 @@ test('updateMany missing where clause', async () => {
           counter INTEGER
         );`)
       }
-    }
+    },
   })
 
   const entity = mapper.entities.post
@@ -369,30 +369,30 @@ test('updateMany missing where clause', async () => {
   const posts = [{
     title: 'Dog',
     longText: 'Foo',
-    counter: 10
+    counter: 10,
   }, {
     title: 'Cat',
     longText: 'Bar',
-    counter: 20
+    counter: 20,
   }, {
     title: 'Mouse',
     longText: 'Baz',
-    counter: 30
+    counter: 30,
   }, {
     title: 'Duck',
     longText: 'A duck tale',
-    counter: 40
+    counter: 40,
   }]
 
   await entity.insert({
-    inputs: posts
+    inputs: posts,
   })
 
   rejects(entity.updateMany({
     input: {
-      title: 'Updated title'
-    }
+      title: 'Updated title',
+    },
   }), {
-    message: 'Missing where clause'
+    message: 'Missing where clause',
   })
 })

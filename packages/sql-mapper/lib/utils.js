@@ -55,5 +55,5 @@ module.exports = {
   toLowerFirst,
   sanitizeLimit,
   tableName,
-  areSchemasSupported
+  areSchemasSupported,
 }

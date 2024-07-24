@@ -13,7 +13,7 @@ test('restart in case of a crash', async () => {
 
   {
     const res = await request(url + '/crash', {
-      method: 'POST'
+      method: 'POST',
     })
 
     assert.strictEqual(res.statusCode, 200)
@@ -55,7 +55,7 @@ test('do not restart in case of a crash in case it\'s so specified', async () =>
   const { child, url } = await start('-c', config)
 
   request(url + '/crash', {
-    method: 'POST'
+    method: 'POST',
   })
 
   await once(child, 'exit')

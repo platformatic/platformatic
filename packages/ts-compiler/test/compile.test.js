@@ -27,7 +27,7 @@ test('empty folder', async (t) => {
   assert.strictEqual(res, false)
 
   pinoTest.consecutive(stream, [
-    { level: 40, msg: 'The tsc executable was not found.' }
+    { level: 40, msg: 'The tsc executable was not found.' },
   ])
 })
 
@@ -40,8 +40,8 @@ test('successfully compile', async (t) => {
 
   await writeFile(join(localTmpDir, 'tsconfig.json'), JSON.stringify({
     compilerOptions: {
-      outDir: 'dist'
-    }
+      outDir: 'dist',
+    },
   }))
 
   await writeFile(join(localTmpDir, 'index.ts'), 'console.log("Hello, World!")')
@@ -54,7 +54,7 @@ test('successfully compile', async (t) => {
   assert.strictEqual(res, true)
 
   await pinoTest.consecutive(stream, [
-    { level: 30, msg: 'Typescript compilation completed successfully.' }
+    { level: 30, msg: 'Typescript compilation completed successfully.' },
   ])
 
   const compiled = await readFile(join(localTmpDir, 'dist', 'index.js'), 'utf8')
@@ -70,8 +70,8 @@ test('clean', async (t) => {
 
   await writeFile(join(localTmpDir, 'tsconfig.json'), JSON.stringify({
     compilerOptions: {
-      outDir: 'dist'
-    }
+      outDir: 'dist',
+    },
   }))
 
   await writeFile(join(localTmpDir, 'dist', 'whaat'), '42')
@@ -87,7 +87,7 @@ test('clean', async (t) => {
 
   await pinoTest.consecutive(stream, [
     { level: 30, msg: 'Removing build directory ' + join(localTmpDir, 'dist') },
-    { level: 30, msg: 'Typescript compilation completed successfully.' }
+    { level: 30, msg: 'Typescript compilation completed successfully.' },
   ])
 
   await assert.rejects(access(join(localTmpDir, 'dist', 'whaat')))

@@ -9,14 +9,14 @@ export type PackageConfiguration = {
 }
 
 export namespace GeneratorUtils {
-  export function safeMkdir(dir: string): Promise<void>
-  export function stripVersion(version: string): string
-  export function convertServiceNameToPrefix(serviceName: string): string
-  export function envObjectToString(env: Env): string
-  export function envStringToObject(env: string): Env
-  export function extractEnvVariablesFromText(text: string): string[]
-  export function getPackageConfigurationObject(config: PackageConfiguration[]): object
-  export function flattenObject(obj: object): object
-  export function getServiceTemplateFromSchemaUrl(schemaUrl: string): string
+  export function safeMkdir (dir: string): Promise<void>
+  export function stripVersion (version: string): string
+  export function convertServiceNameToPrefix (serviceName: string): string
+  export function envObjectToString (env: Env): string
+  export function envStringToObject (env: string): Env
+  export function extractEnvVariablesFromText (text: string): string[]
+  export function getPackageConfigurationObject (config: PackageConfiguration[]): object
+  export function flattenObject (obj: object): object
+  export function getServiceTemplateFromSchemaUrl (schemaUrl: string): string
   export const PLT_ROOT: string
 }

@@ -128,5 +128,5 @@ module.exports = {
   insertPrep,
   deleteAll,
   insertMany,
-  updateMany
+  updateMany,
 }

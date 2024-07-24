@@ -28,11 +28,11 @@ async function onDatabaseLoad (db, sql) {
 
 test('entities are available', async (t) => {
   const app = Fastify({
-    pluginTimeout: 30000
+    pluginTimeout: 30000,
   })
   app.register(core, {
     ...connInfo,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
   t.after(() => app.close())
 
@@ -42,11 +42,11 @@ test('entities are available', async (t) => {
 
 test('graphql is available', async (t) => {
   const app = Fastify({
-    pluginTimeout: 30000
+    pluginTimeout: 30000,
   })
   app.register(core, {
     ...connInfo,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
   t.after(() => app.close())
 
@@ -61,30 +61,30 @@ test('graphql is available', async (t) => {
               title
             }
           }
-        `
-    }
+        `,
+    },
   })
   equal(res.statusCode, 200, 'savePage status code')
   same(res.json(), {
     data: {
       savePage: {
         id: 1,
-        title: 'Hello'
-      }
-    }
+        title: 'Hello',
+      },
+    },
   }, 'savePage response')
 })
 
 test('graphql is available via the boolean enabled flag', async (t) => {
   const app = Fastify({
-    pluginTimeout: 30000
+    pluginTimeout: 30000,
   })
   app.register(core, {
     ...connInfo,
     onDatabaseLoad,
     graphql: {
-      enabled: true
-    }
+      enabled: true,
+    },
   })
   t.after(() => app.close())
 
@@ -99,30 +99,30 @@ test('graphql is available via the boolean enabled flag', async (t) => {
               title
             }
           }
-        `
-    }
+        `,
+    },
   })
   equal(res.statusCode, 200, 'savePage status code')
   same(res.json(), {
     data: {
       savePage: {
         id: 1,
-        title: 'Hello'
-      }
-    }
+        title: 'Hello',
+      },
+    },
   }, 'savePage response')
 })
 
 test('graphql is available via the string enabled flag', async (t) => {
   const app = Fastify({
-    pluginTimeout: 30000
+    pluginTimeout: 30000,
   })
   app.register(core, {
     ...connInfo,
     onDatabaseLoad,
     graphql: {
-      enabled: 'true'
-    }
+      enabled: 'true',
+    },
   })
   t.after(() => app.close())
 
@@ -137,48 +137,48 @@ test('graphql is available via the string enabled flag', async (t) => {
               title
             }
           }
-        `
-    }
+        `,
+    },
   })
   equal(res.statusCode, 200, 'savePage status code')
   same(res.json(), {
     data: {
       savePage: {
         id: 1,
-        title: 'Hello'
-      }
-    }
+        title: 'Hello',
+      },
+    },
   }, 'savePage response')
 })
 
 test('graphiql can be enabled', async (t) => {
   const app = Fastify({
-    pluginTimeout: 30000
+    pluginTimeout: 30000,
   })
   app.register(core, {
     ...connInfo,
     onDatabaseLoad,
     graphql: {
-      graphiql: true
-    }
+      graphiql: true,
+    },
   })
   t.after(() => app.close())
 
   const res = await app.inject({
     method: 'GET',
-    url: '/graphiql'
+    url: '/graphiql',
   })
   equal(res.statusCode, 200, 'savePage status code')
 })
 
 test('graphql can be disabled', async (t) => {
   const app = Fastify({
-    pluginTimeout: 30000
+    pluginTimeout: 30000,
   })
   app.register(core, {
     ...connInfo,
     onDatabaseLoad,
-    graphql: false
+    graphql: false,
   })
   t.after(() => app.close())
 
@@ -193,22 +193,22 @@ test('graphql can be disabled', async (t) => {
               title
             }
           }
-        `
-    }
+        `,
+    },
   })
   equal(res.statusCode, 404, '/graphql not found')
 })
 
 test('graphql can be disabled via boolean enabled flag', async (t) => {
   const app = Fastify({
-    pluginTimeout: 30000
+    pluginTimeout: 30000,
   })
   app.register(core, {
     ...connInfo,
     onDatabaseLoad,
     graphql: {
-      enabled: false
-    }
+      enabled: false,
+    },
   })
   t.after(() => app.close())
 
@@ -223,22 +223,22 @@ test('graphql can be disabled via boolean enabled flag', async (t) => {
               title
             }
           }
-        `
-    }
+        `,
+    },
   })
   equal(res.statusCode, 404, '/graphql not found')
 })
 
 test('graphql can be disabled via string enabled flag', async (t) => {
   const app = Fastify({
-    pluginTimeout: 30000
+    pluginTimeout: 30000,
   })
   app.register(core, {
     ...connInfo,
     onDatabaseLoad,
     graphql: {
-      enabled: 'false'
-    }
+      enabled: 'false',
+    },
   })
   t.after(() => app.close())
 
@@ -253,118 +253,118 @@ test('graphql can be disabled via string enabled flag', async (t) => {
               title
             }
           }
-        `
-    }
+        `,
+    },
   })
   equal(res.statusCode, 404, '/graphql not found')
 })
 
 test('openapi is available', async (t) => {
   const app = Fastify({
-    pluginTimeout: 30000
+    pluginTimeout: 30000,
   })
   app.register(core, {
     ...connInfo,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
   t.after(() => app.close())
 
   const res = await app.inject({
     method: 'GET',
-    url: '/pages'
+    url: '/pages',
   })
   equal(res.statusCode, 200, '/pages status code')
 })
 
 test('openapi is available via the enabled flag', async (t) => {
   const app = Fastify({
-    pluginTimeout: 30000
+    pluginTimeout: 30000,
   })
   app.register(core, {
     ...connInfo,
     onDatabaseLoad,
     openapi: {
-      enabled: true
-    }
+      enabled: true,
+    },
   })
   t.after(() => app.close())
 
   const res = await app.inject({
     method: 'GET',
-    url: '/pages'
+    url: '/pages',
   })
   equal(res.statusCode, 200, '/pages status code')
 })
 
 test('openapi can be disabled', async (t) => {
   const app = Fastify({
-    pluginTimeout: 30000
+    pluginTimeout: 30000,
   })
   app.register(core, {
     ...connInfo,
     onDatabaseLoad,
-    openapi: false
+    openapi: false,
   })
   t.after(() => app.close())
 
   const res = await app.inject({
     method: 'GET',
-    url: '/pages'
+    url: '/pages',
   })
   equal(res.statusCode, 404, '/pages status code')
 })
 
 test('openapi can be disabled via enabled flag', async (t) => {
   const app = Fastify({
-    pluginTimeout: 30000
+    pluginTimeout: 30000,
   })
   app.register(core, {
     ...connInfo,
     onDatabaseLoad,
     openapi: {
-      enabled: false
-    }
+      enabled: false,
+    },
   })
   t.after(() => app.close())
 
   const res = await app.inject({
     method: 'GET',
-    url: '/pages'
+    url: '/pages',
   })
   equal(res.statusCode, 404, '/pages status code')
 })
 
 test('openapi with an object', async (t) => {
   const app = Fastify({
-    pluginTimeout: 30000
+    pluginTimeout: 30000,
   })
   app.register(core, {
     ...connInfo,
     onDatabaseLoad,
-    openapi: {}
+    openapi: {},
   })
   t.after(() => app.close())
 
   const res = await app.inject({
     method: 'GET',
-    url: '/pages'
+    url: '/pages',
   })
   equal(res.statusCode, 200, '/pages status code')
 })
 
 test('mq is available', async (t) => {
   const app = Fastify({
-    pluginTimeout: 30000
+    pluginTimeout: 30000,
   })
   await app.register(core, {
     ...connInfo,
     events: true,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
   t.after(() => app.close())
 
   const queue = await app.platformatic.subscribe([
-    await app.platformatic.entities.page.getSubscriptionTopic({ action: 'save' })
+    await app.platformatic.entities.page.getSubscriptionTopic({ action: 'save' }),
   ])
 
   const res = await app.inject({
@@ -378,43 +378,43 @@ test('mq is available', async (t) => {
               title
             }
           }
-        `
-    }
+        `,
+    },
   })
   equal(res.statusCode, 200, 'savePage status code')
   same(res.json(), {
     data: {
       savePage: {
         id: 1,
-        title: 'Hello'
-      }
-    }
+        title: 'Hello',
+      },
+    },
   }, 'savePage response')
 
   const [ev] = await once(queue, 'data')
   same(ev, {
     topic: '/entity/page/save/1',
     payload: {
-      id: 1
-    }
+      id: 1,
+    },
   })
 })
 
 test('mq is available via the enabled flag', async (t) => {
   const app = Fastify({
-    pluginTimeout: 30000
+    pluginTimeout: 30000,
   })
   await app.register(core, {
     ...connInfo,
     events: {
-      enabled: true
+      enabled: true,
     },
-    onDatabaseLoad
+    onDatabaseLoad,
   })
   t.after(() => app.close())
 
   const queue = await app.platformatic.subscribe([
-    await app.platformatic.entities.page.getSubscriptionTopic({ action: 'save' })
+    await app.platformatic.entities.page.getSubscriptionTopic({ action: 'save' }),
   ])
 
   const res = await app.inject({
@@ -428,38 +428,38 @@ test('mq is available via the enabled flag', async (t) => {
               title
             }
           }
-        `
-    }
+        `,
+    },
   })
   equal(res.statusCode, 200, 'savePage status code')
   same(res.json(), {
     data: {
       savePage: {
         id: 1,
-        title: 'Hello'
-      }
-    }
+        title: 'Hello',
+      },
+    },
   }, 'savePage response')
 
   const [ev] = await once(queue, 'data')
   same(ev, {
     topic: '/entity/page/save/1',
     payload: {
-      id: 1
-    }
+      id: 1,
+    },
   })
 })
 
 test('mq is disabled via the enabled flag', async (t) => {
   const app = Fastify({
-    pluginTimeout: 30000
+    pluginTimeout: 30000,
   })
   await app.register(core, {
     ...connInfo,
     events: {
-      enabled: false
+      enabled: false,
     },
-    onDatabaseLoad
+    onDatabaseLoad,
   })
   t.after(() => app.close())
 

@@ -32,16 +32,16 @@ test('should get runtime logs history via management api', async (t) => {
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath: app.managementApi.server.address(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/logs/42'
+    path: '/api/v1/logs/42',
   })
   assert.strictEqual(statusCode, 200)
 
@@ -74,19 +74,19 @@ test('should get logs from previous run', async (t) => {
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath: app.managementApi.server.address(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   const { statusCode, body } = await client.request({
     method: 'GET',
     path: '/api/v1/logs/42',
     query: {
-      pid: prevRuntimePID
-    }
+      pid: prevRuntimePID,
+    },
   })
   assert.strictEqual(statusCode, 200)
 
@@ -112,16 +112,16 @@ test('should throw 404 if log file does not exist', async (t) => {
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath: app.managementApi.server.address(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/logs/42'
+    path: '/api/v1/logs/42',
   })
 
   assert.strictEqual(statusCode, 404)

@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify"
+import type { FastifyInstance } from 'fastify'
 
 export default async function (app: FastifyInstance) {
   app.log.info('Dynamite enabled')

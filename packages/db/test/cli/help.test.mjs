@@ -14,7 +14,7 @@ const CLI_COMMANDS = [
   'schema',
   'migrations',
   'migrations create',
-  'migrations apply'
+  'migrations apply',
 ]
 
 for (const cmd of CLI_COMMANDS) {

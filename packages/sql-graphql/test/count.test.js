@@ -31,7 +31,7 @@ test('count', async (t) => {
           counter INTEGER
         );`)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -41,19 +41,19 @@ test('count', async (t) => {
   const posts = [{
     title: 'Dog',
     longText: 'Foo',
-    counter: 10
+    counter: 10,
   }, {
     title: 'Cat',
     longText: 'Bar',
-    counter: 20
+    counter: 20,
   }, {
     title: 'Mouse',
     longText: 'Baz',
-    counter: 30
+    counter: 30,
   }, {
     title: 'Duck',
     longText: 'A duck tale',
-    counter: 40
+    counter: 40,
   }]
 
   {
@@ -70,9 +70,9 @@ test('count', async (t) => {
             }
           `,
         variables: {
-          inputs: posts
-        }
-      }
+          inputs: posts,
+        },
+      },
     })
     equal(res.statusCode, 200, 'posts status code')
   }
@@ -88,16 +88,16 @@ test('count', async (t) => {
               total
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'posts status code')
     same(res.json(), {
       data: {
         countPosts: {
-          total: 4
-        }
-      }
+          total: 4,
+        },
+      },
     }, 'posts response')
   }
 
@@ -112,16 +112,16 @@ test('count', async (t) => {
               total
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'posts status code')
     same(res.json(), {
       data: {
         countPosts: {
-          total: 2
-        }
-      }
+          total: 2,
+        },
+      },
     }, 'posts response')
   }
 })

@@ -6,7 +6,7 @@ import { setTimeout } from 'node:timers/promises'
 
 const mockAgent = new MockAgent({
   keepAliveTimeout: 10,
-  keepAliveMaxTimeout: 10
+  keepAliveMaxTimeout: 10,
 })
 mockAgent.disableNetConnect()
 
@@ -21,7 +21,7 @@ test('should fetch stackables from the marketplace', async () => {
   const mockStackables = [
     { name: 'mock-service-1' },
     { name: 'mock-service-2' },
-    { name: 'mock-service-3' }
+    { name: 'mock-service-3' },
   ]
 
   mockPool.intercept({ path: '/templates' }).reply(200, mockStackables)
@@ -35,7 +35,7 @@ test('should fetch private stackables from the marketplace', async () => {
     { name: 'mock-service-1' },
     { name: 'mock-service-2' },
     { name: 'mock-service-3' },
-    { name: 'private-mock-service-1' }
+    { name: 'private-mock-service-1' },
   ]
 
   mockPool.intercept({ path: '/templates' }).reply(200, mockStackables)
@@ -48,7 +48,7 @@ test('should fetch only public stackables if user api key is wrong', async () =>
   const mockStackables = [
     { name: 'mock-service-1' },
     { name: 'mock-service-2' },
-    { name: 'mock-service-3' }
+    { name: 'mock-service-3' },
   ]
 
   mockPool.intercept({ path: '/templates' }).reply(401)

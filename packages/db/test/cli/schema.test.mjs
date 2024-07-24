@@ -19,8 +19,8 @@ test('print the graphql schema to stdout', async (t) => {
   const { stdout } = await execa('node', [cliPath, 'schema', 'graphql'], {
     cwd: desm.join(import.meta.url, '..', 'fixtures', 'sqlite'),
     env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
+      DATABASE_URL: connectionInfo.connectionString,
+    },
   })
 
   const snapshot = await import('../../snapshots/test/cli/schema1.test.mjs')
@@ -34,8 +34,8 @@ test('print the openapi schema to stdout', async (t) => {
   const { stdout } = await execa('node', [cliPath, 'schema', 'openapi'], {
     cwd: desm.join(import.meta.url, '..', 'fixtures', 'sqlite'),
     env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
+      DATABASE_URL: connectionInfo.connectionString,
+    },
   })
 
   const snapshot = await import('../../snapshots/test/cli/schema2.test.mjs')
@@ -55,7 +55,7 @@ test('generates the json schema config', async (t) => {
   const languageservice = jsonLanguageService.getLanguageService({
     async schemaRequestService (uri) {
       return configSchema
-    }
+    },
   })
 
   languageservice.configure({ allowComments: false, schemas: [{ fileMatch: ['*.data.json'], uri: $id }] })

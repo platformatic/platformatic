@@ -7,5 +7,5 @@ module.exports = {
   ...mysql,
   insertOne: shared.insertOne,
   insertMany: shared.insertMany,
-  deleteAll: shared.deleteAll
+  deleteAll: shared.deleteAll,
 }

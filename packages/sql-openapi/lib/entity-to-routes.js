@@ -17,8 +17,8 @@ const getEntityLinksForEntity = (app, entity) => {
     entityLinks[getEntityById] = {
       operationId: `get${relatedEntity.name}By${relatedEntityPrimaryKeyCamelcaseCapitalized}`,
       parameters: {
-        [relatedEntityPrimaryKeyCamelcase]: `$response.body#/${ownField}`
-      }
+        [relatedEntityPrimaryKeyCamelcase]: `$response.body#/${ownField}`,
+      },
     }
   }
 
@@ -34,8 +34,8 @@ const getEntityLinksForEntity = (app, entity) => {
     entityLinks[getEntities] = {
       operationId: `get${capitalize(relatedEntity.pluralName)}`,
       parameters: {
-        [`where.${theirField}.eq`]: `$response.body#/${ownField}`
-      }
+        [`where.${theirField}.eq`]: `$response.body#/${ownField}`,
+      },
     }
   }
   return entityLinks
@@ -47,11 +47,11 @@ async function entityPlugin (app, opts) {
   const ignoreRoutes = opts.ignoreRoutes
 
   const entitySchema = {
-    $ref: entity.name + '#'
+    $ref: entity.name + '#',
   }
 
   const entitySchemaInput = {
-    $ref: entity.name + 'Input#'
+    $ref: entity.name + 'Input#',
   }
 
   const entityFieldsNames = Object.values(entity.fields)
@@ -100,26 +100,26 @@ async function entityPlugin (app, opts) {
         querystring: {
           type: 'object',
           properties: {
-            fields
-          }
+            fields,
+          },
         },
         response: {
-          200: entitySchema
-        }
+          200: entitySchema,
+        },
       },
       links: {
-        200: entityLinks
-      }
+        200: entityLinks,
+      },
     }, async function (request, reply) {
       const ctx = { app: this, reply }
       const res = await entity.find({
         ctx,
         where: {
           [primaryKeyCamelcase]: {
-            eq: request.params[primaryKeyCamelcase]
-          }
+            eq: request.params[primaryKeyCamelcase],
+          },
         },
-        fields: request.query.fields
+        fields: request.query.fields,
       })
       if (res.length === 0) {
         return reply.callNotFound()
@@ -136,7 +136,7 @@ async function entityPlugin (app, opts) {
     const targetEntity = app.platformatic.entities[targetEntityName]
     const targetForeignKeyCamelcase = camelcase(reverseRelationship.relation.column_name)
     const targetEntitySchema = {
-      $ref: targetEntity.name + '#'
+      $ref: targetEntity.name + '#',
     }
     const entityLinks = getEntityLinksForEntity(app, targetEntity)
     // e.g. getQuotesForMovie
@@ -170,19 +170,19 @@ async function entityPlugin (app, opts) {
             querystring: {
               type: 'object',
               properties: {
-                fields: getFieldsForEntity(targetEntity, ignore)
-              }
+                fields: getFieldsForEntity(targetEntity, ignore),
+              },
             },
             response: {
               200: {
                 type: 'array',
-                items: targetEntitySchema
-              }
-            }
+                items: targetEntitySchema,
+              },
+            },
           },
           links: {
-            200: entityLinks
-          }
+            200: entityLinks,
+          },
         }, async function (request, reply) {
           const ctx = { app: this, reply }
           // IF we want to have HTTP/404 in case the entity does not exist
@@ -194,9 +194,9 @@ async function entityPlugin (app, opts) {
             ctx,
             where: {
               [primaryKeyCamelcase]: {
-                eq: request.params[primaryKeyCamelcase]
-              }
-            }
+                eq: request.params[primaryKeyCamelcase],
+              },
+            },
           })
           if (resEntity === 0) {
             return reply.callNotFound()
@@ -207,10 +207,10 @@ async function entityPlugin (app, opts) {
             ctx,
             where: {
               [targetForeignKeyCamelcase]: {
-                eq: request.params[primaryKeyCamelcase]
-              }
+                eq: request.params[primaryKeyCamelcase],
+              },
             },
-            fields: request.query.fields
+            fields: request.query.fields,
 
           })
           if (res.length === 0) {
@@ -246,7 +246,7 @@ async function entityPlugin (app, opts) {
     }
 
     const targetEntitySchema = {
-      $ref: targetEntity.name + '#'
+      $ref: targetEntity.name + '#',
     }
     const entityLinks = getEntityLinksForEntity(app, targetEntity)
     // e.g. getMovieForQuote
@@ -270,16 +270,16 @@ async function entityPlugin (app, opts) {
             querystring: {
               type: 'object',
               properties: {
-                fields: getFieldsForEntity(targetEntity, ignore)
-              }
+                fields: getFieldsForEntity(targetEntity, ignore),
+              },
             },
             response: {
-              200: targetEntitySchema
-            }
+              200: targetEntitySchema,
+            },
           },
           links: {
-            200: entityLinks
-          }
+            200: entityLinks,
+          },
         }, async function (request, reply) {
           const ctx = { app: this, reply }
           // check that the entity exists
@@ -287,9 +287,9 @@ async function entityPlugin (app, opts) {
             ctx,
             where: {
               [primaryKeyCamelcase]: {
-                eq: request.params[primaryKeyCamelcase]
-              }
-            }
+                eq: request.params[primaryKeyCamelcase],
+              },
+            },
           }))[0]
 
           if (!resEntity) {
@@ -301,10 +301,10 @@ async function entityPlugin (app, opts) {
             ctx,
             where: {
               [targetForeignKeyCamelcase]: {
-                eq: resEntity[targetColumnCamelcase]
-              }
+                eq: resEntity[targetColumnCamelcase],
+              },
             },
-            fields: request.query.fields
+            fields: request.query.fields,
           })
 
           if (res.length === 0) {
@@ -337,15 +337,15 @@ async function entityPlugin (app, opts) {
         querystring: {
           type: 'object',
           properties: {
-            fields
-          }
+            fields,
+          },
         },
         response: {
-          200: entitySchema
-        }
+          200: entitySchema,
+        },
       },
       links: {
-        200: entityLinks
+        200: entityLinks,
       },
       async handler (request, reply) {
         const id = request.params[primaryKeyCamelcase]
@@ -354,18 +354,18 @@ async function entityPlugin (app, opts) {
           ctx,
           input: {
             ...request.body,
-            [primaryKeyCamelcase]: id
+            [primaryKeyCamelcase]: id,
           },
           where: {
             [primaryKeyCamelcase]: {
-              eq: id
-            }
+              eq: id,
+            },
           },
-          fields: request.query.fields
+          fields: request.query.fields,
         })
         reply.header('location', `${app.prefix}/${res[primaryKeyCamelcase]}`)
         return res
-      }
+      },
     })
   }
 
@@ -383,23 +383,23 @@ async function entityPlugin (app, opts) {
         querystring: {
           type: 'object',
           properties: {
-            fields
-          }
+            fields,
+          },
         },
         response: {
-          200: entitySchema
-        }
-      }
+          200: entitySchema,
+        },
+      },
     }, async function (request, reply) {
       const ctx = { app: this, reply }
       const res = await entity.delete({
         ctx,
         where: {
           [primaryKeyCamelcase]: {
-            eq: request.params[primaryKeyCamelcase]
-          }
+            eq: request.params[primaryKeyCamelcase],
+          },
         },
-        fields: request.query.fields
+        fields: request.query.fields,
       })
       if (res.length === 0) {
         return reply.callNotFound()
@@ -414,12 +414,12 @@ function getPrimaryKeyParams (entity, ignore) {
   const fields = entity.fields
   const field = fields[primaryKey]
   const properties = {
-    [field.camelcase]: { type: mapSQLTypeToOpenAPIType(field.sqlType, ignore) }
+    [field.camelcase]: { type: mapSQLTypeToOpenAPIType(field.sqlType, ignore) },
   }
 
   return {
     type: 'object',
-    properties
+    properties,
   }
 }
 

@@ -10,16 +10,16 @@ schema.title = 'Acme Base'
 
 // Needed to allow module loading
 schema.properties.module = {
-  type: 'string'
+  type: 'string',
 }
 
 schema.properties.dynamite = {
   anyOf: [{
-    type: 'boolean'
+    type: 'boolean',
   }, {
-    type: 'string'
+    type: 'string',
   }],
-  description: 'Enable /dynamite route'
+  description: 'Enable /dynamite route',
 }
 
 delete schema.properties.plugins

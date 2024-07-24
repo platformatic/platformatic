@@ -44,13 +44,13 @@ async function execute (logger, seedFile, config) {
 async function seed (_args) {
   const logger = pino(pretty({
     translateTime: 'SYS:HH:MM:ss',
-    ignore: 'hostname,pid'
+    ignore: 'hostname,pid',
   }))
 
   const { configManager, args } = await loadConfig({
     alias: {
-      c: 'config'
-    }
+      c: 'config',
+    },
   }, _args, platformaticDB)
   await configManager.parseAndValidate()
   const config = configManager.current
@@ -77,7 +77,7 @@ async function seed (_args) {
       cwd: process.cwd(),
       logger,
       tsConfig: configManager.current.plugins?.typescript?.tsConfig,
-      flags: configManager.current.plugins?.typescript?.flags
+      flags: configManager.current.plugins?.typescript?.flags,
     })
     const tsConfigPath = config?.plugins?.typescript?.tsConfig || resolve(process.cwd(), 'tsconfig.json')
     const tsConfig = JSON.parse(await readFile(tsConfigPath, 'utf8'))

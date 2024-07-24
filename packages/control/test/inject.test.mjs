@@ -29,14 +29,14 @@ test('should inject runtime entrypoint by pid', async (t) => {
     [
       cliPath, 'inject',
       '-p', process.pid,
-      '/'
+      '/',
     ]
   )
   assert.strictEqual(child.exitCode, 0)
   const responseBody = child.stdout
   const response = JSON.parse(responseBody)
   assert.deepStrictEqual(response, {
-    message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev'
+    message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev',
   })
 })
 
@@ -58,7 +58,7 @@ test('should inject runtime service by pid', async (t) => {
       cliPath, 'inject',
       '-p', process.pid,
       '-s', 'service-1',
-      '/hello'
+      '/hello',
     ]
   )
   assert.strictEqual(child.exitCode, 0)
@@ -66,7 +66,7 @@ test('should inject runtime service by pid', async (t) => {
   const response = JSON.parse(responseBody)
   assert.deepStrictEqual(response, {
     runtime: 'runtime-1',
-    service: 'service-1'
+    service: 'service-1',
   })
 })
 
@@ -94,7 +94,7 @@ test('should inject runtime service with headers and body', async (t) => {
       '-H', 'bar: baz',
       '-d', '{"foo":"bar"}',
       '-i',
-      '/mirror'
+      '/mirror',
     ]
   )
   assert.strictEqual(child.exitCode, 0)
@@ -146,7 +146,7 @@ test('should inject runtime service with output to the file', async (t) => {
       '-d', '{"foo":"bar"}',
       '-i',
       '-o', tmpFilePath,
-      '/mirror'
+      '/mirror',
     ]
   )
   assert.strictEqual(child.exitCode, 0)
@@ -198,7 +198,7 @@ test('should inject runtime service with --verbose option', async (t) => {
       '-H', 'bar: baz',
       '-d', '{"foo":"bar"}',
       '-v',
-      '/mirror'
+      '/mirror',
     ]
   )
   assert.strictEqual(child.exitCode, 0)

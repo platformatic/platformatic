@@ -19,12 +19,12 @@ module.exports = {
             } else if (p.options) {
               return {
                 path: p.path,
-                options: p.options
+                options: p.options,
               }
             } else {
               return p.path
             }
-          })
+          }),
         }
 
         if (typeof config.plugin[0] === 'object') {
@@ -43,12 +43,12 @@ module.exports = {
           config.plugins = {
             paths: [{
               path: config.plugin.path,
-              options: config.plugin.options
-            }]
+              options: config.plugin.options,
+            }],
           }
         } else {
           config.plugins = {
-            paths: [config.plugin.path]
+            paths: [config.plugin.path],
           }
         }
 
@@ -66,7 +66,7 @@ module.exports = {
         }
       } else {
         config.plugins = {
-          paths: [config.plugin]
+          paths: [config.plugin],
         }
       }
 
@@ -78,5 +78,5 @@ module.exports = {
     config.$schema = 'https://platformatic.dev/schemas/v0.17.0/' + kind
 
     return config
-  }
+  },
 }

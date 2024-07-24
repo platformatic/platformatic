@@ -42,12 +42,12 @@ test('users can save and update their own pages, read everybody\'s and delete no
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   const generated = [42, 42, 43, 42, 42, 42]
   app.register(auth, {
     jwt: {
-      secret: 'supersecret'
+      secret: 'supersecret',
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
@@ -58,38 +58,38 @@ test('users can save and update their own pages, read everybody\'s and delete no
         return {
           ...where,
           userId: {
-            eq: user['X-PLATFORMATIC-USER-ID']
-          }
+            eq: user['X-PLATFORMATIC-USER-ID'],
+          },
         }
       },
       async delete ({ user, ctx, where }) {
         return {
           ...where,
           userId: {
-            eq: user['X-PLATFORMATIC-USER-ID']
-          }
+            eq: user['X-PLATFORMATIC-USER-ID'],
+          },
         }
       },
       defaults: {
         userId: async function ({ user, ctx, input }) {
           deepEqual(user, {
             'X-PLATFORMATIC-USER-ID': generated.shift(),
-            'X-PLATFORMATIC-ROLE': 'user'
+            'X-PLATFORMATIC-ROLE': 'user',
           })
 
           return user['X-PLATFORMATIC-USER-ID']
-        }
+        },
 
       },
       async save ({ user, ctx, where }) {
         return {
           ...where,
           userId: {
-            eq: user['X-PLATFORMATIC-USER-ID']
-          }
+            eq: user['X-PLATFORMATIC-USER-ID'],
+          },
         }
-      }
-    }]
+      },
+    }],
   })
   test.after(() => {
     app.close()
@@ -99,7 +99,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
 
   const token = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': 'user'
+    'X-PLATFORMATIC-ROLE': 'user',
   })
 
   {
@@ -107,7 +107,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -118,8 +118,8 @@ test('users can save and update their own pages, read everybody\'s and delete no
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
@@ -127,9 +127,9 @@ test('users can save and update their own pages, read everybody\'s and delete no
         savePage: {
           id: 1,
           title: 'Hello',
-          userId: 42
-        }
-      }
+          userId: 42,
+        },
+      },
     }, 'savePage response')
   }
 
@@ -138,7 +138,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -149,8 +149,8 @@ test('users can save and update their own pages, read everybody\'s and delete no
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     deepEqual(res.json(), {
@@ -158,9 +158,9 @@ test('users can save and update their own pages, read everybody\'s and delete no
         getPageById: {
           id: 1,
           title: 'Hello',
-          userId: 42
-        }
-      }
+          userId: 42,
+        },
+      },
     }, 'pages response')
   }
 
@@ -169,7 +169,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -179,17 +179,17 @@ test('users can save and update their own pages, read everybody\'s and delete no
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
-          title: 'Hello World'
-        }
-      }
+          title: 'Hello World',
+        },
+      },
     }, 'savePage response')
   }
 
@@ -198,7 +198,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -208,23 +208,23 @@ test('users can save and update their own pages, read everybody\'s and delete no
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
-          title: 'Hello World'
-        }
-      }
+          title: 'Hello World',
+        },
+      },
     }, 'pages response')
   }
 
   const token2 = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 43,
-    'X-PLATFORMATIC-ROLE': 'user'
+    'X-PLATFORMATIC-ROLE': 'user',
   })
 
   {
@@ -232,7 +232,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`
+        Authorization: `Bearer ${token2}`,
       },
       body: {
         query: `
@@ -242,13 +242,13 @@ test('users can save and update their own pages, read everybody\'s and delete no
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
       data: {
-        savePage: null
+        savePage: null,
       },
       errors: [
         {
@@ -256,14 +256,14 @@ test('users can save and update their own pages, read everybody\'s and delete no
           locations: [
             {
               line: 3,
-              column: 13
-            }
+              column: 13,
+            },
           ],
           path: [
-            'savePage'
-          ]
-        }
-      ]
+            'savePage',
+          ],
+        },
+      ],
     }, 'savePage response')
   }
 
@@ -272,7 +272,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`
+        Authorization: `Bearer ${token2}`,
       },
       body: {
         query: `
@@ -283,14 +283,14 @@ test('users can save and update their own pages, read everybody\'s and delete no
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     deepEqual(res.json(), {
       data: {
-        getPageById: null
-      }
+        getPageById: null,
+      },
     }, 'pages response')
   }
 
@@ -299,7 +299,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -315,10 +315,10 @@ test('users can save and update their own pages, read everybody\'s and delete no
           inputs: [
             { title: 'Page 1' },
             { title: 'Page 2' },
-            { title: 'Page 3' }
-          ]
-        }
-      }
+            { title: 'Page 3' },
+          ],
+        },
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
@@ -326,9 +326,9 @@ test('users can save and update their own pages, read everybody\'s and delete no
         insertPages: [
           { id: 2, title: 'Page 1', userId: 42 },
           { id: 3, title: 'Page 2', userId: 42 },
-          { id: 4, title: 'Page 3', userId: 42 }
-        ]
-      }
+          { id: 4, title: 'Page 3', userId: 42 },
+        ],
+      },
     }, 'savePage response')
   }
 
@@ -337,7 +337,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`
+        Authorization: `Bearer ${token2}`,
       },
       body: {
         query: `
@@ -347,14 +347,14 @@ test('users can save and update their own pages, read everybody\'s and delete no
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'deletePages status code')
     deepEqual(res.json(), {
       data: {
-        deletePages: []
-      }
+        deletePages: [],
+      },
     })
   }
 
@@ -363,7 +363,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -373,17 +373,17 @@ test('users can save and update their own pages, read everybody\'s and delete no
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'deletePages status code')
     deepEqual(res.json(), {
       data: {
         deletePages: [{
           id: 1,
-          title: 'Hello World'
-        }]
-      }
+          title: 'Hello World',
+        }],
+      },
     })
   }
 
@@ -392,7 +392,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -403,14 +403,14 @@ test('users can save and update their own pages, read everybody\'s and delete no
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     deepEqual(res.json(), {
       data: {
-        getPageById: null
-      }
+        getPageById: null,
+      },
     }, 'pages response')
   }
 })
@@ -424,7 +424,7 @@ test('user can delete all post written before yesterday', async (t) => {
       ok('onDatabaseLoad called')
       await clear(db, sql)
       await createPagesWithTimestamp(db, sql)
-    }
+    },
   })
   const userId = 42
   const yesterday = (new Date(Date.now() - 60 * 60 * 24 * 1000)).toISOString()
@@ -433,7 +433,7 @@ test('user can delete all post written before yesterday', async (t) => {
 
   app.register(auth, {
     jwt: {
-      secret: 'supersecret'
+      secret: 'supersecret',
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
@@ -446,14 +446,14 @@ test('user can delete all post written before yesterday', async (t) => {
         return {
           ...where,
           editedAt: {
-            lt: yesterday
-          }
+            lt: yesterday,
+          },
         }
       },
       defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID'
-      }
-    }]
+        userId: 'X-PLATFORMATIC-USER-ID',
+      },
+    }],
   })
   test.after(() => {
     app.close()
@@ -464,7 +464,7 @@ test('user can delete all post written before yesterday', async (t) => {
   // that is: 24 * 60 * 60 * 1000
   const token = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': userId,
-    'X-PLATFORMATIC-ROLE': 'user'
+    'X-PLATFORMATIC-ROLE': 'user',
   })
 
   // Inserts a page edited 2 hours ago
@@ -473,7 +473,7 @@ test('user can delete all post written before yesterday', async (t) => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -485,8 +485,8 @@ test('user can delete all post written before yesterday', async (t) => {
               editedAt
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
@@ -495,9 +495,9 @@ test('user can delete all post written before yesterday', async (t) => {
           id: 1,
           title: 'Hello',
           userId,
-          editedAt: twoHoursAgo
-        }
-      }
+          editedAt: twoHoursAgo,
+        },
+      },
     }, 'savePage response')
   }
 
@@ -507,7 +507,7 @@ test('user can delete all post written before yesterday', async (t) => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -519,8 +519,8 @@ test('user can delete all post written before yesterday', async (t) => {
               editedAt
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
@@ -529,9 +529,9 @@ test('user can delete all post written before yesterday', async (t) => {
           id: 2,
           title: 'Hello',
           userId,
-          editedAt: twentySixHoursAgo
-        }
-      }
+          editedAt: twentySixHoursAgo,
+        },
+      },
     }, 'savePage response')
   }
   {
@@ -539,7 +539,7 @@ test('user can delete all post written before yesterday', async (t) => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -551,8 +551,8 @@ test('user can delete all post written before yesterday', async (t) => {
               editedAt
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     deepEqual(res.json(), {
@@ -561,14 +561,14 @@ test('user can delete all post written before yesterday', async (t) => {
           id: 1,
           title: 'Hello',
           userId,
-          editedAt: twoHoursAgo
+          editedAt: twoHoursAgo,
         }, {
           id: 2,
           title: 'Hello',
           userId,
-          editedAt: twentySixHoursAgo
-        }]
-      }
+          editedAt: twentySixHoursAgo,
+        }],
+      },
     }, 'pages response')
   }
 
@@ -577,7 +577,7 @@ test('user can delete all post written before yesterday', async (t) => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -587,17 +587,17 @@ test('user can delete all post written before yesterday', async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'deletePages status code')
     deepEqual(res.json(), {
       data: {
         deletePages: [{
           id: 2,
-          title: 'Hello'
-        }]
-      }
+          title: 'Hello',
+        }],
+      },
     })
   }
 
@@ -606,7 +606,7 @@ test('user can delete all post written before yesterday', async (t) => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -618,8 +618,8 @@ test('user can delete all post written before yesterday', async (t) => {
               editedAt
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     deepEqual(res.json(), {
@@ -628,9 +628,9 @@ test('user can delete all post written before yesterday', async (t) => {
           id: 1,
           title: 'Hello',
           userId,
-          editedAt: twoHoursAgo
-        }]
-      }
+          editedAt: twoHoursAgo,
+        }],
+      },
     }, 'pages response')
   }
 })

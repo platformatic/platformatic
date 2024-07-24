@@ -5,7 +5,7 @@ export default async function catalogue (app, opts) {
   app.register(autoload, {
     dir: join(import.meta.url, 'routes'),
     options: {
-      prefix: opts.prefix
-    }
+      prefix: opts.prefix,
+    },
   })
 }

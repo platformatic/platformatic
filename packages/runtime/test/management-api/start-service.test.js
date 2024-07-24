@@ -18,7 +18,7 @@ test('should start stopped service by service id', async (t) => {
   t.after(async () => {
     await Promise.all([
       app.close(),
-      app.managementApi.close()
+      app.managementApi.close(),
     ])
   })
 
@@ -31,11 +31,11 @@ test('should start stopped service by service id', async (t) => {
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath: app.managementApi.server.address(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   t.after(async () => {
@@ -44,7 +44,7 @@ test('should start stopped service by service id', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'POST',
-    path: '/api/v1/services/service-1/start'
+    path: '/api/v1/services/service-1/start',
   })
   await body.text()
 

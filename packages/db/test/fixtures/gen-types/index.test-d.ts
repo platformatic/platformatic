@@ -19,7 +19,7 @@ app.platformatic.addEntityHooks('graph', {
     expectType<Parameters<typeof app.platformatic.entities.graph.find>[0]>(options)
 
     return [{
-      id: 42
+      id: 42,
     }]
-  }
+  },
 })

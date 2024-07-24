@@ -5,18 +5,18 @@ const sqlMapper = require('@platformatic/sql-mapper')
 
 const defaults = [{
   module: '@platformatic/sql-events',
-  configKey: 'events'
+  configKey: 'events',
 }, {
   module: '@platformatic/sql-graphql',
-  configKey: 'graphql'
+  configKey: 'graphql',
 }, {
   module: '@platformatic/sql-openapi',
-  configKey: 'openapi'
+  configKey: 'openapi',
 }]
 
 module.exports = fp(async function (app, opts) {
   app.register(sqlMapper, {
-    ...opts
+    ...opts,
   })
 
   for (const obj of defaults) {
@@ -28,7 +28,7 @@ module.exports = fp(async function (app, opts) {
       const sqlModule = require(module)
       const config = typeof opts[configKey] === 'object' ? opts[configKey] : {}
       return app.register(sqlModule, {
-        ...config
+        ...config,
       })
     }
   }

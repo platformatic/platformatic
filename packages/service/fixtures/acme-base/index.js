@@ -41,7 +41,7 @@ acmeBase.configManagerConfig = {
     useDefaults: true,
     coerceTypes: true,
     allErrors: true,
-    strict: false
+    strict: false,
   },
   async transformConfig () {
     // Call the transformConfig method from the base stackable
@@ -58,7 +58,7 @@ acmeBase.configManagerConfig = {
     if (await isDirectory(pluginsDir)) {
       paths.push({
         path: pluginsDir,
-        encapsulate: false
+        encapsulate: false,
       })
     }
 
@@ -66,12 +66,12 @@ acmeBase.configManagerConfig = {
 
     if (await isDirectory(routesDir)) {
       paths.push({
-        path: routesDir
+        path: routesDir,
       })
     }
 
     this.current.plugins = {
-      paths
+      paths,
     }
 
     if (!this.current.server?.openapi) {
@@ -82,9 +82,9 @@ acmeBase.configManagerConfig = {
         info: {
           title: 'Acme Microservice',
           description: 'A microservice for Acme Inc.',
-          version: '1.0.0'
-        }
+          version: '1.0.0',
+        },
       }
     }
-  }
+  },
 }

@@ -16,7 +16,7 @@ test('rmeove the watch config', async () => {
     fixPaths: true,
     onMissingEnv (key) {
       return ''
-    }
+    },
   })
 
   await configManager.parse()

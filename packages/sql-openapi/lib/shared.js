@@ -49,9 +49,9 @@ function generateArgs (entity, ignore) {
     'where.or': {
       type: 'array',
       items: {
-        type: 'string'
-      }
-    }
+        type: 'string',
+      },
+    },
   }
 
   Object.assign(whereArgs, whereOrArrayArgs)
@@ -81,17 +81,17 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
             totalCount: { type: 'boolean', default: false },
             fields,
             ...whereArgs,
-            ...orderByArgs
+            ...orderByArgs,
           },
-          additionalProperties: false
+          additionalProperties: false,
         },
         response: {
           200: {
             type: 'array',
-            items: entitySchema
-          }
-        }
-      }
+            items: entitySchema,
+          },
+        },
+      },
     }, async function (request, reply) {
       const query = request.query
       const { limit, offset, fields } = query
@@ -179,12 +179,12 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
         body: entitySchemaInput,
         tags: [entity.table],
         response: {
-          200: entitySchema
-        }
+          200: entitySchema,
+        },
       },
       links: {
-        200: entityLinks
-      }
+        200: entityLinks,
+      },
     }, async function (request, reply) {
       const ctx = { app: this, reply }
       const res = await entity.save({ input: request.body, ctx })
@@ -208,19 +208,19 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
           type: 'object',
           properties: {
             fields,
-            ...whereArgs
+            ...whereArgs,
           },
-          additionalProperties: false
+          additionalProperties: false,
         },
         response: {
           200: {
             type: 'array',
-            items: entitySchema
-          }
-        }
+            items: entitySchema,
+          },
+        },
       },
       links: {
-        200: entityLinks
+        200: entityLinks,
       },
       async handler (request, reply) {
         const ctx = { app: this, reply }
@@ -247,17 +247,17 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
 
         const res = await entity.updateMany({
           input: {
-            ...request.body
+            ...request.body,
           },
           where,
           fields: request.query.fields,
-          ctx
+          ctx,
         })
         // TODO: Should find a way to test this line
         // if (!res) return reply.callNotFound()
         reply.header('location', `${app.prefix}`)
         return res
-      }
+      },
     })
   }
 }
@@ -278,8 +278,8 @@ function getFieldsForEntity (entity, ignore) {
       enum: Object.keys(entity.fields)
         .map((field) => entity.fields[field].camelcase)
         .filter((field) => !ignore[field])
-        .sort()
-    }
+        .sort(),
+    },
   }
 }
 

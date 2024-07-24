@@ -11,7 +11,7 @@ async function frontendTemplate ({ source, language, name, fullResponse }) {
   const help = helpMe({
     dir: join(import.meta.url, 'help'),
     // the default
-    ext: '.txt'
+    ext: '.txt',
   })
   let schema
   if (source.startsWith('http')) {
@@ -47,12 +47,12 @@ async function frontendTemplate ({ source, language, name, fullResponse }) {
 
 export async function command (argv) {
   let {
-    _: [source, language], name, 'full-response': fullResponse
+    _: [source, language], name, 'full-response': fullResponse,
   } = parseArgs(argv)
   const help = helpMe({
     dir: join(import.meta.url, 'help'),
     // the default
-    ext: '.txt'
+    ext: '.txt',
   })
   if (!name) {
     name = 'api'

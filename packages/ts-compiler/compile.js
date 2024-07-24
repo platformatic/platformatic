@@ -22,7 +22,7 @@ async function compile (options = {}) {
   try {
     const tsFlags = options.flags || ['--project', tsConfigPath, '--rootDir', dirname(tsConfigPath)]
     const env = {
-      ...process.env
+      ...process.env,
     }
     // Adding code coverage to the massive tsc executable will
     // slow things down massively. So we skip it

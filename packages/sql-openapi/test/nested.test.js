@@ -66,7 +66,7 @@ test('nested routes', async (t) => {
           owner_id INTEGER REFERENCES owners(id)
         );`)
       }
-    }
+    },
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -76,7 +76,7 @@ test('nested routes', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     const openapi = res.json()
     const snapshot = await snap(openapi)
@@ -84,33 +84,33 @@ test('nested routes', async (t) => {
   }
 
   const owners = [{
-    name: 'Matteo'
+    name: 'Matteo',
   }, {
-    name: 'Luca'
+    name: 'Luca',
   }, {
-    name: 'Marco'
+    name: 'Marco',
   }]
 
   const posts = [{
     title: 'Dog',
     longText: 'Foo',
-    counter: 10
+    counter: 10,
   }, {
     title: 'Cat',
     longText: 'Bar',
-    counter: 20
+    counter: 20,
   }, {
     title: 'Mouse',
     longText: 'Baz',
-    counter: 30
+    counter: 30,
   }, {
     title: 'Duck',
     longText: 'A duck tale',
-    counter: 40
+    counter: 40,
   }, {
     title: 'Horse',
     longText: 'A horse tale',
-    counter: 50
+    counter: 50,
   }]
 
   const ownerIds = []
@@ -118,7 +118,7 @@ test('nested routes', async (t) => {
     const res = await app.inject({
       method: 'POST',
       url: '/owners',
-      body
+      body,
     })
     equal(res.statusCode, 200, 'POST /owners status code')
     ownerIds.push(res.json().id)
@@ -135,7 +135,7 @@ test('nested routes', async (t) => {
     const res = await app.inject({
       method: 'POST',
       url: '/posts',
-      body
+      body,
     })
     equal(res.statusCode, 200, 'POST /posts status code')
   }
@@ -143,7 +143,7 @@ test('nested routes', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: `/owners/${ownerIds[0]}/posts?fields=title,longText,counter,ownerId`
+      url: `/owners/${ownerIds[0]}/posts?fields=title,longText,counter,ownerId`,
     })
     equal(res.statusCode, 200, 'GET /owners/:id/posts status code')
     same(res.json(), [posts[0], posts[1]], 'GET /owners/:id/posts response')
@@ -153,7 +153,7 @@ test('nested routes', async (t) => {
     // Owner exists, but has no posts
     const res = await app.inject({
       method: 'GET',
-      url: '/owners/3/posts'
+      url: '/owners/3/posts',
     })
     equal(res.statusCode, 200, 'GET /owners/:id/posts status code')
     same(res.json(), [], 'GET /owners/:id/posts response')
@@ -163,20 +163,20 @@ test('nested routes', async (t) => {
     // Owner does not exist
     const res = await app.inject({
       method: 'GET',
-      url: '/owners/42/posts'
+      url: '/owners/42/posts',
     })
     equal(res.statusCode, 404, 'GET /posts status code')
     same(res.json(), {
       message: 'Route GET:/owners/42/posts not found',
       error: 'Not Found',
-      statusCode: 404
+      statusCode: 404,
     }, 'GET /owners/:id/posts response')
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/posts/3/owner'
+      url: '/posts/3/owner',
     })
     equal(res.statusCode, 200, 'GET /posts/:id/owner status code')
     same(res.json().name, owners[1].name, 'GET /posts/:id/owner response')
@@ -186,13 +186,13 @@ test('nested routes', async (t) => {
     // Post does not exist
     const res = await app.inject({
       method: 'GET',
-      url: '/posts/42/owner'
+      url: '/posts/42/owner',
     })
     equal(res.statusCode, 404, 'GET /posts/:id/owner status code')
     same(res.json(), {
       message: 'Route GET:/posts/42/owner not found',
       error: 'Not Found',
-      statusCode: 404
+      statusCode: 404,
     }, 'GET /posts/:id/owner response')
   }
 
@@ -200,13 +200,13 @@ test('nested routes', async (t) => {
     // Post exists, owner does not
     const res = await app.inject({
       method: 'GET',
-      url: '/posts/5/owner'
+      url: '/posts/5/owner',
     })
     equal(res.statusCode, 404, 'GET /posts/:id/owner status code')
     same(res.json(), {
       message: 'Route GET:/posts/5/owner not found',
       error: 'Not Found',
-      statusCode: 404
+      statusCode: 404,
     }, 'GET /posts/:id/owner response')
   }
 })
@@ -247,7 +247,7 @@ test('nested routes with recursive FK', async (t) => {
           );
         `)
       }
-    }
+    },
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -257,7 +257,7 @@ test('nested routes with recursive FK', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     const openapi = res.json()
     const snapshot = await snap(openapi)
@@ -268,8 +268,8 @@ test('nested routes with recursive FK', async (t) => {
     method: 'POST',
     url: '/people',
     body: {
-      name: 'Dad'
-    }
+      name: 'Dad',
+    },
   })
   equal(res.statusCode, 200, 'POST /people status code')
   const dad = res.json()
@@ -279,8 +279,8 @@ test('nested routes with recursive FK', async (t) => {
     url: '/people',
     body: {
       name: 'Child',
-      parentId: dad.id
-    }
+      parentId: dad.id,
+    },
   })
   equal(res.statusCode, 200, 'POST /people status code')
   const child = res2.json()
@@ -288,30 +288,30 @@ test('nested routes with recursive FK', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/people'
+      url: '/people',
     })
     equal(res.statusCode, 200, 'GET /people status code')
     same(res.json(), [{
       id: 1,
       name: 'Dad',
-      parentId: null
+      parentId: null,
     }, {
       id: 2,
       name: 'Child',
-      parentId: 1
+      parentId: 1,
     }], 'GET /people response')
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: `/people/${child.id}/parent`
+      url: `/people/${child.id}/parent`,
     })
     equal(res.statusCode, 200, 'GET /people/:id/parent status code')
     same(res.json(), {
       id: 1,
       name: 'Dad',
-      parentId: null
+      parentId: null,
     }, 'GET /people/:id/parent response')
   }
 })

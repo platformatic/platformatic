@@ -25,7 +25,7 @@ test('generateJsonSchemaConfig generates the file', async (t) => {
   const languageservice = jsonLanguageService.getLanguageService({
     async schemaRequestService (uri) {
       return configSchema
-    }
+    },
   })
 
   languageservice.configure({ allowComments: false, schemas: [{ fileMatch: ['*.data.json'], uri: $id }] })

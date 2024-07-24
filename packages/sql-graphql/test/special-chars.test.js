@@ -32,7 +32,7 @@ test('should correctly get the special characters', { skip: isSQLite }, async (t
           PRIMARY KEY (id)
         );`)
       }
-    }
+    },
   })
 
   app.register(sqlGraphQL)

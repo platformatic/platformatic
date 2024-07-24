@@ -27,8 +27,8 @@ test('ignores openapi routes', async (t) => {
     ['-c', join(import.meta.url, '..', 'fixtures', 'ignore-routes.json')],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 
@@ -48,9 +48,9 @@ test('ignores openapi routes', async (t) => {
     const { statusCode } = await request(`${url}/pages`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ title: 'World' })
+      body: JSON.stringify({ title: 'World' }),
     })
     assert.equal(statusCode, 404)
   }

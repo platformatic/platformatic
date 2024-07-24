@@ -10,7 +10,7 @@ module.exports = async function upgrade (config, version) {
   const iterator = loadMigrationsFromPath(join(__dirname, 'versions'))
 
   const migrations = [
-    zeroSixteen
+    zeroSixteen,
   ]
 
   for await (const migration of iterator) {
@@ -21,7 +21,7 @@ module.exports = async function upgrade (config, version) {
     version,
     migrations,
     input: config,
-    logger: this.logger.child({ name: '@platformatic/db' })
+    logger: this.logger.child({ name: '@platformatic/db' }),
   })
 
   let result

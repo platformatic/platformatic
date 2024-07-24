@@ -17,7 +17,7 @@ const streamRuntimeLogsCommand = require('./lib/logs')
 
 const help = helpMe({
   dir: join(__dirname, 'help'),
-  ext: '.txt'
+  ext: '.txt',
 })
 
 const program = commist({ maxDistance: 2 })
@@ -42,9 +42,9 @@ async function runControl (argv) {
   const args = parseArgs({
     args: argv,
     options: {
-      version: { type: 'boolean', short: 'v' }
+      version: { type: 'boolean', short: 'v' },
     },
-    strict: false
+    strict: false,
   }).values
 
   if (args.version && argv[0] !== 'inject') {
@@ -79,5 +79,5 @@ module.exports = {
   stopRuntimeCommand,
   restartRuntimeCommand,
   injectRuntimeCommand,
-  streamRuntimeLogsCommand
+  streamRuntimeLogsCommand,
 }

@@ -10,7 +10,7 @@ async function start (opts) {
 
   const signSync = createSigner({
     key: 'secret',
-    expiresIn: '1h'
+    expiresIn: '1h',
   })
 
   app.decorate('refreshToken', '')
@@ -28,7 +28,7 @@ async function start (opts) {
   port = app.server.address().port
 
   const refreshToken = signSync({
-    iss: `http://localhost:${port}`
+    iss: `http://localhost:${port}`,
   })
 
   app.refreshToken = refreshToken

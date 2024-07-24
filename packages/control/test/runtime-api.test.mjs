@@ -66,12 +66,12 @@ test('should get all runtime log indexes', async (t) => {
   assert.deepStrictEqual(logIndexes, [
     {
       pid: prevRuntimePID,
-      indexes: [41]
+      indexes: [41],
     },
     {
       pid: runtime.pid,
-      indexes: [1, 42]
-    }
+      indexes: [1, 42],
+    },
   ])
 })
 
@@ -119,7 +119,7 @@ test('should get runtime history log for prev run', async (t) => {
 
   const runtimeClient = new RuntimeApiClient()
   const runtimeLogsStream = await runtimeClient.getRuntimeLogsStream(runtime.pid, 41, {
-    runtimePID: prevRuntimePID
+    runtimePID: prevRuntimePID,
   })
   const runtimeLogs = await runtimeLogsStream.text()
   assert.strictEqual(runtimeLogs, prevTestLogs)
@@ -177,7 +177,7 @@ test('should get runtime all logs for prev run', async (t) => {
 
   const runtimeClient = new RuntimeApiClient()
   const runtimeLogsStream = await runtimeClient.getRuntimeAllLogsStream(runtime.pid, {
-    runtimePID: prevRuntimePID
+    runtimePID: prevRuntimePID,
   })
   const runtimeLogs = await runtimeLogsStream.text()
 
@@ -215,7 +215,7 @@ test('should get runtime live metrics', async (t) => {
         'rss',
         'totalHeapSize',
         'usedHeapSize',
-        'version'
+        'version',
       ])
     }))
   })

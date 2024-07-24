@@ -11,7 +11,7 @@ const MQEmitter = require('mqemitter')
 
 const fakeLogger = {
   trace () {},
-  error () {}
+  error () {},
 }
 
 test('get topics', async (t) => {
@@ -34,7 +34,7 @@ test('get topics', async (t) => {
   const mapper = await connect({
     log: fakeLogger,
     ...connInfo,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
   const pageEntity = mapper.entities.page
 
@@ -42,7 +42,7 @@ test('get topics', async (t) => {
   equal(setupEmitter({ mapper, mq, log: fakeLogger }), undefined)
   const queue = await mapper.subscribe([
     await pageEntity.getSubscriptionTopic({ action: 'save' }),
-    await pageEntity.getSubscriptionTopic({ action: 'delete' })
+    await pageEntity.getSubscriptionTopic({ action: 'delete' }),
   ])
   equal(mapper.mq, mq)
 
@@ -50,43 +50,43 @@ test('get topics', async (t) => {
 
   // save - new record
   const page = await pageEntity.save({
-    input: { title: 'fourth page' }
+    input: { title: 'fourth page' },
   })
   expected.push({
     topic: '/entity/page/save/' + page.id,
     payload: {
-      id: page.id
-    }
+      id: page.id,
+    },
   })
 
   // save - update record
   await pageEntity.save({
     input: {
       id: page.id,
-      title: 'fifth page'
-    }
+      title: 'fifth page',
+    },
   })
   expected.push({
     topic: '/entity/page/save/' + page.id,
     payload: {
-      id: page.id
-    }
+      id: page.id,
+    },
   })
 
   await pageEntity.delete({
     where: {
       id: {
-        eq: page.id
-      }
+        eq: page.id,
+      },
     },
-    fields: ['id', 'title']
+    fields: ['id', 'title'],
   })
 
   expected.push({
     topic: '/entity/page/delete/' + page.id,
     payload: {
-      id: page.id
-    }
+      id: page.id,
+    },
   })
 
   for await (const ev of queue) {
@@ -117,7 +117,7 @@ test('hooks', async (t) => {
   const mapper = await connect({
     log: fakeLogger,
     ...connInfo,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
   const pageEntity = mapper.entities.page
 
@@ -125,7 +125,7 @@ test('hooks', async (t) => {
   equal(setupEmitter({ mapper, mq, log: fakeLogger }), undefined)
   const queue = await mapper.subscribe([
     await pageEntity.getSubscriptionTopic({ action: 'save' }),
-    await pageEntity.getSubscriptionTopic({ action: 'delete' })
+    await pageEntity.getSubscriptionTopic({ action: 'delete' }),
   ])
   equal(mapper.mq, mq)
 
@@ -133,43 +133,43 @@ test('hooks', async (t) => {
 
   // save - new record
   const page = await pageEntity.save({
-    input: { title: 'fourth page' }
+    input: { title: 'fourth page' },
   })
   expected.push({
     topic: '/entity/page/save/' + page.id,
     payload: {
-      id: page.id
-    }
+      id: page.id,
+    },
   })
 
   // save - update record
   await pageEntity.save({
     input: {
       id: page.id,
-      title: 'fifth page'
-    }
+      title: 'fifth page',
+    },
   })
   expected.push({
     topic: '/entity/page/save/' + page.id,
     payload: {
-      id: page.id
-    }
+      id: page.id,
+    },
   })
 
   await pageEntity.delete({
     where: {
       id: {
-        eq: page.id
-      }
+        eq: page.id,
+      },
     },
-    fields: ['id', 'title']
+    fields: ['id', 'title'],
   })
 
   expected.push({
     topic: '/entity/page/delete/' + page.id,
     payload: {
-      id: page.id
-    }
+      id: page.id,
+    },
   })
 
   for await (const ev of queue) {
@@ -200,13 +200,13 @@ test('get topics', async (t) => {
   const mapper = await connect({
     log: fakeLogger,
     ...connInfo,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
   mapper.addEntityHooks('page', {
     async getSubscriptionTopic (original, { action }) {
       equal('create', action)
       return original({ action })
-    }
+    },
   })
 
   const pageEntity = mapper.entities.page
@@ -236,7 +236,7 @@ test('no events', async (t) => {
   const mapper = await connect({
     log: fakeLogger,
     ...connInfo,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
 
   const mq = MQEmitter()
@@ -251,7 +251,7 @@ test('no events', async (t) => {
 
   const queue = await mapper.subscribe([
     await pageEntity.getSubscriptionTopic({ action: 'save' }),
-    await pageEntity.getSubscriptionTopic({ action: 'delete' })
+    await pageEntity.getSubscriptionTopic({ action: 'delete' }),
   ])
   equal(mapper.mq, mq)
 
@@ -261,25 +261,25 @@ test('no events', async (t) => {
 
   // save - new record
   const page = await pageEntity.save({
-    input: { title: 'fourth page' }
+    input: { title: 'fourth page' },
   })
 
   // save - update record
   await pageEntity.save({
     input: {
       id: page.id,
-      title: 'fifth page'
-    }
+      title: 'fifth page',
+    },
   })
 
   // delete a record
   await pageEntity.delete({
     where: {
       id: {
-        eq: page.id
-      }
+        eq: page.id,
+      },
     },
-    fields: ['id', 'title']
+    fields: ['id', 'title'],
   })
 })
 
@@ -303,7 +303,7 @@ test('wrong action', async (t) => {
   const mapper = await connect({
     log: fakeLogger,
     ...connInfo,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
 
   setupEmitter({ mapper, log: fakeLogger })

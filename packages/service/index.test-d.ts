@@ -12,7 +12,7 @@ import {
   platformaticService,
   Stackable,
   Generator,
-  PlatformaticServiceConfig
+  PlatformaticServiceConfig,
 } from '.'
 
 declare module 'fastify' {
@@ -44,8 +44,8 @@ function buildStackable (): Stackable<PlatformaticServiceConfig> {
     async transformConfig (this: ConfigManager<PlatformaticServiceConfig>) {
       this.current.plugins = {
         paths: [{
-          path: 'my-plugin'
-        }]
+          path: 'my-plugin',
+        }],
       }
     },
     async upgrade (config: PlatformaticServiceConfig, version: string) {
@@ -54,7 +54,7 @@ function buildStackable (): Stackable<PlatformaticServiceConfig> {
         return upgrade.call(this, config, version)
       }
       return config
-    }
+    },
   }
 
   // configVersion is not part of ConfigManagerConfig
@@ -88,10 +88,10 @@ function buildStackable2 (): Stackable<PlatformaticServiceConfig> {
     async transformConfig (this: ConfigManager<PlatformaticServiceConfig>) {
       this.current.plugins = {
         paths: [{
-          path: 'my-plugin'
-        }]
+          path: 'my-plugin',
+        }],
       }
-    }
+    },
   }
 
   await start(myApp, ['--help'])

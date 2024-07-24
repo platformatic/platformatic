@@ -16,10 +16,10 @@ test('healthcheck route enabled with interval', async (t) => {
         interval: 2000,
         fn: function () {
           return check
-        }
-      }
+        },
+      },
     },
-    metrics: false
+    metrics: false,
   })
 
   t.after(async () => {
@@ -44,7 +44,7 @@ test('healthcheck route enabled with interval', async (t) => {
       statusCode: 503,
       code: 'FST_UNDER_PRESSURE',
       error: 'Service Unavailable',
-      message: 'Service Unavailable'
+      message: 'Service Unavailable',
     })
   }
 
@@ -56,9 +56,9 @@ test('healthcheck route enabled without interval', async (t) => {
     server: {
       hostname: '127.0.0.1',
       port: 0,
-      healthCheck: true
+      healthCheck: true,
     },
-    metrics: false
+    metrics: false,
   })
 
   t.after(async () => {
@@ -78,9 +78,9 @@ test('healthcheck route disabled', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
-    metrics: false
+    metrics: false,
   })
 
   t.after(async () => {

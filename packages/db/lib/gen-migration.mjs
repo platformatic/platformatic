@@ -10,7 +10,7 @@ import errors from './errors.js'
 async function generateMigration (_args) {
   const logger = pino(pretty({
     translateTime: 'SYS:HH:MM:ss',
-    ignore: 'hostname,pid'
+    ignore: 'hostname,pid',
   }))
 
   const { configManager } = await loadConfig({}, _args, platformaticDB)
@@ -37,7 +37,7 @@ async function generateMigration (_args) {
 
     await Promise.all([
       writeFile(doFile, ''),
-      writeFile(undoFile, '')
+      writeFile(undoFile, ''),
     ])
 
     logger.info({ do: doFile, undo: undoFile }, 'Created migration files')

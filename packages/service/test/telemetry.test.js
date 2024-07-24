@@ -13,8 +13,8 @@ test('should not configure telemetry if not configured', async () => {
   const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
-      port: 0
-    }
+      port: 0,
+    },
   }))
 
   test.after(async () => {
@@ -35,24 +35,24 @@ test('should setup telemetry if configured', async (t) => {
   const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
 
     telemetry: {
       serviceName: 'test-service',
       version: '1.0.0',
       exporter: {
-        type: 'memory'
-      }
+        type: 'memory',
+      },
     },
     plugins: {
       paths: [{
         path: file,
         options: {
-          message: 'hello'
-        }
-      }]
-    }
+          message: 'hello',
+        },
+      }],
+    },
   }))
 
   t.after(async () => {
@@ -63,7 +63,7 @@ test('should setup telemetry if configured', async (t) => {
   const res = await request(`${app.url}/`, {
     method: 'GET',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       query: `
@@ -73,8 +73,8 @@ test('should setup telemetry if configured', async (t) => {
               title
             }
           }
-        `
-    })
+        `,
+    }),
   })
   assert.strictEqual(res.statusCode, 200, 'savePage status code')
   const { exporters } = app.openTelemetry

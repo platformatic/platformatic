@@ -18,24 +18,24 @@ test('should get service graphql schema', async (t) => {
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath: app.managementApi.server.address(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   t.after(async () => {
     await Promise.all([
       client.close(),
       app.close(),
-      app.managementApi.close()
+      app.managementApi.close(),
     ])
   })
 
   const res = await client.request({
     method: 'GET',
-    path: '/api/v1/services/service-db/graphql-schema'
+    path: '/api/v1/services/service-db/graphql-schema',
   })
 
   const { statusCode, body } = res
@@ -46,7 +46,7 @@ test('should get service graphql schema', async (t) => {
   const logger = {}
   if (isatty(1) && !logger.transport) {
     logger.transport = {
-      target: 'pino-pretty'
+      target: 'pino-pretty',
     }
   }
 

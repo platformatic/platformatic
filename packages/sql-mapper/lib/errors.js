@@ -20,5 +20,5 @@ module.exports = {
   ParamLimitMustBeNotNegativeError: createError(`${ERROR_PREFIX}_PARAM_LIMIT_MUST_BE_NOT_NEGATIVE`, 'Param limit=%s not allowed. It must be a not negative value.'),
   MissingValueForPrimaryKeyError: createError(`${ERROR_PREFIX}_MISSING_VALUE_FOR_PRIMARY_KEY`, 'Missing value for primary key %s'),
   MissingWhereClauseError: createError(`${ERROR_PREFIX}_MISSING_WHERE_CLAUSE`, 'Missing where clause', 400),
-  SQLiteOnlySupportsAutoIncrementOnOneColumnError: createError(`${ERROR_PREFIX}_SQLITE_ONLY_SUPPORTS_AUTO_INCREMENT_ON_ONE_COLUMN`, 'SQLite only supports autoIncrement on one column')
+  SQLiteOnlySupportsAutoIncrementOnOneColumnError: createError(`${ERROR_PREFIX}_SQLITE_ONLY_SUPPORTS_AUTO_INCREMENT_ON_ONE_COLUMN`, 'SQLite only supports autoIncrement on one column'),
 }

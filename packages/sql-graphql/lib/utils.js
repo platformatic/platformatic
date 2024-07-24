@@ -85,5 +85,5 @@ function fromSelectionSet (selectionSet, fields = new Set()) {
 module.exports = {
   sqlTypeToGraphQL,
   fromSelectionSet,
-  typeSym: Symbol('graphlType')
+  typeSym: Symbol('graphlType'),
 }

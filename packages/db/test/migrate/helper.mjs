@@ -12,5 +12,5 @@ function getFixturesConfigFileLocation (filename, subdirectories = []) {
 
 export {
   cliPath,
-  getFixturesConfigFileLocation
+  getFixturesConfigFileLocation,
 }

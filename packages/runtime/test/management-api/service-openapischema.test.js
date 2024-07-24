@@ -18,24 +18,24 @@ test('should get service openapi schema', async (t) => {
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath: app.managementApi.server.address(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   t.after(async () => {
     await Promise.all([
       client.close(),
       app.close(),
-      app.managementApi.close()
+      app.managementApi.close(),
     ])
   })
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/services/service-1/openapi-schema'
+    path: '/api/v1/services/service-1/openapi-schema',
   })
 
   assert.strictEqual(statusCode, 200)
@@ -45,7 +45,7 @@ test('should get service openapi schema', async (t) => {
   const logger = {}
   if (isatty(1) && !logger.transport) {
     logger.transport = {
-      target: 'pino-pretty'
+      target: 'pino-pretty',
     }
   }
 
@@ -55,31 +55,31 @@ test('should get service openapi schema', async (t) => {
       info: {
         title: 'Platformatic',
         description: 'This is a service built on top of Platformatic',
-        version: '1.0.0'
+        version: '1.0.0',
       },
       components: {
-        schemas: {}
+        schemas: {},
       },
       paths: {
         '/hello': {
           get: {
             responses: {
               200: {
-                description: 'Default Response'
-              }
-            }
-          }
+                description: 'Default Response',
+              },
+            },
+          },
         },
         '/large-logs': {
           get: {
             responses: {
               200: {
-                description: 'Default Response'
-              }
-            }
-          }
-        }
-      }
+                description: 'Default Response',
+              },
+            },
+          },
+        },
+      },
     }
 
   )

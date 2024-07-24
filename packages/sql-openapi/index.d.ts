@@ -18,7 +18,6 @@ export interface SQLOpenApiPluginOptions extends Partial<OpenAPIV3.Document> {
   },
 }
 
-
 declare const plugin: FastifyPluginAsync<SQLOpenApiPluginOptions>
 export default plugin
 

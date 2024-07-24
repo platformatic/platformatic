@@ -10,13 +10,13 @@ process.setMaxListeners(100)
 test('use default env variables names', async (t) => {
   const { child, url } = await start(
     [
-      '-c', join(import.meta.url, '..', 'fixtures', 'default-env-var-names.json')
+      '-c', join(import.meta.url, '..', 'fixtures', 'default-env-var-names.json'),
     ],
     {
       env: {
         PORT: '11111',
-        HOSTNAME: '127.0.0.1'
-      }
+        HOSTNAME: '127.0.0.1',
+      },
     }
   )
   t.after(() => {
@@ -53,7 +53,7 @@ test('https embedded pem', async (t) => {
   assert.strictEqual(res.statusCode, 200)
   const body = await res.body.json()
   assert.deepStrictEqual(body, {
-    hello: 'world'
+    hello: 'world',
   }, 'response')
 })
 
@@ -66,7 +66,7 @@ test('https pem path', async (t) => {
   assert.strictEqual(res.statusCode, 200)
   const body = await res.body.json()
   assert.deepStrictEqual(body, {
-    hello: 'world'
+    hello: 'world',
   }, 'response')
 })
 

@@ -1,5 +1,5 @@
 import fastify, {
-  type FastifyPluginAsync
+  type FastifyPluginAsync,
 } from 'fastify'
 import { expectType } from 'tsd'
 import auth, {
@@ -7,7 +7,7 @@ import auth, {
   DBAuthorizationPluginInterface,
   DBAuthorizationPluginOptions,
   SetupDBAuthorizationUserDecorator,
-  errors
+  errors,
 } from '../..'
 import { FastifyError } from '@fastify/error'
 
@@ -34,7 +34,7 @@ app.register(async (instance) => {
     find: ({ user, where }) => {
       expectType<User>(user)
       return where
-    }
+    },
   }])
 
   instance.get('/test', (request) => {
@@ -45,7 +45,6 @@ app.register(async (instance) => {
 // Errors
 type ErrorWithNoParams = () => FastifyError
 type ErrorWithOneParam = (param: string) => FastifyError
-type ErrorWithOneAnyParam = (param: any) => FastifyError
 type ErrorWithTwoParams = (param1: string, param2: string) => FastifyError
 
 expectType<ErrorWithNoParams>(errors.Unauthorized)

@@ -28,7 +28,7 @@ test('watches CommonJS files with hotreload on a single service', async (t) => {
   const cjsPluginFilePath = join(appDst, 'plugin.js')
 
   await Promise.all([
-    cp(appSrc, appDst, { recursive: true })
+    cp(appSrc, appDst, { recursive: true }),
   ])
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))

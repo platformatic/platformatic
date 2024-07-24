@@ -12,11 +12,11 @@ test('should not configure telemetry if not configured', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     db: {
-      ...connectionInfo
-    }
+      ...connectionInfo,
+    },
   }
 
   const configManager = await buildConfigManager(config)
@@ -37,21 +37,21 @@ test('should setup telemetry if configured', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     db: {
       ...connectionInfo,
       async onDatabaseLoad (db, sql) {
         await createBasicPages(db, sql)
-      }
+      },
     },
     telemetry: {
       serviceName: 'test-service',
       version: '1.0.0',
       exporter: {
-        type: 'memory'
-      }
-    }
+        type: 'memory',
+      },
+    },
   }
 
   const configManager = await buildConfigManager(config)
@@ -75,11 +75,11 @@ test('should setup telemetry if configured', async (t) => {
   const res = await request(`${app.url}/graphql`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      query
-    })
+      query,
+    }),
   })
   assert.equal(res.statusCode, 200, 'savePage status code')
   const { exporters } = app.openTelemetry

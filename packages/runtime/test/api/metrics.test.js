@@ -58,7 +58,7 @@ test('should get runtime metrics in a json format', async (t) => {
     'service_1_http_request_summary_seconds',
     'service_2_http_request_all_summary_seconds',
     'service_2_http_request_duration_seconds',
-    'service_2_http_request_summary_seconds'
+    'service_2_http_request_summary_seconds',
   ]
   for (const metricName of expectedMetricNames) {
     assert.ok(metricsNames.includes(metricName))
@@ -117,7 +117,7 @@ test('should get runtime metrics in a text format', async (t) => {
     'service_1_http_request_summary_seconds',
     'service_2_http_request_all_summary_seconds',
     'service_2_http_request_duration_seconds',
-    'service_2_http_request_summary_seconds'
+    'service_2_http_request_summary_seconds',
   ]
   for (const metricName of expectedMetricNames) {
     assert.ok(metricsNames.includes(metricName))
@@ -203,7 +203,7 @@ test('should get formatted runtime metrics', async (t) => {
     'rss',
     'totalHeapSize',
     'usedHeapSize',
-    'version'
+    'version',
   ])
 
   const entrypointMetrics = metrics.entrypoint
@@ -244,7 +244,7 @@ test('should get cached formatted runtime metrics', async (t) => {
       'rss',
       'totalHeapSize',
       'usedHeapSize',
-      'version'
+      'version',
     ])
 
     const entrypointMetrics = metric.entrypoint
@@ -288,7 +288,7 @@ test('should get metrics after reloading one of the services', async (t) => {
       'rss',
       'totalHeapSize',
       'usedHeapSize',
-      'version'
+      'version',
     ])
 
     const entrypointMetrics = metric.entrypoint

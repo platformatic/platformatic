@@ -12,12 +12,12 @@ async function generateWithLoggerClientPlugin (app, opts) {
     type: 'openapi',
     name: 'withLogger',
     path: join(__dirname, 'with-logger.openapi.json'),
-    url: opts.url
+    url: opts.url,
   })
 }
 
 generateWithLoggerClientPlugin[Symbol.for('plugin-meta')] = {
-  name: 'withLogger OpenAPI Client'
+  name: 'withLogger OpenAPI Client',
 }
 generateWithLoggerClientPlugin[Symbol.for('skip-override')] = true
 

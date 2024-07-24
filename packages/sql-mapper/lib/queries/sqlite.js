@@ -54,7 +54,7 @@ async function listConstraints (db, sql, table) {
   for (const pk of pks) {
     constraints.push({
       column_name: pk.name,
-      constraint_type: 'PRIMARY KEY'
+      constraint_type: 'PRIMARY KEY',
     })
   }
 
@@ -69,7 +69,7 @@ async function listConstraints (db, sql, table) {
     if (index.unique === 1) {
       constraints.push({
         column_name: index.name,
-        constraint_type: 'UNIQUE'
+        constraint_type: 'UNIQUE',
       })
     }
   }
@@ -85,7 +85,7 @@ async function listConstraints (db, sql, table) {
       column_name: foreignKey.from,
       constraint_type: 'FOREIGN KEY',
       foreign_table_name: foreignKey.table,
-      foreign_column_name: foreignKey.to
+      foreign_column_name: foreignKey.to,
     })
   }
   return constraints

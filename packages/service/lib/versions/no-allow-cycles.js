@@ -11,5 +11,5 @@ module.exports.migration = {
     }
 
     return config
-  }
+  },
 }

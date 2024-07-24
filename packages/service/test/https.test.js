@@ -23,8 +23,8 @@ test('supports https options', async (t) => {
 
   setGlobalDispatcher(new Agent({
     connect: {
-      rejectUnauthorized: false
-    }
+      rejectUnauthorized: false,
+    },
   }))
 
   const app = await buildServer(buildConfig({
@@ -33,9 +33,9 @@ test('supports https options', async (t) => {
       port: 0,
       https: {
         key: privateKey,
-        cert: [{ path: certificateRelativePath }]
-      }
-    }
+        cert: [{ path: certificateRelativePath }],
+      },
+    },
   }))
 
   t.after(async () => {

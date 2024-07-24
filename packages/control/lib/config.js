@@ -9,9 +9,9 @@ async function getRuntimeConfigCommand (argv) {
     options: {
       pid: { type: 'string', short: 'p' },
       name: { type: 'string', short: 'n' },
-      service: { type: 'string', short: 's' }
+      service: { type: 'string', short: 's' },
     },
-    strict: false
+    strict: false,
   }).values
 
   const client = new RuntimeApiClient()

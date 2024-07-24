@@ -6,7 +6,7 @@ import { Migrator } from '../lib/migrator.mjs'
 
 test('throws if connection string is invalid', async (t) => {
   const migrator = new Migrator({}, {
-    connectionString: 'unknownDb://mydb:1234/db'
+    connectionString: 'unknownDb://mydb:1234/db',
   })
   try {
     await migrator.setupPostgrator()

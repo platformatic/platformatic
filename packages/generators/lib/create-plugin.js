@@ -184,7 +184,7 @@ function generatePluginWithTypesSupport (typescript) {
   return {
     path: 'plugins',
     file: pluginName,
-    contents: pluginTemplate
+    contents: pluginTemplate,
   }
 }
 
@@ -198,7 +198,7 @@ function generateRouteWithTypesSupport (typescript) {
   return {
     path: 'routes',
     file: routesName,
-    contents: routesTemplate
+    contents: routesTemplate,
   }
 }
 
@@ -208,33 +208,33 @@ function generateTests (typescript, mod, customizations) {
     output.push({
       path: 'test',
       file: 'helper.ts',
-      contents: testHelperTS(mod, customizations)
+      contents: testHelperTS(mod, customizations),
     })
     output.push({
       path: join('test', 'plugins'),
       file: 'example.test.ts',
-      contents: TEST_PLUGIN_TS
+      contents: TEST_PLUGIN_TS,
     })
     output.push({
       path: join('test', 'routes'),
       file: 'root.test.ts',
-      contents: TEST_ROUTES_TS
+      contents: TEST_ROUTES_TS,
     })
   } else {
     output.push({
       path: 'test',
       file: 'helper.js',
-      contents: testHelperJS(mod, customizations)
+      contents: testHelperJS(mod, customizations),
     })
     output.push({
       path: join('test', 'plugins'),
       file: 'example.test.js',
-      contents: TEST_PLUGIN_JS
+      contents: TEST_PLUGIN_JS,
     })
     output.push({
       path: join('test', 'routes'),
       file: 'root.test.js',
-      contents: TEST_ROUTES_JS
+      contents: TEST_ROUTES_JS,
     })
   }
   return output
@@ -251,5 +251,5 @@ module.exports = {
   generatePluginWithTypesSupport,
   generateRouteWithTypesSupport,
   generatePlugins,
-  generateTests
+  generateTests,
 }

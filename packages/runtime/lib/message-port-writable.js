@@ -14,7 +14,7 @@ class MessagePortWritable extends Writable {
   _write (chunk, encoding, callback) {
     this.port.postMessage({
       metadata: this.metadata,
-      logs: [chunk.toString().trim()]
+      logs: [chunk.toString().trim()],
     })
     process.nextTick(callback)
   }
@@ -31,7 +31,7 @@ class MessagePortWritable extends Writable {
 
     this.port.postMessage({
       metadata: this.metadata,
-      logs
+      logs,
     })
     setImmediate(callback)
   }

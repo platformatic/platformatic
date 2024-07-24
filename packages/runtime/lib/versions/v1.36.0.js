@@ -7,5 +7,5 @@ module.exports = {
       config.restartOnError = false
     }
     return config
-  }
+  },
 }

@@ -20,7 +20,7 @@ test('array support', { skip: !isPg }, async (t) => {
       title VARCHAR(42) NOT NULL,
       tags VARCHAR(42)[] NOT NULL
     );`)
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -40,8 +40,8 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
@@ -49,9 +49,9 @@ test('array support', { skip: !isPg }, async (t) => {
         savePage: {
           id: 1,
           title: 'Hello',
-          tags: ['foo', 'bar']
-        }
-      }
+          tags: ['foo', 'bar'],
+        },
+      },
     }, 'savePage response')
   }
 
@@ -68,8 +68,8 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
@@ -77,9 +77,9 @@ test('array support', { skip: !isPg }, async (t) => {
         getPageById: {
           id: 1,
           title: 'Hello',
-          tags: ['foo', 'bar']
-        }
-      }
+          tags: ['foo', 'bar'],
+        },
+      },
     }, 'pages response')
   }
 
@@ -96,8 +96,8 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
@@ -105,9 +105,9 @@ test('array support', { skip: !isPg }, async (t) => {
         pages: [{
           id: 1,
           title: 'Hello',
-          tags: ['foo', 'bar']
-        }]
-      }
+          tags: ['foo', 'bar'],
+        }],
+      },
     }, 'pages response')
   }
 
@@ -124,8 +124,8 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
@@ -133,9 +133,9 @@ test('array support', { skip: !isPg }, async (t) => {
         pages: [{
           id: 1,
           title: 'Hello',
-          tags: ['foo', 'bar']
-        }]
-      }
+          tags: ['foo', 'bar'],
+        }],
+      },
     }, 'pages response')
   }
 
@@ -152,8 +152,8 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
@@ -161,9 +161,9 @@ test('array support', { skip: !isPg }, async (t) => {
         pages: [{
           id: 1,
           title: 'Hello',
-          tags: ['foo', 'bar']
-        }]
-      }
+          tags: ['foo', 'bar'],
+        }],
+      },
     }, 'pages response')
   }
 
@@ -180,8 +180,8 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
@@ -189,9 +189,9 @@ test('array support', { skip: !isPg }, async (t) => {
         pages: [{
           id: 1,
           title: 'Hello',
-          tags: ['foo', 'bar']
-        }]
-      }
+          tags: ['foo', 'bar'],
+        }],
+      },
     }, 'pages response')
   }
 
@@ -208,14 +208,14 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
       data: {
-        pages: []
-      }
+        pages: [],
+      },
     }, 'pages response')
   }
 
@@ -232,14 +232,14 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
       data: {
-        pages: []
-      }
+        pages: [],
+      },
     }, 'pages response')
   }
 
@@ -256,14 +256,14 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
       data: {
-        pages: []
-      }
+        pages: [],
+      },
     }, 'pages response')
   }
 
@@ -280,14 +280,14 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
       data: {
-        pages: []
-      }
+        pages: [],
+      },
     }, 'pages response')
   }
 
@@ -304,14 +304,14 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
       data: {
-        pages: []
-      }
+        pages: [],
+      },
     }, 'pages response')
   }
 
@@ -328,8 +328,8 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
@@ -337,9 +337,9 @@ test('array support', { skip: !isPg }, async (t) => {
         savePage: {
           id: 1,
           title: 'Hello World',
-          tags: ['foo', 'bar', 'baz']
-        }
-      }
+          tags: ['foo', 'bar', 'baz'],
+        },
+      },
     }, 'savePage response')
   }
 
@@ -356,8 +356,8 @@ test('array support', { skip: !isPg }, async (t) => {
               tags
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
@@ -365,9 +365,9 @@ test('array support', { skip: !isPg }, async (t) => {
         getPageById: {
           id: 1,
           title: 'Hello World',
-          tags: ['foo', 'bar', 'baz']
-        }
-      }
+          tags: ['foo', 'bar', 'baz'],
+        },
+      },
     }, 'pages response')
   }
 })

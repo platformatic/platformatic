@@ -34,7 +34,7 @@ test('should fail when an unknown foreign key relationship exists', { skip: !isS
             FOREIGN KEY (category_id) REFERENCES subcategories(id) ON DELETE CASCADE
           );
         );`)
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -50,8 +50,8 @@ test('should fail when an unknown foreign key relationship exists', { skip: !isS
               name
             }
           }
-        `
-    }
+        `,
+    },
   }), 'No foreign table named "subcategories" was found')
 })
 
@@ -110,7 +110,7 @@ test('should handle multi references', async (t) => {
           );
         `)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -119,14 +119,14 @@ test('should handle multi references', async (t) => {
 
   const authors = [{
     id: 1,
-    name: 'Mark'
+    name: 'Mark',
   }]
 
   const books = [{
     id: 1,
     title: 'Harry',
     authorId: 1,
-    anotherAuthorId: 1
+    anotherAuthorId: 1,
   }]
 
   {
@@ -143,9 +143,9 @@ test('should handle multi references', async (t) => {
             }
           `,
         variables: {
-          inputs: authors
-        }
-      }
+          inputs: authors,
+        },
+      },
     })
     equal(res.statusCode, 200, 'authors status code')
   }
@@ -164,9 +164,9 @@ test('should handle multi references', async (t) => {
             }
           `,
         variables: {
-          inputs: books
-        }
-      }
+          inputs: books,
+        },
+      },
     })
     equal(res.statusCode, 200, 'books status code')
   }
@@ -188,8 +188,8 @@ test('should handle multi references', async (t) => {
                 }
               }
             }
-          `
-      }
+          `,
+      },
     })
     equal(res.statusCode, 200, 'query books')
     same(res.json(), {
@@ -197,13 +197,13 @@ test('should handle multi references', async (t) => {
         books: [{
           id: 1,
           author: {
-            id: 1
+            id: 1,
           },
           anotherAuthor: {
-            id: 1
-          }
-        }]
-      }
+            id: 1,
+          },
+        }],
+      },
     }, 'query book response')
   }
 
@@ -221,8 +221,8 @@ test('should handle multi references', async (t) => {
                 }
               }
             }
-          `
-      }
+          `,
+      },
     })
     equal(res.statusCode, 200, 'query authors')
     same(res.json(), {
@@ -230,10 +230,10 @@ test('should handle multi references', async (t) => {
         authors: [{
           id: 1,
           books: [{
-            id: 1
-          }]
-        }]
-      }
+            id: 1,
+          }],
+        }],
+      },
     }, 'query authors response')
   }
 })
@@ -288,7 +288,7 @@ test('cut out id exactly from ending when forming a name of relation', async (t)
           );
         `)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -297,13 +297,13 @@ test('cut out id exactly from ending when forming a name of relation', async (t)
 
   const individuals = [{
     id: 1,
-    name: 'Mark'
+    name: 'Mark',
   }]
 
   const organization = [{
     id: 1,
     name: 'Platformatic',
-    individualId: 1
+    individualId: 1,
   }]
 
   {
@@ -320,9 +320,9 @@ test('cut out id exactly from ending when forming a name of relation', async (t)
             }
           `,
         variables: {
-          inputs: individuals
-        }
-      }
+          inputs: individuals,
+        },
+      },
     })
     equal(res.statusCode, 200, 'individuals status code')
   }
@@ -341,9 +341,9 @@ test('cut out id exactly from ending when forming a name of relation', async (t)
             }
           `,
         variables: {
-          inputs: organization
-        }
-      }
+          inputs: organization,
+        },
+      },
     })
     equal(res.statusCode, 200, 'organization status code')
   }
@@ -364,8 +364,8 @@ test('cut out id exactly from ending when forming a name of relation', async (t)
                 }
               }
             }
-          `
-      }
+          `,
+      },
     })
     equal(res.statusCode, 200, 'query organization')
     same(res.json(), {
@@ -375,10 +375,10 @@ test('cut out id exactly from ending when forming a name of relation', async (t)
           name: 'Platformatic',
           individual: {
             id: 1,
-            name: 'Mark'
-          }
-        }]
-      }
+            name: 'Mark',
+          },
+        }],
+      },
     }, 'query organization response')
   }
 })
@@ -459,7 +459,7 @@ test('should handle reads from save', async (t) => {
           );
         `)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -467,18 +467,18 @@ test('should handle reads from save', async (t) => {
   await app.ready()
 
   const categories = [{
-    name: 'Sci-Fi'
+    name: 'Sci-Fi',
   }]
 
   const authors = [{
     name: 'Mark',
-    categoryId: 1
+    categoryId: 1,
   }]
 
   const books = [{
     title: 'Harry',
     authorId: 1,
-    categoryId: 1
+    categoryId: 1,
   }]
 
   {
@@ -495,9 +495,9 @@ test('should handle reads from save', async (t) => {
             }
           `,
         variables: {
-          inputs: categories
-        }
-      }
+          inputs: categories,
+        },
+      },
     })
     equal(res.statusCode, 200, 'categories status code')
   }
@@ -516,9 +516,9 @@ test('should handle reads from save', async (t) => {
             }
           `,
         variables: {
-          inputs: authors
-        }
-      }
+          inputs: authors,
+        },
+      },
     })
     equal(res.statusCode, 200, 'authors status code')
   }
@@ -537,9 +537,9 @@ test('should handle reads from save', async (t) => {
             }
           `,
         variables: {
-          inputs: books
-        }
-      }
+          inputs: books,
+        },
+      },
     })
     equal(res.statusCode, 200, 'books status code')
   }
@@ -561,9 +561,9 @@ test('should handle reads from save', async (t) => {
             }
           `,
         variables: {
-          inputs: books
-        }
-      }
+          inputs: books,
+        },
+      },
     })
     equal(res.statusCode, 200, 'books status code')
     same(res.json(), {
@@ -572,10 +572,10 @@ test('should handle reads from save', async (t) => {
           id: 1,
           books: [{
             id: 1,
-            title: 'Harry'
-          }]
-        }
-      }
+            title: 'Harry',
+          }],
+        },
+      },
     })
   }
 })
@@ -630,7 +630,7 @@ test('should handle nullable relation', async (t) => {
           );
         `)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -640,30 +640,30 @@ test('should handle nullable relation', async (t) => {
   const authors = [
     {
       id: 1,
-      name: 'Mark 1'
+      name: 'Mark 1',
     },
     {
       id: 2,
-      name: 'Mark 2'
-    }
+      name: 'Mark 2',
+    },
   ]
 
   const books = [
     {
       id: 1,
       title: 'Harry 1',
-      authorId: 1
+      authorId: 1,
     },
     {
       id: 2,
       title: 'Harry 2',
-      authorId: null
+      authorId: null,
     },
     {
       id: 3,
       title: 'Harry 3',
-      authorId: 2
-    }
+      authorId: 2,
+    },
   ]
 
   {
@@ -680,9 +680,9 @@ test('should handle nullable relation', async (t) => {
             }
           `,
         variables: {
-          inputs: authors
-        }
-      }
+          inputs: authors,
+        },
+      },
     })
     equal(res.statusCode, 200, 'authors status code')
   }
@@ -701,9 +701,9 @@ test('should handle nullable relation', async (t) => {
             }
           `,
         variables: {
-          inputs: books
-        }
-      }
+          inputs: books,
+        },
+      },
     })
     equal(res.statusCode, 200, 'books status code')
   }
@@ -722,8 +722,8 @@ test('should handle nullable relation', async (t) => {
                 }
               }
             }
-          `
-      }
+          `,
+      },
     })
     equal(res.statusCode, 200, 'query books')
     same(res.json(), {
@@ -732,21 +732,21 @@ test('should handle nullable relation', async (t) => {
           {
             id: 1,
             author: {
-              id: 1
-            }
+              id: 1,
+            },
           },
           {
             id: 2,
-            author: null
+            author: null,
           },
           {
             id: 3,
             author: {
-              id: 2
-            }
-          }
-        ]
-      }
+              id: 2,
+            },
+          },
+        ],
+      },
     }, 'query book response')
   }
 
@@ -764,8 +764,8 @@ test('should handle nullable relation', async (t) => {
                 }
               }
             }
-          `
-      }
+          `,
+      },
     })
     equal(res.statusCode, 200, 'query authors')
     same(res.json(), {
@@ -773,14 +773,14 @@ test('should handle nullable relation', async (t) => {
         authors: [
           {
             id: 1,
-            books: [{ id: 1 }]
+            books: [{ id: 1 }],
           },
           {
             id: 2,
-            books: [{ id: 3 }]
-          }
-        ]
-      }
+            books: [{ id: 3 }],
+          },
+        ],
+      },
     }, 'query authors response')
   }
 })

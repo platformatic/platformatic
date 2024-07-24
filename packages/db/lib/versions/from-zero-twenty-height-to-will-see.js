@@ -15,5 +15,5 @@ module.exports.migration = {
     delete config.db?.dashboard
 
     return config
-  }
+  },
 }

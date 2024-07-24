@@ -17,24 +17,24 @@ test('should get the runtime process env', async (t) => {
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath: app.managementApi.server.address(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   t.after(async () => {
     await Promise.all([
       client.close(),
       app.close(),
-      app.managementApi.close()
+      app.managementApi.close(),
     ])
   })
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/env'
+    path: '/api/v1/env',
   })
 
   assert.strictEqual(statusCode, 200)

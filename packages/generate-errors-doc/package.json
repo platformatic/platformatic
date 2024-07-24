@@ -4,7 +4,7 @@
   "description": "",
   "main": "generate.js",
   "scripts": {
-    "lint": "standard | snazzy",
+    "lint": "eslint",
     "generate-doc": "node generate.js"
   },
   "author": "Marco Piraccini <marco@platformatic.dev>",
@@ -34,9 +34,10 @@
     "@platformatic/sql-openapi": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:*",
+    "eslint": "9",
+    "neostandard": "^0.11.1",
     "platformatic": "workspace:*",
-    "snazzy": "^9.0.0",
-    "standard": "^17.1.0"
+    "typescript": "^5.5.4"
   },
   "standard": {
     "ignore": [

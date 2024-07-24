@@ -14,7 +14,7 @@ export const compile = compileCmd
 const help = helpMe({
   dir: join(import.meta.url, 'help'),
   // the default
-  ext: '.txt'
+  ext: '.txt',
 })
 
 const program = commist({ maxDistance: 2 })
@@ -28,8 +28,8 @@ program.register('compile', compile)
 export async function run (argv) {
   const args = parseArgs(argv, {
     alias: {
-      v: 'version'
-    }
+      v: 'version',
+    },
   })
 
   if (args.version) {
@@ -40,7 +40,7 @@ export async function run (argv) {
   /* c8 ignore next 4 */
   return {
     output: await program.parseAsync(argv),
-    help
+    help,
   }
 }
 

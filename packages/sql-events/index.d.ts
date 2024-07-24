@@ -16,11 +16,11 @@ export interface SQLEventsPluginOptions<T extends Entities> {
 }
 
 /**
- * Fastify plugin that add events capabilities to registered sql-mapper 
+ * Fastify plugin that add events capabilities to registered sql-mapper
  */
-export default function plugin<T extends Entities>(app: FastifyInstance, options: SQLEventsPluginOptions<T>): Promise<SQLEventsPluginInterface>
+export default function plugin<T extends Entities> (app: FastifyInstance, options: SQLEventsPluginOptions<T>): Promise<SQLEventsPluginInterface>
 
-export function setupEmitter<T extends Entities>(options: SQLEventsPluginOptions<T>): void
+export function setupEmitter<T extends Entities> (options: SQLEventsPluginOptions<T>): void
 
 /**
  * All the errors thrown by the plugin.

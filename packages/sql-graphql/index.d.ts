@@ -47,4 +47,3 @@ export module errors {
   export const UnsupportedKindError: (kind: string) => FastifyError
   export const ErrorPrintingGraphQLSchema: () => FastifyError
 }
-

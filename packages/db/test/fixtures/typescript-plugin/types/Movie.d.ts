@@ -3,8 +3,8 @@
  * A Movie
  */
 declare interface Movie {
-    id?: number;
-    title: string;
+  id?: number;
+  title: string;
 }
 
-export { Movie };
+export { Movie }

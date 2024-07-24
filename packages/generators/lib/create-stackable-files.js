@@ -450,69 +450,69 @@ function generateStackableFiles (typescript, stackableName) {
       {
         path: '',
         file: 'index.ts',
-        contents: getTsStackableIndexFile(stackableName)
+        contents: getTsStackableIndexFile(stackableName),
       },
       {
         path: '',
         file: 'index.d.ts',
-        contents: getStackableIndexTypesFile(stackableName)
+        contents: getStackableIndexTypesFile(stackableName),
       },
       {
         path: '',
         file: 'config.d.ts',
-        contents: getStackableConfigTypesFile(stackableName)
+        contents: getStackableConfigTypesFile(stackableName),
       },
       {
         path: 'lib',
         file: 'generator.ts',
-        contents: getTsStackableGeneratorFile(stackableName)
+        contents: getTsStackableGeneratorFile(stackableName),
       },
       {
         path: 'lib/templates',
         file: 'types.ts',
-        contents: getTsGlobalTypesTemplateFile(stackableName)
+        contents: getTsGlobalTypesTemplateFile(stackableName),
       },
       {
         path: 'lib',
         file: 'schema.ts',
-        contents: getTsStackableSchemaFile(stackableName)
-      }
+        contents: getTsStackableSchemaFile(stackableName),
+      },
     ]
   }
   return [
     {
       path: '',
       file: 'index.js',
-      contents: getJsStackableIndexFile(stackableName)
+      contents: getJsStackableIndexFile(stackableName),
     },
     {
       path: '',
       file: 'index.d.ts',
-      contents: getStackableIndexTypesFile(stackableName)
+      contents: getStackableIndexTypesFile(stackableName),
     },
     {
       path: '',
       file: 'config.d.ts',
-      contents: getStackableConfigTypesFile(stackableName)
+      contents: getStackableConfigTypesFile(stackableName),
     },
     {
       path: 'lib',
       file: 'generator.js',
-      contents: getJsStackableGeneratorFile(stackableName)
+      contents: getJsStackableGeneratorFile(stackableName),
     },
     {
       path: 'lib/templates',
       file: 'types.js',
-      contents: getJsGlobalTypesTemplateFile(stackableName)
+      contents: getJsGlobalTypesTemplateFile(stackableName),
     },
     {
       path: 'lib',
       file: 'schema.js',
-      contents: getJsStackableSchemaFile(stackableName)
-    }
+      contents: getJsStackableSchemaFile(stackableName),
+    },
   ]
 }
 
 module.exports = {
-  generateStackableFiles
+  generateStackableFiles,
 }

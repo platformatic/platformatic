@@ -43,11 +43,11 @@ test('path schema override', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI, {
     ignore: {
-      category: true
+      category: true,
     },
     paths: {
       '/pages': {
@@ -55,10 +55,10 @@ test('path schema override', async (t) => {
         description: customDescription1,
         put: {
           summary: customSummary2,
-          description: customDescription2
-        }
-      }
-    }
+          description: customDescription2,
+        },
+      },
+    },
   })
   t.after(() => app.close())
 
@@ -67,7 +67,7 @@ test('path schema override', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
 
     equal(res.statusCode, 200, 'GET /documentation/json status code')

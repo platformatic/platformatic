@@ -5,7 +5,7 @@
   "main": "compile.js",
   "scripts": {
     "test": "npm run lint && c8 node --test",
-    "lint": "standard | snazzy"
+    "lint": "eslint"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
   "repository": {
@@ -15,11 +15,11 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "c8": "^10.0.0",
+    "eslint": "9",
     "fastify": "^4.26.2",
+    "neostandard": "^0.11.1",
     "pino-test": "^1.0.1",
-    "snazzy": "^9.0.0",
-    "standard": "^17.1.0",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.4"
   },
   "dependencies": {
     "@platformatic/utils": "workspace:*",

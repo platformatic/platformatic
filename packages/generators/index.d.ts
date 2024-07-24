@@ -4,5 +4,5 @@ import { generateTests, generatePlugins } from './lib/create-plugin'
 export {
   BaseGenerator,
   generateTests,
-  generatePlugins
+  generatePlugins,
 }

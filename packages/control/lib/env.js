@@ -8,9 +8,9 @@ async function getRuntimeEnvCommand (argv) {
     args: argv,
     options: {
       pid: { type: 'string', short: 'p' },
-      name: { type: 'string', short: 'n' }
+      name: { type: 'string', short: 'n' },
     },
-    strict: false
+    strict: false,
   }).values
 
   const client = new RuntimeApiClient()

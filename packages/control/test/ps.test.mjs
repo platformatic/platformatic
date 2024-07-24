@@ -38,7 +38,7 @@ test('should get all runtimes', async (t) => {
 
   const headers = headersRow.split(/\s+/).filter(Boolean)
   assert.deepStrictEqual(headers, [
-    'PID', 'NAME', 'PLT', 'TIME', 'URL', 'PWD'
+    'PID', 'NAME', 'PLT', 'TIME', 'URL', 'PWD',
   ])
 
   const runtime1Values = runtime1Row.split(/\s+/).filter(Boolean)

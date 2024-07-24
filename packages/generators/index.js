@@ -8,5 +8,5 @@ module.exports = {
   BaseGenerator,
   StackableGenerator,
   generateTests,
-  ...utils
+  ...utils,
 }

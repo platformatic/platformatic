@@ -8,7 +8,7 @@ const { clear, connInfo, createBasicPages } = require('./helper')
 const fakeLogger = {
   trace: () => {},
   error: () => {},
-  warn: () => {}
+  warn: () => {},
 }
 
 test('specify table to be added', async (t) => {
@@ -29,8 +29,8 @@ test('specify table to be added', async (t) => {
     log: fakeLogger,
     onDatabaseLoad,
     include: {
-      pages: true
-    }
+      pages: true,
+    },
   })
 
   const pageEntity = mapper.entities.page
@@ -59,8 +59,8 @@ test('specify tables to be added', async (t) => {
     onDatabaseLoad,
     include: {
       pages: true,
-      categories: true
-    }
+      categories: true,
+    },
   })
 
   const pageEntity = mapper.entities.page
@@ -89,7 +89,7 @@ test('show a warning if there is no table to be included (no tables included)', 
     error: () => {},
     warn: (msg) => {
       equal(msg, 'Specified table "missing_table_pages" not found. Did you mean "pages"?')
-    }
+    },
   }
 
   const mapper = await connect({
@@ -97,8 +97,8 @@ test('show a warning if there is no table to be included (no tables included)', 
     log: logger,
     onDatabaseLoad,
     include: {
-      missing_table_pages: true
-    }
+      missing_table_pages: true,
+    },
   })
 
   const pageEntity = mapper.entities.page
@@ -124,13 +124,13 @@ test('include an entity and ignore a column', async (t) => {
     log: fakeLogger,
     onDatabaseLoad,
     include: {
-      categories: true
+      categories: true,
     },
     ignore: {
       categories: {
-        name: true
-      }
-    }
+        name: true,
+      },
+    },
   })
 
   const categoryEntity = mapper.entities.category

@@ -22,7 +22,7 @@
     "test:server": "node ../cli/cli.js db start --config=test/e2e/fixtures/platformatic.e2e.db.json",
     "test:prepare": "node test/prepare.mjs",
     "test:cleanup": "rm -rf src/platformatic-generated-code test/e2e/fixtures/db.sqlite",
-    "lint": "standard | snazzy",
+    "lint": "eslint",
     "test": "npm run lint && npm run test:e2e && npm run test:types"
   },
   "dependencies": {
@@ -43,11 +43,11 @@
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@vitejs/plugin-react": "^3.1.0",
+    "eslint": "9",
+    "neostandard": "^0.11.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "snazzy": "^9.0.0",
-    "standard": "^17.1.0",
-    "typescript": "^5.4.2",
+    "typescript": "^5.5.4",
     "vite": "^5.1.6"
   },
   "standard": {

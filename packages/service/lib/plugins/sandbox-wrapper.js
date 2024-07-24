@@ -36,7 +36,7 @@ module.exports = fp(async function (app, opts) {
         forceESM: plugin.forceESM,
         ignoreFilter: plugin.ignoreFilter,
         matchFilter: plugin.matchFilter,
-        ...patternOptions
+        ...patternOptions,
       })
     } else {
       let loaded = await import(pathToFileURL(plugin.path))
@@ -71,7 +71,7 @@ function patternOptionsFromPlugin (plugin) {
   const patternOptionKeys = [
     'ignorePattern',
     'indexPattern',
-    'autoHooksPattern'
+    'autoHooksPattern',
   ]
 
   for (const key of patternOptionKeys) {

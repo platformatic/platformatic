@@ -27,7 +27,7 @@ test('errors when starting an already started application', async (t) => {
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
   }
   const app = new PlatformaticApp(config, null, logger)
 
@@ -49,7 +49,7 @@ test('errors when stopping an already stopped application', async (t) => {
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
   }
   const app = new PlatformaticApp(config, null, logger)
 
@@ -69,7 +69,7 @@ test('does not restart while restarting', { only: true }, async (t) => {
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
   }
   const app = new PlatformaticApp(config, null, logger)
 
@@ -83,7 +83,7 @@ test('does not restart while restarting', { only: true }, async (t) => {
   await Promise.all([
     app.restart(),
     app.restart(),
-    app.restart()
+    app.restart(),
   ])
   await app.stop()
   stream.end()
@@ -114,7 +114,7 @@ test('restarts on SIGUSR2', async (t) => {
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
   }
   const app = new PlatformaticApp(config, null, logger)
 
@@ -136,7 +136,7 @@ test('stops on signals other than SIGUSR2', async (t) => {
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
   }
   const app = new PlatformaticApp(config, null, logger)
 
@@ -164,7 +164,7 @@ test('stops on uncaught exceptions', async (t) => {
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
   }
   const app = new PlatformaticApp(config, null, logger)
 
@@ -191,7 +191,7 @@ test('supports configuration overrides', async (t) => {
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
   }
 
   await t.test('throws on non-string config paths', async (t) => {
@@ -233,7 +233,7 @@ test('supports configuration overrides', async (t) => {
     config._configOverrides = new Map([
       ['server.keepAliveTimeout', 1],
       ['server.port', 0],
-      ['server.pluginTimeout', 99]
+      ['server.pluginTimeout', 99],
     ])
     const app = new PlatformaticApp(config, null, logger)
 
@@ -262,7 +262,7 @@ test('restarts on config change without overriding the configManager', async (t)
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
   }
   const app = new PlatformaticApp(config, null, logger)
 
@@ -298,7 +298,7 @@ test('logs errors if an env variable is missing', async (t) => {
     config: configFile,
     path: fixturesDir,
     entrypoint: true,
-    hotReload: true
+    hotReload: true,
   }
   const app = new PlatformaticApp(config, null, logger)
 
@@ -333,14 +333,14 @@ test('Uses the server config if passed', async (t) => {
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
   }
   const serverConfig = {
     hostname: '127.0.0.1',
     port: '14242',
     logger: {
-      level: 'info'
-    }
+      level: 'info',
+    },
   }
   const app = new PlatformaticApp(config, null, logger, null, serverConfig)
 
@@ -377,7 +377,7 @@ test('logs errors during startup', async (t) => {
     config: configFile,
     path: appPath,
     entrypoint: true,
-    hotReload: true
+    hotReload: true,
   }
   const app = new PlatformaticApp(config, null, logger)
 
@@ -409,7 +409,7 @@ test('returns application statuses', async (t) => {
     entrypoint: true,
     hotReload: true,
     dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
   }
   const app = new PlatformaticApp(config, null, logger)
 
