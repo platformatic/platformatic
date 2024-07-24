@@ -90,8 +90,14 @@ class Store {
     }
 
     if (!app && type) {
-      const toLoad = `https://schemas.platformatic.dev/@platformatic/${type}/${pltVersion}.json`
+      let toLoad = `https://platformatic.dev/schemas/v${pltVersion}/${type}`
       app = this.#map.get(toLoad)
+
+      if (!app) {
+        toLoad = `https://schemas.platformatic.dev/@platformatic/${type}/${pltVersion}.json`
+        app = this.#map.get(toLoad)
+      }
+
       if (!app && defaultTypes.includes(type)) {
         app = await loadModule(require, `@platformatic/${type}`)
         this.add(app)

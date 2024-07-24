@@ -359,6 +359,35 @@ test('schema null', async (t) => {
   assert.equal(store.getVersionFromSchema(null), null)
 })
 
+test('Platformatic Service with legacy schema', async t => {
+  function foo () {
+  }
+
+  foo.schema = {
+    $id: `https://platformatic.dev/schemas/v${version}/service`,
+    type: 'object'
+  }
+
+  foo.configType = 'foo'
+  foo.configManagerConfig = {
+    schema: foo.schema,
+    allowToWatch: ['.env'],
+    schemaOptions: {
+      useDefaults: true,
+      coerceTypes: true,
+      allErrors: true,
+      strict: false
+    },
+    transformConfig () {
+    }
+  }
+
+  const store = new Store()
+  store.add(foo)
+
+  assert.equal(await store.get({ $schema: './foo' }), foo, 'should have builtin value')
+})
+
 test('Platformatic Service', async t => {
   function foo () {
   }
