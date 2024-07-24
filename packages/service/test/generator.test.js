@@ -76,7 +76,10 @@ describe('generator', () => {
     await svc.prepare()
     const platformaticConfigFile = svc.getFileObject('platformatic.json')
     const contents = JSON.parse(platformaticConfigFile.contents)
-    assert.equal(contents.$schema, `https://platformatic.dev/schemas/v${svc.platformaticVersion}/service`)
+    assert.equal(
+      contents.$schema,
+      `https://schemas.platformatic.dev/@platformatic/service/${svc.platformaticVersion}.json`
+    )
     assert.deepEqual(contents.server, {
       hostname: '{PLT_SERVER_HOSTNAME}',
       port: '{PORT}',

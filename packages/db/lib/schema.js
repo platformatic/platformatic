@@ -4,7 +4,6 @@
 const { metrics, server, plugins, watch, openApiDefs, openApiBase, clients } = require('@platformatic/service').schemas
 const telemetry = require('@platformatic/telemetry').schema
 const pkg = require('../package.json')
-const version = 'v' + pkg.version
 
 const db = {
   type: 'object',
@@ -396,7 +395,7 @@ const types = {
 }
 
 const platformaticDBschema = {
-  $id: `https://platformatic.dev/schemas/${version}/db`,
+  $id: `https://schemas.platformatic.dev/@platformatic/db/${pkg.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
   title: 'Platformatic DB',
   type: 'object',

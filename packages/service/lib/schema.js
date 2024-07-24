@@ -343,7 +343,7 @@ const clients = {
 }
 
 const platformaticServiceSchema = {
-  $id: `https://platformatic.dev/schemas/v${pkg.version}/service`,
+  $id: `https://schemas.platformatic.dev/@platformatic/service/${pkg.version}.json`,
   version: pkg.version,
   title: 'Platformatic Service',
   type: 'object',

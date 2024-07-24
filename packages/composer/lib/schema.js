@@ -4,7 +4,6 @@
 const { metrics, server, plugins, watch, clients, openApiBase, openApiDefs, graphqlBase } = require('@platformatic/service').schemas
 const telemetry = require('@platformatic/telemetry').schema
 const pkg = require('../package.json')
-const version = 'v' + pkg.version
 
 const openApiService = {
   type: 'object',
@@ -176,7 +175,7 @@ const types = {
 }
 
 const platformaticComposerSchema = {
-  $id: `https://platformatic.dev/schemas/${version}/composer`,
+  $id: `https://schemas.platformatic.dev/@platformatic/composer/${pkg.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
   title: 'Platformatic Composer',
   type: 'object',

@@ -91,7 +91,7 @@ declare module 'fastify' {
     const { isRuntimeContext } = this.config
     const version = this.platformaticVersion
     const config = {
-      $schema: `https://platformatic.dev/schemas/v${version}/service`,
+      $schema: `https://schemas.platformatic.dev/@platformatic/service/${version}.json`,
       service: {
         openapi: true
       },

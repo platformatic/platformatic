@@ -79,7 +79,10 @@ declare module 'fastify' {
     await svc.prepare()
     const platformaticConfigFile = svc.getFileObject('platformatic.json')
     const contents = JSON.parse(platformaticConfigFile.contents)
-    assert.equal(contents.$schema, `https://platformatic.dev/schemas/v${svc.platformaticVersion}/composer`)
+    assert.equal(
+      contents.$schema,
+      `https://schemas.platformatic.dev/@platformatic/composer/${svc.platformaticVersion}.json`
+    )
     assert.deepEqual(contents.composer, {
       services: [
         {
