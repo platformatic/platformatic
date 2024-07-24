@@ -463,7 +463,7 @@ class RuntimeGenerator extends BaseGenerator {
       this.addFile({
         path: '',
         file: 'platformatic.json',
-        contents: JSON.stringify(runtimePkgConfigFileData, null, 2)
+        contents: JSON.stringify(runtimePkgConfigFileData, null, 2),
       })
     }
     await this.writeFiles()
