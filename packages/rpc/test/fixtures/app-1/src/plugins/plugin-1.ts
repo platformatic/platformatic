@@ -10,6 +10,11 @@ type Group = {
   users: User[]
 }
 
+type Node = {
+  id: string
+  nodes: (Node | null)[]
+}
+
 const users = [
   { name: 'Alice', age: 30 },
   { name: 'Bob', age: 25 },
@@ -26,6 +31,17 @@ const plugin: FastifyPluginAsync = async (app) => {
 
   app.rpc('getGroupByName', async (options: { name: string }): Promise<Group> => {
     return { name: options.name, users: users }
+  })
+
+  app.rpc('getRecursiveNode', async (): Promise<Node> => {
+    return {
+      id: 'root',
+      nodes: [
+        null,
+        { id: 'node-1', nodes: [null, { id: 'node-2', nodes: [] }] },
+        { id: 'node-3', nodes: [] },
+      ]
+    }
   })
 }
 

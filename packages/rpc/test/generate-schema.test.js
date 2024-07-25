@@ -106,6 +106,23 @@ test('should generate an openapi schema from a ts app', async (t) => {
             }
           }
         }
+      },
+      '/getRecursiveNode': {
+        post: {
+          operationId: 'getRecursiveNode',
+          responses: {
+            200: {
+              description: 'Success',
+              content: {
+                'application/json': {
+                  schema: {
+                    $ref: '#/components/schemas/getRecursiveNodeReturnType'
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     components: {
@@ -178,6 +195,30 @@ test('should generate an openapi schema from a ts app', async (t) => {
                     type: 'number'
                   }
                 }
+              }
+            }
+          }
+        },
+        getRecursiveNodeReturnType: {
+          $ref: '#/components/schemas/Node'
+        },
+        Node: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string'
+            },
+            nodes: {
+              type: 'array',
+              items: {
+                anyOf: [
+                  {
+                    $ref: '#/components/schemas/Node'
+                  },
+                  {
+                    type: 'null'
+                  }
+                ]
               }
             }
           }
