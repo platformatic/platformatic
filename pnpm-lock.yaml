@@ -412,8 +412,8 @@ importers:
         specifier: '9'
         version: 9.7.0
       json-schema-to-typescript:
-        specifier: ^14.0.0
-        version: 14.1.0
+        specifier: ^15.0.0
+        version: 15.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.1(eslint@9.7.0)(typescript@5.5.4)
@@ -839,8 +839,8 @@ importers:
         specifier: '9'
         version: 9.7.0
       json-schema-to-typescript:
-        specifier: ^14.0.0
-        version: 14.1.0
+        specifier: ^15.0.0
+        version: 15.0.0
       mercurius:
         specifier: ^14.0.0
         version: 14.1.0(graphql@16.9.0)
@@ -1496,8 +1496,8 @@ importers:
         specifier: '9'
         version: 9.7.0
       json-schema-to-typescript:
-        specifier: ^14.0.0
-        version: 14.1.0
+        specifier: ^15.0.0
+        version: 15.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.1(eslint@9.7.0)(typescript@5.5.4)
@@ -4177,8 +4177,8 @@ packages:
     resolution: {integrity: sha512-pJ4XLQP4Q9HTxl6RVDLJ8Cyh1uitSs0CzDBAz1uoJ4sRD/Bk7cFSXL1FUXDW3zJ7YnfliJx6eu8Jn283bpZ4Yg==}
     engines: {node: '>=10'}
 
-  json-schema-to-typescript@14.1.0:
-    resolution: {integrity: sha512-VIeAFQkn88gFh26MSHWG4uX7TjK/arTw0NVLMZn6vX1WrSF+P6xu5MyEdovu+9PJ0uiS5gm0wzwQvYW9eSq1uw==}
+  json-schema-to-typescript@15.0.0:
+    resolution: {integrity: sha512-gOX3cJB4eL1ztMc3WUh569ubRcKnr8MnYk++6+/WaaN4bufGHSR6EcbUbvLZgirPQOfvni5SSGkRx0pYloYU8A==}
     engines: {node: '>=16.0.0'}
     hasBin: true
 
@@ -8288,7 +8288,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  json-schema-to-typescript@14.1.0:
+  json-schema-to-typescript@15.0.0:
     dependencies:
       '@apidevtools/json-schema-ref-parser': 11.6.4
       '@types/json-schema': 7.0.15
