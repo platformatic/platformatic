@@ -304,7 +304,7 @@ importers:
         version: 7.0.4
       '@fastify/swagger':
         specifier: ^8.14.0
-        version: 8.14.0
+        version: 8.15.0
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
@@ -704,7 +704,7 @@ importers:
         version: 7.0.4
       '@fastify/swagger':
         specifier: ^8.14.0
-        version: 8.14.0
+        version: 8.15.0
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
@@ -1364,7 +1364,7 @@ importers:
         version: 7.0.4
       '@fastify/swagger':
         specifier: ^8.14.0
-        version: 8.14.0
+        version: 8.15.0
       '@fastify/under-pressure':
         specifier: ^8.3.0
         version: 8.5.1
@@ -1756,7 +1756,7 @@ importers:
         version: 3.4.1
       '@fastify/swagger':
         specifier: ^8.14.0
-        version: 8.14.0
+        version: 8.15.0
       '@platformatic/scalar-theme':
         specifier: workspace:*
         version: link:../scalar-theme
@@ -1823,7 +1823,7 @@ importers:
     dependencies:
       '@fastify/swagger':
         specifier: ^8.14.0
-        version: 8.14.0
+        version: 8.15.0
       '@opentelemetry/api':
         specifier: ^1.8.0
         version: 1.9.0
@@ -2352,8 +2352,8 @@ packages:
   '@fastify/static@7.0.4':
     resolution: {integrity: sha512-p2uKtaf8BMOZWLs6wu+Ihg7bWNBdjNgCwDza4MJtTqg+5ovKmcbgbR9Xs5/smZ1YISfzKOCNYmZV8LaCj+eJ1Q==}
 
-  '@fastify/swagger@8.14.0':
-    resolution: {integrity: sha512-sGiznEb3rl6pKGGUZ+JmfI7ct5cwbTQGo+IjewaTvtzfrshnryu4dZwEsjw0YHABpBA+kCz3kpRaHB7qpa67jg==}
+  '@fastify/swagger@8.15.0':
+    resolution: {integrity: sha512-zy+HEEKFqPMS2sFUsQU5X0MHplhKJvWeohBwTCkBAJA/GDYGLGUWQaETEhptiqxK7Hs0fQB9B4MDb3pbwIiCwA==}
 
   '@fastify/under-pressure@8.5.1':
     resolution: {integrity: sha512-4PRp1Y29yNSqNnMIwL9CyBtNP6rqLnY0JmZ0TMzCYj28k9Lw0nrqI6A2JxNQZd0jzbls/8LN4TcuRW2HEqQVmw==}
@@ -6293,7 +6293,7 @@ snapshots:
       fastq: 1.17.1
       glob: 10.4.5
 
-  '@fastify/swagger@8.14.0':
+  '@fastify/swagger@8.15.0':
     dependencies:
       fastify-plugin: 4.5.1
       json-schema-resolver: 2.0.0
