@@ -61,7 +61,13 @@ async function buildServer (options, app) {
     fastifyOptions.genReqId = function (req) { return randomUUID() }
     const root = fastify(fastifyOptions)
     root.decorate('platformatic', { configManager, config })
-    await root.register(app)
+
+    if (typeof app === 'function') {
+      await root.register(app)
+    } else {
+      await root.register(app.app)
+    }
+
     if (!root.hasRoute({ url: '/', method: 'GET' })) {
       await root.register(require('./root-endpoint'))
     }

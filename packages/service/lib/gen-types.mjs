@@ -4,7 +4,7 @@ import { writeFile } from 'fs/promises'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { loadConfig } from '@platformatic/config'
-import { platformaticService } from '../index.js'
+import platformaticService from '../index.js'
 import { checkForDependencies } from '@platformatic/utils'
 
 const GLOBAL_TYPES_TEMPLATE = `

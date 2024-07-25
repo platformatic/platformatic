@@ -93,8 +93,8 @@ async function platformaticService (app, opts) {
 }
 
 platformaticService[Symbol.for('skip-override')] = true
-platformaticService.configType = 'service'
-platformaticService.configManagerConfig = {
+
+module.exports.configManagerConfig = {
   version,
   schema,
   allowToWatch: ['.env'],
@@ -135,10 +135,15 @@ platformaticService.configManagerConfig = {
   upgrade,
 }
 
+// Retained for backwards compatibility
+platformaticService.configManagerConfig = module.exports.configManagerConfig
+
 function _buildServer (options, app) {
-  return buildServer(options, app || platformaticService)
+  return buildServer(options, app || module.exports)
 }
-module.exports = platformaticService
+
+module.exports.configType = 'service'
+module.exports.app = platformaticService
 module.exports.schema = schema
 module.exports.buildServer = _buildServer
 module.exports.schemas = require('./lib/schema')

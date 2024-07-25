@@ -7,7 +7,9 @@ const { test } = require('node:test')
 const { createGunzip } = require('node:zlib')
 const { pipeline } = require('node:stream/promises')
 const { request } = require('undici')
-const { buildServer, platformaticService } = require('..')
+const app = require('..')
+
+const { buildServer, platformaticService } = app
 
 test('customize service', async (t) => {
   async function myApp (app, opts) {
@@ -21,7 +23,7 @@ test('customize service', async (t) => {
       hostname: '127.0.0.1',
       port: 0,
     },
-  }, myApp)
+  }, { app: myApp })
 
   t.after(async () => {
     await app.close()
@@ -51,7 +53,7 @@ test('catch errors from the other side', async (t) => {
         path: require.resolve('./fixtures/other-side.js'),
       }],
     },
-  }, myApp)
+  }, { app: myApp })
 
   t.after(async () => {
     await app.close()
@@ -155,7 +157,7 @@ test('customize service without toLoad', async (t) => {
       hostname: '127.0.0.1',
       port: 0,
     },
-  }, myApp)
+  }, { app: myApp })
 
   t.after(async () => {
     await app.close()
@@ -183,7 +185,7 @@ test('customize service with beforePlugins', async (t) => {
       hostname: '127.0.0.1',
       port: 0,
     },
-  }, myApp)
+  }, { app: myApp })
 
   t.after(async () => {
     await app.close()

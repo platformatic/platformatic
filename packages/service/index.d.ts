@@ -55,6 +55,17 @@ export const schema: JSONSchemaType<PlatformaticServiceConfig>
 
 export declare const platformaticService: Stackable<PlatformaticServiceConfig>
 
-export default platformaticService
+export declare const app: Stackable<PlatformaticServiceConfig>
 
 export const tsCompiler: TSCompiler
+
+type defaultExport = {
+  app: Stackable<PlatformaticServiceConfig>,
+  schema: JSONSchemaType<PlatformaticServiceConfig>,
+  buildServer: (opts: object, app?: object, ConfigManagerConstructor?: object) => Promise<FastifyInstance>,
+  start: <ConfigType>(app: Stackable<ConfigType>, args: string[]) => Promise<void>,
+  Generator: typeof ServiceGenerator.ServiceGenerator,
+  tsCompiler: TSCompiler,
+}
+
+export default defaultExport
