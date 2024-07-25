@@ -82,7 +82,7 @@ importers:
         version: 8.21.0
       pino-pretty:
         specifier: ^11.0.0
-        version: 11.2.1
+        version: 11.2.2
       undici:
         specifier: ^6.9.0
         version: 6.19.4
@@ -228,7 +228,7 @@ importers:
         version: 8.21.0
       pino-pretty:
         specifier: ^11.0.0
-        version: 11.2.1
+        version: 11.2.2
       undici:
         specifier: ^6.9.0
         version: 6.19.4
@@ -385,7 +385,7 @@ importers:
         version: 8.21.0
       pino-pretty:
         specifier: ^11.0.0
-        version: 11.2.1
+        version: 11.2.2
       rfdc:
         specifier: ^1.3.1
         version: 1.4.1
@@ -522,7 +522,7 @@ importers:
         version: 8.21.0
       pino-pretty:
         specifier: ^11.0.0
-        version: 11.2.1
+        version: 11.2.2
       table:
         specifier: ^6.8.1
         version: 6.8.2
@@ -619,7 +619,7 @@ importers:
         version: 8.21.0
       pino-pretty:
         specifier: ^11.0.0
-        version: 11.2.1
+        version: 11.2.2
       resolve:
         specifier: ^1.22.8
         version: 1.22.8
@@ -803,7 +803,7 @@ importers:
         version: 8.21.0
       pino-pretty:
         specifier: ^11.0.0
-        version: 11.2.1
+        version: 11.2.2
       postgrator:
         specifier: ^7.2.0
         version: 7.2.0
@@ -1250,7 +1250,7 @@ importers:
         version: 8.21.0
       pino-pretty:
         specifier: ^11.0.0
-        version: 11.2.1
+        version: 11.2.2
       pino-roll:
         specifier: ^1.0.0
         version: 1.1.0
@@ -1466,7 +1466,7 @@ importers:
         version: 8.21.0
       pino-pretty:
         specifier: ^11.0.0
-        version: 11.2.1
+        version: 11.2.2
       prom-client:
         specifier: ^15.1.2
         version: 15.1.3
@@ -1878,7 +1878,7 @@ importers:
         version: 9.2.0
       pino-pretty:
         specifier: ^11.0.0
-        version: 11.2.1
+        version: 11.2.2
       resolve:
         specifier: ^1.22.8
         version: 1.22.8
@@ -4832,8 +4832,8 @@ packages:
   pino-abstract-transport@1.2.0:
     resolution: {integrity: sha512-Guhh8EZfPCfH+PMXAb6rKOjGQEoy0xlAIn+irODG5kgfYV+BQ0rGYYWTIel3P5mmyXqkYkPmdIkywsn6QKUR1Q==}
 
-  pino-pretty@11.2.1:
-    resolution: {integrity: sha512-O05NuD9tkRasFRWVaF/uHLOvoRDFD7tb5VMertr78rbsYFjYp48Vg3477EshVAF5eZaEw+OpDl/tu+B0R5o+7g==}
+  pino-pretty@11.2.2:
+    resolution: {integrity: sha512-2FnyGir8nAJAqD3srROdrF1J5BIcMT4nwj7hHSc60El6Uxlym00UbCCd8pYIterstVBFlMyF1yFV8XdGIPbj4A==}
     hasBin: true
 
   pino-roll@1.1.0:
@@ -8980,7 +8980,7 @@ snapshots:
       readable-stream: 4.5.2
       split2: 4.2.0
 
-  pino-pretty@11.2.1:
+  pino-pretty@11.2.2:
     dependencies:
       colorette: 2.0.20
       dateformat: 4.6.3
