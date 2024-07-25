@@ -105,7 +105,7 @@ test('has /metrics endpoint on configured port', async (t) => {
   testPrometheusOutput(body)
 })
 
-test.only('support basic auth', async (t) => {
+test('support basic auth', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
@@ -177,7 +177,7 @@ test('has /metrics endpoint on parent server', async (t) => {
   testPrometheusOutput(body)
 })
 
-test.only('support basic auth with metrics on parent server', async (t) => {
+test('support basic auth with metrics on parent server', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
