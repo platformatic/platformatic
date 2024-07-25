@@ -79,7 +79,7 @@ importers:
         version: 1.2.8
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.3.2
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -225,7 +225,7 @@ importers:
         version: 1.2.8
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.3.2
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -382,7 +382,7 @@ importers:
         version: 6.3.1
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.3.2
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -495,7 +495,7 @@ importers:
         version: 0.11.1(eslint@9.7.0)(typescript@5.5.4)
       pino:
         specifier: ^8.17.2
-        version: 8.21.0
+        version: 9.3.2
       pino-test:
         specifier: ^1.0.1
         version: 1.0.1
@@ -519,7 +519,7 @@ importers:
         version: 5.0.0
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.3.2
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -616,7 +616,7 @@ importers:
         version: 6.3.1
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.3.2
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -800,7 +800,7 @@ importers:
         version: 6.3.1
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.3.2
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -1125,7 +1125,7 @@ importers:
         version: 4.28.1
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.3.2
       undici:
         specifier: ^6.9.0
         version: 6.19.4
@@ -1247,7 +1247,7 @@ importers:
         version: 1.2.8
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.3.2
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -1463,7 +1463,7 @@ importers:
         version: 6.3.1
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.3.2
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -1875,7 +1875,7 @@ importers:
         version: 8.0.1
       pino:
         specifier: ^9.2.0
-        version: 9.2.0
+        version: 9.3.2
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -4859,8 +4859,8 @@ packages:
     resolution: {integrity: sha512-ip4qdzjkAyDDZklUaZkcRFb2iA118H9SgRh8yzTkSQK8HilsOJF7rSY8HoW5+I0M46AZgX/pxbprf2vvzQCE0Q==}
     hasBin: true
 
-  pino@9.2.0:
-    resolution: {integrity: sha512-g3/hpwfujK5a4oVbaefoJxezLzsDgLcNJeITvC6yrfwYeT9la+edCK42j5QpEQSQCZgTKapXvnQIdgZwvRaZug==}
+  pino@9.3.2:
+    resolution: {integrity: sha512-WtARBjgZ7LNEkrGWxMBN/jvlFiE17LTbBoH0konmBU684Kd0uIiDwBXlcTCW7iJnA6HfIKwUssS/2AC6cDEanw==}
     hasBin: true
 
   playwright-core@1.45.2:
@@ -4935,6 +4935,9 @@ packages:
 
   process-warning@3.0.0:
     resolution: {integrity: sha512-mqn0kFRl0EoqhnL0GQ0veqFHyIN1yig9RHh/InzORTUiZHFRAur+aMtRkELNwGs9aNwKS6tg/An4NYBPGwvtzQ==}
+
+  process-warning@4.0.0:
+    resolution: {integrity: sha512-/MyYDxttz7DfGMMHiysAsFE4qF+pQYAA8ziO/3NcRVrQ5fSk+Mns4QZA/oRPFzvcqNoVJXQNWNAsdwBXLUkQKw==}
 
   process@0.11.10:
     resolution: {integrity: sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==}
@@ -7788,7 +7791,7 @@ snapshots:
       fast-json-stringify: 5.16.1
       find-my-way: 8.2.0
       light-my-request: 5.13.0
-      pino: 9.2.0
+      pino: 9.3.2
       process-warning: 3.0.0
       proxy-addr: 2.0.7
       rfdc: 1.4.1
@@ -9039,14 +9042,14 @@ snapshots:
       sonic-boom: 3.8.1
       thread-stream: 2.7.0
 
-  pino@9.2.0:
+  pino@9.3.2:
     dependencies:
       atomic-sleep: 1.0.0
       fast-redact: 3.5.0
       on-exit-leak-free: 2.1.2
       pino-abstract-transport: 1.2.0
       pino-std-serializers: 7.0.0
-      process-warning: 3.0.0
+      process-warning: 4.0.0
       quick-format-unescaped: 4.0.4
       real-require: 0.2.0
       safe-stable-stringify: 2.4.3
@@ -9121,6 +9124,8 @@ snapshots:
   process-warning@1.0.0: {}
 
   process-warning@3.0.0: {}
+
+  process-warning@4.0.0: {}
 
   process@0.11.10: {}
 
