@@ -160,3 +160,57 @@ test('do not force enable metrics if they are set to false', async (t) => {
     metrics: false
   })
 })
+
+test('set serviceId in metrics as label in all services', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-metrics.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const serviceConfig = await app.getServiceConfig('with-logger')
+
+  delete serviceConfig.$schema
+
+  let logger = {}
+  if (process.stdout.isTTY) {
+    logger = {
+      transport: {
+        target: 'pino-pretty'
+      }
+    }
+  }
+
+  assert.deepStrictEqual(serviceConfig, {
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+      logger,
+      keepAliveTimeout: 5000,
+      trustProxy: true
+    },
+    service: { openapi: true },
+    plugins: {
+      paths: [
+        join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js')
+      ]
+    },
+    watch: {
+      enabled: false
+    },
+    metrics: {
+      server: 'hide',
+      defaultMetrics: {
+        enabled: false
+      },
+      labels: {
+        app: 'serviceApp', // this is from the runtime config
+        serviceId: 'with-logger' // this is set for each service
+      }
+    }
+  })
+})

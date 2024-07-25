@@ -275,16 +275,17 @@ class PlatformaticApp extends EventEmitter {
       configManager.current.metrics
     ) {
       const labels = configManager.current.metrics?.labels || {}
+      const serviceId = this.appConfig.id
       configManager.update({
         ...configManager.current,
         metrics: {
           server: 'hide',
           defaultMetrics: { enabled: this.appConfig.entrypoint },
+          ...configManager.current.metrics,
           labels: {
-            serviceId: this.appConfig.id,
+            serviceId,
             ...labels
-          },
-          ...configManager.current.metrics
+          }
         }
       })
     }
