@@ -19,7 +19,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@types/node": "^20.14.11",
-    "borp": "^0.16.0",
+    "borp": "^0.17.0",
     "eslint": "9",
     "neostandard": "^0.11.1",
     "tsd": "^0.31.0",

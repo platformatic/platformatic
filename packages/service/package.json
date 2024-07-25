@@ -29,7 +29,7 @@
     "@fastify/aws-lambda": "^4.0.0",
     "@fastify/compress": "^7.0.0",
     "bindings": "^1.5.0",
-    "borp": "^0.16.0",
+    "borp": "^0.17.0",
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.0",
     "neostandard": "^0.11.1",

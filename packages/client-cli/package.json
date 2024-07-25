@@ -26,7 +26,7 @@
     "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/utils": "workspace:*",
-    "borp": "^0.16.0",
+    "borp": "^0.17.0",
     "dotenv": "^16.4.5",
     "eslint": "9",
     "execa": "^8.0.1",

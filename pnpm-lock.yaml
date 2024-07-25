@@ -97,8 +97,8 @@ importers:
         specifier: ^2.0.6
         version: 2.0.6
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       c8:
         specifier: ^10.0.0
         version: 10.1.2
@@ -155,8 +155,8 @@ importers:
         specifier: workspace:*
         version: link:../telemetry
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       c8:
         specifier: ^10.0.0
         version: 10.1.2
@@ -252,8 +252,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
@@ -400,8 +400,8 @@ importers:
         specifier: workspace:*
         version: link:../db
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       c8:
         specifier: ^10.0.0
         version: 10.1.2
@@ -476,8 +476,8 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       c8:
         specifier: ^10.0.0
         version: 10.1.2
@@ -540,8 +540,8 @@ importers:
         specifier: workspace:*
         version: link:../service
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       desm:
         specifier: ^1.3.1
         version: 1.3.1
@@ -652,8 +652,8 @@ importers:
         specifier: ^8.12.0
         version: 8.17.1
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       c8:
         specifier: ^10.0.0
         version: 10.1.2
@@ -830,8 +830,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       c8:
         specifier: ^10.0.0
         version: 10.1.2
@@ -915,8 +915,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       eslint:
         specifier: '9'
         version: 9.7.0
@@ -961,8 +961,8 @@ importers:
         version: 4.5.1
     devDependencies:
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       eslint:
         specifier: '9'
         version: 9.7.0
@@ -1134,8 +1134,8 @@ importers:
         specifier: ^9.0.7
         version: 9.0.7
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       c8:
         specifier: ^10.0.0
         version: 10.1.2
@@ -1162,8 +1162,8 @@ importers:
         specifier: ^20.14.11
         version: 20.14.12
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       eslint:
         specifier: '9'
         version: 9.7.0
@@ -1292,8 +1292,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       c8:
         specifier: ^10.0.0
         version: 10.1.2
@@ -1490,8 +1490,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       eslint:
         specifier: '9'
         version: 9.7.0
@@ -1557,8 +1557,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       eslint:
         specifier: '9'
         version: 9.7.0
@@ -1630,8 +1630,8 @@ importers:
         specifier: workspace:*
         version: link:../telemetry
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       eslint:
         specifier: '9'
         version: 9.7.0
@@ -1667,8 +1667,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       dtsgenerator:
         specifier: ^3.19.1
         version: 3.19.2
@@ -1728,8 +1728,8 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       eslint:
         specifier: '9'
         version: 9.7.0
@@ -1789,8 +1789,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-mapper
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       eslint:
         specifier: ^9.4.0
         version: 9.7.0
@@ -1853,8 +1853,8 @@ importers:
         version: 4.5.1
     devDependencies:
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       fastify:
         specifier: ^4.26.2
         version: 4.28.1
@@ -1924,8 +1924,8 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1
       borp:
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: ^0.17.0
+        version: 0.17.0
       eslint:
         specifier: '9'
         version: 9.7.0
@@ -3003,8 +3003,8 @@ packages:
     resolution: {integrity: sha512-1wEo1pNahY9js7Vkp1RQa/VWdWrXYJnVAmsHV3Pw/0YzspjABLw7dcekjukOMTIYWr8ir/aG0GX1eoEkYhpnUg==}
     hasBin: true
 
-  borp@0.16.0:
-    resolution: {integrity: sha512-xfHEmkIkYGQXuyHSiymCNuadBZqtl4UPK6oCVHfKwk/FOTuujsZZRGOpUBZlXUy3yMZm4ClncIW9+9d12lZofw==}
+  borp@0.17.0:
+    resolution: {integrity: sha512-NLtUDhth7C04exd4l7PqNameVJaGYRW4M1zcAkbmaLU2QSRNXjubR/PQ8VyE2Bqguf2CtJ0mwhAWBDlXyQ+VTA==}
     hasBin: true
 
   brace-expansion@1.1.11:
@@ -7004,7 +7004,7 @@ snapshots:
       commander: 6.2.1
       lodash: 4.17.21
 
-  borp@0.16.0:
+  borp@0.17.0:
     dependencies:
       '@reporters/github': 1.7.0
       c8: 10.1.2
