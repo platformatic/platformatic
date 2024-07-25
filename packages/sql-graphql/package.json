@@ -31,7 +31,7 @@
     "@platformatic/sql-events": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
-    "borp": "^0.16.0",
+    "borp": "^0.17.0",
     "eslint": "9",
     "fastify": "^4.26.2",
     "neostandard": "^0.11.1",

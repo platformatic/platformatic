@@ -27,7 +27,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@matteo.collina/tspl": "^0.1.1",
-    "borp": "^0.16.0",
+    "borp": "^0.17.0",
     "eslint": "9",
     "fastify": "^4.26.2",
     "neostandard": "^0.11.1",
