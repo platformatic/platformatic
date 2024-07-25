@@ -357,39 +357,39 @@ function generateStackableTests (typescript, stackableName) {
       {
         path: 'test',
         file: 'index.test.ts',
-        contents: getTsStackableIndexTestFile(stackableName)
+        contents: getTsStackableIndexTestFile(stackableName),
       },
       {
         path: 'test',
         file: 'schema.test.ts',
-        contents: getTsStackableSchemaTestFile(stackableName)
+        contents: getTsStackableSchemaTestFile(stackableName),
       },
       {
         path: 'test',
         file: 'generator.test.ts',
-        contents: getTsStackableGeneratorTestFile()
-      }
+        contents: getTsStackableGeneratorTestFile(),
+      },
     ]
   }
   return [
     {
       path: 'test',
       file: 'index.test.js',
-      contents: getJsStackableIndexTestFile(stackableName)
+      contents: getJsStackableIndexTestFile(stackableName),
     },
     {
       path: 'test',
       file: 'schema.test.js',
-      contents: getJsStackableSchemaTestFile(stackableName)
+      contents: getJsStackableSchemaTestFile(stackableName),
     },
     {
       path: 'test',
       file: 'generator.test.js',
-      contents: getJsStackableGeneratorTestFile()
-    }
+      contents: getJsStackableGeneratorTestFile(),
+    },
   ]
 }
 
 module.exports = {
-  generateStackableTests
+  generateStackableTests,
 }

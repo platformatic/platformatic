@@ -55,7 +55,7 @@ async function buildServer (options, app) {
         config.server.hostname = '0.0.0.0'
       }
       fastifyOptions = {
-        ...config.server
+        ...config.server,
       }
     }
     fastifyOptions.genReqId = function (req) { return randomUUID() }
@@ -69,7 +69,7 @@ async function buildServer (options, app) {
     root.decorate('url', {
       getter () {
         return url
-      }
+      },
     })
 
     if (root.restarted) {
@@ -106,8 +106,8 @@ async function safeRestart (app) {
     app.log.error({
       err: {
         message: err.message,
-        stack: err.stack
-      }
+        stack: err.stack,
+      },
     }, 'failed to reload server')
   }
 }
@@ -159,8 +159,8 @@ async function start (appType, _args) {
       app.log.error({
         err: {
           message: err.message,
-          stack: err.stack
-        }
+          stack: err.stack,
+        },
       }, 'exiting')
     } else if (signal) {
       app.log.info({ signal }, 'received signal')

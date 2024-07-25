@@ -32,7 +32,7 @@ module.exports = async function adjustConfig (configManager) {
     /* c8 ignore next 4 */
     configManager.current.db.ignore = configManager.current.db.ignore || {}
     configManager.current.db.ignore = Object.assign({}, {
-      [configManager.current.migrations.table || migrationsTableName]: true
+      [configManager.current.migrations.table || migrationsTableName]: true,
     }, configManager.current.db.ignore)
   }
 }

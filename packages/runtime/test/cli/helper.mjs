@@ -8,8 +8,8 @@ setGlobalDispatcher(new Agent({
   keepAliveTimeout: 10,
   keepAliveMaxTimeout: 10,
   tls: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false,
+  },
 }))
 
 export const cliPath = join(import.meta.url, '..', '..', 'runtime.mjs')

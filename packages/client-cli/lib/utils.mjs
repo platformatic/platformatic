@@ -29,7 +29,7 @@ export async function appendToEnv (file, key, value) {
 export async function appendToBothEnvs (dir, key, value) {
   await Promise.all([
     appendToEnv(join(dir, '.env'), key, value),
-    appendToEnv(join(dir, '.env.sample'), key, value)
+    appendToEnv(join(dir, '.env.sample'), key, value),
   ])
 }
 
@@ -67,7 +67,7 @@ export function getResponseTypes (responses) {
   const output = {
     text: [],
     blob: [],
-    json: []
+    json: [],
   }
   Object.keys(responses).forEach((code) => {
     const resp = responses[code]

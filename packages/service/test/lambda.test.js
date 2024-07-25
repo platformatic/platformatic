@@ -14,9 +14,9 @@ test('should respond 200 on root endpoint', async (t) => {
       port: 0,
       healthCheck: {
         enabled: true,
-        interval: 2000
-      }
-    }
+        interval: 2000,
+      },
+    },
   }))
 
   t.after(async () => {
@@ -34,7 +34,7 @@ test('should respond 200 on root endpoint', async (t) => {
       headers: {
       },
       cookies: [],
-      queryStringParameters: ''
+      queryStringParameters: '',
     }
 
     const ret = await handler(evt)
@@ -55,10 +55,10 @@ test('should respond 200 on root endpoint', async (t) => {
       httpMethod: 'GET',
       path: '/',
       headers: {
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36',
       },
       cookies: [],
-      queryStringParameters: ''
+      queryStringParameters: '',
     }
 
     const ret = await handler(evt)
@@ -89,7 +89,7 @@ test('from a config file on disk', async (t) => {
     headers: {
     },
     cookies: [],
-    queryStringParameters: ''
+    queryStringParameters: '',
   }
 
   const ret = await handler(evt)

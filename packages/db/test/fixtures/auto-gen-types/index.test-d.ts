@@ -12,20 +12,19 @@ expectType<Partial<AggregateRating>[]>(aggregateRatings)
 
 const aggregateRating = aggregateRatings[0] as AggregateRating
 expectType<{
-	id?: number;
-	movieId: number;
-	rating: number;
-	ratingType: string;
+  id?: number;
+  movieId: number;
+  rating: number;
+  ratingType: string;
 }>(aggregateRating)
-
 
 const movies = await app.platformatic.entities.movie.find()
 expectType<Partial<Movie>[]>(movies)
 
 const movie = movies[0] as Movie
 expectType<{
-	id?: number;
-	title: string;
-	boxOffice?: number | null;
-	year: number;
+  id?: number;
+  title: string;
+  boxOffice?: number | null;
+  year: number;
 }>(movie)

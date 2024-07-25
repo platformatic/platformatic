@@ -7,7 +7,7 @@ const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const {
   createComposer,
   createOpenApiService,
-  testEntityRoutes
+  testEntityRoutes,
 } = require('./helper')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
@@ -28,35 +28,35 @@ test('should proxy openapi requests', async (t) => {
           id: 'service1',
           origin: origin1,
           openapi: {
-            url: '/documentation/json'
+            url: '/documentation/json',
           },
           proxy: {
-            prefix: '/internal/service1'
-          }
+            prefix: '/internal/service1',
+          },
         },
         {
           id: 'service2',
           origin: origin2,
           openapi: {
-            url: '/documentation/json'
+            url: '/documentation/json',
           },
           proxy: {
-            prefix: '/internal/service2'
-          }
+            prefix: '/internal/service2',
+          },
         },
         {
           id: 'service3',
           origin: origin3,
           openapi: {
-            url: '/documentation/json'
+            url: '/documentation/json',
           },
           proxy: {
-            prefix: '/'
-          }
-        }
+            prefix: '/',
+          },
+        },
       ],
-      refreshTimeout: 1000
-    }
+      refreshTimeout: 1000,
+    },
   }
 
   const composer = await createComposer(t, config)
@@ -64,7 +64,7 @@ test('should proxy openapi requests', async (t) => {
 
   const { statusCode, body } = await request(composerOrigin, {
     method: 'GET',
-    path: '/documentation/json'
+    path: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
@@ -89,7 +89,7 @@ test('should proxy openapi requests', async (t) => {
   {
     const { statusCode, body } = await request(composerOrigin, {
       method: 'GET',
-      path: '/internal/service1/documentation/json'
+      path: '/internal/service1/documentation/json',
     })
     assert.equal(statusCode, 200)
 
@@ -103,7 +103,7 @@ test('should proxy openapi requests', async (t) => {
   {
     const { statusCode, body } = await request(composerOrigin, {
       method: 'GET',
-      path: '/internal/service2/documentation/json'
+      path: '/internal/service2/documentation/json',
     })
     assert.equal(statusCode, 200)
 
@@ -118,7 +118,7 @@ test('should proxy openapi requests', async (t) => {
     // internal service gets the x-forwarded-for and x-forwarded-host headers
     const { statusCode, body } = await request(composerOrigin, {
       method: 'GET',
-      path: '/internal/service1/headers'
+      path: '/internal/service1/headers',
     })
     assert.equal(statusCode, 200)
 

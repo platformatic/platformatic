@@ -7,7 +7,7 @@ const {
   extractEnvVariablesFromText,
   getPackageConfigurationObject,
   PLT_ROOT,
-  getLatestNpmVersion
+  getLatestNpmVersion,
 } = require('./utils')
 const { join } = require('node:path')
 const { FileGenerator } = require('./file-generator')
@@ -24,7 +24,7 @@ const fakeLogger = {
   warn: () => {},
   debug: () => {},
   trace: () => {},
-  error: () => {}
+  error: () => {},
 }
 /* c8 ignore start */
 
@@ -60,7 +60,7 @@ class BaseGenerator extends FileGenerator {
       envPrefix: '',
       env: {},
       defaultEnv: {},
-      isUpdating: false
+      isUpdating: false,
     }
   }
 
@@ -137,7 +137,7 @@ class BaseGenerator extends FileGenerator {
     this.config = {
       ...this.getDefaultConfig(),
       ...oldConfig,
-      ...config
+      ...config,
     }
 
     if (this.config.isRuntimeContext) {
@@ -163,7 +163,7 @@ class BaseGenerator extends FileGenerator {
       const newConfig = await this.inquirer.prompt(this.questions)
       this.setConfig({
         ...this.config,
-        ...newConfig
+        ...newConfig,
       })
     }
   }
@@ -190,7 +190,7 @@ class BaseGenerator extends FileGenerator {
         this.addFile({
           path: '',
           file: 'platformatic.json',
-          contents: JSON.stringify(currentConfigFile, null, 2)
+          contents: JSON.stringify(currentConfigFile, null, 2),
         })
       } else {
         await this.getFastifyVersion()
@@ -203,7 +203,7 @@ class BaseGenerator extends FileGenerator {
         this.addFile({
           path: '',
           file: 'package.json',
-          contents: JSON.stringify(template, null, 2)
+          contents: JSON.stringify(template, null, 2),
         })
 
         await this.generateConfigFile()
@@ -215,7 +215,7 @@ class BaseGenerator extends FileGenerator {
           this.addFile({
             path: '',
             file: 'tsconfig.json',
-            contents: JSON.stringify(this.getTsConfig(), null, 2)
+            contents: JSON.stringify(this.getTsConfig(), null, 2),
           })
         }
 
@@ -236,7 +236,7 @@ class BaseGenerator extends FileGenerator {
       }
       return {
         targetDirectory: this.targetDirectory,
-        env: this.config.env
+        env: this.config.env,
       }
     } catch (err) {
       if (err.code?.startsWith('PLT_GEN')) {
@@ -280,15 +280,15 @@ class BaseGenerator extends FileGenerator {
         noEmitOnError: true,
         incremental: true,
         strict: true,
-        outDir: 'dist'
+        outDir: 'dist',
       },
       watchOptions: {
         watchFile: 'fixedPollingInterval',
         watchDirectory: 'fixedPollingInterval',
         fallbackPolling: 'dynamicPriority',
         synchronousWatchDirectory: true,
-        excludeDirectories: ['**/node_modules', 'dist']
-      }
+        excludeDirectories: ['**/node_modules', 'dist'],
+      },
     }
   }
 
@@ -299,7 +299,7 @@ class BaseGenerator extends FileGenerator {
         this.questions.push({
           type: 'input',
           name: 'targetDirectory',
-          message: 'Where would you like to create your project?'
+          message: 'Where would you like to create your project?',
         })
       }
 
@@ -309,14 +309,14 @@ class BaseGenerator extends FileGenerator {
         name: 'typescript',
         message: 'Do you want to use TypeScript?',
         default: false,
-        choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+        choices: [{ name: 'yes', value: true }, { name: 'no', value: false }],
       })
 
       // port
       this.questions.push({
         type: 'input',
         name: 'port',
-        message: 'What port do you want to use?'
+        message: 'What port do you want to use?',
       })
     }
   }
@@ -340,7 +340,7 @@ class BaseGenerator extends FileGenerator {
         }
         return {
           name: packageDefinition.name,
-          options: packageConfigOutput.config
+          options: packageConfigOutput.config,
         }
       })
     }
@@ -348,7 +348,7 @@ class BaseGenerator extends FileGenerator {
     this.addFile({
       path: '',
       file: configFileName,
-      contents: JSON.stringify(contents, null, 2)
+      contents: JSON.stringify(contents, null, 2),
     })
   }
 
@@ -380,19 +380,19 @@ class BaseGenerator extends FileGenerator {
       name: `${this.config.serviceName}`,
       scripts: {
         start: 'platformatic start',
-        test: 'borp'
+        test: 'borp',
       },
       devDependencies: {
         fastify: `^${this.fastifyVersion}`,
         borp: `${this.pkgData.devDependencies.borp}`,
-        ...this.config.devDependencies
+        ...this.config.devDependencies,
       },
       dependencies: {
-        ...this.config.dependencies
+        ...this.config.dependencies,
       },
       engines: {
-        node: '^18.8.0 || >=20.6.0'
-      }
+        node: '^18.8.0 || >=20.6.0',
+      },
     }
 
     if (this.config.typescript) {
@@ -409,7 +409,7 @@ class BaseGenerator extends FileGenerator {
       this.addFile({
         path: '',
         file: '.env',
-        contents: serializeEnvVars(this.config.env)
+        contents: serializeEnvVars(this.config.env),
       })
 
       const emptyEnvVars = {}
@@ -424,8 +424,8 @@ class BaseGenerator extends FileGenerator {
         file: '.env.sample',
         contents: serializeEnvVars({
           ...this.config.defaultEnv,
-          ...emptyEnvVars
-        })
+          ...emptyEnvVars,
+        }),
       })
     }
   }
@@ -461,7 +461,7 @@ class BaseGenerator extends FileGenerator {
         const flattened = flattenObject(pkg)
         const output = {
           name: flattened.name,
-          options: []
+          options: [],
         }
         if (pkg.options) {
           Object.entries(flattened)
@@ -473,7 +473,7 @@ class BaseGenerator extends FileGenerator {
                 name: serviceEnvVarKey,
                 path: key.replace('options.', ''),
                 type: 'string',
-                value: runtimeEnv[runtimeEnvVarKey]
+                value: runtimeEnv[runtimeEnvVarKey],
               }
               output.options.push(option)
             })
@@ -487,7 +487,7 @@ class BaseGenerator extends FileGenerator {
       name: serviceName,
       template: getServiceTemplateFromSchemaUrl(servicePkgJsonFileData.$schema),
       fields: [],
-      plugins
+      plugins,
     }
   }
 

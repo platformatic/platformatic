@@ -25,8 +25,8 @@ test('parses composer and client dependencies', async (t) => {
     {
       id: 'external-service-1',
       url: 'http://external-dependency-1',
-      local: false
-    }
+      local: false,
+    },
   ])
 
   const service1 = services.find((service) => service.id === 'service-1')

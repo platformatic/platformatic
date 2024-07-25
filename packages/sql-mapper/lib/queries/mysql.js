@@ -149,5 +149,5 @@ module.exports = {
   ...shared,
   insertOne,
   insertMany,
-  deleteAll
+  deleteAll,
 }

@@ -14,14 +14,14 @@ test('composer should restart if a service with openapi and graphql updates', as
     const schema2 = 'type Query {\n  greetings: String\n}'
     const graphql1 = await createGraphqlService(t, {
       schema: schema1,
-      resolvers: { Query: { rnd: () => Math.floor(Math.rnd() * 100) } }
+      resolvers: { Query: { rnd: () => Math.floor(Math.rnd() * 100) } },
     })
     const graphql1Origin = await graphql1.listen()
     const port = graphql1.server.address().port
 
     const graphql1a = await createGraphqlService(t, {
       schema: schema2,
-      resolvers: { Query: { greetings: () => 'welcome' } }
+      resolvers: { Query: { greetings: () => 'welcome' } },
     })
 
     const openapi1 = await createOpenApiService(t, ['users'])
@@ -34,19 +34,19 @@ test('composer should restart if a service with openapi and graphql updates', as
             {
               id: 'graphql1',
               origin: graphql1Origin,
-              graphql: true
+              graphql: true,
             },
             {
               id: 'openapi1',
               origin: openapi1Origin,
               openapi: {
                 url: '/documentation/json',
-                prefix: '/api1'
-              }
-            }
+                prefix: '/api1',
+              },
+            },
           ],
-          refreshTimeout: REFRESH_TIMEOUT
-        }
+          refreshTimeout: REFRESH_TIMEOUT,
+        },
       }
     )
 
@@ -55,7 +55,7 @@ test('composer should restart if a service with openapi and graphql updates', as
     assert.equal(composer.graphqlSupergraph.sdl, schema1)
     {
       const { statusCode } = await request(composerOrigin, {
-        path: '/documentation/json'
+        path: '/documentation/json',
       })
       assert.equal(statusCode, 200, 'openapi are reachable on composer')
     }
@@ -69,7 +69,7 @@ test('composer should restart if a service with openapi and graphql updates', as
     assert.equal(composer.graphqlSupergraph.sdl, schema2, 'graphql schema updated')
     {
       const { statusCode } = await request(composerOrigin, {
-        path: '/documentation/json'
+        path: '/documentation/json',
       })
       assert.equal(statusCode, 200)
     }
@@ -81,7 +81,7 @@ test('composer should restart if a service with openapi and graphql updates', as
 
     const graphql1 = await createGraphqlService(t, {
       schema,
-      resolvers: { Query: { rnd: () => Math.floor(Math.rnd() * 100) } }
+      resolvers: { Query: { rnd: () => Math.floor(Math.rnd() * 100) } },
     })
     const graphql1Origin = await graphql1.listen()
 
@@ -98,19 +98,19 @@ test('composer should restart if a service with openapi and graphql updates', as
             {
               id: 'graphql1',
               origin: graphql1Origin,
-              graphql: true
+              graphql: true,
             },
             {
               id: 'openapi1',
               origin: openapi1Origin,
               openapi: {
                 url: '/documentation/json',
-                prefix: '/api1'
-              }
-            }
+                prefix: '/api1',
+              },
+            },
           ],
-          refreshTimeout: REFRESH_TIMEOUT
-        }
+          refreshTimeout: REFRESH_TIMEOUT,
+        },
       }
     )
 
@@ -119,7 +119,7 @@ test('composer should restart if a service with openapi and graphql updates', as
     assert.equal(composer.graphqlSupergraph.sdl, schema)
     {
       const { statusCode } = await request(composerOrigin, {
-        path: '/documentation/json'
+        path: '/documentation/json',
       })
       assert.equal(statusCode, 200, 'openapi are reachable on composer')
     }
@@ -133,7 +133,7 @@ test('composer should restart if a service with openapi and graphql updates', as
     assert.equal(composer.graphqlSupergraph.sdl, schema, 'graphql has the same schema')
     {
       const { statusCode } = await request(composerOrigin, {
-        path: '/documentation/json'
+        path: '/documentation/json',
       })
       assert.equal(statusCode, 200)
     }

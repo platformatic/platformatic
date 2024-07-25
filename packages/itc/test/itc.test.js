@@ -7,7 +7,7 @@ const { MessageChannel } = require('node:worker_threads')
 const { ITC } = require('../index.js')
 const {
   generateItcRequest,
-  generateItcResponse
+  generateItcResponse,
 } = require('./helper.js')
 
 test('should send a request between threads', async (t) => {
@@ -317,8 +317,8 @@ test('should sanitize a request before sending', async (t) => {
     nested: {
       test: 'test-req-message',
       foo: () => {},
-      bar: Symbol('test')
-    }
+      bar: Symbol('test'),
+    },
   }
   const testResponse = { test: 'test-res-message' }
 
@@ -338,7 +338,7 @@ test('should sanitize a request before sending', async (t) => {
   assert.deepStrictEqual(response, testResponse)
   assert.deepStrictEqual(requests, [{
     test: 'test-req-message',
-    nested: { test: 'test-req-message' }
+    nested: { test: 'test-req-message' },
   }])
 })
 

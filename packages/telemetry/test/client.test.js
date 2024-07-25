@@ -33,8 +33,8 @@ test('should add the propagation headers correctly, new propagation started', as
   const app = await setupApp({
     serviceName: 'test-service',
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   }, handler, test.after)
 
   const { startSpanClient } = app.openTelemetry
@@ -45,7 +45,7 @@ test('should add the propagation headers correctly, new propagation started', as
   const spanId = span._spanContext.spanId
   const traceId = span._spanContext.traceId
   deepEqual(telemetryHeaders, {
-    traceparent: `00-${traceId}-${spanId}-01`
+    traceparent: `00-${traceId}-${spanId}-01`,
   })
 })
 
@@ -62,8 +62,8 @@ test('should add the propagation headers correctly, with propagation already sta
     serviceName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   }, handler, test.after)
 
   const { startSpanClient } = app.openTelemetry
@@ -71,7 +71,7 @@ test('should add the propagation headers correctly, with propagation already sta
   const url = 'http://localhost:3000/test'
   const incomingHeaders = {
     host: 'test',
-    traceparent
+    traceparent,
   }
   const { propagator } = app.openTelemetry
   const context = propagator.extract(new PlatformaticContext(), { headers: incomingHeaders }, fastifyTextMapGetter)
@@ -84,7 +84,7 @@ test('should add the propagation headers correctly, with propagation already sta
   // We preserved the tracedId
   deepEqual(traceId, traceId2)
   deepEqual(telemetryHeaders, {
-    traceparent: `00-${traceId}-${spanId2}-01`
+    traceparent: `00-${traceId}-${spanId2}-01`,
   })
 })
 
@@ -99,8 +99,8 @@ test('should trace a client request', async () => {
     serviceName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   }, handler, test.after)
 
   const { startSpanClient, endSpanClient } = app.openTelemetry
@@ -115,8 +115,8 @@ test('should trace a client request', async () => {
     method: 'GET',
     url: '/test',
     headers: {
-      ...telemetryHeaders
-    }
+      ...telemetryHeaders,
+    },
   }
 
   const response = await app.inject(args)
@@ -159,8 +159,8 @@ test('should trace a client request failing', async () => {
     serviceName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   }, handler, test.after)
 
   const { startSpanClient, endSpanClient } = app.openTelemetry
@@ -173,7 +173,7 @@ test('should trace a client request failing', async () => {
   const args = {
     method: 'GET',
     url: '/wrong',
-    headers: telemetryHeaders
+    headers: telemetryHeaders,
   }
   const response = await app.inject(args)
   endSpanClient(span, response)
@@ -209,8 +209,8 @@ test('should trace a client request failing (no HTTP error)', async () => {
     serviceName: 'test-service',
     version: '1.0.0',
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   }, handler, test.after)
 
   const { startSpanClient, endSpanClient, setErrorInSpanClient } = app.openTelemetry
@@ -247,8 +247,8 @@ test('should not add the query in span name', async () => {
   const app = await setupApp({
     serviceName: 'test-service',
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   }, handler, test.after)
 
   const { startSpanClient } = app.openTelemetry
@@ -268,12 +268,12 @@ test('should ignore the skipped operations', async () => {
     skip: [
       {
         path: '/skipme',
-        method: 'POST'
-      }
+        method: 'POST',
+      },
     ],
     exporter: {
-      type: 'memory'
-    }
+      type: 'memory',
+    },
   }, handler, test.after)
 
   const { startSpanClient } = app.openTelemetry

@@ -23,34 +23,34 @@ async function buildConnection (log, createConnectionPool, connectionString, poo
       log.trace({
         query: {
           text,
-          values
-        }
+          values,
+        },
       }, 'start query')
     },
     onQueryResults: (_query, { text }, results) => {
       log.trace({
         query: {
           text,
-          results: results.length
-        }
+          results: results.length,
+        },
       }, 'end query')
     },
     onQueryError: (_query, { text }, err) => {
       log.error({
         query: {
           text,
-          error: err.message
-        }
+          error: err.message,
+        },
       }, 'query error')
     },
-    schema
+    schema,
   })
   return db
 }
 
 const defaultAutoTimestampFields = {
   createdAt: 'created_at',
-  updatedAt: 'updated_at'
+  updatedAt: 'updated_at',
 }
 
 async function createConnectionPool ({ log, connectionString, poolSize, idleTimeoutMilliseconds, queueTimeoutMilliseconds, acquireLockTimeoutMilliseconds }) {
@@ -87,10 +87,10 @@ async function createConnectionPool ({ log, connectionString, poolSize, idleTime
       onQuery ({ text, values }) {
         log.trace({
           query: {
-            text
-          }
+            text,
+          },
         }, 'query')
-      }
+      },
     })
     sql = sqlite.sql
     db.isSQLite = true
@@ -224,7 +224,7 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize, inclu
       entities,
       cleanUpAllEntities: buildCleanUp(db, sql, log, entities, queries),
       addEntityHooks,
-      dbschema
+      dbschema,
     }
 
     if (cache) {
@@ -253,7 +253,7 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize, inclu
 async function sqlMapper (app, opts) {
   const mapper = await connect({
     log: app.log,
-    ...opts
+    ...opts,
   })
 
   app.onClose(() => mapper.db.dispose())
@@ -269,7 +269,7 @@ async function sqlMapper (app, opts) {
   app.addHook('onRequest', function (req, reply, done) {
     req.platformaticContext = {
       app: this, // uses the encapsulated fastify instance of the route
-      reply
+      reply,
     }
     done()
   })

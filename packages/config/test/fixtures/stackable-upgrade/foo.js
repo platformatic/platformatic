@@ -19,15 +19,15 @@ foo.configManagerConfig = {
     useDefaults: true,
     coerceTypes: true,
     allErrors: true,
-    strict: false
+    strict: false,
   },
   upgrade (config, originalVersion) {
     this.logger.child({}).info('bar')
     return {
       ...config,
-      originalVersion
+      originalVersion,
     }
-  }
+  },
 }
 
 module.exports = foo

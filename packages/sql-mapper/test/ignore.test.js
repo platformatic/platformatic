@@ -8,7 +8,7 @@ const { clear, connInfo, createBasicPages } = require('./helper')
 const fakeLogger = {
   trace: () => {},
   error: () => {},
-  warn: () => {}
+  warn: () => {},
 }
 
 test('ignore a table', async (t) => {
@@ -29,8 +29,8 @@ test('ignore a table', async (t) => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {
-      categories: true
-    }
+      categories: true,
+    },
   })
 
   const pageEntity = mapper.entities.page
@@ -59,7 +59,7 @@ test('show a warning if there is no ignored table', async (t) => {
     error: () => {},
     warn: (msg) => {
       equal(msg, 'Ignored table "missing_table_pages" not found. Did you mean "pages"?')
-    }
+    },
   }
 
   const mapper = await connect({
@@ -67,8 +67,8 @@ test('show a warning if there is no ignored table', async (t) => {
     log: logger,
     onDatabaseLoad,
     ignore: {
-      missing_table_pages: true
-    }
+      missing_table_pages: true,
+    },
   })
 
   const pageEntity = mapper.entities.page
@@ -96,7 +96,7 @@ test('show a warning if the database is empty', async (t) => {
     error: () => {},
     warn: (msg) => {
       equal(msg, 'Ignored table "missing_table_pages" not found.')
-    }
+    },
   }
 
   await connect({
@@ -104,8 +104,8 @@ test('show a warning if the database is empty', async (t) => {
     log: logger,
     onDatabaseLoad,
     ignore: {
-      missing_table_pages: true
-    }
+      missing_table_pages: true,
+    },
   })
 })
 
@@ -129,9 +129,9 @@ test('ignore a column', async (t) => {
     onDatabaseLoad,
     ignore: {
       categories: {
-        name: true
-      }
-    }
+        name: true,
+      },
+    },
   })
 
   const pageEntity = mapper.entities.page
@@ -162,7 +162,7 @@ test('shows a warning if there is no ignored column', async (t) => {
     error: () => {},
     warn: (msg) => {
       equal(msg, 'Ignored column "missing_column_name" not found. Did you mean "name"?')
-    }
+    },
   }
 
   const mapper = await connect({
@@ -171,9 +171,9 @@ test('shows a warning if there is no ignored column', async (t) => {
     onDatabaseLoad,
     ignore: {
       categories: {
-        missing_column_name: true
-      }
-    }
+        missing_column_name: true,
+      },
+    },
   })
 
   const pageEntity = mapper.entities.page

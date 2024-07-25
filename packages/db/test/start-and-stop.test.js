@@ -14,14 +14,14 @@ test('starts, query and stop', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     db: {
       ...connectionInfo,
       async onDatabaseLoad (db, sql) {
         await createBasicPages(db, sql)
-      }
-    }
+      },
+    },
   }
 
   const configManager = await buildConfigManager(config)
@@ -45,8 +45,8 @@ test('starts, query and stop', async (t) => {
               title
             }
           }
-        `
-      })
+        `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'savePage status code')
 
@@ -55,9 +55,9 @@ test('starts, query and stop', async (t) => {
       data: {
         savePage: {
           id: '1',
-          title: 'Hello'
-        }
-      }
+          title: 'Hello',
+        },
+      },
     }, 'savePage response')
   }
 
@@ -73,17 +73,17 @@ test('starts, query and stop', async (t) => {
               title
             }
           }
-        `
-      })
+        `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'pages status code')
     assert.deepEqual(await res.body.json(), {
       data: {
         getPageById: {
           id: '1',
-          title: 'Hello'
-        }
-      }
+          title: 'Hello',
+        },
+      },
     }, 'pages response')
   }
 
@@ -99,17 +99,17 @@ test('starts, query and stop', async (t) => {
               title
             }
           }
-        `
-      })
+        `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'savePage status code')
     assert.deepEqual(await res.body.json(), {
       data: {
         savePage: {
           id: '1',
-          title: 'Hello World'
-        }
-      }
+          title: 'Hello World',
+        },
+      },
     }, 'savePage response')
   }
 
@@ -125,17 +125,17 @@ test('starts, query and stop', async (t) => {
               title
             }
           }
-        `
-      })
+        `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'pages status code')
     assert.deepEqual(await res.body.json(), {
       data: {
         getPageById: {
           id: '1',
-          title: 'Hello World'
-        }
-      }
+          title: 'Hello World',
+        },
+      },
     }, 'pages response')
   }
 })
@@ -146,14 +146,14 @@ test('inject', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     db: {
       ...connectionInfo,
       async onDatabaseLoad (db, sql) {
         await createBasicPages(db, sql)
-      }
-    }
+      },
+    },
   }
 
   const configManager = await buildConfigManager(config)
@@ -178,17 +178,17 @@ test('inject', async (t) => {
               title
             }
           }
-        `
-      })
+        `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'savePage status code')
     assert.deepEqual(res.json(), {
       data: {
         savePage: {
           id: '1',
-          title: 'Hello'
-        }
-      }
+          title: 'Hello',
+        },
+      },
     }, 'savePage response')
   }
 })
@@ -206,14 +206,14 @@ test('ignore and sqlite3', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     db: {
-      connectionString: `sqlite://${dbLocation}`
+      connectionString: `sqlite://${dbLocation}`,
     },
     migrations: {
-      dir: migrations
-    }
+      dir: migrations,
+    },
   }
 
   const configManager = await buildConfigManager(config)

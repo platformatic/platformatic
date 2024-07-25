@@ -4,7 +4,7 @@ const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const {
   createComposer,
-  createOpenApiService
+  createOpenApiService,
 } = require('../helper')
 
 test('should respond 200 on root endpoint', async (t) => {
@@ -22,7 +22,7 @@ test('should respond 200 on root endpoint', async (t) => {
     const { statusCode, body } = await composer.inject({
       method: 'GET',
       url: '/',
-      headers: { 'user-agent': '' }
+      headers: { 'user-agent': '' },
     })
     assert.equal(statusCode, 200)
     assert.deepEqual(JSON.parse(body), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
@@ -34,8 +34,8 @@ test('should respond 200 on root endpoint', async (t) => {
       method: 'GET',
       url: '/',
       headers: {
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'
-      }
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36',
+      },
     })
     assert.equal(statusCode, 200)
     assert.equal(headers['content-type'], 'text/html; charset=UTF-8')
@@ -60,11 +60,11 @@ test('should not expose a default root endpoint if it is composed', async (t) =>
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
           openapi: {
-            url: '/documentation/json'
-          }
-        }
-      ]
-    }
+            url: '/documentation/json',
+          },
+        },
+      ],
+    },
   })
 
   const { statusCode, body } = await composer.inject({ method: 'GET', url: '/' })

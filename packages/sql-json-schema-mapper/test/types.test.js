@@ -29,28 +29,28 @@ referenceTest('p1', {
   type: 'object',
   properties: {
     id: {
-      type: 'integer'
+      type: 'integer',
     },
     description: {
       type: 'string',
-      nullable: true
+      nullable: true,
     },
     metadata: {
       type: 'object',
       additionalProperties: true,
-      nullable: true
+      nullable: true,
     },
     section: {
       type: 'number',
-      nullable: true
+      nullable: true,
     },
     title: {
-      type: 'string'
-    }
+      type: 'string',
+    },
   },
   required: [
-    'title'
-  ]
+    'title',
+  ],
 })
 
 referenceTest('p2', {
@@ -60,23 +60,23 @@ referenceTest('p2', {
   type: 'object',
   properties: {
     id: {
-      type: 'integer'
+      type: 'integer',
     },
     description: {
       type: 'string',
-      nullable: true
+      nullable: true,
     },
     metadata: {
       type: 'object',
       additionalProperties: true,
-      nullable: true
+      nullable: true,
     },
     section: {
       type: 'number',
-      nullable: true
-    }
+      nullable: true,
+    },
   },
-  required: []
+  required: [],
 })
 
 referenceTest('p3', {
@@ -86,24 +86,24 @@ referenceTest('p3', {
   type: 'object',
   properties: {
     id: {
-      type: 'integer'
+      type: 'integer',
     },
     test: {
       type: 'integer',
-      nullable: true
+      nullable: true,
     },
     testStored: {
       type: 'integer',
       nullable: true,
-      readOnly: true
+      readOnly: true,
     },
     testVirtual: {
       type: 'integer',
       nullable: true,
-      readOnly: true
-    }
+      readOnly: true,
+    },
   },
-  required: []
+  required: [],
 })
 
 referenceTest('multiple types', {
@@ -113,27 +113,27 @@ referenceTest('multiple types', {
   type: 'object',
   properties: {
     id: {
-      type: ['integer', 'string']
+      type: ['integer', 'string'],
     },
     description: {
       type: 'string',
-      nullable: true
+      nullable: true,
     },
     metadata: {
       type: 'object',
       additionalProperties: true,
-      nullable: true
+      nullable: true,
     },
     section: {
-      type: ['number', 'null']
+      type: ['number', 'null'],
     },
     title: {
-      type: 'string'
-    }
+      type: 'string',
+    },
   },
   required: [
-    'title'
-  ]
+    'title',
+  ],
 })
 
 referenceTest('arrays', {
@@ -143,21 +143,21 @@ referenceTest('arrays', {
   type: 'object',
   properties: {
     id: {
-      type: 'integer'
+      type: 'integer',
     },
     tags: {
       type: 'array',
       items: {
-        type: 'string'
-      }
+        type: 'string',
+      },
     },
     title: {
-      type: 'string'
-    }
+      type: 'string',
+    },
   },
   required: [
-    'title'
-  ]
+    'title',
+  ],
 })
 
 referenceTest('objects in arrays', {
@@ -167,7 +167,7 @@ referenceTest('objects in arrays', {
   type: 'object',
   properties: {
     id: {
-      type: 'integer'
+      type: 'integer',
     },
     tags: {
       type: 'array',
@@ -175,18 +175,18 @@ referenceTest('objects in arrays', {
         type: 'object',
         properties: {
           foo: {
-            type: 'string'
-          }
-        }
-      }
+            type: 'string',
+          },
+        },
+      },
     },
     title: {
-      type: 'string'
-    }
+      type: 'string',
+    },
   },
   required: [
-    'title'
-  ]
+    'title',
+  ],
 })
 
 referenceTest('enums', {
@@ -196,17 +196,17 @@ referenceTest('enums', {
   type: 'object',
   properties: {
     id: {
-      type: 'integer'
+      type: 'integer',
     },
     color: {
       type: 'string',
-      enum: ['amber', 'green', 'red']
+      enum: ['amber', 'green', 'red'],
     },
     title: {
-      type: 'string'
-    }
+      type: 'string',
+    },
   },
   required: [
-    'title'
-  ]
+    'title',
+  ],
 })

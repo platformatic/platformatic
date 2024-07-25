@@ -16,9 +16,9 @@ function createSampleGraphqlService (t) {
       Query: {
         async add (_, { x, y }) {
           return x + y
-        }
-      }
-    }
+        },
+      },
+    },
   })
 }
 
@@ -35,10 +35,10 @@ test('should get a warning using graphql services', async t => {
           {
             id: 'graphql1',
             origin: graphql1Host,
-            graphql: true
-          }
-        ]
-      }
+            graphql: true,
+          },
+        ],
+      },
     },
     logger
   )
@@ -59,12 +59,12 @@ test('should enable graphiql on composer', async t => {
           {
             id: 'graphql1',
             graphql: {
-              host: graphql1Host
-            }
-          }
+              host: graphql1Host,
+            },
+          },
         ],
-        graphql: { graphiql: true }
-      }
+        graphql: { graphiql: true },
+      },
     }
   )
 
@@ -85,11 +85,11 @@ test('graphiql should be disabled on composer by default', async t => {
           {
             id: 'graphql1',
             graphql: {
-              host: graphql1Host
-            }
-          }
-        ]
-      }
+              host: graphql1Host,
+            },
+          },
+        ],
+      },
     }
   )
 

@@ -12,81 +12,81 @@ const cors = {
           type: 'array',
           items: {
             anyOf: [{
-              type: 'string'
+              type: 'string',
             }, {
               type: 'object',
               properties: {
                 regexp: {
-                  type: 'string'
-                }
+                  type: 'string',
+                },
               },
-              required: ['regexp']
-            }]
-          }
+              required: ['regexp'],
+            }],
+          },
         },
         {
           type: 'object',
           properties: {
             regexp: {
-              type: 'string'
-            }
+              type: 'string',
+            },
           },
-          required: ['regexp']
-        }
-      ]
+          required: ['regexp'],
+        },
+      ],
     },
     methods: {
       type: 'array',
       items: {
-        type: 'string'
-      }
+        type: 'string',
+      },
     },
     allowedHeaders: {
       type: 'string',
-      description: 'Comma separated string of allowed headers.'
+      description: 'Comma separated string of allowed headers.',
     },
     exposedHeaders: {
       anyOf: [
         {
           type: 'array',
           items: {
-            type: 'string'
-          }
+            type: 'string',
+          },
         },
         {
           type: 'string',
-          description: 'Comma separated string of exposed headers.'
-        }
-      ]
+          description: 'Comma separated string of exposed headers.',
+        },
+      ],
     },
     credentials: {
-      type: 'boolean'
+      type: 'boolean',
     },
     maxAge: {
-      type: 'integer'
+      type: 'integer',
     },
     preflightContinue: {
       type: 'boolean',
-      default: false
+      default: false,
     },
     optionsSuccessStatus: {
       type: 'integer',
-      default: 204
+      default: 204,
     },
     preflight: {
       type: 'boolean',
-      default: true
+      default: true,
     },
     strictPreflight: {
       type: 'boolean',
-      default: true
+      default: true,
     },
     hideOptionsRoute: {
       type: 'boolean',
-      default: true
-    }
+      default: true,
+    },
   },
-  additionalProperties: false
+  additionalProperties: false,
 }
 
 const server = {
@@ -94,16 +94,16 @@ const server = {
   properties: {
     // TODO add support for level
     hostname: {
-      type: 'string'
+      type: 'string',
     },
     port: {
       anyOf: [
         { type: 'integer' },
-        { type: 'string' }
-      ]
+        { type: 'string' },
+      ],
     },
     pluginTimeout: {
-      type: 'integer'
+      type: 'integer',
     },
     healthCheck: {
       anyOf: [
@@ -112,48 +112,48 @@ const server = {
           type: 'object',
           properties: {
             enabled: { type: 'boolean' },
-            interval: { type: 'integer' }
+            interval: { type: 'integer' },
           },
-          additionalProperties: true
-        }
-      ]
+          additionalProperties: true,
+        },
+      ],
     },
     ignoreTrailingSlash: {
-      type: 'boolean'
+      type: 'boolean',
     },
     ignoreDuplicateSlashes: {
-      type: 'boolean'
+      type: 'boolean',
     },
     connectionTimeout: {
-      type: 'integer'
+      type: 'integer',
     },
     keepAliveTimeout: {
       type: 'integer',
-      default: 5000
+      default: 5000,
     },
     maxRequestsPerSocket: {
-      type: 'integer'
+      type: 'integer',
     },
     forceCloseConnections: {
       anyOf: [
         { type: 'boolean' },
-        { type: 'string', pattern: '^idle$' }
-      ]
+        { type: 'string', pattern: '^idle$' },
+      ],
     },
     requestTimeout: {
-      type: 'integer'
+      type: 'integer',
     },
     bodyLimit: {
-      type: 'integer'
+      type: 'integer',
     },
     maxParamLength: {
-      type: 'integer'
+      type: 'integer',
     },
     disableRequestLogging: {
-      type: 'boolean'
+      type: 'boolean',
     },
     exposeHeadRoutes: {
-      type: 'boolean'
+      type: 'boolean',
     },
     logger: {
       anyOf: [
@@ -162,7 +162,7 @@ const server = {
           type: 'object',
           properties: {
             level: {
-              type: 'string'
+              type: 'string',
             },
             transport: {
               anyOf: [{
@@ -170,13 +170,13 @@ const server = {
                 properties: {
                   target: {
                     type: 'string',
-                    resolveModule: true
+                    resolveModule: true,
                   },
                   options: {
-                    type: 'object'
-                  }
+                    type: 'object',
+                  },
                 },
-                additionalProperties: false
+                additionalProperties: false,
               }, {
                 type: 'object',
                 properties: {
@@ -187,92 +187,92 @@ const server = {
                       properties: {
                         target: {
                           type: 'string',
-                          resolveModule: true
+                          resolveModule: true,
                         },
                         options: {
-                          type: 'object'
+                          type: 'object',
                         },
                         level: {
-                          type: 'string'
+                          type: 'string',
                         },
-                        additionalProperties: false
-                      }
-                    }
+                        additionalProperties: false,
+                      },
+                    },
                   },
                   options: {
-                    type: 'object'
-                  }
+                    type: 'object',
+                  },
                 },
-                additionalProperties: false
-              }]
+                additionalProperties: false,
+              }],
             },
             pipeline: {
               type: 'object',
               properties: {
                 target: {
                   type: 'string',
-                  resolveModule: true
+                  resolveModule: true,
                 },
                 options: {
-                  type: 'object'
-                }
+                  type: 'object',
+                },
               },
-              additionalProperties: false
-            }
+              additionalProperties: false,
+            },
           },
-          additionalProperties: true
-        }
-      ]
+          additionalProperties: true,
+        },
+      ],
     },
     serializerOpts: {
       type: 'object',
       properties: {
         schema: {
-          type: 'object'
+          type: 'object',
         },
         ajv: {
-          type: 'object'
+          type: 'object',
         },
         rounding: {
           type: 'string',
           enum: ['floor', 'ceil', 'round', 'trunc'],
-          default: 'trunc'
+          default: 'trunc',
         },
         debugMode: {
-          type: 'boolean'
+          type: 'boolean',
         },
         mode: {
           type: 'string',
-          enum: ['debug', 'standalone']
+          enum: ['debug', 'standalone'],
         },
         largeArraySize: {
           anyOf: [
             { type: 'integer' },
-            { type: 'string' }
+            { type: 'string' },
           ],
-          default: 20000
+          default: 20000,
         },
         largeArrayMechanism: {
           type: 'string',
           enum: ['default', 'json-stringify'],
-          default: 'default'
-        }
-      }
+          default: 'default',
+        },
+      },
     },
     caseSensitive: {
-      type: 'boolean'
+      type: 'boolean',
     },
     requestIdHeader: {
       anyOf: [
         { type: 'string' },
-        { type: 'boolean', const: false }
-      ]
+        { type: 'boolean', const: false },
+      ],
     },
     requestIdLogLabel: {
-      type: 'string'
+      type: 'string',
     },
     jsonShorthand: {
-      type: 'boolean'
+      type: 'boolean',
     },
     trustProxy: {
       anyOf: [
@@ -281,108 +281,108 @@ const server = {
         {
           type: 'array',
           items: {
-            type: 'string'
-          }
+            type: 'string',
+          },
         },
-        { type: 'integer' }
-      ]
+        { type: 'integer' },
+      ],
     },
     http2: {
-      type: 'boolean'
+      type: 'boolean',
     },
     https: {
       type: 'object',
       properties: {
         allowHTTP1: {
-          type: 'boolean'
+          type: 'boolean',
         },
         key: {
           anyOf: [
             {
-              type: 'string'
+              type: 'string',
             },
             {
               type: 'object',
               properties: {
                 path: {
                   type: 'string',
-                  resolvePath: true
-                }
+                  resolvePath: true,
+                },
               },
-              additionalProperties: false
+              additionalProperties: false,
             },
             {
               type: 'array',
               items: {
                 anyOf: [
                   {
-                    type: 'string'
+                    type: 'string',
                   },
                   {
                     type: 'object',
                     properties: {
                       path: {
                         type: 'string',
-                        resolvePath: true
-                      }
+                        resolvePath: true,
+                      },
                     },
-                    additionalProperties: false
-                  }
-                ]
-              }
-            }
-          ]
+                    additionalProperties: false,
+                  },
+                ],
+              },
+            },
+          ],
         },
         cert: {
           anyOf: [
             {
-              type: 'string'
+              type: 'string',
             },
             {
               type: 'object',
               properties: {
                 path: {
                   type: 'string',
-                  resolvePath: true
-                }
+                  resolvePath: true,
+                },
               },
-              additionalProperties: false
+              additionalProperties: false,
             },
             {
               type: 'array',
               items: {
                 anyOf: [
                   {
-                    type: 'string'
+                    type: 'string',
                   },
                   {
                     type: 'object',
                     properties: {
                       path: {
                         type: 'string',
-                        resolvePath: true
-                      }
+                        resolvePath: true,
+                      },
                     },
-                    additionalProperties: false
-                  }
-                ]
-              }
-            }
-          ]
+                    additionalProperties: false,
+                  },
+                ],
+              },
+            },
+          ],
         },
         requestCert: {
-          type: 'boolean'
+          type: 'boolean',
         },
         rejectUnauthorized: {
-          type: 'boolean'
-        }
+          type: 'boolean',
+        },
       },
       additionalProperties: false,
-      required: ['key', 'cert']
+      required: ['key', 'cert'],
     },
-    cors
+    cors,
   },
-  additionalProperties: false
+  additionalProperties: false,
 }
 
 module.exports.server = server

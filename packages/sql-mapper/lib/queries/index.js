@@ -5,19 +5,19 @@
 const obj = {}
 
 Object.defineProperty(obj, 'pg', {
-  get: () => require('./pg')
+  get: () => require('./pg'),
 })
 
 Object.defineProperty(obj, 'mysql', {
-  get: () => require('./mysql')
+  get: () => require('./mysql'),
 })
 
 Object.defineProperty(obj, 'mariadb', {
-  get: () => require('./mariadb')
+  get: () => require('./mariadb'),
 })
 
 Object.defineProperty(obj, 'sqlite', {
-  get: () => require('./sqlite')
+  get: () => require('./sqlite'),
 })
 
 module.exports = obj

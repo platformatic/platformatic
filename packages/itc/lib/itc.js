@@ -37,7 +37,7 @@ class ITC extends EventEmitter {
 
     const { error, data } = await Promise.race([
       responsePromise,
-      this.#closePromise
+      this.#closePromise,
     ])
 
     if (error !== null) throw error
@@ -164,7 +164,7 @@ class ITC extends EventEmitter {
       version: PLT_ITC_VERSION,
       reqId: randomUUID(),
       name,
-      data
+      data,
     }
   }
 
@@ -175,7 +175,7 @@ class ITC extends EventEmitter {
       reqId: request.reqId,
       name: request.name,
       error,
-      data
+      data,
     }
   }
 
@@ -184,7 +184,7 @@ class ITC extends EventEmitter {
       type: PLT_ITC_UNHANDLED_ERROR_TYPE,
       version: PLT_ITC_VERSION,
       error,
-      data: null
+      data: null,
     }
   }
 

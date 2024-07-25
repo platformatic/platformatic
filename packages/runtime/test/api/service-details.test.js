@@ -29,6 +29,6 @@ test('should get service details', async (t) => {
     version: platformaticVersion,
     entrypoint: false,
     localUrl: 'http://with-logger.plt.local',
-    dependencies: []
+    dependencies: [],
   })
 })

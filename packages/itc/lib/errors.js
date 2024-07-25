@@ -52,5 +52,5 @@ module.exports = {
   MessagePortClosed: createError(
     `${ERROR_PREFIX}_MESSAGE_PORT_CLOSED`,
     'ITC MessagePort is closed'
-  )
+  ),
 }

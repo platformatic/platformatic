@@ -11,5 +11,5 @@ async function generateJsonSchemaConfig () {
 
 module.exports = {
   generateJsonSchemaConfig,
-  filenameConfigJsonSchema
+  filenameConfigJsonSchema,
 }

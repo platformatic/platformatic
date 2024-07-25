@@ -11,11 +11,11 @@ module.exports = async function (app) {
       params: {
         type: 'object',
         properties: {
-          name: { type: 'string' }
+          name: { type: 'string' },
         },
-        required: ['name']
-      }
-    }
+        required: ['name'],
+      },
+    },
   }, async (request, reply) => {
     return { hello: request.params.name }
   })

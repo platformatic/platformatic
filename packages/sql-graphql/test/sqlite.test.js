@@ -28,7 +28,7 @@ test('store, close and load', async (t) => {
           id INTEGER PRIMARY KEY,
           title VARCHAR(42)
         );`)
-      }
+      },
     })
     app.register(sqlGraphQL)
 
@@ -43,17 +43,17 @@ test('store, close and load', async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
       data: {
         savePage: {
           id: 1,
-          title: 'Hello'
-        }
-      }
+          title: 'Hello',
+        },
+      },
     }, 'savePage response')
 
     await app.close()
@@ -62,7 +62,7 @@ test('store, close and load', async (t) => {
   {
     const app = fastify()
     app.register(sqlMapper, {
-      connectionString: `sqlite://${file}`
+      connectionString: `sqlite://${file}`,
     })
     app.register(sqlGraphQL)
     const res = await app.inject({
@@ -76,17 +76,17 @@ test('store, close and load', async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
       data: {
         getPageById: {
           id: 1,
-          title: 'Hello'
-        }
-      }
+          title: 'Hello',
+        },
+      },
     }, 'pages response')
     await app.close()
   }
@@ -114,7 +114,7 @@ test('demo', async (t) => {
             category_id INTEGER,
             FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
           );`)
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -131,17 +131,17 @@ test('demo', async (t) => {
                 name
               }
             }
-          `
-      }
+          `,
+      },
     })
     equal(res.statusCode, 200, 'saveCategory status code')
     same(res.json(), {
       data: {
         saveCategory: {
           id: 1,
-          name: 'pets'
-        }
-      }
+          name: 'pets',
+        },
+      },
     }, 'saveCategory response')
   }
 
@@ -161,8 +161,8 @@ test('demo', async (t) => {
                 }
               }
             }
-          `
-      }
+          `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
@@ -172,10 +172,10 @@ test('demo', async (t) => {
           title: 'Dogs',
           category: {
             id: 1,
-            name: 'pets'
-          }
-        }
-      }
+            name: 'pets',
+          },
+        },
+      },
     }, 'savePage response')
   }
 
@@ -195,8 +195,8 @@ test('demo', async (t) => {
                 }
               }
             }
-          `
-      }
+          `,
+      },
     })
     equal(res.statusCode, 200, 'getPageById status code')
     same(res.json(), {
@@ -206,10 +206,10 @@ test('demo', async (t) => {
           title: 'Dogs',
           category: {
             id: 1,
-            name: 'pets'
-          }
-        }
-      }
+            name: 'pets',
+          },
+        },
+      },
     }, 'saveCategory response')
   }
 
@@ -227,8 +227,8 @@ test('demo', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
@@ -236,10 +236,10 @@ test('demo', async (t) => {
         pages: [{
           title: 'Dogs',
           category: {
-            name: 'pets'
-          }
-        }]
-      }
+            name: 'pets',
+          },
+        }],
+      },
     }, 'pages response')
   }
 
@@ -257,8 +257,8 @@ test('demo', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'categories status code')
     same(res.json(), {
@@ -266,10 +266,10 @@ test('demo', async (t) => {
         categories: [{
           name: 'pets',
           pages: [{
-            title: 'Dogs'
-          }]
-        }]
-      }
+            title: 'Dogs',
+          }],
+        }],
+      },
     }, 'categories response')
   }
 })

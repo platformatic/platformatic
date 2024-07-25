@@ -33,16 +33,16 @@ test('should get runtime log indexes', async (t) => {
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath: app.managementApi.server.address(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/logs/indexes'
+    path: '/api/v1/logs/indexes',
   })
   assert.strictEqual(statusCode, 200)
 
@@ -68,16 +68,16 @@ test('should get only latest 30 logs indexes (150 MB)', async (t) => {
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath: app.managementApi.server.address(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   const res = await app.inject('service-1', {
     method: 'GET',
-    url: '/large-logs'
+    url: '/large-logs',
   })
   assert.strictEqual(res.statusCode, 200)
 
@@ -86,7 +86,7 @@ test('should get only latest 30 logs indexes (150 MB)', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/logs/indexes'
+    path: '/api/v1/logs/indexes',
   })
   assert.strictEqual(statusCode, 200)
 
@@ -119,19 +119,19 @@ test('should get all runtimes log indexes (with previous)', async (t) => {
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath: app.managementApi.server.address(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   const { statusCode, body } = await client.request({
     method: 'GET',
     path: '/api/v1/logs/indexes',
     query: {
-      all: 'true'
-    }
+      all: 'true',
+    },
   })
   assert.strictEqual(statusCode, 200)
 
@@ -139,11 +139,11 @@ test('should get all runtimes log indexes (with previous)', async (t) => {
   assert.deepStrictEqual(runtimesLogsIds, [
     {
       pid: parseInt(prevRuntimePID),
-      indexes: [42]
+      indexes: [42],
     },
     {
       pid: process.pid,
-      indexes: [1]
-    }
+      indexes: [1],
+    },
   ])
 })

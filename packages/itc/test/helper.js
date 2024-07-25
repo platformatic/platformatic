@@ -9,7 +9,7 @@ function generateItcRequest (request) {
     version: '1.0.0',
     name: 'test-command',
     data: { test: 'test-req-message' },
-    ...request
+    ...request,
   }
 }
 
@@ -21,11 +21,11 @@ function generateItcResponse (response) {
     name: 'test-command',
     error: null,
     data: { test: 'test-req-message' },
-    ...response
+    ...response,
   }
 }
 
 module.exports = {
   generateItcRequest,
-  generateItcResponse
+  generateItcResponse,
 }

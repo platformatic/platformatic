@@ -23,8 +23,8 @@ test('autostart', async (t) => {
     ['-c', join(import.meta.url, '..', 'fixtures', 'simple.json')],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 
@@ -41,8 +41,8 @@ test('autostart', async (t) => {
                   title
                 }
               }
-            `
-      })
+            `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'savePage status code')
     const body = await res.body.json()
@@ -62,17 +62,17 @@ test('autostart', async (t) => {
                   title
                 }
               }
-            `
-      })
+            `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'pages status code')
     assert.deepEqual(await res.body.json(), {
       data: {
         getPageById: {
           id,
-          title: 'Hello'
-        }
-      }
+          title: 'Hello',
+        },
+      },
     }, 'pages response')
   }
 
@@ -88,17 +88,17 @@ test('autostart', async (t) => {
                   title
                 }
               }
-            `
-      })
+            `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'savePage status code')
     assert.deepEqual(await res.body.json(), {
       data: {
         savePage: {
           id,
-          title: 'Hello World'
-        }
-      }
+          title: 'Hello World',
+        },
+      },
     }, 'savePage response')
   }
 
@@ -114,17 +114,17 @@ test('autostart', async (t) => {
                   title
                 }
               }
-            `
-      })
+            `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'pages status code')
     assert.deepEqual(await res.body.json(), {
       data: {
         getPageById: {
           id,
-          title: 'Hello World'
-        }
-      }
+          title: 'Hello World',
+        },
+      },
     }, 'pages response')
   }
 
@@ -149,8 +149,8 @@ test('start command', async (t) => {
     ['-c', join(import.meta.url, '..', 'fixtures', 'simple.json')],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 
@@ -167,8 +167,8 @@ test('start command', async (t) => {
                   title
                 }
               }
-            `
-      })
+            `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'savePage status code')
     const body = await res.body.json()
@@ -188,17 +188,17 @@ test('start command', async (t) => {
                   title
                 }
               }
-            `
-      })
+            `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'pages status code')
     assert.deepEqual(await res.body.json(), {
       data: {
         getPageById: {
           id,
-          title: 'Hello'
-        }
-      }
+          title: 'Hello',
+        },
+      },
     }, 'pages response')
   }
 
@@ -214,17 +214,17 @@ test('start command', async (t) => {
                   title
                 }
               }
-            `
-      })
+            `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'savePage status code')
     assert.deepEqual(await res.body.json(), {
       data: {
         savePage: {
           id,
-          title: 'Hello World'
-        }
-      }
+          title: 'Hello World',
+        },
+      },
     }, 'savePage response')
   }
 
@@ -240,17 +240,17 @@ test('start command', async (t) => {
                   title
                 }
               }
-            `
-      })
+            `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'pages status code')
     assert.deepEqual(await res.body.json(), {
       data: {
         getPageById: {
           id,
-          title: 'Hello World'
-        }
-      }
+          title: 'Hello World',
+        },
+      },
     }, 'pages response')
   }
 

@@ -6,89 +6,89 @@ const $defs = {
     type: 'object',
     properties: {
       title: {
-        type: 'string'
+        type: 'string',
       },
       summary: {
-        type: 'string'
+        type: 'string',
       },
       description: {
-        type: 'string'
+        type: 'string',
       },
       termsOfService: {
-        type: 'string'
+        type: 'string',
       },
       contact: {
-        $ref: '#/$defs/contact'
+        $ref: '#/$defs/contact',
       },
       license: {
-        $ref: '#/$defs/license'
+        $ref: '#/$defs/license',
       },
       version: {
-        type: 'string'
-      }
+        type: 'string',
+      },
     },
     required: [
       'title',
-      'version'
+      'version',
     ],
-    $ref: '#/$defs/specification-extensions'
+    $ref: '#/$defs/specification-extensions',
   },
   contact: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#contact-object',
     type: 'object',
     properties: {
       name: {
-        type: 'string'
+        type: 'string',
       },
       url: {
-        type: 'string'
+        type: 'string',
       },
       email: {
-        type: 'string'
-      }
+        type: 'string',
+      },
     },
-    $ref: '#/$defs/specification-extensions'
+    $ref: '#/$defs/specification-extensions',
   },
   license: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#license-object',
     type: 'object',
     properties: {
       name: {
-        type: 'string'
+        type: 'string',
       },
       identifier: {
-        type: 'string'
+        type: 'string',
       },
       url: {
-        type: 'string'
-      }
+        type: 'string',
+      },
     },
     required: [
-      'name'
+      'name',
     ],
-    $ref: '#/$defs/specification-extensions'
+    $ref: '#/$defs/specification-extensions',
   },
   server: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#server-object',
     type: 'object',
     properties: {
       url: {
-        type: 'string'
+        type: 'string',
       },
       description: {
-        type: 'string'
+        type: 'string',
       },
       variables: {
         type: 'object',
         additionalProperties: {
-          $ref: '#/$defs/server-variable'
-        }
-      }
+          $ref: '#/$defs/server-variable',
+        },
+      },
     },
     required: [
-      'url'
+      'url',
     ],
-    $ref: '#/$defs/specification-extensions'
+    $ref: '#/$defs/specification-extensions',
   },
   'server-variable': {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#server-variable-object',
@@ -97,158 +97,158 @@ const $defs = {
       enum: {
         type: 'array',
         items: {
-          type: 'string'
+          type: 'string',
         },
-        minItems: 1
+        minItems: 1,
       },
       default: {
-        type: 'string'
+        type: 'string',
       },
       description: {
-        type: 'string'
-      }
+        type: 'string',
+      },
     },
     required: [
-      'default'
+      'default',
     ],
-    $ref: '#/$defs/specification-extensions'
+    $ref: '#/$defs/specification-extensions',
   },
   components: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#components-object',
     type: 'object',
     properties: {
       schemas: {
-        type: 'object'
+        type: 'object',
       },
       responses: {
         type: 'object',
         additionalProperties: {
-          $ref: '#/$defs/response-or-reference'
-        }
+          $ref: '#/$defs/response-or-reference',
+        },
       },
       parameters: {
         type: 'object',
         additionalProperties: {
-          $ref: '#/$defs/parameter-or-reference'
-        }
+          $ref: '#/$defs/parameter-or-reference',
+        },
       },
       examples: {
         type: 'object',
         additionalProperties: {
-          $ref: '#/$defs/example-or-reference'
-        }
+          $ref: '#/$defs/example-or-reference',
+        },
       },
       requestBodies: {
         type: 'object',
         additionalProperties: {
-          $ref: '#/$defs/request-body-or-reference'
-        }
+          $ref: '#/$defs/request-body-or-reference',
+        },
       },
       headers: {
         type: 'object',
         additionalProperties: {
-          $ref: '#/$defs/header-or-reference'
-        }
+          $ref: '#/$defs/header-or-reference',
+        },
       },
       securitySchemes: {
         type: 'object',
         additionalProperties: {
-          $ref: '#/$defs/security-scheme-or-reference'
-        }
+          $ref: '#/$defs/security-scheme-or-reference',
+        },
       },
       links: {
         type: 'object',
         additionalProperties: {
-          $ref: '#/$defs/link-or-reference'
-        }
+          $ref: '#/$defs/link-or-reference',
+        },
       },
       callbacks: {
         type: 'object',
         additionalProperties: {
-          $ref: '#/$defs/callbacks-or-reference'
-        }
+          $ref: '#/$defs/callbacks-or-reference',
+        },
       },
       pathItems: {
         type: 'object',
         additionalProperties: {
-          $ref: '#/$defs/path-item-or-reference'
-        }
-      }
+          $ref: '#/$defs/path-item-or-reference',
+        },
+      },
     },
-    $ref: '#/$defs/specification-extensions'
+    $ref: '#/$defs/specification-extensions',
   },
   paths: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#paths-object',
     type: 'object',
     patternProperties: {
       '^/': {
-        $ref: '#/$defs/path-item'
-      }
+        $ref: '#/$defs/path-item',
+      },
     },
-    $ref: '#/$defs/specification-extensions'
+    $ref: '#/$defs/specification-extensions',
   },
   'path-item': {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#path-item-object',
     type: 'object',
     properties: {
       summary: {
-        type: 'string'
+        type: 'string',
       },
       description: {
-        type: 'string'
+        type: 'string',
       },
       servers: {
         type: 'array',
         items: {
-          $ref: '#/$defs/server'
-        }
+          $ref: '#/$defs/server',
+        },
       },
       parameters: {
         type: 'array',
         items: {
-          $ref: '#/$defs/parameter-or-reference'
-        }
+          $ref: '#/$defs/parameter-or-reference',
+        },
       },
       get: {
-        $ref: '#/$defs/operation'
+        $ref: '#/$defs/operation',
       },
       put: {
-        $ref: '#/$defs/operation'
+        $ref: '#/$defs/operation',
       },
       post: {
-        $ref: '#/$defs/operation'
+        $ref: '#/$defs/operation',
       },
       delete: {
-        $ref: '#/$defs/operation'
+        $ref: '#/$defs/operation',
       },
       options: {
-        $ref: '#/$defs/operation'
+        $ref: '#/$defs/operation',
       },
       head: {
-        $ref: '#/$defs/operation'
+        $ref: '#/$defs/operation',
       },
       patch: {
-        $ref: '#/$defs/operation'
+        $ref: '#/$defs/operation',
       },
       trace: {
-        $ref: '#/$defs/operation'
-      }
+        $ref: '#/$defs/operation',
+      },
     },
-    $ref: '#/$defs/specification-extensions'
+    $ref: '#/$defs/specification-extensions',
   },
   'path-item-or-reference': {
     if: {
       type: 'object',
       required: [
-        '$ref'
-      ]
+        '$ref',
+      ],
     },
     then: {
-      $ref: '#/$defs/reference'
+      $ref: '#/$defs/reference',
     },
     else: {
-      $ref: '#/$defs/path-item'
-    }
+      $ref: '#/$defs/path-item',
+    },
   },
   operation: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#operation-object',
@@ -257,191 +257,191 @@ const $defs = {
       tags: {
         type: 'array',
         items: {
-          type: 'string'
-        }
+          type: 'string',
+        },
       },
       summary: {
-        type: 'string'
+        type: 'string',
       },
       description: {
-        type: 'string'
+        type: 'string',
       },
       externalDocs: {
-        $ref: '#/$defs/external-documentation'
+        $ref: '#/$defs/external-documentation',
       },
       operationId: {
-        type: 'string'
+        type: 'string',
       },
       parameters: {
         type: 'array',
         items: {
-          $ref: '#/$defs/parameter-or-reference'
-        }
+          $ref: '#/$defs/parameter-or-reference',
+        },
       },
       requestBody: {
-        $ref: '#/$defs/request-body-or-reference'
+        $ref: '#/$defs/request-body-or-reference',
       },
       responses: {
-        $ref: '#/$defs/responses'
+        $ref: '#/$defs/responses',
       },
       callbacks: {
         type: 'object',
         additionalProperties: {
-          $ref: '#/$defs/callbacks-or-reference'
-        }
+          $ref: '#/$defs/callbacks-or-reference',
+        },
       },
       security: {
         type: 'array',
         items: {
-          $ref: '#/$defs/security-requirement'
-        }
+          $ref: '#/$defs/security-requirement',
+        },
       },
       servers: {
         type: 'array',
         items: {
-          $ref: '#/$defs/server'
-        }
-      }
+          $ref: '#/$defs/server',
+        },
+      },
     },
-    $ref: '#/$defs/specification-extensions'
+    $ref: '#/$defs/specification-extensions',
   },
   'external-documentation': {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#external-documentation-object',
     type: 'object',
     properties: {
       description: {
-        type: 'string'
+        type: 'string',
       },
       url: {
-        type: 'string'
-      }
+        type: 'string',
+      },
     },
     required: [
-      'url'
+      'url',
     ],
-    $ref: '#/$defs/specification-extensions'
+    $ref: '#/$defs/specification-extensions',
   },
   parameter: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#parameter-object',
     type: 'object',
     properties: {
       name: {
-        type: 'string'
+        type: 'string',
       },
       in: {
         enum: [
           'query',
           'header',
           'path',
-          'cookie'
-        ]
+          'cookie',
+        ],
       },
       description: {
-        type: 'string'
+        type: 'string',
       },
       required: {
         default: false,
-        type: 'boolean'
+        type: 'boolean',
       },
       content: {
         type: 'object',
         $ref: '#/$defs/content',
         minProperties: 1,
-        maxProperties: 1
-      }
+        maxProperties: 1,
+      },
     },
     required: [
       'name',
-      'in'
+      'in',
     ],
     oneOf: [
       {
         required: [
-          'schema'
-        ]
+          'schema',
+        ],
       },
       {
         required: [
-          'content'
-        ]
-      }
+          'content',
+        ],
+      },
     ],
     if: {
       type: 'object',
       properties: {
         in: {
-          const: 'query'
-        }
+          const: 'query',
+        },
       },
       required: [
-        'in'
-      ]
+        'in',
+      ],
     },
     then: {
       type: 'object',
       properties: {
         allowEmptyValue: {
           default: false,
-          type: 'boolean'
-        }
-      }
+          type: 'boolean',
+        },
+      },
     },
-    $ref: '#/$defs/specification-extensions'
+    $ref: '#/$defs/specification-extensions',
   },
   'parameter-or-reference': {
     if: {
       type: 'object',
       required: [
-        '$ref'
-      ]
+        '$ref',
+      ],
     },
     then: {
-      $ref: '#/$defs/reference'
+      $ref: '#/$defs/reference',
     },
     else: {
-      $ref: '#/$defs/parameter'
-    }
+      $ref: '#/$defs/parameter',
+    },
   },
   'request-body': {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#request-body-object',
     type: 'object',
     properties: {
       description: {
-        type: 'string'
+        type: 'string',
       },
       content: {
-        $ref: '#/$defs/content'
+        $ref: '#/$defs/content',
       },
       required: {
         default: false,
-        type: 'boolean'
-      }
+        type: 'boolean',
+      },
     },
     required: [
-      'content'
+      'content',
     ],
-    $ref: '#/$defs/specification-extensions'
+    $ref: '#/$defs/specification-extensions',
   },
   'request-body-or-reference': {
     if: {
       type: 'object',
       required: [
-        '$ref'
-      ]
+        '$ref',
+      ],
     },
     then: {
-      $ref: '#/$defs/reference'
+      $ref: '#/$defs/reference',
     },
     else: {
-      $ref: '#/$defs/request-body'
-    }
+      $ref: '#/$defs/request-body',
+    },
   },
   content: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#fixed-fields-10',
     type: 'object',
     additionalProperties: {
-      $ref: '#/$defs/media-type'
-    }
+      $ref: '#/$defs/media-type',
+    },
   },
   'media-type': {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#media-type-object',
@@ -450,31 +450,31 @@ const $defs = {
       encoding: {
         type: 'object',
         additionalProperties: {
-          $ref: '#/$defs/encoding'
-        }
-      }
+          $ref: '#/$defs/encoding',
+        },
+      },
     },
     allOf: [
       {
-        $ref: '#/$defs/specification-extensions'
+        $ref: '#/$defs/specification-extensions',
       },
       {
-        $ref: '#/$defs/examples'
-      }
-    ]
+        $ref: '#/$defs/examples',
+      },
+    ],
   },
   encoding: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#encoding-object',
     type: 'object',
     properties: {
       contentType: {
-        type: 'string'
+        type: 'string',
       },
       headers: {
         type: 'object',
         additionalProperties: {
-          $ref: '#/$defs/header-or-reference'
-        }
+          $ref: '#/$defs/header-or-reference',
+        },
       },
       style: {
         default: 'form',
@@ -482,24 +482,24 @@ const $defs = {
           'form',
           'spaceDelimited',
           'pipeDelimited',
-          'deepObject'
-        ]
+          'deepObject',
+        ],
       },
       explode: {
-        type: 'boolean'
+        type: 'boolean',
       },
       allowReserved: {
         default: false,
-        type: 'boolean'
-      }
+        type: 'boolean',
+      },
     },
     allOf: [
       {
-        $ref: '#/$defs/specification-extensions'
+        $ref: '#/$defs/specification-extensions',
       },
       {
-        $ref: '#/$defs/encoding/$defs/explode-default'
-      }
+        $ref: '#/$defs/encoding/$defs/explode-default',
+      },
     ],
 
     $defs: {
@@ -508,277 +508,277 @@ const $defs = {
           type: 'object',
           properties: {
             style: {
-              const: 'form'
-            }
+              const: 'form',
+            },
           },
           required: [
-            'style'
-          ]
+            'style',
+          ],
         },
         then: {
           type: 'object',
           properties: {
             explode: {
-              default: true
-            }
-          }
+              default: true,
+            },
+          },
         },
         else: {
           type: 'object',
           properties: {
             explode: {
-              default: false
-            }
-          }
-        }
-      }
-    }
+              default: false,
+            },
+          },
+        },
+      },
+    },
   },
   responses: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#responses-object',
     type: 'object',
     additionalProperties: {
-      $ref: '#/$defs/response-or-reference'
+      $ref: '#/$defs/response-or-reference',
     },
     minProperties: 1,
-    $ref: '#/$defs/specification-extensions'
+    $ref: '#/$defs/specification-extensions',
   },
   response: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#response-object',
     type: 'object',
     properties: {
       description: {
-        type: 'string'
+        type: 'string',
       },
       headers: {
         type: 'object',
         additionalProperties: {
-          $ref: '#/$defs/header-or-reference'
-        }
+          $ref: '#/$defs/header-or-reference',
+        },
       },
       content: {
-        $ref: '#/$defs/content'
+        $ref: '#/$defs/content',
       },
       links: {
         type: 'object',
         additionalProperties: {
-          $ref: '#/$defs/link-or-reference'
-        }
-      }
+          $ref: '#/$defs/link-or-reference',
+        },
+      },
     },
     required: [
-      'description'
+      'description',
     ],
-    $ref: '#/$defs/specification-extensions'
+    $ref: '#/$defs/specification-extensions',
   },
   'response-or-reference': {
     if: {
       type: 'object',
       required: [
-        '$ref'
-      ]
+        '$ref',
+      ],
     },
     then: {
-      $ref: '#/$defs/reference'
+      $ref: '#/$defs/reference',
     },
     else: {
-      $ref: '#/$defs/response'
-    }
+      $ref: '#/$defs/response',
+    },
   },
   callbacks: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#callback-object',
     type: 'object',
     $ref: '#/$defs/specification-extensions',
     additionalProperties: {
-      $ref: '#/$defs/path-item-or-reference'
-    }
+      $ref: '#/$defs/path-item-or-reference',
+    },
   },
   'callbacks-or-reference': {
     if: {
       type: 'object',
       required: [
-        '$ref'
-      ]
+        '$ref',
+      ],
     },
     then: {
-      $ref: '#/$defs/reference'
+      $ref: '#/$defs/reference',
     },
     else: {
-      $ref: '#/$defs/callbacks'
-    }
+      $ref: '#/$defs/callbacks',
+    },
   },
   example: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#example-object',
     type: 'object',
     properties: {
       summary: {
-        type: 'string'
+        type: 'string',
       },
       description: {
-        type: 'string'
+        type: 'string',
       },
       value: true,
       externalValue: {
-        type: 'string'
-      }
+        type: 'string',
+      },
     },
     not: {
       required: [
         'value',
-        'externalValue'
-      ]
+        'externalValue',
+      ],
     },
-    $ref: '#/$defs/specification-extensions'
+    $ref: '#/$defs/specification-extensions',
   },
   'example-or-reference': {
     if: {
       type: 'object',
       required: [
-        '$ref'
-      ]
+        '$ref',
+      ],
     },
     then: {
-      $ref: '#/$defs/reference'
+      $ref: '#/$defs/reference',
     },
     else: {
-      $ref: '#/$defs/example'
-    }
+      $ref: '#/$defs/example',
+    },
   },
   link: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#link-object',
     type: 'object',
     properties: {
       operationRef: {
-        type: 'string'
+        type: 'string',
       },
       operationId: {
-        type: 'string'
+        type: 'string',
       },
       parameters: {
-        $ref: '#/$defs/map-of-strings'
+        $ref: '#/$defs/map-of-strings',
       },
       requestBody: true,
       description: {
-        type: 'string'
+        type: 'string',
       },
       body: {
-        $ref: '#/$defs/server'
-      }
+        $ref: '#/$defs/server',
+      },
     },
     oneOf: [
       {
         required: [
-          'operationRef'
-        ]
+          'operationRef',
+        ],
       },
       {
         required: [
-          'operationId'
-        ]
-      }
+          'operationId',
+        ],
+      },
     ],
-    $ref: '#/$defs/specification-extensions'
+    $ref: '#/$defs/specification-extensions',
   },
   'link-or-reference': {
     if: {
       type: 'object',
       required: [
-        '$ref'
-      ]
+        '$ref',
+      ],
     },
     then: {
-      $ref: '#/$defs/reference'
+      $ref: '#/$defs/reference',
     },
     else: {
-      $ref: '#/$defs/link'
-    }
+      $ref: '#/$defs/link',
+    },
   },
   header: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#header-object',
     type: 'object',
     properties: {
       description: {
-        type: 'string'
+        type: 'string',
       },
       required: {
         default: false,
-        type: 'boolean'
+        type: 'boolean',
       },
       content: {
         type: 'object',
         $ref: '#/$defs/content',
         minProperties: 1,
-        maxProperties: 1
-      }
+        maxProperties: 1,
+      },
     },
     oneOf: [
       {
         required: [
-          'schema'
-        ]
+          'schema',
+        ],
       },
       {
         required: [
-          'content'
-        ]
-      }
+          'content',
+        ],
+      },
     ],
-    $ref: '#/$defs/specification-extensions'
+    $ref: '#/$defs/specification-extensions',
   },
   'header-or-reference': {
     if: {
       type: 'object',
       required: [
-        '$ref'
-      ]
+        '$ref',
+      ],
     },
     then: {
-      $ref: '#/$defs/reference'
+      $ref: '#/$defs/reference',
     },
     else: {
-      $ref: '#/$defs/header'
-    }
+      $ref: '#/$defs/header',
+    },
   },
   tag: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#tag-object',
     type: 'object',
     properties: {
       name: {
-        type: 'string'
+        type: 'string',
       },
       description: {
-        type: 'string'
+        type: 'string',
       },
       externalDocs: {
-        $ref: '#/$defs/external-documentation'
-      }
+        $ref: '#/$defs/external-documentation',
+      },
     },
     required: [
-      'name'
+      'name',
     ],
-    $ref: '#/$defs/specification-extensions'
+    $ref: '#/$defs/specification-extensions',
   },
   reference: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#reference-object',
     type: 'object',
     properties: {
       $ref: {
-        type: 'string'
+        type: 'string',
       },
       summary: {
-        type: 'string'
+        type: 'string',
       },
       description: {
-        type: 'string'
-      }
-    }
+        type: 'string',
+      },
+    },
   },
   schema: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#schema-object',
     type: [
       'object',
-      'boolean'
-    ]
+      'boolean',
+    ],
   },
   'security-scheme': {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#security-scheme-object',
@@ -790,35 +790,35 @@ const $defs = {
           'http',
           'mutualTLS',
           'oauth2',
-          'openIdConnect'
-        ]
+          'openIdConnect',
+        ],
       },
       description: {
-        type: 'string'
-      }
+        type: 'string',
+      },
     },
     required: [
-      'type'
+      'type',
     ],
     allOf: [
       {
-        $ref: '#/$defs/specification-extensions'
+        $ref: '#/$defs/specification-extensions',
       },
       {
-        $ref: '#/$defs/security-scheme/$defs/type-apikey'
+        $ref: '#/$defs/security-scheme/$defs/type-apikey',
       },
       {
-        $ref: '#/$defs/security-scheme/$defs/type-http'
+        $ref: '#/$defs/security-scheme/$defs/type-http',
       },
       {
-        $ref: '#/$defs/security-scheme/$defs/type-http-bearer'
+        $ref: '#/$defs/security-scheme/$defs/type-http-bearer',
       },
       {
-        $ref: '#/$defs/security-scheme/$defs/type-oauth2'
+        $ref: '#/$defs/security-scheme/$defs/type-oauth2',
       },
       {
-        $ref: '#/$defs/security-scheme/$defs/type-oidc'
-      }
+        $ref: '#/$defs/security-scheme/$defs/type-oidc',
+      },
     ],
     $defs: {
       'type-apikey': {
@@ -826,162 +826,162 @@ const $defs = {
           type: 'object',
           properties: {
             type: {
-              const: 'apiKey'
-            }
+              const: 'apiKey',
+            },
           },
           required: [
-            'type'
-          ]
+            'type',
+          ],
         },
         then: {
           type: 'object',
           properties: {
             name: {
-              type: 'string'
+              type: 'string',
             },
             in: {
               enum: [
                 'query',
                 'header',
-                'cookie'
-              ]
-            }
+                'cookie',
+              ],
+            },
           },
           required: [
             'name',
-            'in'
-          ]
-        }
+            'in',
+          ],
+        },
       },
       'type-http': {
         if: {
           type: 'object',
           properties: {
             type: {
-              const: 'http'
-            }
+              const: 'http',
+            },
           },
           required: [
-            'type'
-          ]
+            'type',
+          ],
         },
         then: {
           type: 'object',
           properties: {
             scheme: {
-              type: 'string'
-            }
+              type: 'string',
+            },
           },
           required: [
-            'scheme'
-          ]
-        }
+            'scheme',
+          ],
+        },
       },
       'type-http-bearer': {
         if: {
           type: 'object',
           properties: {
             type: {
-              const: 'http'
+              const: 'http',
             },
             scheme: {
               type: 'string',
-              pattern: '^[Bb][Ee][Aa][Rr][Ee][Rr]$'
-            }
+              pattern: '^[Bb][Ee][Aa][Rr][Ee][Rr]$',
+            },
           },
           required: [
             'type',
-            'scheme'
-          ]
+            'scheme',
+          ],
         },
         then: {
           type: 'object',
           properties: {
             bearerFormat: {
-              type: 'string'
-            }
-          }
-        }
+              type: 'string',
+            },
+          },
+        },
       },
       'type-oauth2': {
         if: {
           type: 'object',
           properties: {
             type: {
-              const: 'oauth2'
-            }
+              const: 'oauth2',
+            },
           },
           required: [
-            'type'
-          ]
+            'type',
+          ],
         },
         then: {
           type: 'object',
           properties: {
             flows: {
-              $ref: '#/$defs/oauth-flows'
-            }
+              $ref: '#/$defs/oauth-flows',
+            },
           },
           required: [
-            'flows'
-          ]
-        }
+            'flows',
+          ],
+        },
       },
       'type-oidc': {
         if: {
           type: 'object',
           properties: {
             type: {
-              const: 'openIdConnect'
-            }
+              const: 'openIdConnect',
+            },
           },
           required: [
-            'type'
-          ]
+            'type',
+          ],
         },
         then: {
           type: 'object',
           properties: {
             openIdConnectUrl: {
-              type: 'string'
-            }
+              type: 'string',
+            },
           },
           required: [
-            'openIdConnectUrl'
-          ]
-        }
-      }
-    }
+            'openIdConnectUrl',
+          ],
+        },
+      },
+    },
   },
   'security-scheme-or-reference': {
     if: {
       type: 'object',
       required: [
-        '$ref'
-      ]
+        '$ref',
+      ],
     },
     then: {
-      $ref: '#/$defs/reference'
+      $ref: '#/$defs/reference',
     },
     else: {
-      $ref: '#/$defs/security-scheme'
-    }
+      $ref: '#/$defs/security-scheme',
+    },
   },
   'oauth-flows': {
     type: 'object',
     properties: {
       implicit: {
-        $ref: '#/$defs/oauth-flows/$defs/implicit'
+        $ref: '#/$defs/oauth-flows/$defs/implicit',
       },
       password: {
-        $ref: '#/$defs/oauth-flows/$defs/password'
+        $ref: '#/$defs/oauth-flows/$defs/password',
       },
       clientCredentials: {
-        $ref: '#/$defs/oauth-flows/$defs/client-credentials'
+        $ref: '#/$defs/oauth-flows/$defs/client-credentials',
       },
       authorizationCode: {
-        $ref: '#/$defs/oauth-flows/$defs/authorization-code'
-      }
+        $ref: '#/$defs/oauth-flows/$defs/authorization-code',
+      },
     },
     $ref: '#/$defs/specification-extensions',
 
@@ -990,83 +990,83 @@ const $defs = {
         type: 'object',
         properties: {
           authorizationUrl: {
-            type: 'string'
+            type: 'string',
           },
           refreshUrl: {
-            type: 'string'
+            type: 'string',
           },
           scopes: {
-            $ref: '#/$defs/map-of-strings'
-          }
+            $ref: '#/$defs/map-of-strings',
+          },
         },
         required: [
           'authorizationUrl',
-          'scopes'
+          'scopes',
         ],
-        $ref: '#/$defs/specification-extensions'
+        $ref: '#/$defs/specification-extensions',
       },
       password: {
         type: 'object',
         properties: {
           tokenUrl: {
-            type: 'string'
+            type: 'string',
           },
           refreshUrl: {
-            type: 'string'
+            type: 'string',
           },
           scopes: {
-            $ref: '#/$defs/map-of-strings'
-          }
+            $ref: '#/$defs/map-of-strings',
+          },
         },
         required: [
           'tokenUrl',
-          'scopes'
+          'scopes',
         ],
-        $ref: '#/$defs/specification-extensions'
+        $ref: '#/$defs/specification-extensions',
       },
       'client-credentials': {
         type: 'object',
         properties: {
           tokenUrl: {
-            type: 'string'
+            type: 'string',
           },
           refreshUrl: {
-            type: 'string'
+            type: 'string',
           },
           scopes: {
-            $ref: '#/$defs/map-of-strings'
-          }
+            $ref: '#/$defs/map-of-strings',
+          },
         },
         required: [
           'tokenUrl',
-          'scopes'
+          'scopes',
         ],
-        $ref: '#/$defs/specification-extensions'
+        $ref: '#/$defs/specification-extensions',
       },
       'authorization-code': {
         type: 'object',
         properties: {
           authorizationUrl: {
-            type: 'string'
+            type: 'string',
           },
           tokenUrl: {
-            type: 'string'
+            type: 'string',
           },
           refreshUrl: {
-            type: 'string'
+            type: 'string',
           },
           scopes: {
-            $ref: '#/$defs/map-of-strings'
-          }
+            $ref: '#/$defs/map-of-strings',
+          },
         },
         required: [
           'authorizationUrl',
           'tokenUrl',
-          'scopes'
+          'scopes',
         ],
-        $ref: '#/$defs/specification-extensions'
-      }
-    }
+        $ref: '#/$defs/specification-extensions',
+      },
+    },
   },
   'security-requirement': {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#security-requirement-object',
@@ -1074,16 +1074,16 @@ const $defs = {
     additionalProperties: {
       type: 'array',
       items: {
-        type: 'string'
-      }
-    }
+        type: 'string',
+      },
+    },
   },
   'specification-extensions': {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#specification-extensions',
     type: 'object',
     patternProperties: {
-      '^x-': true
-    }
+      '^x-': true,
+    },
   },
   examples: {
     type: 'object',
@@ -1092,17 +1092,17 @@ const $defs = {
       examples: {
         type: 'object',
         additionalProperties: {
-          $ref: '#/$defs/example-or-reference'
-        }
-      }
-    }
+          $ref: '#/$defs/example-or-reference',
+        },
+      },
+    },
   },
   'map-of-strings': {
     type: 'object',
     additionalProperties: {
-      type: 'string'
-    }
-  }
+      type: 'string',
+    },
+  },
 }
 
 module.exports = $defs

@@ -38,10 +38,10 @@ test('allowPrimaryKeysInInput: false', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI, {
-    allowPrimaryKeysInInput: false
+    allowPrimaryKeysInInput: false,
   })
   t.after(() => app.close())
 
@@ -50,7 +50,7 @@ test('allowPrimaryKeysInInput: false', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     const json = res.json()
     const snapshot = await snap(json)
@@ -63,15 +63,15 @@ test('allowPrimaryKeysInInput: false', async (t) => {
       url: '/pages',
       body: {
         id: 42,
-        title: 'Hello'
-      }
+        title: 'Hello',
+      },
     })
     equal(res.statusCode, 400, 'POST /pages status code')
     same(res.json(), {
       statusCode: 400,
       code: 'FST_ERR_VALIDATION',
       error: 'Bad Request',
-      message: 'body/id must NOT be valid'
+      message: 'body/id must NOT be valid',
     }, 'POST /pages response')
   }
 
@@ -80,14 +80,14 @@ test('allowPrimaryKeysInInput: false', async (t) => {
       method: 'POST',
       url: '/pages',
       body: {
-        title: 'Hello'
-      }
+        title: 'Hello',
+      },
     })
     equal(res.statusCode, 200, 'POST /pages status code')
     equal(res.headers.location, '/pages/1', 'POST /api/pages location')
     same(res.json(), {
       id: 1, // The passed in id is ignored
-      title: 'Hello'
+      title: 'Hello',
     }, 'POST /pages response')
   }
 })
@@ -101,10 +101,10 @@ test('allowPrimaryKeysInInput: true', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI, {
-    allowPrimaryKeysInInput: true
+    allowPrimaryKeysInInput: true,
   })
   t.after(() => app.close())
 
@@ -113,7 +113,7 @@ test('allowPrimaryKeysInInput: true', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     const json = res.json()
     const snapshot = await snap(json)
@@ -126,14 +126,14 @@ test('allowPrimaryKeysInInput: true', async (t) => {
       url: '/pages',
       body: {
         id: 42,
-        title: 'Hello'
-      }
+        title: 'Hello',
+      },
     })
     equal(res.statusCode, 200, 'POST /pages status code')
     equal(res.headers.location, '/pages/42', 'POST /api/pages location')
     same(res.json(), {
       id: 42, // The passed in id is used
-      title: 'Hello'
+      title: 'Hello',
     }, 'POST /pages response')
   }
 })
@@ -147,7 +147,7 @@ test('allowPrimaryKeysInInput default', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -157,7 +157,7 @@ test('allowPrimaryKeysInInput default', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     const json = res.json()
     const snapshot = await snap(json)
@@ -170,14 +170,14 @@ test('allowPrimaryKeysInInput default', async (t) => {
       url: '/pages',
       body: {
         id: 42,
-        title: 'Hello'
-      }
+        title: 'Hello',
+      },
     })
     equal(res.statusCode, 200, 'POST /pages status code')
     equal(res.headers.location, '/pages/42', 'POST /api/pages location')
     same(res.json(), {
       id: 42, // The passed in id is used
-      title: 'Hello'
+      title: 'Hello',
     }, 'POST /pages response')
   }
 })

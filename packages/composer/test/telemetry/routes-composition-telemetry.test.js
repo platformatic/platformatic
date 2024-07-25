@@ -5,7 +5,7 @@ const { test } = require('node:test')
 const { request } = require('undici')
 const {
   createComposer,
-  createOpenApiService
+  createOpenApiService,
 } = require('../helper')
 
 test('should compose openapi with prefixes', async (t) => {
@@ -28,18 +28,18 @@ test('should compose openapi with prefixes', async (t) => {
           origin: `${api1Origin}`,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api1'
-          }
-        }
-      ]
+            prefix: '/api1',
+          },
+        },
+      ],
     },
     telemetry: {
       serviceName: 'test-composer',
       version: '1.0.0',
       exporter: {
-        type: 'memory'
-      }
-    }
+        type: 'memory',
+      },
+    },
   })
 
   const composerOrigin = await composer.start()
@@ -48,8 +48,8 @@ test('should compose openapi with prefixes', async (t) => {
     method: 'GET',
     path: '/api1/users',
     headers: {
-      'content-type': 'application/json'
-    }
+      'content-type': 'application/json',
+    },
   })
   const statusCode = res.statusCode
   assert.equal(statusCode, 200)

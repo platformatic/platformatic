@@ -37,7 +37,7 @@ describe('generator', () => {
         PLT_SERVER_LOGGER_LEVEL: 'info',
         PORT: 3042,
         DATABASE_URL: 'sqlite://./db.sqlite',
-        PLT_TYPESCRIPT: false
+        PLT_TYPESCRIPT: false,
       },
       defaultEnv: {
         DATABASE_URL: 'sqlite://./db.sqlite',
@@ -45,14 +45,14 @@ describe('generator', () => {
         PLT_SERVER_HOSTNAME: '0.0.0.0',
         PLT_SERVER_LOGGER_LEVEL: 'info',
         PLT_TYPESCRIPT: false,
-        PORT: 3042
+        PORT: 3042,
       },
       database: 'sqlite',
       connectionString: 'sqlite://./db.sqlite',
       types: true,
       migrations: 'migrations',
       createMigrations: true,
-      isUpdating: false
+      isUpdating: false,
     })
   })
   test('generate correct .env file', async (t) => {
@@ -67,13 +67,13 @@ describe('generator', () => {
         'PLT_TYPESCRIPT=false',
         'DATABASE_URL=sqlite://./db.sqlite',
         'PLT_APPLY_MIGRATIONS=true',
-        ''
+        '',
       ].join('\n'))
     }
 
     {
       dbApp.setConfig({
-        typescript: true
+        typescript: true,
       })
 
       await dbApp.prepare()
@@ -90,7 +90,7 @@ describe('generator', () => {
       // with envPrefix
       dbApp.setConfig({
         isRuntimeContext: true,
-        envPrefix: 'PREFIX'
+        envPrefix: 'PREFIX',
       })
 
       const appEnv = await dbApp.prepare()
@@ -132,7 +132,7 @@ declare module 'fastify' {
     const dbApp = new DBGenerator()
     dbApp.setConfig({
       typescript: true,
-      types: true
+      types: true,
     })
     await dbApp.prepare()
     const platformaticConfigFile = dbApp.getFileObject('platformatic.json')
@@ -144,14 +144,14 @@ declare module 'fastify' {
     assert.deepEqual(contents.server, {
       hostname: '{PLT_SERVER_HOSTNAME}',
       port: '{PORT}',
-      logger: { level: '{PLT_SERVER_LOGGER_LEVEL}' }
+      logger: { level: '{PLT_SERVER_LOGGER_LEVEL}' },
     })
 
     assert.deepEqual(contents.db, {
       connectionString: '{DATABASE_URL}',
       graphql: true,
       openapi: true,
-      schemalock: true
+      schemalock: true,
     })
 
     assert.deepEqual(contents.migrations, { autoApply: '{PLT_APPLY_MIGRATIONS}', dir: 'migrations' })
@@ -164,7 +164,7 @@ declare module 'fastify' {
     {
       // sqlite
       dbApp.setConfig({
-        typescript: true
+        typescript: true,
       })
       await dbApp.prepare()
 
@@ -177,7 +177,7 @@ declare module 'fastify' {
     {
       // sqlite with javascript
       dbApp.setConfig({
-        typescript: false
+        typescript: false,
       })
       await dbApp.prepare()
 
@@ -191,7 +191,7 @@ declare module 'fastify' {
       // mysql
       dbApp.setConfig({
         typescript: true,
-        database: 'mysql'
+        database: 'mysql',
       })
       await dbApp.prepare()
 
@@ -210,7 +210,7 @@ declare module 'fastify' {
       // mariadb
       dbApp.setConfig({
         typescript: true,
-        database: 'mariadb'
+        database: 'mariadb',
       })
       await dbApp.prepare()
 
@@ -229,7 +229,7 @@ declare module 'fastify' {
       // postgres
       dbApp.setConfig({
         typescript: true,
-        database: 'postgres'
+        database: 'postgres',
       })
       await dbApp.prepare()
 
@@ -249,7 +249,7 @@ declare module 'fastify' {
     const dbApp = new DBGenerator()
 
     dbApp.setConfig({
-      database: 'postgres'
+      database: 'postgres',
     })
 
     await dbApp.prepare()
@@ -264,14 +264,14 @@ declare module 'fastify' {
         label: 'What is the connection string?',
         default: svc.connectionStrings.sqlite,
         type: 'string',
-        configValue: 'connectionString'
+        configValue: 'connectionString',
       },
       {
         default: true,
         label: 'Should migrations be applied automatically on startup?',
         type: 'boolean',
-        var: 'PLT_APPLY_MIGRATIONS'
-      }
+        var: 'PLT_APPLY_MIGRATIONS',
+      },
     ])
   })
 
@@ -279,15 +279,15 @@ declare module 'fastify' {
     const svc = new DBGenerator()
 
     svc.setConfig({
-      connectionString: 'mydb://foobar.com'
+      connectionString: 'mydb://foobar.com',
     })
     assert.equal(svc.getDatabaseFromConnectionString(), 'mydb')
     svc.setConfig({
-      connectionString: 'bad_connection_string'
+      connectionString: 'bad_connection_string',
     })
     assert.equal(svc.getDatabaseFromConnectionString(), null)
     svc.setConfig({
-      connectionString: null
+      connectionString: null,
     })
     assert.equal(svc.getDatabaseFromConnectionString(), null)
   })
@@ -297,8 +297,8 @@ declare module 'fastify' {
       {
         var: 'DATABASE_URL',
         configValue: 'connectionString',
-        value: 'sqlite123://./db.sqlite'
-      }
+        value: 'sqlite123://./db.sqlite',
+      },
     ])
 
     assert.equal(svc.config.database, 'sqlite123')
@@ -314,21 +314,21 @@ declare module 'fastify' {
             {
               path: 'threshold',
               value: '1',
-              type: 'number'
+              type: 'number',
             },
             {
               path: 'foobar',
               value: '123',
               type: 'number',
-              name: 'FST_PLUGIN_STATIC_FOOBAR'
-            }
-          ]
-        }
+              name: 'FST_PLUGIN_STATIC_FOOBAR',
+            },
+          ],
+        },
       ]
       svc.setConfig({
         isRuntimeContext: true,
         serviceName: 'my-db',
-        plugin: false
+        plugin: false,
       })
       await svc.addPackage(packageDefinitions[0])
       await svc.prepare()
@@ -342,10 +342,10 @@ declare module 'fastify' {
             name: '@fastify/compress',
             options: {
               threshold: 1,
-              foobar: '{PLT_MY_DB_FST_PLUGIN_STATIC_FOOBAR}'
-            }
-          }
-        ]
+              foobar: '{PLT_MY_DB_FST_PLUGIN_STATIC_FOOBAR}',
+            },
+          },
+        ],
       })
 
       assert.equal(svc.config.env.PLT_MY_DB_FST_PLUGIN_STATIC_FOOBAR, 123)
@@ -360,10 +360,10 @@ declare module 'fastify' {
             {
               path: 'threshold',
               value: '1',
-              type: 'number'
-            }
-          ]
-        }
+              type: 'number',
+            },
+          ],
+        },
       ]
       await svc.addPackage(packageDefinitions[0])
       await svc.prepare()
@@ -375,21 +375,21 @@ declare module 'fastify' {
         paths: [
           {
             encapsulate: false,
-            path: './plugins'
+            path: './plugins',
           },
           {
-            path: './routes'
-          }
+            path: './routes',
+          },
         ],
         packages: [
           {
             name: '@fastify/compress',
             options: {
-              threshold: 1
-            }
-          }
+              threshold: 1,
+            },
+          },
         ],
-        typescript: '{PLT_TYPESCRIPT}'
+        typescript: '{PLT_TYPESCRIPT}',
       })
     }
   })
@@ -401,12 +401,12 @@ declare module 'fastify' {
         serviceName: 'my-db',
         env: {
           FOO: 'bar',
-          BAZ: 'baz'
-        }
+          BAZ: 'baz',
+        },
       })
       assert.deepEqual(svc.config.env, {
         PLT_MY_DB_FOO: 'bar',
-        PLT_MY_DB_BAZ: 'baz'
+        PLT_MY_DB_BAZ: 'baz',
       })
 
       await svc.prepare()
@@ -422,8 +422,8 @@ declare module 'fastify' {
         serviceName: 'my-db',
         env: {
           FOO: 'bar',
-          BAZ: 'baz'
-        }
+          BAZ: 'baz',
+        },
       })
 
       await svc.prepare()

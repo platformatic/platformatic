@@ -7,7 +7,7 @@ const { connInfo, isSQLite, isMysql, isMysql8, isPg, clear } = require('./helper
 
 const fakeLogger = {
   trace: () => {},
-  error: () => {}
+  error: () => {},
 }
 
 test('uses tables from different schemas', { skip: isSQLite }, async () => {
@@ -51,7 +51,7 @@ test('uses tables from different schemas', { skip: isSQLite }, async () => {
     onDatabaseLoad,
     ignore: {},
     hooks: {},
-    schema: ['test1', 'test2']
+    schema: ['test1', 'test2'],
   })
   const pageEntity = mapper.entities.test1Page
   equal(pageEntity.name, 'Test1Page')
@@ -105,7 +105,7 @@ test('find enums correctly using schemas', { skip: isSQLite }, async () => {
     onDatabaseLoad,
     ignore: {},
     hooks: {},
-    schema: ['test1']
+    schema: ['test1'],
   })
   const pageEntity = mapper.entities.test1Page
   equal(pageEntity.name, 'Test1Page')
@@ -117,24 +117,24 @@ test('find enums correctly using schemas', { skip: isSQLite }, async () => {
       table: 'pages',
       constraints: [
         {
-          constraint_type: isMysql8 ? 'UNIQUE' : 'PRIMARY KEY'
-        }
+          constraint_type: isMysql8 ? 'UNIQUE' : 'PRIMARY KEY',
+        },
       ],
       columns: [
         {
           column_name: 'id',
-          is_nullable: 'NO'
+          is_nullable: 'NO',
         },
         {
           column_name: 'title',
-          is_nullable: 'NO'
+          is_nullable: 'NO',
         },
         {
           column_name: 'type',
-          is_nullable: 'YES'
-        }
-      ]
-    }
+          is_nullable: 'YES',
+        },
+      ],
+    },
   ]))
   ok(true)
 })
@@ -180,7 +180,7 @@ test('if schema is empty array, should not load entities from tables in explicit
     onDatabaseLoad,
     ignore: {},
     hooks: {},
-    schema: []
+    schema: [],
   })
 
   equal(Object.keys(mapper.entities).length, 0)
@@ -212,7 +212,7 @@ test('[pg] if schema is empty array, should find entities only in default \'publ
     onDatabaseLoad,
     ignore: {},
     hooks: {},
-    schema: []
+    schema: [],
   })
   equal(Object.keys(mapper.entities).length, 1)
   const pageEntity = mapper.entities.page
@@ -241,7 +241,7 @@ test('[sqlite] if sqllite, ignores schema information', { skip: !isSQLite }, asy
     onDatabaseLoad,
     ignore: {},
     hooks: {},
-    schema: ['ignored', 'also_ignored']
+    schema: ['ignored', 'also_ignored'],
   })
 
   equal(Object.keys(mapper.entities).length, 1)
@@ -279,7 +279,7 @@ test('addEntityHooks in entities with schema', { skip: isSQLite }, async () => {
     ...connInfo,
     log: fakeLogger,
     onDatabaseLoad,
-    schema: ['test1']
+    schema: ['test1'],
   })
 
   throws(() => mapper.addEntityHooks('user', {}), { message: 'Cannot find entity user' })
@@ -293,27 +293,27 @@ test('addEntityHooks in entities with schema', { skip: isSQLite }, async () => {
 
       if (!input.id) {
         deepEqual(input, {
-          title: 'Hello'
+          title: 'Hello',
         })
 
         return original({
           input: {
-            title: 'Hello from hook'
+            title: 'Hello from hook',
           },
-          fields
+          fields,
         })
       } else {
         deepEqual(input, {
           id: 1,
-          title: 'Hello World'
+          title: 'Hello World',
         })
 
         return original({
           input: {
             id: 1,
-            title: 'Hello from hook 2'
+            title: 'Hello from hook 2',
           },
-          fields
+          fields,
         })
       }
     },
@@ -322,13 +322,13 @@ test('addEntityHooks in entities with schema', { skip: isSQLite }, async () => {
 
       deepEqual(args.where, {
         id: {
-          eq: '1'
-        }
+          eq: '1',
+        },
       })
       args.where = {
         id: {
-          eq: '2'
-        }
+          eq: '2',
+        },
       }
       deepEqual(args.fields, ['id', 'title'])
       return original(args)
@@ -337,27 +337,27 @@ test('addEntityHooks in entities with schema', { skip: isSQLite }, async () => {
       ok('insert called')
 
       deepEqual(args.inputs, [{
-        title: 'hello'
+        title: 'hello',
       }, {
-        title: 'world'
+        title: 'world',
       }])
       deepEqual(args.fields, ['id', 'title'])
       return original(args)
-    }
+    },
   })
 
   const entity = mapper.entities.test1Page
 
   deepEqual(await entity.save({ input: { title: 'Hello' } }), {
     id: 1,
-    title: 'Hello from hook'
+    title: 'Hello from hook',
   })
 
   deepEqual(await entity.find({ where: { id: { eq: 1 } }, fields: ['id', 'title'] }), [])
 
   deepEqual(await entity.save({ input: { id: 1, title: 'Hello World' } }), {
     id: 1,
-    title: 'Hello from hook 2'
+    title: 'Hello from hook 2',
   })
 
   await entity.insert({ inputs: [{ title: 'hello' }, { title: 'world' }], fields: ['id', 'title'] })
@@ -407,7 +407,7 @@ test('uses tables from different schemas with FK', { skip: isSQLite }, async () 
     onDatabaseLoad,
     ignore: {},
     hooks: {},
-    schema: ['test1', 'test2']
+    schema: ['test1', 'test2'],
   })
   const pageEntity = mapper.entities.test1Page
   equal(pageEntity.name, 'Test1Page')
@@ -466,11 +466,11 @@ test('recreate mapper from schema', async () => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
   const dbschema = mapper.dbschema
   const knownQueries = [
-    'SELECT VERSION()'
+    'SELECT VERSION()',
   ]
   const mapper2 = await connect({
     connectionString: connInfo.connectionString,
@@ -484,11 +484,11 @@ test('recreate mapper from schema', async () => {
       error (...msg) {
         console.log(...msg)
         ifError('no error')
-      }
+      },
     },
     dbschema,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
   test.after(() => mapper2.db.dispose())
 

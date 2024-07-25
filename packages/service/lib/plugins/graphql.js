@@ -14,8 +14,8 @@ async function setupGraphQL (app, opts) {
   const graphqlOptions = deepmerge({
     graphiql: true,
     additionalRouteOptions: {
-      schema: { hide: true }
-    }
+      schema: { hide: true },
+    },
   }, opts)
 
   app.register(mercurius, graphqlOptions)

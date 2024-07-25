@@ -30,7 +30,7 @@ test('should throw if placeholder is missing', async (t) => {
 test('should support YAML format', async (t) => {
   const cm = new ConfigManager({
     source: resolve(__dirname, './fixtures/simple.yaml'),
-    env: { PLT_FOOBAR: 'foobar' }
+    env: { PLT_FOOBAR: 'foobar' },
   })
   await cm.parse()
   assert.deepEqual(cm.current, {
@@ -40,18 +40,18 @@ test('should support YAML format', async (t) => {
     core: {
       connectionString: 'postgres://postgres:postgres@localhost:5432/postgres',
       graphiql: true,
-      ignore: { versions: true }
+      ignore: { versions: true },
     },
     migrations: { dir: './demo/auth/migrations', validateChecksums: false },
     authorization: { adminSecret: 'plt-db' },
-    foobar: 'foobar'
+    foobar: 'foobar',
   })
 })
 
 test('should support TOML format', async (t) => {
   const cm = new ConfigManager({
     source: resolve(__dirname, './fixtures/simple.toml'),
-    env: { PLT_FOOBAR: 'foobar' }
+    env: { PLT_FOOBAR: 'foobar' },
   })
   await cm.parse()
   cm._transformConfig = function () {
@@ -65,18 +65,18 @@ test('should support TOML format', async (t) => {
     core: {
       connectionString: 'postgres://postgres:postgres@localhost:5432/postgres',
       graphiql: true,
-      ignore: { versions: true }
+      ignore: { versions: true },
     },
     migrations: { dir: './demo/auth/migrations', validateChecksums: false },
     authorization: { adminSecret: 'plt-db' },
-    foobar: 'foobar'
+    foobar: 'foobar',
   })
 })
 
 test('should support JSON5 format', async (t) => {
   const cm = new ConfigManager({
     source: resolve(__dirname, './fixtures/simple.json5'),
-    env: { PLT_FOOBAR: 'foobar' }
+    env: { PLT_FOOBAR: 'foobar' },
   })
   await cm.parse()
   cm._transformConfig = function () {
@@ -90,11 +90,11 @@ test('should support JSON5 format', async (t) => {
     core: {
       connectionString: 'postgres://postgres:postgres@localhost:5432/postgres',
       graphiql: true,
-      ignore: { versions: true }
+      ignore: { versions: true },
     },
     migrations: { dir: './demo/auth/migrations', validateChecksums: false },
     authorization: { adminSecret: 'plt-db' },
-    foobar: 'foobar'
+    foobar: 'foobar',
   })
 })
 
@@ -105,7 +105,7 @@ test('transformConfig option', async (t) => {
     env: { PLT_FOOBAR: 'foobar' },
     transformConfig: function () {
       calledTransformConfig = true
-    }
+    },
   })
   await cm.parse()
   assert.ok(calledTransformConfig)
@@ -116,11 +116,11 @@ test('transformConfig option', async (t) => {
     core: {
       connectionString: 'postgres://postgres:postgres@localhost:5432/postgres',
       graphiql: true,
-      ignore: { versions: true }
+      ignore: { versions: true },
     },
     migrations: { dir: './demo/auth/migrations', validateChecksums: false },
     authorization: { adminSecret: 'plt-db' },
-    foobar: 'foobar'
+    foobar: 'foobar',
   })
 })
 
@@ -132,19 +132,19 @@ test('should NOT throw if placeholder is missing but replaceEnv is `false`', asy
       server: {
         hostname: '127.0.0.1',
         logger: {
-          level: 'info'
+          level: 'info',
         },
-        port: '{PORT}'
+        port: '{PORT}',
       },
       core: {
-        connectionString: 'sqlite://./db.sqlite'
+        connectionString: 'sqlite://./db.sqlite',
       },
       migrations: {
-        dir: './migrations'
+        dir: './migrations',
       },
       plugin: {
-        path: './plugin-sum.js'
-      }
+        path: './plugin-sum.js',
+      },
     }
 
   )
@@ -158,19 +158,19 @@ test('should NOT throw if placeholder is missing but replaceEnv is `false` / 2',
       server: {
         hostname: '127.0.0.1',
         logger: {
-          level: 'info'
+          level: 'info',
         },
-        port: '{PORT}'
+        port: '{PORT}',
       },
       core: {
-        connectionString: 'sqlite://./db.sqlite'
+        connectionString: 'sqlite://./db.sqlite',
       },
       migrations: {
-        dir: './migrations'
+        dir: './migrations',
       },
       plugin: {
-        path: './plugin-sum.js'
-      }
+        path: './plugin-sum.js',
+      },
     }
   )
 })

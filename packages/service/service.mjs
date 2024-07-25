@@ -17,7 +17,7 @@ import { start, platformaticService } from './index.js'
 const help = helpMe({
   dir: join(import.meta.url, 'help'),
   // the default
-  ext: '.txt'
+  ext: '.txt',
 })
 
 function wrapCommand (fn) {
@@ -50,8 +50,8 @@ program.register('schema', help.toStdout.bind(null, ['schema']))
 export async function runService (argv) {
   const args = parseArgs(argv, {
     alias: {
-      v: 'version'
-    }
+      v: 'version',
+    },
   })
 
   /* c8 ignore next 4 */
@@ -62,7 +62,7 @@ export async function runService (argv) {
 
   return {
     output: await program.parseAsync(argv),
-    help
+    help,
   }
 }
 

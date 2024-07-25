@@ -21,18 +21,18 @@ test('config reloads', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
       paths: [{
         path: file,
         options: {
-          message: 'hello'
-        }
-      }]
+          message: 'hello',
+        },
+      }],
     },
     watch: false,
-    metrics: false
+    metrics: false,
   })
 
   t.after(async () => {
@@ -49,17 +49,17 @@ test('config reloads', async (t) => {
   await app.platformatic.configManager.update({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
       paths: [{
         path: file,
         options: {
-          message: 'ciao mondo'
-        }
-      }]
+          message: 'ciao mondo',
+        },
+      }],
     },
-    metrics: false
+    metrics: false,
   })
 
   await app.restart()
@@ -78,17 +78,17 @@ test('config reloads from a written file', async (t) => {
   await writeFile(config, JSON.stringify({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
       paths: [{
         path: file,
         options: {
-          message: 'hello'
-        }
-      }]
+          message: 'hello',
+        },
+      }],
     },
-    metrics: false
+    metrics: false,
   }))
 
   await writeFile(file, `
@@ -112,17 +112,17 @@ test('config reloads from a written file', async (t) => {
   await app.platformatic.configManager.update({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
       paths: [{
         path: file,
         options: {
-          message: 'ciao mondo'
-        }
-      }]
+          message: 'ciao mondo',
+        },
+      }],
     },
-    metrics: false
+    metrics: false,
   })
 
   await app.restart()
@@ -142,17 +142,17 @@ test('config reloads from a written file from a route', async (t) => {
     server: {
       hostname: '127.0.0.1',
       logger: { level: 'error' },
-      port: 0
+      port: 0,
     },
     plugins: {
       paths: [{
         path: file,
         options: {
-          message: 'hello'
-        }
-      }]
+          message: 'hello',
+        },
+      }],
     },
-    metrics: false
+    metrics: false,
   }))
 
   await writeFile(file, `
@@ -197,7 +197,7 @@ test('config reloads from a written file from a route', async (t) => {
 
   {
     const res = await request(`${app.url}/restart`, {
-      method: 'POST'
+      method: 'POST',
     })
     assert.strictEqual(res.statusCode, 200, 'add status code')
   }
@@ -220,9 +220,9 @@ test('config is adjusted to handle custom loggers', async (t) => {
         debug () {},
         fatal () {},
         warn () {},
-        trace () {}
-      }
-    }
+        trace () {},
+      },
+    },
   }
 
   let called = false
@@ -231,7 +231,7 @@ test('config is adjusted to handle custom loggers', async (t) => {
       called = true
       return this
     },
-    enumerable: false
+    enumerable: false,
   })
 
   await buildServer(options)
@@ -249,17 +249,17 @@ test('config reloads', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
       paths: [{
         path: file,
         options: {
-          message: 'hello'
-        }
-      }]
+          message: 'hello',
+        },
+      }],
     },
-    metrics: false
+    metrics: false,
   })
 
   t.after(async () => {
@@ -276,17 +276,17 @@ test('config reloads', async (t) => {
   await app.platformatic.configManager.update({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
       paths: [{
         path: file,
         options: {
-          message: 'ciao mondo'
-        }
-      }]
+          message: 'ciao mondo',
+        },
+      }],
     },
-    metrics: false
+    metrics: false,
   })
 
   await app.restart()
@@ -313,14 +313,14 @@ test('do not watch typescript outDir', async (t) => {
 
   assert.deepStrictEqual(app.platformatic.configManager.current.watch, {
     enabled: false,
-    ignore: ['dist/**/*']
+    ignore: ['dist/**/*'],
   })
 })
 
 test('start without server config', async (t) => {
   const app = await buildServer({
     watch: false,
-    metrics: false
+    metrics: false,
   })
   t.after(async () => {
     await app.close()
@@ -330,7 +330,7 @@ test('start without server config', async (t) => {
   const res = await request(url)
   assert.strictEqual(res.statusCode, 200, 'add status code')
   assert.deepStrictEqual(await res.body.json(), {
-    message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev'
+    message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev',
   })
 })
 
@@ -345,11 +345,11 @@ test('transport logger', async (t) => {
         transport: {
           target: join(__dirname, 'fixtures', 'custom-transport.js'),
           options: {
-            path: file
-          }
-        }
-      }
-    }
+            path: file,
+          },
+        },
+      },
+    },
   }
 
   const server = await buildServer(options)

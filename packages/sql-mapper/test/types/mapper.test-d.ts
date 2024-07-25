@@ -14,13 +14,13 @@ import {
   createConnectionPool,
   Entities,
   errors,
-  WhereCondition
+  WhereCondition,
 } from '../../mapper'
 
 const log = {
-  trace() { },
-  error() { },
-  warn() { }
+  trace () { },
+  error () { },
+  warn () { },
 }
 
 declare module 'fastify' {
@@ -36,39 +36,31 @@ expectType<{ [entityName: string]: Entity }>(pluginOptions.entities)
 
 expectType<Promise<void>>(pluginOptions.cleanUpAllEntities())
 
-{
-  const pluginOptions2: SQLMapperPluginInterface<Entities> = await connect<Entities>({
-    connectionString: '',
-    poolSize: 2,
-    queueTimeoutMilliseconds: 42,
-    idleTimeoutMilliseconds: 42,
-    acquireLockTimeoutMilliseconds: 42
-  })
-}
+expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({
+  connectionString: '',
+  poolSize: 2,
+  queueTimeoutMilliseconds: 42,
+  idleTimeoutMilliseconds: 42,
+  acquireLockTimeoutMilliseconds: 42,
+}))
 
-{
-  const pluginOptions2: SQLMapperPluginInterface<Entities> = await connect<Entities>({
-    connectionString: '',
-    cache: false
-  })
-}
+expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({
+  connectionString: '',
+  cache: false,
+}))
 
-{
-  const pluginOptions2: SQLMapperPluginInterface<Entities> = await connect<Entities>({
-    connectionString: '',
-    cache: true
-  })
-}
+expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({
+  connectionString: '',
+  cache: true,
+}))
 
-{
-  const pluginOptions2: SQLMapperPluginInterface<Entities> = await connect<Entities>({
-    connectionString: '',
-    cache: {
-      ttl: 1000,
-      stale: 10
-    }
-  })
-}
+expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({
+  connectionString: '',
+  cache: {
+    ttl: 1000,
+    stale: 10,
+  },
+}))
 
 interface EntityFields {
   id: number,
@@ -96,26 +88,26 @@ expectType<Partial<EntityFields>[]>(await entity.insert({ inputs: [{ id: 1, name
 expectType<Partial<EntityFields>>(await entity.save({ input: { id: 1, name: 'test' }, tx: pluginOptions.db }))
 expectType<Partial<EntityFields>[]>(await entity.delete({ tx: pluginOptions.db }))
 expectType<number>(await entity.count({ tx: pluginOptions.db }))
-expectType<Partial<EntityFields>[]>(await entity.updateMany({ where: { id: { eq: '1' } }, input: { id: 1, name: 'test' }}))
+expectType<Partial<EntityFields>[]>(await entity.updateMany({ where: { id: { eq: '1' } }, input: { id: 1, name: 'test' } }))
 expectType<Partial<EntityFields>[]>(await entity.find({ where: { id: { eq: null } } }))
 expectType<Partial<EntityFields>[]>(await entity.find({ where: { id: { neq: null } } }))
 
 const whereCondition: WhereCondition = {
-  eq: {eq: ""},
-  neq: {neq: ""},
-  gt: {gt: ""},
-  gte: {gte: ""},
-  lt: {lt: ""},
-  lte: {lte: ""},
-  in: {in: []},
-  nin: {nin: []},
-  like: {like: ""},
-  ilike: {ilike: ""},
-  all: {all: ""},
-  any: {any: ""},
-  contains: {contains: []},
-  contained: {contained: []},
-  overlaps: {overlaps: []},
+  eq: { eq: '' },
+  neq: { neq: '' },
+  gt: { gt: '' },
+  gte: { gte: '' },
+  lt: { lt: '' },
+  lte: { lte: '' },
+  in: { in: [] },
+  nin: { nin: [] },
+  like: { like: '' },
+  ilike: { ilike: '' },
+  all: { all: '' },
+  any: { any: '' },
+  contains: { contains: [] },
+  contained: { contained: [] },
+  overlaps: { overlaps: [] },
 }
 await entity.find({ where: whereCondition })
 await entity.delete({ where: whereCondition })
@@ -123,26 +115,29 @@ await entity.count({ where: whereCondition })
 await entity.updateMany({ where: whereCondition, input: { id: 1, name: 'test' } })
 
 const entityHooks: EntityHooks = {
-  async find(originalFind: typeof entity.find, ...options: Parameters<typeof entity.find>): ReturnType<typeof entity.find> { return [] },
-  async insert(originalInsert: typeof entity.insert, ...options: Parameters<typeof entity.insert>): ReturnType<typeof entity.insert> { return [] },
-  async save(originalSave: typeof entity.save, ...options: Parameters<typeof entity.save>): ReturnType<typeof entity.save> { return {} },
-  async delete(originalDelete: typeof entity.delete, ...options: Parameters<typeof entity.delete>): ReturnType<typeof entity.delete> { return [] },
-  async count(originalCount: typeof entity.count, ...options: Parameters<typeof entity.count>): ReturnType<typeof entity.count> { return 0 },
-  async updateMany(originalUpdateMany: typeof entity.updateMany, ...options: Parameters<typeof entity.updateMany>): ReturnType<typeof entity.updateMany> { return [] },
+  async find (originalFind: typeof entity.find, ...options: Parameters<typeof entity.find>): ReturnType<typeof entity.find> { return [] },
+  async insert (originalInsert: typeof entity.insert, ...options: Parameters<typeof entity.insert>): ReturnType<typeof entity.insert> { return [] },
+  async save (originalSave: typeof entity.save, ...options: Parameters<typeof entity.save>): ReturnType<typeof entity.save> { return {} },
+  async delete (originalDelete: typeof entity.delete, ...options: Parameters<typeof entity.delete>): ReturnType<typeof entity.delete> { return [] },
+  async count (originalCount: typeof entity.count, ...options: Parameters<typeof entity.count>): ReturnType<typeof entity.count> { return 0 },
+  async updateMany (originalUpdateMany: typeof entity.updateMany, ...options: Parameters<typeof entity.updateMany>): ReturnType<typeof entity.updateMany> { return [] },
 }
 expectType<EntityHooks>(entityHooks)
 expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({ connectionString: '', log }))
 expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({ connectionString: '', autoTimestamp: true, log }))
 expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({ connectionString: '', hooks: {}, log }))
 expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({
-  connectionString: '', hooks: {
-    Page: entityHooks
+  connectionString: '',
+  hooks: {
+    Page: entityHooks,
   },
-  log
+  log,
 }))
 expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({ connectionString: '', ignore: {}, log }))
 expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({
-  connectionString: '', log, onDatabaseLoad(db: Database, sql: SQL) {
+  connectionString: '',
+  log,
+  onDatabaseLoad (db: Database, sql: SQL) {
     expectType<(query: SQLQuery) => Promise<any[]>>(db.query)
     expectType<() => Promise<void>>(db.dispose)
     expectType<(fn: (tx: Database) => Promise<EntityFields>, options?: any) => Promise<EntityFields>>(db.tx<EntityFields>)
@@ -150,8 +145,7 @@ expectType<SQLMapperPluginInterface<Entities>>(await connect<Entities>({
     expectType<boolean | undefined>(pluginOptions.db.isMariaDB)
     expectType<boolean | undefined>(pluginOptions.db.isSQLite)
     expectType<boolean | undefined>(pluginOptions.db.isPg)
-
-  }
+  },
 }))
 
 const instance: FastifyInstance = fastify()
@@ -160,14 +154,14 @@ instance.register((instance) => {
   expectType<SQLMapperPluginInterface<Entities>>(instance.platformatic)
 
   instance.platformatic.addEntityHooks<EntityFields>('something', {
-    async find(originalFind, options) {
+    async find (originalFind, options) {
       expectType<Partial<EntityFields>[]>(await originalFind())
       expectType<Parameters<typeof entity.find>[0]>(options)
 
       return [{
-        id: 42
+        id: 42,
       }]
-    }
+    },
   })
 
   instance.get('/', async (request, reply) => {

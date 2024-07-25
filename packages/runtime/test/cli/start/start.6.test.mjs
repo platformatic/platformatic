@@ -9,7 +9,7 @@ test('does not start if node inspector flags are provided', async (t) => {
   const config = join(import.meta.url, '..', '..', '..', 'fixtures', 'configs', 'monorepo.json')
   const child = execa(process.execPath, [cliPath, 'start', '-c', config], {
     env: { NODE_OPTIONS: '--inspect' },
-    encoding: 'utf8'
+    encoding: 'utf8',
   })
   let stderr = ''
   let found = false

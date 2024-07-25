@@ -17,11 +17,11 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret'
+      secret: 'supersecret',
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
@@ -30,14 +30,14 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
       entity: 'page',
       find: false,
       delete: false,
-      save: false
+      save: false,
     }, {
       role: 'anonymous',
       entity: 'page',
       find: false,
       delete: false,
-      save: false
-    }]
+      save: false,
+    }],
   })
   test.after(() => {
     app.close()
@@ -47,7 +47,7 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
 
   const token = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': 'user'
+    'X-PLATFORMATIC-ROLE': 'user',
   })
 
   // create a page through the API fails...
@@ -56,7 +56,7 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -67,14 +67,14 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
 
     deepEqual(res.json(), {
       data: {
-        savePage: null
+        savePage: null,
       },
       errors: [
         {
@@ -82,14 +82,14 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
           locations: [
             {
               line: 3,
-              column: 13
-            }
+              column: 13,
+            },
           ],
           path: [
-            'savePage'
-          ]
-        }
-      ]
+            'savePage',
+          ],
+        },
+      ],
     }, 'savePage response')
   }
 
@@ -98,9 +98,9 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
     const res = await app.platformatic.entities.page.save({
       input: { title: 'page title' },
       ctx: {
-        reply: () => {}
+        reply: () => {},
       },
-      skipAuth: true
+      skipAuth: true,
     })
     deepEqual(res, { id: '1', title: 'page title', userId: null }, 'save')
   }
@@ -110,7 +110,7 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -120,14 +120,14 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
 
     deepEqual(res.json(), {
       data: {
-        getPageById: null
+        getPageById: null,
       },
       errors: [
         {
@@ -135,14 +135,14 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
           locations: [
             {
               line: 3,
-              column: 13
-            }
+              column: 13,
+            },
           ],
           path: [
-            'getPageById'
-          ]
-        }
-      ]
+            'getPageById',
+          ],
+        },
+      ],
     }, 'getPageById')
   }
 
@@ -150,9 +150,9 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
   {
     const res = await app.platformatic.entities.page.find({
       ctx: {
-        reply: () => {}
+        reply: () => {},
       },
-      skipAuth: true
+      skipAuth: true,
     })
     deepEqual(res, [{ id: '1', title: 'page title', userId: null }], 'find')
   }
@@ -160,7 +160,7 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
   {
     const resInsert = await app.platformatic.entities.page.insert({
       inputs: [{ title: 'page title2' }],
-      skipAuth: true
+      skipAuth: true,
     })
 
     deepEqual(resInsert, [{ id: '2', title: 'page title2', userId: null }], 'insert')
@@ -171,7 +171,7 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -181,13 +181,13 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'deletePages status code')
     deepEqual(res.json(), {
       data: {
-        deletePages: null
+        deletePages: null,
       },
       errors: [
         {
@@ -195,14 +195,14 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
           locations: [
             {
               line: 3,
-              column: 13
-            }
+              column: 13,
+            },
           ],
           path: [
-            'deletePages'
-          ]
-        }
-      ]
+            'deletePages',
+          ],
+        },
+      ],
     }, 'deletePages response')
   }
 
@@ -212,11 +212,11 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
       method: 'GET',
       url: '/pages?where.id.gte=1',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
-        title: 'Updated page title'
-      }
+        title: 'Updated page title',
+      },
     })
     equal(res.statusCode, 401, 'updateMay status code')
 
@@ -224,7 +224,7 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
       statusCode: 401,
       code: 'PLT_DB_AUTH_UNAUTHORIZED',
       error: 'Unauthorized',
-      message: 'operation not allowed'
+      message: 'operation not allowed',
     }, 'updateMany response')
   }
 
@@ -233,18 +233,18 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
     const res = await app.platformatic.entities.page.updateMany({
       where: {
         id: {
-          gte: 1
-        }
+          gte: 1,
+        },
       },
       input: { title: 'Updated page title' },
       ctx: {
-        reply: () => {}
+        reply: () => {},
       },
-      skipAuth: true
+      skipAuth: true,
     })
     deepEqual(res, [
       { id: '1', title: 'Updated page title', userId: null },
-      { id: '2', title: 'Updated page title', userId: null }
+      { id: '2', title: 'Updated page title', userId: null },
     ], 'updateMany')
   }
 
@@ -252,32 +252,32 @@ test('use the skipAuth option to avoid permissions programatically', async () =>
     await app.platformatic.entities.page.delete({
       where: {
         id: {
-          eq: 1
-        }
+          eq: 1,
+        },
       },
       skipAuth: true,
       ctx: {
-        reply: () => {}
-      }
+        reply: () => {},
+      },
     })
 
     await app.platformatic.entities.page.delete({
       where: {
         id: {
-          eq: 2
-        }
+          eq: 2,
+        },
       },
       skipAuth: true,
       ctx: {
-        reply: () => {}
-      }
+        reply: () => {},
+      },
     })
 
     const res = await app.platformatic.entities.page.find({
       skipAuth: true,
       ctx: {
-        reply: () => {}
-      }
+        reply: () => {},
+      },
     })
     deepEqual(res, [], 'find')
   }
@@ -293,11 +293,11 @@ test('if ctx is not present, skips permission check ', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret'
+      secret: 'supersecret',
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
@@ -306,14 +306,14 @@ test('if ctx is not present, skips permission check ', async () => {
       entity: 'page',
       find: false,
       delete: false,
-      save: false
+      save: false,
     }, {
       role: 'anonymous',
       entity: 'page',
       find: false,
       delete: false,
-      save: false
-    }]
+      save: false,
+    }],
   })
   test.after(() => {
     app.close()
@@ -323,7 +323,7 @@ test('if ctx is not present, skips permission check ', async () => {
 
   const token = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': 'user'
+    'X-PLATFORMATIC-ROLE': 'user',
   })
 
   // create a page through the API fails...
@@ -332,7 +332,7 @@ test('if ctx is not present, skips permission check ', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -343,14 +343,14 @@ test('if ctx is not present, skips permission check ', async () => {
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
 
     deepEqual(res.json(), {
       data: {
-        savePage: null
+        savePage: null,
       },
       errors: [
         {
@@ -358,21 +358,21 @@ test('if ctx is not present, skips permission check ', async () => {
           locations: [
             {
               line: 3,
-              column: 13
-            }
+              column: 13,
+            },
           ],
           path: [
-            'savePage'
-          ]
-        }
-      ]
+            'savePage',
+          ],
+        },
+      ],
     }, 'savePage response')
   }
 
   // ...but it works if we don't have the context
   {
     const res = await app.platformatic.entities.page.save({
-      input: { title: 'page title' }
+      input: { title: 'page title' },
     })
     deepEqual(res, { id: '1', title: 'page title', userId: null }, 'save')
   }
@@ -382,7 +382,7 @@ test('if ctx is not present, skips permission check ', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -392,14 +392,14 @@ test('if ctx is not present, skips permission check ', async () => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
 
     deepEqual(res.json(), {
       data: {
-        getPageById: null
+        getPageById: null,
       },
       errors: [
         {
@@ -407,14 +407,14 @@ test('if ctx is not present, skips permission check ', async () => {
           locations: [
             {
               line: 3,
-              column: 13
-            }
+              column: 13,
+            },
           ],
           path: [
-            'getPageById'
-          ]
-        }
-      ]
+            'getPageById',
+          ],
+        },
+      ],
     }, 'getPageById')
   }
 
@@ -434,7 +434,7 @@ test('if ctx is not present, skips permission check ', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -444,13 +444,13 @@ test('if ctx is not present, skips permission check ', async () => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'deletePages status code')
     deepEqual(res.json(), {
       data: {
-        deletePages: null
+        deletePages: null,
       },
       errors: [
         {
@@ -458,14 +458,14 @@ test('if ctx is not present, skips permission check ', async () => {
           locations: [
             {
               line: 3,
-              column: 13
-            }
+              column: 13,
+            },
           ],
           path: [
-            'deletePages'
-          ]
-        }
-      ]
+            'deletePages',
+          ],
+        },
+      ],
     }, 'deletePages response')
   }
 
@@ -475,11 +475,11 @@ test('if ctx is not present, skips permission check ', async () => {
       method: 'GET',
       url: '/pages?where.id.gte=1',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
-        title: 'Updated page title'
-      }
+        title: 'Updated page title',
+      },
     })
     equal(res.statusCode, 401, 'updateMay status code')
 
@@ -487,7 +487,7 @@ test('if ctx is not present, skips permission check ', async () => {
       statusCode: 401,
       code: 'PLT_DB_AUTH_UNAUTHORIZED',
       error: 'Unauthorized',
-      message: 'operation not allowed'
+      message: 'operation not allowed',
     }, 'updateMany response')
   }
 
@@ -495,14 +495,14 @@ test('if ctx is not present, skips permission check ', async () => {
     const res = await app.platformatic.entities.page.updateMany({
       where: {
         id: {
-          gte: 1
-        }
+          gte: 1,
+        },
       },
-      input: { title: 'Updated page title' }
+      input: { title: 'Updated page title' },
     })
     deepEqual(res, [
       { id: '1', title: 'Updated page title', userId: null },
-      { id: '2', title: 'Updated page title', userId: null }
+      { id: '2', title: 'Updated page title', userId: null },
     ], 'updateMany')
   }
 
@@ -510,17 +510,17 @@ test('if ctx is not present, skips permission check ', async () => {
     await app.platformatic.entities.page.delete({
       where: {
         id: {
-          eq: 1
-        }
-      }
+          eq: 1,
+        },
+      },
     })
 
     await app.platformatic.entities.page.delete({
       where: {
         id: {
-          eq: 2
-        }
-      }
+          eq: 2,
+        },
+      },
     })
 
     const res = await app.platformatic.entities.page.find()
@@ -538,11 +538,11 @@ test('validate that a ctx is needed for skipAuth: false', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret'
+      secret: 'supersecret',
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
@@ -551,14 +551,14 @@ test('validate that a ctx is needed for skipAuth: false', async () => {
       entity: 'page',
       find: false,
       delete: false,
-      save: false
+      save: false,
     }, {
       role: 'anonymous',
       entity: 'page',
       find: false,
       delete: false,
-      save: false
-    }]
+      save: false,
+    }],
   })
   test.after(() => {
     app.close()
@@ -569,28 +569,28 @@ test('validate that a ctx is needed for skipAuth: false', async () => {
   await rejects(app.platformatic.entities.page.delete({
     where: {
       id: {
-        eq: 1
-      }
+        eq: 1,
+      },
     },
-    skipAuth: false
+    skipAuth: false,
   }))
 
   await rejects(app.platformatic.entities.page.save({
     input: { title: 'page title' },
-    skipAuth: false
+    skipAuth: false,
   }))
 
   await rejects(app.platformatic.entities.page.insert({
     inputs: [{ title: 'page title' }],
-    skipAuth: false
+    skipAuth: false,
   }))
 
   await rejects(app.platformatic.entities.page.find({
-    skipAuth: false
+    skipAuth: false,
   }))
 
   await rejects(app.platformatic.entities.page.updateMany({
     input: { title: 'page title' },
-    skipAuth: false
+    skipAuth: false,
   }))
 })

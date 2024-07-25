@@ -29,5 +29,5 @@ module.exports = {
   WorkerIsRequired: createError(`${ERROR_PREFIX}_REQUIRED_WORKER`, 'The worker parameter is required'),
 
   // TODO: should remove next one as it's not used anymore
-  CannotRemoveServiceOnUpdateError: createError(`${ERROR_PREFIX}_CANNOT_REMOVE_SERVICE_ON_UPDATE`, 'Cannot remove service "%s" when updating a Runtime')
+  CannotRemoveServiceOnUpdateError: createError(`${ERROR_PREFIX}_CANNOT_REMOVE_SERVICE_ON_UPDATE`, 'Cannot remove service "%s" when updating a Runtime'),
 }

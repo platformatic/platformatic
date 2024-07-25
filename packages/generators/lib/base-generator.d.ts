@@ -81,42 +81,42 @@ export namespace BaseGenerator {
     questions: Array<object>
 
     packages: PackageConfiguration[]
-    constructor(opts?: BaseGeneratorOptions)
+    constructor (opts?: BaseGeneratorOptions)
 
-    setConfig(config?: BaseGeneratorConfig): void
-    
+    setConfig (config?: BaseGeneratorConfig): void
+
     getEnvVarName (envVarName: string): string
     addEnvVars (envVars: Env, opts: AddEnvVarOptions): void
     addEnvVar (envVarName: string, envVarValue: EnvVarValue, opts: AddEnvVarOptions): void
     getEnvVar (envVarName: string): EnvVarValue
-    setEnvVars(env?: Env): void
+    setEnvVars (env?: Env): void
 
-    getDefaultConfig(): { [x: string]: JSONValue }
+    getDefaultConfig (): { [x: string]: JSONValue }
 
-    getFastifyVersion(): Promise<string>
-    getPlatformaticVersion(): Promise<string>
+    getFastifyVersion (): Promise<string>
+    getPlatformaticVersion (): Promise<string>
 
-    addPackage(pkg: PackageDefinition): Promise<void>
+    addPackage (pkg: PackageDefinition): Promise<void>
 
-    loadFromDir(dir: string): Promise<void>
-    prepare(): Promise<GeneratorMetadata>
-    run(): Promise<GeneratorMetadata>
-    addQuestion(question: any, where?: WhereClause): Promise<void>
-    removeQuestion(variableName: string): void
-    getTSConfig(): { [x: string]: JSONValue }
+    loadFromDir (dir: string): Promise<void>
+    prepare (): Promise<GeneratorMetadata>
+    run (): Promise<GeneratorMetadata>
+    addQuestion (question: any, where?: WhereClause): Promise<void>
+    removeQuestion (variableName: string): void
+    getTSConfig (): { [x: string]: JSONValue }
 
-    getConfigFieldsDefinitions(): ConfigFieldDefinition[]
-    setConfigFields(fields: ConfigField[]): void
+    getConfigFieldsDefinitions (): ConfigFieldDefinition[]
+    setConfigFields (fields: ConfigField[]): void
 
-    generateConfigFile(): Promise<void>
-    readPackageJsonFile(): Promise<JSONValue>
-    generatePackageJson(): Promise<{ [x: string]: JSONValue }>
-    getConfigFileName(): string
-    checkEnvVariablesInConfigFile(): boolean
-    _beforePrepare(): Promise<void>
-    _afterPrepare(): Promise<void | JSONValue>
-    _getConfigFileContents(): Promise<{ [x: string]: BaseGenerator.JSONValue }>
+    generateConfigFile (): Promise<void>
+    readPackageJsonFile (): Promise<JSONValue>
+    generatePackageJson (): Promise<{ [x: string]: JSONValue }>
+    getConfigFileName (): string
+    checkEnvVariablesInConfigFile (): boolean
+    _beforePrepare (): Promise<void>
+    _afterPrepare (): Promise<void | JSONValue>
+    _getConfigFileContents (): Promise<{ [x: string]: BaseGenerator.JSONValue }>
 
-    postInstallActions(): Promise<void>
+    postInstallActions (): Promise<void>
   }
 }

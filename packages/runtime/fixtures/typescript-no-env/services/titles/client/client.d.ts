@@ -1,10 +1,10 @@
 import { FastifyPluginAsync } from 'fastify'
 
 interface GetMoviesRequest {
-  'limit'?: number;
-  'offset'?: number;
-  'totalCount'?: boolean;
-  'fields'?: Array<string>;
+  limit?: number;
+  offset?: number;
+  totalCount?: boolean;
+  fields?: Array<string>;
   'where.id.eq'?: number;
   'where.id.neq'?: number;
   'where.id.gt'?: number;
@@ -29,22 +29,22 @@ interface GetMoviesRequest {
 }
 
 interface GetMoviesResponseOK {
-  'id'?: number;
-  'title': string;
+  id?: number;
+  title: string;
 }
 
 interface CreateMovieRequest {
-  'id'?: number;
-  'title': string;
+  id?: number;
+  title: string;
 }
 
 interface CreateMovieResponseOK {
-  'id'?: number;
-  'title': string;
+  id?: number;
+  title: string;
 }
 
 interface UpdateMoviesRequest {
-  'fields'?: Array<string>;
+  fields?: Array<string>;
   'where.id.eq'?: number;
   'where.id.neq'?: number;
   'where.id.gt'?: number;
@@ -64,44 +64,44 @@ interface UpdateMoviesRequest {
   'where.title.in'?: string;
   'where.title.nin'?: string;
   'where.or'?: Array<string>;
-  'id'?: number;
-  'title': string;
+  id?: number;
+  title: string;
 }
 
 interface UpdateMoviesResponseOK {
-  'id'?: number;
-  'title': string;
+  id?: number;
+  title: string;
 }
 
 interface GetMovieByIdRequest {
-  'fields'?: Array<string>;
-  'id': number;
+  fields?: Array<string>;
+  id: number;
 }
 
 interface GetMovieByIdResponseOK {
-  'id'?: number;
-  'title': string;
+  id?: number;
+  title: string;
 }
 
 interface UpdateMovieRequest {
-  'fields'?: Array<string>;
-  'id': number;
-  'title': string;
+  fields?: Array<string>;
+  id: number;
+  title: string;
 }
 
 interface UpdateMovieResponseOK {
-  'id'?: number;
-  'title': string;
+  id?: number;
+  title: string;
 }
 
 interface DeleteMoviesRequest {
-  'fields'?: Array<string>;
-  'id': number;
+  fields?: Array<string>;
+  id: number;
 }
 
 interface DeleteMoviesResponseOK {
-  'id'?: number;
-  'title': string;
+  id?: number;
+  title: string;
 }
 
 interface Client {
@@ -117,15 +117,15 @@ type ClientPlugin = FastifyPluginAsync<NonNullable<client.ClientOptions>>
 
 declare module 'fastify' {
   interface ConfigureClient {
-    getHeaders(req: FastifyRequest, reply: FastifyReply): Promise<Record<string,string>>;
+    getHeaders(req: FastifyRequest, reply: FastifyReply): Promise<Record<string, string>>;
   }
   interface FastifyInstance {
-    'client': Client;
+    client: Client;
     configureClient(opts: ConfigureClient): unknown
   }
 
   interface FastifyRequest {
-    'client': Client;
+    client: Client;
   }
 }
 
@@ -133,9 +133,9 @@ declare namespace client {
   export interface ClientOptions {
     url: string
   }
-  export const client: ClientPlugin;
-  export { client as default };
+  export const client: ClientPlugin
+  export { client as default }
 }
 
-declare function client(...params: Parameters<ClientPlugin>): ReturnType<ClientPlugin>;
-export = client;
+declare function client (...params: Parameters<ClientPlugin>): ReturnType<ClientPlugin>
+export = client

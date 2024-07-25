@@ -10,9 +10,9 @@ test('CORS is disabled by default', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
-    metrics: false
+    metrics: false,
   }, async function (app, opts) {
     app.register(platformaticService, opts)
     app.post('/login', (req, reply) => {})
@@ -28,8 +28,8 @@ test('CORS is disabled by default', async (t) => {
     method: 'OPTIONS',
     headers: {
       'Access-Control-Request-Method': 'POST',
-      Origin: 'https://foo.bar.org'
-    }
+      Origin: 'https://foo.bar.org',
+    },
   }))
   assert.strictEqual(res.statusCode, 404)
 })
@@ -41,10 +41,10 @@ test('CORS can be enabled', async (t) => {
       port: 0,
       cors: {
         origin: true,
-        methods: ['GET', 'POST']
-      }
+        methods: ['GET', 'POST'],
+      },
     },
-    metrics: false
+    metrics: false,
   }, async function (app, opts) {
     app.register(platformaticService, opts)
     app.post('/login', (req, reply) => {})
@@ -60,8 +60,8 @@ test('CORS can be enabled', async (t) => {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
-        Origin: 'https://foo.bar.org'
-      }
+        Origin: 'https://foo.bar.org',
+      },
     }))
     assert.strictEqual(res.statusCode, 204)
     assert.strictEqual(res.headers['access-control-allow-origin'], 'https://foo.bar.org')
@@ -76,12 +76,12 @@ test('CORS with a regexp', async (t) => {
       port: 0,
       cors: {
         origin: {
-          regexp: 'https://[a-z-]*.deploy.space|https://platformatic.cloud'
+          regexp: 'https://[a-z-]*.deploy.space|https://platformatic.cloud',
         },
-        methods: ['GET', 'POST']
-      }
+        methods: ['GET', 'POST'],
+      },
     },
-    metrics: false
+    metrics: false,
   }, async function (app, opts) {
     app.register(platformaticService, opts)
     app.post('/login', (req, reply) => {})
@@ -97,8 +97,8 @@ test('CORS with a regexp', async (t) => {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
-        Origin: 'https://platformatic.cloud'
-      }
+        Origin: 'https://platformatic.cloud',
+      },
     }))
     assert.strictEqual(res.statusCode, 204)
     assert.strictEqual(res.headers['access-control-allow-origin'], 'https://platformatic.cloud')
@@ -110,8 +110,8 @@ test('CORS with a regexp', async (t) => {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
-        Origin: 'https://foo.deploy.space'
-      }
+        Origin: 'https://foo.deploy.space',
+      },
     }))
     assert.strictEqual(res.statusCode, 204)
     assert.strictEqual(res.headers['access-control-allow-origin'], 'https://foo.deploy.space')
@@ -123,8 +123,8 @@ test('CORS with a regexp', async (t) => {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
-        Origin: 'https://foo.space'
-      }
+        Origin: 'https://foo.space',
+      },
     }))
     assert.strictEqual(res.statusCode, 204)
     assert.strictEqual(res.headers['access-control-allow-origin'], undefined)
@@ -139,10 +139,10 @@ test('CORS with an array of strings', async (t) => {
       port: 0,
       cors: {
         origin: ['https://foo.deploy.space', 'https://platformatic.cloud'],
-        methods: ['GET', 'POST']
-      }
+        methods: ['GET', 'POST'],
+      },
     },
-    metrics: false
+    metrics: false,
   }, async function (app, opts) {
     app.register(platformaticService, opts)
     app.post('/login', (req, reply) => {})
@@ -158,8 +158,8 @@ test('CORS with an array of strings', async (t) => {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
-        Origin: 'https://platformatic.cloud'
-      }
+        Origin: 'https://platformatic.cloud',
+      },
     }))
     assert.strictEqual(res.statusCode, 204)
     assert.strictEqual(res.headers['access-control-allow-origin'], 'https://platformatic.cloud')
@@ -171,8 +171,8 @@ test('CORS with an array of strings', async (t) => {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
-        Origin: 'https://foo.deploy.space'
-      }
+        Origin: 'https://foo.deploy.space',
+      },
     }))
     assert.strictEqual(res.statusCode, 204)
     assert.strictEqual(res.headers['access-control-allow-origin'], 'https://foo.deploy.space')
@@ -184,8 +184,8 @@ test('CORS with an array of strings', async (t) => {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
-        Origin: 'https://foo.cloud'
-      }
+        Origin: 'https://foo.cloud',
+      },
     }))
     assert.strictEqual(res.statusCode, 204)
     assert.strictEqual(res.headers['access-control-allow-origin'], undefined)
@@ -200,12 +200,12 @@ test('CORS with an array and a regexp', async (t) => {
       port: 0,
       cors: {
         origin: [{
-          regexp: 'https://[a-z-]*.deploy.space'
+          regexp: 'https://[a-z-]*.deploy.space',
         }, 'https://platformatic.cloud'],
-        methods: ['GET', 'POST']
-      }
+        methods: ['GET', 'POST'],
+      },
     },
-    metrics: false
+    metrics: false,
   }, async function (app, opts) {
     app.register(platformaticService, opts)
     app.post('/login', (req, reply) => {})
@@ -221,8 +221,8 @@ test('CORS with an array and a regexp', async (t) => {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
-        Origin: 'https://platformatic.cloud'
-      }
+        Origin: 'https://platformatic.cloud',
+      },
     }))
     assert.strictEqual(res.statusCode, 204)
     assert.strictEqual(res.headers['access-control-allow-origin'], 'https://platformatic.cloud')
@@ -234,8 +234,8 @@ test('CORS with an array and a regexp', async (t) => {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
-        Origin: 'https://foo.deploy.space'
-      }
+        Origin: 'https://foo.deploy.space',
+      },
     }))
     assert.strictEqual(res.statusCode, 204)
     assert.strictEqual(res.headers['access-control-allow-origin'], 'https://foo.deploy.space')
@@ -247,8 +247,8 @@ test('CORS with an array and a regexp', async (t) => {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
-        Origin: 'https://foo.cloud'
-      }
+        Origin: 'https://foo.cloud',
+      },
     }))
     assert.strictEqual(res.statusCode, 204)
     assert.strictEqual(res.headers['access-control-allow-origin'], undefined)
@@ -263,10 +263,10 @@ test('CORS with a string', async (t) => {
       port: 0,
       cors: {
         origin: 'https://platformatic.cloud',
-        methods: ['GET', 'POST']
-      }
+        methods: ['GET', 'POST'],
+      },
     },
-    metrics: false
+    metrics: false,
   }, async function (app, opts) {
     app.register(platformaticService, opts)
     app.post('/login', (req, reply) => {})
@@ -282,8 +282,8 @@ test('CORS with a string', async (t) => {
       method: 'OPTIONS',
       headers: {
         'Access-Control-Request-Method': 'POST',
-        Origin: 'https://foo.cloud'
-      }
+        Origin: 'https://foo.cloud',
+      },
     }))
     assert.strictEqual(res.statusCode, 204)
     assert.strictEqual(res.headers['access-control-allow-origin'], 'https://platformatic.cloud')

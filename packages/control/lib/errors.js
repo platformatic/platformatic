@@ -20,5 +20,5 @@ module.exports = {
   FailedToGetRuntimeServiceConfig: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_SERVICE_CONFIG`, 'Failed to get runtime service config %s.'),
   FailedToGetRuntimeHistoryLogs: createError(`${ERROR_PREFIX}_FAILED_TO_GET_HISTORY_LOGS`, 'Failed to get history logs %s.'),
   FailedToGetRuntimeAllLogs: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_ALL_LOGS`, 'Failed to get runtime all logs %s.'),
-  FailedToGetRuntimeLogIndexes: createError(`${ERROR_PREFIX}_FAILED_TO_GET_HISTORY_LOGS_COUNT`, 'Failed to get history logs count %s.')
+  FailedToGetRuntimeLogIndexes: createError(`${ERROR_PREFIX}_FAILED_TO_GET_HISTORY_LOGS_COUNT`, 'Failed to get history logs count %s.'),
 }

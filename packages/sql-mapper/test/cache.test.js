@@ -15,7 +15,7 @@ const seed = [
     title VARCHAR(255) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
   )`,
-  'INSERT INTO movies (title) VALUES (\'Jurassic Park\'), (\'The Dark Knight\'), (\'Memento\')'
+  'INSERT INTO movies (title) VALUES (\'Jurassic Park\'), (\'The Dark Knight\'), (\'Memento\')',
 ]
 
 test('setup', async t => {
@@ -36,7 +36,7 @@ test('dedupe', async t => {
       onDedupe: () => { dedupes++ },
       onHit: () => { hits++ },
       onMiss: () => { misses++ },
-      onError: () => { errors++ }
+      onError: () => { errors++ },
     }
     const mapper = await setupDatabase({ seed, cache, t })
     const concurrency = 10
@@ -61,7 +61,7 @@ test('dedupe', async t => {
       onDedupe: () => { dedupes++ },
       onHit: () => { hits++ },
       onMiss: () => { misses++ },
-      onError: () => { errors++ }
+      onError: () => { errors++ },
     }
     const mapper = await setupDatabase({ seed, cache, t })
     const concurrency = 10

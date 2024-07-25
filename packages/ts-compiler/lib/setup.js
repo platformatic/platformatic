@@ -16,7 +16,7 @@ async function setup (options) {
     logger = pino(
       pretty({
         translateTime: 'SYS:HH:MM:ss',
-        ignore: 'hostname,pid'
+        ignore: 'hostname,pid',
       })
     )
   }

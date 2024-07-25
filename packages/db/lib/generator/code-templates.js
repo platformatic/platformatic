@@ -21,7 +21,7 @@ let counter = 0
   t.after(async () => {
     await fs.unlink(dbPath)
   })
-`
+`,
 }
 
 function jsHelperPostgres (connectionString) {
@@ -62,7 +62,7 @@ let counter = 0
     \`)
     await db.dispose()
   })
-`
+`,
   }
 }
 
@@ -104,7 +104,7 @@ let counter = 0
     \`)
     await db.dispose()
   })
-`
+`,
   }
 }
 
@@ -215,5 +215,5 @@ module.exports = {
   jsHelperPostgres,
   jsHelperSqlite,
   moviesTestJS,
-  moviesTestTS
+  moviesTestTS,
 }

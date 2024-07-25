@@ -16,7 +16,7 @@ import { createComposer } from './lib/create.mjs'
 const help = helpMe({
   dir: join(import.meta.url, 'help'),
   // the default
-  ext: '.txt'
+  ext: '.txt',
 })
 
 const program = commist({ maxDistance: 2 })
@@ -32,8 +32,8 @@ program.register('create', createComposer)
 export async function runComposer (argv) {
   const args = parseArgs(argv, {
     alias: {
-      v: 'version'
-    }
+      v: 'version',
+    },
   })
 
   if (args.version) {
@@ -45,7 +45,7 @@ export async function runComposer (argv) {
 
   return {
     output,
-    help
+    help,
   }
 }
 

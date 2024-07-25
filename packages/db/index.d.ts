@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/triple-slash-reference */
 /// <reference types="@platformatic/sql-graphql" />
 /// <reference types="@platformatic/sql-openapi" />
 import { FastifyInstance } from 'fastify'

@@ -6,13 +6,13 @@ module.exports = async function (fastify, opts) {
     return {
       headers: req.headers,
       body: req.body,
-      query: req.query
+      query: req.query,
     }
   })
 
   fastify.get('/valid', async (req, res) => {
     return {
-      message: 'This is a valid response'
+      message: 'This is a valid response',
     }
   })
 
@@ -28,7 +28,7 @@ module.exports = async function (fastify, opts) {
   fastify.get('/with-refs', async (req, res) => {
     const movie = {
       id: 123,
-      title: 'Harry Potter'
+      title: 'Harry Potter',
     }
     return movie
   })

@@ -30,7 +30,7 @@ test('no modification of entity', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -93,7 +93,7 @@ test('no modification of entity with nested data', async (t) => {
           );
         `)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())

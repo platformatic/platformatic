@@ -7,28 +7,28 @@ const RuntimeApiClient = require('./runtime-api-client')
 const tableColumns = [
   {
     value: 'id',
-    alias: 'NAME'
+    alias: 'NAME',
   },
   {
     value: 'type',
-    alias: 'TYPE'
+    alias: 'TYPE',
   },
   {
     value: 'entrypoint',
     alias: 'ENTRYPOINT',
     formatter: (entrypoint) => {
       return entrypoint ? 'yes' : 'no'
-    }
-  }
+    },
+  },
 ]
 
 const tableConfig = {
   border: getBorderCharacters('void'),
   columnDefault: {
     paddingLeft: 0,
-    paddingRight: 1
+    paddingRight: 1,
   },
-  drawHorizontalLine: () => false
+  drawHorizontalLine: () => false,
 }
 
 async function printRuntimeServices (services) {
@@ -56,9 +56,9 @@ async function getRuntimeServicesCommand (argv) {
     args: argv,
     options: {
       pid: { type: 'string', short: 'p' },
-      name: { type: 'string', short: 'n' }
+      name: { type: 'string', short: 'n' },
     },
-    strict: false
+    strict: false,
   }).values
 
   const client = new RuntimeApiClient()

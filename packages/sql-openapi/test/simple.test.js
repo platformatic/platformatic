@@ -39,7 +39,7 @@ test('simple db, simple rest API', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -49,7 +49,7 @@ test('simple db, simple rest API', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     equal(res.json().info.version, '1.0.0', 'GET /documentation/json info version default')
   }
@@ -59,26 +59,26 @@ test('simple db, simple rest API', async (t) => {
       method: 'POST',
       url: '/pages',
       body: {
-        title: 'Hello'
-      }
+        title: 'Hello',
+      },
     })
     equal(res.statusCode, 200, 'POST /pages status code')
     equal(res.headers.location, '/pages/1', 'POST /api/pages location')
     same(res.json(), {
       id: 1,
-      title: 'Hello'
+      title: 'Hello',
     }, 'POST /pages response')
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/pages/1'
+      url: '/pages/1',
     })
     equal(res.statusCode, 200, 'GET /pages/1 status code')
     same(res.json(), {
       id: 1,
-      title: 'Hello'
+      title: 'Hello',
     }, 'GET /pages/1 response')
   }
 
@@ -87,25 +87,25 @@ test('simple db, simple rest API', async (t) => {
       method: 'PUT',
       url: '/pages/1',
       body: {
-        title: 'Hello World'
-      }
+        title: 'Hello World',
+      },
     })
     equal(res.statusCode, 200, 'PUT /pages/1 status code')
     same(res.json(), {
       id: 1,
-      title: 'Hello World'
+      title: 'Hello World',
     }, 'PUT /pages/1 response')
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/pages/1'
+      url: '/pages/1',
     })
     equal(res.statusCode, 200, 'GET /pages/1 status code')
     same(res.json(), {
       id: 1,
-      title: 'Hello World'
+      title: 'Hello World',
     }, 'GET /pages/1 response')
   }
 
@@ -114,8 +114,8 @@ test('simple db, simple rest API', async (t) => {
       method: 'POST',
       url: '/pages',
       body: {
-        tilte: 'Hello' // typo, wrong field
-      }
+        tilte: 'Hello', // typo, wrong field
+      },
     })
     equal(res.statusCode, 400, 'POST /pages status code')
     equal(res.headers.location, undefined, 'no location header')
@@ -123,14 +123,14 @@ test('simple db, simple rest API', async (t) => {
       statusCode: 400,
       code: 'FST_ERR_VALIDATION',
       error: 'Bad Request',
-      message: "body must have required property 'title'"
+      message: "body must have required property 'title'",
     }, 'POST /pages response')
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     const json = res.json()
     const snapshot = await snap(json)
@@ -140,10 +140,10 @@ test('simple db, simple rest API', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/pages/1?fields=title'
+      url: '/pages/1?fields=title',
     })
     same(res.json(), {
-      title: 'Hello World'
+      title: 'Hello World',
     }, 'GET /pages/1?fields=title response')
   }
 
@@ -152,11 +152,11 @@ test('simple db, simple rest API', async (t) => {
       method: 'PUT',
       url: '/pages/1?fields=title',
       body: {
-        title: 'Hello fields'
-      }
+        title: 'Hello fields',
+      },
     })
     same(res.json(), {
-      title: 'Hello fields'
+      title: 'Hello fields',
     }, 'PUT /pages/1?fields=title response')
   }
 
@@ -164,11 +164,11 @@ test('simple db, simple rest API', async (t) => {
     // Fields as array
     const res = await app.inject({
       method: 'GET',
-      url: '/pages/1?fields=title&fields=id'
+      url: '/pages/1?fields=title&fields=id',
     })
     same(res.json(), {
       id: 1,
-      title: 'Hello fields'
+      title: 'Hello fields',
     }, 'GET /pages/1?fields=title&fields=id response')
   }
 
@@ -176,11 +176,11 @@ test('simple db, simple rest API', async (t) => {
     // Fields as comma separated strings
     const res = await app.inject({
       method: 'GET',
-      url: '/pages/1?fields=title,id'
+      url: '/pages/1?fields=title,id',
     })
     same(res.json(), {
       id: 1,
-      title: 'Hello fields'
+      title: 'Hello fields',
     }, 'GET /pages/1?fields=title,id response')
   }
 })
@@ -193,10 +193,10 @@ test('swagger prefix', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI, {
-    swaggerPrefix: '/my-prefix'
+    swaggerPrefix: '/my-prefix',
   })
   t.after(() => app.close())
 
@@ -205,7 +205,7 @@ test('swagger prefix', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/my-prefix/json'
+      url: '/my-prefix/json',
     })
     equal(res.json().info.version, '1.0.0', 'GET /my-prefix/json info version default')
   }
@@ -239,7 +239,7 @@ test('nullable fields', async (t) => {
 
       await clear(db, sql)
       await createBasicPagesNullable(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -251,20 +251,20 @@ test('nullable fields', async (t) => {
       url: '/pages',
       body: {
         // empty object
-      }
+      },
     })
     equal(res.statusCode, 200, 'POST /pages status code')
     equal(res.headers.location, '/pages/1', 'POST /api/pages location')
     same(res.json(), {
       id: 1,
-      title: null
+      title: null,
     }, 'POST /pages response')
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     const openapi = res.json()
     const snapshot = await snap(openapi)
@@ -294,7 +294,7 @@ test('list', async (t) => {
           long_text TEXT
         );`)
       }
-    }
+    },
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -303,23 +303,23 @@ test('list', async (t) => {
 
   const posts = [{
     title: 'Post 1',
-    longText: 'This is a long text 1'
+    longText: 'This is a long text 1',
   }, {
     title: 'Post 2',
-    longText: 'This is a long text 2'
+    longText: 'This is a long text 2',
   }, {
     title: 'Post 3',
-    longText: 'This is a long text 3'
+    longText: 'This is a long text 3',
   }, {
     title: 'Post 4',
-    longText: 'This is a long text 4'
+    longText: 'This is a long text 4',
   }]
 
   for (const body of posts) {
     await app.inject({
       method: 'POST',
       url: '/posts',
-      body
+      body,
     })
   }
 
@@ -438,14 +438,14 @@ test('list', async (t) => {
   for (let i = 5; i <= 100; i++) {
     const body = {
       title: `Post ${i}`,
-      longText: `This is a long text ${i}`
+      longText: `This is a long text ${i}`,
     }
     posts.push(body)
 
     await app.inject({
       method: 'POST',
       url: '/posts',
-      body
+      body,
     })
   }
 
@@ -487,7 +487,7 @@ test('not found', async (t) => {
       await clear(db, sql)
 
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -497,7 +497,7 @@ test('not found', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/pages/1'
+      url: '/pages/1',
     })
     equal(res.statusCode, 404, 'GET /pages/1 status code')
   }
@@ -505,7 +505,7 @@ test('not found', async (t) => {
   {
     const res = await app.inject({
       method: 'DELETE',
-      url: '/pages/1'
+      url: '/pages/1',
     })
     equal(res.statusCode, 404, 'DELETE /pages/1 status code')
   }
@@ -521,7 +521,7 @@ test('PUT with an Id', async (t) => {
       await clear(db, sql)
 
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -533,13 +533,13 @@ test('PUT with an Id', async (t) => {
       method: 'PUT',
       url: '/pages/1',
       body: {
-        title: 'Hello World'
-      }
+        title: 'Hello World',
+      },
     })
     equal(res.statusCode, 200, 'PUT /pages/1 status code')
     same(res.json(), {
       id: 1,
-      title: 'Hello World'
+      title: 'Hello World',
     })
   }
 })
@@ -554,7 +554,7 @@ test('delete', async (t) => {
       await clear(db, sql)
 
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -564,7 +564,7 @@ test('delete', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/pages/1'
+      url: '/pages/1',
     })
     equal(res.statusCode, 404, 'GET /pages/1 status code')
   }
@@ -574,33 +574,33 @@ test('delete', async (t) => {
       method: 'POST',
       url: '/pages',
       body: {
-        title: 'Hello'
-      }
+        title: 'Hello',
+      },
     })
     equal(res.statusCode, 200, 'POST /pages status code')
     equal(res.headers.location, '/pages/1', 'POST /api/pages location')
     same(res.json(), {
       id: 1,
-      title: 'Hello'
+      title: 'Hello',
     }, 'POST /pages response')
   }
 
   {
     const res = await app.inject({
       method: 'DELETE',
-      url: '/pages/1'
+      url: '/pages/1',
     })
     equal(res.statusCode, 200, 'DELETE /pages/1 status code')
     same(res.json(), {
       id: 1,
-      title: 'Hello'
+      title: 'Hello',
     }, 'DELETE /pages response')
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/pages/1'
+      url: '/pages/1',
     })
     equal(res.statusCode, 404, 'GET /pages/1 status code')
   }
@@ -610,17 +610,17 @@ test('delete', async (t) => {
       method: 'POST',
       url: '/pages',
       body: {
-        title: 'Hello fields'
-      }
+        title: 'Hello fields',
+      },
     })
     const { id } = res.json()
 
     const res2 = await app.inject({
       method: 'DELETE',
-      url: `/pages/${id}?fields=title`
+      url: `/pages/${id}?fields=title`,
     })
     same(res2.json(), {
-      title: 'Hello fields'
+      title: 'Hello fields',
     }, 'DELETE /pages?fields=title response')
   }
 })
@@ -634,14 +634,14 @@ test('simple db, simple rest API', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI, {
     info: {
       title: 'Simple Title',
       description: 'Simple Description',
-      version: '42.42.42'
-    }
+      version: '42.42.42',
+    },
   })
   t.after(() => app.close())
 
@@ -649,7 +649,7 @@ test('simple db, simple rest API', async (t) => {
 
   const res = await app.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   const json = res.json()
   const snapshot = await snap(json)
@@ -658,7 +658,7 @@ test('simple db, simple rest API', async (t) => {
 
   const { body } = await app.inject({
     method: 'GET',
-    url: '/documentation/yaml'
+    url: '/documentation/yaml',
   })
 
   const parsedYaml = yaml.parse(body)
@@ -672,8 +672,8 @@ test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
     baz: 42,
     items: ['foo', 'bar'],
     nested: {
-      hello: 'world'
-    }
+      hello: 'world',
+    },
   }
   app.register(sqlMapper, {
     ...connInfo,
@@ -689,7 +689,7 @@ test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
       );`)
 
       await db.query(sql`INSERT INTO pages (id, title, metadata) VALUES (1, 'Hello World', ${JSON.stringify(jsonData)})`)
-    }
+    },
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -698,7 +698,7 @@ test('deserialize JSON columns', { skip: isSQLite }, async (t) => {
 
   const res = await app.inject({
     method: 'GET',
-    url: '/pages'
+    url: '/pages',
   })
   const json = res.json()
   if (isMariaDB) {
@@ -717,7 +717,7 @@ test('expose the api with a prefix, if defined', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI, { prefix: '/api' })
   t.after(() => app.close())
@@ -728,14 +728,14 @@ test('expose the api with a prefix, if defined', async (t) => {
       method: 'POST',
       url: '/pages',
       body: {
-        title: 'Hello'
-      }
+        title: 'Hello',
+      },
     })
     equal(res.statusCode, 404, 'POST /pages status code')
     same(res.json(), {
       message: 'Route POST:/pages not found',
       error: 'Not Found',
-      statusCode: 404
+      statusCode: 404,
     }, 'POST /pages response')
   }
   {
@@ -743,14 +743,14 @@ test('expose the api with a prefix, if defined', async (t) => {
       method: 'POST',
       url: '/api/pages',
       body: {
-        title: 'Hello'
-      }
+        title: 'Hello',
+      },
     })
     equal(res.statusCode, 200, 'POST /pages status code')
     equal(res.headers.location, '/api/pages/1', 'POST /api/pages location')
     same(res.json(), {
       id: 1,
-      title: 'Hello'
+      title: 'Hello',
     }, 'POST /pages response')
   }
 
@@ -758,7 +758,7 @@ test('expose the api with a prefix, if defined', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     const json = res.json()
     const snapshot = await snap(json)
@@ -767,7 +767,7 @@ test('expose the api with a prefix, if defined', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation'
+      url: '/documentation',
     })
     equal(res.statusCode, 200, 'GET /documentation status code')
   }
@@ -786,7 +786,7 @@ test('JSON type', { skip: !(isPg || isMysql8) }, async (t) => {
         id SERIAL PRIMARY KEY,
         config json NOT NULL
       );`)
-    }
+    },
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -799,17 +799,17 @@ test('JSON type', { skip: !(isPg || isMysql8) }, async (t) => {
       url: '/simpleTypes',
       body: {
         config: {
-          foo: 'bar'
-        }
-      }
+          foo: 'bar',
+        },
+      },
     })
     equal(res.statusCode, 200, 'POST /simpleTypes status code')
     equal(res.headers.location, '/simpleTypes/1', 'POST /simpleTypes location')
     same(res.json(), {
       id: 1,
       config: {
-        foo: 'bar'
-      }
+        foo: 'bar',
+      },
     }, 'POST /simpleTypes response')
   }
 
@@ -820,17 +820,17 @@ test('JSON type', { skip: !(isPg || isMysql8) }, async (t) => {
       body: {
         config: {
           foo: 'bar',
-          bar: 'foo'
-        }
-      }
+          bar: 'foo',
+        },
+      },
     })
     equal(res.statusCode, 200, 'PUT /simpleTypes status code')
     same(res.json(), {
       id: 1,
       config: {
         foo: 'bar',
-        bar: 'foo'
-      }
+        bar: 'foo',
+      },
     }, 'PUT /simpleTypes response')
   }
 })
@@ -849,7 +849,7 @@ test('BIGINT', { skip: isSQLite }, async (t) => {
         id SERIAL PRIMARY KEY,
         counter BIGINT
       );`)
-    }
+    },
   })
   t.after(() => app.close())
 
@@ -865,25 +865,25 @@ test('BIGINT', { skip: isSQLite }, async (t) => {
       url: '/simpleTypes',
       body: {
         id: 1,
-        counter: counter.toString()
-      }
+        counter: counter.toString(),
+      },
     })
     equal(res.statusCode, 200, 'POST /simpleTypes status code')
     same(res.json(), {
       id: 1,
-      counter: counter.toString()
+      counter: counter.toString(),
     }, 'POST /simpleTypes response')
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/simpleTypes/1'
+      url: '/simpleTypes/1',
     })
     equal(res.statusCode, 200, 'GET /simpleTypes status code')
     same(res.json(), {
       id: 1,
-      counter: counter.toString()
+      counter: counter.toString(),
     }, 'GET /simpleTypes response')
   }
 })
@@ -901,7 +901,7 @@ test('BIGINT as ids', { skip: isSQLite }, async (t) => {
       CREATE TABLE simple_types (
         counter BIGINT PRIMARY KEY
       );`)
-    }
+    },
   })
   t.after(() => app.close())
 
@@ -916,23 +916,23 @@ test('BIGINT as ids', { skip: isSQLite }, async (t) => {
       method: 'POST',
       url: '/simpleTypes',
       body: {
-        counter: counter.toString()
-      }
+        counter: counter.toString(),
+      },
     })
     equal(res.statusCode, 200, 'POST /simpleTypes status code')
     same(res.json(), {
-      counter: counter.toString()
+      counter: counter.toString(),
     }, 'POST /simpleTypes response')
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: `/simpleTypes/${counter}`
+      url: `/simpleTypes/${counter}`,
     })
     equal(res.statusCode, 200, 'GET /simpleTypes status code')
     same(res.json(), {
-      counter: counter.toString()
+      counter: counter.toString(),
     }, 'GET /simpleTypes response')
   }
 })

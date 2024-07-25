@@ -13,7 +13,7 @@ const errors = {
   CouldNotCreateWorkspaceError: createError(`${ERROR_PREFIX}_COULD_NOT_CREATE_WORKSPACE`, 'Could not create workspace'),
   CouldNotCreateApplicationError: createError(`${ERROR_PREFIX}_COULD_NOT_CREATE_APPLICATION`, 'Could not create application'),
   CouldNotFetchUserOrgsError: createError(`${ERROR_PREFIX}_COULD_NOT_FETCH_USER_ORGS`, 'Could not fetch user ogranisations'),
-  NoUserOrgsError: createError(`${ERROR_PREFIX}_NO_USER_ORGS`, 'User does not have any organisations.')
+  NoUserOrgsError: createError(`${ERROR_PREFIX}_NO_USER_ORGS`, 'User does not have any organisations.'),
 }
 
 export default errors

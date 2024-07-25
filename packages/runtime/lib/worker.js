@@ -8,7 +8,7 @@ const { pathToFileURL } = require('node:url')
 const {
   MessageChannel,
   parentPort,
-  workerData
+  workerData,
 } = require('node:worker_threads')
 const undici = require('undici')
 const pino = require('pino')
@@ -23,7 +23,7 @@ if (typeof register === 'function' && workerData.config.loaderFile) {
   const { port1, port2 } = new MessageChannel()
   register(workerData.config.loaderFile, {
     data: { port: port2 },
-    transferList: [port2]
+    transferList: [port2],
   })
   loaderPort = port1
 } else if (globalThis.LOADER_PORT) {
@@ -44,7 +44,7 @@ function createLogger (config) {
   }
 
   const multiStream = pino.multistream([
-    { stream: cliStream, level: loggerConfig.level || 'info' }
+    { stream: cliStream, level: loggerConfig.level || 'info' },
   ])
 
   if (loggerConfig.transport) {
@@ -54,7 +54,7 @@ function createLogger (config) {
   if (config.loggingPort) {
     const portStream = new MessagePortWritable({
       metadata: config.loggingMetadata,
-      port: config.loggingPort
+      port: config.loggingPort,
     })
     multiStream.add({ level: 'trace', stream: portStream })
   }
@@ -77,9 +77,9 @@ function createLogger (config) {
         mkdir: true,
         fsync: true,
         limit: {
-          count: logsLimitCount
-        }
-      }
+          count: logsLimitCount,
+        },
+      },
     })
     multiStream.add({ level: 'trace', stream: pinoRoll })
   }
@@ -153,7 +153,7 @@ async function main () {
 
   const globalDispatcher = new Agent({
     ...config.undici,
-    interceptors
+    interceptors,
   })
   setGlobalDispatcher(globalDispatcher)
 

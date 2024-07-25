@@ -62,7 +62,7 @@ test('should get runtime logs via management api (with a start index)', async (t
 
   const res = await app.inject('service-1', {
     method: 'GET',
-    url: '/large-logs'
+    url: '/large-logs',
   })
   assert.strictEqual(res.statusCode, 200)
 
@@ -73,16 +73,16 @@ test('should get runtime logs via management api (with a start index)', async (t
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath,
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/logs/indexes'
+    path: '/api/v1/logs/indexes',
   })
   assert.strictEqual(statusCode, 200)
 
@@ -127,8 +127,8 @@ test('should support custom use transport with a message port logging', async (t
     level: 'trace',
     transport: {
       target: 'pino/file',
-      options: { destination: logsPath }
-    }
+      options: { destination: logsPath },
+    },
   }
 
   const configWithLoggerPath = join(projectDir, 'platformatic-custom-logger.json')

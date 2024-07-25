@@ -18,7 +18,7 @@ module.exports = async (app, opts) => {
       const songs = await app.platformatic.entities.song.find({
         where: { singerId: { in: Array.from(ids) } },
         limit: QUERY_RESULT_LIMIT,
-        ctx: null
+        ctx: null,
       })
 
       const results = new Map(queries.map(q => [String(q.singerId), []]))
@@ -51,13 +51,13 @@ module.exports = async (app, opts) => {
     Song: {
       singer: (parent, args, context, info) => {
         return parent?.singerId ? { id: parent.singerId } : null
-      }
+      },
     },
     Artist: {
       songs: async (parent, args, context, info) => {
         const r = await loader.songs({ singerId: parent.id })
         return r ?? []
-      }
+      },
     },
     Query: {
       getArtistsBySongs: async (parent, { ids }, context, info) => {
@@ -67,11 +67,11 @@ module.exports = async (app, opts) => {
         const songs = await app.platformatic.entities.song.find({
           where: { singerId: { in: args.ids } },
           limit: QUERY_RESULT_LIMIT,
-          ctx: null
+          ctx: null,
         })
 
         return songs.map(s => ({ ...s, singerId: s.singerId }))
-      }
-    }
+      },
+    },
   })
 }

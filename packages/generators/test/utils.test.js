@@ -9,7 +9,7 @@ const {
   envObjectToString,
   extractEnvVariablesFromText,
   getPackageConfigurationObject,
-  addPrefixToString
+  addPrefixToString,
 } = require('../lib/utils')
 const { flattenObject } = require('../lib/utils')
 const { getServiceTemplateFromSchemaUrl } = require('../lib/utils')
@@ -34,7 +34,7 @@ describe('utils', () => {
         'my-service': 'MY_SERVICE',
         a: 'A',
         MY_SERVICE: 'MY_SERVICE',
-        asderas123: 'ASDERAS123'
+        asderas123: 'ASDERAS123',
       }
 
       Object.entries(expectations).forEach((exp) => {
@@ -48,7 +48,7 @@ describe('utils', () => {
     test('should convert env object to string', async () => {
       const env = {
         FOO: 'bar',
-        DATABASE_URL: 'sqlite://./db.sqlite'
+        DATABASE_URL: 'sqlite://./db.sqlite',
       }
 
       assert.equal(envObjectToString(env), `FOO=bar${EOL}DATABASE_URL=sqlite://./db.sqlite`)
@@ -86,39 +86,39 @@ describe('utils', () => {
       {
         path: 'prefix',
         value: '/foo',
-        type: 'string'
+        type: 'string',
       },
       {
         path: 'foo.fooOption1',
         value: 'value1',
-        type: 'string'
+        type: 'string',
       },
       {
         path: 'foo.fooOption2',
         value: 'value2',
-        type: 'string'
+        type: 'string',
       },
       {
         path: 'foo.fooOption3',
         value: 'value3',
         type: 'string',
-        name: 'THE_FOO_OPTION_3'
+        name: 'THE_FOO_OPTION_3',
       },
       {
         path: 'foobar',
         value: '123',
-        type: 'number'
+        type: 'number',
       },
       {
         path: 'boolean.truthy',
         value: 'true',
-        type: 'boolean'
+        type: 'boolean',
       },
       {
         path: 'boolean.falsey',
         value: 'false',
-        type: 'boolean'
-      }
+        type: 'boolean',
+      },
     ]
     const output = getPackageConfigurationObject(input)
     assert.deepEqual(output.config, {
@@ -126,17 +126,17 @@ describe('utils', () => {
       foo: {
         fooOption1: 'value1',
         fooOption2: 'value2',
-        fooOption3: '{THE_FOO_OPTION_3}'
+        fooOption3: '{THE_FOO_OPTION_3}',
       },
       foobar: 123,
       boolean: {
         truthy: true,
-        falsey: false
-      }
+        falsey: false,
+      },
     })
 
     assert.deepEqual(output.env, {
-      THE_FOO_OPTION_3: 'value3'
+      THE_FOO_OPTION_3: 'value3',
     })
 
     // should throw
@@ -145,8 +145,8 @@ describe('utils', () => {
         {
           path: 'wrong',
           type: 'object',
-          value: {}
-        }
+          value: {},
+        },
       ])
       assert.fail()
     } catch (err) {
@@ -172,12 +172,12 @@ describe('utils', () => {
           credentials: {
             client: {
               id: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID}',
-              secret: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET}'
-            }
+              secret: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET}',
+            },
           },
           startRedirectPath: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_REDIRECT_PATH}',
-          callbackUri: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI}'
-        }
+          callbackUri: '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI}',
+        },
       }
       const expected = {
         name: '@fastify/oauth2',
@@ -185,7 +185,7 @@ describe('utils', () => {
         'options.credentials.client.id': '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID}',
         'options.credentials.client.secret': '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET}',
         'options.startRedirectPath': '{PLT_RIVAL_FST_PLUGIN_OAUTH2_REDIRECT_PATH}',
-        'options.callbackUri': '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI}'
+        'options.callbackUri': '{PLT_RIVAL_FST_PLUGIN_OAUTH2_CALLBACK_URI}',
       }
       assert.deepEqual(flattenObject(packageObject), expected)
     })
@@ -209,12 +209,12 @@ describe('utils', () => {
         '',
         '# this is a comment that will be not parsed',
         'MY_VAR=value',
-        'PLT_SERVICE_NAME_FOOBAR=foobar'
+        'PLT_SERVICE_NAME_FOOBAR=foobar',
       ]
 
       const expected = {
         MY_VAR: 'value',
-        PLT_SERVICE_NAME_FOOBAR: 'foobar'
+        PLT_SERVICE_NAME_FOOBAR: 'foobar',
       }
 
       assert.deepEqual(envStringToObject(template.join(EOL)), expected)

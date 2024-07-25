@@ -8,7 +8,7 @@ const { connect } = require('..')
 const fakeLogger = {
   trace: () => {},
   warn: () => {},
-  error: () => {}
+  error: () => {},
 }
 
 test('unique key', async (t) => {
@@ -34,7 +34,7 @@ test('unique key', async (t) => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
   const pageEntity = mapper.entities.page
   notEqual(pageEntity, undefined)
@@ -77,12 +77,12 @@ test('no key', async (t) => {
       deepEqual(obj, { table: 'pages' })
       equal(str, 'Cannot find any primary keys for table')
     },
-    error: () => {}
+    error: () => {},
   }
   const mapper = await connect({
     connectionString: connInfo.connectionString,
     log,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
   deepEqual(mapper.entities, {})
 })

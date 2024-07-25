@@ -10,7 +10,7 @@ const pinoLogLevels = {
   warn: 40,
   info: 30,
   debug: 20,
-  trace: 10
+  trace: 10,
 }
 
 async function streamRuntimeLogsCommand (argv) {
@@ -21,9 +21,9 @@ async function streamRuntimeLogsCommand (argv) {
       name: { type: 'string', short: 'n' },
       level: { type: 'string', short: 'l', default: 'info' },
       pretty: { type: 'string', default: 'true' },
-      service: { type: 'string', short: 's' }
+      service: { type: 'string', short: 's' },
     },
-    strict: false
+    strict: false,
   }).values
 
   const client = new RuntimeApiClient()

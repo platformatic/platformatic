@@ -51,7 +51,7 @@ function buildStackable () : Stackable<AcmeBaseConfig> {
       useDefaults: true,
       coerceTypes: true,
       allErrors: true,
-      strict: false
+      strict: false,
     },
     async transformConfig (this: ConfigManager<AcmeBaseConfig & PlatformaticServiceConfig>) {
       // Call the transformConfig method from the base stackable
@@ -70,7 +70,7 @@ function buildStackable () : Stackable<AcmeBaseConfig> {
       if (await isDirectory(pluginsDir)) {
         paths.push({
           path: pluginsDir,
-          encapsulate: false
+          encapsulate: false,
         })
       }
 
@@ -78,12 +78,12 @@ function buildStackable () : Stackable<AcmeBaseConfig> {
 
       if (await isDirectory(routesDir)) {
         paths.push({
-          path: routesDir
+          path: routesDir,
         })
       }
 
       this.current.plugins = {
-        paths
+        paths,
       }
 
       if (!this.current?.service?.openapi) {
@@ -94,11 +94,11 @@ function buildStackable () : Stackable<AcmeBaseConfig> {
           info: {
             title: 'Acme Microservice',
             description: 'A microservice for Acme Inc.',
-            version: '1.0.0'
-          }
+            version: '1.0.0',
+          },
         }
       }
-    }
+    },
   }
 
   return acmeBase

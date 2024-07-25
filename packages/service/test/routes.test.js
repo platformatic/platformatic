@@ -14,9 +14,9 @@ test('should respond 200 on root endpoint', async (t) => {
       port: 0,
       healthCheck: {
         enabled: true,
-        interval: 2000
-      }
-    }
+        interval: 2000,
+      },
+    },
   }))
 
   t.after(async () => {
@@ -36,8 +36,8 @@ test('should respond 200 on root endpoint', async (t) => {
     // browser
     const res = await (request(`${app.url}/`, {
       headers: {
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'
-      }
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36',
+      },
     }))
 
     assert.strictEqual(res.statusCode, 200)
@@ -52,12 +52,12 @@ test('should not overwrite a plugin which define a root endpoint', async (t) => 
       port: 0,
       healthCheck: {
         enabled: true,
-        interval: 2000
-      }
+        interval: 2000,
+      },
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
-    }
+      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')],
+    },
   }))
 
   t.after(async () => {
@@ -78,15 +78,15 @@ test('openapi enabled', async (t) => {
       port: 0,
       healthCheck: {
         enabled: true,
-        interval: 2000
-      }
+        interval: 2000,
+      },
     },
     service: {
-      openapi: true
+      openapi: true,
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
-    }
+      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')],
+    },
   }))
 
   t.after(async () => {
@@ -111,20 +111,20 @@ test('openapi config', async (t) => {
   const app = await buildServer(buildConfig({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     service: {
       openapi: {
         info: {
           title: 'My Service',
           version: '0.0.42',
-          description: 'My Service is the best service ever'
-        }
-      }
+          description: 'My Service is the best service ever',
+        },
+      },
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
-    }
+      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')],
+    },
   }))
 
   t.after(async () => {
@@ -153,15 +153,15 @@ test('openapi disabled', async (t) => {
       port: 0,
       healthCheck: {
         enabled: true,
-        interval: 2000
-      }
+        interval: 2000,
+      },
     },
     service: {
-      openapi: false
+      openapi: false,
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
-    }
+      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')],
+    },
   }))
 
   t.after(async () => {
@@ -184,12 +184,12 @@ test('openapi disabled by default', async (t) => {
       port: 0,
       healthCheck: {
         enabled: true,
-        interval: 2000
-      }
+        interval: 2000,
+      },
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
-    }
+      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')],
+    },
   }))
 
   t.after(async () => {
@@ -210,11 +210,11 @@ test('request id is a uuid', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'request-id.js')]
-    }
+      paths: [join(__dirname, 'fixtures', 'request-id.js')],
+    },
   })
 
   t.after(async () => {
@@ -223,7 +223,7 @@ test('request id is a uuid', async (t) => {
   await app.start()
 
   const res = await request(`${app.url}/request-id`, {
-    method: 'GET'
+    method: 'GET',
   })
   assert.strictEqual(res.statusCode, 200)
   const json = await res.body.json()

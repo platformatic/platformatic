@@ -12,7 +12,7 @@ const { isatty } = require('node:tty')
 
 async function compile (argv, logger) {
   const { configManager, configType, app } = await loadConfig({}, argv, {
-    watch: false
+    watch: false,
   }, false)
   /* c8 ignore next */
   if (!logger) {
@@ -21,7 +21,7 @@ async function compile (argv, logger) {
     if (isatty(process.stdout.fd)) {
       stream = pretty({
         translateTime: 'SYS:HH:MM:ss',
-        ignore: 'hostname,pid'
+        ignore: 'hostname,pid',
       })
     }
 
@@ -30,7 +30,7 @@ async function compile (argv, logger) {
 
   let compiled = false
   const compileOptions = {
-    clean: argv.includes('--clean')
+    clean: argv.includes('--clean'),
   }
   if (configType === 'runtime') {
     for (const service of configManager.current.services) {
@@ -41,7 +41,7 @@ async function compile (argv, logger) {
         onMissingEnv (key) {
           return service.localServiceEnvVars.get(key)
         },
-        watch: false
+        watch: false,
       }, false)
 
       const tsOptions = await extract(configManager, app)
@@ -51,7 +51,7 @@ async function compile (argv, logger) {
           ...compileOptions,
           ...tsOptions,
           cwd: service.path,
-          logger: childLogger
+          logger: childLogger,
         })
         compiled ||= serviceWasCompiled
       }
@@ -63,7 +63,7 @@ async function compile (argv, logger) {
         ...compileOptions,
         ...tsOptions,
         cwd: dirname(configManager.fullPath),
-        logger
+        logger,
       })
     }
   }

@@ -15,14 +15,14 @@ function printAppSummary (args, logger) {
     { config: 'Directory', value: args.dir },
     { config: 'Language', value: args.typescript ? 'Typescript' : 'Javascript' },
     { config: 'Init Git Repository', value: args.git },
-    { config: 'Install Dependencies', value: args.install }
+    { config: 'Install Dependencies', value: args.install },
   ]
 
   const p = new Table({
     columns: [
       { name: 'config', alignment: 'right' },
-      { name: 'value', alignment: 'left' }
-    ]
+      { name: 'value', alignment: 'left' },
+    ],
   })
 
   p.addRows(table)
@@ -33,7 +33,7 @@ async function createComposer (_args) {
     translateTime: 'SYS:HH:MM:ss',
     ignore: 'hostname,pid',
     minimumLevel: 'debug',
-    sync: true
+    sync: true,
   })
 
   const logger = pino(stream)
@@ -48,8 +48,8 @@ async function createComposer (_args) {
       plugin: true,
       typescript: false,
       git: false,
-      install: true
-    }
+      install: true,
+    },
 
   })
 
@@ -63,7 +63,7 @@ async function createComposer (_args) {
     tests: args.plugin,
     typescript: args.typescript,
     initGitRepository: args.git,
-    targetDirectory: args.dir
+    targetDirectory: args.dir,
   })
 
   try {

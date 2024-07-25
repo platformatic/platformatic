@@ -1,11 +1,10 @@
-import { Entity } from '@platformatic/sql-mapper';
-import graphqlPlugin from '@platformatic/sql-graphql'
-import { EntityTypes, Movie,Quote } from './types'
+import { Entity } from '@platformatic/sql-mapper'
+import { EntityTypes, Movie, Quote } from './types'
 
 declare module 'fastify' {
   interface FastifyInstance {
     getSchema<T extends 'Movie' | 'Quote'>(schemaId: T): {
-      '$id': string,
+      $id: string,
       title: string,
       description: string,
       type: string,

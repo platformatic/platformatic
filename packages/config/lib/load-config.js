@@ -10,8 +10,8 @@ async function loadConfig (minimistConfig, _args, app, overrides = {}, replaceEn
   const args = parseArgs(_args, deepmerge({ all: true })({
     alias: {
       v: 'version',
-      c: 'config'
-    }
+      c: 'config',
+    },
   }, minimistConfig))
 
   let store
@@ -27,7 +27,7 @@ async function loadConfig (minimistConfig, _args, app, overrides = {}, replaceEn
     app,
     directory: args.config && dirname(args.config),
     config: args.config,
-    overrides
+    overrides,
   })
 
   app = loaded.app
@@ -47,7 +47,7 @@ function printConfigValidationErrors (err) {
   const tabularData = err.validationErrors.map((err) => {
     return {
       path: err.path,
-      message: err.message
+      message: err.message,
     }
   })
   console.table(tabularData, ['path', 'message'])

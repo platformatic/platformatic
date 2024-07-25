@@ -29,7 +29,7 @@ test('interceptors as undici options', async (t) => {
     await Promise.all([
       idpServer.close(),
       externalServer.close(),
-      app.close()
+      app.close(),
     ])
   })
 
@@ -61,7 +61,7 @@ test('composable interceptors', async (t) => {
     await Promise.all([
       idpServer.close(),
       externalServer.close(),
-      app.close()
+      app.close(),
     ])
   })
 

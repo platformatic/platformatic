@@ -19,8 +19,8 @@ test('customize service', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
-      port: 0
-    }
+      port: 0,
+    },
   }, myApp)
 
   t.after(async () => {
@@ -44,13 +44,13 @@ test('catch errors from the other side', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
       paths: [{
-        path: require.resolve('./fixtures/other-side.js')
-      }]
-    }
+        path: require.resolve('./fixtures/other-side.js'),
+      }],
+    },
   }, myApp)
 
   t.after(async () => {
@@ -64,7 +64,7 @@ test('catch errors from the other side', async (t) => {
   assert.deepStrictEqual(body, {
     statusCode: 500,
     error: 'Internal Server Error',
-    message: 'kaboom'
+    message: 'kaboom',
   })
 })
 
@@ -72,16 +72,16 @@ test('accept packages', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
       packages: [{
         name: '@fastify/compress',
         options: {
-          threshold: 1 // 1 byte
-        }
-      }]
-    }
+          threshold: 1, // 1 byte
+        },
+      }],
+    },
   })
 
   t.after(async () => {
@@ -91,8 +91,8 @@ test('accept packages', async (t) => {
 
   const res = await (request(app.url, {
     headers: {
-      'accept-encoding': 'gzip'
-    }
+      'accept-encoding': 'gzip',
+    },
   }))
   assert.strictEqual(res.statusCode, 200)
   let body = ''
@@ -109,11 +109,11 @@ test('accept packages / string form', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
-      packages: ['@fastify/compress']
-    }
+      packages: ['@fastify/compress'],
+    },
   })
 
   t.after(async () => {
@@ -128,12 +128,12 @@ test('accept packages / with typescript on', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
       packages: ['@fastify/compress'],
-      typescript: true
-    }
+      typescript: true,
+    },
   })
 
   t.after(async () => {
@@ -153,8 +153,8 @@ test('customize service without toLoad', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
-      port: 0
-    }
+      port: 0,
+    },
   }, myApp)
 
   t.after(async () => {
@@ -174,15 +174,15 @@ test('customize service with beforePlugins', async (t) => {
       ...opts,
       beforePlugins: [async function (app) {
         app.get('/', () => 'hello world')
-      }]
+      }],
     })
   }
 
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
-      port: 0
-    }
+      port: 0,
+    },
   }, myApp)
 
   t.after(async () => {

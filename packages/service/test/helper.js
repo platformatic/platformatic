@@ -13,15 +13,15 @@ const agent = new Agent({
   keepAliveTimeout: 10,
   keepAliveMaxTimeout: 10,
   tls: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false,
+  },
 })
 
 setGlobalDispatcher(agent)
 
 function buildConfig (options) {
   const base = {
-    server: {}
+    server: {},
   }
 
   return Object.assign(base, options)

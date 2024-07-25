@@ -24,22 +24,22 @@ test('Creates a Platformatic Stackable without typescript', { timeout }, async (
   // The actions must match IN ORDER
   const actions = [{
     match: 'What kind of project do you want to create?',
-    do: [keys.DOWN, keys.ENTER] // Stackable
+    do: [keys.DOWN, keys.ENTER], // Stackable
   }, {
     match: 'Where would you like to create your project?',
-    do: [keys.ENTER]
+    do: [keys.ENTER],
   }, {
     match: 'What is the name of the stackable?',
-    do: [keys.ENTER] // my-stackable
+    do: [keys.ENTER], // my-stackable
   }, {
     match: 'Do you want to use TypeScript',
-    do: [keys.ENTER] // no
+    do: [keys.ENTER], // no
   }, {
     match: 'Do you want to init the git repository',
-    do: [keys.DOWN, keys.ENTER] // yes
+    do: [keys.DOWN, keys.ENTER], // yes
   }]
   await executeCreatePlatformatic(tmpDir, actions, {
-    done: 'Stackable created successfully!'
+    done: 'Stackable created successfully!',
   })
 
   const baseProjectDir = join(tmpDir, 'platformatic')
@@ -64,22 +64,22 @@ test('Creates a Platformatic Stackable with typescript', { timeout }, async () =
   // The actions must match IN ORDER
   const actions = [{
     match: 'What kind of project do you want to create?',
-    do: [keys.DOWN, keys.ENTER] // Stackable
+    do: [keys.DOWN, keys.ENTER], // Stackable
   }, {
     match: 'Where would you like to create your project?',
-    do: [keys.ENTER]
+    do: [keys.ENTER],
   }, {
     match: 'What is the name of the stackable?',
-    do: [keys.ENTER] // my-stackable
+    do: [keys.ENTER], // my-stackable
   }, {
     match: 'Do you want to use TypeScript',
-    do: [keys.DOWN, keys.ENTER] // yes
+    do: [keys.DOWN, keys.ENTER], // yes
   }, {
     match: 'Do you want to init the git repository',
-    do: [keys.ENTER] // no
+    do: [keys.ENTER], // no
   }]
   await executeCreatePlatformatic(tmpDir, actions, {
-    done: 'Stackable created successfully!'
+    done: 'Stackable created successfully!',
   })
 
   const baseProjectDir = join(tmpDir, 'platformatic')

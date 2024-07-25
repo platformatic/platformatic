@@ -19,24 +19,24 @@ test('should get service details', async (t) => {
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath: app.managementApi.server.address(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   t.after(async () => {
     await Promise.all([
       client.close(),
       app.close(),
-      app.managementApi.close()
+      app.managementApi.close(),
     ])
   })
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/services/service-1'
+    path: '/api/v1/services/service-1',
   })
 
   assert.strictEqual(statusCode, 200)
@@ -51,6 +51,6 @@ test('should get service details', async (t) => {
     entrypoint: true,
     url: entrypointDetails.url,
     localUrl: 'http://service-1.plt.local',
-    dependencies: []
+    dependencies: [],
   })
 })

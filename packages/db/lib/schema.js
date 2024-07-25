@@ -9,39 +9,39 @@ const db = {
   type: 'object',
   properties: {
     connectionString: {
-      type: 'string'
+      type: 'string',
     },
     schema: {
       type: 'array',
       items: {
-        type: 'string'
-      }
+        type: 'string',
+      },
     },
     schemalock: {
       oneOf: [{
         type: 'boolean',
-        default: false
+        default: false,
       }, {
         type: 'object',
         properties: {
           path: {
             type: 'string',
-            resolvePath: true
-          }
-        }
-      }]
+            resolvePath: true,
+          },
+        },
+      }],
     },
     poolSize: {
-      type: 'integer'
+      type: 'integer',
     },
     idleTimeoutMilliseconds: {
-      type: 'integer'
+      type: 'integer',
     },
     queueTimeoutMilliseconds: {
-      type: 'integer'
+      type: 'integer',
     },
     acquireLockTimeoutMilliseconds: {
-      type: 'integer'
+      type: 'integer',
     },
     autoTimestamp: {
       oneOf: [{
@@ -49,96 +49,96 @@ const db = {
         properties: {
           createdAt: {
             type: 'string',
-            default: 'created_at'
+            default: 'created_at',
           },
           updatedAt: {
             type: 'string',
-            default: 'updated_at'
-          }
-        }
+            default: 'updated_at',
+          },
+        },
       }, {
-        type: 'boolean'
-      }]
+        type: 'boolean',
+      }],
     },
     graphql: {
       anyOf: [{
-        type: 'boolean'
+        type: 'boolean',
       }, {
         type: 'object',
         properties: {
           graphiql: {
-            type: 'boolean'
+            type: 'boolean',
           },
           include: {
             type: 'object',
             additionalProperties: {
-              type: 'boolean'
-            }
+              type: 'boolean',
+            },
           },
           ignore: {
             type: 'object',
             additionalProperties: {
               anyOf: [{
-                type: 'boolean'
+                type: 'boolean',
               }, {
                 type: 'object',
                 additionalProperties: {
-                  type: 'boolean'
-                }
-              }]
-            }
+                  type: 'boolean',
+                },
+              }],
+            },
           },
           subscriptionIgnore: {
             type: 'array',
             items: {
-              type: 'string'
-            }
+              type: 'string',
+            },
           },
           schema: {
-            type: 'string'
+            type: 'string',
           },
           schemaPath: {
             type: 'string',
-            resolvePath: true
+            resolvePath: true,
           },
           enabled: {
             anyOf: [
               { type: 'boolean' },
-              { type: 'string' }
-            ]
-          }
-        }
-      }]
+              { type: 'string' },
+            ],
+          },
+        },
+      }],
     },
     openapi: {
       anyOf: [{
-        type: 'boolean'
+        type: 'boolean',
       }, {
         type: 'object',
         properties: {
           ...(openApiBase.properties),
           allowPrimaryKeysInInput: {
             type: 'boolean',
-            default: true
+            default: true,
           },
           include: {
             type: 'object',
             additionalProperties: {
-              type: 'boolean'
-            }
+              type: 'boolean',
+            },
           },
           ignore: {
             type: 'object',
             additionalProperties: {
               anyOf: [{
-                type: 'boolean'
+                type: 'boolean',
               }, {
                 type: 'object',
                 additionalProperties: {
-                  type: 'boolean'
-                }
-              }]
-            }
+                  type: 'boolean',
+                },
+              }],
+            },
           },
           ignoreRoutes: {
             type: 'array',
@@ -146,103 +146,103 @@ const db = {
               type: 'object',
               properties: {
                 method: { type: 'string' },
-                path: { type: 'string' }
+                path: { type: 'string' },
               },
               required: ['method', 'path'],
-              additionalProperties: false
-            }
+              additionalProperties: false,
+            },
           },
           enabled: {
             anyOf: [
               { type: 'boolean' },
-              { type: 'string' }
-            ]
+              { type: 'string' },
+            ],
           },
           swaggerPrefix: {
             type: 'string',
-            description: 'Base URL for the OpenAPI Swagger Documentation'
+            description: 'Base URL for the OpenAPI Swagger Documentation',
           },
           prefix: {
             type: 'string',
-            description: 'Base URL for generated Platformatic DB routes'
-          }
+            description: 'Base URL for generated Platformatic DB routes',
+          },
         },
-        additionalProperties: false
-      }]
+        additionalProperties: false,
+      }],
     },
     include: {
       type: 'object',
       additionalProperties: {
-        type: 'boolean'
-      }
+        type: 'boolean',
+      },
     },
     ignore: {
       type: 'object',
       // TODO add support for column-level ignore
       additionalProperties: {
-        type: 'boolean'
-      }
+        type: 'boolean',
+      },
     },
     limit: {
       type: 'object',
       properties: {
         default: {
           type: 'integer',
-          default: 10
+          default: 10,
         },
         max: {
           type: 'integer',
-          default: 100
-        }
-      }
+          default: 100,
+        },
+      },
     },
     events: {
       anyOf: [{
-        type: 'boolean'
+        type: 'boolean',
       }, {
         type: 'object',
         properties: {
           connectionString: {
-            type: 'string'
+            type: 'string',
           },
           enabled: {
             anyOf: [
               { type: 'boolean' },
-              { type: 'string' }
-            ]
-          }
+              { type: 'string' },
+            ],
+          },
         },
-        additionalProperties: false
-      }]
+        additionalProperties: false,
+      }],
     },
     cache: {
-      type: 'boolean'
-    }
+      type: 'boolean',
+    },
   },
-  required: ['connectionString']
+  required: ['connectionString'],
 }
 
 const sharedAuthorizationRule = {
   role: {
     type: 'string',
-    description: 'the role name to match the rule'
+    description: 'the role name to match the rule',
   },
   defaults: {
     type: 'object',
     description: 'defaults for entity creation',
     additionalProperties: {
-      type: 'string'
-    }
+      type: 'string',
+    },
   },
   find: {
-    $ref: '#/$defs/crud-operation-auth'
+    $ref: '#/$defs/crud-operation-auth',
   },
   save: {
-    $ref: '#/$defs/crud-operation-auth'
+    $ref: '#/$defs/crud-operation-auth',
   },
   delete: {
-    $ref: '#/$defs/crud-operation-auth'
-  }
+    $ref: '#/$defs/crud-operation-auth',
+  },
 }
 
 const authorization = {
@@ -250,21 +250,21 @@ const authorization = {
   properties: {
     adminSecret: {
       type: 'string',
-      description: 'The password should be used to access routes under /_admin prefix and for admin access to REST and GraphQL endpoints with X-PLATFORMATIC-ADMIN-SECRET header.'
+      description: 'The password should be used to access routes under /_admin prefix and for admin access to REST and GraphQL endpoints with X-PLATFORMATIC-ADMIN-SECRET header.',
     },
     roleKey: {
       type: 'string',
       description: 'The user metadata key to store user roles',
-      default: 'X-PLATFORMATIC-ROLE'
+      default: 'X-PLATFORMATIC-ROLE',
     },
     rolePath: {
       type: 'string',
-      description: 'The user metadata path to store user roles'
+      description: 'The user metadata path to store user roles',
     },
     anonymousRole: {
       type: 'string',
       description: 'The role name for anonymous users',
-      default: 'anonymous'
+      default: 'anonymous',
     },
     jwt: {
       type: 'object',
@@ -273,37 +273,37 @@ const authorization = {
         secret: {
           oneOf: [{
             type: 'string',
-            description: 'the shared secret for JWT'
+            description: 'the shared secret for JWT',
           }, {
             type: 'object',
             description: 'the JWT secret configuration (see: https://github.com/fastify/fastify-jwt#secret-required)',
-            additionalProperties: true
-          }]
+            additionalProperties: true,
+          }],
         },
         namespace: {
           type: 'string',
-          description: 'the namespace for JWT custom claims'
+          description: 'the namespace for JWT custom claims',
         },
         jwks: {
           oneOf: [{
-            type: 'boolean'
+            type: 'boolean',
           }, {
             // shall we replicate here all the options in https://github.com/nearform/get-jwks#options
             type: 'object',
-            additionalProperties: true
-          }]
-        }
-      }
+            additionalProperties: true,
+          }],
+        },
+      },
     },
     webhook: {
       type: 'object',
       properties: {
         url: {
           type: 'string',
-          description: 'the webhook url'
-        }
+          description: 'the webhook url',
+        },
       },
-      additionalProperties: false
+      additionalProperties: false,
     },
     rules: {
       type: 'array',
@@ -314,12 +314,12 @@ const authorization = {
           properties: {
             entity: {
               type: 'string',
-              description: 'the DB entity type to which the rule applies'
+              description: 'the DB entity type to which the rule applies',
             },
-            ...sharedAuthorizationRule
+            ...sharedAuthorizationRule,
           },
           required: ['role'],
-          additionalProperties: false
+          additionalProperties: false,
         }, {
           type: 'object',
           properties: {
@@ -327,18 +327,18 @@ const authorization = {
               type: 'array',
               description: 'the DB entity types to which the rule applies',
               items: {
-                type: 'string'
-              }
+                type: 'string',
+              },
             },
-            ...sharedAuthorizationRule
+            ...sharedAuthorizationRule,
           },
           required: ['role'],
-          additionalProperties: false
-        }]
-      }
-    }
+          additionalProperties: false,
+        }],
+      },
+    },
   },
-  additionalProperties: false
+  additionalProperties: false,
 }
 
 const migrations = {
@@ -347,51 +347,51 @@ const migrations = {
     dir: {
       type: 'string',
       resolvePath: true,
-      description: 'The path to the directory containing the migrations.'
+      description: 'The path to the directory containing the migrations.',
     },
     table: {
       type: 'string',
       description: 'Table created to track schema version.',
-      default: 'versions'
+      default: 'versions',
     },
     validateChecksums: {
-      type: 'boolean'
+      type: 'boolean',
     },
     autoApply: {
       description: 'Whether to automatically apply migrations when running the migrate command.',
       anyOf: [{
         type: 'boolean',
-        default: false
+        default: false,
       }, {
-        type: 'string'
-      }]
+        type: 'string',
+      }],
     },
     newline: {
       type: 'string',
-      description: 'Force line ending on file when generating checksum. Value should be either CRLF (windows) or LF (unix/mac).'
+      description: 'Force line ending on file when generating checksum. Value should be either CRLF (windows) or LF (unix/mac).',
     },
     currentSchema: {
       type: 'string',
-      description: 'For Postgres and MS SQL Server(will ignore for another DBs). Specifies schema to look to when validating `versions` table columns. For Postgres, run\'s `SET search_path = currentSchema` prior to running queries against db.'
-    }
+      description: 'For Postgres and MS SQL Server(will ignore for another DBs). Specifies schema to look to when validating `versions` table columns. For Postgres, run\'s `SET search_path = currentSchema` prior to running queries against db.',
+    },
   },
   additionalProperties: false,
-  required: ['dir']
+  required: ['dir'],
 }
 
 const types = {
   type: 'object',
   properties: {
     autogenerate: {
-      type: 'boolean'
+      type: 'boolean',
     },
     dir: {
       type: 'string',
       resolvePath: true,
-      description: 'The path to the directory the types should be generated in.'
-    }
+      description: 'The path to the directory the types should be generated in.',
+    },
   },
-  additionalProperties: false
+  additionalProperties: false,
 }
 
 const platformaticDBschema = {
@@ -406,9 +406,9 @@ const platformaticDBschema = {
         ...server.properties,
         pluginTimeout: {
           ...server.properties.pluginTimeout,
-          default: 60 * 1000
-        }
-      }
+          default: 60 * 1000,
+        },
+      },
     },
     db,
     authorization,
@@ -420,14 +420,14 @@ const platformaticDBschema = {
     clients,
     watch: {
       anyOf: [watch, {
-        type: 'boolean'
+        type: 'boolean',
       }, {
-        type: 'string'
-      }]
+        type: 'string',
+      }],
     },
     $schema: {
-      type: 'string'
-    }
+      type: 'string',
+    },
   },
   additionalProperties: false,
   required: ['db'],
@@ -443,7 +443,7 @@ const platformaticDBschema = {
             type: 'object',
             additionalProperties: {
               if: {
-                type: 'object'
+                type: 'object',
               },
               then: {
                 type: 'object',
@@ -455,30 +455,30 @@ const platformaticDBschema = {
                   gt: { type: 'string' },
                   gte: { type: 'string' },
                   lt: { type: 'string' },
-                  lte: { type: 'string' }
+                  lte: { type: 'string' },
                 },
-                additionalProperties: false
+                additionalProperties: false,
               },
               else: {
-                type: 'string'
-              }
-            }
+                type: 'string',
+              },
+            },
           },
           fields: {
             type: 'array',
             description: 'array of enabled field for the operation',
             items: {
-              type: 'string'
-            }
-          }
+              type: 'string',
+            },
+          },
         },
-        additionalProperties: false
+        additionalProperties: false,
       }, {
         type: 'boolean',
-        description: 'true if enabled (with not authorization constraints enabled)'
-      }]
-    }
-  }
+        description: 'true if enabled (with not authorization constraints enabled)',
+      }],
+    },
+  },
 }
 
 module.exports.schema = platformaticDBschema

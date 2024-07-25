@@ -4,7 +4,7 @@
 
 const camelcase = require('camelcase')
 const {
-  fromSelectionSet
+  fromSelectionSet,
 } = require('./utils')
 const assert = require('assert')
 
@@ -49,8 +49,8 @@ module.exports = function establishRelations (app, relations, resolvers, loaders
             return foreign.loadMany(keys, queries, ctx)
           },
           opts: {
-            cache: false
-          }
+            cache: false,
+          },
         }
       }
     }

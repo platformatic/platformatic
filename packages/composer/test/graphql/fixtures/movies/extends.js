@@ -18,7 +18,7 @@ module.exports = async (app, opts) => {
       const movies = await app.platformatic.entities.movie.find({
         where: { directorId: { in: Array.from(ids) } },
         limit: QUERY_RESULT_LIMIT,
-        ctx: null
+        ctx: null,
       })
 
       const results = new Map(queries.map(q => [String(q.directorId), []]))
@@ -51,13 +51,13 @@ module.exports = async (app, opts) => {
     Movie: {
       director: (parent, args, context, info) => {
         return parent?.directorId ? { id: parent.directorId } : null
-      }
+      },
     },
     Artist: {
       movies: async (parent, args, context, info) => {
         const r = await loader.movies({ directorId: parent.id })
         return r ?? []
-      }
+      },
     },
     Query: {
       getArtistsByMovies: async (parent, { ids }, context, info) => {
@@ -67,11 +67,11 @@ module.exports = async (app, opts) => {
         const movies = await app.platformatic.entities.movie.find({
           where: { directorId: { in: args.ids } },
           limit: QUERY_RESULT_LIMIT,
-          ctx: null
+          ctx: null,
         })
 
         return movies.map(s => ({ ...s, directorId: s.directorId }))
-      }
-    }
+      },
+    },
   })
 }

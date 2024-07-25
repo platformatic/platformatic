@@ -16,19 +16,19 @@ test('should not throw error if setup migrator twice', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     db: {
-      connectionString: `sqlite://${join(cwd, 'db.sqlite')}`
+      connectionString: `sqlite://${join(cwd, 'db.sqlite')}`,
     },
     migrations: {
-      dir: migrationsDirPath
-    }
+      dir: migrationsDirPath,
+    },
   }
 
   const logger = pino(pretty({
     translateTime: 'SYS:HH:MM:ss',
-    ignore: 'hostname,pid'
+    ignore: 'hostname,pid',
   }))
 
   const migrator = new Migrator(

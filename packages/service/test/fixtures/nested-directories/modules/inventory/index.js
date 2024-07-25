@@ -21,8 +21,8 @@ async function inventory (fastify, opts) {
   fastify.register(autoload, {
     dir: join(import.meta.url, 'routes'),
     options: {
-      prefix: opts.prefix
-    }
+      prefix: opts.prefix,
+    },
   })
 
   fastify.get('/foo', async function (req) {

@@ -11,7 +11,7 @@ async function buildServerRuntime (options = {}) {
   const {
     serviceMap,
     loggingPort,
-    loggingMetadata
+    loggingMetadata,
   } = options
 
   if (!options.configManager) {
@@ -22,7 +22,7 @@ async function buildServerRuntime (options = {}) {
     // Instantiate a new config manager from the current options.
     const cm = new ConfigManager({
       ...platformaticRuntime.configManagerConfig,
-      source: options
+      source: options,
     })
     await cm.parseAndValidate()
 

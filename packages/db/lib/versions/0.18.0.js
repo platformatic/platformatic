@@ -6,5 +6,5 @@ module.exports = {
     config.db = config.core
     delete config.core
     return config
-  }
+  },
 }

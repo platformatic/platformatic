@@ -13,4 +13,3 @@ function buildStackable () : Stackable<PlatformaticServiceConfig> {
 }
 
 export default buildStackable()
-

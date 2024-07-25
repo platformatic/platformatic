@@ -3,8 +3,8 @@
  * A Quote
  */
 declare interface Quote {
-    id?: number;
-    quote: string;
-    movieId: number;
+  id?: number;
+  quote: string;
+  movieId: number;
 }
-export { Quote };
+export { Quote }

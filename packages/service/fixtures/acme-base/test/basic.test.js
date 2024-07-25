@@ -6,9 +6,9 @@ test('dynamite', async (t) => {
   const server = await buildServer({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
-    dynamite: true
+    dynamite: true,
   })
 
   const res = await server.inject('/dynamite')
@@ -20,9 +20,9 @@ test('dynamite false', async (t) => {
   const server = await buildServer({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
-    dynamite: false
+    dynamite: false,
   })
 
   const res = await server.inject('/dynamite')
@@ -33,9 +33,9 @@ test('openapi', async (t) => {
   const server = await buildServer({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
-    dynamite: true
+    dynamite: true,
   })
 
   const res = await server.inject('/documentation/json')

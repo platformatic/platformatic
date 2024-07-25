@@ -15,9 +15,9 @@ test('should start composer with a graphql service', async t => {
       Query: {
         async add (_, { x, y }) {
           return x + y
-        }
-      }
-    }
+        },
+      },
+    },
   })
 
   const graphql1Host = await graphql1.listen()
@@ -29,10 +29,10 @@ test('should start composer with a graphql service', async t => {
           {
             id: 'graphql1',
             origin: graphql1Host,
-            graphql: true
-          }
-        ]
-      }
+            graphql: true,
+          },
+        ],
+      },
     }
   )
 
@@ -61,9 +61,9 @@ test('should start composer with two graphql services', async t => {
       Query: {
         async add (_, { x, y }) {
           return x + y
-        }
-      }
-    }
+        },
+      },
+    },
   })
 
   const graphql2 = await createGraphqlService(t, {
@@ -75,9 +75,9 @@ test('should start composer with two graphql services', async t => {
       Query: {
         async mul (_, { x, y }) {
           return x * y
-        }
-      }
-    }
+        },
+      },
+    },
   })
 
   const graphql1Host = await graphql1.listen()
@@ -90,15 +90,15 @@ test('should start composer with two graphql services', async t => {
           {
             id: 'graphql1',
             origin: graphql1Host,
-            graphql: true
+            graphql: true,
           },
           {
             id: 'graphql2',
             origin: graphql2Host,
-            graphql: true
-          }
-        ]
-      }
+            graphql: true,
+          },
+        ],
+      },
     }
   )
 

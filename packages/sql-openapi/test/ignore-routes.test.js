@@ -36,13 +36,13 @@ test('ignore a root entity route', async (t) => {
     async onDatabaseLoad (db, sql) {
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI, {
     ignoreRoutes: [
       { path: '/pages', method: 'GET' },
-      { path: '/pages', method: 'PUT' }
-    ]
+      { path: '/pages', method: 'PUT' },
+    ],
   })
   t.after(() => app.close())
 
@@ -60,7 +60,7 @@ test('ignore a root entity route', async (t) => {
     const res = await app.inject({
       method: 'POST',
       url: '/pages',
-      body: { title: 'hello' }
+      body: { title: 'hello' },
     })
     assert.strictEqual(res.statusCode, 200, res.body)
   }
@@ -73,13 +73,13 @@ test('ignore a parametric entity route', async (t) => {
     async onDatabaseLoad (db, sql) {
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI, {
     ignoreRoutes: [
       { path: '/pages/{id}', method: 'GET' },
-      { path: '/pages/{id}', method: 'PUT' }
-    ]
+      { path: '/pages/{id}', method: 'PUT' },
+    ],
   })
   t.after(() => app.close())
 
@@ -89,7 +89,7 @@ test('ignore a parametric entity route', async (t) => {
     const res = await app.inject({
       method: 'POST',
       url: '/pages',
-      body: { title: 'hello' }
+      body: { title: 'hello' },
     })
     assert.strictEqual(res.statusCode, 200, res.body)
   }

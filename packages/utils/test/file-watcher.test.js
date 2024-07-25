@@ -24,7 +24,7 @@ test('initialize watchIgnore and allowToWatch arrays', async (t) => {
     const fileWatcher = new FileWatcher({
       path: os.tmpdir(),
       watchIgnore: ['foo'],
-      allowToWatch: ['bar']
+      allowToWatch: ['bar'],
     })
     deepEqual(fileWatcher.watchIgnore, ['foo'])
     deepEqual(fileWatcher.allowToWatch, ['bar'])
@@ -36,7 +36,7 @@ test('should not watch ignored files', async (t) => {
 
   const fileWatcher = new FileWatcher({
     path: os.tmpdir(),
-    watchIgnore: ['test.file', 'test2.file', './test3.file', '.\\test4.file']
+    watchIgnore: ['test.file', 'test2.file', './test3.file', '.\\test4.file'],
   })
   equal(false, fileWatcher.shouldFileBeWatched('test.file'))
   equal(false, fileWatcher.shouldFileBeWatched('test2.file'))
@@ -50,7 +50,7 @@ test('should not watch not allowed files', async (t) => {
 
   const fileWatcher = new FileWatcher({
     path: os.tmpdir(),
-    allowToWatch: ['test.file', 'test2.file', './test3.file', '.\\test4.file']
+    allowToWatch: ['test.file', 'test2.file', './test3.file', '.\\test4.file'],
   })
   equal(true, fileWatcher.shouldFileBeWatched('test.file'))
   equal(true, fileWatcher.shouldFileBeWatched('test2.file'))

@@ -31,7 +31,7 @@ function addLoggerToTheConfig (config) {
   if (isatty(1)) {
     if (!logger.transport) {
       logger.transport = {
-        target: 'pino-pretty'
+        target: 'pino-pretty',
       }
     }
   }
@@ -101,5 +101,5 @@ module.exports = {
   isDocker,
   isFileAccessible,
   getJSPluginPath,
-  addLoggerToTheConfig
+  addLoggerToTheConfig,
 }

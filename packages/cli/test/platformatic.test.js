@@ -13,8 +13,8 @@ setGlobalDispatcher(new Agent({
   keepAliveTimeout: 10,
   keepAliveMaxTimeout: 10,
   tls: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false,
+  },
 }))
 
 const version = JSON.parse(await readFile(join(import.meta.url, '..', 'package.json'))).version
@@ -168,8 +168,8 @@ test('start the database and do a call', async (t) => {
                 name
               }
             }
-          `
-    })
+          `,
+    }),
   })
   assert.equal(res.statusCode, 200, 'saveGraph status code')
   const body = await res.body.json()
@@ -187,8 +187,8 @@ for (const type of ['service', 'db', 'composer']) {
       await execa('node', [cliPath, type, 'start'], {
         env: {
           ...process.env,
-          NODE_PATH: ''
-        }
+          NODE_PATH: '',
+        },
       })
       assert.fail('bug')
     } catch (err) {

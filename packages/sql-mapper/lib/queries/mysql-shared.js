@@ -113,7 +113,7 @@ module.exports = {
   listColumns,
   listConstraints,
   updateOne,
-  updateMany
+  updateMany,
 }
 
 module.exports.hasILIKE = false

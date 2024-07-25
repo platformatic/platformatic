@@ -1,7 +1,7 @@
-import { FastifyPluginAsync, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyPluginAsync, FastifyInstance, FastifyReply } from 'fastify'
 import { SQL, SQLQuery } from '@databases/sql'
 import { FastifyError } from '@fastify/error'
-import { createCache } from 'async-cache-dedupe'
+import type { createCache } from 'async-cache-dedupe'
 
 type cacheOptions = (Parameters<typeof createCache>[0]) | boolean
 
@@ -315,7 +315,7 @@ export interface Entity<EntityFields = any> {
   updateMany: UpdateMany<EntityFields>
 }
 
-type EntityHook<T extends (...args: any) => any> = (original: T, ...options: Parameters<T>) => ReturnType<T>;
+type EntityHook<T extends (...args: any) => any> = (original: T, ...options: Parameters<T>) => ReturnType<T>
 
 export interface EntityHooks<EntityFields = any> {
   find?: EntityHook<Find<EntityFields>>,
@@ -367,7 +367,7 @@ export interface CreateConnectionPoolOptions extends BasePoolOptions {
   log: ILogger
 }
 
-export function createConnectionPool(options: CreateConnectionPoolOptions): Promise<{ db: Database, sql: SQL }>
+export function createConnectionPool (options: CreateConnectionPoolOptions): Promise<{ db: Database, sql: SQL }>
 
 export interface SQLMapperPluginOptions extends BasePoolOptions {
   /**
@@ -446,7 +446,7 @@ declare module 'fastify' {
 /**
  * Connects to the database and maps the tables to entities.
  */
-export function connect<T extends Entities>(options: SQLMapperPluginOptions): Promise<SQLMapperPluginInterface<T>>
+export function connect<T extends Entities> (options: SQLMapperPluginOptions): Promise<SQLMapperPluginInterface<T>>
 /**
  * Fastify plugin that connects to the database and maps the tables to entities.
  */
@@ -457,7 +457,7 @@ export default plugin
  * An object that contains utility functions.
  */
 export module utils {
-  export function toSingular(str: string): string
+  export function toSingular (str: string): string
 }
 
 /**
@@ -480,5 +480,3 @@ export module errors {
   export const MissingValueForPrimaryKeyError: (key: string) => FastifyError
   export const SQLiteOnlySupportsAutoIncrementOnOneColumnError: () => FastifyError
 }
-
-

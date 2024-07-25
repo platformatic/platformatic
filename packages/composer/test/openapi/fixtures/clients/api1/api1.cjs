@@ -8,12 +8,12 @@ async function generateApi1ClientPlugin (app, opts) {
     type: 'openapi',
     name: 'api1',
     path: join(__dirname, 'api1.openapi.json'),
-    url: opts.url
+    url: opts.url,
   })
 }
 
 generateApi1ClientPlugin[Symbol.for('plugin-meta')] = {
-  name: 'api1 OpenAPI Client'
+  name: 'api1 OpenAPI Client',
 }
 generateApi1ClientPlugin[Symbol.for('skip-override')] = true
 

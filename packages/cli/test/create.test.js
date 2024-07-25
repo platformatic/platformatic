@@ -17,7 +17,7 @@ test('should create a service with base options', async (t) => {
   const child = execa('node', [
     cliPath, 'service', 'create',
     '--dir', dest,
-    '--install', 'false'
+    '--install', 'false',
   ])
   await child
 
@@ -47,7 +47,7 @@ test('should create a db with base options', async (t) => {
   const child = execa('node', [
     cliPath, 'db', 'create',
     '--dir', dest,
-    '--install', 'false'
+    '--install', 'false',
   ])
   await child
 
@@ -77,7 +77,7 @@ test('should create a composer with base options', async (t) => {
   const child = execa('node', [
     cliPath, 'composer', 'create',
     '--dir', dest,
-    '--install', 'false'
+    '--install', 'false',
   ])
   await child
 

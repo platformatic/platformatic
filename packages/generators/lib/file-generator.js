@@ -9,7 +9,7 @@ const fakeLogger = {
   warn: () => {},
   debug: () => {},
   trace: () => {},
-  error: () => {}
+  error: () => {},
 }
 /* c8 ignore start */
 

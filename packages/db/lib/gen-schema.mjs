@@ -12,7 +12,7 @@ async function buildServer (_args, onServer) {
   const logger = pino(pretty({
     translateTime: 'SYS:HH:MM:ss',
     ignore: 'hostname,pid',
-    minimumLevel: 'error'
+    minimumLevel: 'error',
   }))
 
   try {

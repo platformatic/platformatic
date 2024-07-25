@@ -80,7 +80,7 @@ function extractEnvVariablesFromText (text) {
 function getPackageConfigurationObject (config, serviceName = '') {
   const output = {
     config: {},
-    env: {}
+    env: {},
   }
   let current = output.config
   for (const param of config) {
@@ -200,5 +200,5 @@ module.exports = {
   safeMkdir,
   stripVersion,
   PLT_ROOT,
-  getLatestNpmVersion
+  getLatestNpmVersion,
 }

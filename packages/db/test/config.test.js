@@ -11,11 +11,11 @@ test('should set pluginTimeout to 60s by default', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     db: {
-      ...connectionInfo
-    }
+      ...connectionInfo,
+    },
   }
 
   const configManager = await buildConfigManager(config)

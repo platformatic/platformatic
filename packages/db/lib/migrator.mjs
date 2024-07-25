@@ -28,7 +28,7 @@ class Migrator {
 
     const { db, sql } = await createConnectionPool({
       ...this.coreConfig,
-      log: this.logger
+      log: this.logger,
     })
 
     let driver
@@ -64,7 +64,7 @@ class Migrator {
       },
       validateChecksums: this.validateChecksums,
       newline: this.newline,
-      currentSchema: ['pg', 'mysql'].includes(driver) ? this.currentSchema : undefined
+      currentSchema: ['pg', 'mysql'].includes(driver) ? this.currentSchema : undefined,
     })
 
     if (this.validateChecksums === true) {

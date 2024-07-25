@@ -7,18 +7,18 @@ module.exports = async function (app) {
     find: true,
     delete: false,
     defaults: {
-      userId: 'X-PLATFORMATIC-USER-ID'
+      userId: 'X-PLATFORMATIC-USER-ID',
     },
     save: {
       checks: {
-        userId: 'X-PLATFORMATIC-USER-ID'
-      }
-    }
+        userId: 'X-PLATFORMATIC-USER-ID',
+      },
+    },
   }, {
     role: 'anonymous',
     entity: 'page',
     find: false,
     delete: false,
-    save: false
+    save: false,
   }])
 }

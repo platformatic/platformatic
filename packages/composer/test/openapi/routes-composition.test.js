@@ -9,7 +9,7 @@ const {
   createComposer,
   createBasicService,
   createOpenApiService,
-  testEntityRoutes
+  testEntityRoutes,
 } = require('../helper')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
@@ -29,26 +29,26 @@ test('should compose openapi with prefixes', async (t) => {
           origin: 'http://127.0.0.1:' + api1.server.address().port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api1'
-          }
+            prefix: '/api1',
+          },
         },
         {
           id: 'api2',
           origin: 'http://127.0.0.1:' + api2.server.address().port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api2'
-          }
-        }
-      ]
-    }
+            prefix: '/api2',
+          },
+        },
+      ],
+    },
   })
 
   const composerOrigin = await composer.start()
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
@@ -72,25 +72,25 @@ test('should compose openapi without prefixes', async (t) => {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
           openapi: {
-            url: '/documentation/json'
-          }
+            url: '/documentation/json',
+          },
         },
         {
           id: 'api2',
           origin: 'http://127.0.0.1:' + api2.server.address().port,
           openapi: {
-            url: '/documentation/json'
-          }
-        }
-      ]
-    }
+            url: '/documentation/json',
+          },
+        },
+      ],
+    },
   })
 
   const composerOrigin = await composer.start()
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
@@ -114,25 +114,25 @@ test('should read schemas from disk and compose openapi', async (t) => {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
           openapi: {
-            url: '/documentation/json'
-          }
+            url: '/documentation/json',
+          },
         },
         {
           id: 'api2',
           origin: 'http://127.0.0.1:' + api2.server.address().port,
           openapi: {
-            url: '/documentation/json'
-          }
-        }
-      ]
-    }
+            url: '/documentation/json',
+          },
+        },
+      ],
+    },
   })
 
   const composerOrigin = await composer.start()
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
@@ -160,25 +160,25 @@ test('should not proxy request if it is not in a schema file', async (t) => {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
           openapi: {
-            file: join(__dirname, 'fixtures', 'schemas', 'users.json')
-          }
+            file: join(__dirname, 'fixtures', 'schemas', 'users.json'),
+          },
         },
         {
           id: 'api2',
           origin: 'http://127.0.0.1:' + api2.server.address().port,
           openapi: {
-            file: join(__dirname, 'fixtures', 'schemas', 'posts.json')
-          }
-        }
-      ]
-    }
+            file: join(__dirname, 'fixtures', 'schemas', 'posts.json'),
+          },
+        },
+      ],
+    },
   })
 
   const composerOrigin = await composer.start()
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
@@ -195,7 +195,7 @@ test('should not proxy request if it is not in a schema file', async (t) => {
   {
     const { statusCode } = await composer.inject({
       method: 'GET',
-      url: '/not-in-the-schema'
+      url: '/not-in-the-schema',
     })
     assert.equal(statusCode, 404)
   }
@@ -216,22 +216,22 @@ test('should automatically compose API with service id as prefix if there is no 
           origin: 'http://127.0.0.1:' + api1.server.address().port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api1'
-          }
+            prefix: '/api1',
+          },
         },
         {
           id: 'api2',
-          origin: 'http://127.0.0.1:' + api2.server.address().port
-        }
-      ]
-    }
+          origin: 'http://127.0.0.1:' + api2.server.address().port,
+        },
+      ],
+    },
   })
 
   const composerOrigin = await composer.start()
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
@@ -243,7 +243,7 @@ test('should automatically compose API with service id as prefix if there is no 
   {
     const { statusCode } = await composer.inject({
       method: 'GET',
-      url: '/api2/posts'
+      url: '/api2/posts',
     })
     assert.equal(statusCode, 200)
   }
@@ -264,30 +264,30 @@ test('should allow custom title', async (t) => {
           origin: 'http://127.0.0.1:' + api1.server.address().port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api1'
-          }
+            prefix: '/api1',
+          },
         },
         {
           id: 'api2',
           origin: 'http://127.0.0.1:' + api2.server.address().port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api2'
-          }
-        }
+            prefix: '/api2',
+          },
+        },
       ],
       openapi: {
         title: 'My API',
-        version: '1.0.42'
-      }
-    }
+        version: '1.0.42',
+      },
+    },
   })
 
   await composer.start()
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
@@ -307,18 +307,18 @@ test('should parse array querystring', async (t) => {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
           openapi: {
-            url: '/documentation/json'
-          }
-        }
-      ]
-    }
+            url: '/documentation/json',
+          },
+        },
+      ],
+    },
   })
 
   const composerOrigin = await composer.start()
 
   const { statusCode } = await request(composerOrigin, {
     method: 'GET',
-    path: '/users?fields=id,name'
+    path: '/users?fields=id,name',
   })
   assert.equal(statusCode, 200)
 })
@@ -335,19 +335,19 @@ test('should compose empty responses', async (t) => {
           origin: 'http://127.0.0.1:' + api.server.address().port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api'
-          }
-        }
+            prefix: '/api',
+          },
+        },
       ],
-      addEmptySchema: true
-    }
+      addEmptySchema: true,
+    },
   })
 
   await composer.start()
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 

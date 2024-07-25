@@ -16,7 +16,7 @@ test('upgrade from v0.16.0', async () => {
     fixPaths: false,
     onMissingEnv (key) {
       return ''
-    }
+    },
   })
 
   await configManager.parse()
@@ -26,7 +26,7 @@ test('upgrade from v0.16.0', async () => {
   equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/db/${version}.json`)
 
   deepEqual(config.plugins, {
-    paths: ['plugin.js']
+    paths: ['plugin.js'],
   })
 })
 
@@ -39,7 +39,7 @@ test('typescript', async () => {
     fixPaths: false,
     onMissingEnv (key) {
       return ''
-    }
+    },
   })
 
   await configManager.parse()
@@ -50,7 +50,7 @@ test('typescript', async () => {
 
   deepEqual(config.plugins, {
     paths: ['plugin.ts'],
-    typescript: true
+    typescript: true,
   })
 })
 
@@ -63,7 +63,7 @@ test('no plugin', async () => {
     fixPaths: false,
     onMissingEnv (key) {
       return ''
-    }
+    },
   })
 
   await configManager.parse()

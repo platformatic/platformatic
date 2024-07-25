@@ -12,15 +12,15 @@ test('configure authorizations works even with empty object', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     authorization: {},
     db: {
       ...connectionInfo,
       async onDatabaseLoad (db, sql) {
         await createBasicPages(db, sql)
-      }
-    }
+      },
+    },
   }
 
   const configManager = await buildConfigManager(config)
@@ -39,7 +39,7 @@ test('configure authorizations works even with empty object', async (t) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-PLATFORMATIC-ADMIN-SECRET': 'secret'
+        'X-PLATFORMATIC-ADMIN-SECRET': 'secret',
       },
       body: JSON.stringify({
         query: `
@@ -49,14 +49,14 @@ test('configure authorizations works even with empty object', async (t) => {
               title
             }
           }
-        `
-      })
+        `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'savePage status code')
 
     assert.deepEqual(await res.json(), {
       data: {
-        savePage: null
+        savePage: null,
       },
       errors: [
         {
@@ -64,14 +64,14 @@ test('configure authorizations works even with empty object', async (t) => {
           locations: [
             {
               line: 3,
-              column: 13
-            }
+              column: 13,
+            },
           ],
           path: [
-            'savePage'
-          ]
-        }
-      ]
+            'savePage',
+          ],
+        },
+      ],
     }, 'savePage response')
   }
 })
@@ -82,18 +82,18 @@ test('addCustomRule', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     authorization: {},
     db: {
       ...connectionInfo,
       async onDatabaseLoad (db, sql) {
         await createBasicPages(db, sql)
-      }
+      },
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'auth-in-code.js')]
-    }
+      paths: [join(__dirname, 'fixtures', 'auth-in-code.js')],
+    },
   }
 
   const configManager = await buildConfigManager(config)

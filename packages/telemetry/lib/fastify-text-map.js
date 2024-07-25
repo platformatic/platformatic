@@ -7,16 +7,16 @@ const fastifyTextMapGetter = {
   /* istanbul ignore next */
   keys (request) {
     return Object.keys(request.headers)
-  }
+  },
 }
 
 const fastifyTextMapSetter = {
   set (reply, key, value) {
     reply.headers({ [key]: value })
-  }
+  },
 }
 
 module.exports = {
   fastifyTextMapGetter,
-  fastifyTextMapSetter
+  fastifyTextMapSetter,
 }

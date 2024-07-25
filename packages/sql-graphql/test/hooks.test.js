@@ -41,27 +41,27 @@ test('basic hooks', async (t) => {
           equal(ctx.app, app)
           if (!input.id) {
             deepEqual(input, {
-              title: 'Hello'
+              title: 'Hello',
             })
 
             return original({
               input: {
-                title: 'Hello from hook'
+                title: 'Hello from hook',
               },
-              fields
+              fields,
             })
           } else {
             deepEqual(input, {
               id: 1,
-              title: 'Hello World'
+              title: 'Hello World',
             })
 
             return original({
               input: {
                 id: 1,
-                title: 'Hello from hook 2'
+                title: 'Hello from hook 2',
               },
-              fields
+              fields,
             })
           }
         },
@@ -71,13 +71,13 @@ test('basic hooks', async (t) => {
           equal(args.ctx.app, app)
           deepEqual(args.where, {
             id: {
-              in: ['1']
-            }
+              in: ['1'],
+            },
           })
           args.where = {
             id: {
-              eq: ['2']
-            }
+              eq: ['2'],
+            },
           }
           deepEqual(args.fields, ['id', 'title'])
           return original(args)
@@ -87,15 +87,15 @@ test('basic hooks', async (t) => {
 
           equal(args.ctx.app, app)
           deepEqual(args.inputs, [{
-            title: 'Hello'
+            title: 'Hello',
           }, {
-            title: 'Hello World'
+            title: 'Hello World',
           }])
           deepEqual(args.fields, ['id', 'title'])
           return original(args)
-        }
-      }
-    }
+        },
+      },
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -114,17 +114,17 @@ test('basic hooks', async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
-          title: 'Hello from hook'
-        }
-      }
+          title: 'Hello from hook',
+        },
+      },
     }, 'savePage response')
   }
 
@@ -140,14 +140,14 @@ test('basic hooks', async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     deepEqual(res.json(), {
       data: {
-        getPageById: null
-      }
+        getPageById: null,
+      },
     }, 'pages response')
   }
 
@@ -163,17 +163,17 @@ test('basic hooks', async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
-          title: 'Hello from hook 2'
-        }
-      }
+          title: 'Hello from hook 2',
+        },
+      },
     }, 'savePage response')
   }
 
@@ -193,14 +193,14 @@ test('basic hooks', async (t) => {
         variables: {
           inputs: [
             {
-              title: 'Hello'
+              title: 'Hello',
             },
             {
-              title: 'Hello World'
-            }
-          ]
-        }
-      }
+              title: 'Hello World',
+            },
+          ],
+        },
+      },
     })
 
     equal(res.statusCode, 200, 'insertPages status code')
@@ -267,24 +267,24 @@ test('hooks with relationships', async (t) => {
 
           return original({
             input,
-            fields
+            fields,
           })
         },
         async find (original, opts) {
           pass('find called')
           equal(opts.ctx.app, app)
           return original(opts)
-        }
-      }
-    }
+        },
+      },
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
 
   const categories = [{
-    name: 'Pets'
+    name: 'Pets',
   }, {
-    name: 'Food'
+    name: 'Food',
   }]
 
   await app.inject({
@@ -300,9 +300,9 @@ test('hooks with relationships', async (t) => {
             }
           `,
       variables: {
-        inputs: categories
-      }
-    }
+        inputs: categories,
+      },
+    },
   })
 
   {
@@ -321,8 +321,8 @@ test('hooks with relationships', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
@@ -332,10 +332,10 @@ test('hooks with relationships', async (t) => {
           title: 'Hello',
           category: {
             id: 1,
-            name: 'Pets'
-          }
-        }
-      }
+            name: 'Pets',
+          },
+        },
+      },
     }, 'savePage response')
   }
 
@@ -363,8 +363,8 @@ test('hooks with relationships', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     deepEqual(res.json(), {
@@ -380,12 +380,12 @@ test('hooks with relationships', async (t) => {
               title: 'Hello',
               category: {
                 id: 1,
-                name: 'Pets'
-              }
-            }]
-          }
-        }
-      }
+                name: 'Pets',
+              },
+            }],
+          },
+        },
+      },
     }, 'pages response')
   }
 
@@ -409,8 +409,8 @@ test('hooks with relationships', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'categories.posts status code')
     deepEqual(res.json(), {
@@ -423,15 +423,15 @@ test('hooks with relationships', async (t) => {
             title: 'Hello',
             category: {
               id: 1,
-              name: 'Pets'
-            }
-          }]
+              name: 'Pets',
+            },
+          }],
         }, {
           id: 2,
           name: 'Food',
-          pages: []
-        }]
-      }
+          pages: [],
+        }],
+      },
     }, 'categories.posts response')
   }
 })
@@ -464,14 +464,14 @@ test('delete hook', async (t) => {
           equal(args.ctx.app, app)
           deepEqual(args.where, {
             id: {
-              eq: '1'
-            }
+              eq: '1',
+            },
           })
           deepEqual(args.fields, ['id', 'title'])
           return original(args)
-        }
-      }
-    }
+        },
+      },
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -490,17 +490,17 @@ test('delete hook', async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
-          title: 'Hello'
-        }
-      }
+          title: 'Hello',
+        },
+      },
     }, 'savePage response')
   }
 
@@ -516,17 +516,17 @@ test('delete hook', async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'deletePage status code')
     deepEqual(res.json(), {
       data: {
         deletePages: [{
           id: 1,
-          title: 'Hello'
-        }]
-      }
+          title: 'Hello',
+        }],
+      },
     }, 'deletePage response')
   }
 
@@ -542,14 +542,14 @@ test('delete hook', async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     deepEqual(res.json(), {
       data: {
-        getPageById: null
-      }
+        getPageById: null,
+      },
     }, 'pages response')
   }
 })
@@ -575,7 +575,7 @@ test('false resolver no schema', async (t) => {
           title VARCHAR(42)
         );`)
       }
-    }
+    },
   })
   app.register(sqlGraphQL, {
     schema: `
@@ -587,13 +587,13 @@ test('false resolver no schema', async (t) => {
       Mutation: {
         savePage: false,
         deletePages: false,
-        insertPages: false
+        insertPages: false,
       },
       Query: {
         pages: false,
-        getPageById: false
-      }
-    }
+        getPageById: false,
+      },
+    },
   })
   t.after(() => app.close())
 
@@ -611,8 +611,8 @@ test('false resolver no schema', async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
   }
@@ -629,17 +629,17 @@ test('false resolver no schema', async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 400, 'pages status code')
     deepEqual(res.json(), {
       data: null,
       errors: [{
         message: 'Cannot query field "getPageById" on type "Query".',
-        locations: [{ line: 3, column: 13 }
-        ]
-      }]
+        locations: [{ line: 3, column: 13 },
+        ],
+      }],
     })
   }
 
@@ -655,8 +655,8 @@ test('false resolver no schema', async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'deletePages status code')
   }

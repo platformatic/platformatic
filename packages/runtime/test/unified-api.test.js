@@ -6,7 +6,7 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const {
   buildServer,
-  loadConfig
+  loadConfig,
 } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
@@ -65,7 +65,7 @@ test('buildServer()', async (t) => {
     const config = await loadConfig({}, ['-c', configFile])
     const server = await buildServer({
       app: config.app,
-      ...config.configManager.current
+      ...config.configManager.current,
     })
 
     t.after(async () => {
@@ -82,7 +82,7 @@ test('buildServer()', async (t) => {
     const config = await loadConfig({}, ['-c', configFile])
     const server = await buildServer({
       app: config.app,
-      ...config.configManager.current
+      ...config.configManager.current,
     })
 
     t.after(async () => {
@@ -99,7 +99,7 @@ test('buildServer()', async (t) => {
     const config = await loadConfig({}, ['-c', configFile])
     const server = await buildServer({
       app: config.app,
-      ...config.configManager.current
+      ...config.configManager.current,
     })
 
     t.after(async () => {
@@ -116,7 +116,7 @@ test('buildServer()', async (t) => {
     const config = await loadConfig({}, ['-c', configFile])
     const server = await buildServer({
       app: config.app,
-      ...config.configManager.current
+      ...config.configManager.current,
     })
 
     t.after(async () => {

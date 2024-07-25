@@ -94,5 +94,5 @@ module.exports = {
   getPlatformaticVersion,
   hasDependency,
   checkForDependencies,
-  getLatestNpmVersion
+  getLatestNpmVersion,
 }

@@ -13,7 +13,7 @@ async function startDeployService (t, options = {}) {
     return {
       id: 'default-bundle-id',
       token: 'default-upload-token',
-      isBundleUploaded: false
+      isBundleUploaded: false,
     }
   })
 
@@ -57,5 +57,5 @@ async function startMachine (t, callback = () => {}) {
 export {
   cliPath,
   startDeployService,
-  startMachine
+  startMachine,
 }

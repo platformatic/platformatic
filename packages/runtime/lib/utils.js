@@ -6,5 +6,5 @@ function getArrayDifference (a, b) {
 }
 
 module.exports = {
-  getArrayDifference
+  getArrayDifference,
 }

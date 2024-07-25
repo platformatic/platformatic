@@ -13,7 +13,7 @@ async function setupTsCompiler (app) {
     ...extractTypeScriptCompileOptionsFromConfig(config),
     cwd: workingDir,
     clean: false,
-    logger: app.log
+    logger: app.log,
   })
 }
 

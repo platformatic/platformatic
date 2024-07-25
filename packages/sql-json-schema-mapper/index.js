@@ -76,13 +76,13 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false) {
       properties[field.camelcase] = {
         type: 'array',
         items: {
-          type
-        }
+          type,
+        },
       }
     } else if (field.sqlType === 'json' || field.sqlType === 'jsonb') {
       properties[field.camelcase] = {
         type: 'object',
-        additionalProperties: true
+        additionalProperties: true,
       }
     } else {
       properties[field.camelcase] = { type }
@@ -109,7 +109,7 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false) {
     description: `A ${entity.name}`,
     type: 'object',
     properties,
-    additionalProperties: false
+    additionalProperties: false,
   }
 
   if (required.length > 0) {

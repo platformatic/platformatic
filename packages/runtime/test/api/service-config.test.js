@@ -27,8 +27,8 @@ test('should get service config', async (t) => {
   if (process.stdout.isTTY) {
     logger = {
       transport: {
-        target: 'pino-pretty'
-      }
+        target: 'pino-pretty',
+      },
     }
   }
 
@@ -38,24 +38,24 @@ test('should get service config', async (t) => {
       port: 0,
       logger,
       keepAliveTimeout: 5000,
-      trustProxy: true
+      trustProxy: true,
     },
     service: { openapi: true },
     plugins: {
       paths: [
-        join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js')
-      ]
+        join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js'),
+      ],
     },
     watch: {
-      enabled: false
+      enabled: false,
     },
     metrics: {
       server: 'hide',
       defaultMetrics: {
-        enabled: false
+        enabled: false,
       },
-      prefix: 'with_logger_'
-    }
+      prefix: 'with_logger_',
+    },
   })
 })
 
@@ -78,8 +78,8 @@ test('do not force enable metrics without the management api', async (t) => {
   if (process.stdout.isTTY) {
     logger = {
       transport: {
-        target: 'pino-pretty'
-      }
+        target: 'pino-pretty',
+      },
     }
   }
 
@@ -89,17 +89,17 @@ test('do not force enable metrics without the management api', async (t) => {
       port: 0,
       logger,
       keepAliveTimeout: 5000,
-      trustProxy: true
+      trustProxy: true,
     },
     service: { openapi: true },
     plugins: {
       paths: [
-        join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js')
-      ]
+        join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js'),
+      ],
     },
     watch: {
-      enabled: false
-    }
+      enabled: false,
+    },
   })
 })
 
@@ -122,8 +122,8 @@ test('do not force enable metrics if they are set to false', async (t) => {
   if (process.stdout.isTTY) {
     logger = {
       transport: {
-        target: 'pino-pretty'
-      }
+        target: 'pino-pretty',
+      },
     }
   }
 
@@ -133,28 +133,28 @@ test('do not force enable metrics if they are set to false', async (t) => {
       port: 0,
       logger,
       keepAliveTimeout: 5000,
-      trustProxy: true
+      trustProxy: true,
     },
     service: { openapi: true },
     plugins: {
       paths: [
         {
           options: {
-            name: 'plugin1'
+            name: 'plugin1',
           },
-          path: join(fixturesDir, 'monorepo', 'serviceAppWithMultiplePlugins', 'plugin.js')
+          path: join(fixturesDir, 'monorepo', 'serviceAppWithMultiplePlugins', 'plugin.js'),
         },
         {
           options: {
-            name: 'plugin2'
+            name: 'plugin2',
           },
-          path: join(fixturesDir, 'monorepo', 'serviceAppWithMultiplePlugins', 'plugin2.mjs')
-        }
-      ]
+          path: join(fixturesDir, 'monorepo', 'serviceAppWithMultiplePlugins', 'plugin2.mjs'),
+        },
+      ],
     },
     watch: {
-      enabled: false
+      enabled: false,
     },
-    metrics: false
+    metrics: false,
   })
 })

@@ -8,9 +8,9 @@ test('isKeyEnabled', async (t) => {
   const a = {
     foo: true,
     bar: {
-      hello: 'world'
+      hello: 'world',
     },
-    baz: false
+    baz: false,
   }
   equal(isKeyEnabled('foo', a), true)
   equal(isKeyEnabled('bar', a), true)

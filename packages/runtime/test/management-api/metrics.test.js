@@ -17,24 +17,24 @@ test('should not expose service metrics via runtime management api proxy', async
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath: app.managementApi.server.address(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   t.after(async () => {
     await Promise.all([
       client.close(),
       app.close(),
-      app.managementApi.close()
+      app.managementApi.close(),
     ])
   })
 
   const { statusCode } = await client.request({
     method: 'GET',
-    path: '/api/v1/services/service-1/proxy/metrics'
+    path: '/api/v1/services/service-1/proxy/metrics',
   })
 
   assert.strictEqual(statusCode, 404)

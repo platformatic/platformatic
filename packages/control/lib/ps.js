@@ -6,29 +6,29 @@ const RuntimeApiClient = require('./runtime-api-client')
 const tableColumns = [
   {
     value: 'pid',
-    alias: 'PID'
+    alias: 'PID',
   },
   {
     value: 'packageName',
-    alias: 'NAME'
+    alias: 'NAME',
   },
   {
     value: 'platformaticVersion',
-    alias: 'PLT'
+    alias: 'PLT',
   },
   {
     value: 'uptimeSeconds',
     alias: 'TIME',
-    formatter: formatRuntimeTime
+    formatter: formatRuntimeTime,
   },
   {
     value: 'url',
-    alias: 'URL'
+    alias: 'URL',
   },
   {
     value: 'projectDir',
-    alias: 'PWD'
-  }
+    alias: 'PWD',
+  },
 ]
 
 function formatRuntimeTime (timeSeconds) {
@@ -56,9 +56,9 @@ const tableConfig = {
   border: getBorderCharacters('void'),
   columnDefault: {
     paddingLeft: 0,
-    paddingRight: 1
+    paddingRight: 1,
   },
-  drawHorizontalLine: () => false
+  drawHorizontalLine: () => false,
 }
 
 async function printRuntimes (runtimes) {

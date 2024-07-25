@@ -28,7 +28,7 @@ async function mapperToGraphql (app, opts) {
     resolvers,
     loaders,
     federationReplacements,
-    federationMetadata: opts.federationMetadata
+    federationMetadata: opts.federationMetadata,
   }
   const metaMap = new Map()
 
@@ -36,7 +36,7 @@ async function mapperToGraphql (app, opts) {
     // no schema
     queryTopFields.hello = { type: graphql.GraphQLString }
     resolvers.Query = {
-      hello: () => 'Hello Platformatic!'
+      hello: () => 'Hello Platformatic!',
     }
   } else {
     const entitiesNames = Object.values(mapper.entities)
@@ -96,13 +96,13 @@ async function mapperToGraphql (app, opts) {
 
   const query = new graphql.GraphQLObjectType({
     name: 'Query',
-    fields: queryTopFields
+    fields: queryTopFields,
   })
 
   const mutation = Object.keys(mutationTopFields).length > 0
     ? new graphql.GraphQLObjectType({
       name: 'Mutation',
-      fields: mutationTopFields
+      fields: mutationTopFields,
     })
     : null
 
@@ -130,7 +130,7 @@ async function mapperToGraphql (app, opts) {
 
     if (entitiesList.length > 0) {
       opts.subscription = {
-        emitter: app.platformatic.mq
+        emitter: app.platformatic.mq,
       }
       // TODO support ignoring some of those
       subscription = setupSubscriptions(app, metaMap, resolvers, ignoreList)
@@ -184,7 +184,7 @@ async function mapperToGraphql (app, opts) {
     ...opts,
     schema: sdl,
     loaders,
-    resolvers
+    resolvers,
   })
 
   if (app.openTelemetry) {

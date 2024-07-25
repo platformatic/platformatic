@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/triple-slash-reference */
 /// <reference types="mercurius" />
 /// <reference types="@fastify/swagger" />
 import { FastifyInstance, FastifyBaseLogger } from 'fastify'
@@ -9,7 +8,6 @@ import { PlatformaticService } from './config'
 import type { JSONSchemaType } from 'ajv'
 import { ServiceGenerator } from './lib/generator/service-generator'
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
 export import Generator = ServiceGenerator.ServiceGenerator
 
 export interface PlatformaticApp<T> {

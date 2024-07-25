@@ -21,7 +21,7 @@ test('expose arrays', { skip: !isPg }, async (t) => {
       title VARCHAR(42) NOT NULL,
       tags VARCHAR(42)[] NOT NULL
     );`)
-    }
+    },
   })
   app.register(sqlOpenAPI)
   t.after(async () => {
@@ -33,7 +33,7 @@ test('expose arrays', { skip: !isPg }, async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     equal(res.json().info.version, '1.0.0', 'GET /documentation/json info version default')
   }
@@ -44,48 +44,48 @@ test('expose arrays', { skip: !isPg }, async (t) => {
       url: '/pages',
       body: {
         title: 'Hello',
-        tags: ['foo', 'bar']
-      }
+        tags: ['foo', 'bar'],
+      },
     })
     equal(res.statusCode, 200, 'POST /pages status code')
     equal(res.headers.location, '/pages/1', 'POST /api/pages location')
     same(res.json(), {
       id: 1,
       title: 'Hello',
-      tags: ['foo', 'bar']
+      tags: ['foo', 'bar'],
     }, 'POST /pages response')
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/pages/1'
+      url: '/pages/1',
     })
     equal(res.statusCode, 200, 'GET /pages/1 status code')
     same(res.json(), {
       id: 1,
       title: 'Hello',
-      tags: ['foo', 'bar']
+      tags: ['foo', 'bar'],
     }, 'GET /pages/1 response')
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/pages?where.tags.any=foo'
+      url: '/pages?where.tags.any=foo',
     })
     equal(res.statusCode, 200, 'GET /pages/1 status code')
     same(res.json(), [{
       id: 1,
       title: 'Hello',
-      tags: ['foo', 'bar']
+      tags: ['foo', 'bar'],
     }], 'GET /pages/1 response')
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/pages?where.tags.any=baz'
+      url: '/pages?where.tags.any=baz',
     })
     equal(res.statusCode, 200, 'GET /pages/1 status code')
     same(res.json(), [], 'GET /pages/1 response')
@@ -94,7 +94,7 @@ test('expose arrays', { skip: !isPg }, async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/pages?where.tags.all=foo'
+      url: '/pages?where.tags.all=foo',
     })
     equal(res.statusCode, 200, 'GET /pages/1 status code')
     same(res.json(), [], 'GET /pages/1 response')
@@ -103,39 +103,39 @@ test('expose arrays', { skip: !isPg }, async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/pages?where.tags.contains=foo'
+      url: '/pages?where.tags.contains=foo',
     })
     equal(res.statusCode, 200, 'GET /pages/1 status code')
     same(res.json(), [{
       id: 1,
       title: 'Hello',
-      tags: ['foo', 'bar']
+      tags: ['foo', 'bar'],
     }], 'GET /pages/1 response')
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/pages?where.tags.contained=foo,bar'
+      url: '/pages?where.tags.contained=foo,bar',
     })
     equal(res.statusCode, 200, 'GET /pages/1 status code')
     same(res.json(), [{
       id: 1,
       title: 'Hello',
-      tags: ['foo', 'bar']
+      tags: ['foo', 'bar'],
     }], 'GET /pages/1 response')
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/pages?where.tags.overlaps=foo'
+      url: '/pages?where.tags.overlaps=foo',
     })
     equal(res.statusCode, 200, 'GET /pages/1 status code')
     same(res.json(), [{
       id: 1,
       title: 'Hello',
-      tags: ['foo', 'bar']
+      tags: ['foo', 'bar'],
     }], 'GET /pages/1 response')
   }
 
@@ -145,27 +145,27 @@ test('expose arrays', { skip: !isPg }, async (t) => {
       url: '/pages/1',
       body: {
         title: 'Hello World',
-        tags: ['foo', 'bar', 'baz']
-      }
+        tags: ['foo', 'bar', 'baz'],
+      },
     })
     equal(res.statusCode, 200, 'PUT /pages/1 status code')
     same(res.json(), {
       id: 1,
       title: 'Hello World',
-      tags: ['foo', 'bar', 'baz']
+      tags: ['foo', 'bar', 'baz'],
     }, 'PUT /pages/1 response')
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/pages/1'
+      url: '/pages/1',
     })
     equal(res.statusCode, 200, 'GET /pages/1 status code')
     same(res.json(), {
       id: 1,
       title: 'Hello World',
-      tags: ['foo', 'bar', 'baz']
+      tags: ['foo', 'bar', 'baz'],
     }, 'GET /pages/1 response')
   }
 
@@ -174,8 +174,8 @@ test('expose arrays', { skip: !isPg }, async (t) => {
       method: 'POST',
       url: '/pages',
       body: {
-        tilte: 'Hello' // typo, wrong field
-      }
+        tilte: 'Hello', // typo, wrong field
+      },
     })
     equal(res.statusCode, 400, 'POST /pages status code')
     equal(res.headers.location, undefined, 'no location header')
@@ -183,14 +183,14 @@ test('expose arrays', { skip: !isPg }, async (t) => {
       statusCode: 400,
       code: 'FST_ERR_VALIDATION',
       error: 'Bad Request',
-      message: "body must have required property 'tags'"
+      message: "body must have required property 'tags'",
     }, 'POST /pages response')
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     const json = res.json()
     const snapshot = await snap(json)
@@ -200,11 +200,11 @@ test('expose arrays', { skip: !isPg }, async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/pages/1?fields=title,tags'
+      url: '/pages/1?fields=title,tags',
     })
     same(res.json(), {
       title: 'Hello World',
-      tags: ['foo', 'bar', 'baz']
+      tags: ['foo', 'bar', 'baz'],
     }, 'GET /pages/1?fields=title response')
   }
 
@@ -214,12 +214,12 @@ test('expose arrays', { skip: !isPg }, async (t) => {
       url: '/pages/1?fields=title,tags',
       body: {
         title: 'Hello fields',
-        tags: []
-      }
+        tags: [],
+      },
     })
     same(res.json(), {
       title: 'Hello fields',
-      tags: []
+      tags: [],
     }, 'PUT /pages/1?fields=title response')
   }
 })

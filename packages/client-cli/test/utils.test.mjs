@@ -11,22 +11,22 @@ test('should get response content type', async (t) => {
       content: {
         'text/html': {
           schema: {
-            type: 'string'
-          }
+            type: 'string',
+          },
         },
         'application/json': {
           schema: {
-            type: 'string'
-          }
-        }
-      }
+            type: 'string',
+          },
+        },
+      },
     }
     equal(getResponseContentType(template), 'text/html')
   }
   {
     // returns null, AKA empty/unknown response
     const template = {
-      description: 'Contents of file'
+      description: 'Contents of file',
     }
     equal(getResponseContentType(template), null)
   }
@@ -38,10 +38,10 @@ test('should detect a json response', async (t) => {
       200: {
         content: {
           'application/json': {
-            schema: {}
-          }
-        }
-      }
+            schema: {},
+          },
+        },
+      },
     }
     equal(is200JsonResponse(responsesObject), true)
   }
@@ -49,8 +49,8 @@ test('should detect a json response', async (t) => {
   {
     const responsesObject = {
       200: {
-        description: 'Default response'
-      }
+        description: 'Default response',
+      },
     }
     equal(is200JsonResponse(responsesObject), false)
   }
@@ -60,10 +60,10 @@ test('should detect a json response', async (t) => {
       '2xx': {
         content: {
           'application/json': {
-            schema: {}
-          }
-        }
-      }
+            schema: {},
+          },
+        },
+      },
     }
     equal(is200JsonResponse(responsesObject), true)
   }
@@ -75,7 +75,7 @@ test('should return all response codes', async () => {
     204: {},
     404: {},
     400: {},
-    502: {}
+    502: {},
   }
   const expected = [200, 204, 404, 400, 502]
   const extracted = getAllResponseCodes(responseObject)
@@ -90,26 +90,26 @@ test('should map responses to fetch parse function', async () => {
     200: {
       content: {
         'application/json': {
-          schema: { type: 'object', properties: { foobar: { type: 'string' } } }
+          schema: { type: 'object', properties: { foobar: { type: 'string' } } },
         },
         'text/plain': {
-          schema: { type: 'string' }
-        }
-      }
+          schema: { type: 'string' },
+        },
+      },
     },
     202: {
       content: {
         'image/png': {
-          schema: { type: 'string', format: 'binary' }
-        }
-      }
-    }
+          schema: { type: 'string', format: 'binary' },
+        },
+      },
+    },
   }
   const mapped = getResponseTypes(responseObject)
   const expected = {
     json: [200],
     blob: [202],
-    text: [200]
+    text: [200],
   }
   deepEqual(mapped, expected)
 })

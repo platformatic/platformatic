@@ -30,7 +30,7 @@ async function fetchOpenApiSchema (service) {
 export default async function fetchOpenApiSchemas (_args) {
   const logger = pino(pretty({
     translateTime: 'SYS:HH:MM:ss',
-    ignore: 'hostname,pid'
+    ignore: 'hostname,pid',
   }))
 
   const { configManager } = await loadConfig({}, _args, platformaticComposer)
@@ -57,5 +57,5 @@ export default async function fetchOpenApiSchemas (_args) {
 
 export {
   fetchOpenApiSchema,
-  fetchOpenApiSchemas
+  fetchOpenApiSchemas,
 }

@@ -36,7 +36,7 @@ class PlatformaticApp extends EventEmitter {
     this.#fileWatcher = null
     this.#hasManagementApi = !!hasManagementApi
     this.#logger = logger.child({
-      name: this.appConfig.id
+      name: this.appConfig.id,
     })
     this.#telemetryConfig = telemetryConfig
     this.#metricsConfig = metricsConfig
@@ -123,7 +123,7 @@ class PlatformaticApp extends EventEmitter {
         app: this.config.app,
         ...config,
         id: this.appConfig.id,
-        configManager
+        configManager,
       })
     } catch (err) {
       this.#logAndExit(err)
@@ -193,8 +193,8 @@ class PlatformaticApp extends EventEmitter {
       this.server.log.error({
         err: {
           message: err?.message,
-          stack: err?.stack
-        }
+          stack: err?.stack,
+        },
       }, 'exiting')
     } else if (signal) {
       this.server.log.info({ signal }, 'received signal')
@@ -217,7 +217,7 @@ class PlatformaticApp extends EventEmitter {
     try {
       _config = await loadConfig({}, ['-c', appConfig.config], {
         onMissingEnv: this.#fetchServiceUrl,
-        context: appConfig
+        context: appConfig,
       }, true, this.#logger)
     } catch (err) {
       this.#logAndExit(err)
@@ -276,20 +276,20 @@ class PlatformaticApp extends EventEmitter {
     configManager.update({
       ...configManager.current,
       telemetry: this.#telemetryConfig,
-      metrics: this.#metricsConfig
+      metrics: this.#metricsConfig,
     })
 
     if (configManager.current.metrics !== false) {
       configManager.update({
         ...configManager.current,
-        metrics: this.#metricsConfig
+        metrics: this.#metricsConfig,
       })
     }
 
     if (this.#serverConfig) {
       configManager.update({
         ...configManager.current,
-        server: this.#serverConfig
+        server: this.#serverConfig,
       })
     }
 
@@ -303,8 +303,8 @@ class PlatformaticApp extends EventEmitter {
           server: 'hide',
           defaultMetrics: { enabled: this.appConfig.entrypoint },
           prefix: snakeCase(this.appConfig.id) + '_',
-          ...configManager.current.metrics
-        }
+          ...configManager.current.metrics,
+        },
       })
     }
 
@@ -313,8 +313,8 @@ class PlatformaticApp extends EventEmitter {
         ...configManager.current,
         server: {
           ...(configManager.current.server || {}),
-          trustProxy: true
-        }
+          trustProxy: true,
+        },
       })
     }
   }
@@ -348,7 +348,7 @@ class PlatformaticApp extends EventEmitter {
       path: dirname(configManager.fullPath),
       /* c8 ignore next 2 */
       allowToWatch: this.#originalWatch?.allow,
-      watchIgnore: this.#originalWatch?.ignore || []
+      watchIgnore: this.#originalWatch?.ignore || [],
     })
 
     fileWatcher.on('update', this.#debouncedRestart)

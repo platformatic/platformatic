@@ -5,7 +5,7 @@ const { test } = require('node:test')
 const { request } = require('undici')
 const {
   createComposer,
-  createOpenApiService
+  createOpenApiService,
 } = require('../helper')
 
 test('should expose x-forwarded-* headers', async (t) => {
@@ -21,12 +21,12 @@ test('should expose x-forwarded-* headers', async (t) => {
           origin: origin1,
           openapi: {
             url: '/documentation/json',
-            prefix: '/internal/service1'
-          }
-        }
+            prefix: '/internal/service1',
+          },
+        },
       ],
-      refreshTimeout: 1000
-    }
+      refreshTimeout: 1000,
+    },
   }
 
   const composer = await createComposer(t, config)
@@ -34,7 +34,7 @@ test('should expose x-forwarded-* headers', async (t) => {
   // internal service gets the x-forwarded-for and x-forwarded-host headers
   const { statusCode, body } = await request(composerOrigin, {
     method: 'GET',
-    path: '/internal/service1/headers'
+    path: '/internal/service1/headers',
   })
   assert.equal(statusCode, 200)
 

@@ -8,8 +8,8 @@ async function composeOpenAPI (app, opts) {
     openapi: {
       info: {
         title: opts.openapi?.title || 'Platformatic Composer',
-        version: opts.openapi?.version || '1.0.0'
-      }
+        version: opts.openapi?.version || '1.0.0',
+      },
     },
     transform: ({ schema, url }) => {
       for (const service of opts.services) {
@@ -27,7 +27,7 @@ async function composeOpenAPI (app, opts) {
         }
       }
       return { schema, url }
-    }
+    },
   })
 
   const { default: scalarTheme } = await import('@platformatic/scalar-theme')
@@ -42,8 +42,8 @@ async function composeOpenAPI (app, opts) {
     logLevel: 'warn',
     routePrefix,
     configuration: {
-      customCss: scalarTheme.theme
-    }
+      customCss: scalarTheme.theme,
+    },
   })
 }
 

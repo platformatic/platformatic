@@ -28,7 +28,7 @@ test('batch inserts', async (t) => {
           title VARCHAR(42)
         );`)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -52,10 +52,10 @@ test('batch inserts', async (t) => {
           inputs: [
             { title: 'Page 1' },
             { title: 'Page 2' },
-            { title: 'Page 3' }
-          ]
-        }
-      }
+            { title: 'Page 3' },
+          ],
+        },
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
@@ -63,9 +63,9 @@ test('batch inserts', async (t) => {
         insertPages: [
           { id: 1, title: 'Page 1' },
           { id: 2, title: 'Page 2' },
-          { id: 3, title: 'Page 3' }
-        ]
-      }
+          { id: 3, title: 'Page 3' },
+        ],
+      },
     }, 'savePage response')
   }
 
@@ -81,8 +81,8 @@ test('batch inserts', async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
@@ -90,9 +90,9 @@ test('batch inserts', async (t) => {
         pages: [
           { id: 1, title: 'Page 1' },
           { id: 2, title: 'Page 2' },
-          { id: 3, title: 'Page 3' }
-        ]
-      }
+          { id: 3, title: 'Page 3' },
+        ],
+      },
     }, 'pages response')
   }
 })
@@ -112,7 +112,7 @@ test('[PG] - batch inserts UUID', { skip: !isPg }, async (t) => {
         id uuid PRIMARY KEY default uuid_generate_v1(),
         title VARCHAR(42)
       );`)
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -137,10 +137,10 @@ test('[PG] - batch inserts UUID', { skip: !isPg }, async (t) => {
           inputs: [
             { title: 'Page 1' },
             { title: 'Page 2' },
-            { title: 'Page 3' }
-          ]
-        }
-      }
+            { title: 'Page 3' },
+          ],
+        },
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     ids = res.json().data.insertPages
@@ -149,9 +149,9 @@ test('[PG] - batch inserts UUID', { skip: !isPg }, async (t) => {
         insertPages: [
           { title: 'Page 1' },
           { title: 'Page 2' },
-          { title: 'Page 3' }
-        ]
-      }
+          { title: 'Page 3' },
+        ],
+      },
     }, 'insertPages response'))
   }
 
@@ -167,17 +167,17 @@ test('[PG] - batch inserts UUID', { skip: !isPg }, async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'getPageById status code')
     same(res.json(), {
       data: {
         getPageById: {
           id,
-          title
-        }
-      }
+          title,
+        },
+      },
     }, 'getPageById response')
   }
 })

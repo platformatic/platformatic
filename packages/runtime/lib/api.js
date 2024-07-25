@@ -29,7 +29,7 @@ class RuntimeApi {
       const serviceTelemetryConfig = telemetryConfig
         ? {
             ...telemetryConfig,
-            serviceName: `${telemetryConfig.serviceName}-${service.id}`
+            serviceName: `${telemetryConfig.serviceName}-${service.id}`,
           }
         : null
 
@@ -41,7 +41,7 @@ class RuntimeApi {
         serverConfig = {
           port: 0,
           host: '127.0.0.1',
-          keepAliveTimeout: 5000
+          keepAliveTimeout: 5000,
         }
       }
 
@@ -52,7 +52,7 @@ class RuntimeApi {
 
     this.#interceptor = createFastifyInterceptor({
       // setting the domain here allows for fail-fast scenarios
-      domain: '.plt.local'
+      domain: '.plt.local',
     })
 
     composedInterceptors.unshift(this.#interceptor)
@@ -285,7 +285,7 @@ class RuntimeApi {
       version,
       localUrl,
       entrypoint,
-      dependencies
+      dependencies,
     }
 
     if (entrypoint) {
@@ -412,7 +412,7 @@ class RuntimeApi {
       statusCode: res.statusCode,
       statusMessage: res.statusMessage,
       headers: res.headers,
-      body: res.body
+      body: res.body,
     }
   }
 }

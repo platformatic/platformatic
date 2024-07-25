@@ -38,7 +38,7 @@ function topologicalSort (services, config) {
     topo.add(service, {
       group: service.id,
       after: localDependencyIds,
-      manual: true
+      manual: true,
     })
   }
 

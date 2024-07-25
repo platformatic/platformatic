@@ -16,13 +16,13 @@ test('autoload & filesystem based routing / watch disabled', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'directories', 'routes')]
+      paths: [join(__dirname, 'fixtures', 'directories', 'routes')],
     },
     watch: false,
-    metrics: false
+    metrics: false,
   }
 
   const app = await buildServer(config)
@@ -57,17 +57,17 @@ test('multiple files / watch false', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
       paths: [{
-        path: join(__dirname, 'fixtures', 'directories', 'plugins')
+        path: join(__dirname, 'fixtures', 'directories', 'plugins'),
       }, {
-        path: join(__dirname, 'fixtures', 'directories', 'routes')
-      }]
+        path: join(__dirname, 'fixtures', 'directories', 'routes'),
+      }],
     },
     watch: false,
-    metrics: false
+    metrics: false,
   }
 
   const app = await buildServer(config)
@@ -109,13 +109,13 @@ test('autoload & filesystem based routing / watch disabled / no object', async (
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'directories', 'routes')]
+      paths: [join(__dirname, 'fixtures', 'directories', 'routes')],
     },
     watch: false,
-    metrics: false
+    metrics: false,
   }
 
   const app = await buildServer(config)
@@ -150,16 +150,16 @@ test('multiple files / watch false / no object', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
       paths: [
         join(__dirname, 'fixtures', 'directories', 'plugins'),
-        join(__dirname, 'fixtures', 'directories', 'routes')
-      ]
+        join(__dirname, 'fixtures', 'directories', 'routes'),
+      ],
     },
     watch: false,
-    metrics: false
+    metrics: false,
   }
 
   const app = await buildServer(config)
@@ -203,21 +203,21 @@ test('nested directories', async (t) => {
       hostname: '127.0.0.1',
       port: 0,
       // Windows CI is slow
-      pluginTimeout: 60 * 1000
+      pluginTimeout: 60 * 1000,
     },
     service: {
-      openapi: true
+      openapi: true,
     },
     plugins: {
       paths: [{
         path: join(__dirname, 'fixtures', 'nested-directories', 'plugins'),
-        encapsulate: false
+        encapsulate: false,
       }, {
         path: join(__dirname, 'fixtures', 'nested-directories', 'modules'),
         encapsulate: false,
-        maxDepth: 1
-      }]
-    }
+        maxDepth: 1,
+      }],
+    },
   }
 
   const app = await buildServer(config)
@@ -261,24 +261,24 @@ test('disable encapsulation for a single file', async (t) => {
       hostname: '127.0.0.1',
       port: 0,
       // Windows CI is slow
-      pluginTimeout: 60 * 1000
+      pluginTimeout: 60 * 1000,
     },
     service: {
-      openapi: true
+      openapi: true,
     },
     plugins: {
       paths: [{
         path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'decorator.js'),
-        encapsulate: false
+        encapsulate: false,
       }, {
         path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'handlers.js'),
-        encapsulate: false
+        encapsulate: false,
       }, {
         path: join(__dirname, 'fixtures', 'nested-directories', 'modules'),
         encapsulate: false,
-        maxDepth: 1
-      }]
-    }
+        maxDepth: 1,
+      }],
+    },
   }
 
   const app = await buildServer(config)
@@ -308,24 +308,24 @@ test('disable encapsulation for a single file / different order', async (t) => {
       hostname: '127.0.0.1',
       port: 0,
       // Windows CI is slow
-      pluginTimeout: 60 * 1000
+      pluginTimeout: 60 * 1000,
     },
     service: {
-      openapi: true
+      openapi: true,
     },
     plugins: {
       paths: [{
         path: join(__dirname, 'fixtures', 'nested-directories', 'modules'),
         encapsulate: false,
-        maxDepth: 1
+        maxDepth: 1,
       }, {
         path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'decorator.js'),
-        encapsulate: false
+        encapsulate: false,
       }, {
         path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'handlers.js'),
-        encapsulate: false
-      }]
-    }
+        encapsulate: false,
+      }],
+    },
   }
 
   const app = await buildServer(config)
@@ -353,7 +353,7 @@ test('autoload with ignorePattern, indexPattern and autoHooksPattern options', a
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
       paths: [
@@ -369,12 +369,12 @@ test('autoload with ignorePattern, indexPattern and autoHooksPattern options', a
           // Override default autohooks.js with auto.hooks.js which overrides
           // the response body
           autoHooksPattern: '^auto.hooks.js$',
-          autoHooks: true
-        }
-      ]
+          autoHooks: true,
+        },
+      ],
     },
     watch: false,
-    metrics: false
+    metrics: false,
   }
 
   const app = await buildServer(config)
@@ -414,7 +414,7 @@ test('autoload with INVALID ignorePattern, indexPattern and autoHooksPattern opt
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
       paths: [
@@ -422,12 +422,12 @@ test('autoload with INVALID ignorePattern, indexPattern and autoHooksPattern opt
           path: join(__dirname, 'fixtures', 'directories', 'routes'),
           ignorePattern: '***',
           indexPattern: '***terrible)))_pattern',
-          autoHooksPattern: ''
-        }
-      ]
+          autoHooksPattern: '',
+        },
+      ],
     },
     watch: false,
-    metrics: false
+    metrics: false,
   }
 
   const app = await buildServer(config)
@@ -448,18 +448,18 @@ test('loads encapsulated plugin twice', async (t) => {
       hostname: '127.0.0.1',
       port: 0,
       // Windows CI is slow
-      pluginTimeout: 60 * 1000
+      pluginTimeout: 60 * 1000,
     },
     service: {
-      openapi: true
+      openapi: true,
     },
     plugins: {
       paths: [{
-        path: join(__dirname, 'fixtures', 'directories', 'routes')
+        path: join(__dirname, 'fixtures', 'directories', 'routes'),
       }, {
-        path: join(__dirname, 'fixtures', 'directories', 'plugins', 'decorator.js')
-      }]
-    }
+        path: join(__dirname, 'fixtures', 'directories', 'plugins', 'decorator.js'),
+      }],
+    },
   }
 
   {

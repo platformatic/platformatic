@@ -20,8 +20,8 @@ test('missing migrations', async (t) => {
     'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('no-migrations.json')],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   ))
 })
@@ -34,8 +34,8 @@ test('missing migrations.dir', async (t) => {
     'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('no-migrations-dir.json')],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   ))
 })
@@ -48,8 +48,8 @@ test('not applied migrations', async (t) => {
     'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('bad-migrations.json')],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   ))
 })

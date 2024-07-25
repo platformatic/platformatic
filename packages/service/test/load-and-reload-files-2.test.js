@@ -25,13 +25,13 @@ test('error', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
-      paths: [file]
+      paths: [file],
     },
     watch: false,
-    metrics: false
+    metrics: false,
   })
 
   t.after(async () => {
@@ -59,19 +59,19 @@ test('mock undici is supported', async (t) => {
   // intercept the request
   mockPool.intercept({
     path: '/',
-    method: 'GET'
+    method: 'GET',
   }).reply(200, {
-    hello: 'world'
+    hello: 'world',
   })
 
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'undici-plugin.js')]
-    }
+      paths: [join(__dirname, 'fixtures', 'undici-plugin.js')],
+    },
   })
 
   t.after(async () => {
@@ -82,6 +82,6 @@ test('mock undici is supported', async (t) => {
   const res = await app.inject('/request')
   assert.strictEqual(res.statusCode, 200)
   assert.deepStrictEqual(res.json(), {
-    hello: 'world'
+    hello: 'world',
   })
 })

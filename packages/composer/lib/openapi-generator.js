@@ -67,7 +67,7 @@ async function composeOpenAPI (app, opts) {
       apiByApiRoutes[prefix + path] = {
         origin,
         prefix,
-        schema: schema.paths[path]
+        schema: schema.paths[path],
       }
     }
 
@@ -82,7 +82,7 @@ async function composeOpenAPI (app, opts) {
 
   await app.register(require('@fastify/reply-from'), {
     undici: dispatcher,
-    destroyAgent: false
+    destroyAgent: false,
   })
 
   await app.register(await import('fastify-openapi-glue'), {
@@ -124,7 +124,7 @@ async function composeOpenAPI (app, opts) {
               ...headers,
               ...telemetryHeaders,
               'x-forwarded-for': request.ip,
-              'x-forwarded-host': request.hostname
+              'x-forwarded-host': request.hostname,
             }
 
             const telemetryId = config.telemetry?.serviceName
@@ -138,9 +138,9 @@ async function composeOpenAPI (app, opts) {
           replyOptions.rewriteRequestHeaders = rewriteRequestHeaders
 
           reply.from(origin + newRoutePath, replyOptions)
-        }
+        },
       }
-    }
+    },
   })
 
   app.addHook('preValidation', async (req) => {

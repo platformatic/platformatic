@@ -33,7 +33,7 @@ test('should properly setup the enum types', { skip: isSQLite }, async (t) => {
           PRIMARY KEY (id)
         );`)
       }
-    }
+    },
   })
 
   app.register(sqlGraphQL)
@@ -74,7 +74,7 @@ test('should not fail if enum value contains a space ', { skip: isSQLite }, asyn
           PRIMARY KEY (id)
         );`)
       }
-    }
+    },
   })
 
   app.register(sqlGraphQL)
@@ -126,7 +126,7 @@ test('should not fail if tables have duplicate enum names', { skip: isSQLite }, 
           PRIMARY KEY (pk)
         );`)
       }
-    }
+    },
   })
 
   app.register(sqlGraphQL)
@@ -169,7 +169,7 @@ test('should not fail if tables have enum with special characters', { skip: isSQ
           );
         `)
       }
-    }
+    },
   })
 
   app.register(sqlGraphQL)
@@ -195,8 +195,8 @@ test('should not fail if tables have enum with special characters', { skip: isSQ
               }
             }
           `,
-        variables: { input: { id: 1 } }
-      }
+        variables: { input: { id: 1 } },
+      },
     })
     equal(res.statusCode, 200)
   }
@@ -213,8 +213,8 @@ test('should not fail if tables have enum with special characters', { skip: isSQ
               }
             }
           `,
-        variables: { input: { id: 2 } }
-      }
+        variables: { input: { id: 2 } },
+      },
     })
     equal(res.statusCode, 200)
   }
@@ -226,8 +226,8 @@ test('should not fail if tables have enum with special characters', { skip: isSQ
       body: {
         query: `
             query { enumTests { id } }
-          `
-      }
+          `,
+      },
     })
     equal(res.statusCode, 200)
     same(res.json(), { data: { enumTests: [{ id: 1 }, { id: 2 }] } })
@@ -245,8 +245,8 @@ test('should not fail if tables have enum with special characters', { skip: isSQ
               }
             }
           `,
-        variables: { input: { eq: 1 } }
-      }
+        variables: { input: { eq: 1 } },
+      },
     })
     equal(res.statusCode, 200)
   }
@@ -258,8 +258,8 @@ test('should not fail if tables have enum with special characters', { skip: isSQ
       body: {
         query: `
             query { enumTests { id } }
-          `
-      }
+          `,
+      },
     })
     equal(res.statusCode, 200)
     same(res.json(), { data: { enumTests: [{ id: 2 }] } })

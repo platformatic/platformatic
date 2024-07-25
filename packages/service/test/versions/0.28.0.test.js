@@ -16,7 +16,7 @@ test('remove hotReload', async () => {
     fixPaths: false,
     onMissingEnv (key) {
       return ''
-    }
+    },
   })
 
   await configManager.parse()
@@ -26,7 +26,7 @@ test('remove hotReload', async () => {
   equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/service/${version}.json`)
 
   deepEqual(config.plugins, {
-    paths: ['plugin.js']
+    paths: ['plugin.js'],
   })
 
   deepEqual(config.watch, {})

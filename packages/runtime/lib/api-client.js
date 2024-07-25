@@ -79,7 +79,7 @@ class RuntimeApiClient extends EventEmitter {
       packageName: packageJson.name ?? null,
       packageVersion: packageJson.version ?? null,
       url: entrypointDetails?.url ?? null,
-      platformaticVersion
+      platformaticVersion,
     }
   }
 
@@ -109,7 +109,7 @@ class RuntimeApiClient extends EventEmitter {
       // Remove once https://github.com/nodejs/node/pull/51290 is released
       // on all lines.
       // Likely to be removed when we drop support for Node.js 18.
-      sleep(10000, 'timeout', { ref: false })
+      sleep(10000, 'timeout', { ref: false }),
     ])
 
     if (res === 'timeout') {
@@ -250,9 +250,9 @@ class RuntimeApiClient extends EventEmitter {
           p50: p50Value,
           p90: p90Value,
           p95: p95Value,
-          p99: p99Value
-        }
-      }
+          p99: p99Value,
+        },
+      },
     }
     return formattedMetrics
   }
@@ -391,7 +391,7 @@ class RuntimeApiClient extends EventEmitter {
       }
       runtimesLogsIds.push({
         pid: runtime.runtimePID,
-        indexes: runtimeLogIds
+        indexes: runtimeLogIds,
       })
     }
 
@@ -439,7 +439,7 @@ class RuntimeApiClient extends EventEmitter {
       runtimesLogFiles.push({
         runtimePID: parseInt(runtimePID),
         runtimeLogFiles,
-        lastModified
+        lastModified,
       })
     }
 
@@ -496,5 +496,5 @@ function getRuntimeLogsDir (runtimeDir, runtimePID) {
 module.exports = {
   RuntimeApiClient,
   getRuntimeTmpDir,
-  getRuntimeLogsDir
+  getRuntimeLogsDir,
 }

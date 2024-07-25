@@ -6,13 +6,13 @@ const { clear, connInfo, isSQLite } = require('./helper')
 const { createConnectionPool } = require('..')
 const fakeLogger = {
   trace: () => {},
-  error: () => {}
+  error: () => {},
 }
 
 test('createConnectionPool', async () => {
   const { db, sql } = await createConnectionPool({
     connectionString: connInfo.connectionString,
-    log: fakeLogger
+    log: fakeLogger,
   })
   await clear(db, sql)
   test.after(async () => {
@@ -38,6 +38,6 @@ test('createConnectionPool', async () => {
   deepEqual(res, [{
     id: 1,
     the_title: 'foo',
-    is_published: true
+    is_published: true,
   }])
 })

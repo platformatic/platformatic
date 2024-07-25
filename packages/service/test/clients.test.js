@@ -53,7 +53,7 @@ test('client is loaded (ts)', async (t) => {
   console.time('compile')
   await compile({
     cwd: targetDir,
-    logger: pino({ level: 'warn' })
+    logger: pino({ level: 'warn' }),
   })
   console.timeEnd('compile')
 

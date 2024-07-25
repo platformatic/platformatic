@@ -8,7 +8,7 @@ class ServiceGenerator extends BaseGenerator {
   constructor (opts = {}) {
     super({
       ...opts,
-      module: '@platformatic/service'
+      module: '@platformatic/service',
     })
   }
 
@@ -26,16 +26,16 @@ class ServiceGenerator extends BaseGenerator {
         this.addEnvVars({
           PLT_SERVER_HOSTNAME: this.config.hostname,
           PLT_SERVER_LOGGER_LEVEL: 'info',
-          PORT: 3042
+          PORT: 3042,
         }, { overwrite: false })
       }
 
       this.addEnvVars({
-        PLT_TYPESCRIPT: this.config.typescript
+        PLT_TYPESCRIPT: this.config.typescript,
       }, { overwrite: false, default: true })
 
       this.config.dependencies = {
-        '@platformatic/service': `^${this.platformaticVersion}`
+        '@platformatic/service': `^${this.platformaticVersion}`,
       }
     }
   }
@@ -50,22 +50,22 @@ class ServiceGenerator extends BaseGenerator {
         label: 'What is the hostname?',
         default: '0.0.0.0',
         type: 'string',
-        configValue: 'hostname'
+        configValue: 'hostname',
       },
       {
         var: 'PLT_SERVER_LOGGER_LEVEL',
         label: 'What is the logger level?',
         default: 'info',
         type: 'string',
-        configValue: ''
+        configValue: '',
       },
       {
         label: 'Which port do you want to use?',
         var: 'PORT',
         default: 3042,
         type: 'number',
-        configValue: 'port'
-      }
+        configValue: 'port',
+      },
     ]
   }
 
@@ -93,17 +93,17 @@ declare module 'fastify' {
     const config = {
       $schema: `https://schemas.platformatic.dev/@platformatic/service/${version}.json`,
       service: {
-        openapi: true
+        openapi: true,
       },
-      watch: true
+      watch: true,
     }
     if (this.config.plugin) {
       config.plugins = {
         paths: [
           { path: './plugins', encapsulate: false },
-          './routes'
+          './routes',
         ],
-        typescript: `{${this.getEnvVarName('PLT_TYPESCRIPT')}}`
+        typescript: `{${this.getEnvVarName('PLT_TYPESCRIPT')}}`,
       }
     }
 
@@ -112,8 +112,8 @@ declare module 'fastify' {
         hostname: '{PLT_SERVER_HOSTNAME}',
         port: '{PORT}',
         logger: {
-          level: '{PLT_SERVER_LOGGER_LEVEL}'
-        }
+          level: '{PLT_SERVER_LOGGER_LEVEL}',
+        },
       }
     }
 

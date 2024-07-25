@@ -21,8 +21,8 @@ test('migrate and start', async (t) => {
   const { stdout } = await execa('node', [cliPath, 'migrations', 'apply'], {
     cwd,
     env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
+      DATABASE_URL: connectionInfo.connectionString,
+    },
   })
 
   {
@@ -35,8 +35,8 @@ test('migrate and start', async (t) => {
   const { child, url } = await start([], {
     cwd,
     env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
+      DATABASE_URL: connectionInfo.connectionString,
+    },
   })
 
   t.after(async () => {
@@ -56,8 +56,8 @@ test('migrate and start', async (t) => {
                   name
                 }
               }
-            `
-      })
+            `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'saveGraph status code')
     const body = await res.body.json()
@@ -65,9 +65,9 @@ test('migrate and start', async (t) => {
       data: {
         saveGraph: {
           id: '1',
-          name: 'Hello'
-        }
-      }
+          name: 'Hello',
+        },
+      },
     }, 'saveGraph response')
   }
 })
@@ -84,8 +84,8 @@ test('no cwd', async (t) => {
     'node', [cliPath, 'migrations', 'apply', '-c', config],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 
@@ -98,8 +98,8 @@ test('no cwd', async (t) => {
 
   const { child, url } = await start(['-c', config], {
     env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
+      DATABASE_URL: connectionInfo.connectionString,
+    },
   })
 
   t.after(async () => {
@@ -119,8 +119,8 @@ test('no cwd', async (t) => {
                   name
                 }
               }
-            `
-      })
+            `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'saveGraph status code')
     const body = await res.body.json()
@@ -128,9 +128,9 @@ test('no cwd', async (t) => {
       data: {
         saveGraph: {
           id: '1',
-          name: 'Hello'
-        }
-      }
+          name: 'Hello',
+        },
+      },
     }, 'saveGraph response')
   }
 })
@@ -146,8 +146,8 @@ test('do not restart on save', async (t) => {
   const { stdout } = await execa('node', [cliPath, 'migrations', 'apply'], {
     cwd,
     env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
+      DATABASE_URL: connectionInfo.connectionString,
+    },
   })
 
   {
@@ -160,8 +160,8 @@ test('do not restart on save', async (t) => {
   const { child, url } = await start([], {
     cwd,
     env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
+      DATABASE_URL: connectionInfo.connectionString,
+    },
   })
 
   t.after(async () => {
@@ -183,8 +183,8 @@ test('do not restart on save', async (t) => {
                   name
                 }
               }
-            `
-      })
+            `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'saveGraph status code')
     const body = await res.body.json()
@@ -192,9 +192,9 @@ test('do not restart on save', async (t) => {
       data: {
         saveGraph: {
           id: '1',
-          name: 'Hello'
-        }
-      }
+          name: 'Hello',
+        },
+      },
     }, 'saveGraph response')
   }
 

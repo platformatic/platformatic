@@ -29,7 +29,7 @@ test('one-level order by', async (t) => {
           counter INTEGER
         );`)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -54,10 +54,10 @@ test('one-level order by', async (t) => {
           inputs: [
             { title: 'Page 1', counter: 3 },
             { title: 'Page 2', counter: 2 },
-            { title: 'Page 3', counter: 1 }
-          ]
-        }
-      }
+            { title: 'Page 3', counter: 1 },
+          ],
+        },
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
@@ -65,9 +65,9 @@ test('one-level order by', async (t) => {
         insertPages: [
           { id: 1, title: 'Page 1', counter: 3 },
           { id: 2, title: 'Page 2', counter: 2 },
-          { id: 3, title: 'Page 3', counter: 1 }
-        ]
-      }
+          { id: 3, title: 'Page 3', counter: 1 },
+        ],
+      },
     }, 'savePage response')
   }
 
@@ -84,8 +84,8 @@ test('one-level order by', async (t) => {
               counter
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
@@ -93,9 +93,9 @@ test('one-level order by', async (t) => {
         pages: [
           { id: 3, title: 'Page 3', counter: 1 },
           { id: 2, title: 'Page 2', counter: 2 },
-          { id: 1, title: 'Page 1', counter: 3 }
-        ]
-      }
+          { id: 1, title: 'Page 1', counter: 3 },
+        ],
+      },
     }, 'pages response')
   }
 
@@ -112,8 +112,8 @@ test('one-level order by', async (t) => {
               counter
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
@@ -121,9 +121,9 @@ test('one-level order by', async (t) => {
         pages: [
           { id: 1, title: 'Page 1', counter: 3 },
           { id: 2, title: 'Page 2', counter: 2 },
-          { id: 3, title: 'Page 3', counter: 1 }
-        ]
-      }
+          { id: 3, title: 'Page 3', counter: 1 },
+        ],
+      },
     }, 'pages response')
   }
 
@@ -140,8 +140,8 @@ test('one-level order by', async (t) => {
               counter
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 400, 'pages status code')
     same(res.json(), {
@@ -150,10 +150,10 @@ test('one-level order by', async (t) => {
         message: 'Field "PageOrderByArguments.direction" of required type "OrderByDirection!" was not provided.',
         locations: [{
           line: 3,
-          column: 29
-        }
-        ]
-      }]
+          column: 29,
+        },
+        ],
+      }],
     })
   }
 })
@@ -180,7 +180,7 @@ test('list order by', async (t) => {
           counter2 INTEGER
         );`)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -205,10 +205,10 @@ test('list order by', async (t) => {
           inputs: [
             { counter: 3, counter2: 3 },
             { counter: 3, counter2: 2 },
-            { counter: 1, counter2: 1 }
-          ]
-        }
-      }
+            { counter: 1, counter2: 1 },
+          ],
+        },
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
@@ -216,9 +216,9 @@ test('list order by', async (t) => {
         insertPages: [
           { id: 1, counter: 3, counter2: 3 },
           { id: 2, counter: 3, counter2: 2 },
-          { id: 3, counter: 1, counter2: 1 }
-        ]
-      }
+          { id: 3, counter: 1, counter2: 1 },
+        ],
+      },
     }, 'savePage response')
   }
 
@@ -235,8 +235,8 @@ test('list order by', async (t) => {
               counter2
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
@@ -244,9 +244,9 @@ test('list order by', async (t) => {
         pages: [
           { id: 3, counter: 1, counter2: 1 },
           { id: 1, counter: 3, counter2: 3 },
-          { id: 2, counter: 3, counter2: 2 }
-        ]
-      }
+          { id: 2, counter: 3, counter2: 2 },
+        ],
+      },
     }, 'pages response')
   }
 })
@@ -300,15 +300,15 @@ test('nested order by', async (t) => {
           );
         `)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
 
   const categories = [{
-    name: 'Pets'
+    name: 'Pets',
   }, {
-    name: 'Food'
+    name: 'Food',
   }]
 
   await app.inject({
@@ -324,17 +324,17 @@ test('nested order by', async (t) => {
             }
           `,
       variables: {
-        inputs: categories
-      }
-    }
+        inputs: categories,
+      },
+    },
   })
 
   const pages = [{
     title: 'foo',
-    categoryId: 1
+    categoryId: 1,
   }, {
     title: 'bar',
-    categoryId: 1
+    categoryId: 1,
   }]
 
   await app.inject({
@@ -350,9 +350,9 @@ test('nested order by', async (t) => {
             }
           `,
       variables: {
-        inputs: pages
-      }
-    }
+        inputs: pages,
+      },
+    },
   })
 
   {
@@ -371,8 +371,8 @@ test('nested order by', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'categories.posts status code')
     same(res.json(), {
@@ -382,17 +382,17 @@ test('nested order by', async (t) => {
           name: 'Pets',
           pages: [{
             id: 2,
-            title: 'bar'
+            title: 'bar',
           }, {
             id: 1,
-            title: 'foo'
-          }]
+            title: 'foo',
+          }],
         }, {
           id: 2,
           name: 'Food',
-          pages: []
-        }]
-      }
+          pages: [],
+        }],
+      },
     }, 'categories.posts response')
   }
 })

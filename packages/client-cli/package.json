@@ -7,7 +7,7 @@
     "plt-client": "cli.mjs"
   },
   "scripts": {
-    "lint": "standard | snazzy",
+    "lint": "eslint",
     "test": "pnpm run lint && borp --concurrency=1 --timeout=120000 && tsd"
   },
   "repository": {
@@ -28,15 +28,15 @@
     "@platformatic/utils": "workspace:*",
     "borp": "^0.16.0",
     "dotenv": "^16.4.5",
+    "eslint": "9",
     "execa": "^8.0.1",
     "fastify": "^4.26.2",
     "fastify-tsconfig": "^2.0.0",
     "fs-extra": "^11.2.0",
-    "snazzy": "^9.0.0",
+    "neostandard": "^0.11.1",
     "split2": "^4.2.0",
-    "standard": "^17.1.0",
-    "typescript": "^5.4.2",
     "tsd": "^0.31.0",
+    "typescript": "^5.4.2",
     "why-is-node-running": "^2.2.2"
   },
   "dependencies": {

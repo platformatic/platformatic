@@ -122,11 +122,11 @@ async function downloadAndWriteGraphQL (logger, url, folder, name, generateImple
   const res = await request(url, {
     method: 'POST',
     headers: {
-      'content-type': 'application/json'
+      'content-type': 'application/json',
     },
     body: JSON.stringify({
-      query
-    })
+      query,
+    }),
   })
 
   const text = await res.body.text()
@@ -174,7 +174,7 @@ async function downloadAndProcess (options) {
     language,
     type,
     urlAuthHeaders,
-    typesComment
+    typesComment,
   } = options
 
   let generateImplementation = options.generateImplementation
@@ -241,7 +241,7 @@ async function downloadAndProcess (options) {
     const toPush = {
       schema,
       name: camelcase(name),
-      type: found
+      type: found,
     }
     const availableCommandLineOptionsInClient = ['fullRequest', 'fullResponse', 'validateResponse']
     availableCommandLineOptionsInClient.forEach((c) => {
@@ -273,7 +273,7 @@ async function downloadAndProcess (options) {
 function getPackageJSON ({ name, generateImplementation }) {
   const obj = {
     name,
-    types: `./${name}.d.ts`
+    types: `./${name}.d.ts`,
   }
 
   if (generateImplementation) {
@@ -287,14 +287,14 @@ export async function command (argv) {
   const help = helpMe({
     dir: desm.join(import.meta.url, 'help'),
     // the default
-    ext: '.txt'
+    ext: '.txt',
   })
   let { _: [url], ...options } = parseArgs(argv, {
     string: ['name', 'folder', 'runtime', 'optional-headers', 'language', 'type', 'url-auth-headers', 'types-comment'],
     boolean: ['typescript', 'full-response', 'types-only', 'full-request', 'full', 'frontend', 'validate-response'],
     default: {
       typescript: false,
-      language: 'js'
+      language: 'js',
     },
     alias: {
       n: 'name',
@@ -303,8 +303,8 @@ export async function command (argv) {
       c: 'config',
       R: 'runtime',
       F: 'full',
-      h: 'help'
-    }
+      h: 'help',
+    },
   })
 
   if (options.full || options.F) {
@@ -316,7 +316,7 @@ export async function command (argv) {
     translateTime: 'SYS:HH:MM:ss',
     ignore: 'hostname,pid',
     minimumLevel: 'debug',
-    sync: true
+    sync: true,
   })
 
   const logger = pino(stream)
@@ -326,9 +326,9 @@ export async function command (argv) {
   if (options.runtime) {
     // TODO add flag to allow specifying a runtime config file
     const runtimeConfigFile = await findUp('platformatic.runtime.json', {
-      cwd: dirname(process.cwd())
+      cwd: dirname(process.cwd()),
     }) || await findUp('platformatic.json', {
-      cwd: dirname(process.cwd())
+      cwd: dirname(process.cwd()),
     })
 
     if (!runtimeConfigFile) {

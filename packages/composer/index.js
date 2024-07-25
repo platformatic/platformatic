@@ -70,9 +70,9 @@ platformaticComposer.configManagerConfig = {
     useDefaults: true,
     coerceTypes: true,
     allErrors: true,
-    strict: false
+    strict: false,
   },
-  transformConfig: platformaticService.configManagerConfig.transformConfig
+  transformConfig: platformaticService.configManagerConfig.transformConfig,
 }
 
 function getServiceUrl (id) {
@@ -197,8 +197,8 @@ async function watchServices (app, opts) {
           app.log.error({
             err: {
               message: error.message,
-              stack: error.stack
-            }
+              stack: error.stack,
+            },
           }, 'failed to restart server')
         }
       }
@@ -206,8 +206,8 @@ async function watchServices (app, opts) {
       app.log.error({
         err: {
           message: error.message,
-          stack: error.stack
-        }
+          stack: error.stack,
+        },
       }, 'failed to get services info')
     }
   }, refreshTimeout).unref()

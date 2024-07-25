@@ -51,7 +51,7 @@ test('dependencies are not considered if services are specified manually', async
     'db-app',
     'composerApp',
     'multi-plugin-service',
-    'serviceApp'
+    'serviceApp',
   ])
 })
 
@@ -67,7 +67,7 @@ test('dependencies are resolved if services are not specified manually', async (
     'serviceApp',
     'with-logger',
     'multi-plugin-service',
-    'composerApp'
+    'composerApp',
   ])
 })
 
@@ -76,7 +76,7 @@ test('parseInspectorOptions()', async (t) => {
     assert.throws(() => {
       const cm = {
         args: { inspect: '', 'inspect-brk': '' },
-        current: {}
+        current: {},
       }
 
       parseInspectorOptions(cm)
@@ -86,7 +86,7 @@ test('parseInspectorOptions()', async (t) => {
   await t.test('--inspect default settings', () => {
     const cm = {
       args: { inspect: '' },
-      current: {}
+      current: {},
     }
 
     parseInspectorOptions(cm)
@@ -94,14 +94,14 @@ test('parseInspectorOptions()', async (t) => {
       host: '127.0.0.1',
       port: 9229,
       breakFirstLine: false,
-      hotReloadDisabled: false
+      hotReloadDisabled: false,
     })
   })
 
   await t.test('--inspect-brk default settings', () => {
     const cm = {
       args: { 'inspect-brk': '' },
-      current: {}
+      current: {},
     }
 
     parseInspectorOptions(cm)
@@ -109,14 +109,14 @@ test('parseInspectorOptions()', async (t) => {
       host: '127.0.0.1',
       port: 9229,
       breakFirstLine: true,
-      hotReloadDisabled: false
+      hotReloadDisabled: false,
     })
   })
 
   await t.test('hot reloading is disabled if the inspector is used', () => {
     const cm1 = {
       args: { 'inspect-brk': '' },
-      current: { hotReload: true }
+      current: { hotReload: true },
     }
 
     parseInspectorOptions(cm1)
@@ -124,7 +124,7 @@ test('parseInspectorOptions()', async (t) => {
 
     const cm2 = {
       args: {},
-      current: { hotReload: true }
+      current: { hotReload: true },
     }
 
     parseInspectorOptions(cm2)
@@ -134,7 +134,7 @@ test('parseInspectorOptions()', async (t) => {
   await t.test('sets port to a custom value', () => {
     const cm = {
       args: { inspect: '6666' },
-      current: {}
+      current: {},
     }
 
     parseInspectorOptions(cm)
@@ -142,14 +142,14 @@ test('parseInspectorOptions()', async (t) => {
       host: '127.0.0.1',
       port: 6666,
       breakFirstLine: false,
-      hotReloadDisabled: false
+      hotReloadDisabled: false,
     })
   })
 
   await t.test('sets host and port to custom values', () => {
     const cm = {
       args: { inspect: '0.0.0.0:6666' },
-      current: {}
+      current: {},
     }
 
     parseInspectorOptions(cm)
@@ -157,7 +157,7 @@ test('parseInspectorOptions()', async (t) => {
       host: '0.0.0.0',
       port: 6666,
       breakFirstLine: false,
-      hotReloadDisabled: false
+      hotReloadDisabled: false,
     })
   })
 
@@ -165,7 +165,7 @@ test('parseInspectorOptions()', async (t) => {
     assert.throws(() => {
       const cm = {
         args: { inspect: ':9229' },
-        current: {}
+        current: {},
       }
 
       parseInspectorOptions(cm)
@@ -177,7 +177,7 @@ test('parseInspectorOptions()', async (t) => {
       assert.throws(() => {
         const cm = {
           args: { inspect: inspectFlag },
-          current: {}
+          current: {},
         }
 
         parseInspectorOptions(cm)
@@ -186,7 +186,7 @@ test('parseInspectorOptions()', async (t) => {
 
     const cm = {
       args: {},
-      current: {}
+      current: {},
     }
 
     cm.args.inspect = '0'
@@ -278,8 +278,8 @@ test('loads with the store', async (t) => {
       fixPaths: false,
       onMissingEnv (key) {
         return '{' + key + '}'
-      }
-    }
+      },
+    },
   })
 
   await configManager.parseAndValidate(false)

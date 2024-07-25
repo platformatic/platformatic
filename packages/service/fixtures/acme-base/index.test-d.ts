@@ -13,9 +13,9 @@ async function main (): Promise<void> {
   const server = await buildServer({
     server: {
       port: 3042,
-      hostname: '127.0.0.1'
+      hostname: '127.0.0.1',
     },
-    dynamite: true
+    dynamite: true,
   })
 
   expectType<ConfigManager<AcmeBaseConfig>>(server.platformatic.configManager)

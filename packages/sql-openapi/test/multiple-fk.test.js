@@ -43,7 +43,7 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
   const app = fastify()
   app.register(sqlMapper, {
     ...connInfo,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -55,12 +55,12 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
       method: 'POST',
       url: '/owners',
       body: {
-        id: 'maccio'
-      }
+        id: 'maccio',
+      },
     })
     equal(res.statusCode, 200, 'POST /owners status code')
     same(res.json(), {
-      id: 'maccio'
+      id: 'maccio',
     }, 'POST /owners response')
   }
 
@@ -69,12 +69,12 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
       method: 'POST',
       url: '/owners',
       body: {
-        id: 'pino'
-      }
+        id: 'pino',
+      },
     })
     equal(res.statusCode, 200, 'POST /owners status code')
     same(res.json(), {
-      id: 'pino'
+      id: 'pino',
     }, 'POST /owners response')
   }
 
@@ -83,12 +83,12 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
       method: 'POST',
       url: '/owners',
       body: {
-        id: 'herbert'
-      }
+        id: 'herbert',
+      },
     })
     equal(res.statusCode, 200, 'POST /owners status code')
     same(res.json(), {
-      id: 'herbert'
+      id: 'herbert',
     }, 'POST /owners response')
   }
 
@@ -99,14 +99,14 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
       body: {
         id: 'IL LIBRO',
         fkId: 'maccio',
-        customId: 'pino'
-      }
+        customId: 'pino',
+      },
     })
     equal(res.statusCode, 200, 'POST /editors status code')
     same(res.json(), {
       id: 'IL LIBRO',
       fkId: 'maccio',
-      customId: 'pino'
+      customId: 'pino',
     }, 'POST /editors response')
   }
 
@@ -117,14 +117,14 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
       body: {
         id: 'IL LIBRO 2!',
         fkId: 'herbert',
-        customId: 'maccio'
-      }
+        customId: 'maccio',
+      },
     })
     equal(res.statusCode, 200, 'POST /editors status code')
     same(res.json(), {
       id: 'IL LIBRO 2!',
       fkId: 'herbert',
-      customId: 'maccio'
+      customId: 'maccio',
     }, 'POST /editors response')
   }
 
@@ -135,14 +135,14 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
       body: {
         id: 'capatonda',
         fkId: 'maccio',
-        customId: 'maccio'
-      }
+        customId: 'maccio',
+      },
     })
     equal(res.statusCode, 200, 'POST /editors status code')
     same(res.json(), {
       id: 'capatonda',
       fkId: 'maccio',
-      customId: 'maccio'
+      customId: 'maccio',
     }, 'POST /editors response')
   }
 
@@ -153,14 +153,14 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
       body: {
         id: 'cammino',
         fkId: 'pino',
-        customId: 'pino'
-      }
+        customId: 'pino',
+      },
     })
     equal(res.statusCode, 200, 'POST /editors status code')
     same(res.json(), {
       id: 'cammino',
       fkId: 'pino',
-      customId: 'pino'
+      customId: 'pino',
     }, 'POST /editors response')
   }
 
@@ -171,14 +171,14 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
       body: {
         id: 'ballerina',
         fkId: 'herbert',
-        customId: 'herbert'
-      }
+        customId: 'herbert',
+      },
     })
     equal(res.statusCode, 200, 'POST /editors status code')
     same(res.json(), {
       id: 'ballerina',
       fkId: 'herbert',
-      customId: 'herbert'
+      customId: 'herbert',
     }, 'POST /editors response')
   }
 
@@ -189,8 +189,8 @@ test('multiple foreign keys pointing the same table', { skip: isSQLite }, async 
       body: {
         id: 'following-not-existing-fk-id',
         fkId: 'ERROREEEEE!',
-        customId: 'maccio'
-      }
+        customId: 'maccio',
+      },
     })
     equal(res.statusCode, 500, 'POST /editors status code')
   }

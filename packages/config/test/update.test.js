@@ -10,8 +10,8 @@ test('should update valid config without updating the file', async (t) => {
   const config = {
     name: 'Platformatic',
     props: {
-      foo: 'bar'
-    }
+      foo: 'bar',
+    },
   }
   const schema = {
     type: 'object',
@@ -21,10 +21,10 @@ test('should update valid config without updating the file', async (t) => {
         type: 'object',
         properties: {
           foo: { type: 'string' },
-          bar: { type: 'integer' }
-        }
-      }
-    }
+          bar: { type: 'integer' },
+        },
+      },
+    },
   }
 
   const file = await saveConfigToFile(config, 'to-replace.json')
@@ -32,7 +32,7 @@ test('should update valid config without updating the file', async (t) => {
   const cm = new ConfigManager({
     source: file,
     schema,
-    env: { PLT_FOO: 'foobar' }
+    env: { PLT_FOO: 'foobar' },
   })
   let isConfigTransformed = false
   cm._transformConfig = (config) => {
@@ -48,8 +48,8 @@ test('should update valid config without updating the file', async (t) => {
     name: 'Platformatic',
     props: {
       foo: 'foobar',
-      bar: 42
-    }
+      bar: 42,
+    },
   }
   await cm.update(newConfig)
   assert.deepEqual(cm.current, newConfig)
@@ -64,8 +64,8 @@ test('should not update with invalid config', async (t) => {
   const config = {
     name: 'Platformatic',
     props: {
-      foo: 'bar'
-    }
+      foo: 'bar',
+    },
   }
   const schema = {
     type: 'object',
@@ -75,10 +75,10 @@ test('should not update with invalid config', async (t) => {
         type: 'object',
         properties: {
           foo: { type: 'string' },
-          bar: { type: 'integer' }
-        }
-      }
-    }
+          bar: { type: 'integer' },
+        },
+      },
+    },
   }
 
   const file = await saveConfigToFile(config, 'do-not-update.json')
@@ -86,15 +86,15 @@ test('should not update with invalid config', async (t) => {
   const cm = new ConfigManager({
     source: file,
     schema,
-    env: { PLT_FOO: 'foobar' }
+    env: { PLT_FOO: 'foobar' },
   })
   await cm.parse()
   const newConfig = {
     name: 'Platformatic',
     props: {
       foo: 'foobar',
-      bar: '42'
-    }
+      bar: '42',
+    },
   }
   const updateRes = await cm.update(newConfig)
   assert.deepEqual(updateRes, false)

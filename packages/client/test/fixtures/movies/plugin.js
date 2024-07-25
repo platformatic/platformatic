@@ -9,24 +9,24 @@ module.exports = async function (app) {
         type: 'object',
         properties: {
           id: { type: 'string' },
-          title: { type: 'string' }
+          title: { type: 'string' },
         },
-        required: ['id', 'title']
+        required: ['id', 'title'],
       },
       response: {
         204: {
           type: 'null',
-          description: 'No Content'
-        }
-      }
-    }
+          description: 'No Content',
+        },
+      },
+    },
   }, async (request, reply) => {
     await app.platformatic.entities.movie.save({
       fields: ['id', 'title'],
       input: {
         id: request.params.id,
-        title: request.params.title
-      }
+        title: request.params.title,
+      },
     })
     reply.status(204)
   })
@@ -40,11 +40,11 @@ module.exports = async function (app) {
       params: {
         type: 'object',
         properties: {
-          name: { type: 'string' }
+          name: { type: 'string' },
         },
-        required: ['name']
-      }
-    }
+        required: ['name'],
+      },
+    },
   }, async (request, reply) => {
     return { hello: request.params.name }
   })
@@ -55,11 +55,11 @@ module.exports = async function (app) {
         type: 'object',
         properties: {
           name: { type: 'string' },
-          id: { type: 'string' }
+          id: { type: 'string' },
         },
-        required: ['name']
-      }
-    }
+        required: ['name'],
+      },
+    },
   }, async (request, reply) => {
     return { hello: request.headers.name }
   })
@@ -69,17 +69,17 @@ module.exports = async function (app) {
       params: {
         type: 'object',
         properties: {
-          name: { type: 'string' }
+          name: { type: 'string' },
         },
-        required: ['name']
+        required: ['name'],
       },
       body: {
         type: 'object',
         properties: {
-          name: { type: 'string' }
-        }
-      }
-    }
+          name: { type: 'string' },
+        },
+      },
+    },
   }, async (request, reply) => {
     return { hello: request.params.name }
   })
@@ -94,7 +94,7 @@ module.exports = async function (app) {
     Query: {
       hello: async (root, args, context, info) => {
         throw new Error('hello error')
-      }
-    }
+      },
+    },
   })
 }
