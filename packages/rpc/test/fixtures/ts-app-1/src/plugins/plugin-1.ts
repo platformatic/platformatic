@@ -21,6 +21,10 @@ const users = [
   { name: 'Charlie', age: 35 },
 ]
 const plugin: FastifyPluginAsync = async (app) => {
+  // These lines are needed to test avoiding types collision
+  type addUserArgs = { user: User }
+  type addUserReturnType = void
+
   app.rpc('addUser', async (options: { user: User }): Promise<void> => {
     users.push(options.user)
   })

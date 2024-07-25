@@ -3,9 +3,9 @@
 const fp = require('fastify-plugin')
 
 module.exports = fp(async function rpcPlugin (fastify, opts) {
-  const openapiSchema = opts.openapiSchema
+  const openapiSchema = opts.openapi
   if (!openapiSchema) {
-    throw new Error('openapiSchema option is required')
+    throw new Error('openapi option is required')
   }
 
   const rpcHandlers = {}

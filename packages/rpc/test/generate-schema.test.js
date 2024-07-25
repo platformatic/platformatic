@@ -11,7 +11,7 @@ test('should generate an openapi schema from a ts app', async (t) => {
   const cwd = await mkdtemp(join(tmpdir(), 'fastify-rpc-'))
   t.after(() => rm(cwd, { recursive: true }))
 
-  const fixtureDir = join(__dirname, 'fixtures', 'app-1')
+  const fixtureDir = join(__dirname, 'fixtures', 'ts-app-1')
   await cp(fixtureDir, cwd, { recursive: true })
 
   const schemaPath = join(cwd, 'openapi.json')

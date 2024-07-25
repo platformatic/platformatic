@@ -8,7 +8,7 @@ const { writeFile, readFile } = require('node:fs/promises')
 const { buildGenerator } = require('typescript-json-schema')
 const ts = require('typescript')
 
-function replaceDefinitionsWitComponents (schema) {
+function sanitizeSchemaRefs (schema, tsPrefix) {
   for (const key of Object.keys(schema)) {
     const value = schema[key]
     if (
@@ -16,41 +16,53 @@ function replaceDefinitionsWitComponents (schema) {
       typeof value === 'string' &&
       value.startsWith('#/definitions/')
     ) {
-      schema.$ref = value.replace(
-        '#/definitions/',
-        '#/components/schemas/'
-      )
+      schema.$ref = value
+        .replace('#/definitions/', '#/components/schemas/')
+        .replace(tsPrefix, '')
     }
     if (typeof value === 'object') {
-      replaceDefinitionsWitComponents(value)
+      sanitizeSchemaRefs(value)
     }
   }
 }
 
-function generateOpenApiSchema (handlers, schemas) {
-  replaceDefinitionsWitComponents(schemas)
+function sanitizeSchemas (definitions, tsPrefix) {
+  const newSchemas = {}
 
+  for (const key of Object.keys(definitions)) {
+    const schema = definitions[key]
+    const newKey = key.replace(tsPrefix, '')
+    newSchemas[newKey] = schema
+    sanitizeSchemaRefs(schema, tsPrefix)
+  }
+
+  return newSchemas
+}
+
+function generateOpenApiSchema (handlers, schemas, tsPrefix) {
   const paths = {}
 
   for (const handler of handlers) {
     const routeSchema = { post: { operationId: handler.name } }
 
     if (handler.args) {
+      const argsSchemaId = handler.args.replace(tsPrefix, '')
       routeSchema.post.requestBody = {
         content: {
           'application/json': {
-            schema: { $ref: `#/components/schemas/${handler.args}` }
+            schema: { $ref: `#/components/schemas/${argsSchemaId}` }
           }
         }
       }
     }
 
+    const responseSchemaId = handler.returnType.replace(tsPrefix, '')
     routeSchema.post.responses = {
       200: {
         description: 'Success',
         content: {
           'application/json': {
-            schema: { $ref: `#/components/schemas/${handler.returnType}` }
+            schema: { $ref: `#/components/schemas/${responseSchemaId}` }
           }
         }
       }
@@ -67,7 +79,7 @@ function generateOpenApiSchema (handlers, schemas) {
     },
     paths,
     components: {
-      schemas: schemas.definitions
+      schemas: sanitizeSchemas(schemas.definitions, tsPrefix)
     }
   }
   return openApiSchema
@@ -131,7 +143,7 @@ function parseNodeType (nodeType) {
   return nodeType
 }
 
-function createTransformer () {
+function createTransformer ({ tsPrefix }) {
   const handlers = []
   const types = new Set()
 
@@ -157,7 +169,7 @@ function createTransformer () {
             const handlerNode = childNode.arguments[1]
             const handlersArgsNode = handlerNode.parameters[0]
             if (handlersArgsNode?.type) {
-              const handlerArgsTypeAliasName = `${handlerName}Args`
+              const handlerArgsTypeAliasName = tsPrefix + `${handlerName}Args`
               const handlerArgsTypeAlias = ts.factory.createTypeAliasDeclaration(
                 undefined,
                 ts.factory.createIdentifier(handlerArgsTypeAliasName),
@@ -171,7 +183,7 @@ function createTransformer () {
 
             const handlerReturnType = handlerNode.type?.getText(sourceFile)
             if (handlerReturnType) {
-              const handlerReturnTypeAliasName = `${handlerName}ReturnType`
+              const handlerReturnTypeAliasName = tsPrefix + `${handlerName}ReturnType`
               const handlerReturnTypeAlias = ts.factory.createTypeAliasDeclaration(
                 undefined,
                 ts.factory.createIdentifier(handlerReturnTypeAliasName),
@@ -224,6 +236,7 @@ function getTypesSchemas (program, types) {
 
 async function generateRpcSchema (options) {
   const tsConfig = await parseTsConfig(options.tsConfigPath)
+  const tsPrefix = '_platformatic_rpc_'
 
   const program = ts.createProgram({
     rootNames: tsConfig.fileNames,
@@ -232,7 +245,7 @@ async function generateRpcSchema (options) {
 
   const compilerOptions = program.getCompilerOptions()
 
-  const { transformer, handlers, types } = createTransformer(program)
+  const { transformer, handlers, types } = createTransformer({ tsPrefix })
 
   const sourceFiles = program.getSourceFiles().filter(file => !file.isDeclarationFile)
   const { transformed } = ts.transform(sourceFiles, [transformer], compilerOptions)
@@ -240,7 +253,7 @@ async function generateRpcSchema (options) {
   const updatedProgram = createUpdatedProgram(program, transformed, compilerOptions)
 
   const schemas = getTypesSchemas(updatedProgram, [...types])
-  const openapiSchema = generateOpenApiSchema(handlers, schemas)
+  const openapiSchema = generateOpenApiSchema(handlers, schemas, tsPrefix)
 
   return openapiSchema
 }
