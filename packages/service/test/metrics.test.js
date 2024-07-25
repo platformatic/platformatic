@@ -188,7 +188,8 @@ test('support basic auth with metrics on parent server', async (t) => {
       auth: {
         username: 'foo',
         password: 'bar'
-      }
+      },
+      prefix: 'test'
     }
   })
 
@@ -224,6 +225,9 @@ test('support basic auth with metrics on parent server', async (t) => {
     assert.match(res.headers['content-type'], /^text\/plain/)
     const body = await res.body.text()
     testPrometheusOutput(body)
+    const cpu = findFirstPrometheusLineForMetric('process_cpu_percent_usage', body)
+    const labels = parseLabels(cpu)
+    assert.strictEqual(labels.prefix, 'test')
   }
 })
 
@@ -367,7 +371,8 @@ test('specify custom labels', async (t) => {
     metrics: {
       labels: {
         foo: 'bar'
-      }
+      },
+      prefix: 'test'
     }
   })
 
@@ -393,6 +398,7 @@ test('specify custom labels', async (t) => {
     const cpu = findFirstPrometheusLineForMetric('process_cpu_percent_usage', body)
     const labels = parseLabels(cpu)
     assert.strictEqual(labels.foo, 'bar')
+    assert.strictEqual(labels.prefix, 'test')
   }
 
   {

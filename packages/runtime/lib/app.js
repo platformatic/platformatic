@@ -4,7 +4,6 @@ const { dirname } = require('node:path')
 const { EventEmitter, once } = require('node:events')
 const { FileWatcher } = require('@platformatic/utils')
 const debounce = require('debounce')
-const { snakeCase } = require('change-case-all')
 const { buildServer } = require('./build-server')
 const { loadConfig } = require('./load-config')
 const errors = require('./errors')
@@ -275,12 +274,16 @@ class PlatformaticApp extends EventEmitter {
       (this.#hasManagementApi && configManager.current.metrics === undefined) ||
       configManager.current.metrics
     ) {
+      const labels = configManager.current.metrics?.labels || {}
       configManager.update({
         ...configManager.current,
         metrics: {
           server: 'hide',
           defaultMetrics: { enabled: this.appConfig.entrypoint },
-          prefix: snakeCase(this.appConfig.id) + '_',
+          labels: {
+            serviceId: this.appConfig.id,
+            ...labels
+          },
           ...configManager.current.metrics
         }
       })

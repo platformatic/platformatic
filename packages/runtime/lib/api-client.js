@@ -170,10 +170,6 @@ class RuntimeApiClient extends EventEmitter {
 
     if (metrics === null) return null
 
-    const entrypointDetails = await this.getEntrypointDetails()
-    const entrypointConfig = await this.getServiceConfig(entrypointDetails.id)
-    const entrypointMetricsPrefix = entrypointConfig.metrics?.prefix
-
     const cpuMetric = metrics.find(
       (metric) => metric.name === 'process_cpu_percent_usage'
     )
@@ -204,28 +200,27 @@ class RuntimeApiClient extends EventEmitter {
     let p95Value = 0
     let p99Value = 0
 
-    if (entrypointMetricsPrefix) {
-      const metricName = entrypointMetricsPrefix + 'http_request_all_summary_seconds'
-      const httpLatencyMetrics = metrics.find((metric) => metric.name === metricName)
+    const metricName = 'http_request_all_summary_seconds'
+    const httpLatencyMetrics =
+        metrics.find((metric) => metric.name === metricName)
 
-      p50Value = httpLatencyMetrics.values.find(
-        (value) => value.labels.quantile === 0.5
-      ).value || 0
-      p90Value = httpLatencyMetrics.values.find(
-        (value) => value.labels.quantile === 0.9
-      ).value || 0
-      p95Value = httpLatencyMetrics.values.find(
-        (value) => value.labels.quantile === 0.95
-      ).value || 0
-      p99Value = httpLatencyMetrics.values.find(
-        (value) => value.labels.quantile === 0.99
-      ).value || 0
+    p50Value = httpLatencyMetrics.values.find(
+      (value) => value.labels.quantile === 0.5
+    ).value || 0
+    p90Value = httpLatencyMetrics.values.find(
+      (value) => value.labels.quantile === 0.9
+    ).value || 0
+    p95Value = httpLatencyMetrics.values.find(
+      (value) => value.labels.quantile === 0.95
+    ).value || 0
+    p99Value = httpLatencyMetrics.values.find(
+      (value) => value.labels.quantile === 0.99
+    ).value || 0
 
-      p50Value = Math.round(p50Value * 1000)
-      p90Value = Math.round(p90Value * 1000)
-      p95Value = Math.round(p95Value * 1000)
-      p99Value = Math.round(p99Value * 1000)
-    }
+    p50Value = Math.round(p50Value * 1000)
+    p90Value = Math.round(p90Value * 1000)
+    p95Value = Math.round(p95Value * 1000)
+    p99Value = Math.round(p99Value * 1000)
 
     const cpu = cpuMetric.values[0].value
     const rss = rssMetric.values[0].value
