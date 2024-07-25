@@ -190,7 +190,6 @@ const metrics = {
           required: ['enabled'],
           additionalProperties: false,
         },
-        prefix: { type: 'string' },
         auth: {
           type: 'object',
           properties: {

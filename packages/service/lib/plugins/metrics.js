@@ -12,7 +12,6 @@ const metricsPlugin = fp(async function (app, opts = {}) {
   const register = new promClient.Registry()
 
   const defaultMetrics = opts.defaultMetrics ?? { enabled: true }
-  const prefix = opts.prefix ?? ''
 
   if (opts.labels) {
     const labels = opts.labels ?? {}
@@ -34,15 +33,16 @@ const metricsPlugin = fp(async function (app, opts = {}) {
     routeMetrics: {
       enabled: true,
       customLabels: {
+        // TODO: check if this is set in prom
         telemetry_id: (req) => req.headers['x-telemetry-id'] ?? 'unknown',
       },
       overrides: {
         histogram: {
-          name: prefix + 'http_request_duration_seconds',
+          name: 'http_request_duration_seconds',
           registers: [register],
         },
         summary: {
-          name: prefix + 'http_request_summary_seconds',
+          name: 'http_request_summary_seconds',
           registers: [register],
         },
       },
@@ -51,7 +51,7 @@ const metricsPlugin = fp(async function (app, opts = {}) {
 
   app.register(fp(async (app) => {
     const httpLatencyMetric = new app.metrics.client.Summary({
-      name: prefix + 'http_request_all_summary_seconds',
+      name: 'http_request_all_summary_seconds',
       help: 'request duration in seconds summary for all requests',
       collect: () => {
         process.nextTick(() => httpLatencyMetric.reset())
@@ -130,9 +130,10 @@ const metricsPlugin = fp(async function (app, opts = {}) {
   }
 
   function cleanMetrics () {
+    const httpMetrics = ['http_request_duration_seconds', 'http_request_summary_seconds', 'http_request_all_summary_seconds']
     const metrics = app.metrics.client.register._metrics
     for (const metricName in metrics) {
-      if (defaultMetrics.enabled || metricName.startsWith(prefix)) {
+      if (defaultMetrics.enabled || httpMetrics.includes(metricName)) {
         delete metrics[metricName]
       }
     }

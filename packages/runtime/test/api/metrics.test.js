@@ -8,6 +8,18 @@ const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
+function findPrometheusLinesForMetric (metric, output) {
+  const ret = []
+  const lines = output.split('\n')
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    if (line.startsWith(metric)) {
+      ret.push(line)
+    }
+  }
+  return ret
+}
+
 test('should get runtime metrics in a json format', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
@@ -53,13 +65,11 @@ test('should get runtime metrics in a json format', async (t) => {
     'process_cpu_user_seconds_total',
     'process_resident_memory_bytes',
     'process_start_time_seconds',
-    'service_1_http_request_all_summary_seconds',
-    'service_1_http_request_duration_seconds',
-    'service_1_http_request_summary_seconds',
-    'service_2_http_request_all_summary_seconds',
-    'service_2_http_request_duration_seconds',
-    'service_2_http_request_summary_seconds',
+    'http_request_all_summary_seconds',
+    'http_request_duration_seconds',
+    'http_request_summary_seconds'
   ]
+  // TODO: check the labels
   for (const metricName of expectedMetricNames) {
     assert.ok(metricsNames.includes(metricName))
   }
@@ -112,16 +122,29 @@ test('should get runtime metrics in a text format', async (t) => {
     'process_cpu_user_seconds_total',
     'process_resident_memory_bytes',
     'process_start_time_seconds',
-    'service_1_http_request_all_summary_seconds',
-    'service_1_http_request_duration_seconds',
-    'service_1_http_request_summary_seconds',
-    'service_2_http_request_all_summary_seconds',
-    'service_2_http_request_duration_seconds',
-    'service_2_http_request_summary_seconds',
+    'http_request_all_summary_seconds',
+    'http_request_duration_seconds',
+    'http_request_summary_seconds'
   ]
   for (const metricName of expectedMetricNames) {
     assert.ok(metricsNames.includes(metricName))
   }
+
+  // Check that the serviceId labels are present in the metrics
+  const httpRequestsSummary = findPrometheusLinesForMetric('http_request_all_summary_seconds', metrics.metrics)
+  const httpRequestsSummaryLabels = httpRequestsSummary.map((line) => line.split('{')[1].split('}')[0].split(','))
+  const services = httpRequestsSummaryLabels.flat()
+    .filter((label) => label.startsWith('serviceId='))
+    .reduce((acc, label) => {
+      const service = label.split('"')[1]
+      if (service) {
+        acc.push(service)
+      }
+      return acc
+    }, [])
+
+  const serviceIds = [...new Set(services)].sort()
+  assert.deepEqual(serviceIds, ['service-1', 'service-2', 'service-db'])
 })
 
 function getMetricsLines (metrics) {
@@ -203,7 +226,7 @@ test('should get formatted runtime metrics', async (t) => {
     'rss',
     'totalHeapSize',
     'usedHeapSize',
-    'version',
+    'version'
   ])
 
   const entrypointMetrics = metrics.entrypoint
@@ -244,7 +267,7 @@ test('should get cached formatted runtime metrics', async (t) => {
       'rss',
       'totalHeapSize',
       'usedHeapSize',
-      'version',
+      'version'
     ])
 
     const entrypointMetrics = metric.entrypoint
@@ -288,7 +311,7 @@ test('should get metrics after reloading one of the services', async (t) => {
       'rss',
       'totalHeapSize',
       'usedHeapSize',
-      'version',
+      'version'
     ])
 
     const entrypointMetrics = metric.entrypoint

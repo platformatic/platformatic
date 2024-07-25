@@ -25,7 +25,7 @@ test('should start a prometheus server on port 9090', async (t) => {
 
   const { statusCode, body } = await request('http://127.0.0.1:9090', {
     method: 'GET',
-    path: '/metrics',
+    path: '/metrics'
   })
   assert.strictEqual(statusCode, 200)
 
@@ -64,10 +64,9 @@ test('should start a prometheus server on port 9090', async (t) => {
     'process_cpu_user_seconds_total',
     'process_resident_memory_bytes',
     'process_start_time_seconds',
-    'service_1_http_request_all_summary_seconds',
-    'service_1_http_request_duration_seconds',
-    'service_1_http_request_summary_seconds',
-
+    'http_request_all_summary_seconds',
+    'http_request_duration_seconds',
+    'http_request_summary_seconds'
   ]
   for (const metricName of expectedMetricNames) {
     assert.ok(metricsNames.includes(metricName))

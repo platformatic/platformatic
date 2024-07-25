@@ -30,7 +30,7 @@ test('should get runtime config by pid', async (t) => {
   assert.strictEqual(runtimeConfig.hotReload, false)
   assert.deepStrictEqual(runtimeConfig.autoload, {
     path: join(projectDir, 'services'),
-    exclude: [],
+    exclude: []
   })
   assert.deepStrictEqual(runtimeConfig.managementApi, true)
 })
@@ -55,7 +55,7 @@ test('should get runtime config by name', async (t) => {
   assert.strictEqual(runtimeConfig.hotReload, false)
   assert.deepStrictEqual(runtimeConfig.autoload, {
     path: join(projectDir, 'services'),
-    exclude: [],
+    exclude: []
   })
   assert.deepStrictEqual(runtimeConfig.managementApi, true)
 })
@@ -81,21 +81,23 @@ test('should get runtime service config', async (t) => {
       hostname: '127.0.0.1',
       port: 0,
       logger: {},
-      keepAliveTimeout: 5000,
+      keepAliveTimeout: 5000
     },
     service: { openapi: true },
     plugins: {
       paths: [
-        join(projectDir, 'services', 'service-1', 'plugin.js'),
-      ],
+        join(projectDir, 'services', 'service-1', 'plugin.js')
+      ]
     },
     watch: { enabled: false },
     metrics: {
       defaultMetrics: {
-        enabled: true,
+        enabled: true
       },
-      prefix: 'service_1_',
-      server: 'hide',
-    },
+      labels: {
+        serviceId: 'service-1'
+      },
+      server: 'hide'
+    }
   })
 })
