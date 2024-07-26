@@ -201,7 +201,7 @@ importers:
         version: 6.3.0
       code-block-writer:
         specifier: ^13.0.1
-        version: 13.0.1
+        version: 13.0.2
       desm:
         specifier: ^1.3.1
         version: 1.3.1
@@ -752,7 +752,7 @@ importers:
         version: 1.3.0
       code-block-writer:
         specifier: ^13.0.1
-        version: 13.0.1
+        version: 13.0.2
       commist:
         specifier: ^3.2.0
         version: 3.2.0
@@ -992,7 +992,7 @@ importers:
         version: 8.0.0
       code-block-writer:
         specifier: ^13.0.1
-        version: 13.0.1
+        version: 13.0.2
       desm:
         specifier: ^1.3.1
         version: 1.3.1
@@ -1409,7 +1409,7 @@ importers:
         version: 1.3.0
       code-block-writer:
         specifier: ^13.0.1
-        version: 13.0.1
+        version: 13.0.2
       colorette:
         specifier: ^2.0.20
         version: 2.0.20
@@ -1658,7 +1658,7 @@ importers:
     dependencies:
       code-block-writer:
         specifier: ^13.0.1
-        version: 13.0.1
+        version: 13.0.2
       safe-identifier:
         specifier: ^0.4.2
         version: 0.4.2
@@ -3142,8 +3142,8 @@ packages:
     resolution: {integrity: sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA==}
     engines: {node: '>=0.10.0'}
 
-  code-block-writer@13.0.1:
-    resolution: {integrity: sha512-c5or4P6erEA69TxaxTNcHUNcIn+oyxSRTOWV+pSYF+z4epXqNvwvJ70XPGjPNgue83oAFAPBRQYwpAJ/Hpe/Sg==}
+  code-block-writer@13.0.2:
+    resolution: {integrity: sha512-XfXzAGiStXSmCIwrkdfvc7FS5Dtj8yelCtyOf2p2skCAfvLd6zu0rGzuS9NSCO3bq1JKpFZ7tbKdKlcd5occQA==}
 
   color-convert@1.9.3:
     resolution: {integrity: sha512-QfAUtd+vFdAtFQcC8CCyYt1fYWxSqAiK2cSD6zDB8N3cpsEBAvRxp9zOGg6G/SHHJYAT88/az/IuDGALsNVbGg==}
@@ -7152,7 +7152,7 @@ snapshots:
 
   cluster-key-slot@1.1.2: {}
 
-  code-block-writer@13.0.1: {}
+  code-block-writer@13.0.2: {}
 
   color-convert@1.9.3:
     dependencies:
