@@ -1,5 +1,5 @@
-import { type InstanceOptions} from 'ajv'
-import { type FastifyPluginAsync } from 'fastify'
+import type { InstanceOptions } from 'ajv'
+import type { FastifyPluginAsync } from 'fastify'
 import { FastifyError } from '@fastify/error'
 
 interface LogFn {
