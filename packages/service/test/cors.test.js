@@ -17,7 +17,7 @@ test('CORS is disabled by default', async (t) => {
     async app (app, opts) {
       app.register(platformaticService, opts)
       app.post('/login', (req, reply) => {})
-    }
+    },
   })
 
   // handles login
@@ -51,7 +51,7 @@ test('CORS can be enabled', async (t) => {
     async app (app, opts) {
       app.register(platformaticService, opts)
       app.post('/login', (req, reply) => {})
-    }
+    },
   })
 
   t.after(async () => {
@@ -90,7 +90,7 @@ test('CORS with a regexp', async (t) => {
     async app (app, opts) {
       app.register(platformaticService, opts)
       app.post('/login', (req, reply) => {})
-    }
+    },
   })
 
   t.after(async () => {
@@ -153,7 +153,7 @@ test('CORS with an array of strings', async (t) => {
     async app (app, opts) {
       app.register(platformaticService, opts)
       app.post('/login', (req, reply) => {})
-    }
+    },
   })
 
   t.after(async () => {
@@ -218,7 +218,7 @@ test('CORS with an array and a regexp', async (t) => {
     async app (app, opts) {
       app.register(platformaticService, opts)
       app.post('/login', (req, reply) => {})
-    }
+    },
   })
 
   t.after(async () => {
@@ -281,7 +281,7 @@ test('CORS with a string', async (t) => {
     async app (app, opts) {
       app.register(platformaticService, opts)
       app.post('/login', (req, reply) => {})
-    }
+    },
   })
 
   t.after(async () => {

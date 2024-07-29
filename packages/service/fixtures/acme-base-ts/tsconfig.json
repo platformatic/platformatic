@@ -7,7 +7,7 @@
     "sourceMap": false,
     "incremental": true,
     "pretty": true,
-    "noEmitOnError": true,
+    "strictNullChecks": true,
     "strict": true,
     "outDir": "dist"
   },

@@ -1,4 +1,4 @@
-import { type InstanceOptions } from 'ajv'
+import { type InstanceOptions} from 'ajv'
 import { type FastifyPluginAsync } from 'fastify'
 import { FastifyError } from '@fastify/error'
 
@@ -62,6 +62,18 @@ export class ConfigManager<T = object> {
   update(config: JsonMap): Promise<boolean | undefined>
   save(): Promise<boolean | undefined>
   load(): Promise<string>
+}
+
+export interface ConfigManagerConfig<T> extends Omit<IConfigManagerOptions, 'source' | 'watch' | 'schema' | 'configVersion'> {
+  transformConfig: (this: ConfigManager<T>) => Promise<void>
+  schema: object
+}
+
+export interface Stackable<ConfigType> {
+  configType: string
+  configManagerConfig: ConfigManagerConfig<ConfigType>
+  schema: object
+  transformConfig?: (config: any) => Promise<any>
 }
 
 export default ConfigManager
