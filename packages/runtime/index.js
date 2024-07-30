@@ -7,6 +7,7 @@ const { platformaticRuntime, wrapConfigInRuntimeConfig } = require('./lib/config
 const RuntimeGenerator = require('./lib/generator/runtime-generator')
 const { Runtime } = require('./lib/runtime')
 const { start, startCommand } = require('./lib/start')
+const symbols = require('./lib/worker/symbols')
 const { loadConfig, getRuntimeLogsDir } = require('./lib/utils')
 
 module.exports.buildServer = buildServer
@@ -19,5 +20,6 @@ module.exports.platformaticRuntime = platformaticRuntime
 module.exports.schema = platformaticRuntime.schema
 module.exports.start = start
 module.exports.startCommand = startCommand
+module.exports.symbols = symbols
 module.exports.Runtime = Runtime
 module.exports.wrapConfigInRuntimeConfig = wrapConfigInRuntimeConfig

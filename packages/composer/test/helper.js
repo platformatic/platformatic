@@ -12,7 +12,7 @@ const Swagger = require('@fastify/swagger')
 const mercurius = require('mercurius')
 const { getIntrospectionQuery } = require('graphql')
 const { buildServer: dbBuildServer } = require('@platformatic/db')
-const { buildServer: buildRuntime } = require('@platformatic/runtime')
+const { buildServer: buildRuntime, symbols } = require('@platformatic/runtime')
 const { buildServer } = require('..')
 
 const agent = new Agent({
@@ -52,54 +52,66 @@ async function createBasicService (t) {
     throw new Error('KA-BOOM!!!')
   })
 
-  app.get('/empty', {
-    schema: {
-      response: {
-        204: {
-          type: 'null',
-        },
-        302: {
-          type: 'null',
-        },
-      },
-    },
-  }, async () => {})
-
-  app.get('/object', {
-    schema: {
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            text: { type: 'string' },
+  app.get(
+    '/empty',
+    {
+      schema: {
+        response: {
+          204: {
+            type: 'null',
           },
-          required: ['text'],
+          302: {
+            type: 'null',
+          },
         },
       },
     },
-  }, async () => {
-    return { text: 'Some text' }
-  })
+    async () => {}
+  )
 
-  app.get('/nested', {
-    schema: {
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            nested: {
-              type: 'object',
-              properties: {
-                text: { type: 'string' },
+  app.get(
+    '/object',
+    {
+      schema: {
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              text: { type: 'string' },
+            },
+            required: ['text'],
+          },
+        },
+      },
+    },
+    async () => {
+      return { text: 'Some text' }
+    }
+  )
+
+  app.get(
+    '/nested',
+    {
+      schema: {
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              nested: {
+                type: 'object',
+                properties: {
+                  text: { type: 'string' },
+                },
               },
             },
           },
         },
       },
     },
-  }, async () => {
-    return { nested: { text: 'Some text' } }
-  })
+    async () => {
+      return { nested: { text: 'Some text' } }
+    }
+  )
 
   t.after(async () => {
     await app.close()
@@ -171,91 +183,119 @@ async function createOpenApiService (t, entitiesNames = [], options = {}) {
       },
     })
 
-    app.get(`/${entity}`, {
-      schema: {
-        response: {
-          200: {
-            type: 'array',
-            items: { $ref: entity },
+    app.get(
+      `/${entity}`,
+      {
+        schema: {
+          response: {
+            200: {
+              type: 'array',
+              items: { $ref: entity },
+            },
           },
         },
       },
-    }, async () => {
-      return Array.from(storage.values())
-    })
+      async () => {
+        return Array.from(storage.values())
+      }
+    )
 
-    app.post(`/${entity}`, {
-      schema: {
-        body: {
-          type: 'object',
-          properties: {
-            name: { type: 'string' },
+    app.post(
+      `/${entity}`,
+      {
+        schema: {
+          body: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+            },
+          },
+          response: {
+            200: { $ref: entity },
           },
         },
-        response: {
-          200: { $ref: entity },
-        },
       },
-    }, async (req) => {
-      const entity = req.body
-      return saveEntity(entity)
-    })
+      async req => {
+        const entity = req.body
+        return saveEntity(entity)
+      }
+    )
 
-    app.put(`/${entity}`, {
-      schema: {
-        body: { $ref: entity },
-        response: {
-          200: { $ref: entity },
+    app.put(
+      `/${entity}`,
+      {
+        schema: {
+          body: { $ref: entity },
+          response: {
+            200: { $ref: entity },
+          },
         },
       },
-    }, async (req) => {
-      const entity = req.body
-      return saveEntity(entity)
-    })
+      async req => {
+        const entity = req.body
+        return saveEntity(entity)
+      }
+    )
 
-    app.get(`/${entity}/:id`, {
-      schema: {
-        response: {
-          200: { $ref: entity },
+    app.get(
+      `/${entity}/:id`,
+      {
+        schema: {
+          response: {
+            200: { $ref: entity },
+          },
         },
       },
-    }, async (req) => {
-      return storage.get(parseInt(req.params.id))
-    })
+      async req => {
+        return storage.get(parseInt(req.params.id))
+      }
+    )
 
-    app.post(`/${entity}/:id`, {
-      schema: {
-        response: {
-          200: { $ref: entity },
+    app.post(
+      `/${entity}/:id`,
+      {
+        schema: {
+          response: {
+            200: { $ref: entity },
+          },
         },
       },
-    }, async (req) => {
-      const id = req.params.id
-      const entity = req.body
-      return saveEntity({ ...entity, id })
-    })
+      async req => {
+        const id = req.params.id
+        const entity = req.body
+        return saveEntity({ ...entity, id })
+      }
+    )
 
-    app.put(`/${entity}/:id`, {
-      schema: {
-        response: {
-          200: { $ref: entity },
+    app.put(
+      `/${entity}/:id`,
+      {
+        schema: {
+          response: {
+            200: { $ref: entity },
+          },
         },
       },
-    }, async (req) => {
-      const id = req.params.id
-      const entity = req.body
-      return saveEntity({ ...entity, id })
-    })
+      async req => {
+        const id = req.params.id
+        const entity = req.body
+        return saveEntity({ ...entity, id })
+      }
+    )
 
-    app.delete(`/${entity}/:id`, {
-      schema: {
-        response: {
-          200: { $ref: entity },
+    app.delete(
+      `/${entity}/:id`,
+      {
+        schema: {
+          response: {
+            200: { $ref: entity },
+          },
         },
       },
-    }, async (req) => {
-      return storage.delete(parseInt(req.params.id))
-    })
+      async req => {
+        return storage.delete(parseInt(req.params.id))
+      }
+    )
   }
 
   t.after(async () => {
@@ -337,12 +377,13 @@ async function createComposerInRuntime (t, prefix, composerConfig) {
   t.after(() => rm(tmpDir, { recursive: true, force: true }))
 
   const composerConfigPath = resolve(tmpDir, 'composer/platformatic.composer.json')
+  const pluginConfigPath = resolve(tmpDir, 'composer/plugin.js')
   const runtimeConfigPath = resolve(tmpDir, 'platformatic.runtime.json')
 
   await writeFile(
     runtimeConfigPath,
     JSON.stringify({
-      $schema: 'https://platformatic.dev/schemas/v1.5.1/runtime',
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/1.51.0.json',
       entrypoint: 'composer',
       watch: false,
       services: [
@@ -360,8 +401,27 @@ async function createComposerInRuntime (t, prefix, composerConfig) {
     composerConfigPath,
     JSON.stringify({
       module: resolve(__dirname, '../index.js'),
+      plugins: {
+        paths: [
+          {
+            path: './plugin.js',
+          },
+        ],
+      },
       ...composerConfig,
     }),
+    'utf-8'
+  )
+
+  await writeFile(
+    pluginConfigPath,
+    `
+      module.exports = async function (app) {
+        globalThis[Symbol.for('plt.runtime.itc')].handle('getSchema', () => {
+          return app.graphqlSupergraph.sdl
+        })
+      }
+    `,
     'utf-8'
   )
 
@@ -464,14 +524,20 @@ async function graphqlRequest ({ query, variables, url, host }) {
   })
 
   const content = await body.json()
-  if (statusCode !== 200) { console.log(statusCode, content) }
+  if (statusCode !== 200) {
+    console.log(statusCode, content)
+  }
 
   return content.errors ? content.errors : content.data
 }
 
 async function createPlatformaticDbService (t, { name, jsonFile }) {
-  try { fs.unlinkSync(path.join(__dirname, 'graphql', 'fixtures', name, 'db0.sqlite')) } catch { }
-  try { fs.unlinkSync(path.join(__dirname, 'graphql', 'fixtures', name, 'db1.sqlite')) } catch { }
+  try {
+    fs.unlinkSync(path.join(__dirname, 'graphql', 'fixtures', name, 'db0.sqlite'))
+  } catch {}
+  try {
+    fs.unlinkSync(path.join(__dirname, 'graphql', 'fixtures', name, 'db1.sqlite'))
+  } catch {}
 
   const service = await dbBuildServer(path.join(__dirname, 'graphql', 'fixtures', name, jsonFile))
   service.get('/.well-known/graphql-composition', async function (req, reply) {
@@ -479,17 +545,21 @@ async function createPlatformaticDbService (t, { name, jsonFile }) {
     return res
   })
   t.after(async () => {
-    try { await service.close() } catch { }
+    try {
+      await service.close()
+    } catch {}
   })
 
   return service
 }
 
 async function startServices (t, names) {
-  return Promise.all(names.map(async ({ name, jsonFile }) => {
-    const service = await createPlatformaticDbService(t, { name, jsonFile })
-    return { name, host: await service.start() }
-  }))
+  return Promise.all(
+    names.map(async ({ name, jsonFile }) => {
+      const service = await createPlatformaticDbService(t, { name, jsonFile })
+      return { name, host: await service.start() }
+    })
+  )
 }
 
 function createLoggerSpy () {
@@ -501,13 +571,27 @@ function createLoggerSpy () {
     _error: [],
     _fatal: [],
 
-    trace: function (...args) { this._trace.push(args) },
-    debug: function (...args) { this._debug.push(args) },
-    info: function (...args) { this._info.push(args) },
-    warn: function (...args) { this._warn.push(args) },
-    error: function (...args) { this._error.push(args) },
-    fatal: function (...args) { this._fatal.push(args) },
-    child: function () { return this },
+    trace: function (...args) {
+      this._trace.push(args)
+    },
+    debug: function (...args) {
+      this._debug.push(args)
+    },
+    info: function (...args) {
+      this._info.push(args)
+    },
+    warn: function (...args) {
+      this._warn.push(args)
+    },
+    error: function (...args) {
+      this._error.push(args)
+    },
+    fatal: function (...args) {
+      this._fatal.push(args)
+    },
+    child: function () {
+      return this
+    },
 
     reset: function () {
       this._trace = []
@@ -530,11 +614,23 @@ async function checkRestarted (runtime, id) {
   await sleep(2000)
 
   const { statusCode, body } = await client.request({ method: 'GET', path: '/api/v1/logs/all' })
-  assert.strictEqual(statusCode, 200)
+
+  if (statusCode !== 200) {
+    return false
+  }
+
   const messages = (await body.text()).trim().split('\n').map(JSON.parse)
 
-  return messages.some(m => m.msg.startsWith('detected services changes, restarting')) &&
+  return (
+    messages.some(m => m.msg.startsWith('detected services changes, restarting')) &&
     messages.some(m => m.msg.startsWith(`Service ${id} has been successfully reloaded`))
+  )
+}
+
+async function checkSchema (runtime, schema) {
+  const composer = await runtime.getService('composer')
+  const sdl = await composer[symbols.kITC].send('getSchema')
+  return sdl === schema
 }
 
 async function getRuntimeLogs (runtime) {
@@ -565,5 +661,6 @@ module.exports = {
   startServices,
   createLoggerSpy,
   checkRestarted,
+  checkSchema,
   getRuntimeLogs,
 }

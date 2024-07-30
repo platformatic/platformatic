@@ -185,16 +185,10 @@ class Runtime extends EventEmitter {
     this.#servicesStarted[id] = false
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
-    await Promise.race([
-      service[kITC].send('stop'),
-      sleep(10000, 'timeout', { ref: false }),
-    ])
+    await Promise.race([service[kITC].send('stop'), sleep(10000, 'timeout', { ref: false })])
 
     // Wait for the worker thread to finish, we're going to create a new one if the service is ever restarted
-    const res = await Promise.race([
-      once(service, 'exit'),
-      sleep(10000, 'timeout', { ref: false }),
-    ])
+    const res = await Promise.race([once(service, 'exit'), sleep(10000, 'timeout', { ref: false })])
 
     // If the worker didn't exit in time, kill it
     if (res === 'timeout') {
@@ -301,7 +295,7 @@ class Runtime extends EventEmitter {
         prevFileStream.destroy()
       }
 
-      fileStream.on('error', (err) => {
+      fileStream.on('error', err => {
         logger.error(err, 'Error streaming log file')
         fileStream.destroy()
         watcher.close()
@@ -394,6 +388,10 @@ class Runtime extends EventEmitter {
     return serviceDetails
   }
 
+  async getService (id) {
+    return this.#getServiceById(id, true)
+  }
+
   async getServiceConfig (id) {
     const service = await this.#getServiceById(id, true)
 
@@ -471,30 +469,14 @@ class Runtime extends EventEmitter {
 
     const entrypointMetricsPrefix = entrypointConfig.metrics?.prefix
 
-    const cpuMetric = metrics.find(
-      (metric) => metric.name === 'process_cpu_percent_usage'
-    )
-    const rssMetric = metrics.find(
-      (metric) => metric.name === 'process_resident_memory_bytes'
-    )
-    const totalHeapSizeMetric = metrics.find(
-      (metric) => metric.name === 'nodejs_heap_size_total_bytes'
-    )
-    const usedHeapSizeMetric = metrics.find(
-      (metric) => metric.name === 'nodejs_heap_size_used_bytes'
-    )
-    const heapSpaceSizeTotalMetric = metrics.find(
-      (metric) => metric.name === 'nodejs_heap_space_size_total_bytes'
-    )
-    const newSpaceSizeTotalMetric = heapSpaceSizeTotalMetric.values.find(
-      (value) => value.labels.space === 'new'
-    )
-    const oldSpaceSizeTotalMetric = heapSpaceSizeTotalMetric.values.find(
-      (value) => value.labels.space === 'old'
-    )
-    const eventLoopUtilizationMetric = metrics.find(
-      (metric) => metric.name === 'nodejs_eventloop_utilization'
-    )
+    const cpuMetric = metrics.find(metric => metric.name === 'process_cpu_percent_usage')
+    const rssMetric = metrics.find(metric => metric.name === 'process_resident_memory_bytes')
+    const totalHeapSizeMetric = metrics.find(metric => metric.name === 'nodejs_heap_size_total_bytes')
+    const usedHeapSizeMetric = metrics.find(metric => metric.name === 'nodejs_heap_size_used_bytes')
+    const heapSpaceSizeTotalMetric = metrics.find(metric => metric.name === 'nodejs_heap_space_size_total_bytes')
+    const newSpaceSizeTotalMetric = heapSpaceSizeTotalMetric.values.find(value => value.labels.space === 'new')
+    const oldSpaceSizeTotalMetric = heapSpaceSizeTotalMetric.values.find(value => value.labels.space === 'old')
+    const eventLoopUtilizationMetric = metrics.find(metric => metric.name === 'nodejs_eventloop_utilization')
 
     let p50Value = 0
     let p90Value = 0
@@ -503,20 +485,12 @@ class Runtime extends EventEmitter {
 
     if (entrypointMetricsPrefix) {
       const metricName = entrypointMetricsPrefix + 'http_request_all_summary_seconds'
-      const httpLatencyMetrics = metrics.find((metric) => metric.name === metricName)
+      const httpLatencyMetrics = metrics.find(metric => metric.name === metricName)
 
-      p50Value = httpLatencyMetrics.values.find(
-        (value) => value.labels.quantile === 0.5
-      ).value || 0
-      p90Value = httpLatencyMetrics.values.find(
-        (value) => value.labels.quantile === 0.9
-      ).value || 0
-      p95Value = httpLatencyMetrics.values.find(
-        (value) => value.labels.quantile === 0.95
-      ).value || 0
-      p99Value = httpLatencyMetrics.values.find(
-        (value) => value.labels.quantile === 0.99
-      ).value || 0
+      p50Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.5).value || 0
+      p90Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.9).value || 0
+      p95Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.95).value || 0
+      p99Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.99).value || 0
 
       p50Value = Math.round(p50Value * 1000)
       p90Value = Math.round(p90Value * 1000)
@@ -605,24 +579,21 @@ class Runtime extends EventEmitter {
     const { port1: loggerDestination, port2: loggingPort } = new MessageChannel()
     loggerDestination.on('message', this.#forwardThreadLog.bind(this))
 
-    const service = new Worker(
-      kWorkerFile,
-      {
-        workerData: {
-          config,
-          serviceConfig,
-          dirname: this.#configManager.dirname,
-          runtimeLogsDir: this.#runtimeLogsDir,
-          loggingPort,
-        },
-        execArgv: [], // Avoid side effects
-        env: this.#env,
-        transferList: [loggingPort],
-      }
-    )
+    const service = new Worker(kWorkerFile, {
+      workerData: {
+        config,
+        serviceConfig,
+        dirname: this.#configManager.dirname,
+        runtimeLogsDir: this.#runtimeLogsDir,
+        loggingPort,
+      },
+      execArgv: [], // Avoid side effects
+      env: this.#env,
+      transferList: [loggingPort],
+    })
 
     // Make sure the listener can handle a lot of API requests at once before raising a warning
-    service.setMaxListeners(1E3)
+    service.setMaxListeners(1e3)
 
     // Track service exiting
     service.once('exit', code => {
@@ -638,7 +609,9 @@ class Runtime extends EventEmitter {
           if (restartOnError > 0) {
             this.#restartCrashedService(serviceConfig, code, started)
           } else {
-            this.logger.warn(`Service ${id} unexpectedly exited with code ${code}. The service is no longer available ...`)
+            this.logger.warn(
+              `Service ${id} unexpectedly exited with code ${code}. The service is no longer available ...`
+            )
           }
         }
       })
@@ -754,7 +727,7 @@ class Runtime extends EventEmitter {
     const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
     const runtimeLogsFiles = await readdir(runtimeLogsDir)
     return runtimeLogsFiles
-      .filter((file) => file.startsWith('logs'))
+      .filter(file => file.startsWith('logs'))
       .sort((log1, log2) => {
         const index1 = parseInt(log1.slice('logs.'.length))
         const index2 = parseInt(log2.slice('logs.'.length))
@@ -785,9 +758,7 @@ class Runtime extends EventEmitter {
       })
     }
 
-    return runtimesLogFiles.sort(
-      (runtime1, runtime2) => runtime1.lastModified - runtime2.lastModified
-    )
+    return runtimesLogFiles.sort((runtime1, runtime2) => runtime1.lastModified - runtime2.lastModified)
   }
 
   #forwardThreadLog (message) {
