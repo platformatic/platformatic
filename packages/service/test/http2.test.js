@@ -53,22 +53,9 @@ test('supports http2 options', { skip: isNode18 }, async (t) => {
   await app.start()
 
   assert.strictEqual(app.url.startsWith('https://'), true)
-  let res = await (request(`${app.url}/`, {
-    dispatcher: agent,
-  }))
+  const res = await (request(`${app.url}/`, { dispatcher: agent }))
   assert.strictEqual(res.statusCode, 200)
-  let body = await res.body.json()
-  assert.deepStrictEqual(body, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
-
-  await app.restart()
-
-  assert.strictEqual(app.url.startsWith('https://'), true)
-  res = await (request(`${app.url}/`, {
-    dispatcher: agent,
-  }))
-
-  assert.strictEqual(res.statusCode, 200)
-  body = await res.body.json()
+  const body = await res.body.json()
   assert.deepStrictEqual(body, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
 
   // This uses the HTTP/1 agent
@@ -115,20 +102,8 @@ test('supports allowHTTP1 with HTTP/2', { skip: isNode18 }, async (t) => {
   await app.start()
 
   assert.strictEqual(app.url.startsWith('https://'), true)
-  let res = await (request(`${app.url}/`, {
-    dispatcher: agent,
-  }))
+  const res = await (request(`${app.url}/`, { dispatcher: agent }))
   assert.strictEqual(res.statusCode, 200)
-  let body = await res.body.json()
-  assert.deepStrictEqual(body, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
-
-  await app.restart()
-
-  assert.strictEqual(app.url.startsWith('https://'), true)
-  res = await (request(`${app.url}/`, {
-    dispatcher: agent,
-  }))
-  assert.strictEqual(res.statusCode, 200)
-  body = await res.body.json()
+  const body = await res.body.json()
   assert.deepStrictEqual(body, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
 })

@@ -3,6 +3,7 @@
 
 const telemetry = require('@platformatic/telemetry').schema
 const { schemas: { server } } = require('@platformatic/utils')
+
 const pkg = require('../package.json')
 const platformaticRuntimeSchema = {
   $id: `https://schemas.platformatic.dev/@platformatic/runtime/${pkg.version}.json`,
@@ -58,7 +59,7 @@ const platformaticRuntimeSchema = {
     entrypoint: {
       type: 'string',
     },
-    hotReload: {
+    watch: {
       anyOf: [
         {
           type: 'boolean',
@@ -80,7 +81,7 @@ const platformaticRuntimeSchema = {
         breakFirstLine: {
           type: 'boolean',
         },
-        hotReloadDisabled: {
+        watchDisabled: {
           type: 'boolean',
         },
       },
@@ -180,7 +181,10 @@ const platformaticRuntimeSchema = {
       default: true,
       anyOf: [
         { type: 'boolean' },
-        { type: 'string' },
+        {
+          type: 'number',
+          minimum: 100,
+        },
       ],
     },
     services: {

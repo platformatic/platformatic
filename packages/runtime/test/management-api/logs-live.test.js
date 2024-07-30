@@ -21,7 +21,6 @@ test('should get runtime logs via management api', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await app.managementApi.close()
   })
 
   const socketPath = app.managementApi.server.address()
@@ -32,7 +31,7 @@ test('should get runtime logs via management api', async (t) => {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       reject(new Error('Timeout'))
-    }, 100000)
+    }, 3000)
 
     webSocket.on('error', (err) => {
       reject(err)
@@ -41,8 +40,11 @@ test('should get runtime logs via management api', async (t) => {
     webSocket.on('message', (data) => {
       if (data.includes('Server listening at')) {
         clearTimeout(timeout)
-        webSocket.close()
-        resolve()
+
+        setImmediate(() => {
+          webSocket.terminate()
+          resolve()
+        })
       }
     })
   })
@@ -57,7 +59,6 @@ test('should get runtime logs via management api (with a start index)', async (t
 
   t.after(async () => {
     await app.close()
-    await app.managementApi.close()
   })
 
   const res = await app.inject('service-1', {
@@ -114,7 +115,7 @@ test('should get runtime logs via management api (with a start index)', async (t
   })
 })
 
-test('should support custom use transport with a message port logging', async (t) => {
+test('should support custom use transport', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')
   const configPath = join(projectDir, 'platformatic.json')
   const configFile = await readFile(configPath, 'utf8')
@@ -139,7 +140,6 @@ test('should support custom use transport with a message port logging', async (t
 
   t.after(async () => {
     await app.close()
-    await app.managementApi.close()
     await rm(configWithLoggerPath)
     await rm(logsPath)
   })

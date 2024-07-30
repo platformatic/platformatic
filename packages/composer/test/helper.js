@@ -3,19 +3,24 @@
 const path = require('path')
 const fs = require('fs')
 const assert = require('node:assert/strict')
-const { request, setGlobalDispatcher, Agent } = require('undici')
+const { mkdtemp, rm, writeFile, mkdir } = require('node:fs/promises')
+const { setTimeout: sleep } = require('node:timers/promises')
+const { resolve } = require('node:path')
+const { request, setGlobalDispatcher, Client, Agent } = require('undici')
 const fastify = require('fastify')
 const Swagger = require('@fastify/swagger')
 const mercurius = require('mercurius')
 const { getIntrospectionQuery } = require('graphql')
 const { buildServer: dbBuildServer } = require('@platformatic/db')
-
+const { buildServer: buildRuntime } = require('@platformatic/runtime')
 const { buildServer } = require('..')
 
 const agent = new Agent({
   keepAliveMaxTimeout: 10,
   keepAliveTimeout: 10,
 })
+
+const tmpBaseDir = resolve(__dirname, '../tmp')
 
 setGlobalDispatcher(agent)
 
@@ -325,6 +330,47 @@ async function createComposer (t, composerConfig, logger = false) {
   return app
 }
 
+async function createComposerInRuntime (t, prefix, composerConfig) {
+  await mkdir(tmpBaseDir, { recursive: true })
+  const tmpDir = await mkdtemp(resolve(tmpBaseDir, prefix))
+  await mkdir(resolve(tmpDir, 'composer'), { recursive: true })
+  t.after(() => rm(tmpDir, { recursive: true, force: true }))
+
+  const composerConfigPath = resolve(tmpDir, 'composer/platformatic.composer.json')
+  const runtimeConfigPath = resolve(tmpDir, 'platformatic.runtime.json')
+
+  await writeFile(
+    runtimeConfigPath,
+    JSON.stringify({
+      $schema: 'https://platformatic.dev/schemas/v1.5.1/runtime',
+      entrypoint: 'composer',
+      watch: false,
+      services: [
+        {
+          id: 'composer',
+          path: resolve(tmpDir, 'composer'),
+          config: composerConfigPath,
+        },
+      ],
+    }),
+    'utf-8'
+  )
+
+  await writeFile(
+    composerConfigPath,
+    JSON.stringify({
+      module: resolve(__dirname, '../index.js'),
+      ...composerConfig,
+    }),
+    'utf-8'
+  )
+
+  const runtime = await buildRuntime(runtimeConfigPath)
+  t.after(() => runtime.close())
+
+  return runtime
+}
+
 async function testEntityRoutes (origin, entitiesRoutes) {
   for (const entityRoute of entitiesRoutes) {
     {
@@ -474,40 +520,42 @@ function createLoggerSpy () {
   }
 }
 
-/**
- * on timeout resolve
- */
-function eventToPromise (fn, timeout = 60_000) {
-  return new Promise((resolve, reject) => {
-    let resolved
-    let t = setTimeout(() => {
-      if (resolved) { return }
-      resolve()
-    }, timeout)
-    try {
-      fn(async () => {
-        if (t) {
-          clearTimeout(t)
-          t = null
-        }
-        if (resolved) { return }
-        resolved = true
-        resolve()
-      })
-    } catch (err) {
-      if (t) {
-        clearTimeout(t)
-        t = null
-      }
-      if (resolved) { return }
-      resolved = true
-      reject(err)
-    }
-  })
+async function checkRestarted (runtime, id) {
+  const client = new Client(
+    { hostname: 'localhost', protocol: 'http:' },
+    { socketPath: runtime.managementApi.server.address() }
+  )
+
+  // Wait for logs to be written
+  await sleep(2000)
+
+  const { statusCode, body } = await client.request({ method: 'GET', path: '/api/v1/logs/all' })
+  assert.strictEqual(statusCode, 200)
+  const messages = (await body.text()).trim().split('\n').map(JSON.parse)
+
+  return messages.some(m => m.msg.startsWith('detected services changes, restarting')) &&
+    messages.some(m => m.msg.startsWith(`Service ${id} has been successfully reloaded`))
+}
+
+async function getRuntimeLogs (runtime) {
+  const client = new Client(
+    { hostname: 'localhost', protocol: 'http:' },
+    { socketPath: runtime.managementApi.server.address() }
+  )
+
+  // Wait for logs to be written
+  await sleep(2000)
+
+  const { statusCode, body } = await client.request({ method: 'GET', path: '/api/v1/logs/all' })
+  assert.strictEqual(statusCode, 200)
+  const messages = (await body.text()).trim().split('\n').map(JSON.parse)
+
+  return messages.map(m => m.msg)
 }
 
 module.exports = {
   createComposer,
+  createComposerInRuntime,
   createOpenApiService,
   createGraphqlService,
   createBasicService,
@@ -516,5 +564,6 @@ module.exports = {
   createPlatformaticDbService,
   startServices,
   createLoggerSpy,
-  eventToPromise,
+  checkRestarted,
+  getRuntimeLogs,
 }

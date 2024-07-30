@@ -155,7 +155,7 @@ class RuntimeGenerator extends BaseGenerator {
     const config = {
       $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${this.platformaticVersion}.json`,
       entrypoint: this.entryPoint.name,
-      hotReload: true,
+      watch: true,
       autoload: {
         path: 'services',
         exclude: ['docs'],

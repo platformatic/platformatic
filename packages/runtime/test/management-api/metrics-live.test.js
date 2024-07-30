@@ -18,7 +18,6 @@ test('should get runtime metrics via management api', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await app.managementApi.close()
   })
 
   const socketPath = app.managementApi.server.address()
@@ -75,7 +74,6 @@ test('should not throw if entrypoint does not have metrics enabled', async (t) =
 
   t.after(async () => {
     await app.close()
-    await app.managementApi.close()
   })
 
   const socketPath = app.managementApi.server.address()

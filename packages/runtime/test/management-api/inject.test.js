@@ -28,7 +28,6 @@ test('should proxy request to the service', async (t) => {
     await Promise.all([
       client.close(),
       app.close(),
-      app.managementApi.close(),
     ])
   })
 

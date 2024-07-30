@@ -27,10 +27,10 @@ test('should get runtime config by pid', async (t) => {
     `https://schemas.platformatic.dev/@platformatic/runtime/${platformaticVersion}.json`
   )
   assert.strictEqual(runtimeConfig.entrypoint, 'service-1')
-  assert.strictEqual(runtimeConfig.hotReload, false)
+  assert.strictEqual(runtimeConfig.watch, false)
   assert.deepStrictEqual(runtimeConfig.autoload, {
     path: join(projectDir, 'services'),
-    exclude: []
+    exclude: [],
   })
   assert.deepStrictEqual(runtimeConfig.managementApi, true)
 })
@@ -52,10 +52,10 @@ test('should get runtime config by name', async (t) => {
     `https://schemas.platformatic.dev/@platformatic/runtime/${platformaticVersion}.json`
   )
   assert.strictEqual(runtimeConfig.entrypoint, 'service-1')
-  assert.strictEqual(runtimeConfig.hotReload, false)
+  assert.strictEqual(runtimeConfig.watch, false)
   assert.deepStrictEqual(runtimeConfig.autoload, {
     path: join(projectDir, 'services'),
-    exclude: []
+    exclude: [],
   })
   assert.deepStrictEqual(runtimeConfig.managementApi, true)
 })
@@ -80,24 +80,23 @@ test('should get runtime service config', async (t) => {
     server: {
       hostname: '127.0.0.1',
       port: 0,
-      logger: {},
-      keepAliveTimeout: 5000
+      keepAliveTimeout: 5000,
     },
     service: { openapi: true },
     plugins: {
       paths: [
-        join(projectDir, 'services', 'service-1', 'plugin.js')
-      ]
+        join(projectDir, 'services', 'service-1', 'plugin.js'),
+      ],
     },
-    watch: { enabled: false },
+    watch: { enabled: true },
     metrics: {
       defaultMetrics: {
-        enabled: true
+        enabled: true,
       },
       labels: {
-        serviceId: 'service-1'
+        serviceId: 'service-1',
       },
-      server: 'hide'
-    }
+      server: 'hide',
+    },
   })
 })

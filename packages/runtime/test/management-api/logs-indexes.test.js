@@ -6,7 +6,7 @@ const { test } = require('node:test')
 const { writeFile, rm, mkdir } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { Client } = require('undici')
-const { getRuntimeTmpDir, getRuntimeLogsDir } = require('../../lib/api-client')
+const { getRuntimeTmpDir, getRuntimeLogsDir } = require('../../lib/utils')
 
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
@@ -23,7 +23,6 @@ test('should get runtime log indexes', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await app.managementApi.close()
     await rm(runtimeTmpDir, { recursive: true, force: true })
   })
 
@@ -62,7 +61,6 @@ test('should get only latest 30 logs indexes (150 MB)', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await app.managementApi.close()
     await rm(runtimeTmpDir, { recursive: true, force: true })
   })
 
@@ -113,7 +111,6 @@ test('should get all runtimes log indexes (with previous)', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await app.managementApi.close()
     await rm(runtimeTmpDir, { recursive: true, force: true })
   })
 

@@ -1,9 +1,9 @@
-import { cp, writeFile, mkdtemp, mkdir, rm } from 'node:fs/promises'
+import { tspl } from '@matteo.collina/tspl'
+import desm from 'desm'
+import { cp, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import desm from 'desm'
-import { start, createCjsLoggingPlugin } from './helper.mjs'
-import { tspl } from '@matteo.collina/tspl'
+import { createCjsLoggingPlugin, start } from './helper.mjs'
 
 const fixturesDir = join(desm(import.meta.url), '..', '..', 'fixtures')
 
@@ -19,11 +19,11 @@ function saferm (path) {
 }
 
 test('do not crash on syntax error', async (t) => {
-  const plan = tspl(t, { plan: 3 })
+  const plan = tspl(t, { plan: 4 })
   const tmpDir = await mkdtemp(join(base, 'do-no-crash-'))
   t.after(() => saferm(tmpDir))
   console.log(`using ${tmpDir}`)
-  const configFileSrc = join(fixturesDir, 'configs', 'monorepo-hotreload.json')
+  const configFileSrc = join(fixturesDir, 'configs', 'monorepo-watch.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
   const appSrc = join(fixturesDir, 'monorepo')
   const appDst = join(tmpDir, 'monorepo')
@@ -34,9 +34,17 @@ test('do not crash on syntax error', async (t) => {
     cp(appSrc, appDst, { recursive: true }),
   ])
 
-  await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', true))
+  await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v0', true))
   const { child } = await start('-c', configFileDst)
   t.after(() => child.kill('SIGKILL'))
+
+  for await (const log of child.ndj.iterator({ destroyOnReturn: false })) {
+    if (log.msg === 'RELOADED v0') {
+      plan.ok('reloaded')
+      break
+    }
+  }
+  await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', true))
 
   for await (const log of child.ndj.iterator({ destroyOnReturn: false })) {
     if (log.msg === 'RELOADED v1') {

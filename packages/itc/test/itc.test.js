@@ -1,6 +1,7 @@
 'use strict'
 
 const assert = require('node:assert/strict')
+const { once } = require('node:events')
 const { test } = require('node:test')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { MessageChannel } = require('node:worker_threads')
@@ -67,6 +68,23 @@ test('should throw an error if request name is not a string', async (t) => {
     assert.strictEqual(error.code, 'PLT_ITC_REQUEST_NAME_IS_NOT_STRING')
     assert.strictEqual(error.message, 'ITC request name is not a string: "true"')
   }
+})
+
+test('should send a notification between threads', async (t) => {
+  const { port1, port2 } = new MessageChannel()
+
+  const itc1 = new ITC({ port: port1 })
+  const itc2 = new ITC({ port: port2 })
+
+  const notificationName = 'notification'
+  const testNotification = { test: 'test-notification' }
+
+  t.after(() => itc2.close())
+  await itc2.listen()
+
+  await itc1.notify(notificationName, testNotification)
+  const [receivedNotification] = await once(itc2, notificationName)
+  assert.deepStrictEqual(testNotification, receivedNotification)
 })
 
 test('should throw if call listen twice', async (t) => {

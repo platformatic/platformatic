@@ -2,22 +2,18 @@
 
 const { createRequire } = require('node:module')
 const { join } = require('node:path')
+
 const ConfigManager = require('@platformatic/config')
+
 const { platformaticRuntime } = require('./config')
 const { buildRuntime } = require('./start')
-const { loadConfig } = require('./load-config')
+const { loadConfig } = require('./utils')
 
 async function buildServerRuntime (options = {}) {
-  const {
-    serviceMap,
-    loggingPort,
-    loggingMetadata,
-  } = options
+  const { serviceMap } = options
 
   if (!options.configManager) {
     delete options.serviceMap
-    delete options.loggingPort
-    delete options.loggingMetadata
 
     // Instantiate a new config manager from the current options.
     const cm = new ConfigManager({
@@ -26,8 +22,6 @@ async function buildServerRuntime (options = {}) {
     })
     await cm.parseAndValidate()
 
-    cm.current.loggingPort = loggingPort
-    cm.current.loggingMetadata = loggingMetadata
     cm.current.serviceMap = serviceMap
 
     if (typeof options === 'string') {

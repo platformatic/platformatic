@@ -1,42 +1,21 @@
 'use strict'
 
-const { once } = require('node:events')
 const inspector = require('node:inspector')
-const { join, resolve, dirname } = require('node:path')
 const { writeFile } = require('node:fs/promises')
-const { pathToFileURL } = require('node:url')
-const { Worker } = require('node:worker_threads')
+const { join, resolve, dirname } = require('node:path')
+
 const { printConfigValidationErrors } = require('@platformatic/config')
 const closeWithGrace = require('close-with-grace')
-const { loadConfig } = require('./load-config')
-const { startManagementApi } = require('./management-api')
-const { startPrometheusServer } = require('./prom-server.js')
-const { parseInspectorOptions, wrapConfigInRuntimeConfig } = require('./config')
-const { RuntimeApiClient, getRuntimeLogsDir } = require('./api-client.js')
-const errors = require('./errors')
-const pkg = require('../package.json')
 const pino = require('pino')
 const pretty = require('pino-pretty')
 
-const kLoaderFile = pathToFileURL(join(__dirname, 'loader.mjs')).href
-const kWorkerFile = join(__dirname, 'worker.js')
-const kWorkerExecArgv = [
-  '--no-warnings',
-  '--experimental-loader',
-  kLoaderFile,
-]
-
-function startWorker ({ config, dirname, runtimeLogsDir }, env) {
-  const worker = new Worker(kWorkerFile, {
-    /* c8 ignore next */
-    execArgv: config.hotReload ? kWorkerExecArgv : [],
-    transferList: config.loggingPort ? [config.loggingPort] : [],
-    workerData: { config, dirname, runtimeLogsDir },
-    env,
-  })
-
-  return worker
-}
+const pkg = require('../package.json')
+const { parseInspectorOptions, wrapConfigInRuntimeConfig } = require('./config')
+const { Runtime } = require('./runtime')
+const errors = require('./errors')
+const { startManagementApi } = require('./management-api')
+const { startPrometheusServer } = require('./prom-server')
+const { getRuntimeLogsDir, loadConfig } = require('./utils')
 
 async function buildRuntime (configManager, env) {
   env = env || process.env
@@ -50,80 +29,47 @@ async function buildRuntime (configManager, env) {
     parseInspectorOptions(configManager)
   }
 
-  if (config.hotReload) {
-    config.loaderFile = kLoaderFile
-  }
-
   const dirname = configManager.dirname
   const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
 
-  // The configManager cannot be transferred to the worker, so remove it.
-  delete config.configManager
+  const runtime = new Runtime(configManager, runtimeLogsDir, env)
 
-  let worker = startWorker({ config, dirname, runtimeLogsDir }, env)
+  /* c8 ignore next 3 */
+  process.on('SIGUSR2', async () => {
+    runtime.logger.info('Received SIGUSR2, restarting all services ...')
+
+    try {
+      await runtime.restart()
+    } catch (err) {
+      runtime.logger.error({ err }, 'Failed to restart services.')
+    }
+  })
 
   let managementApi = null
-
-  if (config.hotReload) {
-    /* c8 ignore next 3 */
-    process.on('SIGUSR2', () => {
-      worker.postMessage({ signal: 'SIGUSR2' })
-    })
-
-    /* c8 ignore next 3 */
-    configManager.on('update', () => {
-      // TODO(cjihrig): Need to clean up and restart the worker.
-    })
-  }
-
-  function setupExit () {
-    worker.on('exit', (code) => {
-      // runtimeApiClient.started can be false if a stop command was issued
-      // via the management API.
-      if (config.restartOnError === false || !runtimeApiClient.started) {
-        // We must stop those here in case the `closeWithGrace` callback
-        // was not called.
-        configManager.fileWatcher?.stopWatching()
-        managementApi?.close()
-        return
-      }
-
-      worker = startWorker({ config, dirname, runtimeLogsDir }, env)
-      setupExit()
-
-      once(worker, 'message').then((msg) => {
-        runtimeApiClient.setWorker(worker).catch(() => {
-          // TODO: currently we restart if the worker fails to start intermitently
-          // should we limit this to a number of retries?
-        })
-      })
-    })
-  }
-
-  setupExit()
-
-  await once(worker, 'message') // plt:init
-
-  const runtimeApiClient = new RuntimeApiClient(
-    worker,
-    configManager,
-    runtimeLogsDir
-  )
-
   if (config.managementApi) {
-    managementApi = await startManagementApi(runtimeApiClient, configManager)
-    runtimeApiClient.managementApi = managementApi
-    runtimeApiClient.on('start', () => {
-      runtimeApiClient.startCollectingMetrics()
+    managementApi = await startManagementApi(runtime, configManager)
+    runtime.managementApi = managementApi
+    runtime.on('started', () => {
+      runtime.startCollectingMetrics()
     })
-  }
-  if (config.metrics) {
-    runtimeApiClient.on('start', async () => {
-      await startPrometheusServer(runtimeApiClient, config.metrics)
+    runtime.on('closed', () => {
+      managementApi.close()
     })
   }
 
-  return runtimeApiClient
+  if (config.metrics) {
+    let promServer
+    runtime.on('started', async () => {
+      promServer = await startPrometheusServer(runtime, config.metrics)
+    })
+
+    runtime.on('closed', async () => {
+      await promServer.close()
+    })
+  }
+
+  await runtime.init()
+  return runtime
 }
 
 async function start (args) {
@@ -155,15 +101,15 @@ async function setupAndStartRuntime (config) {
   let runtime = await buildRuntime(runtimeConfig)
 
   let address = null
-  let startErr = null
+  const startErr = null
   const originalPort = runtimeConfig.current.server?.port || 0
   while (address === null) {
     try {
       address = await runtime.start()
     } catch (err) {
-      startErr = err
       if (err.code === 'EADDRINUSE') {
         await runtime.close()
+
         if (runtimeConfig.current?.server?.port > MAX_PORT) throw err
         runtimeConfig.current.server.port++
         runtime = await buildRuntime(runtimeConfig)

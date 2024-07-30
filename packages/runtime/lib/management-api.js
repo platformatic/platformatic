@@ -1,13 +1,14 @@
 'use strict'
 
-const { tmpdir } = require('node:os')
-const { platform } = require('node:os')
-const { join } = require('node:path')
 const { mkdir, rm } = require('node:fs/promises')
+const { platform, tmpdir } = require('node:os')
+const { join } = require('node:path')
+
 const fastify = require('fastify')
 const ws = require('ws')
-const { getRuntimeLogsDir } = require('./api-client.js')
+
 const errors = require('./errors')
+const { getRuntimeLogsDir } = require('./utils')
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 
@@ -200,12 +201,12 @@ async function startManagementApi (runtime, configManager) {
   try {
     const runtimePIDDir = join(PLATFORMATIC_TMP_DIR, runtimePID.toString())
     if (platform() !== 'win32') {
-      await rm(runtimePIDDir, { recursive: true, force: true }).catch()
+      await rm(runtimePIDDir, { recursive: true, force: true })
       await mkdir(runtimePIDDir, { recursive: true })
     }
 
     const runtimeLogsDir = getRuntimeLogsDir(configManager.dirname, process.pid)
-    await rm(runtimeLogsDir, { recursive: true, force: true }).catch()
+    await rm(runtimeLogsDir, { recursive: true, force: true })
     await mkdir(runtimeLogsDir, { recursive: true })
 
     let socketPath = null
@@ -221,7 +222,7 @@ async function startManagementApi (runtime, configManager) {
 
     managementApi.addHook('onClose', async () => {
       if (platform() !== 'win32') {
-        await rm(runtimePIDDir, { recursive: true, force: true }).catch()
+        await rm(runtimePIDDir, { recursive: true, force: true })
       }
     })
 

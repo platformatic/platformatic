@@ -10,7 +10,9 @@
     "test": "npm run lint && borp --concurrency=1 --timeout=180000 && tsd",
     "gen-schema": "node lib/schema.js > schema.json",
     "coverage": "npm run lint && borp -X=fixtures -X=test -C --concurrency=1 --timeout=120000 && tsd",
-    "lint": "eslint"
+    "lint": "eslint",
+    "gen-schema": "node lib/schema.js > schema.json",
+    "gen-types": "json2ts > config.d.ts < schema.json"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
   "repository": {
@@ -51,6 +53,7 @@
     "@fastify/websocket": "^10.0.0",
     "@hapi/topo": "^6.0.2",
     "@platformatic/config": "workspace:*",
+    "@platformatic/itc": "workspace:*",
     "@platformatic/generators": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/ts-compiler": "workspace:*",
@@ -75,6 +78,7 @@
     "semgrator": "^0.3.0",
     "tail-file-stream": "^0.1.0",
     "undici": "^6.9.0",
+    "undici-thread-interceptor": "^0.5.0",
     "ws": "^8.16.0"
   },
   "standard": {

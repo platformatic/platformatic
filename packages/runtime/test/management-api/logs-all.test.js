@@ -6,7 +6,7 @@ const { test } = require('node:test')
 const { rm, mkdir, writeFile } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { Client } = require('undici')
-const { getRuntimeTmpDir, getRuntimeLogsDir } = require('../../lib/api-client')
+const { getRuntimeTmpDir, getRuntimeLogsDir } = require('../../lib/utils')
 
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
@@ -23,7 +23,6 @@ test('should get all runtime logs', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await app.managementApi.close()
     await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
   })
 
@@ -82,7 +81,6 @@ test('should get previous runtime logs', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await app.managementApi.close()
     await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
   })
 

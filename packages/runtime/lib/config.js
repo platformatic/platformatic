@@ -1,9 +1,12 @@
 'use strict'
+
 const { readdir } = require('node:fs/promises')
 const { join, resolve: pathResolve } = require('node:path')
+
 const ConfigManager = require('@platformatic/config')
-const { schema } = require('./schema')
+
 const errors = require('./errors')
+const { schema } = require('./schema')
 const upgrade = require('./upgrade')
 
 const kServicesAutoloaded = Symbol('plt.servicesAutoloaded')
@@ -69,7 +72,7 @@ async function _transformConfig (configManager) {
       service.config = pathResolve(service.path, service.config)
     }
     service.entrypoint = service.id === config.entrypoint
-    service.hotReload = !!config.hotReload
+    service.watch = !!config.watch
     service.dependencies = []
     service.localServiceEnvVars = new Map()
     service.localUrl = `http://${service.id}.plt.local`
@@ -87,6 +90,10 @@ async function _transformConfig (configManager) {
 
   configManager.current.services = services
   configManager.current.services[kServicesAutoloaded] = true
+
+  if (configManager.current.restartOnError === true) {
+    configManager.current.restartOnError = 5000
+  }
 }
 
 async function platformaticRuntime () {
@@ -128,7 +135,7 @@ async function wrapConfigInRuntimeConfig ({ configManager, args }) {
   const wrapperConfig = {
     $schema: schema.$id,
     entrypoint: serviceId,
-    hotReload: true,
+    watch: true,
     services: [
       {
         id: serviceId,
@@ -198,10 +205,10 @@ function parseInspectorOptions (configManager) {
       host,
       port,
       breakFirstLine: hasInspectBrk,
-      hotReloadDisabled: !!current.hotReload,
+      watchDisabled: !!current.watch,
     }
 
-    current.hotReload = false
+    current.watch = false
   }
 }
 

@@ -1,7 +1,7 @@
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
+  "$schema": "https://platformatic.dev/schemas/v1.21.0/runtime",
   "entrypoint": "serviceApp",
-  "hotReload": "{PLT_HOT_RELOAD}",
+  "watch": false,
   "autoload": {
     "path": "../monorepo",
     "exclude": ["docs", "composerApp"],
@@ -15,5 +15,7 @@
         "config": "platformatic.service.json"
       }
     }
-  }
+  },
+  "managementApi": {},
+  "metrics": false
 }

@@ -1,8 +1,8 @@
-import { Agent, setGlobalDispatcher } from 'undici'
-import { execa } from 'execa'
-import split from 'split2'
 import { join } from 'desm'
+import { execa } from 'execa'
 import { rm } from 'node:fs/promises'
+import split from 'split2'
+import { Agent, setGlobalDispatcher } from 'undici'
 
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 10,

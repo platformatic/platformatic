@@ -33,7 +33,6 @@ test('should stop service by service id', async (t) => {
     await client.close()
     await Promise.all([
       app.close(),
-      app.managementApi.close(),
     ])
   })
 
@@ -46,7 +45,7 @@ test('should stop service by service id', async (t) => {
   assert.strictEqual(statusCode, 200)
 
   {
-    const serviceDetails = await app.getServiceDetails('service-1')
+    const serviceDetails = await app.getServiceDetails('service-1', true)
     assert.strictEqual(serviceDetails.status, 'stopped')
   }
 })
@@ -61,7 +60,7 @@ test('should start stopped service by service id', async (t) => {
   await app.stopService('service-1')
 
   {
-    const serviceDetails = await app.getServiceDetails('service-1')
+    const serviceDetails = await app.getServiceDetails('service-1', true)
     assert.strictEqual(serviceDetails.status, 'stopped')
   }
 
@@ -78,7 +77,6 @@ test('should start stopped service by service id', async (t) => {
     await client.close()
     await Promise.all([
       app.close(),
-      app.managementApi.close(),
     ])
   })
 
@@ -117,7 +115,6 @@ test('should proxy request to the service', async (t) => {
 
     await Promise.all([
       app.close(),
-      app.managementApi.close(),
     ])
   })
 

@@ -239,6 +239,9 @@ importers:
       '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
+      '@platformatic/composer':
+        specifier: workspace:*
+        version: link:../composer
       '@platformatic/db':
         specifier: workspace:*
         version: link:../db
@@ -399,6 +402,9 @@ importers:
       '@platformatic/db':
         specifier: workspace:*
         version: link:../db
+      '@platformatic/runtime':
+        specifier: workspace:*
+        version: link:../runtime
       borp:
         specifier: ^0.17.0
         version: 0.17.0
@@ -1228,6 +1234,9 @@ importers:
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
+      '@platformatic/itc':
+        specifier: workspace:*
+        version: link:../itc
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
@@ -1297,6 +1306,9 @@ importers:
       undici:
         specifier: ^6.9.0
         version: 6.19.5
+      undici-thread-interceptor:
+        specifier: ^0.5.0
+        version: 0.5.0(typescript@5.5.4)
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -1390,9 +1402,6 @@ importers:
       '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
-      '@fastify/restartable':
-        specifier: ^2.3.1
-        version: 2.3.1
       '@fastify/static':
         specifier: ^7.0.1
         version: 7.0.4
@@ -2369,9 +2378,6 @@ packages:
 
   '@fastify/reply-from@9.8.0':
     resolution: {integrity: sha512-bPNVaFhEeNI0Lyl6404YZaPFokudCplidE3QoOcr78yOy6H9sYw97p5KPYvY/NJNUHfFtvxOaSAHnK+YSiv/Mg==}
-
-  '@fastify/restartable@2.3.1':
-    resolution: {integrity: sha512-xMy17v36cUJwODkMpgTklHXK+GGA6qhR5/L+2mkKaOL9XhgiaBH5n4RP/xsgdKEVVFhPaxpuCmEjAUg1XbZv8Q==}
 
   '@fastify/send@2.1.0':
     resolution: {integrity: sha512-yNYiY6sDkexoJR0D8IDy3aRP3+L4wdqCpvx5WP+VtEU58sn7USmKynBzDQex5X42Zzvw2gNzzYgP90UfWShLFA==}
@@ -6202,6 +6208,9 @@ packages:
   undici-oidc-interceptor@0.5.0:
     resolution: {integrity: sha512-YU6ABaLFxzKZGjBmamrrRTlziIe6/jrEBUEyNEe2ZRtlXULorg6xo+/jsyEPZVizHdrTFFX3ZPEPxrNmO3pOEA==}
 
+  undici-thread-interceptor@0.5.0:
+    resolution: {integrity: sha512-/83sLa6McyASeHkjB4QxxS8Qo60rG4kAuk62ncHhIsJ3F+3SO1FUi9mdbzfzymzD8MWtZ+xHPOIUCD0E4Ij9uQ==}
+
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
 
@@ -6925,10 +6934,6 @@ snapshots:
       fastify-plugin: 4.5.1
       toad-cache: 3.7.0
       undici: 5.28.4
-
-  '@fastify/restartable@2.3.1':
-    dependencies:
-      fastify: 4.28.1
 
   '@fastify/send@2.1.0':
     dependencies:
@@ -11352,6 +11357,17 @@ snapshots:
     dependencies:
       fast-jwt: 4.0.2
       undici: 6.19.5
+
+  undici-thread-interceptor@0.5.0(typescript@5.5.4):
+    dependencies:
+      eslint: 9.8.0
+      hyperid: 3.2.0
+      light-my-request: 5.13.0
+      neostandard: 0.11.1(eslint@9.8.0)(typescript@5.5.4)
+      undici: 6.19.5
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
 
   undici-types@5.26.5: {}
 

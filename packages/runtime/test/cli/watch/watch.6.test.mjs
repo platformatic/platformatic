@@ -19,7 +19,7 @@ function saferm (path) {
   return rm(path, { recursive: true, force: true }).catch(() => {})
 }
 
-test('watches CommonJS files with hotreload on a single service', async (t) => {
+test('watches CommonJS files with watch on a single service', async (t) => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => saferm(tmpDir))
   console.log(`using ${tmpDir}`)

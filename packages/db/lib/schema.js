@@ -428,6 +428,9 @@ const platformaticDBschema = {
     $schema: {
       type: 'string',
     },
+    module: {
+      type: 'string',
+    },
   },
   additionalProperties: false,
   required: ['db'],

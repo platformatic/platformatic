@@ -151,7 +151,6 @@ export interface PlatformaticService {
         defaultMetrics?: {
           enabled: boolean;
         };
-        prefix?: string;
         auth?: {
           username: string;
           password: string;
@@ -173,6 +172,7 @@ export interface PlatformaticService {
     | boolean
     | string;
   $schema?: string;
+  module?: string;
   service?: {
     openapi?:
       | {
@@ -214,22 +214,6 @@ export interface PlatformaticService {
     fullRequest?: boolean;
     validateResponse?: boolean;
   }[];
-  versions?: {
-    /**
-     * The path to the directory containing the versions mappers
-     */
-    dir: string;
-    configs: {
-      version: string;
-      openapi?: {
-        prefix?: string;
-        path?: string;
-      };
-      plugins?: {
-        [k: string]: unknown;
-      };
-    }[];
-  };
 }
 export interface OpenTelemetry {
   /**

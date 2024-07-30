@@ -1,19 +1,19 @@
 'use strict'
 
+const { EventEmitter } = require('node:events')
 const { dirname } = require('node:path')
-const { EventEmitter, once } = require('node:events')
+
 const { FileWatcher } = require('@platformatic/utils')
 const debounce = require('debounce')
-const { buildServer } = require('./build-server')
-const { loadConfig } = require('./load-config')
-const errors = require('./errors')
+
+const { buildServer } = require('../build-server')
+const errors = require('../errors')
+const { getServiceUrl, loadConfig } = require('../utils')
 
 class PlatformaticApp extends EventEmitter {
-  #hotReload
-  #loaderPort
   #starting
   #started
-  #originalWatch
+  #watch
   #fileWatcher
   #logger
   #telemetryConfig
@@ -22,73 +22,28 @@ class PlatformaticApp extends EventEmitter {
   #hasManagementApi
   #metricsConfig
 
-  constructor (appConfig, loaderPort, logger, telemetryConfig, serverConfig, hasManagementApi, metricsConfig) {
+  constructor (appConfig, logger, telemetryConfig, serverConfig, hasManagementApi, watch, metricsConfig) {
     super()
     this.appConfig = appConfig
     this.config = null
-    this.#hotReload = false
-    this.#loaderPort = loaderPort
+    this.#watch = watch
     this.#starting = false
     this.#started = false
     this.server = null
-    this.#originalWatch = null
     this.#fileWatcher = null
     this.#hasManagementApi = !!hasManagementApi
     this.#logger = logger.child({
-      name: this.appConfig.id
+      name: this.appConfig.id,
     })
     this.#telemetryConfig = telemetryConfig
     this.#metricsConfig = metricsConfig
     this.#serverConfig = serverConfig
-
-    /* c8 ignore next 4 */
-    this.#debouncedRestart = debounce(() => {
-      this.server.log.info('files changed')
-      this.restart()
-    }, 100) // debounce restart for 100ms
   }
 
   getStatus () {
     if (this.#starting) return 'starting'
     if (this.#started) return 'started'
     return 'stopped'
-  }
-
-  async restart () {
-    if (this.#starting || !this.#started) {
-      return
-    }
-
-    this.#starting = true
-    this.#started = false
-
-    // The CJS cache should not be cleared from the loader because v20 moved
-    // the loader to a different thread with a different CJS cache.
-    clearCjsCache()
-
-    /* c8 ignore next 4 - tests may not pass in a MessagePort. */
-    if (this.#loaderPort) {
-      this.#loaderPort.postMessage('plt:clear-cache')
-      await once(this.#loaderPort, 'message')
-    }
-
-    try {
-      await this.config.configManager.parseAndValidate()
-      await this.#updateConfig()
-
-      this.#setuplogger(this.config.configManager)
-      await this.server.restart()
-    } catch (err) {
-      // The restart failed. Log the error and
-      // wait for another event.
-      // The old app is still available
-      this.#logger.error({ err })
-    }
-
-    this.#started = true
-    this.#starting = false
-    this.emit('start')
-    this.emit('restart')
   }
 
   async getBootstrapDependencies () {
@@ -108,12 +63,11 @@ class PlatformaticApp extends EventEmitter {
     this.#starting = true
 
     await this.#applyConfig()
-    await this.#updateConfig()
 
     const configManager = this.config.configManager
     const config = configManager.current
 
-    this.#setuplogger(configManager)
+    this.#setupLogger(configManager)
 
     try {
       // If this is a restart, have the fastify server restart itself. If this
@@ -122,17 +76,22 @@ class PlatformaticApp extends EventEmitter {
         app: this.config.app,
         ...config,
         id: this.appConfig.id,
-        configManager
+        configManager,
       })
     } catch (err) {
       this.#logAndExit(err)
     }
 
-    if (
-      (config.plugins !== undefined) &&
-      this.#originalWatch?.enabled !== false
-    ) {
-      this.#startFileWatching()
+    const watch = this.config.configManager.current.watch
+
+    if (config.plugins !== undefined && this.#watch && watch.enabled !== false) {
+      /* c8 ignore next 4 */
+      this.#debouncedRestart = debounce(() => {
+        this.server.log.info('files changed')
+        this.emit('changed')
+      }, 100) // debounce restart for 100ms
+
+      this.#startFileWatching(watch)
     }
 
     if (this.appConfig.useHttp) {
@@ -176,39 +135,6 @@ class PlatformaticApp extends EventEmitter {
     await this.server.start()
   }
 
-  async handleProcessLevelEvent ({ signal, err }) {
-    /* c8 ignore next 3 */
-    if (!this.server) {
-      return false
-    }
-
-    if (signal === 'SIGUSR2') {
-      this.server.log.info('reloading configuration')
-      await this.restart()
-      return false
-    }
-
-    if (err) {
-      this.server.log.error({
-        err: {
-          message: err?.message,
-          stack: err?.stack
-        }
-      }, 'exiting')
-    } else if (signal) {
-      this.server.log.info({ signal }, 'received signal')
-    }
-
-    if (this.#starting) {
-      await once(this, 'start')
-    }
-
-    if (this.#started) {
-      await this.stop()
-      this.server.log.info('server stopped')
-    }
-  }
-
   async #loadConfig () {
     const appConfig = this.appConfig
 
@@ -216,7 +142,7 @@ class PlatformaticApp extends EventEmitter {
     try {
       _config = await loadConfig({}, ['-c', appConfig.config], {
         onMissingEnv: this.#fetchServiceUrl,
-        context: appConfig
+        context: appConfig,
       }, true, this.#logger)
     } catch (err) {
       this.#logAndExit(err)
@@ -233,62 +159,43 @@ class PlatformaticApp extends EventEmitter {
     const appConfig = this.appConfig
     const { configManager } = this.config
 
-    function applyOverrides () {
-      if (appConfig._configOverrides instanceof Map) {
-        appConfig._configOverrides.forEach((value, key) => {
-          if (typeof key !== 'string') {
-            throw new errors.ConfigPathMustBeStringError()
-          }
-
-          const parts = key.split('.')
-          let next = configManager.current
-          let obj
-          let i
-
-          for (i = 0; next !== undefined && i < parts.length; ++i) {
-            obj = next
-            next = obj[parts[i]]
-          }
-
-          if (i === parts.length) {
-            obj[parts.at(-1)] = value
-          }
-        })
-      }
-    }
-
-    applyOverrides()
-
-    this.#hotReload = this.appConfig.hotReload
-
     configManager.on('error', (err) => {
       /* c8 ignore next */
       this.server.log.error({ err }, 'error reloading the configuration')
     })
-  }
 
-  async #updateConfig () {
-    this.#originalWatch = this.config.configManager.current.watch
-    this.config.configManager.current.watch = { enabled: false }
+    if (appConfig._configOverrides instanceof Map) {
+      appConfig._configOverrides.forEach((value, key) => {
+        if (typeof key !== 'string') {
+          throw new errors.ConfigPathMustBeStringError()
+        }
 
-    const { configManager } = this.config
+        const parts = key.split('.')
+        let next = configManager.current
+        let obj
+        let i
+
+        for (i = 0; next !== undefined && i < parts.length; ++i) {
+          obj = next
+          next = obj[parts[i]]
+        }
+
+        if (i === parts.length) {
+          obj[parts.at(-1)] = value
+        }
+      })
+    }
+
     configManager.update({
       ...configManager.current,
       telemetry: this.#telemetryConfig,
-      metrics: this.#metricsConfig
+      metrics: this.#metricsConfig,
     })
-
-    if (configManager.current.metrics !== false) {
-      configManager.update({
-        ...configManager.current,
-        metrics: this.#metricsConfig
-      })
-    }
 
     if (this.#serverConfig) {
       configManager.update({
         ...configManager.current,
-        server: this.#serverConfig
+        server: this.#serverConfig,
       })
     }
 
@@ -306,9 +213,9 @@ class PlatformaticApp extends EventEmitter {
           ...configManager.current.metrics,
           labels: {
             serviceId,
-            ...labels
-          }
-        }
+            ...labels,
+          },
+        },
       })
     }
 
@@ -317,13 +224,13 @@ class PlatformaticApp extends EventEmitter {
         ...configManager.current,
         server: {
           ...(configManager.current.server || {}),
-          trustProxy: true
-        }
+          trustProxy: true,
+        },
       })
     }
   }
 
-  #setuplogger (configManager) {
+  #setupLogger (configManager) {
     configManager.current.server = configManager.current.server || {}
     const level = configManager.current.server.logger?.level
 
@@ -342,7 +249,7 @@ class PlatformaticApp extends EventEmitter {
     return getServiceUrl(parent.serviceId)
   }
 
-  #startFileWatching () {
+  #startFileWatching (watch) {
     if (this.#fileWatcher) {
       return
     }
@@ -351,8 +258,8 @@ class PlatformaticApp extends EventEmitter {
     const fileWatcher = new FileWatcher({
       path: dirname(configManager.fullPath),
       /* c8 ignore next 2 */
-      allowToWatch: this.#originalWatch?.allow,
-      watchIgnore: this.#originalWatch?.ignore || []
+      allowToWatch: watch?.allow,
+      watchIgnore: watch?.ignore || [],
     })
 
     fileWatcher.on('update', this.#debouncedRestart)
@@ -365,6 +272,7 @@ class PlatformaticApp extends EventEmitter {
 
   async #stopFileWatching () {
     const watcher = this.#fileWatcher
+
     if (watcher) {
       this.server.log.debug('stop watching files')
       await watcher.stopWatching()
@@ -377,25 +285,6 @@ class PlatformaticApp extends EventEmitter {
     this.#logger.error({ err })
     process.exit(1)
   }
-}
-
-/* c8 ignore next 11 - c8 upgrade marked many existing things as uncovered */
-function clearCjsCache () {
-  // This evicts all of the modules from the require() cache.
-  // Note: This does not clean up children references to the deleted module.
-  // It's likely not a big deal for most cases, but it is a leak. The child
-  // references can be cleaned up, but it is expensive and involves walking
-  // the entire require() cache. See the DEP0144 documentation for how to do
-  // it.
-  Object.keys(require.cache).forEach((key) => {
-    if (!key.match(/node_modules/)) {
-      delete require.cache[key]
-    }
-  })
-}
-
-function getServiceUrl (id) {
-  return `http://${id}.plt.local`
 }
 
 module.exports = { PlatformaticApp }

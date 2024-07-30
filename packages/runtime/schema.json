@@ -607,7 +607,7 @@
     "entrypoint": {
       "type": "string"
     },
-    "hotReload": {
+    "watch": {
       "anyOf": [
         {
           "type": "boolean"
@@ -629,7 +629,7 @@
         "breakFirstLine": {
           "type": "boolean"
         },
-        "hotReloadDisabled": {
+        "watchDisabled": {
           "type": "boolean"
         }
       }
@@ -758,7 +758,8 @@
           "type": "boolean"
         },
         {
-          "type": "string"
+          "type": "number",
+          "minimum": 100
         }
       ]
     },

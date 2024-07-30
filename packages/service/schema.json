@@ -820,6 +820,9 @@
     "$schema": {
       "type": "string"
     },
+    "module": {
+      "type": "string"
+    },
     "service": {
       "type": "object",
       "properties": {

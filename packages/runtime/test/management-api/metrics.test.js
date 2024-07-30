@@ -28,7 +28,6 @@ test('should not expose service metrics via runtime management api proxy', async
     await Promise.all([
       client.close(),
       app.close(),
-      app.managementApi.close(),
     ])
   })
 

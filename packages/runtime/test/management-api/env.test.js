@@ -28,7 +28,6 @@ test('should get the runtime process env', async (t) => {
     await Promise.all([
       client.close(),
       app.close(),
-      app.managementApi.close(),
     ])
   })
 

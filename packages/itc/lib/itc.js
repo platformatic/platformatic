@@ -6,6 +6,7 @@ const errors = require('./errors.js')
 
 const PLT_ITC_REQUEST_TYPE = 'PLT_ITC_REQUEST'
 const PLT_ITC_RESPONSE_TYPE = 'PLT_ITC_RESPONSE'
+const PLT_ITC_NOTIFICATION_TYPE = 'PLT_ITC_NOTIFICATION'
 const PLT_ITC_UNHANDLED_ERROR_TYPE = 'PLT_ITC_UNHANDLED_ERROR'
 const PLT_ITC_VERSION = '1.0.0'
 
@@ -22,6 +23,9 @@ class ITC extends EventEmitter {
     this.#requestEmitter = new EventEmitter()
     this.#handlers = new Map()
     this.#listening = false
+
+    // Make sure the emitter handle a lot of listeners at once before raising a warning
+    this.#requestEmitter.setMaxListeners(1E3)
   }
 
   async send (name, message) {
@@ -44,6 +48,10 @@ class ITC extends EventEmitter {
     return data
   }
 
+  async notify (name, message) {
+    this.port.postMessage(this.#generateNotification(name, message))
+  }
+
   handle (message, handler) {
     this.#handlers.set(message, handler)
   }
@@ -63,6 +71,9 @@ class ITC extends EventEmitter {
       if (messageType === PLT_ITC_RESPONSE_TYPE) {
         this.#handleResponse(message)
         return
+      }
+      if (messageType === PLT_ITC_NOTIFICATION_TYPE) {
+        this.emit(message.name, message.data)
       }
       if (messageType === PLT_ITC_UNHANDLED_ERROR_TYPE) {
         this.emit('unhandledError', message.error)
@@ -103,6 +114,8 @@ class ITC extends EventEmitter {
       } catch (handlerError) {
         const error = new errors.HandlerFailed(handlerError.message)
         error.handlerError = handlerError
+        // This is needed as the code might be lost when sending the message over the port
+        error.handlerErrorCode = handlerError.code
         throw error
       }
     } catch (error) {
@@ -175,6 +188,15 @@ class ITC extends EventEmitter {
       reqId: request.reqId,
       name: request.name,
       error,
+      data,
+    }
+  }
+
+  #generateNotification (name, data) {
+    return {
+      type: PLT_ITC_NOTIFICATION_TYPE,
+      version: PLT_ITC_VERSION,
+      name,
       data,
     }
   }

@@ -29,7 +29,6 @@ test('should get service graphql schema', async (t) => {
     await Promise.all([
       client.close(),
       app.close(),
-      app.managementApi.close(),
     ])
   })
 

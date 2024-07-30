@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.22.0.json",
+  "$schema": "https://platformatic.dev/schemas/v1.51.8/runtime",
   "entrypoint": "a",
   "autoload": {
     "path": "./services"
@@ -10,5 +10,6 @@
     "logger": {
       "level": "info"
     }
-  }
+  },
+  "restartOnError": false
 }

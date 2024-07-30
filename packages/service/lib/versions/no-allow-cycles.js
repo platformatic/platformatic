@@ -3,7 +3,7 @@
 const { version } = require('../../package.json')
 
 module.exports.migration = {
-  version: '2.0.0',
+  version: '1.99.0', // This is to account alpha versions as well
   toVersion: version,
   up: function (config) {
     if (typeof config.allowCycles === 'boolean') {

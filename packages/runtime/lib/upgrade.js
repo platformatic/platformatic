@@ -1,6 +1,7 @@
 'use strict'
 
-const { join } = require('path')
+const { join } = require('node:path')
+
 const pkg = require('../package.json')
 
 module.exports = async function upgrade (config, version) {

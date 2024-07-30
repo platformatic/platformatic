@@ -30,7 +30,6 @@ test('should get runtime config', async (t) => {
     await Promise.all([
       client.close(),
       app.close(),
-      app.managementApi.close(),
     ])
   })
 
@@ -47,7 +46,7 @@ test('should get runtime config', async (t) => {
     `https://schemas.platformatic.dev/@platformatic/runtime/${platformaticVersion}.json`
   )
   assert.strictEqual(runtimeConfig.entrypoint, 'service-1')
-  assert.strictEqual(runtimeConfig.hotReload, false)
+  assert.strictEqual(runtimeConfig.watch, false)
   assert.deepStrictEqual(runtimeConfig.autoload, {
     path: join(projectDir, 'services'),
     exclude: [],

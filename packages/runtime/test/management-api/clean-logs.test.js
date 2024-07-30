@@ -5,7 +5,7 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const { rm, readdir } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
-const { getRuntimeTmpDir, getRuntimeLogsDir } = require('../../lib/api-client')
+const { getRuntimeTmpDir, getRuntimeLogsDir } = require('../../lib/utils')
 
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
@@ -22,7 +22,6 @@ test('should clean the logs after reaching a limit', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await app.managementApi.close()
     await rm(runtimeTmpDir, { recursive: true, force: true })
   })
 

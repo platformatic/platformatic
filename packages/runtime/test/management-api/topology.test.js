@@ -30,7 +30,6 @@ test('should get services topology', async (t) => {
     await Promise.all([
       client.close(),
       app.close(),
-      app.managementApi.close(),
     ])
   })
 

@@ -28,7 +28,6 @@ test('should reload all services with a management api', async (t) => {
     await Promise.all([
       client.close(),
       app.close(),
-      app.managementApi.close(),
     ])
   })
 

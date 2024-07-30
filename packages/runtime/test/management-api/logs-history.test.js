@@ -5,7 +5,7 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const { writeFile, rm, mkdir } = require('node:fs/promises')
 const { Client } = require('undici')
-const { getRuntimeTmpDir, getRuntimeLogsDir } = require('../../lib/api-client')
+const { getRuntimeTmpDir, getRuntimeLogsDir } = require('../../lib/utils')
 
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
@@ -22,7 +22,6 @@ test('should get runtime logs history via management api', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await app.managementApi.close()
     await rm(runtimeTmpDir, { recursive: true, force: true })
   })
 
@@ -68,7 +67,6 @@ test('should get logs from previous run', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await app.managementApi.close()
     await rm(runtimeTmpDir, { recursive: true, force: true })
   })
 
@@ -106,7 +104,6 @@ test('should throw 404 if log file does not exist', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await app.managementApi.close()
     await rm(runtimeTmpDir, { recursive: true, force: true })
   })
 

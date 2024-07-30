@@ -6,7 +6,7 @@ import helpMe from 'help-me'
 import { readFile, writeFile, mkdir, access } from 'fs/promises'
 import { join, dirname, relative, resolve, posix } from 'path'
 import * as desm from 'desm'
-import { request } from 'undici'
+import { getGlobalDispatcher, request, setGlobalDispatcher } from 'undici'
 import { processOpenAPI } from './lib/openapi-generator.mjs'
 import { processFrontendOpenAPI } from './lib/frontend-openapi-generator.mjs'
 import { processGraphQL } from './lib/graphql-generator.mjs'
@@ -336,13 +336,10 @@ export async function command (argv) {
       process.exit(1)
     }
 
-    let RuntimeApi
-    let platformaticRuntime
+    let runtimeModule
 
     try {
-      const imported = await import('@platformatic/runtime')
-      RuntimeApi = imported.RuntimeApi
-      platformaticRuntime = imported.platformaticRuntime
+      runtimeModule = await import('@platformatic/runtime')
 
       // Ignoring the catch block.
       // TODO(mcollina): we would need to setup ESM import
@@ -356,9 +353,10 @@ export async function command (argv) {
       throw err
     }
 
+    const { Runtime, platformaticRuntime, getRuntimeLogsDir } = runtimeModule
     const { configManager } = await loadConfig({}, ['-c', runtimeConfigFile], platformaticRuntime)
 
-    configManager.current.hotReload = false
+    configManager.current.watch = false
 
     for (const service of configManager.current.services) {
       service.localServiceEnvVars.set('PLT_SERVER_LOGGER_LEVEL', 'warn')
@@ -366,8 +364,13 @@ export async function command (argv) {
       service.watch = false
     }
 
-    runtime = new RuntimeApi(configManager.current, logger)
-    await runtime.startServices()
+    const runtimeLogsDir = getRuntimeLogsDir(configManager.dirname, process.pid)
+    runtime = new Runtime(configManager, runtimeLogsDir, process.env)
+    await runtime.init()
+    await runtime.start()
+
+    // Set interceptors
+    setGlobalDispatcher(getGlobalDispatcher().compose(runtime.getInterceptor()))
 
     url = `http://${options.runtime}.plt.local`
   }
@@ -404,7 +407,7 @@ export async function command (argv) {
     logger.info(`Client generated successfully into ${options.folder}`)
     logger.info('Check out the docs to know more: https://docs.platformatic.dev/docs/service/overview')
     if (runtime) {
-      await runtime.stopServices()
+      await runtime.close()
     }
   } catch (err) {
     logger.error(err.message)
