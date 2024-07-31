@@ -196,6 +196,9 @@ importers:
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
       abstract-logging:
         specifier: ^2.0.1
         version: 2.0.1
@@ -254,9 +257,6 @@ importers:
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
-      '@platformatic/utils':
-        specifier: workspace:*
-        version: link:../utils
       borp:
         specifier: ^0.17.0
         version: 0.17.0
@@ -1126,6 +1126,9 @@ importers:
       '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
       boring-name-generator:
         specifier: ^1.0.3
         version: 1.0.3
@@ -1142,9 +1145,6 @@ importers:
         specifier: ^6.9.0
         version: 6.19.5
     devDependencies:
-      '@platformatic/utils':
-        specifier: workspace:*
-        version: link:../utils
       '@types/inquirer':
         specifier: ^9.0.7
         version: 9.0.7
