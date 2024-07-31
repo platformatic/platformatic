@@ -20,8 +20,8 @@ const plugin = async (app) => {
     return {
       id: 'root',
       nodes: [
-        'node-1',
-        { id: 'node-1', nodes: ['node-42', { id: 'node-2', nodes: [] }] },
+        null,
+        { id: 'node-1', nodes: [null, { id: 'node-2', nodes: [] }] },
         { id: 'node-3', nodes: [] }
       ]
     }

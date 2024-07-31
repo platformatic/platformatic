@@ -6,6 +6,7 @@ const { join, isAbsolute, dirname } = require('node:path')
 const { parseArgs } = require('node:util')
 const { writeFile, readFile } = require('node:fs/promises')
 const { buildGenerator } = require('typescript-json-schema')
+const helpMe = require('help-me')
 const ts = require('typescript')
 
 function sanitizeSchemaRefs (schema, tsPrefix) {
@@ -228,7 +229,9 @@ async function parseTsConfig (tsConfigPath) {
 
 function getTypesSchemas (program, types) {
   const generator = buildGenerator(program, {
-    ignoreErrors: true
+    ignoreErrors: true,
+    noExtraProps: true,
+    required: true
   })
   const schemas = generator.getSchemaForSymbols(types)
   return schemas
@@ -262,11 +265,18 @@ async function generateRpcSchemaCommand (argv) {
   const args = parseArgs({
     args: argv,
     options: {
+      help: { type: 'boolean', short: 'h' },
       path: { type: 'string', short: 'p' },
       'ts-config': { type: 'string', short: 't', default: 'tsconfig.json' }
     },
     strict: false
   }).values
+
+  const help = helpMe({ dir: join(__dirname, 'help'), ext: '.txt' })
+  if (args.help) {
+    await help.toStdout()
+    process.exit(0)
+  }
 
   let tsConfigPath = args['ts-config']
   if (!isAbsolute(tsConfigPath)) {

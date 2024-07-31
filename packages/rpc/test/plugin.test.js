@@ -29,4 +29,46 @@ test('should generate an openapi schema from a ts app', async (t) => {
       { name: 'Bob', age: 25 }
     ])
   }
+
+  {
+    const { statusCode, body } = await app.inject({
+      method: 'POST',
+      url: '/rpc/getUsers',
+      body: JSON.stringify({ maxAge: 'string' }),
+      headers: {
+        'content-type': 'application/json'
+      }
+    })
+    assert.strictEqual(statusCode, 400)
+
+    const error = JSON.parse(body)
+    assert.deepStrictEqual(error, {
+      code: 'FST_ERR_VALIDATION',
+      error: 'Bad Request',
+      message: 'body/maxAge must be number',
+      statusCode: 400
+    })
+  }
+
+  {
+    const { statusCode, body } = await app.inject({
+      method: 'POST',
+      url: '/rpc/getRecursiveNode',
+      body: JSON.stringify({}),
+      headers: {
+        'content-type': 'application/json'
+      }
+    })
+    assert.strictEqual(statusCode, 200, body)
+
+    const users = JSON.parse(body)
+    assert.deepStrictEqual(users, {
+      id: 'root',
+      nodes: [
+        null,
+        { id: 'node-1', nodes: [null, { id: 'node-2', nodes: [] }] },
+        { id: 'node-3', nodes: [] }
+      ]
+    })
+  }
 })

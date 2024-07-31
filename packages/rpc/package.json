@@ -3,6 +3,9 @@
   "version": "1.49.1",
   "description": "A fastify RPC plugin for typescript applications",
   "main": "index.js",
+  "bin": {
+    "plt-rpc": "cli.js"
+  },
   "scripts": {
     "lint": "standard",
     "test": "pnpm run lint && borp --concurrency=1 --timeout 120000",
@@ -27,8 +30,8 @@
   },
   "dependencies": {
     "fastify": "^4.28.1",
-    "fastify-openapi-glue": "^4.6.1",
     "fastify-plugin": "^4.5.1",
+    "help-me": "^5.0.0",
     "typescript": "~5.1.0",
     "typescript-json-schema": "^0.64.0"
   }

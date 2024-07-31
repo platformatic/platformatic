@@ -139,9 +139,13 @@ test('should generate an openapi schema from a ts app', async (t) => {
                 age: {
                   type: 'number'
                 }
-              }
+              },
+              additionalProperties: false,
+              required: ['age', 'name']
             }
-          }
+          },
+          additionalProperties: false,
+          required: ['user']
         },
         addUserReturnType: {
           type: 'object',
@@ -153,7 +157,9 @@ test('should generate an openapi schema from a ts app', async (t) => {
             maxAge: {
               type: 'number'
             }
-          }
+          },
+          additionalProperties: false,
+          required: ['maxAge']
         },
         getUsersReturnType: {
           type: 'array',
@@ -166,7 +172,9 @@ test('should generate an openapi schema from a ts app', async (t) => {
               age: {
                 type: 'number'
               }
-            }
+            },
+            additionalProperties: false,
+            required: ['age', 'name']
           }
         },
         getGroupByNameArgs: {
@@ -175,7 +183,9 @@ test('should generate an openapi schema from a ts app', async (t) => {
             name: {
               type: 'string'
             }
-          }
+          },
+          additionalProperties: false,
+          required: ['name']
         },
         getGroupByNameReturnType: {
           type: 'object',
@@ -194,10 +204,17 @@ test('should generate an openapi schema from a ts app', async (t) => {
                   age: {
                     type: 'number'
                   }
-                }
+                },
+                additionalProperties: false,
+                required: [
+                  'age',
+                  'name'
+                ]
               }
             }
-          }
+          },
+          additionalProperties: false,
+          required: ['users']
         },
         getRecursiveNodeReturnType: {
           $ref: '#/components/schemas/Node'
@@ -221,7 +238,9 @@ test('should generate an openapi schema from a ts app', async (t) => {
                 ]
               }
             }
-          }
+          },
+          additionalProperties: false,
+          required: ['id', 'nodes']
         }
       }
     }

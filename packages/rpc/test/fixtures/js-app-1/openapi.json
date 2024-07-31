@@ -192,7 +192,7 @@
                   "$ref": "#/components/schemas/Node"
                 },
                 {
-                  "type": "string"
+                  "type": "null"
                 }
               ]
             }

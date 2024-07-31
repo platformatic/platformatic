@@ -6,7 +6,7 @@ type User = {
 }
 
 type Group = {
-  name: string
+  name?: string
   users: User[]
 }
 
@@ -20,6 +20,7 @@ const users = [
   { name: 'Bob', age: 25 },
   { name: 'Charlie', age: 35 },
 ]
+
 const plugin: FastifyPluginAsync = async (app) => {
   // These lines are needed to test avoiding types collision
   type addUserArgs = { user: User }
