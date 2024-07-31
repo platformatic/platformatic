@@ -1,17 +1,12 @@
-import { test } from 'node:test'
+import { safeRemove } from '@platformatic/utils'
+import { mkdtemp } from 'fs/promises'
 import { equal } from 'node:assert'
-import { timeout } from './timeout.mjs'
-import { isFileAccessible } from '../../src/utils.mjs'
 import { join } from 'node:path'
+import { test } from 'node:test'
 import { tmpdir } from 'os'
-import { mkdtemp, rm } from 'fs/promises'
-import {
-  executeCreatePlatformatic,
-  startMarketplace,
-  keys,
-  walk,
-  getServices,
-} from './helper.mjs'
+import { isFileAccessible } from '../../src/utils.mjs'
+import { executeCreatePlatformatic, getServices, keys, startMarketplace, walk } from './helper.mjs'
+import { timeout } from './timeout.mjs'
 
 let tmpDir
 test.beforeEach(async () => {
@@ -20,48 +15,59 @@ test.beforeEach(async () => {
 
 test.afterEach(async () => {
   try {
-    await rm(tmpDir, { recursive: true, force: true })
+    await safeRemove(tmpDir)
   } catch (e) {
     // on purpose, in win the resource might be still "busy"
   }
 })
 
-test('Creates a Platformatic DB service with no migrations', { timeout }, async (t) => {
+test('Creates a Platformatic DB service with no migrations', { timeout }, async t => {
   const marketplaceHost = await startMarketplace(t)
   // The actions must match IN ORDER
-  const actions = [{
-    match: 'What kind of project do you want to create?',
-    do: [keys.ENTER], // Application
-  }, {
-    match: 'Where would you like to create your project?',
-    do: [keys.ENTER],
-    waitAfter: 8000,
-  }, {
-    match: 'Which kind of project do you want to create?',
-    do: [keys.UP, keys.ENTER], // DB
-  }, {
-    match: 'What is the name of the service?',
-    do: [keys.ENTER],
-  }, {
-    match: 'What is the connection string?',
-    do: [keys.ENTER],
-  }, {
-    match: 'Do you want to create default migrations',
-    do: [keys.DOWN, keys.ENTER], // no
-  }, {
-    match: 'Do you want to create another service?',
-    do: [keys.DOWN, keys.ENTER], // no
-  }, {
-    // NOTE THAT HERE THE DEFAULT OPTION FOR SERVICE IS "YES"
-    match: 'Do you want to use TypeScript',
-    do: [keys.ENTER], // no
-  }, {
-    match: 'What port do you want to use?',
-    do: [keys.ENTER],
-  }, {
-    match: 'Do you want to init the git repository',
-    do: [keys.DOWN, keys.ENTER], // yes
-  }]
+  const actions = [
+    {
+      match: 'What kind of project do you want to create?',
+      do: [keys.ENTER], // Application
+    },
+    {
+      match: 'Where would you like to create your project?',
+      do: [keys.ENTER],
+      waitAfter: 8000,
+    },
+    {
+      match: 'Which kind of project do you want to create?',
+      do: [keys.UP, keys.ENTER], // DB
+    },
+    {
+      match: 'What is the name of the service?',
+      do: [keys.ENTER],
+    },
+    {
+      match: 'What is the connection string?',
+      do: [keys.ENTER],
+    },
+    {
+      match: 'Do you want to create default migrations',
+      do: [keys.DOWN, keys.ENTER], // no
+    },
+    {
+      match: 'Do you want to create another service?',
+      do: [keys.DOWN, keys.ENTER], // no
+    },
+    {
+      // NOTE THAT HERE THE DEFAULT OPTION FOR SERVICE IS "YES"
+      match: 'Do you want to use TypeScript',
+      do: [keys.ENTER], // no
+    },
+    {
+      match: 'What port do you want to use?',
+      do: [keys.ENTER],
+    },
+    {
+      match: 'Do you want to init the git repository',
+      do: [keys.DOWN, keys.ENTER], // yes
+    },
+  ]
   await executeCreatePlatformatic(tmpDir, actions, { marketplaceHost })
 
   const baseProjectDir = join(tmpDir, 'platformatic')

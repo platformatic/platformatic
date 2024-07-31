@@ -3,7 +3,7 @@
 const path = require('path')
 const fs = require('fs')
 const assert = require('node:assert/strict')
-const { mkdtemp, rm, writeFile, mkdir } = require('node:fs/promises')
+const { mkdtemp, writeFile } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { resolve } = require('node:path')
 const { request, setGlobalDispatcher, Client, Agent } = require('undici')
@@ -12,7 +12,9 @@ const Swagger = require('@fastify/swagger')
 const mercurius = require('mercurius')
 const { getIntrospectionQuery } = require('graphql')
 const { buildServer: dbBuildServer } = require('@platformatic/db')
-const { buildServer: buildRuntime, symbols } = require('@platformatic/runtime')
+const { createDirectory, safeRemove } = require('@platformatic/utils')
+// This is to avoid a circular dependency
+const { buildServer: buildRuntime, symbols } = require('../../runtime')
 const { buildServer } = require('..')
 
 const agent = new Agent({
@@ -371,10 +373,9 @@ async function createComposer (t, composerConfig, logger = false) {
 }
 
 async function createComposerInRuntime (t, prefix, composerConfig) {
-  await mkdir(tmpBaseDir, { recursive: true })
   const tmpDir = await mkdtemp(resolve(tmpBaseDir, prefix))
-  await mkdir(resolve(tmpDir, 'composer'), { recursive: true })
-  t.after(() => rm(tmpDir, { recursive: true, force: true }))
+  await createDirectory(resolve(tmpDir, 'composer'))
+  t.after(() => safeRemove(tmpDir))
 
   const composerConfigPath = resolve(tmpDir, 'composer/platformatic.composer.json')
   const pluginConfigPath = resolve(tmpDir, 'composer/plugin.js')

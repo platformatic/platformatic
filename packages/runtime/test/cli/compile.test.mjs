@@ -1,24 +1,24 @@
-import { test } from 'node:test'
-import assert from 'node:assert'
+import { createDirectory } from '@platformatic/utils'
 import { join } from 'desm'
-import path from 'node:path'
-import { cliPath, delDir } from './helper.mjs'
 import { execa } from 'execa'
-import { mkdtemp, cp, mkdir, access } from 'node:fs/promises'
+import assert from 'node:assert'
+import { access, cp, mkdtemp } from 'node:fs/promises'
+import path from 'node:path'
+import { test } from 'node:test'
+import { cliPath, delDir } from './helper.mjs'
 
 const base = join(import.meta.url, '..', 'tmp')
 
 try {
-  await mkdir(base, { recursive: true })
-} catch {
-}
+  await createDirectory(base)
+} catch {}
 
 test('compile without tsconfigs', async () => {
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
   await execa(cliPath, ['compile', '-c', config])
 })
 
-test('compile with tsconfig', async (t) => {
+test('compile with tsconfig', async t => {
   const tmpDir = await mkdtemp(path.join(base, 'test-runtime-compile-'))
   const prev = process.cwd()
   process.chdir(tmpDir)
@@ -34,16 +34,20 @@ test('compile with tsconfig', async (t) => {
   const { stdout } = await execa(cliPath, ['compile'])
 
   const lines = stdout.split('\n').map(JSON.parse)
-  const expected = [{
-    name: 'composer',
-    msg: 'No typescript configuration file was found, skipping compilation.',
-  }, {
-    name: 'movies',
-    msg: 'Typescript compilation completed successfully.',
-  }, {
-    name: 'titles',
-    msg: 'Typescript compilation completed successfully.',
-  }]
+  const expected = [
+    {
+      name: 'composer',
+      msg: 'No typescript configuration file was found, skipping compilation.',
+    },
+    {
+      name: 'movies',
+      msg: 'Typescript compilation completed successfully.',
+    },
+    {
+      name: 'titles',
+      msg: 'Typescript compilation completed successfully.',
+    },
+  ]
 
   for (let i = 0; i < expected.length; i++) {
     assert.deepStrictEqual(lines[i].name, expected[i].name)
@@ -51,7 +55,7 @@ test('compile with tsconfig', async (t) => {
   }
 })
 
-test('compile with tsconfig custom flags', async (t) => {
+test('compile with tsconfig custom flags', async t => {
   const tmpDir = await mkdtemp(path.join(base, 'test-runtime-compile-'))
   const prev = process.cwd()
   process.chdir(tmpDir)
@@ -67,16 +71,20 @@ test('compile with tsconfig custom flags', async (t) => {
   const { stdout } = await execa(cliPath, ['compile'])
 
   const lines = stdout.split('\n').map(JSON.parse)
-  const expected = [{
-    name: 'composer',
-    msg: 'No typescript configuration file was found, skipping compilation.',
-  }, {
-    name: 'movies',
-    msg: 'Typescript compilation completed successfully.',
-  }, {
-    name: 'titles',
-    msg: 'Typescript compilation completed successfully.',
-  }]
+  const expected = [
+    {
+      name: 'composer',
+      msg: 'No typescript configuration file was found, skipping compilation.',
+    },
+    {
+      name: 'movies',
+      msg: 'Typescript compilation completed successfully.',
+    },
+    {
+      name: 'titles',
+      msg: 'Typescript compilation completed successfully.',
+    },
+  ]
 
   const outDir = path.join(tmpDir, 'services', 'movies', 'custom')
 
@@ -90,7 +98,7 @@ test('compile with tsconfig custom flags', async (t) => {
   }
 })
 
-test('compile single service', async (t) => {
+test('compile single service', async t => {
   const tmpDir = await mkdtemp(path.join(base, 'test-runtime-compile-'))
   const prev = process.cwd()
   process.chdir(tmpDir)
@@ -106,16 +114,18 @@ test('compile single service', async (t) => {
   const { stdout } = await execa(cliPath, ['compile'])
 
   const lines = stdout.split('\n').map(JSON.parse)
-  const expected = [{
-    msg: 'Typescript compilation completed successfully.',
-  }]
+  const expected = [
+    {
+      msg: 'Typescript compilation completed successfully.',
+    },
+  ]
 
   for (let i = 0; i < expected.length; i++) {
     assert.deepStrictEqual(lines[i].msg, expected[i].msg)
   }
 })
 
-test('compile with tsconfig and no .env', async (t) => {
+test('compile with tsconfig and no .env', async t => {
   const tmpDir = await mkdtemp(path.join(base, 'test-runtime-compile-'))
   const prev = process.cwd()
   process.chdir(tmpDir)
@@ -131,16 +141,20 @@ test('compile with tsconfig and no .env', async (t) => {
   const { stdout } = await execa(cliPath, ['compile'])
 
   const lines = stdout.split('\n').map(JSON.parse)
-  const expected = [{
-    name: 'composer',
-    msg: 'No typescript configuration file was found, skipping compilation.',
-  }, {
-    name: 'movies',
-    msg: 'Typescript compilation completed successfully.',
-  }, {
-    name: 'titles',
-    msg: 'Typescript compilation completed successfully.',
-  }]
+  const expected = [
+    {
+      name: 'composer',
+      msg: 'No typescript configuration file was found, skipping compilation.',
+    },
+    {
+      name: 'movies',
+      msg: 'Typescript compilation completed successfully.',
+    },
+    {
+      name: 'titles',
+      msg: 'Typescript compilation completed successfully.',
+    },
+  ]
 
   for (let i = 0; i < expected.length; i++) {
     assert.deepStrictEqual(lines[i].name, expected[i].name)

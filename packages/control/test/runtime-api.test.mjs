@@ -1,30 +1,31 @@
 'use strict'
 
-import assert from 'node:assert'
-import { tmpdir } from 'node:os'
-import { test } from 'node:test'
-import { join } from 'node:path'
-import { createHash } from 'node:crypto'
-import { setTimeout as sleep } from 'node:timers/promises'
-import { writeFile, rm, mkdir } from 'node:fs/promises'
+import { createDirectory, safeRemove } from '@platformatic/utils'
 import * as desm from 'desm'
+import assert from 'node:assert'
+import { createHash } from 'node:crypto'
+import { writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'node:timers/promises'
+import split from 'split2'
 import { RuntimeApiClient } from '../index.js'
 import { startRuntime } from './helper.mjs'
-import split from 'split2'
 
 const fixturesDir = desm.join(import.meta.url, 'fixtures')
 
-test('should get runtime log indexes', async (t) => {
+test('should get runtime log indexes', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+  await safeRemove(runtimeTmpDir)
 
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     runtime.kill('SIGINT')
-    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+    await safeRemove(runtimeTmpDir)
   })
 
   const testLogs = 'test-logs-42\n'
@@ -37,23 +38,23 @@ test('should get runtime log indexes', async (t) => {
   assert.deepStrictEqual(logIndexes, [1, 42])
 })
 
-test('should get all runtime log indexes', async (t) => {
+test('should get all runtime log indexes', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+  await safeRemove(runtimeTmpDir)
 
   const prevRuntimePID = 424242
   const prevTestLogs = 'test-logs-42\n'
   const prevRuntimeLogsDir = getRuntimeLogsDir(projectDir, prevRuntimePID)
-  await mkdir(prevRuntimeLogsDir, { recursive: true })
+  await createDirectory(prevRuntimeLogsDir)
   await writeFile(join(prevRuntimeLogsDir, 'logs.41'), prevTestLogs)
 
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     runtime.kill('SIGINT')
-    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+    await safeRemove(runtimeTmpDir)
   })
 
   const testLogs = 'test-logs-42\n'
@@ -75,17 +76,17 @@ test('should get all runtime log indexes', async (t) => {
   ])
 })
 
-test('should get runtime history log', async (t) => {
+test('should get runtime history log', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+  await safeRemove(runtimeTmpDir)
 
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     runtime.kill('SIGINT')
-    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+    await safeRemove(runtimeTmpDir)
   })
 
   const testLogs = 'test-logs-42\n'
@@ -98,23 +99,23 @@ test('should get runtime history log', async (t) => {
   assert.strictEqual(runtimeLogs, testLogs)
 })
 
-test('should get runtime history log for prev run', async (t) => {
+test('should get runtime history log for prev run', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+  await safeRemove(runtimeTmpDir)
 
   const prevRuntimePID = 424242
   const prevTestLogs = 'test-logs-41\n'
   const prevRuntimeLogsDir = getRuntimeLogsDir(projectDir, prevRuntimePID)
-  await mkdir(prevRuntimeLogsDir, { recursive: true })
+  await createDirectory(prevRuntimeLogsDir)
   await writeFile(join(prevRuntimeLogsDir, 'logs.41'), prevTestLogs)
 
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     runtime.kill('SIGINT')
-    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+    await safeRemove(runtimeTmpDir)
   })
 
   const runtimeClient = new RuntimeApiClient()
@@ -125,17 +126,17 @@ test('should get runtime history log for prev run', async (t) => {
   assert.strictEqual(runtimeLogs, prevTestLogs)
 })
 
-test('should get runtime all logs', async (t) => {
+test('should get runtime all logs', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+  await safeRemove(runtimeTmpDir)
 
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     runtime.kill('SIGINT')
-    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+    await safeRemove(runtimeTmpDir)
   })
 
   const testLogs = 'test-logs-42\n'
@@ -155,24 +156,24 @@ test('should get runtime all logs', async (t) => {
   assert.strictEqual(logsLines.at(-3) + '\n', testLogs)
 })
 
-test('should get runtime all logs for prev run', async (t) => {
+test('should get runtime all logs for prev run', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+  await safeRemove(runtimeTmpDir)
 
   const prevRuntimePID = 424242
   const prevTestLogs = 'test-logs-41\n'
   const prevRuntimeLogsDir = getRuntimeLogsDir(projectDir, prevRuntimePID)
-  await mkdir(prevRuntimeLogsDir, { recursive: true })
+  await createDirectory(prevRuntimeLogsDir)
   await writeFile(join(prevRuntimeLogsDir, 'logs.2'), prevTestLogs)
   await writeFile(join(prevRuntimeLogsDir, 'logs.3'), prevTestLogs)
 
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
     runtime.kill('SIGINT')
-    await rm(runtimeTmpDir, { recursive: true, force: true, maxRetries: 10 })
+    await safeRemove(runtimeTmpDir)
   })
 
   const runtimeClient = new RuntimeApiClient()
@@ -186,7 +187,7 @@ test('should get runtime all logs for prev run', async (t) => {
   assert.strictEqual(logsLines.at(-3) + '\n', prevTestLogs)
 })
 
-test('should get runtime live metrics', async (t) => {
+test('should get runtime live metrics', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
   const { runtime } = await startRuntime(configFile)
@@ -200,24 +201,26 @@ test('should get runtime live metrics', async (t) => {
 
   let count = 0
   await new Promise((resolve, reject) => {
-    runtimeMetricsStream.pipe(split((record) => {
-      if (count++ > 10) resolve()
+    runtimeMetricsStream.pipe(
+      split(record => {
+        if (count++ > 10) resolve()
 
-      const metric = JSON.parse(record)
-      const metricsKeys = Object.keys(metric).sort()
-      assert.deepStrictEqual(metricsKeys, [
-        'cpu',
-        'date',
-        'elu',
-        'entrypoint',
-        'newSpaceSize',
-        'oldSpaceSize',
-        'rss',
-        'totalHeapSize',
-        'usedHeapSize',
-        'version',
-      ])
-    }))
+        const metric = JSON.parse(record)
+        const metricsKeys = Object.keys(metric).sort()
+        assert.deepStrictEqual(metricsKeys, [
+          'cpu',
+          'date',
+          'elu',
+          'entrypoint',
+          'newSpaceSize',
+          'oldSpaceSize',
+          'rss',
+          'totalHeapSize',
+          'usedHeapSize',
+          'version',
+        ])
+      })
+    )
   })
 })
 

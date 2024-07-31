@@ -4,13 +4,14 @@ const assert = require('node:assert/strict')
 const { tmpdir } = require('node:os')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { unlink, mkdtemp, cp, rm } = require('node:fs/promises')
+const { unlink, mkdtemp, cp } = require('node:fs/promises')
 const { buildServer: buildService } = require('../../service')
 const { buildOpenAPIClient } = require('..')
 const Fastify = require('fastify')
+const { safeRemove } = require('@platformatic/utils')
 require('./helper')
 
-test('build basic client from file with (endpoint with duplicated parameters)', async (t) => {
+test('build basic client from file with (endpoint with duplicated parameters)', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'duped-params')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -24,7 +25,7 @@ test('build basic client from file with (endpoint with duplicated parameters)', 
 
   t.after(async () => {
     await app.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await app.start()
 
@@ -50,7 +51,7 @@ test('build basic client from file with (endpoint with duplicated parameters)', 
   assert.deepEqual(result.body.id, 'bodyId')
 })
 
-test('build basic client from file (enpoint with no parameters)', async (t) => {
+test('build basic client from file (enpoint with no parameters)', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'no-params')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -64,7 +65,7 @@ test('build basic client from file (enpoint with no parameters)', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await app.start()
 
@@ -95,7 +96,7 @@ test('build basic client from file (enpoint with no parameters)', async (t) => {
   assert.equal(getResult.message, 'GET /hello works')
 })
 
-test('build basic client from file (query array parameter)', async (t) => {
+test('build basic client from file (query array parameter)', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'array-query-params')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -109,7 +110,7 @@ test('build basic client from file (query array parameter)', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await app.start()
 
@@ -149,7 +150,7 @@ test('build basic client from file (query array parameter)', async (t) => {
   }
 })
 
-test('build basic client from file (path parameter)', async (t) => {
+test('build basic client from file (path parameter)', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'path-params')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -163,7 +164,7 @@ test('build basic client from file (path parameter)', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await app.start()
 
@@ -182,11 +183,14 @@ test('build basic client from file (path parameter)', async (t) => {
     const result = await client.getPath(params)
     assert.equal(result.id, 'baz')
     assert.equal(result.name, 'bar')
-    assert.deepEqual(params, {
-      path: { id: 'baz' },
-      query: { name: 'bar' },
-    },
-    'calling the client should NOT override the sent params')
+    assert.deepEqual(
+      params,
+      {
+        path: { id: 'baz' },
+        query: { name: 'bar' },
+      },
+      'calling the client should NOT override the sent params'
+    )
 
     const { id, name } = await client.getPath({ path: { id: 'ok' }, query: { name: undefined } })
     assert.equal(id, 'ok')
@@ -233,7 +237,7 @@ test('build basic client from file (path parameter)', async (t) => {
   }
 })
 
-test('validate response', async (t) => {
+test('validate response', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'validate-response')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -247,7 +251,7 @@ test('validate response', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await app.start()
 
@@ -321,7 +325,7 @@ test('validate response', async (t) => {
   assert.deepEqual(validFullResult.body.message, 'This is a valid response')
 })
 
-test('build client with common parameters', async (t) => {
+test('build client with common parameters', async t => {
   const app = Fastify()
 
   app.get('/path/with/:fieldId', async (req, res) => {
@@ -348,13 +352,16 @@ test('build client with common parameters', async (t) => {
     movieId: '123',
   })
 
-  assert.deepEqual({
-    pathParam: 'foo',
-    queryParam: '123',
-  }, output)
+  assert.deepEqual(
+    {
+      pathParam: 'foo',
+      queryParam: '123',
+    },
+    output
+  )
 })
 
-test('build client with header injection options (getHeaders)', async (t) => {
+test('build client with header injection options (getHeaders)', async t => {
   const app = Fastify()
 
   app.get('/path/with/:fieldId', async (req, res) => {
@@ -375,7 +382,7 @@ test('build client with header injection options (getHeaders)', async (t) => {
   const fieldId = 'foo'
   const movieId = '123'
 
-  const getHeaders = (options) => {
+  const getHeaders = options => {
     const { url } = options
     assert.match(url.href, new RegExp(`path/with/${fieldId}\\?movieId=${movieId}`))
     return { href: url.href }
@@ -392,13 +399,16 @@ test('build client with header injection options (getHeaders)', async (t) => {
     movieId,
   })
 
-  assert.deepEqual({
-    pathParam: 'foo',
-    queryParam: '123',
-  }, output)
+  assert.deepEqual(
+    {
+      pathParam: 'foo',
+      queryParam: '123',
+    },
+    output
+  )
 })
 
-test('edge cases', async (t) => {
+test('edge cases', async t => {
   const specPath = join(__dirname, 'fixtures', 'misc', 'openapi.json')
   const client = await buildOpenAPIClient({
     url: 'http://127.0.0.1:3000',
@@ -407,7 +417,7 @@ test('edge cases', async (t) => {
   assert.equal(typeof client.getTestWithWeirdCharacters, 'function')
 })
 
-test('should not throw when params are not passed', async (t) => {
+test('should not throw when params are not passed', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'misc')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -421,7 +431,7 @@ test('should not throw when params are not passed', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await app.start()
 
@@ -437,7 +447,7 @@ test('should not throw when params are not passed', async (t) => {
   assert.strictEqual(typeof result2, 'object', 'call without params')
 })
 
-test('do not set bodies for methods that should not have them', async (t) => {
+test('do not set bodies for methods that should not have them', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'no-bodies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -451,7 +461,7 @@ test('do not set bodies for methods that should not have them', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await app.start()
 

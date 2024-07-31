@@ -1,8 +1,9 @@
 'use strict'
 
 const { join, dirname } = require('path')
-const { readFile, rm } = require('fs/promises')
+const { readFile } = require('fs/promises')
 const setup = require('./lib/setup')
+const { safeRemove } = require('@platformatic/utils')
 
 async function compile (options = {}) {
   const { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists } = await setup(options)
@@ -34,7 +35,7 @@ async function compile (options = {}) {
       if (outDir) {
         const outDirFullPath = join(dirname(tsConfigPath), outDir)
         logger.info(`Removing build directory ${outDirFullPath}`)
-        await rm(outDirFullPath, { recursive: true })
+        await safeRemove(outDirFullPath)
       }
     }
     await execa(tscExecutablePath, tsFlags, { cwd: options.cwd, env })

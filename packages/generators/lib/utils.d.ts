@@ -9,7 +9,6 @@ export type PackageConfiguration = {
 }
 
 export namespace GeneratorUtils {
-  export function safeMkdir (dir: string): Promise<void>
   export function stripVersion (version: string): string
   export function convertServiceNameToPrefix (serviceName: string): string
   export function envObjectToString (env: Env): string

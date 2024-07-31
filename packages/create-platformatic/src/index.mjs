@@ -1,21 +1,21 @@
-import { say } from './say.mjs'
-import path, { basename, join } from 'node:path'
-import inquirer from 'inquirer'
-import generateName from 'boring-name-generator'
-import { getUsername, getVersion, minimumSupportedNodeVersions, isCurrentVersionSupported, safeMkdir } from './utils.mjs'
-import { createGitRepository } from './create-git-repository.mjs'
-import { getPkgManager } from '@platformatic/utils'
 import { StackableGenerator } from '@platformatic/generators'
+import { createDirectory, getPkgManager } from '@platformatic/utils'
+import generateName from 'boring-name-generator'
+import { execa } from 'execa'
+import inquirer from 'inquirer'
+import parseArgs from 'minimist'
+import { writeFile } from 'node:fs/promises'
+import path, { basename, join } from 'node:path'
+import { setTimeout } from 'node:timers/promises'
+import { pathToFileURL } from 'node:url'
+import ora from 'ora'
 import pino from 'pino'
 import pretty from 'pino-pretty'
-import { execa } from 'execa'
-import parseArgs from 'minimist'
-import ora from 'ora'
-import { pathToFileURL } from 'node:url'
-import { writeFile } from 'node:fs/promises'
-import { request } from 'undici'
-import { setTimeout } from 'node:timers/promises'
 import resolve from 'resolve'
+import { request } from 'undici'
+import { createGitRepository } from './create-git-repository.mjs'
+import { say } from './say.mjs'
+import { getUsername, getVersion, isCurrentVersionSupported, minimumSupportedNodeVersions } from './utils.mjs'
 
 const MARKETPLACE_HOST = 'https://marketplace.platformatic.dev'
 
@@ -26,10 +26,7 @@ export async function fetchStackables (marketplaceHost) {
   const stackablesRequestTimeout = setTimeout(5000, new Error('Request timed out'))
 
   try {
-    const { statusCode, body } = await Promise.race([
-      stackablesRequest,
-      stackablesRequestTimeout,
-    ])
+    const { statusCode, body } = await Promise.race([stackablesRequest, stackablesRequestTimeout])
     if (statusCode === 200) {
       return (await body.json()).map(stackable => stackable.name)
     }
@@ -57,7 +54,7 @@ async function importOrLocal ({ pkgManager, name, projectDir, pkg }) {
     try {
       const fileToImport = resolve.sync(pkg, { basedir: projectDir })
       return await import(pathToFileURL(fileToImport))
-    } catch { }
+    } catch {}
 
     const spinner = ora(`Installing ${pkg}...`).start()
     await execa(pkgManager, ['install', pkg], { cwd: projectDir })
@@ -68,7 +65,7 @@ async function importOrLocal ({ pkgManager, name, projectDir, pkg }) {
   }
 }
 
-export const createPlatformatic = async (argv) => {
+export const createPlatformatic = async argv => {
   const args = parseArgs(argv, {
     default: {
       install: true,
@@ -90,10 +87,12 @@ export const createPlatformatic = async (argv) => {
     await say(`Please use one of the following Node.js versions >= ${supportedVersions}.`)
   }
 
-  const logger = pino(pretty({
-    translateTime: 'SYS:HH:MM:ss',
-    ignore: 'hostname,pid',
-  }))
+  const logger = pino(
+    pretty({
+      translateTime: 'SYS:HH:MM:ss',
+      ignore: 'hostname,pid',
+    })
+  )
 
   const pkgManager = getPkgManager()
 
@@ -126,7 +125,7 @@ async function createApplication (args, logger, pkgManager) {
   const projectDir = path.resolve(process.cwd(), optionsDir.dir)
   const projectName = basename(projectDir)
 
-  await safeMkdir(projectDir)
+  await createDirectory(projectDir)
 
   const runtime = await importOrLocal({
     pkgManager,
@@ -170,7 +169,7 @@ async function createApplication (args, logger, pkgManager) {
       name: 'serviceName',
       message: 'What is the name of the service?',
       default: generateName().dashed,
-      validate: (value) => {
+      validate: value => {
         if (value.length === 0) {
           return 'Please enter a name'
         }
@@ -209,7 +208,10 @@ async function createApplication (args, logger, pkgManager) {
         name: 'shouldBreak',
         message: 'Do you want to create another service?',
         default: false,
-        choices: [{ name: 'yes', value: false }, { name: 'no', value: true }],
+        choices: [
+          { name: 'yes', value: false },
+          { name: 'no', value: true },
+        ],
       },
     ])
 
@@ -247,7 +249,10 @@ async function createApplication (args, logger, pkgManager) {
     name: 'initGitRepository',
     message: 'Do you want to init the git repository?',
     default: false,
-    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }],
+    choices: [
+      { name: 'yes', value: true },
+      { name: 'no', value: false },
+    ],
   })
 
   if (initGitRepository) {
@@ -259,7 +264,7 @@ async function createApplication (args, logger, pkgManager) {
     const content = `packages:
 # all packages in direct subdirs of packages/
 - 'services/*'`
-    await (writeFile(join(projectDir, 'pnpm-workspace.yaml'), content))
+    await writeFile(join(projectDir, 'pnpm-workspace.yaml'), content)
   }
 
   if (args.install) {
@@ -288,7 +293,10 @@ async function createStackable (args, logger, pkgManager) {
     name: 'initGitRepository',
     message: 'Do you want to init the git repository?',
     default: false,
-    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }],
+    choices: [
+      { name: 'yes', value: true },
+      { name: 'no', value: false },
+    ],
   })
 
   if (initGitRepository) {

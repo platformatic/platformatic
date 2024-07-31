@@ -1,8 +1,8 @@
 'use strict'
 
-const { mkdir, rm } = require('node:fs/promises')
 const { platform, tmpdir } = require('node:os')
 const { join } = require('node:path')
+const { createDirectory, safeRemove } = require('@platformatic/utils')
 
 const fastify = require('fastify')
 const ws = require('ws')
@@ -15,9 +15,9 @@ const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 async function managementApiPlugin (app, opts) {
   app.log.warn(
     'Runtime Management API is in the experimental stage. ' +
-    'The feature is not subject to semantic versioning rules. ' +
-    'Non-backward compatible changes or removal may occur in any future release. ' +
-    'Use of the feature is not recommended in production environments.'
+      'The feature is not subject to semantic versioning rules. ' +
+      'Non-backward compatible changes or removal may occur in any future release. ' +
+      'Use of the feature is not recommended in production environments.'
   )
 
   const runtime = opts.runtime
@@ -48,37 +48,37 @@ async function managementApiPlugin (app, opts) {
     return runtime.getServices()
   })
 
-  app.get('/services/:id', async (request) => {
+  app.get('/services/:id', async request => {
     const { id } = request.params
     app.log.debug('get service details', { id })
     return runtime.getServiceDetails(id)
   })
 
-  app.get('/services/:id/config', async (request) => {
+  app.get('/services/:id/config', async request => {
     const { id } = request.params
     app.log.debug('get service config', { id })
     return runtime.getServiceConfig(id)
   })
 
-  app.get('/services/:id/openapi-schema', async (request) => {
+  app.get('/services/:id/openapi-schema', async request => {
     const { id } = request.params
     app.log.debug('get openapi-schema', { id })
     return runtime.getServiceOpenapiSchema(id)
   })
 
-  app.get('/services/:id/graphql-schema', async (request) => {
+  app.get('/services/:id/graphql-schema', async request => {
     const { id } = request.params
     app.log.debug('get graphql-schema', { id })
     return runtime.getServiceGraphqlSchema(id)
   })
 
-  app.post('/services/:id/start', async (request) => {
+  app.post('/services/:id/start', async request => {
     const { id } = request.params
     app.log.debug('start service', { id })
     await runtime.startService(id)
   })
 
-  app.post('/services/:id/stop', async (request) => {
+  app.post('/services/:id/stop', async request => {
     const { id } = request.params
     app.log.debug('stop service', { id })
     await runtime.stopService(id)
@@ -103,22 +103,17 @@ async function managementApiPlugin (app, opts) {
 
     const res = await runtime.inject(id, injectParams)
 
-    reply
-      .code(res.statusCode)
-      .headers(res.headers)
-      .send(res.body)
+    reply.code(res.statusCode).headers(res.headers).send(res.body)
   })
 
-  app.get('/metrics/live', { websocket: true }, async (socket) => {
+  app.get('/metrics/live', { websocket: true }, async socket => {
     const cachedMetrics = runtime.getCachedMetrics()
     if (cachedMetrics.length > 0) {
-      const serializedMetrics = cachedMetrics
-        .map((metric) => JSON.stringify(metric))
-        .join('\n')
+      const serializedMetrics = cachedMetrics.map(metric => JSON.stringify(metric)).join('\n')
       socket.send(serializedMetrics + '\n')
     }
 
-    const eventHandler = (metrics) => {
+    const eventHandler = metrics => {
       const serializedMetrics = JSON.stringify(metrics)
       socket.send(serializedMetrics + '\n')
     }
@@ -148,7 +143,7 @@ async function managementApiPlugin (app, opts) {
     runtime.pipeLogsStream(stream, req.log, startLogId)
   })
 
-  app.get('/logs/indexes', async (req) => {
+  app.get('/logs/indexes', async req => {
     const returnAllIds = req.query.all === 'true'
 
     if (returnAllIds) {
@@ -169,16 +164,10 @@ async function managementApiPlugin (app, opts) {
 
     reply.hijack()
 
-    runtime.pipeLogsStream(
-      reply.raw,
-      req.log,
-      startLogId,
-      endLogId,
-      runtimePID
-    )
+    runtime.pipeLogsStream(reply.raw, req.log, startLogId, endLogId, runtimePID)
   })
 
-  app.get('/logs/:id', async (req) => {
+  app.get('/logs/:id', async req => {
     const logId = parseInt(req.params.id)
     const runtimePID = parseInt(req.query.pid) || process.pid
 
@@ -187,10 +176,7 @@ async function managementApiPlugin (app, opts) {
       throw new errors.LogFileNotFound(logId)
     }
 
-    const logFileStream = await runtime.getLogFileStream(
-      logId,
-      runtimePID
-    )
+    const logFileStream = await runtime.getLogFileStream(logId, runtimePID)
     return logFileStream
   })
 }
@@ -201,13 +187,11 @@ async function startManagementApi (runtime, configManager) {
   try {
     const runtimePIDDir = join(PLATFORMATIC_TMP_DIR, runtimePID.toString())
     if (platform() !== 'win32') {
-      await rm(runtimePIDDir, { recursive: true, force: true })
-      await mkdir(runtimePIDDir, { recursive: true })
+      await createDirectory(runtimePIDDir, true)
     }
 
     const runtimeLogsDir = getRuntimeLogsDir(configManager.dirname, process.pid)
-    await rm(runtimeLogsDir, { recursive: true, force: true })
-    await mkdir(runtimeLogsDir, { recursive: true })
+    await createDirectory(runtimeLogsDir, true)
 
     let socketPath = null
     if (platform() === 'win32') {
@@ -222,13 +206,13 @@ async function startManagementApi (runtime, configManager) {
 
     managementApi.addHook('onClose', async () => {
       if (platform() !== 'win32') {
-        await rm(runtimePIDDir, { recursive: true, force: true })
+        await safeRemove(runtimePIDDir)
       }
     })
 
     await managementApi.listen({ path: socketPath })
     return managementApi
-  /* c8 ignore next 4 */
+    /* c8 ignore next 4 */
   } catch (err) {
     console.error(err)
     process.exit(1)

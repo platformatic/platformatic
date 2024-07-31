@@ -2,18 +2,19 @@
 
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { rm, writeFile, mkdir, readFile, access } = require('node:fs/promises')
+const { writeFile, readFile, access } = require('node:fs/promises')
 const assert = require('node:assert')
 const os = require('node:os')
 const pino = require('pino')
 const pinoTest = require('pino-test')
 
 const { compile } = require('../compile.js')
+const { safeRemove, createDirectory } = require('@platformatic/utils')
 
 const tmpDir = os.tmpdir()
 const cwd = process.cwd()
 
-test('empty folder', async (t) => {
+test('empty folder', async t => {
   process.chdir(tmpDir)
   t.after(() => {
     process.chdir(cwd)
@@ -26,23 +27,24 @@ test('empty folder', async (t) => {
 
   assert.strictEqual(res, false)
 
-  pinoTest.consecutive(stream, [
-    { level: 40, msg: 'The tsc executable was not found.' },
-  ])
+  pinoTest.consecutive(stream, [{ level: 40, msg: 'The tsc executable was not found.' }])
 })
 
-test('successfully compile', async (t) => {
+test('successfully compile', async t => {
   const localTmpDir = join(tmpDir, 'compiled')
-  await mkdir(join(localTmpDir), { recursive: true })
+  await createDirectory(join(localTmpDir), true)
   t.after(async () => {
-    await rm(localTmpDir, { recursive: true })
+    await safeRemove(localTmpDir)
   })
 
-  await writeFile(join(localTmpDir, 'tsconfig.json'), JSON.stringify({
-    compilerOptions: {
-      outDir: 'dist',
-    },
-  }))
+  await writeFile(
+    join(localTmpDir, 'tsconfig.json'),
+    JSON.stringify({
+      compilerOptions: {
+        outDir: 'dist',
+      },
+    })
+  )
 
   await writeFile(join(localTmpDir, 'index.ts'), 'console.log("Hello, World!")')
 
@@ -53,26 +55,27 @@ test('successfully compile', async (t) => {
 
   assert.strictEqual(res, true)
 
-  await pinoTest.consecutive(stream, [
-    { level: 30, msg: 'Typescript compilation completed successfully.' },
-  ])
+  await pinoTest.consecutive(stream, [{ level: 30, msg: 'Typescript compilation completed successfully.' }])
 
   const compiled = await readFile(join(localTmpDir, 'dist', 'index.js'), 'utf8')
   assert.strictEqual(compiled, 'console.log("Hello, World!");\n')
 })
 
-test('clean', async (t) => {
+test('clean', async t => {
   const localTmpDir = join(tmpDir, 'compiled')
-  await mkdir(join(localTmpDir, 'dist'), { recursive: true })
+  await createDirectory(join(localTmpDir, 'dist'), true)
   t.after(async () => {
-    await rm(localTmpDir, { recursive: true })
+    await safeRemove(localTmpDir)
   })
 
-  await writeFile(join(localTmpDir, 'tsconfig.json'), JSON.stringify({
-    compilerOptions: {
-      outDir: 'dist',
-    },
-  }))
+  await writeFile(
+    join(localTmpDir, 'tsconfig.json'),
+    JSON.stringify({
+      compilerOptions: {
+        outDir: 'dist',
+      },
+    })
+  )
 
   await writeFile(join(localTmpDir, 'dist', 'whaat'), '42')
 

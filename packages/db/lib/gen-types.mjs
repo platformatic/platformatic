@@ -1,14 +1,14 @@
-import { resolve, join, relative, basename, posix, parse } from 'path'
-import { mkdir, writeFile, readFile, readdir, unlink } from 'fs/promises'
+import { loadConfig } from '@platformatic/config'
+import { mapOpenAPItoTypes, mapSQLEntityToJSONSchema } from '@platformatic/sql-json-schema-mapper'
+import utils, { createDirectory } from '@platformatic/utils'
+import camelcase from 'camelcase'
+import { readFile, readdir, unlink, writeFile } from 'fs/promises'
 import { createRequire } from 'node:module'
+import { basename, join, parse, posix, relative, resolve } from 'path'
 import pino from 'pino'
 import pretty from 'pino-pretty'
-import camelcase from 'camelcase'
-import { mapSQLEntityToJSONSchema, mapOpenAPItoTypes } from '@platformatic/sql-json-schema-mapper'
-import { setupDB, isFileAccessible } from './utils.js'
-import { loadConfig } from '@platformatic/config'
 import { platformaticDB } from '../index.js'
-import utils from '@platformatic/utils'
+import { isFileAccessible, setupDB } from './utils.js'
 
 const checkForDependencies = utils.checkForDependencies
 
@@ -35,9 +35,9 @@ declare module 'fastify' {
 
 async function removeUnusedTypeFiles (entities, dir) {
   const entityTypes = await readdir(dir)
-  const entityNames = Object.values(entities).map((entity) => entity.name)
-  const removedEntityNames = entityTypes.filter((file) => !entityNames.includes(basename(file, '.d.ts')))
-  await Promise.all(removedEntityNames.map((file) => unlink(join(dir, file))))
+  const entityNames = Object.values(entities).map(entity => entity.name)
+  const removedEntityNames = entityTypes.filter(file => !entityNames.includes(basename(file, '.d.ts')))
+  await Promise.all(removedEntityNames.map(file => unlink(join(dir, file))))
 }
 
 function getTypesFolderPath (cwd, config) {
@@ -46,7 +46,9 @@ function getTypesFolderPath (cwd, config) {
 
 async function generateEntityType (entity) {
   const jsonSchema = mapSQLEntityToJSONSchema(entity)
-  const fieldDefinitions = Object.fromEntries(Object.entries(entity.fields).map(([, value]) => [value.camelcase, value]))
+  const fieldDefinitions = Object.fromEntries(
+    Object.entries(entity.fields).map(([, value]) => [value.camelcase, value])
+  )
   const tsCode = mapOpenAPItoTypes(jsonSchema, fieldDefinitions)
   entity.name = camelcase(entity.name).replace(/^\w/, c => c.toUpperCase())
   return tsCode + `\nexport { ${entity.name} };\n`
@@ -113,8 +115,7 @@ declare module 'fastify' {
   }
 }`)
 
-  return GLOBAL_TYPES_TEMPLATE
-    .replace('ENTITIES_IMPORTS_PLACEHOLDER', globalTypesImports.join('\n'))
+  return GLOBAL_TYPES_TEMPLATE.replace('ENTITIES_IMPORTS_PLACEHOLDER', globalTypesImports.join('\n'))
     .replace('ENTITIES_DEFINITION_PLACEHOLDER', globalTypesInterface.join('\n    '))
     .replace('HOOKS_DEFINITION_PLACEHOLDER', globalHooks.join('\n    '))
 }
@@ -144,7 +145,7 @@ async function execute ({ logger, config, configManager }) {
   if (isTypeFolderExists) {
     await removeUnusedTypeFiles(entities, typesFolderPath)
   } else {
-    await mkdir(typesFolderPath, { recursive: true })
+    await createDirectory(typesFolderPath)
   }
 
   let count = 0
@@ -178,10 +179,12 @@ async function execute ({ logger, config, configManager }) {
 }
 
 async function generateTypes (_args) {
-  const logger = pino(pretty({
-    translateTime: 'SYS:HH:MM:ss',
-    ignore: 'hostname,pid',
-  }))
+  const logger = pino(
+    pretty({
+      translateTime: 'SYS:HH:MM:ss',
+      ignore: 'hostname,pid',
+    })
+  )
 
   const { configManager, args } = await loadConfig({}, _args, platformaticDB)
 

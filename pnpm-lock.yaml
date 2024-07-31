@@ -154,6 +154,9 @@ importers:
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
       borp:
         specifier: ^0.17.0
         version: 0.17.0
@@ -402,9 +405,6 @@ importers:
       '@platformatic/db':
         specifier: workspace:*
         version: link:../db
-      '@platformatic/runtime':
-        specifier: workspace:*
-        version: link:../runtime
       borp:
         specifier: ^0.17.0
         version: 0.17.0
@@ -517,6 +517,9 @@ importers:
       '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
       commist:
         specifier: ^3.2.0
         version: 3.2.0
@@ -1021,6 +1024,9 @@ importers:
         specifier: ^6.9.0
         version: 6.19.5
     devDependencies:
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@playwright/test':
         specifier: ^1.42.1
         version: 1.45.3
@@ -1136,6 +1142,9 @@ importers:
         specifier: ^6.9.0
         version: 6.19.5
     devDependencies:
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@types/inquirer':
         specifier: ^9.0.7
         version: 9.0.7

@@ -4,13 +4,14 @@ const assert = require('node:assert/strict')
 const { tmpdir } = require('node:os')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { mkdtemp, cp, unlink, rm } = require('node:fs/promises')
+const { mkdtemp, cp, unlink } = require('node:fs/promises')
 const Fastify = require('fastify')
 const { buildServer } = require('../../db')
 const client = require('..')
+const { safeRemove } = require('@platformatic/utils')
 require('./helper')
 
-test('app decorator with GraphQL', async (t) => {
+test('app decorator with GraphQL', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -24,7 +25,7 @@ test('app decorator with GraphQL', async (t) => {
 
   t.after(async () => {
     await targetApp.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await targetApp.start()
 
@@ -85,10 +86,12 @@ test('app decorator with GraphQL', async (t) => {
   })
 
   assert.deepEqual(movies.json(), {
-    movies: [{
-      id: '1',
-      title: 'The Matrix',
-    }],
+    movies: [
+      {
+        id: '1',
+        title: 'The Matrix',
+      },
+    ],
     getMovieById: {
       id: '1',
       title: 'The Matrix',

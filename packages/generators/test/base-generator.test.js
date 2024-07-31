@@ -1,6 +1,6 @@
 'use strict'
 
-const { readFile, rm, cp } = require('node:fs/promises')
+const { readFile, cp } = require('node:fs/promises')
 const { test, after, afterEach, describe } = require('node:test')
 const assert = require('node:assert')
 const { join } = require('node:path')
@@ -8,16 +8,17 @@ const { join } = require('node:path')
 const { fakeLogger, getTempDir, moveToTmpdir, mockNpmJsRequestForPkgs, mockAgent } = require('./helpers')
 const { BaseGenerator } = require('../lib/base-generator')
 const { convertServiceNameToPrefix } = require('../lib/utils')
+const { safeRemove } = require('@platformatic/utils')
 
 afterEach(async () => {
   try {
-    await rm(join(__dirname, 'tmp'), { recursive: true })
+    await safeRemove(join(__dirname, 'tmp'))
   } catch (err) {
     // do nothing
   }
 })
 
-test('should write file and dirs', async (t) => {
+test('should write file and dirs', async t => {
   const dir = await getTempDir()
   const gen = new BaseGenerator({
     logger: fakeLogger,
@@ -46,7 +47,7 @@ test('should write file and dirs', async (t) => {
   assert.ok(gitignore.length > 0) // file is created and not empty
 })
 
-test('extended class should generate config', async (t) => {
+test('extended class should generate config', async t => {
   class ServiceClass extends BaseGenerator {
     constructor (opts) {
       super({
@@ -78,7 +79,7 @@ test('extended class should generate config', async (t) => {
   })
 })
 
-test('setConfig', async (t) => {
+test('setConfig', async t => {
   const bg = new BaseGenerator({
     module: '@platformatic/service',
   })
@@ -104,7 +105,7 @@ test('setConfig', async (t) => {
   })
 
   // should not have undefined properties
-  Object.entries(bg.config).forEach((kv) => {
+  Object.entries(bg.config).forEach(kv => {
     assert.notStrictEqual(undefined, kv[1])
   })
 
@@ -177,7 +178,7 @@ test('setConfig', async (t) => {
   })
 })
 
-test('should append env values', async (t) => {
+test('should append env values', async t => {
   const bg = new BaseGenerator({
     module: '@platformatic/service',
   })
@@ -196,7 +197,7 @@ test('should append env values', async (t) => {
   assert.equal(dotEnvSampleFile.contents.trim(), 'FOO=')
 })
 
-test('should add a default env var to the .env.sample config', async (t) => {
+test('should add a default env var to the .env.sample config', async t => {
   const bg = new BaseGenerator({
     module: '@platformatic/service',
   })
@@ -207,9 +208,12 @@ test('should add a default env var to the .env.sample config', async (t) => {
     },
   })
 
-  bg.addEnvVars({
-    BAR: 'baz',
-  }, { overwrite: false, default: true })
+  bg.addEnvVars(
+    {
+      BAR: 'baz',
+    },
+    { overwrite: false, default: true }
+  )
 
   await bg.prepare()
   const dotEnvFile = bg.getFileObject('.env')
@@ -219,7 +223,7 @@ test('should add a default env var to the .env.sample config', async (t) => {
   assert.equal(dotEnvSampleFile.contents.trim(), 'BAR=baz\nFOO=')
 })
 
-test('should prepare the questions', async (t) => {
+test('should prepare the questions', async t => {
   const bg = new BaseGenerator({
     module: '@platformatic/service',
   })
@@ -231,24 +235,31 @@ test('should prepare the questions', async (t) => {
   })
 
   await bg.prepareQuestions()
-  assert.deepStrictEqual(bg.questions, [{
-    type: 'input',
-    name: 'targetDirectory',
-    message: 'Where would you like to create your project?',
-  }, {
-    type: 'list',
-    name: 'typescript',
-    message: 'Do you want to use TypeScript?',
-    default: false,
-    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }],
-  }, {
-    type: 'input',
-    name: 'port',
-    message: 'What port do you want to use?',
-  }])
+  assert.deepStrictEqual(bg.questions, [
+    {
+      type: 'input',
+      name: 'targetDirectory',
+      message: 'Where would you like to create your project?',
+    },
+    {
+      type: 'list',
+      name: 'typescript',
+      message: 'Do you want to use TypeScript?',
+      default: false,
+      choices: [
+        { name: 'yes', value: true },
+        { name: 'no', value: false },
+      ],
+    },
+    {
+      type: 'input',
+      name: 'port',
+      message: 'What port do you want to use?',
+    },
+  ])
 })
 
-test('should prepare the questions with a targetDirectory', async (t) => {
+test('should prepare the questions with a targetDirectory', async t => {
   const bg = new BaseGenerator({
     module: '@platformatic/service',
   })
@@ -261,20 +272,26 @@ test('should prepare the questions with a targetDirectory', async (t) => {
   })
 
   await bg.prepareQuestions()
-  assert.deepStrictEqual(bg.questions, [{
-    type: 'list',
-    name: 'typescript',
-    message: 'Do you want to use TypeScript?',
-    default: false,
-    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }],
-  }, {
-    type: 'input',
-    name: 'port',
-    message: 'What port do you want to use?',
-  }])
+  assert.deepStrictEqual(bg.questions, [
+    {
+      type: 'list',
+      name: 'typescript',
+      message: 'Do you want to use TypeScript?',
+      default: false,
+      choices: [
+        { name: 'yes', value: true },
+        { name: 'no', value: false },
+      ],
+    },
+    {
+      type: 'input',
+      name: 'port',
+      message: 'What port do you want to use?',
+    },
+  ])
 })
 
-test('should prepare the questions in runtime context', async (t) => {
+test('should prepare the questions in runtime context', async t => {
   const bg = new BaseGenerator({
     module: '@platformatic/service',
   })
@@ -290,7 +307,7 @@ test('should prepare the questions in runtime context', async (t) => {
   assert.deepStrictEqual(bg.questions, [])
 })
 
-test('should return service metadata', async (t) => {
+test('should return service metadata', async t => {
   const bg = new BaseGenerator({
     module: '@platformatic/service',
   })
@@ -311,7 +328,7 @@ test('should return service metadata', async (t) => {
   })
 })
 
-test('should generate javascript plugin, routes and tests', async (t) => {
+test('should generate javascript plugin, routes and tests', async t => {
   const bg = new BaseGenerator({
     module: '@platformatic/service',
   })
@@ -327,7 +344,7 @@ test('should generate javascript plugin, routes and tests', async (t) => {
   assert.ok(bg.getFileObject('example.test.js', join('test', 'plugins')))
 })
 
-test('should generate tsConfig file and typescript files', async (t) => {
+test('should generate tsConfig file and typescript files', async t => {
   const bg = new BaseGenerator({
     module: '@platformatic/service',
   })
@@ -367,7 +384,7 @@ test('should generate tsConfig file and typescript files', async (t) => {
   assert.ok(bg.getFileObject('example.test.ts', join('test', 'plugins')))
 })
 
-test('should throw if prepare fails', async (t) => {
+test('should throw if prepare fails', async t => {
   const bg = new BaseGenerator({
     module: '@platformatic/service',
   })
@@ -407,7 +424,10 @@ test('should throw if there is a missing env variable', async () => {
     assert.fail()
   } catch (err) {
     assert.equal(err.code, 'PLT_GEN_MISSING_ENV_VAR')
-    assert.equal(err.message, 'Env variable BAR is defined in config file platformatic.json, but not in config.env object.')
+    assert.equal(
+      err.message,
+      'Env variable BAR is defined in config file platformatic.json, but not in config.env object.'
+    )
   }
 })
 
@@ -432,7 +452,7 @@ test('should add package', async () => {
   assert.deepEqual(bg.packages[0], packageDefinition)
 })
 
-test('support packages', async (t) => {
+test('support packages', async t => {
   {
     const svc = new BaseGenerator({
       module: '@platformatic/service',
@@ -683,7 +703,8 @@ test('support packages', async (t) => {
         'dist-tags': {
           latest: '1.42.0',
         },
-      }).delay(3000)
+      })
+      .delay(3000)
 
     const svc = new BaseGenerator({
       module: '@platformatic/service',
@@ -740,7 +761,7 @@ test('support packages', async (t) => {
     assert.equal(packageJson.dependencies.foobar, 'latest')
   }
 })
-test('should load data from directory', async (t) => {
+test('should load data from directory', async t => {
   const runtimeDirectory = join(__dirname, 'fixtures', 'sample-runtime')
   const bg = new BaseGenerator({
     module: '@platformatic/service',
@@ -785,12 +806,13 @@ test('should load data from directory', async (t) => {
             name: 'FST_PLUGIN_OAUTH2_CALLBACK_URI',
           },
         ],
-      }],
+      },
+    ],
   }
   assert.deepEqual(data, expected)
 })
 
-test('on update should just touch the packages configuration', async (t) => {
+test('on update should just touch the packages configuration', async t => {
   mockNpmJsRequestForPkgs(['@fastify/foo-plugin'])
   const runtimeDirectory = join(__dirname, 'fixtures', 'sample-runtime', 'services', 'rival')
   const dir = await moveToTmpdir(after)
@@ -834,7 +856,7 @@ test('on update should just touch the packages configuration', async (t) => {
   })
 })
 
-test('on update should just touch the packages configuration', async (t) => {
+test('on update should just touch the packages configuration', async t => {
   mockNpmJsRequestForPkgs(['@fastify/foo-plugin'])
   const runtimeDirectory = join(__dirname, 'fixtures', 'sample-runtime', 'services', 'no-plugin')
   const dir = await moveToTmpdir(after)
@@ -872,7 +894,7 @@ test('on update should just touch the packages configuration', async (t) => {
 })
 
 describe('runtime context', () => {
-  test('should set config.envPrefix correctly', async (t) => {
+  test('should set config.envPrefix correctly', async t => {
     const bg = new BaseGenerator({
       module: '@platformatic/service',
     })
@@ -901,7 +923,7 @@ describe('runtime context', () => {
     })
   })
 
-  test('should generate correct env file from config.env', async (t) => {
+  test('should generate correct env file from config.env', async t => {
     const bg = new BaseGenerator({
       module: '@platformatic/service',
     })
@@ -924,7 +946,7 @@ describe('runtime context', () => {
     })
   })
 
-  test('should return service metadata', async (t) => {
+  test('should return service metadata', async t => {
     const bg = new BaseGenerator({
       module: '@platformatic/service',
     })

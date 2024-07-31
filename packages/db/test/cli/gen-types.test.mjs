@@ -1,12 +1,13 @@
+import { createDirectory, safeRemove } from '@platformatic/utils'
+import { execa } from 'execa'
 import assert from 'node:assert/strict'
 import { existsSync } from 'node:fs'
-import { test } from 'node:test'
+import { cp, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { test } from 'node:test'
 import { setTimeout } from 'node:timers/promises'
-import { rm, mkdir, cp, readFile, writeFile } from 'node:fs/promises'
-import { execa } from 'execa'
-import stripAnsi from 'strip-ansi'
 import split from 'split2'
+import stripAnsi from 'strip-ansi'
 import { urlDirname } from '../../lib/utils.js'
 import { cliPath } from './helper.js'
 
@@ -18,53 +19,25 @@ if (!existsSync(pathToTSD)) {
   pathToTSD = join(urlDirname(import.meta.url), '../../../../node_modules/.bin/tsd')
 }
 
-async function safeRm (dir) {
-  // we are running on CI, no need for clean up
-  if (process.env.CI) {
-    return
-  }
-
-  let _err = null
-  let count = 0
-
-  while (count++ < 10) {
-    try {
-      _err = null
-      await rm(dir, { force: true, recursive: true })
-    } catch (err) {
-      _err = err
-      if (err.code === 'EBUSY') {
-        await setTimeout(count * 100)
-      } else {
-        break
-      }
-    }
-  }
-
-  if (_err) {
-    throw _err
-  }
-}
-
 async function adjustTypeReferenceToAvoidLoops (cwd) {
   let types = await readFile(join(cwd, 'global.d.ts'), 'utf8')
   types = types.replace('@platformatic/db', '../../../index')
   await writeFile(join(cwd, 'global.d.ts'), types, 'utf8')
 }
 
-test('generate ts types', async (t) => {
+test('generate ts types', async t => {
   const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
   const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   try {
-    await safeRm(cwd)
+    await safeRemove(cwd)
   } catch {}
 
-  await mkdir(cwd)
+  await createDirectory(cwd)
   await cp(testDir, cwd, { recursive: true })
 
   t.after(async () => {
-    await safeRm(cwd)
+    await safeRemove(cwd)
   })
 
   try {
@@ -80,19 +53,19 @@ test('generate ts types', async (t) => {
   }
 })
 
-test('generate ts types twice', async (t) => {
+test('generate ts types twice', async t => {
   const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
   const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   try {
-    await safeRm(cwd)
+    await safeRemove(cwd)
   } catch {}
 
-  await mkdir(cwd)
+  await createDirectory(cwd)
   await cp(testDir, cwd, { recursive: true })
 
   t.after(async () => {
-    await safeRm(cwd)
+    await safeRemove(cwd)
   })
 
   try {
@@ -108,18 +81,18 @@ test('generate ts types twice', async (t) => {
   }
 })
 
-test('should show warning if there is no entities', async (t) => {
+test('should show warning if there is no entities', async t => {
   const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
   const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   try {
-    await safeRm(cwd)
+    await safeRemove(cwd)
   } catch {}
 
   await cp(testDir, cwd, { recursive: true })
 
   t.after(async () => {
-    await safeRm(cwd)
+    await safeRemove(cwd)
   })
 
   try {
@@ -131,20 +104,20 @@ test('should show warning if there is no entities', async (t) => {
   }
 })
 
-test('run migrate command with type generation', async (t) => {
+test('run migrate command with type generation', async t => {
   const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
   const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   const fieldRegex = /\n\s*(\w+)\??:/g
 
   try {
-    await safeRm(cwd)
+    await safeRemove(cwd)
   } catch {}
 
   await cp(testDir, cwd, { recursive: true })
 
   t.after(async () => {
-    await safeRm(cwd)
+    await safeRemove(cwd)
   })
 
   try {
@@ -175,18 +148,18 @@ test('run migrate command with type generation', async (t) => {
   }
 })
 
-test('run migrate command with type generation without plugin in config', async (t) => {
+test('run migrate command with type generation without plugin in config', async t => {
   const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types-no-plugin')
   const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   try {
-    await safeRm(cwd)
+    await safeRemove(cwd)
   } catch {}
 
   await cp(testDir, cwd, { recursive: true })
 
   t.after(async () => {
-    await safeRm(cwd)
+    await safeRemove(cwd)
   })
 
   try {
@@ -203,7 +176,7 @@ test('run migrate command with type generation without plugin in config', async 
   }
 })
 
-test('missing config file', async (t) => {
+test('missing config file', async t => {
   try {
     await execa('node', [cliPath, 'seed'])
   } catch (err) {
@@ -212,12 +185,12 @@ test('missing config file', async (t) => {
   }
 })
 
-test('generate types on start', async (t) => {
+test('generate types on start', async t => {
   const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
   const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   try {
-    await safeRm(cwd)
+    await safeRemove(cwd)
   } catch {}
 
   await cp(testDir, cwd, { recursive: true })
@@ -225,7 +198,7 @@ test('generate types on start', async (t) => {
   const child = execa('node', [cliPath, 'start'], { cwd })
   t.after(async () => {
     child.kill('SIGINT')
-    await safeRm(cwd)
+    await safeRemove(cwd)
   })
 
   const splitter = split()
@@ -253,12 +226,12 @@ test('generate types on start', async (t) => {
   }
 })
 
-test('generate types on start in a different cwd', async (t) => {
+test('generate types on start in a different cwd', async t => {
   const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types')
   const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   try {
-    await safeRm(cwd)
+    await safeRemove(cwd)
   } catch {}
 
   await cp(testDir, cwd, { recursive: true })
@@ -267,7 +240,7 @@ test('generate types on start in a different cwd', async (t) => {
   const child = execa('node', [cliPath, 'start', '-c', pathToConfig])
   t.after(async () => {
     child.kill('SIGINT')
-    await safeRm(cwd)
+    await safeRemove(cwd)
   })
 
   const splitter = split()
@@ -295,17 +268,17 @@ test('generate types on start in a different cwd', async (t) => {
   }
 })
 
-test('correctly format entity type names', async (t) => {
+test('correctly format entity type names', async t => {
   const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'chars-gen-types')
   const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   try {
-    await safeRm(cwd)
+    await safeRemove(cwd)
   } catch {}
   await cp(testDir, cwd, { recursive: true })
 
   t.after(async () => {
-    await safeRm(cwd)
+    await safeRemove(cwd)
   })
 
   try {
@@ -317,17 +290,17 @@ test('correctly format entity type names', async (t) => {
   }
 })
 
-test('use types directory from config as target folder', async (t) => {
+test('use types directory from config as target folder', async t => {
   const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types-dir')
   const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   try {
-    await safeRm(cwd)
+    await safeRemove(cwd)
   } catch {}
   await cp(testDir, cwd, { recursive: true })
 
   t.after(async () => {
-    await safeRm(cwd)
+    await safeRemove(cwd)
   })
 
   try {
@@ -342,19 +315,19 @@ test('use types directory from config as target folder', async (t) => {
   }
 })
 
-test('generate types on start while considering types directory', async (t) => {
+test('generate types on start while considering types directory', async t => {
   const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'auto-gen-types-dir')
   const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
   try {
-    await safeRm(cwd)
+    await safeRemove(cwd)
   } catch {}
   await cp(testDir, cwd, { recursive: true })
 
   const child = execa('node', [cliPath, 'start'], { cwd })
   t.after(async () => {
     child.kill('SIGINT')
-    await safeRm(cwd)
+    await safeRemove(cwd)
   })
 
   const splitter = split()

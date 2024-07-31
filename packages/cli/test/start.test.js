@@ -1,15 +1,16 @@
+import { createDirectory } from '@platformatic/utils'
 import assert from 'node:assert'
-import { test } from 'node:test'
 import { spawn } from 'node:child_process'
-import { cp, symlink, mkdir } from 'node:fs/promises'
+import { cp, symlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
+import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { cliPath } from './helper.js'
 
 let count = 0
 
-test('starts a server', async (t) => {
+test('starts a server', async t => {
   const src = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'platformatic.service.json')
   const destDir = join(tmpdir(), `test-cli-${process.pid}-${count++}`)
   const dest = join(destDir, 'platformatic.service.json')
@@ -40,27 +41,20 @@ test('starts a server', async (t) => {
   }
 })
 
-test('starts a runtime application', async (t) => {
+test('starts a runtime application', async t => {
   const srcDir = join(dirname(fileURLToPath(import.meta.url)), 'fixtures')
   const destDir = join(tmpdir(), `test-cli-${process.pid}-${count++}`)
   let found = false
 
-  await cp(
-    join(srcDir, 'platformatic.runtime.json'),
-    join(destDir, 'platformatic.runtime.json')
-  )
-  await cp(
-    join(srcDir, 'platformatic.service.json'),
-    join(destDir, 'platformatic.service.json')
-  )
+  await cp(join(srcDir, 'platformatic.runtime.json'), join(destDir, 'platformatic.runtime.json'))
+  await cp(join(srcDir, 'platformatic.service.json'), join(destDir, 'platformatic.service.json'))
 
-  await mkdir(join(destDir, 'node_modules', '@platformatic'), {
-    recursive: true,
-  })
+  await createDirectory(join(destDir, 'node_modules', '@platformatic'))
 
   await symlink(
     join(srcDir, '..', '..', 'node_modules', '@platformatic', 'service'),
-    join(destDir, 'node_modules', '@platformatic', 'service'))
+    join(destDir, 'node_modules', '@platformatic', 'service')
+  )
 
   const child = spawn(process.execPath, [cliPath, 'start'], {
     cwd: destDir,

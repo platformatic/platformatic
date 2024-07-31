@@ -1,20 +1,12 @@
 'use strict'
 
-const { mkdir } = require('node:fs/promises')
 const { WrongTypeError } = require('./errors')
 const { join } = require('node:path')
 const { request } = require('undici')
 const { setTimeout } = require('timers/promises')
 const PLT_ROOT = 'PLT_ROOT'
 const { EOL } = require('node:os')
-async function safeMkdir (dir) {
-  try {
-    await mkdir(dir, { recursive: true })
-    /* c8 ignore next 3 */
-  } catch (err) {
-    // do nothing
-  }
-}
+const { createDirectory } = require('@platformatic/utils')
 
 /**
  * Strip all extra characters from a simple semver version string
@@ -49,7 +41,7 @@ function addPrefixToString (input, prefix) {
 
 function envObjectToString (env) {
   const output = []
-  Object.entries(env).forEach((kv) => {
+  Object.entries(env).forEach(kv => {
     output.push(`${kv[0]}=${kv[1]}`)
   })
   return output.join(EOL)
@@ -59,10 +51,10 @@ function envStringToObject (envString) {
   const output = {}
   const split = envString.split(EOL)
   split
-    .filter((line) => {
+    .filter(line => {
       return line.trim() !== '' && line.indexOf('#') !== 0
     })
-    .forEach((line) => {
+    .forEach(line => {
       const kv = line.split('=')
       output[kv[0]] = kv[1]
     })
@@ -71,9 +63,7 @@ function envStringToObject (envString) {
 function extractEnvVariablesFromText (text) {
   const match = text.match(/\{[a-zA-Z0-9-_]*\}/g)
   if (match) {
-    return match
-      .map((found) => found.replace('{', '').replace('}', ''))
-      .filter((found) => found !== '')
+    return match.map(found => found.replace('{', '').replace('}', '')).filter(found => found !== '')
   }
   return []
 }
@@ -90,14 +80,14 @@ function getPackageConfigurationObject (config, serviceName = '') {
         let value
         let isPath = false
         switch (param.type) {
-          case 'string' :
+          case 'string':
             value = param.value.toString()
             break
           case 'number':
             value = parseInt(param.value)
             break
           case 'boolean':
-            value = (param.value === 'true')
+            value = param.value === 'true'
             break
           case 'path':
             value = `${join(`{${PLT_ROOT}}`, param.value)}`
@@ -167,7 +157,7 @@ async function getLatestNpmVersion (pkg) {
 function flattenObject (ob) {
   const result = {}
   for (const i in ob) {
-    if ((typeof ob[i]) === 'object' && !Array.isArray(ob[i])) {
+    if (typeof ob[i] === 'object' && !Array.isArray(ob[i])) {
       const temp = flattenObject(ob[i])
       for (const j in temp) {
         result[i + '.' + j] = temp[j]
@@ -197,7 +187,7 @@ module.exports = {
   extractEnvVariablesFromText,
   flattenObject,
   getServiceTemplateFromSchemaUrl,
-  safeMkdir,
+  createDirectory,
   stripVersion,
   PLT_ROOT,
   getLatestNpmVersion,

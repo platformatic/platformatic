@@ -3,41 +3,45 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { writeFile, rm, mkdir } = require('node:fs/promises')
+const { writeFile } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { Client } = require('undici')
 const { getRuntimeTmpDir, getRuntimeLogsDir } = require('../../lib/utils')
+const { createDirectory, safeRemove } = require('@platformatic/utils')
 
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should get runtime log indexes', async (t) => {
+test('should get runtime log indexes', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true })
+  await safeRemove(runtimeTmpDir, { recursive: true, force: true })
 
   const app = await buildServer(configFile)
   await app.start()
 
   t.after(async () => {
     await app.close()
-    await rm(runtimeTmpDir, { recursive: true, force: true })
+    await safeRemove(runtimeTmpDir, { recursive: true, force: true })
   })
 
   const testLogs = 'test-logs-42\n'
   const runtimeLogsDir = getRuntimeLogsDir(projectDir, process.pid)
   await writeFile(join(runtimeLogsDir, 'logs.42'), testLogs)
 
-  const client = new Client({
-    hostname: 'localhost',
-    protocol: 'http:',
-  }, {
-    socketPath: app.managementApi.server.address(),
-    keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10,
-  })
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:',
+    },
+    {
+      socketPath: app.managementApi.server.address(),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10,
+    }
+  )
 
   const { statusCode, body } = await client.request({
     method: 'GET',
@@ -49,29 +53,32 @@ test('should get runtime log indexes', async (t) => {
   assert.deepStrictEqual(data, { indexes: [1, 42] })
 })
 
-test('should get only latest 30 logs indexes (150 MB)', async (t) => {
+test('should get only latest 30 logs indexes (150 MB)', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true })
+  await safeRemove(runtimeTmpDir, { recursive: true, force: true })
 
   const app = await buildServer(configFile)
   await app.start()
 
   t.after(async () => {
     await app.close()
-    await rm(runtimeTmpDir, { recursive: true, force: true })
+    await safeRemove(runtimeTmpDir, { recursive: true, force: true })
   })
 
-  const client = new Client({
-    hostname: 'localhost',
-    protocol: 'http:',
-  }, {
-    socketPath: app.managementApi.server.address(),
-    keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10,
-  })
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:',
+    },
+    {
+      socketPath: app.managementApi.server.address(),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10,
+    }
+  )
 
   const res = await app.inject('service-1', {
     method: 'GET',
@@ -92,16 +99,16 @@ test('should get only latest 30 logs indexes (150 MB)', async (t) => {
   assert.deepStrictEqual(new Set(indexes).size, 3)
 })
 
-test('should get all runtimes log indexes (with previous)', async (t) => {
+test('should get all runtimes log indexes (with previous)', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true })
+  await safeRemove(runtimeTmpDir, { recursive: true, force: true })
 
   const prevRuntimePID = '424242'
   const prevRuntimeLogsDir = getRuntimeLogsDir(projectDir, prevRuntimePID)
-  await mkdir(prevRuntimeLogsDir, { recursive: true })
+  await createDirectory(prevRuntimeLogsDir)
 
   const prevRuntimeLogs = 'test-logs-42\n'
   await writeFile(join(prevRuntimeLogsDir, 'logs.42'), prevRuntimeLogs)
@@ -111,17 +118,20 @@ test('should get all runtimes log indexes (with previous)', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await rm(runtimeTmpDir, { recursive: true, force: true })
+    await safeRemove(runtimeTmpDir, { recursive: true, force: true })
   })
 
-  const client = new Client({
-    hostname: 'localhost',
-    protocol: 'http:',
-  }, {
-    socketPath: app.managementApi.server.address(),
-    keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10,
-  })
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:',
+    },
+    {
+      socketPath: app.managementApi.server.address(),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10,
+    }
+  )
 
   const { statusCode, body } = await client.request({
     method: 'GET',

@@ -1,24 +1,22 @@
 'use strict'
+
+import { safeRemove } from '@platformatic/utils'
 import assert from 'assert/strict'
-import { test } from 'node:test'
-import { join } from 'node:path'
 import { execa } from 'execa'
+import { readdir, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { readdir, rm, stat } from 'node:fs/promises'
+import { join } from 'node:path'
+import { test } from 'node:test'
 import { cliPath } from './helper.js'
 
 let count = 0
-test('should create a service with base options', async (t) => {
+test('should create a service with base options', async t => {
   const dest = join(tmpdir(), `test-cli-create-${process.pid}-${count++}`)
   t.after(async () => {
-    await rm(dest, { recursive: true })
+    await safeRemove(dest)
   })
 
-  const child = execa('node', [
-    cliPath, 'service', 'create',
-    '--dir', dest,
-    '--install', 'false',
-  ])
+  const child = execa('node', [cliPath, 'service', 'create', '--dir', dest, '--install', 'false'])
   await child
 
   // check file structure
@@ -38,17 +36,13 @@ test('should create a service with base options', async (t) => {
   }
 })
 
-test('should create a db with base options', async (t) => {
+test('should create a db with base options', async t => {
   const dest = join(tmpdir(), `test-cli-create-${process.pid}-${count++}`)
   t.after(async () => {
-    await rm(dest, { recursive: true })
+    await safeRemove(dest)
   })
 
-  const child = execa('node', [
-    cliPath, 'db', 'create',
-    '--dir', dest,
-    '--install', 'false',
-  ])
+  const child = execa('node', [cliPath, 'db', 'create', '--dir', dest, '--install', 'false'])
   await child
 
   // check file structure
@@ -68,17 +62,13 @@ test('should create a db with base options', async (t) => {
   }
 })
 
-test('should create a composer with base options', async (t) => {
+test('should create a composer with base options', async t => {
   const dest = join(tmpdir(), `test-cli-create-${process.pid}-${count++}`)
   t.after(async () => {
-    await rm(dest, { recursive: true })
+    await safeRemove(dest)
   })
 
-  const child = execa('node', [
-    cliPath, 'composer', 'create',
-    '--dir', dest,
-    '--install', 'false',
-  ])
+  const child = execa('node', [cliPath, 'composer', 'create', '--dir', dest, '--install', 'false'])
   await child
 
   // check file structure

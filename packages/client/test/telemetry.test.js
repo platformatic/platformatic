@@ -4,14 +4,15 @@ const assert = require('node:assert/strict')
 const { tmpdir } = require('node:os')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { mkdtemp, cp, unlink, rm } = require('node:fs/promises')
+const { mkdtemp, cp, unlink } = require('node:fs/promises')
 const Fastify = require('fastify')
 const { telemetry } = require('@platformatic/telemetry')
+const { safeRemove } = require('@platformatic/utils')
 const { buildServer } = require('../../db')
 const client = require('..')
 require('./helper')
 
-test('telemetry correctly propagates from a service client to a server for an OpenAPI endpoint', async (t) => {
+test('telemetry correctly propagates from a service client to a server for an OpenAPI endpoint', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'telemetry')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -25,10 +26,10 @@ test('telemetry correctly propagates from a service client to a server for an Op
   const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
 
-  targetApp.addHook('onRequest', async (req) => {
+  targetApp.addHook('onRequest', async req => {
     if (req.url === '/movies/') {
       const clientTelemetryId = req.headers['x-telemetry-id']
       assert.strictEqual(clientTelemetryId, 'test-client')
@@ -53,7 +54,7 @@ test('telemetry correctly propagates from a service client to a server for an Op
     name: 'movies',
   })
 
-  app.post('/', async (req) => {
+  app.post('/', async req => {
     const movie = await req.movies.createMovie({
       title: 'The Matrix',
     })
@@ -94,7 +95,7 @@ test('telemetry correctly propagates from a service client to a server for an Op
   assert.equal(serverTraceId, clientTraceId)
 })
 
-test('telemetry correctly propagates from a generic client through a service client and then to another service, propagating the traceId', async (t) => {
+test('telemetry correctly propagates from a generic client through a service client and then to another service, propagating the traceId', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'telemetry')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -108,7 +109,7 @@ test('telemetry correctly propagates from a generic client through a service cli
   const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await targetApp.start()
   const targetAppUrl = targetApp.url
@@ -128,7 +129,7 @@ test('telemetry correctly propagates from a generic client through a service cli
     name: 'movies',
   })
 
-  app.post('/', async (req) => {
+  app.post('/', async req => {
     const movie = await req.movies.createMovie({
       title: 'The Matrix',
     })
@@ -177,7 +178,7 @@ test('telemetry correctly propagates from a generic client through a service cli
   assert.equal(serverTraceId, traceId)
 })
 
-test('telemetry correctly propagates from a service client to a server for a GraphQL endpoint', async (t) => {
+test('telemetry correctly propagates from a service client to a server for a GraphQL endpoint', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'telemetry')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -191,7 +192,7 @@ test('telemetry correctly propagates from a service client to a server for a Gra
   const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await targetApp.start()
   const targetAppUrl = targetApp.url
@@ -210,7 +211,7 @@ test('telemetry correctly propagates from a service client to a server for a Gra
     url: `${targetApp.url}/graphql`,
   })
 
-  app.post('/', async (req) => {
+  app.post('/', async req => {
     const movie = await req.client.graphql({
       query: `
         mutation createMovie($title: String!) {

@@ -4,13 +4,13 @@ const os = require('node:os')
 const assert = require('node:assert')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { rm } = require('node:fs/promises')
 const { request } = require('undici')
 const { buildServer } = require('..')
 const { setTimeout: sleep } = require('timers/promises')
 const fs = require('fs/promises')
+const { safeRemove } = require('@platformatic/utils')
 
-test('config is adjusted to handle custom loggers', async (t) => {
+test('config is adjusted to handle custom loggers', async t => {
   const options = {
     server: {
       hostname: '127.0.0.1',
@@ -39,12 +39,12 @@ test('config is adjusted to handle custom loggers', async (t) => {
   assert.strictEqual(called, true)
 })
 
-test('do not watch typescript outDir', async (t) => {
+test('do not watch typescript outDir', async t => {
   process.env.PLT_CLIENT_URL = 'http://localhost:3042'
   const targetDir = join(__dirname, '..', 'fixtures', 'hello-client-ts')
 
   try {
-    await rm(join(targetDir, 'dist'), { recursive: true })
+    await safeRemove(join(targetDir, 'dist'))
   } catch {}
 
   const app = await buildServer(join(targetDir, 'platformatic.service.json'))
@@ -58,7 +58,7 @@ test('do not watch typescript outDir', async (t) => {
   })
 })
 
-test('start without server config', async (t) => {
+test('start without server config', async t => {
   const app = await buildServer({
     watch: false,
     metrics: false,
@@ -75,7 +75,7 @@ test('start without server config', async (t) => {
   })
 })
 
-test('transport logger', async (t) => {
+test('transport logger', async t => {
   const file = join(os.tmpdir(), `${process.pid}-4.json`)
   const options = {
     server: {

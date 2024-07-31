@@ -4,10 +4,11 @@ const assert = require('node:assert/strict')
 const { tmpdir } = require('node:os')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { mkdtemp, cp, unlink, rm } = require('node:fs/promises')
+const { mkdtemp, cp, unlink } = require('node:fs/promises')
 const Fastify = require('fastify')
 const { MockAgent, setGlobalDispatcher, getGlobalDispatcher } = require('undici')
 const { buildServer } = require('../../db')
+const { safeRemove } = require('@platformatic/utils')
 const client = require('..')
 require('./helper')
 
@@ -36,7 +37,7 @@ test('default decorator', async (t) => {
   const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await targetApp.start()
 
@@ -94,7 +95,7 @@ test('req decorator with OpenAPI and auth', async (t) => {
   const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await targetApp.start()
 
@@ -146,7 +147,7 @@ test('app decorator with OpenAPI', async (t) => {
   const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await targetApp.start()
 
@@ -205,7 +206,7 @@ test('req decorator with OpenAPI', async (t) => {
   const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await targetApp.start()
 
@@ -272,7 +273,7 @@ test('validate response', async (t) => {
   const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await targetApp.start()
 
@@ -328,7 +329,7 @@ test('req decorator with GraphQL and auth', async (t) => {
   const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await targetApp.start()
 
@@ -389,7 +390,7 @@ test('configureClient getHeaders', async (t) => {
   const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await targetApp.start()
 

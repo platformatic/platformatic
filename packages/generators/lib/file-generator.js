@@ -1,5 +1,5 @@
 'use strict'
-const { safeMkdir } = require('./utils')
+const { createDirectory } = require('@platformatic/utils')
 const { join } = require('node:path')
 const { writeFile, readFile } = require('node:fs/promises')
 
@@ -59,14 +59,14 @@ class FileGenerator {
     if (!this.targetDirectory) {
       throw new Error('No target directory set.')
     }
-    await safeMkdir(this.targetDirectory)
+    await createDirectory(this.targetDirectory)
     for (const fileToWrite of this.files) {
       if (fileToWrite.contents.length === 0) {
         continue
       }
       const baseDir = join(this.targetDirectory, fileToWrite.path)
       if (fileToWrite.path !== '') {
-        await safeMkdir(baseDir)
+        await createDirectory(baseDir)
       }
       const fullFilePath = join(baseDir, fileToWrite.file)
       await writeFile(fullFilePath, fileToWrite.contents, fileToWrite.options)

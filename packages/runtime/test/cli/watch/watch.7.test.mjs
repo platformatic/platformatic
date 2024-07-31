@@ -1,6 +1,7 @@
+import { createDirectory, safeRemove } from '@platformatic/utils'
 import desm from 'desm'
 import assert from 'node:assert'
-import { cp, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { cp, mkdtemp, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -12,27 +13,19 @@ const fixturesDir = join(desm(import.meta.url), '..', '..', '..', 'fixtures')
 const base = join(desm(import.meta.url), '..', '..', 'tmp')
 
 try {
-  await mkdir(base, { recursive: true })
-} catch {
-}
+  await createDirectory(base)
+} catch {}
 
-function saferm (path) {
-  return rm(path, { recursive: true, force: true }).catch(() => {})
-}
-
-test('should not watch files if watch = false', async (t) => {
+test('should not watch files if watch = false', async t => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
-  t.after(() => saferm(tmpDir))
+  t.after(() => safeRemove(tmpDir))
   const configFileSrc = join(fixturesDir, 'configs', 'monorepo-watch-single.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo-watch.json')
   const appSrc = join(fixturesDir, 'monorepo-watch')
   const appDst = join(tmpDir, 'monorepo-watch')
   const cjsPluginFilePath = join(appDst, 'service1', 'plugin.js')
 
-  await Promise.all([
-    cp(configFileSrc, configFileDst),
-    cp(appSrc, appDst, { recursive: true }),
-  ])
+  await Promise.all([cp(configFileSrc, configFileDst), cp(appSrc, appDst, { recursive: true })])
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
   const { child, url } = await start('-c', configFileDst)

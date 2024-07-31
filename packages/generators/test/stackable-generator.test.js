@@ -1,22 +1,23 @@
 'use strict'
 
-const { readFile, rm } = require('node:fs/promises')
+const { readFile } = require('node:fs/promises')
 const { test, afterEach } = require('node:test')
 const assert = require('node:assert')
 const { join } = require('node:path')
 
+const { safeRemove } = require('@platformatic/utils')
 const { fakeLogger, getTempDir } = require('./helpers')
 const { StackableGenerator } = require('../lib/stackable-generator')
 
 afterEach(async () => {
   try {
-    await rm(join(__dirname, 'tmp'), { recursive: true })
+    await safeRemove(join(__dirname, 'tmp'))
   } catch (err) {
     // do nothing
   }
 })
 
-test('should create a stackable project without typescript', async (t) => {
+test('should create a stackable project without typescript', async t => {
   const dir = await getTempDir()
   const gen = new StackableGenerator({
     logger: fakeLogger,
@@ -64,7 +65,7 @@ test('should create a stackable project without typescript', async (t) => {
   assert.ok(testGeneratorFile.length > 0)
 })
 
-test('should create a stackable project with typescript', async (t) => {
+test('should create a stackable project with typescript', async t => {
   const dir = await getTempDir()
   const gen = new StackableGenerator({
     logger: fakeLogger,

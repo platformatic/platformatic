@@ -3,26 +3,27 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { rm, readdir } = require('node:fs/promises')
+const { readdir } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { getRuntimeTmpDir, getRuntimeLogsDir } = require('../../lib/utils')
 
 const { buildServer } = require('../..')
+const { safeRemove } = require('@platformatic/utils')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should clean the logs after reaching a limit', async (t) => {
+test('should clean the logs after reaching a limit', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
 
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
-  await rm(runtimeTmpDir, { recursive: true, force: true })
+  await safeRemove(runtimeTmpDir)
 
   const app = await buildServer(configFile)
   await app.start()
 
   t.after(async () => {
     await app.close()
-    await rm(runtimeTmpDir, { recursive: true, force: true })
+    await safeRemove(runtimeTmpDir)
   })
 
   const res = await app.inject('service-1', {
@@ -36,8 +37,6 @@ test('should clean the logs after reaching a limit', async (t) => {
 
   const runtimeLogsDir = getRuntimeLogsDir(projectDir, process.pid)
   const runtimeLogsFiles = await readdir(runtimeLogsDir)
-  const runtimeLogFiles = runtimeLogsFiles.filter(
-    (file) => file.startsWith('logs')
-  )
+  const runtimeLogFiles = runtimeLogsFiles.filter(file => file.startsWith('logs'))
   assert.deepStrictEqual(runtimeLogFiles.length, 3)
 })

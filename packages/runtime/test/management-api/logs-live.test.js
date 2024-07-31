@@ -4,15 +4,16 @@ const assert = require('node:assert')
 const { platform, tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { readFile, writeFile, rm } = require('node:fs/promises')
+const { readFile, writeFile } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { Client } = require('undici')
 const WebSocket = require('ws')
 
 const { buildServer } = require('../..')
+const { safeRemove } = require('@platformatic/utils')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should get runtime logs via management api', async (t) => {
+test('should get runtime logs via management api', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
@@ -33,11 +34,11 @@ test('should get runtime logs via management api', async (t) => {
       reject(new Error('Timeout'))
     }, 3000)
 
-    webSocket.on('error', (err) => {
+    webSocket.on('error', err => {
       reject(err)
     })
 
-    webSocket.on('message', (data) => {
+    webSocket.on('message', data => {
       if (data.includes('Server listening at')) {
         clearTimeout(timeout)
 
@@ -50,7 +51,7 @@ test('should get runtime logs via management api', async (t) => {
   })
 })
 
-test('should get runtime logs via management api (with a start index)', async (t) => {
+test('should get runtime logs via management api (with a start index)', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
@@ -72,14 +73,17 @@ test('should get runtime logs via management api (with a start index)', async (t
 
   const socketPath = app.managementApi.server.address()
 
-  const client = new Client({
-    hostname: 'localhost',
-    protocol: 'http:',
-  }, {
-    socketPath,
-    keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10,
-  })
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:',
+    },
+    {
+      socketPath,
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10,
+    }
+  )
 
   const { statusCode, body } = await client.request({
     method: 'GET',
@@ -91,16 +95,14 @@ test('should get runtime logs via management api (with a start index)', async (t
   const startLogId = indexes[1]
 
   const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-  const webSocket = new WebSocket(
-    protocol + socketPath + ':/api/v1/logs/live' + `?start=${startLogId}`
-  )
+  const webSocket = new WebSocket(protocol + socketPath + ':/api/v1/logs/live' + `?start=${startLogId}`)
 
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       reject(new Error('Timeout'))
     }, 100000)
 
-    webSocket.on('error', (err) => {
+    webSocket.on('error', err => {
       reject(err)
     })
 
@@ -115,14 +117,14 @@ test('should get runtime logs via management api (with a start index)', async (t
   })
 })
 
-test('should support custom use transport', async (t) => {
+test('should support custom use transport', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configPath = join(projectDir, 'platformatic.json')
   const configFile = await readFile(configPath, 'utf8')
   const config = JSON.parse(configFile)
 
   const logsPath = join(tmpdir(), 'platformatic-management-api-logs.txt')
-  await rm(logsPath).catch(() => {})
+  await safeRemove(logsPath)
 
   config.server.logger = {
     level: 'trace',
@@ -140,8 +142,8 @@ test('should support custom use transport', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await rm(configWithLoggerPath)
-    await rm(logsPath)
+    await safeRemove(configWithLoggerPath)
+    await safeRemove(logsPath)
   })
 
   const socketPath = app.managementApi.server.address()
@@ -154,11 +156,11 @@ test('should support custom use transport', async (t) => {
       reject(new Error('Timeout'))
     }, 100000)
 
-    webSocket.on('error', (err) => {
+    webSocket.on('error', err => {
       reject(err)
     })
 
-    webSocket.on('message', (data) => {
+    webSocket.on('message', data => {
       if (data.includes('Server listening at')) {
         clearTimeout(timeout)
         webSocket.close()

@@ -1,17 +1,18 @@
+import { createDirectory } from '@platformatic/utils'
 import assert from 'node:assert/strict'
+import { mkdtemp } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { test } from 'node:test'
 import { join } from 'node:path'
-import { mkdtemp, mkdir } from 'node:fs/promises'
+import { test } from 'node:test'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import Postgrator from 'postgrator'
 import { Migrator } from '../../lib/migrator.mjs'
 
-test('should not throw error if setup migrator twice', async (t) => {
+test('should not throw error if setup migrator twice', async t => {
   const cwd = await mkdtemp(join(tmpdir(), 'migrator-test-'))
   const migrationsDirPath = join(cwd, 'migrations')
-  await mkdir(migrationsDirPath)
+  await createDirectory(migrationsDirPath)
 
   const config = {
     server: {
@@ -26,16 +27,14 @@ test('should not throw error if setup migrator twice', async (t) => {
     },
   }
 
-  const logger = pino(pretty({
-    translateTime: 'SYS:HH:MM:ss',
-    ignore: 'hostname,pid',
-  }))
-
-  const migrator = new Migrator(
-    config.migrations,
-    config.db,
-    logger
+  const logger = pino(
+    pretty({
+      translateTime: 'SYS:HH:MM:ss',
+      ignore: 'hostname,pid',
+    })
   )
+
+  const migrator = new Migrator(config.migrations, config.db, logger)
 
   t.after(() => migrator.close())
   await migrator.setupPostgrator()

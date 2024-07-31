@@ -11,6 +11,7 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
+    "@platformatic/utils": "workspace:*",
     "@fastify/error": "^3.4.1",
     "boring-name-generator": "^1.0.3",
     "change-case-all": "^2.1.0",

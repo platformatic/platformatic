@@ -1,17 +1,18 @@
-import assert from 'node:assert/strict'
-import { tmpdir } from 'node:os'
-import { test } from 'node:test'
-import { join } from 'node:path'
-import { readFile, mkdtemp, rm } from 'node:fs/promises'
+import { safeRemove } from '@platformatic/utils'
 import Ajv from 'ajv'
 import { execa } from 'execa'
+import assert from 'node:assert/strict'
+import { mkdtemp, readFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
 import { schema } from '../../lib/schema.js'
 import { cliPath } from './helper.js'
 
-test('generateJsonSchemaConfig generates the file', async (t) => {
+test('generateJsonSchemaConfig generates the file', async t => {
   const cwd = await mkdtemp(join(tmpdir(), 'gen-schema-test-'))
   t.after(async () => {
-    await rm(cwd, { recursive: true, force: true })
+    await safeRemove(cwd)
   })
 
   await execa('node', [cliPath, 'schema', 'config'], { cwd })
