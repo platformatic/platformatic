@@ -1,0 +1,204 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Platformatic RPC",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/addUser": {
+      "post": {
+        "operationId": "addUser",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/addUserArgs"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/addUserReturnType"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/getUsers": {
+      "post": {
+        "operationId": "getUsers",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/getUsersArgs"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getUsersReturnType"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/getGroupByName": {
+      "post": {
+        "operationId": "getGroupByName",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/getGroupByNameArgs"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getGroupByNameReturnType"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/getRecursiveNode": {
+      "post": {
+        "operationId": "getRecursiveNode",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getRecursiveNodeReturnType"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "addUserArgs": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "age": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      "addUserReturnType": {
+        "type": "object",
+        "properties": {}
+      },
+      "getUsersArgs": {
+        "type": "object",
+        "properties": {
+          "maxAge": {
+            "type": "number"
+          }
+        }
+      },
+      "getUsersReturnType": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "age": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      "getGroupByNameArgs": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "getGroupByNameReturnType": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "age": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
+      "getRecursiveNodeReturnType": {
+        "$ref": "#/components/schemas/Node"
+      },
+      "Node": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Node"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}
