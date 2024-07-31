@@ -85,7 +85,7 @@ importers:
         version: 11.2.2
       undici:
         specifier: ^6.9.0
-        version: 6.19.4
+        version: 6.19.5
     devDependencies:
       '@platformatic/composer':
         specifier: workspace:*
@@ -149,7 +149,7 @@ importers:
         version: 5.0.1
       undici:
         specifier: ^6.9.0
-        version: 6.19.4
+        version: 6.19.5
     devDependencies:
       '@platformatic/telemetry':
         specifier: workspace:*
@@ -231,7 +231,7 @@ importers:
         version: 11.2.2
       undici:
         specifier: ^6.9.0
-        version: 6.19.4
+        version: 6.19.5
       yaml:
         specifier: ^2.4.1
         version: 2.5.0
@@ -391,7 +391,7 @@ importers:
         version: 1.4.1
       undici:
         specifier: ^6.9.0
-        version: 6.19.4
+        version: 6.19.5
     devDependencies:
       '@platformatic/client':
         specifier: workspace:*
@@ -467,7 +467,7 @@ importers:
         version: 7.6.3
       undici:
         specifier: ^6.9.0
-        version: 6.19.4
+        version: 6.19.5
     devDependencies:
       '@iarna/toml':
         specifier: ^2.2.5
@@ -528,7 +528,7 @@ importers:
         version: 6.8.2
       undici:
         specifier: ^6.9.0
-        version: 6.19.4
+        version: 6.19.5
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -631,7 +631,7 @@ importers:
         version: 7.1.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.4
+        version: 6.19.5
       which:
         specifier: ^3.0.1
         version: 3.0.1
@@ -864,7 +864,7 @@ importers:
         version: 5.5.4
       undici:
         specifier: ^6.9.0
-        version: 6.19.4
+        version: 6.19.5
       vscode-json-languageservice:
         specifier: ^5.3.9
         version: 5.4.0
@@ -897,7 +897,7 @@ importers:
         version: 3.1.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.4
+        version: 6.19.5
     devDependencies:
       '@fastify/cookie':
         specifier: ^8.3.0
@@ -1013,7 +1013,7 @@ importers:
         version: 1.2.8
       undici:
         specifier: ^6.9.0
-        version: 6.19.4
+        version: 6.19.5
     devDependencies:
       '@playwright/test':
         specifier: ^1.42.1
@@ -1128,7 +1128,7 @@ importers:
         version: 8.21.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.4
+        version: 6.19.5
     devDependencies:
       '@types/inquirer':
         specifier: ^9.0.7
@@ -1262,7 +1262,7 @@ importers:
         version: 0.1.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.4
+        version: 6.19.5
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -1478,7 +1478,7 @@ importers:
         version: 0.3.0
       undici:
         specifier: ^6.9.0
-        version: 6.19.4
+        version: 6.19.5
     devDependencies:
       '@fastify/aws-lambda':
         specifier: ^4.0.0
@@ -1918,7 +1918,7 @@ importers:
         version: 8.0.4
       undici:
         specifier: ^6.9.0
-        version: 6.19.4
+        version: 6.19.5
     devDependencies:
       '@matteo.collina/tspl':
         specifier: ^0.1.1
@@ -5589,8 +5589,8 @@ packages:
     resolution: {integrity: sha512-72RFADWFqKmUb2hmmvNODKL3p9hcB6Gt2DOQMis1SEBaV6a4MH8soBvzg+95CYhCKPFedut2JY9bMfrDl9D23g==}
     engines: {node: '>=14.0'}
 
-  undici@6.19.4:
-    resolution: {integrity: sha512-i3uaEUwNdkRq2qtTRRJb13moW5HWqviu7Vl7oYRYz++uPtGHJj+x7TGjcEuwS5Mt2P4nA0U9dhIX3DdB6JGY0g==}
+  undici@6.19.5:
+    resolution: {integrity: sha512-LryC15SWzqQsREHIOUybavaIHF5IoL0dJ9aWWxL/PgT1KfqAW5225FZpDUFlt9xiDMS2/S7DOKhFWA7RLksWdg==}
     engines: {node: '>=18.17'}
 
   unicorn-magic@0.1.0:
@@ -6506,7 +6506,7 @@ snapshots:
       mercurius: 14.1.0(graphql@16.9.0)
       metaline: 1.1.0
       pino: 8.21.0
-      undici: 6.19.4
+      undici: 6.19.5
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -7762,7 +7762,7 @@ snapshots:
 
   fastify-undici-dispatcher@0.6.0:
     dependencies:
-      undici: 6.19.4
+      undici: 6.19.5
 
   fastify-user@0.3.3:
     dependencies:
@@ -9817,7 +9817,7 @@ snapshots:
   undici-oidc-interceptor@0.5.0:
     dependencies:
       fast-jwt: 4.0.2
-      undici: 6.19.4
+      undici: 6.19.5
 
   undici-types@5.26.5: {}
 
@@ -9825,7 +9825,7 @@ snapshots:
     dependencies:
       '@fastify/busboy': 2.1.1
 
-  undici@6.19.4: {}
+  undici@6.19.5: {}
 
   unicorn-magic@0.1.0: {}
 
