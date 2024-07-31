@@ -23,7 +23,7 @@ test('supports logging using a transport', { skip: true }, async (t) => {
   })
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   config.configManager.current.server.logger.transport.options = {
-    path: dest
+    path: dest,
   }
   const app = await buildServer(config.configManager.current)
   await app.start()

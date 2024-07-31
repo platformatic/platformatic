@@ -6,7 +6,7 @@ module.exports = async function (app) {
     const { ids } = req.query
     return {
       message: 'ok',
-      data: ids
+      data: ids,
     }
   })
 }

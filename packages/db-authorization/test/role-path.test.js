@@ -16,11 +16,11 @@ test('roles defined in objects and extracted with rolePath', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret'
+      secret: 'supersecret',
     },
     rolePath: 'resource_access.account.roles',
     anonymousRole: 'anonymous',
@@ -31,28 +31,28 @@ test('roles defined in objects and extracted with rolePath', async () => {
       delete: true,
       save: true,
       defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID'
-      }
+        userId: 'X-PLATFORMATIC-USER-ID',
+      },
     }, {
       role: 'user',
       entity: 'page',
       find: true,
       delete: false,
       defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID'
+        userId: 'X-PLATFORMATIC-USER-ID',
       },
       save: {
         checks: {
-          userId: 'X-PLATFORMATIC-USER-ID'
-        }
-      }
+          userId: 'X-PLATFORMATIC-USER-ID',
+        },
+      },
     }, {
       role: 'anonymous',
       entity: 'page',
       find: false,
       delete: false,
-      save: false
-    }]
+      save: false,
+    }],
   })
   test.after(() => {
     app.close()
@@ -65,9 +65,9 @@ test('roles defined in objects and extracted with rolePath', async () => {
     'X-PLATFORMATIC-USER-ID': 42,
     resource_access: {
       account: {
-        roles: ['user', 'moderator']
-      }
-    }
+        roles: ['user', 'moderator'],
+      },
+    },
   })
 
   {
@@ -75,7 +75,7 @@ test('roles defined in objects and extracted with rolePath', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -86,8 +86,8 @@ test('roles defined in objects and extracted with rolePath', async () => {
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
@@ -95,9 +95,9 @@ test('roles defined in objects and extracted with rolePath', async () => {
         savePage: {
           id: 1,
           title: 'Hello',
-          userId: 42
-        }
-      }
+          userId: 42,
+        },
+      },
     }, 'savePage response')
   }
 
@@ -106,7 +106,7 @@ test('roles defined in objects and extracted with rolePath', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -116,17 +116,17 @@ test('roles defined in objects and extracted with rolePath', async () => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'deletePages status code')
     deepEqual(res.json(), {
       data: {
         deletePages: [{
           id: 1,
-          title: 'Hello'
-        }]
-      }
+          title: 'Hello',
+        }],
+      },
     }, 'deletePages response')
   }
 
@@ -135,9 +135,9 @@ test('roles defined in objects and extracted with rolePath', async () => {
     'X-PLATFORMATIC-USER-ID': 42,
     resource_access: {
       account: {
-        roles: 'moderator, user'
-      }
-    }
+        roles: 'moderator, user',
+      },
+    },
   })
 
   {
@@ -145,7 +145,7 @@ test('roles defined in objects and extracted with rolePath', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`
+        Authorization: `Bearer ${token2}`,
       },
       body: {
         query: `
@@ -156,8 +156,8 @@ test('roles defined in objects and extracted with rolePath', async () => {
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
@@ -165,9 +165,9 @@ test('roles defined in objects and extracted with rolePath', async () => {
         savePage: {
           id: 2,
           title: 'Hello',
-          userId: 42
-        }
-      }
+          userId: 42,
+        },
+      },
     }, 'savePage response')
   }
 
@@ -176,7 +176,7 @@ test('roles defined in objects and extracted with rolePath', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`
+        Authorization: `Bearer ${token2}`,
       },
       body: {
         query: `
@@ -186,17 +186,17 @@ test('roles defined in objects and extracted with rolePath', async () => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'deletePages status code')
     deepEqual(res.json(), {
       data: {
         deletePages: [{
           id: 2,
-          title: 'Hello'
-        }]
-      }
+          title: 'Hello',
+        }],
+      },
     }, 'deletePages response')
   }
 
@@ -204,9 +204,9 @@ test('roles defined in objects and extracted with rolePath', async () => {
     'X-PLATFORMATIC-USER-ID': 43,
     resource_access: {
       account: {
-        roles: 'user'
-      }
-    }
+        roles: 'user',
+      },
+    },
   })
 
   {
@@ -214,7 +214,7 @@ test('roles defined in objects and extracted with rolePath', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token3}`
+        Authorization: `Bearer ${token3}`,
       },
       body: {
         query: `
@@ -225,8 +225,8 @@ test('roles defined in objects and extracted with rolePath', async () => {
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
@@ -234,9 +234,9 @@ test('roles defined in objects and extracted with rolePath', async () => {
         savePage: {
           id: 3,
           title: 'Hello',
-          userId: 43
-        }
-      }
+          userId: 43,
+        },
+      },
     }, 'savePage response')
   }
 
@@ -245,7 +245,7 @@ test('roles defined in objects and extracted with rolePath', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token3}`
+        Authorization: `Bearer ${token3}`,
       },
       body: {
         query: `
@@ -255,13 +255,13 @@ test('roles defined in objects and extracted with rolePath', async () => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'deletePages status code')
     deepEqual(res.json(), {
       data: {
-        deletePages: null
+        deletePages: null,
       },
       errors: [
         {
@@ -269,14 +269,14 @@ test('roles defined in objects and extracted with rolePath', async () => {
           locations: [
             {
               line: 3,
-              column: 13
-            }
+              column: 13,
+            },
           ],
           path: [
-            'deletePages'
-          ]
-        }
-      ]
+            'deletePages',
+          ],
+        },
+      ],
     }, 'deletePages response')
   }
 })

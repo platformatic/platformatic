@@ -59,7 +59,7 @@ test('should get runtime metrics via management api', async (t) => {
           'rss',
           'totalHeapSize',
           'usedHeapSize',
-          'version'
+          'version',
         ])
       }
     })

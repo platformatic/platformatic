@@ -22,7 +22,6 @@ function quoteYamlBraces (yamlString) {
 module.exports.quoteYamlBraces = quoteYamlBraces
 
 function getParser (path) {
-  /* eslint no-case-declarations: off */
   switch (extname(path)) {
     case '.yaml':
     case '.yml':

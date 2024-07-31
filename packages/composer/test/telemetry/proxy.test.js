@@ -6,7 +6,7 @@ const { request } = require('undici')
 const {
   createComposer,
   createOpenApiService,
-  createBasicService
+  createBasicService,
 } = require('../helper')
 
 test('should proxy openapi requests with telemetry span', async (t) => {
@@ -28,19 +28,19 @@ test('should proxy openapi requests with telemetry span', async (t) => {
           id: 'service1',
           origin: origin1,
           proxy: {
-            prefix: '/internal/service1'
-          }
-        }
+            prefix: '/internal/service1',
+          },
+        },
       ],
-      refreshTimeout: 1000
+      refreshTimeout: 1000,
     },
     telemetry: {
       serviceName: 'test-composer',
       version: '1.0.0',
       exporter: {
-        type: 'memory'
-      }
-    }
+        type: 'memory',
+      },
+    },
   }
 
   const composer = await createComposer(t, config)
@@ -51,8 +51,8 @@ test('should proxy openapi requests with telemetry span', async (t) => {
       method: 'GET',
       path: '/internal/service1/users',
       headers: {
-        'content-type': 'application/json'
-      }
+        'content-type': 'application/json',
+      },
     })
     const statusCode = res.statusCode
     assert.equal(statusCode, 200)
@@ -83,19 +83,19 @@ test('should proxy openapi requests with telemetry, managing errors', async (t) 
           id: 'service1',
           origin: origin1,
           proxy: {
-            prefix: '/internal/service1'
-          }
-        }
+            prefix: '/internal/service1',
+          },
+        },
       ],
-      refreshTimeout: 1000
+      refreshTimeout: 1000,
     },
     telemetry: {
       serviceName: 'test-composer',
       version: '1.0.0',
       exporter: {
-        type: 'memory'
-      }
-    }
+        type: 'memory',
+      },
+    },
   }
 
   const composer = await createComposer(t, config)
@@ -106,8 +106,8 @@ test('should proxy openapi requests with telemetry, managing errors', async (t) 
       method: 'GET',
       path: '/internal/service1/error',
       headers: {
-        'content-type': 'application/json'
-      }
+        'content-type': 'application/json',
+      },
     })
     const statusCode = res.statusCode
     assert.equal(statusCode, 500)

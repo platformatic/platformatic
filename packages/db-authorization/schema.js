@@ -6,18 +6,18 @@ const AuthSchema = {
   properties: {
     adminSecret: {
       type: 'string',
-      description: 'The password should be used to access routes under /_admin prefix.'
+      description: 'The password should be used to access routes under /_admin prefix.',
     },
     roleKey: {
       type: 'string',
-      description: 'The key in the user object that contains the roles.'
+      description: 'The key in the user object that contains the roles.',
     },
     rolePath: {
       type: 'string',
-      description: 'The path in the user object that contains the roles.'
-    }
+      description: 'The path in the user object that contains the roles.',
+    },
   },
-  additionalProperties: true // TODO remove and add proper validation for the rules
+  additionalProperties: true, // TODO remove and add proper validation for the rules
 }
 
 module.exports = AuthSchema

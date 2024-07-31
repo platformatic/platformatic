@@ -25,7 +25,7 @@ test('writes a config file', async (t) => {
     join(dest, 'platformatic.db.schema.json'))
 
   await mkdir(join(dest, 'node_modules', '@platformatic'), {
-    recursive: true
+    recursive: true,
   })
 
   await symlink(
@@ -33,7 +33,7 @@ test('writes a config file', async (t) => {
     join(dest, 'node_modules', '@platformatic', 'db'))
 
   const { stdout } = await execa('node', [cliPath, 'upgrade'], {
-    cwd: dest
+    cwd: dest,
   })
 
   assert.match(stdout, /Migrating to version 0.16.0/)
@@ -60,7 +60,7 @@ test('writes a config file with a config option', async (t) => {
     join(dest, 'platformatic.db.schema.json'))
 
   await mkdir(join(dest, 'node_modules', '@platformatic'), {
-    recursive: true
+    recursive: true,
   })
 
   await symlink(
@@ -68,7 +68,7 @@ test('writes a config file with a config option', async (t) => {
     join(dest, 'node_modules', '@platformatic', 'db'))
 
   await execa('node', [cliPath, 'upgrade', '-c', join(dest, 'platformatic.db.json')], {
-    cwd: dest
+    cwd: dest,
   })
 
   const config = JSON.parse(await readFile(join(dest, 'platformatic.db.json'), 'utf8'))
@@ -92,7 +92,7 @@ test('updates a runtime', async (t) => {
     { recursive: true })
 
   await execa('node', [cliPath, 'upgrade'], {
-    cwd: dest
+    cwd: dest,
   })
 
   const config = JSON.parse(await readFile(join(dest, 'platformatic.json'), 'utf8'))

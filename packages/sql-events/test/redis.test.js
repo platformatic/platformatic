@@ -13,7 +13,7 @@ const { PassThrough } = require('stream')
 
 const fakeLogger = {
   trace () {},
-  error () {}
+  error () {},
 }
 
 test('emit events', async (t) => {
@@ -36,7 +36,7 @@ test('emit events', async (t) => {
   const mapper = await connect({
     log: fakeLogger,
     ...connInfo,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
   const pageEntity = mapper.entities.page
 
@@ -53,50 +53,50 @@ test('emit events', async (t) => {
 
   const queue = await mapper.subscribe([
     '/entity/page/save/+',
-    '/entity/page/delete/+'
+    '/entity/page/delete/+',
   ])
 
   const expected = []
 
   // save - new record
   const page = await pageEntity.save({
-    input: { title: 'fourth page' }
+    input: { title: 'fourth page' },
   })
   expected.push({
     topic: '/entity/page/save/' + page.id,
     payload: {
-      id: page.id
-    }
+      id: page.id,
+    },
   })
 
   // save - update record
   await pageEntity.save({
     input: {
       id: page.id,
-      title: 'fifth page'
-    }
+      title: 'fifth page',
+    },
   })
   expected.push({
     topic: '/entity/page/save/' + page.id,
     payload: {
-      id: page.id
-    }
+      id: page.id,
+    },
   })
 
   await pageEntity.delete({
     where: {
       id: {
-        eq: page.id
-      }
+        eq: page.id,
+      },
     },
-    fields: ['id', 'title']
+    fields: ['id', 'title'],
   })
 
   expected.push({
     topic: '/entity/page/delete/' + page.id,
     payload: {
-      id: page.id
-    }
+      id: page.id,
+    },
   })
 
   let i = 0

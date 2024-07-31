@@ -18,8 +18,8 @@ async function main (): Promise<void> {
   const server = await buildServer({
     server: {
       port: 3042,
-      host: '127.0.0.1'
-    }
+      host: '127.0.0.1',
+    },
   })
 
   expectType<Database>(server.platformatic.db)

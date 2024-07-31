@@ -7,5 +7,5 @@ module.exports = {
       delete config.watch
     }
     return config
-  }
+  },
 }

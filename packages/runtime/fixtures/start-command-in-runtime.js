@@ -6,7 +6,7 @@ const { startCommand } = require('..')
 
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 1,
-  keepAliveMaxTimeout: 1
+  keepAliveMaxTimeout: 1,
 }))
 
 async function main () {

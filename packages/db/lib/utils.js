@@ -13,7 +13,7 @@ async function setupDB (log, config) {
     db,
     sql,
     entities,
-    dbschema
+    dbschema,
   }
 }
 
@@ -41,5 +41,5 @@ module.exports = {
   isFileAccessible,
   urlDirname,
   updateSchemaLock,
-  locateSchemaLock
+  locateSchemaLock,
 }

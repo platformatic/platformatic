@@ -28,7 +28,7 @@ test('should clean the logs after reaching a limit', async (t) => {
 
   const res = await app.inject('service-1', {
     method: 'GET',
-    url: '/large-logs'
+    url: '/large-logs',
   })
   assert.strictEqual(res.statusCode, 200)
 

@@ -104,12 +104,12 @@ platformaticRuntime.configManagerConfig = {
     useDefaults: true,
     coerceTypes: true,
     allErrors: true,
-    strict: false
+    strict: false,
   },
   async transformConfig () {
     await _transformConfig(this)
   },
-  upgrade
+  upgrade,
 }
 
 async function wrapConfigInRuntimeConfig ({ configManager, args }) {
@@ -133,9 +133,9 @@ async function wrapConfigInRuntimeConfig ({ configManager, args }) {
       {
         id: serviceId,
         path: configManager.dirname,
-        config: configManager.fullPath
-      }
-    ]
+        config: configManager.fullPath,
+      },
+    ],
   }
   const cm = new ConfigManager({
     source: wrapperConfig,
@@ -144,9 +144,9 @@ async function wrapConfigInRuntimeConfig ({ configManager, args }) {
       useDefaults: true,
       coerceTypes: true,
       allErrors: true,
-      strict: false
+      strict: false,
     },
-    transformConfig () { return _transformConfig(this) }
+    transformConfig () { return _transformConfig(this) },
   })
 
   await cm.parseAndValidate()
@@ -198,7 +198,7 @@ function parseInspectorOptions (configManager) {
       host,
       port,
       breakFirstLine: hasInspectBrk,
-      hotReloadDisabled: !!current.hotReload
+      hotReloadDisabled: !!current.hotReload,
     }
 
     current.hotReload = false
@@ -208,5 +208,5 @@ function parseInspectorOptions (configManager) {
 module.exports = {
   parseInspectorOptions,
   platformaticRuntime,
-  wrapConfigInRuntimeConfig
+  wrapConfigInRuntimeConfig,
 }

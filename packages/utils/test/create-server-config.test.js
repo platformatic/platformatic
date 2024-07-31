@@ -8,6 +8,6 @@ test('createServerConfig', async (t) => {
   const data = createServerConfig({ server: { foo: 'bar' }, something: 'else' })
   deepEqual(data, {
     foo: 'bar',
-    something: 'else'
+    something: 'else',
   })
 })

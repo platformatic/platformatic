@@ -34,16 +34,16 @@ function generateStackablePlugins (typescript) {
     return [{
       path: 'plugins',
       file: 'example.ts',
-      contents: getTsStackablePluginFile()
+      contents: getTsStackablePluginFile(),
     }]
   }
   return [{
     path: 'plugins',
     file: 'example.js',
-    contents: getJsStackablePluginFile()
+    contents: getJsStackablePluginFile(),
   }]
 }
 
 module.exports = {
-  generateStackablePlugins
+  generateStackablePlugins,
 }

@@ -16,7 +16,7 @@ test('remove hotReload', async () => {
     fixPaths: false,
     onMissingEnv (key) {
       return ''
-    }
+    },
   })
 
   await configManager.parse()
@@ -26,6 +26,6 @@ test('remove hotReload', async () => {
   equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/db/${version}.json`)
 
   deepEqual(config.watch, {
-    ignore: ['*.sqlite', '*.sqlite-journal']
+    ignore: ['*.sqlite', '*.sqlite-journal'],
   })
 })

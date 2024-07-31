@@ -31,7 +31,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
     const bodyWriter = new CodeBlockWriter({
       indentNumberOfSpaces: 2,
       useTabs: false,
-      useSingleQuote: true
+      useSingleQuote: true,
     })
 
     const addedProps = new Set()

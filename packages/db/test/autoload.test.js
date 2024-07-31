@@ -14,16 +14,16 @@ test('autoload & filesystem based routing / watch disabled', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     db: {
-      ...connectionInfo
+      ...connectionInfo,
     },
     plugins: {
-      paths: [join(workingDir, 'routes')]
+      paths: [join(workingDir, 'routes')],
     },
     watch: false,
-    metrics: false
+    metrics: false,
   }
   const configManager = await buildConfigManager(config, workingDir)
   const app = await buildServer({ configManager })
@@ -63,16 +63,16 @@ test('autoload & filesystem based routing / watch enabled', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     db: {
-      ...connectionInfo
+      ...connectionInfo,
     },
     plugins: {
-      paths: [join(workingDir, 'routes')]
+      paths: [join(workingDir, 'routes')],
     },
     watch: true,
-    metrics: false
+    metrics: false,
   }
 
   const configManager = await buildConfigManager(config, workingDir)
@@ -113,20 +113,20 @@ test('multiple files', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     db: {
-      ...connectionInfo
+      ...connectionInfo,
     },
     plugins: {
       paths: [{
-        path: join(workingDir, 'plugins')
+        path: join(workingDir, 'plugins'),
       }, {
-        path: join(workingDir, 'routes')
-      }]
+        path: join(workingDir, 'routes'),
+      }],
     },
     watch: true,
-    metrics: false
+    metrics: false,
   }
 
   const configManager = await buildConfigManager(config, workingDir)
@@ -174,20 +174,20 @@ test('multiple files / watch false', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     db: {
-      ...connectionInfo
+      ...connectionInfo,
     },
     plugins: {
       paths: [{
-        path: join(workingDir, 'plugins')
+        path: join(workingDir, 'plugins'),
       }, {
-        path: join(workingDir, 'routes')
-      }]
+        path: join(workingDir, 'routes'),
+      }],
     },
     watch: false,
-    metrics: false
+    metrics: false,
   }
 
   const configManager = await buildConfigManager(config, workingDir)
@@ -235,19 +235,19 @@ test('multiple files as strings', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     db: {
-      ...connectionInfo
+      ...connectionInfo,
     },
     plugins: {
       paths: [
         join(workingDir, 'plugins'),
-        join(workingDir, 'routes')
-      ]
+        join(workingDir, 'routes'),
+      ],
     },
     watch: true,
-    metrics: false
+    metrics: false,
   }
 
   const configManager = await buildConfigManager(config, workingDir)
@@ -295,16 +295,16 @@ test('autoload & filesystem based routing / watch disabled / no object', async (
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     db: {
-      ...connectionInfo
+      ...connectionInfo,
     },
     plugins: {
-      paths: [join(workingDir, 'routes')]
+      paths: [join(workingDir, 'routes')],
     },
     watch: false,
-    metrics: false
+    metrics: false,
   }
 
   const configManager = await buildConfigManager(config, workingDir)

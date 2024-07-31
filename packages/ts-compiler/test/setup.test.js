@@ -9,7 +9,7 @@ const setup = require('../lib/setup.js')
 test('throw if cwd is not specified', async () => {
   await assert.rejects(setup({}), {
     name: 'Error',
-    message: 'The cwd option is required.'
+    message: 'The cwd option is required.',
   })
 })
 

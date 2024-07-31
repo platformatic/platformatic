@@ -13,8 +13,8 @@ test('serviceToSubgraphConfig unit test', t => {
         origin: 'http://origin',
         graphql: {
           composeEndpoint: '/introspection',
-          graphqlEndpoint: '/graphql'
-        }
+          graphqlEndpoint: '/graphql',
+        },
       },
       expected: {
         name: 'http://origin',
@@ -22,10 +22,10 @@ test('serviceToSubgraphConfig unit test', t => {
         server: {
           host: 'http://origin',
           composeEndpoint: '/introspection',
-          graphqlEndpoint: '/graphql'
-        }
-      }
-    }
+          graphqlEndpoint: '/graphql',
+        },
+      },
+    },
   ]
 
   for (const c of cases) {

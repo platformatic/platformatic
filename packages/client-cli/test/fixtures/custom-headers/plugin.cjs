@@ -6,8 +6,8 @@ module.exports = async function (app) {
     return {
       message: 'ok',
       data: {
-        authorization: req.headers.authorization
-      }
+        authorization: req.headers.authorization,
+      },
     }
   })
 }

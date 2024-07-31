@@ -11,13 +11,13 @@ export type pltRuntimeBuildServer = {
 }
 
 declare module '@platformatic/runtime' {
-  export function buildServer(opts: object): Promise<pltRuntimeBuildServer>
-  export function start(args: object): Promise<object>
-  export function startCommand(args: object): Promise<void>
-  export function loadConfig(minimistConfig: object, args: object, store: object, overrides: object, replaceEnv: boolean): void
-  export function compile(argv: string[], logger: BaseLogger): void
-  export function platformaticRuntime(): Promise<void>
-  export function wrapConfigInRuntimeConfig(args: object): object
+  export function buildServer (opts: object): Promise<pltRuntimeBuildServer>
+  export function start (args: object): Promise<object>
+  export function startCommand (args: object): Promise<void>
+  export function loadConfig (minimistConfig: object, args: object, store: object, overrides: object, replaceEnv: boolean): void
+  export function compile (argv: string[], logger: BaseLogger): void
+  export function platformaticRuntime (): Promise<void>
+  export function wrapConfigInRuntimeConfig (args: object): object
   export const Generator: RuntimeGenerator.RuntimeGenerator
 }
 
@@ -42,4 +42,3 @@ export module errors {
   export const CannotMapSpecifierToAbsolutePathError: (specifier: string) => FastifyError
   export const NodeInspectorFlagsNotSupportedError: () => FastifyError
 }
-

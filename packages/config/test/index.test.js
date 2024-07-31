@@ -29,16 +29,16 @@ test('should accept and parse initial config object', async (t) => {
     source: {
       server: {
         hostname: '127.0.0.1',
-        port: '3042'
-      }
-    }
+        port: '3042',
+      },
+    },
   })
   await cm.parse()
   assert.deepEqual(cm.current, {
     server: {
       hostname: '127.0.0.1',
-      port: '3042'
-    }
+      port: '3042',
+    },
   })
 })
 
@@ -47,10 +47,10 @@ test('dirname option', async (t) => {
     source: {
       server: {
         hostname: '127.0.0.1',
-        port: '3042'
-      }
+        port: '3042',
+      },
     },
-    dirname: 'foobar'
+    dirname: 'foobar',
   })
   await cm.parse()
   assert.equal(cm.dirname, 'foobar')
@@ -61,9 +61,9 @@ test('dirname as cwd', async (t) => {
     source: {
       server: {
         hostname: '127.0.0.1',
-        port: '3042'
-      }
-    }
+        port: '3042',
+      },
+    },
   })
   await cm.parse()
   assert.equal(cm.dirname, process.cwd())
@@ -76,12 +76,12 @@ test('should used passed env vars', (t) => {
       source: './test.json',
       env: {
         FOOBAR: 'foobar',
-        PLT_FOOBAR: 'plt_foobar'
-      }
+        PLT_FOOBAR: 'plt_foobar',
+      },
     })
     assert.deepStrictEqual(cm.env, {
       FOOBAR: 'foobar',
-      PLT_FOOBAR: 'plt_foobar'
+      PLT_FOOBAR: 'plt_foobar',
     })
   }
   {
@@ -99,7 +99,7 @@ test('should used passed env vars', (t) => {
 
 test('should not validate if parsing is not called', (t) => {
   const cm = new ConfigManager({
-    source: './test.json'
+    source: './test.json',
   })
   assert.deepEqual(cm.validate(), false)
 })
@@ -107,7 +107,7 @@ test('should not validate if parsing is not called', (t) => {
 test('should throw if file is not JSON, yaml, or toml', async (t) => {
   try {
     const cm = new ConfigManager({
-      source: './test.txt'
+      source: './test.txt',
     })
     await cm.parse()
     assert.fail()
@@ -122,8 +122,8 @@ test('should look for a .env file in the same folder of config', async () => {
   const config = {
     name: 'Platformatic',
     props: {
-      foo: '{PLT_PROP}'
-    }
+      foo: '{PLT_PROP}',
+    },
   }
   const schema = {
     type: 'object',
@@ -133,10 +133,10 @@ test('should look for a .env file in the same folder of config', async () => {
         type: 'object',
         properties: {
           foo: { type: 'string' },
-          bar: { type: 'integer' }
-        }
-      }
-    }
+          bar: { type: 'integer' },
+        },
+      },
+    },
   }
 
   const file = join(tmpDir, 'uses-env.json')
@@ -150,8 +150,8 @@ test('should look for a .env file in the same folder of config', async () => {
   const expectedConfig = {
     name: 'Platformatic',
     props: {
-      foo: 'foo'
-    }
+      foo: 'foo',
+    },
   }
   assert.deepEqual(cm.current, expectedConfig)
   await unlink(file)
@@ -170,8 +170,8 @@ test('should look for a .env file in process.cwd() too', async (t) => {
   const config = {
     name: 'Platformatic',
     props: {
-      foo: '{PLT_PROP}'
-    }
+      foo: '{PLT_PROP}',
+    },
   }
   const schema = {
     type: 'object',
@@ -181,10 +181,10 @@ test('should look for a .env file in process.cwd() too', async (t) => {
         type: 'object',
         properties: {
           foo: { type: 'string' },
-          bar: { type: 'integer' }
-        }
-      }
-    }
+          bar: { type: 'integer' },
+        },
+      },
+    },
   }
 
   const file = join(tmpDir, 'uses-env.json')
@@ -200,8 +200,8 @@ test('should look for a .env file in process.cwd() too', async (t) => {
   const expectedConfig = {
     name: 'Platformatic',
     props: {
-      foo: 'foo'
-    }
+      foo: 'foo',
+    },
   }
   assert.deepEqual(cm.current, expectedConfig)
   await unlink(file)
@@ -221,7 +221,7 @@ test('ConfigManager.listConfigFiles() lists possible configs by type', async (t)
     'platformatic.yaml',
     'platformatic.yml',
     'platformatic.toml',
-    'platformatic.tml'
+    'platformatic.tml',
   ])
   assert.deepEqual(ConfigManager.listConfigFiles('service'), [
     'platformatic.service.json',
@@ -235,7 +235,7 @@ test('ConfigManager.listConfigFiles() lists possible configs by type', async (t)
     'platformatic.yaml',
     'platformatic.yml',
     'platformatic.toml',
-    'platformatic.tml'
+    'platformatic.tml',
   ])
   assert.deepEqual(ConfigManager.listConfigFiles('runtime'), [
     'platformatic.runtime.json',
@@ -249,7 +249,7 @@ test('ConfigManager.listConfigFiles() lists possible configs by type', async (t)
     'platformatic.yaml',
     'platformatic.yml',
     'platformatic.toml',
-    'platformatic.tml'
+    'platformatic.tml',
   ])
 })
 
@@ -284,7 +284,7 @@ test('ConfigManager.listConfigFiles() lists all possible configs', async (t) => 
     'platformatic.runtime.yaml',
     'platformatic.runtime.yml',
     'platformatic.runtime.toml',
-    'platformatic.runtime.tml'
+    'platformatic.runtime.tml',
   ])
 })
 
@@ -319,7 +319,7 @@ test('should throw if there is upgrade but not version', async (t) => {
   try {
     // eslint-disable-next-line no-new
     new ConfigManager({
-      upgrade () {}
+      upgrade () {},
     })
     assert.fail()
   } catch (err) {
@@ -336,13 +336,13 @@ describe('upgrade', () => {
         $schema: 'https://platformatic.dev/schemas/v0.42.0/something.json',
         server: {
           hostname: '127.0.0.1',
-          port: '3042'
-        }
+          port: '3042',
+        },
       },
       upgrade (config, origin) {
         plan.equal(origin, '0.42.0')
         return config
-      }
+      },
     })
     await cm.parse()
   })
@@ -355,13 +355,13 @@ describe('upgrade', () => {
         module: './foo.js@0.42.0',
         server: {
           hostname: '127.0.0.1',
-          port: '3042'
-        }
+          port: '3042',
+        },
       },
       upgrade (config, origin) {
         plan.equal(origin, '0.42.0')
         return config
-      }
+      },
     })
     await cm.parse()
   })
@@ -374,7 +374,7 @@ describe('upgrade', () => {
       upgrade (config, origin) {
         plan.equal(origin, '0.15.0')
         return config
-      }
+      },
     })
     await cm.parse()
   })
@@ -387,7 +387,7 @@ describe('upgrade', () => {
       upgrade (config, origin) {
         plan.equal(origin, '0.15.0')
         return config
-      }
+      },
     })
     await cm.parse()
   })

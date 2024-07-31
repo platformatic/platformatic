@@ -6,12 +6,12 @@ const findRule = require('../lib/find-rule')
 const allowAll = {
   save: true,
   find: true,
-  delete: true
+  delete: true,
 }
 const denyAll = {
   save: false,
   find: false,
-  delete: false
+  delete: false,
 }
 
 test('should return first rule that match', (t) => {
@@ -22,20 +22,20 @@ test('should return first rule that match', (t) => {
       _id: 'RULE1',
       role: 'role1',
       entity: 'page',
-      ...allowAll
+      ...allowAll,
     },
     {
       _id: 'RULE2',
       role: 'role2',
       entity: 'page',
-      ...allowAll
+      ...allowAll,
     },
     {
       _id: 'RULE3',
       role: 'role1',
       entity: 'page',
-      ...denyAll
-    }
+      ...denyAll,
+    },
   ]
   const found = findRule(rules, roles)
   deepEqual(found._id, 'RULE1')
@@ -49,20 +49,20 @@ test('should return null if no match', (t) => {
       _id: 'RULE1',
       role: 'role1',
       entity: 'page',
-      ...allowAll
+      ...allowAll,
     },
     {
       _id: 'RULE2',
       role: 'role2',
       entity: 'page',
-      ...allowAll
+      ...allowAll,
     },
     {
       _id: 'RULE3',
       role: 'role1',
       entity: 'page',
-      ...denyAll
-    }
+      ...denyAll,
+    },
   ]
   const found = findRule(rules, roles)
   deepEqual(found, null)
@@ -76,20 +76,20 @@ test('should search all roles until match', (t) => {
       _id: 'RULE1',
       role: 'role1',
       entity: 'page',
-      ...allowAll
+      ...allowAll,
     },
     {
       _id: 'RULE2',
       role: 'role2',
       entity: 'page',
-      ...allowAll
+      ...allowAll,
     },
     {
       _id: 'RULE3',
       role: 'role1',
       entity: 'page',
-      ...denyAll
-    }
+      ...denyAll,
+    },
   ]
   const found = findRule(rules, roles)
   deepEqual(found._id, 'RULE2')

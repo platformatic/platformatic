@@ -19,8 +19,8 @@ setGlobalDispatcher(new Agent({
   keepAliveTimeout: 10,
   keepAliveMaxTimeout: 10,
   tls: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false,
+  },
 }))
 
 const cliPath = join(__dirname, '..', '..', 'db.mjs')
@@ -31,10 +31,10 @@ async function connectDB (connectionInfo) {
       debug: () => {},
       info: () => {},
       trace: () => {},
-      error: () => {}
+      error: () => {},
     },
     max: 1,
-    ...connectionInfo
+    ...connectionInfo,
   })
   return db
 }

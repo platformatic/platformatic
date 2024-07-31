@@ -4,10 +4,10 @@ export default async function (fastify, opts) {
       params: {
         type: 'object',
         properties: {
-          sku: { type: 'number' }
-        }
-      }
-    }
+          sku: { type: 'number' },
+        },
+      },
+    },
   }, async (request, reply) => {
     const sku = request.params.sku
     return { sku, inStore: await fastify.inventory.howManyInStore(sku) }

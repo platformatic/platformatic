@@ -10,7 +10,7 @@ test('stackable example', async t => {
 
   // if this fails, it will throw an error
   await execa('node', ['--test'], {
-    cwd: join(__dirname, '..', 'fixtures', 'acme-base')
+    cwd: join(__dirname, '..', 'fixtures', 'acme-base'),
   })
 
   const tsd = (await import('tsd')).default
@@ -35,6 +35,6 @@ test('stackable in typescript', async t => {
 
   // if this fails, it will throw an error
   await execa('node', ['--test'], {
-    cwd: join(cwd, 'dist')
+    cwd: join(cwd, 'dist'),
   })
 })

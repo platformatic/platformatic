@@ -29,8 +29,8 @@ test('supports http2 options', { skip: isNode18 }, async (t) => {
     keepAliveTimeout: 100,
     keepAliveMaxTimeout: 100,
     connect: {
-      rejectUnauthorized: false
-    }
+      rejectUnauthorized: false,
+    },
   })
 
   const app = await buildServer(buildConfig({
@@ -40,9 +40,9 @@ test('supports http2 options', { skip: isNode18 }, async (t) => {
       http2: true,
       https: {
         key: privateKey,
-        cert: [{ path: certificateRelativePath }]
-      }
-    }
+        cert: [{ path: certificateRelativePath }],
+      },
+    },
   }))
 
   t.after(async () => {
@@ -54,7 +54,7 @@ test('supports http2 options', { skip: isNode18 }, async (t) => {
 
   assert.strictEqual(app.url.startsWith('https://'), true)
   let res = await (request(`${app.url}/`, {
-    dispatcher: agent
+    dispatcher: agent,
   }))
   assert.strictEqual(res.statusCode, 200)
   let body = await res.body.json()
@@ -64,7 +64,7 @@ test('supports http2 options', { skip: isNode18 }, async (t) => {
 
   assert.strictEqual(app.url.startsWith('https://'), true)
   res = await (request(`${app.url}/`, {
-    dispatcher: agent
+    dispatcher: agent,
   }))
 
   assert.strictEqual(res.statusCode, 200)
@@ -90,8 +90,8 @@ test('supports allowHTTP1 with HTTP/2', { skip: isNode18 }, async (t) => {
     keepAliveTimeout: 100,
     keepAliveMaxTimeout: 100,
     connect: {
-      rejectUnauthorized: false
-    }
+      rejectUnauthorized: false,
+    },
   })
 
   const app = await buildServer(buildConfig({
@@ -102,9 +102,9 @@ test('supports allowHTTP1 with HTTP/2', { skip: isNode18 }, async (t) => {
       https: {
         allowHTTP1: true,
         key: privateKey,
-        cert: [{ path: certificateRelativePath }]
-      }
-    }
+        cert: [{ path: certificateRelativePath }],
+      },
+    },
   }))
 
   t.after(async () => {
@@ -116,7 +116,7 @@ test('supports allowHTTP1 with HTTP/2', { skip: isNode18 }, async (t) => {
 
   assert.strictEqual(app.url.startsWith('https://'), true)
   let res = await (request(`${app.url}/`, {
-    dispatcher: agent
+    dispatcher: agent,
   }))
   assert.strictEqual(res.statusCode, 200)
   let body = await res.body.json()
@@ -126,7 +126,7 @@ test('supports allowHTTP1 with HTTP/2', { skip: isNode18 }, async (t) => {
 
   assert.strictEqual(app.url.startsWith('https://'), true)
   res = await (request(`${app.url}/`, {
-    dispatcher: agent
+    dispatcher: agent,
   }))
   assert.strictEqual(res.statusCode, 200)
   body = await res.body.json()

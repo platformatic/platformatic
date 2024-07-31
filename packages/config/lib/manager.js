@@ -64,7 +64,7 @@ class ConfigManager extends EventEmitter {
     return async (app, opts) => {
       return fastifyPlugin(app, {
         ...opts,
-        configManager: this
+        configManager: this,
       })
     }
   }
@@ -102,7 +102,7 @@ class ConfigManager extends EventEmitter {
             context: opts.context,
             escapeJSON: false,
             parent: config,
-            tree: [...opts.tree ?? [], config]
+            tree: [...opts.tree ?? [], config],
           }
         )
       }
@@ -143,7 +143,7 @@ class ConfigManager extends EventEmitter {
           config = await this.replaceEnv(config, {
             escapeJSON: false,
             ignore: this._replaceEnvIgnore,
-            context: this.context
+            context: this.context,
           })
         }
 
@@ -238,7 +238,7 @@ class ConfigManager extends EventEmitter {
           data.parentData[data.parentDataProperty] = resolved
         }
         return true
-      }
+      },
     })
     ajv.addKeyword({
       keyword: 'resolveModule',
@@ -262,7 +262,7 @@ class ConfigManager extends EventEmitter {
         } catch {
           return false
         }
-      }
+      },
     })
 
     ajv.addKeyword({
@@ -272,7 +272,7 @@ class ConfigManager extends EventEmitter {
         if (typeof value === schema) { return true }
         validate.errors = [{ message: `"${data.parentDataProperty}" shoud be a ${schema}.`, params: data.parentData }]
         return false
-      }
+      },
     })
 
     const ajvValidate = ajv.compile(this.schema)
@@ -283,7 +283,7 @@ class ConfigManager extends EventEmitter {
       this.validationErrors = ajvValidate.errors.map((err) => {
         return {
           path: err.instancePath === '' ? '/' : err.instancePath,
-          message: err.message + ' ' + JSON.stringify(err.params)
+          message: err.message + ' ' + JSON.stringify(err.params),
         }
       })
       return false
@@ -333,7 +333,7 @@ class ConfigManager extends EventEmitter {
         'platformatic.yaml',
         'platformatic.yml',
         'platformatic.toml',
-        'platformatic.tml'
+        'platformatic.tml',
       ]
     } else {
       // A config type was not provided. Search for all known types and
@@ -343,7 +343,7 @@ class ConfigManager extends EventEmitter {
         ...this.listConfigFiles('service'),
         ...this.listConfigFiles('db'),
         ...this.listConfigFiles('composer'),
-        ...this.listConfigFiles('runtime')
+        ...this.listConfigFiles('runtime'),
       ])]
     }
   }
@@ -392,7 +392,7 @@ class ConfigManager extends EventEmitter {
     return {
       ...process.env,
       ...this.env,
-      [PLT_ROOT]: join(this.fullPath, '..')
+      [PLT_ROOT]: join(this.fullPath, '..'),
     }
   }
 }

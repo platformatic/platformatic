@@ -31,7 +31,7 @@ test('list', async (t) => {
           counter INTEGER
         );`)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -41,19 +41,19 @@ test('list', async (t) => {
   const posts = [{
     title: 'Dog',
     longText: 'Foo',
-    counter: 10
+    counter: 10,
   }, {
     title: 'Cat',
     longText: 'Bar',
-    counter: 20
+    counter: 20,
   }, {
     title: 'Mouse',
     longText: 'Baz',
-    counter: 30
+    counter: 30,
   }, {
     title: 'Duck',
     longText: 'A duck tale',
-    counter: 40
+    counter: 40,
   }]
 
   {
@@ -70,9 +70,9 @@ test('list', async (t) => {
             }
           `,
         variables: {
-          inputs: posts
-        }
-      }
+          inputs: posts,
+        },
+      },
     })
     equal(res.statusCode, 200, 'posts status code')
   }
@@ -90,8 +90,8 @@ test('list', async (t) => {
               longText
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'posts status code')
     same(res.json(), {
@@ -99,9 +99,9 @@ test('list', async (t) => {
         posts: [{
           id: '1',
           title: 'Dog',
-          longText: 'Foo'
-        }]
-      }
+          longText: 'Foo',
+        }],
+      },
     }, 'posts response')
   }
 
@@ -118,8 +118,8 @@ test('list', async (t) => {
               longText
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'posts status code')
     same(res.json(), {
@@ -127,17 +127,17 @@ test('list', async (t) => {
         posts: [{
           id: '2',
           title: 'Cat',
-          longText: 'Bar'
+          longText: 'Bar',
         }, {
           id: '3',
           title: 'Mouse',
-          longText: 'Baz'
+          longText: 'Baz',
         }, {
           id: '4',
           title: 'Duck',
-          longText: 'A duck tale'
-        }]
-      }
+          longText: 'A duck tale',
+        }],
+      },
     }, 'posts response')
   }
 
@@ -154,8 +154,8 @@ test('list', async (t) => {
               longText
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'posts status code')
     same(res.json(), {
@@ -163,17 +163,17 @@ test('list', async (t) => {
         posts: [{
           id: '2',
           title: 'Cat',
-          longText: 'Bar'
+          longText: 'Bar',
         }, {
           id: '3',
           title: 'Mouse',
-          longText: 'Baz'
+          longText: 'Baz',
         }, {
           id: '4',
           title: 'Duck',
-          longText: 'A duck tale'
-        }]
-      }
+          longText: 'A duck tale',
+        }],
+      },
     }, 'posts response')
   }
 
@@ -190,8 +190,8 @@ test('list', async (t) => {
               longText
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'posts status code')
     same(res.json(), {
@@ -199,17 +199,17 @@ test('list', async (t) => {
         posts: [{
           id: '1',
           title: 'Dog',
-          longText: 'Foo'
+          longText: 'Foo',
         }, {
           id: '2',
           title: 'Cat',
-          longText: 'Bar'
+          longText: 'Bar',
         }, {
           id: '3',
           title: 'Mouse',
-          longText: 'Baz'
-        }]
-      }
+          longText: 'Baz',
+        }],
+      },
     }, 'posts response')
   }
 
@@ -226,8 +226,8 @@ test('list', async (t) => {
               longText
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'posts status code')
     same(res.json(), {
@@ -235,17 +235,17 @@ test('list', async (t) => {
         posts: [{
           id: '1',
           title: 'Dog',
-          longText: 'Foo'
+          longText: 'Foo',
         }, {
           id: '2',
           title: 'Cat',
-          longText: 'Bar'
+          longText: 'Bar',
         }, {
           id: '3',
           title: 'Mouse',
-          longText: 'Baz'
-        }]
-      }
+          longText: 'Baz',
+        }],
+      },
     }, 'posts response')
   }
 
@@ -262,8 +262,8 @@ test('list', async (t) => {
               longText
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'posts status code')
     same(res.json(), {
@@ -271,17 +271,17 @@ test('list', async (t) => {
         posts: [{
           id: '2',
           title: 'Cat',
-          longText: 'Bar'
+          longText: 'Bar',
         }, {
           id: '3',
           title: 'Mouse',
-          longText: 'Baz'
+          longText: 'Baz',
         }, {
           id: '4',
           title: 'Duck',
-          longText: 'A duck tale'
-        }]
-      }
+          longText: 'A duck tale',
+        }],
+      },
     }, 'posts response')
   }
 
@@ -298,8 +298,8 @@ test('list', async (t) => {
               longText
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'posts status code')
     same(res.json(), {
@@ -307,13 +307,13 @@ test('list', async (t) => {
         posts: [{
           id: '2',
           title: 'Cat',
-          longText: 'Bar'
+          longText: 'Bar',
         }, {
           id: '3',
           title: 'Mouse',
-          longText: 'Baz'
-        }]
-      }
+          longText: 'Baz',
+        }],
+      },
     }, 'posts response')
   }
 
@@ -330,8 +330,8 @@ test('list', async (t) => {
               longText
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'posts status code')
     same(res.json(), {
@@ -339,13 +339,13 @@ test('list', async (t) => {
         posts: [{
           id: '2',
           title: 'Cat',
-          longText: 'Bar'
+          longText: 'Bar',
         }, {
           id: '3',
           title: 'Mouse',
-          longText: 'Baz'
-        }]
-      }
+          longText: 'Baz',
+        }],
+      },
     }, 'posts response')
   }
 
@@ -362,8 +362,8 @@ test('list', async (t) => {
               longText
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'posts status code')
     same(res.json(), {
@@ -371,13 +371,13 @@ test('list', async (t) => {
         posts: [{
           id: '2',
           title: 'Cat',
-          longText: 'Bar'
+          longText: 'Bar',
         }, {
           id: '3',
           title: 'Mouse',
-          longText: 'Baz'
-        }]
-      }
+          longText: 'Baz',
+        }],
+      },
     }, 'posts response')
   }
 })
@@ -438,7 +438,7 @@ test('nested where', async (t) => {
           owner_id INTEGER REFERENCES owners(id)
         );`)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
 
@@ -447,27 +447,27 @@ test('nested where', async (t) => {
   await app.ready()
 
   const owners = [{
-    name: 'Matteo'
+    name: 'Matteo',
   }, {
-    name: 'Luca'
+    name: 'Luca',
   }]
 
   const posts = [{
     title: 'Dog',
     longText: 'Foo',
-    counter: 10
+    counter: 10,
   }, {
     title: 'Cat',
     longText: 'Bar',
-    counter: 20
+    counter: 20,
   }, {
     title: 'Mouse',
     longText: 'Baz',
-    counter: 30
+    counter: 30,
   }, {
     title: 'Duck',
     longText: 'A duck tale',
-    counter: 40
+    counter: 40,
   }]
 
   {
@@ -484,9 +484,9 @@ test('nested where', async (t) => {
           }
         `,
         variables: {
-          inputs: owners
-        }
-      }
+          inputs: owners,
+        },
+      },
     })
     const toAssign = [...posts]
     for (const owner of res.json().data.insertOwners) {
@@ -506,9 +506,9 @@ test('nested where', async (t) => {
           }
         `,
         variables: {
-          inputs: posts
-        }
-      }
+          inputs: posts,
+        },
+      },
     })
   }
 
@@ -529,8 +529,8 @@ test('nested where', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'owners status code')
     same(res.json(), {
@@ -541,22 +541,22 @@ test('nested where', async (t) => {
           posts: [{
             id: '2',
             title: 'Cat',
-            longText: 'Bar'
-          }]
+            longText: 'Bar',
+          }],
         }, {
           id: '2',
           name: 'Luca',
           posts: [{
             id: '3',
             title: 'Mouse',
-            longText: 'Baz'
+            longText: 'Baz',
           }, {
             id: '4',
             title: 'Duck',
-            longText: 'A duck tale'
-          }]
-        }]
-      }
+            longText: 'A duck tale',
+          }],
+        }],
+      },
     }, 'owners response')
   }
 })
@@ -585,7 +585,7 @@ test('delete', async (t) => {
           counter INTEGER
         );`)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -595,19 +595,19 @@ test('delete', async (t) => {
   const posts = [{
     title: 'Dog',
     longText: 'Foo',
-    counter: 10
+    counter: 10,
   }, {
     title: 'Cat',
     longText: 'Bar',
-    counter: 20
+    counter: 20,
   }, {
     title: 'Mouse',
     longText: 'Baz',
-    counter: 30
+    counter: 30,
   }, {
     title: 'Duck',
     longText: 'A duck tale',
-    counter: 40
+    counter: 40,
   }]
 
   await app.inject({
@@ -623,9 +623,9 @@ test('delete', async (t) => {
           }
         `,
       variables: {
-        inputs: posts
-      }
-    }
+        inputs: posts,
+      },
+    },
   })
 
   {
@@ -641,8 +641,8 @@ test('delete', async (t) => {
               longText
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'deletePosts status code')
     same(res.json(), {
@@ -650,9 +650,9 @@ test('delete', async (t) => {
         deletePosts: [{
           id: 1,
           title: 'Dog',
-          longText: 'Foo'
-        }]
-      }
+          longText: 'Foo',
+        }],
+      },
     }, 'deletePosts response')
   }
 
@@ -669,14 +669,14 @@ test('delete', async (t) => {
               longText
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'posts status code')
     same(res.json(), {
       data: {
-        posts: []
-      }
+        posts: [],
+      },
     }, 'posts response')
   }
 })
@@ -705,7 +705,7 @@ test('delete all', async (t) => {
           counter INTEGER
         );`)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -715,19 +715,19 @@ test('delete all', async (t) => {
   const posts = [{
     title: 'Dog',
     longText: 'Foo',
-    counter: 10
+    counter: 10,
   }, {
     title: 'Cat',
     longText: 'Bar',
-    counter: 20
+    counter: 20,
   }, {
     title: 'Mouse',
     longText: 'Baz',
-    counter: 30
+    counter: 30,
   }, {
     title: 'Duck',
     longText: 'A duck tale',
-    counter: 40
+    counter: 40,
   }]
 
   await app.inject({
@@ -743,9 +743,9 @@ test('delete all', async (t) => {
           }
         `,
       variables: {
-        inputs: posts
-      }
-    }
+        inputs: posts,
+      },
+    },
   })
 
   {
@@ -761,8 +761,8 @@ test('delete all', async (t) => {
               longText
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'deletePosts status code')
     same(res.json(), {
@@ -770,22 +770,22 @@ test('delete all', async (t) => {
         deletePosts: [{
           id: 1,
           title: 'Dog',
-          longText: 'Foo'
+          longText: 'Foo',
         }, {
           id: 2,
           title: 'Cat',
-          longText: 'Bar'
+          longText: 'Bar',
         }, {
           id: 3,
           title: 'Mouse',
-          longText: 'Baz'
+          longText: 'Baz',
         }, {
           id: 4,
           title: 'Duck',
-          longText: 'A duck tale'
+          longText: 'A duck tale',
 
-        }]
-      }
+        }],
+      },
     }, 'deletePosts response')
   }
 
@@ -802,14 +802,14 @@ test('delete all', async (t) => {
               longText
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'posts status code')
     same(res.json(), {
       data: {
-        posts: []
-      }
+        posts: [],
+      },
     }, 'posts response')
   }
 })
@@ -838,7 +838,7 @@ test('like', async (t) => {
           counter INTEGER
         );`)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -848,19 +848,19 @@ test('like', async (t) => {
   const posts = [{
     title: 'Dog',
     longText: 'The dog barks',
-    counter: 10
+    counter: 10,
   }, {
     title: 'Cat',
     longText: 'The cat meows',
-    counter: 20
+    counter: 20,
   }, {
     title: 'Mouse',
     longText: 'The mouse likes cheese',
-    counter: 30
+    counter: 30,
   }, {
     title: 'Duck',
     longText: 'A duck tale',
-    counter: 40
+    counter: 40,
   }]
 
   await app.inject({
@@ -876,9 +876,9 @@ test('like', async (t) => {
           }
         `,
       variables: {
-        inputs: posts
-      }
-    }
+        inputs: posts,
+      },
+    },
   })
 
   {
@@ -895,8 +895,8 @@ test('like', async (t) => {
               counter
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'posts status code')
     same(res.json(), {
@@ -905,24 +905,24 @@ test('like', async (t) => {
           id: '1',
           title: 'Dog',
           longText: 'The dog barks',
-          counter: 10
+          counter: 10,
         }, {
           id: '2',
           title: 'Cat',
           longText: 'The cat meows',
-          counter: 20
+          counter: 20,
         }, {
           id: '3',
           title: 'Mouse',
           longText: 'The mouse likes cheese',
-          counter: 30
+          counter: 30,
         }, {
           id: '4',
           title: 'Duck',
           longText: 'A duck tale',
-          counter: 40
-        }]
-      }
+          counter: 40,
+        }],
+      },
     }, 'posts response')
   }
 
@@ -940,8 +940,8 @@ test('like', async (t) => {
               counter
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'where: { longText: { like: "The%" } } status code')
     same(res.json(), {
@@ -950,19 +950,19 @@ test('like', async (t) => {
           id: '1',
           title: 'Dog',
           longText: 'The dog barks',
-          counter: 10
+          counter: 10,
         }, {
           id: '2',
           title: 'Cat',
           longText: 'The cat meows',
-          counter: 20
+          counter: 20,
         }, {
           id: '3',
           title: 'Mouse',
           longText: 'The mouse likes cheese',
-          counter: 30
-        }]
-      }
+          counter: 30,
+        }],
+      },
     }, 'where: { longText: { like: "The%" } } response')
   }
 
@@ -980,8 +980,8 @@ test('like', async (t) => {
               counter
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'where: { longText: { like: "%s" } } status code')
     same(res.json(), {
@@ -990,14 +990,14 @@ test('like', async (t) => {
           id: '1',
           title: 'Dog',
           longText: 'The dog barks',
-          counter: 10
+          counter: 10,
         }, {
           id: '2',
           title: 'Cat',
           longText: 'The cat meows',
-          counter: 20
-        }]
-      }
+          counter: 20,
+        }],
+      },
     }, 'where: { longText: { like: "%s" } } response')
   }
 
@@ -1015,8 +1015,8 @@ test('like', async (t) => {
               counter
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'where: { longText: { like: "%o%" } } status code')
     same(res.json(), {
@@ -1025,19 +1025,19 @@ test('like', async (t) => {
           id: '1',
           title: 'Dog',
           longText: 'The dog barks',
-          counter: 10
+          counter: 10,
         }, {
           id: '2',
           title: 'Cat',
           longText: 'The cat meows',
-          counter: 20
+          counter: 20,
         }, {
           id: '3',
           title: 'Mouse',
           longText: 'The mouse likes cheese',
-          counter: 30
-        }]
-      }
+          counter: 30,
+        }],
+      },
     }, 'where: { longText: { like: "%o%" } } response')
   }
 
@@ -1055,8 +1055,8 @@ test('like', async (t) => {
               counter
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'where: { counter: { like: 10 } } status code')
     same(res.json(), {
@@ -1065,9 +1065,9 @@ test('like', async (t) => {
           id: '1',
           title: 'Dog',
           longText: 'The dog barks',
-          counter: 10
-        }]
-      }
+          counter: 10,
+        }],
+      },
     }, 'where: { counter: { like: 10 } } response')
   }
 
@@ -1085,8 +1085,8 @@ test('like', async (t) => {
               counter
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'where: { counter: { like: 40 } } status code')
     same(res.json(), {
@@ -1095,9 +1095,9 @@ test('like', async (t) => {
           id: '4',
           title: 'Duck',
           longText: 'A duck tale',
-          counter: 40
-        }]
-      }
+          counter: 40,
+        }],
+      },
     }, 'where: { counter: { like: 40 } } response')
   }
 })

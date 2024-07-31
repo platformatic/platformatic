@@ -7,7 +7,7 @@ const { request } = require('undici')
 const {
   createComposer,
   createBasicService,
-  createOpenApiService
+  createOpenApiService,
 } = require('../helper')
 
 test('should add onSend route hook', async (t) => {
@@ -22,14 +22,14 @@ test('should add onSend route hook', async (t) => {
             id: 'api1',
             origin: 'http://127.0.0.1:' + api.server.address().port,
             openapi: {
-              url: '/documentation/json'
-            }
-          }
-        ]
+              url: '/documentation/json',
+            },
+          },
+        ],
       },
       plugins: {
-        paths: [join(__dirname, './fixtures/plugins/hook.js')]
-      }
+        paths: [join(__dirname, './fixtures/plugins/hook.js')],
+      },
     }
   )
 
@@ -51,14 +51,14 @@ test('should add multiple onRoute hooks for one route', async (t) => {
             id: 'api1',
             origin: 'http://127.0.0.1:' + api.server.address().port,
             openapi: {
-              url: '/documentation/json'
-            }
-          }
-        ]
+              url: '/documentation/json',
+            },
+          },
+        ],
       },
       plugins: {
-        paths: [join(__dirname, './fixtures/plugins/multiple-hooks.js')]
-      }
+        paths: [join(__dirname, './fixtures/plugins/multiple-hooks.js')],
+      },
     }
   )
 
@@ -83,14 +83,14 @@ test('should parse json response payload', async (t) => {
             id: 'api1',
             origin: 'http://127.0.0.1:' + api.server.address().port,
             openapi: {
-              url: '/documentation/json'
-            }
-          }
-        ]
+              url: '/documentation/json',
+            },
+          },
+        ],
       },
       plugins: {
-        paths: [join(__dirname, './fixtures/plugins/parse-payload.js')]
-      }
+        paths: [join(__dirname, './fixtures/plugins/parse-payload.js')],
+      },
     }
   )
   const composerOrigin = await composer.start()
@@ -98,7 +98,7 @@ test('should parse json response payload', async (t) => {
   {
     const { statusCode, body } = await request(composerOrigin, {
       method: 'GET',
-      path: '/users/1'
+      path: '/users/1',
     })
 
     assert.equal(statusCode, 200)
@@ -120,14 +120,14 @@ test('should parse text response payload', async (t) => {
             id: 'api1',
             origin: 'http://127.0.0.1:' + api.server.address().port,
             openapi: {
-              url: '/documentation/json'
-            }
-          }
-        ]
+              url: '/documentation/json',
+            },
+          },
+        ],
       },
       plugins: {
-        paths: [join(__dirname, './fixtures/plugins/parse-payload.js')]
-      }
+        paths: [join(__dirname, './fixtures/plugins/parse-payload.js')],
+      },
     }
   )
   const composerOrigin = await composer.start()
@@ -135,7 +135,7 @@ test('should parse text response payload', async (t) => {
   {
     const { statusCode, body } = await request(composerOrigin, {
       method: 'GET',
-      path: '/text'
+      path: '/text',
     })
 
     assert.equal(statusCode, 200)
@@ -157,11 +157,11 @@ test('should throw an error if addComposerOnRouteHook called when app is ready',
             id: 'api1',
             origin: 'http://127.0.0.1:' + api.server.address().port,
             openapi: {
-              url: '/documentation/json'
-            }
-          }
-        ]
-      }
+              url: '/documentation/json',
+            },
+          },
+        ],
+      },
     }
   )
 
@@ -187,14 +187,14 @@ test('should send two different schema objects into different composer hooks', a
             id: 'api1',
             origin: 'http://127.0.0.1:' + api.server.address().port,
             openapi: {
-              file: join(__dirname, './fixtures/schemas/users-with-refs.json')
-            }
-          }
-        ]
+              file: join(__dirname, './fixtures/schemas/users-with-refs.json'),
+            },
+          },
+        ],
       },
       plugins: {
-        paths: [join(__dirname, './fixtures/plugins/hooks-with-refs.js')]
-      }
+        paths: [join(__dirname, './fixtures/plugins/hooks-with-refs.js')],
+      },
     }
   )
 
@@ -202,7 +202,7 @@ test('should send two different schema objects into different composer hooks', a
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
 
   assert.equal(statusCode, 200)

@@ -10,7 +10,7 @@ const { request, Agent, setGlobalDispatcher } = require('undici')
 
 const agent = new Agent({
   keepAliveTimeout: 10,
-  keepAliveMaxTimeout: 10
+  keepAliveMaxTimeout: 10,
 })
 setGlobalDispatcher(agent)
 
@@ -20,13 +20,13 @@ async function buildAuthorizer (opts = {}) {
   app.register(require('@fastify/session'), {
     cookieName: 'sessionId',
     secret: 'a secret with minimum length of 32 characters',
-    cookie: { secure: false }
+    cookie: { secure: false },
   })
 
   app.post('/login', async (request, reply) => {
     request.session.user = request.body
     return {
-      status: 'ok'
+      status: 'ok',
     }
   })
 
@@ -59,11 +59,11 @@ test('users can save and update their own pages, read everybody\'s and delete no
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(auth, {
     webhook: {
-      url: `http://localhost:${authorizer.server.address().port}/authorize`
+      url: `http://localhost:${authorizer.server.address().port}/authorize`,
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
@@ -73,20 +73,20 @@ test('users can save and update their own pages, read everybody\'s and delete no
       find: true,
       delete: false,
       defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID'
+        userId: 'X-PLATFORMATIC-USER-ID',
       },
       save: {
         checks: {
-          userId: 'X-PLATFORMATIC-USER-ID'
-        }
-      }
+          userId: 'X-PLATFORMATIC-USER-ID',
+        },
+      },
     }, {
       role: 'anonymous',
       entity: 'page',
       find: false,
       delete: false,
-      save: false
-    }]
+      save: false,
+    }],
   })
   test.after(() => {
     app.close()
@@ -99,12 +99,12 @@ test('users can save and update their own pages, read everybody\'s and delete no
     const res = await request(`http://localhost:${authorizer.server.address().port}/login`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         'X-PLATFORMATIC-USER-ID': userId,
-        'X-PLATFORMATIC-ROLE': role
-      })
+        'X-PLATFORMATIC-ROLE': role,
+      }),
     })
 
     res.body.resume()
@@ -120,7 +120,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        cookie
+        cookie,
       },
       body: {
         query: `
@@ -131,8 +131,8 @@ test('users can save and update their own pages, read everybody\'s and delete no
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
@@ -140,9 +140,9 @@ test('users can save and update their own pages, read everybody\'s and delete no
         savePage: {
           id: 1,
           title: 'Hello',
-          userId: 42
-        }
-      }
+          userId: 42,
+        },
+      },
     }, 'savePage response')
   }
 
@@ -151,7 +151,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        cookie
+        cookie,
       },
       body: {
         query: `
@@ -162,8 +162,8 @@ test('users can save and update their own pages, read everybody\'s and delete no
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     deepEqual(res.json(), {
@@ -171,9 +171,9 @@ test('users can save and update their own pages, read everybody\'s and delete no
         getPageById: {
           id: 1,
           title: 'Hello',
-          userId: 42
-        }
-      }
+          userId: 42,
+        },
+      },
     }, 'pages response')
   }
 
@@ -183,14 +183,14 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'GET',
       url: '/pages',
       headers: {
-        cookie
-      }
+        cookie,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     deepEqual(res.json(), [{
       id: 1,
       title: 'Hello',
-      userId: 42
+      userId: 42,
     }]
     , 'pages response')
   }
@@ -200,7 +200,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        cookie
+        cookie,
       },
       body: {
         query: `
@@ -210,17 +210,17 @@ test('users can save and update their own pages, read everybody\'s and delete no
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
       data: {
         savePage: {
           id: 1,
-          title: 'Hello World'
-        }
-      }
+          title: 'Hello World',
+        },
+      },
     }, 'savePage response')
   }
 
@@ -229,7 +229,7 @@ test('users can save and update their own pages, read everybody\'s and delete no
       method: 'POST',
       url: '/graphql',
       headers: {
-        cookie
+        cookie,
       },
       body: {
         query: `
@@ -239,17 +239,17 @@ test('users can save and update their own pages, read everybody\'s and delete no
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     deepEqual(res.json(), {
       data: {
         getPageById: {
           id: 1,
-          title: 'Hello World'
-        }
-      }
+          title: 'Hello World',
+        },
+      },
     }, 'pages response')
   }
 })
@@ -265,7 +265,7 @@ test('Non-200 status code', async (t) => {
         err.statusCode = request.headers['X-STATUS-CODE']
         throw err
       }
-    }
+    },
   })
   const app = fastify()
   app.register(core, {
@@ -275,11 +275,11 @@ test('Non-200 status code', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(auth, {
     webhook: {
-      url: `http://localhost:${authorizer.server.address().port}/authorize`
+      url: `http://localhost:${authorizer.server.address().port}/authorize`,
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
@@ -289,20 +289,20 @@ test('Non-200 status code', async (t) => {
       find: true,
       delete: false,
       defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID'
+        userId: 'X-PLATFORMATIC-USER-ID',
       },
       save: {
         checks: {
-          userId: 'X-PLATFORMATIC-USER-ID'
-        }
-      }
+          userId: 'X-PLATFORMATIC-USER-ID',
+        },
+      },
     }, {
       role: 'anonymous',
       entity: 'page',
       find: false,
       delete: false,
-      save: false
-    }]
+      save: false,
+    }],
   })
   test.after(() => {
     app.close()
@@ -324,13 +324,13 @@ test('Non-200 status code', async (t) => {
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
       data: {
-        savePage: null
+        savePage: null,
       },
       errors: [
         {
@@ -338,14 +338,14 @@ test('Non-200 status code', async (t) => {
           locations: [
             {
               line: 3,
-              column: 13
-            }
+              column: 13,
+            },
           ],
           path: [
-            'savePage'
-          ]
-        }
-      ]
+            'savePage',
+          ],
+        },
+      ],
     }, 'savePage response')
   }
 
@@ -354,7 +354,7 @@ test('Non-200 status code', async (t) => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        'X-STATUS-CODE': '403'
+        'X-STATUS-CODE': '403',
       },
       body: {
         query: `
@@ -365,13 +365,13 @@ test('Non-200 status code', async (t) => {
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
       data: {
-        savePage: null
+        savePage: null,
       },
       errors: [
         {
@@ -379,14 +379,14 @@ test('Non-200 status code', async (t) => {
           locations: [
             {
               line: 3,
-              column: 13
-            }
+              column: 13,
+            },
           ],
           path: [
-            'savePage'
-          ]
-        }
-      ]
+            'savePage',
+          ],
+        },
+      ],
     }, 'savePage response')
   }
 })

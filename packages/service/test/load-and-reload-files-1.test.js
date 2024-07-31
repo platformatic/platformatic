@@ -23,13 +23,13 @@ test('load and reload', async (t) => {
   const app = await buildServer({
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
-      paths: [file]
+      paths: [file],
     },
     watch: false,
-    metrics: false
+    metrics: false,
   })
 
   t.after(async () => {

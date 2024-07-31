@@ -9,8 +9,8 @@ process.env.TZ = 'UTC'
 const connInfo = {
   autoTimestamp: {
     createdAt: 'inserted_at',
-    updatedAt: 'updated_at'
-  }
+    updatedAt: 'updated_at',
+  },
 }
 
 if (!process.env.DB || process.env.DB === 'postgresql') {
@@ -47,7 +47,7 @@ const fakeLogger = {
   info: () => { },
   warn: () => { },
   error: () => { },
-  fatal: () => { }
+  fatal: () => { },
 }
 
 module.exports.fakeLogger = fakeLogger
@@ -65,7 +65,7 @@ module.exports.setupDatabase = async function ({ seed, cache, t }) {
     },
     ignore: {},
     hooks: {},
-    cache
+    cache,
   })
 }
 

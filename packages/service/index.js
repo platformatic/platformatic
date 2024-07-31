@@ -102,7 +102,7 @@ platformaticService.configManagerConfig = {
     useDefaults: true,
     coerceTypes: true,
     allErrors: true,
-    strict: false
+    strict: false,
   },
   async transformConfig () {
     // Set watch to true by default. This is not possible
@@ -132,7 +132,7 @@ platformaticService.configManagerConfig = {
       this.current.watch.ignore.push(outDir + '/**/*')
     }
   },
-  upgrade
+  upgrade,
 }
 
 function _buildServer (options, app) {

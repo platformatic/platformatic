@@ -9,13 +9,13 @@ const fastify = require('fastify')
 const fakeLogger = {
   trace: () => {},
   error: () => {},
-  warn: () => {}
+  warn: () => {},
 }
 
 test('should throw if no connection string is provided', async () => {
   try {
     await connect({
-      connectionString: false
+      connectionString: false,
     })
   } catch (err) {
     equal(err.message, 'connectionString is required')
@@ -41,7 +41,7 @@ test('[PG] return entities', { skip: !isPg }, async (t) => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
   const pageEntity = mapper.entities.page
   equal(pageEntity.name, 'Page')
@@ -69,7 +69,7 @@ test('[mysql] return entities', { skip: !isMysql }, async (t) => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
   const pageEntity = mapper.entities.page
   equal(pageEntity.name, 'Page')
@@ -97,7 +97,7 @@ test('[sqlite] return entities', { skip: !isSQLite }, async (t) => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
   const pageEntity = mapper.entities.page
   equal(pageEntity.name, 'Page')
@@ -130,7 +130,7 @@ test('ignore tables', async (t) => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: { users: true },
-    hooks: {}
+    hooks: {},
   })
   equal(mapper.entities.users, undefined)
 })
@@ -149,7 +149,7 @@ test('[PG] return entities with Fastify', { skip: !isPg }, async (t) => {
   app.register(plugin, {
     connectionString: connInfo.connectionString,
     log: fakeLogger,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
   await app.ready()
   const pageEntity = app.platformatic.entities.page
@@ -172,7 +172,7 @@ test('[mysql] return entities', { skip: !isMysql }, async (t) => {
   t.after(() => app.close())
   app.register(plugin, {
     connectionString: connInfo.connectionString,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
   await app.ready()
   const pageEntity = app.platformatic.entities.page
@@ -195,7 +195,7 @@ test('[sqlite] return entities', { skip: !isSQLite }, async (t) => {
   t.after(() => app.close())
   app.register(plugin, {
     connectionString: connInfo.connectionString,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
   await app.ready()
   const pageEntity = app.platformatic.entities.page
@@ -225,7 +225,7 @@ test('platformaticContext', async (t) => {
   t.after(() => app.close())
   app.register(plugin, {
     connectionString: connInfo.connectionString,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
 
   app.get('/', function (req, reply) {
@@ -247,7 +247,7 @@ test('platformatic decorator already present', async () => {
   test.after(() => app.close())
   app.register(plugin, {
     connectionString: connInfo.connectionString,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
   await app.ready()
 })
@@ -269,7 +269,7 @@ test('clean up all tables', async () => {
   const mapper = await connect({
     connectionString: connInfo.connectionString,
     log: fakeLogger,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
 
   const res = await mapper.entities.page.save({ input: { title: 'hello' } })
@@ -326,7 +326,7 @@ test('clean up all tables with foreign keys', async () => {
   const mapper = await connect({
     connectionString: connInfo.connectionString,
     log: fakeLogger,
-    onDatabaseLoad
+    onDatabaseLoad,
   })
 
   {

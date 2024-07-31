@@ -35,14 +35,14 @@ test('ignore a table', async (t) => {
   app.register(sqlMapper, {
     ...connInfo,
     ignore: {
-      categories: true
+      categories: true,
     },
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -62,8 +62,8 @@ test('ignore a table', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'introspection query status code')
     const data = res.json().data
@@ -77,15 +77,15 @@ test('ignore a column', async (t) => {
     ...connInfo,
     ignore: {
       categories: {
-        name: true
-      }
+        name: true,
+      },
     },
     async onDatabaseLoad (db, sql) {
       pass('onDatabaseLoad called')
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -108,8 +108,8 @@ test('ignore a column', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'introspection query status code')
     const data = res.json().data
@@ -127,12 +127,12 @@ test('ignore a table via sql-graphql option', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlGraphQL, {
     ignore: {
-      category: true
-    }
+      category: true,
+    },
   })
   t.after(() => app.close())
 
@@ -151,8 +151,8 @@ test('ignore a table via sql-graphql option', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'introspection query status code')
     const data = res.json().data
@@ -177,8 +177,8 @@ test('show a warning if there is no ignored entity', async (t) => {
         if (msg === 'Ignored graphql entity "missingEntityPages" not found. Did you mean "page"?') {
           pass('warning message is shown')
         }
-      }
-    }
+      },
+    },
   })
 
   app.register(sqlMapper, {
@@ -188,12 +188,12 @@ test('show a warning if there is no ignored entity', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlGraphQL, {
     ignore: {
-      missingEntityPages: true
-    }
+      missingEntityPages: true,
+    },
   })
   t.after(() => app.close())
 
@@ -209,14 +209,14 @@ test('ignore a column via sql-graphql option', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlGraphQL, {
     ignore: {
       category: {
-        name: true
-      }
-    }
+        name: true,
+      },
+    },
   })
   t.after(() => app.close())
 
@@ -238,8 +238,8 @@ test('ignore a column via sql-graphql option', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'introspection query status code')
     const data = res.json().data
@@ -265,8 +265,8 @@ test('show a warning if there is no ignored entity field', async (t) => {
         if (msg === 'Ignored graphql field "missingFieldName" not found in entity "category". Did you mean "name"?') {
           pass('warning message is shown')
         }
-      }
-    }
+      },
+    },
   })
 
   app.register(sqlMapper, {
@@ -276,14 +276,14 @@ test('show a warning if there is no ignored entity field', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlGraphQL, {
     ignore: {
       category: {
-        missingFieldName: true
-      }
-    }
+        missingFieldName: true,
+      },
+    },
   })
   t.after(() => app.close())
 

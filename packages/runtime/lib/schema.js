@@ -10,11 +10,11 @@ const platformaticRuntimeSchema = {
   type: 'object',
   properties: {
     $schema: {
-      type: 'string'
+      type: 'string',
     },
     preload: {
       type: 'string',
-      resolvePath: true
+      resolvePath: true,
     },
     autoload: {
       type: 'object',
@@ -23,14 +23,14 @@ const platformaticRuntimeSchema = {
       properties: {
         path: {
           type: 'string',
-          resolvePath: true
+          resolvePath: true,
         },
         exclude: {
           type: 'array',
           default: [],
           items: {
-            type: 'string'
-          }
+            type: 'string',
+          },
         },
         mappings: {
           type: 'object',
@@ -40,89 +40,89 @@ const platformaticRuntimeSchema = {
             required: ['id', 'config'],
             properties: {
               id: {
-                type: 'string'
+                type: 'string',
               },
               config: {
-                type: 'string'
+                type: 'string',
               },
               useHttp: {
-                type: 'boolean'
-              }
-            }
-          }
-        }
-      }
+                type: 'boolean',
+              },
+            },
+          },
+        },
+      },
     },
     telemetry,
     server,
     entrypoint: {
-      type: 'string'
+      type: 'string',
     },
     hotReload: {
       anyOf: [
         {
-          type: 'boolean'
+          type: 'boolean',
         },
         {
-          type: 'string'
-        }
-      ]
+          type: 'string',
+        },
+      ],
     },
     inspectorOptions: {
       type: 'object',
       properties: {
         host: {
-          type: 'string'
+          type: 'string',
         },
         port: {
-          type: 'number'
+          type: 'number',
         },
         breakFirstLine: {
-          type: 'boolean'
+          type: 'boolean',
         },
         hotReloadDisabled: {
-          type: 'boolean'
-        }
-      }
+          type: 'boolean',
+        },
+      },
     },
     undici: {
       type: 'object',
       properties: {
         agentOptions: {
           type: 'object',
-          additionalProperties: true
+          additionalProperties: true,
         },
         interceptors: {
           anyOf: [{
             type: 'array',
             items: {
-              $ref: '#/$defs/undiciInterceptor'
-            }
+              $ref: '#/$defs/undiciInterceptor',
+            },
           }, {
             type: 'object',
             properties: {
               Client: {
                 type: 'array',
                 items: {
-                  $ref: '#/$defs/undiciInterceptor'
-                }
+                  $ref: '#/$defs/undiciInterceptor',
+                },
               },
               Pool: {
                 type: 'array',
                 items: {
-                  $ref: '#/$defs/undiciInterceptor'
-                }
+                  $ref: '#/$defs/undiciInterceptor',
+                },
               },
               Agent: {
                 type: 'array',
                 items: {
-                  $ref: '#/$defs/undiciInterceptor'
-                }
-              }
-            }
-          }]
-        }
-      }
+                  $ref: '#/$defs/undiciInterceptor',
+                },
+              },
+            },
+          }],
+        },
+      },
     },
     managementApi: {
       anyOf: [
@@ -135,14 +135,14 @@ const platformaticRuntimeSchema = {
               maxSize: {
                 type: 'number',
                 minimum: 5,
-                default: 200
-              }
-            }
+                default: 200,
+              },
+            },
           },
-          additionalProperties: false
-        }
+          additionalProperties: false,
+        },
       ],
-      default: true
+      default: true,
     },
     metrics: {
       anyOf: [
@@ -153,8 +153,8 @@ const platformaticRuntimeSchema = {
             port: {
               anyOf: [
                 { type: 'integer' },
-                { type: 'string' }
-              ]
+                { type: 'string' },
+              ],
             },
             hostname: { type: 'string' },
             endpoint: { type: 'string' },
@@ -162,26 +162,26 @@ const platformaticRuntimeSchema = {
               type: 'object',
               properties: {
                 username: { type: 'string' },
-                password: { type: 'string' }
+                password: { type: 'string' },
               },
               additionalProperties: false,
-              required: ['username', 'password']
+              required: ['username', 'password'],
             },
             labels: {
               type: 'object',
-              additionalProperties: { type: 'string' }
-            }
+              additionalProperties: { type: 'string' },
+            },
           },
-          additionalProperties: false
-        }
-      ]
+          additionalProperties: false,
+        },
+      ],
     },
     restartOnError: {
       default: true,
       anyOf: [
         { type: 'boolean' },
-        { type: 'string' }
-      ]
+        { type: 'string' },
+      ],
     },
     services: {
       type: 'array',
@@ -190,25 +190,25 @@ const platformaticRuntimeSchema = {
         required: ['id', 'path', 'config'],
         properties: {
           id: {
-            type: 'string'
+            type: 'string',
           },
           path: {
             type: 'string',
-            resolvePath: true
+            resolvePath: true,
           },
           config: {
-            type: 'string'
+            type: 'string',
           },
           useHttp: {
-            type: 'boolean'
-          }
-        }
-      }
-    }
+            type: 'boolean',
+          },
+        },
+      },
+    },
   },
   anyOf: [
     { required: ['autoload', 'entrypoint'] },
-    { required: ['services', 'entrypoint'] }
+    { required: ['services', 'entrypoint'] },
   ],
   additionalProperties: false,
   $defs: {
@@ -216,16 +216,16 @@ const platformaticRuntimeSchema = {
       type: 'object',
       properties: {
         module: {
-          type: 'string'
+          type: 'string',
         },
         options: {
           type: 'object',
-          additionalProperties: true
-        }
+          additionalProperties: true,
+        },
       },
-      required: ['module', 'options']
-    }
-  }
+      required: ['module', 'options'],
+    },
+  },
 }
 
 module.exports.schema = platformaticRuntimeSchema

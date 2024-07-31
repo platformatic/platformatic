@@ -12,5 +12,5 @@ module.exports.migration = {
     delete config.plugins?.hotReload
 
     return config
-  }
+  },
 }

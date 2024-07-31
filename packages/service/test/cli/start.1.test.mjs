@@ -29,12 +29,12 @@ test('start command', async (t) => {
 test('allow custom env properties', async (t) => {
   const { child, url } = await start(
     [
-      '-c', join(import.meta.url, '..', 'fixtures', 'custom-port-placeholder.json')
+      '-c', join(import.meta.url, '..', 'fixtures', 'custom-port-placeholder.json'),
     ],
     {
       env: {
-        A_CUSTOM_PORT: '11111'
-      }
+        A_CUSTOM_PORT: '11111',
+      },
     }
   )
   t.after(() => {

@@ -14,17 +14,17 @@ test('should resolve openapi services to the origin', async (t) => {
           {
             id: 'service1',
             openapi: {
-              file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'users.json')
-            }
+              file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'users.json'),
+            },
           },
           {
             id: 'service2',
             openapi: {
-              file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'posts.json')
-            }
-          }
-        ]
-      }
+              file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'posts.json'),
+            },
+          },
+        ],
+      },
     }
   )
 
@@ -48,9 +48,9 @@ test('should resolve graphql services', async (t) => {
       Query: {
         async add (_, { x, y }) {
           return x + y
-        }
-      }
-    }
+        },
+      },
+    },
   })
   const graphql2 = await createGraphqlService(t, {
     schema: `
@@ -61,9 +61,9 @@ test('should resolve graphql services', async (t) => {
       Query: {
         async mul (_, { x, y }) {
           return x * y
-        }
-      }
-    }
+        },
+      },
+    },
   })
 
   const graphql1Host = await graphql1.listen()
@@ -76,15 +76,15 @@ test('should resolve graphql services', async (t) => {
           {
             id: 'graphql1',
             origin: graphql1Host,
-            graphql: true
+            graphql: true,
           },
           {
             id: 'graphql2',
             origin: graphql2Host,
-            graphql: true
-          }
-        ]
-      }
+            graphql: true,
+          },
+        ],
+      },
     }
   )
 
@@ -104,9 +104,9 @@ test('should resolve different services', async (t) => {
       Query: {
         async add (_, { x, y }) {
           return x + y
-        }
-      }
-    }
+        },
+      },
+    },
   })
 
   const graphql2 = await createGraphqlService(t, {
@@ -118,9 +118,9 @@ test('should resolve different services', async (t) => {
       Query: {
         async mul (_, { x, y }) {
           return x * y
-        }
-      }
-    }
+        },
+      },
+    },
   })
 
   const graphql1Host = await graphql1.listen()
@@ -133,30 +133,30 @@ test('should resolve different services', async (t) => {
           {
             id: 'graphql',
             origin: graphql1Host,
-            graphql: true
+            graphql: true,
           },
           {
             id: 'openapi',
             origin: 'http://openapi.plt.local',
             openapi: {
-              file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'users.json')
-            }
+              file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'users.json'),
+            },
           },
           {
             id: 'openapi-and-graphql',
             origin: 'http://openapi-and-graphql.plt.local',
             openapi: {
-              file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'posts.json')
+              file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'posts.json'),
             },
             graphql: {
-              host: graphql2Host
-            }
+              host: graphql2Host,
+            },
           },
           {
-            id: 'none'
-          }
-        ]
-      }
+            id: 'none',
+          },
+        ],
+      },
     }
   )
 

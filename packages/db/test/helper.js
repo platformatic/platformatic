@@ -20,8 +20,8 @@ const agent = new Agent({
   keepAliveTimeout: 10,
   keepAliveMaxTimeout: 10,
   tls: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false,
+  },
 })
 setGlobalDispatcher(agent)
 
@@ -38,11 +38,11 @@ async function getConnectionInfo (dbType) {
 
     return {
       connectionInfo: {
-        connectionString
+        connectionString,
       },
       async dropTestDB () {
         await rm(pathToSqlite).catch(() => {})
-      }
+      },
     }
   }
 
@@ -62,10 +62,10 @@ async function getConnectionInfo (dbType) {
       debug: () => {},
       info: () => {},
       trace: () => {},
-      error: () => {}
+      error: () => {},
     },
     connectionString: baseConnectionString,
-    poolSize: 1
+    poolSize: 1,
   })
 
   const connectionInfo = {}
@@ -79,7 +79,7 @@ async function getConnectionInfo (dbType) {
     async dropTestDB () {
       await db.query(sql`DROP DATABASE ${sql.ident(testDBName)};`)
       await db.dispose()
-    }
+    },
   }
 }
 
@@ -103,7 +103,7 @@ module.exports.createBasicPages = createBasicPages
 async function buildConfigManager (source, dirname) {
   const base = {
     server: {},
-    db: {}
+    db: {},
   }
   source = Object.assign(base, source)
 
@@ -114,7 +114,7 @@ async function buildConfigManager (source, dirname) {
   const configManager = new ConfigManager({
     ...platformaticDB.configManagerConfig,
     source,
-    dirname
+    dirname,
   })
 
   await configManager.parseAndValidate()

@@ -6,7 +6,7 @@ const ExporterSchema = {
     type: {
       type: 'string',
       enum: ['console', 'otlp', 'zipkin', 'memory'],
-      default: 'console'
+      default: 'console',
     },
     options: {
       type: 'object',
@@ -14,16 +14,16 @@ const ExporterSchema = {
       properties: {
         url: {
           type: 'string',
-          description: 'The URL to send the traces to. Not used for console or memory exporters.'
+          description: 'The URL to send the traces to. Not used for console or memory exporters.',
         },
         headers: {
           type: 'object',
-          description: 'Headers to send to the exporter. Not used for console or memory exporters.'
-        }
-      }
+          description: 'Headers to send to the exporter. Not used for console or memory exporters.',
+        },
+      },
     },
-    additionalProperties: false
-  }
+    additionalProperties: false,
+  },
 }
 
 const TelemetrySchema = {
@@ -32,11 +32,11 @@ const TelemetrySchema = {
   properties: {
     serviceName: {
       type: 'string',
-      description: 'The name of the service. Defaults to the folder name if not specified.'
+      description: 'The name of the service. Defaults to the folder name if not specified.',
     },
     version: {
       type: 'string',
-      description: 'The version of the service (optional)'
+      description: 'The version of the service (optional)',
     },
     skip: {
       type: 'array',
@@ -46,28 +46,28 @@ const TelemetrySchema = {
         properties: {
           path: {
             type: 'string',
-            description: 'The path to skip. Can be a string or a regex.'
+            description: 'The path to skip. Can be a string or a regex.',
           },
           method: {
             description: 'HTTP method to skip',
             type: 'string',
-            enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']
-          }
-        }
-      }
+            enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'],
+          },
+        },
+      },
     },
     exporter: {
       anyOf: [
         {
           type: 'array',
-          items: ExporterSchema
+          items: ExporterSchema,
         },
-        ExporterSchema
-      ]
-    }
+        ExporterSchema,
+      ],
+    },
   },
   required: ['serviceName'],
-  additionalProperties: false
+  additionalProperties: false,
 }
 
 module.exports = TelemetrySchema

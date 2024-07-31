@@ -21,7 +21,7 @@ function setupSubscriptions (app, metaMap, resolvers, ignores) {
     const { type } = meta
     const saved = `${field.singularName}Saved`
     fields[saved] = {
-      type
+      type,
     }
     resolvers.Subscription[saved] = {
       subscribe: async function * (_, query, ctx, info) {
@@ -54,7 +54,7 @@ function setupSubscriptions (app, metaMap, resolvers, ignores) {
             log.warn({ err, entity: field.singularName }, 'graphql subscription error')
           }
         }
-      }
+      },
     }
 
     const deleted = `${field.singularName}Deleted`
@@ -63,10 +63,10 @@ function setupSubscriptions (app, metaMap, resolvers, ignores) {
         name: `${field.name}Deleted`,
         fields: {
           [primaryKey]: {
-            type: meta.fields[primaryKey].type
-          }
-        }
-      })
+            type: meta.fields[primaryKey].type,
+          },
+        },
+      }),
     }
     resolvers.Subscription[deleted] = {
       subscribe: async (_, query, ctx, info) => {
@@ -75,12 +75,12 @@ function setupSubscriptions (app, metaMap, resolvers, ignores) {
         const res = await pubsub.subscribe(topic)
         ctx.reply.request.log.trace({ topic }, 'subscribed')
         return wrap(res, deleted)
-      }
+      },
     }
   }
   const subscription = new graphql.GraphQLObjectType({
     name: 'Subscription',
-    fields
+    fields,
   })
 
   return subscription

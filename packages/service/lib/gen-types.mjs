@@ -25,7 +25,7 @@ async function execute ({ logger, configManager }) {
 async function generateTypes (_args) {
   const logger = pino(pretty({
     translateTime: 'SYS:HH:MM:ss',
-    ignore: 'hostname,pid'
+    ignore: 'hostname,pid',
   }))
   const { configManager, args } = await loadConfig({}, _args, platformaticService)
   await configManager.parseAndValidate()

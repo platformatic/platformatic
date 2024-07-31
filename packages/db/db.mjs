@@ -22,7 +22,7 @@ const compile = buildCompileCmd(platformaticDB)
 const help = helpMe({
   dir: join(import.meta.url, 'help'),
   // the default
-  ext: '.txt'
+  ext: '.txt',
 })
 
 function wrapCommand (fn) {
@@ -64,8 +64,8 @@ program.register('schema', help.toStdout.bind(null, ['schema']))
 export async function runDB (argv) {
   const args = parseArgs(argv, {
     alias: {
-      v: 'version'
-    }
+      v: 'version',
+    },
   })
 
   if (args.version) {
@@ -77,7 +77,7 @@ export async function runDB (argv) {
 
   return {
     output,
-    help
+    help,
   }
 }
 

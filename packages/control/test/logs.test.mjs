@@ -45,7 +45,7 @@ test('should filter runtime logs by log level', async (t) => {
       cliPath, 'logs',
       '-p', runtime.pid,
       '-l', 'debug',
-      '--pretty', 'false'
+      '--pretty', 'false',
     ]
   )
   t.after(() => child.kill('SIGINT'))
@@ -119,7 +119,7 @@ test('should filter runtime logs by service id', async (t) => {
       '-p', runtime.pid,
       '-l', 'trace',
       '-s', 'service-2',
-      '--pretty', 'false'
+      '--pretty', 'false',
     ]
   )
   t.after(() => child.kill('SIGINT'))

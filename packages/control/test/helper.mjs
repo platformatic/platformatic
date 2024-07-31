@@ -8,7 +8,7 @@ import split from 'split2'
 
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 10,
-  keepAliveMaxTimeout: 10
+  keepAliveMaxTimeout: 10,
 }))
 
 const runtimeCliPath = createRequire(import.meta.url).resolve('@platformatic/runtime/runtime.mjs')

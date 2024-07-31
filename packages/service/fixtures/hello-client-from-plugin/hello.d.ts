@@ -14,11 +14,11 @@ type HelloPlugin = FastifyPluginAsync<NonNullable<hello.HelloOptions>>
 
 declare module 'fastify' {
   interface FastifyInstance {
-    'hello': Hello;
+    hello: Hello;
   }
 
   interface FastifyRequest {
-    'hello': Hello;
+    hello: Hello;
   }
 }
 
@@ -26,9 +26,9 @@ declare namespace hello {
   export interface HelloOptions {
     url: string
   }
-  export const hello: HelloPlugin;
-  export { hello as default };
+  export const hello: HelloPlugin
+  export { hello as default }
 }
 
-declare function hello(...params: Parameters<HelloPlugin>): ReturnType<HelloPlugin>;
-export = hello;
+declare function hello (...params: Parameters<HelloPlugin>): ReturnType<HelloPlugin>
+export = hello

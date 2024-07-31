@@ -15,7 +15,7 @@ async function cleanTmpDir () {
     force: true,
     recursive: true,
     maxRetries: 10,
-    retryDelay: 1000
+    retryDelay: 1000,
   }
 
   const results = await Promise.allSettled(filesToRemove.map(file => rm(file, removeOptions)))

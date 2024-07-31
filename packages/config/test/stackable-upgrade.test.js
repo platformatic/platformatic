@@ -27,12 +27,12 @@ test('stackable upgrade', async t => {
     module: './foo.js@0.42.0',
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
-      paths: ['./plugin.js']
+      paths: ['./plugin.js'],
     },
-    originalVersion: '0.42.0' // see foo.js
+    originalVersion: '0.42.0', // see foo.js
   })
 })
 
@@ -42,7 +42,7 @@ test('stackable upgrade should have the logger available', async t => {
 
   const stream = sink()
   const store = new Store({
-    logger: pino(stream)
+    logger: pino(stream),
   })
 
   t.after(() => {
@@ -55,8 +55,8 @@ test('stackable upgrade should have the logger available', async t => {
   await consecutive(stream, [
     {
       level: 30,
-      msg: 'bar'
-    }
+      msg: 'bar',
+    },
   ])
 })
 
@@ -79,11 +79,11 @@ test('stackable upgrade with extends', async t => {
     extends: './foo.js@0.42.0',
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     plugins: {
-      paths: ['./plugin.js']
+      paths: ['./plugin.js'],
     },
-    originalVersion: '0.42.0' // see foo.js
+    originalVersion: '0.42.0', // see foo.js
   })
 })

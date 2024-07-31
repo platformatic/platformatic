@@ -11,16 +11,16 @@ test('support prefix option', async (t) => {
     server: {
       hostname: '127.0.0.1',
       port: 0,
-      forceCloseConnections: true
+      forceCloseConnections: true,
     },
     service: {
       openapi: {
         path: join(__dirname, 'fixtures', 'openapi-spec-test.json'),
-        swaggerPrefix: '/my-prefix'
-      }
+        swaggerPrefix: '/my-prefix',
+      },
     },
     watch: false,
-    metrics: false
+    metrics: false,
   }
 
   const app = await buildServer(config)
@@ -42,17 +42,17 @@ test('support prefix option', async (t) => {
               type: 'object',
               properties: {
                 foo: {
-                  type: 'string'
+                  type: 'string',
                 },
                 bar: {
-                  type: 'string'
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+                  type: 'string',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   })
 })
 test('provide openapi spec from a file', async (t) => {
@@ -60,15 +60,15 @@ test('provide openapi spec from a file', async (t) => {
     server: {
       hostname: '127.0.0.1',
       port: 0,
-      forceCloseConnections: true
+      forceCloseConnections: true,
     },
     service: {
       openapi: {
-        path: join(__dirname, 'fixtures', 'openapi-spec-test.json')
-      }
+        path: join(__dirname, 'fixtures', 'openapi-spec-test.json'),
+      },
     },
     watch: false,
-    metrics: false
+    metrics: false,
   }
 
   const app = await buildServer(config)
@@ -91,17 +91,17 @@ test('provide openapi spec from a file', async (t) => {
                 type: 'object',
                 properties: {
                   foo: {
-                    type: 'string'
+                    type: 'string',
                   },
                   bar: {
-                    type: 'string'
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    type: 'string',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     })
 
     assert.deepEqual(body.paths['/hello'].get, {
@@ -115,17 +115,17 @@ test('provide openapi spec from a file', async (t) => {
                 type: 'object',
                 properties: {
                   foo: {
-                    type: 'string'
+                    type: 'string',
                   },
                   bar: {
-                    type: 'string'
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    type: 'string',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     })
   }
 })

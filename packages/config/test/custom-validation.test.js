@@ -11,10 +11,10 @@ test('should validate successfully with ajv typeof custom keyword', async (t) =>
       type: 'object',
       properties: {
         test: {
-          typeof: 'function'
-        }
-      }
-    }
+          typeof: 'function',
+        },
+      },
+    },
   })
 
   const parseResult = await cm.parse()
@@ -28,10 +28,10 @@ test('should get error with ajv typeof custom keyword', async (t) => {
       type: 'object',
       properties: {
         test: {
-          typeof: 'RegExp'
-        }
-      }
-    }
+          typeof: 'RegExp',
+        },
+      },
+    },
   })
 
   const parseResult = await cm.parse()

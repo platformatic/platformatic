@@ -18,22 +18,22 @@ async function setupOpenAPI (app, opts) {
     info: {
       title: 'Platformatic DB',
       description: 'Exposing a SQL database as REST',
-      version: '1.0.0'
-    }
+      version: '1.0.0',
+    },
   }, opts)
   app.log.trace({ openapi: openapiConfig })
   await app.register(Swagger, {
     exposeRoute: openapiConfig.exposeRoute,
     openapi: {
-      ...openapiConfig
+      ...openapiConfig,
     },
     refResolver: {
       buildLocalReference (json, baseUri, fragment, i) {
         // TODO figure out if we need def-${i}
         /* istanbul ignore next */
         return json.$id || `def-${i}`
-      }
-    }
+      },
+    },
   })
 
   const ignore = opts.ignore || []
@@ -53,15 +53,15 @@ async function setupOpenAPI (app, opts) {
     prefix: undefined,
     routePrefix,
     configuration: {
-      customCss: scalarTheme.theme
-    }
+      customCss: scalarTheme.theme,
+    },
   })
 
   app.addHook('onRoute', (routeOptions) => {
     if (paths[routeOptions.url]) {
       routeOptions.schema = {
         ...routeOptions.schema,
-        ...getSchemaOverrideFromOpenApiPathItem(paths[routeOptions.url], routeOptions.method)
+        ...getSchemaOverrideFromOpenApiPathItem(paths[routeOptions.url], routeOptions.method),
       }
     }
   })
@@ -97,7 +97,7 @@ async function setupOpenAPI (app, opts) {
       const targetEntity = app.platformatic.entities[targetEntityName]
       const reverseRelationship = {
         sourceEntity: relation.entityName,
-        relation
+        relation,
       }
       /* istanbul ignore next */
       targetEntity.reverseRelationships = targetEntity.reverseRelationships || []
@@ -141,7 +141,7 @@ async function setupOpenAPI (app, opts) {
         entity,
         prefix: localPrefix,
         ignore: ignore[entity.singularName] || {},
-        ignoreRoutes
+        ignoreRoutes,
       })
     } else {
       // TODO support ignore
@@ -149,7 +149,7 @@ async function setupOpenAPI (app, opts) {
         entity,
         prefix: localPrefix,
         ignore,
-        ignoreRoutes
+        ignoreRoutes,
       })
     }
   }

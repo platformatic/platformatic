@@ -57,15 +57,15 @@ test('nested resolver', async (t) => {
           );
         `)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
 
   const categories = [{
-    name: 'Pets'
+    name: 'Pets',
   }, {
-    name: 'Food'
+    name: 'Food',
   }]
 
   await app.inject({
@@ -81,9 +81,9 @@ test('nested resolver', async (t) => {
             }
           `,
       variables: {
-        inputs: categories
-      }
-    }
+        inputs: categories,
+      },
+    },
   })
 
   {
@@ -102,8 +102,8 @@ test('nested resolver', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
@@ -113,10 +113,10 @@ test('nested resolver', async (t) => {
           title: 'Hello',
           category: {
             id: 1,
-            name: 'Pets'
-          }
-        }
-      }
+            name: 'Pets',
+          },
+        },
+      },
     }, 'savePage response')
   }
 
@@ -144,8 +144,8 @@ test('nested resolver', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
@@ -161,12 +161,12 @@ test('nested resolver', async (t) => {
               title: 'Hello',
               category: {
                 id: 1,
-                name: 'Pets'
-              }
-            }]
-          }
-        }
-      }
+                name: 'Pets',
+              },
+            }],
+          },
+        },
+      },
     }, 'pages response')
   }
 
@@ -191,8 +191,8 @@ test('nested resolver', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
@@ -204,12 +204,12 @@ test('nested resolver', async (t) => {
             pages: [{
               title: 'Hello',
               category: {
-                name: 'Pets'
-              }
-            }]
-          }
-        }
-      }
+                name: 'Pets',
+              },
+            }],
+          },
+        },
+      },
     }, 'pages response')
   }
 
@@ -233,8 +233,8 @@ test('nested resolver', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'categories.posts status code')
     same(res.json(), {
@@ -247,15 +247,15 @@ test('nested resolver', async (t) => {
             title: 'Hello',
             category: {
               id: 1,
-              name: 'Pets'
-            }
-          }]
+              name: 'Pets',
+            },
+          }],
         }, {
           id: 2,
           name: 'Food',
-          pages: []
-        }]
-      }
+          pages: [],
+        }],
+      },
     }, 'categories.posts response')
   }
 })
@@ -309,7 +309,7 @@ test('nested resolver with more of 10 rows in nested entity', async (t) => {
           );
         `)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -325,7 +325,7 @@ test('nested resolver with more of 10 rows in nested entity', async (t) => {
     { name: 'Category 08' },
     { name: 'Category 09' },
     { name: 'Category 10' },
-    { name: 'Category 11' }
+    { name: 'Category 11' },
   ]
   await app.inject({
     method: 'POST',
@@ -340,9 +340,9 @@ test('nested resolver with more of 10 rows in nested entity', async (t) => {
             }
           `,
       variables: {
-        inputs: categories
-      }
-    }
+        inputs: categories,
+      },
+    },
   })
 
   const pages = [
@@ -356,7 +356,7 @@ test('nested resolver with more of 10 rows in nested entity', async (t) => {
     { title: 'Page 08', categoryId: 8 },
     { title: 'Page 09', categoryId: 9 },
     { title: 'Page 10', categoryId: 10 },
-    { title: 'Page 11', categoryId: 11 }
+    { title: 'Page 11', categoryId: 11 },
   ]
   await app.inject({
     method: 'POST',
@@ -371,9 +371,9 @@ test('nested resolver with more of 10 rows in nested entity', async (t) => {
             }
           `,
       variables: {
-        inputs: pages
-      }
-    }
+        inputs: pages,
+      },
+    },
   })
 
   {
@@ -391,8 +391,8 @@ test('nested resolver with more of 10 rows in nested entity', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages.category status code')
     same(res.json(), {
@@ -408,9 +408,9 @@ test('nested resolver with more of 10 rows in nested entity', async (t) => {
           { id: 8, title: 'Page 08', category: { id: 8 } },
           { id: 9, title: 'Page 09', category: { id: 9 } },
           { id: 10, title: 'Page 10', category: { id: 10 } },
-          { id: 11, title: 'Page 11', category: { id: 11 } }
-        ]
-      }
+          { id: 11, title: 'Page 11', category: { id: 11 } },
+        ],
+      },
     }, 'pages.category response')
   }
 })
@@ -464,21 +464,21 @@ test('disable one-too-many', async (t) => {
           );
         `)
       }
-    }
+    },
   })
   app.register(sqlGraphQL, {
     resolvers: {
       Category: {
-        pages: false
-      }
-    }
+        pages: false,
+      },
+    },
   })
   t.after(() => app.close())
 
   const categories = [{
-    name: 'Pets'
+    name: 'Pets',
   }, {
-    name: 'Food'
+    name: 'Food',
   }]
 
   await app.inject({
@@ -494,9 +494,9 @@ test('disable one-too-many', async (t) => {
             }
           `,
       variables: {
-        inputs: categories
-      }
-    }
+        inputs: categories,
+      },
+    },
   })
 
   {
@@ -515,8 +515,8 @@ test('disable one-too-many', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
@@ -526,10 +526,10 @@ test('disable one-too-many', async (t) => {
           title: 'Hello',
           category: {
             id: 1,
-            name: 'Pets'
-          }
-        }
-      }
+            name: 'Pets',
+          },
+        },
+      },
     }, 'savePage response')
   }
 
@@ -549,8 +549,8 @@ test('disable one-too-many', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
@@ -560,10 +560,10 @@ test('disable one-too-many', async (t) => {
           title: 'Hello',
           category: {
             id: 1,
-            name: 'Pets'
-          }
-        }
-      }
+            name: 'Pets',
+          },
+        },
+      },
     }, 'pages response')
   }
 
@@ -587,14 +587,14 @@ test('disable one-too-many', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 400, 'categories.posts status code')
     pass(match(res.json(), {
       errors: [{
-        message: 'Cannot query field "pages" on type "Category". Did you mean "name"?'
-      }]
+        message: 'Cannot query field "pages" on type "Category". Did you mean "name"?',
+      }],
     }, 'categories.posts response'))
   }
 })
@@ -648,21 +648,21 @@ test('disable many-to-one relationship', async (t) => {
           );
         `)
       }
-    }
+    },
   })
   app.register(sqlGraphQL, {
     resolvers: {
       Page: {
-        category: false
-      }
-    }
+        category: false,
+      },
+    },
   })
   t.after(() => app.close())
 
   const categories = [{
-    name: 'Pets'
+    name: 'Pets',
   }, {
-    name: 'Food'
+    name: 'Food',
   }]
 
   await app.inject({
@@ -678,9 +678,9 @@ test('disable many-to-one relationship', async (t) => {
             }
           `,
       variables: {
-        inputs: categories
-      }
-    }
+        inputs: categories,
+      },
+    },
   })
 
   {
@@ -695,17 +695,17 @@ test('disable many-to-one relationship', async (t) => {
               title
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
       data: {
         savePage: {
           id: 1,
-          title: 'Hello'
-        }
-      }
+          title: 'Hello',
+        },
+      },
     }, 'savePage response')
   }
 
@@ -725,14 +725,14 @@ test('disable many-to-one relationship', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 400, 'pages status code')
     pass(match(res.json(), {
       errors: [{
-        message: 'Cannot query field "category" on type "Page". Did you mean "categoryId"?'
-      }]
+        message: 'Cannot query field "category" on type "Page". Did you mean "categoryId"?',
+      }],
     }, 'pages response'))
   }
 
@@ -752,8 +752,8 @@ test('disable many-to-one relationship', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'categories.posts status code')
     same(res.json(), {
@@ -763,14 +763,14 @@ test('disable many-to-one relationship', async (t) => {
           name: 'Pets',
           pages: [{
             id: 1,
-            title: 'Hello'
-          }]
+            title: 'Hello',
+          }],
         }, {
           id: 2,
           name: 'Food',
-          pages: []
-        }]
-      }
+          pages: [],
+        }],
+      },
     }, 'categories.posts response')
   }
 })
@@ -824,15 +824,15 @@ test('nested update', async (t) => {
           );
         `)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
 
   const categories = [{
-    name: 'Pets'
+    name: 'Pets',
   }, {
-    name: 'Food'
+    name: 'Food',
   }]
 
   await app.inject({
@@ -848,9 +848,9 @@ test('nested update', async (t) => {
             }
           `,
       variables: {
-        inputs: categories
-      }
-    }
+        inputs: categories,
+      },
+    },
   })
 
   {
@@ -869,8 +869,8 @@ test('nested update', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
@@ -880,10 +880,10 @@ test('nested update', async (t) => {
           title: 'Hello',
           category: {
             id: 1,
-            name: 'Pets'
-          }
-        }
-      }
+            name: 'Pets',
+          },
+        },
+      },
     }, 'savePage response')
   }
 
@@ -911,8 +911,8 @@ test('nested update', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
@@ -928,12 +928,12 @@ test('nested update', async (t) => {
               title: 'Hello',
               category: {
                 id: 1,
-                name: 'Pets'
-              }
-            }]
-          }
-        }
-      }
+                name: 'Pets',
+              },
+            }],
+          },
+        },
+      },
     }, 'pages response')
   }
 
@@ -957,8 +957,8 @@ test('nested update', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'categories.posts status code')
     same(res.json(), {
@@ -971,15 +971,15 @@ test('nested update', async (t) => {
             title: 'Hello',
             category: {
               id: 1,
-              name: 'Pets'
-            }
-          }]
+              name: 'Pets',
+            },
+          }],
         }, {
           id: 2,
           name: 'Food',
-          pages: []
-        }]
-      }
+          pages: [],
+        }],
+      },
     }, 'categories.posts response')
   }
 
@@ -999,8 +999,8 @@ test('nested update', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
@@ -1010,10 +1010,10 @@ test('nested update', async (t) => {
           title: 'Updated',
           category: {
             id: 1,
-            name: 'Pets'
-          }
-        }
-      }
+            name: 'Pets',
+          },
+        },
+      },
     }, 'savePage response')
   }
 })
@@ -1067,15 +1067,15 @@ test('nested resolver without `id` suffix', async (t) => {
           );
         `)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
 
   const categories = [{
-    name: 'Pets'
+    name: 'Pets',
   }, {
-    name: 'Food'
+    name: 'Food',
   }]
 
   await app.inject({
@@ -1091,9 +1091,9 @@ test('nested resolver without `id` suffix', async (t) => {
             }
           `,
       variables: {
-        inputs: categories
-      }
-    }
+        inputs: categories,
+      },
+    },
   })
 
   {
@@ -1112,8 +1112,8 @@ test('nested resolver without `id` suffix', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     same(res.json(), {
@@ -1123,10 +1123,10 @@ test('nested resolver without `id` suffix', async (t) => {
           title: 'Hello',
           category: {
             id: 1,
-            name: 'Pets'
-          }
-        }
-      }
+            name: 'Pets',
+          },
+        },
+      },
     }, 'savePage response')
   }
 
@@ -1154,8 +1154,8 @@ test('nested resolver without `id` suffix', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
@@ -1171,12 +1171,12 @@ test('nested resolver without `id` suffix', async (t) => {
               title: 'Hello',
               category: {
                 id: 1,
-                name: 'Pets'
-              }
-            }]
-          }
-        }
-      }
+                name: 'Pets',
+              },
+            }],
+          },
+        },
+      },
     }, 'pages response')
   }
 
@@ -1201,8 +1201,8 @@ test('nested resolver without `id` suffix', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     same(res.json(), {
@@ -1214,12 +1214,12 @@ test('nested resolver without `id` suffix', async (t) => {
             pages: [{
               title: 'Hello',
               category: {
-                name: 'Pets'
-              }
-            }]
-          }
-        }
-      }
+                name: 'Pets',
+              },
+            }],
+          },
+        },
+      },
     }, 'pages response')
   }
 
@@ -1243,8 +1243,8 @@ test('nested resolver without `id` suffix', async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'categories.posts status code')
     same(res.json(), {
@@ -1257,15 +1257,15 @@ test('nested resolver without `id` suffix', async (t) => {
             title: 'Hello',
             category: {
               id: 1,
-              name: 'Pets'
-            }
-          }]
+              name: 'Pets',
+            },
+          }],
         }, {
           id: 2,
           name: 'Food',
-          pages: []
-        }]
-      }
+          pages: [],
+        }],
+      },
     }, 'categories.posts response')
   }
 })

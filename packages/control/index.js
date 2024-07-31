@@ -3,5 +3,5 @@
 const RuntimeApiClient = require('./lib/runtime-api-client')
 
 module.exports = {
-  RuntimeApiClient
+  RuntimeApiClient,
 }

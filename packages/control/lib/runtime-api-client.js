@@ -63,7 +63,7 @@ class RuntimeApiClient {
 
     const { statusCode, body } = await client.request({
       path: '/api/v1/metadata',
-      method: 'GET'
+      method: 'GET',
     })
 
     if (statusCode !== 200) {
@@ -80,7 +80,7 @@ class RuntimeApiClient {
 
     const { statusCode, body } = await client.request({
       path: '/api/v1/services',
-      method: 'GET'
+      method: 'GET',
     })
 
     if (statusCode !== 200) {
@@ -97,7 +97,7 @@ class RuntimeApiClient {
 
     const { statusCode, body } = await client.request({
       path: `/api/v1/services/${serviceId}/config`,
-      method: 'GET'
+      method: 'GET',
     })
 
     if (statusCode !== 200) {
@@ -114,7 +114,7 @@ class RuntimeApiClient {
 
     const { statusCode, body } = await client.request({
       path: '/api/v1/config',
-      method: 'GET'
+      method: 'GET',
     })
 
     if (statusCode !== 200) {
@@ -131,7 +131,7 @@ class RuntimeApiClient {
 
     const { statusCode, body } = await client.request({
       path: '/api/v1/env',
-      method: 'GET'
+      method: 'GET',
     })
 
     if (statusCode !== 200) {
@@ -158,7 +158,7 @@ class RuntimeApiClient {
 
     const { statusCode, body } = await client.request({
       path: '/api/v1/reload',
-      method: 'POST'
+      method: 'POST',
     })
 
     if (statusCode !== 200) {
@@ -172,7 +172,7 @@ class RuntimeApiClient {
 
     const { statusCode, body } = await client.request({
       path: '/api/v1/stop',
-      method: 'POST'
+      method: 'POST',
     })
 
     if (statusCode !== 200) {
@@ -211,7 +211,7 @@ class RuntimeApiClient {
     const { statusCode, body } = await client.request({
       path: '/api/v1/logs/' + logsId,
       method: 'GET',
-      query: { pid: runtimePID }
+      query: { pid: runtimePID },
     })
 
     if (statusCode !== 200) {
@@ -229,7 +229,7 @@ class RuntimeApiClient {
     const { statusCode, body } = await client.request({
       path: '/api/v1/logs/all',
       method: 'GET',
-      query: { pid: runtimePID }
+      query: { pid: runtimePID },
     })
 
     if (statusCode !== 200) {
@@ -247,7 +247,7 @@ class RuntimeApiClient {
     const { statusCode, body } = await client.request({
       path: '/api/v1/logs/indexes',
       method: 'GET',
-      query: { all }
+      query: { all },
     })
 
     if (statusCode !== 200) {
@@ -269,7 +269,7 @@ class RuntimeApiClient {
       method: options.method,
       headers: options.headers,
       query: options.query,
-      body: options.body
+      body: options.body,
     })
     return response
   }
@@ -289,7 +289,7 @@ class RuntimeApiClient {
       const socketPath = this.#getSocketPathFromPid(pid)
       undiciClient = new Client({
         hostname: 'localhost',
-        protocol: 'http:'
+        protocol: 'http:',
       }, { socketPath })
 
       this.#undiciClients.set(pid, undiciClient)

@@ -8,7 +8,7 @@ const { writeFile, mkdtemp } = require('fs/promises')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const {
   createComposer,
-  createOpenApiService
+  createOpenApiService,
 } = require('../helper')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
@@ -20,9 +20,9 @@ test('should rename static route', async (t) => {
   const openapiConfig = {
     paths: {
       '/users': {
-        alias: '/customers'
-      }
-    }
+        alias: '/customers',
+      },
+    },
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -38,17 +38,17 @@ test('should rename static route', async (t) => {
             origin: 'http://127.0.0.1:' + api.server.address().port,
             openapi: {
               url: '/documentation/json',
-              config: openapiConfigFile
-            }
-          }
-        ]
-      }
+              config: openapiConfigFile,
+            },
+          },
+        ],
+      },
     }
   )
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
@@ -67,7 +67,7 @@ test('should rename static route', async (t) => {
       { id: 1, name: 'test1' },
       { id: 2, name: 'test2' },
       { id: 3, name: 'test3' },
-      { id: 4, name: 'test4' }
+      { id: 4, name: 'test4' },
     ])
   }
 })
@@ -79,9 +79,9 @@ test('should rename parametric route', async (t) => {
   const openapiConfig = {
     paths: {
       '/users/{id}': {
-        alias: '/customers/{id}'
-      }
-    }
+        alias: '/customers/{id}',
+      },
+    },
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -97,17 +97,17 @@ test('should rename parametric route', async (t) => {
             origin: 'http://127.0.0.1:' + api.server.address().port,
             openapi: {
               url: '/documentation/json',
-              config: openapiConfigFile
-            }
-          }
-        ]
-      }
+              config: openapiConfigFile,
+            },
+          },
+        ],
+      },
     }
   )
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
@@ -133,9 +133,9 @@ test('should rename parametric route with prefix', async (t) => {
   const openapiConfig = {
     paths: {
       '/users/{id}': {
-        alias: '/customers/{id}'
-      }
-    }
+        alias: '/customers/{id}',
+      },
+    },
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -152,17 +152,17 @@ test('should rename parametric route with prefix', async (t) => {
             openapi: {
               url: '/documentation/json',
               config: openapiConfigFile,
-              prefix: '/prefix1'
-            }
-          }
-        ]
-      }
+              prefix: '/prefix1',
+            },
+          },
+        ],
+      },
     }
   )
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 

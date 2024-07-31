@@ -29,16 +29,16 @@ test('should get all runtime logs', async (t) => {
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath: app.managementApi.server.address(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   const res = await app.inject('service-1', {
     method: 'GET',
-    url: '/large-logs'
+    url: '/large-logs',
   })
   assert.strictEqual(res.statusCode, 200)
 
@@ -47,7 +47,7 @@ test('should get all runtime logs', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/logs/all'
+    path: '/api/v1/logs/all',
   })
   assert.strictEqual(statusCode, 200)
 
@@ -74,7 +74,7 @@ test('should get previous runtime logs', async (t) => {
     writeFile(join(prevRuntimeTmpDir, 'logs.2'), 'test-logs-2\n'),
     writeFile(join(prevRuntimeTmpDir, 'logs.3'), 'test-logs-3\n'),
     writeFile(join(prevRuntimeTmpDir, 'logs.4'), 'test-logs-4\n'),
-    writeFile(join(prevRuntimeTmpDir, 'logs.5'), 'test-logs-5\n')
+    writeFile(join(prevRuntimeTmpDir, 'logs.5'), 'test-logs-5\n'),
   ])
 
   const app = await buildServer(configFile)
@@ -88,19 +88,19 @@ test('should get previous runtime logs', async (t) => {
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath: app.managementApi.server.address(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   const { statusCode, body } = await client.request({
     method: 'GET',
     path: '/api/v1/logs/all',
     query: {
-      pid: prevRuntimePID
-    }
+      pid: prevRuntimePID,
+    },
   })
   assert.strictEqual(statusCode, 200)
 

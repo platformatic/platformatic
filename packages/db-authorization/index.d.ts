@@ -1,6 +1,6 @@
 import {
   type PlatformaticContext,
-  type WhereCondition
+  type WhereCondition,
 } from '@platformatic/sql-mapper'
 import { type FastifyPluginAsync } from 'fastify'
 import { type FastifyUserPluginOptions } from 'fastify-user'
@@ -77,4 +77,3 @@ export module errors {
   export const UnauthorizedField: (field: string) => FastifyError
   export const MissingNotNullableError: (field: string, entity: string) => FastifyError
 }
-

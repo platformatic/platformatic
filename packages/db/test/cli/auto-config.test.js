@@ -22,11 +22,11 @@ for (const fileType of fileTypes) {
     );`)
 
     const { child, url } = await start([
-      '-c', join(__dirname, '..', 'fixtures', 'auto-config', fileType, 'platformatic.db.' + fileType)
+      '-c', join(__dirname, '..', 'fixtures', 'auto-config', fileType, 'platformatic.db.' + fileType),
     ], {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     })
 
     let id
@@ -42,8 +42,8 @@ for (const fileType of fileTypes) {
                     title
                   }
                 }
-              `
-        })
+              `,
+        }),
       })
       assert.equal(res.statusCode, 200, 'savePage status code')
       const body = await res.body.json()
@@ -63,17 +63,17 @@ for (const fileType of fileTypes) {
                     title
                   }
                 }
-              `
-        })
+              `,
+        }),
       })
       assert.equal(res.statusCode, 200, 'pages status code')
       assert.deepEqual(await res.body.json(), {
         data: {
           getPageById: {
             id,
-            title: 'Hello'
-          }
-        }
+            title: 'Hello',
+          },
+        },
       }, 'pages response')
     }
 
@@ -89,17 +89,17 @@ for (const fileType of fileTypes) {
                     title
                   }
                 }
-              `
-        })
+              `,
+        }),
       })
       assert.equal(res.statusCode, 200, 'savePage status code')
       assert.deepEqual(await res.body.json(), {
         data: {
           savePage: {
             id,
-            title: 'Hello World'
-          }
-        }
+            title: 'Hello World',
+          },
+        },
       }, 'savePage response')
     }
 
@@ -115,17 +115,17 @@ for (const fileType of fileTypes) {
                     title
                   }
                 }
-              `
-        })
+              `,
+        }),
       })
       assert.equal(res.statusCode, 200, 'pages status code')
       assert.deepEqual(await res.body.json(), {
         data: {
           getPageById: {
             id,
-            title: 'Hello World'
-          }
-        }
+            title: 'Hello World',
+          },
+        },
       }, 'pages response')
     }
 

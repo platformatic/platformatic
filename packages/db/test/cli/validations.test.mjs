@@ -29,8 +29,8 @@ test('print validation errors', async (t) => {
       'node', [cliPath, 'start', '--config', join(import.meta.url, '..', 'fixtures', 'missing-required-values.json')],
       {
         env: {
-          DATABASE_URL: connectionInfo.connectionString
-        }
+          DATABASE_URL: connectionInfo.connectionString,
+        },
       }
     )
     assert.fail('should have thrown')

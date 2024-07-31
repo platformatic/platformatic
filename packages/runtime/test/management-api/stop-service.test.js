@@ -22,24 +22,24 @@ test('should stop service by service id', async (t) => {
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath: app.managementApi.server.address(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   t.after(async () => {
     await client.close()
     await Promise.all([
       app.close(),
-      app.managementApi.close()
+      app.managementApi.close(),
     ])
   })
 
   const { statusCode, body } = await client.request({
     method: 'POST',
-    path: '/api/v1/services/service-1/stop'
+    path: '/api/v1/services/service-1/stop',
   })
   await body.text()
 
@@ -67,24 +67,24 @@ test('should start stopped service by service id', async (t) => {
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath: app.managementApi.server.address(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   t.after(async () => {
     await client.close()
     await Promise.all([
       app.close(),
-      app.managementApi.close()
+      app.managementApi.close(),
     ])
   })
 
   const { statusCode, body } = await client.request({
     method: 'POST',
-    path: '/api/v1/services/service-1/start'
+    path: '/api/v1/services/service-1/start',
   })
   await body.text()
 
@@ -105,11 +105,11 @@ test('should proxy request to the service', async (t) => {
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath: app.managementApi.server.address(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   t.after(async () => {
@@ -117,13 +117,13 @@ test('should proxy request to the service', async (t) => {
 
     await Promise.all([
       app.close(),
-      app.managementApi.close()
+      app.managementApi.close(),
     ])
   })
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/services/service-2/proxy/hello'
+    path: '/api/v1/services/service-2/proxy/hello',
   })
 
   assert.strictEqual(statusCode, 200)

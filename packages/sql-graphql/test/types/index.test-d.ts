@@ -10,19 +10,19 @@ const pluginOptions: SQLGraphQLPluginOptions = {
     Mutation: {
       savePage: false,
       deletePages: false,
-      insertPages: false
+      insertPages: false,
     },
     Query: {
       async getCategory (root, args, context, info) {
         return { id: 1, name: 'Hello' }
-      }
+      },
     },
   },
   schema: `
     extend type Query {
       add(a: Int!, b: Int!): Int
     }
-  `
+  `,
 }
 
 const instance: FastifyInstance = fastify()

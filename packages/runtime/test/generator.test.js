@@ -17,7 +17,7 @@ mockAgent.disableNetConnect()
 describe('Generator', () => {
   test('should create a runtime with 2 services', async () => {
     const rg = new RuntimeGenerator({
-      targetDirectory: '/tmp/runtime'
+      targetDirectory: '/tmp/runtime',
     })
 
     // adding one service
@@ -32,7 +32,7 @@ describe('Generator', () => {
 
     rg.setConfig({
       port: 3043,
-      logLevel: 'debug'
+      logLevel: 'debug',
     })
 
     const output = await rg.prepare()
@@ -45,8 +45,8 @@ describe('Generator', () => {
         PLT_SERVER_HOSTNAME: '127.0.0.1',
         PLT_SERVER_LOGGER_LEVEL: 'debug',
         PLT_MANAGEMENT_API: true,
-        PORT: 3043
-      }
+        PORT: 3043,
+      },
     })
 
     // should list only runtime files
@@ -61,12 +61,12 @@ describe('Generator', () => {
   test('should have a valid package.json', async () => {
     const rg = new RuntimeGenerator({
       name: 'test-runtime',
-      targetDirectory: '/tmp/runtime'
+      targetDirectory: '/tmp/runtime',
     })
 
     const firstService = new ServiceGenerator()
     firstService.setConfig({
-      isRuntimeContext: false
+      isRuntimeContext: false,
     })
     rg.addService(firstService, 'first-service')
 
@@ -74,7 +74,7 @@ describe('Generator', () => {
 
     rg.setConfig({
       port: 3043,
-      logLevel: 'debug'
+      logLevel: 'debug',
     })
 
     await rg.prepare()
@@ -87,17 +87,17 @@ describe('Generator', () => {
 
   test('should have services plugin dependencies in package.json', async () => {
     const rg = new RuntimeGenerator({
-      targetDirectory: '/tmp/runtime'
+      targetDirectory: '/tmp/runtime',
     })
 
     // adding one service
     const firstService = new ServiceGenerator()
     firstService.setConfig({
-      isRuntimeContext: false
+      isRuntimeContext: false,
     })
     await firstService.addPackage({
       name: '@fastify/helmet',
-      options: []
+      options: [],
     })
     rg.addService(firstService, 'first-service')
 
@@ -105,7 +105,7 @@ describe('Generator', () => {
 
     rg.setConfig({
       port: 3043,
-      logLevel: 'debug'
+      logLevel: 'debug',
     })
 
     const output = await rg.prepare()
@@ -120,22 +120,22 @@ describe('Generator', () => {
         PLT_SERVER_HOSTNAME: '127.0.0.1',
         PLT_MANAGEMENT_API: true,
         PLT_SERVER_LOGGER_LEVEL: 'debug',
-        PORT: 3043
-      }
+        PORT: 3043,
+      },
     })
   })
 
   test('should create a runtime with 1 service and 1 db', async () => {
     const rg = new RuntimeGenerator({
-      targetDirectory: '/tmp/runtime'
+      targetDirectory: '/tmp/runtime',
     })
 
     // adding one service
     const firstService = new ServiceGenerator()
     firstService.setConfig({
       env: {
-        SERVICE_1: 'foo'
-      }
+        SERVICE_1: 'foo',
+      },
     })
     rg.addService(firstService, 'first-service')
 
@@ -143,15 +143,15 @@ describe('Generator', () => {
     const secondService = new ServiceGenerator()
     secondService.setConfig({
       env: {
-        SERVICE_2: 'foo'
-      }
+        SERVICE_2: 'foo',
+      },
     })
     rg.addService(secondService, 'second-service')
 
     rg.setEntryPoint('first-service')
 
     rg.setConfig({
-      port: 3043
+      port: 3043,
     })
 
     const output = await rg.prepare()
@@ -166,8 +166,8 @@ describe('Generator', () => {
         PLT_SERVER_HOSTNAME: '127.0.0.1',
         PLT_MANAGEMENT_API: true,
         PLT_SERVER_LOGGER_LEVEL: 'info',
-        PORT: 3043
-      }
+        PORT: 3043,
+      },
     })
 
     // should list only runtime files
@@ -181,7 +181,7 @@ describe('Generator', () => {
 
   test('should create a runtime with 2 services and 2 composers', async () => {
     const rg = new RuntimeGenerator({
-      targetDirectory: '/tmp/runtime'
+      targetDirectory: '/tmp/runtime',
     })
 
     // adding one service
@@ -201,7 +201,7 @@ describe('Generator', () => {
     rg.setEntryPoint('first-service')
 
     rg.setConfig({
-      port: 3043
+      port: 3043,
     })
 
     await rg.prepare()
@@ -214,16 +214,16 @@ describe('Generator', () => {
         id: 'first-service',
         openapi: {
           url: '/documentation/json',
-          prefix: '/first-service'
-        }
+          prefix: '/first-service',
+        },
       },
       {
         id: 'second-service',
         openapi: {
           url: '/documentation/json',
-          prefix: '/second-service'
-        }
-      }
+          prefix: '/second-service',
+        },
+      },
     ])
 
     const secondComposerConfigFile = secondComposer.getFileObject('platformatic.json')
@@ -233,16 +233,16 @@ describe('Generator', () => {
         id: 'first-service',
         openapi: {
           url: '/documentation/json',
-          prefix: '/first-service'
-        }
+          prefix: '/first-service',
+        },
       },
       {
         id: 'second-service',
         openapi: {
           url: '/documentation/json',
-          prefix: '/second-service'
-        }
-      }
+          prefix: '/second-service',
+        },
+      },
     ])
   })
 
@@ -254,7 +254,7 @@ describe('Generator', () => {
 
     {
       const rg = new RuntimeGenerator({
-        targetDirectory
+        targetDirectory,
       })
 
       // adding one service
@@ -268,7 +268,7 @@ describe('Generator', () => {
       rg.setEntryPoint('first-service')
 
       rg.setConfig({
-        port: 3043
+        port: 3043,
       })
 
       await rg.prepare()
@@ -277,7 +277,7 @@ describe('Generator', () => {
 
     {
       const rg = new RuntimeGenerator({
-        targetDirectory
+        targetDirectory,
       })
 
       // adding another service
@@ -294,8 +294,8 @@ describe('Generator', () => {
           PLT_SERVER_HOSTNAME: '127.0.0.1',
           PLT_SERVER_LOGGER_LEVEL: 'info',
           PLT_MANAGEMENT_API: 'true',
-          PORT: 3043
-        }
+          PORT: 3043,
+        },
       })
 
       // should list only runtime files
@@ -310,7 +310,7 @@ describe('Generator', () => {
   test('should create a runtime with 2 services with typescript enabled', async () => {
     const rg = new RuntimeGenerator({
       targetDirectory: '/tmp/runtime',
-      type: 'runtime'
+      type: 'runtime',
     })
 
     // adding one service
@@ -325,7 +325,7 @@ describe('Generator', () => {
 
     rg.setConfig({
       port: 3043,
-      typescript: true
+      typescript: true,
     })
 
     await rg.prepare()

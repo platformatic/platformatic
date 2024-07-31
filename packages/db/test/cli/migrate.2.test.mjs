@@ -23,8 +23,8 @@ test('migrate creates a schema.lock file on a different path', { skip: true }, a
     'node', [cliPath, 'migrations', 'apply', '-c', configPath],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 
@@ -57,8 +57,8 @@ test('start creates schema.lock if it is missing', { skip: true }, async (t) => 
     'node', [cliPath, 'migrations', 'apply', '-c', configPathWithoutSchemaLock],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 
@@ -66,8 +66,8 @@ test('start creates schema.lock if it is missing', { skip: true }, async (t) => 
     'node', [cliPath, 'start', '-c', configPath],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 
@@ -108,8 +108,8 @@ test('start updates schema.lock with migrations autoApply', async (t) => {
     'node', [cliPath, 'start', '-c', configPath],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 
@@ -158,8 +158,8 @@ test('migrate does not update an existing schemalock file if no migrations have 
     'node', [cliPath, 'migrations', 'apply', '-c', configPath],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 
@@ -175,8 +175,8 @@ test('migrate does not update an existing schemalock file if no migrations have 
     'node', [cliPath, 'migrations', 'apply', '-c', configPath],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 

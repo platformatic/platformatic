@@ -29,11 +29,11 @@ test('categories are global, but pages are user specific', async () => {
 
       await clear(db, sql)
       await createPagesAndCategories(db, sql)
-    }
+    },
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret'
+      secret: 'supersecret',
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
@@ -41,30 +41,30 @@ test('categories are global, but pages are user specific', async () => {
       role: 'user',
       entity: 'category',
       find: true,
-      save: true
+      save: true,
     }, {
       role: 'user',
       entity: 'page',
       defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID'
+        userId: 'X-PLATFORMATIC-USER-ID',
       },
       find: {
         checks: {
-          userId: 'X-PLATFORMATIC-USER-ID'
-        }
+          userId: 'X-PLATFORMATIC-USER-ID',
+        },
       },
       save: {
         checks: {
-          userId: 'X-PLATFORMATIC-USER-ID'
-        }
-      }
+          userId: 'X-PLATFORMATIC-USER-ID',
+        },
+      },
     }, {
       role: 'anonymous',
       entity: 'page',
       find: false,
       delete: false,
-      save: false
-    }]
+      save: false,
+    }],
   })
   test.after(() => {
     app.close()
@@ -74,7 +74,7 @@ test('categories are global, but pages are user specific', async () => {
 
   const token = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': 'user'
+    'X-PLATFORMATIC-ROLE': 'user',
   })
 
   {
@@ -82,7 +82,7 @@ test('categories are global, but pages are user specific', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -91,16 +91,16 @@ test('categories are global, but pages are user specific', async () => {
               id
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'saveCategory status code')
     deepEqual(res.json(), {
       data: {
         saveCategory: {
-          id: 1
-        }
-      }
+          id: 1,
+        },
+      },
     }, 'saveCategory response')
   }
 
@@ -109,7 +109,7 @@ test('categories are global, but pages are user specific', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -123,8 +123,8 @@ test('categories are global, but pages are user specific', async () => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
@@ -134,16 +134,16 @@ test('categories are global, but pages are user specific', async () => {
           title: 'Hello',
           category: {
             id: 1,
-            name: 'pets'
-          }
-        }
-      }
+            name: 'pets',
+          },
+        },
+      },
     }, 'savePage response')
   }
 
   const token2 = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 43,
-    'X-PLATFORMATIC-ROLE': 'user'
+    'X-PLATFORMATIC-ROLE': 'user',
   })
 
   {
@@ -151,7 +151,7 @@ test('categories are global, but pages are user specific', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`
+        Authorization: `Bearer ${token2}`,
       },
       body: {
         query: `
@@ -165,8 +165,8 @@ test('categories are global, but pages are user specific', async () => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json()
@@ -177,10 +177,10 @@ test('categories are global, but pages are user specific', async () => {
           title: 'Hello World',
           category: {
             id: 1,
-            name: 'pets'
-          }
-        }
-      }
+            name: 'pets',
+          },
+        },
+      },
     }, 'savePage response')
   }
 
@@ -189,7 +189,7 @@ test('categories are global, but pages are user specific', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`
+        Authorization: `Bearer ${token2}`,
       },
       body: {
         query: `
@@ -203,8 +203,8 @@ test('categories are global, but pages are user specific', async () => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'getCategoryById status code')
     deepEqual(res.json(), {
@@ -214,10 +214,10 @@ test('categories are global, but pages are user specific', async () => {
           name: 'pets',
           pages: [{
             id: 2,
-            title: 'Hello World'
-          }]
-        }
-      }
+            title: 'Hello World',
+          }],
+        },
+      },
     }, 'getCategoryById response')
   }
 })
@@ -231,11 +231,11 @@ test('specify multiple entities in a rule', async () => {
 
       await clear(db, sql)
       await createPagesAndCategories(db, sql)
-    }
+    },
   })
   app.register(auth, {
     jwt: {
-      secret: 'supersecret'
+      secret: 'supersecret',
     },
     roleKey: 'X-PLATFORMATIC-ROLE',
     anonymousRole: 'anonymous',
@@ -243,31 +243,31 @@ test('specify multiple entities in a rule', async () => {
       role: 'admin',
       entity: 'category',
       find: true,
-      save: true
+      save: true,
     }, {
       role: 'user',
       entity: 'category',
       find: true,
-      save: false
+      save: false,
     }, {
       role: 'user',
       entity: 'page',
       defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID'
+        userId: 'X-PLATFORMATIC-USER-ID',
       },
       find: true,
       save: {
         checks: {
-          userId: 'X-PLATFORMATIC-USER-ID'
-        }
-      }
+          userId: 'X-PLATFORMATIC-USER-ID',
+        },
+      },
     }, {
       role: 'anonymous',
       entities: ['category', 'page'],
       find: true,
       delete: false,
-      save: false
-    }]
+      save: false,
+    }],
   })
   test.after(() => {
     app.close()
@@ -277,7 +277,7 @@ test('specify multiple entities in a rule', async () => {
 
   const adminToken = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 1,
-    'X-PLATFORMATIC-ROLE': 'admin'
+    'X-PLATFORMATIC-ROLE': 'admin',
   })
 
   {
@@ -285,7 +285,7 @@ test('specify multiple entities in a rule', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${adminToken}`
+        Authorization: `Bearer ${adminToken}`,
       },
       body: {
         query: `
@@ -294,22 +294,22 @@ test('specify multiple entities in a rule', async () => {
               id
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'saveCategory status code')
     deepEqual(res.json(), {
       data: {
         saveCategory: {
-          id: 1
-        }
-      }
+          id: 1,
+        },
+      },
     }, 'saveCategory response')
   }
 
   const token = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': 'user'
+    'X-PLATFORMATIC-ROLE': 'user',
   })
 
   {
@@ -317,7 +317,7 @@ test('specify multiple entities in a rule', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -331,8 +331,8 @@ test('specify multiple entities in a rule', async () => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
@@ -342,16 +342,16 @@ test('specify multiple entities in a rule', async () => {
           title: 'Hello',
           category: {
             id: 1,
-            name: 'pets'
-          }
-        }
-      }
+            name: 'pets',
+          },
+        },
+      },
     }, 'savePage response')
   }
 
   const token2 = await app.jwt.sign({
     'X-PLATFORMATIC-USER-ID': 43,
-    'X-PLATFORMATIC-ROLE': 'user'
+    'X-PLATFORMATIC-ROLE': 'user',
   })
 
   {
@@ -359,7 +359,7 @@ test('specify multiple entities in a rule', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`
+        Authorization: `Bearer ${token2}`,
       },
       body: {
         query: `
@@ -373,8 +373,8 @@ test('specify multiple entities in a rule', async () => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json()
@@ -385,10 +385,10 @@ test('specify multiple entities in a rule', async () => {
           title: 'Hello World',
           category: {
             id: 1,
-            name: 'pets'
-          }
-        }
-      }
+            name: 'pets',
+          },
+        },
+      },
     }, 'savePage response')
   }
 
@@ -397,7 +397,7 @@ test('specify multiple entities in a rule', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token2}`
+        Authorization: `Bearer ${token2}`,
       },
       body: {
         query: `
@@ -411,8 +411,8 @@ test('specify multiple entities in a rule', async () => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'getCategoryById status code')
     deepEqual(res.json(), {
@@ -422,13 +422,13 @@ test('specify multiple entities in a rule', async () => {
           name: 'pets',
           pages: [{
             id: 1,
-            title: 'Hello'
+            title: 'Hello',
           }, {
             id: 2,
-            title: 'Hello World'
-          }]
-        }
-      }
+            title: 'Hello World',
+          }],
+        },
+      },
     }, 'getCategoryById response')
   }
 
@@ -448,8 +448,8 @@ test('specify multiple entities in a rule', async () => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'categories status code')
     deepEqual(res.json(), {
@@ -459,13 +459,13 @@ test('specify multiple entities in a rule', async () => {
           name: 'pets',
           pages: [{
             id: 1,
-            title: 'Hello'
+            title: 'Hello',
           }, {
             id: 2,
-            title: 'Hello World'
-          }]
-        }]
-      }
+            title: 'Hello World',
+          }],
+        }],
+      },
     }, 'categories response')
   }
 })

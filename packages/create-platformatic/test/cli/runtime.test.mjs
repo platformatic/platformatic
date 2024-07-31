@@ -10,7 +10,7 @@ import {
   startMarketplace,
   keys,
   walk,
-  getServices
+  getServices,
 } from './helper.mjs'
 
 let tmpDir
@@ -31,45 +31,45 @@ test('Creates a Platformatic Runtime with two Services', { timeout }, async (t) 
   // The actions must match IN ORDER
   const actions = [{
     match: 'What kind of project do you want to create?',
-    do: [keys.ENTER] // Application
+    do: [keys.ENTER], // Application
   }, {
     match: 'Where would you like to create your project?',
     do: [keys.ENTER],
-    waitAfter: 8000
+    waitAfter: 8000,
   }, {
     match: 'Which kind of project do you want to create?',
-    do: [keys.ENTER] // Service
+    do: [keys.ENTER], // Service
   }, {
     match: 'What is the name of the service?',
-    do: [keys.ENTER]
+    do: [keys.ENTER],
   }, {
     match: 'Do you want to create another service?',
-    do: [keys.ENTER] // yes
+    do: [keys.ENTER], // yes
   }, {
     match: 'Which kind of project do you want to create?',
-    do: [keys.ENTER] // Service
+    do: [keys.ENTER], // Service
   }, {
     match: 'What is the name of the service?',
-    do: [keys.ENTER]
+    do: [keys.ENTER],
   }, {
     match: 'Do you want to create another service?',
-    do: [keys.DOWN, keys.ENTER] // no
+    do: [keys.DOWN, keys.ENTER], // no
   }, {
     match: 'Which service should be exposed?',
-    do: [keys.ENTER]
+    do: [keys.ENTER],
   }, {
     match: 'Do you want to use TypeScript',
-    do: [keys.DOWN, keys.ENTER] // yes
+    do: [keys.DOWN, keys.ENTER], // yes
   }, {
     match: 'What port do you want to use?',
-    do: [keys.ENTER]
+    do: [keys.ENTER],
   }, {
     match: 'Do you want to init the git repository',
-    do: [keys.DOWN, keys.ENTER] // yes
+    do: [keys.DOWN, keys.ENTER], // yes
   }]
   await executeCreatePlatformatic(tmpDir, actions, {
     marketplaceHost,
-    pkgManager: 'pnpm'
+    pkgManager: 'pnpm',
   })
 
   const baseProjectDir = join(tmpDir, 'platformatic')

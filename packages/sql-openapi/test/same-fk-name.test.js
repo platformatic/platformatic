@@ -29,7 +29,7 @@ test('same foreign keys with different names', async (t) => {
   try {
     app.register(sqlMapper, {
       ...connInfo,
-      onDatabaseLoad
+      onDatabaseLoad,
     })
     app.register(sqlOpenAPI)
     t.after(() => app.close())
@@ -44,12 +44,12 @@ test('same foreign keys with different names', async (t) => {
       method: 'POST',
       url: '/owners',
       body: {
-        id: 1
-      }
+        id: 1,
+      },
     })
     equal(res.statusCode, 200, 'POST /owners status code')
     same(res.json(), {
-      id: 1
+      id: 1,
     }, 'POST /owners response')
   }
 
@@ -58,12 +58,12 @@ test('same foreign keys with different names', async (t) => {
       method: 'POST',
       url: '/owners',
       body: {
-        id: 2
-      }
+        id: 2,
+      },
     })
     equal(res.statusCode, 200, 'POST /owners status code')
     same(res.json(), {
-      id: 2
+      id: 2,
     }, 'POST /owners response')
   }
 
@@ -72,12 +72,12 @@ test('same foreign keys with different names', async (t) => {
       method: 'POST',
       url: '/owners',
       body: {
-        id: 3
-      }
+        id: 3,
+      },
     })
     equal(res.statusCode, 200, 'POST /owners status code')
     same(res.json(), {
-      id: 3
+      id: 3,
     }, 'POST /owners response')
   }
 
@@ -87,13 +87,13 @@ test('same foreign keys with different names', async (t) => {
       url: '/editors',
       body: {
         id: 10,
-        field: 1
-      }
+        field: 1,
+      },
     })
     equal(res.statusCode, 200, 'POST /editors status code')
     same(res.json(), {
       id: 10,
-      field: 1
+      field: 1,
     }, 'POST /editors response')
   }
 
@@ -103,13 +103,13 @@ test('same foreign keys with different names', async (t) => {
       url: '/editors',
       body: {
         id: 20,
-        field: 2
-      }
+        field: 2,
+      },
     })
     equal(res.statusCode, 200, 'POST /editors status code')
     same(res.json(), {
       id: 20,
-      field: 2
+      field: 2,
     }, 'POST /editors response')
   }
 
@@ -119,13 +119,13 @@ test('same foreign keys with different names', async (t) => {
       url: '/editors',
       body: {
         id: 30,
-        field: 3
-      }
+        field: 3,
+      },
     })
     equal(res.statusCode, 200, 'POST /editors status code')
     same(res.json(), {
       id: 30,
-      field: 3
+      field: 3,
     }, 'POST /editors response')
   }
 
@@ -135,8 +135,8 @@ test('same foreign keys with different names', async (t) => {
       url: '/editors',
       body: {
         id: 40,
-        field: 'not existing'
-      }
+        field: 'not existing',
+      },
     })
     equal(res.statusCode, 400, 'POST /editors status code')
   }
@@ -144,141 +144,141 @@ test('same foreign keys with different names', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/owners'
+      url: '/owners',
     })
     equal(res.statusCode, 200)
     same(res.json(), [
       { id: 1 },
       { id: 2 },
-      { id: 3 }
+      { id: 3 },
     ])
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/owners/1'
+      url: '/owners/1',
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 1
+      id: 1,
     })
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors'
+      url: '/editors',
     })
     equal(res.statusCode, 200)
     same(res.json(), [
       {
         id: 10,
-        field: 1
+        field: 1,
       },
       {
         id: 20,
-        field: 2
+        field: 2,
       },
       {
         id: 30,
-        field: 3
-      }
+        field: 3,
+      },
     ])
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors/20'
+      url: '/editors/20',
     })
     equal(res.statusCode, 200)
     same(res.json(), {
       id: 20,
-      field: 2
+      field: 2,
     })
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors/10/field'
+      url: '/editors/10/field',
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 1
+      id: 1,
     })
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors/10/field'
+      url: '/editors/10/field',
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 1
+      id: 1,
     })
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors/10/field2'
+      url: '/editors/10/field2',
     })
     equal(res.statusCode, 200, 'the foreign key is duplicated, so an index has been automatically added')
     same(res.json(), {
-      id: 1
+      id: 1,
     })
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors/20/field'
+      url: '/editors/20/field',
     })
     equal(res.statusCode, 200)
     same(res.json(), {
-      id: 2
+      id: 2,
     })
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/editors/20/field2'
+      url: '/editors/20/field2',
     })
     equal(res.statusCode, 200, 'as in the test above, same fk, same result')
     same(res.json(), {
-      id: 2
+      id: 2,
     })
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/owners/2/editorField'
+      url: '/owners/2/editorField',
     })
     equal(res.statusCode, 200)
     same(res.json(), [
       {
         id: 20,
-        field: 2
-      }
+        field: 2,
+      },
     ])
   }
 
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/owners/1/editorField2'
+      url: '/owners/1/editorField2',
     })
     equal(res.statusCode, 200)
     same(res.json(), [
       {
         id: 10,
-        field: 1
-      }
+        field: 1,
+      },
     ])
   }
 })

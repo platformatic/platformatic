@@ -15,15 +15,15 @@ test('graphql enabled', async (t) => {
       forceCloseConnections: true,
       healthCheck: {
         enabled: true,
-        interval: 2000
-      }
+        interval: 2000,
+      },
     },
     service: {
-      graphql: true
+      graphql: true,
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')]
-    }
+      paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')],
+    },
   }))
 
   t.after(async () => {
@@ -35,21 +35,21 @@ test('graphql enabled', async (t) => {
     const res = await request(`${app.url}/graphql`, {
       method: 'POST',
       headers: {
-        'content-type': 'application/json'
+        'content-type': 'application/json',
       },
       body: JSON.stringify({
         query: `
           query {
             hello
           }
-        `
-      })
+        `,
+      }),
     })
     assert.strictEqual(res.statusCode, 200, 'hello status code')
     assert.deepStrictEqual(await res.body.json(), {
       data: {
-        hello: 'world'
-      }
+        hello: 'world',
+      },
     }, 'hello response')
   }
 
@@ -68,15 +68,15 @@ test('graphql disabled', async (t) => {
         port: 0,
         healthCheck: {
           enabled: true,
-          interval: 2000
-        }
+          interval: 2000,
+        },
       },
       service: {
-        graphql: false
+        graphql: false,
       },
       plugins: {
-        paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')]
-      }
+        paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')],
+      },
     }))
     await app.close()
     assert.fail('should have errored but did not')
@@ -93,17 +93,17 @@ test('disable graphiql', async (t) => {
       port: 0,
       healthCheck: {
         enabled: true,
-        interval: 2000
-      }
+        interval: 2000,
+      },
     },
     service: {
       graphql: {
-        graphiql: false
-      }
+        graphiql: false,
+      },
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')]
-    }
+      paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')],
+    },
   }))
 
   t.after(async () => {
@@ -115,21 +115,21 @@ test('disable graphiql', async (t) => {
     const res = await request(`${app.url}/graphql`, {
       method: 'POST',
       headers: {
-        'content-type': 'application/json'
+        'content-type': 'application/json',
       },
       body: JSON.stringify({
         query: `
           query {
             hello
           }
-        `
-      })
+        `,
+      }),
     })
     assert.strictEqual(res.statusCode, 200, 'hello status code')
     assert.deepStrictEqual(await res.body.json(), {
       data: {
-        hello: 'world'
-      }
+        hello: 'world',
+      },
     }, 'hello response')
   }
 
@@ -148,12 +148,12 @@ test('graphql disabled by default', async (t) => {
         port: 0,
         healthCheck: {
           enabled: true,
-          interval: 2000
-        }
+          interval: 2000,
+        },
       },
       plugins: {
-        paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')]
-      }
+        paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')],
+      },
     }))
     await app.close()
     assert.fail('should have errored but did not')
@@ -170,15 +170,15 @@ test('graphql errors are correctly propagated in custom resolvers', async (t) =>
       port: 0,
       healthCheck: {
         enabled: true,
-        interval: 2000
-      }
+        interval: 2000,
+      },
     },
     service: {
-      graphql: true
+      graphql: true,
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'throw-resolver.js')]
-    }
+      paths: [join(__dirname, 'fixtures', 'throw-resolver.js')],
+    },
   }))
 
   t.after(async () => {
@@ -190,31 +190,31 @@ test('graphql errors are correctly propagated in custom resolvers', async (t) =>
     const res = await request(`${app.url}/graphql`, {
       method: 'POST',
       headers: {
-        'content-type': 'application/json'
+        'content-type': 'application/json',
       },
       body: JSON.stringify({
         query: `
           query {
             hello
           }
-        `
-      })
+        `,
+      }),
     })
     assert.strictEqual(res.statusCode, 200, 'hello status code')
     assert.deepStrictEqual(await res.body.json(), {
       data: {
-        hello: null
+        hello: null,
       },
       errors: [
         {
           message: 'Kaboooooom!!!',
           locations: [{
             line: 3,
-            column: 13
+            column: 13,
           }],
-          path: ['hello']
-        }
-      ]
+          path: ['hello'],
+        },
+      ],
     }, 'hello response')
   }
 
@@ -232,16 +232,16 @@ test('do not include /graphql in the OpenAPI schema', async (t) => {
       forceCloseConnections: true,
       healthCheck: {
         enabled: true,
-        interval: 2000
-      }
+        interval: 2000,
+      },
     },
     service: {
       graphql: true,
-      openapi: true
+      openapi: true,
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')]
-    }
+      paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')],
+    },
   }))
 
   t.after(async () => {

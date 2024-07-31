@@ -15,7 +15,7 @@ async function composeGraphql (app, opts) {
   }
 
   const graphqlConfig = {
-    graphiql: opts.graphql?.graphiql
+    graphiql: opts.graphql?.graphiql,
   }
   if (services.length > 0) {
     const graphqlSupergraph = await fetchGraphqlSubgraphs(services, opts.graphql, app)

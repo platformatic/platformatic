@@ -42,7 +42,7 @@ test('created_at updated_at happy path', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -65,8 +65,8 @@ test('created_at updated_at happy path', async (t) => {
               updatedAt
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json().data
@@ -89,8 +89,8 @@ test('created_at updated_at happy path', async (t) => {
               updatedAt
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     const data = res.json().data
@@ -115,8 +115,8 @@ test('created_at updated_at happy path', async (t) => {
               updatedAt
             }
           }
-        `
-      }
+        `,
+      },
     })
     const data = res.json().data
     equal(data.savePage.createdAt, original.createdAt, 'createdAt')
@@ -138,8 +138,8 @@ test('created_at updated_at happy path', async (t) => {
               updatedAt
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     const data = res.json().data
@@ -157,7 +157,7 @@ test('cannot set created_at', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -178,8 +178,8 @@ test('cannot set created_at', async (t) => {
               updatedAt
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 400, 'savePage status code')
     const data = res.json()
@@ -196,7 +196,7 @@ test('cannot set updated_at', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -217,8 +217,8 @@ test('cannot set updated_at', async (t) => {
               updatedAt
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json().data
@@ -240,8 +240,8 @@ test('cannot set updated_at', async (t) => {
               updatedAt
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 400, 'savePage status code')
     const data = res.json()
@@ -259,7 +259,7 @@ test('do not assign created_at updated_at', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -280,8 +280,8 @@ test('do not assign created_at updated_at', async (t) => {
               updatedAt
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json().data
@@ -303,8 +303,8 @@ test('do not assign created_at updated_at', async (t) => {
               updatedAt
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     const data = res.json().data
@@ -326,8 +326,8 @@ test('do not assign created_at updated_at', async (t) => {
               updatedAt
             }
           }
-        `
-      }
+        `,
+      },
     })
     const data = res.json().data
     equal(data.savePage.createdAt, null, 'createdAt')
@@ -348,8 +348,8 @@ test('do not assign created_at updated_at', async (t) => {
               updatedAt
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     const data = res.json().data
@@ -367,7 +367,7 @@ test('bulk insert adds created_at updated_at', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -388,8 +388,8 @@ test('bulk insert adds created_at updated_at', async (t) => {
               updatedAt
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     const data = res.json().data
@@ -416,10 +416,10 @@ test('bulk insert adds created_at updated_at', async (t) => {
           inputs: [
             { title: 'Page 1' },
             { title: 'Page 2' },
-            { title: 'Page 3' }
-          ]
-        }
-      }
+            { title: 'Page 3' },
+          ],
+        },
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     const pages = res.json().data.insertPages
@@ -444,8 +444,8 @@ test('bulk insert adds created_at updated_at', async (t) => {
               updatedAt
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     const pages = res.json().data.pages
@@ -467,7 +467,7 @@ test('bulk insert with autoTimestamp=false do not had created_at updated_at', as
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -493,10 +493,10 @@ test('bulk insert with autoTimestamp=false do not had created_at updated_at', as
           inputs: [
             { title: 'Page 1' },
             { title: 'Page 2' },
-            { title: 'Page 3' }
-          ]
-        }
-      }
+            { title: 'Page 3' },
+          ],
+        },
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     const pages = res.json().data.insertPages

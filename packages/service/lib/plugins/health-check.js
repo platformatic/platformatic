@@ -10,7 +10,7 @@ async function setupClients (app, opts) {
     exposeStatusRoute: '/status',
     healthCheckInterval: healthCheck.interval !== undefined ? healthCheck.interval : 5000,
     ...healthCheck,
-    healthCheck: healthCheck.fn
+    healthCheck: healthCheck.fn,
   })
 }
 

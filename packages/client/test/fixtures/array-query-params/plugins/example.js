@@ -6,7 +6,7 @@ module.exports = async function (fastify, opts) {
     return {
       isArray: Array.isArray(req.query.ids),
       ids: req.query.ids,
-      stringArrayUnion: req.query.stringArrayUnion
+      stringArrayUnion: req.query.stringArrayUnion,
     }
   })
 }

@@ -8,8 +8,8 @@ module.exports = fp(async function (app) {
       type: 'object',
       properties: {
         user_id: { type: 'number' },
-        first_name: { type: 'string' }
-      }
+        first_name: { type: 'string' },
+      },
     }
 
     async function onComposerResponse (request, reply, body) {

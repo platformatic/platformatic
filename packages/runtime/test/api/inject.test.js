@@ -21,7 +21,7 @@ test('should inject request to service', async (t) => {
 
   const res = await app.inject('with-logger', {
     method: 'GET',
-    url: '/'
+    url: '/',
   })
 
   assert.strictEqual(res.statusCode, 200)

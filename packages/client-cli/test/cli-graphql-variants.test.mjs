@@ -84,11 +84,11 @@ app.listen({ port: 0 })
     throw new Error('no url was found')
   }
   const res = await request(url, {
-    method: 'POST'
+    method: 'POST',
   })
   const body = await res.body.json()
   equal(match(body, {
-    title: 'foo'
+    title: 'foo',
   }), true)
 })
 
@@ -133,8 +133,8 @@ app.listen({ port: 0 });
       outDir: 'build',
       target: 'es2018',
       moduleResolution: 'NodeNext',
-      lib: ['es2018']
-    }
+      lib: ['es2018'],
+    },
   }, null, 2)
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
@@ -163,11 +163,11 @@ app.listen({ port: 0 });
     break
   }
   const res = await request(url, {
-    method: 'POST'
+    method: 'POST',
   })
   const body = await res.body.json()
   equal(match(body, {
-    title: 'foo'
+    title: 'foo',
   }), true)
 })
 
@@ -231,11 +231,11 @@ app.listen({ port: 0 })
     throw new Error('no url was found')
   }
   const res = await request(url, {
-    method: 'POST'
+    method: 'POST',
   })
   const body = await res.body.json()
   equal(match(body, {
-    title: 'foo'
+    title: 'foo',
   }), true)
 })
 
@@ -299,10 +299,10 @@ app.listen({ port: 0 })
     throw new Error('no url was found')
   }
   const res = await request(url, {
-    method: 'POST'
+    method: 'POST',
   })
   const body = await res.body.json()
   equal(match(body, {
-    title: 'foo'
+    title: 'foo',
   }), true)
 })

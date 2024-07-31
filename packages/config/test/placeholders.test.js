@@ -10,15 +10,15 @@ test('transform placeholders', async (t) => {
       source: './file.json',
       env: {
         PLT_FOO: 'bar',
-        PLT_USERNAME: 'john'
-      }
+        PLT_USERNAME: 'john',
+      },
     })
     const config = {
       server: {
         hostname: '127.0.0.1',
         port: '3042',
-        replace: '{PLT_FOO}'
-      }
+        replace: '{PLT_FOO}',
+      },
     }
 
     const res = await cm.replaceEnv(JSON.stringify(config))
@@ -26,8 +26,8 @@ test('transform placeholders', async (t) => {
       server: {
         hostname: '127.0.0.1',
         port: '3042',
-        replace: 'bar'
-      }
+        replace: 'bar',
+      },
     })
   }
 
@@ -37,23 +37,23 @@ test('transform placeholders', async (t) => {
       source: './file.json',
       env: {
         PLT_FOO: 'bar',
-        PLT_USERNAME: 'john'
-      }
+        PLT_USERNAME: 'john',
+      },
     })
 
     const config = {
       server: {
         hostname: '127.0.0.1',
-        port: '3042'
-      }
+        port: '3042',
+      },
     }
 
     const res = await cm.replaceEnv(JSON.stringify(config))
     assert.deepEqual(JSON.parse(res), {
       server: {
         hostname: '127.0.0.1',
-        port: '3042'
-      }
+        port: '3042',
+      },
     })
   }
 })
@@ -63,17 +63,17 @@ test('throws if not all placeholders are defined', async (t) => {
     source: './file.json',
     env: {
       PLT_FOO: 'bar',
-      PLT_USERNAME: 'john'
-    }
+      PLT_USERNAME: 'john',
+    },
   })
 
   const config = {
     server: {
       hostname: '127.0.0.1',
       port: '3042',
-      replace: '{PLT_FOO}'
+      replace: '{PLT_FOO}',
     },
-    plugin: '{PLT_PLUGIN}'
+    plugin: '{PLT_PLUGIN}',
   }
   try {
     await cm.replaceEnv(JSON.stringify(config))
@@ -88,15 +88,15 @@ test('transform placeholders with newlines', async (t) => {
     source: './file.json',
     env: {
       PLT_FOO: 'bar\nbar2\nbar3',
-      PLT_USERNAME: 'john\njohn2'
-    }
+      PLT_USERNAME: 'john\njohn2',
+    },
   })
   const config = {
     server: {
       hostname: '127.0.0.1',
       port: '3042',
-      replace: '{PLT_FOO}'
-    }
+      replace: '{PLT_FOO}',
+    },
   }
 
   const res = await cm.replaceEnv(JSON.stringify(config))
@@ -104,8 +104,8 @@ test('transform placeholders with newlines', async (t) => {
     server: {
       hostname: '127.0.0.1',
       port: '3042',
-      replace: 'bar\nbar2\nbar3'
-    }
+      replace: 'bar\nbar2\nbar3',
+    },
   })
 })
 
@@ -114,15 +114,15 @@ test('transform placeholders with `\\`', async (t) => {
     source: './file.json',
     env: {
       PLT_FOO: 'bar\\.bar2\\.bar3',
-      PLT_USERNAME: 'john\\.john2'
-    }
+      PLT_USERNAME: 'john\\.john2',
+    },
   })
   const config = {
     server: {
       hostname: '127.0.0.1',
       port: '3042',
-      replace: '{PLT_FOO}'
-    }
+      replace: '{PLT_FOO}',
+    },
   }
 
   const res = await cm.replaceEnv(JSON.stringify(config))
@@ -130,8 +130,8 @@ test('transform placeholders with `\\`', async (t) => {
     server: {
       hostname: '127.0.0.1',
       port: '3042',
-      replace: 'bar\\.bar2\\.bar3'
-    }
+      replace: 'bar\\.bar2\\.bar3',
+    },
   })
 })
 
@@ -141,7 +141,7 @@ test('support a custom callback for missing env vars', async (t) => {
     source: './file.json',
     env: {
       PLT_FOO: 'bar',
-      PLT_USERNAME: 'john'
+      PLT_USERNAME: 'john',
     },
     onMissingEnv (key) {
       if (key === 'PLT_PLUGIN') {
@@ -149,16 +149,16 @@ test('support a custom callback for missing env vars', async (t) => {
       }
 
       throw new Error(`unexpected key: ${key}`)
-    }
+    },
   })
 
   const config = {
     server: {
       hostname: '127.0.0.1',
       port: '3042',
-      replace: '{PLT_FOO}'
+      replace: '{PLT_FOO}',
     },
-    plugin: '{PLT_PLUGIN}'
+    plugin: '{PLT_PLUGIN}',
   }
 
   const result = await cm.replaceEnv(JSON.stringify(config))
@@ -171,15 +171,15 @@ test('transform placeholders in object values', async (t) => {
       source: './file.json',
       env: {
         PLT_FOO: 'bar',
-        PLT_USERNAME: 'john'
-      }
+        PLT_USERNAME: 'john',
+      },
     })
     const config = {
       server: {
         hostname: '127.0.0.1',
         port: '3042',
-        replace: '{PLT_FOO}'
-      }
+        replace: '{PLT_FOO}',
+      },
     }
 
     const res = await cm.replaceEnv(config)
@@ -187,8 +187,8 @@ test('transform placeholders in object values', async (t) => {
       server: {
         hostname: '127.0.0.1',
         port: '3042',
-        replace: 'bar'
-      }
+        replace: 'bar',
+      },
     })
   }
 
@@ -198,23 +198,23 @@ test('transform placeholders in object values', async (t) => {
       source: './file.json',
       env: {
         PLT_FOO: 'bar',
-        PLT_USERNAME: 'john'
-      }
+        PLT_USERNAME: 'john',
+      },
     })
 
     const config = {
       server: {
         hostname: '127.0.0.1',
-        port: '3042'
-      }
+        port: '3042',
+      },
     }
 
     const res = await cm.replaceEnv(config)
     assert.deepEqual(res, {
       server: {
         hostname: '127.0.0.1',
-        port: '3042'
-      }
+        port: '3042',
+      },
     })
   }
 })
@@ -224,17 +224,17 @@ test('throws if not all placeholders in object are defined', async (t) => {
     source: './file.json',
     env: {
       PLT_FOO: 'bar',
-      PLT_USERNAME: 'john'
-    }
+      PLT_USERNAME: 'john',
+    },
   })
 
   const config = {
     server: {
       hostname: '127.0.0.1',
       port: '3042',
-      replace: '{PLT_FOO}'
+      replace: '{PLT_FOO}',
     },
-    plugin: '{PLT_PLUGIN}'
+    plugin: '{PLT_PLUGIN}',
   }
   try {
     await cm.replaceEnv(config)
@@ -249,29 +249,29 @@ test('skips ignored placeholders', async (t) => {
     source: './file.json',
     env: {
       PLT_FOO: 'bar',
-      PLT_USERNAME: 'john'
-    }
+      PLT_USERNAME: 'john',
+    },
   })
 
   const config = {
     openapi: {
       paths: [
         '/movies/{id}',
-        '/movies/{PLT_FOO}'
-      ]
-    }
+        '/movies/{PLT_FOO}',
+      ],
+    },
   }
 
   const res = await cm.replaceEnv(config, {
-    ignore: ['$.openapi.paths']
+    ignore: ['$.openapi.paths'],
   })
 
   assert.deepEqual(res, {
     openapi: {
       paths: [
         '/movies/{id}',
-        '/movies/{PLT_FOO}'
-      ]
-    }
+        '/movies/{PLT_FOO}',
+      ],
+    },
   })
 })

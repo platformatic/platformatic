@@ -17,9 +17,9 @@ async function injectRuntimeCommand (argv) {
       data: { type: 'string', short: 'd' },
       include: { type: 'boolean', short: 'i', default: false },
       verbose: { type: 'boolean', short: 'v', default: false },
-      output: { type: 'string', short: 'o' }
+      output: { type: 'string', short: 'o' },
     },
-    strict: false
+    strict: false,
   })
 
   const client = new RuntimeApiClient()

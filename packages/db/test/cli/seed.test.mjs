@@ -20,14 +20,14 @@ test('seed and start', async (t) => {
   await execa('node', [cliPath, 'migrations', 'apply'], {
     cwd,
     env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
+      DATABASE_URL: connectionInfo.connectionString,
+    },
   })
   const { stdout } = await execa('node', [cliPath, 'seed', seed], {
     cwd,
     env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
+      DATABASE_URL: connectionInfo.connectionString,
+    },
   })
 
   {
@@ -40,8 +40,8 @@ test('seed and start', async (t) => {
   const { child, url } = await start([], {
     cwd,
     env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
+      DATABASE_URL: connectionInfo.connectionString,
+    },
   })
 
   t.after(async () => {
@@ -61,8 +61,8 @@ test('seed and start', async (t) => {
                   name
                 }
               }
-            `
-      })
+            `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'graphs status code')
     const body = await res.body.json()
@@ -70,12 +70,12 @@ test('seed and start', async (t) => {
       data: {
         graphs: [{
           id: '1',
-          name: 'Hello'
+          name: 'Hello',
         }, {
           id: '2',
-          name: 'Hello 2'
-        }]
-      }
+          name: 'Hello 2',
+        }],
+      },
     })
   }
 })
@@ -94,8 +94,8 @@ test('seed command should throw an error if there are migrations to apply', asyn
     await execa('node', [cliPath, 'seed', seed], {
       cwd,
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     })
   } catch (err) {
     const sanitized = stripAnsi(err.stderr)
@@ -120,14 +120,14 @@ test('valid config files', async (t) => {
     await execa('node', [cliPath, 'migrations', 'apply'], {
       cwd,
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     })
     const { stdout } = await execa('node', [cliPath, 'seed', seed], {
       cwd,
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     })
 
     {
@@ -163,14 +163,14 @@ test('missing seed file', async (t) => {
     await execa('node', [cliPath, 'migrations', 'apply'], {
       cwd,
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     })
     await execa('node', [cliPath, 'seed'], {
       cwd,
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     })
   } catch (err) {
     assert.equal(err.exitCode, 1)
@@ -186,14 +186,14 @@ test('seed and start from cwd', async (t) => {
   await execa('node', [cliPath, 'migrations', 'apply'], {
     cwd,
     env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
+      DATABASE_URL: connectionInfo.connectionString,
+    },
   })
   const { stdout } = await execa('node', [cliPath, 'seed', 'seed.js'], {
     cwd,
     env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
+      DATABASE_URL: connectionInfo.connectionString,
+    },
   })
 
   {
@@ -204,8 +204,8 @@ test('seed and start from cwd', async (t) => {
   const { child, url } = await start([], {
     cwd,
     env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
+      DATABASE_URL: connectionInfo.connectionString,
+    },
   })
 
   t.after(async () => {
@@ -225,8 +225,8 @@ test('seed and start from cwd', async (t) => {
                   name
                 }
               }
-            `
-      })
+            `,
+      }),
     })
     assert.equal(res.statusCode, 200, 'graphs status code')
     const body = await res.body.json()
@@ -234,12 +234,12 @@ test('seed and start from cwd', async (t) => {
       data: {
         graphs: [{
           id: '1',
-          name: 'Hello'
+          name: 'Hello',
         }, {
           id: '2',
-          name: 'Hello 2'
-        }]
-      }
+          name: 'Hello 2',
+        }],
+      },
     }, 'graphs response')
   }
 })

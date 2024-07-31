@@ -38,13 +38,13 @@ function setupEmitter ({ log, mq, mapper, connectionString }) {
         const topic = await entity.getPublishTopic({ action: 'save', data: res, ctx })
         if (topic) {
           const payload = {
-            [primaryKey]: res[primaryKey]
+            [primaryKey]: res[primaryKey],
           }
           _log.trace({ topic, payload }, 'publishing event')
           await new Promise((resolve) => {
             mq.emit({
               topic,
-              payload
+              payload,
             }, resolve)
           })
         }
@@ -52,7 +52,7 @@ function setupEmitter ({ log, mq, mapper, connectionString }) {
       },
 
       delete: multiElement('delete'),
-      insert: multiElement('save')
+      insert: multiElement('save'),
     })
 
     function multiElement (action) {
@@ -70,8 +70,8 @@ function setupEmitter ({ log, mq, mapper, connectionString }) {
               mq.emit({
                 topic,
                 payload: {
-                  [primaryKey]: payload[primaryKey]
-                }
+                  [primaryKey]: payload[primaryKey],
+                },
               }, resolve)
             })
           }

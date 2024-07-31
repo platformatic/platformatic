@@ -9,7 +9,7 @@ test('should add slash if needed', async (t) => {
     { input: '', output: '/' },
     { input: '/foobar', output: '/foobar' },
     { input: undefined, output: '' },
-    { input: null, output: '' }
+    { input: null, output: '' },
   ]
 
   for (const exp of expectations) {
@@ -22,7 +22,7 @@ test('isFetchable unit test', t => {
     { label: 'empty service', params: {}, expected: false },
     { label: 'openapi service from file', params: { openapi: { file: '/to/file' } }, expected: false },
     { label: 'openapi+graphql service, openapi has url', params: { openapi: { url: 'http://service/opeanapi' }, graphql: true }, expected: true },
-    { label: 'openapi+graphql service with default', params: { graphql: true, openapi: true }, expected: true }
+    { label: 'openapi+graphql service with default', params: { graphql: true, openapi: true }, expected: true },
   ]
 
   for (const c of cases) {

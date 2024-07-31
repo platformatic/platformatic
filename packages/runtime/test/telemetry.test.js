@@ -27,8 +27,8 @@ test('propagate the traceId correctly to runtime services', async (t) => {
     method: 'GET',
     path: '/',
     headers: {
-      traceparent
-    }
+      traceparent,
+    },
   })
 
   assert.strictEqual(res.statusCode, 200)

@@ -10,7 +10,7 @@ import {
   startMarketplace,
   keys,
   walk,
-  getServices
+  getServices,
 } from './helper.mjs'
 
 let tmpDir
@@ -31,30 +31,30 @@ test('Creates a Platformatic Service with no typescript', { timeout }, async (t)
   // The actions must match IN ORDER
   const actions = [{
     match: 'What kind of project do you want to create?',
-    do: [keys.ENTER] // Application
+    do: [keys.ENTER], // Application
   }, {
     match: 'Where would you like to create your project?',
     do: [keys.ENTER],
-    waitAfter: 8000
+    waitAfter: 8000,
   }, {
     match: 'Which kind of project do you want to create?',
-    do: [keys.ENTER] // Service
+    do: [keys.ENTER], // Service
   }, {
     match: 'What is the name of the service?',
-    do: [keys.ENTER]
+    do: [keys.ENTER],
   }, {
     match: 'Do you want to create another service?',
-    do: [keys.DOWN, keys.ENTER] // no
+    do: [keys.DOWN, keys.ENTER], // no
   }, {
     // NOTE THAT HERE THE DEFAULT OPTION FOR SERVICE IS "YES"
     match: 'Do you want to use TypeScript',
-    do: [keys.ENTER] // no
+    do: [keys.ENTER], // no
   }, {
     match: 'What port do you want to use?',
-    do: [keys.ENTER]
+    do: [keys.ENTER],
   }, {
     match: 'Do you want to init the git repository',
-    do: [keys.DOWN, keys.ENTER] // yes
+    do: [keys.DOWN, keys.ENTER], // yes
   }]
   await executeCreatePlatformatic(tmpDir, actions, { marketplaceHost })
 
@@ -83,30 +83,30 @@ test('Creates a Platformatic Service with typescript', { timeout }, async (t) =>
   // The actions must match IN ORDER
   const actions = [{
     match: 'What kind of project do you want to create?',
-    do: [keys.ENTER] // Application
+    do: [keys.ENTER], // Application
   }, {
     match: 'Where would you like to create your project?',
     do: [keys.ENTER],
-    waitAfter: 8000
+    waitAfter: 8000,
   }, {
     match: 'Which kind of project do you want to create?',
-    do: [keys.ENTER] // Service
+    do: [keys.ENTER], // Service
   }, {
     match: 'What is the name of the service?',
-    do: [keys.ENTER]
+    do: [keys.ENTER],
   }, {
     match: 'Do you want to create another service?',
-    do: [keys.DOWN, keys.ENTER] // no
+    do: [keys.DOWN, keys.ENTER], // no
   }, {
     // NOTE THAT HERE THE DEFAULT OPTION FOR SERVICE IS "YES"
     match: 'Do you want to use TypeScript',
-    do: [keys.DOWN, keys.ENTER] // no
+    do: [keys.DOWN, keys.ENTER], // no
   }, {
     match: 'What port do you want to use?',
-    do: [keys.ENTER]
+    do: [keys.ENTER],
   }, {
     match: 'Do you want to init the git repository',
-    do: [keys.DOWN, keys.ENTER] // yes
+    do: [keys.DOWN, keys.ENTER], // yes
   }]
   await executeCreatePlatformatic(tmpDir, actions, { marketplaceHost })
 
@@ -157,30 +157,30 @@ test('Creates a Platformatic Service in a non empty directory', { timeout, skip:
   // The actions must match IN ORDER
   const actions = [{
     match: 'What kind of project do you want to create?',
-    do: [keys.ENTER] // Application
+    do: [keys.ENTER], // Application
   }, {
     match: 'Where would you like to create your project?',
     do: [targetDirectory, keys.ENTER],
-    waitAfter: 8000
+    waitAfter: 8000,
   }, {
     match: 'Confirm you want to use',
-    do: [keys.ENTER] // confirm use existing directory
+    do: [keys.ENTER], // confirm use existing directory
   }, {
     // NOTE THAT HERE THE DEFAULT OPTION FOR SERVICE IS "YES"
     match: 'Do you want to use TypeScript',
-    do: [keys.DOWN, keys.ENTER] // no
+    do: [keys.DOWN, keys.ENTER], // no
   }, {
     match: 'What port do you want to use?',
-    do: [keys.ENTER]
+    do: [keys.ENTER],
   }, {
     match: 'Do you want to create the github action to deploy',
-    do: [keys.DOWN, keys.ENTER]
+    do: [keys.DOWN, keys.ENTER],
   }, {
     match: 'Do you want to enable PR Previews in your application',
-    do: [keys.DOWN, keys.ENTER]
+    do: [keys.DOWN, keys.ENTER],
   }, {
     match: 'Do you want to init the git repository',
-    do: [keys.DOWN, keys.ENTER] // yes
+    do: [keys.DOWN, keys.ENTER], // yes
   }]
   await executeCreatePlatformatic(tmpDir, actions, { marketplaceHost })
 

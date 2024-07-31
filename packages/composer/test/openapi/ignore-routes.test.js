@@ -8,7 +8,7 @@ const { writeFile, mkdtemp } = require('node:fs/promises')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const {
   createComposer,
-  createOpenApiService
+  createOpenApiService,
 } = require('../helper')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
@@ -20,9 +20,9 @@ test('should ignore static routes', async (t) => {
   const openapiConfig = {
     paths: {
       '/users': {
-        ignore: true
-      }
-    }
+        ignore: true,
+      },
+    },
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -38,17 +38,17 @@ test('should ignore static routes', async (t) => {
             origin: 'http://127.0.0.1:' + api.server.address().port,
             openapi: {
               url: '/documentation/json',
-              config: openapiConfigFile
-            }
-          }
-        ]
-      }
+              config: openapiConfigFile,
+            },
+          },
+        ],
+      },
     }
   )
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
@@ -75,9 +75,9 @@ test('should ignore parametric routes', async (t) => {
   const openapiConfig = {
     paths: {
       '/users/{id}': {
-        ignore: true
-      }
-    }
+        ignore: true,
+      },
+    },
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -93,17 +93,17 @@ test('should ignore parametric routes', async (t) => {
             origin: 'http://127.0.0.1:' + api.server.address().port,
             openapi: {
               url: '/documentation/json',
-              config: openapiConfigFile
-            }
-          }
-        ]
-      }
+              config: openapiConfigFile,
+            },
+          },
+        ],
+      },
     }
   )
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
@@ -133,17 +133,17 @@ test('should ignore routes for only for one service', async (t) => {
   const openapiConfig1 = {
     paths: {
       '/users': {
-        ignore: true
-      }
-    }
+        ignore: true,
+      },
+    },
   }
 
   const openapiConfig2 = {
     paths: {
       '/users/{id}': {
-        ignore: true
-      }
-    }
+        ignore: true,
+      },
+    },
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -163,25 +163,25 @@ test('should ignore routes for only for one service', async (t) => {
             origin: 'http://127.0.0.1:' + api1.server.address().port,
             openapi: {
               url: '/documentation/json',
-              config: openapiConfigFile1
-            }
+              config: openapiConfigFile1,
+            },
           },
           {
             id: 'api2',
             origin: 'http://127.0.0.1:' + api2.server.address().port,
             openapi: {
               url: '/documentation/json',
-              config: openapiConfigFile2
-            }
-          }
-        ]
-      }
+              config: openapiConfigFile2,
+            },
+          },
+        ],
+      },
     }
   )
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
@@ -208,13 +208,13 @@ test('should ignore only specified methods', async (t) => {
   const openapiConfig = {
     paths: {
       '/users': {
-        post: { ignore: true }
+        post: { ignore: true },
       },
       '/users/{id}': {
         get: { ignore: true },
-        delete: { ignore: true }
-      }
-    }
+        delete: { ignore: true },
+      },
+    },
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -230,17 +230,17 @@ test('should ignore only specified methods', async (t) => {
             origin: 'http://127.0.0.1:' + api.server.address().port,
             openapi: {
               url: '/documentation/json',
-              config: openapiConfigFile
-            }
-          }
-        ]
-      }
+              config: openapiConfigFile,
+            },
+          },
+        ],
+      },
     }
   )
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
@@ -263,8 +263,8 @@ test('should ignore all routes if methods array is not specified', async (t) => 
 
   const openapiConfig = {
     paths: {
-      '/users': { ignore: true }
-    }
+      '/users': { ignore: true },
+    },
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -280,17 +280,17 @@ test('should ignore all routes if methods array is not specified', async (t) => 
             origin: 'http://127.0.0.1:' + api.server.address().port,
             openapi: {
               url: '/documentation/json',
-              config: openapiConfigFile
-            }
-          }
-        ]
-      }
+              config: openapiConfigFile,
+            },
+          },
+        ],
+      },
     }
   )
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
@@ -319,9 +319,9 @@ test('should skip route if all routes are ignored', async (t) => {
       '/users': {
         get: { ignore: true },
         post: { ignore: true },
-        put: { ignore: true }
-      }
-    }
+        put: { ignore: true },
+      },
+    },
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -337,17 +337,17 @@ test('should skip route if all routes are ignored', async (t) => {
             origin: 'http://127.0.0.1:' + api.server.address().port,
             openapi: {
               url: '/documentation/json',
-              config: openapiConfigFile
-            }
-          }
-        ]
-      }
+              config: openapiConfigFile,
+            },
+          },
+        ],
+      },
     }
   )
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 

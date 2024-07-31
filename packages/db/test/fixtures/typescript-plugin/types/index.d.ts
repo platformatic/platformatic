@@ -1,7 +1,7 @@
 import { Movie } from './Movie'
 
 interface EntityTypes {
-    Movie: Movie
+  Movie: Movie
 }
 
 export { EntityTypes, Movie }

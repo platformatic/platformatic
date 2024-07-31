@@ -10,7 +10,7 @@ module.exports = async function (app) {
     Query: {
       hello: async function (root, args, context) {
         throw new Error('Kaboooooom!!!')
-      }
-    }
+      },
+    },
   })
 }

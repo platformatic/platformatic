@@ -38,12 +38,12 @@ function composeOpenApi (apis, options = {}) {
     openapi: '3.0.0',
     info: {
       title: options.title || 'Platformatic Composer',
-      version: options.version || '1.0.0'
+      version: options.version || '1.0.0',
     },
     components: {
-      schemas: mergedSchemas
+      schemas: mergedSchemas,
     },
-    paths: mergedPaths
+    paths: mergedPaths,
   }
 }
 

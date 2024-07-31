@@ -58,21 +58,21 @@ const formatSpanAttributes = {
       'server.port': urlData.port,
       'http.request.method': method,
       'url.path': path,
-      'url.scheme': protocol
+      'url.scheme': protocol,
     }
   },
   reply (reply) {
     return {
-      'http.response.status_code': reply.statusCode
+      'http.response.status_code': reply.statusCode,
     }
   },
   error (error) {
     return {
       'error.name': error.name,
       'error.message': error.message,
-      'error.stack': error.stack
+      'error.stack': error.stack,
     }
-  }
+  },
 }
 
 const setupProvider = (app, opts) => {
@@ -90,8 +90,8 @@ const setupProvider = (app, opts) => {
   const provider = new PlatformaticTracerProvider({
     resource: new Resource({
       [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
-      [SemanticResourceAttributes.SERVICE_VERSION]: version
-    })
+      [SemanticResourceAttributes.SERVICE_VERSION]: version,
+    }),
   })
 
   const exporterObjs = []
@@ -208,7 +208,7 @@ async function setupTelemetry (app, opts) {
     propagator.inject(context, headers, {
       set (carrier, key, value) {
         headers[key] = value
-      }
+      },
     })
     return headers
   }
@@ -247,7 +247,7 @@ async function setupTelemetry (app, opts) {
           'http.request.method': method,
           'url.full': url,
           'url.path': urlObj.path,
-          'url.scheme': urlObj.scheme
+          'url.scheme': urlObj.scheme,
         }
       : {}
     span.setAttributes(attributes)
@@ -271,13 +271,13 @@ async function setupTelemetry (app, opts) {
         spanStatus.code = SpanStatusCode.ERROR
       }
       span.setAttributes({
-        'http.response.status_code': response.statusCode
+        'http.response.status_code': response.statusCode,
       })
       span.setStatus(spanStatus)
     } else {
       span.setStatus({
         code: SpanStatusCode.ERROR,
-        message: 'No response received'
+        message: 'No response received',
       })
     }
     span.end()
@@ -309,7 +309,7 @@ async function setupTelemetry (app, opts) {
     if (error) {
       span.setStatus({
         code: SpanStatusCode.ERROR,
-        message: error.message
+        message: error.message,
       })
     } else {
       const spanStatus = { code: SpanStatusCode.OK }
@@ -324,7 +324,7 @@ async function setupTelemetry (app, opts) {
     endSpanClient,
     setErrorInSpanClient,
     startInternalSpan,
-    endInternalSpan
+    endInternalSpan,
   })
 }
 

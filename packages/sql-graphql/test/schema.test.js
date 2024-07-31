@@ -46,7 +46,7 @@ test('should handle relationships with different schemas', { skip: isSQLite }, a
           );
         `)
       }
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -55,13 +55,13 @@ test('should handle relationships with different schemas', { skip: isSQLite }, a
 
   const authors = [{
     id: 1,
-    name: 'Mark'
+    name: 'Mark',
   }]
 
   const books = [{
     id: 1,
     title: 'Harry',
-    authorId: 1
+    authorId: 1,
   }]
 
   {
@@ -78,9 +78,9 @@ test('should handle relationships with different schemas', { skip: isSQLite }, a
             }
           `,
         variables: {
-          inputs: authors
-        }
-      }
+          inputs: authors,
+        },
+      },
     })
     equal(res.statusCode, 200, 'authors status code')
   }
@@ -99,9 +99,9 @@ test('should handle relationships with different schemas', { skip: isSQLite }, a
             }
           `,
         variables: {
-          inputs: books
-        }
-      }
+          inputs: books,
+        },
+      },
     })
     equal(res.statusCode, 200, 'books status code')
   }
@@ -120,8 +120,8 @@ test('should handle relationships with different schemas', { skip: isSQLite }, a
                 } 
               }
             }
-          `
-      }
+          `,
+      },
     })
     equal(res.statusCode, 200, 'query books')
     same(res.json(), {
@@ -129,10 +129,10 @@ test('should handle relationships with different schemas', { skip: isSQLite }, a
         test2Books: [{
           id: 1,
           author: {
-            id: 1
-          }
-        }]
-      }
+            id: 1,
+          },
+        }],
+      },
     }, 'query book response')
   }
 
@@ -150,8 +150,8 @@ test('should handle relationships with different schemas', { skip: isSQLite }, a
                 }
               }
             }
-          `
-      }
+          `,
+      },
     })
     equal(res.statusCode, 200, 'query authors')
     same(res.json(), {
@@ -159,10 +159,10 @@ test('should handle relationships with different schemas', { skip: isSQLite }, a
         test1Authors: [{
           id: 1,
           test2Books: [{
-            id: 1
-          }]
-        }]
-      }
+            id: 1,
+          }],
+        }],
+      },
     }, 'query authors response')
   }
 })
@@ -210,7 +210,7 @@ test('should not throw if all of the schema with contraint references are loaded
         ALTER TABLE ONLY test4.books
           ADD CONSTRAINT authors_fkey FOREIGN KEY (author_id) REFERENCES test3.authors(id);
       `)
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -265,7 +265,7 @@ test('should not throw if some of the schema with contraint references are not p
         ALTER TABLE ONLY test4.books
           ADD CONSTRAINT authors_fkey FOREIGN KEY (author_id) REFERENCES test3.authors(id);
       `)
-    }
+    },
   })
   app.register(sqlGraphQL)
   t.after(() => app.close())

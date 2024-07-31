@@ -41,12 +41,12 @@ function mockNpmJsRequestForPkgs (pkgs) {
       .get('https://registry.npmjs.org')
       .intercept({
         method: 'GET',
-        path: `/${pkg}`
+        path: `/${pkg}`,
       })
       .reply(200, {
         'dist-tags': {
-          latest: '1.42.0'
-        }
+          latest: '1.42.0',
+        },
       })
   }
 }
@@ -55,10 +55,10 @@ module.exports = {
     info: () => {},
     debug: () => {},
     warn: () => {},
-    error: () => {}
+    error: () => {},
   },
   getTempDir,
   moveToTmpdir,
   mockNpmJsRequestForPkgs,
-  mockAgent
+  mockAgent,
 }

@@ -49,7 +49,7 @@ function buildConfig (options) {
     server: {},
     core: {},
     cli: {},
-    authorization: {}
+    authorization: {},
   }
 
   return Object.assign(base, options)

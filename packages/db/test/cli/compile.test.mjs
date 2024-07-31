@@ -25,8 +25,8 @@ test('should compile typescript plugin', async (t) => {
     const child = await execa('node', [cliPath, 'compile'], {
       cwd,
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     })
     assert.equal(child.stdout.includes('Typescript compilation completed successfully.'), true)
   } catch (err) {
@@ -55,8 +55,8 @@ test('should compile typescript plugin with start command', async (t) => {
   const child = execa('node', [cliPath, 'start'], {
     cwd,
     env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
+      DATABASE_URL: connectionInfo.connectionString,
+    },
   })
 
   t.after(async () => {

@@ -23,7 +23,7 @@ const kWorkerFile = join(__dirname, 'worker.js')
 const kWorkerExecArgv = [
   '--no-warnings',
   '--experimental-loader',
-  kLoaderFile
+  kLoaderFile,
 ]
 
 function startWorker ({ config, dirname, runtimeLogsDir }, env) {
@@ -32,7 +32,7 @@ function startWorker ({ config, dirname, runtimeLogsDir }, env) {
     execArgv: config.hotReload ? kWorkerExecArgv : [],
     transferList: config.loggingPort ? [config.loggingPort] : [],
     workerData: { config, dirname, runtimeLogsDir },
-    env
+    env,
   })
 
   return worker
@@ -175,7 +175,7 @@ async function setupAndStartRuntime (config) {
   if (startErr?.code === 'PLT_RUNTIME_EADDR_IN_USE') {
     const logger = pino(pretty({
       translateTime: 'SYS:HH:MM:ss',
-      ignore: 'hostname,pid'
+      ignore: 'hostname,pid',
     }))
     logger.warn(`Port: ${originalPort} is already in use!`)
     logger.warn(`Starting service on port: ${runtimeConfig.current.server.port}`)
@@ -208,16 +208,16 @@ async function startCommand (args) {
           hostname: '127.0.0.1',
           port: 3042,
           logger: {
-            level: 'info'
-          }
+            level: 'info',
+          },
         },
         plugins: {
-          paths: [args[0]]
+          paths: [args[0]],
         },
         service: {
-          openapi: true
+          openapi: true,
         },
-        watch: true
+        watch: true,
       }
       const toWrite = join(dirname(resolve(args[0])), 'platformatic.service.json')
       console.log(`No config file found, creating ${join(dirname(args[0]), 'platformatic.service.json')}`)

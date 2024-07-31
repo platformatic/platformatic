@@ -15,7 +15,7 @@ const pltVersion = JSON.parse(readFileSync(join(__dirname, '../package.json'), '
 const defaultTypes = [
   'service',
   'db',
-  'composer'
+  'composer',
 ]
 
 class Store {
@@ -64,7 +64,7 @@ class Store {
     // We support both 'module' and 'extends'. Note that we have to rename the veriable, because "extends" is a reserved word
     const {
       module: extendedModule,
-      version
+      version,
     } = splitModuleFromVersion(_extends || module)
     let app = this.#map.get($schema)
     let require = this.#require
@@ -138,7 +138,7 @@ class Store {
     const knownTypes = Array.from(this.#map.entries()).map(([id, app]) => {
       return {
         id,
-        configType: app.configType
+        configType: app.configType,
       }
     })
 
@@ -160,7 +160,7 @@ class Store {
         `platformatic.${type}.yaml`,
         `platformatic.${type}.yml`,
         `platformatic.${type}.toml`,
-        `platformatic.${type}.tml`
+        `platformatic.${type}.tml`,
       ]
     }
 
@@ -176,8 +176,8 @@ class Store {
           `platformatic.${type}.yaml`,
           `platformatic.${type}.yml`,
           `platformatic.${type}.toml`,
-          `platformatic.${type}.tml`
-        ]
+          `platformatic.${type}.tml`,
+        ],
       }
 
       types.push(_)
@@ -190,8 +190,8 @@ class Store {
         'platformatic.yaml',
         'platformatic.yml',
         'platformatic.toml',
-        'platformatic.tml'
-      ]
+        'platformatic.tml',
+      ],
     })
 
     const lookup = new Map()
@@ -206,7 +206,7 @@ class Store {
     const configFilesAccessibility = await Promise.all(filenames.map(async (filename) => {
       return {
         filename,
-        found: await isFileAccessible(filename, this.#cwd)
+        found: await isFileAccessible(filename, this.#cwd),
       }
     }))
 
@@ -230,7 +230,7 @@ class Store {
 
     return {
       path: join(this.#cwd, found.filename),
-      app
+      app,
     }
   }
 
@@ -261,12 +261,12 @@ class Store {
       configVersion: version,
       logger: this.logger,
       ...app.configManagerConfig,
-      ...overrides
+      ...overrides,
     }
 
     const configManager = new ConfigManager({
       source: configFile,
-      ...configManagerConfig
+      ...configManagerConfig,
     })
 
     return { configManager, app }

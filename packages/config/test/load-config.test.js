@@ -11,7 +11,7 @@ function app () {
 app.configType = 'service'
 app.schema = {
   $id: 'service',
-  type: 'object'
+  type: 'object',
 }
 
 test('happy path', async t => {
@@ -25,7 +25,7 @@ test('happy path', async t => {
     _: [],
     c: file,
     config: file,
-    boo: true
+    boo: true,
   })
   assert.deepEqual(configManager.current, JSON.parse(await readFile(file, 'utf8')))
 })
@@ -42,7 +42,7 @@ test('cwd', async t => {
   const { configManager, args } = await loadConfig({}, [], app)
 
   assert.deepEqual(args, {
-    _: []
+    _: [],
   })
   assert.deepEqual(configManager.current, JSON.parse(await readFile(file, 'utf8')))
 })
@@ -82,7 +82,7 @@ test('empty rejects with an error', async t => {
       'platformatic.yaml',
       'platformatic.yml',
       'platformatic.toml',
-      'platformatic.tml'
+      'platformatic.tml',
     ])
   }
 })
@@ -96,14 +96,14 @@ test('not passing validation kills the process', async t => {
     type: 'object',
     properties: {
       foo: {
-        type: 'string'
-      }
+        type: 'string',
+      },
     },
-    required: ['foo']
+    required: ['foo'],
   }
 
   app.configManagerConfig = {
-    schema: app.schema
+    schema: app.schema,
   }
 
   const file = join(__dirname, 'fixtures', 'platformatic.service.json')
@@ -113,7 +113,7 @@ test('not passing validation kills the process', async t => {
     assert.equal(err.message, 'The configuration does not validate against the configuration schema')
     assert.deepEqual(err.validationErrors, [{
       path: '/',
-      message: 'must have required property \'foo\' {"missingProperty":"foo"}'
+      message: 'must have required property \'foo\' {"missingProperty":"foo"}',
     }])
   }
 })
@@ -129,7 +129,7 @@ test('loadConfig with Store', async t => {
     _: [],
     c: file,
     config: file,
-    boo: true
+    boo: true,
   })
   assert.deepEqual(configManager.current, JSON.parse(await readFile(file, 'utf8')))
 })
@@ -139,7 +139,7 @@ test('printConfigValidationErrors', async t => {
   console.table = (data) => {
     assert.deepEqual(data, [{
       path: '/',
-      message: 'must have required property \'foo\' {"missingProperty":"foo"}'
+      message: 'must have required property \'foo\' {"missingProperty":"foo"}',
     }])
   }
   t.after(() => {
@@ -149,8 +149,8 @@ test('printConfigValidationErrors', async t => {
     validationErrors: [{
       path: '/',
       message: 'must have required property \'foo\' {"missingProperty":"foo"}',
-      foo: 'bar' // should be ignored
-    }]
+      foo: 'bar', // should be ignored
+    }],
   })
 })
 
@@ -159,7 +159,7 @@ test('printAndExitLoadConfigError', async t => {
   console.table = (data) => {
     assert.deepEqual(data, [{
       path: '/',
-      message: 'must have required property \'foo\' {"missingProperty":"foo"}'
+      message: 'must have required property \'foo\' {"missingProperty":"foo"}',
     }])
   }
   t.after(() => {
@@ -169,8 +169,8 @@ test('printAndExitLoadConfigError', async t => {
     validationErrors: [{
       path: '/',
       message: 'must have required property \'foo\' {"missingProperty":"foo"}',
-      foo: 'bar' // should be ignored
-    }]
+      foo: 'bar', // should be ignored
+    }],
   })
 })
 
@@ -179,7 +179,7 @@ test('printAndExitLoadConfigError validationErrors', async t => {
   console.table = (data) => {
     assert.deepEqual(data, [{
       path: '/',
-      message: 'must have required property \'foo\' {"missingProperty":"foo"}'
+      message: 'must have required property \'foo\' {"missingProperty":"foo"}',
     }])
   }
   const processExit = process.exit
@@ -194,8 +194,8 @@ test('printAndExitLoadConfigError validationErrors', async t => {
     validationErrors: [{
       path: '/',
       message: 'must have required property \'foo\' {"missingProperty":"foo"}',
-      foo: 'bar' // should be ignored
-    }]
+      foo: 'bar', // should be ignored
+    }],
   })
 })
 
@@ -219,7 +219,7 @@ In alternative run "npm create platformatic@latest" to generate a basic platform
     process.exit = processExit
   })
   printAndExitLoadConfigError({
-    filenames: ['foo', 'bar']
+    filenames: ['foo', 'bar'],
   })
 })
 

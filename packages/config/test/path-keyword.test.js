@@ -14,10 +14,10 @@ test('do not emit event for not allowed files', async (t) => {
       properties: {
         path: {
           type: 'string',
-          resolvePath: true
-        }
-      }
-    }
+          resolvePath: true,
+        },
+      },
+    },
   })
 
   const parseResult = await cm.parse()
@@ -34,10 +34,10 @@ test('do not emit event for empty paths', async (t) => {
       properties: {
         path: {
           type: 'string',
-          resolvePath: true
-        }
-      }
-    }
+          resolvePath: true,
+        },
+      },
+    },
   })
 
   const parseResult = await cm.parse()
@@ -53,10 +53,10 @@ test('resolveModule', async (t) => {
       properties: {
         path: {
           type: 'string',
-          resolveModule: true
-        }
-      }
-    }
+          resolveModule: true,
+        },
+      },
+    },
   })
 
   const parseResult = await cm.parse()
@@ -74,10 +74,10 @@ test('resolveModule /2', async (t) => {
       properties: {
         path: {
           type: 'string',
-          resolveModule: true
-        }
-      }
-    }
+          resolveModule: true,
+        },
+      },
+    },
   })
 
   const parseResult = await cm.parse()
@@ -93,10 +93,10 @@ test('resolveModule / 3', async (t) => {
       properties: {
         path: {
           type: 'string',
-          resolveModule: true
-        }
-      }
-    }
+          resolveModule: true,
+        },
+      },
+    },
   })
 
   const parseResult = await cm.parse()
@@ -111,10 +111,10 @@ test('resolveModule / 3', async (t) => {
       properties: {
         path: {
           type: 'string',
-          resolveModule: true
-        }
-      }
-    }
+          resolveModule: true,
+        },
+      },
+    },
   })
 
   const parseResult = await cm.parse()
@@ -131,10 +131,10 @@ test('fixPaths: false', async (t) => {
       properties: {
         path: {
           type: 'string',
-          resolveModule: true
-        }
-      }
-    }
+          resolveModule: true,
+        },
+      },
+    },
   })
 
   const parseResult = await cm.parse()

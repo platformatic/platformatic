@@ -18,8 +18,8 @@ test('migrate on start', async (t) => {
     'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('auto-apply.json')],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 
@@ -51,8 +51,8 @@ test('validate migration checksums', async (t) => {
     'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('validate-migrations-checksums.json')],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 
@@ -73,8 +73,8 @@ test('validate migration checksums', async (t) => {
     'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('validate-migrations-checksums.json')],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 
@@ -105,8 +105,8 @@ test('do not validate migration checksums if not configured', async (t) => {
     'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('auto-apply.json')],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 
@@ -119,8 +119,8 @@ test('do not validate migration checksums if not configured', async (t) => {
     'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('auto-apply.json')],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
   secondChild.stderr.pipe(process.stderr)
@@ -146,8 +146,8 @@ test('throws if migrations directory does not exist', async (t) => {
     'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('invalid-migrations-directory.json')],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 
@@ -169,8 +169,8 @@ test('do not run migrations by default', async (t) => {
     'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('no-auto-apply.json')],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 
@@ -223,8 +223,8 @@ test('migrate creates a schema.lock file', async (t) => {
     'node', [cliPath, 'migrations', 'apply', '-c', configPath],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 
@@ -236,8 +236,8 @@ test('migrate creates a schema.lock file', async (t) => {
     'node', [cliPath, 'start', '-c', configPath],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 

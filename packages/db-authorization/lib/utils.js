@@ -39,5 +39,5 @@ function getRoles (request, roleKey, anonymousRole, isRolePath = false) {
 }
 module.exports = {
   getRequestFromContext,
-  getRoles
+  getRoles,
 }

@@ -4,9 +4,9 @@ module.exports = async function (app, opts) {
       names: async function (root, args, context) {
         return [
           'John',
-          'Jane'
+          'Jane',
         ]
-      }
-    }
+      },
+    },
   })
 }

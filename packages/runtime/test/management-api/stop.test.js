@@ -17,11 +17,11 @@ test('should stop the runtimes with a management api', async (t) => {
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
     socketPath: app.managementApi.server.address(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   t.after(async () => {
@@ -30,7 +30,7 @@ test('should stop the runtimes with a management api', async (t) => {
 
   const { statusCode, body } = await client.request({
     method: 'POST',
-    path: '/api/v1/stop'
+    path: '/api/v1/stop',
   })
   await body.text()
 

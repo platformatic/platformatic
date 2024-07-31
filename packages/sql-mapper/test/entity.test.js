@@ -7,7 +7,7 @@ const { connect } = require('..')
 const fakeLogger = {
   // trace: (...args) => { console.log(JSON.stringify(args, null, 2)) },
   trace: () => {},
-  error: () => {}
+  error: () => {},
 }
 
 test('entity fields', async () => {
@@ -35,7 +35,7 @@ test('entity fields', async () => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
   const pageEntity = mapper.entities.page
   notEqual(pageEntity, undefined)
@@ -75,7 +75,7 @@ test('entity API', async () => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
   const pageEntity = mapper.entities.page
   // fixInput
@@ -86,7 +86,7 @@ test('entity API', async () => {
   const fixedOutput = pageEntity.fixOutput({
     id: 42,
     the_title: 'Fixme',
-    is_published: true
+    is_published: true,
   })
 
   deepEqual(fixedOutput, { id: 42, theTitle: 'Fixme', isPublished: true })
@@ -105,7 +105,7 @@ test('entity API', async () => {
   // insert - single
   const insertResult = await pageEntity.insert({
     inputs: [{ theTitle: 'foobar', isPublished: false }],
-    fields: ['id', 'theTitle', 'isPublished']
+    fields: ['id', 'theTitle', 'isPublished'],
   })
   deepEqual(insertResult, [{ id: '3', theTitle: 'foobar', isPublished: false }])
 
@@ -113,25 +113,25 @@ test('entity API', async () => {
   const insertMultipleResult = await pageEntity.insert({
     inputs: [
       { theTitle: 'platformatic', isPublished: false },
-      { isPublished: true, theTitle: 'foobar' }
+      { isPublished: true, theTitle: 'foobar' },
     ],
-    fields: ['id', 'theTitle', 'isPublished']
+    fields: ['id', 'theTitle', 'isPublished'],
   })
   deepEqual(insertMultipleResult, [
     { id: '4', theTitle: 'platformatic', isPublished: false },
-    { id: '5', theTitle: 'foobar', isPublished: true }
+    { id: '5', theTitle: 'foobar', isPublished: true },
   ])
 
   // save - new record
   deepEqual(await pageEntity.save({
     input: { theTitle: 'fourth page', isPublished: false },
-    fields: ['id', 'theTitle', 'isPublished']
+    fields: ['id', 'theTitle', 'isPublished'],
   }), { id: 6, theTitle: 'fourth page', isPublished: false })
 
   // save - update record
   deepEqual(await pageEntity.save({
     input: { id: 4, theTitle: 'foofoo', isPublished: true },
-    fields: ['id', 'theTitle', 'isPublished']
+    fields: ['id', 'theTitle', 'isPublished'],
   }), { id: '4', theTitle: 'foofoo', isPublished: true })
 
   // save - empty object
@@ -146,10 +146,10 @@ test('entity API', async () => {
   deepEqual(await pageEntity.delete({
     where: {
       id: {
-        eq: 2
-      }
+        eq: 2,
+      },
     },
-    fields: ['id', 'theTitle']
+    fields: ['id', 'theTitle'],
   }), [{ id: '2', theTitle: 'bar' }])
 })
 
@@ -177,12 +177,12 @@ test('empty save', async () => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
 
   const insertResult = await mapper.entities.page.save({
     input: {},
-    fields: ['id', 'theTitle']
+    fields: ['id', 'theTitle'],
   })
   deepEqual(insertResult, { id: '1', theTitle: null })
 })
@@ -204,16 +204,16 @@ test('insert with explicit integer PK value', async () => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
   const pageEntity = mapper.entities.page
   const [newPage] = await pageEntity.insert({
     fields: ['id', 'title'],
-    inputs: [{ id: 13, title: '13th page with explicit id equal to 13' }]
+    inputs: [{ id: 13, title: '13th page with explicit id equal to 13' }],
   })
   deepEqual(newPage, {
     id: '13',
-    title: '13th page with explicit id equal to 13'
+    title: '13th page with explicit id equal to 13',
   })
 })
 
@@ -234,7 +234,7 @@ test('insert with explicit uuid PK value', { skip: !isSQLite }, async () => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
 
   const pageEntity = mapper.entities.page
@@ -242,12 +242,12 @@ test('insert with explicit uuid PK value', { skip: !isSQLite }, async () => {
     fields: ['id', 'title'],
     inputs: [{
       id: '00000000-0000-0000-0000-000000000013',
-      title: '13th page with explicit id equal to 13'
-    }]
+      title: '13th page with explicit id equal to 13',
+    }],
   })
   deepEqual(newPage, {
     id: '00000000-0000-0000-0000-000000000013',
-    title: '13th page with explicit id equal to 13'
+    title: '13th page with explicit id equal to 13',
   })
 })
 
@@ -268,7 +268,7 @@ test('insert with explicit uuid PK value without rowid', { skip: !isSQLite }, as
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
 
   const pageEntity = mapper.entities.page
@@ -276,12 +276,12 @@ test('insert with explicit uuid PK value without rowid', { skip: !isSQLite }, as
     fields: ['id', 'title'],
     inputs: [{
       id: '00000000-0000-0000-0000-000000000013',
-      title: '13th page with explicit id equal to 13'
-    }]
+      title: '13th page with explicit id equal to 13',
+    }],
   })
   deepEqual(newPage, {
     id: '00000000-0000-0000-0000-000000000013',
-    title: '13th page with explicit id equal to 13'
+    title: '13th page with explicit id equal to 13',
   })
 })
 
@@ -302,7 +302,7 @@ test('insert without fields to retrieve', { skip: !isSQLite }, async () => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
 
   const pageEntity = mapper.entities.page
@@ -310,21 +310,21 @@ test('insert without fields to retrieve', { skip: !isSQLite }, async () => {
     fields: [],
     inputs: [{
       id: '13',
-      title: '13th page with explicit id equal to 13'
-    }]
+      title: '13th page with explicit id equal to 13',
+    }],
   })
 
   const [newPage] = await pageEntity.find({
     where: {
       id: {
-        eq: '13'
-      }
-    }
+        eq: '13',
+      },
+    },
   })
 
   deepEqual(newPage, {
     id: '13',
-    title: '13th page with explicit id equal to 13'
+    title: '13th page with explicit id equal to 13',
   })
 })
 
@@ -344,7 +344,7 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async () => {
         id uuid PRIMARY KEY,
         title VARCHAR(42)
       );`)
-    }
+    },
   })
   test.after(() => mapper.db.dispose())
 
@@ -356,7 +356,7 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async () => {
     id = res.id
     deepEqual(res, {
       id,
-      title: 'Hello'
+      title: 'Hello',
     })
   }
 
@@ -364,7 +364,7 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async () => {
     const res = await pageEntity.find({ where: { id: { eq: id } } })
     deepEqual(res, [{
       id,
-      title: 'Hello'
+      title: 'Hello',
     }])
   }
 
@@ -372,7 +372,7 @@ test('[SQLite] - UUID', { skip: !isSQLite }, async () => {
     const res = await pageEntity.save({ input: { id, title: 'Hello World' } })
     deepEqual(res, {
       id,
-      title: 'Hello World'
+      title: 'Hello World',
     })
   }
 })
@@ -395,16 +395,16 @@ test('[SQLite] allows to have VARCHAR PK', { skip: !isSQLite }, async () => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
   const pageEntity = mapper.entities.page
   const [newPage] = await pageEntity.insert({
     fields: ['id', 'title'],
-    inputs: [{ id: 'varchar_id', title: '13th page with explicit id equal to 13' }]
+    inputs: [{ id: 'varchar_id', title: '13th page with explicit id equal to 13' }],
   })
   deepEqual(newPage, {
     id: 'varchar_id',
-    title: '13th page with explicit id equal to 13'
+    title: '13th page with explicit id equal to 13',
   })
 })
 
@@ -469,7 +469,7 @@ test('mixing snake and camel case', async () => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
 
   const pageEntity = mapper.entities.page
@@ -477,7 +477,7 @@ test('mixing snake and camel case', async () => {
 
   const [newCategory] = await categoryEntity.insert({
     fields: ['id', 'name'],
-    inputs: [{ name: 'fiction' }]
+    inputs: [{ name: 'fiction' }],
   })
 
   {
@@ -485,22 +485,22 @@ test('mixing snake and camel case', async () => {
       fields: ['id', 'title', 'categoryId'],
       inputs: [
         {
-          title: 'A fiction', bodyContent: 'This is our first fiction', categoryId: newCategory.id
+          title: 'A fiction', bodyContent: 'This is our first fiction', categoryId: newCategory.id,
         },
         {
-          title: 'A fiction', body_content: 'This is our first fiction', category_id: newCategory.id
-        }
+          title: 'A fiction', body_content: 'This is our first fiction', category_id: newCategory.id,
+        },
 
-      ]
+      ],
     })
     deepEqual(res, [{
       id: '1',
       title: 'A fiction',
-      categoryId: newCategory.id
+      categoryId: newCategory.id,
     }, {
       id: '2',
       title: 'A fiction',
-      categoryId: newCategory.id
+      categoryId: newCategory.id,
     }])
   }
 
@@ -508,13 +508,13 @@ test('mixing snake and camel case', async () => {
     const res = await pageEntity.save({
       fields: ['id', 'title', 'categoryId'],
       input: {
-        title: 'A fiction', body_content: 'This is our first fiction', category_id: newCategory.id
-      }
+        title: 'A fiction', body_content: 'This is our first fiction', category_id: newCategory.id,
+      },
     })
     deepEqual(res, {
       id: '3',
       title: 'A fiction',
-      categoryId: newCategory.id
+      categoryId: newCategory.id,
     })
   }
 })
@@ -580,7 +580,7 @@ test('only include wanted fields - with foreign', async () => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
 
   const pageEntity = mapper.entities.page
@@ -588,7 +588,7 @@ test('only include wanted fields - with foreign', async () => {
 
   const [newCategory] = await categoryEntity.insert({
     fields: ['id', 'name'],
-    inputs: [{ name: 'fiction' }]
+    inputs: [{ name: 'fiction' }],
   })
 
   {
@@ -597,13 +597,13 @@ test('only include wanted fields - with foreign', async () => {
       fields,
       inputs: [
         {
-          title: 'A fiction', bodyContent: 'This is our first fiction', categoryId: newCategory.id
-        }
-      ]
+          title: 'A fiction', bodyContent: 'This is our first fiction', categoryId: newCategory.id,
+        },
+      ],
     })
     deepEqual(res, [{
       id: '1',
-      categoryId: newCategory.id
+      categoryId: newCategory.id,
     }])
   }
 })
@@ -669,7 +669,7 @@ test('only include wanted fields - without foreign', async () => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
 
   const pageEntity = mapper.entities.page
@@ -677,7 +677,7 @@ test('only include wanted fields - without foreign', async () => {
 
   const [newCategory] = await categoryEntity.insert({
     fields: ['id', 'name'],
-    inputs: [{ name: 'fiction' }]
+    inputs: [{ name: 'fiction' }],
   })
 
   {
@@ -686,13 +686,13 @@ test('only include wanted fields - without foreign', async () => {
       fields,
       inputs: [
         {
-          title: 'A fiction', bodyContent: 'This is our first fiction', categoryId: newCategory.id
-        }
-      ]
+          title: 'A fiction', bodyContent: 'This is our first fiction', categoryId: newCategory.id,
+        },
+      ],
     })
     deepEqual(res, [{
       id: '1',
-      title: 'A fiction'
+      title: 'A fiction',
     }])
   }
 })
@@ -758,7 +758,7 @@ test('include all fields', async () => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
 
   const pageEntity = mapper.entities.page
@@ -766,22 +766,22 @@ test('include all fields', async () => {
 
   const [newCategory] = await categoryEntity.insert({
     fields: ['id', 'name'],
-    inputs: [{ name: 'fiction' }]
+    inputs: [{ name: 'fiction' }],
   })
 
   {
     const res = await pageEntity.insert({
       inputs: [
         {
-          title: 'A fiction', bodyContent: 'This is our first fiction', categoryId: newCategory.id
-        }
-      ]
+          title: 'A fiction', bodyContent: 'This is our first fiction', categoryId: newCategory.id,
+        },
+      ],
     })
     deepEqual(res, [{
       id: '1',
       title: 'A fiction',
       bodyContent: 'This is our first fiction',
-      categoryId: newCategory.id
+      categoryId: newCategory.id,
     }])
   }
 })
@@ -817,7 +817,7 @@ test('include possible values of enum columns', { skip: isSQLite }, async () => 
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
   const pageEntity = mapper.entities.page
   const typeField = pageEntity.fields.type
@@ -842,39 +842,39 @@ test('JSON type', { skip: !(isPg || isMysql8) }, async () => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
 
   const simpleType = mapper.entities.simpleType
 
   // save - new record
   deepEqual(await simpleType.save({
-    input: { config: { foo: 'bar' } }
+    input: { config: { foo: 'bar' } },
   }), { id: 1, config: { foo: 'bar' } })
 
   // save - update
   deepEqual(await simpleType.save({
-    input: { id: 1, config: { foo: 'bar', bar: 'foo' } }
+    input: { id: 1, config: { foo: 'bar', bar: 'foo' } },
   }), { id: 1, config: { foo: 'bar', bar: 'foo' } })
 
   // insert
   deepEqual(await simpleType.insert({
-    inputs: [{ config: { foo: 'bar' } }]
+    inputs: [{ config: { foo: 'bar' } }],
   }), [{ id: 2, config: { foo: 'bar' } }])
 
   // updateMany
   deepEqual(await simpleType.updateMany({
     where: {
       id: {
-        eq: 2
-      }
+        eq: 2,
+      },
     },
     input: {
       config: {
         foo: 'bar',
-        bar: 'foo'
-      }
-    }
+        bar: 'foo',
+      },
+    },
   }), [{ id: 2, config: { foo: 'bar', bar: 'foo' } }])
 })
 
@@ -899,36 +899,36 @@ test('stored and virtual generated columns should return for SQLite', { skip: !(
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
 
   const generatedTest = mapper.entities.generatedTest
 
   // save - new record
   deepEqual(await generatedTest.save({
-    input: { test: 1 }
+    input: { test: 1 },
   }), { id: 1, test: 1, testStored: 2, testVirtual: 4 })
 
   // save - update
   deepEqual(await generatedTest.save({
-    input: { id: 1, test: 2 }
+    input: { id: 1, test: 2 },
   }), { id: 1, test: 2, testStored: 4, testVirtual: 8 })
 
   // insert
   deepEqual(await generatedTest.insert({
-    inputs: [{ test: 4 }]
+    inputs: [{ test: 4 }],
   }), [{ id: 2, test: 4, testStored: 8, testVirtual: 16 }])
 
   // updateMany
   deepEqual(await generatedTest.updateMany({
     where: {
       id: {
-        eq: 2
-      }
+        eq: 2,
+      },
     },
     input: {
-      test: 8
-    }
+      test: 8,
+    },
   }), [{ id: 2, test: 8, testStored: 16, testVirtual: 32 }])
 })
 
@@ -952,36 +952,36 @@ test('stored generated columns should return for pg', { skip: !(isPg) }, async (
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
 
   const generatedTest = mapper.entities.generatedTest
 
   // save - new record
   deepEqual(await generatedTest.save({
-    input: { test: 1 }
+    input: { test: 1 },
   }), { id: 1, test: 1, testStored: 2 })
 
   // save - update
   deepEqual(await generatedTest.save({
-    input: { id: 1, test: 2 }
+    input: { id: 1, test: 2 },
   }), { id: 1, test: 2, testStored: 4 })
 
   // insert
   deepEqual(await generatedTest.insert({
-    inputs: [{ test: 4 }]
+    inputs: [{ test: 4 }],
   }), [{ id: 2, test: 4, testStored: 8 }])
 
   // updateMany
   deepEqual(await generatedTest.updateMany({
     where: {
       id: {
-        eq: 2
-      }
+        eq: 2,
+      },
     },
     input: {
-      test: 8
-    }
+      test: 8,
+    },
   }), [{ id: 2, test: 8, testStored: 16 }])
 })
 
@@ -1006,36 +1006,36 @@ test('stored and virtual generated columns should return for pg', { skip: (isPg 
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
 
   const generatedTest = mapper.entities.generatedTest
 
   // save - new record
   deepEqual(await generatedTest.save({
-    input: { test: 1 }
+    input: { test: 1 },
   }), { id: 1, test: 1, testStored: 2, testVirtual: 4 })
 
   // save - update
   deepEqual(await generatedTest.save({
-    input: { id: 1, test: 2 }
+    input: { id: 1, test: 2 },
   }), { id: 1, test: 2, testStored: 4, testVirtual: 8 })
 
   // insert
   deepEqual(await generatedTest.insert({
-    inputs: [{ test: 4 }]
+    inputs: [{ test: 4 }],
   }), [{ id: 2, test: 4, testStored: 8, testVirtual: 16 }])
 
   // updateMany
   deepEqual(await generatedTest.updateMany({
     where: {
       id: {
-        eq: 2
-      }
+        eq: 2,
+      },
     },
     input: {
-      test: 8
-    }
+      test: 8,
+    },
   }), [{ id: 2, test: 8, testStored: 16, testVirtual: 32 }])
 })
 
@@ -1063,14 +1063,14 @@ test('nested transactions', async () => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
 
   await mapper.db.tx(async (tx) => {
     const insertResult = await mapper.entities.page.save({
       input: {},
       fields: ['id', 'theTitle'],
-      tx
+      tx,
     })
     deepEqual(insertResult, { id: '1', theTitle: null })
   })
@@ -1096,89 +1096,89 @@ test('array support (PG)', { skip: !(isPg) }, async () => {
     log: fakeLogger,
     onDatabaseLoad,
     ignore: {},
-    hooks: {}
+    hooks: {},
   })
 
   const generatedTest = mapper.entities.generatedTest
 
   // save - new record
   deepEqual(await generatedTest.save({
-    input: { test: [1, 2, 3], checkmark: true }
+    input: { test: [1, 2, 3], checkmark: true },
   }), { id: 1, test: [1, 2, 3], checkmark: true })
 
   // save - update
   deepEqual(await generatedTest.save({
-    input: { id: 1, test: [4, 5, 6], checkmark: true }
+    input: { id: 1, test: [4, 5, 6], checkmark: true },
   }), { id: 1, test: [4, 5, 6], checkmark: true })
 
   // insert
   deepEqual(await generatedTest.insert({
-    inputs: [{ test: [4], checkmark: true }]
+    inputs: [{ test: [4], checkmark: true }],
   }), [{ id: 2, test: [4], checkmark: true }])
 
   // where any
   deepEqual(await generatedTest.find({
     where: {
-      test: { any: 4 }
-    }
+      test: { any: 4 },
+    },
   }), [{ id: 1, test: [4, 5, 6], checkmark: true }, { id: 2, test: [4], checkmark: true }])
 
   // where all
   deepEqual(await generatedTest.find({
     where: {
-      test: { all: 4 }
-    }
+      test: { all: 4 },
+    },
   }), [{ id: 2, test: [4], checkmark: true }])
 
   // where contains
   deepEqual(await generatedTest.find({
     where: {
-      test: { contains: [4] }
-    }
+      test: { contains: [4] },
+    },
   }), [{ id: 1, test: [4, 5, 6], checkmark: true }, { id: 2, test: [4], checkmark: true }])
 
   // where contained
   deepEqual(await generatedTest.find({
     where: {
-      test: { contained: [4, 5, 6] }
-    }
+      test: { contained: [4, 5, 6] },
+    },
   }), [{ id: 1, test: [4, 5, 6], checkmark: true }, { id: 2, test: [4], checkmark: true }])
 
   // where overlaps
   deepEqual(await generatedTest.find({
     where: {
-      test: { overlaps: [4] }
-    }
+      test: { overlaps: [4] },
+    },
   }), [{ id: 1, test: [4, 5, 6], checkmark: true }, { id: 2, test: [4], checkmark: true }])
 
   // where eq
   await rejects(generatedTest.find({
     where: {
-      test: { eq: 4 }
-    }
+      test: { eq: 4 },
+    },
   }))
 
   // where any to non-array
   await rejects(generatedTest.find({
     where: {
-      checkmark: { any: 4 }
-    }
+      checkmark: { any: 4 },
+    },
   }))
 
   // where any to non-array
   await rejects(generatedTest.find({
     where: {
-      checkmark: { all: 4 }
-    }
+      checkmark: { all: 4 },
+    },
   }))
 
   // updateMany
   deepEqual(await generatedTest.updateMany({
     where: {
-      checkmark: { eq: true }
+      checkmark: { eq: true },
     },
     input: {
-      test: [8]
-    }
+      test: [8],
+    },
   }), [{ id: 1, test: [8], checkmark: true }, { id: 2, test: [8], checkmark: true }])
 })

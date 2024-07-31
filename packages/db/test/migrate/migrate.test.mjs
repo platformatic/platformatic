@@ -14,8 +14,8 @@ test('migrate up', async (t) => {
     'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('simple.json')],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
 
@@ -32,8 +32,8 @@ test('migrate up & down specifying a version with "to"', async (t) => {
       'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('simple.json')],
       {
         env: {
-          DATABASE_URL: connectionInfo.connectionString
-        }
+          DATABASE_URL: connectionInfo.connectionString,
+        },
       }
     )
     const sanitized = stripAnsi(stdout)
@@ -45,8 +45,8 @@ test('migrate up & down specifying a version with "to"', async (t) => {
       'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('simple.json'), '-t', '000'],
       {
         env: {
-          DATABASE_URL: connectionInfo.connectionString
-        }
+          DATABASE_URL: connectionInfo.connectionString,
+        },
       }
     )
     const sanitized = stripAnsi(stdout)
@@ -62,8 +62,8 @@ test('ignore versions', async (t) => {
     'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('simple.json')],
     {
       env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
+        DATABASE_URL: connectionInfo.connectionString,
+      },
     }
   )
   const sanitized = stripAnsi(stdout)
@@ -80,8 +80,8 @@ test('migrations rollback', async (t) => {
       'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('multiple-migrations.json')],
       {
         env: {
-          DATABASE_URL: connectionInfo.connectionString
-        }
+          DATABASE_URL: connectionInfo.connectionString,
+        },
       }
     )
     const sanitized = stripAnsi(stdout)
@@ -96,8 +96,8 @@ test('migrations rollback', async (t) => {
       'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'],
       {
         env: {
-          DATABASE_URL: connectionInfo.connectionString
-        }
+          DATABASE_URL: connectionInfo.connectionString,
+        },
       }
     )
     const sanitized = stripAnsi(stdout)
@@ -109,8 +109,8 @@ test('migrations rollback', async (t) => {
       'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'],
       {
         env: {
-          DATABASE_URL: connectionInfo.connectionString
-        }
+          DATABASE_URL: connectionInfo.connectionString,
+        },
       }
     )
     const sanitized = stripAnsi(stdout)
@@ -122,8 +122,8 @@ test('migrations rollback', async (t) => {
       'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'],
       {
         env: {
-          DATABASE_URL: connectionInfo.connectionString
-        }
+          DATABASE_URL: connectionInfo.connectionString,
+        },
       }
     )
     const sanitized = stripAnsi(stdout)
@@ -135,8 +135,8 @@ test('migrations rollback', async (t) => {
       'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'],
       {
         env: {
-          DATABASE_URL: connectionInfo.connectionString
-        }
+          DATABASE_URL: connectionInfo.connectionString,
+        },
       }
     )
     const sanitized = stripAnsi(stdout)
@@ -150,8 +150,8 @@ test('migrations rollback', async (t) => {
       'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('multiple-migrations.json')],
       {
         env: {
-          DATABASE_URL: connectionInfo.connectionString
-        }
+          DATABASE_URL: connectionInfo.connectionString,
+        },
       }
     )
     const sanitized = stripAnsi(stdout)
@@ -174,8 +174,8 @@ test('after a migration, platformatic config is touched', async (t) => {
       'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('simple.json')],
       {
         env: {
-          DATABASE_URL: connectionInfo.connectionString
-        }
+          DATABASE_URL: connectionInfo.connectionString,
+        },
       }
     )
     const sanitized = stripAnsi(stdout)

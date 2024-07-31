@@ -18,14 +18,14 @@ import {
   runControl,
   getRuntimesCommand,
   injectRuntimeCommand,
-  streamRuntimeLogsCommand
+  streamRuntimeLogsCommand,
 } from '@platformatic/control/control.js'
 
 const program = commist({ maxDistance: 2 })
 const help = helpMe({
   dir: join(import.meta.url, 'help'),
   // the default
-  ext: '.txt'
+  ext: '.txt',
 })
 
 async function load (moduleName) {
@@ -84,8 +84,8 @@ const args = minimist(process.argv.slice(2), {
   boolean: ['help', 'version'],
   alias: {
     help: 'h',
-    version: 'v'
-  }
+    version: 'v',
+  },
 })
 
 if (args.version && !args._.includes('inject')) {

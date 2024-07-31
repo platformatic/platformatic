@@ -76,7 +76,7 @@ test('simple db, simple rest API', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   t.after(() => app.close())
 
@@ -118,7 +118,7 @@ test('noRequired = true', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   t.after(() => app.close())
 
@@ -160,7 +160,7 @@ test('ignore one field', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   t.after(() => app.close())
 
@@ -169,7 +169,7 @@ test('ignore one field', async (t) => {
   {
     const page = app.platformatic.entities.page
     const pageJsonSchema = mapSQLEntityToJSONSchema(page, {
-      title: true
+      title: true,
     })
 
     equal(pageJsonSchema.$id, 'Page')
@@ -203,7 +203,7 @@ test('stored and virtual generated columns should be read only', async (t) => {
 
       await clear(db, sql)
       await createBasicGeneratedTests(db, sql)
-    }
+    },
   })
   t.after(() => app.close())
 
@@ -236,7 +236,7 @@ test('PG Arrays', { skip: !isPg }, async (t) => {
       title VARCHAR(42) NOT NULL,
       tags VARCHAR(42)[] NOT NULL
     );`)
-    }
+    },
   })
   t.after(() => app.close())
 

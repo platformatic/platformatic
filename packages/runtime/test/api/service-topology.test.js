@@ -34,7 +34,7 @@ test('should get services topology', async (t) => {
         version: platformaticVersion,
         entrypoint: false,
         localUrl: 'http://db-app.plt.local',
-        dependencies: []
+        dependencies: [],
       },
       {
         id: 'serviceApp',
@@ -44,7 +44,7 @@ test('should get services topology', async (t) => {
         entrypoint: true,
         url: entrypointDetails.url,
         localUrl: 'http://serviceApp.plt.local',
-        dependencies: []
+        dependencies: [],
       },
       {
         id: 'with-logger',
@@ -53,7 +53,7 @@ test('should get services topology', async (t) => {
         version: platformaticVersion,
         entrypoint: false,
         localUrl: 'http://with-logger.plt.local',
-        dependencies: []
+        dependencies: [],
       },
       {
         id: 'multi-plugin-service',
@@ -62,9 +62,9 @@ test('should get services topology', async (t) => {
         version: platformaticVersion,
         entrypoint: false,
         localUrl: 'http://multi-plugin-service.plt.local',
-        dependencies: []
-      }
-    ]
+        dependencies: [],
+      },
+    ],
   })
 })
 
@@ -91,7 +91,7 @@ test('should get services topology (composer)', async (t) => {
         version: platformaticVersion,
         localUrl: 'http://dbApp.plt.local',
         entrypoint: false,
-        dependencies: []
+        dependencies: [],
       },
       {
         id: 'serviceApp',
@@ -100,7 +100,7 @@ test('should get services topology (composer)', async (t) => {
         version: platformaticVersion,
         localUrl: 'http://serviceApp.plt.local',
         entrypoint: false,
-        dependencies: []
+        dependencies: [],
       },
       {
         id: 'with-logger',
@@ -109,7 +109,7 @@ test('should get services topology (composer)', async (t) => {
         version: platformaticVersion,
         localUrl: 'http://with-logger.plt.local',
         entrypoint: false,
-        dependencies: []
+        dependencies: [],
       },
       {
         id: 'multi-plugin-service',
@@ -118,7 +118,7 @@ test('should get services topology (composer)', async (t) => {
         version: platformaticVersion,
         localUrl: 'http://multi-plugin-service.plt.local',
         entrypoint: false,
-        dependencies: []
+        dependencies: [],
       },
       {
         id: 'composerApp',
@@ -131,27 +131,27 @@ test('should get services topology (composer)', async (t) => {
           {
             id: 'with-logger',
             url: 'http://with-logger.plt.local',
-            local: true
+            local: true,
           },
           {
             id: 'multi-plugin-service',
             url: 'http://multi-plugin-service.plt.local',
-            local: true
+            local: true,
           },
           {
             id: 'serviceApp',
             url: 'http://serviceApp.plt.local',
-            local: true
+            local: true,
           },
           {
             id: 'external-service',
             url: 'https://external-service.com',
-            local: false
-          }
+            local: false,
+          },
         ],
-        url: entrypointDetails.url
-      }
+        url: entrypointDetails.url,
+      },
     ],
-    entrypoint: 'composerApp'
+    entrypoint: 'composerApp',
   })
 })

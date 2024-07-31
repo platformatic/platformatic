@@ -1,20 +1,20 @@
 import { expectAssignable } from 'tsd'
-import { BaseGenerator } from './lib/base-generator';
+import { BaseGenerator } from './lib/base-generator'
 import { generatePlugins, generateTests } from './index'
-import { FileGenerator } from './lib/file-generator';
+import { FileGenerator } from './lib/file-generator'
 
 expectAssignable<BaseGenerator.ConfigFieldDefinition>({
   label: 'PLT_TESTING',
   var: 'testing',
   default: 'hello world',
   type: 'string',
-  configValue: 'someConfigValue'
+  configValue: 'someConfigValue',
 })
 
 expectAssignable<BaseGenerator.ConfigField>({
   var: 'testing',
   configValue: 'someConfigValue',
-  value: 'asd123'
+  value: 'asd123',
 })
 
 expectAssignable<FileGenerator.FileObject[]>(generatePlugins(true))

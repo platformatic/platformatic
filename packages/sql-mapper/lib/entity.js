@@ -6,7 +6,7 @@ const {
   toUpperFirst,
   toLowerFirst,
   tableName,
-  sanitizeLimit
+  sanitizeLimit,
 } = require('./utils')
 const { singularize } = require('inflected')
 const { findNearestString } = require('@platformatic/utils')
@@ -34,7 +34,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
   const primaryKeysTypes = Array.from(primaryKeys).map((key) => {
     return {
       key,
-      sqlType: fields[key].sqlType
+      sqlType: fields[key].sqlType,
     }
   })
 
@@ -206,7 +206,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     all: 'ALL',
     contains: '@>',
     contained: '<@',
-    overlaps: '&&'
+    overlaps: '&&',
   }
 
   function computeCriteria (opts) {
@@ -364,7 +364,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     insert,
     save,
     delete: _delete,
-    updateMany
+    updateMany,
   }
 }
 
@@ -383,7 +383,7 @@ function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, useSc
     acc[column.column_name] = {
       sqlType: column.udt_name,
       isNullable: column.is_nullable === 'YES',
-      isArray: column.isArray
+      isArray: column.isArray,
     }
 
     // To get enum values in mysql and mariadb
@@ -437,7 +437,7 @@ function buildEntity (db, sql, log, table, queries, autoTimestamp, schema, useSc
     if (!field) {
       // This should never happen
       log.warn({
-        constraint
+        constraint,
       }, `No field for ${constraint.column_name}`)
       continue
     }

@@ -10,7 +10,7 @@ const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const {
   createComposer,
   createOpenApiService,
-  testEntityRoutes
+  testEntityRoutes,
 } = require('../helper')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
@@ -30,20 +30,20 @@ test('should restart composer if api has been changed', async (t) => {
           origin: 'http://127.0.0.1:' + api1.server.address().port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api1'
-          }
+            prefix: '/api1',
+          },
         },
         {
           id: 'api2',
           origin: 'http://127.0.0.1:' + api2.server.address().port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api2'
-          }
-        }
+            prefix: '/api2',
+          },
+        },
       ],
-      refreshTimeout: 500
-    }
+      refreshTimeout: 500,
+    },
   })
 
   const composerOrigin = await composer.start()
@@ -51,7 +51,7 @@ test('should restart composer if api has been changed', async (t) => {
   {
     const { statusCode, body } = await composer.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     assert.equal(statusCode, 200)
 
@@ -69,7 +69,7 @@ test('should restart composer if api has been changed', async (t) => {
   {
     const { statusCode, body } = await composer.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     assert.equal(statusCode, 200)
 
@@ -80,7 +80,7 @@ test('should restart composer if api has been changed', async (t) => {
 
     const { statusCode: statusCode2 } = await composer.inject({
       method: 'GET',
-      url: '/api1/users'
+      url: '/api1/users',
     })
     assert.equal(statusCode2, 404)
   }
@@ -101,20 +101,20 @@ test('should watch api only if it has a url', async (t) => {
           origin: 'http://127.0.0.1:' + api1.server.address().port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api1'
-          }
+            prefix: '/api1',
+          },
         },
         {
           id: 'api2',
           origin: 'http://127.0.0.1:' + api2.server.address().port,
           openapi: {
             file: join(__dirname, 'fixtures', 'schemas', 'posts.json'),
-            prefix: '/api2'
-          }
-        }
+            prefix: '/api2',
+          },
+        },
       ],
-      refreshTimeout: 500
-    }
+      refreshTimeout: 500,
+    },
   })
 
   const composerOrigin = await composer.start()
@@ -122,7 +122,7 @@ test('should watch api only if it has a url', async (t) => {
   {
     const { statusCode, body } = await composer.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     assert.equal(statusCode, 200)
 
@@ -140,7 +140,7 @@ test('should watch api only if it has a url', async (t) => {
   {
     const { statusCode, body } = await composer.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     assert.equal(statusCode, 200)
 
@@ -151,7 +151,7 @@ test('should watch api only if it has a url', async (t) => {
 
     const { statusCode: statusCode2 } = await composer.inject({
       method: 'GET',
-      url: '/api2/posts'
+      url: '/api2/posts',
     })
     assert.equal(statusCode2, 500)
   }
@@ -175,20 +175,20 @@ test('should compose schema after service restart', async (t) => {
           origin: 'http://127.0.0.1:' + api1Port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api1'
-          }
+            prefix: '/api1',
+          },
         },
         {
           id: 'api2',
           origin: 'http://127.0.0.1:' + api2Port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api2'
-          }
-        }
+            prefix: '/api2',
+          },
+        },
       ],
-      refreshTimeout: 500
-    }
+      refreshTimeout: 500,
+    },
   })
 
   const composerOrigin = await composer.start()
@@ -196,7 +196,7 @@ test('should compose schema after service restart', async (t) => {
   {
     const { statusCode, body } = await composer.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     assert.equal(statusCode, 200)
 
@@ -214,7 +214,7 @@ test('should compose schema after service restart', async (t) => {
   {
     const { statusCode, body } = await composer.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     assert.equal(statusCode, 200)
 
@@ -225,7 +225,7 @@ test('should compose schema after service restart', async (t) => {
 
     const { statusCode: statusCode2 } = await composer.inject({
       method: 'GET',
-      url: '/api1/users'
+      url: '/api1/users',
     })
     assert.equal(statusCode2, 404)
   }
@@ -237,7 +237,7 @@ test('should compose schema after service restart', async (t) => {
   {
     const { statusCode, body } = await composer.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     assert.equal(statusCode, 200)
 
@@ -263,20 +263,20 @@ test('should not watch an api if refreshTimeout equals 0', async (t) => {
           origin: 'http://127.0.0.1:' + api1.server.address().port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api1'
-          }
+            prefix: '/api1',
+          },
         },
         {
           id: 'api2',
           origin: 'http://127.0.0.1:' + api2.server.address().port,
           openapi: {
             url: '/documentation/json',
-            prefix: '/api2'
-          }
-        }
+            prefix: '/api2',
+          },
+        },
       ],
-      refreshTimeout: 0
-    }
+      refreshTimeout: 0,
+    },
   })
 
   await composer.start()
@@ -297,9 +297,9 @@ test('should not restart composer if schema has been changed', async (t) => {
   const openapiConfig = {
     paths: {
       '/users/{id}': {
-        alias: '/customers/{id}'
-      }
-    }
+        alias: '/customers/{id}',
+      },
+    },
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -314,12 +314,12 @@ test('should not restart composer if schema has been changed', async (t) => {
           origin: 'http://127.0.0.1:' + api.server.address().port,
           openapi: {
             url: '/documentation/json',
-            config: openapiConfigFile
-          }
-        }
+            config: openapiConfigFile,
+          },
+        },
       ],
-      refreshTimeout: 500
-    }
+      refreshTimeout: 500,
+    },
   })
 
   await composer.start()

@@ -16,12 +16,12 @@ test('should respond 200 on root endpoint', async (t) => {
       port: 0,
       healthCheck: {
         enabled: true,
-        interval: 2000
-      }
+        interval: 2000,
+      },
     },
     db: {
-      ...connectionInfo
-    }
+      ...connectionInfo,
+    },
   }
 
   const configManager = await buildConfigManager(config)
@@ -45,8 +45,8 @@ test('should respond 200 on root endpoint', async (t) => {
     // browser
     const res = await (request(`${app.url}/`, {
       headers: {
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'
-      }
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36',
+      },
     }))
     const html = await res.body.text()
     assert.equal(res.statusCode, 200)
@@ -66,15 +66,15 @@ test('should not overwrite a plugin which define a root endpoint', async (t) => 
       port: 0,
       healthCheck: {
         enabled: true,
-        interval: 2000
-      }
+        interval: 2000,
+      },
     },
     db: {
-      ...connectionInfo
+      ...connectionInfo,
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
-    }
+      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')],
+    },
   }
 
   const configManager = await buildConfigManager(config)
@@ -98,14 +98,14 @@ test('should exclude the root endpoint from the openapi documentation', async (t
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 0,
     },
     db: {
-      ...connectionInfo
+      ...connectionInfo,
     },
     authorization: {
-      adminSecret: 'secret'
-    }
+      adminSecret: 'secret',
+    },
   }
 
   const configManager = await buildConfigManager(config)

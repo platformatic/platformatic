@@ -6,20 +6,18 @@ import { writeOperations } from './openapi-common.mjs'
 export function processOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders, validateResponse, typesComment }) {
   return {
     types: generateTypesFromOpenAPI({ schema, name, fullResponse, fullRequest, optionalHeaders, typesComment }),
-    implementation: generateImplementationFromOpenAPI({ name, fullResponse, fullRequest, validateResponse })
+    implementation: generateImplementationFromOpenAPI({ name, fullResponse, fullRequest, validateResponse }),
   }
 }
 
 function generateImplementationFromOpenAPI ({ name, fullResponse, fullRequest, validateResponse }) {
   const camelcasedName = toJavaScriptName(name)
 
-  /* eslint-disable new-cap */
   const writer = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
     useTabs: false,
-    useSingleQuote: true
+    useSingleQuote: true,
   })
-  /* eslint-enable new-cap */
 
   // TODO support esm
   writer.writeLine('\'use strict\'')
@@ -80,24 +78,23 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
         method,
         operation: {
           ...operation,
-          operationId: opId
-        }
+          operationId: opId,
+        },
       }
     })
   })
-  /* eslint-disable new-cap */
+
   const writer = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
     useTabs: false,
-    useSingleQuote: true
+    useSingleQuote: true,
   })
 
   const interfaces = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
     useTabs: false,
-    useSingleQuote: true
+    useSingleQuote: true,
   })
-  /* eslint-enable new-cap */
 
   if (typesComment) {
     writer.writeLine(`// ${typesComment}`)
@@ -121,7 +118,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
     interfaces.blankLine()
     writer.write(`export type ${capitalizedName} =`).block(() => {
       writeOperations(interfaces, writer, operations, {
-        fullRequest, fullResponse, optionalHeaders, schema
+        fullRequest, fullResponse, optionalHeaders, schema,
       })
     })
 

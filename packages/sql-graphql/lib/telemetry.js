@@ -10,7 +10,7 @@ const telemetryWrapper = (app, fn, operationType, operationName) => async (...ar
   const telemetryAttributes = {
     'graphql.document': document,
     'graphql.operation.name': operationName,
-    'graphql.operation.type': operationType
+    'graphql.operation.type': operationType,
   }
   const spanName = `${operationType} ${operationName}`
   const ctx = request.span?.context

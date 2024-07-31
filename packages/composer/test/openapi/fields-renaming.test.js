@@ -9,7 +9,7 @@ const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const {
   createComposer,
   createBasicService,
-  createOpenApiService
+  createOpenApiService,
 } = require('../helper')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
@@ -27,13 +27,13 @@ test('should rename top level object fields', async (t) => {
               type: 'object',
               properties: {
                 id: { rename: 'user_id' },
-                name: { rename: 'first_name' }
-              }
-            }
-          }
-        }
-      }
-    }
+                name: { rename: 'first_name' },
+              },
+            },
+          },
+        },
+      },
+    },
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -49,17 +49,17 @@ test('should rename top level object fields', async (t) => {
             origin: 'http://127.0.0.1:' + api.server.address().port,
             openapi: {
               url: '/documentation/json',
-              config: openapiConfigFile
-            }
-          }
-        ]
-      }
+              config: openapiConfigFile,
+            },
+          },
+        ],
+      },
     }
   )
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
@@ -74,8 +74,8 @@ test('should rename top level object fields', async (t) => {
     title: 'users',
     properties: {
       user_id: { type: 'number' },
-      first_name: { type: 'string' }
-    }
+      first_name: { type: 'string' },
+    },
   })
 
   {
@@ -102,15 +102,15 @@ test('should rename nested object fields', async (t) => {
                 nested: {
                   type: 'object',
                   properties: {
-                    text: { rename: 'renamed_text_filed' }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+                    text: { rename: 'renamed_text_filed' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -126,17 +126,17 @@ test('should rename nested object fields', async (t) => {
             origin: 'http://127.0.0.1:' + api.server.address().port,
             openapi: {
               url: '/documentation/json',
-              config: openapiConfigFile
-            }
-          }
-        ]
-      }
+              config: openapiConfigFile,
+            },
+          },
+        ],
+      },
     }
   )
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
@@ -152,10 +152,10 @@ test('should rename nested object fields', async (t) => {
       nested: {
         type: 'object',
         properties: {
-          renamed_text_filed: { type: 'string' }
-        }
-      }
-    }
+          renamed_text_filed: { type: 'string' },
+        },
+      },
+    },
   })
 
   {
@@ -179,13 +179,13 @@ test('should rename property in required array', async (t) => {
             200: {
               type: 'object',
               properties: {
-                text: { rename: 'renamed_text_filed' }
-              }
-            }
-          }
-        }
-      }
-    }
+                text: { rename: 'renamed_text_filed' },
+              },
+            },
+          },
+        },
+      },
+    },
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -201,17 +201,17 @@ test('should rename property in required array', async (t) => {
             origin: 'http://127.0.0.1:' + api.server.address().port,
             openapi: {
               url: '/documentation/json',
-              config: openapiConfigFile
-            }
-          }
-        ]
-      }
+              config: openapiConfigFile,
+            },
+          },
+        ],
+      },
     }
   )
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
@@ -224,9 +224,9 @@ test('should rename property in required array', async (t) => {
   assert.deepEqual(responseSchema, {
     type: 'object',
     properties: {
-      renamed_text_filed: { type: 'string' }
+      renamed_text_filed: { type: 'string' },
     },
-    required: ['renamed_text_filed']
+    required: ['renamed_text_filed'],
   })
 
   {
@@ -253,14 +253,14 @@ test('should rename top level object fields in array', async (t) => {
                 type: 'object',
                 properties: {
                   id: { rename: 'user_id' },
-                  name: { rename: 'first_name' }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+                  name: { rename: 'first_name' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -276,17 +276,17 @@ test('should rename top level object fields in array', async (t) => {
             origin: 'http://127.0.0.1:' + api.server.address().port,
             openapi: {
               url: '/documentation/json',
-              config: openapiConfigFile
-            }
-          }
-        ]
-      }
+              config: openapiConfigFile,
+            },
+          },
+        ],
+      },
     }
   )
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   assert.equal(statusCode, 200)
 
@@ -303,9 +303,9 @@ test('should rename top level object fields in array', async (t) => {
       type: 'object',
       properties: {
         user_id: { type: 'number' },
-        first_name: { type: 'string' }
-      }
-    }
+        first_name: { type: 'string' },
+      },
+    },
   })
 
   {
@@ -317,7 +317,7 @@ test('should rename top level object fields in array', async (t) => {
       { user_id: 1, first_name: 'test1' },
       { user_id: 2, first_name: 'test2' },
       { user_id: 3, first_name: 'test3' },
-      { user_id: 4, first_name: 'test4' }
+      { user_id: 4, first_name: 'test4' },
     ])
   }
 })

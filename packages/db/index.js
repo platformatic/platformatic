@@ -90,7 +90,7 @@ async function platformaticDB (app, opts) {
 
   await app.register(platformaticService, {
     ...opts,
-    beforePlugins: [toLoad]
+    beforePlugins: [toLoad],
   })
 
   if (!app.hasRoute({ url: '/', method: 'GET' })) {
@@ -121,7 +121,7 @@ platformaticDB.configManagerConfig = {
   async transformConfig () {
     await adjustConfig(this)
   },
-  upgrade
+  upgrade,
 }
 
 function _buildServer (options) {

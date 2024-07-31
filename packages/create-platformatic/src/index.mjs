@@ -28,7 +28,7 @@ export async function fetchStackables (marketplaceHost) {
   try {
     const { statusCode, body } = await Promise.race([
       stackablesRequest,
-      stackablesRequestTimeout
+      stackablesRequestTimeout,
     ])
     if (statusCode === 200) {
       return (await body.json()).map(stackable => stackable.name)
@@ -44,7 +44,7 @@ export async function chooseStackable (stackables) {
     name: 'type',
     message: 'Which kind of project do you want to create?',
     default: stackables.indexOf('@platformatic/service'),
-    choices: stackables
+    choices: stackables,
   })
 
   return options.type
@@ -71,10 +71,10 @@ async function importOrLocal ({ pkgManager, name, projectDir, pkg }) {
 export const createPlatformatic = async (argv) => {
   const args = parseArgs(argv, {
     default: {
-      install: true
+      install: true,
     },
     boolean: ['install'],
-    string: ['global-config', 'marketplace-host']
+    string: ['global-config', 'marketplace-host'],
   })
 
   const username = await getUsername()
@@ -92,7 +92,7 @@ export const createPlatformatic = async (argv) => {
 
   const logger = pino(pretty({
     translateTime: 'SYS:HH:MM:ss',
-    ignore: 'hostname,pid'
+    ignore: 'hostname,pid',
   }))
 
   const pkgManager = getPkgManager()
@@ -104,8 +104,8 @@ export const createPlatformatic = async (argv) => {
     default: 'application',
     choices: [
       { name: 'Application', value: 'application' },
-      { name: 'Stackable', value: 'stackable' }
-    ]
+      { name: 'Stackable', value: 'stackable' },
+    ],
   })
 
   if (projectType === 'application') {
@@ -120,7 +120,7 @@ async function createApplication (args, logger, pkgManager) {
     type: 'input',
     name: 'dir',
     message: 'Where would you like to create your project?',
-    default: 'platformatic'
+    default: 'platformatic',
   })
 
   const projectDir = path.resolve(process.cwd(), optionsDir.dir)
@@ -132,17 +132,17 @@ async function createApplication (args, logger, pkgManager) {
     pkgManager,
     name: projectName,
     projectDir,
-    pkg: '@platformatic/runtime'
+    pkg: '@platformatic/runtime',
   })
 
   const generator = new runtime.Generator({
     logger,
     name: projectName,
-    inquirer
+    inquirer,
   })
   generator.setConfig({
     ...generator.config,
-    targetDirectory: projectDir
+    targetDirectory: projectDir,
   })
 
   await generator.populateFromExistingConfig()
@@ -162,7 +162,7 @@ async function createApplication (args, logger, pkgManager) {
       pkgManager,
       name: projectName,
       projectDir,
-      pkg: stackableName
+      pkg: stackableName,
     })
 
     const { serviceName } = await inquirer.prompt({
@@ -184,19 +184,19 @@ async function createApplication (args, logger, pkgManager) {
         }
 
         return true
-      }
+      },
     })
 
     names.push(serviceName)
 
     const stackableGenerator = new stackable.Generator({
       logger,
-      inquirer
+      inquirer,
     })
 
     stackableGenerator.setConfig({
       ...stackableGenerator.config,
-      serviceName
+      serviceName,
     })
 
     generator.addService(stackableGenerator, serviceName)
@@ -209,8 +209,8 @@ async function createApplication (args, logger, pkgManager) {
         name: 'shouldBreak',
         message: 'Do you want to create another service?',
         default: false,
-        choices: [{ name: 'yes', value: false }, { name: 'no', value: true }]
-      }
+        choices: [{ name: 'yes', value: false }, { name: 'no', value: true }],
+      },
     ])
 
     if (shouldBreak) {
@@ -226,8 +226,8 @@ async function createApplication (args, logger, pkgManager) {
         type: 'list',
         name: 'entrypoint',
         message: 'Which service should be exposed?',
-        choices: names.map(name => ({ name, value: name }))
-      }
+        choices: names.map(name => ({ name, value: name })),
+      },
     ])
     entrypoint = results.entrypoint
   } else {
@@ -247,7 +247,7 @@ async function createApplication (args, logger, pkgManager) {
     name: 'initGitRepository',
     message: 'Do you want to init the git repository?',
     default: false,
-    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }],
   })
 
   if (initGitRepository) {
@@ -288,7 +288,7 @@ async function createStackable (args, logger, pkgManager) {
     name: 'initGitRepository',
     message: 'Do you want to init the git repository?',
     default: false,
-    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }],
   })
 
   if (initGitRepository) {

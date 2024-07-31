@@ -10,7 +10,7 @@ function createSupergraph ({ sdl = null, resolvers = {} } = {}) {
   if (!sdl) {
     return {
       sdl: placeholderSdl,
-      resolvers: placeholderResolvers
+      resolvers: placeholderResolvers,
     }
   }
   return { sdl, resolvers }
@@ -29,8 +29,8 @@ function serviceToSubgraphConfig (service) {
     server: {
       host: service.graphql.host || service.origin,
       composeEndpoint: service.graphql.composeEndpoint,
-      graphqlEndpoint: service.graphql.graphqlEndpoint
-    }
+      graphqlEndpoint: service.graphql.graphqlEndpoint,
+    },
   }
 }
 
@@ -41,7 +41,7 @@ async function fetchGraphqlSubgraphs (services, options, app) {
   return createSupergraph({
     logger: app.log,
     sdl: composer.toSdl(),
-    resolvers: composer.resolvers
+    resolvers: composer.resolvers,
   })
 }
 
@@ -78,7 +78,7 @@ function toComposerOptions (options, app) {
           app.log.error({ err }, 'running onSubgraphError')
         }
       }
-    }
+    },
   }
 }
 

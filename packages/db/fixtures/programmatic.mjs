@@ -4,16 +4,16 @@ import { join } from 'desm'
 const app = await buildServer({
   server: {
     hostname: '127.0.0.1',
-    port: 0
+    port: 0,
   },
   db: {
-    connectionString: 'sqlite://::memory::'
+    connectionString: 'sqlite://::memory::',
   },
   migrations: {
     dir: join(import.meta.url, './migrations'),
     table: 'versions',
-    autoApply: true
-  }
+    autoApply: true,
+  },
 })
 
 await app.start() // this will start our server

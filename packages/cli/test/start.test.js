@@ -18,7 +18,7 @@ test('starts a server', async (t) => {
 
   const child = spawn(process.execPath, [cliPath, 'start'], {
     cwd: destDir,
-    timeout: 10_000
+    timeout: 10_000,
   })
 
   t.after(async () => {
@@ -55,7 +55,7 @@ test('starts a runtime application', async (t) => {
   )
 
   await mkdir(join(destDir, 'node_modules', '@platformatic'), {
-    recursive: true
+    recursive: true,
   })
 
   await symlink(
@@ -64,7 +64,7 @@ test('starts a runtime application', async (t) => {
 
   const child = spawn(process.execPath, [cliPath, 'start'], {
     cwd: destDir,
-    timeout: 10_000
+    timeout: 10_000,
   })
 
   child.stderr.pipe(process.stderr)

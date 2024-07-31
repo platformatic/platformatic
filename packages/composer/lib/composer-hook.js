@@ -53,7 +53,7 @@ async function composeOpenAPI (app) {
   Object.defineProperty(app.platformatic, 'addComposerOnRouteHook', {
     value: addComposerOnRouteHook,
     writable: false,
-    configurable: false
+    configurable: false,
   })
 }
 

@@ -19,5 +19,5 @@ module.exports = {
   VersionMismatchError: createError(`${ERROR_PREFIX}_VERSION_MISMATCH`, 'Version mismatch. You are running Platformatic %s but your app requires %s'),
   InvalidConfigFileExtensionError: createError(`${ERROR_PREFIX}_INVALID_CONFIG_FILE_EXTENSION`, 'Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported.'),
   NoConfigFileFoundError: createError(`${ERROR_PREFIX}_NO_CONFIG_FILE_FOUND`, 'no config file found'),
-  VersionMissingError: createError(`${ERROR_PREFIX}_VERSION_MISSING`, 'version is required if upgrade is specified.')
+  VersionMissingError: createError(`${ERROR_PREFIX}_VERSION_MISSING`, 'version is required if upgrade is specified.'),
 }

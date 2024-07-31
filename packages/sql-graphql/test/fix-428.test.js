@@ -50,7 +50,7 @@ test('do not crash', { skip: !isPg }, async (t) => {
       t.after(() => async () => {
         await clean(db, sql)
       })
-    }
+    },
   })
   await app.register(sqlGraphQL)
   t.after(() => app.close())
@@ -69,17 +69,17 @@ test('do not crash', { skip: !isPg }, async (t) => {
               name
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'saveCompany status code')
     same(res.json(), {
       data: {
         saveCompany: {
           id: 1,
-          name: 'Platformatic'
-        }
-      }
+          name: 'Platformatic',
+        },
+      },
     }, 'saveCompany response')
   }
 
@@ -95,17 +95,17 @@ test('do not crash', { skip: !isPg }, async (t) => {
               name
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'saveSocialMedia status code')
     same(res.json(), {
       data: {
         saveSocialMedia: {
           id: 1,
-          name: 'Twitter'
-        }
-      }
+          name: 'Twitter',
+        },
+      },
     }, 'saveSocialMedia response')
   }
 
@@ -121,17 +121,17 @@ test('do not crash', { skip: !isPg }, async (t) => {
               username
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'saveCompanySocialMedia status code')
     same(res.json(), {
       data: {
         saveCompanySocialMedia: {
           id: 1,
-          username: 'platformatic'
-        }
-      }
+          username: 'platformatic',
+        },
+      },
     }, 'saveCompanySocialMedia response')
   }
 
@@ -152,8 +152,8 @@ test('do not crash', { skip: !isPg }, async (t) => {
               }
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'complex status code')
     same(res.json(), {
@@ -163,11 +163,11 @@ test('do not crash', { skip: !isPg }, async (t) => {
           companySocialMedias: [{
             username: 'platformatic',
             socialMedias: {
-              name: 'Twitter'
-            }
-          }]
-        }]
-      }
+              name: 'Twitter',
+            },
+          }],
+        }],
+      },
     }, 'complex response')
   }
 })

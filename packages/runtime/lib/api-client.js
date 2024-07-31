@@ -79,7 +79,7 @@ class RuntimeApiClient extends EventEmitter {
       packageName: packageJson.name ?? null,
       packageVersion: packageJson.version ?? null,
       url: entrypointDetails?.url ?? null,
-      platformaticVersion
+      platformaticVersion,
     }
   }
 
@@ -109,7 +109,7 @@ class RuntimeApiClient extends EventEmitter {
       // Remove once https://github.com/nodejs/node/pull/51290 is released
       // on all lines.
       // Likely to be removed when we drop support for Node.js 18.
-      sleep(10000, 'timeout', { ref: false })
+      sleep(10000, 'timeout', { ref: false }),
     ])
 
     if (res === 'timeout') {
@@ -170,10 +170,6 @@ class RuntimeApiClient extends EventEmitter {
 
     if (metrics === null) return null
 
-    const entrypointDetails = await this.getEntrypointDetails()
-    const entrypointConfig = await this.getServiceConfig(entrypointDetails.id)
-    const entrypointMetricsPrefix = entrypointConfig.metrics?.prefix
-
     const cpuMetric = metrics.find(
       (metric) => metric.name === 'process_cpu_percent_usage'
     )
@@ -204,28 +200,27 @@ class RuntimeApiClient extends EventEmitter {
     let p95Value = 0
     let p99Value = 0
 
-    if (entrypointMetricsPrefix) {
-      const metricName = entrypointMetricsPrefix + 'http_request_all_summary_seconds'
-      const httpLatencyMetrics = metrics.find((metric) => metric.name === metricName)
+    const metricName = 'http_request_all_summary_seconds'
+    const httpLatencyMetrics =
+        metrics.find((metric) => metric.name === metricName)
 
-      p50Value = httpLatencyMetrics.values.find(
-        (value) => value.labels.quantile === 0.5
-      ).value || 0
-      p90Value = httpLatencyMetrics.values.find(
-        (value) => value.labels.quantile === 0.9
-      ).value || 0
-      p95Value = httpLatencyMetrics.values.find(
-        (value) => value.labels.quantile === 0.95
-      ).value || 0
-      p99Value = httpLatencyMetrics.values.find(
-        (value) => value.labels.quantile === 0.99
-      ).value || 0
+    p50Value = httpLatencyMetrics.values.find(
+      (value) => value.labels.quantile === 0.5
+    ).value || 0
+    p90Value = httpLatencyMetrics.values.find(
+      (value) => value.labels.quantile === 0.9
+    ).value || 0
+    p95Value = httpLatencyMetrics.values.find(
+      (value) => value.labels.quantile === 0.95
+    ).value || 0
+    p99Value = httpLatencyMetrics.values.find(
+      (value) => value.labels.quantile === 0.99
+    ).value || 0
 
-      p50Value = Math.round(p50Value * 1000)
-      p90Value = Math.round(p90Value * 1000)
-      p95Value = Math.round(p95Value * 1000)
-      p99Value = Math.round(p99Value * 1000)
-    }
+    p50Value = Math.round(p50Value * 1000)
+    p90Value = Math.round(p90Value * 1000)
+    p95Value = Math.round(p95Value * 1000)
+    p99Value = Math.round(p99Value * 1000)
 
     const cpu = cpuMetric.values[0].value
     const rss = rssMetric.values[0].value
@@ -250,9 +245,9 @@ class RuntimeApiClient extends EventEmitter {
           p50: p50Value,
           p90: p90Value,
           p95: p95Value,
-          p99: p99Value
-        }
-      }
+          p99: p99Value,
+        },
+      },
     }
     return formattedMetrics
   }
@@ -391,7 +386,7 @@ class RuntimeApiClient extends EventEmitter {
       }
       runtimesLogsIds.push({
         pid: runtime.runtimePID,
-        indexes: runtimeLogIds
+        indexes: runtimeLogIds,
       })
     }
 
@@ -439,7 +434,7 @@ class RuntimeApiClient extends EventEmitter {
       runtimesLogFiles.push({
         runtimePID: parseInt(runtimePID),
         runtimeLogFiles,
-        lastModified
+        lastModified,
       })
     }
 
@@ -496,5 +491,5 @@ function getRuntimeLogsDir (runtimeDir, runtimePID) {
 module.exports = {
   RuntimeApiClient,
   getRuntimeTmpDir,
-  getRuntimeLogsDir
+  getRuntimeLogsDir,
 }

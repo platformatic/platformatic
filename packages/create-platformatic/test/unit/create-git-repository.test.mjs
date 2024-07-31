@@ -21,7 +21,7 @@ const loggerSpy = {
     this._debug = []
     this._info = []
     this._error = []
-  }
+  },
 }
 
 const tmpDir = join(tmpdir(), 'test-create-platformatic-git-repo')

@@ -36,12 +36,12 @@ test('ignore a table', async (t) => {
   app.register(sqlMapper, {
     ...connInfo,
     ignore: {
-      categories: true
+      categories: true,
     },
     async onDatabaseLoad (db, sql) {
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -51,7 +51,7 @@ test('ignore a table', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     equal(res.statusCode, 200, 'GET /documentation/json status code')
     const data = res.json()
@@ -65,13 +65,13 @@ test('ignore a column', async (t) => {
     ...connInfo,
     ignore: {
       categories: {
-        name: true
-      }
+        name: true,
+      },
     },
     async onDatabaseLoad (db, sql) {
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI)
   t.after(() => app.close())
@@ -81,7 +81,7 @@ test('ignore a column', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     equal(res.statusCode, 200, 'GET /documentation/json status code')
     const data = res.json()
@@ -96,12 +96,12 @@ test('ignore a table from OpenAPI', async (t) => {
     async onDatabaseLoad (db, sql) {
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI, {
     ignore: {
-      category: true
-    }
+      category: true,
+    },
   })
   t.after(() => app.close())
 
@@ -110,7 +110,7 @@ test('ignore a table from OpenAPI', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation/json'
+      url: '/documentation/json',
     })
     equal(res.statusCode, 200, 'GET /documentation/json status code')
     const data = res.json()
@@ -120,7 +120,7 @@ test('ignore a table from OpenAPI', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/categories'
+      url: '/categories',
     })
     equal(res.statusCode, 404, 'GET /categories status code')
   }
@@ -143,8 +143,8 @@ test('show a warning if there is no ignored entity', async (t) => {
         if (msg === 'Ignored openapi entity "missingEntityPages" not found. Did you mean "page"?') {
           ok('warning message is shown')
         }
-      }
-    }
+      },
+    },
   })
 
   app.register(sqlMapper, {
@@ -154,12 +154,12 @@ test('show a warning if there is no ignored entity', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI, {
     ignore: {
-      missingEntityPages: true
-    }
+      missingEntityPages: true,
+    },
   })
   t.after(() => app.close())
 
@@ -181,8 +181,8 @@ test('show a warning if database is empty', async (t) => {
         if (msg === 'Ignored openapi entity "missingEntityPages" not found.') {
           pass('warning message is shown')
         }
-      }
-    }
+      },
+    },
   })
 
   app.register(sqlMapper, {
@@ -191,12 +191,12 @@ test('show a warning if database is empty', async (t) => {
       ok('onDatabaseLoad called')
 
       await clear(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI, {
     ignore: {
-      missingEntityPages: true
-    }
+      missingEntityPages: true,
+    },
   })
   t.after(() => app.close())
 
@@ -212,14 +212,14 @@ test('ignore a column in OpenAPI', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI, {
     ignore: {
       category: {
-        name: true
-      }
-    }
+        name: true,
+      },
+    },
   })
   t.after(() => app.close())
 
@@ -227,7 +227,7 @@ test('ignore a column in OpenAPI', async (t) => {
 
   const res = await app.inject({
     method: 'GET',
-    url: '/documentation/json'
+    url: '/documentation/json',
   })
   equal(res.statusCode, 200, 'GET /documentation/json status code')
   const data = res.json()
@@ -263,8 +263,8 @@ test('show a warning if there is no ignored entity field', async (t) => {
         if (msg === 'Ignored openapi field "missingFieldName" not found in entity "category". Did you mean "name"?') {
           pass('warning message is shown')
         }
-      }
-    }
+      },
+    },
   })
 
   app.register(sqlMapper, {
@@ -274,14 +274,14 @@ test('show a warning if there is no ignored entity field', async (t) => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlOpenAPI, {
     ignore: {
       category: {
-        missingFieldName: true
-      }
-    }
+        missingFieldName: true,
+      },
+    },
   })
   t.after(() => app.close())
 

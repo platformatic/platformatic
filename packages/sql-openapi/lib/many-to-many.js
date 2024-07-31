@@ -10,11 +10,11 @@ async function entityPlugin (app, opts) {
   const ignoreRoutes = opts.ignoreRoutes
 
   const entitySchema = {
-    $ref: entity.name + '#'
+    $ref: entity.name + '#',
   }
 
   const entitySchemaInput = {
-    $ref: entity.name + 'Input#'
+    $ref: entity.name + 'Input#',
   }
   const primaryKeysParams = getPrimaryKeysParams(entity)
   const primaryKeysCamelcase = Array.from(entity.primaryKeys).map((key) => camelcase(key))
@@ -62,13 +62,13 @@ async function entityPlugin (app, opts) {
         querystring: {
           type: 'object',
           properties: {
-            fields
-          }
+            fields,
+          },
         },
         response: {
-          200: entitySchema
-        }
-      }
+          200: entitySchema,
+        },
+      },
     }, async function (request, reply) {
       const ctx = { app: this, reply }
       const res = await entity.find({
@@ -77,7 +77,7 @@ async function entityPlugin (app, opts) {
           acc[key] = { eq: request.params[key] }
           return acc
         }, {}),
-        fields: request.query.fields
+        fields: request.query.fields,
       })
       if (res.length === 0) {
         return reply.callNotFound()
@@ -104,12 +104,12 @@ async function entityPlugin (app, opts) {
           querystring: {
             type: 'object',
             properties: {
-              fields
-            }
+              fields,
+            },
           },
           response: {
-            200: entitySchema
-          }
+            200: entitySchema,
+          },
         },
         async handler (request, reply) {
           const ids = primaryKeysCamelcase.map((key) => { return { key, value: request.params[key] } })
@@ -121,13 +121,13 @@ async function entityPlugin (app, opts) {
               ...(ids.reduce((acc, { key, value }) => {
                 acc[key] = value
                 return acc
-              }, {}))
+              }, {})),
             },
             where: ids.reduce((acc, { key, value }) => {
               acc[key] = { eq: value }
               return acc
             }, {}),
-            fields: request.query.fields
+            fields: request.query.fields,
           })
           let location = app.prefix + pathWithParams
           for (const key of primaryKeysCamelcase) {
@@ -135,7 +135,7 @@ async function entityPlugin (app, opts) {
           }
           reply.header('location', location)
           return res
-        }
+        },
       })
     }
   }
@@ -154,13 +154,13 @@ async function entityPlugin (app, opts) {
         querystring: {
           type: 'object',
           properties: {
-            fields
-          }
+            fields,
+          },
         },
         response: {
-          200: entitySchema
-        }
-      }
+          200: entitySchema,
+        },
+      },
     }, async function (request, reply) {
       const ids = primaryKeysCamelcase.map((key) => { return { key, value: request.params[key] } })
       const ctx = { app: this, reply }
@@ -170,7 +170,7 @@ async function entityPlugin (app, opts) {
           acc[key] = { eq: value }
           return acc
         }, {}),
-        fields: request.query.fields
+        fields: request.query.fields,
       })
       if (res.length === 0) {
         return reply.callNotFound()
@@ -194,7 +194,7 @@ function getPrimaryKeysParams (entity) {
   return {
     type: 'object',
     properties,
-    required
+    required,
   }
 }
 

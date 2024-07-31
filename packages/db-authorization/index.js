@@ -10,7 +10,7 @@ const { getRequestFromContext, getRoles } = require('./lib/utils')
 const {
   Unauthorized,
   UnauthorizedField,
-  MissingNotNullableError
+  MissingNotNullableError,
 } = require('./lib/errors')
 
 const PLT_ADMIN_ROLE = 'platformatic-admin'
@@ -49,7 +49,7 @@ async function auth (app, opts) {
               value = PLT_ADMIN_ROLE
             }
             return value
-          }
+          },
         })
       }
     }
@@ -58,7 +58,7 @@ async function auth (app, opts) {
       // We replace just the role in `request.user`, all the rest is untouched
       request.user = {
         ...request.user,
-        [roleKey]: PLT_ADMIN_ROLE
+        [roleKey]: PLT_ADMIN_ROLE,
       }
     }
   }
@@ -153,7 +153,7 @@ async function auth (app, opts) {
           role: PLT_ADMIN_ROLE,
           find: true,
           save: true,
-          delete: true
+          delete: true,
         })
       }
 
@@ -219,7 +219,7 @@ async function auth (app, opts) {
             const found = await type.find({
               where,
               ctx,
-              fields
+              fields,
             })
 
             if (found.length === 0) {
@@ -311,7 +311,7 @@ async function auth (app, opts) {
           }
 
           return originalTopic
-        }
+        },
       })
     }
   })
@@ -335,7 +335,7 @@ async function fromRuleToWhere (ctx, rule, where, user) {
         if (typeof clauses === 'string') {
         // case: "userId": "X-PLATFORMATIC-USER-ID"
           where[key] = {
-            eq: request.user[clauses]
+            eq: request.user[clauses],
           }
         } else {
         // case:
@@ -345,7 +345,7 @@ async function fromRuleToWhere (ctx, rule, where, user) {
           for (const clauseKey of Object.keys(clauses)) {
             const clause = clauses[clauseKey]
             where[key] = {
-              [clauseKey]: request.user[clause]
+              [clauseKey]: request.user[clause],
             }
           }
         }

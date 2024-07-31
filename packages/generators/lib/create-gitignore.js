@@ -33,10 +33,10 @@ function generateGitignore () {
   return {
     path: '',
     file: '.gitignore',
-    contents: gitignore
+    contents: gitignore,
   }
 }
 
 module.exports = {
-  generateGitignore
+  generateGitignore,
 }

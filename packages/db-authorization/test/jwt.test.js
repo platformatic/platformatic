@@ -13,7 +13,7 @@ const { createSigner } = require('fast-jwt')
 const { publicKey, privateKey } = generateKeyPairSync('rsa', {
   modulusLength: 2048,
   publicKeyEncoding: { type: 'pkcs1', format: 'pem' },
-  privateKeyEncoding: { type: 'pkcs1', format: 'pem' }
+  privateKeyEncoding: { type: 'pkcs1', format: 'pem' },
 })
 const jwtPublicKey = createPublicKey(publicKey).export({ format: 'jwk' })
 
@@ -42,20 +42,20 @@ test('jwt verify success getting public key from jwks endpoint', async () => {
           n,
           e,
           use: 'sig',
-          kid
-        }
-      ]
+          kid,
+        },
+      ],
     }
   )
   const issuer = `http://localhost:${jwksEndpoint.server.address().port}`
   const header = {
     kid,
     alg,
-    typ: 'JWT'
+    typ: 'JWT',
   }
   const payload = {
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': ['user']
+    'X-PLATFORMATIC-ROLE': ['user'],
   }
 
   const app = fastify()
@@ -66,11 +66,11 @@ test('jwt verify success getting public key from jwks endpoint', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(auth, {
     jwt: {
-      jwks: true
+      jwks: true,
     },
     rules: [{
       role: 'user',
@@ -78,14 +78,14 @@ test('jwt verify success getting public key from jwks endpoint', async () => {
       find: true,
       delete: false,
       defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID'
+        userId: 'X-PLATFORMATIC-USER-ID',
       },
       save: {
         checks: {
-          userId: 'X-PLATFORMATIC-USER-ID'
-        }
-      }
-    }]
+          userId: 'X-PLATFORMATIC-USER-ID',
+        },
+      },
+    }],
   })
   test.after(() => {
     app.close()
@@ -99,7 +99,7 @@ test('jwt verify success getting public key from jwks endpoint', async () => {
     key: privateKey,
     header,
     iss: issuer,
-    kid
+    kid,
   })
   const token = signSync(payload)
 
@@ -108,7 +108,7 @@ test('jwt verify success getting public key from jwks endpoint', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -119,8 +119,8 @@ test('jwt verify success getting public key from jwks endpoint', async () => {
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
@@ -128,9 +128,9 @@ test('jwt verify success getting public key from jwks endpoint', async () => {
         savePage: {
           id: 1,
           title: 'Hello',
-          userId: 42
-        }
-      }
+          userId: 42,
+        },
+      },
     }, 'savePage response')
   }
 
@@ -139,7 +139,7 @@ test('jwt verify success getting public key from jwks endpoint', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -150,8 +150,8 @@ test('jwt verify success getting public key from jwks endpoint', async () => {
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     deepEqual(res.json(), {
@@ -159,9 +159,9 @@ test('jwt verify success getting public key from jwks endpoint', async () => {
         getPageById: {
           id: 1,
           title: 'Hello',
-          userId: 42
-        }
-      }
+          userId: 42,
+        },
+      },
     }, 'pages response')
   }
 })
@@ -177,11 +177,11 @@ test('jwt verify fail if getting public key from jwks endpoint fails', async () 
   const header = {
     kid,
     alg,
-    typ: 'JWT'
+    typ: 'JWT',
   }
   const payload = {
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': ['user']
+    'X-PLATFORMATIC-ROLE': ['user'],
   }
 
   const app = fastify()
@@ -192,11 +192,11 @@ test('jwt verify fail if getting public key from jwks endpoint fails', async () 
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(auth, {
     jwt: {
-      jwks: true
+      jwks: true,
     },
     rules: [{
       role: 'user',
@@ -204,14 +204,14 @@ test('jwt verify fail if getting public key from jwks endpoint fails', async () 
       find: true,
       delete: false,
       defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID'
+        userId: 'X-PLATFORMATIC-USER-ID',
       },
       save: {
         checks: {
-          userId: 'X-PLATFORMATIC-USER-ID'
-        }
-      }
-    }]
+          userId: 'X-PLATFORMATIC-USER-ID',
+        },
+      },
+    }],
   })
   test.after(() => {
     app.close()
@@ -225,7 +225,7 @@ test('jwt verify fail if getting public key from jwks endpoint fails', async () 
     key: privateKey,
     header,
     iss: issuer,
-    kid
+    kid,
   })
   const token = signSync(payload)
 
@@ -234,7 +234,7 @@ test('jwt verify fail if getting public key from jwks endpoint fails', async () 
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -245,13 +245,13 @@ test('jwt verify fail if getting public key from jwks endpoint fails', async () 
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
       data: {
-        savePage: null
+        savePage: null,
       },
       errors: [
         {
@@ -259,14 +259,14 @@ test('jwt verify fail if getting public key from jwks endpoint fails', async () 
           locations: [
             {
               line: 3,
-              column: 13
-            }
+              column: 13,
+            },
           ],
           path: [
-            'savePage'
-          ]
-        }
-      ]
+            'savePage',
+          ],
+        },
+      ],
     }, 'savePage response')
   }
 })
@@ -285,9 +285,9 @@ test('jwt verify fail if jwks succeed but kid is not found', async () => {
           n,
           e,
           use: 'sig',
-          kid
-        }
-      ]
+          kid,
+        },
+      ],
     }
   )
 
@@ -295,11 +295,11 @@ test('jwt verify fail if jwks succeed but kid is not found', async () => {
   const header = {
     kid: 'DIFFERENT_KID',
     alg,
-    typ: 'JWT'
+    typ: 'JWT',
   }
   const payload = {
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': ['user']
+    'X-PLATFORMATIC-ROLE': ['user'],
   }
 
   const app = fastify()
@@ -309,11 +309,11 @@ test('jwt verify fail if jwks succeed but kid is not found', async () => {
       ok('onDatabaseLoad called')
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(auth, {
     jwt: {
-      jwks: true
+      jwks: true,
     },
     rules: [{
       role: 'user',
@@ -321,14 +321,14 @@ test('jwt verify fail if jwks succeed but kid is not found', async () => {
       find: true,
       delete: false,
       defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID'
+        userId: 'X-PLATFORMATIC-USER-ID',
       },
       save: {
         checks: {
-          userId: 'X-PLATFORMATIC-USER-ID'
-        }
-      }
-    }]
+          userId: 'X-PLATFORMATIC-USER-ID',
+        },
+      },
+    }],
   })
   test.after(() => {
     app.close()
@@ -342,7 +342,7 @@ test('jwt verify fail if jwks succeed but kid is not found', async () => {
     key: privateKey,
     header,
     iss: issuer,
-    kid
+    kid,
   })
   const token = signSync(payload)
 
@@ -351,7 +351,7 @@ test('jwt verify fail if jwks succeed but kid is not found', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -362,13 +362,13 @@ test('jwt verify fail if jwks succeed but kid is not found', async () => {
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
       data: {
-        savePage: null
+        savePage: null,
       },
       errors: [
         {
@@ -376,14 +376,14 @@ test('jwt verify fail if jwks succeed but kid is not found', async () => {
           locations: [
             {
               line: 3,
-              column: 13
-            }
+              column: 13,
+            },
           ],
           path: [
-            'savePage'
-          ]
-        }
-      ]
+            'savePage',
+          ],
+        },
+      ],
     }, 'savePage response')
   }
 })
@@ -402,9 +402,9 @@ test('jwt verify fail if the domain is not allowed', async () => {
           n,
           e,
           use: 'sig',
-          kid
-        }
-      ]
+          kid,
+        },
+      ],
     }
   )
 
@@ -412,11 +412,11 @@ test('jwt verify fail if the domain is not allowed', async () => {
   const header = {
     kid,
     alg,
-    typ: 'JWT'
+    typ: 'JWT',
   }
   const payload = {
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': ['user']
+    'X-PLATFORMATIC-ROLE': ['user'],
   }
 
   const app = fastify()
@@ -426,13 +426,13 @@ test('jwt verify fail if the domain is not allowed', async () => {
       ok('onDatabaseLoad called')
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(auth, {
     jwt: {
       jwks: {
-        allowedDomains: ['http://myalloawedomain.com']
-      }
+        allowedDomains: ['http://myalloawedomain.com'],
+      },
     },
     rules: [{
       role: 'user',
@@ -440,14 +440,14 @@ test('jwt verify fail if the domain is not allowed', async () => {
       find: true,
       delete: false,
       defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID'
+        userId: 'X-PLATFORMATIC-USER-ID',
       },
       save: {
         checks: {
-          userId: 'X-PLATFORMATIC-USER-ID'
-        }
-      }
-    }]
+          userId: 'X-PLATFORMATIC-USER-ID',
+        },
+      },
+    }],
   })
   test.after(() => {
     app.close()
@@ -461,7 +461,7 @@ test('jwt verify fail if the domain is not allowed', async () => {
     key: privateKey,
     header,
     iss: issuer,
-    kid
+    kid,
   })
   const token = signSync(payload)
 
@@ -470,7 +470,7 @@ test('jwt verify fail if the domain is not allowed', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -481,13 +481,13 @@ test('jwt verify fail if the domain is not allowed', async () => {
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
       data: {
-        savePage: null
+        savePage: null,
       },
       errors: [
         {
@@ -495,14 +495,14 @@ test('jwt verify fail if the domain is not allowed', async () => {
           locations: [
             {
               line: 3,
-              column: 13
-            }
+              column: 13,
+            },
           ],
           path: [
-            'savePage'
-          ]
-        }
-      ]
+            'savePage',
+          ],
+        },
+      ],
     }, 'savePage response')
   }
 })
@@ -520,21 +520,21 @@ test('jwt skips configure namespace in custom claims', async () => {
           n,
           e,
           use: 'sig',
-          kid
-        }
-      ]
+          kid,
+        },
+      ],
     }
   )
   const issuer = `http://localhost:${jwksEndpoint.server.address().port}`
   const header = {
     kid,
     alg,
-    typ: 'JWT'
+    typ: 'JWT',
   }
   const namespace = 'https://test.com/'
   const payload = {
     [`${namespace}X-PLATFORMATIC-USER-ID`]: 42,
-    [`${namespace}X-PLATFORMATIC-ROLE`]: ['user']
+    [`${namespace}X-PLATFORMATIC-ROLE`]: ['user'],
   }
 
   const app = fastify()
@@ -545,12 +545,12 @@ test('jwt skips configure namespace in custom claims', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(auth, {
     jwt: {
       jwks: true,
-      namespace
+      namespace,
     },
     rules: [{
       role: 'user',
@@ -558,14 +558,14 @@ test('jwt skips configure namespace in custom claims', async () => {
       find: true,
       delete: false,
       defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID'
+        userId: 'X-PLATFORMATIC-USER-ID',
       },
       save: {
         checks: {
-          userId: 'X-PLATFORMATIC-USER-ID'
-        }
-      }
-    }]
+          userId: 'X-PLATFORMATIC-USER-ID',
+        },
+      },
+    }],
   })
   test.after(() => {
     app.close()
@@ -579,7 +579,7 @@ test('jwt skips configure namespace in custom claims', async () => {
     key: privateKey,
     header,
     iss: issuer,
-    kid
+    kid,
   })
   const token = signSync(payload)
 
@@ -588,7 +588,7 @@ test('jwt skips configure namespace in custom claims', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -599,8 +599,8 @@ test('jwt skips configure namespace in custom claims', async () => {
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'savePage status code')
     deepEqual(res.json(), {
@@ -608,9 +608,9 @@ test('jwt skips configure namespace in custom claims', async () => {
         savePage: {
           id: 1,
           title: 'Hello',
-          userId: 42
-        }
-      }
+          userId: 42,
+        },
+      },
     }, 'savePage response')
   }
 
@@ -619,7 +619,7 @@ test('jwt skips configure namespace in custom claims', async () => {
       method: 'POST',
       url: '/graphql',
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       body: {
         query: `
@@ -630,8 +630,8 @@ test('jwt skips configure namespace in custom claims', async () => {
               userId
             }
           }
-        `
-      }
+        `,
+      },
     })
     equal(res.statusCode, 200, 'pages status code')
     deepEqual(res.json(), {
@@ -639,9 +639,9 @@ test('jwt skips configure namespace in custom claims', async () => {
         getPageById: {
           id: 1,
           title: 'Hello',
-          userId: 42
-        }
-      }
+          userId: 42,
+        },
+      },
     }, 'pages response')
   }
 })
@@ -659,20 +659,20 @@ test('do not install a preHandler hook', async () => {
           n,
           e,
           use: 'sig',
-          kid
-        }
-      ]
+          kid,
+        },
+      ],
     }
   )
   const issuer = `http://localhost:${jwksEndpoint.server.address().port}`
   const header = {
     kid,
     alg,
-    typ: 'JWT'
+    typ: 'JWT',
   }
   const payload = {
     'X-PLATFORMATIC-USER-ID': 42,
-    'X-PLATFORMATIC-ROLE': ['user']
+    'X-PLATFORMATIC-ROLE': ['user'],
   }
 
   const app = fastify()
@@ -683,11 +683,11 @@ test('do not install a preHandler hook', async () => {
 
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(auth, {
     jwt: {
-      jwks: true
+      jwks: true,
     },
     rules: [{
       role: 'user',
@@ -695,14 +695,14 @@ test('do not install a preHandler hook', async () => {
       find: true,
       delete: false,
       defaults: {
-        userId: 'X-PLATFORMATIC-USER-ID'
+        userId: 'X-PLATFORMATIC-USER-ID',
       },
       save: {
         checks: {
-          userId: 'X-PLATFORMATIC-USER-ID'
-        }
-      }
-    }]
+          userId: 'X-PLATFORMATIC-USER-ID',
+        },
+      },
+    }],
   })
   test.after(() => {
     app.close()
@@ -721,7 +721,7 @@ test('do not install a preHandler hook', async () => {
     key: privateKey,
     header,
     iss: issuer,
-    kid
+    kid,
   })
   const token = signSync(payload)
 
@@ -730,8 +730,8 @@ test('do not install a preHandler hook', async () => {
       method: 'GET',
       url: '/test',
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     })
     equal(res.statusCode, 200, 'test status code')
   }

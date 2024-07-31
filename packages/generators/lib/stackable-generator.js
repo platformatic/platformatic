@@ -18,7 +18,7 @@ const fakeLogger = {
   warn: () => {},
   debug: () => {},
   trace: () => {},
-  error: () => {}
+  error: () => {},
 }
 /* c8 ignore start */
 
@@ -41,7 +41,7 @@ class StackableGenerator extends FileGenerator {
       typescript: false,
       initGitRepository: false,
       dependencies: {},
-      devDependencies: {}
+      devDependencies: {},
     }
   }
 
@@ -59,7 +59,7 @@ class StackableGenerator extends FileGenerator {
     this.config = {
       ...this.getDefaultConfig(),
       ...oldConfig,
-      ...config
+      ...config,
     }
 
     if (this.config.targetDirectory) {
@@ -74,7 +74,7 @@ class StackableGenerator extends FileGenerator {
       const newConfig = await this.inquirer.prompt(this.questions)
       this.setConfig({
         ...this.config,
-        ...newConfig
+        ...newConfig,
       })
     }
   }
@@ -92,7 +92,7 @@ class StackableGenerator extends FileGenerator {
       this.addFile({
         path: '',
         file: 'package.json',
-        contents: JSON.stringify(template, null, 2)
+        contents: JSON.stringify(template, null, 2),
       })
 
       if (this.config.typescript) {
@@ -100,7 +100,7 @@ class StackableGenerator extends FileGenerator {
         this.addFile({
           path: '',
           file: 'tsconfig.json',
-          contents: JSON.stringify(this.getTsConfig(), null, 2)
+          contents: JSON.stringify(this.getTsConfig(), null, 2),
         })
       }
 
@@ -116,7 +116,7 @@ class StackableGenerator extends FileGenerator {
       await this._afterPrepare()
 
       return {
-        targetDirectory: this.targetDirectory
+        targetDirectory: this.targetDirectory,
       }
     } catch (err) {
       if (err.code?.startsWith('PLT_GEN')) {
@@ -140,15 +140,15 @@ class StackableGenerator extends FileGenerator {
         noEmitOnError: true,
         incremental: true,
         strict: true,
-        outDir: 'dist'
+        outDir: 'dist',
       },
       watchOptions: {
         watchFile: 'fixedPollingInterval',
         watchDirectory: 'fixedPollingInterval',
         fallbackPolling: 'dynamicPriority',
         synchronousWatchDirectory: true,
-        excludeDirectories: ['**/node_modules', 'dist']
-      }
+        excludeDirectories: ['**/node_modules', 'dist'],
+      },
     }
   }
 
@@ -159,7 +159,7 @@ class StackableGenerator extends FileGenerator {
         type: 'input',
         name: 'targetDirectory',
         message: 'Where would you like to create your project?',
-        default: 'platformatic'
+        default: 'platformatic',
       })
     }
 
@@ -167,7 +167,7 @@ class StackableGenerator extends FileGenerator {
       type: 'input',
       name: 'stackableName',
       message: 'What is the name of the stackable?',
-      default: 'my-stackable'
+      default: 'my-stackable',
     })
 
     // typescript
@@ -176,7 +176,7 @@ class StackableGenerator extends FileGenerator {
       name: 'typescript',
       message: 'Do you want to use TypeScript?',
       default: false,
-      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+      choices: [{ name: 'yes', value: true }, { name: 'no', value: false }],
     })
   }
 
@@ -207,12 +207,12 @@ class StackableGenerator extends FileGenerator {
     const dependencies = {
       '@platformatic/config': `^${this.platformaticVersion}`,
       '@platformatic/service': `^${this.platformaticVersion}`,
-      'json-schema-to-typescript': '^13.0.0'
+      'json-schema-to-typescript': '^13.0.0',
     }
 
     const devDependencies = {
       borp: '^0.10.0',
-      fastify: `^${this.fastifyVersion}`
+      fastify: `^${this.fastifyVersion}`,
     }
 
     const npmPackageName = kebabCase(this.config.stackableName)
@@ -229,7 +229,7 @@ class StackableGenerator extends FileGenerator {
         main: 'dist/index.js',
         bin: {
           [createStackableCommand]: './dist/cli/create.js',
-          [startStackableCommand]: './dist/cli/start.js'
+          [startStackableCommand]: './dist/cli/start.js',
         },
         scripts: {
           build: 'tsc --build',
@@ -237,21 +237,21 @@ class StackableGenerator extends FileGenerator {
           'gen-types': 'json2ts > config.d.ts < schema.json',
           'build:config': 'pnpm run gen-schema && pnpm run gen-types',
           clean: 'rm -fr ./dist',
-          test: 'borp'
+          test: 'borp',
         },
         engines: {
-          node: '^18.8.0 || >=20.6.0'
+          node: '^18.8.0 || >=20.6.0',
         },
         devDependencies: {
           ...devDependencies,
           typescript: typescriptVersion,
-          ...this.config.devDependencies
+          ...this.config.devDependencies,
         },
         dependencies: {
           ...dependencies,
           '@platformatic/generators': `^${this.platformaticVersion}`,
-          ...this.config.dependencies
-        }
+          ...this.config.dependencies,
+        },
       }
     }
 
@@ -261,7 +261,7 @@ class StackableGenerator extends FileGenerator {
       main: 'index.js',
       bin: {
         [createStackableCommand]: './cli/create.js',
-        [startStackableCommand]: './cli/start.js'
+        [startStackableCommand]: './cli/start.js',
       },
       scripts: {
         'gen-schema': 'node lib/schema.js > schema.json',
@@ -269,20 +269,20 @@ class StackableGenerator extends FileGenerator {
         'build:config': 'pnpm run gen-schema && pnpm run gen-types',
         prepublishOnly: 'pnpm run build:config',
         lint: 'standard',
-        test: 'borp'
+        test: 'borp',
       },
       engines: {
-        node: '^18.8.0 || >=20.6.0'
+        node: '^18.8.0 || >=20.6.0',
       },
       devDependencies: {
         ...devDependencies,
         standard: '^17.0.0',
-        ...this.config.devDependencies
+        ...this.config.devDependencies,
       },
       dependencies: {
         ...dependencies,
-        ...this.config.dependencies
-      }
+        ...this.config.dependencies,
+      },
     }
   }
 

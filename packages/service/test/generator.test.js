@@ -33,7 +33,7 @@ describe('generator', () => {
 
     {
       svc.setConfig({
-        typescript: true
+        typescript: true,
       })
 
       await svc.prepare()
@@ -49,7 +49,7 @@ describe('generator', () => {
     await svc.prepare()
 
     svc.setConfig({
-      typescript: true
+      typescript: true,
     })
 
     await svc.prepare()
@@ -71,7 +71,7 @@ describe('generator', () => {
   test('config', async (t) => {
     const svc = new ServiceGenerator()
     svc.setConfig({
-      typescript: true
+      typescript: true,
     })
     await svc.prepare()
     const platformaticConfigFile = svc.getFileObject('platformatic.json')
@@ -83,12 +83,12 @@ describe('generator', () => {
     assert.deepEqual(contents.server, {
       hostname: '{PLT_SERVER_HOSTNAME}',
       port: '{PORT}',
-      logger: { level: '{PLT_SERVER_LOGGER_LEVEL}' }
+      logger: { level: '{PLT_SERVER_LOGGER_LEVEL}' },
     })
 
     assert.deepEqual(contents.plugins, {
       paths: [{ path: './plugins', encapsulate: false }, './routes'],
-      typescript: '{PLT_TYPESCRIPT}'
+      typescript: '{PLT_TYPESCRIPT}',
     })
   })
 
@@ -102,21 +102,21 @@ describe('generator', () => {
             {
               path: 'threshold',
               value: '1',
-              type: 'number'
+              type: 'number',
             },
             {
               path: 'foobar',
               value: '123',
               type: 'number',
-              name: 'FST_PLUGIN_STATIC_FOOBAR'
-            }
-          ]
-        }
+              name: 'FST_PLUGIN_STATIC_FOOBAR',
+            },
+          ],
+        },
       ]
       svc.setConfig({
         isRuntimeContext: true,
         plugin: false,
-        serviceName: 'my-service'
+        serviceName: 'my-service',
       })
       await svc.addPackage(packageDefinitions[0])
       await svc.prepare()
@@ -130,10 +130,10 @@ describe('generator', () => {
             name: '@fastify/compress',
             options: {
               threshold: 1,
-              foobar: '{PLT_MY_SERVICE_FST_PLUGIN_STATIC_FOOBAR}'
-            }
-          }
-        ]
+              foobar: '{PLT_MY_SERVICE_FST_PLUGIN_STATIC_FOOBAR}',
+            },
+          },
+        ],
       })
 
       assert.equal(svc.config.env.PLT_MY_SERVICE_FST_PLUGIN_STATIC_FOOBAR, 123)
@@ -148,10 +148,10 @@ describe('generator', () => {
             {
               path: 'threshold',
               value: '1',
-              type: 'number'
-            }
-          ]
-        }
+              type: 'number',
+            },
+          ],
+        },
       ]
       await svc.addPackage(packageDefinitions[0])
       await svc.prepare()
@@ -163,19 +163,19 @@ describe('generator', () => {
         paths: [
           {
             encapsulate: false,
-            path: './plugins'
+            path: './plugins',
           },
-          './routes'
+          './routes',
         ],
         typescript: '{PLT_TYPESCRIPT}',
         packages: [
           {
             name: '@fastify/compress',
             options: {
-              threshold: 1
-            }
-          }
-        ]
+              threshold: 1,
+            },
+          },
+        ],
       })
     }
   })
@@ -189,27 +189,27 @@ describe('generator', () => {
         label: 'What is the hostname?',
         default: '0.0.0.0',
         type: 'string',
-        configValue: 'hostname'
+        configValue: 'hostname',
       },
       {
         var: 'PLT_SERVER_LOGGER_LEVEL',
         label: 'What is the logger level?',
         default: 'info',
         type: 'string',
-        configValue: ''
+        configValue: '',
       },
       {
         label: 'Which port do you want to use?',
         var: 'PORT',
         default: 3042,
         type: 'number',
-        configValue: 'port'
-      }
+        configValue: 'port',
+      },
     ])
 
     // empty array in runtime context
     svc.setConfig({
-      isRuntimeContext: true
+      isRuntimeContext: true,
     })
     assert.deepEqual(svc.getConfigFieldsDefinitions(), [])
   })
@@ -217,27 +217,27 @@ describe('generator', () => {
   test('should set config fields', async () => {
     const svc = new ServiceGenerator()
     svc.setConfig({
-      isRuntimeContext: false
+      isRuntimeContext: false,
     })
     const values = [
       {
         // existing field
         var: 'PLT_SERVER_HOSTNAME',
         configValue: 'hostname',
-        value: '127.0.0.123'
+        value: '127.0.0.123',
       },
       {
         // existing field without configValue
         var: 'PLT_SERVER_LOGGER_LEVEL',
         configValue: '',
-        value: 'debug'
+        value: 'debug',
       },
       {
         // non-existing field
         var: 'PLT_NOT_EXISTING',
         configValue: 'foobar',
-        value: 'baz'
-      }
+        value: 'baz',
+      },
 
     ]
     svc.setConfigFields(values)
@@ -245,7 +245,7 @@ describe('generator', () => {
     assert.equal(svc.config.hostname, '127.0.0.123')
     assert.deepEqual(svc.config.env, {
       PLT_SERVER_HOSTNAME: '127.0.0.123',
-      PLT_SERVER_LOGGER_LEVEL: 'debug'
+      PLT_SERVER_LOGGER_LEVEL: 'debug',
     })
 
     assert.equal(undefined, svc.config.foobar)
@@ -260,8 +260,8 @@ describe('generator', () => {
         serviceName: 'my-service',
         env: {
           FOO: 'bar',
-          BAZ: 'baz'
-        }
+          BAZ: 'baz',
+        },
       })
 
       await svc.prepare()
@@ -271,7 +271,7 @@ describe('generator', () => {
       assert.deepEqual(svc.config.env, {
         PLT_MY_SERVICE_FOO: 'bar',
         PLT_MY_SERVICE_BAZ: 'baz',
-        PLT_MY_SERVICE_TYPESCRIPT: false
+        PLT_MY_SERVICE_TYPESCRIPT: false,
       })
     })
 
@@ -279,7 +279,7 @@ describe('generator', () => {
       const svc = new ServiceGenerator()
       svc.setConfig({
         isRuntimeContext: true,
-        serviceName: 'my-service'
+        serviceName: 'my-service',
       })
 
       await svc.prepare()
@@ -293,7 +293,7 @@ describe('generator', () => {
       const svc = new ServiceGenerator()
       svc.setConfig({
         isRuntimeContext: true,
-        serviceName: 'my-service'
+        serviceName: 'my-service',
       })
 
       await svc.prepare()

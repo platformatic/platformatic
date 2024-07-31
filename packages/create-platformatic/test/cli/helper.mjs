@@ -13,7 +13,7 @@ export const keys = {
   DOWN: '\x1B\x5B\x42',
   UP: '\x1B\x5B\x41',
   ENTER: '\x0D',
-  SPACE: '\x20'
+  SPACE: '\x20',
 }
 
 export const createPath = join(import.meta.url, '..', '..', 'create-platformatic.mjs')
@@ -60,19 +60,19 @@ export async function executeCreatePlatformatic (dir, actions = [], options = {}
     const questions = [...actions]
     try {
       const execaOptions = {
-        cwd: dir
+        cwd: dir,
       }
 
       if (pkgManager === 'pnpm') {
         execaOptions.env = {
-          npm_config_user_agent: 'pnpm/6.14.1 npm/? node/v16.4.2 darwin x64'
+          npm_config_user_agent: 'pnpm/6.14.1 npm/? node/v16.4.2 darwin x64',
         }
       }
 
       const child = execa('node', [
         createPath,
         `--install=${pkgMgrInstall.toString()}`,
-        `--marketplace-host=${marketplaceHost}`
+        `--marketplace-host=${marketplaceHost}`,
       ], execaOptions)
 
       // We just need the "lastPrompt" printed before the process stopped to wait for an answer
@@ -147,7 +147,7 @@ export async function startMarketplace (t, opts = {}) {
     return [
       { name: '@platformatic/composer' },
       { name: '@platformatic/db' },
-      { name: '@platformatic/service' }
+      { name: '@platformatic/service' },
     ]
   })
 

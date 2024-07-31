@@ -43,7 +43,7 @@ test('subscription - crud', async t => {
     async onDatabaseLoad (db, sql) {
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlEvents)
   app.register(sqlGraphQL)
@@ -53,7 +53,7 @@ test('subscription - crud', async t => {
   const { client } = createWebSocketClient(t, app)
 
   client.write(JSON.stringify({
-    type: 'connection_init'
+    type: 'connection_init',
   }))
 
   {
@@ -67,8 +67,8 @@ test('subscription - crud', async t => {
       id: 1,
       type: 'start',
       payload: {
-        query
-      }
+        query,
+      },
     }))
   }
 
@@ -82,8 +82,8 @@ test('subscription - crud', async t => {
       id: 1,
       type: 'start',
       payload: {
-        query
-      }
+        query,
+      },
     }))
   }
 
@@ -103,8 +103,8 @@ test('subscription - crud', async t => {
             id
           }
         }
-      `
-    }
+      `,
+    },
   })
 
   {
@@ -117,10 +117,10 @@ test('subscription - crud', async t => {
         data: {
           pageSaved: {
             id: '1',
-            title: 'Hello World'
-          }
-        }
-      }
+            title: 'Hello World',
+          },
+        },
+      },
     })
   }
 
@@ -134,8 +134,8 @@ test('subscription - crud', async t => {
             id
           }
         }
-      `
-    }
+      `,
+    },
   })
 
   {
@@ -148,10 +148,10 @@ test('subscription - crud', async t => {
         data: {
           pageSaved: {
             id: '1',
-            title: 'Harry Potter'
-          }
-        }
-      }
+            title: 'Harry Potter',
+          },
+        },
+      },
     })
   }
 
@@ -165,8 +165,8 @@ test('subscription - crud', async t => {
             id
           }
         }
-      `
-    }
+      `,
+    },
   })
 
   {
@@ -178,17 +178,17 @@ test('subscription - crud', async t => {
       payload: {
         data: {
           pageDeleted: {
-            id: '1'
-          }
-        }
-      }
+            id: '1',
+          },
+        },
+      },
     })
   }
 
   {
     const [
       received,
-      stored
+      stored,
     ] = await Promise.all(([
       (async function () {
         const res = await app.inject({
@@ -207,10 +207,10 @@ test('subscription - crud', async t => {
               inputs: [
                 { title: 'Page 1' },
                 { title: 'Page 2' },
-                { title: 'Page 3' }
-              ]
-            }
-          }
+                { title: 'Page 3' },
+              ],
+            },
+          },
         })
 
         const pages = res.json().data.insertPages
@@ -230,7 +230,7 @@ test('subscription - crud', async t => {
         }
 
         return pages
-      })()
+      })(),
     ]))
 
     same(received, stored)
@@ -246,11 +246,11 @@ test('subscription - ignore', async t => {
     async onDatabaseLoad (db, sql) {
       await clear(db, sql)
       await createBasicPages(db, sql)
-    }
+    },
   })
   app.register(sqlEvents)
   app.register(sqlGraphQL, {
-    subscriptionIgnore: ['page']
+    subscriptionIgnore: ['page'],
   })
 
   await app.ready()
@@ -278,11 +278,11 @@ test('subscription - crud with two schemas and a ignore', async t => {
           name VARCHAR(42)
         );`)
       }
-    }
+    },
   })
   app.register(sqlEvents)
   app.register(sqlGraphQL, {
-    subscriptionIgnore: ['category']
+    subscriptionIgnore: ['category'],
   })
 
   await app.listen({ port: 0 })
@@ -291,7 +291,7 @@ test('subscription - crud with two schemas and a ignore', async t => {
   t.after(() => client.destroy())
 
   client.write(JSON.stringify({
-    type: 'connection_init'
+    type: 'connection_init',
   }))
 
   {
@@ -310,8 +310,8 @@ test('subscription - crud with two schemas and a ignore', async t => {
       id: 1,
       type: 'start',
       payload: {
-        query
-      }
+        query,
+      },
     }))
   }
 

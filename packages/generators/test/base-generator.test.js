@@ -21,12 +21,12 @@ test('should write file and dirs', async (t) => {
   const dir = await getTempDir()
   const gen = new BaseGenerator({
     logger: fakeLogger,
-    module: '@platformatic/service'
+    module: '@platformatic/service',
   })
 
   gen.setConfig({
     targetDirectory: dir,
-    serviceName: 'test-service'
+    serviceName: 'test-service',
   })
 
   await gen.run()
@@ -51,20 +51,20 @@ test('extended class should generate config', async (t) => {
     constructor (opts) {
       super({
         ...opts,
-        module: '@platformatic/service'
+        module: '@platformatic/service',
       })
     }
 
     async _getConfigFileContents () {
       // Implement when extending this class
       return {
-        foo: 'bar'
+        foo: 'bar',
       }
     }
   }
 
   const svc = new ServiceClass({
-    logger: fakeLogger
+    logger: fakeLogger,
   })
 
   await svc.prepare()
@@ -74,13 +74,13 @@ test('extended class should generate config', async (t) => {
     path: '',
     file: 'platformatic.json',
     contents: JSON.stringify({ foo: 'bar' }, null, 2),
-    options: {}
+    options: {},
   })
 })
 
 test('setConfig', async (t) => {
   const bg = new BaseGenerator({
-    module: '@platformatic/service'
+    module: '@platformatic/service',
   })
 
   // should init the default config
@@ -100,7 +100,7 @@ test('setConfig', async (t) => {
     serviceName: '',
     envPrefix: '',
     tests: false,
-    isUpdating: false
+    isUpdating: false,
   })
 
   // should not have undefined properties
@@ -110,7 +110,7 @@ test('setConfig', async (t) => {
 
   // partial config with defaults
   bg.setConfig({
-    port: 3084
+    port: 3084,
   })
 
   assert.deepEqual(bg.config, {
@@ -127,7 +127,7 @@ test('setConfig', async (t) => {
     serviceName: '',
     envPrefix: '',
     tests: false,
-    isUpdating: false
+    isUpdating: false,
   })
 
   // reset config to defaults
@@ -146,17 +146,17 @@ test('setConfig', async (t) => {
     serviceName: '',
     envPrefix: '',
     tests: false,
-    isUpdating: false
+    isUpdating: false,
   })
 
   // update only some fields
   bg.setConfig({
     hostname: '123.123.123.123',
-    port: 3000
+    port: 3000,
   })
 
   bg.setConfig({
-    port: 1234
+    port: 1234,
   })
 
   assert.deepEqual(bg.config, {
@@ -173,19 +173,19 @@ test('setConfig', async (t) => {
     serviceName: '',
     envPrefix: '',
     tests: false,
-    isUpdating: false
+    isUpdating: false,
   })
 })
 
 test('should append env values', async (t) => {
   const bg = new BaseGenerator({
-    module: '@platformatic/service'
+    module: '@platformatic/service',
   })
   // partial config with defaults
   bg.setConfig({
     env: {
-      FOO: 'bar'
-    }
+      FOO: 'bar',
+    },
   })
 
   await bg.prepare()
@@ -198,17 +198,17 @@ test('should append env values', async (t) => {
 
 test('should add a default env var to the .env.sample config', async (t) => {
   const bg = new BaseGenerator({
-    module: '@platformatic/service'
+    module: '@platformatic/service',
   })
   // partial config with defaults
   bg.setConfig({
     env: {
-      FOO: 'bar'
-    }
+      FOO: 'bar',
+    },
   })
 
   bg.addEnvVars({
-    BAR: 'baz'
+    BAR: 'baz',
   }, { overwrite: false, default: true })
 
   await bg.prepare()
@@ -221,43 +221,43 @@ test('should add a default env var to the .env.sample config', async (t) => {
 
 test('should prepare the questions', async (t) => {
   const bg = new BaseGenerator({
-    module: '@platformatic/service'
+    module: '@platformatic/service',
   })
   // partial config with defaults
   bg.setConfig({
     env: {
-      FOO: 'bar'
-    }
+      FOO: 'bar',
+    },
   })
 
   await bg.prepareQuestions()
   assert.deepStrictEqual(bg.questions, [{
     type: 'input',
     name: 'targetDirectory',
-    message: 'Where would you like to create your project?'
+    message: 'Where would you like to create your project?',
   }, {
     type: 'list',
     name: 'typescript',
     message: 'Do you want to use TypeScript?',
     default: false,
-    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }],
   }, {
     type: 'input',
     name: 'port',
-    message: 'What port do you want to use?'
+    message: 'What port do you want to use?',
   }])
 })
 
 test('should prepare the questions with a targetDirectory', async (t) => {
   const bg = new BaseGenerator({
-    module: '@platformatic/service'
+    module: '@platformatic/service',
   })
   // partial config with defaults
   bg.setConfig({
     targetDirectory: './foo',
     env: {
-      FOO: 'bar'
-    }
+      FOO: 'bar',
+    },
   })
 
   await bg.prepareQuestions()
@@ -266,24 +266,24 @@ test('should prepare the questions with a targetDirectory', async (t) => {
     name: 'typescript',
     message: 'Do you want to use TypeScript?',
     default: false,
-    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }]
+    choices: [{ name: 'yes', value: true }, { name: 'no', value: false }],
   }, {
     type: 'input',
     name: 'port',
-    message: 'What port do you want to use?'
+    message: 'What port do you want to use?',
   }])
 })
 
 test('should prepare the questions in runtime context', async (t) => {
   const bg = new BaseGenerator({
-    module: '@platformatic/service'
+    module: '@platformatic/service',
   })
   // partial config with defaults
   bg.setConfig({
     isRuntimeContext: true,
     env: {
-      FOO: 'bar'
-    }
+      FOO: 'bar',
+    },
   })
 
   await bg.prepareQuestions()
@@ -292,32 +292,32 @@ test('should prepare the questions in runtime context', async (t) => {
 
 test('should return service metadata', async (t) => {
   const bg = new BaseGenerator({
-    module: '@platformatic/service'
+    module: '@platformatic/service',
   })
   // partial config with defaults
   bg.setConfig({
     targetDirectory: '/foo/bar',
     env: {
-      FOO: 'bar'
-    }
+      FOO: 'bar',
+    },
   })
 
   const metadata = await bg.prepare()
   assert.deepEqual(metadata, {
     targetDirectory: '/foo/bar',
     env: {
-      FOO: 'bar'
-    }
+      FOO: 'bar',
+    },
   })
 })
 
 test('should generate javascript plugin, routes and tests', async (t) => {
   const bg = new BaseGenerator({
-    module: '@platformatic/service'
+    module: '@platformatic/service',
   })
   bg.setConfig({
     plugin: true,
-    tests: true
+    tests: true,
   })
   await bg.prepare()
   assert.ok(bg.getFileObject('example.js', 'plugins'))
@@ -329,12 +329,12 @@ test('should generate javascript plugin, routes and tests', async (t) => {
 
 test('should generate tsConfig file and typescript files', async (t) => {
   const bg = new BaseGenerator({
-    module: '@platformatic/service'
+    module: '@platformatic/service',
   })
   bg.setConfig({
     typescript: true,
     plugin: true,
-    tests: true
+    tests: true,
   })
   const template = {
     compilerOptions: {
@@ -346,15 +346,15 @@ test('should generate tsConfig file and typescript files', async (t) => {
       noEmitOnError: true,
       incremental: true,
       strict: true,
-      outDir: 'dist'
+      outDir: 'dist',
     },
     watchOptions: {
       watchFile: 'fixedPollingInterval',
       watchDirectory: 'fixedPollingInterval',
       fallbackPolling: 'dynamicPriority',
       synchronousWatchDirectory: true,
-      excludeDirectories: ['**/node_modules', 'dist']
-    }
+      excludeDirectories: ['**/node_modules', 'dist'],
+    },
   }
   await bg.prepare()
   const tsConfigFile = bg.getFileObject('tsconfig.json')
@@ -369,7 +369,7 @@ test('should generate tsConfig file and typescript files', async (t) => {
 
 test('should throw if prepare fails', async (t) => {
   const bg = new BaseGenerator({
-    module: '@platformatic/service'
+    module: '@platformatic/service',
   })
 
   bg._beforePrepare = async () => {
@@ -386,20 +386,20 @@ test('should throw if prepare fails', async (t) => {
 
 test('should throw if there is a missing env variable', async () => {
   const bg = new BaseGenerator({
-    module: '@platformatic/service'
+    module: '@platformatic/service',
   })
 
   bg._getConfigFileContents = async () => {
     return {
       FOO: '{FOO}',
-      BAR: '{BAR}'
+      BAR: '{BAR}',
     }
   }
 
   bg.setConfig({
     env: {
-      FOO: 'foobar'
-    }
+      FOO: 'foobar',
+    },
   })
 
   try {
@@ -413,7 +413,7 @@ test('should throw if there is a missing env variable', async () => {
 
 test('should add package', async () => {
   const bg = new BaseGenerator({
-    module: '@platformatic/service'
+    module: '@platformatic/service',
   })
 
   const packageDefinition = {
@@ -422,9 +422,9 @@ test('should add package', async () => {
       {
         path: 'foobar',
         type: 'string',
-        value: 'foobar'
-      }
-    ]
+        value: 'foobar',
+      },
+    ],
   }
   await bg.addPackage(packageDefinition)
 
@@ -435,7 +435,7 @@ test('should add package', async () => {
 test('support packages', async (t) => {
   {
     const svc = new BaseGenerator({
-      module: '@platformatic/service'
+      module: '@platformatic/service',
     })
     const packageDefinitions = [
       {
@@ -444,20 +444,20 @@ test('support packages', async (t) => {
           {
             path: 'threshold',
             value: '1',
-            type: 'number'
+            type: 'number',
           },
           {
             path: 'foobar',
             value: '123',
             type: 'number',
-            name: 'FST_PLUGIN_STATIC_FOOBAR'
-          }
-        ]
-      }
+            name: 'FST_PLUGIN_STATIC_FOOBAR',
+          },
+        ],
+      },
     ]
     svc.setConfig({
       isRuntimeContext: true,
-      serviceName: 'my-service'
+      serviceName: 'my-service',
     })
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
@@ -471,10 +471,10 @@ test('support packages', async (t) => {
           name: '@fastify/compress',
           options: {
             threshold: 1,
-            foobar: '{PLT_MY_SERVICE_FST_PLUGIN_STATIC_FOOBAR}'
-          }
-        }
-      ]
+            foobar: '{PLT_MY_SERVICE_FST_PLUGIN_STATIC_FOOBAR}',
+          },
+        },
+      ],
     })
 
     assert.equal(svc.config.env.PLT_MY_SERVICE_FST_PLUGIN_STATIC_FOOBAR, 123)
@@ -487,10 +487,10 @@ test('support packages', async (t) => {
   {
     // with standard platformatic plugin
     const svc = new BaseGenerator({
-      module: '@platformatic/service'
+      module: '@platformatic/service',
     })
     svc.setConfig({
-      plugin: true
+      plugin: true,
     })
     const packageDefinitions = [
       {
@@ -499,10 +499,10 @@ test('support packages', async (t) => {
           {
             path: 'threshold',
             value: '1',
-            type: 'number'
-          }
-        ]
-      }
+            type: 'number',
+          },
+        ],
+      },
     ]
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
@@ -515,61 +515,21 @@ test('support packages', async (t) => {
         {
           name: '@fastify/compress',
           options: {
-            threshold: 1
-          }
-        }
-      ]
+            threshold: 1,
+          },
+        },
+      ],
     })
   }
 
   {
     // with relative path type but no name
     const svc = new BaseGenerator({
-      module: '@platformatic/service'
-    })
-    svc.setConfig({
-      isRuntimeContext: true,
-      plugin: true
-    })
-    const packageDefinitions = [
-      {
-        name: '@fastify/static',
-        options: [
-          {
-            path: 'root',
-            value: 'public',
-            type: 'path'
-          }
-        ]
-      }
-    ]
-    await svc.addPackage(packageDefinitions[0])
-    await svc.prepare()
-
-    const platformaticConfigFile = svc.getFileObject('platformatic.json')
-    const contents = JSON.parse(platformaticConfigFile.contents)
-
-    assert.deepEqual(contents.plugins, {
-      packages: [
-        {
-          name: '@fastify/static',
-          options: {
-            root: join('{PLT_ROOT}', 'public')
-          }
-        }
-      ]
-    })
-  }
-
-  {
-    // with relative path type and name
-    const svc = new BaseGenerator({
-      module: '@platformatic/service'
+      module: '@platformatic/service',
     })
     svc.setConfig({
       isRuntimeContext: true,
       plugin: true,
-      serviceName: 'my-service'
     })
     const packageDefinitions = [
       {
@@ -579,10 +539,9 @@ test('support packages', async (t) => {
             path: 'root',
             value: 'public',
             type: 'path',
-            name: 'FST_PLUGIN_STATIC_ROOT'
-          }
-        ]
-      }
+          },
+        ],
+      },
     ]
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
@@ -595,10 +554,51 @@ test('support packages', async (t) => {
         {
           name: '@fastify/static',
           options: {
-            root: join('{PLT_ROOT}', '{PLT_MY_SERVICE_FST_PLUGIN_STATIC_ROOT}')
-          }
-        }
-      ]
+            root: join('{PLT_ROOT}', 'public'),
+          },
+        },
+      ],
+    })
+  }
+
+  {
+    // with relative path type and name
+    const svc = new BaseGenerator({
+      module: '@platformatic/service',
+    })
+    svc.setConfig({
+      isRuntimeContext: true,
+      plugin: true,
+      serviceName: 'my-service',
+    })
+    const packageDefinitions = [
+      {
+        name: '@fastify/static',
+        options: [
+          {
+            path: 'root',
+            value: 'public',
+            type: 'path',
+            name: 'FST_PLUGIN_STATIC_ROOT',
+          },
+        ],
+      },
+    ]
+    await svc.addPackage(packageDefinitions[0])
+    await svc.prepare()
+
+    const platformaticConfigFile = svc.getFileObject('platformatic.json')
+    const contents = JSON.parse(platformaticConfigFile.contents)
+
+    assert.deepEqual(contents.plugins, {
+      packages: [
+        {
+          name: '@fastify/static',
+          options: {
+            root: join('{PLT_ROOT}', '{PLT_MY_SERVICE_FST_PLUGIN_STATIC_ROOT}'),
+          },
+        },
+      ],
     })
   }
 
@@ -618,17 +618,17 @@ test('support packages', async (t) => {
     //   })
 
     const svc = new BaseGenerator({
-      module: '@platformatic/service'
+      module: '@platformatic/service',
     })
     const packageDefinitions = [
       {
         name: 'foobar',
-        options: []
-      }
+        options: [],
+      },
     ]
     svc.setConfig({
       isRuntimeContext: true,
-      serviceName: 'my-service'
+      serviceName: 'my-service',
     })
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
@@ -644,24 +644,24 @@ test('support packages', async (t) => {
       .get('https://registry.npmjs.org')
       .intercept({
         method: 'GET',
-        path: '/foobar'
+        path: '/foobar',
       })
       .reply(500, {
-        message: 'Internal Server Error'
+        message: 'Internal Server Error',
       })
 
     const svc = new BaseGenerator({
-      module: '@platformatic/service'
+      module: '@platformatic/service',
     })
     const packageDefinitions = [
       {
         name: 'foobar',
-        options: []
-      }
+        options: [],
+      },
     ]
     svc.setConfig({
       isRuntimeContext: true,
-      serviceName: 'my-service'
+      serviceName: 'my-service',
     })
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
@@ -677,27 +677,27 @@ test('support packages', async (t) => {
       .get('https://registry.npmjs.org')
       .intercept({
         method: 'GET',
-        path: '/foobarxxx'
+        path: '/foobarxxx',
       })
       .reply(200, {
         'dist-tags': {
-          latest: '1.42.0'
-        }
+          latest: '1.42.0',
+        },
       }).delay(3000)
 
     const svc = new BaseGenerator({
-      module: '@platformatic/service'
+      module: '@platformatic/service',
     })
     const packageName = 'foobarxxx'
     const packageDefinitions = [
       {
         name: packageName,
-        options: []
-      }
+        options: [],
+      },
     ]
     svc.setConfig({
       isRuntimeContext: true,
-      serviceName: 'my-service'
+      serviceName: 'my-service',
     })
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
@@ -713,24 +713,24 @@ test('support packages', async (t) => {
       .get('https://registry.npmjs.org')
       .intercept({
         method: 'GET',
-        path: '/foobar'
+        path: '/foobar',
       })
       .reply(500, {
-        message: 'Internal Server Error'
+        message: 'Internal Server Error',
       })
 
     const svc = new BaseGenerator({
-      module: '@platformatic/service'
+      module: '@platformatic/service',
     })
     const packageDefinitions = [
       {
         name: 'foobar',
-        options: []
-      }
+        options: [],
+      },
     ]
     svc.setConfig({
       isRuntimeContext: true,
-      serviceName: 'my-service'
+      serviceName: 'my-service',
     })
     await svc.addPackage(packageDefinitions[0])
     await svc.prepare()
@@ -743,7 +743,7 @@ test('support packages', async (t) => {
 test('should load data from directory', async (t) => {
   const runtimeDirectory = join(__dirname, 'fixtures', 'sample-runtime')
   const bg = new BaseGenerator({
-    module: '@platformatic/service'
+    module: '@platformatic/service',
   })
   const data = await bg.loadFromDir('rival', runtimeDirectory)
   const expected = {
@@ -758,34 +758,34 @@ test('should load data from directory', async (t) => {
             path: 'name',
             type: 'string',
             value: 'googleOAuth2',
-            name: 'FST_PLUGIN_OAUTH2_NAME'
+            name: 'FST_PLUGIN_OAUTH2_NAME',
           },
           {
             path: 'credentials.client.id',
             type: 'string',
             value: 'sample_client_id',
-            name: 'FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID'
+            name: 'FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_ID',
           },
           {
             path: 'credentials.client.secret',
             type: 'string',
             value: 'sample_client_secret',
-            name: 'FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET'
+            name: 'FST_PLUGIN_OAUTH2_CREDENTIALS_CLIENT_SECRET',
           },
           {
             path: 'startRedirectPath',
             type: 'string',
             value: '/login/google',
-            name: 'FST_PLUGIN_OAUTH2_REDIRECT_PATH'
+            name: 'FST_PLUGIN_OAUTH2_REDIRECT_PATH',
           },
           {
             path: 'callbackUri',
             type: 'string',
             value: 'http://localhost:3000/login/google/callback',
-            name: 'FST_PLUGIN_OAUTH2_CALLBACK_URI'
-          }
-        ]
-      }]
+            name: 'FST_PLUGIN_OAUTH2_CALLBACK_URI',
+          },
+        ],
+      }],
   }
   assert.deepEqual(data, expected)
 })
@@ -798,10 +798,10 @@ test('on update should just touch the packages configuration', async (t) => {
 
   const bg = new BaseGenerator({
     module: '@platformatic/service',
-    targetDirectory: dir
+    targetDirectory: dir,
   })
   bg.setConfig({
-    isUpdating: true
+    isUpdating: true,
   })
   await bg.addPackage({
     name: '@fastify/foo-plugin',
@@ -810,9 +810,9 @@ test('on update should just touch the packages configuration', async (t) => {
         path: 'name',
         type: 'string',
         value: 'foobar',
-        name: 'FST_PLUGIN_FOO_FOOBAR'
-      }
-    ]
+        name: 'FST_PLUGIN_FOO_FOOBAR',
+      },
+    ],
   })
   await bg.prepare()
 
@@ -825,12 +825,12 @@ test('on update should just touch the packages configuration', async (t) => {
     {
       name: '@fastify/foo-plugin',
       options: {
-        name: '{FST_PLUGIN_FOO_FOOBAR}'
-      }
-    }
+        name: '{FST_PLUGIN_FOO_FOOBAR}',
+      },
+    },
   ])
   assert.deepEqual(bg.config.dependencies, {
-    '@fastify/foo-plugin': '1.42.0'
+    '@fastify/foo-plugin': '1.42.0',
   })
 })
 
@@ -842,10 +842,10 @@ test('on update should just touch the packages configuration', async (t) => {
 
   const bg = new BaseGenerator({
     module: '@platformatic/service',
-    targetDirectory: dir
+    targetDirectory: dir,
   })
   bg.setConfig({
-    isUpdating: true
+    isUpdating: true,
   })
   await bg.addPackage({
     name: '@fastify/foo-plugin',
@@ -854,9 +854,9 @@ test('on update should just touch the packages configuration', async (t) => {
         path: 'name',
         type: 'string',
         value: 'foobar',
-        name: 'FST_PLUGIN_FOO_FOOBAR'
-      }
-    ]
+        name: 'FST_PLUGIN_FOO_FOOBAR',
+      },
+    ],
   })
   await bg.prepare()
 
@@ -867,19 +867,19 @@ test('on update should just touch the packages configuration', async (t) => {
   const configFileContents = JSON.parse(bg.files[0].contents)
   assert.equal(configFileContents.plugins, undefined)
   assert.deepEqual(bg.config.dependencies, {
-    '@fastify/foo-plugin': '1.42.0'
+    '@fastify/foo-plugin': '1.42.0',
   })
 })
 
 describe('runtime context', () => {
   test('should set config.envPrefix correctly', async (t) => {
     const bg = new BaseGenerator({
-      module: '@platformatic/service'
+      module: '@platformatic/service',
     })
 
     bg.setConfig({
       isRuntimeContext: true,
-      serviceName: 'sample-service'
+      serviceName: 'sample-service',
     })
 
     assert.equal(bg.config.envPrefix, 'SAMPLE_SERVICE')
@@ -890,20 +890,20 @@ describe('runtime context', () => {
       envPrefix: 'ANOTHER_PREFIX',
       env: {
         FOO: 'bar',
-        BAZ: 'baz'
-      }
+        BAZ: 'baz',
+      },
     })
 
     assert.equal(bg.config.envPrefix, 'ANOTHER_PREFIX')
     assert.deepEqual(bg.config.env, {
       PLT_ANOTHER_PREFIX_FOO: 'bar',
-      PLT_ANOTHER_PREFIX_BAZ: 'baz'
+      PLT_ANOTHER_PREFIX_BAZ: 'baz',
     })
   })
 
   test('should generate correct env file from config.env', async (t) => {
     const bg = new BaseGenerator({
-      module: '@platformatic/service'
+      module: '@platformatic/service',
     })
 
     bg.setConfig({
@@ -912,21 +912,21 @@ describe('runtime context', () => {
       envPrefix: 'ANOTHER_PREFIX',
       env: {
         FOO: 'bar',
-        BAZ: 'baz'
-      }
+        BAZ: 'baz',
+      },
     })
 
     const meta = await bg.prepare()
 
     assert.deepEqual(meta.env, {
       PLT_ANOTHER_PREFIX_FOO: 'bar',
-      PLT_ANOTHER_PREFIX_BAZ: 'baz'
+      PLT_ANOTHER_PREFIX_BAZ: 'baz',
     })
   })
 
   test('should return service metadata', async (t) => {
     const bg = new BaseGenerator({
-      module: '@platformatic/service'
+      module: '@platformatic/service',
     })
     // partial config with defaults
     bg.setConfig({
@@ -934,29 +934,29 @@ describe('runtime context', () => {
       isRuntimeContext: true,
       serviceName: 'my-service',
       env: {
-        FOO: 'bar'
-      }
+        FOO: 'bar',
+      },
     })
 
     const metadata = await bg.prepare()
     assert.deepEqual(metadata, {
       targetDirectory: '/foo/bar',
       env: {
-        PLT_MY_SERVICE_FOO: 'bar'
-      }
+        PLT_MY_SERVICE_FOO: 'bar',
+      },
     })
   })
 
   test('should generate service name if not provided', async () => {
     const bg = new BaseGenerator({
-      module: '@platformatic/service'
+      module: '@platformatic/service',
     })
     bg.setConfig({
       targetDirectory: '/foo/bar',
       isRuntimeContext: true,
       env: {
-        FOO: 'bar'
-      }
+        FOO: 'bar',
+      },
     })
 
     const metadata = await bg.prepare()
@@ -966,8 +966,8 @@ describe('runtime context', () => {
     assert.deepEqual(metadata, {
       targetDirectory: '/foo/bar',
       env: {
-        [`PLT_${envPrefix}_FOO`]: 'bar'
-      }
+        [`PLT_${envPrefix}_FOO`]: 'bar',
+      },
     })
   })
 })

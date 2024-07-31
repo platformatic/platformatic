@@ -18,8 +18,8 @@ test('getUsername from git', async () => {
           return { stdout: name }
         }
         return ''
-      }
-    }
+      },
+    },
   })
   const username = await getUsername()
   equal(username, name)
@@ -34,8 +34,8 @@ test('getUsername from whoami', async () => {
           return { stdout: name }
         }
         return ''
-      }
-    }
+      },
+    },
   })
   const username = await getUsername()
   equal(username, name)
@@ -55,8 +55,8 @@ test('if getUsername from git failed, it tries whoim', async () => {
         }
 
         return ''
-      }
-    }
+      },
+    },
   })
   const username = await getUsername()
   equal(username, name)
@@ -73,8 +73,8 @@ test('if both git usern.ame and whoami fail, no username is set', async () => {
           throw new Error('whoami failed')
         }
         return ''
-      }
-    }
+      },
+    },
   })
   const username = await getUsername()
   equal(username, null)
@@ -85,8 +85,8 @@ test('getUsername - no username found', async () => {
     execa: {
       execa: (command) => {
         return ''
-      }
-    }
+      },
+    },
   })
   const username = await getUsername()
   equal(username, null)
@@ -257,7 +257,7 @@ test('should convert service name to env prefix', async () => {
     'my-service': 'MY_SERVICE',
     a: 'A',
     MY_SERVICE: 'MY_SERVICE',
-    asderas123: 'ASDERAS123'
+    asderas123: 'ASDERAS123',
   }
 
   Object.entries(expectations).forEach((exp) => {
@@ -270,11 +270,11 @@ test('should add prefix to a key/value object', async () => {
   const prefix = 'MY_PREFIX'
   const env = {
     PLT_HOSTNAME: 'myhost',
-    PORT: '3042'
+    PORT: '3042',
   }
   deepEqual(addPrefixToEnv(env, prefix), {
     MY_PREFIX_PLT_HOSTNAME: 'myhost',
-    MY_PREFIX_PORT: '3042'
+    MY_PREFIX_PORT: '3042',
   })
 })
 

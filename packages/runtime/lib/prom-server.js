@@ -24,7 +24,7 @@ async function startPrometheusServer (runtimeApiClient, opts) {
           return reply.code(401).send({ message: 'Unauthorized' })
         }
         return done()
-      }
+      },
     })
     onRequestHook = promServer.basicAuth
   }
@@ -38,7 +38,7 @@ async function startPrometheusServer (runtimeApiClient, opts) {
       reply.type('text/plain')
       const { metrics } = await runtimeApiClient.getMetrics('text')
       return metrics
-    }
+    },
   })
 
   await promServer.listen({ port, host })
@@ -46,5 +46,5 @@ async function startPrometheusServer (runtimeApiClient, opts) {
 }
 
 module.exports = {
-  startPrometheusServer
+  startPrometheusServer,
 }

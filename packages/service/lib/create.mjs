@@ -16,14 +16,14 @@ function printAppSummary (args, logger) {
     { config: 'Language', value: args.typescript ? 'Typescript' : 'Javascript' },
     { config: 'Init Git Repository', value: args.git },
     { config: 'Install Dependencies', value: args.install },
-    { config: 'Sample Plugin and Tests', value: args.plugin }
+    { config: 'Sample Plugin and Tests', value: args.plugin },
   ]
 
   const p = new Table({
     columns: [
       { name: 'config', alignment: 'right' },
-      { name: 'value', alignment: 'left' }
-    ]
+      { name: 'value', alignment: 'left' },
+    ],
   })
 
   p.addRows(table)
@@ -34,7 +34,7 @@ async function createService (_args) {
     translateTime: 'SYS:HH:MM:ss',
     ignore: 'hostname,pid',
     minimumLevel: 'debug',
-    sync: true
+    sync: true,
   })
 
   const logger = pino(stream)
@@ -49,8 +49,8 @@ async function createService (_args) {
       plugin: true,
       typescript: false,
       git: false,
-      install: true
-    }
+      install: true,
+    },
 
   })
 
@@ -64,7 +64,7 @@ async function createService (_args) {
     tests: args.plugin,
     typescript: args.typescript,
     initGitRepository: args.git,
-    targetDirectory: args.dir
+    targetDirectory: args.dir,
   })
 
   try {
