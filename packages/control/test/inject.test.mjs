@@ -22,7 +22,6 @@ test('should inject runtime entrypoint by pid', async t => {
 
   t.after(() => {
     app.close()
-    app.managementApi.close()
   })
 
   const child = await execa('node', [cliPath, 'inject', '-p', process.pid, '/'])
@@ -43,7 +42,6 @@ test('should inject runtime service by pid', async t => {
 
   t.after(() => {
     app.close()
-    app.managementApi.close()
   })
 
   const child = await execa('node', [cliPath, 'inject', '-p', process.pid, '-s', 'service-1', '/hello'])
@@ -65,7 +63,6 @@ test('should inject runtime service with headers and body', async t => {
 
   t.after(() => {
     app.close()
-    app.managementApi.close()
   })
 
   const child = await execa('node', [
@@ -120,7 +117,6 @@ test('should inject runtime service with output to the file', async t => {
 
   t.after(() => {
     app.close()
-    app.managementApi.close()
     safeRemove(tmpFilePath)
   })
 
@@ -180,7 +176,6 @@ test('should inject runtime service with --verbose option', async t => {
 
   t.after(() => {
     app.close()
-    app.managementApi.close()
   })
 
   const child = await execa('node', [
