@@ -3,14 +3,13 @@
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const path = require('node:path')
-const { setTimeout: sleep } = require('node:timers/promises')
 const dedent = require('dedent')
 const {
   createGraphqlService,
   createComposerInRuntime,
-  checkRestarted,
   checkSchema,
   getRuntimeLogs,
+  waitForRestart,
 } = require('../helper')
 
 const REFRESH_TIMEOUT = 1000
@@ -51,8 +50,6 @@ test('should restart composer if a service has been changed, and update the sche
 
   await runtime.start()
 
-  await sleep(REFRESH_TIMEOUT * 2)
-
   const graphql1a = await createGraphqlService(t, {
     schema: schema2,
     resolvers: {
@@ -65,7 +62,7 @@ test('should restart composer if a service has been changed, and update the sche
   await graphql1.close()
   await graphql1a.listen({ port })
 
-  assert.ok(await checkRestarted(runtime, 'composer'))
+  await waitForRestart(runtime)
 
   assert.ok(await checkSchema(runtime, schema2))
 })
@@ -154,13 +151,12 @@ test('composer should restart and update schema if one of the services shuts dow
   })
 
   await runtime.start()
-  await sleep(REFRESH_TIMEOUT * 2)
 
   assert.ok(checkSchema(runtime, supergraph1))
 
   await graphql1.close()
 
-  assert.ok(await checkRestarted(runtime, 'composer'))
+  await waitForRestart(runtime)
 
   assert.ok(checkSchema(runtime, supergraph2))
 })
@@ -211,9 +207,7 @@ test('should not restart if services did not change', async t => {
 
   await runtime.start()
 
-  await sleep(REFRESH_TIMEOUT * 2)
-
-  assert.ok(!(await checkRestarted(runtime, 'composer')))
+  await assert.rejects(() => waitForRestart(runtime))
 })
 
 test('should not watch when refreshTimeout is 0', async t => {
@@ -272,14 +266,13 @@ test('should not watch when refreshTimeout is 0', async t => {
   })
 
   await runtime.start()
-  await sleep(REFRESH_TIMEOUT * 2)
 
   assert.ok(checkSchema(runtime, supergraph1))
 
   await graphql1.close()
   await graphql2.close()
 
-  assert.ok(!(await checkRestarted(runtime, 'composer')))
+  await assert.rejects(() => waitForRestart(runtime))
   assert.ok(checkSchema(runtime, supergraph1))
 })
 
@@ -289,14 +282,12 @@ test('should not watch if there are no fetchable services', async t => {
   })
   await runtime.start()
 
-  await sleep(REFRESH_TIMEOUT * 2)
-
   const messages = await getRuntimeLogs(runtime)
 
   assert.ok(!messages.find(l => l === 'start watching services'))
 })
 
-test('should handle errors watching services', { only: true }, async t => {
+test('should handle errors watching services', async t => {
   const graphql1 = await createGraphqlService(t, {
     schema: 'type Query { cheatingDice: Int }',
     resolvers: { Query: { cheatingDice: () => 3 } },
@@ -319,11 +310,7 @@ test('should handle errors watching services', { only: true }, async t => {
 
   await runtime.start()
 
-  await sleep(REFRESH_TIMEOUT * 1)
-
   await graphql1.close()
-
-  await sleep(REFRESH_TIMEOUT * 2)
 
   const messages = await getRuntimeLogs(runtime)
 

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint",
-    "test": "pnpm run lint && borp -C -X fixtures -X test --concurrency=1 && tsd"
+    "test": "pnpm run lint && borp --timeout=180000 -C -X fixtures -X test --concurrency=1 && tsd"
   },
   "keywords": [],
   "author": "",

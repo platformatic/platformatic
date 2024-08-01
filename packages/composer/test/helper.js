@@ -5,11 +5,13 @@ const fs = require('fs')
 const assert = require('node:assert/strict')
 const { mkdtemp, writeFile } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
+const { platform } = require('node:os')
 const { resolve } = require('node:path')
 const { request, setGlobalDispatcher, Client, Agent } = require('undici')
 const fastify = require('fastify')
 const Swagger = require('@fastify/swagger')
 const mercurius = require('mercurius')
+const WebSocket = require('ws')
 const { getIntrospectionQuery } = require('graphql')
 const { buildServer: dbBuildServer } = require('@platformatic/db')
 const { createDirectory, safeRemove } = require('@platformatic/utils')
@@ -23,6 +25,12 @@ const agent = new Agent({
 })
 
 const tmpBaseDir = resolve(__dirname, '../tmp')
+
+const REFRESH_TIMEOUT = 1000
+
+// GitHub actions are REALLY slow.
+const LOGS_WRITE_DELAY = 20000
+const REFRESH_TIMEOUT_DELAY_FACTOR = 20
 
 setGlobalDispatcher(agent)
 
@@ -373,6 +381,7 @@ async function createComposer (t, composerConfig, logger = false) {
 }
 
 async function createComposerInRuntime (t, prefix, composerConfig) {
+  await createDirectory(tmpBaseDir)
   const tmpDir = await mkdtemp(resolve(tmpBaseDir, prefix))
   await createDirectory(resolve(tmpDir, 'composer'))
   t.after(() => safeRemove(tmpDir))
@@ -427,7 +436,7 @@ async function createComposerInRuntime (t, prefix, composerConfig) {
   )
 
   const runtime = await buildRuntime(runtimeConfigPath)
-  t.after(() => runtime.close())
+  t.after(() => runtime.close().catch(() => {}))
 
   return runtime
 }
@@ -605,27 +614,49 @@ function createLoggerSpy () {
   }
 }
 
-async function checkRestarted (runtime, id) {
-  const client = new Client(
-    { hostname: 'localhost', protocol: 'http:' },
-    { socketPath: runtime.managementApi.server.address() }
-  )
+async function waitForRestart (runtime, previousUrl) {
+  const id = (await runtime.getEntrypointDetails()).id
+  const socketPath = runtime.getManagementApiUrl()
 
-  // Wait for logs to be written
-  await sleep(2000)
+  const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
+  const webSocket = new WebSocket(protocol + socketPath + ':/api/v1/logs/live')
 
-  const { statusCode, body } = await client.request({ method: 'GET', path: '/api/v1/logs/all' })
+  try {
+    const url = await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error(`Service ${id} has not been restarted`))
+      }, REFRESH_TIMEOUT * REFRESH_TIMEOUT_DELAY_FACTOR)
 
-  if (statusCode !== 200) {
-    return false
+      webSocket.on('error', err => {
+        reject(err)
+      })
+
+      webSocket.on('message', data => {
+        if (data.includes(`Service ${id} has been successfully reloaded`)) {
+          clearTimeout(timeout)
+
+          setImmediate(async () => {
+            try {
+              const entrypoint = await runtime.getEntrypointDetails()
+
+              if (previousUrl && entrypoint.url === previousUrl) {
+                return
+              }
+
+              webSocket.terminate()
+              resolve(entrypoint.url)
+            } catch (e) {
+              reject(e)
+            }
+          })
+        }
+      })
+    })
+
+    return url
+  } finally {
+    webSocket.close()
   }
-
-  const messages = (await body.text()).trim().split('\n').map(JSON.parse)
-
-  return (
-    messages.some(m => m.msg.startsWith('detected services changes, restarting')) &&
-    messages.some(m => m.msg.startsWith(`Service ${id} has been successfully reloaded`))
-  )
 }
 
 async function checkSchema (runtime, schema) {
@@ -635,13 +666,10 @@ async function checkSchema (runtime, schema) {
 }
 
 async function getRuntimeLogs (runtime) {
-  const client = new Client(
-    { hostname: 'localhost', protocol: 'http:' },
-    { socketPath: runtime.managementApi.server.address() }
-  )
+  const client = new Client({ hostname: 'localhost', protocol: 'http:' }, { socketPath: runtime.getManagementApiUrl() })
 
   // Wait for logs to be written
-  await sleep(2000)
+  await sleep(LOGS_WRITE_DELAY)
 
   const { statusCode, body } = await client.request({ method: 'GET', path: '/api/v1/logs/all' })
   assert.strictEqual(statusCode, 200)
@@ -651,6 +679,7 @@ async function getRuntimeLogs (runtime) {
 }
 
 module.exports = {
+  REFRESH_TIMEOUT,
   createComposer,
   createComposerInRuntime,
   createOpenApiService,
@@ -661,7 +690,7 @@ module.exports = {
   createPlatformaticDbService,
   startServices,
   createLoggerSpy,
-  checkRestarted,
-  checkSchema,
   getRuntimeLogs,
+  waitForRestart,
+  checkSchema,
 }

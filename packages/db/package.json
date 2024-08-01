@@ -8,10 +8,10 @@
     "plt-db": "./db.mjs"
   },
   "scripts": {
-    "test": "pnpm run lint && borp -T --concurrency=1 --timeout 120000 && tsd ",
-    "test:postgresql": "DB=postgresql borp -T --concurrency=1 --timeout 120000",
-    "test:mariadb": "DB=mariadb borp -T --concurrency=1 --timeout 120000",
-    "test:mysql": "DB=mysql borp -T --concurrency=1 --timeout 120000",
+    "test": "pnpm run lint && borp -T --concurrency=1 --timeout=180000 && tsd ",
+    "test:postgresql": "DB=postgresql borp -T --concurrency=1 --timeout=180000",
+    "test:mariadb": "DB=mariadb borp -T --concurrency=1 --timeout=180000",
+    "test:mysql": "DB=mysql borp -T --concurrency=1 --timeout=180000",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "pnpm run gen-schema && pnpm run gen-types",

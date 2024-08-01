@@ -27,7 +27,7 @@ test('logs errors during db migrations', async (t) => {
 
   const client = new Client(
     { hostname: 'localhost', protocol: 'http:' },
-    { socketPath: runtime.managementApi.server.address() }
+    { socketPath: runtime.getManagementApiUrl() }
   )
 
   await sleep(3000)

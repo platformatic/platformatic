@@ -15,6 +15,8 @@ const { createThreadInterceptor } = require('undici-thread-interceptor')
 const { checkDependencies, topologicalSort } = require('./dependencies')
 const errors = require('./errors')
 const { createLogger } = require('./logger')
+const { startManagementApi } = require('./management-api')
+const { startPrometheusServer } = require('./prom-server')
 const { getRuntimeTmpDir } = require('./utils')
 const { makeITCSafe } = require('./worker/itc')
 const { kId, kITC, kConfig } = require('./worker/symbols')
@@ -42,6 +44,8 @@ class Runtime extends EventEmitter {
   #metricsTimeout
   #status
   #interceptor
+  #managementApi
+  #prometheusServer
 
   constructor (configManager, runtimeLogsDir, env) {
     super()
@@ -66,6 +70,14 @@ class Runtime extends EventEmitter {
 
     // This cannot be transferred to worker threads
     delete config.configManager
+
+    if (config.managementApi) {
+      this.#managementApi = await startManagementApi(this, this.#configManager)
+    }
+
+    if (config.metrics) {
+      this.#prometheusServer = await startPrometheusServer(this, config.metrics)
+    }
 
     // Create the logger
     const [logger, destination] = createLogger(config, this.#runtimeLogsDir)
@@ -118,6 +130,10 @@ class Runtime extends EventEmitter {
 
     this.#updateStatus('started')
 
+    if (this.#managementApi && typeof this.#metrics === 'undefined') {
+      this.startCollectingMetrics()
+    }
+
     return this.#url
   }
 
@@ -142,10 +158,28 @@ class Runtime extends EventEmitter {
     return this.#url
   }
 
-  async close () {
+  async close (fromManagementApi) {
     this.#updateStatus('closing')
+
     clearInterval(this.#metricsTimeout)
+
     await this.stop()
+
+    if (this.#managementApi) {
+      if (fromManagementApi) {
+        // This allow a close request coming from the management API to correctly be handled
+        setImmediate(() => {
+          this.#managementApi.close()
+        })
+      } else {
+        await this.#managementApi.close()
+      }
+    }
+
+    if (this.#prometheusServer) {
+      await this.#prometheusServer.close()
+    }
+
     this.#updateStatus('closed')
   }
 
@@ -199,25 +233,6 @@ class Runtime extends EventEmitter {
   async inject (id, injectParams) {
     const service = await this.#getServiceById(id, true)
     return service[kITC].send('inject', injectParams)
-  }
-
-  async getRuntimeMetadata () {
-    const packageJson = await this.#getRuntimePackageJson()
-    const entrypointDetails = await this.getEntrypointDetails()
-
-    return {
-      pid: process.pid,
-      cwd: process.cwd(),
-      argv: process.argv,
-      uptimeSeconds: Math.floor(process.uptime()),
-      execPath: process.execPath,
-      nodeVersion: process.version,
-      projectDir: this.#configManager.dirname,
-      packageName: packageJson.name ?? null,
-      packageVersion: packageJson.version ?? null,
-      url: entrypointDetails?.url ?? null,
-      platformaticVersion,
-    }
   }
 
   startCollectingMetrics () {
@@ -334,12 +349,39 @@ class Runtime extends EventEmitter {
     this.on('closed', onClose)
   }
 
+  async getRuntimeMetadata () {
+    const packageJson = await this.#getRuntimePackageJson()
+    const entrypointDetails = await this.getEntrypointDetails()
+
+    return {
+      pid: process.pid,
+      cwd: process.cwd(),
+      argv: process.argv,
+      uptimeSeconds: Math.floor(process.uptime()),
+      execPath: process.execPath,
+      nodeVersion: process.version,
+      projectDir: this.#configManager.dirname,
+      packageName: packageJson.name ?? null,
+      packageVersion: packageJson.version ?? null,
+      url: entrypointDetails?.url ?? null,
+      platformaticVersion,
+    }
+  }
+
   getRuntimeConfig () {
     return this.#configManager.current
   }
 
   getInterceptor () {
     return this.#interceptor
+  }
+
+  getManagementApi () {
+    return this.#managementApi
+  }
+
+  getManagementApiUrl () {
+    return this.#managementApi?.server.address()
   }
 
   async getEntrypointDetails () {
@@ -763,6 +805,7 @@ class Runtime extends EventEmitter {
 
   #forwardThreadLog (message) {
     for (const log of message.logs) {
+      process._rawDebug(log)
       // In order to being able to forward messages serialized in the
       // worker threads by directly writing to the destinations using multistream
       // we unfortunately need to reparse the message to set some internal flags

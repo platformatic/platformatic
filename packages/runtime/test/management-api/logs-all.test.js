@@ -33,7 +33,7 @@ test('should get all runtime logs', async t => {
       protocol: 'http:',
     },
     {
-      socketPath: app.managementApi.server.address(),
+      socketPath: app.getManagementApiUrl(),
       keepAliveTimeout: 10,
       keepAliveMaxTimeout: 10,
     }
@@ -94,7 +94,7 @@ test('should get previous runtime logs', async t => {
       protocol: 'http:',
     },
     {
-      socketPath: app.managementApi.server.address(),
+      socketPath: app.getManagementApiUrl(),
       keepAliveTimeout: 10,
       keepAliveMaxTimeout: 10,
     }

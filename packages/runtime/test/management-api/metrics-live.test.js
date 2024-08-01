@@ -20,7 +20,7 @@ test('should get runtime metrics via management api', async (t) => {
     await app.close()
   })
 
-  const socketPath = app.managementApi.server.address()
+  const socketPath = app.getManagementApiUrl()
 
   const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
   const webSocket = new WebSocket(protocol + socketPath + ':/api/v1/metrics/live')
@@ -76,7 +76,7 @@ test('should not throw if entrypoint does not have metrics enabled', async (t) =
     await app.close()
   })
 
-  const socketPath = app.managementApi.server.address()
+  const socketPath = app.getManagementApiUrl()
 
   const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
   const webSocket = new WebSocket(protocol + socketPath + ':/api/v1/metrics/live')

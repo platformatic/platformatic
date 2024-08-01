@@ -24,7 +24,7 @@ test('should get runtime logs via management api', async t => {
     await app.close()
   })
 
-  const socketPath = app.managementApi.server.address()
+  const socketPath = app.getManagementApiUrl()
 
   const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
   const webSocket = new WebSocket(protocol + socketPath + ':/api/v1/logs/live')
@@ -71,7 +71,7 @@ test('should get runtime logs via management api (with a start index)', async t 
   // Wait for logs to be written
   await sleep(3000)
 
-  const socketPath = app.managementApi.server.address()
+  const socketPath = app.getManagementApiUrl()
 
   const client = new Client(
     {
@@ -146,7 +146,7 @@ test('should support custom use transport', async t => {
     await safeRemove(logsPath)
   })
 
-  const socketPath = app.managementApi.server.address()
+  const socketPath = app.getManagementApiUrl()
 
   const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
   const webSocket = new WebSocket(protocol + socketPath + ':/api/v1/logs/live')

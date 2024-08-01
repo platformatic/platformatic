@@ -19,7 +19,7 @@ test('should get the runtime process env', async (t) => {
     hostname: 'localhost',
     protocol: 'http:',
   }, {
-    socketPath: app.managementApi.server.address(),
+    socketPath: app.getManagementApiUrl(),
     keepAliveTimeout: 10,
     keepAliveMaxTimeout: 10,
   })

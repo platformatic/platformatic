@@ -36,7 +36,7 @@ test('should get runtime logs history via management api', async t => {
       protocol: 'http:',
     },
     {
-      socketPath: app.managementApi.server.address(),
+      socketPath: app.getManagementApiUrl(),
       keepAliveTimeout: 10,
       keepAliveMaxTimeout: 10,
     }
@@ -80,7 +80,7 @@ test('should get logs from previous run', async t => {
       protocol: 'http:',
     },
     {
-      socketPath: app.managementApi.server.address(),
+      socketPath: app.getManagementApiUrl(),
       keepAliveTimeout: 10,
       keepAliveMaxTimeout: 10,
     }
@@ -120,7 +120,7 @@ test('should throw 404 if log file does not exist', async t => {
       protocol: 'http:',
     },
     {
-      socketPath: app.managementApi.server.address(),
+      socketPath: app.getManagementApiUrl(),
       keepAliveTimeout: 10,
       keepAliveMaxTimeout: 10,
     }

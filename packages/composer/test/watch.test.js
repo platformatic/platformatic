@@ -2,14 +2,18 @@
 
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { checkRestarted, createGraphqlService, createComposerInRuntime, createOpenApiService, testEntityRoutes } = require('./helper')
+const {
+  REFRESH_TIMEOUT,
+  waitForRestart,
+  createGraphqlService,
+  createComposerInRuntime,
+  createOpenApiService,
+  testEntityRoutes,
+} = require('./helper')
 const { request } = require('undici')
 
-const REFRESH_TIMEOUT = 1000
-
-test('composer should restart if an external service with openapi and graphql updates', async (t) => {
-  await t.test('change graphql', async (t) => {
+test('composer should restart if an external service with openapi and graphql updates', async t => {
+  await t.test('change graphql', async t => {
     const schema1 = 'type Query {\n  rnd: Int\n}'
     const schema2 = 'type Query {\n  greetings: String\n}'
     const graphql1 = await createGraphqlService(t, {
@@ -27,30 +31,26 @@ test('composer should restart if an external service with openapi and graphql up
     const openapi1 = await createOpenApiService(t, ['users'])
     const openapi1Origin = await openapi1.listen()
 
-    const runtime = await createComposerInRuntime(
-      t,
-      'composer-external-watch',
-      {
-        composer: {
-          services: [
-            {
-              id: 'graphql1',
-              origin: graphql1Origin,
-              graphql: true,
+    const runtime = await createComposerInRuntime(t, 'composer-external-watch', {
+      composer: {
+        services: [
+          {
+            id: 'graphql1',
+            origin: graphql1Origin,
+            graphql: true,
+          },
+          {
+            id: 'openapi1',
+            origin: openapi1Origin,
+            openapi: {
+              url: '/documentation/json',
+              prefix: '/api1',
             },
-            {
-              id: 'openapi1',
-              origin: openapi1Origin,
-              openapi: {
-                url: '/documentation/json',
-                prefix: '/api1',
-              },
-            },
-          ],
-          refreshTimeout: REFRESH_TIMEOUT,
-        },
-      }
-    )
+          },
+        ],
+        refreshTimeout: REFRESH_TIMEOUT,
+      },
+    })
 
     let composerOrigin = await runtime.start()
 
@@ -64,8 +64,8 @@ test('composer should restart if an external service with openapi and graphql up
 
     await graphql1.close()
     await graphql1a.listen({ port })
-    await sleep(REFRESH_TIMEOUT * 2)
-    composerOrigin = (await runtime.getEntrypointDetails()).url
+
+    composerOrigin = await waitForRestart(runtime)
 
     {
       const { statusCode } = await request(composerOrigin, {
@@ -73,12 +73,11 @@ test('composer should restart if an external service with openapi and graphql up
       })
       assert.equal(statusCode, 200)
     }
-    await testEntityRoutes(composerOrigin, ['/api1/users'], 'same openapi')
 
-    assert.ok(await checkRestarted(runtime, 'composer'))
+    await testEntityRoutes(composerOrigin, ['/api1/users'], 'same openapi')
   })
 
-  await t.test('change openapi', async (t) => {
+  await t.test('change openapi', async t => {
     const schema = 'type Query {\n  rnd: Int\n}'
 
     const graphql1 = await createGraphqlService(t, {
@@ -93,30 +92,26 @@ test('composer should restart if an external service with openapi and graphql up
     const port = openapi1.server.address().port
     const openapi1a = await createOpenApiService(t, ['posts'])
 
-    const runtime = await createComposerInRuntime(
-      t,
-      'composer-external-watch',
-      {
-        composer: {
-          services: [
-            {
-              id: 'graphql1',
-              origin: graphql1Origin,
-              graphql: true,
+    const runtime = await createComposerInRuntime(t, 'composer-external-watch', {
+      composer: {
+        services: [
+          {
+            id: 'graphql1',
+            origin: graphql1Origin,
+            graphql: true,
+          },
+          {
+            id: 'openapi1',
+            origin: openapi1Origin,
+            openapi: {
+              url: '/documentation/json',
+              prefix: '/api1',
             },
-            {
-              id: 'openapi1',
-              origin: openapi1Origin,
-              openapi: {
-                url: '/documentation/json',
-                prefix: '/api1',
-              },
-            },
-          ],
-          refreshTimeout: REFRESH_TIMEOUT,
-        },
-      }
-    )
+          },
+        ],
+        refreshTimeout: REFRESH_TIMEOUT,
+      },
+    })
 
     let composerOrigin = await runtime.start()
 
@@ -130,8 +125,8 @@ test('composer should restart if an external service with openapi and graphql up
 
     await openapi1.close()
     await openapi1a.listen({ port })
-    await sleep(REFRESH_TIMEOUT * 2)
-    composerOrigin = (await runtime.getEntrypointDetails()).url
+
+    composerOrigin = await waitForRestart(runtime)
 
     {
       const { statusCode } = await request(composerOrigin, {
@@ -140,7 +135,5 @@ test('composer should restart if an external service with openapi and graphql up
       assert.equal(statusCode, 200)
     }
     await testEntityRoutes(composerOrigin, ['/api1/posts'], 'openapi updated')
-
-    assert.ok(await checkRestarted(runtime, 'composer'))
   })
 })

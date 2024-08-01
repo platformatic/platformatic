@@ -24,7 +24,7 @@ test('should stop service by service id', async (t) => {
     hostname: 'localhost',
     protocol: 'http:',
   }, {
-    socketPath: app.managementApi.server.address(),
+    socketPath: app.getManagementApiUrl(),
     keepAliveTimeout: 10,
     keepAliveMaxTimeout: 10,
   })
@@ -68,7 +68,7 @@ test('should start stopped service by service id', async (t) => {
     hostname: 'localhost',
     protocol: 'http:',
   }, {
-    socketPath: app.managementApi.server.address(),
+    socketPath: app.getManagementApiUrl(),
     keepAliveTimeout: 10,
     keepAliveMaxTimeout: 10,
   })
@@ -105,7 +105,7 @@ test('should proxy request to the service', async (t) => {
     hostname: 'localhost',
     protocol: 'http:',
   }, {
-    socketPath: app.managementApi.server.address(),
+    socketPath: app.getManagementApiUrl(),
     keepAliveTimeout: 10,
     keepAliveMaxTimeout: 10,
   })

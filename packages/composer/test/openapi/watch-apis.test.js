@@ -4,21 +4,15 @@ const assert = require('node:assert/strict')
 const { tmpdir } = require('node:os')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { setTimeout: sleep } = require('node:timers/promises')
 const { writeFile, mkdtemp } = require('node:fs/promises')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
-const {
-  checkRestarted,
-  createComposerInRuntime,
-  createOpenApiService,
-  testEntityRoutes,
-} = require('../helper')
+const { createComposerInRuntime, createOpenApiService, testEntityRoutes, waitForRestart } = require('../helper')
 
 const REFRESH_TIMEOUT = 1000
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
-test('should restart composer if api has been changed', async (t) => {
+test('should restart composer if api has been changed', async t => {
   const api1 = await createOpenApiService(t, ['users'])
   const api2 = await createOpenApiService(t, ['posts'])
 
@@ -65,8 +59,8 @@ test('should restart composer if api has been changed', async (t) => {
   }
 
   await api1.close()
-  await sleep(REFRESH_TIMEOUT * 2)
-  composerOrigin = (await runtime.getEntrypointDetails()).url
+
+  composerOrigin = await waitForRestart(runtime)
 
   {
     const { statusCode, body } = await runtime.inject('composer', {
@@ -86,11 +80,9 @@ test('should restart composer if api has been changed', async (t) => {
     })
     assert.equal(statusCode2, 404)
   }
-
-  assert.ok(await checkRestarted(runtime, 'composer'))
 })
 
-test('should watch api only if it has a url', async (t) => {
+test('should watch api only if it has a url', async t => {
   const api1 = await createOpenApiService(t, ['users'])
   const api2 = await createOpenApiService(t, ['posts'])
 
@@ -121,7 +113,7 @@ test('should watch api only if it has a url', async (t) => {
     },
   })
 
-  let composerOrigin = await runtime.start()
+  const composerOrigin = await runtime.start()
 
   {
     const { statusCode, body } = await runtime.inject('composer', {
@@ -137,8 +129,8 @@ test('should watch api only if it has a url', async (t) => {
   }
 
   await api2.close()
-  await sleep(REFRESH_TIMEOUT * 2)
-  composerOrigin = (await runtime.getEntrypointDetails()).url
+
+  await assert.rejects(() => waitForRestart(runtime, composerOrigin))
 
   {
     const { statusCode, body } = await runtime.inject('composer', {
@@ -158,11 +150,9 @@ test('should watch api only if it has a url', async (t) => {
     })
     assert.equal(statusCode2, 500)
   }
-
-  assert.ok(!(await checkRestarted(runtime, 'composer')))
 })
 
-test('should compose schema after service restart', async (t) => {
+test('should compose schema after service restart', async t => {
   const api1 = await createOpenApiService(t, ['users'])
   const api2 = await createOpenApiService(t, ['posts'])
 
@@ -212,8 +202,8 @@ test('should compose schema after service restart', async (t) => {
   }
 
   await api1.close()
-  await sleep(REFRESH_TIMEOUT * 2)
-  composerOrigin = (await runtime.getEntrypointDetails()).url
+
+  composerOrigin = await waitForRestart(runtime, composerOrigin)
 
   {
     const { statusCode, body } = await runtime.inject('composer', {
@@ -236,8 +226,8 @@ test('should compose schema after service restart', async (t) => {
 
   const newApi1 = await createOpenApiService(t, ['users'])
   await newApi1.listen({ port: api1Port })
-  await sleep(REFRESH_TIMEOUT * 2)
-  composerOrigin = (await runtime.getEntrypointDetails()).url
+
+  composerOrigin = await waitForRestart(runtime, composerOrigin)
 
   {
     const { statusCode, body } = await runtime.inject('composer', {
@@ -251,11 +241,9 @@ test('should compose schema after service restart', async (t) => {
 
     await testEntityRoutes(composerOrigin, ['/api1/users', '/api2/posts'])
   }
-
-  assert.ok(await checkRestarted(runtime, 'composer'))
 })
 
-test('should not watch an api if refreshTimeout equals 0', async (t) => {
+test('should not watch an api if refreshTimeout equals 0', async t => {
   const api1 = await createOpenApiService(t, ['users'])
   const api2 = await createOpenApiService(t, ['posts'])
 
@@ -291,11 +279,10 @@ test('should not watch an api if refreshTimeout equals 0', async (t) => {
   await api1.close()
   await api2.close()
 
-  await sleep(REFRESH_TIMEOUT * 2)
-  assert.ok(!(await checkRestarted(runtime, 'composer')))
+  await assert.rejects(() => waitForRestart(runtime))
 })
 
-test('should not restart composer if schema has been changed', async (t) => {
+test('should not restart composer if schema has been changed', async t => {
   const api = await createOpenApiService(t, ['users'])
   await api.listen({ port: 0 })
 
@@ -328,7 +315,6 @@ test('should not restart composer if schema has been changed', async (t) => {
   })
 
   await runtime.start()
-  await sleep(3000)
 
-  assert.ok(!(await checkRestarted(runtime, 'composer')))
+  await assert.rejects(() => waitForRestart(runtime))
 })

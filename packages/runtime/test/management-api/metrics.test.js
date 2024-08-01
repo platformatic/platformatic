@@ -19,7 +19,7 @@ test('should not expose service metrics via runtime management api proxy', async
     hostname: 'localhost',
     protocol: 'http:',
   }, {
-    socketPath: app.managementApi.server.address(),
+    socketPath: app.getManagementApiUrl(),
     keepAliveTimeout: 10,
     keepAliveMaxTimeout: 10,
   })

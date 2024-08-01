@@ -9,7 +9,7 @@ async function createDirectory (path, empty = false) {
 }
 
 function safeRemove (path) {
-  return rm(path, { force: true, recursive: true, maxRetries: 10, retryDelay: 1000 }).catch()
+  return rm(path, { force: true, recursive: true, maxRetries: 10, retryDelay: 1000 }).catch(() => {})
 }
 
 module.exports = {

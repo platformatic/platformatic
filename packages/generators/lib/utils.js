@@ -49,7 +49,7 @@ function envObjectToString (env) {
 
 function envStringToObject (envString) {
   const output = {}
-  const split = envString.split(EOL)
+  const split = envString.split(/\r?\n/)
   split
     .filter(line => {
       return line.trim() !== '' && line.indexOf('#') !== 0

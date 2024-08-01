@@ -37,7 +37,7 @@ test('should get runtime log indexes', async t => {
       protocol: 'http:',
     },
     {
-      socketPath: app.managementApi.server.address(),
+      socketPath: app.getManagementApiUrl(),
       keepAliveTimeout: 10,
       keepAliveMaxTimeout: 10,
     }
@@ -74,7 +74,7 @@ test('should get only latest 30 logs indexes (150 MB)', async t => {
       protocol: 'http:',
     },
     {
-      socketPath: app.managementApi.server.address(),
+      socketPath: app.getManagementApiUrl(),
       keepAliveTimeout: 10,
       keepAliveMaxTimeout: 10,
     }
@@ -127,7 +127,7 @@ test('should get all runtimes log indexes (with previous)', async t => {
       protocol: 'http:',
     },
     {
-      socketPath: app.managementApi.server.address(),
+      socketPath: app.getManagementApiUrl(),
       keepAliveTimeout: 10,
       keepAliveMaxTimeout: 10,
     }

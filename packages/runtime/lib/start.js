@@ -13,13 +13,10 @@ const pkg = require('../package.json')
 const { parseInspectorOptions, wrapConfigInRuntimeConfig } = require('./config')
 const { Runtime } = require('./runtime')
 const errors = require('./errors')
-const { startManagementApi } = require('./management-api')
-const { startPrometheusServer } = require('./prom-server')
 const { getRuntimeLogsDir, loadConfig } = require('./utils')
 
 async function buildRuntime (configManager, env) {
   env = env || process.env
-  const config = configManager.current
 
   if (inspector.url()) {
     throw new errors.NodeInspectorFlagsNotSupportedError()
@@ -44,29 +41,6 @@ async function buildRuntime (configManager, env) {
       runtime.logger.error({ err }, 'Failed to restart services.')
     }
   })
-
-  let managementApi = null
-  if (config.managementApi) {
-    managementApi = await startManagementApi(runtime, configManager)
-    runtime.managementApi = managementApi
-    runtime.on('started', () => {
-      runtime.startCollectingMetrics()
-    })
-    runtime.on('closed', () => {
-      managementApi.close()
-    })
-  }
-
-  if (config.metrics) {
-    let promServer
-    runtime.on('started', async () => {
-      promServer = await startPrometheusServer(runtime, config.metrics)
-    })
-
-    runtime.on('closed', async () => {
-      await promServer.close()
-    })
-  }
 
   await runtime.init()
   return runtime
@@ -119,10 +93,12 @@ async function setupAndStartRuntime (config) {
     }
   }
   if (startErr?.code === 'PLT_RUNTIME_EADDR_IN_USE') {
-    const logger = pino(pretty({
-      translateTime: 'SYS:HH:MM:ss',
-      ignore: 'hostname,pid',
-    }))
+    const logger = pino(
+      pretty({
+        translateTime: 'SYS:HH:MM:ss',
+        ignore: 'hostname,pid',
+      })
+    )
     logger.warn(`Port: ${originalPort} is already in use!`)
     logger.warn(`Starting service on port: ${runtimeConfig.current.server.port}`)
   }
@@ -138,7 +114,7 @@ async function startCommand (args) {
     const runtime = startResult.runtime
     const res = startResult.address
 
-    closeWithGrace(async (event) => {
+    closeWithGrace(async event => {
       if (event.err instanceof Error) {
         console.error(event.err)
       }
@@ -175,7 +151,7 @@ async function startCommand (args) {
       console.error(`Missing config file!
   Be sure to have a config file with one of the following names:
 
-  ${err.filenames.map((s) => ' * ' + s).join('\n')}
+  ${err.filenames.map(s => ' * ' + s).join('\n')}
 
   In alternative run "npm create platformatic@latest" to generate a basic plt service config.`)
       process.exit(1)
