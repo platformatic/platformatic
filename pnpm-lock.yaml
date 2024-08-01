@@ -438,6 +438,9 @@ importers:
       typescript:
         specifier: ^5.5.4
         version: 5.5.4
+      ws:
+        specifier: ^8.16.0
+        version: 8.18.0
 
   packages/config:
     dependencies:

@@ -5,12 +5,11 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint",
-    "test": "pnpm run lint && borp -T --timeout=180000 -c 1&& tsd",
+    "test": "pnpm run lint && borp -T --timeout=180000 -c 1 && tsd",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "pnpm run gen-schema && pnpm run gen-types",
-    "prepublishOnly": "pnpm run build",
-    "nocov": "pnpm run lint && node ./test/runner.js"
+    "prepublishOnly": "pnpm run build"
   },
   "bin": {
     "plt-composer": "./composer.mjs"
@@ -39,7 +38,8 @@
     "single-user-cache": "^1.0.1",
     "split2": "^4.2.0",
     "tsd": "^0.31.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "ws": "^8.16.0"
   },
   "dependencies": {
     "@fastify/error": "^3.4.1",

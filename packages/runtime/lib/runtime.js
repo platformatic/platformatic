@@ -164,6 +164,7 @@ class Runtime extends EventEmitter {
     clearInterval(this.#metricsTimeout)
 
     await this.stop()
+    this.#loggerDestination.end()
 
     if (this.#managementApi) {
       if (fromManagementApi) {

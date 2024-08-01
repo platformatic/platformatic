@@ -384,7 +384,6 @@ async function createComposerInRuntime (t, prefix, composerConfig) {
   await createDirectory(tmpBaseDir)
   const tmpDir = await mkdtemp(resolve(tmpBaseDir, prefix))
   await createDirectory(resolve(tmpDir, 'composer'))
-  t.after(() => safeRemove(tmpDir))
 
   const composerConfigPath = resolve(tmpDir, 'composer/platformatic.composer.json')
   const pluginConfigPath = resolve(tmpDir, 'composer/plugin.js')
@@ -436,7 +435,11 @@ async function createComposerInRuntime (t, prefix, composerConfig) {
   )
 
   const runtime = await buildRuntime(runtimeConfigPath)
-  t.after(() => runtime.close().catch(() => {}))
+
+  t.after(async () => {
+    await runtime.close()
+    await safeRemove(tmpDir)
+  })
 
   return runtime
 }
@@ -628,6 +631,7 @@ async function waitForRestart (runtime, previousUrl) {
       }, REFRESH_TIMEOUT * REFRESH_TIMEOUT_DELAY_FACTOR)
 
       webSocket.on('error', err => {
+        clearTimeout(timeout)
         reject(err)
       })
 
