@@ -140,6 +140,10 @@ class Runtime extends EventEmitter {
   }
 
   async stop () {
+    if (this.#status === 'starting') {
+      await once(this, 'started')
+    }
+
     this.#updateStatus('stopping')
 
     for (const timer of this.#crashedServicesTimers.values()) {
@@ -149,9 +153,7 @@ class Runtime extends EventEmitter {
     this.#startedServices.clear()
     this.#crashedServicesTimers.clear()
 
-    this.status = 'stopping'
-    await Promise.all(this.#servicesIds.map(service => this.stopService(service)))
-    this.status = false
+    await Promise.all(this.#servicesIds.map(service => this._stopService(service)))
 
     this.#updateStatus('stopped')
   }
@@ -231,7 +233,8 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async stopService (id) {
+  // Do not rename to #stopService as this is used in tests
+  async _stopService (id) {
     const service = await this.#getServiceById(id, false, false)
 
     if (!service) {
@@ -523,16 +526,6 @@ class Runtime extends EventEmitter {
       return null
     }
 
-    let entrypointConfig
-    try {
-      entrypointConfig = await this.getServiceConfig(this.#entrypointId)
-    } catch (e) {
-      // If the entrypoint is not started, skip it
-      return null
-    }
-
-    const entrypointMetricsPrefix = entrypointConfig.metrics?.prefix
-
     const cpuMetric = metrics.find(metric => metric.name === 'process_cpu_percent_usage')
     const rssMetric = metrics.find(metric => metric.name === 'process_resident_memory_bytes')
     const totalHeapSizeMetric = metrics.find(metric => metric.name === 'nodejs_heap_size_total_bytes')
@@ -547,20 +540,18 @@ class Runtime extends EventEmitter {
     let p95Value = 0
     let p99Value = 0
 
-    if (entrypointMetricsPrefix) {
-      const metricName = entrypointMetricsPrefix + 'http_request_all_summary_seconds'
-      const httpLatencyMetrics = metrics.find(metric => metric.name === metricName)
+    const metricName = 'http_request_all_summary_seconds'
+    const httpLatencyMetrics = metrics.find(metric => metric.name === metricName)
 
-      p50Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.5).value || 0
-      p90Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.9).value || 0
-      p95Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.95).value || 0
-      p99Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.99).value || 0
+    p50Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.5).value || 0
+    p90Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.9).value || 0
+    p95Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.95).value || 0
+    p99Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.99).value || 0
 
-      p50Value = Math.round(p50Value * 1000)
-      p90Value = Math.round(p90Value * 1000)
-      p95Value = Math.round(p95Value * 1000)
-      p99Value = Math.round(p99Value * 1000)
-    }
+    p50Value = Math.round(p50Value * 1000)
+    p90Value = Math.round(p90Value * 1000)
+    p95Value = Math.round(p95Value * 1000)
+    p99Value = Math.round(p99Value * 1000)
 
     const cpu = cpuMetric.values[0].value
     const rss = rssMetric.values[0].value
@@ -669,7 +660,7 @@ class Runtime extends EventEmitter {
       // Wait for the next tick so that crashed from the thread are logged first
       setImmediate(() => {
         // If this was started, it means it crashed
-        if (started) {
+        if (started && (this.#status === 'started' || this.#status === 'starting')) {
           if (restartOnError > 0) {
             this.#restartCrashedService(serviceConfig, code, started)
           } else {
@@ -697,7 +688,7 @@ class Runtime extends EventEmitter {
       try {
         const wasStarted = this.#startedServices.get(id)
 
-        await this.stopService(id)
+        await this._stopService(id)
 
         if (wasStarted) {
           await this.startService(id)
@@ -804,7 +795,8 @@ class Runtime extends EventEmitter {
   async #getAllLogsFiles () {
     try {
       await access(this.#runtimeTmpDir)
-    } catch (error) {
+    } catch (err) {
+      this.logger.error({ err }, 'Cannot access temporary folder.')
       return []
     }
 

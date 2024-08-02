@@ -1,7 +1,7 @@
 {
-  "$schema": "https://platformatic.dev/schemas/v1.21.0/runtime",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.22.0.json",
   "entrypoint": "serviceApp",
-  "watch": false,
+  "watch": true,
   "autoload": {
     "path": "../monorepo",
     "exclude": ["docs", "composerApp"],
