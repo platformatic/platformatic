@@ -1331,9 +1331,6 @@ importers:
       '@fastify/formbody':
         specifier: ^7.4.0
         version: 7.4.0
-      '@matteo.collina/tspl':
-        specifier: ^0.1.1
-        version: 0.1.1
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
