@@ -298,9 +298,9 @@ class Runtime extends EventEmitter {
 
     let latestFileId = parseInt(runtimeLogFiles.at(-1).slice('logs.'.length))
 
-    let waiting = false
     let fileStream = null
     let fileId = startLogId ?? latestFileId
+    let isClosed = false
 
     const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
 
@@ -309,9 +309,7 @@ class Runtime extends EventEmitter {
         const logFileId = parseInt(filename.slice('logs.'.length))
         if (logFileId > latestFileId) {
           latestFileId = logFileId
-          if (waiting) {
-            streamLogFile(++fileId)
-          }
+          fileStream.unwatch()
         }
       }
     }).unref()
@@ -335,15 +333,18 @@ class Runtime extends EventEmitter {
         prevFileStream.destroy()
       }
 
+      fileStream.on('close', () => {
+        if (latestFileId > fileId && !isClosed) {
+          streamLogFile(++fileId)
+        }
+      })
+
       fileStream.on('error', err => {
+        isClosed = true
         logger.error(err, 'Error streaming log file')
         fileStream.destroy()
         watcher.close()
         writableStream.end()
-      })
-
-      fileStream.on('data', () => {
-        waiting = false
       })
 
       fileStream.on('eof', () => {
@@ -352,9 +353,7 @@ class Runtime extends EventEmitter {
           return
         }
         if (latestFileId > fileId) {
-          streamLogFile(++fileId)
-        } else {
-          waiting = true
+          fileStream.unwatch()
         }
       })
 
@@ -364,7 +363,7 @@ class Runtime extends EventEmitter {
     streamLogFile(fileId)
 
     const onClose = () => {
-      this.removeListener('closed', onClose)
+      isClosed = true
       watcher.close()
       fileStream.destroy()
     }
