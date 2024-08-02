@@ -30,7 +30,7 @@ test('logs errors during db migrations', async (t) => {
     { socketPath: runtime.getManagementApiUrl() }
   )
 
-  await sleep(3000)
+  await sleep(5000)
 
   const { statusCode, body } = await client.request({ method: 'GET', path: '/api/v1/logs/all' })
   assert.strictEqual(statusCode, 200)

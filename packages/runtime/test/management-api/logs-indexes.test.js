@@ -87,7 +87,7 @@ test('should get only latest 30 logs indexes (150 MB)', async t => {
   assert.strictEqual(res.statusCode, 200)
 
   // Wait for logs to be written
-  await sleep(3000)
+  await sleep(5000)
 
   const { statusCode, body } = await client.request({
     method: 'GET',

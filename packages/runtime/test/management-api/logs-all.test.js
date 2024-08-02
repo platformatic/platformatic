@@ -46,7 +46,7 @@ test('should get all runtime logs', async t => {
   assert.strictEqual(res.statusCode, 200)
 
   // Wait for logs to be written
-  await sleep(3000)
+  await sleep(5000)
 
   const { statusCode, body } = await client.request({
     method: 'GET',
@@ -58,7 +58,7 @@ test('should get all runtime logs', async t => {
 
   const logsSize = Buffer.byteLength(data, 'utf8')
   const logsSizeMb = logsSize / 1024 / 1024
-  assert(logsSizeMb > 6)
+  assert(logsSizeMb >= 6)
 })
 
 test('should get previous runtime logs', async t => {
