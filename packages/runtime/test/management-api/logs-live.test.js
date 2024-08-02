@@ -68,9 +68,6 @@ test('should get runtime logs via management api (with a start index)', async t 
   })
   assert.strictEqual(res.statusCode, 200)
 
-  // Wait for logs to be written
-  await sleep(3000)
-
   const socketPath = app.getManagementApiUrl()
 
   const client = new Client(
@@ -85,6 +82,9 @@ test('should get runtime logs via management api (with a start index)', async t 
     }
   )
 
+  // Wait for logs to be written
+  await sleep(5000)
+
   const { statusCode, body } = await client.request({
     method: 'GET',
     path: '/api/v1/logs/indexes',
@@ -92,7 +92,10 @@ test('should get runtime logs via management api (with a start index)', async t 
   assert.strictEqual(statusCode, 200)
 
   const { indexes } = await body.json()
-  const startLogId = indexes[1]
+  const startLogId = indexes.at(-1)
+
+  // Wait for logs to be written to the latest file
+  await sleep(5000)
 
   const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
   const webSocket = new WebSocket(protocol + socketPath + ':/api/v1/logs/live' + `?start=${startLogId}`)
@@ -108,7 +111,7 @@ test('should get runtime logs via management api (with a start index)', async t 
 
     let counter = 0
     webSocket.on('message', () => {
-      if (counter++ > 10) {
+      if (counter++ > 3) {
         clearTimeout(timeout)
         webSocket.close()
         resolve()

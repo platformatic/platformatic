@@ -520,67 +520,75 @@ class Runtime extends EventEmitter {
   }
 
   async getFormattedMetrics () {
-    const { metrics } = await this.getMetrics()
+    try {
+      const { metrics } = await this.getMetrics()
 
-    if (metrics === null) {
+      if (metrics === null) {
+        return null
+      }
+
+      const cpuMetric = metrics.find(metric => metric.name === 'process_cpu_percent_usage')
+      const rssMetric = metrics.find(metric => metric.name === 'process_resident_memory_bytes')
+      const totalHeapSizeMetric = metrics.find(metric => metric.name === 'nodejs_heap_size_total_bytes')
+      const usedHeapSizeMetric = metrics.find(metric => metric.name === 'nodejs_heap_size_used_bytes')
+      const heapSpaceSizeTotalMetric = metrics.find(metric => metric.name === 'nodejs_heap_space_size_total_bytes')
+      const newSpaceSizeTotalMetric = heapSpaceSizeTotalMetric.values.find(value => value.labels.space === 'new')
+      const oldSpaceSizeTotalMetric = heapSpaceSizeTotalMetric.values.find(value => value.labels.space === 'old')
+      const eventLoopUtilizationMetric = metrics.find(metric => metric.name === 'nodejs_eventloop_utilization')
+
+      let p50Value = 0
+      let p90Value = 0
+      let p95Value = 0
+      let p99Value = 0
+
+      const metricName = 'http_request_all_summary_seconds'
+      const httpLatencyMetrics = metrics.find(metric => metric.name === metricName)
+
+      p50Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.5).value || 0
+      p90Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.9).value || 0
+      p95Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.95).value || 0
+      p99Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.99).value || 0
+
+      p50Value = Math.round(p50Value * 1000)
+      p90Value = Math.round(p90Value * 1000)
+      p95Value = Math.round(p95Value * 1000)
+      p99Value = Math.round(p99Value * 1000)
+
+      const cpu = cpuMetric.values[0].value
+      const rss = rssMetric.values[0].value
+      const elu = eventLoopUtilizationMetric.values[0].value
+      const totalHeapSize = totalHeapSizeMetric.values[0].value
+      const usedHeapSize = usedHeapSizeMetric.values[0].value
+      const newSpaceSize = newSpaceSizeTotalMetric.value
+      const oldSpaceSize = oldSpaceSizeTotalMetric.value
+
+      const formattedMetrics = {
+        version: 1,
+        date: new Date().toISOString(),
+        cpu,
+        elu,
+        rss,
+        totalHeapSize,
+        usedHeapSize,
+        newSpaceSize,
+        oldSpaceSize,
+        entrypoint: {
+          latency: {
+            p50: p50Value,
+            p90: p90Value,
+            p95: p95Value,
+            p99: p99Value,
+          },
+        },
+      }
+
+      return formattedMetrics
+    } catch (err) {
+      // If any metric is missing, return nothing
+      this.logger.warn({ err }, 'Cannot fetch metrics')
+
       return null
     }
-
-    const cpuMetric = metrics.find(metric => metric.name === 'process_cpu_percent_usage')
-    const rssMetric = metrics.find(metric => metric.name === 'process_resident_memory_bytes')
-    const totalHeapSizeMetric = metrics.find(metric => metric.name === 'nodejs_heap_size_total_bytes')
-    const usedHeapSizeMetric = metrics.find(metric => metric.name === 'nodejs_heap_size_used_bytes')
-    const heapSpaceSizeTotalMetric = metrics.find(metric => metric.name === 'nodejs_heap_space_size_total_bytes')
-    const newSpaceSizeTotalMetric = heapSpaceSizeTotalMetric.values.find(value => value.labels.space === 'new')
-    const oldSpaceSizeTotalMetric = heapSpaceSizeTotalMetric.values.find(value => value.labels.space === 'old')
-    const eventLoopUtilizationMetric = metrics.find(metric => metric.name === 'nodejs_eventloop_utilization')
-
-    let p50Value = 0
-    let p90Value = 0
-    let p95Value = 0
-    let p99Value = 0
-
-    const metricName = 'http_request_all_summary_seconds'
-    const httpLatencyMetrics = metrics.find(metric => metric.name === metricName)
-
-    p50Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.5).value || 0
-    p90Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.9).value || 0
-    p95Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.95).value || 0
-    p99Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.99).value || 0
-
-    p50Value = Math.round(p50Value * 1000)
-    p90Value = Math.round(p90Value * 1000)
-    p95Value = Math.round(p95Value * 1000)
-    p99Value = Math.round(p99Value * 1000)
-
-    const cpu = cpuMetric.values[0].value
-    const rss = rssMetric.values[0].value
-    const elu = eventLoopUtilizationMetric.values[0].value
-    const totalHeapSize = totalHeapSizeMetric.values[0].value
-    const usedHeapSize = usedHeapSizeMetric.values[0].value
-    const newSpaceSize = newSpaceSizeTotalMetric.value
-    const oldSpaceSize = oldSpaceSizeTotalMetric.value
-
-    const formattedMetrics = {
-      version: 1,
-      date: new Date().toISOString(),
-      cpu,
-      elu,
-      rss,
-      totalHeapSize,
-      usedHeapSize,
-      newSpaceSize,
-      oldSpaceSize,
-      entrypoint: {
-        latency: {
-          p50: p50Value,
-          p90: p90Value,
-          p95: p95Value,
-          p99: p99Value,
-        },
-      },
-    }
-    return formattedMetrics
   }
 
   async getLogIds (runtimePID) {
