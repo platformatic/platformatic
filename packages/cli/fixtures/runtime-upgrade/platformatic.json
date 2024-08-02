@@ -9,7 +9,7 @@
       "level": "{PLT_SERVER_LOGGER_LEVEL}"
     }
   },
-  "hotReload": true,
+  "watch": true,
   "managementApi": true,
   "services": [
     {

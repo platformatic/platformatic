@@ -9,7 +9,7 @@
   },
   "plugin": {
     "path": "plugin.js",
-    "hotReload": true,
+    "watch": true,
     "stopTimeout": 10000,
     "options": {
       "something": "else"

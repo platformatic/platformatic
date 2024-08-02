@@ -80,7 +80,9 @@ export interface PlatformaticComposer {
     requestIdLogLabel?: string;
     jsonShorthand?: boolean;
     trustProxy?: boolean | string | string[] | number;
+    http2?: boolean;
     https?: {
+      allowHTTP1?: boolean;
       key:
         | string
         | {
@@ -140,13 +142,9 @@ export interface PlatformaticComposer {
     services: {
       id: string;
       origin?: string;
-      openapi?:
-        | {
-            [k: string]: unknown;
-          }
-        | {
-            [k: string]: unknown;
-          };
+      openapi?: {
+        [k: string]: unknown;
+      };
       graphql?:
         | boolean
         | {
@@ -198,7 +196,7 @@ export interface PlatformaticComposer {
                 many?: {
                   type: string;
                   fkey: string;
-                  as: string;
+                  as?: string;
                   pkey?: string;
                   subgraph?: string;
                   resolver: {
@@ -258,6 +256,71 @@ export interface PlatformaticComposer {
             [k: string]: unknown;
           }
         | string;
+      entities?: {
+        /**
+         * This interface was referenced by `undefined`'s JSON-Schema definition
+         * via the `patternProperty` "^.*$".
+         */
+        [k: string]: {
+          pkey?: string;
+          resolver?: {
+            name: string;
+            argsAdapter?:
+              | {
+                  [k: string]: unknown;
+                }
+              | string;
+            partialResults?:
+              | {
+                  [k: string]: unknown;
+                }
+              | string;
+          };
+          fkeys?: {
+            type: string;
+            field?: string;
+            as?: string;
+            pkey?: string;
+            subgraph?: string;
+            resolver?: {
+              name: string;
+              argsAdapter?:
+                | {
+                    [k: string]: unknown;
+                  }
+                | string;
+              partialResults?:
+                | {
+                    [k: string]: unknown;
+                  }
+                | string;
+            };
+            [k: string]: unknown;
+          }[];
+          many?: {
+            type: string;
+            fkey: string;
+            as?: string;
+            pkey?: string;
+            subgraph?: string;
+            resolver: {
+              name: string;
+              argsAdapter?:
+                | {
+                    [k: string]: unknown;
+                  }
+                | string;
+              partialResults?:
+                | {
+                    [k: string]: unknown;
+                  }
+                | string;
+            };
+            [k: string]: unknown;
+          }[];
+          [k: string]: unknown;
+        };
+      };
       addEntitiesResolvers?: boolean;
     };
     addEmptySchema?: boolean;
@@ -269,10 +332,16 @@ export interface PlatformaticComposer {
         port?: number | string;
         hostname?: string;
         endpoint?: string;
-        server?: "own" | "parent";
+        server?: "own" | "parent" | "hide";
+        defaultMetrics?: {
+          enabled: boolean;
+        };
         auth?: {
           username: string;
           password: string;
+        };
+        labels?: {
+          [k: string]: string;
         };
       };
   types?: {
@@ -292,6 +361,9 @@ export interface PlatformaticComposer {
     path?: string;
     schema?: string;
     url?: string;
+    fullResponse?: boolean;
+    fullRequest?: boolean;
+    validateResponse?: boolean;
   }[];
   telemetry?: OpenTelemetry;
   watch?:
@@ -306,6 +378,7 @@ export interface PlatformaticComposer {
     | boolean
     | string;
   $schema?: string;
+  module?: string;
 }
 export interface Info {
   title: string;

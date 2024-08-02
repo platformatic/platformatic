@@ -1,14 +1,15 @@
-import assert from 'node:assert/strict'
-import { tmpdir } from 'node:os'
-import { test } from 'node:test'
-import { join } from 'node:path'
-import { writeFile, mkdir, readdir, mkdtemp } from 'node:fs/promises'
-import split from 'split2'
+import { createDirectory } from '@platformatic/utils'
 import { once } from 'events'
 import { execa } from 'execa'
+import assert from 'node:assert/strict'
+import { mkdtemp, readdir, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import split from 'split2'
 import { cliPath } from './helper.js'
 
-test('generates next file correctly with empty dir', async (t) => {
+test('generates next file correctly with empty dir', async t => {
   const cwd = await mkdtemp(join(tmpdir(), 'gen-migration-test-'))
   const configFilePath = join(cwd, 'gen-migration.json')
   const migrationsDirPath = join(cwd, 'migrations')
@@ -27,7 +28,7 @@ test('generates next file correctly with empty dir', async (t) => {
   }
 
   await writeFile(configFilePath, JSON.stringify(config))
-  await mkdir(migrationsDirPath)
+  await createDirectory(migrationsDirPath)
 
   await execa('node', [cliPath, 'migrations', 'create', '-c', configFilePath], { cwd })
   const newMigrations = await readdir(migrationsDirPath)
@@ -37,7 +38,7 @@ test('generates next file correctly with empty dir', async (t) => {
   assert.equal(newMigrations[1], '001.undo.sql')
 })
 
-test('generates next file correctly with existing files', async (t) => {
+test('generates next file correctly with existing files', async t => {
   const cwd = await mkdtemp(join(tmpdir(), 'gen-migration-test-'))
   const configFilePath = join(cwd, 'gen-migration.json')
   const migrationsDirPath = join(cwd, 'migrations')
@@ -56,7 +57,7 @@ test('generates next file correctly with existing files', async (t) => {
   }
 
   await writeFile(configFilePath, JSON.stringify(config))
-  await mkdir(migrationsDirPath)
+  await createDirectory(migrationsDirPath)
 
   await execa('node', [cliPath, 'migrations', 'create', '-c', configFilePath], { cwd })
   const child = execa('node', [cliPath, 'migrations', 'create', '-c', configFilePath], { cwd })
@@ -73,7 +74,7 @@ test('generates next file correctly with existing files', async (t) => {
   assert.equal(newMigrations[3], '002.undo.sql')
 })
 
-test('throws if there is no migrations in the config', async (t) => {
+test('throws if there is no migrations in the config', async t => {
   const cwd = await mkdtemp(join(tmpdir(), 'gen-migration-test-'))
   const configFilePath = join(cwd, 'gen-migration.json')
 
@@ -96,7 +97,7 @@ test('throws if there is no migrations in the config', async (t) => {
   assert.match(data, /Missing "migrations" section in config file/)
 })
 
-test('throws if migrations directory does not exist', async (t) => {
+test('throws if migrations directory does not exist', async t => {
   const cwd = await mkdtemp(join(tmpdir(), 'gen-migration-test-'))
   const configFilePath = join(cwd, 'gen-migration.json')
   const migrationsDirPath = join(cwd, 'migrations')

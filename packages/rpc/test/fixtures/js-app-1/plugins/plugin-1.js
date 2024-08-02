@@ -1,7 +1,7 @@
 const users = [
   { name: 'Alice', age: 30 },
   { name: 'Bob', age: 25 },
-  { name: 'Charlie', age: 35 }
+  { name: 'Charlie', age: 35 },
 ]
 const plugin = async (app) => {
   app.rpc('addUser', async (options) => {
@@ -22,8 +22,8 @@ const plugin = async (app) => {
       nodes: [
         null,
         { id: 'node-1', nodes: [null, { id: 'node-2', nodes: [] }] },
-        { id: 'node-3', nodes: [] }
-      ]
+        { id: 'node-3', nodes: [] },
+      ],
     }
   })
 }

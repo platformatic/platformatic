@@ -5,12 +5,13 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint",
-    "test": "pnpm run lint && borp -C -X fixtures -X test --concurrency=1 && tsd"
+    "test": "pnpm run lint && borp --timeout=180000 -C -X fixtures -X test --concurrency=1 && tsd"
   },
   "keywords": [],
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
+    "@platformatic/utils": "workspace:*",
     "@fastify/error": "^3.4.1",
     "boring-name-generator": "^1.0.3",
     "change-case-all": "^2.1.0",

@@ -1,11 +1,12 @@
-import { test } from 'node:test'
+import { safeRemove } from '@platformatic/utils'
 import { equal } from 'node:assert'
+import { mkdtemp } from 'node:fs/promises'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { tmpdir } from 'os'
+import { isFileAccessible } from '../../src/utils.mjs'
 import { executeCreatePlatformatic, keys, walk } from './helper.mjs'
 import { timeout } from './timeout.mjs'
-import { isFileAccessible } from '../../src/utils.mjs'
-import { join } from 'node:path'
-import { tmpdir } from 'os'
-import { mkdtemp, rm } from 'node:fs/promises'
 
 let tmpDir
 test.beforeEach(async () => {
@@ -14,7 +15,7 @@ test.beforeEach(async () => {
 
 test.afterEach(async () => {
   try {
-    await rm(tmpDir, { recursive: true, force: true })
+    await safeRemove(tmpDir)
   } catch (e) {
     // on purpose, in win the resource might be still "busy"
   }
@@ -22,22 +23,28 @@ test.afterEach(async () => {
 
 test('Creates a Platformatic Stackable without typescript', { timeout }, async () => {
   // The actions must match IN ORDER
-  const actions = [{
-    match: 'What kind of project do you want to create?',
-    do: [keys.DOWN, keys.ENTER], // Stackable
-  }, {
-    match: 'Where would you like to create your project?',
-    do: [keys.ENTER],
-  }, {
-    match: 'What is the name of the stackable?',
-    do: [keys.ENTER], // my-stackable
-  }, {
-    match: 'Do you want to use TypeScript',
-    do: [keys.ENTER], // no
-  }, {
-    match: 'Do you want to init the git repository',
-    do: [keys.DOWN, keys.ENTER], // yes
-  }]
+  const actions = [
+    {
+      match: 'What kind of project do you want to create?',
+      do: [keys.DOWN, keys.ENTER], // Stackable
+    },
+    {
+      match: 'Where would you like to create your project?',
+      do: [keys.ENTER],
+    },
+    {
+      match: 'What is the name of the stackable?',
+      do: [keys.ENTER], // my-stackable
+    },
+    {
+      match: 'Do you want to use TypeScript',
+      do: [keys.ENTER], // no
+    },
+    {
+      match: 'Do you want to init the git repository',
+      do: [keys.DOWN, keys.ENTER], // yes
+    },
+  ]
   await executeCreatePlatformatic(tmpDir, actions, {
     done: 'Stackable created successfully!',
   })
@@ -62,22 +69,28 @@ test('Creates a Platformatic Stackable without typescript', { timeout }, async (
 
 test('Creates a Platformatic Stackable with typescript', { timeout }, async () => {
   // The actions must match IN ORDER
-  const actions = [{
-    match: 'What kind of project do you want to create?',
-    do: [keys.DOWN, keys.ENTER], // Stackable
-  }, {
-    match: 'Where would you like to create your project?',
-    do: [keys.ENTER],
-  }, {
-    match: 'What is the name of the stackable?',
-    do: [keys.ENTER], // my-stackable
-  }, {
-    match: 'Do you want to use TypeScript',
-    do: [keys.DOWN, keys.ENTER], // yes
-  }, {
-    match: 'Do you want to init the git repository',
-    do: [keys.ENTER], // no
-  }]
+  const actions = [
+    {
+      match: 'What kind of project do you want to create?',
+      do: [keys.DOWN, keys.ENTER], // Stackable
+    },
+    {
+      match: 'Where would you like to create your project?',
+      do: [keys.ENTER],
+    },
+    {
+      match: 'What is the name of the stackable?',
+      do: [keys.ENTER], // my-stackable
+    },
+    {
+      match: 'Do you want to use TypeScript',
+      do: [keys.DOWN, keys.ENTER], // yes
+    },
+    {
+      match: 'Do you want to init the git repository',
+      do: [keys.ENTER], // no
+    },
+  ]
   await executeCreatePlatformatic(tmpDir, actions, {
     done: 'Stackable created successfully!',
   })

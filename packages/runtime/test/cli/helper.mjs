@@ -1,16 +1,18 @@
-import { Agent, setGlobalDispatcher } from 'undici'
+import { safeRemove } from '@platformatic/utils'
+import { join } from 'desm'
 import { execa } from 'execa'
 import split from 'split2'
-import { join } from 'desm'
-import { rm } from 'node:fs/promises'
+import { Agent, setGlobalDispatcher } from 'undici'
 
-setGlobalDispatcher(new Agent({
-  keepAliveTimeout: 10,
-  keepAliveMaxTimeout: 10,
-  tls: {
-    rejectUnauthorized: false,
-  },
-}))
+setGlobalDispatcher(
+  new Agent({
+    keepAliveTimeout: 10,
+    keepAliveMaxTimeout: 10,
+    tls: {
+      rejectUnauthorized: false,
+    },
+  })
+)
 
 export const cliPath = join(import.meta.url, '..', '..', 'runtime.mjs')
 
@@ -26,30 +28,34 @@ export async function start (...args) {
     reject = _reject
   })
 
+  let serverStarted = false
   const errorTimeout = setTimeout(() => {
-    reject(new Error('Couldn\'t start server'))
+    reject(new Error("Couldn't start server"))
   }, 30000)
 
-  child.ndj = child.stdout.pipe(split(function (line) {
-    try {
-      const message = JSON.parse(line)
-      const mo = message.msg?.match(/server listening at (.+)/i)
+  child.ndj = child.stdout.pipe(
+    split(function (line) {
+      try {
+        const message = JSON.parse(line)
+        const mo = message.msg?.match(/server listening at (.+)/i)
 
-      if (mo) {
-        clearTimeout(errorTimeout)
+        if (!serverStarted && mo) {
+          clearTimeout(errorTimeout)
 
-        setTimeout(() => {
-          resolve(mo[1])
-        }, 1000)
+          setTimeout(() => {
+            resolve(mo[1])
+          }, 1000)
+        }
+
+        return message
+      } catch (err) {
+        console.log('>>', line)
       }
-
-      return message
-    } catch (err) {
-      console.log('>>', line)
-    }
-  }))
+    })
+  )
 
   const url = await promise
+  serverStarted = true
   return { child, url }
 }
 
@@ -59,7 +65,7 @@ export function delDir (tmpDir) {
     // This is because on Windows, it's very hard to delete files if the file
     // system is not collaborating.
     try {
-      await rm(tmpDir, { recursive: true, force: true })
+      await safeRemove(tmpDir)
     } catch (err) {
       if (err.code !== 'EBUSY') {
         throw err

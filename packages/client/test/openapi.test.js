@@ -4,21 +4,24 @@ const assert = require('node:assert/strict')
 const { tmpdir } = require('node:os')
 const { test, mock } = require('node:test')
 const { join } = require('node:path')
-const { unlink, mkdtemp, cp, rm } = require('node:fs/promises')
+const { unlink, mkdtemp, cp } = require('node:fs/promises')
 const { ResponseStatusCodeError } = require('undici').errors
 const { buildServer } = require('../../db')
 const { buildOpenAPIClient } = require('..')
+const { safeRemove } = require('@platformatic/utils')
 require('./helper')
 
-test('rejects with no url', async (t) => {
+test('rejects with no url', async t => {
   await assert.rejects(buildOpenAPIClient())
   await assert.rejects(buildOpenAPIClient({}))
-  await assert.rejects(buildOpenAPIClient({
-    path: join(__dirname, 'fixtures', 'movies', 'openapi.json'),
-  }))
+  await assert.rejects(
+    buildOpenAPIClient({
+      path: join(__dirname, 'fixtures', 'movies', 'openapi.json'),
+    })
+  )
 })
 
-test('build basic client from url', async (t) => {
+test('build basic client from url', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -33,7 +36,7 @@ test('build basic client from url', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await app.start()
 
@@ -135,7 +138,7 @@ test('build basic client from url', async (t) => {
   }
 })
 
-test('build full response client from url', async (t) => {
+test('build full response client from url', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -149,7 +152,7 @@ test('build full response client from url', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await app.start()
 
@@ -289,7 +292,7 @@ test('build full response client from url', async (t) => {
   }
 })
 
-test('properly call query parser', async (t) => {
+test('properly call query parser', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -303,7 +306,7 @@ test('properly call query parser', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await app.start()
 
@@ -328,7 +331,7 @@ test('properly call query parser', async (t) => {
   assert.strictEqual(mockQueryParser.mock.callCount(), 1)
 })
 
-test('throw on error level response', async (t) => {
+test('throw on error level response', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -342,7 +345,7 @@ test('throw on error level response', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await app.start()
 
@@ -352,12 +355,15 @@ test('throw on error level response', async (t) => {
     throwOnError: true,
   })
 
-  await assert.rejects(client.getMovieById({
-    id: 100,
-  }), ResponseStatusCodeError)
+  await assert.rejects(
+    client.getMovieById({
+      id: 100,
+    }),
+    ResponseStatusCodeError
+  )
 })
 
-test('build basic client from file', async (t) => {
+test('build basic client from file', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -371,7 +377,7 @@ test('build basic client from file', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await app.start()
 
@@ -447,7 +453,7 @@ test('build basic client from file', async (t) => {
   }
 })
 
-test('build basic client from url with custom headers', async (t) => {
+test('build basic client from url with custom headers', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'auth')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -461,7 +467,7 @@ test('build basic client from url with custom headers', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await app.start()
 
@@ -539,7 +545,7 @@ test('build basic client from url with custom headers', async (t) => {
   }
 })
 
-test('302', async (t) => {
+test('302', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'movies-no-200')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -553,7 +559,7 @@ test('302', async (t) => {
 
   t.after(async () => {
     await app.close()
-    await rm(tmpDir, { recursive: true })
+    await safeRemove(tmpDir)
   })
   await app.start()
 

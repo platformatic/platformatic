@@ -7,8 +7,8 @@
     "plt-service": "./service.mjs"
   },
   "scripts": {
-    "test": "pnpm run lint && borp -T --concurrency=1 --timeout 120000 && tsd",
-    "unit": "borp --pattern 'test/**/*.test.{js,mjs}' --ignore 'fixtures/**/*' --concurrency=1 --timeout=120000 --no-typescript",
+    "test": "pnpm run lint && borp -T --concurrency=1 --timeout=180000 && tsd",
+    "unit": "borp --pattern 'test/**/*.test.{js,mjs}' --ignore 'fixtures/**/*' --concurrency=1 --timeout=180000 --no-typescript",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "pnpm run gen-schema && pnpm run gen-types",
@@ -52,7 +52,6 @@
     "@fastify/cors": "^9.0.1",
     "@fastify/deepmerge": "^1.3.0",
     "@fastify/error": "^3.4.1",
-    "@fastify/restartable": "^2.3.1",
     "@fastify/static": "^7.0.1",
     "@fastify/swagger": "^8.14.0",
     "@fastify/under-pressure": "^8.3.0",

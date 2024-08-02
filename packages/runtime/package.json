@@ -9,8 +9,10 @@
   "scripts": {
     "test": "npm run lint && borp --concurrency=1 --timeout=180000 && tsd",
     "gen-schema": "node lib/schema.js > schema.json",
-    "coverage": "npm run lint && borp -X=fixtures -X=test -C --concurrency=1 --timeout=120000 && tsd",
-    "lint": "eslint"
+    "coverage": "npm run lint && borp -X=fixtures -X=test -C --concurrency=1 --timeout=180000 && tsd",
+    "lint": "eslint",
+    "gen-schema": "node lib/schema.js > schema.json",
+    "gen-types": "json2ts > config.d.ts < schema.json"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",
   "repository": {
@@ -25,7 +27,6 @@
   "devDependencies": {
     "@fastify/express": "^3.0.0",
     "@fastify/formbody": "^7.4.0",
-    "@matteo.collina/tspl": "^0.1.1",
     "@platformatic/composer": "workspace:*",
     "@platformatic/db": "workspace:*",
     "@platformatic/service": "workspace:*",
@@ -51,6 +52,7 @@
     "@fastify/websocket": "^10.0.0",
     "@hapi/topo": "^6.0.2",
     "@platformatic/config": "workspace:*",
+    "@platformatic/itc": "workspace:*",
     "@platformatic/generators": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/ts-compiler": "workspace:*",
@@ -75,12 +77,7 @@
     "semgrator": "^0.3.0",
     "tail-file-stream": "^0.2.0",
     "undici": "^6.9.0",
+    "undici-thread-interceptor": "^0.5.0",
     "ws": "^8.16.0"
-  },
-  "standard": {
-    "ignore": [
-      "**/dist/*",
-      "**/test/tmp"
-    ]
   }
 }

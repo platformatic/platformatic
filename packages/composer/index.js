@@ -179,6 +179,11 @@ async function watchServices (app, opts) {
     return
   }
 
+  if (!globalThis[Symbol.for('plt.runtime.id')]) {
+    app.log.warn('Watching services is only supported when running within a Platformatic Runtime.')
+    return
+  }
+
   const { fetchOpenApiSchema } = await import('./lib/openapi-fetch-schemas.mjs')
 
   app.log.info({ services: watching }, 'start watching services')
@@ -187,20 +192,9 @@ async function watchServices (app, opts) {
     try {
       if (await detectServicesUpdate({ app, services: watching, fetchOpenApiSchema, fetchGraphqlSubgraphs })) {
         clearInterval(timer)
-        app.log.info('restarting server')
-        try {
-          app.addOnRestartHook(async (app) => {
-            app.log.info('server restarted')
-          })
-          await app.restart()
-        } catch (error) {
-          app.log.error({
-            err: {
-              message: error.message,
-              stack: error.stack,
-            },
-          }, 'failed to restart server')
-        }
+        app.log.info('detected services changes, restarting ...')
+
+        globalThis[Symbol.for('plt.runtime.itc')].notify('changed')
       }
     } catch (error) {
       app.log.error({

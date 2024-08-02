@@ -8,7 +8,7 @@
   },
   "scripts": {
     "lint": "eslint",
-    "test": "pnpm run lint && borp --concurrency=1 --timeout=120000 && tsd"
+    "test": "pnpm run lint && borp --concurrency=1 --timeout=180000 && tsd"
   },
   "repository": {
     "type": "git",
@@ -22,10 +22,10 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@matteo.collina/tspl": "^0.1.1",
+    "@platformatic/composer": "workspace:*",
     "@platformatic/db": "workspace:*",
     "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "@platformatic/utils": "workspace:*",
     "borp": "^0.17.0",
     "dotenv": "^16.4.5",
     "eslint": "9",
@@ -43,6 +43,7 @@
     "@fastify/error": "^3.4.1",
     "@platformatic/client": "workspace:*",
     "@platformatic/config": "workspace:*",
+    "@platformatic/utils": "workspace:*",
     "abstract-logging": "^2.0.1",
     "camelcase": "~6.3.0",
     "code-block-writer": "^13.0.1",

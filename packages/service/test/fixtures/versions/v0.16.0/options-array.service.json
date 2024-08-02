@@ -9,7 +9,7 @@
   },
   "plugin": [{
     "path": "plugin.ts",
-    "hotReload": true,
+    "watch": true,
     "stopTimeout": 10000,
     "options": {
       "something": "else"
@@ -19,7 +19,7 @@
     }
   }, {
     "path": "other.js",
-    "hotReload": false,
+    "watch": false,
     "stopTimeout": 2,
     "options": {
       "foo": "bar"

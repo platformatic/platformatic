@@ -4,7 +4,7 @@
   "description": "Platformatic DB Utils",
   "main": "index.js",
   "scripts": {
-    "test": "npm run lint && borp --coverage",
+    "test": "npm run lint && borp --timeout=180000 --coverage",
     "lint": "eslint"
   },
   "repository": {

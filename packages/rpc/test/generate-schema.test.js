@@ -26,7 +26,7 @@ test('should generate an openapi schema from a ts app', async (t) => {
     openapi: '3.0.0',
     info: {
       title: 'Platformatic RPC',
-      version: '1.0.0'
+      version: '1.0.0',
     },
     paths: {
       '/addUser': {
@@ -36,10 +36,10 @@ test('should generate an openapi schema from a ts app', async (t) => {
             content: {
               'application/json': {
                 schema: {
-                  $ref: '#/components/schemas/addUserArgs'
-                }
-              }
-            }
+                  $ref: '#/components/schemas/addUserArgs',
+                },
+              },
+            },
           },
           responses: {
             200: {
@@ -47,13 +47,13 @@ test('should generate an openapi schema from a ts app', async (t) => {
               content: {
                 'application/json': {
                   schema: {
-                    $ref: '#/components/schemas/addUserReturnType'
-                  }
-                }
-              }
-            }
-          }
-        }
+                    $ref: '#/components/schemas/addUserReturnType',
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       '/getUsers': {
         post: {
@@ -62,10 +62,10 @@ test('should generate an openapi schema from a ts app', async (t) => {
             content: {
               'application/json': {
                 schema: {
-                  $ref: '#/components/schemas/getUsersArgs'
-                }
-              }
-            }
+                  $ref: '#/components/schemas/getUsersArgs',
+                },
+              },
+            },
           },
           responses: {
             200: {
@@ -73,13 +73,13 @@ test('should generate an openapi schema from a ts app', async (t) => {
               content: {
                 'application/json': {
                   schema: {
-                    $ref: '#/components/schemas/getUsersReturnType'
-                  }
-                }
-              }
-            }
-          }
-        }
+                    $ref: '#/components/schemas/getUsersReturnType',
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       '/getGroupByName': {
         post: {
@@ -88,10 +88,10 @@ test('should generate an openapi schema from a ts app', async (t) => {
             content: {
               'application/json': {
                 schema: {
-                  $ref: '#/components/schemas/getGroupByNameArgs'
-                }
-              }
-            }
+                  $ref: '#/components/schemas/getGroupByNameArgs',
+                },
+              },
+            },
           },
           responses: {
             200: {
@@ -99,13 +99,13 @@ test('should generate an openapi schema from a ts app', async (t) => {
               content: {
                 'application/json': {
                   schema: {
-                    $ref: '#/components/schemas/getGroupByNameReturnType'
-                  }
-                }
-              }
-            }
-          }
-        }
+                    $ref: '#/components/schemas/getGroupByNameReturnType',
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       '/getRecursiveNode': {
         post: {
@@ -116,14 +116,14 @@ test('should generate an openapi schema from a ts app', async (t) => {
               content: {
                 'application/json': {
                   schema: {
-                    $ref: '#/components/schemas/getRecursiveNodeReturnType'
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    $ref: '#/components/schemas/getRecursiveNodeReturnType',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     },
     components: {
       schemas: {
@@ -134,32 +134,32 @@ test('should generate an openapi schema from a ts app', async (t) => {
               type: 'object',
               properties: {
                 name: {
-                  type: 'string'
+                  type: 'string',
                 },
                 age: {
-                  type: 'number'
-                }
+                  type: 'number',
+                },
               },
               additionalProperties: false,
-              required: ['age', 'name']
-            }
+              required: ['age', 'name'],
+            },
           },
           additionalProperties: false,
-          required: ['user']
+          required: ['user'],
         },
         addUserReturnType: {
           type: 'object',
-          properties: {}
+          properties: {},
         },
         getUsersArgs: {
           type: 'object',
           properties: {
             maxAge: {
-              type: 'number'
-            }
+              type: 'number',
+            },
           },
           additionalProperties: false,
-          required: ['maxAge']
+          required: ['maxAge'],
         },
         getUsersReturnType: {
           type: 'array',
@@ -167,31 +167,31 @@ test('should generate an openapi schema from a ts app', async (t) => {
             type: 'object',
             properties: {
               name: {
-                type: 'string'
+                type: 'string',
               },
               age: {
-                type: 'number'
-              }
+                type: 'number',
+              },
             },
             additionalProperties: false,
-            required: ['age', 'name']
-          }
+            required: ['age', 'name'],
+          },
         },
         getGroupByNameArgs: {
           type: 'object',
           properties: {
             name: {
-              type: 'string'
-            }
+              type: 'string',
+            },
           },
           additionalProperties: false,
-          required: ['name']
+          required: ['name'],
         },
         getGroupByNameReturnType: {
           type: 'object',
           properties: {
             name: {
-              type: 'string'
+              type: 'string',
             },
             users: {
               type: 'array',
@@ -199,50 +199,50 @@ test('should generate an openapi schema from a ts app', async (t) => {
                 type: 'object',
                 properties: {
                   name: {
-                    type: 'string'
+                    type: 'string',
                   },
                   age: {
-                    type: 'number'
-                  }
+                    type: 'number',
+                  },
                 },
                 additionalProperties: false,
                 required: [
                   'age',
-                  'name'
-                ]
-              }
-            }
+                  'name',
+                ],
+              },
+            },
           },
           additionalProperties: false,
-          required: ['users']
+          required: ['users'],
         },
         getRecursiveNodeReturnType: {
-          $ref: '#/components/schemas/Node'
+          $ref: '#/components/schemas/Node',
         },
         Node: {
           type: 'object',
           properties: {
             id: {
-              type: 'string'
+              type: 'string',
             },
             nodes: {
               type: 'array',
               items: {
                 anyOf: [
                   {
-                    $ref: '#/components/schemas/Node'
+                    $ref: '#/components/schemas/Node',
                   },
                   {
-                    type: 'null'
-                  }
-                ]
-              }
-            }
+                    type: 'null',
+                  },
+                ],
+              },
+            },
           },
           additionalProperties: false,
-          required: ['id', 'nodes']
-        }
-      }
-    }
+          required: ['id', 'nodes'],
+        },
+      },
+    },
   })
 })

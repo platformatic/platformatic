@@ -1,24 +1,25 @@
 #! /usr/bin/env node
 
-import parseArgs from 'minimist'
-import isMain from 'es-main'
-import helpMe from 'help-me'
-import { readFile, writeFile, mkdir, access } from 'fs/promises'
-import { join, dirname, relative, resolve, posix } from 'path'
+import { ConfigManager, getParser, getStringifier, loadConfig } from '@platformatic/config'
+import { createDirectory } from '@platformatic/utils'
+import camelcase from 'camelcase'
 import * as desm from 'desm'
-import { request } from 'undici'
-import { processOpenAPI } from './lib/openapi-generator.mjs'
-import { processFrontendOpenAPI } from './lib/frontend-openapi-generator.mjs'
-import { processGraphQL } from './lib/graphql-generator.mjs'
-import { ConfigManager, loadConfig, getStringifier, getParser } from '@platformatic/config'
-import graphql from 'graphql'
-import { appendToBothEnvs } from './lib/utils.mjs'
+import isMain from 'es-main'
 import { findUp } from 'find-up'
+import { access, readFile, writeFile } from 'fs/promises'
+import graphql from 'graphql'
+import helpMe from 'help-me'
+import parseArgs from 'minimist'
+import { dirname, join, posix, relative, resolve } from 'path'
 import pino from 'pino'
 import pinoPretty from 'pino-pretty'
+import { getGlobalDispatcher, request, setGlobalDispatcher } from 'undici'
 import YAML from 'yaml'
-import camelcase from 'camelcase'
 import errors from './lib/errors.mjs'
+import { processFrontendOpenAPI } from './lib/frontend-openapi-generator.mjs'
+import { processGraphQL } from './lib/graphql-generator.mjs'
+import { processOpenAPI } from './lib/openapi-generator.mjs'
+import { appendToBothEnvs } from './lib/utils.mjs'
 
 function parseFile (content) {
   let parsed = false
@@ -43,8 +44,21 @@ export async function isFileAccessible (filename) {
 
 const configFileNames = ConfigManager.listConfigFiles()
 
-async function writeOpenAPIClient (folder, name, text, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language, typesComment) {
-  await mkdir(folder, { recursive: true })
+async function writeOpenAPIClient (
+  folder,
+  name,
+  text,
+  generateImplementation,
+  typesOnly,
+  fullRequest,
+  fullResponse,
+  optionalHeaders,
+  validateResponse,
+  isFrontend,
+  language,
+  typesComment
+) {
+  await createDirectory(folder)
 
   // TODO deal with yaml
   const schema = parseFile(text)
@@ -62,7 +76,15 @@ async function writeOpenAPIClient (folder, name, text, generateImplementation, t
       await writeFile(join(folder, `${name}.${extension}`), implementation)
     }
   } else {
-    const { types, implementation } = processOpenAPI({ schema, name, fullResponse, fullRequest, optionalHeaders, validateResponse, typesComment })
+    const { types, implementation } = processOpenAPI({
+      schema,
+      name,
+      fullResponse,
+      fullRequest,
+      optionalHeaders,
+      validateResponse,
+      typesComment,
+    })
     await writeFile(join(folder, `${name}.d.ts`), types)
     if (generateImplementation) {
       await writeFile(join(folder, `${name}.cjs`), implementation)
@@ -75,7 +97,7 @@ async function writeOpenAPIClient (folder, name, text, generateImplementation, t
 }
 
 async function writeGraphQLClient (folder, name, schema, url, generateImplementation) {
-  await mkdir(folder, { recursive: true })
+  await createDirectory(folder, { recursive: true })
   const { types, implementation } = processGraphQL({ schema, name, folder, url })
   const clientSchema = graphql.buildClientSchema(schema)
   const sdl = graphql.printSchema(clientSchema)
@@ -87,7 +109,22 @@ async function writeGraphQLClient (folder, name, schema, url, generateImplementa
   await writeFile(join(folder, 'package.json'), getPackageJSON({ name, generateImplementation }))
 }
 
-async function downloadAndWriteOpenAPI (logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language, urlAuthHeaders, typesComment) {
+async function downloadAndWriteOpenAPI (
+  logger,
+  url,
+  folder,
+  name,
+  generateImplementation,
+  typesOnly,
+  fullRequest,
+  fullResponse,
+  optionalHeaders,
+  validateResponse,
+  isFrontend,
+  language,
+  urlAuthHeaders,
+  typesComment
+) {
   logger.debug(`Trying to download OpenAPI schema from ${url}`)
   let requestOptions
   if (urlAuthHeaders) {
@@ -103,7 +140,20 @@ async function downloadAndWriteOpenAPI (logger, url, folder, name, generateImple
     // we are OpenAPI
     const text = await res.body.text()
     try {
-      await writeOpenAPIClient(folder, name, text, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language, typesComment)
+      await writeOpenAPIClient(
+        folder,
+        name,
+        text,
+        generateImplementation,
+        typesOnly,
+        fullRequest,
+        fullResponse,
+        optionalHeaders,
+        validateResponse,
+        isFrontend,
+        language,
+        typesComment
+      )
       /* c8 ignore next 3 */
     } catch (err) {
       logger.error(err)
@@ -140,12 +190,39 @@ async function downloadAndWriteGraphQL (logger, url, folder, name, generateImple
   return 'graphql'
 }
 
-async function readFromFileAndWrite (logger, file, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language, typesComment) {
+async function readFromFileAndWrite (
+  logger,
+  file,
+  folder,
+  name,
+  generateImplementation,
+  typesOnly,
+  fullRequest,
+  fullResponse,
+  optionalHeaders,
+  validateResponse,
+  isFrontend,
+  language,
+  typesComment
+) {
   logger.info(`Trying to read schema from file ${file}`)
   const text = await readFile(file, 'utf8')
   // try OpenAPI first
   try {
-    await writeOpenAPIClient(folder, name, text, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language, typesComment)
+    await writeOpenAPIClient(
+      folder,
+      name,
+      text,
+      generateImplementation,
+      typesOnly,
+      fullRequest,
+      fullResponse,
+      optionalHeaders,
+      validateResponse,
+      isFrontend,
+      language,
+      typesComment
+    )
     return 'openapi'
   } catch (err) {
     logger.error(err, `Error parsing OpenAPI definition: ${err.message} Trying with GraphQL`)
@@ -180,7 +257,7 @@ async function downloadAndProcess (options) {
   let generateImplementation = options.generateImplementation
   let config = options.config
   if (!config) {
-    const configFilesAccessibility = await Promise.all(configFileNames.map((fileName) => isFileAccessible(fileName)))
+    const configFilesAccessibility = await Promise.all(configFileNames.map(fileName => isFileAccessible(fileName)))
     config = configFileNames.find((value, index) => configFilesAccessibility[index])
   }
 
@@ -193,22 +270,113 @@ async function downloadAndProcess (options) {
   const toTry = []
   if (url.startsWith('http')) {
     if (type === 'openapi') {
-      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language, urlAuthHeaders, typesComment))
-      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language, urlAuthHeaders, typesComment))
+      toTry.push(
+        downloadAndWriteOpenAPI.bind(
+          null,
+          logger,
+          url + '/documentation/json',
+          folder,
+          name,
+          generateImplementation,
+          typesOnly,
+          fullRequest,
+          fullResponse,
+          optionalHeaders,
+          validateResponse,
+          isFrontend,
+          language,
+          urlAuthHeaders,
+          typesComment
+        )
+      )
+      toTry.push(
+        downloadAndWriteOpenAPI.bind(
+          null,
+          logger,
+          url,
+          folder,
+          name,
+          generateImplementation,
+          typesOnly,
+          fullRequest,
+          fullResponse,
+          optionalHeaders,
+          validateResponse,
+          isFrontend,
+          language,
+          urlAuthHeaders,
+          typesComment
+        )
+      )
     } else if (options.type === 'graphql') {
-      toTry.push(downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation, typesOnly))
+      toTry.push(
+        downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation, typesOnly)
+      )
       toTry.push(downloadAndWriteGraphQL.bind(null, logger, url, folder, name, generateImplementation, typesOnly))
     } else {
       // add download functions only if it's an URL
-      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url + '/documentation/json', folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language, urlAuthHeaders, typesComment))
-      toTry.push(downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation, typesOnly))
-      toTry.push(downloadAndWriteOpenAPI.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language, urlAuthHeaders, typesComment))
+      toTry.push(
+        downloadAndWriteOpenAPI.bind(
+          null,
+          logger,
+          url + '/documentation/json',
+          folder,
+          name,
+          generateImplementation,
+          typesOnly,
+          fullRequest,
+          fullResponse,
+          optionalHeaders,
+          validateResponse,
+          isFrontend,
+          language,
+          urlAuthHeaders,
+          typesComment
+        )
+      )
+      toTry.push(
+        downloadAndWriteGraphQL.bind(null, logger, url + '/graphql', folder, name, generateImplementation, typesOnly)
+      )
+      toTry.push(
+        downloadAndWriteOpenAPI.bind(
+          null,
+          logger,
+          url,
+          folder,
+          name,
+          generateImplementation,
+          typesOnly,
+          fullRequest,
+          fullResponse,
+          optionalHeaders,
+          validateResponse,
+          isFrontend,
+          language,
+          urlAuthHeaders,
+          typesComment
+        )
+      )
       toTry.push(downloadAndWriteGraphQL.bind(null, logger, url, folder, name, generateImplementation, typesOnly))
     }
   } else {
     // add readFromFileAndWrite to the functions only if it's not an URL
     toTry.push(
-      readFromFileAndWrite.bind(null, logger, url, folder, name, generateImplementation, typesOnly, fullRequest, fullResponse, optionalHeaders, validateResponse, isFrontend, language, typesComment)
+      readFromFileAndWrite.bind(
+        null,
+        logger,
+        url,
+        folder,
+        name,
+        generateImplementation,
+        typesOnly,
+        fullRequest,
+        fullResponse,
+        optionalHeaders,
+        validateResponse,
+        isFrontend,
+        language,
+        typesComment
+      )
     )
   }
   for (const fn of toTry) {
@@ -228,9 +396,9 @@ async function downloadAndProcess (options) {
     const data = parse(await readFile(config, 'utf8'))
     data.clients = data.clients || []
     if (runtime) {
-      data.clients = data.clients.filter((client) => client.serviceId !== runtime)
+      data.clients = data.clients.filter(client => client.serviceId !== runtime)
     } else {
-      data.clients = data.clients.filter((client) => client.name !== name)
+      data.clients = data.clients.filter(client => client.name !== name)
     }
     let schema
     if (found === 'openapi') {
@@ -244,7 +412,7 @@ async function downloadAndProcess (options) {
       type: found,
     }
     const availableCommandLineOptionsInClient = ['fullRequest', 'fullResponse', 'validateResponse']
-    availableCommandLineOptionsInClient.forEach((c) => {
+    availableCommandLineOptionsInClient.forEach(c => {
       if (options[c]) {
         toPush[c] = true
       }
@@ -289,7 +457,10 @@ export async function command (argv) {
     // the default
     ext: '.txt',
   })
-  let { _: [url], ...options } = parseArgs(argv, {
+  let {
+    _: [url],
+    ...options
+  } = parseArgs(argv, {
     string: ['name', 'folder', 'runtime', 'optional-headers', 'language', 'type', 'url-auth-headers', 'types-comment'],
     boolean: ['typescript', 'full-response', 'types-only', 'full-request', 'full', 'frontend', 'validate-response'],
     default: {
@@ -325,24 +496,23 @@ export async function command (argv) {
 
   if (options.runtime) {
     // TODO add flag to allow specifying a runtime config file
-    const runtimeConfigFile = await findUp('platformatic.runtime.json', {
-      cwd: dirname(process.cwd()),
-    }) || await findUp('platformatic.json', {
-      cwd: dirname(process.cwd()),
-    })
+    const runtimeConfigFile =
+      (await findUp('platformatic.runtime.json', {
+        cwd: dirname(process.cwd()),
+      })) ||
+      (await findUp('platformatic.json', {
+        cwd: dirname(process.cwd()),
+      }))
 
     if (!runtimeConfigFile) {
       logger.error('Could not find a platformatic.json file in any parent directory.')
       process.exit(1)
     }
 
-    let RuntimeApi
-    let platformaticRuntime
+    let runtimeModule
 
     try {
-      const imported = await import('@platformatic/runtime')
-      RuntimeApi = imported.RuntimeApi
-      platformaticRuntime = imported.platformaticRuntime
+      runtimeModule = await import('@platformatic/runtime')
 
       // Ignoring the catch block.
       // TODO(mcollina): we would need to setup ESM import
@@ -350,15 +520,16 @@ export async function command (argv) {
       /* c8 ignore next 7 */
     } catch (err) {
       if (err.code === 'ERR_MODULE_NOT_FOUND') {
-        logger.error('We couldn\'t find the @platformatic/runtime package, make sure you have it installed.')
+        logger.error("We couldn't find the @platformatic/runtime package, make sure you have it installed.")
         process.exit(1)
       }
       throw err
     }
 
+    const { Runtime, platformaticRuntime, getRuntimeLogsDir } = runtimeModule
     const { configManager } = await loadConfig({}, ['-c', runtimeConfigFile], platformaticRuntime)
 
-    configManager.current.hotReload = false
+    configManager.current.watch = false
 
     for (const service of configManager.current.services) {
       service.localServiceEnvVars.set('PLT_SERVER_LOGGER_LEVEL', 'warn')
@@ -366,8 +537,13 @@ export async function command (argv) {
       service.watch = false
     }
 
-    runtime = new RuntimeApi(configManager.current, logger)
-    await runtime.startServices()
+    const runtimeLogsDir = getRuntimeLogsDir(configManager.dirname, process.pid)
+    runtime = new Runtime(configManager, runtimeLogsDir, process.env)
+    await runtime.init()
+    await runtime.start()
+
+    // Set interceptors
+    setGlobalDispatcher(getGlobalDispatcher().compose(runtime.getInterceptor()))
 
     url = `http://${options.runtime}.plt.local`
   }
@@ -388,7 +564,7 @@ export async function command (argv) {
     options.fullRequest = options['full-request']
     options.fullResponse = options['full-response']
     options.optionalHeaders = options['optional-headers']
-      ? options['optional-headers'].split(',').map((h) => h.trim())
+      ? options['optional-headers'].split(',').map(h => h.trim())
       : []
 
     options.validateResponse = options['validate-response']
@@ -404,7 +580,7 @@ export async function command (argv) {
     logger.info(`Client generated successfully into ${options.folder}`)
     logger.info('Check out the docs to know more: https://docs.platformatic.dev/docs/service/overview')
     if (runtime) {
-      await runtime.stopServices()
+      await runtime.close()
     }
   } catch (err) {
     logger.error(err.message)

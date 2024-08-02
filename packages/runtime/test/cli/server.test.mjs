@@ -1,7 +1,7 @@
+import { join } from 'desm'
 import assert from 'node:assert'
 import { on } from 'node:events'
 import { test } from 'node:test'
-import { join } from 'desm'
 import { request } from 'undici'
 import { cliPath, start } from './helper.mjs'
 

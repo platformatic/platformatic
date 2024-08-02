@@ -4,22 +4,23 @@ const assert = require('assert/strict')
 const { tmpdir } = require('node:os')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { writeFile, readFile, mkdtemp, rm } = require('node:fs/promises')
+const { writeFile, readFile, mkdtemp } = require('node:fs/promises')
 
 const fastify = require('fastify')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 
 const { cliPath } = require('./helper.js')
 const { createOpenApiService } = require('../helper.js')
+const { safeRemove } = require('@platformatic/utils')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
-test('should fetch the available schemas', async (t) => {
+test('should fetch the available schemas', async t => {
   const { execa } = await import('execa')
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-test-'))
   t.after(async () => {
-    await rm(cwd, { recursive: true, force: true })
+    await safeRemove(cwd)
   })
 
   const pathToConfig = join(cwd, 'platformatic.composer.json')

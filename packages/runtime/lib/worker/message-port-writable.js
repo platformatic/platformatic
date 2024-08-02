@@ -1,5 +1,5 @@
 'use strict'
-const assert = require('node:assert')
+
 const { Writable } = require('node:stream')
 
 class MessagePortWritable extends Writable {
@@ -12,28 +12,24 @@ class MessagePortWritable extends Writable {
   }
 
   _write (chunk, encoding, callback) {
-    this.port.postMessage({
-      metadata: this.metadata,
-      logs: [chunk.toString().trim()],
-    })
-    process.nextTick(callback)
+    this.port.postMessage({ metadata: this.metadata, logs: [chunk.toString().trim()] })
+    callback()
   }
 
   _writev (chunks, callback) {
     // Process the logs here before trying to send them across the thread
     // boundary. Sometimes the chunks have an undocumented method on them
     // which will prevent sending the chunk itself across threads.
-    const logs = chunks.map((chunk) => {
-      // pino should always produce a string here.
-      assert(typeof chunk.chunk === 'string')
-      return chunk.chunk.trim()
-    })
+    const logs = []
 
-    this.port.postMessage({
-      metadata: this.metadata,
-      logs,
-    })
-    setImmediate(callback)
+    for (const { chunk } of chunks) {
+      if (typeof chunk === 'string') {
+        logs.push(chunk.trim())
+      }
+    }
+
+    this.port.postMessage({ metadata: this.metadata, logs })
+    callback()
   }
 
   _final (callback) {

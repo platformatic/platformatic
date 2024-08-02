@@ -3,20 +3,27 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const pino = require('pino')
 const { loadConfig } = require('@platformatic/config')
 const { platformaticRuntime } = require('..')
-const RuntimeApi = require('../lib/api')
+const { Runtime } = require('../lib/runtime')
+const { getRuntimeLogsDir } = require('../lib/utils')
 
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
 test('parses composer and client dependencies', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-dependencies.json')
-  const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const dirname = config.configManager.dirname
+  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
 
-  const runtime = new RuntimeApi(loaded.configManager.current, pino(), undefined)
-  await runtime._resolveBootstrapDependencies()
-  const services = loaded.configManager.current.services
+  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await runtime.init()
+  const { services } = await runtime.getServices()
 
   const mainService = services.find((service) => service.id === 'main')
 
@@ -38,12 +45,18 @@ test('parses composer and client dependencies', async (t) => {
 
 test('correct throws on missing dependencies', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-missing-dependencies.json')
-  const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const dirname = config.configManager.dirname
+  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
 
-  const runtime = new RuntimeApi(loaded.configManager.current, pino(), undefined)
+  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+
+  t.after(async () => {
+    await runtime.close()
+  })
 
   await assert.rejects(
-    () => runtime._resolveBootstrapDependencies(),
+    () => runtime.init(),
     { name: 'FastifyError', message: 'Missing dependency: "service \'composer\' has unknown dependency: \'missing\'."' }
   )
 })

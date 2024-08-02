@@ -2,17 +2,13 @@
 
 const fastify = require('fastify')
 
-async function startPrometheusServer (runtimeApiClient, opts) {
+async function startPrometheusServer (runtime, opts) {
   const host = opts.hostname ?? '0.0.0.0'
   const port = opts.port ?? 9090
   const metricsEndpoint = opts.endpoint ?? '/metrics'
   const auth = opts.auth ?? null
 
   const promServer = fastify({ name: 'Prometheus server' })
-
-  runtimeApiClient.on('close', async () => {
-    await promServer.close()
-  })
 
   let onRequestHook
   if (auth) {
@@ -36,7 +32,7 @@ async function startPrometheusServer (runtimeApiClient, opts) {
     onRequest: onRequestHook,
     handler: async (req, reply) => {
       reply.type('text/plain')
-      const { metrics } = await runtimeApiClient.getMetrics('text')
+      const { metrics } = await runtime.getMetrics('text')
       return metrics
     },
   })

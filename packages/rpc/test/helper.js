@@ -9,9 +9,9 @@ async function generateSchema (schemaPath, tsConfigPath, options) {
   const child = await execa('node', [
     executablePath,
     '--path', schemaPath,
-    '--ts-config', tsConfigPath
+    '--ts-config', tsConfigPath,
   ], {
-    cwd: options.cwd
+    cwd: options.cwd,
   })
 
   return child

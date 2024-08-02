@@ -11,7 +11,7 @@
     "paths": [
       "plugin.js"
     ],
-    "hotReload": {
+    "watch": {
       "enabled": true
     }
   }

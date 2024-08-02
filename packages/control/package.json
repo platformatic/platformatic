@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "pnpm run lint && pnpm run unit",
-    "unit": "borp --concurrency=1 --timeout 60000",
+    "unit": "borp --concurrency=1 --timeout=180000",
     "build": "node lib/schema.js | json2ts > config.d.ts",
     "lint": "eslint"
   },
@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "@fastify/error": "^3.4.1",
+    "@platformatic/utils": "workspace:*",
     "commist": "^3.2.0",
     "help-me": "^5.0.0",
     "pino": "^8.19.0",

@@ -1,21 +1,28 @@
+import { execa } from 'execa'
+import { equal, match } from 'node:assert'
+import { test } from 'node:test'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { execa } from 'execa'
-import { test } from 'node:test'
-import { equal, match } from 'node:assert'
 
-import { isFileAccessible } from '../../src/utils.mjs'
+import { createDirectory } from '@platformatic/utils'
+import { writeFile } from 'fs/promises'
 import { createGitRepository, GIT_FIRST_COMMIT_MESSAGE, GIT_MAIN_BRANCH } from '../../src/create-git-repository.mjs'
-import { mkdir, rm, writeFile } from 'fs/promises'
+import { isFileAccessible } from '../../src/utils.mjs'
 
 const loggerSpy = {
   _debug: [],
   _info: [],
   _error: [],
 
-  debug: function (...args) { this._debug.push(args) },
-  info: function (...args) { this._info.push(args) },
-  error: function (...args) { this._error.push(args) },
+  debug: function (...args) {
+    this._debug.push(args)
+  },
+  info: function (...args) {
+    this._info.push(args)
+  },
+  error: function (...args) {
+    this._error.push(args)
+  },
 
   reset: function () {
     this._debug = []
@@ -27,8 +34,7 @@ const loggerSpy = {
 const tmpDir = join(tmpdir(), 'test-create-platformatic-git-repo')
 test.beforeEach(async () => {
   loggerSpy.reset()
-  await rm(tmpDir, { recursive: true, force: true })
-  await mkdir(tmpDir, { recursive: true })
+  await createDirectory(tmpDir, true)
 })
 
 test('should create the git repo', async () => {

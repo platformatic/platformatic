@@ -1,19 +1,33 @@
 'use strict'
 
+import { safeRemove } from '@platformatic/utils'
+import esmock from 'esmock'
+import { mkdtemp, writeFile } from 'fs/promises'
+import { deepEqual, equal, notEqual } from 'node:assert'
 import { test } from 'node:test'
-import { equal, deepEqual, notEqual, doesNotThrow } from 'node:assert'
-import { randomBetween, sleep, getDependencyVersion, findDBConfigFile, findServiceConfigFile, isFileAccessible, isCurrentVersionSupported, minimumSupportedNodeVersions, findRuntimeConfigFile, findComposerConfigFile, convertServiceNameToPrefix, addPrefixToEnv, safeMkdir } from '../../src/utils.mjs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import esmock from 'esmock'
 import semver from 'semver'
-import { mkdir, mkdtemp, rm, writeFile } from 'fs/promises'
+import {
+  addPrefixToEnv,
+  convertServiceNameToPrefix,
+  findComposerConfigFile,
+  findDBConfigFile,
+  findRuntimeConfigFile,
+  findServiceConfigFile,
+  getDependencyVersion,
+  isCurrentVersionSupported,
+  isFileAccessible,
+  minimumSupportedNodeVersions,
+  randomBetween,
+  sleep,
+} from '../../src/utils.mjs'
 
 test('getUsername from git', async () => {
   const name = 'lukeskywalker'
   const { getUsername } = await esmock.strict('../../src/utils.mjs', {
     execa: {
-      execa: (command) => {
+      execa: command => {
         if (command === 'git') {
           return { stdout: name }
         }
@@ -29,7 +43,7 @@ test('getUsername from whoami', async () => {
   const name = 'hansolo'
   const { getUsername } = await esmock.strict('../../src/utils.mjs', {
     execa: {
-      execa: (command) => {
+      execa: command => {
         if (command === 'whoami') {
           return { stdout: name }
         }
@@ -46,7 +60,7 @@ test('if getUsername from git failed, it tries whoim', async () => {
 
   const { getUsername } = await esmock.strict('../../src/utils.mjs', {
     execa: {
-      execa: (command) => {
+      execa: command => {
         if (command === 'git') {
           throw new Error('git failed')
         }
@@ -65,7 +79,7 @@ test('if getUsername from git failed, it tries whoim', async () => {
 test('if both git usern.ame and whoami fail, no username is set', async () => {
   const { getUsername } = await esmock.strict('../../src/utils.mjs', {
     execa: {
-      execa: (command) => {
+      execa: command => {
         if (command === 'git') {
           throw new Error('git failed')
         }
@@ -83,7 +97,7 @@ test('if both git usern.ame and whoami fail, no username is set', async () => {
 test('getUsername - no username found', async () => {
   const { getUsername } = await esmock.strict('../../src/utils.mjs', {
     execa: {
-      execa: (command) => {
+      execa: command => {
         return ''
       },
     },
@@ -140,8 +154,8 @@ test('findDBConfigFile', async () => {
   await writeFile(config, 'TEST')
   equal(await findDBConfigFile(tmpDir1), 'platformatic.db.yml')
   equal(await findDBConfigFile(tmpDir2), undefined)
-  await rm(tmpDir1, { recursive: true, force: true })
-  await rm(tmpDir2, { recursive: true, force: true })
+  await safeRemove(tmpDir1)
+  await safeRemove(tmpDir2)
 })
 
 test('findServiceConfigFile', async () => {
@@ -151,8 +165,8 @@ test('findServiceConfigFile', async () => {
   await writeFile(config, 'TEST')
   equal(await findServiceConfigFile(tmpDir1), 'platformatic.service.toml')
   equal(await findServiceConfigFile(tmpDir2), undefined)
-  await rm(tmpDir1, { recursive: true, force: true })
-  await rm(tmpDir2, { recursive: true, force: true })
+  await safeRemove(tmpDir1)
+  await safeRemove(tmpDir2)
 })
 
 test('findComposerConfigFile', async () => {
@@ -162,8 +176,8 @@ test('findComposerConfigFile', async () => {
   await writeFile(config, 'TEST')
   equal(await findComposerConfigFile(tmpDir1), 'platformatic.composer.yml')
   equal(await findComposerConfigFile(tmpDir2), undefined)
-  await rm(tmpDir1, { recursive: true, force: true })
-  await rm(tmpDir2, { recursive: true, force: true })
+  await safeRemove(tmpDir1)
+  await safeRemove(tmpDir2)
 })
 
 test('findRuntimeConfigFile', async () => {
@@ -173,8 +187,8 @@ test('findRuntimeConfigFile', async () => {
   await writeFile(config, 'TEST')
   equal(await findRuntimeConfigFile(tmpDir1), 'platformatic.runtime.yml')
   equal(await findRuntimeConfigFile(tmpDir2), undefined)
-  await rm(tmpDir1, { recursive: true, force: true })
-  await rm(tmpDir2, { recursive: true, force: true })
+  await safeRemove(tmpDir1)
+  await safeRemove(tmpDir2)
 })
 
 test('isFileAccessible', async () => {
@@ -184,7 +198,7 @@ test('isFileAccessible', async () => {
   equal(await isFileAccessible(config), true)
   const config2 = join(tmpDir1, 'platformatic2.db.yml')
   equal(await isFileAccessible(config2), false)
-  await rm(tmpDir1, { recursive: true, force: true })
+  await safeRemove(tmpDir1)
 })
 
 test('minimumSupportedNodeVersions', async () => {
@@ -260,7 +274,7 @@ test('should convert service name to env prefix', async () => {
     asderas123: 'ASDERAS123',
   }
 
-  Object.entries(expectations).forEach((exp) => {
+  Object.entries(expectations).forEach(exp => {
     const converted = convertServiceNameToPrefix(exp[0])
     equal(exp[1], converted)
   })
@@ -275,17 +289,5 @@ test('should add prefix to a key/value object', async () => {
   deepEqual(addPrefixToEnv(env, prefix), {
     MY_PREFIX_PLT_HOSTNAME: 'myhost',
     MY_PREFIX_PORT: '3042',
-  })
-})
-
-test('safeMkdir should not throw if dir already exists', async () => {
-  const tempDirectory = join(tmpdir(), 'safeMkdirTest')
-  test.after(async () => {
-    await rm(tempDirectory, { recursive: true })
-  })
-  await mkdir(tempDirectory)
-
-  doesNotThrow(async () => {
-    await safeMkdir(tempDirectory)
   })
 })

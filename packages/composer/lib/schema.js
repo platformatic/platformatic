@@ -197,6 +197,9 @@ const platformaticComposerSchema = {
     $schema: {
       type: 'string',
     },
+    module: {
+      type: 'string',
+    },
   },
   additionalProperties: false,
   required: ['composer'],

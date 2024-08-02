@@ -1,10 +1,11 @@
-import assert from 'node:assert'
-import test from 'node:test'
-import path from 'node:path'
-import { access, cp, rm, mkdir } from 'node:fs/promises'
+import { createDirectory, safeRemove } from '@platformatic/utils'
 import { execa } from 'execa'
-import stripAnsi from 'strip-ansi'
+import assert from 'node:assert'
+import { access, cp } from 'node:fs/promises'
+import path from 'node:path'
+import test from 'node:test'
 import split from 'split2'
+import stripAnsi from 'strip-ansi'
 import { fileURLToPath } from 'url'
 import { cliPath, safeKill } from './helper.mjs'
 
@@ -18,17 +19,10 @@ function urlDirname (url) {
 
 async function getCWD (t) {
   const dir = path.join(urlDirname(import.meta.url), '..', 'tmp', `typescript-plugin-clone-2-${count++}`)
-  try {
-    await rm(dir, { recursive: true })
-  } catch {}
+  await createDirectory(dir, true)
 
-  await mkdir(dir, { recursive: true })
+  t.after(() => safeRemove(dir))
 
-  t.after(async () => {
-    try {
-      await rm(dir, { recursive: true })
-    } catch {}
-  })
   return dir
 }
 
@@ -38,7 +32,7 @@ function exitOnTeardown (child) {
   }
 }
 
-test('start command should not compile typescript if `typescript` is false', async (t) => {
+test('start command should not compile typescript if `typescript` is false', async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
   const cwd = await getCWD(t)
 
@@ -58,7 +52,7 @@ test('start command should not compile typescript if `typescript` is false', asy
   }
 })
 
-test('should compile typescript plugin with start command with different cwd', async (t) => {
+test('should compile typescript plugin with start command with different cwd', async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   const dest = path.join(urlDirname(import.meta.url), '..', 'tmp', `typescript-plugin-clone2-${count++}`)
 
@@ -89,7 +83,7 @@ test('should compile typescript plugin with start command with different cwd', a
   assert.fail('should compile typescript plugin with start command')
 })
 
-test('valid tsconfig file inside an inner folder', async (t) => {
+test('valid tsconfig file inside an inner folder', async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   const cwd = await getCWD(t)
 
@@ -102,7 +96,7 @@ test('valid tsconfig file inside an inner folder', async (t) => {
   }
 })
 
-test('should compile typescript plugin with start command from a folder', async (t) => {
+test('should compile typescript plugin with start command from a folder', async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-autoload')
   const cwd = await getCWD(t)
 
@@ -133,7 +127,7 @@ test('should compile typescript plugin with start command from a folder', async 
   assert.fail('should compile typescript plugin with start command')
 })
 
-test('should start the service if it was precompiled and typescript is `false`', async (t) => {
+test('should start the service if it was precompiled and typescript is `false`', async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
   const cwd = await getCWD(t)
 
@@ -166,7 +160,7 @@ test('should start the service if it was precompiled and typescript is `false`',
   assert.fail('should load the typescript plugin without compiling it')
 })
 
-test('should not start the service if it was not precompiled and typescript is `false`', async (t) => {
+test('should not start the service if it was not precompiled and typescript is `false`', async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
   const cwd = await getCWD(t)
 
@@ -197,7 +191,7 @@ test('should not start the service if it was not precompiled and typescript is `
   assert.fail('should load the typescript plugin without compiling it')
 })
 
-test('should compile typescript plugin with string config', async (t) => {
+test('should compile typescript plugin with string config', async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-string')
   const cwd = await getCWD(t)
 
@@ -235,7 +229,7 @@ test('should compile typescript plugin with string config', async (t) => {
   assert.fail('should compile typescript plugin with a compile command')
 })
 
-test('should not start the service if it was not precompiled and typescript is `"false"`', async (t) => {
+test('should not start the service if it was not precompiled and typescript is `"false"`', async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
   const cwd = await getCWD(t)
 
@@ -266,7 +260,7 @@ test('should not start the service if it was not precompiled and typescript is `
   assert.fail('should load the typescript plugin without compiling it')
 })
 
-test('should compile typescript plugin with start command with custom tsconfig', async (t) => {
+test('should compile typescript plugin with start command with custom tsconfig', async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-custom-tsconfig')
   const cwd = await getCWD(t)
 
@@ -297,7 +291,7 @@ test('should compile typescript plugin with start command with custom tsconfig',
   assert.fail('should compile typescript plugin with start command')
 })
 
-test('should not start the service if it was not precompiled and typescript is `false`', async (t) => {
+test('should not start the service if it was not precompiled and typescript is `false`', async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile-enabled')
   const cwd = await getCWD(t)
 
@@ -328,7 +322,7 @@ test('should not start the service if it was not precompiled and typescript is `
   assert.fail('should load the typescript plugin without compiling it')
 })
 
-test('should start without a tsconfig but with a outDir configuration', async (t) => {
+test('should start without a tsconfig but with a outDir configuration', async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-compiled')
   const cwd = await getCWD(t)
 
@@ -359,7 +353,7 @@ test('should start without a tsconfig but with a outDir configuration', async (t
   assert.fail('should compile typescript plugin with start command')
 })
 
-test('should compile typescript plugin with start command with custom flags', async (t) => {
+test('should compile typescript plugin with start command with custom flags', async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-custom-flags')
   const cwd = await getCWD(t)
 
