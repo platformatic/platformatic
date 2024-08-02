@@ -1220,8 +1220,8 @@ importers:
         specifier: ^20.11.28
         version: 20.14.13
       borp:
-        specifier: ^0.15.0
-        version: 0.15.0
+        specifier: ^0.17.0
+        version: 0.17.0
       eslint:
         specifier: '9'
         version: 9.8.0
@@ -3098,10 +3098,6 @@ packages:
 
   boring-name-generator@1.0.3:
     resolution: {integrity: sha512-1wEo1pNahY9js7Vkp1RQa/VWdWrXYJnVAmsHV3Pw/0YzspjABLw7dcekjukOMTIYWr8ir/aG0GX1eoEkYhpnUg==}
-    hasBin: true
-
-  borp@0.15.0:
-    resolution: {integrity: sha512-G3tAYzy+meolAqquLa52n4XGsER6lBsL3i+56C3JPZYkcCXUak7tMTJGOxVwwaxZM9GERGKTtqLr5H0yNZ+uXA==}
     hasBin: true
 
   borp@0.17.0:
@@ -7606,16 +7602,6 @@ snapshots:
     dependencies:
       commander: 6.2.1
       lodash: 4.17.21
-
-  borp@0.15.0:
-    dependencies:
-      '@reporters/github': 1.7.0
-      c8: 10.1.2
-      execa: 8.0.1
-      find-up: 7.0.0
-      glob: 10.4.5
-    transitivePeerDependencies:
-      - monocart-coverage-reports
 
   borp@0.17.0:
     dependencies:

@@ -24,7 +24,7 @@
   "devDependencies": {
     "@fastify/autoload": "^5.10.0",
     "@types/node": "^20.11.28",
-    "borp": "^0.15.0",
+    "borp": "^0.17.0",
     "eslint": "9",
     "execa": "^8.0.1",
     "neostandard": "^0.11.1"
