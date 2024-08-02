@@ -18,7 +18,7 @@ const { createLogger } = require('./logger')
 const { startManagementApi } = require('./management-api')
 const { startPrometheusServer } = require('./prom-server')
 const { getRuntimeTmpDir } = require('./utils')
-const { makeITCSafe } = require('./worker/itc')
+const { sendViaITC } = require('./worker/itc')
 const { kId, kITC, kConfig } = require('./worker/symbols')
 
 const platformaticVersion = require('../package.json').version
@@ -226,7 +226,7 @@ class Runtime extends EventEmitter {
       service = await this.#getServiceById(id)
     }
 
-    const serviceUrl = await service[kITC].send('start')
+    const serviceUrl = await sendViaITC(service, 'start')
 
     if (serviceUrl) {
       this.#url = serviceUrl
@@ -244,7 +244,7 @@ class Runtime extends EventEmitter {
     this.#startedServices.set(id, false)
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
-    await Promise.race([service[kITC].send('stop'), sleep(10000, 'timeout', { ref: false })])
+    await Promise.race([sendViaITC(service, 'stop'), sleep(10000, 'timeout', { ref: false })])
 
     // Wait for the worker thread to finish, we're going to create a new one if the service is ever restarted
     const res = await Promise.race([once(service, 'exit'), sleep(10000, 'timeout', { ref: false })])
@@ -257,7 +257,7 @@ class Runtime extends EventEmitter {
 
   async inject (id, injectParams) {
     const service = await this.#getServiceById(id, true)
-    return service[kITC].send('inject', injectParams)
+    return sendViaITC(service, 'inject', injectParams)
   }
 
   startCollectingMetrics () {
@@ -435,8 +435,8 @@ class Runtime extends EventEmitter {
 
     const { entrypoint, dependencies, localUrl } = service[kConfig]
 
-    const status = await service[kITC].send('getStatus')
-    const { type, version } = await service[kITC].send('getServiceInfo')
+    const status = await sendViaITC(service, 'getStatus')
+    const { type, version } = await sendViaITC(service, 'getServiceInfo')
 
     const serviceDetails = {
       id,
@@ -462,19 +462,19 @@ class Runtime extends EventEmitter {
   async getServiceConfig (id) {
     const service = await this.#getServiceById(id, true)
 
-    return service[kITC].send('getServiceConfig')
+    return sendViaITC(service, 'getServiceConfig')
   }
 
   async getServiceOpenapiSchema (id) {
     const service = await this.#getServiceById(id, true)
 
-    return service[kITC].send('getServiceOpenAPISchema')
+    return sendViaITC(service, 'getServiceOpenAPISchema')
   }
 
   async getServiceGraphqlSchema (id) {
     const service = await this.#getServiceById(id, true)
 
-    return service[kITC].send('getServiceGraphQLSchema')
+    return sendViaITC(service, 'getServiceGraphQLSchema')
   }
 
   async getMetrics (format = 'json') {
@@ -489,7 +489,7 @@ class Runtime extends EventEmitter {
           continue
         }
 
-        const serviceMetrics = await service[kITC].send('getMetrics', format)
+        const serviceMetrics = await sendViaITC(service, 'getMetrics', format)
 
         if (serviceMetrics) {
           if (metrics === null) {
@@ -678,7 +678,6 @@ class Runtime extends EventEmitter {
     // Setup ITC
     service[kITC] = new ITC({ port: service })
     service[kITC].listen()
-    makeITCSafe(id, service, service[kITC])
 
     // Handle services changes
     // This is not purposely activated on when this.#configManager.current.watch === true
@@ -758,7 +757,7 @@ class Runtime extends EventEmitter {
     }
 
     if (ensureStarted) {
-      const serviceStatus = await service[kITC].send('getStatus')
+      const serviceStatus = await sendViaITC(service, 'getStatus')
 
       if (serviceStatus !== 'started') {
         throw new errors.ServiceNotStartedError(id)
@@ -825,7 +824,6 @@ class Runtime extends EventEmitter {
     }
 
     for (const log of message.logs) {
-      process._rawDebug(log)
       // In order to being able to forward messages serialized in the
       // worker threads by directly writing to the destinations using multistream
       // we unfortunately need to reparse the message to set some internal flags

@@ -81,7 +81,7 @@ async function managementApiPlugin (app, opts) {
   app.post('/services/:id/stop', async request => {
     const { id } = request.params
     app.log.debug('stop service', { id })
-    await runtime.stopService(id)
+    await runtime._stopService(id)
   })
 
   app.all('/services/:id/proxy/*', async (request, reply) => {

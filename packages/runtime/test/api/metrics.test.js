@@ -292,7 +292,7 @@ test('should get metrics after reloading one of the services', async (t) => {
     await app.close()
   })
 
-  await app.stopService('service-2')
+  await app._stopService('service-2')
   await app.startService('service-2')
 
   await sleep(5000)

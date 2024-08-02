@@ -7,6 +7,40 @@ const { printSchema } = require('graphql')
 const { ITC } = require('@platformatic/itc')
 
 const errors = require('../errors')
+const { kITC, kId } = require('./symbols')
+
+async function sendViaITC (worker, name, message) {
+  try {
+    // Make sure to catch when the worker exits, otherwise we're stuck forever
+    const ac = new AbortController()
+    let exitCode
+
+    const response = await Promise.race([
+      worker[kITC].send(name, message),
+      once(worker, 'exit', { signal: ac.signal }).then(([code]) => {
+        exitCode = code
+      }),
+    ])
+
+    if (typeof exitCode === 'number') {
+      throw new errors.ServiceExitedError(worker[kId], exitCode)
+    } else {
+      ac.abort()
+    }
+
+    return response
+  } catch (error) {
+    if (!error.handlerError) {
+      throw error
+    }
+
+    if (error.handlerErrorCode && !error.handlerError.code) {
+      error.handlerError.code = error.handlerErrorCode
+    }
+
+    throw error.handlerError
+  }
+}
 
 function setupITC (app, service, dispatcher) {
   const itc = new ITC({ port: parentPort })
@@ -40,10 +74,8 @@ function setupITC (app, service, dispatcher) {
       await app.stop()
     }
 
-    setImmediate(() => {
-      dispatcher.interceptor.close()
-      itc.close()
-    })
+    dispatcher.interceptor.close()
+    itc.close()
   })
 
   itc.handle('getStatus', async () => {
@@ -91,7 +123,7 @@ function setupITC (app, service, dispatcher) {
     }
   })
 
-  itc.handle('getMetrics', async (format) => {
+  itc.handle('getMetrics', async format => {
     const promRegister = app.server.metrics?.client?.register
 
     if (!promRegister) {
@@ -101,7 +133,7 @@ function setupITC (app, service, dispatcher) {
     return format === 'json' ? promRegister.getMetricsAsJSON() : promRegister.metrics()
   })
 
-  itc.handle('inject', async (injectParams) => {
+  itc.handle('inject', async injectParams => {
     const { statusCode, statusMessage, headers, body } = await app.server.inject(injectParams)
 
     return { statusCode, statusMessage, headers, body }
@@ -114,41 +146,4 @@ function setupITC (app, service, dispatcher) {
   return itc
 }
 
-function makeITCSafe (id, worker, itc) {
-  const originalSend = itc.send
-
-  itc.send = async function send (...args) {
-    try {
-      // Make sure to catch when the worker exits, otherwise we're stuck forever
-      const ac = new AbortController()
-      let exitCode
-
-      const response = await Promise.race([
-        originalSend.apply(itc, args),
-        once(worker, 'exit', { signal: ac.signal }).then(([code]) => {
-          exitCode = code
-        }),
-      ])
-
-      if (typeof exitCode === 'number') {
-        throw new errors.ServiceExitedError(id, exitCode)
-      } else {
-        ac.abort()
-      }
-
-      return response
-    } catch (error) {
-      if (!error.handlerError) {
-        throw error
-      }
-
-      if (error.handlerErrorCode && !error.handlerError.code) {
-        error.handlerError.code = error.handlerErrorCode
-      }
-
-      throw error.handlerError
-    }
-  }
-}
-
-module.exports = { setupITC, makeITCSafe }
+module.exports = { sendViaITC, setupITC }
