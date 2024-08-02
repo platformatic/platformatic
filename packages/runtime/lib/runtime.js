@@ -35,7 +35,6 @@ class Runtime extends EventEmitter {
   #env
   #services
   #servicesIds
-  #servicesStarted
   #entrypoint
   #entrypointId
   #url
@@ -46,6 +45,8 @@ class Runtime extends EventEmitter {
   #interceptor
   #managementApi
   #prometheusServer
+  #startedServices
+  #crashedServicesTimers
 
   constructor (configManager, runtimeLogsDir, env) {
     super()
@@ -57,11 +58,12 @@ class Runtime extends EventEmitter {
     this.#env = env
     this.#services = new Map()
     this.#servicesIds = []
-    this.#servicesStarted = {}
     this.#url = undefined
     // Note: nothing hits the main thread so there is no reason to set the globalDispatcher here
     this.#interceptor = createThreadInterceptor({ domain: '.plt.local' })
     this.#status = undefined
+    this.#startedServices = new Map()
+    this.#crashedServicesTimers = new Map()
   }
 
   async init () {
@@ -140,6 +142,13 @@ class Runtime extends EventEmitter {
   async stop () {
     this.#updateStatus('stopping')
 
+    for (const timer of this.#crashedServicesTimers.values()) {
+      clearTimeout(timer)
+    }
+
+    this.#startedServices.clear()
+    this.#crashedServicesTimers.clear()
+
     this.status = 'stopping'
     await Promise.all(this.#servicesIds.map(service => this.stopService(service)))
     this.status = false
@@ -191,12 +200,18 @@ class Runtime extends EventEmitter {
   }
 
   async startService (id) {
-    if (this.#servicesStarted[id]) {
+    if (this.#startedServices.get(id)) {
       throw new errors.ApplicationAlreadyStartedError()
     }
 
     // This is set here so that if the service fails while starting we track the status
-    this.#servicesStarted[id] = true
+    this.#startedServices.set(id, true)
+
+    // Make sure we don't restart twice
+    const crashedTimer = this.#crashedServicesTimers.get(id)
+    if (crashedTimer) {
+      clearTimeout(crashedTimer)
+    }
 
     let service = await this.#getServiceById(id, false, false)
 
@@ -223,7 +238,7 @@ class Runtime extends EventEmitter {
       return
     }
 
-    this.#servicesStarted[id] = false
+    this.#startedServices.set(id, false)
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
     await Promise.race([service[kITC].send('stop'), sleep(10000, 'timeout', { ref: false })])
@@ -646,7 +661,7 @@ class Runtime extends EventEmitter {
 
     // Track service exiting
     service.once('exit', code => {
-      const started = this.#servicesStarted[id]
+      const started = this.#startedServices.get(id)
       this.#services.delete(id)
       loggerDestination.close()
       loggingPort.close()
@@ -680,7 +695,7 @@ class Runtime extends EventEmitter {
     // used by the composer
     service[kITC].on('changed', async () => {
       try {
-        const wasStarted = this.#servicesStarted[id]
+        const wasStarted = this.#startedServices.get(id)
 
         await this.stopService(id)
 
@@ -724,14 +739,12 @@ class Runtime extends EventEmitter {
 
     this.logger.warn(`Service ${id} unexpectedly exited with code ${code}. Restarting in ${restartTimeout}ms ...`)
 
-    const timeout = setTimeout(async () => {
-      this.removeListener('stopping', clearServiceRestart)
-
+    const timer = setTimeout(async () => {
       try {
         await this.#setupService(serviceConfig)
 
         if (started) {
-          this.#servicesStarted[id] = false
+          this.#startedServices.set(id, false)
           await this.startService(id)
         }
       } catch (err) {
@@ -739,9 +752,7 @@ class Runtime extends EventEmitter {
       }
     }, restartTimeout).unref()
 
-    const clearServiceRestart = clearTimeout.bind(null, timeout)
-
-    this.once('stopping', () => clearServiceRestart)
+    this.#crashedServicesTimers.set(id, timer)
   }
 
   async #getServiceById (id, ensureStarted = false, mustExist = true) {

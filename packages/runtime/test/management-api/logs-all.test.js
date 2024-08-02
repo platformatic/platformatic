@@ -58,7 +58,7 @@ test('should get all runtime logs', async t => {
 
   const logsSize = Buffer.byteLength(data, 'utf8')
   const logsSizeMb = logsSize / 1024 / 1024
-  assert(logsSizeMb > 10)
+  assert(logsSizeMb > 6)
 })
 
 test('should get previous runtime logs', async t => {

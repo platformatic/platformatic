@@ -28,6 +28,7 @@ export async function start (...args) {
     reject = _reject
   })
 
+  let serverStarted = false
   const errorTimeout = setTimeout(() => {
     reject(new Error("Couldn't start server"))
   }, 30000)
@@ -38,7 +39,7 @@ export async function start (...args) {
         const message = JSON.parse(line)
         const mo = message.msg?.match(/server listening at (.+)/i)
 
-        if (mo) {
+        if (!serverStarted && mo) {
           clearTimeout(errorTimeout)
 
           setTimeout(() => {
@@ -54,6 +55,7 @@ export async function start (...args) {
   )
 
   const url = await promise
+  serverStarted = true
   return { child, url }
 }
 

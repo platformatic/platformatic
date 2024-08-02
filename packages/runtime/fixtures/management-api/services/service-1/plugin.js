@@ -6,9 +6,10 @@ module.exports = async function (app) {
     return { service: 'service-2' }
   })
 
-  app.get('/large-logs', async (req) => {
-    const largeLog = 'a'.repeat(100)
-    for (let i = 0; i < 500000; i++) {
+  // 10 MB total
+  app.get('/large-logs', async req => {
+    const largeLog = 'a'.repeat(1000)
+    for (let i = 0; i < 10000; i++) {
       app.log.trace(largeLog)
     }
   })

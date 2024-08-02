@@ -27,7 +27,6 @@
   "devDependencies": {
     "@fastify/express": "^3.0.0",
     "@fastify/formbody": "^7.4.0",
-    "@matteo.collina/tspl": "^0.1.1",
     "@platformatic/composer": "workspace:*",
     "@platformatic/db": "workspace:*",
     "@platformatic/service": "workspace:*",

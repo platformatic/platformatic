@@ -11,7 +11,7 @@
   },
   "managementApi": {
     "logs": {
-      "maxSize": 15
+      "maxSize": 6
     }
   }
 }
