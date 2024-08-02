@@ -164,7 +164,6 @@ class Runtime extends EventEmitter {
     clearInterval(this.#metricsTimeout)
 
     await this.stop()
-    this.#loggerDestination.end()
 
     if (this.#managementApi) {
       if (fromManagementApi) {
@@ -179,6 +178,13 @@ class Runtime extends EventEmitter {
 
     if (this.#prometheusServer) {
       await this.#prometheusServer.close()
+    }
+
+    if (this.logger) {
+      this.#loggerDestination.end()
+
+      this.logger = null
+      this.#loggerDestination = null
     }
 
     this.#updateStatus('closed')
@@ -718,7 +724,9 @@ class Runtime extends EventEmitter {
 
     this.logger.warn(`Service ${id} unexpectedly exited with code ${code}. Restarting in ${restartTimeout}ms ...`)
 
-    setTimeout(async () => {
+    const timeout = setTimeout(async () => {
+      this.removeListener('stopping', clearServiceRestart)
+
       try {
         await this.#setupService(serviceConfig)
 
@@ -730,6 +738,10 @@ class Runtime extends EventEmitter {
         this.logger.error({ err }, `Failed to restart service ${id}.`)
       }
     }, restartTimeout).unref()
+
+    const clearServiceRestart = clearTimeout.bind(null, timeout)
+
+    this.once('stopping', () => clearServiceRestart)
   }
 
   async #getServiceById (id, ensureStarted = false, mustExist = true) {
@@ -805,6 +817,10 @@ class Runtime extends EventEmitter {
   }
 
   #forwardThreadLog (message) {
+    if (!this.#loggerDestination) {
+      return
+    }
+
     for (const log of message.logs) {
       process._rawDebug(log)
       // In order to being able to forward messages serialized in the

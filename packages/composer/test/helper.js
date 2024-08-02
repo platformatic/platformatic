@@ -29,7 +29,7 @@ const tmpBaseDir = resolve(__dirname, '../tmp')
 const REFRESH_TIMEOUT = 1000
 
 // GitHub actions are REALLY slow.
-const LOGS_WRITE_DELAY = 20000
+const LOGS_WRITE_DELAY = 10000
 const REFRESH_TIMEOUT_DELAY_FACTOR = 20
 
 setGlobalDispatcher(agent)

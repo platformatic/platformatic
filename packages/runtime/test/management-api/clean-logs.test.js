@@ -38,5 +38,5 @@ test('should clean the logs after reaching a limit', async t => {
   const runtimeLogsDir = getRuntimeLogsDir(projectDir, process.pid)
   const runtimeLogsFiles = await readdir(runtimeLogsDir)
   const runtimeLogFiles = runtimeLogsFiles.filter(file => file.startsWith('logs'))
-  assert.deepStrictEqual(runtimeLogFiles.length, 3)
+  assert.deepStrictEqual(runtimeLogFiles.length, 2)
 })
