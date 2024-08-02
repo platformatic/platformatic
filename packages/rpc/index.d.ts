@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyPluginAsync } from 'fastify'
+import { FastifyPluginAsync } from 'fastify'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -11,5 +11,5 @@ interface FastifyRpcOptions {
   openapi: object;
 }
 
-declare const fastifyRpcPlugin: FastifyPluginAsync<FastifyRpcOptions>;
-export default fastifyRpcPlugin;
+declare const fastifyRpcPlugin: FastifyPluginAsync<FastifyRpcOptions>
+export default fastifyRpcPlugin

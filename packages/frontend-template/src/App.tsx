@@ -6,16 +6,16 @@ import { getMovies, createMovie, updateMovie, setBaseUrl } from './platformatic-
 
 setBaseUrl('http://localhost:9999')
 
-function App() {
+function App () {
   const [movies, setMovies] = useState<Awaited<ReturnType<typeof getMovies>>>([])
   const [newMovie, setNewMovie] = useState<Awaited<ReturnType<typeof createMovie>>>()
 
-  async function onCreateMovie() {
+  async function onCreateMovie () {
     const newMovie = await createMovie({ title: 'Harry Potter' })
     setNewMovie(newMovie)
   }
 
-  async function onUpdateMovie() {
+  async function onUpdateMovie () {
     if (!newMovie || !newMovie.id) return
 
     const updatedMovie = await updateMovie({ id: newMovie.id, title: 'The Lord of the Rings' })
@@ -23,7 +23,7 @@ function App() {
   }
 
   useEffect(() => {
-    async function fetchMovies() {
+    async function fetchMovies () {
       const movies = await getMovies({})
       setMovies(movies)
     }
@@ -38,24 +38,26 @@ function App() {
       <p>
         You can find more details about the topic at:&nbsp;
         <a
-          href="https://docs.platformatic.dev/docs/cli"
-          target="_blank"
-          rel="noopener noreferrer nofollow"
+          href='https://docs.platformatic.dev/docs/cli'
+          target='_blank'
+          rel='noopener noreferrer nofollow'
         >
           https://docs.platformatic.dev/docs/cli
         </a>
       </p>
 
       <h2>Movies</h2>
-      {movies.length === 0 ? (
-        'No movies yet'
-      ) : (
-        <ul>
-          {movies.map((movie) => (
-            <li key={movie.id}>{movie.title}</li>
-          ))}
-        </ul>
-      )}
+      {movies.length === 0
+        ? (
+            'No movies yet'
+          )
+        : (
+          <ul>
+            {movies.map((movie) => (
+              <li key={movie.id}>{movie.title}</li>
+            ))}
+          </ul>
+          )}
 
       <button onClick={onCreateMovie}>Create movie</button>
       <button onClick={onUpdateMovie}>Update movie</button>

@@ -79,11 +79,5 @@
     "undici": "^6.9.0",
     "undici-thread-interceptor": "^0.5.0",
     "ws": "^8.16.0"
-  },
-  "standard": {
-    "ignore": [
-      "**/dist/*",
-      "**/test/tmp"
-    ]
   }
 }

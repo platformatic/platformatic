@@ -51,9 +51,9 @@ function generateOpenApiSchema (handlers, schemas, tsPrefix) {
       routeSchema.post.requestBody = {
         content: {
           'application/json': {
-            schema: { $ref: `#/components/schemas/${argsSchemaId}` }
-          }
-        }
+            schema: { $ref: `#/components/schemas/${argsSchemaId}` },
+          },
+        },
       }
     }
 
@@ -63,10 +63,10 @@ function generateOpenApiSchema (handlers, schemas, tsPrefix) {
         description: 'Success',
         content: {
           'application/json': {
-            schema: { $ref: `#/components/schemas/${responseSchemaId}` }
-          }
-        }
-      }
+            schema: { $ref: `#/components/schemas/${responseSchemaId}` },
+          },
+        },
+      },
     }
 
     paths[`/${handler.name}`] = routeSchema
@@ -76,12 +76,12 @@ function generateOpenApiSchema (handlers, schemas, tsPrefix) {
     openapi: '3.0.0',
     info: {
       title: 'Platformatic RPC',
-      version: '1.0.0'
+      version: '1.0.0',
     },
     paths,
     components: {
-      schemas: sanitizeSchemas(schemas.definitions, tsPrefix)
-    }
+      schemas: sanitizeSchemas(schemas.definitions, tsPrefix),
+    },
   }
   return openApiSchema
 }
@@ -101,13 +101,13 @@ function createUpdatedProgram (program, sourceFiles) {
         return ts.createSourceFile(fileName, formattedCode, formattedFile.languageVersion)
       }
       return defaultCompilerHost.getSourceFile(fileName)
-    }
+    },
   }
 
   const newProgram = ts.createProgram({
     rootNames: program.getRootFileNames(),
     options: compilerOptions,
-    host: customCompilerHost
+    host: customCompilerHost,
   })
 
   return newProgram
@@ -231,7 +231,7 @@ function getTypesSchemas (program, types) {
   const generator = buildGenerator(program, {
     ignoreErrors: true,
     noExtraProps: true,
-    required: true
+    required: true,
   })
   const schemas = generator.getSchemaForSymbols(types)
   return schemas
@@ -243,7 +243,7 @@ async function generateRpcSchema (options) {
 
   const program = ts.createProgram({
     rootNames: tsConfig.fileNames,
-    options: tsConfig.options
+    options: tsConfig.options,
   })
 
   const compilerOptions = program.getCompilerOptions()
@@ -267,9 +267,9 @@ async function generateRpcSchemaCommand (argv) {
     options: {
       help: { type: 'boolean', short: 'h' },
       path: { type: 'string', short: 'p' },
-      'ts-config': { type: 'string', short: 't', default: 'tsconfig.json' }
+      'ts-config': { type: 'string', short: 't', default: 'tsconfig.json' },
     },
-    strict: false
+    strict: false,
   }).values
 
   const help = helpMe({ dir: join(__dirname, 'help'), ext: '.txt' })

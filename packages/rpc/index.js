@@ -50,7 +50,7 @@ module.exports = fp(async function rpcPlugin (fastify, opts) {
 
     handlersSchemas[operationId] = {
       body: bodySchema ? sanitizeSchemaRefs(bodySchema) : null,
-      response: responseSchema ? sanitizeSchemaRefs(responseSchema) : null
+      response: responseSchema ? sanitizeSchemaRefs(responseSchema) : null,
     }
   }
 
@@ -73,7 +73,7 @@ module.exports = fp(async function rpcPlugin (fastify, opts) {
     }
     if (handlerSchemas.response) {
       routeSchema.response = {
-        200: handlerSchemas.response
+        200: handlerSchemas.response,
       }
     }
 
@@ -84,9 +84,9 @@ module.exports = fp(async function rpcPlugin (fastify, opts) {
       handler: async (req, reply) => {
         const args = req.body
         return handler(args)
-      }
+      },
     })
   })
 }, {
-  name: 'fastify-rpc'
+  name: 'fastify-rpc',
 })

@@ -1,4 +1,4 @@
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsync } from 'fastify'
 
 type User = {
   name: string
@@ -23,7 +23,9 @@ const users = [
 
 const plugin: FastifyPluginAsync = async (app) => {
   // These lines are needed to test avoiding types collision
+  /* eslint-disable-next-line */
   type addUserArgs = { user: User }
+  /* eslint-disable-next-line */
   type addUserReturnType = void
 
   app.rpc('addUser', async (options: { user: User }): Promise<void> => {
@@ -35,7 +37,7 @@ const plugin: FastifyPluginAsync = async (app) => {
   })
 
   app.rpc('getGroupByName', async (options: { name: string }): Promise<Group> => {
-    return { name: options.name, users: users }
+    return { name: options.name, users }
   })
 
   app.rpc('getRecursiveNode', async (): Promise<Node> => {
@@ -45,9 +47,9 @@ const plugin: FastifyPluginAsync = async (app) => {
         null,
         { id: 'node-1', nodes: [null, { id: 'node-2', nodes: [] }] },
         { id: 'node-3', nodes: [] },
-      ]
+      ],
     }
   })
 }
 
-export default plugin;
+export default plugin

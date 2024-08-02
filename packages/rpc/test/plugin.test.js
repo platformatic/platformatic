@@ -18,15 +18,15 @@ test('should generate an openapi schema from a ts app', async (t) => {
       url: '/rpc/getUsers',
       body: JSON.stringify({ maxAge: 30 }),
       headers: {
-        'content-type': 'application/json'
-      }
+        'content-type': 'application/json',
+      },
     })
     assert.strictEqual(statusCode, 200)
 
     const users = JSON.parse(body)
     assert.deepStrictEqual(users, [
       { name: 'Alice', age: 30 },
-      { name: 'Bob', age: 25 }
+      { name: 'Bob', age: 25 },
     ])
   }
 
@@ -36,8 +36,8 @@ test('should generate an openapi schema from a ts app', async (t) => {
       url: '/rpc/getUsers',
       body: JSON.stringify({ maxAge: 'string' }),
       headers: {
-        'content-type': 'application/json'
-      }
+        'content-type': 'application/json',
+      },
     })
     assert.strictEqual(statusCode, 400)
 
@@ -46,7 +46,7 @@ test('should generate an openapi schema from a ts app', async (t) => {
       code: 'FST_ERR_VALIDATION',
       error: 'Bad Request',
       message: 'body/maxAge must be number',
-      statusCode: 400
+      statusCode: 400,
     })
   }
 
@@ -56,8 +56,8 @@ test('should generate an openapi schema from a ts app', async (t) => {
       url: '/rpc/getRecursiveNode',
       body: JSON.stringify({}),
       headers: {
-        'content-type': 'application/json'
-      }
+        'content-type': 'application/json',
+      },
     })
     assert.strictEqual(statusCode, 200, body)
 
@@ -67,8 +67,8 @@ test('should generate an openapi schema from a ts app', async (t) => {
       nodes: [
         null,
         { id: 'node-1', nodes: [null, { id: 'node-2', nodes: [] }] },
-        { id: 'node-3', nodes: [] }
-      ]
+        { id: 'node-3', nodes: [] },
+      ],
     })
   }
 })
