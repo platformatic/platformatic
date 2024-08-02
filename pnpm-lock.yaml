@@ -11372,7 +11372,7 @@ snapshots:
       eslint: 9.8.0
       hyperid: 3.2.0
       light-my-request: 5.13.0
-      neostandard: 0.11.1(eslint@9.8.0)(typescript@5.5.4)
+      neostandard: 0.11.2(eslint@9.8.0)(typescript@5.5.4)
       undici: 6.19.5
     transitivePeerDependencies:
       - supports-color
