@@ -286,9 +286,10 @@ class RuntimeApiClient extends EventEmitter {
 
     let latestFileId = parseInt(runtimeLogFiles.at(-1).slice('logs.'.length))
 
-    let waiting = false
     let fileStream = null
     let fileId = startLogId ?? latestFileId
+
+    let isClosed = false
 
     const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
 
@@ -297,9 +298,7 @@ class RuntimeApiClient extends EventEmitter {
         const logFileId = parseInt(filename.slice('logs.'.length))
         if (logFileId > latestFileId) {
           latestFileId = logFileId
-          if (waiting) {
-            streamLogFile(++fileId)
-          }
+          fileStream.unwatch()
         }
       }
     }).unref()
@@ -324,25 +323,25 @@ class RuntimeApiClient extends EventEmitter {
       }
 
       fileStream.on('error', (err) => {
+        isClosed = true
         logger.error(err, 'Error streaming log file')
         fileStream.destroy()
         watcher.close()
         writableStream.end()
       })
 
-      fileStream.on('data', () => {
-        waiting = false
+      fileStream.on('close', () => {
+        if (latestFileId > fileId && !isClosed) {
+          streamLogFile(++fileId)
+        }
       })
 
       fileStream.on('eof', () => {
         if (fileId >= endLogId) {
           writableStream.end()
-          return
         }
         if (latestFileId > fileId) {
-          streamLogFile(++fileId)
-        } else {
-          waiting = true
+          fileStream.unwatch()
         }
       })
 
@@ -352,10 +351,12 @@ class RuntimeApiClient extends EventEmitter {
     streamLogFile(fileId)
 
     writableStream.on('close', () => {
+      isClosed = true
       watcher.close()
       fileStream.destroy()
     })
     writableStream.on('error', () => {
+      isClosed = true
       watcher.close()
       fileStream.destroy()
     })
