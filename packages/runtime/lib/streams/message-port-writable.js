@@ -18,16 +18,16 @@ class MessagePortWritable extends Writable {
   _write (chunk, encoding, callback) {
     this.#port.postMessage({ metadata: this.#metadata, logs: [chunk.toString(encoding ?? 'utf-8')] })
 
-    // Important: do not remove setImmediate otherwise _writev will never be used
-    setImmediate(callback)
+    // Important: do not remove nextTick otherwise _writev will never be used
+    process.nextTick(callback)
   }
 
   // Since this is only invoked by pino, we only receive strings
   _writev (chunks, callback) {
     this.#port.postMessage({ metadata: this.#metadata, logs: chunks.map(c => c.chunk.toString(c.encoding ?? 'utf-8')) })
 
-    // Important: do not remove setImmediate otherwise _writev will never be used
-    setImmediate(callback)
+    // Important: do not remove nextTick otherwise _writev will never be used
+    process.nextTick(callback)
   }
 
   _final (callback) {

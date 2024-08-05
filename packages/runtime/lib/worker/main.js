@@ -14,7 +14,7 @@ const { PlatformaticApp } = require('./app')
 const { setupITC } = require('./itc')
 const loadInterceptors = require('./interceptors')
 const { MessagePortWritable } = require('../streams/message-port-writable')
-const { PinoWritable } = require('../streams/pino-writable')
+const { createPinoWritable } = require('../streams/pino-writable')
 const { kId, kITC } = require('./symbols')
 
 process.on('uncaughtException', handleUnhandled.bind(null, 'uncaught exception'))
@@ -39,12 +39,12 @@ function handleUnhandled (type, err) {
 
 function createLogger () {
   const destination = new MessagePortWritable({ port: workerData.loggingPort })
-  const logger = pino({ level: 'trace' }, destination)
+  const loggerInstance = pino({ level: 'trace' }, destination)
 
-  Reflect.defineProperty(process, 'stdout', { value: new PinoWritable({ pino: logger, level: 'info' }) })
-  Reflect.defineProperty(process, 'stderr', { value: new PinoWritable({ pino: logger, level: 'error' }) })
+  Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(loggerInstance, 'info') })
+  Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(loggerInstance, 'error') })
 
-  return logger
+  return loggerInstance
 }
 
 async function main () {

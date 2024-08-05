@@ -21,4 +21,10 @@ class PinoWritable extends Writable {
   // We don't define _writev as we have to serialize messages one by one so batching wouldn't make any sense.
 }
 
-module.exports = { PinoWritable }
+function createPinoWritable (pino, level) {
+  const writable = new PinoWritable({ pino, level })
+  writable.write = writable.write.bind(writable)
+  return writable
+}
+
+module.exports = { PinoWritable, createPinoWritable }

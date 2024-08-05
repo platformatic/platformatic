@@ -15,7 +15,7 @@ module.exports = async function foo (app) {
     console.log('#'.repeat(1e4))
     console.log(Buffer.from(Array.from(Array(1e2)).map((_, i) => i)))
 
-    const logger = pino({ level: 'trace' }, process.stdout)
+    const logger = pino({ level: 'trace' })
     logger.trace('This is a trace')
     logger.fatal({ payload: { ts: '123', foo: 'bar' } }, 'This is a fatal with object')
 
