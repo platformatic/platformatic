@@ -3,11 +3,7 @@
 const { createRequire } = require('node:module')
 const { join } = require('node:path')
 const { setTimeout: sleep } = require('node:timers/promises')
-const {
-  parentPort,
-  workerData,
-  threadId,
-} = require('node:worker_threads')
+const { parentPort, workerData, threadId } = require('node:worker_threads')
 const { pathToFileURL } = require('node:url')
 
 const pino = require('pino')
@@ -20,15 +16,15 @@ const loadInterceptors = require('./interceptors')
 const { MessagePortWritable } = require('./message-port-writable')
 const { kId, kITC } = require('./symbols')
 
+process.on('uncaughtException', handleUnhandled.bind(null, 'uncaught exception'))
+process.on('unhandledRejection', handleUnhandled.bind(null, 'unhandled rejection'))
+
 globalThis.fetch = fetch
 globalThis[kId] = threadId
 
 let app
 const config = workerData.config
-const logger = pino(
-  { level: 'trace' },
-  new MessagePortWritable({ port: workerData.loggingPort })
-)
+const logger = createLogger()
 
 function handleUnhandled (type, err) {
   logger.error({ err }, `application ${type}`)
@@ -40,18 +36,32 @@ function handleUnhandled (type, err) {
     })
 }
 
-process.on('uncaughtException', handleUnhandled.bind(null, 'uncaught exception'))
-process.on('unhandledRejection', handleUnhandled.bind(null, 'unhandled rejection'))
+function createLogger () {
+  const destination = new MessagePortWritable({ port: workerData.loggingPort })
+  const logger = pino({ level: 'trace' }, destination)
 
-// Tested by test/cli/start.test.mjs by C8 does not see it.
-/* c8 ignore next 4 */
-process.on('unhandledRejection', (err) => {
-  logger.error({ err }, 'runtime uncaught rejection')
+  // Forward stdio as well via the destination
+  const originalStdoutWrite = process.stdout.write.bind(process.stdout)
+  const originalStderrWrite = process.stderr.write.bind(process.stderr)
 
-  Promise.race([app?.stop(), sleep(1000, 'timeout', { ref: false })])
-    .catch()
-    .finally(process.exit.bind(1))
-})
+  process.stdout.write = function (chunk, encoding, callback) {
+    for (const line of chunk.trimEnd().split('\n')) {
+      logger.info({ raw: line })
+    }
+
+    return originalStdoutWrite(chunk, encoding, callback)
+  }
+
+  process.stderr.write = function (chunk, encoding, callback) {
+    for (const line of chunk.trimEnd().split('\n')) {
+      logger.error({ raw: line })
+    }
+
+    return originalStderrWrite(chunk, encoding, callback)
+  }
+
+  return logger
+}
 
 async function main () {
   if (config.preload) {
@@ -73,7 +83,7 @@ async function main () {
     }
 
     if (Array.isArray(config.undici.interceptors)) {
-      composedInterceptors.push(...await loadInterceptors(_require, config.undici.interceptors))
+      composedInterceptors.push(...(await loadInterceptors(_require, config.undici.interceptors)))
     }
   }
 

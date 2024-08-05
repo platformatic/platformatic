@@ -835,17 +835,36 @@ class Runtime extends EventEmitter {
       // worker threads by directly writing to the destinations using multistream
       // we unfortunately need to reparse the message to set some internal flags
       // of the destination which are never set since we bypass pino.
-      const obj = JSON.parse(log)
-      const { level, time, msg } = obj
+      let message = JSON.parse(log)
+      let { level, time, msg, raw } = message
+
+      try {
+        const parsed = JSON.parse(raw)
+
+        if (typeof parsed.level === 'number' && typeof parsed.time === 'number') {
+          level = parsed.level
+          time = parsed.time
+          message = parsed
+        } else {
+          message.raw = undefined
+          message.payload = parsed
+        }
+      } catch {
+        if (typeof message.raw === 'string') {
+          message.msg = message.raw
+        }
+
+        message.raw = undefined
+      }
 
       this.#loggerDestination.lastLevel = level
       this.#loggerDestination.lastTime = time
       this.#loggerDestination.lastMsg = msg
-      this.#loggerDestination.lastObj = obj
+      this.#loggerDestination.lastObj = message
       this.#loggerDestination.lastLogger = this.logger
 
       // Never drop the `\n` as the worker thread trimmed the message
-      this.#loggerDestination.write(log + '\n')
+      this.#loggerDestination.write(JSON.stringify(message) + '\n')
     }
   }
 }
