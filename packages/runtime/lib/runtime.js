@@ -652,6 +652,15 @@ class Runtime extends EventEmitter {
       execArgv: [], // Avoid side effects
       env: this.#env,
       transferList: [loggingPort],
+      /*
+        Important: always set stdout and stderr to true, so that worker's output is not automatically
+        piped to the parent thread. We actually never output the thread output since we replace it
+        with PinoWritable, and disabling the piping avoids us to redeclare some internal Node.js methods.
+
+        The author of this (Paolo and Matteo) are not proud of the solution. Forgive us.
+      */
+      stdout: true,
+      stderr: true,
     })
 
     // Make sure the listener can handle a lot of API requests at once before raising a warning
@@ -839,7 +848,7 @@ class Runtime extends EventEmitter {
       let { level, time, msg, raw } = message
 
       try {
-        const parsed = JSON.parse(raw)
+        const parsed = JSON.parse(raw.trimEnd())
 
         if (typeof parsed.level === 'number' && typeof parsed.time === 'number') {
           level = parsed.level
@@ -851,7 +860,7 @@ class Runtime extends EventEmitter {
         }
       } catch {
         if (typeof message.raw === 'string') {
-          message.msg = message.raw
+          message.msg = message.raw.replace(/\n$/, '')
         }
 
         message.raw = undefined

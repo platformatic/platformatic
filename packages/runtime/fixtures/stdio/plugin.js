@@ -12,13 +12,12 @@ module.exports = async function foo (app) {
     console.error('This is a\n console.error')
 
     console.log(JSON.stringify({ ts: '123', foo: 'bar' }))
+    console.log('#'.repeat(1e4))
+    console.log(Buffer.from(Array.from(Array(1e2)).map((_, i) => i)))
 
-    const logger = pino({ level: 'trace' })
+    const logger = pino({ level: 'trace' }, process.stdout)
     logger.trace('This is a trace')
-    logger.fatal(
-      { payload: { ts: '123', foo: 'bar' } },
-      'This is a fatal with object'
-    )
+    logger.fatal({ payload: { ts: '123', foo: 'bar' } }, 'This is a fatal with object')
 
     return { ok: true }
   })

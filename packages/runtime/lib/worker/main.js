@@ -13,7 +13,8 @@ const { wire } = require('undici-thread-interceptor')
 const { PlatformaticApp } = require('./app')
 const { setupITC } = require('./itc')
 const loadInterceptors = require('./interceptors')
-const { MessagePortWritable } = require('./message-port-writable')
+const { MessagePortWritable } = require('../streams/message-port-writable')
+const { PinoWritable } = require('../streams/pino-writable')
 const { kId, kITC } = require('./symbols')
 
 process.on('uncaughtException', handleUnhandled.bind(null, 'uncaught exception'))
@@ -40,25 +41,8 @@ function createLogger () {
   const destination = new MessagePortWritable({ port: workerData.loggingPort })
   const logger = pino({ level: 'trace' }, destination)
 
-  // Forward stdio as well via the destination
-  const originalStdoutWrite = process.stdout.write.bind(process.stdout)
-  const originalStderrWrite = process.stderr.write.bind(process.stderr)
-
-  process.stdout.write = function (chunk, encoding, callback) {
-    for (const line of chunk.trimEnd().split('\n')) {
-      logger.info({ raw: line })
-    }
-
-    return originalStdoutWrite(chunk, encoding, callback)
-  }
-
-  process.stderr.write = function (chunk, encoding, callback) {
-    for (const line of chunk.trimEnd().split('\n')) {
-      logger.error({ raw: line })
-    }
-
-    return originalStderrWrite(chunk, encoding, callback)
-  }
+  Reflect.defineProperty(process, 'stdout', { value: new PinoWritable({ pino: logger, level: 'info' }) })
+  Reflect.defineProperty(process, 'stderr', { value: new PinoWritable({ pino: logger, level: 'error' }) })
 
   return logger
 }
