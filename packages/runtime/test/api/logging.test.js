@@ -38,7 +38,7 @@ test('logs stdio from the service thread', async t => {
         protocol: 'http:',
       },
       {
-        socketPath: app.managementApi.server.address(),
+        socketPath: app.getManagementApiUrl(),
         keepAliveTimeout: 10,
         keepAliveMaxTimeout: 10,
       }
