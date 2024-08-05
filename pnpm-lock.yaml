@@ -1238,7 +1238,7 @@ importers:
         version: 11.2.1
       pino-roll:
         specifier: ^1.0.0
-        version: 1.1.0
+        version: 1.2.0
       semgrator:
         specifier: ^0.3.0
         version: 0.3.0
@@ -5091,8 +5091,8 @@ packages:
     resolution: {integrity: sha512-O05NuD9tkRasFRWVaF/uHLOvoRDFD7tb5VMertr78rbsYFjYp48Vg3477EshVAF5eZaEw+OpDl/tu+B0R5o+7g==}
     hasBin: true
 
-  pino-roll@1.1.0:
-    resolution: {integrity: sha512-VlioCA387G/56yelKkoe0OXFFG/LnsqiMRAQnRijgXh8NMoeFaQssU14nz3kSqk5GZ3BWBERgB8M9S2AN3wQGA==}
+  pino-roll@1.2.0:
+    resolution: {integrity: sha512-0jbkS6X37FCzZh2iId5ayLL9xvbx2yvqhL5bZeFVdXelISAGUfKpA1i2snSI/QuIQGuBaVuCagD6FBBVn0Z+JQ==}
 
   pino-std-serializers@4.0.0:
     resolution: {integrity: sha512-cK0pekc1Kjy5w9V2/n+8MkZwusa6EyyxfeQCB799CQRhRt/CqYKiWs5adeu8Shve2ZNffvfC/7J64A2PJo1W/Q==}
@@ -9862,7 +9862,7 @@ snapshots:
       sonic-boom: 4.0.1
       strip-json-comments: 3.1.1
 
-  pino-roll@1.1.0:
+  pino-roll@1.2.0:
     dependencies:
       sonic-boom: 3.8.1
 
