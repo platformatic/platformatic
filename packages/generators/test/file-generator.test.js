@@ -3,10 +3,10 @@
 const { test, describe } = require('node:test')
 const assert = require('node:assert')
 const { FileGenerator } = require('../lib/file-generator')
-const { rm, readFile } = require('node:fs/promises')
+const { readFile } = require('node:fs/promises')
 const { join } = require('node:path')
 const { tmpdir } = require('node:os')
-const { safeMkdir } = require('../lib/utils')
+const { createDirectory, safeRemove } = require('@platformatic/utils')
 
 let dirCount = 0
 describe('FileGenerator', () => {
@@ -15,14 +15,14 @@ describe('FileGenerator', () => {
     const fileObject = fg.getFileObject('sample', 'file')
     assert.strictEqual(null, fileObject)
   })
-  test('should throw if no targeDirectory is set', async (t) => {
+  test('should throw if no targeDirectory is set', async t => {
     const fg = new FileGenerator()
     assert.rejects(async () => {
       await fg.writeFiles()
     })
   })
 
-  test('should replace a file with same name and path', async (t) => {
+  test('should replace a file with same name and path', async t => {
     const fg = new FileGenerator()
     fg.addFile({ path: 'path', file: 'file', contents: 'hello world' })
     fg.addFile({ path: 'path', file: 'file', contents: 'foobar' })
@@ -32,7 +32,7 @@ describe('FileGenerator', () => {
     assert.equal(fg.files.length, 1)
   })
 
-  test('should list files', async (t) => {
+  test('should list files', async t => {
     const fg = new FileGenerator()
     fg.addFile({ path: 'path', file: 'helloworld.txt', contents: 'hello world' })
     fg.addFile({ path: 'path', file: 'foobar.txt', contents: 'foobar' })
@@ -44,7 +44,7 @@ describe('FileGenerator', () => {
       join('anotherpath', 'foobar.txt'),
     ])
   })
-  test('should append file content', async (t) => {
+  test('should append file content', async t => {
     const fg = new FileGenerator()
     fg.addFile({ path: 'path', file: 'helloworld.txt', contents: 'hello world' })
 
@@ -59,7 +59,7 @@ describe('FileGenerator', () => {
     assert.equal(newFileObject.contents, 'foobar')
   })
 
-  test('should reset all files', async (t) => {
+  test('should reset all files', async t => {
     const fg = new FileGenerator()
     fg.addFile({ path: 'path', file: 'file', contents: 'hello world' })
     fg.addFile({ path: 'path', file: 'file', contents: 'foobar' })
@@ -68,13 +68,13 @@ describe('FileGenerator', () => {
     assert.equal(fg.files.length, 0)
   })
 
-  test('should write files', async (t) => {
+  test('should write files', async t => {
     const tempDir = join(tmpdir(), `plt-file-generator-test-${dirCount++}`)
     t.after(async () => {
-      await rm(tempDir, { recursive: true })
+      await safeRemove(tempDir)
     })
 
-    await safeMkdir(tempDir)
+    await createDirectory(tempDir)
     const fg = new FileGenerator()
     fg.setTargetDirectory(tempDir)
     fg.addFile({ path: 'myDir', file: 'helloworld.txt', contents: 'hello world' })
@@ -84,13 +84,13 @@ describe('FileGenerator', () => {
     assert.equal(fileContents, 'hello world')
   })
 
-  test('should not write empty files', async (t) => {
+  test('should not write empty files', async t => {
     const tempDir = join(tmpdir(), `plt-file-generator-test-${dirCount++}`)
     t.after(async () => {
-      await rm(tempDir, { recursive: true })
+      await safeRemove(tempDir)
     })
 
-    await safeMkdir(tempDir)
+    await createDirectory(tempDir)
     const fg = new FileGenerator()
     fg.setTargetDirectory(tempDir)
     fg.addFile({ path: 'myDir', file: 'helloworld.txt', contents: '' })
@@ -104,13 +104,13 @@ describe('FileGenerator', () => {
     }
   })
 
-  test('should load file from filesystem', async (t) => {
+  test('should load file from filesystem', async t => {
     const tempDir = join(tmpdir(), `plt-file-generator-test-${dirCount++}`)
     t.after(async () => {
-      await rm(tempDir, { recursive: true })
+      await safeRemove(tempDir)
     })
 
-    await safeMkdir(tempDir)
+    await createDirectory(tempDir)
     const fg = new FileGenerator()
     fg.setTargetDirectory(tempDir)
     fg.addFile({ path: 'myDir', file: 'helloworld.txt', contents: 'hello world' })

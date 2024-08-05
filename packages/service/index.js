@@ -135,7 +135,6 @@ module.exports.configManagerConfig = {
   upgrade,
 }
 
-// Retained for backwards compatibility
 platformaticService.configManagerConfig = module.exports.configManagerConfig
 
 function _buildServer (options, app) {

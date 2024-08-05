@@ -361,6 +361,9 @@ const platformaticServiceSchema = {
     $schema: {
       type: 'string',
     },
+    module: {
+      type: 'string',
+    },
     service,
     clients,
   },

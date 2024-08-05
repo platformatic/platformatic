@@ -172,6 +172,7 @@ export interface PlatformaticService {
     | boolean
     | string;
   $schema?: string;
+  module?: string;
   service?: {
     openapi?:
       | {

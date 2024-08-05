@@ -13,7 +13,11 @@ test('does not wait forever if worker exits during api operation', async (t) => 
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
 
+  t.after(async () => {
+    await app.close()
+  })
+
   await assert.rejects(async () => {
     await app.start()
-  }, /The runtime exited before the operation completed/)
+  }, /The service serviceThrowsOnStart exited prematurely with error code 1/)
 })

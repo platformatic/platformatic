@@ -108,7 +108,8 @@ const test = require('node:test')
 const assert = require('node:assert')
 const { tmpdir } = require('node:os')
 const { join } = require('node:path')
-const { readFile, readdir, mkdtemp, rm } = require('node:fs/promises')
+const { readFile, readdir, mkdtemp } = require('node:fs/promises')
+const { safeRemove } = require('@platformatic/utils')
 const { Generator } = require('../index')
 const stackablePackageJson = require('../package.json')
 
@@ -163,7 +164,7 @@ test('should return Generator config fields definitions', async () => {
 
 test('should generate a stackable app', async (t) => {
   const testDir = await mkdtemp(join(tmpdir(), 'stackable-'))
-  t.after(() => rm(testDir, { recursive: true, force: true }))
+  t.after(() => safeRemove(testDir))
 
   const generator = new Generator()
 
@@ -231,9 +232,10 @@ import test from 'node:test'
 import assert from 'node:assert'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { readFile, readdir, mkdtemp, rm } from 'node:fs/promises'
+import { readFile, readdir, mkdtemp } from 'node:fs/promises'
 import { readFileSync } from 'node:fs'
 import { Generator } from '../index'
+import { safeRemove } from '@platformatic/utils'
 
 const stackablePackageJsonPath = require.resolve('../../package.json')
 const stackablePackageJson = JSON.parse(readFileSync(stackablePackageJsonPath, 'utf8'))
@@ -289,7 +291,7 @@ test('should return Generator config fields definitions', async () => {
 
 test('should generate a stackable app', async (t) => {
   const testDir = await mkdtemp(join(tmpdir(), 'stackable-'))
-  t.after(() => rm(testDir, { recursive: true, force: true }))
+  t.after(() => safeRemove(testDir))
 
   const generator = new Generator()
 

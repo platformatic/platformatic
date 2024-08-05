@@ -1,6 +1,7 @@
 const { join } = require('node:path')
-const { mkdir, rm } = require('node:fs/promises')
 const { MockAgent, setGlobalDispatcher } = require('undici')
+const { createDirectory } = require('@platformatic/utils')
+const { safeRemove } = require('@platformatic/utils')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -12,7 +13,7 @@ async function getTempDir (baseDir) {
     baseDir = __dirname
   }
   const dir = join(baseDir, 'tmp', `plt-runtime-${process.pid}-${Date.now()}-${counter++}`)
-  await safeMkdir(dir)
+  await createDirectory(dir, true)
   return dir
 }
 async function moveToTmpdir (teardown) {
@@ -21,18 +22,9 @@ async function moveToTmpdir (teardown) {
   process.chdir(dir)
   teardown(() => process.chdir(cwd))
   if (!process.env.SKIP_RM_TMP) {
-    teardown(() => rm(dir, { recursive: true }).catch(() => {}))
+    teardown(() => safeRemove(dir))
   }
   return dir
-}
-
-async function safeMkdir (dir) {
-  try {
-    await mkdir(dir, { recursive: true })
-    /* c8 ignore next 3 */
-  } catch (err) {
-    // do nothing
-  }
 }
 
 function mockNpmJsRequestForPkgs (pkgs) {

@@ -1,14 +1,15 @@
 'use strict'
 
-const tsCompiler = require('@platformatic/ts-compiler')
-const { loadConfig } = require('./load-config')
-const { dirname, join } = require('node:path')
 const { createRequire } = require('node:module')
+const { dirname, join } = require('node:path')
+const { isatty } = require('node:tty')
 const { pathToFileURL } = require('node:url')
 
+const tsCompiler = require('@platformatic/ts-compiler')
 const pino = require('pino')
 const pretty = require('pino-pretty')
-const { isatty } = require('node:tty')
+
+const { loadConfig } = require('./utils')
 
 async function compile (argv, logger) {
   const { configManager, configType, app } = await loadConfig({}, argv, {

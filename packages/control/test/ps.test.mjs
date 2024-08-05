@@ -1,13 +1,14 @@
 'use strict'
 
-import assert from 'node:assert'
-import { tmpdir, platform } from 'node:os'
-import { test } from 'node:test'
-import { join } from 'node:path'
-import { readdir, writeFile, mkdir, rm } from 'node:fs/promises'
-import { execa } from 'execa'
+import { createDirectory, safeRemove } from '@platformatic/utils'
 import * as desm from 'desm'
-import { startRuntime, getPlatformaticVersion } from './helper.mjs'
+import { execa } from 'execa'
+import assert from 'node:assert'
+import { readdir, writeFile } from 'node:fs/promises'
+import { platform, tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { getPlatformaticVersion, startRuntime } from './helper.mjs'
 
 const cliPath = desm.join(import.meta.url, '..', 'control.js')
 const fixturesDir = desm.join(import.meta.url, 'fixtures')
@@ -16,7 +17,7 @@ const version = await getPlatformaticVersion()
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 
-test('should get all runtimes', async (t) => {
+test('should get all runtimes', async t => {
   const runtimeProjectDir1 = join(fixturesDir, 'runtime-1')
   const runtimeConfigPath1 = join(runtimeProjectDir1, 'platformatic.json')
   const { runtime: runtime1, url: runtime1Url } = await startRuntime(runtimeConfigPath1)
@@ -37,9 +38,7 @@ test('should get all runtimes', async (t) => {
   const [headersRow, runtime1Row, runtime2Row] = runtimesTableRows
 
   const headers = headersRow.split(/\s+/).filter(Boolean)
-  assert.deepStrictEqual(headers, [
-    'PID', 'NAME', 'PLT', 'TIME', 'URL', 'PWD',
-  ])
+  assert.deepStrictEqual(headers, ['PID', 'NAME', 'PLT', 'TIME', 'URL', 'PWD'])
 
   const runtime1Values = runtime1Row.split(/\s+/).filter(Boolean)
   assert.strictEqual(runtime1Values.length, 6)
@@ -58,9 +57,9 @@ test('should get all runtimes', async (t) => {
   assert.strictEqual(runtime2Values[5], runtimeProjectDir2)
 })
 
-test('should remove the runtime tmp dir if can not get metadata', { skip: platform() === 'win32' }, async (t) => {
+test('should remove the runtime tmp dir if can not get metadata', { skip: platform() === 'win32' }, async t => {
   const runtimeDir = join(PLATFORMATIC_TMP_DIR, '1234')
-  await mkdir(runtimeDir, { recursive: true })
+  await createDirectory(runtimeDir)
   await writeFile(join(runtimeDir, 'socket'), '')
 
   const child = await execa('node', [cliPath, 'ps'])
@@ -73,7 +72,7 @@ test('should remove the runtime tmp dir if can not get metadata', { skip: platfo
   }
 })
 
-test('should get no runtimes running', async (t) => {
+test('should get no runtimes running', async t => {
   const child = await execa('node', [cliPath, 'ps'])
   assert.strictEqual(child.exitCode, 0)
   const runtimesTable = child.stdout
@@ -81,7 +80,7 @@ test('should get no runtimes running', async (t) => {
 
   {
     // This should work even if there is no /tmp/platformatic/runtimes directory
-    await rm(PLATFORMATIC_TMP_DIR, { recursive: true, force: true }).catch(() => {})
+    await safeRemove(PLATFORMATIC_TMP_DIR)
     const child = await execa('node', [cliPath, 'ps'])
     assert.strictEqual(child.exitCode, 0)
     const runtimesTable = child.stdout

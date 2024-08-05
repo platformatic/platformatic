@@ -2,6 +2,7 @@
 
 const Topo = require('@hapi/topo')
 const { closest } = require('fastest-levenshtein')
+
 const errors = require('./errors')
 
 function missingDependencyErrorMessage (clientName, service, services) {

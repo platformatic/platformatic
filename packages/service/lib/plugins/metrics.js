@@ -139,17 +139,8 @@ const metricsPlugin = fp(async function (app, opts = {}) {
     }
   }
 
-  let isRestarting = false
-  app.addHook('onReady', async () => {
-    app.addPreRestartHook(async () => {
-      isRestarting = true
-      cleanMetrics()
-    })
-  })
   app.addHook('onClose', async () => {
-    if (!isRestarting) {
-      cleanMetrics()
-    }
+    cleanMetrics()
   })
 }, {
   encapsulate: false,

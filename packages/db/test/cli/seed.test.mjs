@@ -1,17 +1,18 @@
+import { createDirectory } from '@platformatic/utils'
+import { execa } from 'execa'
 import assert from 'node:assert/strict'
+import { copyFile, mkdtemp, readdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { copyFile, mkdir, mkdtemp, readdir } from 'node:fs/promises'
-import { request } from 'undici'
-import { execa } from 'execa'
-import stripAnsi from 'strip-ansi'
 import rimraf from 'rimraf'
+import stripAnsi from 'strip-ansi'
+import { request } from 'undici'
 import { urlDirname } from '../../lib/utils.js'
 import { getConnectionInfo } from '../helper.js'
 import { cliPath, start } from './helper.js'
 
-test('seed and start', async (t) => {
+test('seed and start', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
   const cwd = join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite')
@@ -68,19 +69,22 @@ test('seed and start', async (t) => {
     const body = await res.body.json()
     assert.deepEqual(body, {
       data: {
-        graphs: [{
-          id: '1',
-          name: 'Hello',
-        }, {
-          id: '2',
-          name: 'Hello 2',
-        }],
+        graphs: [
+          {
+            id: '1',
+            name: 'Hello',
+          },
+          {
+            id: '2',
+            name: 'Hello 2',
+          },
+        ],
       },
     })
   }
 })
 
-test('seed command should throw an error if there are migrations to apply', async (t) => {
+test('seed command should throw an error if there are migrations to apply', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
   const cwd = join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite')
@@ -103,7 +107,7 @@ test('seed command should throw an error if there are migrations to apply', asyn
   }
 })
 
-test('valid config files', async (t) => {
+test('valid config files', async t => {
   const fixturesDir = join(urlDirname(import.meta.url), '..', 'fixtures')
   const validConfigFiles = await readdir(join(fixturesDir, 'valid-config-files'))
 
@@ -113,7 +117,7 @@ test('valid config files', async (t) => {
     const cwd = await mkdtemp(join(tmpdir(), 'seed-'))
 
     await copyFile(join(fixturesDir, 'valid-config-files', configFile), join(cwd, configFile))
-    await mkdir(join(cwd, 'migrations'))
+    await createDirectory(join(cwd, 'migrations'))
     await copyFile(join(fixturesDir, 'sqlite', 'migrations', '001.do.sql'), join(cwd, 'migrations', '001.do.sql'))
     const seed = join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite', 'seed.js')
 
@@ -142,7 +146,7 @@ test('valid config files', async (t) => {
   }
 })
 
-test('missing config file', async (t) => {
+test('missing config file', async t => {
   try {
     await execa('node', [cliPath, 'seed'])
   } catch (err) {
@@ -151,7 +155,7 @@ test('missing config file', async (t) => {
   }
 })
 
-test('missing seed file', async (t) => {
+test('missing seed file', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
   const cwd = join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite')
 
@@ -178,7 +182,7 @@ test('missing seed file', async (t) => {
   }
 })
 
-test('seed and start from cwd', async (t) => {
+test('seed and start from cwd', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
   const cwd = join(urlDirname(import.meta.url), '..', 'fixtures', 'sqlite')
@@ -230,16 +234,23 @@ test('seed and start from cwd', async (t) => {
     })
     assert.equal(res.statusCode, 200, 'graphs status code')
     const body = await res.body.json()
-    assert.deepEqual(body, {
-      data: {
-        graphs: [{
-          id: '1',
-          name: 'Hello',
-        }, {
-          id: '2',
-          name: 'Hello 2',
-        }],
+    assert.deepEqual(
+      body,
+      {
+        data: {
+          graphs: [
+            {
+              id: '1',
+              name: 'Hello',
+            },
+            {
+              id: '2',
+              name: 'Hello 2',
+            },
+          ],
+        },
       },
-    }, 'graphs response')
+      'graphs response'
+    )
   }
 })

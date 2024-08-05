@@ -247,6 +247,7 @@ class Store {
     if (!app) {
       const parser = getParser(configFile)
       const parsed = parser(await readFile(configFile))
+
       const res = await this._get(parsed, opts)
       app = res.app
       version = res.version

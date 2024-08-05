@@ -11,7 +11,7 @@ test('remove the watch config', async () => {
   const file = join(__dirname, 'fixtures', '1.4.0.json')
 
   const configManager = new ConfigManager({
-    ...(platformaticRuntime.configManagerConfig),
+    ...platformaticRuntime.configManagerConfig,
     source: file,
     fixPaths: true,
     onMissingEnv (key) {
@@ -24,5 +24,5 @@ test('remove the watch config', async () => {
   const config = configManager.current
 
   equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`)
-  equal(config.watch, undefined)
+  equal(config.watch, true)
 })

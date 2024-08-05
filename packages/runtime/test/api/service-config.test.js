@@ -23,41 +23,29 @@ test('should get service config', async (t) => {
 
   delete serviceConfig.$schema
 
-  let logger = {}
-  if (process.stdout.isTTY) {
-    logger = {
-      transport: {
-        target: 'pino-pretty'
-      }
-    }
-  }
-
   assert.deepStrictEqual(serviceConfig, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
-      logger,
       keepAliveTimeout: 5000,
-      trustProxy: true
+      trustProxy: true,
     },
     service: { openapi: true },
     plugins: {
       paths: [
-        join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js')
-      ]
+        join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js'),
+      ],
     },
-    watch: {
-      enabled: false
-    },
+    watch: { enabled: true },
     metrics: {
       server: 'hide',
       defaultMetrics: {
-        enabled: false
+        enabled: false,
       },
       labels: {
-        serviceId: 'with-logger'
-      }
-    }
+        serviceId: 'with-logger',
+      },
+    },
   })
 })
 
@@ -76,37 +64,25 @@ test('do not force enable metrics without the management api', async (t) => {
 
   delete serviceConfig.$schema
 
-  let logger = {}
-  if (process.stdout.isTTY) {
-    logger = {
-      transport: {
-        target: 'pino-pretty'
-      }
-    }
-  }
-
   assert.deepStrictEqual(serviceConfig, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
-      logger,
       keepAliveTimeout: 5000,
-      trustProxy: true
+      trustProxy: true,
     },
     service: { openapi: true },
     plugins: {
       paths: [
-        join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js')
-      ]
+        join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js'),
+      ],
     },
-    watch: {
-      enabled: false
-    }
+    watch: { enabled: true },
   })
 })
 
 test('do not force enable metrics if they are set to false', async (t) => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api-without-metrics.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
 
@@ -120,43 +96,75 @@ test('do not force enable metrics if they are set to false', async (t) => {
 
   delete serviceConfig.$schema
 
-  let logger = {}
-  if (process.stdout.isTTY) {
-    logger = {
-      transport: {
-        target: 'pino-pretty'
-      }
-    }
-  }
-
   assert.deepStrictEqual(serviceConfig, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
-      logger,
       keepAliveTimeout: 5000,
-      trustProxy: true
+      trustProxy: true,
     },
     service: { openapi: true },
     plugins: {
       paths: [
         {
           options: {
-            name: 'plugin1'
+            name: 'plugin1',
           },
-          path: join(fixturesDir, 'monorepo', 'serviceAppWithMultiplePlugins', 'plugin.js')
+          path: join(fixturesDir, 'monorepo', 'serviceAppWithMultiplePlugins', 'plugin.js'),
         },
         {
           options: {
-            name: 'plugin2'
+            name: 'plugin2',
           },
-          path: join(fixturesDir, 'monorepo', 'serviceAppWithMultiplePlugins', 'plugin2.mjs')
-        }
-      ]
+          path: join(fixturesDir, 'monorepo', 'serviceAppWithMultiplePlugins', 'plugin2.mjs'),
+        },
+      ],
+    },
+    watch: { enabled: true },
+    metrics: false,
+  })
+})
+
+test('set serviceId in metrics as label in all services', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-metrics.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const serviceConfig = await app.getServiceConfig('with-logger')
+
+  delete serviceConfig.$schema
+
+  assert.deepStrictEqual(serviceConfig, {
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+      keepAliveTimeout: 5000,
+      trustProxy: true,
+    },
+    service: { openapi: true },
+    plugins: {
+      paths: [
+        join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js'),
+      ],
     },
     watch: {
-      enabled: false
+      enabled: true,
     },
-    metrics: false
+    metrics: {
+      server: 'hide',
+      defaultMetrics: {
+        enabled: false,
+      },
+      labels: {
+        app: 'serviceApp', // this is from the runtime config
+        serviceId: 'with-logger', // this is set for each service
+      },
+    },
   })
 })

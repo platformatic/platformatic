@@ -4,7 +4,6 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
-const { isatty } = require('tty')
 
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
@@ -20,62 +19,53 @@ test('should get service config', async (t) => {
 
   const client = new Client({
     hostname: 'localhost',
-    protocol: 'http:'
+    protocol: 'http:',
   }, {
-    socketPath: app.managementApi.server.address(),
+    socketPath: app.getManagementApiUrl(),
     keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10
+    keepAliveMaxTimeout: 10,
   })
 
   t.after(async () => {
     await Promise.all([
       client.close(),
       app.close(),
-      app.managementApi.close()
     ])
   })
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/services/service-1/config'
+    path: '/api/v1/services/service-1/config',
   })
 
   assert.strictEqual(statusCode, 200)
 
   const serviceConfig = await body.json()
 
-  const logger = {}
-  if (isatty(1) && !logger.transport) {
-    logger.transport = {
-      target: 'pino-pretty'
-    }
-  }
-
   assert.deepStrictEqual(serviceConfig, {
     $schema: `https://schemas.platformatic.dev/@platformatic/service/${platformaticVersion}.json`,
     server: {
       hostname: '127.0.0.1',
       port: 0,
-      logger,
-      keepAliveTimeout: 5000
+      keepAliveTimeout: 5000,
     },
     service: { openapi: true },
     plugins: {
       paths: [
-        join(projectDir, 'services', 'service-1', 'plugin.js')
-      ]
+        join(projectDir, 'services', 'service-1', 'plugin.js'),
+      ],
     },
     watch: {
-      enabled: false
+      enabled: true,
     },
     metrics: {
       server: 'hide',
       defaultMetrics: {
-        enabled: true
+        enabled: true,
       },
       labels: {
-        serviceId: 'service-1'
-      }
-    }
+        serviceId: 'service-1',
+      },
+    },
   })
 })

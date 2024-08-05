@@ -4,17 +4,18 @@ const assert = require('node:assert/strict')
 const { tmpdir } = require('node:os')
 const { test, describe } = require('node:test')
 const { join, resolve } = require('node:path')
-const { unlink, writeFile, mkdir } = require('node:fs/promises')
+const { unlink, writeFile } = require('node:fs/promises')
 const ConfigManager = require('..')
 const pid = process.pid
 const { tspl } = require('@matteo.collina/tspl')
+const { createDirectory } = require('@platformatic/utils')
 
 test('should compute absolute path', () => {
   const cm = new ConfigManager({ source: './test.json' })
   assert.equal(cm.fullPath, resolve(process.cwd(), './test.json'))
 })
 
-test('should throw if both path and config are not defined', async (t) => {
+test('should throw if both path and config are not defined', async t => {
   try {
     const cm = new ConfigManager({})
     await cm.parse()
@@ -24,7 +25,7 @@ test('should throw if both path and config are not defined', async (t) => {
   }
 })
 
-test('should accept and parse initial config object', async (t) => {
+test('should accept and parse initial config object', async t => {
   const cm = new ConfigManager({
     source: {
       server: {
@@ -42,7 +43,7 @@ test('should accept and parse initial config object', async (t) => {
   })
 })
 
-test('dirname option', async (t) => {
+test('dirname option', async t => {
   const cm = new ConfigManager({
     source: {
       server: {
@@ -56,7 +57,7 @@ test('dirname option', async (t) => {
   assert.equal(cm.dirname, 'foobar')
 })
 
-test('dirname as cwd', async (t) => {
+test('dirname as cwd', async t => {
   const cm = new ConfigManager({
     source: {
       server: {
@@ -69,7 +70,7 @@ test('dirname as cwd', async (t) => {
   assert.equal(cm.dirname, process.cwd())
 })
 
-test('should used passed env vars', (t) => {
+test('should used passed env vars', t => {
   {
     // passed env
     const cm = new ConfigManager({
@@ -97,14 +98,14 @@ test('should used passed env vars', (t) => {
   }
 })
 
-test('should not validate if parsing is not called', (t) => {
+test('should not validate if parsing is not called', t => {
   const cm = new ConfigManager({
     source: './test.json',
   })
   assert.deepEqual(cm.validate(), false)
 })
 
-test('should throw if file is not JSON, yaml, or toml', async (t) => {
+test('should throw if file is not JSON, yaml, or toml', async t => {
   try {
     const cm = new ConfigManager({
       source: './test.txt',
@@ -118,7 +119,7 @@ test('should throw if file is not JSON, yaml, or toml', async (t) => {
 
 test('should look for a .env file in the same folder of config', async () => {
   const tmpDir = join(tmpdir(), `plt-auth-${pid}`)
-  await mkdir(tmpDir)
+  await createDirectory(tmpDir)
   const config = {
     name: 'Platformatic',
     props: {
@@ -158,14 +159,14 @@ test('should look for a .env file in the same folder of config', async () => {
   await unlink(envFile)
 })
 
-test('should look for a .env file in process.cwd() too', async (t) => {
+test('should look for a .env file in process.cwd() too', async t => {
   const currentCWD = process.cwd()
   t.after(() => process.chdir(currentCWD))
 
   const tmpDir = join(tmpdir(), `plt-auth-${pid}-2`)
   const tmpDir2 = join(tmpdir(), `plt-auth-${pid}-2-cwd`)
-  await mkdir(tmpDir)
-  await mkdir(tmpDir2)
+  await createDirectory(tmpDir)
+  await createDirectory(tmpDir2)
 
   const config = {
     name: 'Platformatic',
@@ -208,7 +209,7 @@ test('should look for a .env file in process.cwd() too', async (t) => {
   await unlink(envFile)
 })
 
-test('ConfigManager.listConfigFiles() lists possible configs by type', async (t) => {
+test('ConfigManager.listConfigFiles() lists possible configs by type', async t => {
   assert.deepEqual(ConfigManager.listConfigFiles('db'), [
     'platformatic.db.json',
     'platformatic.db.json5',
@@ -253,7 +254,7 @@ test('ConfigManager.listConfigFiles() lists possible configs by type', async (t)
   ])
 })
 
-test('ConfigManager.listConfigFiles() lists all possible configs', async (t) => {
+test('ConfigManager.listConfigFiles() lists all possible configs', async t => {
   assert.deepEqual(ConfigManager.listConfigFiles(), [
     'platformatic.service.json',
     'platformatic.service.json5',
@@ -288,34 +289,22 @@ test('ConfigManager.listConfigFiles() lists all possible configs', async (t) => 
   ])
 })
 
-test('ConfigManager.findConfigFile() finds configs by type', async (t) => {
+test('ConfigManager.findConfigFile() finds configs by type', async t => {
   const fixturesDir = join(__dirname, 'fixtures')
-  assert.deepEqual(
-    await ConfigManager.findConfigFile(fixturesDir, 'db'),
-    'platformatic.db.json'
-  )
-  assert.deepEqual(
-    await ConfigManager.findConfigFile(fixturesDir, 'service'),
-    'platformatic.service.json'
-  )
+  assert.deepEqual(await ConfigManager.findConfigFile(fixturesDir, 'db'), 'platformatic.db.json')
+  assert.deepEqual(await ConfigManager.findConfigFile(fixturesDir, 'service'), 'platformatic.service.json')
 })
 
-test('ConfigManager.findConfigFile() finds configs without type', async (t) => {
+test('ConfigManager.findConfigFile() finds configs without type', async t => {
   const fixturesDir = join(__dirname, 'fixtures')
-  assert.deepEqual(
-    await ConfigManager.findConfigFile(fixturesDir),
-    'platformatic.service.json'
-  )
+  assert.deepEqual(await ConfigManager.findConfigFile(fixturesDir), 'platformatic.service.json')
 })
 
-test('ConfigManager.findConfigFile() searches cwd by default', async (t) => {
-  assert.deepEqual(
-    await ConfigManager.findConfigFile(),
-    undefined
-  )
+test('ConfigManager.findConfigFile() searches cwd by default', async t => {
+  assert.deepEqual(await ConfigManager.findConfigFile(), undefined)
 })
 
-test('should throw if there is upgrade but not version', async (t) => {
+test('should throw if there is upgrade but not version', async t => {
   try {
     // eslint-disable-next-line no-new
     new ConfigManager({
@@ -328,7 +317,7 @@ test('should throw if there is upgrade but not version', async (t) => {
 })
 
 describe('upgrade', () => {
-  test('missing configVersion with platformatic URL schema', async (t) => {
+  test('missing configVersion with platformatic URL schema', async t => {
     const plan = tspl(t, { plan: 1 })
     const cm = new ConfigManager({
       version: '1.0.0',
@@ -347,7 +336,7 @@ describe('upgrade', () => {
     await cm.parse()
   })
 
-  test('missing configVersion with version in module', async (t) => {
+  test('missing configVersion with version in module', async t => {
     const plan = tspl(t, { plan: 1 })
     const cm = new ConfigManager({
       version: '1.0.0',
@@ -366,7 +355,7 @@ describe('upgrade', () => {
     await cm.parse()
   })
 
-  test('missing configVersion with version in module', async (t) => {
+  test('missing configVersion with version in module', async t => {
     const plan = tspl(t, { plan: 1 })
     const cm = new ConfigManager({
       version: '1.0.0',
@@ -379,7 +368,7 @@ describe('upgrade', () => {
     await cm.parse()
   })
 
-  test('if all things fails, it\'s a legacy app', async (t) => {
+  test("if all things fails, it's a legacy app", async t => {
     const plan = tspl(t, { plan: 1 })
     const cm = new ConfigManager({
       version: '1.0.0',

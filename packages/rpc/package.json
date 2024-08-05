@@ -1,0 +1,39 @@
+{
+  "name": "@platformatic/rpc",
+  "version": "1.49.1",
+  "description": "A fastify RPC plugin for typescript applications",
+  "main": "index.js",
+  "bin": {
+    "plt-rpc": "cli.js"
+  },
+  "scripts": {
+    "lint": "eslint",
+    "test": "pnpm run lint && borp --concurrency=1 --timeout 120000",
+    "cov": "pnpm run lint && borp --concurrency=1 --coverage --timeout 120000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "author": "Matteo Collina <hello@matteocollina.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "devDependencies": {
+    "@fastify/autoload": "^5.10.0",
+    "@types/node": "^20.11.28",
+    "borp": "^0.15.0",
+    "eslint": "9",
+    "execa": "^8.0.1",
+    "neostandard": "^0.11.1"
+  },
+  "dependencies": {
+    "fastify": "^4.28.1",
+    "fastify-plugin": "^4.5.1",
+    "help-me": "^5.0.0",
+    "typescript": "~5.1.0",
+    "typescript-json-schema": "^0.64.0"
+  }
+}

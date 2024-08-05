@@ -63,9 +63,9 @@ the services managed by the composer. Each service object supports the following
     - `error` (`error`) - The error message
     - `subgraphName` (`string`) - The erroring subgraph
 
- Its important to note GraphQL subscriptions are not supported in the composer yet.
+    Its important to note GraphQL subscriptions are not supported in the composer yet.
 
-- **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the services. If not specified, the default value is `1000`; set to `0` to disable.
+- **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the services. If not specified, the default value is `1000`; set to `0` to disable. This is only supported if the Composer is running within a [Platformatic Runtime](../runtime/overview.md).
 
 - **`addEmptySchema`** (`boolean`) - If true, the composer will add an empty response schema to the composed OpenAPI specification. Default is `false`.
 

@@ -10,7 +10,7 @@ const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 test('can restart the runtime apps', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const app = await buildServer(configFile)
-  const entryUrl = await app.start()
+  let entryUrl = await app.start()
 
   t.after(async () => {
     await app.close()
@@ -23,7 +23,7 @@ test('can restart the runtime apps', async (t) => {
     assert.deepStrictEqual(await res.body.json(), { hello: 'world' })
   }
 
-  await app.restart()
+  entryUrl = await app.restart()
 
   {
     const res = await request(entryUrl + '/upstream')

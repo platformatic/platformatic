@@ -2,10 +2,10 @@
 
 const { tmpdir } = require('node:os')
 const { join } = require('node:path')
-const { rm } = require('node:fs/promises')
 const { randomUUID } = require('node:crypto')
 const why = require('why-is-node-running')
 const { createConnectionPool } = require('@platformatic/sql-mapper')
+const { safeRemove } = require('@platformatic/utils')
 const { Agent, setGlobalDispatcher } = require('undici')
 const { platformaticDB, ConfigManager } = require('..')
 
@@ -41,7 +41,7 @@ async function getConnectionInfo (dbType) {
         connectionString,
       },
       async dropTestDB () {
-        await rm(pathToSqlite).catch(() => {})
+        return safeRemove(pathToSqlite)
       },
     }
   }

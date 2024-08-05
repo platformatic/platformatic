@@ -227,51 +227,6 @@ test('support basic auth with metrics on parent server', async (t) => {
   }
 })
 
-test('do not error on restart', async (t) => {
-  const app = await buildServer({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
-    },
-    metrics: true,
-  })
-
-  t.after(async () => {
-    await app.close()
-  })
-  await app.start()
-  await app.restart()
-
-  const res = await (request('http://127.0.0.1:9090/metrics'))
-  assert.strictEqual(res.statusCode, 200)
-  assert.match(res.headers['content-type'], /^text\/plain/)
-  const body = await res.body.text()
-  testPrometheusOutput(body)
-})
-
-test('restarting 10 times does not leak', async (t) => {
-  process.on('warning', (warning) => {
-    assert.fail('warning was raised')
-  })
-  const app = await buildServer({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
-    },
-    metrics: true,
-  })
-
-  t.after(async () => {
-    await app.close()
-  })
-
-  await app.start()
-
-  for (let i = 0; i < 10; i++) {
-    await app.restart()
-  }
-})
-
 test('should not expose metrics if server hide is set', async (t) => {
   const app = await buildServer({
     server: {

@@ -8,7 +8,7 @@ const { Client } = require('undici')
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should stop service by service id', async (t) => {
+test('should stop service by service id', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
@@ -20,21 +20,21 @@ test('should stop service by service id', async (t) => {
     assert.strictEqual(serviceDetails.status, 'started')
   }
 
-  const client = new Client({
-    hostname: 'localhost',
-    protocol: 'http:',
-  }, {
-    socketPath: app.managementApi.server.address(),
-    keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10,
-  })
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:',
+    },
+    {
+      socketPath: app.getManagementApiUrl(),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10,
+    }
+  )
 
   t.after(async () => {
     await client.close()
-    await Promise.all([
-      app.close(),
-      app.managementApi.close(),
-    ])
+    await Promise.all([app.close()])
   })
 
   const { statusCode, body } = await client.request({
@@ -46,40 +46,40 @@ test('should stop service by service id', async (t) => {
   assert.strictEqual(statusCode, 200)
 
   {
-    const serviceDetails = await app.getServiceDetails('service-1')
+    const serviceDetails = await app.getServiceDetails('service-1', true)
     assert.strictEqual(serviceDetails.status, 'stopped')
   }
 })
 
-test('should start stopped service by service id', async (t) => {
+test('should start stopped service by service id', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
 
   await app.start()
 
-  await app.stopService('service-1')
+  await app._stopService('service-1')
 
   {
-    const serviceDetails = await app.getServiceDetails('service-1')
+    const serviceDetails = await app.getServiceDetails('service-1', true)
     assert.strictEqual(serviceDetails.status, 'stopped')
   }
 
-  const client = new Client({
-    hostname: 'localhost',
-    protocol: 'http:',
-  }, {
-    socketPath: app.managementApi.server.address(),
-    keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10,
-  })
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:',
+    },
+    {
+      socketPath: app.getManagementApiUrl(),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10,
+    }
+  )
 
   t.after(async () => {
     await client.close()
-    await Promise.all([
-      app.close(),
-      app.managementApi.close(),
-    ])
+    await Promise.all([app.close()])
   })
 
   const { statusCode, body } = await client.request({
@@ -96,29 +96,29 @@ test('should start stopped service by service id', async (t) => {
   }
 })
 
-test('should proxy request to the service', async (t) => {
+test('should proxy request to the service', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
 
   await app.start()
 
-  const client = new Client({
-    hostname: 'localhost',
-    protocol: 'http:',
-  }, {
-    socketPath: app.managementApi.server.address(),
-    keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10,
-  })
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:',
+    },
+    {
+      socketPath: app.getManagementApiUrl(),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10,
+    }
+  )
 
   t.after(async () => {
     await client.close()
 
-    await Promise.all([
-      app.close(),
-      app.managementApi.close(),
-    ])
+    await Promise.all([app.close()])
   })
 
   const { statusCode, body } = await client.request({

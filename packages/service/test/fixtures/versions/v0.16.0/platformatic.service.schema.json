@@ -150,7 +150,7 @@
                 "outDir"
               ]
             },
-            "hotReload": {
+            "watch": {
               "type": "boolean",
               "default": true
             },

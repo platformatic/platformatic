@@ -45,16 +45,8 @@ test('supports https options', async (t) => {
   await app.start()
 
   assert.strictEqual(app.url.startsWith('https://'), true)
-  let res = await (request(`${app.url}/`))
+  const res = await (request(`${app.url}/`))
   assert.strictEqual(res.statusCode, 200)
-  let body = await res.body.json()
-  assert.deepStrictEqual(body, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
-
-  await app.restart()
-
-  assert.strictEqual(app.url.startsWith('https://'), true)
-  res = await (request(`${app.url}/`))
-  assert.strictEqual(res.statusCode, 200)
-  body = await res.body.json()
+  const body = await res.body.json()
   assert.deepStrictEqual(body, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
 })

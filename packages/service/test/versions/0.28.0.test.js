@@ -29,5 +29,5 @@ test('remove hotReload', async () => {
     paths: ['plugin.js'],
   })
 
-  deepEqual(config.watch, {})
+  deepEqual(config.watch, { enabled: true })
 })

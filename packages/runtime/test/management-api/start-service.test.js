@@ -18,14 +18,13 @@ test('should start stopped service by service id', async (t) => {
   t.after(async () => {
     await Promise.all([
       app.close(),
-      app.managementApi.close(),
     ])
   })
 
-  await app.stopService('service-1')
+  await app._stopService('service-1')
 
   {
-    const serviceDetails = await app.getServiceDetails('service-1')
+    const serviceDetails = await app.getServiceDetails('service-1', true)
     assert.strictEqual(serviceDetails.status, 'stopped')
   }
 
@@ -33,7 +32,7 @@ test('should start stopped service by service id', async (t) => {
     hostname: 'localhost',
     protocol: 'http:',
   }, {
-    socketPath: app.managementApi.server.address(),
+    socketPath: app.getManagementApiUrl(),
     keepAliveTimeout: 10,
     keepAliveMaxTimeout: 10,
   })

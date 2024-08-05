@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint",
-    "test": "pnpm run lint && borp --concurrency=1 --timeout 120000 && tsd",
-    "cov": "pnpm run lint && borp --concurrency=1 --coverage --timeout 120000 && tsd"
+    "test": "pnpm run lint && borp --concurrency=1 --timeout=180000 && tsd",
+    "cov": "pnpm run lint && borp --concurrency=1 --coverage --timeout=180000 && tsd"
   },
   "repository": {
     "type": "git",
@@ -20,7 +20,8 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@platformatic/telemetry": "workspace:*",
-    "borp": "^0.16.0",
+    "@platformatic/utils": "workspace:*",
+    "borp": "^0.17.0",
     "c8": "^10.0.0",
     "eslint": "9",
     "execa": "^8.0.1",

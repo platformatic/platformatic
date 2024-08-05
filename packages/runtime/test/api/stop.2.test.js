@@ -18,10 +18,10 @@ test('should fail to stop service with a wrong id', async (t) => {
   })
 
   try {
-    await app.stopService('wrong-service-id')
+    await app._stopService('wrong-service-id')
     assert.fail('should have thrown')
   } catch (err) {
     assert.strictEqual(err.message,
-      'Service not found. Available services are: db-app, serviceApp, with-logger, multi-plugin-service')
+      'Service wrong-service-id not found. Available services are: db-app, serviceApp, with-logger, multi-plugin-service')
   }
 })

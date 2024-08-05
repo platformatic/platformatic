@@ -9,6 +9,7 @@ export class ITC extends EventEmitter {
   constructor (options: ITCConstructorOptions)
 
   send (name: string, message: any): Promise<any>
+  notify (name: string, message: any): void
   handle (message: string, handler: (data: any) => Promise<any>): void
   listen (): void
   close (): void

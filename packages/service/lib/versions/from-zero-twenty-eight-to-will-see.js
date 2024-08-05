@@ -7,9 +7,9 @@ module.exports.migration = {
   toVersion: version,
   up: function (config) {
     if (config.watch !== false) {
-      config.watch = typeof config.watch === 'object' ? config.watch : {}
+      config.watch = typeof config.watch === 'object' ? config.watch : true
     }
-    delete config.plugins?.hotReload
+    delete config.plugins?.watch
 
     return config
   },

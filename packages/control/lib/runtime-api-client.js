@@ -3,11 +3,12 @@
 const { tmpdir, platform, EOL } = require('node:os')
 const { join } = require('node:path')
 const { exec, spawn } = require('node:child_process')
-const { readdir, rm, access } = require('node:fs/promises')
+const { readdir, access } = require('node:fs/promises')
 const { Readable } = require('node:stream')
 const { Client } = require('undici')
 const WebSocket = require('ws')
 const errors = require('./errors.js')
+const { safeRemove } = require('@platformatic/utils')
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 const PLATFORMATIC_PIPE_PREFIX = '\\\\.\\pipe\\platformatic-'
@@ -34,12 +35,10 @@ class RuntimeApiClient {
   }
 
   async getRuntimes () {
-    const runtimePIDs = platform() === 'win32'
-      ? await this.#getWindowsRuntimePIDs()
-      : await this.#getUnixRuntimePIDs()
+    const runtimePIDs = platform() === 'win32' ? await this.#getWindowsRuntimePIDs() : await this.#getUnixRuntimePIDs()
 
     const getMetadataRequests = await Promise.allSettled(
-      runtimePIDs.map(async (runtimePID) => {
+      runtimePIDs.map(async runtimePID => {
         return this.getRuntimeMetadata(runtimePID)
       })
     )
@@ -287,10 +286,13 @@ class RuntimeApiClient {
     let undiciClient = this.#undiciClients.get(pid)
     if (!undiciClient) {
       const socketPath = this.#getSocketPathFromPid(pid)
-      undiciClient = new Client({
-        hostname: 'localhost',
-        protocol: 'http:',
-      }, { socketPath })
+      undiciClient = new Client(
+        {
+          hostname: 'localhost',
+          protocol: 'http:',
+        },
+        { socketPath }
+      )
 
       this.#undiciClients.set(pid, undiciClient)
     }
@@ -332,24 +334,20 @@ class RuntimeApiClient {
 
   async #getWindowsNamedPipes () {
     return new Promise((resolve, reject) => {
-      exec(
-        '[System.IO.Directory]::GetFiles("\\\\.\\pipe\\")',
-        { shell: 'powershell.exe' },
-        (err, stdout) => {
-          if (err) {
-            reject(err)
-            return
-          }
-          const namedPipes = stdout.split(EOL)
-          resolve(namedPipes)
+      exec('[System.IO.Directory]::GetFiles("\\\\.\\pipe\\")', { shell: 'powershell.exe' }, (err, stdout) => {
+        if (err) {
+          reject(err)
+          return
         }
-      )
+        const namedPipes = stdout.split(EOL)
+        resolve(namedPipes)
+      })
     })
   }
 
   async #removeRuntimeTmpDir (pid) {
     const runtimeDir = join(PLATFORMATIC_TMP_DIR, pid.toString())
-    await rm(runtimeDir, { recursive: true, force: true })
+    await safeRemove(runtimeDir)
   }
 }
 
@@ -358,13 +356,13 @@ class WebSocketStream extends Readable {
     super()
     this.ws = new WebSocket(url)
 
-    this.ws.on('message', (data) => {
+    this.ws.on('message', data => {
       this.push(data)
     })
     this.ws.on('close', () => {
       this.push(null)
     })
-    this.ws.on('error', (err) => {
+    this.ws.on('error', err => {
       this.emit('error', new errors.FailedToStreamRuntimeLogs(err.message))
     })
     this.on('close', () => {

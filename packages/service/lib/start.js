@@ -4,8 +4,8 @@ const { readFile } = require('fs/promises')
 const close = require('close-with-grace')
 const { loadConfig, ConfigManager, printConfigValidationErrors, printAndExitLoadConfigError } = require('@platformatic/config')
 const { addLoggerToTheConfig, isDocker } = require('./utils.js')
-const { restartable } = require('@fastify/restartable')
 const { randomUUID } = require('crypto')
+const { fastify } = require('fastify')
 
 async function adjustHttpsKeyAndCert (arg) {
   if (typeof arg === 'string') {
@@ -23,6 +23,37 @@ async function adjustHttpsKeyAndCert (arg) {
   }
 
   return arg
+}
+
+async function createServer (context) {
+  const { app, configManager } = context
+  const config = configManager.current
+  let fastifyOptions = {}
+
+  if (config.server) {
+    // override hostname if it's docker
+    if (await isDocker()) {
+      config.server.hostname = '0.0.0.0'
+    }
+    fastifyOptions = {
+      ...config.server,
+    }
+  }
+  fastifyOptions.genReqId = function (req) { return randomUUID() }
+  const root = fastify(fastifyOptions)
+  root.decorate('platformatic', { configManager, config })
+  await root.register(app)
+  if (!root.hasRoute({ url: '/', method: 'GET' })) {
+    await root.register(require('./root-endpoint'))
+  }
+
+  root.decorate('url', {
+    getter () {
+      return context.url
+    },
+  })
+
+  return root
 }
 
 async function buildServer (options, app) {
@@ -43,58 +74,21 @@ async function buildServer (options, app) {
     options = config
   }
 
-  let url = null
-
-  async function createRestartable (fastify) {
-    const config = configManager.current
-    let fastifyOptions = {}
-
-    if (config.server) {
-      // override hostname if it's docker
-      if (await isDocker()) {
-        config.server.hostname = '0.0.0.0'
-      }
-      fastifyOptions = {
-        ...config.server,
-      }
-    }
-    fastifyOptions.genReqId = function (req) { return randomUUID() }
-    const root = fastify(fastifyOptions)
-    root.decorate('platformatic', { configManager, config })
-
-    if (typeof app === 'function') {
-      await root.register(app)
-    } else {
-      await root.register(app.app)
-    }
-
-    if (!root.hasRoute({ url: '/', method: 'GET' })) {
-      await root.register(require('./root-endpoint'))
-    }
-
-    root.decorate('url', {
-      getter () {
-        return url
-      },
-    })
-
-    if (root.restarted) {
-      root.log.info('restarted')
-    }
-
-    return root
-  }
-
   if (options.server) {
     if (options.server.https) {
       options.server.https.key = await adjustHttpsKeyAndCert(options.server.https.key)
       options.server.https.cert = await adjustHttpsKeyAndCert(options.server.https.cert)
     }
   }
-  const handler = await restartable(createRestartable)
+
+  const context = {
+    app: typeof app === 'function' ? app : app.app,
+    configManager,
+  }
+  const handler = await createServer(context)
   handler.decorate('start', async () => {
-    url = await handler.listen({ host: options.server?.hostname || '127.0.0.1', port: options.server?.port || 0 })
-    return url
+    context.url = await handler.listen({ host: options.server?.hostname || '127.0.0.1', port: options.server?.port || 0 })
+    return context.url
   })
   configManager.on('error', function (err) {
     /* c8 ignore next 1 */
@@ -102,20 +96,6 @@ async function buildServer (options, app) {
   })
 
   return handler
-}
-
-/* c8 ignore next 12 */
-async function safeRestart (app) {
-  try {
-    await app.restart()
-  } catch (err) {
-    app.log.error({
-      err: {
-        message: err.message,
-        stack: err.stack,
-      },
-    }, 'failed to reload server')
-  }
 }
 
 async function start (appType, _args) {
@@ -150,14 +130,6 @@ async function start (appType, _args) {
   } catch (err) {
     printAndExitLoadConfigError(err)
   }
-
-  // Ignore from CI because SIGUSR2 is not available
-  // on Windows
-  process.on('SIGUSR2', function () {
-    app.log.info('reloading configuration')
-    safeRestart(app)
-    return false
-  })
 
   close(async ({ signal, err }) => {
     // Windows does not support trapping signals

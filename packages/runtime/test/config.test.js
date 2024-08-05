@@ -3,15 +3,15 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const pino = require('pino')
 const { loadConfig } = require('@platformatic/config')
 const { platformaticService } = require('@platformatic/service')
 const { platformaticDB } = require('@platformatic/db')
-const RuntimeApi = require('../lib/api')
+const { Runtime } = require('../lib/runtime')
 const { parseInspectorOptions, platformaticRuntime } = require('../lib/config')
 const { wrapConfigInRuntimeConfig } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 const { Store } = require('@platformatic/config')
+const { getRuntimeLogsDir } = require('../lib/utils')
 
 test('throws if no entrypoint is found', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'invalid-entrypoint.json')
@@ -42,11 +42,19 @@ test('throws if both autoload and services are provided', async (t) => {
 test('dependencies are not considered if services are specified manually', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer-no-autoload.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const dirname = config.configManager.dirname
+  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
 
-  const runtime = new RuntimeApi(config.configManager.current, pino(), undefined)
-  const services = await runtime._resolveBootstrapDependencies()
+  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
 
-  assert.deepStrictEqual(Array.from(services.keys()), [
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await runtime.init()
+  const { services } = await runtime.getServices()
+
+  assert.deepStrictEqual(services.map(service => service.id), [
     'with-logger',
     'db-app',
     'composerApp',
@@ -58,11 +66,20 @@ test('dependencies are not considered if services are specified manually', async
 test('dependencies are resolved if services are not specified manually', async (t) => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const dirname = config.configManager.dirname
+  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
 
-  const runtime = new RuntimeApi(config.configManager.current, pino(), undefined)
-  const services = await runtime._resolveBootstrapDependencies()
+  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
 
-  assert.deepStrictEqual(Array.from(services.keys()), [
+  await runtime.init()
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  const { services } = await runtime.getServices()
+
+  assert.deepStrictEqual(services.map(service => service.id), [
     'dbApp',
     'serviceApp',
     'with-logger',
@@ -94,7 +111,7 @@ test('parseInspectorOptions()', async (t) => {
       host: '127.0.0.1',
       port: 9229,
       breakFirstLine: false,
-      hotReloadDisabled: false,
+      watchDisabled: false,
     })
   })
 
@@ -109,26 +126,26 @@ test('parseInspectorOptions()', async (t) => {
       host: '127.0.0.1',
       port: 9229,
       breakFirstLine: true,
-      hotReloadDisabled: false,
+      watchDisabled: false,
     })
   })
 
   await t.test('hot reloading is disabled if the inspector is used', () => {
     const cm1 = {
       args: { 'inspect-brk': '' },
-      current: { hotReload: true },
+      current: { watch: true },
     }
 
     parseInspectorOptions(cm1)
-    assert.strictEqual(cm1.current.hotReload, false)
+    assert.strictEqual(cm1.current.watch, false)
 
     const cm2 = {
       args: {},
-      current: { hotReload: true },
+      current: { watch: true },
     }
 
     parseInspectorOptions(cm2)
-    assert.strictEqual(cm2.current.hotReload, true)
+    assert.strictEqual(cm2.current.watch, true)
   })
 
   await t.test('sets port to a custom value', () => {
@@ -142,7 +159,7 @@ test('parseInspectorOptions()', async (t) => {
       host: '127.0.0.1',
       port: 6666,
       breakFirstLine: false,
-      hotReloadDisabled: false,
+      watchDisabled: false,
     })
   })
 
@@ -157,7 +174,7 @@ test('parseInspectorOptions()', async (t) => {
       host: '0.0.0.0',
       port: 6666,
       breakFirstLine: false,
-      hotReloadDisabled: false,
+      watchDisabled: false,
     })
   })
 
@@ -211,18 +228,18 @@ test('same schemaOptions as platformatic service', async () => {
   assert.deepStrictEqual(platformaticRuntime.schemaOptions, platformaticService.schemaOptions)
 })
 
-test('correctly loads the hotReload value from a string', async () => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-hotreload-env.json')
-  process.env.PLT_HOT_RELOAD = 'true'
+test('correctly loads the watch value from a string', async () => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env.json')
+  process.env.PLT_WATCH = 'true'
   const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  assert.strictEqual(loaded.configManager.current.hotReload, true)
+  assert.strictEqual(loaded.configManager.current.watch, true)
 })
 
-test('correctly loads the hotReload value from a string', async () => {
-  const configFile = join(fixturesDir, 'configs', 'monorepo-hotreload-env.json')
-  process.env.PLT_HOT_RELOAD = 'false'
+test('correctly loads the watch value from a string', async () => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env.json')
+  process.env.PLT_WATCH = 'false'
   const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  assert.strictEqual(loaded.configManager.current.hotReload, false)
+  assert.strictEqual(loaded.configManager.current.watch, false)
 })
 
 test('defaults the service name to `main` if there is no package.json', async (t) => {

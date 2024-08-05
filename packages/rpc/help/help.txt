@@ -1,0 +1,16 @@
+Generate an openapi schema from a typescript fastify application.
+
+To create a client for a remote OpenAPI API, you can use the following command:
+
+```bash
+$ npx plt-rpc --ts-config ./tsconfig.json --path ./openapi.json
+```
+
+Options:
+
+* `--ts-config <path>` - Path to the typescript configuration file.
+* `--path <path>` - Path to the openapi schema file.
+
+Platformatic RPC API is in the experimental stage. The feature is not subject to semantic versioning rules.
+Non-backward compatible changes or removal may occur in any future release.
+Use of the feature is not recommended in production environments.

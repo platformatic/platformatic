@@ -1,10 +1,11 @@
+import { createDirectory, safeRemove } from '@platformatic/utils'
+import { execa } from 'execa'
 import assert from 'node:assert'
+import { access, cp, rename } from 'node:fs/promises'
 import path, { join } from 'node:path'
 import { test } from 'node:test'
-import { access, cp, rename, rm, mkdir } from 'node:fs/promises'
-import { execa } from 'execa'
-import stripAnsi from 'strip-ansi'
 import split from 'split2'
+import stripAnsi from 'strip-ansi'
 import { fileURLToPath } from 'url'
 import { cliPath, safeKill } from './helper.mjs'
 
@@ -18,16 +19,11 @@ function urlDirname (url) {
 
 async function getCWD (t) {
   const dir = path.join(urlDirname(import.meta.url), '..', 'tmp', `typescript-plugin-clone-1-${count++}`)
-  try {
-    await rm(dir, { recursive: true })
-  } catch {}
 
-  await mkdir(dir, { recursive: true })
-  t.after(async () => {
-    try {
-      await rm(dir, { recursive: true })
-    } catch {}
-  })
+  await createDirectory(dir, true)
+
+  t.after(() => safeRemove(dir))
+
   return dir
 }
 
@@ -37,7 +33,7 @@ function exitOnTeardown (child) {
   }
 }
 
-test('should not compile bad typescript plugin', async (t) => {
+test('should not compile bad typescript plugin', async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'bad-typescript-plugin')
   const cwd = await getCWD(t)
   await cp(testDir, cwd, { recursive: true })
@@ -56,7 +52,7 @@ test('should not compile bad typescript plugin', async (t) => {
   } catch (err) {}
 })
 
-test('missing tsconfig file', async (t) => {
+test('missing tsconfig file', async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   const cwd = await getCWD(t)
 
@@ -77,7 +73,7 @@ test('missing tsconfig file', async (t) => {
   }
 })
 
-test('start command should not compile typescript plugin with errors', async (t) => {
+test('start command should not compile typescript plugin with errors', async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'bad-typescript-plugin')
   const cwd = await getCWD(t)
   await cp(testDir, cwd, { recursive: true })
@@ -105,7 +101,7 @@ test('start command should not compile typescript plugin with errors', async (t)
   } catch (err) {}
 })
 
-test('should not compile typescript plugin with start without tsconfig', async (t) => {
+test('should not compile typescript plugin with start without tsconfig', async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   const cwd = await getCWD(t)
 
@@ -126,7 +122,7 @@ test('should not compile typescript plugin with start without tsconfig', async (
   }
 })
 
-test('should compile ts app with config', async (t) => {
+test('should compile ts app with config', async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'hello-ts-with-config')
   const cwd = await getCWD(t)
 
@@ -164,7 +160,7 @@ test('should compile ts app with config', async (t) => {
   assert.fail('should compile typescript plugin with a compile command')
 })
 
-test('should clean outDir with --clean', async (t) => {
+test('should clean outDir with --clean', async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
   const cwd = await getCWD(t)
 

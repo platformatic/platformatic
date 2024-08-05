@@ -3,18 +3,21 @@
 const { on } = require('events')
 const { join } = require('node:path')
 const { tmpdir } = require('node:os')
-const { mkdtemp, rm } = require('node:fs/promises')
+const { mkdtemp } = require('node:fs/promises')
+const { safeRemove } = require('@platformatic/utils')
 
 const split = require('split2')
 const { Agent, setGlobalDispatcher } = require('undici')
 
-setGlobalDispatcher(new Agent({
-  keepAliveTimeout: 10,
-  keepAliveMaxTimeout: 10,
-  tls: {
-    rejectUnauthorized: false,
-  },
-}))
+setGlobalDispatcher(
+  new Agent({
+    keepAliveTimeout: 10,
+    keepAliveMaxTimeout: 10,
+    tls: {
+      rejectUnauthorized: false,
+    },
+  })
+)
 
 const cliPath = join(__dirname, '..', '..', 'composer.mjs')
 
@@ -24,18 +27,20 @@ async function start (...args) {
   const child = execa('node', [cliPath, 'start', ...args])
   child.stderr.pipe(process.stdout)
 
-  const output = child.stdout.pipe(split(function (line) {
-    try {
-      const obj = JSON.parse(line)
-      return obj
-    } catch (err) {
-      console.log(line)
-    }
-  }))
+  const output = child.stdout.pipe(
+    split(function (line) {
+      try {
+        const obj = JSON.parse(line)
+        return obj
+      } catch (err) {
+        console.log(line)
+      }
+    })
+  )
   child.ndj = output
 
   const errorTimeout = setTimeout(() => {
-    throw new Error('Couldn\'t start server')
+    throw new Error("Couldn't start server")
   }, 30000)
 
   for await (const messages of on(output, 'data')) {
@@ -53,7 +58,7 @@ async function start (...args) {
 async function tmpDir (t, name) {
   const cwd = await mkdtemp(join(tmpdir(), name))
   t.after(async () => {
-    await rm(cwd, { recursive: true, force: true })
+    await safeRemove(cwd)
   })
 
   return cwd

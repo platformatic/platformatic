@@ -1,9 +1,8 @@
 'use strict'
 
 const { join } = require('node:path')
-const fs = require('node:fs/promises')
-const { safeMkdir } = require('../lib/utils')
 const { MockAgent, setGlobalDispatcher } = require('undici')
+const { safeRemove, createDirectory } = require('@platformatic/utils')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -16,21 +15,17 @@ async function getTempDir (baseDir) {
     baseDir = __dirname
   }
   const dir = join(baseDir, 'tmp', `platformatic-generators-${process.pid}-${Date.now()}-${counter++}`)
-  await safeMkdir(dir)
+  await createDirectory(dir)
   return dir
 }
 async function moveToTmpdir (teardown) {
   const cwd = process.cwd()
-  // const tmp = join(__dirname, 'tmp')
-  // try {
-  //   await fs.mkdir(tmp)
-  // } catch {
-  // }
+
   const dir = await getTempDir()
   process.chdir(dir)
   teardown(() => process.chdir(cwd))
   if (!process.env.SKIP_RM_TMP) {
-    teardown(() => fs.rm(dir, { recursive: true }).catch(() => {}))
+    teardown(() => safeRemove(dir))
   }
   return dir
 }

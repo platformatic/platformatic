@@ -38,10 +38,5 @@
     "neostandard": "^0.11.1",
     "platformatic": "workspace:*",
     "typescript": "^5.5.4"
-  },
-  "standard": {
-    "ignore": [
-      "**/test/tmp"
-    ]
   }
 }

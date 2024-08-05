@@ -1,9 +1,9 @@
-import assert from 'node:assert'
-import { on, once } from 'node:events'
-import { test } from 'node:test'
 import { join } from 'desm'
-import { request } from 'undici'
 import getPort from 'get-port'
+import assert from 'node:assert'
+import { on } from 'node:events'
+import { test } from 'node:test'
+import { request } from 'undici'
 import { start } from './helper.mjs'
 
 test('restart in case of a crash', async () => {
@@ -39,6 +39,7 @@ test('restart in case of a crash', async () => {
   }
 
   assert.ok(found)
+  assert.ok(foundListening)
 
   {
     const res = await request(url + '/')
@@ -58,5 +59,28 @@ test('do not restart in case of a crash in case it\'s so specified', async () =>
     method: 'POST',
   })
 
-  await once(child, 'exit')
+  let found = false
+  let foundUnavailable = false
+  child.stdout.setEncoding('utf8')
+  for await (const messages of on(child.stdout, 'data')) {
+    for (const message of messages) {
+      if (/Error: Crash/.test(message)) {
+        found = true
+      }
+
+      if (/service a unexpectedly exited with code 1. the service is no longer available/i.test(message)) {
+        foundUnavailable = true
+      }
+    }
+
+    if (foundUnavailable) {
+      break
+    }
+  }
+
+  assert.ok(found)
+  assert.ok(foundUnavailable)
+
+  child.kill('SIGINT')
+  await child.catch(() => {})
 })

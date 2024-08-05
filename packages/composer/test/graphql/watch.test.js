@@ -4,12 +4,17 @@ const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const path = require('node:path')
 const dedent = require('dedent')
-const { createGraphqlService, createComposer, createLoggerSpy, eventToPromise } = require('../helper')
+const {
+  createGraphqlService,
+  createComposerInRuntime,
+  checkSchema,
+  getRuntimeLogs,
+  waitForRestart,
+} = require('../helper')
 
-const REFRESH_TIMEOUT = 500
-const RESTART_TIMEOUT = 3_000
+const REFRESH_TIMEOUT = 1000
 
-test('should restart composer if a service has been changed, and update the schema', async (t) => {
+test('should restart composer if a service has been changed, and update the schema', async t => {
   const schema1 = dedent`
   type Query {
     add(x: Int, y: Int): Int
@@ -30,23 +35,20 @@ test('should restart composer if a service has been changed, and update the sche
   const port = graphql1.server.address().port
   const origin = 'http://localhost:' + port
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'graphql1',
-            origin,
-            graphql: true,
-          },
-        ],
-        refreshTimeout: REFRESH_TIMEOUT,
-      },
-    }
-  )
+  const runtime = await createComposerInRuntime(t, 'graphql-watch', {
+    composer: {
+      services: [
+        {
+          id: 'graphql1',
+          origin,
+          graphql: true,
+        },
+      ],
+      refreshTimeout: REFRESH_TIMEOUT,
+    },
+  })
 
-  await composer.start()
-  const restart = eventToPromise(composer.addOnRestartHook, RESTART_TIMEOUT)
+  await runtime.start()
 
   const graphql1a = await createGraphqlService(t, {
     schema: schema2,
@@ -55,18 +57,17 @@ test('should restart composer if a service has been changed, and update the sche
     },
   })
 
-  assert.equal(composer.graphqlSupergraph.sdl, schema1)
+  assert.ok(checkSchema(runtime, schema1))
 
   await graphql1.close()
   await graphql1a.listen({ port })
 
-  await restart
+  await waitForRestart(runtime)
 
-  assert.equal(composer.restarted, true, 'expected composer to restart')
-  assert.equal(composer.graphqlSupergraph.sdl, schema2)
+  assert.ok(await checkSchema(runtime, schema2))
 })
 
-test('composer should restart and update schema if one of the services shuts down', async (t) => {
+test('composer should restart and update schema if one of the services shuts down', async t => {
   const graphql1 = await createGraphqlService(t, {
     schema: 'type Query { dice: Int }',
     resolvers: { Query: { dice: () => Math.floor(Math.random() * 6) + 1 } },
@@ -127,42 +128,40 @@ test('composer should restart and update schema if one of the services shuts dow
   input UpdateDogInput {
     name: String!
   }`
+
   const graphql1Origin = await graphql1.listen()
   const graphql2Origin = await graphql2.listen()
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'graphql1',
-            origin: graphql1Origin,
-            graphql: true,
-          },
-          {
-            id: 'graphql2',
-            origin: graphql2Origin,
-            graphql: true,
-          },
-        ],
-        refreshTimeout: REFRESH_TIMEOUT,
-      },
-    }
-  )
+  const runtime = await createComposerInRuntime(t, 'graphql-watch', {
+    composer: {
+      services: [
+        {
+          id: 'graphql1',
+          origin: graphql1Origin,
+          graphql: true,
+        },
+        {
+          id: 'graphql2',
+          origin: graphql2Origin,
+          graphql: true,
+        },
+      ],
+      refreshTimeout: REFRESH_TIMEOUT,
+    },
+  })
 
-  await composer.start()
-  const restart = eventToPromise(composer.addOnRestartHook, RESTART_TIMEOUT)
+  await runtime.start()
 
-  assert.equal(composer.graphqlSupergraph.sdl, supergraph1)
+  assert.ok(checkSchema(runtime, supergraph1))
 
   await graphql1.close()
-  await restart
 
-  assert.equal(composer.restarted, true, 'expected composer to restart')
-  assert.equal(composer.graphqlSupergraph.sdl, supergraph2)
+  await waitForRestart(runtime)
+
+  assert.ok(checkSchema(runtime, supergraph2))
 })
 
-test('should not restart if services did not change', async (t) => {
+test('should not restart if services did not change', async t => {
   const services = [
     {
       schema: dedent`
@@ -184,7 +183,8 @@ test('should not restart if services did not change', async (t) => {
         sub(x: Int, y: Int): Int
       }`,
       resolvers: { Query: { sub: (_, { x, y }) => x - y } },
-    }]
+    },
+  ]
 
   for (const service of services) {
     service.instance = await createGraphqlService(t, {
@@ -194,28 +194,23 @@ test('should not restart if services did not change', async (t) => {
     service.origin = await service.instance.listen()
   }
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: services.map((service, i) => ({
-          id: 'graphql' + i,
-          origin: service.origin,
-          graphql: true,
-        })),
-        refreshTimeout: REFRESH_TIMEOUT,
-      },
-    }
-  )
+  const runtime = await createComposerInRuntime(t, 'graphql-watch', {
+    composer: {
+      services: services.map((service, i) => ({
+        id: 'graphql' + i,
+        origin: service.origin,
+        graphql: true,
+      })),
+      refreshTimeout: REFRESH_TIMEOUT,
+    },
+  })
 
-  await composer.start()
+  await runtime.start()
 
-  const restart = eventToPromise(composer.addOnRestartHook, RESTART_TIMEOUT)
-  await restart
-
-  assert.equal(composer.restarted, false)
+  await assert.rejects(() => waitForRestart(runtime))
 })
 
-test('should not watch when refreshTimeout is 0', async (t) => {
+test('should not watch when refreshTimeout is 0', async t => {
   const graphql1 = await createGraphqlService(t, {
     schema: 'type Query { cheatingDice: Int }',
     resolvers: { Query: { cheatingDice: () => 3 } },
@@ -248,60 +243,51 @@ test('should not watch when refreshTimeout is 0', async (t) => {
   input UpdateDogInput {
     name: String!
   }`
+
   const graphql1Origin = await graphql1.listen()
   const graphql2Origin = await graphql2.listen()
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'graphql1',
-            origin: graphql1Origin,
-            graphql: true,
-          },
-          {
-            id: 'graphql2',
-            origin: graphql2Origin,
-            graphql: true,
-          },
-        ],
-        refreshTimeout: 0,
-      },
-    }
-  )
+  const runtime = await createComposerInRuntime(t, 'graphql-watch', {
+    composer: {
+      services: [
+        {
+          id: 'graphql1',
+          origin: graphql1Origin,
+          graphql: true,
+        },
+        {
+          id: 'graphql2',
+          origin: graphql2Origin,
+          graphql: true,
+        },
+      ],
+      refreshTimeout: 0,
+    },
+  })
 
-  await composer.start()
-  const restart = eventToPromise(composer.addOnRestartHook, RESTART_TIMEOUT)
+  await runtime.start()
 
-  assert.equal(composer.graphqlSupergraph.sdl, supergraph1)
+  assert.ok(checkSchema(runtime, supergraph1))
 
   await graphql1.close()
   await graphql2.close()
 
-  await restart
-
-  assert.equal(composer.restarted, false)
-  assert.equal(composer.graphqlSupergraph.sdl, supergraph1)
+  await assert.rejects(() => waitForRestart(runtime))
+  assert.ok(checkSchema(runtime, supergraph1))
 })
 
-test('should not watch if there are no fetchable services', async (t) => {
-  const logger = createLoggerSpy()
-
-  const composer = await createComposer(t, {
+test('should not watch if there are no fetchable services', async t => {
+  const runtime = await createComposerInRuntime(t, 'graphql-watch', {
     composer: { services: [] },
-  }, logger)
-  await composer.start()
+  })
+  await runtime.start()
 
-  const restart = eventToPromise(composer.addOnRestartHook, RESTART_TIMEOUT)
-  await restart
+  const messages = await getRuntimeLogs(runtime)
 
-  assert.ok(!logger._info.find(l => l[1] === 'start watching services'))
+  assert.ok(!messages.find(l => l === 'start watching services'))
 })
 
-test('should handle errors watching services', async (t) => {
-  const logger = createLoggerSpy()
-
+test('should handle errors watching services', async t => {
   const graphql1 = await createGraphqlService(t, {
     schema: 'type Query { cheatingDice: Int }',
     resolvers: { Query: { cheatingDice: () => 3 } },
@@ -309,26 +295,24 @@ test('should handle errors watching services', async (t) => {
 
   const graphql1Origin = await graphql1.listen()
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'graphql1',
-            origin: graphql1Origin,
-            graphql: true,
-          },
-        ],
-        refreshTimeout: REFRESH_TIMEOUT,
-      },
-    }, logger
-  )
+  const runtime = await createComposerInRuntime(t, 'graphql-watch', {
+    composer: {
+      services: [
+        {
+          id: 'graphql1',
+          origin: graphql1Origin,
+          graphql: true,
+        },
+      ],
+      refreshTimeout: REFRESH_TIMEOUT,
+    },
+  })
 
-  await composer.start()
-  const restart = eventToPromise(composer.addOnRestartHook, RESTART_TIMEOUT)
+  await runtime.start()
 
   await graphql1.close()
-  await restart
 
-  assert.ok(logger._error.find(l => l[1] === 'failed to restart server'))
+  const messages = await getRuntimeLogs(runtime)
+
+  assert.ok(messages.find(l => l.startsWith('Service composer unexpectedly exited with code 1')))
 })
