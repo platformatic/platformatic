@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
+  "entrypoint": "stdio",
+  "managementApi": {},
+  "services": [
+    {
+      "id": "stdio",
+      "path": "../stdio",
+      "config": "platformatic.service.json"
+    }
+  ]
+}

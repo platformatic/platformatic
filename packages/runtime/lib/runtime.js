@@ -652,6 +652,15 @@ class Runtime extends EventEmitter {
       execArgv: [], // Avoid side effects
       env: this.#env,
       transferList: [loggingPort],
+      /*
+        Important: always set stdout and stderr to true, so that worker's output is not automatically
+        piped to the parent thread. We actually never output the thread output since we replace it
+        with PinoWritable, and disabling the piping avoids us to redeclare some internal Node.js methods.
+
+        The author of this (Paolo and Matteo) are not proud of the solution. Forgive us.
+      */
+      stdout: true,
+      stderr: true,
     })
 
     // Make sure the listener can handle a lot of API requests at once before raising a warning
@@ -835,17 +844,36 @@ class Runtime extends EventEmitter {
       // worker threads by directly writing to the destinations using multistream
       // we unfortunately need to reparse the message to set some internal flags
       // of the destination which are never set since we bypass pino.
-      const obj = JSON.parse(log)
-      const { level, time, msg } = obj
+      let message = JSON.parse(log)
+      let { level, time, msg, raw } = message
+
+      try {
+        const parsed = JSON.parse(raw.trimEnd())
+
+        if (typeof parsed.level === 'number' && typeof parsed.time === 'number') {
+          level = parsed.level
+          time = parsed.time
+          message = parsed
+        } else {
+          message.raw = undefined
+          message.payload = parsed
+        }
+      } catch {
+        if (typeof message.raw === 'string') {
+          message.msg = message.raw.replace(/\n$/, '')
+        }
+
+        message.raw = undefined
+      }
 
       this.#loggerDestination.lastLevel = level
       this.#loggerDestination.lastTime = time
       this.#loggerDestination.lastMsg = msg
-      this.#loggerDestination.lastObj = obj
+      this.#loggerDestination.lastObj = message
       this.#loggerDestination.lastLogger = this.logger
 
       // Never drop the `\n` as the worker thread trimmed the message
-      this.#loggerDestination.write(log + '\n')
+      this.#loggerDestination.write(JSON.stringify(message) + '\n')
     }
   }
 }
