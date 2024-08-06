@@ -6,6 +6,20 @@ const { request } = require('undici')
 const { buildServer } = require('..')
 const { buildConfigManager, getConnectionInfo, createBasicPages } = require('./helper')
 
+const getSpanPerType = (spans, type = 'http') => {
+  let attibuteToLookFor
+  if (type === 'graphql') {
+    attibuteToLookFor = 'graphql.document'
+  } else if (type === 'db') {
+    attibuteToLookFor = 'db.system'
+  } else if (type === 'http') {
+    attibuteToLookFor = 'url.path'
+  } else {
+    throw new Error(`Type ${type} not supported`)
+  }
+  return spans.find(span => span.attributes[attibuteToLookFor])
+}
+
 test('should not configure telemetry if not configured', async (t) => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
@@ -84,15 +98,19 @@ test('should setup telemetry if configured', async (t) => {
   assert.equal(res.statusCode, 200, 'savePage status code')
   const { exporters } = app.openTelemetry
   const finishedSpans = exporters[0].getFinishedSpans()
-  assert.equal(finishedSpans.length, 2)
-  const span1 = finishedSpans[0]
-  assert.equal(span1.name, 'mutation savePage')
-  assert.equal(span1.attributes['graphql.document'], JSON.stringify({ query }))
-  assert.equal(span1.attributes['graphql.operation.name'], 'savePage')
-  assert.equal(span1.attributes['graphql.operation.type'], 'mutation')
-  const span2 = finishedSpans[1]
-  assert.equal(span2.name, 'POST /graphql')
-  assert.equal(span2.attributes['http.request.method'], 'POST')
-  assert.equal(span2.attributes['url.path'], '/graphql')
-  assert.equal(span2.attributes['http.response.status_code'], 200)
+  assert.equal(finishedSpans.length, 3)
+  const graphqlSpan = getSpanPerType(finishedSpans, 'graphql')
+  const dbSpan = getSpanPerType(finishedSpans, 'db')
+  const httpSpan = getSpanPerType(finishedSpans, 'http')
+  assert.equal(graphqlSpan.name, 'mutation savePage')
+  assert.equal(graphqlSpan.attributes['graphql.document'], JSON.stringify({ query }))
+  assert.equal(graphqlSpan.attributes['graphql.operation.name'], 'savePage')
+  assert.equal(graphqlSpan.attributes['graphql.operation.type'], 'mutation')
+  assert.equal(httpSpan.name, 'POST /graphql')
+  assert.equal(httpSpan.attributes['http.request.method'], 'POST')
+  assert.equal(httpSpan.attributes['url.path'], '/graphql')
+  assert.equal(httpSpan.attributes['http.response.status_code'], 200)
+  assert.equal(dbSpan.name, 'pg.query:INSERT INTO public.pages (title)VALUES ($1)RETURNING id, title')
+  assert.equal(dbSpan.attributes['db.system'], 'postgresql')
+  assert.equal(dbSpan.attributes['db.statement'], 'INSERT INTO public.pages (title)\nVALUES ($1)\nRETURNING id, title')
 })
