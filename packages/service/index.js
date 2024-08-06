@@ -20,6 +20,7 @@ const { schema } = require('./lib/schema')
 const { addLoggerToTheConfig } = require('./lib/utils')
 const { start, buildServer } = require('./lib/start')
 const ServiceGenerator = require('./lib/generator/service-generator.js')
+const { PlatformaticServiceStackable } = require('./lib/stackable')
 
 const { version } = require('./package.json')
 
@@ -141,6 +142,17 @@ function _buildServer (options, app) {
   return buildServer(options, app || module.exports)
 }
 
+async function buildStackable (options, stackableExports) {
+  stackableExports = stackableExports || module.exports
+
+  const app = await buildServer(options, stackableExports)
+  const stackable = new PlatformaticServiceStackable({
+    app,
+    stackable: stackableExports,
+  })
+  return stackable
+}
+
 module.exports.configType = 'service'
 module.exports.app = platformaticService
 module.exports.schema = schema
@@ -152,3 +164,5 @@ module.exports.start = start
 module.exports.Generator = ServiceGenerator
 module.exports.buildCompileCmd = buildCompileCmd
 module.exports.extractTypeScriptCompileOptionsFromConfig = extractTypeScriptCompileOptionsFromConfig
+module.exports.PlatformaticServiceStackable = PlatformaticServiceStackable
+module.exports.buildStackable = buildStackable
