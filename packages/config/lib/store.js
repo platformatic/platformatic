@@ -34,10 +34,6 @@ class Store {
   }
 
   add (app) {
-    if (typeof app !== 'function') {
-      throw new errors.AppMustBeAFunctionError()
-    }
-
     if (app.schema === undefined) {
       throw new errors.SchemaMustBeDefinedError()
     }

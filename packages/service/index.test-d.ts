@@ -32,21 +32,23 @@ expectType<MercuriusPlugin>(server.graphql)
 expectType<Promise<void>>(server.restart())
 
 function buildStackable (): Stackable<PlatformaticServiceConfig> {
-  async function myApp (app: FastifyInstance, opts: object): Promise<void> {
-    await platformaticService(app, opts)
-  }
+  const myApp: Stackable<PlatformaticServiceConfig> = {
+    async app (app: FastifyInstance, opts: object): Promise<void> {
+      await platformaticService.app(app, opts)
+    },
 
-  myApp.schema = platformaticService.schema
-  myApp.configType = 'myApp'
-  myApp.configManagerConfig = {
-    version: platformaticService.configManagerConfig.version,
-    ...platformaticService.configManagerConfig,
-    async transformConfig (this: ConfigManager<PlatformaticServiceConfig>) {
-      this.current.plugins = {
-        paths: [{
-          path: 'my-plugin',
-        }],
-      }
+    schema: platformaticService.schema,
+    configType: 'myApp',
+    configManagerConfig: {
+      version: platformaticService.configManagerConfig.version,
+      ...platformaticService.configManagerConfig,
+      async transformConfig (this: ConfigManager<PlatformaticServiceConfig>) {
+        this.current.plugins = {
+          paths: [{
+            path: 'my-plugin',
+          }],
+        }
+      },
     },
     async upgrade (config: PlatformaticServiceConfig, version: string) {
       const upgrade = platformaticService.configManagerConfig.upgrade
@@ -77,20 +79,21 @@ expectType<MyGenerator>(myGenerator)
 expectType<BaseGenerator.BaseGeneratorConfig>(myGenerator.config)
 
 function buildStackable2 (): Stackable<PlatformaticServiceConfig> {
-  async function myApp (app: FastifyInstance, opts: object): Promise<void> {
-    await platformaticService(app, opts)
-  }
-
-  myApp.schema = platformaticService.schema
-  myApp.configType = 'myApp'
-  myApp.configManagerConfig = {
-    ...platformaticService.configManagerConfig,
-    async transformConfig (this: ConfigManager<PlatformaticServiceConfig>) {
-      this.current.plugins = {
-        paths: [{
-          path: 'my-plugin',
-        }],
-      }
+  const myApp: Stackable<PlatformaticServiceConfig> = {
+    async app (app: FastifyInstance, opts: object): Promise<void> {
+      await platformaticService.app(app, opts)
+    },
+    schema: platformaticService.schema,
+    configType: 'myApp',
+    configManagerConfig: {
+      ...platformaticService.configManagerConfig,
+      async transformConfig (this: ConfigManager<PlatformaticServiceConfig>) {
+        this.current.plugins = {
+          paths: [{
+            path: 'my-plugin',
+          }],
+        }
+      },
     },
   }
 

@@ -1,5 +1,5 @@
 import fp from 'fastify-plugin'
-import { platformaticService, buildServer as buildServiceServer, Stackable, PlatformaticServiceConfig } from '../../../../index.js'
+import platformaticService, { buildServer as buildServiceServer, Stackable, PlatformaticServiceConfig } from '../../../../index.js'
 import { schema } from './schema.js'
 import dynamite from './dynamite.js'
 import { lstat } from 'node:fs/promises'
@@ -24,82 +24,81 @@ async function isDirectory (path: string) {
 }
 
 function buildStackable () : Stackable<AcmeBaseConfig> {
-  async function acmeBase (_app: FastifyInstance, opts: object) {
-    const app = _app as FastifyInstance & AcmeBaseMixin
-    if (app.platformatic.config.dynamite) {
-      app.register(dynamite)
-    }
+  const acmeBase: Stackable<AcmeBaseConfig> = {
+    async app (_app: FastifyInstance, opts: object) {
+      const app = _app as FastifyInstance & AcmeBaseMixin
+      if (app.platformatic.config.dynamite) {
+        app.register(dynamite)
+      }
 
-    await platformaticService(app, opts)
+      await platformaticService.app(app, opts)
+    },
+
+    configType: 'acmeBase',
+
+    // This is the schema for this reusable application configuration file,
+    // customize at will but retain the base properties of the schema from
+    // @platformatic/service
+    schema,
+
+    configManagerConfig: {
+      schema,
+      allowToWatch: ['.env'],
+      schemaOptions: {
+        useDefaults: true,
+        coerceTypes: true,
+        allErrors: true,
+        strict: false,
+      },
+      async transformConfig (this: ConfigManager<AcmeBaseConfig & PlatformaticServiceConfig>) {
+        // Call the transformConfig method from the base stackable
+        platformaticService.configManagerConfig.transformConfig.call(this)
+
+        // In this method you can alter the configuration before the application
+        // is started. It's useful to apply some defaults that cannot be derived
+        // inside the schema, such as resolving paths.
+
+        const paths = []
+
+        const pluginsDir = join(this.dirname, 'plugins')
+
+        if (await isDirectory(pluginsDir)) {
+          paths.push({
+            path: pluginsDir,
+            encapsulate: false,
+          })
+        }
+
+        const routesDir = join(this.dirname, 'routes')
+
+        if (await isDirectory(routesDir)) {
+          paths.push({
+            path: routesDir,
+          })
+        }
+
+        this.current.plugins = {
+          paths,
+        }
+
+        if (!this.current?.service?.openapi) {
+          if (typeof this.current.service !== 'object') {
+            this.current.service = {}
+          }
+          this.current.service.openapi = {
+            info: {
+              title: 'Acme Microservice',
+              description: 'A microservice for Acme Inc.',
+              version: '1.0.0',
+            },
+          }
+        }
+      }
+    },
   }
 
   // break Fastify encapsulation
-  fp(acmeBase)
-
-  acmeBase.configType = 'acmeBase'
-
-  // This is the schema for this reusable application configuration file,
-  // customize at will but retain the base properties of the schema from
-  // @platformatic/service
-  acmeBase.schema = schema
-
-  // The configuration of the ConfigManager
-  acmeBase.configManagerConfig = {
-    schema,
-    allowToWatch: ['.env'],
-    schemaOptions: {
-      useDefaults: true,
-      coerceTypes: true,
-      allErrors: true,
-      strict: false,
-    },
-    async transformConfig (this: ConfigManager<AcmeBaseConfig & PlatformaticServiceConfig>) {
-      // Call the transformConfig method from the base stackable
-      if (platformaticService.configManagerConfig.transformConfig) {
-        platformaticService.configManagerConfig.transformConfig.call(this)
-      }
-
-      // In this method you can alter the configuration before the application
-      // is started. It's useful to apply some defaults that cannot be derived
-      // inside the schema, such as resolving paths.
-
-      const paths = []
-
-      const pluginsDir = join(this.dirname, 'plugins')
-
-      if (await isDirectory(pluginsDir)) {
-        paths.push({
-          path: pluginsDir,
-          encapsulate: false,
-        })
-      }
-
-      const routesDir = join(this.dirname, 'routes')
-
-      if (await isDirectory(routesDir)) {
-        paths.push({
-          path: routesDir,
-        })
-      }
-
-      this.current.plugins = {
-        paths,
-      }
-
-      if (!this.current?.service?.openapi) {
-        if (typeof this.current.service !== 'object') {
-          this.current.service = {}
-        }
-        this.current.service.openapi = {
-          info: {
-            title: 'Acme Microservice',
-            description: 'A microservice for Acme Inc.',
-            version: '1.0.0',
-          },
-        }
-      }
-    },
-  }
+  fp(acmeBase.app)
 
   return acmeBase
 }

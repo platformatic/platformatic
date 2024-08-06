@@ -6,9 +6,9 @@
  */
 
 export interface AcmeBase {
-  server: {
-    hostname: string;
-    port: number | string;
+  server?: {
+    hostname?: string;
+    port?: number | string;
     pluginTimeout?: number;
     healthCheck?:
       | boolean
@@ -32,6 +32,33 @@ export interface AcmeBase {
       | boolean
       | {
           level?: string;
+          transport?:
+            | {
+                target?: string;
+                options?: {
+                  [k: string]: unknown;
+                };
+              }
+            | {
+                targets?: {
+                  target?: string;
+                  options?: {
+                    [k: string]: unknown;
+                  };
+                  level?: string;
+                  additionalProperties?: never;
+                  [k: string]: unknown;
+                }[];
+                options?: {
+                  [k: string]: unknown;
+                };
+              };
+          pipeline?: {
+            target?: string;
+            options?: {
+              [k: string]: unknown;
+            };
+          };
           [k: string]: unknown;
         };
     serializerOpts?: {
@@ -53,7 +80,9 @@ export interface AcmeBase {
     requestIdLogLabel?: string;
     jsonShorthand?: boolean;
     trustProxy?: boolean | string | string[] | number;
+    http2?: boolean;
     https?: {
+      allowHTTP1?: boolean;
       key:
         | string
         | {
@@ -114,9 +143,17 @@ export interface AcmeBase {
     | {
         port?: number | string;
         hostname?: string;
+        endpoint?: string;
+        server?: "own" | "parent" | "hide";
+        defaultMetrics?: {
+          enabled: boolean;
+        };
         auth?: {
           username: string;
           password: string;
+        };
+        labels?: {
+          [k: string]: string;
         };
       };
   telemetry?: OpenTelemetry;
@@ -147,17 +184,20 @@ export interface AcmeBase {
           tags?: Tag[];
           externalDocs?: ExternalDocumentation;
           /**
-           * Base URL for the OpenAPI
+           * Base URL for the OpenAPI Swagger Documentation
            */
-          prefix?: string;
+          swaggerPrefix?: string;
+          /**
+           * Path to an OpenAPI spec file
+           */
+          path?: string;
         }
       | boolean;
     graphql?:
-      | boolean
       | {
           graphiql?: boolean;
-          [k: string]: unknown;
-        };
+        }
+      | boolean;
   };
   clients?: {
     serviceId?: string;
@@ -166,6 +206,9 @@ export interface AcmeBase {
     path?: string;
     schema?: string;
     url?: string;
+    fullResponse?: boolean;
+    fullRequest?: boolean;
+    validateResponse?: boolean;
   }[];
   module?: string;
   /**

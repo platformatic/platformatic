@@ -12,7 +12,7 @@ import { generateJsonSchemaConfig } from './lib/gen-schema.js'
 import { generateTypes } from './lib/gen-types.mjs'
 import { createService } from './lib/create.mjs'
 
-import { start, platformaticService } from './index.js'
+import platformaticService from './index.js'
 
 const help = helpMe({
   dir: join(import.meta.url, 'help'),
@@ -38,7 +38,7 @@ program.register('help start', help.toStdout.bind(null, ['start']))
 
 program.register('start', (argv) => {
   /* c8 ignore next 1 */
-  start(platformaticService, argv).catch(printAndExitLoadConfigError)
+  platformaticService.start(platformaticService, argv).catch(printAndExitLoadConfigError)
 })
 
 program.register('create', wrapCommand(createService))

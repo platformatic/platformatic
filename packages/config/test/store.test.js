@@ -214,7 +214,7 @@ test('import', async t => {
   )
 })
 
-test('app must be a function', async t => {
+test('app can be an object', async t => {
   const foo = {}
 
   foo.schema = {
@@ -236,7 +236,7 @@ test('app must be a function', async t => {
   }
 
   const store = new Store()
-  assert.throws(store.add.bind(store, foo))
+  assert.doesNotThrow(store.add.bind(store, foo))
 })
 
 test('loadConfig', async t => {

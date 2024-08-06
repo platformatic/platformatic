@@ -81,7 +81,10 @@ async function buildServer (options, app) {
     }
   }
 
-  const context = { app, configManager }
+  const context = {
+    app: typeof app === 'function' ? app : app.app,
+    configManager,
+  }
   const handler = await createServer(context)
   handler.decorate('start', async () => {
     context.url = await handler.listen({ host: options.server?.hostname || '127.0.0.1', port: options.server?.port || 0 })

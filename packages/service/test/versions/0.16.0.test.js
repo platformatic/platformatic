@@ -3,7 +3,7 @@
 const { test } = require('node:test')
 const { equal, deepEqual } = require('node:assert')
 const { join } = require('path')
-const { platformaticService } = require('../../index.js')
+const platformaticService = require('../../index.js')
 const { ConfigManager } = require('@platformatic/config')
 const { version } = require('../../package.json')
 

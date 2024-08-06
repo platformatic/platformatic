@@ -2,7 +2,8 @@
 /// <reference types="@fastify/swagger" />
 import { FastifyInstance, FastifyBaseLogger } from 'fastify'
 import ConfigManager from '@platformatic/config'
-import type { IConfigManagerOptions } from '@platformatic/config'
+import type { ConfigManagerConfig } from '@platformatic/config'
+import type { Stackable as _Stackable } from '@platformatic/config'
 import { BaseGenerator } from '@platformatic/generators'
 import { PlatformaticService } from './config'
 import type { JSONSchemaType } from 'ajv'
@@ -26,19 +27,11 @@ declare module 'fastify' {
   }
 }
 
-export interface ConfigManagerConfig<T> extends Omit<IConfigManagerOptions, 'source' | 'watch' | 'schema' | 'configVersion'> {
-  transformConfig: (this: ConfigManager<T>) => Promise<void>
-  schema: object
-}
+type DefaultGenerator = new () => BaseGenerator.BaseGenerator
 
-export interface Stackable<ConfigType> {
-  (app: FastifyInstance, opts: object): Promise<void>
-
-  configType: string
-  configManagerConfig: ConfigManagerConfig<ConfigType>
-  schema: object
-  Generator?: new () => BaseGenerator.BaseGenerator
-
+export interface Stackable<ConfigType, Generator = DefaultGenerator> extends _Stackable<ConfigType> {
+  app: (app: FastifyInstance, opts: object) => Promise<void>
+  Generator?: Generator
   version?: string
   upgrade?: (config: any, version: string) => Promise<any>
   transformConfig?: (config: any) => Promise<any>
@@ -52,9 +45,19 @@ interface TSCompiler {
 }
 
 export const schema: JSONSchemaType<PlatformaticServiceConfig>
+export const configManagerConfig: ConfigManagerConfig<PlatformaticServiceConfig>
 
 export declare const platformaticService: Stackable<PlatformaticServiceConfig>
 
-export default platformaticService
+export declare const app: (app: FastifyInstance, opts: object) => Promise<void>
 
 export const tsCompiler: TSCompiler
+
+type defaultExport = Stackable<PlatformaticServiceConfig> & {
+  buildServer: (opts: object, app?: object, ConfigManagerConstructor?: object) => Promise<FastifyInstance>,
+  start: <ConfigType>(app: Stackable<ConfigType>, args: string[]) => Promise<void>,
+  tsCompiler: TSCompiler,
+  schema: JSONSchemaType<PlatformaticServiceConfig>,
+}
+
+export default defaultExport
