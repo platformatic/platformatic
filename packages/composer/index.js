@@ -14,6 +14,7 @@ const graphqlGenerator = require('./lib/graphql-generator')
 const { isSameGraphqlSchema, fetchGraphqlSubgraphs } = require('./lib/graphql-fetch')
 const { isFetchable } = require('./lib/utils')
 const errors = require('./lib/errors')
+const { PlatformaticComposerStackable } = require('./lib/stackable')
 
 const EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE = 'graphql composer is an experimental feature'
 
@@ -211,6 +212,15 @@ async function watchServices (app, opts) {
   })
 }
 
+async function buildStackable (options) {
+  const app = await buildServer(options, module.exports)
+  const stackable = new PlatformaticComposerStackable({
+    app,
+    stackable: platformaticComposer,
+  })
+  return stackable
+}
+
 module.exports = platformaticComposer
 module.exports.schema = schema
 module.exports.platformaticComposer = platformaticComposer
@@ -218,3 +228,4 @@ module.exports.buildServer = buildComposerServer
 module.exports.errors = errors
 module.exports.Generator = require('./lib/generator/composer-generator')
 module.exports.ConfigManager = ConfigManager
+module.exports.buildStackable = buildStackable
