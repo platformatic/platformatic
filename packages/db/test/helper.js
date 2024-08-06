@@ -122,3 +122,11 @@ async function buildConfigManager (source, dirname) {
 }
 
 module.exports.buildConfigManager = buildConfigManager
+
+if (!process.env.DB || process.env.DB === 'postgresql') {
+  module.exports.expectedTelemetryPrefix = 'pg'
+} else if (process.env.DB === 'mariadb' || process.env.DB === 'mysql' || process.env.DB === 'mysql8') {
+  module.exports.expectedTelemetryPrefix = 'mysql'
+} else if (process.env.DB === 'sqlite') {
+  module.exports.expectedTelemetryPrefix = 'sqlite'
+}

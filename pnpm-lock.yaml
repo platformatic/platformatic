@@ -835,6 +835,9 @@ importers:
       '@databases/sql':
         specifier: ^3.3.0
         version: 3.3.0
+      '@opentelemetry/api':
+        specifier: ^1.8.0
+        version: 1.9.0
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -1785,12 +1788,6 @@ importers:
       '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
-      '@opentelemetry/api':
-        specifier: ^1.8.0
-        version: 1.9.0
-      '@platformatic/db-core':
-        specifier: workspace:*
-        version: link:../db-core
       borp:
         specifier: ^0.17.0
         version: 0.17.0

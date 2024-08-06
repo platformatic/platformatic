@@ -27,8 +27,6 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@matteo.collina/tspl": "^0.1.1",
-    "@opentelemetry/api": "^1.8.0",
-    "@platformatic/db-core": "workspace:*",
     "borp": "^0.17.0",
     "eslint": "9",
     "fastify": "^4.26.2",
