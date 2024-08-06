@@ -136,6 +136,7 @@ module.exports.configManagerConfig = {
   upgrade,
 }
 
+platformaticService.configType = 'service'
 platformaticService.configManagerConfig = module.exports.configManagerConfig
 
 function _buildServer (options, app) {
@@ -143,12 +144,10 @@ function _buildServer (options, app) {
 }
 
 async function buildStackable (options, stackableExports) {
-  stackableExports = stackableExports || module.exports
-
-  const app = await buildServer(options, stackableExports)
+  const app = await buildServer(options, module.exports)
   const stackable = new PlatformaticServiceStackable({
     app,
-    stackable: stackableExports,
+    stackable: platformaticService,
   })
   return stackable
 }

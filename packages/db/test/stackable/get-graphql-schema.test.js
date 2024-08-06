@@ -1,29 +1,36 @@
 'use strict'
 
-const assert = require('node:assert')
+const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { join } = require('node:path')
+const { buildConfigManager, getConnectionInfo } = require('../helper')
 const { buildStackable } = require('../..')
 
 test('get service openapi schema via stackable api', async (t) => {
+  const workingDir = join(__dirname, '..', 'fixtures', 'directories')
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+
   const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0,
     },
-    service: {
-      graphql: true,
+    db: {
+      ...connectionInfo,
     },
     plugins: {
-      paths: [join(__dirname, '..', 'fixtures', 'hello-world-resolver.js')],
+      paths: [join(workingDir, 'routes')],
     },
     watch: false,
     metrics: false,
   }
 
-  const stackable = await buildStackable(config)
+  const configManager = await buildConfigManager(config, workingDir)
+  const stackable = await buildStackable({ configManager })
+
   t.after(async () => {
     await stackable.stop()
+    await dropTestDB()
   })
   await stackable.start()
 
@@ -32,24 +39,31 @@ test('get service openapi schema via stackable api', async (t) => {
 })
 
 test('get null if server does not expose graphql', async (t) => {
+  const workingDir = join(__dirname, '..', 'fixtures', 'directories')
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+
   const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0,
     },
-    service: {
+    db: {
       graphql: false,
+      ...connectionInfo,
     },
     plugins: {
-      paths: [join(__dirname, '..', 'fixtures', 'directories', 'routes')],
+      paths: [join(workingDir, 'routes')],
     },
     watch: false,
     metrics: false,
   }
 
-  const stackable = await buildStackable(config)
+  const configManager = await buildConfigManager(config, workingDir)
+  const stackable = await buildStackable({ configManager })
+
   t.after(async () => {
     await stackable.stop()
+    await dropTestDB()
   })
   await stackable.start()
 

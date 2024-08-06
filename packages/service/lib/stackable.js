@@ -36,7 +36,7 @@ class PlatformaticServiceStackable {
 
   async getGraphqlSchema () {
     await this.app.ready()
-    return printSchema(this.app.graphql.schema)
+    return this.app.graphql ? printSchema(this.app.graphql.schema) : null
   }
 
   async getMetrics (format) {

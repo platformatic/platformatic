@@ -13,6 +13,7 @@ const errors = require('./lib/errors')
 const upgrade = require('./lib/upgrade')
 const fs = require('fs/promises')
 const version = require('./package.json').version
+const { PlatformaticDbStackable } = require('./lib/stackable')
 
 async function platformaticDB (app, opts) {
   const configManager = app.platformatic.configManager
@@ -128,6 +129,15 @@ function _buildServer (options) {
   return buildServer(options, platformaticDB)
 }
 
+async function buildStackable (options) {
+  const app = await buildServer(options, module.exports)
+  const stackable = new PlatformaticDbStackable({
+    app,
+    stackable: platformaticDB,
+  })
+  return stackable
+}
+
 module.exports = platformaticDB
 module.exports.buildServer = _buildServer
 module.exports.schema = schema
@@ -136,3 +146,4 @@ module.exports.ConfigManager = ConfigManager
 module.exports.errors = errors
 module.exports.createConnectionPool = createConnectionPool
 module.exports.Generator = require('./lib/generator/db-generator').Generator
+module.exports.buildStackable = buildStackable
