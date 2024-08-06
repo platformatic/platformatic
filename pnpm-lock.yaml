@@ -1763,6 +1763,9 @@ importers:
       '@matteo.collina/sqlite-pool':
         specifier: ^0.4.0
         version: 0.4.0
+      '@platformatic/telemetry':
+        specifier: workspace:*
+        version: link:../telemetry
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -1782,6 +1785,12 @@ importers:
       '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
+      '@opentelemetry/api':
+        specifier: ^1.8.0
+        version: 1.9.0
+      '@platformatic/db-core':
+        specifier: workspace:*
+        version: link:../db-core
       borp:
         specifier: ^0.17.0
         version: 0.17.0

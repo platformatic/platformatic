@@ -102,7 +102,7 @@ async function composeOpenAPI (app, opts) {
 
           const replyOptions = {}
           const onResponse = (request, reply, res) => {
-            app.openTelemetry?.endSpanClient(reply.request.proxedCallSpan, { statusCode: reply.statusCode })
+            app.openTelemetry?.endHTTPSpanClient(reply.request.proxedCallSpan, { statusCode: reply.statusCode })
             if (req.routeOptions.config?.onComposerResponse) {
               req.routeOptions.config?.onComposerResponse(request, reply, res)
             } else {
@@ -112,7 +112,7 @@ async function composeOpenAPI (app, opts) {
           const rewriteRequestHeaders = (request, headers) => {
             const targetUrl = `${origin}${request.url}`
             const context = request.span?.context
-            const { span, telemetryHeaders } = app.openTelemetry?.startSpanClient(targetUrl, request.method, context) || { span: null, telemetryHeaders: {} }
+            const { span, telemetryHeaders } = app.openTelemetry?.startHTTPSpanClient(targetUrl, request.method, context) || { span: null, telemetryHeaders: {} }
             // We need to store the span in a different object
             // to correctly close it in the onResponse hook
             // Note that we have 2 spans:

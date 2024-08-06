@@ -37,10 +37,10 @@ test('should add the propagation headers correctly, new propagation started', as
     },
   }, handler, test.after)
 
-  const { startSpanClient } = app.openTelemetry
+  const { startHTTPSpanClient } = app.openTelemetry
 
   const url = 'http://localhost:3000/test'
-  const { span, telemetryHeaders } = startSpanClient(url, 'GET')
+  const { span, telemetryHeaders } = startHTTPSpanClient(url, 'GET')
 
   const spanId = span._spanContext.spanId
   const traceId = span._spanContext.traceId
@@ -66,7 +66,7 @@ test('should add the propagation headers correctly, with propagation already sta
     },
   }, handler, test.after)
 
-  const { startSpanClient } = app.openTelemetry
+  const { startHTTPSpanClient } = app.openTelemetry
 
   const url = 'http://localhost:3000/test'
   const incomingHeaders = {
@@ -76,7 +76,7 @@ test('should add the propagation headers correctly, with propagation already sta
   const { propagator } = app.openTelemetry
   const context = propagator.extract(new PlatformaticContext(), { headers: incomingHeaders }, fastifyTextMapGetter)
 
-  const { span, telemetryHeaders } = startSpanClient(url, 'GET', context)
+  const { span, telemetryHeaders } = startHTTPSpanClient(url, 'GET', context)
 
   const spanId2 = span._spanContext.spanId
   const traceId2 = span._spanContext.traceId
@@ -103,14 +103,14 @@ test('should trace a client request', async () => {
     },
   }, handler, test.after)
 
-  const { startSpanClient, endSpanClient } = app.openTelemetry
+  const { startHTTPSpanClient, endHTTPSpanClient } = app.openTelemetry
 
   const url = 'http://localhost:3000/test'
 
   const { propagator } = app.openTelemetry
   const context = propagator.extract(new PlatformaticContext(), { headers: {} }, fastifyTextMapGetter)
 
-  const { span, telemetryHeaders } = startSpanClient(url, 'GET', context)
+  const { span, telemetryHeaders } = startHTTPSpanClient(url, 'GET', context)
   const args = {
     method: 'GET',
     url: '/test',
@@ -120,7 +120,7 @@ test('should trace a client request', async () => {
   }
 
   const response = await app.inject(args)
-  endSpanClient(span, response)
+  endHTTPSpanClient(span, response)
 
   const { exporters } = app.openTelemetry
   const exporter = exporters[0]
@@ -163,20 +163,20 @@ test('should trace a client request failing', async () => {
     },
   }, handler, test.after)
 
-  const { startSpanClient, endSpanClient } = app.openTelemetry
+  const { startHTTPSpanClient, endHTTPSpanClient } = app.openTelemetry
 
   const { propagator } = app.openTelemetry
   const context = propagator.extract(new PlatformaticContext(), { headers: {} }, fastifyTextMapGetter)
 
   const url = 'http://localhost/test'
-  const { span, telemetryHeaders } = startSpanClient(url, 'GET', context)
+  const { span, telemetryHeaders } = startHTTPSpanClient(url, 'GET', context)
   const args = {
     method: 'GET',
     url: '/wrong',
     headers: telemetryHeaders,
   }
   const response = await app.inject(args)
-  endSpanClient(span, response)
+  endHTTPSpanClient(span, response)
 
   const { exporters } = app.openTelemetry
   const exporter = exporters[0]
@@ -213,16 +213,16 @@ test('should trace a client request failing (no HTTP error)', async () => {
     },
   }, handler, test.after)
 
-  const { startSpanClient, endSpanClient, setErrorInSpanClient } = app.openTelemetry
+  const { startHTTPSpanClient, endHTTPSpanClient, setErrorInSpanClient } = app.openTelemetry
 
   const url = 'http://localhost:3000/test'
-  const { span } = startSpanClient(url, 'GET')
+  const { span } = startHTTPSpanClient(url, 'GET')
   try {
     throw new Error('KABOOM!!!')
   } catch (err) {
     setErrorInSpanClient(span, err)
   } finally {
-    endSpanClient(span)
+    endHTTPSpanClient(span)
   }
 
   const { exporters } = app.openTelemetry
@@ -251,10 +251,10 @@ test('should not add the query in span name', async () => {
     },
   }, handler, test.after)
 
-  const { startSpanClient } = app.openTelemetry
+  const { startHTTPSpanClient } = app.openTelemetry
 
   const url = 'http://localhost:3000/test?foo=bar'
-  const { span } = startSpanClient(url, 'GET')
+  const { span } = startHTTPSpanClient(url, 'GET')
   deepEqual(span.name, 'GET http://localhost:3000/test')
 })
 
@@ -276,10 +276,10 @@ test('should ignore the skipped operations', async () => {
     },
   }, handler, test.after)
 
-  const { startSpanClient } = app.openTelemetry
+  const { startHTTPSpanClient } = app.openTelemetry
 
   const url = 'http://localhost:3000/skipme'
-  const ret = startSpanClient(url, 'POST')
+  const ret = startHTTPSpanClient(url, 'POST')
   // no spam should be created
   ok(!ret)
 })

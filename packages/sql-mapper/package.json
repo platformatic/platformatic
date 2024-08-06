@@ -27,6 +27,8 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@matteo.collina/tspl": "^0.1.1",
+    "@opentelemetry/api": "^1.8.0",
+    "@platformatic/db-core": "workspace:*",
     "borp": "^0.17.0",
     "eslint": "9",
     "fastify": "^4.26.2",
@@ -41,6 +43,7 @@
     "@fastify/error": "^3.4.1",
     "@hapi/topo": "^6.0.2",
     "@matteo.collina/sqlite-pool": "^0.4.0",
+    "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "async-cache-dedupe": "^2.1.0",
     "camelcase": "^6.3.0",

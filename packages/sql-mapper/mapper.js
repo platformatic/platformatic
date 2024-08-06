@@ -8,6 +8,7 @@ const queriesFactory = require('./lib/queries')
 const { areSchemasSupported } = require('./lib/utils')
 const errors = require('./lib/errors')
 const setupCache = require('./lib/cache')
+const { setupTelemetry } = require('./lib/telemetry')
 
 // Ignore the function as it is only used only for MySQL and PostgreSQL
 /* istanbul ignore next */
@@ -273,6 +274,11 @@ async function sqlMapper (app, opts) {
     }
     done()
   })
+
+  // TODO: should we enable db telemetry explicitely with a config?
+  if (app.openTelemetry) {
+    await setupTelemetry(app)
+  }
 }
 
 async function dropTable (db, sql, table) {

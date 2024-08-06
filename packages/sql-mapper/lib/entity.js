@@ -11,6 +11,7 @@ const {
 const { singularize } = require('inflected')
 const { findNearestString } = require('@platformatic/utils')
 const errors = require('./errors')
+const { wrapDB } = require('./telemetry')
 
 function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relations, queries, autoTimestamp, schema, useSchemaInName, limitConfig, columns, constraintsList) {
   /* istanbul ignore next */ // Ignoring because this won't be fully covered by DB not supporting schemas (SQLite)
@@ -18,6 +19,17 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
   /* istanbul ignore next */
   const pluralName = camelcase(useSchemaInName ? camelcase(`${schema} ${table}`) : table)
   const singularName = camelcase(entityName)
+
+  // If the db is in the opts, uses it, otherwise uses the defaultDb
+  // if telemetry is enabled, wraps the db with telemetry
+  const getDB = (opts) => {
+    let db = opts?.tx || defaultDb
+    if (opts?.ctx?.app?.openTelemetry && opts?.ctx?.reply?.request) {
+      const req = opts.ctx.reply.request
+      db = wrapDB(opts.ctx.app, db, req)
+    }
+    return db
+  }
 
   // Fields remapping
   const fieldMapToRetrieve = {}
@@ -72,7 +84,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
   }
 
   async function save (args) {
-    const db = args.tx || defaultDb
+    const db = getDB(args)
     if (args.input === undefined) {
       throw new errors.InputNotProvidedError()
     }
@@ -114,7 +126,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
   }
 
   async function insert (args) {
-    const db = args.tx || defaultDb
+    const db = getDB(args)
     const fieldsToRetrieve = computeFields(args.fields).map((f) => sql.ident(f))
     const inputs = args.inputs
     // This else is skipped on MySQL because of https://github.com/ForbesLindesay/atdatabases/issues/221
@@ -155,7 +167,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     if (args.where === undefined || Object.keys(args.where).length === 0) {
       throw new errors.MissingWhereClauseError()
     }
-    const db = args.tx || defaultDb
+    const db = getDB(args)
     const fieldsToRetrieve = computeFields(args.fields).map((f) => sql.ident(f))
     const input = fixInput(args.input)
     if (autoTimestamp && fields[autoTimestamp.updatedAt]) {
@@ -291,7 +303,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
   }
 
   async function find (opts = {}) {
-    const db = opts.tx || defaultDb
+    const db = getDB(opts)
     const fieldsToRetrieve = computeFields(opts.fields).map((f) => sql.ident(f))
     const criteria = computeCriteria(opts)
 
@@ -326,7 +338,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
   }
 
   async function count (opts = {}) {
-    const db = opts.tx || defaultDb
+    const db = getDB(opts)
     let totalCountQuery = null
     totalCountQuery = sql`
         SELECT COUNT(*) AS total 
@@ -341,7 +353,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
   }
 
   async function _delete (opts) {
-    const db = opts.tx || defaultDb
+    const db = getDB(opts)
     const fieldsToRetrieve = computeFields(opts.fields).map((f) => sql.ident(f))
     const criteria = computeCriteria(opts)
     const res = await queries.deleteAll(db, sql, table, schema, criteria, fieldsToRetrieve)

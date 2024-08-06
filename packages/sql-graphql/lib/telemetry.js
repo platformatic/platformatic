@@ -1,7 +1,7 @@
 'use strict'
 
 const telemetryWrapper = (app, fn, operationType, operationName) => async (...args) => {
-  const { startInternalSpan, endInternalSpan } = app.openTelemetry
+  const { startSpan, endSpan } = app.openTelemetry
   const context = args[2]
   const request = context?.reply?.request
   const document = JSON.stringify(request?.body)
@@ -15,14 +15,14 @@ const telemetryWrapper = (app, fn, operationType, operationName) => async (...ar
   const spanName = `${operationType} ${operationName}`
   const ctx = request.span?.context
 
-  const span = startInternalSpan(spanName, ctx, telemetryAttributes)
+  const span = startSpan(spanName, ctx, telemetryAttributes)
   try {
     const result = await fn(...args)
-    endInternalSpan(span)
+    endSpan(span)
     return result
   // We ignore this because in sqlite it's HARD to have a resolver exception without a schema validation exception first.
   } catch (err) /* istanbul ignore next */ {
-    endInternalSpan(span, err)
+    endSpan(span, err)
     throw err
   }
 }

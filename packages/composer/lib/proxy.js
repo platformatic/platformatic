@@ -37,7 +37,7 @@ module.exports = fp(async function (app, opts) {
         rewriteRequestHeaders: (request, headers) => {
           const targetUrl = `${origin}${request.url}`
           const context = request.span?.context
-          const { span, telemetryHeaders } = app.openTelemetry?.startSpanClient(targetUrl, request.method, context) || { span: null, telemetryHeaders: {} }
+          const { span, telemetryHeaders } = app.openTelemetry?.startHTTPSpanClient(targetUrl, request.method, context) || { span: null, telemetryHeaders: {} }
           // We need to store the span in a different object
           // to correctly close it in the onResponse hook
           // Note that we have 2 spans:
@@ -60,7 +60,7 @@ module.exports = fp(async function (app, opts) {
           return headers
         },
         onResponse: (request, reply, res) => {
-          app.openTelemetry?.endSpanClient(reply.request.proxedCallSpan, { statusCode: reply.statusCode })
+          app.openTelemetry?.endHTTPSpanClient(reply.request.proxedCallSpan, { statusCode: reply.statusCode })
           reply.send(res)
         },
       },
