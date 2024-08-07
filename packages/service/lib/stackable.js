@@ -80,8 +80,8 @@ class ServiceStackable {
   async inject (injectParams) {
     await this.init()
 
-    const { statusCode, headers, body } = await this.app.inject(injectParams)
-    return { statusCode, headers, body }
+    const { statusCode, statusMessage, headers, body } = await this.app.inject(injectParams)
+    return { statusCode, statusMessage, headers, body }
   }
 
   async log (message, options = {}) {
