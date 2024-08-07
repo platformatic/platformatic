@@ -29,6 +29,7 @@ test('should get service config', async (t) => {
       port: 0,
       keepAliveTimeout: 5000,
       trustProxy: true,
+      logger: serviceConfig.server.logger,
     },
     service: { openapi: true },
     plugins: {
@@ -70,6 +71,7 @@ test('do not force enable metrics without the management api', async (t) => {
       port: 0,
       keepAliveTimeout: 5000,
       trustProxy: true,
+      logger: serviceConfig.server.logger,
     },
     service: { openapi: true },
     plugins: {
@@ -102,6 +104,7 @@ test('do not force enable metrics if they are set to false', async (t) => {
       port: 0,
       keepAliveTimeout: 5000,
       trustProxy: true,
+      logger: serviceConfig.server.logger,
     },
     service: { openapi: true },
     plugins: {
@@ -146,6 +149,7 @@ test('set serviceId in metrics as label in all services', async (t) => {
       port: 0,
       keepAliveTimeout: 5000,
       trustProxy: true,
+      logger: serviceConfig.server.logger,
     },
     service: { openapi: true },
     plugins: {
