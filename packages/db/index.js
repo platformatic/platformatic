@@ -3,7 +3,7 @@
 const core = require('@platformatic/db-core')
 const auth = require('@platformatic/db-authorization')
 const { createConnectionPool } = require('@platformatic/sql-mapper')
-const { platformaticService, buildServer } = require('@platformatic/service')
+const { platformaticService, buildServer, buildStackable } = require('@platformatic/service')
 const { isKeyEnabled } = require('@platformatic/utils')
 const { schema } = require('./lib/schema')
 const ConfigManager = require('@platformatic/config')
@@ -13,7 +13,6 @@ const errors = require('./lib/errors')
 const upgrade = require('./lib/upgrade')
 const fs = require('fs/promises')
 const version = require('./package.json').version
-const { PlatformaticDbStackable } = require('./lib/stackable')
 
 async function platformaticDB (app, opts) {
   const configManager = app.platformatic.configManager
@@ -129,15 +128,10 @@ function _buildServer (options) {
   return buildServer(options, platformaticDB)
 }
 
-async function buildStackable (options) {
-  const stackable = new PlatformaticDbStackable({
-    init: buildServer.bind(null, options, module.exports),
-    stackable: platformaticDB,
-    configManager: options.configManager,
-  })
-  return stackable
+async function buildDbStackable (options) {
+  return buildStackable(options, platformaticDB)
 }
-platformaticDB.buildStackable = buildStackable
+platformaticDB.buildStackable = buildDbStackable
 
 module.exports = platformaticDB
 module.exports.buildServer = _buildServer
@@ -147,4 +141,4 @@ module.exports.ConfigManager = ConfigManager
 module.exports.errors = errors
 module.exports.createConnectionPool = createConnectionPool
 module.exports.Generator = require('./lib/generator/db-generator').Generator
-module.exports.buildStackable = buildStackable
+module.exports.buildStackable = buildDbStackable

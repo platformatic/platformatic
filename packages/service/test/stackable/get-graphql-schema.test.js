@@ -25,6 +25,8 @@ test('get service openapi schema via stackable api', async (t) => {
   t.after(async () => {
     await stackable.stop()
   })
+
+  await stackable.init()
   await stackable.start()
 
   const graphqlSchema = await stackable.getGraphqlSchema()

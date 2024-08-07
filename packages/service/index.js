@@ -18,7 +18,7 @@ const { telemetry } = require('@platformatic/telemetry')
 const { buildCompileCmd, extractTypeScriptCompileOptionsFromConfig } = require('./lib/compile')
 const { schema } = require('./lib/schema')
 const { addLoggerToTheConfig } = require('./lib/utils')
-const { start, buildServer } = require('./lib/start')
+const { start, buildServer, buildConfigManager } = require('./lib/start')
 const ServiceGenerator = require('./lib/generator/service-generator.js')
 const { PlatformaticServiceStackable } = require('./lib/stackable')
 
@@ -143,11 +143,12 @@ function _buildServer (options, app) {
   return buildServer(options, app || module.exports)
 }
 
-async function buildStackable (options) {
+async function buildStackable (options, app = platformaticService) {
+  const configManager = await buildConfigManager(options, app)
   const stackable = new PlatformaticServiceStackable({
-    init: buildServer.bind(null, options, module.exports),
-    stackable: platformaticService,
-    configManager: options.configManager,
+    init: buildServer.bind(null, options, app),
+    stackable: app,
+    configManager,
   })
   return stackable
 }
@@ -157,6 +158,7 @@ module.exports.configType = 'service'
 module.exports.app = platformaticService
 module.exports.schema = schema
 module.exports.buildServer = _buildServer
+module.exports.buildStackable = buildStackable
 module.exports.schemas = require('./lib/schema')
 module.exports.platformaticService = platformaticService
 module.exports.addLoggerToTheConfig = addLoggerToTheConfig

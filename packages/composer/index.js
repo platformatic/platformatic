@@ -2,7 +2,7 @@
 
 const deepEqual = require('fast-deep-equal')
 const ConfigManager = require('@platformatic/config')
-const { platformaticService, buildServer } = require('@platformatic/service')
+const { platformaticService, buildServer, buildStackable } = require('@platformatic/service')
 
 const { schema } = require('./lib/schema')
 const serviceProxy = require('./lib/proxy')
@@ -14,7 +14,6 @@ const graphqlGenerator = require('./lib/graphql-generator')
 const { isSameGraphqlSchema, fetchGraphqlSubgraphs } = require('./lib/graphql-fetch')
 const { isFetchable } = require('./lib/utils')
 const errors = require('./lib/errors')
-const { PlatformaticComposerStackable } = require('./lib/stackable')
 
 const EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE = 'graphql composer is an experimental feature'
 
@@ -212,15 +211,10 @@ async function watchServices (app, opts) {
   })
 }
 
-async function buildStackable (options) {
-  const stackable = new PlatformaticComposerStackable({
-    init: buildServer.bind(null, options, module.exports),
-    stackable: platformaticComposer,
-    configManager: options.configManager,
-  })
-  return stackable
+async function buildComposerStackable (options) {
+  return buildStackable(options, platformaticComposer)
 }
-platformaticComposer.buildStackable = buildStackable
+platformaticComposer.buildStackable = buildComposerStackable
 
 module.exports = platformaticComposer
 module.exports.schema = schema
@@ -229,4 +223,4 @@ module.exports.buildServer = buildComposerServer
 module.exports.errors = errors
 module.exports.Generator = require('./lib/generator/composer-generator')
 module.exports.ConfigManager = ConfigManager
-module.exports.buildStackable = buildStackable
+module.exports.buildStackable = buildComposerStackable
