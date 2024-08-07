@@ -228,7 +228,7 @@ test('should trace a request in a platformatic DB app', async () => {
 test('should trace a request getting DB from the request and running the query manually', async () => {
   const plugin = async (app) => {
     app.get('/custom-pages', async (request, _reply) => {
-      const { db } = request
+      const db = request.getDB()
       const { sql } = app.platformatic
       const pages = await db.query(sql`SELECT id, title FROM pages;`)
       return pages

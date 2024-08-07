@@ -2,7 +2,7 @@
 
 function wrapQuery (app, db, request) {
   const { startSpan, endSpan, SpanKind } = app.openTelemetry
-  async function wrappedFunction () {
+  async function wrappedQuery () {
     const query = arguments[0]
 
     let namePrefix, dbSystem
@@ -48,14 +48,14 @@ function wrapQuery (app, db, request) {
       throw err
     }
   }
-  return wrappedFunction
+  return wrappedQuery
 }
 
 function wrapDB (app, db, request) {
   const newDb = Object.create(db)
   newDb.query = wrapQuery(app, db, request)
-  newDb.tx = async function wrapTx (func) {
-    return db.tx(async (db) => {
+  newDb.tx = function wrappedTx (func) {
+    return db.tx((db) => {
       const _newDb = Object.create(db)
       _newDb.query = wrapQuery(app, db, request)
       return func(_newDb)
@@ -67,11 +67,11 @@ function wrapDB (app, db, request) {
 const setupTelemetry = app => {
   // Decorate the request with the wrapped DB.
   // We need that for the queries written directly using `db`
-  app.addHook('onRequest', async (req, _reply) => {
-    const { db, sql } = app.platformatic
-    req['db'] = wrapDB(app, db, req)
-    req['sql'] = sql // For symmmetry, if we get the DB from the request, we should also get the SQL (even if unchanged)
-  })
+  if (app.platformatic.db) {
+    app.decorateRequest('getDB', function getDB () {
+      return wrapDB(app, app.platformatic.db, this)
+    })
+  }
 }
 
 module.exports = {
