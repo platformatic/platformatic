@@ -22,6 +22,20 @@ async function createBasicPages (db, sql) {
   }
 }
 
+const getSpanPerType = (spans, type = 'http') => {
+  let attibuteToLookFor
+  if (type === 'graphql') {
+    attibuteToLookFor = 'graphql.document'
+  } else if (type === 'db') {
+    attibuteToLookFor = 'db.system'
+  } else if (type === 'http') {
+    attibuteToLookFor = 'url.path'
+  } else {
+    throw new Error(`Type ${type} not supported`)
+  }
+  return spans.find(span => span.attributes[attibuteToLookFor])
+}
+
 test('creates the spans for the graphql mutation', async (t) => {
   const app = fastify()
 
@@ -63,7 +77,8 @@ test('creates the spans for the graphql mutation', async (t) => {
       },
     })
     equal(res.statusCode, 200, 'savePage status code')
-    same(res.json(), {
+    const ress = res.json()
+    same(ress, {
       data: {
         savePage: {
           id: 1,
@@ -75,9 +90,8 @@ test('creates the spans for the graphql mutation', async (t) => {
 
   const { exporters } = app.openTelemetry
   const finishedSpans = exporters[0].getFinishedSpans()
-  equal(finishedSpans.length, 2)
-  const graphqlSpan = finishedSpans[0]
-  const httpSpan = finishedSpans[1]
+  const graphqlSpan = getSpanPerType(finishedSpans, 'graphql')
+  const httpSpan = getSpanPerType(finishedSpans, 'http')
 
   equal(httpSpan.name, 'POST /graphql')
   equal(httpSpan.attributes['http.request.method'], 'POST')
@@ -147,9 +161,9 @@ test('creates the spans for errors', { skip: isSQLite }, async (t) => {
 
   const { exporters } = app.openTelemetry
   const finishedSpans = exporters[0].getFinishedSpans()
-  equal(finishedSpans.length, 2)
-  const graphqlSpan = finishedSpans[0]
-  const httpSpan = finishedSpans[1]
+  equal(finishedSpans.length, 3)
+  const graphqlSpan = getSpanPerType(finishedSpans, 'graphql')
+  const httpSpan = getSpanPerType(finishedSpans, 'http')
 
   equal(httpSpan.name, 'POST /graphql')
   equal(httpSpan.attributes['http.request.method'], 'POST')
