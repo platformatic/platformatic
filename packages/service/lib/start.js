@@ -87,7 +87,10 @@ async function buildServer (options, app) {
   }
   const handler = await createServer(context)
   handler.decorate('start', async () => {
-    context.url = await handler.listen({ host: options.server?.hostname || '127.0.0.1', port: options.server?.port || 0 })
+    context.url = await handler.listen({
+      host: options.server?.hostname || '127.0.0.1',
+      port: options.server?.port || 0,
+    })
     return context.url
   })
   configManager.on('error', function (err) {

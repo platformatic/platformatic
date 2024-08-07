@@ -11,12 +11,20 @@ class PlatformaticServiceStackable {
     this.config = this.configManager.current
   }
 
-  async start (options) {
-    await this.app.listen(options)
+  async start (options = {}) {
+    if (options.listen === false) {
+      await this.app.ready()
+      return
+    }
+    await this.app.start()
   }
 
   async stop () {
     await this.app.close()
+  }
+
+  getUrl () {
+    return this.app.url
   }
 
   async getInfo () {
@@ -39,7 +47,7 @@ class PlatformaticServiceStackable {
     return this.app.graphql ? printSchema(this.app.graphql.schema) : null
   }
 
-  async getMetrics (format) {
+  async getMetrics ({ format }) {
     const promRegister = this.app.metrics?.client?.register
     if (!promRegister) return null
 
@@ -51,6 +59,11 @@ class PlatformaticServiceStackable {
   async inject (injectParams) {
     const { statusCode, headers, body } = await this.app.inject(injectParams)
     return { statusCode, headers, body }
+  }
+
+  async log (message, options = {}) {
+    const logLevel = options.level ?? 'info'
+    this.app.log[logLevel](message)
   }
 }
 

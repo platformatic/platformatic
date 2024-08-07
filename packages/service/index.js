@@ -143,7 +143,7 @@ function _buildServer (options, app) {
   return buildServer(options, app || module.exports)
 }
 
-async function buildStackable (options, stackableExports) {
+async function buildStackable (options) {
   const app = await buildServer(options, module.exports)
   const stackable = new PlatformaticServiceStackable({
     app,
@@ -151,6 +151,7 @@ async function buildStackable (options, stackableExports) {
   })
   return stackable
 }
+platformaticService.buildStackable = buildStackable
 
 module.exports.configType = 'service'
 module.exports.app = platformaticService

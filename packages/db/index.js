@@ -137,6 +137,7 @@ async function buildStackable (options) {
   })
   return stackable
 }
+platformaticDB.buildStackable = buildStackable
 
 module.exports = platformaticDB
 module.exports.buildServer = _buildServer

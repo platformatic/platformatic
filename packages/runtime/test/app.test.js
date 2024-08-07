@@ -203,7 +203,7 @@ test('Uses the server config if passed', async (t) => {
       }
     }
   }
-  assert.strictEqual(configManager, app.server.platformatic.configManager)
+  assert.strictEqual(configManager, app.stackable.configManager)
 })
 
 test('logs errors during startup', async (t) => {
@@ -254,20 +254,20 @@ test('returns application statuses', async (t) => {
   app.start()
 
   assert.strictEqual(app.getStatus(), 'starting')
-  assert.strictEqual(app.server, null)
+  assert.strictEqual(app.stackable, null)
 
   await once(app, 'start')
 
   assert.strictEqual(app.getStatus(), 'started')
-  assert.notStrictEqual(app.server, null)
+  assert.notStrictEqual(app.stackable, null)
 
   app.stop()
 
   assert.strictEqual(app.getStatus(), 'started')
-  assert.notStrictEqual(app.server, null)
+  assert.notStrictEqual(app.stackable, null)
 
   await once(app, 'stop')
 
   assert.strictEqual(app.getStatus(), 'stopped')
-  assert.notStrictEqual(app.server, null)
+  assert.notStrictEqual(app.stackable, null)
 })

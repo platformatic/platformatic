@@ -220,6 +220,7 @@ async function buildStackable (options) {
   })
   return stackable
 }
+platformaticComposer.buildStackable = buildStackable
 
 module.exports = platformaticComposer
 module.exports.schema = schema

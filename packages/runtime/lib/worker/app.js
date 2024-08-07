@@ -6,7 +6,6 @@ const { dirname } = require('node:path')
 const { FileWatcher } = require('@platformatic/utils')
 const debounce = require('debounce')
 
-const { buildServer } = require('../build-server')
 const errors = require('../errors')
 const { getServiceUrl, loadConfig } = require('../utils')
 
@@ -29,7 +28,7 @@ class PlatformaticApp extends EventEmitter {
     this.#watch = watch
     this.#starting = false
     this.#started = false
-    this.server = null
+    this.stackable = null
     this.#fileWatcher = null
     this.#hasManagementApi = !!hasManagementApi
     this.#logger = logger.child({
@@ -72,7 +71,7 @@ class PlatformaticApp extends EventEmitter {
     try {
       // If this is a restart, have the fastify server restart itself. If this
       // is not a restart, then create a new server.
-      this.server = await buildServer({
+      this.stackable = await this.config.app.buildStackable({
         app: this.config.app,
         ...config,
         id: this.appConfig.id,
@@ -87,7 +86,7 @@ class PlatformaticApp extends EventEmitter {
     if (config.plugins !== undefined && this.#watch && watch.enabled !== false) {
       /* c8 ignore next 4 */
       this.#debouncedRestart = debounce(() => {
-        this.server.log.info('files changed')
+        this.stackable.log('files changed', { level: 'debug' })
         this.emit('changed')
       }, 100) // debounce restart for 100ms
 
@@ -96,16 +95,16 @@ class PlatformaticApp extends EventEmitter {
 
     if (this.appConfig.useHttp) {
       try {
-        await this.server.start()
+        await this.stackable.start({ listen: true })
         /* c8 ignore next 5 */
       } catch (err) {
-        this.server.log.error({ err })
+        this.stackable.log(err, { level: 'debug' })
         this.#starting = false
         throw err
       }
     } else {
       // Make sure the server has run all the onReady hooks before returning.
-      await this.server.ready()
+      await this.stackable.start({ listen: false })
     }
 
     this.#started = true
@@ -119,7 +118,7 @@ class PlatformaticApp extends EventEmitter {
     }
 
     await this.#stopFileWatching()
-    await this.server.close()
+    await this.stackable.stop()
 
     this.#started = false
     this.#starting = false
@@ -132,7 +131,7 @@ class PlatformaticApp extends EventEmitter {
       return
     }
 
-    await this.server.start()
+    await this.stackable.start()
   }
 
   async #loadConfig () {
@@ -161,7 +160,7 @@ class PlatformaticApp extends EventEmitter {
 
     configManager.on('error', (err) => {
       /* c8 ignore next */
-      this.server.log.error({ err }, 'error reloading the configuration')
+      this.stackable.log('error reloading the configuration' + err, { level: 'error' })
     })
 
     if (appConfig._configOverrides instanceof Map) {
@@ -253,8 +252,7 @@ class PlatformaticApp extends EventEmitter {
     if (this.#fileWatcher) {
       return
     }
-    const server = this.server
-    const { configManager } = server.platformatic
+    const { configManager } = this.config
     const fileWatcher = new FileWatcher({
       path: dirname(configManager.fullPath),
       /* c8 ignore next 2 */
@@ -265,8 +263,7 @@ class PlatformaticApp extends EventEmitter {
     fileWatcher.on('update', this.#debouncedRestart)
 
     fileWatcher.startWatching()
-    server.log.debug('start watching files')
-    server.platformatic.fileWatcher = fileWatcher
+    this.stackable.log('start watching files', { level: 'debug' })
     this.#fileWatcher = fileWatcher
   }
 
@@ -274,9 +271,8 @@ class PlatformaticApp extends EventEmitter {
     const watcher = this.#fileWatcher
 
     if (watcher) {
-      this.server.log.debug('stop watching files')
+      this.stackable.log('stop watching files', { level: 'debug' })
       await watcher.stopWatching()
-      this.server.platformatic.fileWatcher = undefined
       this.#fileWatcher = null
     }
   }
