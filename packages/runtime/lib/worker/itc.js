@@ -88,11 +88,9 @@ function setupITC (app, service, dispatcher) {
   })
 
   itc.handle('getServiceConfig', async () => {
-    const current = app.config.configManager.current
-    const { logger: _logger, ...server } = current.server
-
+    const current = await app.stackable.getConfig()
     // Remove all undefined keys from the config
-    return JSON.parse(JSON.stringify({ ...current, server: { ...server, logger: undefined } }))
+    return JSON.parse(JSON.stringify(current))
   })
 
   itc.handle('getServiceOpenAPISchema', async () => {

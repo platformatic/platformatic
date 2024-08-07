@@ -85,7 +85,11 @@ class PlatformaticApp extends EventEmitter {
 
     this.#starting = true
 
-    await this.stackable.init()
+    try {
+      await this.stackable.init()
+    } catch (err) {
+      this.#logAndExit(err)
+    }
 
     const configManager = this.config.configManager
     const config = configManager.current

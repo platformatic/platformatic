@@ -215,36 +215,36 @@ test('Uses the server config if passed', async (t) => {
   assert.strictEqual(configManager, app.stackable.configManager)
 })
 
-// test('logs errors during startup', async (t) => {
-//   const { logger, stream } = getLoggerAndStream()
-//   const appPath = join(fixturesDir, 'serviceAppThrowsOnStart')
-//   const configFile = join(appPath, 'platformatic.service.json')
-//   const config = {
-//     id: 'serviceAppThrowsOnStart',
-//     config: configFile,
-//     path: appPath,
-//     entrypoint: true,
-//     watch: true,
-//   }
-//   const app = new PlatformaticApp(config, logger)
+test('logs errors during startup', async (t) => {
+  const { logger, stream } = getLoggerAndStream()
+  const appPath = join(fixturesDir, 'serviceAppThrowsOnStart')
+  const configFile = join(appPath, 'platformatic.service.json')
+  const config = {
+    id: 'serviceAppThrowsOnStart',
+    config: configFile,
+    path: appPath,
+    entrypoint: true,
+    watch: true,
+  }
+  const app = new PlatformaticApp(config, logger)
 
-//   t.mock.method(process, 'exit', () => { throw new Error('exited') })
+  t.mock.method(process, 'exit', () => { throw new Error('exited') })
 
-//   await assert.rejects(async () => {
-//     await app.init()
-//     await app.start()
-//   }, /exited/)
-//   assert.strictEqual(process.exit.mock.calls.length, 1)
-//   assert.strictEqual(process.exit.mock.calls[0].arguments[0], 1)
+  await assert.rejects(async () => {
+    await app.init()
+    await app.start()
+  }, /exited/)
+  assert.strictEqual(process.exit.mock.calls.length, 1)
+  assert.strictEqual(process.exit.mock.calls[0].arguments[0], 1)
 
-//   stream.end()
-//   const lines = []
-//   for await (const line of stream) {
-//     lines.push(line)
-//   }
-//   const lastLine = lines[lines.length - 1]
-//   assert.strictEqual(lastLine.msg, 'boom')
-// })
+  stream.end()
+  const lines = []
+  for await (const line of stream) {
+    lines.push(line)
+  }
+  const lastLine = lines[lines.length - 1]
+  assert.strictEqual(lastLine.msg, 'boom')
+})
 
 test('returns application statuses', async (t) => {
   const { logger } = getLoggerAndStream()
