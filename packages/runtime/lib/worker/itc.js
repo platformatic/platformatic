@@ -59,7 +59,8 @@ function setupITC (app, service, dispatcher) {
 
     const url = app.stackable.getUrl()
 
-    dispatcher.replaceServer(url ?? app.stackable)
+    const dispatchFunc = await app.stackable.getDispatchFunc()
+    dispatcher.replaceServer(url ?? dispatchFunc)
 
     return service.entrypoint ? url : null
   })

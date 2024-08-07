@@ -49,6 +49,11 @@ class ServiceStackable {
     return this.configManager.current
   }
 
+  async getDispatchFunc () {
+    await this.init()
+    return this.app
+  }
+
   async getOpenapiSchema () {
     await this.init()
     await this.app.ready()
