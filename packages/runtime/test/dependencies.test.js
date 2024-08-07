@@ -43,20 +43,20 @@ test('parses composer and client dependencies', async (t) => {
   assert.deepStrictEqual(service2.dependencies, [])
 })
 
-// test('correct throws on missing dependencies', async (t) => {
-//   const configFile = join(fixturesDir, 'configs', 'monorepo-missing-dependencies.json')
-//   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-//   const dirname = config.configManager.dirname
-//   const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
+test('correct throws on missing dependencies', async (t) => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-missing-dependencies.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const dirname = config.configManager.dirname
+  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
 
-//   const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
 
-//   t.after(async () => {
-//     await runtime.close()
-//   })
+  t.after(async () => {
+    await runtime.close()
+  })
 
-//   await assert.rejects(
-//     () => runtime.init(),
-//     { name: 'FastifyError', message: 'Missing dependency: "service \'composer\' has unknown dependency: \'missing\'."' }
-//   )
-// })
+  await assert.rejects(
+    () => runtime.init(),
+    { name: 'FastifyError', message: 'Missing dependency: "service \'composer\' has unknown dependency: \'missing\'."' }
+  )
+})

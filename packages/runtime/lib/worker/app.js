@@ -12,6 +12,7 @@ const { getServiceUrl, loadConfig } = require('../utils')
 class PlatformaticApp extends EventEmitter {
   #starting
   #started
+  #listening
   #watch
   #fileWatcher
   #logger
@@ -28,6 +29,7 @@ class PlatformaticApp extends EventEmitter {
     this.#watch = watch
     this.#starting = false
     this.#started = false
+    this.#listening = false
     this.stackable = null
     this.#fileWatcher = null
     this.#hasManagementApi = !!hasManagementApi
@@ -54,13 +56,7 @@ class PlatformaticApp extends EventEmitter {
     return []
   }
 
-  async start () {
-    if (this.#starting || this.#started) {
-      throw new errors.ApplicationAlreadyStartedError()
-    }
-
-    this.#starting = true
-
+  async init () {
     await this.#applyConfig()
 
     const configManager = this.config.configManager
@@ -80,6 +76,19 @@ class PlatformaticApp extends EventEmitter {
     } catch (err) {
       this.#logAndExit(err)
     }
+  }
+
+  async start () {
+    if (this.#starting || this.#started) {
+      throw new errors.ApplicationAlreadyStartedError()
+    }
+
+    this.#starting = true
+
+    await this.stackable.init()
+
+    const configManager = this.config.configManager
+    const config = configManager.current
 
     const watch = this.config.configManager.current.watch
 
@@ -93,18 +102,15 @@ class PlatformaticApp extends EventEmitter {
       this.#startFileWatching(watch)
     }
 
-    if (this.appConfig.useHttp) {
-      try {
-        await this.stackable.start({ listen: true })
-        /* c8 ignore next 5 */
-      } catch (err) {
-        this.stackable.log(err, { level: 'debug' })
-        this.#starting = false
-        throw err
-      }
-    } else {
-      // Make sure the server has run all the onReady hooks before returning.
-      await this.stackable.start({ listen: false })
+    const listen = !!this.appConfig.useHttp
+    try {
+      await this.stackable.start({ listen })
+      this.#listening = listen
+      /* c8 ignore next 5 */
+    } catch (err) {
+      this.stackable.log(err, { level: 'debug' })
+      this.#starting = false
+      throw err
     }
 
     this.#started = true
@@ -122,16 +128,17 @@ class PlatformaticApp extends EventEmitter {
 
     this.#started = false
     this.#starting = false
+    this.#listening = false
     this.emit('stop')
   }
 
   async listen () {
     // This server is not an entrypoint or already listened in start. Behave as no-op.
-    if (!this.appConfig.entrypoint || this.appConfig.useHttp) {
+    if (!this.appConfig.entrypoint || this.appConfig.useHttp || this.#listening) {
       return
     }
 
-    await this.stackable.start()
+    await this.stackable.start({ listen: true })
   }
 
   async #loadConfig () {
@@ -142,7 +149,7 @@ class PlatformaticApp extends EventEmitter {
       _config = await loadConfig({}, ['-c', appConfig.config], {
         onMissingEnv: this.#fetchServiceUrl,
         context: appConfig,
-      }, true, this.#logger)
+      }, true)
     } catch (err) {
       this.#logAndExit(err)
     }

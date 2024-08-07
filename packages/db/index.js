@@ -130,10 +130,10 @@ function _buildServer (options) {
 }
 
 async function buildStackable (options) {
-  const app = await buildServer(options, module.exports)
   const stackable = new PlatformaticDbStackable({
-    app,
+    init: buildServer.bind(null, options, module.exports),
     stackable: platformaticDB,
+    configManager: options.configManager,
   })
   return stackable
 }

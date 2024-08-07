@@ -4,18 +4,30 @@ const { printSchema } = require('graphql')
 
 class PlatformaticServiceStackable {
   constructor (options) {
-    this.app = options.app
+    this._init = options.init
     this.stackable = options.stackable
+    this.serviceId = options.id
 
-    this.configManager = this.app.platformatic.configManager
+    this.configManager = options.configManager
     this.config = this.configManager.current
   }
 
+  async init () {
+    this.app = await this._init()
+    return this.app
+  }
+
   async start (options = {}) {
+    // this.app = await this.init()
+
     if (options.listen === false) {
+    //   console.log('Starting service---1---------------------------', options)
       await this.app.ready()
+      //   console.log('Starting service---2---------------------------', options)
+
       return
     }
+    // console.log(this.configManager.current.server.logger)
     await this.app.start()
   }
 

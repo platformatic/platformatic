@@ -84,7 +84,6 @@ function setupITC (app, service, dispatcher) {
   })
 
   itc.handle('getServiceInfo', async () => {
-    console.log(app)
     return app.stackable.getInfo()
   })
 

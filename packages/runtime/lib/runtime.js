@@ -28,6 +28,15 @@ const MAX_LISTENERS_COUNT = 100
 const MAX_METRICS_QUEUE_LENGTH = 5 * 60 // 5 minutes in seconds
 const COLLECT_METRICS_TIMEOUT = 1000
 
+process.on('uncaughtException', (err) => {
+  console.error(err)
+  process.exit(1)
+})
+process.on('unhandledRejection', (err) => {
+  console.error(err)
+  process.exit(1)
+})
+
 class Runtime extends EventEmitter {
   #configManager
   #runtimeTmpDir

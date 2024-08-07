@@ -213,10 +213,10 @@ async function watchServices (app, opts) {
 }
 
 async function buildStackable (options) {
-  const app = await buildServer(options, module.exports)
   const stackable = new PlatformaticComposerStackable({
-    app,
+    init: buildServer.bind(null, options, module.exports),
     stackable: platformaticComposer,
+    configManager: options.configManager,
   })
   return stackable
 }
