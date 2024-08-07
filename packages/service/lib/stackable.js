@@ -2,7 +2,7 @@
 
 const { printSchema } = require('graphql')
 
-class PlatformaticServiceStackable {
+class ServiceStackable {
   constructor (options) {
     this.app = null
     this._init = options.init
@@ -87,4 +87,4 @@ class PlatformaticServiceStackable {
   }
 }
 
-module.exports = { PlatformaticServiceStackable }
+module.exports = { ServiceStackable }
