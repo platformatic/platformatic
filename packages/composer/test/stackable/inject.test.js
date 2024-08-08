@@ -6,7 +6,7 @@ const { join } = require('node:path')
 const { buildStackable } = require('../..')
 
 test('inject request into service stackable', async (t) => {
-  const stackable = await buildStackable({
+  const { stackable } = await buildStackable({
     composer: {
       services: [],
     },

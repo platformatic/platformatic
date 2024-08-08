@@ -29,6 +29,42 @@ declare module 'fastify' {
 
 type DefaultGenerator = new () => BaseGenerator.BaseGenerator
 
+export interface StartOptions {
+  listen?: boolean
+}
+
+export interface StackableInfo {
+  type: string
+  version: string
+}
+
+export interface StackableInterface {
+  init: () => Promise<void>
+  start: (options: StartOptions) => Promise<void>
+  stop: () => Promise<void>
+  getUrl: () => string
+  getConfig: () => Promise<object>
+  getInfo: () => Promise<StackableInfo>
+  getDispatchFunc: () => Promise<Function>
+  getOpenapiSchema: () => Promise<object>
+  getGraphqlSchema: () => Promise<string>
+  getMetrics: () => Promise<string>
+  inject: (injectParams: object) => Promise<{
+    statusCode: number
+    statusMessage: string
+    headers: object
+    body: object
+  }>
+}
+
+export function buildStackable<ConfigType> (opts: object, app?: object): Promise<{
+  configType: string,
+  configManager?: ConfigManager<ConfigType>,
+  configManagerConfig?: ConfigManagerConfig<ConfigType>,
+  schema?: object,
+  stackable?: StackableInterface
+}>
+
 export interface Stackable<ConfigType, Generator = DefaultGenerator> extends _Stackable<ConfigType> {
   app: (app: FastifyInstance, opts: object) => Promise<void>
   Generator?: Generator

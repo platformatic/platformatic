@@ -214,7 +214,6 @@ async function watchServices (app, opts) {
 async function buildComposerStackable (options) {
   return buildStackable(options, platformaticComposer)
 }
-platformaticComposer.buildStackable = buildComposerStackable
 
 module.exports = platformaticComposer
 module.exports.schema = schema

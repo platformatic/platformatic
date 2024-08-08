@@ -67,12 +67,13 @@ class PlatformaticApp extends EventEmitter {
     try {
       // If this is a restart, have the fastify server restart itself. If this
       // is not a restart, then create a new server.
-      this.stackable = await this.config.app.buildStackable({
+      const { stackable } = await this.config.app.buildStackable({
         app: this.config.app,
         ...config,
         id: this.appConfig.id,
         configManager,
       })
+      this.stackable = stackable
     } catch (err) {
       this.#logAndExit(err)
     }

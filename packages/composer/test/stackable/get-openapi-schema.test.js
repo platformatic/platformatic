@@ -9,7 +9,7 @@ test('get service openapi schema via stackable api', async (t) => {
   const api = await createOpenApiService(t, ['users'])
   await api.listen({ port: 0 })
 
-  const stackable = await buildStackable({
+  const { stackable } = await buildStackable({
     composer: {
       services: [
         {
@@ -46,7 +46,7 @@ test('get null if server does not expose openapi', async (t) => {
     },
   }
 
-  const stackable = await buildStackable(config)
+  const { stackable } = await buildStackable(config)
   t.after(async () => {
     await stackable.stop()
   })

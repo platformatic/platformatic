@@ -150,9 +150,15 @@ async function buildStackable (options, app = platformaticService) {
     stackable: app,
     configManager,
   })
-  return stackable
+
+  return {
+    schema: app.schema,
+    configType: app.configType,
+    configManager,
+    configManagerConfig: app.configManagerConfig,
+    stackable,
+  }
 }
-platformaticService.buildStackable = buildStackable
 
 module.exports.configType = 'service'
 module.exports.app = platformaticService
@@ -166,5 +172,4 @@ module.exports.start = start
 module.exports.Generator = ServiceGenerator
 module.exports.buildCompileCmd = buildCompileCmd
 module.exports.extractTypeScriptCompileOptionsFromConfig = extractTypeScriptCompileOptionsFromConfig
-module.exports.ServiceStackable = ServiceStackable
 module.exports.buildStackable = buildStackable

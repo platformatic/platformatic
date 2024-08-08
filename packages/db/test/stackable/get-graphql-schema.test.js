@@ -26,7 +26,7 @@ test('get service openapi schema via stackable api', async (t) => {
   }
 
   const configManager = await buildConfigManager(config, workingDir)
-  const stackable = await buildStackable({ configManager })
+  const { stackable } = await buildStackable({ configManager })
 
   t.after(async () => {
     await stackable.stop()
@@ -59,7 +59,7 @@ test('get null if server does not expose graphql', async (t) => {
   }
 
   const configManager = await buildConfigManager(config, workingDir)
-  const stackable = await buildStackable({ configManager })
+  const { stackable } = await buildStackable({ configManager })
 
   t.after(async () => {
     await stackable.stop()
