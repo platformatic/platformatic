@@ -17,22 +17,26 @@ if (!process.env.DB || process.env.DB === 'postgresql') {
   connInfo.connectionString = 'postgres://postgres:postgres@127.0.0.1/postgres'
   module.exports.isPg = true
   module.exports.expectedTelemetryPrefix = 'pg'
+  module.exports.expectedPort = 5432
 } else if (process.env.DB === 'mariadb') {
   connInfo.connectionString = 'mysql://root@127.0.0.1:3307/graph'
   connInfo.poolSize = 10
   module.exports.isMysql = true
   module.exports.expectedTelemetryPrefix = 'mysql'
+  module.exports.expectedPort = 3307
 } else if (process.env.DB === 'mysql') {
   connInfo.connectionString = 'mysql://root@127.0.0.1/graph'
   connInfo.poolSize = 10
   module.exports.isMysql = true
   module.exports.expectedTelemetryPrefix = 'mysql'
+  module.exports.expectedPort = 3306
 } else if (process.env.DB === 'mysql8') {
   connInfo.connectionString = 'mysql://root@127.0.0.1:3308/graph'
   connInfo.poolSize = 10
   module.exports.isMysql = true
   module.exports.isMysql8 = true
   module.exports.expectedTelemetryPrefix = 'mysql'
+  module.exports.expectedPort = 3308
 } else if (process.env.DB === 'sqlite') {
   connInfo.connectionString = 'sqlite://:memory:'
   module.exports.isSQLite = true

@@ -54,7 +54,7 @@ async function getConnectionInfo (dbType) {
   } else if (dbType === 'mysql') {
     baseConnectionString = 'mysql://root@127.0.0.1/'
   } else if (dbType === 'mysql8') {
-    baseConnectionString = 'mysql://root@localhost:3308/'
+    baseConnectionString = 'mysql://root@127.0.0.1:3308/'
   }
 
   const { db, sql } = await createConnectionPool({
@@ -72,6 +72,7 @@ async function getConnectionInfo (dbType) {
   const testDBName = 'test_db_' + randomUUID().replace(/-/g, '')
 
   await db.query(sql`CREATE DATABASE ${sql.ident(testDBName)};`)
+  connectionInfo.dbname = testDBName
   connectionInfo.connectionString = baseConnectionString + testDBName
 
   return {
@@ -124,9 +125,23 @@ async function buildConfigManager (source, dirname) {
 module.exports.buildConfigManager = buildConfigManager
 
 if (!process.env.DB || process.env.DB === 'postgresql') {
+  module.exports.isPg = true
   module.exports.expectedTelemetryPrefix = 'pg'
-} else if (process.env.DB === 'mariadb' || process.env.DB === 'mysql' || process.env.DB === 'mysql8') {
+  module.exports.expectedPort = 5432
+} else if (process.env.DB === 'mariadb') {
+  module.exports.isMysql = true
   module.exports.expectedTelemetryPrefix = 'mysql'
+  module.exports.expectedPort = '3307'
+} else if (process.env.DB === 'mysql') {
+  module.exports.isMysql = true
+  module.exports.expectedTelemetryPrefix = 'mysql'
+  module.exports.expectedPort = 3306
+} else if (process.env.DB === 'mysql8') {
+  module.exports.isMysql = true
+  module.exports.isMysql8 = true
+  module.exports.expectedTelemetryPrefix = 'mysql'
+  module.exports.expectedPort = '3308'
 } else if (process.env.DB === 'sqlite') {
+  module.exports.isSQLite = true
   module.exports.expectedTelemetryPrefix = 'sqlite'
 }

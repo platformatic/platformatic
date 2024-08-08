@@ -4,7 +4,7 @@ const { test } = require('node:test')
 const { deepEqual, equal, match, ok } = require('node:assert')
 const fastify = require('fastify')
 const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
-const { clear, isSQLite, connInfo, expectedTelemetryPrefix } = require('./helper')
+const { clear, isSQLite, isPg, isMysql, isMariaDB, isMysql8, connInfo, expectedTelemetryPrefix, expectedPort } = require('./helper')
 const { telemetry } = require('@platformatic/telemetry')
 const { plugin: mapper } = require('..')
 
@@ -64,7 +64,7 @@ test('should trace a request getting DB from the request and running the query m
     app.get('/custom-pages', async (request, _reply) => {
       try {
         const db = request.getDB()
-        const { sql } = app.platformatic
+        const sql = db.sql
         return db.query(sql`SELECT id, title FROM pages;`)
       } catch (err) {
         console.error(err)
@@ -108,6 +108,24 @@ test('should trace a request getting DB from the request and running the query m
       span.attributes['db.statement'],
       /^SELECT id, title/
     )
+
+    if (isSQLite) {
+      equal(span.attributes['db.system'], 'sqlite')
+      equal(span.attributes['db.name'], ':memory:')
+    } else if (isPg) {
+      equal(span.attributes['db.system'], 'postgresql')
+      equal(span.attributes['db.name'], 'postgres')
+      equal(span.attributes['db.user'], 'postgres')
+      equal(span.attributes['net.peer.name'], '127.0.0.1')
+      equal(span.attributes['net.peer.port'], expectedPort)
+    } else if (isMysql || isMariaDB || isMysql8) {
+      equal(span.attributes['db.system'], 'mysql')
+      equal(span.attributes['db.name'], 'graph')
+      equal(span.attributes['db.user'], 'root')
+      equal(span.attributes['net.peer.name'], '127.0.0.1')
+      equal(span.attributes['net.peer.port'], expectedPort)
+    }
+
     const resource = span.resource
     deepEqual(resource.attributes['service.name'], 'test-service')
     deepEqual(resource.attributes['service.version'], '1.0.0')
