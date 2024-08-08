@@ -7,7 +7,7 @@ module.exports = async function (app) {
   })
 
   let crashOnClose = false
-  app.get('/crash-on-close', async () => {
+  app.get('/crash-on-close', { schema: { hide: true } }, async () => {
     crashOnClose = true
   })
 
