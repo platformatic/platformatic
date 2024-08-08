@@ -5,9 +5,20 @@ const { test } = require('node:test')
 const { request } = require('undici')
 const { buildServer } = require('..')
 const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
-const { buildConfigManager, getConnectionInfo, createBasicPages, expectedTelemetryPrefix } = require('./helper')
+const {
+  buildConfigManager,
+  getConnectionInfo,
+  createBasicPages,
+  expectedTelemetryPrefix,
+  expectedPort,
+  isPg,
+  isMysql,
+  isMysql8,
+  isMariaDB,
+  isSQLite,
+} = require('./helper')
 
-const getSpanPerType = (spans, type = 'http') => {
+const getSpansPerType = (spans, type = 'http') => {
   let attibuteToLookFor
   if (type === 'graphql') {
     attibuteToLookFor = 'graphql.document'
@@ -18,7 +29,7 @@ const getSpanPerType = (spans, type = 'http') => {
   } else {
     throw new Error(`Type ${type} not supported`)
   }
-  return spans.find(span => span.attributes[attibuteToLookFor])
+  return spans.filter(span => span.attributes[attibuteToLookFor])
 }
 
 test('should not configure telemetry if not configured', async (t) => {
@@ -99,21 +110,62 @@ test('should setup telemetry if configured', async (t) => {
   assert.equal(res.statusCode, 200, 'savePage status code')
   const { exporters } = app.openTelemetry
   const finishedSpans = exporters[0].getFinishedSpans()
-  assert.equal(finishedSpans.length, 3)
-  const graphqlSpan = getSpanPerType(finishedSpans, 'graphql')
-  const dbSpan = getSpanPerType(finishedSpans, 'db')
-  const httpSpan = getSpanPerType(finishedSpans, 'http')
+  const graphqlSpans = getSpansPerType(finishedSpans, 'graphql')
+  const dbSpans = getSpansPerType(finishedSpans, 'db')
+  const httpSpans = getSpansPerType(finishedSpans, 'http')
+  assert.equal(graphqlSpans.length, 1)
+  const graphqlSpan = graphqlSpans[0]
   assert.equal(graphqlSpan.name, 'mutation savePage')
   assert.equal(graphqlSpan.attributes['graphql.document'], JSON.stringify({ query }))
   assert.equal(graphqlSpan.attributes['graphql.operation.name'], 'savePage')
   assert.equal(graphqlSpan.attributes['graphql.operation.type'], 'mutation')
+  assert.equal(httpSpans.length, 1)
+  const httpSpan = httpSpans[0]
   assert.equal(httpSpan.name, 'POST /graphql')
   assert.equal(httpSpan.attributes['http.request.method'], 'POST')
   assert.equal(httpSpan.attributes['url.path'], '/graphql')
   assert.equal(httpSpan.attributes['http.response.status_code'], 200)
-  assert.equal(dbSpan.name, 'pg.query:INSERT INTO public.pages (title)VALUES ($1)RETURNING id, title')
-  assert.equal(dbSpan.attributes['db.system'], 'postgresql')
-  assert.equal(dbSpan.attributes['db.statement'], 'INSERT INTO public.pages (title)\nVALUES ($1)\nRETURNING id, title')
+  // DB span
+  const dbname = connectionInfo.dbname
+  if (isPg) {
+    assert.equal(dbSpans.length, 1)
+    const dbSpan = dbSpans[0]
+    assert.ok(dbSpan.name.startsWith('pg.query:'))
+    assert.equal(dbSpan.attributes['db.system'], 'postgresql')
+    assert.equal(dbSpan.attributes['db.user'], 'postgres')
+    assert.equal(dbSpan.attributes['db.name'], dbname)
+    assert.equal(dbSpan.attributes['net.peer.name'], '127.0.0.1')
+    assert.equal(dbSpan.attributes['net.peer.port'], expectedPort)
+    assert.equal(dbSpan.attributes['db.statement'], 'INSERT INTO public.pages (title)\nVALUES ($1)\nRETURNING id, title')
+  } else if (isMysql || isMysql8 || isMariaDB) {
+    // Mysql-like do 2 queries, one for the insert and one for the select
+    assert.equal(dbSpans.length, 2)
+
+    // Insert
+    const dbSpan1 = dbSpans[0]
+    assert.ok(dbSpan1.name.startsWith('mysql.query:'))
+    assert.equal(dbSpan1.attributes['db.system'], 'mysql')
+    assert.equal(dbSpan1.attributes['db.user'], 'root')
+    assert.equal(dbSpan1.attributes['net.peer.name'], '127.0.0.1')
+    assert.equal(dbSpan1.attributes['net.peer.port'], expectedPort)
+
+    // Select
+    const dbSpan2 = dbSpans[1]
+    assert.ok(dbSpan2.name.startsWith('mysql.query:'))
+    assert.equal(dbSpan2.attributes['db.system'], 'mysql')
+    assert.equal(dbSpan2.attributes['db.user'], 'root')
+    assert.equal(dbSpan2.attributes['net.peer.name'], '127.0.0.1')
+    assert.equal(dbSpan2.attributes['net.peer.port'], expectedPort)
+  } else if (isSQLite) {
+    assert.equal(dbSpans.length, 2)
+    const dbSpan1 = dbSpans[0]
+    assert.ok(dbSpan1.name.startsWith('sqlite.query:'))
+    assert.equal(dbSpan1.attributes['db.system'], 'sqlite')
+
+    const dbSpan2 = dbSpans[1]
+    assert.ok(dbSpan2.name.startsWith('sqlite.query:'))
+    assert.equal(dbSpan2.attributes['db.system'], 'sqlite')
+  }
 })
 
 async function setupDBAppWithTelemetry (telemetryOpts, onDatabaseLoad, plugins, teardown) {
@@ -176,7 +228,6 @@ test('should trace a request in a platformatic DB app', async () => {
     method: 'GET',
     url: '/pages',
   })
-  console.log('res', res.json())
   assert.equal(res.statusCode, 200, '/pages status code')
 
   const finishedSpans = exporter.getFinishedSpans()

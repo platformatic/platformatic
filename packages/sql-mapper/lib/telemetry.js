@@ -4,18 +4,16 @@ function wrapQuery (app, db, request) {
   const { startSpan, endSpan, SpanKind } = app.openTelemetry
   async function wrappedQuery () {
     const query = arguments[0]
+    const connectionInfo = db.connectionInfo
 
     let namePrefix, dbSystem
-    if (db.isPg) {
+    if (connectionInfo.isPg) {
       namePrefix = 'pg.query:'
       dbSystem = 'postgresql'
-    } else if (db.isMySql) {
+    } else if (connectionInfo.isMySql) {
       namePrefix = 'mysql.query:'
       dbSystem = 'mysql'
-    } else if (db.isMariaDB) {
-      namePrefix = 'mariadb.query:'
-      dbSystem = 'mysql'
-    } else if (db.isSQLite) {
+    } else if (connectionInfo.isSQLite) {
       namePrefix = 'sqlite.query:'
       dbSystem = 'sqlite'
     } else {
@@ -28,13 +26,25 @@ function wrapQuery (app, db, request) {
       formatValue: (value, index) => ({ placeholder: `$${index + 1}`, value }),
     }
     const { text: queryText } = query.format(format)
-    const spanName = `${namePrefix}${queryText.replace(/\n|\r/g, '')}`
+    // We get the name form the first 20 characters of the query
+    // The spane name is not really important, all the info (included the full query) are in the attributes)
+    const name = queryText.substring(0, 20)
+    const spanName = `${namePrefix}${name.replace(/\n|\r/g, ' ')}`
 
     const ctx = request.span?.context
 
+    const { database, host, port, user } = connectionInfo
     const telemetryAttributes = {
       'db.statement': queryText,
       'db.system': dbSystem,
+      'db.name': database,
+    }
+
+    if (!db.isSQLite) {
+      // we dont' set the connection string as property because it can contain the password
+      telemetryAttributes['db.user'] = user
+      telemetryAttributes['net.peer.name'] = host
+      telemetryAttributes['net.peer.port'] = port
     }
 
     let span
@@ -53,9 +63,11 @@ function wrapQuery (app, db, request) {
 
 function wrapDB (app, db, request) {
   const newDb = Object.create(db)
+  const connectionInfo = db.connectionInfo
   newDb.query = wrapQuery(app, db, request)
   newDb.tx = function wrappedTx (func) {
     return db.tx((db) => {
+      db.connectionInfo = connectionInfo
       const _newDb = Object.create(db)
       _newDb.query = wrapQuery(app, db, request)
       return func(_newDb)

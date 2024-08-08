@@ -9,6 +9,7 @@ const { areSchemasSupported } = require('./lib/utils')
 const errors = require('./lib/errors')
 const setupCache = require('./lib/cache')
 const { setupTelemetry } = require('./lib/telemetry')
+const { getConnectionInfo } = require('./lib/connection-info')
 
 // Ignore the function as it is only used only for MySQL and PostgreSQL
 /* istanbul ignore next */
@@ -95,9 +96,14 @@ async function createConnectionPool ({ log, connectionString, poolSize, idleTime
     })
     sql = sqlite.sql
     db.isSQLite = true
+    db.sql = sql
   } else {
     throw new errors.SpecifyProtocolError()
   }
+
+  // These info are necessary for telemetry attributes
+  const connectionInfo = await getConnectionInfo(db, connectionString)
+  db.connectionInfo = connectionInfo
 
   return { db, sql }
 }
@@ -277,7 +283,7 @@ async function sqlMapper (app, opts) {
 
   // TODO: should we enable db telemetry explicitely with a config?
   if (app.openTelemetry) {
-    await setupTelemetry(app)
+    setupTelemetry(app)
   }
 }
 
