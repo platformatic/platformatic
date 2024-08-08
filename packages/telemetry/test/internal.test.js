@@ -24,7 +24,7 @@ test('start and ends an internal span', async () => {
     },
   }, handler, test.after)
 
-  const { startInternalSpan, endInternalSpan } = app.openTelemetry
+  const { startSpan, endSpan } = app.openTelemetry
 
   const incomingHeaders = {
     host: 'test',
@@ -36,11 +36,11 @@ test('start and ends an internal span', async () => {
   const attributes = {
     'test-attribute': 'test-value',
   }
-  const span = startInternalSpan('TEST', context, attributes)
+  const span = startSpan('TEST', context, attributes)
   deepEqual(span._spanContext.traceId, traceId)
   equal(span._ended, false)
   deepEqual(span.attributes, attributes)
-  endInternalSpan(span)
+  endSpan(span)
   equal(span._ended, true)
 
   const { exporters } = app.openTelemetry
@@ -66,12 +66,12 @@ test('start and ends an internal span with no parent context and no attributes',
     },
   }, handler, test.after)
 
-  const { startInternalSpan, endInternalSpan } = app.openTelemetry
+  const { startSpan, endSpan } = app.openTelemetry
 
-  const span = startInternalSpan('TEST')
+  const span = startSpan('TEST')
   equal(span._ended, false)
   deepEqual(span.attributes, {})
-  endInternalSpan(span)
+  endSpan(span)
   equal(span._ended, true)
 
   const { exporters } = app.openTelemetry
@@ -101,7 +101,7 @@ test('start and ends an internal span with error', async () => {
     },
   }, handler, test.after)
 
-  const { startInternalSpan, endInternalSpan } = app.openTelemetry
+  const { startSpan, endSpan } = app.openTelemetry
 
   const incomingHeaders = {
     host: 'test',
@@ -113,12 +113,12 @@ test('start and ends an internal span with error', async () => {
   const attributes = {
     'test-attribute': 'test-value',
   }
-  const span = startInternalSpan('TEST', context, attributes)
+  const span = startSpan('TEST', context, attributes)
   deepEqual(span._spanContext.traceId, traceId)
   deepEqual(span._ended, false)
   deepEqual(span.attributes, attributes)
   const error = new Error('test error')
-  endInternalSpan(span, error)
+  endSpan(span, error)
   deepEqual(span._ended, true)
 
   const { exporters } = app.openTelemetry

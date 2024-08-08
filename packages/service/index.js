@@ -40,7 +40,7 @@ async function platformaticService (app, opts) {
   }
 
   // This must be done before loading the plugins, so they can inspect if the
-  // openTelemetry decoretor exists and then configure accordingly.
+  // openTelemetry decorator exists and then configure accordingly.
   if (isKeyEnabled('telemetry', config)) {
     await app.register(telemetry, config.telemetry)
   }

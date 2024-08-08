@@ -244,7 +244,11 @@ class Runtime extends EventEmitter {
     this.#startedServices.set(id, false)
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
-    await Promise.race([sendViaITC(service, 'stop'), sleep(10000, 'timeout', { ref: false })])
+    try {
+      await Promise.race([sendViaITC(service, 'stop'), sleep(10000, 'timeout', { ref: false })])
+    } catch (error) {
+      this.logger.info(`Failed to stop service "${id}". Killing a worker thread.`, error)
+    }
 
     // Wait for the worker thread to finish, we're going to create a new one if the service is ever restarted
     const res = await Promise.race([once(service, 'exit'), sleep(10000, 'timeout', { ref: false })])

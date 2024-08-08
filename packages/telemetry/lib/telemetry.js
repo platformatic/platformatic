@@ -2,12 +2,22 @@
 
 const fp = require('fastify-plugin')
 const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
-const { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor, InMemorySpanExporter } = require('@opentelemetry/sdk-trace-base')
-const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions')
+const {
+  ConsoleSpanExporter,
+  BatchSpanProcessor,
+  SimpleSpanProcessor,
+  InMemorySpanExporter,
+} = require('@opentelemetry/sdk-trace-base')
+const {
+  SemanticResourceAttributes,
+} = require('@opentelemetry/semantic-conventions')
 const { Resource } = require('@opentelemetry/resources')
 const { PlatformaticTracerProvider } = require('./platformatic-trace-provider')
 const { PlatformaticContext } = require('./platformatic-context')
-const { fastifyTextMapGetter, fastifyTextMapSetter } = require('./fastify-text-map')
+const {
+  fastifyTextMapGetter,
+  fastifyTextMapSetter,
+} = require('./fastify-text-map')
 const { formatParamUrl } = require('@fastify/swagger')
 const fastUri = require('fast-uri')
 
@@ -85,7 +95,9 @@ const setupProvider = (app, opts) => {
 
   const exporters = Array.isArray(exporter) ? exporter : [exporter]
 
-  app.log.info(`Setting up telemetry for service: ${serviceName}${version ? ' version: ' + version : ''} with exporter of type ${exporter.type}`)
+  app.log.info(
+    `Setting up telemetry for service: ${serviceName}${version ? ' version: ' + version : ''} with exporter of type ${exporter.type}`
+  )
 
   const provider = new PlatformaticTracerProvider({
     resource: new Resource({
@@ -106,7 +118,9 @@ const setupProvider = (app, opts) => {
       exporterObj = new ConsoleSpanExporter(exporterOptions)
     } else if (exporter.type === 'otlp') {
       // We require here because this require (and only the require!) creates some issue with c8 on some mjs tests on other modules. Since we need an assignemet here, we don't use a switch.
-      const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-proto')
+      const {
+        OTLPTraceExporter,
+      } = require('@opentelemetry/exporter-trace-otlp-proto')
       exporterObj = new OTLPTraceExporter(exporterOptions)
     } else if (exporter.type === 'zipkin') {
       const { ZipkinExporter } = require('@opentelemetry/exporter-zipkin')
@@ -114,12 +128,16 @@ const setupProvider = (app, opts) => {
     } else if (exporter.type === 'memory') {
       exporterObj = new InMemorySpanExporter()
     } else {
-      app.log.warn(`Unknown exporter type: ${exporter.type}, defaulting to console.`)
+      app.log.warn(
+        `Unknown exporter type: ${exporter.type}, defaulting to console.`
+      )
       exporterObj = new ConsoleSpanExporter(exporterOptions)
     }
 
     // We use a SimpleSpanProcessor for the console/memory exporters and a BatchSpanProcessor for the others.
-    const spanProcessor = ['memory', 'console'].includes(exporter.type) ? new SimpleSpanProcessor(exporterObj) : new BatchSpanProcessor(exporterObj)
+    const spanProcessor = ['memory', 'console'].includes(exporter.type)
+      ? new SimpleSpanProcessor(exporterObj)
+      : new BatchSpanProcessor(exporterObj)
     spanProcessors.push(spanProcessor)
     exporterObjs.push(exporterObj)
   }
@@ -127,35 +145,40 @@ const setupProvider = (app, opts) => {
   provider.addSpanProcessor(spanProcessors)
   const tracer = provider.getTracer(moduleName, moduleVersion)
   const propagator = provider.getPropagator()
+
   return { tracer, exporters: exporterObjs, propagator, provider }
 }
 
 async function setupTelemetry (app, opts) {
   const openTelemetryAPIs = setupProvider(app, opts)
   const { tracer, propagator, provider } = openTelemetryAPIs
-  const skipOperations = opts?.skip?.map(skip => {
-    const { method, path } = skip
-    return `${method}${path}`
-  }) || []
+  const skipOperations =
+    opts?.skip?.map((skip) => {
+      const { method, path } = skip
+      return `${method}${path}`
+    }) || []
 
   // expose the span as a request decorator
   app.decorateRequest('span')
 
-  const startSpan = async (request) => {
+  const startHTTPSpan = async (request) => {
     if (skipOperations.includes(`${request.method}${request.url}`)) {
-      request.log.debug({ operation: `${request.method}${request.url}` }, 'Skipping telemetry')
+      request.log.debug(
+        { operation: `${request.method}${request.url}` },
+        'Skipping telemetry'
+      )
       return
     }
 
     // We populate the context with the incoming request headers
-    let context = propagator.extract(new PlatformaticContext(), request, fastifyTextMapGetter)
+    let context = propagator.extract(
+      new PlatformaticContext(),
+      request,
+      fastifyTextMapGetter
+    )
 
     const path = extractPath(request)
-    const span = tracer.startSpan(
-      formatSpanName(request, path),
-      {},
-      context
-    )
+    const span = tracer.startSpan(formatSpanName(request, path), {}, context)
     span.kind = SpanKind.SERVER
     // Next 2 lines are needed by W3CTraceContextPropagator
     context = context.setSpan(span)
@@ -164,7 +187,7 @@ async function setupTelemetry (app, opts) {
     request.span = span
   }
 
-  const setErrorInSpan = async (request, reply, error) => {
+  const setErrorInSpan = async (request, _reply, error) => {
     const span = request.span
     span.setAttributes(formatSpanAttributes.error(error))
   }
@@ -176,7 +199,7 @@ async function setupTelemetry (app, opts) {
     }
   }
 
-  const endSpan = async (request, reply) => {
+  const endHTTPSpan = async (request, reply) => {
     const span = request.span
     if (span) {
       const spanStatus = { code: SpanStatusCode.OK }
@@ -189,9 +212,9 @@ async function setupTelemetry (app, opts) {
     }
   }
 
-  app.addHook('onRequest', startSpan)
+  app.addHook('onRequest', startHTTPSpan)
   app.addHook('onSend', injectPropagationHeadersInReply)
-  app.addHook('onResponse', endSpan)
+  app.addHook('onResponse', endHTTPSpan)
   app.addHook('onError', setErrorInSpan)
   app.addHook('onClose', async function () {
     try {
@@ -206,7 +229,7 @@ async function setupTelemetry (app, opts) {
     const context = span.context
     const headers = {}
     propagator.inject(context, headers, {
-      set (carrier, key, value) {
+      set (_carrier, key, value) {
         headers[key] = value
       },
     })
@@ -218,12 +241,15 @@ async function setupTelemetry (app, opts) {
   // So the client caller is responible of:
   // - setting the propagatorHeaders in the client request
   // - closing the span
-  const startSpanClient = (url, method, ctx) => {
+  const startHTTPSpanClient = (url, method, ctx) => {
     let context = ctx || new PlatformaticContext()
     const urlObj = fastUri.parse(url)
 
     if (skipOperations.includes(`${method}${urlObj.path}`)) {
-      app.log.debug({ operation: `${method}${urlObj.path}` }, 'Skipping telemetry')
+      app.log.debug(
+        { operation: `${method}${urlObj.path}` },
+        'Skipping telemetry'
+      )
       return
     }
 
@@ -260,7 +286,7 @@ async function setupTelemetry (app, opts) {
     return { span, telemetryHeaders }
   }
 
-  const endSpanClient = (span, response) => {
+  const endHTTPSpanClient = (span, response) => {
     /* istanbul ignore next */
     if (!span) {
       return
@@ -291,17 +317,17 @@ async function setupTelemetry (app, opts) {
     span.setAttributes(formatSpanAttributes.error(error))
   }
 
-  // The attributes are specific for the "internal" usage, so they must be set by the caller
-  const startInternalSpan = (name, ctx, attributes = {}) => {
+  // In the generic "startSpan" the attributes here are specified by the caller
+  const startSpan = (name, ctx, attributes = {}, kind = SpanKind.INTERNAL) => {
     const context = ctx || new PlatformaticContext()
     const span = tracer.startSpan(name, {}, context)
-    span.kind = SpanKind.INTERNAL
+    span.kind = kind
     span.setAttributes(attributes)
     span.context = context
     return span
   }
 
-  const endInternalSpan = (span, error) => {
+  const endSpan = (span, error) => {
     /* istanbul ignore next */
     if (!span) {
       return
@@ -320,11 +346,12 @@ async function setupTelemetry (app, opts) {
 
   app.decorate('openTelemetry', {
     ...openTelemetryAPIs,
-    startSpanClient,
-    endSpanClient,
+    startHTTPSpanClient,
+    endHTTPSpanClient,
     setErrorInSpanClient,
-    startInternalSpan,
-    endInternalSpan,
+    startSpan,
+    endSpan,
+    SpanKind,
   })
 }
 

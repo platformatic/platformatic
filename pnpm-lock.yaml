@@ -334,7 +334,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.24.71
+        version: 1.24.72
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -835,6 +835,9 @@ importers:
       '@databases/sql':
         specifier: ^3.3.0
         version: 3.3.0
+      '@opentelemetry/api':
+        specifier: ^1.8.0
+        version: 1.9.0
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -1041,7 +1044,7 @@ importers:
         version: 18.3.0
       '@vitejs/plugin-react':
         specifier: ^3.1.0
-        version: 3.1.0(vite@5.3.5(@types/node@20.14.14))
+        version: 3.1.0(vite@5.4.0(@types/node@20.14.14))
       eslint:
         specifier: '9'
         version: 9.8.0
@@ -1059,7 +1062,7 @@ importers:
         version: 5.5.4
       vite:
         specifier: ^5.1.6
-        version: 5.3.5(@types/node@20.14.14)
+        version: 5.4.0(@types/node@20.14.14)
 
   packages/generate-errors-doc:
     devDependencies:
@@ -1449,7 +1452,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.24.71
+        version: 1.24.72
       '@types/ws':
         specifier: ^8.5.10
         version: 8.5.12
@@ -1763,6 +1766,9 @@ importers:
       '@matteo.collina/sqlite-pool':
         specifier: ^0.4.0
         version: 0.4.0
+      '@platformatic/telemetry':
+        specifier: workspace:*
+        version: link:../telemetry
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -1782,6 +1788,9 @@ importers:
       '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
+      '@opentelemetry/api':
+        specifier: ^1.8.0
+        version: 1.9.0
       borp:
         specifier: ^0.17.0
         version: 0.17.0
@@ -1823,7 +1832,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.24.71
+        version: 1.24.72
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -2697,8 +2706,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@scalar/fastify-api-reference@1.24.71':
-    resolution: {integrity: sha512-IG9HqRb+gBwE7iwfwucgU2cNgPK6ydlpc1YLuuhV+IPSY9CNxCND/o88/upsD9Emn1Dx4FHUOhNHRsU1Mg9ZbQ==}
+  '@scalar/fastify-api-reference@1.24.72':
+    resolution: {integrity: sha512-EKeJ2kJtDdP3X9kPyBNiiMlFsH9ltRCrrmEs53Ocv5aXgXln0+od2sRM5lnbZwY+TRRbpZ2IdWk8+0fR78zwXg==}
     engines: {node: '>=18'}
 
   '@sec-ant/readable-stream@0.4.1':
@@ -6064,8 +6073,8 @@ packages:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
 
-  vite@5.3.5:
-    resolution: {integrity: sha512-MdjglKR6AQXQb9JGiS7Rc2wC6uMjcm7Go/NHNO63EwiJXfuk9PgqiP/n5IDJCziMkfw9n4Ubp7lttNwz+8ZVKA==}
+  vite@5.4.0:
+    resolution: {integrity: sha512-5xokfMX0PIiwCMCMb9ZJcMyh5wbBun0zUzKib+L65vAZ8GY9ePZMXxFrHbr/Kyll2+LSCY7xtERPpxkBDKngwg==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
     peerDependencies:
@@ -6073,6 +6082,7 @@ packages:
       less: '*'
       lightningcss: ^1.21.0
       sass: '*'
+      sass-embedded: '*'
       stylus: '*'
       sugarss: '*'
       terser: ^5.4.0
@@ -6084,6 +6094,8 @@ packages:
       lightningcss:
         optional: true
       sass:
+        optional: true
+      sass-embedded:
         optional: true
       stylus:
         optional: true
@@ -7031,7 +7043,7 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.20.0':
     optional: true
 
-  '@scalar/fastify-api-reference@1.24.71':
+  '@scalar/fastify-api-reference@1.24.72':
     dependencies:
       fastify-plugin: 4.5.1
 
@@ -7349,14 +7361,14 @@ snapshots:
       '@typescript-eslint/types': 8.0.1
       eslint-visitor-keys: 3.4.3
 
-  '@vitejs/plugin-react@3.1.0(vite@5.3.5(@types/node@20.14.14))':
+  '@vitejs/plugin-react@3.1.0(vite@5.4.0(@types/node@20.14.14))':
     dependencies:
       '@babel/core': 7.25.2
       '@babel/plugin-transform-react-jsx-self': 7.24.7(@babel/core@7.25.2)
       '@babel/plugin-transform-react-jsx-source': 7.24.7(@babel/core@7.25.2)
       magic-string: 0.27.0
       react-refresh: 0.14.2
-      vite: 5.3.5(@types/node@20.14.14)
+      vite: 5.4.0(@types/node@20.14.14)
     transitivePeerDependencies:
       - supports-color
 
@@ -11000,7 +11012,7 @@ snapshots:
 
   vary@1.1.2: {}
 
-  vite@5.3.5(@types/node@20.14.14):
+  vite@5.4.0(@types/node@20.14.14):
     dependencies:
       esbuild: 0.21.5
       postcss: 8.4.41
