@@ -17,7 +17,7 @@ test('get service info via stackable api', async (t) => {
     },
   }
 
-  const { stackable } = await buildStackable(config)
+  const { stackable } = await buildStackable({ config })
   t.after(async () => {
     await stackable.stop()
   })

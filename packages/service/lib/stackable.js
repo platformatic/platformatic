@@ -11,6 +11,9 @@ class ServiceStackable {
 
     this.configManager = options.configManager
     this.config = this.configManager.current
+    this.context = options.context
+
+    this.#updateConfig()
   }
 
   async init () {
@@ -93,6 +96,67 @@ class ServiceStackable {
     if (!message) return
 
     this.app.log[logLevel](message)
+  }
+
+  async getBootstrapDependencies () {
+    return []
+  }
+
+  #updateConfig () {
+    const {
+      serviceId,
+      telemetryConfig,
+      metricsConfig,
+      serverConfig,
+      hasManagementApi,
+      isEntrypoint,
+    } = this.context
+
+    const configManager = this.configManager
+
+    configManager.on('error', (err) => {
+      /* c8 ignore next */
+      this.stackable.log({ message: 'error reloading the configuration' + err, level: 'error' })
+    })
+
+    configManager.update({
+      ...configManager.current,
+      telemetry: telemetryConfig,
+      metrics: metricsConfig,
+    })
+
+    if (this.context.serverConfig) {
+      configManager.update({
+        ...configManager.current,
+        server: serverConfig,
+      })
+    }
+
+    if (
+      (hasManagementApi && configManager.current.metrics === undefined) ||
+      configManager.current.metrics
+    ) {
+      const labels = configManager.current.metrics?.labels || {}
+      configManager.update({
+        ...configManager.current,
+        metrics: {
+          server: 'hide',
+          defaultMetrics: { enabled: isEntrypoint },
+          ...configManager.current.metrics,
+          labels: { serviceId, ...labels },
+        },
+      })
+    }
+
+    if (!isEntrypoint) {
+      configManager.update({
+        ...configManager.current,
+        server: {
+          ...(configManager.current.server || {}),
+          trustProxy: true,
+        },
+      })
+    }
   }
 }
 

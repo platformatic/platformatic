@@ -13,6 +13,7 @@ const openapiGenerator = require('./lib/openapi-generator')
 const graphqlGenerator = require('./lib/graphql-generator')
 const { isSameGraphqlSchema, fetchGraphqlSubgraphs } = require('./lib/graphql-fetch')
 const { isFetchable } = require('./lib/utils')
+const { ComposerStackable } = require('./lib/stackable')
 const errors = require('./lib/errors')
 
 const EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE = 'graphql composer is an experimental feature'
@@ -73,47 +74,6 @@ platformaticComposer.configManagerConfig = {
     strict: false,
   },
   transformConfig: platformaticService.configManagerConfig.transformConfig,
-}
-
-function getServiceUrl (id) {
-  return `http://${id}.plt.local`
-}
-
-async function parseDependency (configManager, id, urlString) {
-  let url = getServiceUrl(id)
-
-  if (urlString) {
-    try {
-      const remoteUrl = await configManager.replaceEnv(urlString)
-
-      if (remoteUrl) {
-        url = remoteUrl
-      }
-    } catch (err) {
-      // The MissingValueError is an error coming from pupa
-      // https://github.com/sindresorhus/pupa#missingvalueerror
-      // All other errors are simply re-thrown.
-      if (err.name !== 'MissingValueError' || urlString !== `{${err.key}}`) {
-        throw err
-      }
-    }
-  }
-
-  return { id, url, local: url.endsWith('.plt.local') }
-}
-
-// First we compute composed services as dependencies, then we add clients
-platformaticComposer.getBootstrapDependencies = async function _getBootstrapDependencies (service, configManager) {
-  const composedServices = configManager.current.composer?.services
-  const dependencies = []
-
-  if (Array.isArray(composedServices)) {
-    dependencies.push(...await Promise.all(composedServices.map(async (service) => {
-      return parseDependency(configManager, service.id, service.origin)
-    })))
-  }
-
-  return dependencies
 }
 
 // TODO review no need to be async
@@ -212,7 +172,7 @@ async function watchServices (app, opts) {
 }
 
 async function buildComposerStackable (options) {
-  return buildStackable(options, platformaticComposer)
+  return buildStackable(options, platformaticComposer, ComposerStackable)
 }
 
 module.exports = platformaticComposer
