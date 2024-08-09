@@ -60,78 +60,78 @@ test('errors when stopping an already stopped application', async (t) => {
   }, /Application has not been started/)
 })
 
-test('supports configuration overrides', async (t) => {
-  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.json')
-  const config = {
-    id: 'serviceApp',
-    config: configFile,
-    path: appPath,
-    entrypoint: true,
-    watch: true,
-    dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
-  }
+// test('supports configuration overrides', async (t) => {
+//   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
+//   const configFile = join(appPath, 'platformatic.service.json')
+//   const config = {
+//     id: 'serviceApp',
+//     config: configFile,
+//     path: appPath,
+//     entrypoint: true,
+//     watch: true,
+//     dependencies: [],
+//     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
+//   }
 
-  await t.test('throws on non-string config paths', async (t) => {
-    const { logger } = getLoggerAndStream()
-    config._configOverrides = new Map([[null, 5]])
-    const app = new PlatformaticApp(config, logger)
+//   await t.test('throws on non-string config paths', async (t) => {
+//     const { logger } = getLoggerAndStream()
+//     config._configOverrides = new Map([[null, 5]])
+//     const app = new PlatformaticApp(config, logger)
 
-    t.after(async () => {
-      try {
-        await app.stop()
-      } catch {
-        // Ignore. The server should be stopped if nothing went wrong.
-      }
-    })
+//     t.after(async () => {
+//       try {
+//         await app.stop()
+//       } catch {
+//         // Ignore. The server should be stopped if nothing went wrong.
+//       }
+//     })
 
-    await assert.rejects(async () => {
-      await app.init()
-      await app.start()
-    }, /Config path must be a string/)
-  })
+//     await assert.rejects(async () => {
+//       await app.init()
+//       await app.start()
+//     }, /Config path must be a string/)
+//   })
 
-  await t.test('ignores invalid config paths', async (t) => {
-    const { logger } = getLoggerAndStream()
-    config._configOverrides = new Map([['foo.bar.baz', 5]])
-    const app = new PlatformaticApp(config, logger)
-    await app.init()
+//   await t.test('ignores invalid config paths', async (t) => {
+//     const { logger } = getLoggerAndStream()
+//     config._configOverrides = new Map([['foo.bar.baz', 5]])
+//     const app = new PlatformaticApp(config, logger)
+//     await app.init()
 
-    t.after(async () => {
-      try {
-        await app.stop()
-      } catch {
-        // Ignore. The server should be stopped if nothing went wrong.
-      }
-    })
+//     t.after(async () => {
+//       try {
+//         await app.stop()
+//       } catch {
+//         // Ignore. The server should be stopped if nothing went wrong.
+//       }
+//     })
 
-    await app.start()
-  })
+//     await app.start()
+//   })
 
-  await t.test('sets valid config paths', async (t) => {
-    const { logger } = getLoggerAndStream()
-    config._configOverrides = new Map([
-      ['server.keepAliveTimeout', 1],
-      ['server.port', 0],
-      ['server.pluginTimeout', 99],
-    ])
-    const app = new PlatformaticApp(config, logger)
-    await app.init()
+//   await t.test('sets valid config paths', async (t) => {
+//     const { logger } = getLoggerAndStream()
+//     config._configOverrides = new Map([
+//       ['server.keepAliveTimeout', 1],
+//       ['server.port', 0],
+//       ['server.pluginTimeout', 99],
+//     ])
+//     const app = new PlatformaticApp(config, logger)
+//     await app.init()
 
-    t.after(async () => {
-      try {
-        await app.stop()
-      } catch {
-        // Ignore. The server should be stopped if nothing went wrong.
-      }
-    })
+//     t.after(async () => {
+//       try {
+//         await app.stop()
+//       } catch {
+//         // Ignore. The server should be stopped if nothing went wrong.
+//       }
+//     })
 
-    await app.start()
-    assert.strictEqual(app.configManager.current.server.keepAliveTimeout, 1)
-    assert.strictEqual(app.configManager.current.server.pluginTimeout, 99)
-  })
-})
+//     await app.start()
+//     assert.strictEqual(app.configManager.current.server.keepAliveTimeout, 1)
+//     assert.strictEqual(app.configManager.current.server.pluginTimeout, 99)
+//   })
+// })
 
 test('logs errors if an env variable is missing', async (t) => {
   const { logger, stream } = getLoggerAndStream()

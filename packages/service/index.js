@@ -172,6 +172,7 @@ async function buildStackable (
     init: () => buildServer(configManager.current, app),
     stackable: app,
     configManager,
+    context: options.context,
   })
 
   return {
@@ -180,7 +181,6 @@ async function buildStackable (
     configManager,
     configManagerConfig: app.configManagerConfig,
     stackable,
-    app,
   }
 }
 

@@ -26,7 +26,6 @@ class PlatformaticApp extends EventEmitter {
     super()
     this.appConfig = appConfig
 
-    this.app = null
     this.configManager = null
     this.buildStackable = null
 
@@ -61,22 +60,24 @@ class PlatformaticApp extends EventEmitter {
     try {
       // If this is a restart, have the fastify server restart itself. If this
       // is not a restart, then create a new server.
-      const { stackable, configManager, app } = await this.buildStackable({
+      const { stackable, configManager } = await this.buildStackable({
         onMissingEnv: this.#fetchServiceUrl,
-        context: this.appConfig,
         config: this.appConfig.config,
+        context: {
+          serviceId: this.appConfig.id,
+          isEntrypoint: this.appConfig.entrypoint,
+          telemetryConfig: this.#telemetryConfig,
+          metricsConfig: this.#metricsConfig,
+          serverConfig: this.#serverConfig,
+          hasManagementApi: this.#hasManagementApi,
+          localServiceEnvVars: this.appConfig.localServiceEnvVars,
+        },
       })
       this.stackable = stackable
       this.configManager = configManager
-      this.app = app
     } catch (err) {
       this.#logAndExit(err)
     }
-
-    await this.#applyConfig()
-
-    const configManager = this.configManager
-    this.#setupLogger(configManager)
   }
 
   async start () {
@@ -159,90 +160,6 @@ class PlatformaticApp extends EventEmitter {
     }
 
     this.buildStackable = _config.app.buildStackable
-  }
-
-  async #applyConfig () {
-    const appConfig = this.appConfig
-    const configManager = this.configManager
-
-    configManager.on('error', (err) => {
-      /* c8 ignore next */
-      this.stackable.log({ message: 'error reloading the configuration' + err, level: 'error' })
-    })
-
-    if (appConfig._configOverrides instanceof Map) {
-      appConfig._configOverrides.forEach((value, key) => {
-        if (typeof key !== 'string') {
-          throw new errors.ConfigPathMustBeStringError()
-        }
-
-        const parts = key.split('.')
-        let next = configManager.current
-        let obj
-        let i
-
-        for (i = 0; next !== undefined && i < parts.length; ++i) {
-          obj = next
-          next = obj[parts[i]]
-        }
-
-        if (i === parts.length) {
-          obj[parts.at(-1)] = value
-        }
-      })
-    }
-
-    configManager.update({
-      ...configManager.current,
-      telemetry: this.#telemetryConfig,
-      metrics: this.#metricsConfig,
-    })
-
-    if (this.#serverConfig) {
-      configManager.update({
-        ...configManager.current,
-        server: this.#serverConfig,
-      })
-    }
-
-    if (
-      (this.#hasManagementApi && configManager.current.metrics === undefined) ||
-      configManager.current.metrics
-    ) {
-      const labels = configManager.current.metrics?.labels || {}
-      const serviceId = this.appConfig.id
-      configManager.update({
-        ...configManager.current,
-        metrics: {
-          server: 'hide',
-          defaultMetrics: { enabled: this.appConfig.entrypoint },
-          ...configManager.current.metrics,
-          labels: {
-            serviceId,
-            ...labels,
-          },
-        },
-      })
-    }
-
-    if (!this.appConfig.entrypoint) {
-      configManager.update({
-        ...configManager.current,
-        server: {
-          ...(configManager.current.server || {}),
-          trustProxy: true,
-        },
-      })
-    }
-  }
-
-  #setupLogger (configManager) {
-    configManager.current.server = configManager.current.server || {}
-    const level = configManager.current.server.logger?.level
-
-    configManager.current.server.logger = level
-      ? this.#logger.child({ level })
-      : this.#logger
   }
 
   #fetchServiceUrl (key, { parent, context: service }) {
