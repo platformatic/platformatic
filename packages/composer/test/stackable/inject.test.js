@@ -6,14 +6,16 @@ const { join } = require('node:path')
 const { buildStackable } = require('../..')
 
 test('inject request into service stackable', async (t) => {
-  const { stackable } = await buildStackable({
+  const config = {
     composer: {
       services: [],
     },
     plugins: {
       paths: [join(__dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')],
     },
-  })
+  }
+
+  const { stackable } = await buildStackable({ config })
   t.after(async () => {
     await stackable.stop()
   })
