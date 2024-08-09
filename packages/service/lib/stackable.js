@@ -94,6 +94,10 @@ class ServiceStackable {
 
     this.app.log[logLevel](message)
   }
+
+  async getBootstrapDependencies () {
+    return []
+  }
 }
 
 module.exports = { ServiceStackable }

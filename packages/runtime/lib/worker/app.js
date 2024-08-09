@@ -52,11 +52,7 @@ class PlatformaticApp extends EventEmitter {
   }
 
   async getBootstrapDependencies () {
-    const resolver = this.app.getBootstrapDependencies
-    if (typeof resolver === 'function') {
-      return resolver(this.appConfig, this.configManager)
-    }
-    return []
+    return this.stackable.getBootstrapDependencies()
   }
 
   async init () {

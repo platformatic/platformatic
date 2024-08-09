@@ -145,7 +145,11 @@ function _buildServer (options, app) {
   return buildServer(options, app || module.exports)
 }
 
-async function buildStackable (options, app = platformaticService) {
+async function buildStackable (
+  options,
+  app = platformaticService,
+  Stackable = ServiceStackable
+) {
   let configManager = options.configManager
 
   if (configManager === undefined) {
@@ -164,7 +168,7 @@ async function buildStackable (options, app = platformaticService) {
   }
 
   // const config = configManager.current
-  const stackable = new ServiceStackable({
+  const stackable = new Stackable({
     init: () => buildServer(configManager.current, app),
     stackable: app,
     configManager,
@@ -190,5 +194,6 @@ module.exports.platformaticService = platformaticService
 module.exports.addLoggerToTheConfig = addLoggerToTheConfig
 module.exports.start = start
 module.exports.Generator = ServiceGenerator
+module.exports.ServiceStackable = ServiceStackable
 module.exports.buildCompileCmd = buildCompileCmd
 module.exports.extractTypeScriptCompileOptionsFromConfig = extractTypeScriptCompileOptionsFromConfig
