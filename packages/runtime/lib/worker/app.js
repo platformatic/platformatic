@@ -100,7 +100,7 @@ class PlatformaticApp extends EventEmitter {
     if (config.plugins !== undefined && this.#watch && watch.enabled !== false) {
       /* c8 ignore next 4 */
       this.#debouncedRestart = debounce(() => {
-        this.stackable.log('files changed', { level: 'debug' })
+        this.stackable.log({ message: 'files changed', level: 'debug' })
         this.emit('changed')
       }, 100) // debounce restart for 100ms
 
@@ -113,7 +113,7 @@ class PlatformaticApp extends EventEmitter {
       this.#listening = listen
       /* c8 ignore next 5 */
     } catch (err) {
-      this.stackable.log(err, { level: 'debug' })
+      this.stackable.log({ message: err.message, level: 'debug' })
       this.#starting = false
       throw err
     }
@@ -172,7 +172,7 @@ class PlatformaticApp extends EventEmitter {
 
     configManager.on('error', (err) => {
       /* c8 ignore next */
-      this.stackable.log('error reloading the configuration' + err, { level: 'error' })
+      this.stackable.log({ message: 'error reloading the configuration' + err, level: 'error' })
     })
 
     if (appConfig._configOverrides instanceof Map) {
@@ -275,7 +275,7 @@ class PlatformaticApp extends EventEmitter {
     fileWatcher.on('update', this.#debouncedRestart)
 
     fileWatcher.startWatching()
-    this.stackable.log('start watching files', { level: 'debug' })
+    this.stackable.log({ message: 'start watching files', level: 'debug' })
     this.#fileWatcher = fileWatcher
   }
 
@@ -283,7 +283,7 @@ class PlatformaticApp extends EventEmitter {
     const watcher = this.#fileWatcher
 
     if (watcher) {
-      this.stackable.log('stop watching files', { level: 'debug' })
+      this.stackable.log({ message: 'stop watching files', level: 'debug' })
       await watcher.stopWatching()
       this.#fileWatcher = null
     }

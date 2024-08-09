@@ -96,7 +96,7 @@ export interface StackableInterface {
     headers: object
     body: object
   }>,
-  log: (message: string, options: { level: string }) => Promise<void>
+  log: (options: { message: string, level: string }) => Promise<void>
 }
 
 export function buildStackable<ConfigType> (opts: object, app?: object): Promise<{

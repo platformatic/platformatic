@@ -84,10 +84,14 @@ class ServiceStackable {
     return { statusCode, statusMessage, headers, body }
   }
 
-  async log (message, options = {}) {
+  async log (options = {}) {
     await this.init()
 
     const logLevel = options.level ?? 'info'
+
+    const message = options.message
+    if (!message) return
+
     this.app.log[logLevel](message)
   }
 }
