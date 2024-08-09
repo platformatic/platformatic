@@ -1,6 +1,7 @@
 'use strict'
 
 const { isKeyEnabled } = require('@platformatic/utils')
+const { loadConfig, ConfigManager } = require('@platformatic/config')
 const { readFile } = require('fs/promises')
 const { join } = require('path')
 
@@ -18,7 +19,7 @@ const { telemetry } = require('@platformatic/telemetry')
 const { buildCompileCmd, extractTypeScriptCompileOptionsFromConfig } = require('./lib/compile')
 const { schema } = require('./lib/schema')
 const { addLoggerToTheConfig } = require('./lib/utils')
-const { start, buildServer, buildConfigManager } = require('./lib/start')
+const { start, buildServer } = require('./lib/start')
 const ServiceGenerator = require('./lib/generator/service-generator.js')
 const { ServiceStackable } = require('./lib/stackable')
 
@@ -137,6 +138,7 @@ module.exports.configManagerConfig = {
 }
 
 platformaticService.configType = 'service'
+platformaticService.schema = schema
 platformaticService.configManagerConfig = module.exports.configManagerConfig
 
 function _buildServer (options, app) {
@@ -144,9 +146,26 @@ function _buildServer (options, app) {
 }
 
 async function buildStackable (options, app = platformaticService) {
-  const configManager = await buildConfigManager(options, app)
+  let configManager = options.configManager
+
+  if (configManager === undefined) {
+    if (typeof options.config === 'string') {
+      ({ configManager } = await loadConfig({}, ['-c', options.config], app, {
+        onMissingEnv: options.onMissingEnv,
+        context: options.context,
+      }, true))
+    } else {
+      configManager = new ConfigManager({
+        ...app.configManagerConfig,
+        source: options.config,
+      })
+      await configManager.parseAndValidate()
+    }
+  }
+
+  // const config = configManager.current
   const stackable = new ServiceStackable({
-    init: buildServer.bind(null, options, app),
+    init: () => buildServer(configManager.current, app),
     stackable: app,
     configManager,
   })
@@ -157,6 +176,7 @@ async function buildStackable (options, app = platformaticService) {
     configManager,
     configManagerConfig: app.configManagerConfig,
     stackable,
+    app,
   }
 }
 

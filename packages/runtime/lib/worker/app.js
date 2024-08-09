@@ -25,7 +25,11 @@ class PlatformaticApp extends EventEmitter {
   constructor (appConfig, logger, telemetryConfig, serverConfig, hasManagementApi, watch, metricsConfig) {
     super()
     this.appConfig = appConfig
-    this.config = null
+
+    this.app = null
+    this.configManager = null
+    this.buildStackable = null
+
     this.#watch = watch
     this.#starting = false
     this.#started = false
@@ -48,35 +52,35 @@ class PlatformaticApp extends EventEmitter {
   }
 
   async getBootstrapDependencies () {
-    await this.#loadConfig()
-    const resolver = this.config.app.getBootstrapDependencies
+    const resolver = this.app.getBootstrapDependencies
     if (typeof resolver === 'function') {
-      return resolver(this.appConfig, this.config.configManager)
+      return resolver(this.appConfig, this.configManager)
     }
     return []
   }
 
   async init () {
-    await this.#applyConfig()
-
-    const configManager = this.config.configManager
-    const config = configManager.current
-
-    this.#setupLogger(configManager)
+    await this.#loadConfig()
 
     try {
       // If this is a restart, have the fastify server restart itself. If this
       // is not a restart, then create a new server.
-      const { stackable } = await this.config.app.buildStackable({
-        app: this.config.app,
-        ...config,
-        id: this.appConfig.id,
-        configManager,
+      const { stackable, configManager, app } = await this.buildStackable({
+        onMissingEnv: this.#fetchServiceUrl,
+        context: this.appConfig,
+        config: this.appConfig.config,
       })
       this.stackable = stackable
+      this.configManager = configManager
+      this.app = app
     } catch (err) {
       this.#logAndExit(err)
     }
+
+    await this.#applyConfig()
+
+    const configManager = this.configManager
+    this.#setupLogger(configManager)
   }
 
   async start () {
@@ -92,10 +96,9 @@ class PlatformaticApp extends EventEmitter {
       this.#logAndExit(err)
     }
 
-    const configManager = this.config.configManager
-    const config = configManager.current
+    const config = this.configManager.current
 
-    const watch = this.config.configManager.current.watch
+    const watch = config.watch
 
     if (config.plugins !== undefined && this.#watch && watch.enabled !== false) {
       /* c8 ignore next 4 */
@@ -159,16 +162,12 @@ class PlatformaticApp extends EventEmitter {
       this.#logAndExit(err)
     }
 
-    this.config = _config
+    this.buildStackable = _config.app.buildStackable
   }
 
   async #applyConfig () {
-    if (!this.config) {
-      await this.#loadConfig()
-    }
-
     const appConfig = this.appConfig
-    const { configManager } = this.config
+    const configManager = this.configManager
 
     configManager.on('error', (err) => {
       /* c8 ignore next */
@@ -264,7 +263,7 @@ class PlatformaticApp extends EventEmitter {
     if (this.#fileWatcher) {
       return
     }
-    const { configManager } = this.config
+    const configManager = this.configManager
     const fileWatcher = new FileWatcher({
       path: dirname(configManager.fullPath),
       /* c8 ignore next 2 */
