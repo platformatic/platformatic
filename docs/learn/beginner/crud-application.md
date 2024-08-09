@@ -3,9 +3,9 @@ title: Build a Todo API
 label: Building a Todo API with Platformatic DB
 ---
 
-import newApiProjectInstructions from '../../getting-started/new-api-project-instructions.md';
+import NewApiProjectInstructions from '../../getting-started/new-api-project-instructions.md';
 
-# Building a Todo API with Platformatic DB
+# Building a Todo API with Platformatic DB 
 
 In this tutorial, we will build a simple ToDo application using [Platformatic DB](../../db/overview.md). Platformatic DB makes it easy to create endpoints that return data from a database application. It automatically generates REST/GraphQL endpoints by mapping your database and then exposes these endpoints to your API consumers.
 
@@ -28,11 +28,9 @@ Let's get started!
 
 To create and run your Platformatic Todo application, run the following commands:
 
-```bash
-npx create-platformatic@latest
-```
 
-<newApiProjectInstructions />
+<NewApiProjectInstructions />
+
 
 Run the command to start your application:
 
