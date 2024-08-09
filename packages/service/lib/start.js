@@ -55,15 +55,18 @@ async function createServer (context) {
 
   return root
 }
-
-async function buildServer (options, app) {
+async function buildConfigManager (options, app) {
   let configManager = options.configManager
   if (!configManager) {
     // instantiate a new config manager from current options
     configManager = new ConfigManager({ ...app.configManagerConfig, source: options })
     await configManager.parseAndValidate()
   }
+  return configManager
+}
 
+async function buildServer (options, app) {
+  const configManager = await buildConfigManager(options, app)
   const config = configManager.current
 
   // The server now can be not present, so we might need to add logger
@@ -87,7 +90,10 @@ async function buildServer (options, app) {
   }
   const handler = await createServer(context)
   handler.decorate('start', async () => {
-    context.url = await handler.listen({ host: options.server?.hostname || '127.0.0.1', port: options.server?.port || 0 })
+    context.url = await handler.listen({
+      host: options.server?.hostname || '127.0.0.1',
+      port: options.server?.port || 0,
+    })
     return context.url
   })
   configManager.on('error', function (err) {
@@ -150,5 +156,6 @@ async function start (appType, _args) {
   })
 }
 
+module.exports.buildConfigManager = buildConfigManager
 module.exports.buildServer = buildServer
 module.exports.start = start

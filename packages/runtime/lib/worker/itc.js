@@ -3,7 +3,6 @@
 const { once } = require('node:events')
 const { parentPort } = require('node:worker_threads')
 
-const { printSchema } = require('graphql')
 const { ITC } = require('@platformatic/itc')
 
 const errors = require('../errors')
@@ -58,9 +57,12 @@ function setupITC (app, service, dispatcher) {
       await app.listen()
     }
 
-    dispatcher.replaceServer(app.appConfig.useHttp ? app.server.url : app.server)
+    const url = app.stackable.getUrl()
 
-    return service.entrypoint ? app.server.url : null
+    const dispatchFunc = await app.stackable.getDispatchFunc()
+    dispatcher.replaceServer(url ?? dispatchFunc)
+
+    return service.entrypoint ? url : null
   })
 
   itc.handle('stop', async () => {
@@ -83,60 +85,37 @@ function setupITC (app, service, dispatcher) {
   })
 
   itc.handle('getServiceInfo', async () => {
-    const type = app.config?.configType
-    const version = app.config?.app?.configManagerConfig.version ?? null
-
-    return { type, version }
+    return app.stackable.getInfo()
   })
 
   itc.handle('getServiceConfig', async () => {
-    const current = app.config.configManager.current
-    const { logger: _logger, ...server } = current.server
-
+    const current = await app.stackable.getConfig()
     // Remove all undefined keys from the config
-    return JSON.parse(JSON.stringify({ ...current, server: { ...server, logger: undefined } }))
+    return JSON.parse(JSON.stringify(current))
   })
 
   itc.handle('getServiceOpenAPISchema', async () => {
-    if (typeof app.server.swagger !== 'function') {
-      return null
-    }
-
     try {
-      await app.server.ready()
-      return app.server.swagger()
+      return app.stackable.getOpenapiSchema()
     } catch (err) {
       throw new errors.FailedToRetrieveOpenAPISchemaError(service.id, err.message)
     }
   })
 
   itc.handle('getServiceGraphQLSchema', async () => {
-    if (typeof app.server.graphql !== 'function') {
-      return null
-    }
-
     try {
-      await app.server.ready()
-      return printSchema(app.server.graphql.schema)
+      return app.stackable.getGraphqlSchema()
     } catch (err) {
       throw new errors.FailedToRetrieveGraphQLSchemaError(service.id, err.message)
     }
   })
 
   itc.handle('getMetrics', async format => {
-    const promRegister = app.server.metrics?.client?.register
-
-    if (!promRegister) {
-      return null
-    }
-
-    return format === 'json' ? promRegister.getMetricsAsJSON() : promRegister.metrics()
+    return app.stackable.getMetrics({ format })
   })
 
   itc.handle('inject', async injectParams => {
-    const { statusCode, statusMessage, headers, body } = await app.server.inject(injectParams)
-
-    return { statusCode, statusMessage, headers, body }
+    return app.stackable.inject(injectParams)
   })
 
   app.on('changed', () => {

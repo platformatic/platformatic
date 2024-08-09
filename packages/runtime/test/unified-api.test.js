@@ -114,16 +114,16 @@ test('buildServer()', async (t) => {
   await t.test('can build a runtime application', async (t) => {
     const configFile = join(fixturesDir, 'configs', 'monorepo.json')
     const config = await loadConfig({}, ['-c', configFile])
-    const server = await buildServer({
+    const runtime = await buildServer({
       app: config.app,
       ...config.configManager.current,
     })
 
     t.after(async () => {
-      await server.close()
+      await runtime.close()
     })
 
-    const address = await server.start()
+    const address = await runtime.start()
     // The address should be a valid URL.
     new URL(address) // eslint-disable-line no-new
   })

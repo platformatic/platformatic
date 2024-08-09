@@ -3,7 +3,7 @@
 import { FastifyInstance, FastifyBaseLogger } from 'fastify'
 import ConfigManager from '@platformatic/config'
 import type { ConfigManagerConfig } from '@platformatic/config'
-import type { Stackable as _Stackable } from '@platformatic/config'
+import type { Stackable as _Stackable, StackableInterface } from '@platformatic/config'
 import { BaseGenerator } from '@platformatic/generators'
 import { PlatformaticService } from './config'
 import type { JSONSchemaType } from 'ajv'
@@ -59,5 +59,13 @@ type defaultExport = Stackable<PlatformaticServiceConfig> & {
   tsCompiler: TSCompiler,
   schema: JSONSchemaType<PlatformaticServiceConfig>,
 }
+
+export function buildStackable (opts: object, app?: object): Promise<{
+  configType: string,
+  configManager?: ConfigManager<PlatformaticServiceConfig>,
+  configManagerConfig?: ConfigManagerConfig<PlatformaticServiceConfig>,
+  schema?: object,
+  stackable?: StackableInterface
+}>
 
 export default defaultExport

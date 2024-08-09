@@ -2,6 +2,8 @@
 /// <reference types="@platformatic/sql-openapi" />
 import { FastifyInstance } from 'fastify'
 import { PlatformaticDB } from './config'
+import ConfigManager from '@platformatic/config'
+import type { ConfigManagerConfig, StackableInterface } from '@platformatic/config'
 import { SQLMapperPluginInterface, Entities } from '@platformatic/sql-mapper'
 import { SQLEventsPluginInterface } from '@platformatic/sql-events'
 import { DBAuthorizationPluginInterface } from '@platformatic/db-authorization'
@@ -18,6 +20,14 @@ export type PlatformaticDBMixin<T extends Entities> =
 export type PlatformaticDBConfig = PlatformaticDB
 
 export function buildServer (opts: object, app?: object, ConfigManagerContructor?: object): Promise<FastifyInstance>
+
+export function buildStackable (opts: object, app?: object): Promise<{
+  configType: string,
+  configManager?: ConfigManager<PlatformaticDBConfig>,
+  configManagerConfig?: ConfigManagerConfig<PlatformaticDBConfig>,
+  schema?: object,
+  stackable?: StackableInterface
+}>
 
 /**
  * All the errors thrown by the plugin.

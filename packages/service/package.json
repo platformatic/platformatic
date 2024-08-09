@@ -80,7 +80,7 @@
     "fastify-metrics": "^11.0.0",
     "fastify-openapi-glue": "^4.4.3",
     "fastify-plugin": "^4.5.1",
-    "graphql": "^16.8.1",
+    "graphql": "^16.9.0",
     "help-me": "^5.0.0",
     "mercurius": "^14.0.0",
     "minimist": "^1.2.8",

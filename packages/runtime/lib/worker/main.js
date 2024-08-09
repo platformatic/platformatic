@@ -104,6 +104,8 @@ async function main () {
     config.metrics
   )
 
+  await app.init()
+
   // Setup interaction with parent port
   const itc = setupITC(app, service, threadDispatcher)
 

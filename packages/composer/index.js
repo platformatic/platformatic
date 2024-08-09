@@ -2,7 +2,7 @@
 
 const deepEqual = require('fast-deep-equal')
 const ConfigManager = require('@platformatic/config')
-const { platformaticService, buildServer } = require('@platformatic/service')
+const { platformaticService, buildServer, buildStackable } = require('@platformatic/service')
 
 const { schema } = require('./lib/schema')
 const serviceProxy = require('./lib/proxy')
@@ -211,6 +211,10 @@ async function watchServices (app, opts) {
   })
 }
 
+async function buildComposerStackable (options) {
+  return buildStackable(options, platformaticComposer)
+}
+
 module.exports = platformaticComposer
 module.exports.schema = schema
 module.exports.platformaticComposer = platformaticComposer
@@ -218,3 +222,4 @@ module.exports.buildServer = buildComposerServer
 module.exports.errors = errors
 module.exports.Generator = require('./lib/generator/composer-generator')
 module.exports.ConfigManager = ConfigManager
+module.exports.buildStackable = buildComposerStackable
