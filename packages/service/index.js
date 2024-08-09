@@ -172,4 +172,3 @@ module.exports.start = start
 module.exports.Generator = ServiceGenerator
 module.exports.buildCompileCmd = buildCompileCmd
 module.exports.extractTypeScriptCompileOptionsFromConfig = extractTypeScriptCompileOptionsFromConfig
-module.exports.buildStackable = buildStackable
