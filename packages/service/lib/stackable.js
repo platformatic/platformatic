@@ -1,5 +1,6 @@
 'use strict'
 
+const pino = require('pino')
 const { printSchema } = require('graphql')
 
 class ServiceStackable {
@@ -7,7 +8,6 @@ class ServiceStackable {
     this.app = null
     this._init = options.init
     this.stackable = options.stackable
-    this.serviceId = options.id
 
     this.configManager = options.configManager
     this.config = this.configManager.current
@@ -17,6 +17,8 @@ class ServiceStackable {
   }
 
   async init () {
+    this.#initLogger()
+
     if (this.app === null) {
       this.app = await this._init()
     }
@@ -103,6 +105,8 @@ class ServiceStackable {
   }
 
   #updateConfig () {
+    if (!this.context) return
+
     const {
       serviceId,
       telemetryConfig,
@@ -157,6 +161,21 @@ class ServiceStackable {
         },
       })
     }
+  }
+
+  #initLogger () {
+    this.configManager.current.server = this.configManager.current.server || {}
+    const level = this.configManager.current.server.logger?.level
+
+    const pinoOptions = {
+      level: level ?? 'trace',
+    }
+
+    if (this.context?.serviceId) {
+      pinoOptions.name = this.context.serviceId
+    }
+
+    this.configManager.current.server.logger = pino(pinoOptions)
   }
 }
 
