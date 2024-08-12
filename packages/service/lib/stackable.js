@@ -51,7 +51,18 @@ class ServiceStackable {
   }
 
   async getConfig () {
-    return this.configManager.current
+    const config = this.configManager.current
+    const logger = config.server.logger
+
+    if (logger) {
+      config.server.logger = {}
+
+      if (logger.level) {
+        config.server.logger.level = logger.level
+      }
+    }
+
+    return config
   }
 
   async getDispatchFunc () {

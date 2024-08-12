@@ -79,7 +79,7 @@ test('should get runtime service config', async t => {
       hostname: '127.0.0.1',
       port: 0,
       keepAliveTimeout: 5000,
-      logger: {},
+      logger: { level: 'trace' },
     },
     service: { openapi: true },
     plugins: {
