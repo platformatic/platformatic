@@ -87,10 +87,8 @@ class PlatformaticApp extends EventEmitter {
     if (this.#watch) {
       const watchConfig = await this.stackable.getWatchConfig()
       if (watchConfig.enabled !== false) {
-        console.log('-----------------------------------------------1')
         /* c8 ignore next 4 */
         this.#debouncedRestart = debounce(() => {
-          console.log('-----------------------------------------------2')
           this.stackable.log({ message: 'files changed', level: 'debug' })
           this.emit('changed')
         }, 100) // debounce restart for 100ms
