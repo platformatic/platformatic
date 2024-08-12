@@ -112,6 +112,21 @@ export interface StackableInterface {
   }>
 }
 
+export interface StackableContext {
+  serviceId: string,
+  isEntrypoint: boolean,
+  telemetryConfig: object,
+  metricsConfig: object,
+  serverConfig: object,
+  hasManagementApi: boolean,
+  localServiceEnvVars: Map<string, string>,
+}
+
+export interface BuildStackableArgs {
+  config?: string,
+  onMissingEnv?: (envVarName: string) => string,
+}
+
 export function buildStackable<ConfigType> (opts: { config: string }, app?: object): Promise<StackableInterface>
 
 export interface Stackable<ConfigType> {
