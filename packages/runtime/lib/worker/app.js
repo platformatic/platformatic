@@ -1,8 +1,6 @@
 'use strict'
 
 const { EventEmitter } = require('node:events')
-const { dirname } = require('node:path')
-
 const { FileWatcher } = require('@platformatic/utils')
 const debounce = require('debounce')
 
@@ -24,8 +22,6 @@ class PlatformaticApp extends EventEmitter {
   constructor (appConfig, telemetryConfig, serverConfig, hasManagementApi, watch, metricsConfig) {
     super()
     this.appConfig = appConfig
-
-    this.configManager = null
     this.buildStackable = null
 
     this.#watch = watch
@@ -56,7 +52,7 @@ class PlatformaticApp extends EventEmitter {
     try {
       // If this is a restart, have the fastify server restart itself. If this
       // is not a restart, then create a new server.
-      const { stackable, configManager } = await this.buildStackable({
+      const { stackable } = await this.buildStackable({
         onMissingEnv: this.#fetchServiceUrl,
         config: this.appConfig.config,
         context: {
@@ -70,7 +66,6 @@ class PlatformaticApp extends EventEmitter {
         },
       })
       this.stackable = stackable
-      this.configManager = configManager
     } catch (err) {
       this.#logAndExit(err)
     }
@@ -89,18 +84,19 @@ class PlatformaticApp extends EventEmitter {
       this.#logAndExit(err)
     }
 
-    const config = this.configManager.current
+    if (this.#watch) {
+      const watchConfig = await this.stackable.getWatchConfig()
+      if (watchConfig.enabled !== false) {
+        console.log('-----------------------------------------------1')
+        /* c8 ignore next 4 */
+        this.#debouncedRestart = debounce(() => {
+          console.log('-----------------------------------------------2')
+          this.stackable.log({ message: 'files changed', level: 'debug' })
+          this.emit('changed')
+        }, 100) // debounce restart for 100ms
 
-    const watch = config.watch
-
-    if (config.plugins !== undefined && this.#watch && watch.enabled !== false) {
-      /* c8 ignore next 4 */
-      this.#debouncedRestart = debounce(() => {
-        this.stackable.log({ message: 'files changed', level: 'debug' })
-        this.emit('changed')
-      }, 100) // debounce restart for 100ms
-
-      this.#startFileWatching(watch)
+        this.#startFileWatching(watchConfig)
+      }
     }
 
     const listen = !!this.appConfig.useHttp
@@ -172,9 +168,9 @@ class PlatformaticApp extends EventEmitter {
     if (this.#fileWatcher) {
       return
     }
-    const configManager = this.configManager
+
     const fileWatcher = new FileWatcher({
-      path: dirname(configManager.fullPath),
+      path: watch.path,
       /* c8 ignore next 2 */
       allowToWatch: watch?.allow,
       watchIgnore: watch?.ignore || [],

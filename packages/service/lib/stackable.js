@@ -1,7 +1,8 @@
 'use strict'
 
-const pino = require('pino')
+const { dirname } = require('node:path')
 const { printSchema } = require('graphql')
+const pino = require('pino')
 
 class ServiceStackable {
   constructor (options) {
@@ -63,6 +64,21 @@ class ServiceStackable {
     }
 
     return config
+  }
+
+  async getWatchConfig () {
+    const config = this.configManager.current
+
+    const enabled =
+      config.watch?.enabled !== false &&
+      config.plugins !== undefined
+
+    return {
+      enabled,
+      path: dirname(this.configManager.fullPath),
+      allow: config.watch?.allow,
+      ignore: config.watch?.ignore,
+    }
   }
 
   async getDispatchFunc () {
