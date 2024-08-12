@@ -679,7 +679,7 @@ async function getRuntimeLogs (runtime) {
   assert.strictEqual(statusCode, 200)
   const messages = (await body.text()).trim().split('\n').map(JSON.parse)
 
-  return messages.map(m => m.msg)
+  return messages.map(m => m.payload?.msg ?? m.msg)
 }
 
 module.exports = {
