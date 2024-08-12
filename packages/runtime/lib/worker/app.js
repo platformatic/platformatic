@@ -50,9 +50,7 @@ class PlatformaticApp extends EventEmitter {
     await this.#loadConfig()
 
     try {
-      // If this is a restart, have the fastify server restart itself. If this
-      // is not a restart, then create a new server.
-      const { stackable } = await this.buildStackable({
+      this.stackable = await this.buildStackable({
         onMissingEnv: this.#fetchServiceUrl,
         config: this.appConfig.config,
         context: {
@@ -65,7 +63,6 @@ class PlatformaticApp extends EventEmitter {
           localServiceEnvVars: this.appConfig.localServiceEnvVars,
         },
       })
-      this.stackable = stackable
     } catch (err) {
       this.#logAndExit(err)
     }

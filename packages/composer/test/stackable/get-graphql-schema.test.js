@@ -34,7 +34,7 @@ test('should start composer with a graphql service', async t => {
     },
   }
 
-  const { stackable } = await buildStackable({ config })
+  const stackable = await buildStackable({ config })
   t.after(async () => {
     await stackable.stop()
   })
@@ -51,7 +51,7 @@ test('get null if server does not expose openapi', async (t) => {
     },
   }
 
-  const { stackable } = await buildStackable({ config })
+  const stackable = await buildStackable({ config })
   t.after(async () => {
     await stackable.stop()
   })

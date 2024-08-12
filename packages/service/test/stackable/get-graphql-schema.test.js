@@ -21,7 +21,7 @@ test('get service openapi schema via stackable api', async (t) => {
     metrics: false,
   }
 
-  const { stackable } = await buildStackable({ config })
+  const stackable = await buildStackable({ config })
   t.after(async () => {
     await stackable.stop()
   })
@@ -49,7 +49,7 @@ test('get null if server does not expose graphql', async (t) => {
     metrics: false,
   }
 
-  const { stackable } = await buildStackable({ config })
+  const stackable = await buildStackable({ config })
   t.after(async () => {
     await stackable.stop()
   })

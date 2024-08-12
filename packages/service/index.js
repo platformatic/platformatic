@@ -167,7 +167,6 @@ async function buildStackable (
     }
   }
 
-  // const config = configManager.current
   const stackable = new Stackable({
     init: () => buildServer(configManager.current, app),
     stackable: app,
@@ -175,13 +174,7 @@ async function buildStackable (
     context: options.context,
   })
 
-  return {
-    schema: app.schema,
-    configType: app.configType,
-    configManager,
-    configManagerConfig: app.configManagerConfig,
-    stackable,
-  }
+  return stackable
 }
 
 module.exports.configType = 'service'
