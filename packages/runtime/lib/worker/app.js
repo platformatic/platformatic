@@ -15,14 +15,13 @@ class PlatformaticApp extends EventEmitter {
   #listening
   #watch
   #fileWatcher
-  #logger
   #telemetryConfig
   #serverConfig
   #debouncedRestart
   #hasManagementApi
   #metricsConfig
 
-  constructor (appConfig, logger, telemetryConfig, serverConfig, hasManagementApi, watch, metricsConfig) {
+  constructor (appConfig, telemetryConfig, serverConfig, hasManagementApi, watch, metricsConfig) {
     super()
     this.appConfig = appConfig
 
@@ -36,9 +35,6 @@ class PlatformaticApp extends EventEmitter {
     this.stackable = null
     this.#fileWatcher = null
     this.#hasManagementApi = !!hasManagementApi
-    this.#logger = logger.child({
-      name: this.appConfig.id,
-    })
     this.#telemetryConfig = telemetryConfig
     this.#metricsConfig = metricsConfig
     this.#serverConfig = serverConfig
@@ -202,7 +198,11 @@ class PlatformaticApp extends EventEmitter {
   }
 
   #logAndExit (err) {
-    this.#logger.error({ err })
+    // Runtime logs here with console.error because stackable is not initialized
+    console.error(JSON.stringify({
+      msg: err.message,
+      name: this.appConfig.id,
+    }))
     process.exit(1)
   }
 }

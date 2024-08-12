@@ -15,7 +15,7 @@ test('handles startup errors', async (t) => {
     for (const message of messages) {
       stdout += message
 
-      if (/Error: boom/.test(stdout)) {
+      if (/boom/.test(stdout)) {
         found = true
         break
       }
