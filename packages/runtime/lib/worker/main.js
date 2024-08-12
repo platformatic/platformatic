@@ -110,6 +110,7 @@ async function main () {
 
   // Get the dependencies
   const dependencies = config.autoload ? await app.getBootstrapDependencies() : []
+  console.log('Dependencies:', dependencies)
   itc.notify('init', { dependencies })
   itc.listen()
 

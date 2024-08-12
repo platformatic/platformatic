@@ -22,8 +22,6 @@ class PlatformaticApp extends EventEmitter {
   constructor (appConfig, telemetryConfig, serverConfig, hasManagementApi, watch, metricsConfig) {
     super()
     this.appConfig = appConfig
-    this.buildStackable = null
-
     this.#watch = watch
     this.#starting = false
     this.#started = false
@@ -43,14 +41,18 @@ class PlatformaticApp extends EventEmitter {
   }
 
   async getBootstrapDependencies () {
-    return this.stackable.getBootstrapDependencies()
+    return this.stackable.getBootstrapDependencies?.() || []
   }
 
   async init () {
-    await this.#loadConfig()
-
     try {
-      this.stackable = await this.buildStackable({
+      const appConfig = this.appConfig
+      const { app } = await loadConfig({}, ['-c', appConfig.config], {
+        onMissingEnv: this.#fetchServiceUrl,
+        context: this.appConfig,
+      }, true)
+
+      this.stackable = await app.buildStackable({
         onMissingEnv: this.#fetchServiceUrl,
         config: this.appConfig.config,
         context: {
@@ -82,7 +84,10 @@ class PlatformaticApp extends EventEmitter {
     }
 
     if (this.#watch) {
-      const watchConfig = await this.stackable.getWatchConfig()
+      const watchConfig = await this.stackable.getWatchConfig?.() || {
+        enabled: false,
+      }
+
       if (watchConfig.enabled !== false) {
         /* c8 ignore next 4 */
         this.#debouncedRestart = debounce(() => {
@@ -131,22 +136,6 @@ class PlatformaticApp extends EventEmitter {
     }
 
     await this.stackable.start({ listen: true })
-  }
-
-  async #loadConfig () {
-    const appConfig = this.appConfig
-
-    let _config
-    try {
-      _config = await loadConfig({}, ['-c', appConfig.config], {
-        onMissingEnv: this.#fetchServiceUrl,
-        context: appConfig,
-      }, true)
-    } catch (err) {
-      this.#logAndExit(err)
-    }
-
-    this.buildStackable = _config.app.buildStackable
   }
 
   #fetchServiceUrl (key, { parent, context: service }) {

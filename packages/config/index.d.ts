@@ -79,6 +79,12 @@ export interface StackableInfo {
   version: string
 }
 
+export interface StackableDependency {
+  id: string
+  url?: string
+  local: boolean
+}
+
 export interface StackableInterface {
   init: () => Promise<void>
   start: (options: StartOptions) => Promise<void>
@@ -97,15 +103,16 @@ export interface StackableInterface {
     body: object
   }>,
   log: (options: { message: string, level: string }) => Promise<void>
+  getBootstrapDependencies?: () => Promise<StackableDependency[]>
+  getWatchConfig?: () => Promise<{
+    enabled: boolean,
+    path: string,
+    allow?: string[]
+    ignore?: string[]
+  }>
 }
 
-export function buildStackable<ConfigType> (opts: object, app?: object): Promise<{
-  configType: string,
-  configManager?: ConfigManager<ConfigType>,
-  configManagerConfig?: ConfigManagerConfig<ConfigType>,
-  schema?: object,
-  stackable?: StackableInterface
-}>
+export function buildStackable<ConfigType> (opts: { config: string }, app?: object): Promise<StackableInterface>
 
 export interface Stackable<ConfigType> {
   configType: string

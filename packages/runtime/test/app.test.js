@@ -4,7 +4,7 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { once } = require('node:events')
-// const { utimes } = require('node:fs/promises')
+const { utimes } = require('node:fs/promises')
 const { PlatformaticApp } = require('../lib/worker/app')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
@@ -87,54 +87,58 @@ test('logs errors if an env variable is missing', async (t) => {
   )
 })
 
-// test('Uses the server config if passed', async (t) => {
-//   const { logger, stream } = getLoggerAndStream()
-//   const appPath = join(fixturesDir, 'server', 'runtime-server', 'services', 'echo')
-//   const configFile = join(appPath, 'platformatic.service.json')
-//   const config = {
-//     id: 'serviceApp',
-//     config: configFile,
-//     path: appPath,
-//     entrypoint: true,
-//     watch: true,
-//     dependencies: [],
-//     localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
-//   }
-//   const serverConfig = {
-//     hostname: '127.0.0.1',
-//     port: '14242',
-//     logger: {
-//       level: 'info',
-//     },
-//   }
-//   const app = new PlatformaticApp(config, logger, null, serverConfig)
+test('Uses the server config if passed', async (t) => {
+  const appPath = join(fixturesDir, 'server', 'runtime-server', 'services', 'echo')
+  const configFile = join(appPath, 'platformatic.service.json')
+  const config = {
+    id: 'serviceApp',
+    config: configFile,
+    path: appPath,
+    entrypoint: true,
+    watch: true,
+    dependencies: [],
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
+  }
+  const serverConfig = {
+    hostname: '127.0.0.1',
+    port: '14242',
+    logger: {
+      level: 'info',
+    },
+  }
+  const app = new PlatformaticApp(config, null, serverConfig)
 
-//   t.after(async function () {
-//     try {
-//       await app.stop()
-//     } catch (err) {
-//       console.error(err)
-//     }
-//   })
+  t.after(async function () {
+    try {
+      t.mock.restoreAll()
+      await app.stop()
+    } catch (err) {
+      console.error(err)
+    }
+  })
 
-//   await app.init()
-//   await app.start()
-//   await app.listen()
+  const promise = new Promise((resolve, reject) => {
+    t.mock.method(process.stdout, 'write', (message) => {
+      try {
+        const log = JSON.parse(message)
+        if (log.msg.includes('listening')) {
+          if (log.msg.includes(serverConfig.port)) {
+            resolve()
+          } else {
+            reject(new Error('wrong port'))
+          }
+        }
+      } catch (err) {}
+    })
+  })
 
-//   const configManager = app.config.configManager
-//   await utimes(configFile, new Date(), new Date())
-//   for await (const log of stream) {
-//     // Wait for the server to restart, it will print a line containing "Server listening"
-//     if (log.msg.includes('listening')) {
-//       if (log.msg.includes(serverConfig.port)) {
-//         break
-//       } else {
-//         throw new Error('wrong port')
-//       }
-//     }
-//   }
-//   assert.strictEqual(configManager, app.stackable.configManager)
-// })
+  await app.init()
+  await app.start()
+  await app.listen()
+
+  await utimes(configFile, new Date(), new Date())
+  await promise
+})
 
 test('logs errors during startup', async (t) => {
   const appPath = join(fixturesDir, 'serviceAppThrowsOnStart')

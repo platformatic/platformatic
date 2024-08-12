@@ -4,6 +4,8 @@ const { ServiceStackable } = require('@platformatic/service')
 
 class ComposerStackable extends ServiceStackable {
   async getBootstrapDependencies () {
+    // We do not call init() on purpose, as we don't want to load the up just yet.
+
     const composedServices = this.configManager.current.composer?.services
     const dependencies = []
 

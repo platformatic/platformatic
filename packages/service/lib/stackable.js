@@ -127,10 +127,6 @@ class ServiceStackable {
     this.app.log[logLevel](message)
   }
 
-  async getBootstrapDependencies () {
-    return []
-  }
-
   #updateConfig () {
     if (!this.context) return
 
