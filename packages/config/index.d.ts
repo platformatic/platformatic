@@ -1,6 +1,6 @@
+import { FastifyError } from '@fastify/error'
 import type { InstanceOptions } from 'ajv'
 import type { FastifyPluginAsync } from 'fastify'
-import { FastifyError } from '@fastify/error'
 
 interface LogFn {
   // TODO: why is this different from `obj: object` or `obj: any`?
@@ -41,7 +41,7 @@ type JsonArray = boolean[] | number[] | string[] | JsonMap[] | Date[]
 type AnyJson = boolean | number | string | JsonMap | Date | JsonArray | JsonArray[]
 
 interface JsonMap {
-  [key: string]: AnyJson;
+  [key: string]: AnyJson
 }
 
 interface ISerializer {
@@ -64,11 +64,11 @@ export class ConfigManager<T = object> {
   load(): Promise<string>
 }
 
-export interface ConfigManagerConfig<T> extends Omit<IConfigManagerOptions, 'source' | 'watch' | 'schema' | 'configVersion'> {
+export interface ConfigManagerConfig<T>
+  extends Omit<IConfigManagerOptions, 'source' | 'watch' | 'schema' | 'configVersion'> {
   transformConfig: (this: ConfigManager<T>) => Promise<void>
   schema: object
 }
-
 
 export interface StartOptions {
   listen?: boolean
@@ -97,7 +97,7 @@ export interface StackableInterface {
   getOpenapiSchema?: () => Promise<object>
   getGraphqlSchema?: () => Promise<string>
   getMetrics?: () => Promise<string>
-  inject: (injectParams: object) => Promise<{
+  inject?: (injectParams: object) => Promise<{    
     statusCode: number
     statusMessage: string
     headers: object
@@ -106,29 +106,30 @@ export interface StackableInterface {
   log?: (options: { message: string, level: string }) => Promise<void>
   getBootstrapDependencies?: () => Promise<StackableDependency[]>
   getWatchConfig?: () => Promise<{
-    enabled: boolean,
-    path: string,
+    enabled: boolean
+    path: string
     allow?: string[]
     ignore?: string[]
   }>
 }
 
 export interface StackableContext {
-  serviceId: string,
-  isEntrypoint: boolean,
-  telemetryConfig: object,
-  metricsConfig: object,
-  serverConfig: object,
-  hasManagementApi: boolean,
-  localServiceEnvVars: Map<string, string>,
+  serviceId: string
+  isEntrypoint: boolean
+  directory: string
+  telemetryConfig: object
+  metricsConfig: object
+  serverConfig: object
+  hasManagementApi: boolean
+  localServiceEnvVars: Map<string, string>
 }
 
 export interface BuildStackableArgs {
-  config?: string,
-  onMissingEnv?: (envVarName: string) => string,
+  config?: string
+  onMissingEnv?: (envVarName: string) => string
 }
 
-export function buildStackable<ConfigType> (opts: { config: string }, app?: object): Promise<StackableInterface>
+export function buildStackable<ConfigType>(opts: { config: string }, app?: object): Promise<StackableInterface>
 
 export interface Stackable<ConfigType> {
   configType: string
@@ -160,5 +161,5 @@ export module errors {
   export const NoConfigFileFoundError: FastifyError
 }
 
-export function printAndExitLoadConfigError (err: any): void
-export function printAndExitValidationError (err: any): void
+export function printAndExitLoadConfigError(err: any): void
+export function printAndExitValidationError(err: any): void

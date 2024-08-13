@@ -27,10 +27,10 @@ const agent = new Agent({
 const tmpBaseDir = resolve(__dirname, '../tmp')
 
 const REFRESH_TIMEOUT = 1000
+const REFRESH_TIMEOUT_DELAY_FACTOR = 20
 
 // GitHub actions are REALLY slow.
-const LOGS_WRITE_DELAY = 10000
-const REFRESH_TIMEOUT_DELAY_FACTOR = 20
+const LOGS_WRITE_DELAY = process.env.CI ? 10000 : 3000
 
 setGlobalDispatcher(agent)
 

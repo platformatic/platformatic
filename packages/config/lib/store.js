@@ -12,11 +12,8 @@ const abstractLogger = require('./logger')
 
 const pltVersion = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8')).version
 
-const defaultTypes = [
-  'service',
-  'db',
-  'composer',
-]
+const defaultTypes = ['service', 'db', 'composer', 'basic']
+const defaultTypesConfigurationAliases = { basic: 'application' }
 
 class Store {
   #map = new Map()
@@ -58,16 +55,8 @@ class Store {
 
   async _get ({ $schema, module, extends: _extends, core, db }, { directory } = {}) {
     // We support both 'module' and 'extends'. Note that we have to rename the veriable, because "extends" is a reserved word
-    const {
-      module: extendedModule,
-      version,
-    } = splitModuleFromVersion(_extends || module)
+    const { module: extendedModule, version } = splitModuleFromVersion(_extends || module)
     let app = this.#map.get($schema)
-    let require = this.#require
-
-    if (directory) {
-      require = createRequire(join(directory, 'noop.js'))
-    }
 
     let match = $schema?.match(/\/schemas\/(.*)\/(.*)/)
     let type = match?.[2]
@@ -75,6 +64,8 @@ class Store {
       match = $schema?.match(/\/@platformatic\/(.*)\/(.*)\.json/)
       type = match?.[1]
     }
+
+    const require = this.#createRequire(type, directory)
 
     // Legacy Platformatic apps
     if (!app && !type && $schema?.indexOf('./') === 0 && !extendedModule) {
@@ -160,10 +151,12 @@ class Store {
       ]
     }
 
-    for (const type of defaultTypes) {
+    for (let type of defaultTypes) {
       if (typeSet.has(type)) {
         continue
       }
+
+      type = defaultTypesConfigurationAliases[type] ?? type
       const _ = {
         configType: type,
         filenames: [
@@ -199,12 +192,14 @@ class Store {
       }
     }
 
-    const configFilesAccessibility = await Promise.all(filenames.map(async (filename) => {
-      return {
-        filename,
-        found: await isFileAccessible(filename, this.#cwd),
-      }
-    }))
+    const configFilesAccessibility = await Promise.all(
+      filenames.map(async filename => {
+        return {
+          filename,
+          found: await isFileAccessible(filename, this.#cwd),
+        }
+      })
+    )
 
     const found = configFilesAccessibility.find((value, index) => {
       return value.found
@@ -267,6 +262,33 @@ class Store {
     })
 
     return { configManager, app }
+  }
+
+  async loadEmptyConfig ({ app, directory, overrides }) {
+    const version = app.version
+
+    const configManager = new ConfigManager({
+      source: {},
+      schema: {},
+      dirname: directory,
+      configVersion: version,
+      logger: this.logger,
+      ...app.configManagerConfig,
+      ...overrides,
+    })
+
+    return { configManager, app }
+  }
+
+  #createRequire (type, directory) {
+    // For generic application, we load the @platformatic/basic which is a dependency of @platformatic/runtime
+    if (type === 'basic') {
+      return require
+    } else if (directory) {
+      return createRequire(join(directory, 'noop.js'))
+    }
+
+    return this.#require
   }
 }
 

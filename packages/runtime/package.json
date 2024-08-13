@@ -8,7 +8,6 @@
   },
   "scripts": {
     "test": "npm run lint && borp --concurrency=1 --timeout=180000 && tsd",
-    "gen-schema": "node lib/schema.js > schema.json",
     "coverage": "npm run lint && borp -X=fixtures -X=test -C --concurrency=1 --timeout=180000 && tsd",
     "lint": "eslint",
     "gen-schema": "node lib/schema.js > schema.json",
@@ -51,6 +50,7 @@
     "@fastify/error": "^3.4.1",
     "@fastify/websocket": "^10.0.0",
     "@hapi/topo": "^6.0.2",
+    "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/itc": "workspace:*",
     "@platformatic/generators": "workspace:*",

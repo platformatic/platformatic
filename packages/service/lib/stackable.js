@@ -86,13 +86,13 @@ class ServiceStackable {
     return this.app
   }
 
-  async getOpenapiSchema () {
+  async getOpenAPISchema () {
     await this.init()
     await this.app.ready()
     return this.app.swagger ? this.app.swagger() : null
   }
 
-  async getGraphqlSchema () {
+  async getGraphQLSchema () {
     await this.init()
     await this.app.ready()
     return this.app.graphql ? printSchema(this.app.graphql.schema) : null

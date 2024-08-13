@@ -4,7 +4,11 @@ const { createHash } = require('node:crypto')
 const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 
-const { Store, loadConfig: pltConfigLoadConfig } = require('@platformatic/config')
+const {
+  Store,
+  loadConfig: pltConfigLoadConfig,
+  loadEmptyConfig: pltConfigLoadEmptyConfig,
+} = require('@platformatic/config')
 
 const { platformaticRuntime } = require('./config')
 
@@ -29,10 +33,19 @@ function getRuntimeLogsDir (runtimeDir, runtimePID) {
   return join(runtimeTmpDir, runtimePID.toString(), 'logs')
 }
 
-function loadConfig (minimistConfig, args, overrides, replaceEnv = true) {
+async function loadConfig (minimistConfig, args, overrides, replaceEnv = true) {
+  const { default: platformaticBasic } = await import('@platformatic/basic')
   const store = new Store()
   store.add(platformaticRuntime)
+  store.add(platformaticBasic)
+
   return pltConfigLoadConfig(minimistConfig, args, store, overrides, replaceEnv)
+}
+
+async function loadEmptyConfig (path, overrides, replaceEnv = true) {
+  const { default: platformaticBasic } = await import('@platformatic/basic')
+
+  return pltConfigLoadEmptyConfig(path, platformaticBasic, overrides, replaceEnv)
 }
 
 module.exports = {
@@ -41,4 +54,5 @@ module.exports = {
   getRuntimeTmpDir,
   getServiceUrl,
   loadConfig,
+  loadEmptyConfig,
 }

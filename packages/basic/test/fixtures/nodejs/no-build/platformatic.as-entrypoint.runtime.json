@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
+  "entrypoint": "main",
+  "watch": false,
+  "managementApi": true,
+  "metrics": false,
+  "server": {
+    "logger": {
+      "level": "warn"
+    }
+  },
+  "services": [
+    {
+      "id": "main",
+      "path": ".",
+      "config": "platformatic.app.json"
+    }
+  ]
+}

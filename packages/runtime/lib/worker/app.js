@@ -6,7 +6,7 @@ const debounce = require('debounce')
 
 const errors = require('../errors')
 const defaultStackable = require('./default-stackable')
-const { getServiceUrl, loadConfig } = require('../utils')
+const { getServiceUrl, loadConfig, loadEmptyConfig } = require('../utils')
 
 class PlatformaticApp extends EventEmitter {
   #starting
@@ -29,6 +29,7 @@ class PlatformaticApp extends EventEmitter {
 
     this.#context = {
       serviceId: this.appConfig.id,
+      directory: this.appConfig.path,
       isEntrypoint: this.appConfig.entrypoint,
       telemetryConfig,
       metricsConfig,
@@ -58,10 +59,30 @@ class PlatformaticApp extends EventEmitter {
   async init () {
     try {
       const appConfig = this.appConfig
-      const { app } = await loadConfig({}, ['-c', appConfig.config], {
-        onMissingEnv: this.#fetchServiceUrl,
-        context: this.appConfig,
-      }, true)
+      let loadedConfig
+
+      if (!appConfig.config) {
+        loadedConfig = await loadEmptyConfig(
+          appConfig.path,
+          {
+            onMissingEnv: this.#fetchServiceUrl,
+            context: appConfig,
+          },
+          true
+        )
+      } else {
+        loadedConfig = await loadConfig(
+          {},
+          ['-c', appConfig.config],
+          {
+            onMissingEnv: this.#fetchServiceUrl,
+            context: appConfig,
+          },
+          true
+        )
+      }
+
+      const app = loadedConfig.app
 
       const stackable = await app.buildStackable({
         onMissingEnv: this.#fetchServiceUrl,
@@ -82,7 +103,7 @@ class PlatformaticApp extends EventEmitter {
     this.#starting = true
 
     try {
-      await this.stackable.init()
+      await this.stackable.init?.()
     } catch (err) {
       this.#logAndExit(err)
     }
@@ -180,10 +201,12 @@ class PlatformaticApp extends EventEmitter {
 
   #logAndExit (err) {
     // Runtime logs here with console.error because stackable is not initialized
-    console.error(JSON.stringify({
-      msg: err.message,
-      name: this.appConfig.id,
-    }))
+    console.error(
+      JSON.stringify({
+        msg: err.message,
+        name: this.appConfig.id,
+      })
+    )
     process.exit(1)
   }
 

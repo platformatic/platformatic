@@ -34,8 +34,7 @@
             "type": "object",
             "additionalProperties": false,
             "required": [
-              "id",
-              "config"
+              "id"
             ],
             "properties": {
               "id": {
@@ -769,8 +768,7 @@
         "type": "object",
         "required": [
           "id",
-          "path",
-          "config"
+          "path"
         ],
         "properties": {
           "id": {
