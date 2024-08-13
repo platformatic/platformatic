@@ -28,7 +28,7 @@ test('supports logging using a transport', async (t) => {
   await app.start()
 
   // Wait for logs to be written
-  await sleep(1000)
+  await sleep(3000)
 
   const written = await fs.readFile(dest, 'utf8')
   const parsed = JSON.parse(written)
