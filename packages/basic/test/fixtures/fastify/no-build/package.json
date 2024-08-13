@@ -1,0 +1,7 @@
+{
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "fastify": "^4.28.1"
+  }
+}

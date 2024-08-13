@@ -29,7 +29,7 @@ test('get service openapi schema via stackable api', async (t) => {
   await stackable.init()
   await stackable.start()
 
-  const graphqlSchema = await stackable.getGraphqlSchema()
+  const graphqlSchema = await stackable.getGraphQLSchema()
   assert.strictEqual(graphqlSchema, 'type Query {\n  hello: String\n}')
 })
 
@@ -55,6 +55,6 @@ test('get null if server does not expose graphql', async (t) => {
   })
   await stackable.start()
 
-  const graphqlSchema = await stackable.getGraphqlSchema()
+  const graphqlSchema = await stackable.getGraphQLSchema()
   assert.strictEqual(graphqlSchema, null)
 })

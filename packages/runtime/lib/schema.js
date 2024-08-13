@@ -38,7 +38,7 @@ const platformaticRuntimeSchema = {
           additionalProperties: {
             type: 'object',
             additionalProperties: false,
-            required: ['id', 'config'],
+            required: ['id'],
             properties: {
               id: {
                 type: 'string',
@@ -191,7 +191,7 @@ const platformaticRuntimeSchema = {
       type: 'array',
       items: {
         type: 'object',
-        required: ['id', 'path', 'config'],
+        required: ['id', 'path'],
         properties: {
           id: {
             type: 'string',

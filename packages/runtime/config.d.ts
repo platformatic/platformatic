@@ -16,7 +16,7 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime200Alpha2Json = {
     mappings?: {
       [k: string]: {
         id: string;
-        config: string;
+        config?: string;
         useHttp?: boolean;
       };
     };
@@ -203,7 +203,7 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime200Alpha2Json = {
   services?: {
     id: string;
     path: string;
-    config: string;
+    config?: string;
     useHttp?: boolean;
     [k: string]: unknown;
   }[];

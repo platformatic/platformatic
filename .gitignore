@@ -130,3 +130,6 @@ packages/runtime/test/tmp
 
 #OS Files
 .DS_Store
+
+# frontend files
+.vite
