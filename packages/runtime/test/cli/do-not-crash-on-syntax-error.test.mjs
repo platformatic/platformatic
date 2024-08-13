@@ -17,7 +17,8 @@ async function waitForMessageAndWatch (child, expected, watchMessage = 'start wa
   let received = false
 
   for await (const log of child.ndj.iterator({ destroyOnReturn: false })) {
-    if (log.msg === expected) {
+    const msg = log.payload?.msg ?? log.msg
+    if (msg === expected) {
       received = true
 
       if (!watchMessage) {
@@ -25,7 +26,7 @@ async function waitForMessageAndWatch (child, expected, watchMessage = 'start wa
       }
     }
 
-    if (received && log.msg === watchMessage) {
+    if (received && msg === watchMessage) {
       break
     }
   }

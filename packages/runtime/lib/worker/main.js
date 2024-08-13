@@ -96,7 +96,6 @@ async function main () {
   // Create the application
   app = new PlatformaticApp(
     service,
-    logger,
     config.telemetry,
     serverConfig,
     !!config.managementApi,

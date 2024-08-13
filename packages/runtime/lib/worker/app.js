@@ -1,8 +1,6 @@
 'use strict'
 
 const { EventEmitter } = require('node:events')
-const { dirname } = require('node:path')
-
 const { FileWatcher } = require('@platformatic/utils')
 const debounce = require('debounce')
 
@@ -15,17 +13,15 @@ class PlatformaticApp extends EventEmitter {
   #listening
   #watch
   #fileWatcher
-  #logger
   #telemetryConfig
   #serverConfig
   #debouncedRestart
   #hasManagementApi
   #metricsConfig
 
-  constructor (appConfig, logger, telemetryConfig, serverConfig, hasManagementApi, watch, metricsConfig) {
+  constructor (appConfig, telemetryConfig, serverConfig, hasManagementApi, watch, metricsConfig) {
     super()
     this.appConfig = appConfig
-    this.config = null
     this.#watch = watch
     this.#starting = false
     this.#started = false
@@ -33,9 +29,6 @@ class PlatformaticApp extends EventEmitter {
     this.stackable = null
     this.#fileWatcher = null
     this.#hasManagementApi = !!hasManagementApi
-    this.#logger = logger.child({
-      name: this.appConfig.id,
-    })
     this.#telemetryConfig = telemetryConfig
     this.#metricsConfig = metricsConfig
     this.#serverConfig = serverConfig
@@ -48,32 +41,30 @@ class PlatformaticApp extends EventEmitter {
   }
 
   async getBootstrapDependencies () {
-    await this.#loadConfig()
-    const resolver = this.config.app.getBootstrapDependencies
-    if (typeof resolver === 'function') {
-      return resolver(this.appConfig, this.config.configManager)
-    }
-    return []
+    return this.stackable.getBootstrapDependencies?.() || []
   }
 
   async init () {
-    await this.#applyConfig()
-
-    const configManager = this.config.configManager
-    const config = configManager.current
-
-    this.#setupLogger(configManager)
-
     try {
-      // If this is a restart, have the fastify server restart itself. If this
-      // is not a restart, then create a new server.
-      const { stackable } = await this.config.app.buildStackable({
-        app: this.config.app,
-        ...config,
-        id: this.appConfig.id,
-        configManager,
+      const appConfig = this.appConfig
+      const { app } = await loadConfig({}, ['-c', appConfig.config], {
+        onMissingEnv: this.#fetchServiceUrl,
+        context: this.appConfig,
+      }, true)
+
+      this.stackable = await app.buildStackable({
+        onMissingEnv: this.#fetchServiceUrl,
+        config: this.appConfig.config,
+        context: {
+          serviceId: this.appConfig.id,
+          isEntrypoint: this.appConfig.entrypoint,
+          telemetryConfig: this.#telemetryConfig,
+          metricsConfig: this.#metricsConfig,
+          serverConfig: this.#serverConfig,
+          hasManagementApi: this.#hasManagementApi,
+          localServiceEnvVars: this.appConfig.localServiceEnvVars,
+        },
       })
-      this.stackable = stackable
     } catch (err) {
       this.#logAndExit(err)
     }
@@ -92,19 +83,20 @@ class PlatformaticApp extends EventEmitter {
       this.#logAndExit(err)
     }
 
-    const configManager = this.config.configManager
-    const config = configManager.current
+    if (this.#watch) {
+      const watchConfig = await this.stackable.getWatchConfig?.() || {
+        enabled: false,
+      }
 
-    const watch = this.config.configManager.current.watch
+      if (watchConfig.enabled !== false) {
+        /* c8 ignore next 4 */
+        this.#debouncedRestart = debounce(() => {
+          this.stackable.log({ message: 'files changed', level: 'debug' })
+          this.emit('changed')
+        }, 100) // debounce restart for 100ms
 
-    if (config.plugins !== undefined && this.#watch && watch.enabled !== false) {
-      /* c8 ignore next 4 */
-      this.#debouncedRestart = debounce(() => {
-        this.stackable.log({ message: 'files changed', level: 'debug' })
-        this.emit('changed')
-      }, 100) // debounce restart for 100ms
-
-      this.#startFileWatching(watch)
+        this.#startFileWatching(watchConfig)
+      }
     }
 
     const listen = !!this.appConfig.useHttp
@@ -146,110 +138,6 @@ class PlatformaticApp extends EventEmitter {
     await this.stackable.start({ listen: true })
   }
 
-  async #loadConfig () {
-    const appConfig = this.appConfig
-
-    let _config
-    try {
-      _config = await loadConfig({}, ['-c', appConfig.config], {
-        onMissingEnv: this.#fetchServiceUrl,
-        context: appConfig,
-      }, true)
-    } catch (err) {
-      this.#logAndExit(err)
-    }
-
-    this.config = _config
-  }
-
-  async #applyConfig () {
-    if (!this.config) {
-      await this.#loadConfig()
-    }
-
-    const appConfig = this.appConfig
-    const { configManager } = this.config
-
-    configManager.on('error', (err) => {
-      /* c8 ignore next */
-      this.stackable.log({ message: 'error reloading the configuration' + err, level: 'error' })
-    })
-
-    if (appConfig._configOverrides instanceof Map) {
-      appConfig._configOverrides.forEach((value, key) => {
-        if (typeof key !== 'string') {
-          throw new errors.ConfigPathMustBeStringError()
-        }
-
-        const parts = key.split('.')
-        let next = configManager.current
-        let obj
-        let i
-
-        for (i = 0; next !== undefined && i < parts.length; ++i) {
-          obj = next
-          next = obj[parts[i]]
-        }
-
-        if (i === parts.length) {
-          obj[parts.at(-1)] = value
-        }
-      })
-    }
-
-    configManager.update({
-      ...configManager.current,
-      telemetry: this.#telemetryConfig,
-      metrics: this.#metricsConfig,
-    })
-
-    if (this.#serverConfig) {
-      configManager.update({
-        ...configManager.current,
-        server: this.#serverConfig,
-      })
-    }
-
-    if (
-      (this.#hasManagementApi && configManager.current.metrics === undefined) ||
-      configManager.current.metrics
-    ) {
-      const labels = configManager.current.metrics?.labels || {}
-      const serviceId = this.appConfig.id
-      configManager.update({
-        ...configManager.current,
-        metrics: {
-          server: 'hide',
-          defaultMetrics: { enabled: this.appConfig.entrypoint },
-          ...configManager.current.metrics,
-          labels: {
-            serviceId,
-            ...labels,
-          },
-        },
-      })
-    }
-
-    if (!this.appConfig.entrypoint) {
-      configManager.update({
-        ...configManager.current,
-        server: {
-          ...(configManager.current.server || {}),
-          trustProxy: true,
-        },
-      })
-    }
-  }
-
-  #setupLogger (configManager) {
-    configManager.current.server = configManager.current.server || {}
-    const level = configManager.current.server.logger?.level
-
-    configManager.current.server.logger = level
-      ? this.#logger.child({ level })
-      : this.#logger
-  }
-
   #fetchServiceUrl (key, { parent, context: service }) {
     if (service.localServiceEnvVars.has(key)) {
       return service.localServiceEnvVars.get(key)
@@ -264,9 +152,9 @@ class PlatformaticApp extends EventEmitter {
     if (this.#fileWatcher) {
       return
     }
-    const { configManager } = this.config
+
     const fileWatcher = new FileWatcher({
-      path: dirname(configManager.fullPath),
+      path: watch.path,
       /* c8 ignore next 2 */
       allowToWatch: watch?.allow,
       watchIgnore: watch?.ignore || [],
@@ -290,7 +178,11 @@ class PlatformaticApp extends EventEmitter {
   }
 
   #logAndExit (err) {
-    this.#logger.error({ err })
+    // Runtime logs here with console.error because stackable is not initialized
+    console.error(JSON.stringify({
+      msg: err.message,
+      name: this.appConfig.id,
+    }))
     process.exit(1)
   }
 }

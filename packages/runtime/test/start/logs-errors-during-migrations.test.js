@@ -37,5 +37,5 @@ test('logs errors during db migrations', async (t) => {
   const messages = (await body.text()).trim().split('\n').map(JSON.parse)
 
   assert.ok(messages.some(m => m.msg.match(/running 001.do.sql/)))
-  assert.ok(messages.some(m => m.msg.match(/near "fiddlesticks": syntax error/)))
+  assert.ok(messages.some(m => m.payload?.msg?.match(/near "fiddlesticks": syntax error/)))
 })

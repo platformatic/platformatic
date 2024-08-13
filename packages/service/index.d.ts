@@ -60,12 +60,6 @@ type defaultExport = Stackable<PlatformaticServiceConfig> & {
   schema: JSONSchemaType<PlatformaticServiceConfig>,
 }
 
-export function buildStackable (opts: object, app?: object): Promise<{
-  configType: string,
-  configManager?: ConfigManager<PlatformaticServiceConfig>,
-  configManagerConfig?: ConfigManagerConfig<PlatformaticServiceConfig>,
-  schema?: object,
-  stackable?: StackableInterface
-}>
+export function buildStackable (opts: { config: string }, app?: object): Promise<StackableInterface>
 
 export default defaultExport

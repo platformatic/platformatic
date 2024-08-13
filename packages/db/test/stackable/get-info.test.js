@@ -28,7 +28,7 @@ test('get service info via stackable api', async (t) => {
   }
 
   const configManager = await buildConfigManager(config, workingDir)
-  const { stackable } = await buildStackable({ configManager })
+  const stackable = await buildStackable({ configManager })
 
   t.after(async () => {
     await stackable.stop()

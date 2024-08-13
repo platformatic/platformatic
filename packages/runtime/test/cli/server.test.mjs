@@ -34,9 +34,10 @@ test('handles startup errors', async (t) => {
 
   for await (const messages of on(child.stdout, 'data')) {
     for (const message of messages) {
+      console.log('message', message.toString())
       stdout += message
 
-      if (/Error: boom/.test(stdout)) {
+      if (/boom/.test(stdout)) {
         found = true
         break
       }

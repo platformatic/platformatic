@@ -1,19 +1,25 @@
 'use strict'
 
+const { dirname } = require('node:path')
 const { printSchema } = require('graphql')
+const pino = require('pino')
 
 class ServiceStackable {
   constructor (options) {
     this.app = null
     this._init = options.init
     this.stackable = options.stackable
-    this.serviceId = options.id
 
     this.configManager = options.configManager
     this.config = this.configManager.current
+    this.context = options.context
+
+    this.#updateConfig()
   }
 
   async init () {
+    this.#initLogger()
+
     if (this.app === null) {
       this.app = await this._init()
     }
@@ -46,7 +52,33 @@ class ServiceStackable {
   }
 
   async getConfig () {
-    return this.configManager.current
+    const config = this.configManager.current
+    const logger = config.server.logger
+
+    if (logger) {
+      config.server.logger = {}
+
+      if (logger.level) {
+        config.server.logger.level = logger.level
+      }
+    }
+
+    return config
+  }
+
+  async getWatchConfig () {
+    const config = this.configManager.current
+
+    const enabled =
+      config.watch?.enabled !== false &&
+      config.plugins !== undefined
+
+    return {
+      enabled,
+      path: dirname(this.configManager.fullPath),
+      allow: config.watch?.allow,
+      ignore: config.watch?.ignore,
+    }
   }
 
   async getDispatchFunc () {
@@ -93,6 +125,80 @@ class ServiceStackable {
     if (!message) return
 
     this.app.log[logLevel](message)
+  }
+
+  #updateConfig () {
+    if (!this.context) return
+
+    const {
+      serviceId,
+      telemetryConfig,
+      metricsConfig,
+      serverConfig,
+      hasManagementApi,
+      isEntrypoint,
+    } = this.context
+
+    const configManager = this.configManager
+
+    configManager.on('error', (err) => {
+      /* c8 ignore next */
+      this.stackable.log({ message: 'error reloading the configuration' + err, level: 'error' })
+    })
+
+    configManager.update({
+      ...configManager.current,
+      telemetry: telemetryConfig,
+      metrics: metricsConfig,
+    })
+
+    if (this.context.serverConfig) {
+      configManager.update({
+        ...configManager.current,
+        server: serverConfig,
+      })
+    }
+
+    if (
+      (hasManagementApi && configManager.current.metrics === undefined) ||
+      configManager.current.metrics
+    ) {
+      const labels = configManager.current.metrics?.labels || {}
+      configManager.update({
+        ...configManager.current,
+        metrics: {
+          server: 'hide',
+          defaultMetrics: { enabled: isEntrypoint },
+          ...configManager.current.metrics,
+          labels: { serviceId, ...labels },
+        },
+      })
+    }
+
+    if (!isEntrypoint) {
+      configManager.update({
+        ...configManager.current,
+        server: {
+          ...(configManager.current.server || {}),
+          trustProxy: true,
+        },
+      })
+    }
+  }
+
+  #initLogger () {
+    this.configManager.current.server = this.configManager.current.server || {}
+    const level = this.configManager.current.server.logger?.level
+
+    const pinoOptions = {
+      level: level ?? 'trace',
+    }
+
+    if (this.context?.serviceId) {
+      pinoOptions.name = this.context.serviceId
+    }
+
+    this.configManager.current.server.logger = pino(pinoOptions)
   }
 }
 

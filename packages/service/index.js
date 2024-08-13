@@ -1,6 +1,7 @@
 'use strict'
 
 const { isKeyEnabled } = require('@platformatic/utils')
+const { loadConfig, ConfigManager } = require('@platformatic/config')
 const { readFile } = require('fs/promises')
 const { join } = require('path')
 
@@ -18,7 +19,7 @@ const { telemetry } = require('@platformatic/telemetry')
 const { buildCompileCmd, extractTypeScriptCompileOptionsFromConfig } = require('./lib/compile')
 const { schema } = require('./lib/schema')
 const { addLoggerToTheConfig } = require('./lib/utils')
-const { start, buildServer, buildConfigManager } = require('./lib/start')
+const { start, buildServer } = require('./lib/start')
 const ServiceGenerator = require('./lib/generator/service-generator.js')
 const { ServiceStackable } = require('./lib/stackable')
 
@@ -137,27 +138,43 @@ module.exports.configManagerConfig = {
 }
 
 platformaticService.configType = 'service'
+platformaticService.schema = schema
 platformaticService.configManagerConfig = module.exports.configManagerConfig
 
 function _buildServer (options, app) {
   return buildServer(options, app || module.exports)
 }
 
-async function buildStackable (options, app = platformaticService) {
-  const configManager = await buildConfigManager(options, app)
-  const stackable = new ServiceStackable({
-    init: buildServer.bind(null, options, app),
+async function buildStackable (
+  options,
+  app = platformaticService,
+  Stackable = ServiceStackable
+) {
+  let configManager = options.configManager
+
+  if (configManager === undefined) {
+    if (typeof options.config === 'string') {
+      ({ configManager } = await loadConfig({}, ['-c', options.config], app, {
+        onMissingEnv: options.onMissingEnv,
+        context: options.context,
+      }, true))
+    } else {
+      configManager = new ConfigManager({
+        ...app.configManagerConfig,
+        source: options.config,
+      })
+      await configManager.parseAndValidate()
+    }
+  }
+
+  const stackable = new Stackable({
+    init: () => buildServer(configManager.current, app),
     stackable: app,
     configManager,
+    context: options.context,
   })
 
-  return {
-    schema: app.schema,
-    configType: app.configType,
-    configManager,
-    configManagerConfig: app.configManagerConfig,
-    stackable,
-  }
+  return stackable
 }
 
 module.exports.configType = 'service'
@@ -170,5 +187,6 @@ module.exports.platformaticService = platformaticService
 module.exports.addLoggerToTheConfig = addLoggerToTheConfig
 module.exports.start = start
 module.exports.Generator = ServiceGenerator
+module.exports.ServiceStackable = ServiceStackable
 module.exports.buildCompileCmd = buildCompileCmd
 module.exports.extractTypeScriptCompileOptionsFromConfig = extractTypeScriptCompileOptionsFromConfig
