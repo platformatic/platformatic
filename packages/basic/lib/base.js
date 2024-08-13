@@ -9,7 +9,7 @@ export class BaseStackable {
     this.configManager = configManager
     this.serverConfig = options.context.serverConfig
     this.openapiSchema = null
-    this.getGraphQLSchema = null
+    this.getGraphqlSchema = null
 
     // Setup the logger
     const pinoOptions = { level: this.serverConfig?.logger?.level ?? 'trace' }
@@ -59,11 +59,11 @@ export class BaseStackable {
     return null
   }
 
-  async getOpenAPISchema () {
+  async getOpenapiSchema () {
     return this.openapiSchema
   }
 
-  async getGraphQLSchema () {
+  async getGraphqlSchema () {
     return this.graphqlSchema
   }
 
