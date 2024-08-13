@@ -1,0 +1,5 @@
+{
+  "name": "service-db",
+  "main": "./service-db.cjs",
+  "types": "./service-db.d.ts"
+}

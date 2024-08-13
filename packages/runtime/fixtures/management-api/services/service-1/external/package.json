@@ -1,0 +1,5 @@
+{
+  "name": "external",
+  "main": "./external.cjs",
+  "types": "./external.d.ts"
+}

@@ -1,0 +1,4 @@
+{
+  "name": "service-2",
+  "types": "./service-2.d.ts"
+}

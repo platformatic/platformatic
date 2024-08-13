@@ -60,6 +60,12 @@ async function managementApiPlugin (app, opts) {
     return runtime.getServiceConfig(id)
   })
 
+  app.get('/services/:id/dependencies', async request => {
+    const { id } = request.params
+    app.log.debug('get service dependencies', { id })
+    return runtime.getServiceDependencies(id)
+  })
+
   app.get('/services/:id/openapi-schema', async request => {
     const { id } = request.params
     app.log.debug('get openapi-schema', { id })

@@ -8,5 +8,22 @@
       "plugin.js"
     ]
   },
+  "clients": [
+    {
+      "schema": "service-2/service-2.openapi.json",
+      "name": "service2",
+      "type": "openapi",
+      "serviceId": "service-2"
+    },
+    {
+      "serviceId": "service-db",
+      "path": "./service-db",
+      "url": "{PLT_SERVICE_DB_URL}"
+    },
+    {
+      "path": "./service-db",
+      "url": "{PLT_EXTERNAL_URL}"
+    }
+  ],
   "watch": true
 }

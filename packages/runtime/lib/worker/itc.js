@@ -94,6 +94,14 @@ function setupITC (app, service, dispatcher) {
     return JSON.parse(JSON.stringify(current))
   })
 
+  itc.handle('getServiceDependencies', async () => {
+    try {
+      return app.stackable.getDependencies()
+    } catch (err) {
+      throw new errors.FailedToGetServiceDependencies(service.id, err.message)
+    }
+  })
+
   itc.handle('getServiceOpenAPISchema', async () => {
     try {
       return app.stackable.getOpenapiSchema()

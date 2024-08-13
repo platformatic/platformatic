@@ -82,7 +82,7 @@ export interface StackableInfo {
 export interface StackableDependency {
   id: string
   url?: string
-  local: boolean
+  local?: boolean
 }
 
 export interface StackableInterface {
@@ -103,6 +103,7 @@ export interface StackableInterface {
     body: object
   }>,
   log: (options: { message: string, level: string }) => Promise<void>
+  getDependencies?: () => Promise<StackableDependency[]>
   getBootstrapDependencies?: () => Promise<StackableDependency[]>
   getWatchConfig?: () => Promise<{
     enabled: boolean,

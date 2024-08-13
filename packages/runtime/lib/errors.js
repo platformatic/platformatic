@@ -11,8 +11,18 @@ module.exports = {
   UnknownRuntimeAPICommandError: createError(`${ERROR_PREFIX}_UNKNOWN_RUNTIME_API_COMMAND`, 'Unknown Runtime API command "%s"'),
   ServiceNotFoundError: createError(`${ERROR_PREFIX}_SERVICE_NOT_FOUND`, 'Service %s not found. Available services are: %s'),
   ServiceNotStartedError: createError(`${ERROR_PREFIX}_SERVICE_NOT_STARTED`, "Service with id '%s' is not started"),
-  FailedToRetrieveOpenAPISchemaError: createError(`${ERROR_PREFIX}_FAILED_TO_RETRIEVE_OPENAPI_SCHEMA`, 'Failed to retrieve OpenAPI schema for service with id "%s": %s'),
-  FailedToRetrieveGraphQLSchemaError: createError(`${ERROR_PREFIX}_FAILED_TO_RETRIEVE_GRAPHQL_SCHEMA`, 'Failed to retrieve GraphQL schema for service with id "%s": %s'),
+  FailedToGetServiceDependencies: createError(
+    `${ERROR_PREFIX}_FAILED_TO_GET_BOOTSTRAP_DEPENDENCIES`,
+    'Failed to get dependencies for service with id "%s": %s'
+  ),
+  FailedToRetrieveOpenAPISchemaError: createError(
+    `${ERROR_PREFIX}_FAILED_TO_RETRIEVE_OPENAPI_SCHEMA`,
+    'Failed to retrieve OpenAPI schema for service with id "%s": %s'
+  ),
+  FailedToRetrieveGraphQLSchemaError: createError(
+    `${ERROR_PREFIX}_FAILED_TO_RETRIEVE_GRAPHQL_SCHEMA`,
+    'Failed to retrieve GraphQL schema for service with id "%s": %s'
+  ),
   ApplicationAlreadyStartedError: createError(`${ERROR_PREFIX}_APPLICATION_ALREADY_STARTED`, 'Application is already started'),
   ApplicationNotStartedError: createError(`${ERROR_PREFIX}_APPLICATION_NOT_STARTED`, 'Application has not been started'),
   ConfigPathMustBeStringError: createError(`${ERROR_PREFIX}_CONFIG_PATH_MUST_BE_STRING`, 'Config path must be a string'),
@@ -24,7 +34,10 @@ module.exports = {
   InspectorPortError: createError(`${ERROR_PREFIX}_INSPECTOR_PORT`, 'Inspector port must be 0 or in range 1024 to 65535'),
   InspectorHostError: createError(`${ERROR_PREFIX}_INSPECTOR_HOST`, 'Inspector host cannot be empty'),
   CannotMapSpecifierToAbsolutePathError: createError(`${ERROR_PREFIX}_CANNOT_MAP_SPECIFIER_TO_ABSOLUTE_PATH`, 'Cannot map "%s" to an absolute path'),
-  NodeInspectorFlagsNotSupportedError: createError(`${ERROR_PREFIX}_NODE_INSPECTOR_FLAGS_NOT_SUPPORTED`, 'The Node.js inspector flags are not supported. Please use \'platformatic start --inspect\' instead.'),
+  NodeInspectorFlagsNotSupportedError: createError(
+    `${ERROR_PREFIX}_NODE_INSPECTOR_FLAGS_NOT_SUPPORTED`,
+    'The Node.js inspector flags are not supported. Please use \'platformatic start --inspect\' instead.'
+  ),
   FailedToUnlinkManagementApiSocket: createError(`${ERROR_PREFIX}_FAILED_TO_UNLINK_MANAGEMENT_API_SOCKET`, 'Failed to unlink management API socket "%s"'),
   LogFileNotFound: createError(`${ERROR_PREFIX}_LOG_FILE_NOT_FOUND`, 'Log file with index %s not found', 404),
   WorkerIsRequired: createError(`${ERROR_PREFIX}_REQUIRED_WORKER`, 'The worker parameter is required'),

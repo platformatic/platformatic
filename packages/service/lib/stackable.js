@@ -1,6 +1,7 @@
 'use strict'
 
-const { dirname } = require('node:path')
+const { dirname, resolve, join } = require('node:path')
+const { readFile } = require('node:fs/promises')
 const { printSchema } = require('graphql')
 const pino = require('pino')
 
@@ -24,6 +25,38 @@ class ServiceStackable {
       this.app = await this._init()
     }
     return this.app
+  }
+
+  async getDependencies () {
+    const config = this.configManager.current
+    const dirname = this.configManager.dirname
+    const dependencies = []
+
+    for (const client of config.clients ?? []) {
+      let clientServiceId = client.serviceId
+
+      if (!clientServiceId) {
+        try {
+          const clientPath = resolve(dirname, client.path)
+          const clientPackageJsonPath = join(clientPath, 'package.json')
+          const clientPackageJSONFile = await readFile(clientPackageJsonPath, 'utf8')
+          const clientPackageJSON = JSON.parse(clientPackageJSONFile)
+          clientServiceId = clientPackageJSON.name ?? ''
+        } catch (err) {
+          if (client.url === undefined || client.name === undefined) {
+            throw err
+          }
+        }
+      }
+
+      const localUrl = `http://${clientServiceId}.plt.local`
+      const url = client.url ?? localUrl
+      const isLocal = url === localUrl
+
+      dependencies.push({ id: clientServiceId, url, local: isLocal })
+    }
+
+    return dependencies
   }
 
   async start (options = {}) {

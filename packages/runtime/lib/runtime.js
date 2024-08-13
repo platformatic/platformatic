@@ -464,19 +464,21 @@ class Runtime extends EventEmitter {
 
   async getServiceConfig (id) {
     const service = await this.#getServiceById(id, true)
-
     return sendViaITC(service, 'getServiceConfig')
+  }
+
+  async getServiceDependencies (id) {
+    const service = await this.#getServiceById(id, true)
+    return sendViaITC(service, 'getServiceDependencies')
   }
 
   async getServiceOpenapiSchema (id) {
     const service = await this.#getServiceById(id, true)
-
     return sendViaITC(service, 'getServiceOpenAPISchema')
   }
 
   async getServiceGraphqlSchema (id) {
     const service = await this.#getServiceById(id, true)
-
     return sendViaITC(service, 'getServiceGraphQLSchema')
   }
 
