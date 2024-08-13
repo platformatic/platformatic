@@ -11,8 +11,15 @@ class ServiceStackable {
     this.stackable = options.stackable
 
     this.configManager = options.configManager
-    this.config = this.configManager.current
     this.context = options.context
+
+    this.configManager.on('error', (err) => {
+      /* c8 ignore next */
+      this.stackable.log({
+        message: 'error reloading the configuration' + err,
+        level: 'error',
+      })
+    })
 
     this.#updateConfig()
   }
@@ -137,53 +144,52 @@ class ServiceStackable {
       serverConfig,
       hasManagementApi,
       isEntrypoint,
+      isProduction,
     } = this.context
 
-    const configManager = this.configManager
+    const config = this.configManager.current
 
-    configManager.on('error', (err) => {
-      /* c8 ignore next */
-      this.stackable.log({ message: 'error reloading the configuration' + err, level: 'error' })
-    })
-
-    configManager.update({
-      ...configManager.current,
-      telemetry: telemetryConfig,
-      metrics: metricsConfig,
-    })
-
-    if (this.context.serverConfig) {
-      configManager.update({
-        ...configManager.current,
-        server: serverConfig,
-      })
+    if (telemetryConfig) {
+      config.telemetry = telemetryConfig
+    }
+    if (metricsConfig) {
+      config.metrics = metricsConfig
+    }
+    if (serverConfig) {
+      config.server = serverConfig
     }
 
     if (
-      (hasManagementApi && configManager.current.metrics === undefined) ||
-      configManager.current.metrics
+      (hasManagementApi && config.metrics === undefined) || config.metrics
     ) {
-      const labels = configManager.current.metrics?.labels || {}
-      configManager.update({
-        ...configManager.current,
-        metrics: {
-          server: 'hide',
-          defaultMetrics: { enabled: isEntrypoint },
-          ...configManager.current.metrics,
-          labels: { serviceId, ...labels },
-        },
-      })
+      const labels = config.metrics?.labels || {}
+      config.metrics = {
+        server: 'hide',
+        defaultMetrics: { enabled: isEntrypoint },
+        ...config.metrics,
+        labels: { serviceId, ...labels },
+      }
     }
 
     if (!isEntrypoint) {
-      configManager.update({
-        ...configManager.current,
-        server: {
-          ...(configManager.current.server || {}),
-          trustProxy: true,
-        },
-      })
+      config.server = config.server ?? {}
+      config.server.trustProxy = true
     }
+
+    if (isProduction) {
+      if (config.plugins) {
+        config.plugins.typescript = false
+      }
+      if (config.migrations) {
+        config.migrations.autoApply = true
+      }
+      if (config.autogenerate) {
+        config.autogenerate = false
+      }
+      config.watch = { enabled: false }
+    }
+
+    this.configManager.update(config)
   }
 
   #initLogger () {

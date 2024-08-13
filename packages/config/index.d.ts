@@ -115,6 +115,7 @@ export interface StackableInterface {
 export interface StackableContext {
   serviceId: string,
   isEntrypoint: boolean,
+  isProduction: boolean,
   telemetryConfig: object,
   metricsConfig: object,
   serverConfig: object,
