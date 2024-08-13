@@ -12,6 +12,7 @@ const { locateSchemaLock, updateSchemaLock } = require('./lib/utils')
 const errors = require('./lib/errors')
 const upgrade = require('./lib/upgrade')
 const fs = require('fs/promises')
+const { DbStackable } = require('./lib/stackable')
 const version = require('./package.json').version
 
 async function platformaticDB (app, opts) {
@@ -129,7 +130,7 @@ function _buildServer (options) {
 }
 
 async function buildDbStackable (options) {
-  return buildStackable(options, platformaticDB)
+  return buildStackable(options, platformaticDB, DbStackable)
 }
 
 module.exports = platformaticDB

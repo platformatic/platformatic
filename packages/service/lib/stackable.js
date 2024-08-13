@@ -180,12 +180,6 @@ class ServiceStackable {
       if (config.plugins) {
         config.plugins.typescript = false
       }
-      if (config.migrations) {
-        config.migrations.autoApply = true
-      }
-      if (config.autogenerate) {
-        config.autogenerate = false
-      }
       config.watch = { enabled: false }
     }
 
