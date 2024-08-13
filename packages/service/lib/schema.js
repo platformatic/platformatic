@@ -5,39 +5,7 @@
 const pkg = require('../package.json')
 const openApiDefs = require('./openapi-schema-defs')
 const telemetry = require('@platformatic/telemetry').schema
-const { server, cors } = require('@platformatic/utils').schemas
-
-const watch = {
-  type: 'object',
-  properties: {
-    enabled: {
-      default: true,
-      anyOf: [{
-        type: 'boolean',
-      }, {
-        type: 'string',
-      }],
-    },
-    allow: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-      minItems: 1,
-      nullable: true,
-      default: null,
-    },
-    ignore: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-      nullable: true,
-      default: null,
-    },
-  },
-  additionalProperties: false,
-}
+const { server, cors, watch } = require('@platformatic/utils').schemas
 
 const plugins = {
   type: 'object',
@@ -45,123 +13,139 @@ const plugins = {
     packages: {
       type: 'array',
       items: {
-        anyOf: [{
-          type: 'string',
-        }, {
-          type: 'object',
-          properties: {
-            name: {
-              type: 'string',
-            },
-            options: {
-              type: 'object',
-              additionalProperties: true,
-            },
+        anyOf: [
+          {
+            type: 'string',
           },
-          required: ['name'],
-        }],
+          {
+            type: 'object',
+            properties: {
+              name: {
+                type: 'string',
+              },
+              options: {
+                type: 'object',
+                additionalProperties: true,
+              },
+            },
+            required: ['name'],
+          },
+        ],
       },
     },
     paths: {
       type: 'array',
       items: {
-        anyOf: [{
-          type: 'string',
-          resolvePath: true,
-        }, {
-          type: 'object',
-          properties: {
-            path: {
-              type: 'string',
-              resolvePath: true,
-            },
-            encapsulate: {
-              type: 'boolean',
-              default: true,
-            },
-            maxDepth: {
-              type: 'integer',
-            },
-            autoHooks: {
-              type: 'boolean',
-            },
-            autoHooksPattern: {
-              type: 'string',
-            },
-            cascadeHooks: {
-              type: 'boolean',
-            },
-            overwriteHooks: {
-              type: 'boolean',
-            },
-            routeParams: {
-              type: 'boolean',
-            },
-            forceESM: {
-              type: 'boolean',
-            },
-            ignoreFilter: {
-              type: 'string',
-            },
-            matchFilter: {
-              type: 'string',
-            },
-            ignorePattern: {
-              type: 'string',
-            },
-            scriptPattern: {
-              type: 'string',
-            },
-            indexPattern: {
-              type: 'string',
-            },
-            options: {
-              type: 'object',
-              additionalProperties: true,
+        anyOf: [
+          {
+            type: 'string',
+            resolvePath: true,
+          },
+          {
+            type: 'object',
+            properties: {
+              path: {
+                type: 'string',
+                resolvePath: true,
+              },
+              encapsulate: {
+                type: 'boolean',
+                default: true,
+              },
+              maxDepth: {
+                type: 'integer',
+              },
+              autoHooks: {
+                type: 'boolean',
+              },
+              autoHooksPattern: {
+                type: 'string',
+              },
+              cascadeHooks: {
+                type: 'boolean',
+              },
+              overwriteHooks: {
+                type: 'boolean',
+              },
+              routeParams: {
+                type: 'boolean',
+              },
+              forceESM: {
+                type: 'boolean',
+              },
+              ignoreFilter: {
+                type: 'string',
+              },
+              matchFilter: {
+                type: 'string',
+              },
+              ignorePattern: {
+                type: 'string',
+              },
+              scriptPattern: {
+                type: 'string',
+              },
+              indexPattern: {
+                type: 'string',
+              },
+              options: {
+                type: 'object',
+                additionalProperties: true,
+              },
             },
           },
-        }],
+        ],
       },
     },
     typescript: {
-      anyOf: [{
-        type: 'object',
-        properties: {
-          enabled: {
-            anyOf: [{
-              type: 'boolean',
-            }, {
+      anyOf: [
+        {
+          type: 'object',
+          properties: {
+            enabled: {
+              anyOf: [
+                {
+                  type: 'boolean',
+                },
+                {
+                  type: 'string',
+                },
+              ],
+            },
+            tsConfig: {
               type: 'string',
-            }],
-          },
-          tsConfig: {
-            type: 'string',
-            resolvePath: true,
-          },
-          outDir: {
-            type: 'string',
-            resolvePath: true,
-          },
-          flags: {
-            type: 'array',
-            items: {
+              resolvePath: true,
+            },
+            outDir: {
               type: 'string',
+              resolvePath: true,
+            },
+            flags: {
+              type: 'array',
+              items: {
+                type: 'string',
+              },
             },
           },
         },
-      }, {
-        type: 'boolean',
-      }, {
-        type: 'string',
-      }],
+        {
+          type: 'boolean',
+        },
+        {
+          type: 'string',
+        },
+      ],
     },
   },
   additionalProperties: false,
-  anyOf: [{
-    required: ['paths'],
-  }, {
-    required: ['packages'],
-  }],
+  anyOf: [
+    {
+      required: ['paths'],
+    },
+    {
+      required: ['packages'],
+    },
+  ],
 }
 
 const metrics = {
@@ -171,10 +155,7 @@ const metrics = {
       type: 'object',
       properties: {
         port: {
-          anyOf: [
-            { type: 'integer' },
-            { type: 'string' },
-          ],
+          anyOf: [{ type: 'integer' }, { type: 'string' }],
         },
         hostname: { type: 'string' },
         endpoint: { type: 'string' },
@@ -271,12 +252,15 @@ const openApiBase = {
 }
 
 const openapi = {
-  anyOf: [{
-    ...openApiBase,
-    additionalProperties: false,
-  }, {
-    type: 'boolean',
-  }],
+  anyOf: [
+    {
+      ...openApiBase,
+      additionalProperties: false,
+    },
+    {
+      type: 'boolean',
+    },
+  ],
 }
 
 const graphqlBase = {
@@ -290,12 +274,15 @@ const graphqlBase = {
 }
 
 const graphql = {
-  anyOf: [{
-    ...graphqlBase,
-    additionalProperties: false,
-  }, {
-    type: 'boolean',
-  }],
+  anyOf: [
+    {
+      ...graphqlBase,
+      additionalProperties: false,
+    },
+    {
+      type: 'boolean',
+    },
+  ],
 }
 
 const service = {
@@ -352,11 +339,15 @@ const platformaticServiceSchema = {
     metrics,
     telemetry,
     watch: {
-      anyOf: [watch, {
-        type: 'boolean',
-      }, {
-        type: 'string',
-      }],
+      anyOf: [
+        watch,
+        {
+          type: 'boolean',
+        },
+        {
+          type: 'string',
+        },
+      ],
     },
     $schema: {
       type: 'string',

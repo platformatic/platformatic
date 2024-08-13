@@ -4,10 +4,9 @@ const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const { readFile } = require('node:fs/promises')
-const { loadConfig, Store, printConfigValidationErrors, printAndExitLoadConfigError } = require('../')
+const { loadConfig, loadEmptyConfig, Store, printConfigValidationErrors, printAndExitLoadConfigError } = require('../')
 
-function app () {
-}
+function app () {}
 app.configType = 'service'
 app.schema = {
   $id: 'service',
@@ -77,6 +76,12 @@ test('empty rejects with an error', async t => {
       'platformatic.composer.yml',
       'platformatic.composer.toml',
       'platformatic.composer.tml',
+      'platformatic.application.json',
+      'platformatic.application.json5',
+      'platformatic.application.yaml',
+      'platformatic.application.yml',
+      'platformatic.application.toml',
+      'platformatic.application.tml',
       'platformatic.json',
       'platformatic.json5',
       'platformatic.yaml',
@@ -88,8 +93,7 @@ test('empty rejects with an error', async t => {
 })
 
 test('not passing validation kills the process', async t => {
-  function app () {
-  }
+  function app () {}
   app.configType = 'service'
   app.schema = {
     $id: 'service',
@@ -111,10 +115,12 @@ test('not passing validation kills the process', async t => {
     await loadConfig({}, ['-c', file, '--boo'], app)
   } catch (err) {
     assert.equal(err.message, 'The configuration does not validate against the configuration schema')
-    assert.deepEqual(err.validationErrors, [{
-      path: '/',
-      message: 'must have required property \'foo\' {"missingProperty":"foo"}',
-    }])
+    assert.deepEqual(err.validationErrors, [
+      {
+        path: '/',
+        message: 'must have required property \'foo\' {"missingProperty":"foo"}',
+      },
+    ])
   }
 })
 
@@ -134,56 +140,73 @@ test('loadConfig with Store', async t => {
   assert.deepEqual(configManager.current, JSON.parse(await readFile(file, 'utf8')))
 })
 
+test('loadEmptyConfig', async t => {
+  const { configManager, args } = await loadEmptyConfig(join(__dirname, 'fixtures'), app)
+
+  assert.deepEqual(args, {})
+  assert.deepEqual(configManager.current, {})
+})
+
 test('printConfigValidationErrors', async t => {
   const table = console.table
-  console.table = (data) => {
-    assert.deepEqual(data, [{
-      path: '/',
-      message: 'must have required property \'foo\' {"missingProperty":"foo"}',
-    }])
+  console.table = data => {
+    assert.deepEqual(data, [
+      {
+        path: '/',
+        message: 'must have required property \'foo\' {"missingProperty":"foo"}',
+      },
+    ])
   }
   t.after(() => {
     console.table = table
   })
   printConfigValidationErrors({
-    validationErrors: [{
-      path: '/',
-      message: 'must have required property \'foo\' {"missingProperty":"foo"}',
-      foo: 'bar', // should be ignored
-    }],
+    validationErrors: [
+      {
+        path: '/',
+        message: 'must have required property \'foo\' {"missingProperty":"foo"}',
+        foo: 'bar', // should be ignored
+      },
+    ],
   })
 })
 
 test('printAndExitLoadConfigError', async t => {
   const table = console.table
-  console.table = (data) => {
-    assert.deepEqual(data, [{
-      path: '/',
-      message: 'must have required property \'foo\' {"missingProperty":"foo"}',
-    }])
+  console.table = data => {
+    assert.deepEqual(data, [
+      {
+        path: '/',
+        message: 'must have required property \'foo\' {"missingProperty":"foo"}',
+      },
+    ])
   }
   t.after(() => {
     console.table = table
   })
   printConfigValidationErrors({
-    validationErrors: [{
-      path: '/',
-      message: 'must have required property \'foo\' {"missingProperty":"foo"}',
-      foo: 'bar', // should be ignored
-    }],
+    validationErrors: [
+      {
+        path: '/',
+        message: 'must have required property \'foo\' {"missingProperty":"foo"}',
+        foo: 'bar', // should be ignored
+      },
+    ],
   })
 })
 
 test('printAndExitLoadConfigError validationErrors', async t => {
   const table = console.table
-  console.table = (data) => {
-    assert.deepEqual(data, [{
-      path: '/',
-      message: 'must have required property \'foo\' {"missingProperty":"foo"}',
-    }])
+  console.table = data => {
+    assert.deepEqual(data, [
+      {
+        path: '/',
+        message: 'must have required property \'foo\' {"missingProperty":"foo"}',
+      },
+    ])
   }
   const processExit = process.exit
-  process.exit = (code) => {
+  process.exit = code => {
     assert.equal(code, 1)
   }
   t.after(() => {
@@ -191,27 +214,32 @@ test('printAndExitLoadConfigError validationErrors', async t => {
     process.exit = processExit
   })
   printAndExitLoadConfigError({
-    validationErrors: [{
-      path: '/',
-      message: 'must have required property \'foo\' {"missingProperty":"foo"}',
-      foo: 'bar', // should be ignored
-    }],
+    validationErrors: [
+      {
+        path: '/',
+        message: 'must have required property \'foo\' {"missingProperty":"foo"}',
+        foo: 'bar', // should be ignored
+      },
+    ],
   })
 })
 
 test('printAndExitLoadConfigError filenames', async t => {
   const error = console.error
-  console.error = (data) => {
-    assert.equal(data, `Missing config file!
+  console.error = data => {
+    assert.equal(
+      data,
+      `Missing config file!
 Be sure to have a config file with one of the following names:
 
  * foo
  * bar
 
-In alternative run "npm create platformatic@latest" to generate a basic platformatic service config.`)
+In alternative run "npm create platformatic@latest" to generate a basic platformatic service config.`
+    )
   }
   const processExit = process.exit
-  process.exit = (code) => {
+  process.exit = code => {
     assert.equal(code, 1)
   }
   t.after(() => {
@@ -226,11 +254,11 @@ In alternative run "npm create platformatic@latest" to generate a basic platform
 test('printAndExitLoadConfigError bare error', async t => {
   const throwed = new Error('foo')
   const error = console.error
-  console.error = (data) => {
+  console.error = data => {
     assert.equal(data, throwed)
   }
   const processExit = process.exit
-  process.exit = (code) => {
+  process.exit = code => {
     assert.equal(code, 1)
   }
   t.after(() => {

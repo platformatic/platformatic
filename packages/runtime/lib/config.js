@@ -68,7 +68,7 @@ async function _transformConfig (configManager) {
   for (let i = 0; i < services.length; ++i) {
     const service = services[i]
 
-    if (configManager._fixPaths) {
+    if (configManager._fixPaths && service.config) {
       service.config = pathResolve(service.path, service.config)
     }
     service.entrypoint = service.id === config.entrypoint
