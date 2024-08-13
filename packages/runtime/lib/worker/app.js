@@ -5,6 +5,7 @@ const { FileWatcher } = require('@platformatic/utils')
 const debounce = require('debounce')
 
 const errors = require('../errors')
+const defaultStackable = require('./default-stackable')
 const { getServiceUrl, loadConfig } = require('../utils')
 
 class PlatformaticApp extends EventEmitter {
@@ -51,7 +52,7 @@ class PlatformaticApp extends EventEmitter {
   }
 
   async getBootstrapDependencies () {
-    return this.stackable.getBootstrapDependencies?.() || []
+    return this.stackable.getBootstrapDependencies()
   }
 
   async init () {
@@ -62,11 +63,12 @@ class PlatformaticApp extends EventEmitter {
         context: this.appConfig,
       }, true)
 
-      this.stackable = await app.buildStackable({
+      const stackable = await app.buildStackable({
         onMissingEnv: this.#fetchServiceUrl,
         config: this.appConfig.config,
         context: this.#context,
       })
+      this.stackable = this.#wrapStackable(stackable)
     } catch (err) {
       this.#logAndExit(err)
     }
@@ -86,10 +88,7 @@ class PlatformaticApp extends EventEmitter {
     }
 
     if (this.#watch) {
-      const watchConfig = await this.stackable.getWatchConfig?.() || {
-        enabled: false,
-      }
-
+      const watchConfig = await this.stackable.getWatchConfig()
       if (watchConfig.enabled !== false) {
         /* c8 ignore next 4 */
         this.#debouncedRestart = debounce(() => {
@@ -186,6 +185,15 @@ class PlatformaticApp extends EventEmitter {
       name: this.appConfig.id,
     }))
     process.exit(1)
+  }
+
+  #wrapStackable (stackable) {
+    for (const method of Object.keys(defaultStackable)) {
+      if (!stackable[method]) {
+        stackable[method] = defaultStackable[method]
+      }
+    }
+    return stackable
   }
 }
 
