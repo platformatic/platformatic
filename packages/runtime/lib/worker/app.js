@@ -5,7 +5,7 @@ const { FileWatcher } = require('@platformatic/utils')
 const debounce = require('debounce')
 
 const errors = require('../errors')
-const { getServiceUrl, loadConfig } = require('../utils')
+const { getServiceUrl, loadConfig, loadEmptyConfig } = require('../utils')
 
 class PlatformaticApp extends EventEmitter {
   #starting
@@ -47,16 +47,37 @@ class PlatformaticApp extends EventEmitter {
   async init () {
     try {
       const appConfig = this.appConfig
-      const { app } = await loadConfig({}, ['-c', appConfig.config], {
-        onMissingEnv: this.#fetchServiceUrl,
-        context: this.appConfig,
-      }, true)
+      let loadedConfig
+
+      if (!appConfig.config) {
+        loadedConfig = await loadEmptyConfig(
+          appConfig.path,
+          {
+            onMissingEnv: this.#fetchServiceUrl,
+            context: appConfig,
+          },
+          true
+        )
+      } else {
+        loadedConfig = await loadConfig(
+          {},
+          ['-c', appConfig.config],
+          {
+            onMissingEnv: this.#fetchServiceUrl,
+            context: appConfig,
+          },
+          true
+        )
+      }
+
+      const app = loadedConfig.app
 
       this.stackable = await app.buildStackable({
         onMissingEnv: this.#fetchServiceUrl,
         config: this.appConfig.config,
         context: {
           serviceId: this.appConfig.id,
+          directory: appConfig.path,
           isEntrypoint: this.appConfig.entrypoint,
           isProduction: false,
           telemetryConfig: this.#telemetryConfig,
@@ -79,13 +100,13 @@ class PlatformaticApp extends EventEmitter {
     this.#starting = true
 
     try {
-      await this.stackable.init()
+      await this.stackable.init?.()
     } catch (err) {
       this.#logAndExit(err)
     }
 
     if (this.#watch) {
-      const watchConfig = await this.stackable.getWatchConfig?.() || {
+      const watchConfig = (await this.stackable.getWatchConfig?.()) || {
         enabled: false,
       }
 
@@ -180,10 +201,12 @@ class PlatformaticApp extends EventEmitter {
 
   #logAndExit (err) {
     // Runtime logs here with console.error because stackable is not initialized
-    console.error(JSON.stringify({
-      msg: err.message,
-      name: this.appConfig.id,
-    }))
+    console.error(
+      JSON.stringify({
+        msg: err.message,
+        name: this.appConfig.id,
+      })
+    )
     process.exit(1)
   }
 }

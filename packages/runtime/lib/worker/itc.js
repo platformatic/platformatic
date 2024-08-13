@@ -96,7 +96,7 @@ function setupITC (app, service, dispatcher) {
 
   itc.handle('getServiceOpenAPISchema', async () => {
     try {
-      return app.stackable.getOpenapiSchema()
+      return app.stackable.getOpenAPISchema?.() ?? null
     } catch (err) {
       throw new errors.FailedToRetrieveOpenAPISchemaError(service.id, err.message)
     }
@@ -104,7 +104,7 @@ function setupITC (app, service, dispatcher) {
 
   itc.handle('getServiceGraphQLSchema', async () => {
     try {
-      return app.stackable.getGraphqlSchema()
+      return app.stackable.getGraphQLSchema?.() ?? null
     } catch (err) {
       throw new errors.FailedToRetrieveGraphQLSchemaError(service.id, err.message)
     }

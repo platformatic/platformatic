@@ -43,7 +43,7 @@ well-known Platformatic configuration file. `mappings` can be used to override
 these default values.
   - **`id`** (**required**, `string`) - The overridden ID. This becomes the new
   microservice ID.
-  - **`config` (**required**, `string`) - The overridden configuration file
+  - **`config` (`string`) - The overridden configuration file
   name. This is the file that will be used when starting the microservice.
   - **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
   on `127.0.0.1`, and exposed to the other services via that port and on default, it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
@@ -71,7 +71,7 @@ property or the `name` field in the client's `package.json` file if a
 `serviceId` is not explicitly provided.
 - **`path`** (**required**, `string`) - The path to the directory containing
 the microservice.
-- **`config`** (**required**, `string`) - The configuration file used to start
+- **`config`** (`string`) - The configuration file used to start
 the microservice.
 - **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
 on `127.0.0.1`, and exposed to the other services via that port, on default it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).

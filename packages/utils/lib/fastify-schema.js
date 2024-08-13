@@ -11,17 +11,20 @@ const cors = {
         {
           type: 'array',
           items: {
-            anyOf: [{
-              type: 'string',
-            }, {
-              type: 'object',
-              properties: {
-                regexp: {
-                  type: 'string',
-                },
+            anyOf: [
+              {
+                type: 'string',
               },
-              required: ['regexp'],
-            }],
+              {
+                type: 'object',
+                properties: {
+                  regexp: {
+                    type: 'string',
+                  },
+                },
+                required: ['regexp'],
+              },
+            ],
           },
         },
         {
@@ -97,10 +100,7 @@ const server = {
       type: 'string',
     },
     port: {
-      anyOf: [
-        { type: 'integer' },
-        { type: 'string' },
-      ],
+      anyOf: [{ type: 'integer' }, { type: 'string' }],
     },
     pluginTimeout: {
       type: 'integer',
@@ -135,10 +135,7 @@ const server = {
       type: 'integer',
     },
     forceCloseConnections: {
-      anyOf: [
-        { type: 'boolean' },
-        { type: 'string', pattern: '^idle$' },
-      ],
+      anyOf: [{ type: 'boolean' }, { type: 'string', pattern: '^idle$' }],
     },
     requestTimeout: {
       type: 'integer',
@@ -165,46 +162,49 @@ const server = {
               type: 'string',
             },
             transport: {
-              anyOf: [{
-                type: 'object',
-                properties: {
-                  target: {
-                    type: 'string',
-                    resolveModule: true,
-                  },
-                  options: {
-                    type: 'object',
-                  },
-                },
-                additionalProperties: false,
-              }, {
-                type: 'object',
-                properties: {
-                  targets: {
-                    type: 'array',
-                    items: {
+              anyOf: [
+                {
+                  type: 'object',
+                  properties: {
+                    target: {
+                      type: 'string',
+                      resolveModule: true,
+                    },
+                    options: {
                       type: 'object',
-                      properties: {
-                        target: {
-                          type: 'string',
-                          resolveModule: true,
-                        },
-                        options: {
-                          type: 'object',
-                        },
-                        level: {
-                          type: 'string',
-                        },
-                        additionalProperties: false,
-                      },
                     },
                   },
-                  options: {
-                    type: 'object',
-                  },
+                  additionalProperties: false,
                 },
-                additionalProperties: false,
-              }],
+                {
+                  type: 'object',
+                  properties: {
+                    targets: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          target: {
+                            type: 'string',
+                            resolveModule: true,
+                          },
+                          options: {
+                            type: 'object',
+                          },
+                          level: {
+                            type: 'string',
+                          },
+                          additionalProperties: false,
+                        },
+                      },
+                    },
+                    options: {
+                      type: 'object',
+                    },
+                  },
+                  additionalProperties: false,
+                },
+              ],
             },
             pipeline: {
               type: 'object',
@@ -246,10 +246,7 @@ const server = {
           enum: ['debug', 'standalone'],
         },
         largeArraySize: {
-          anyOf: [
-            { type: 'integer' },
-            { type: 'string' },
-          ],
+          anyOf: [{ type: 'integer' }, { type: 'string' }],
           default: 20000,
         },
         largeArrayMechanism: {
@@ -263,10 +260,7 @@ const server = {
       type: 'boolean',
     },
     requestIdHeader: {
-      anyOf: [
-        { type: 'string' },
-        { type: 'boolean', const: false },
-      ],
+      anyOf: [{ type: 'string' }, { type: 'boolean', const: false }],
     },
     requestIdLogLabel: {
       type: 'string',
@@ -385,5 +379,41 @@ const server = {
   additionalProperties: false,
 }
 
+const watch = {
+  type: 'object',
+  properties: {
+    enabled: {
+      default: true,
+      anyOf: [
+        {
+          type: 'boolean',
+        },
+        {
+          type: 'string',
+        },
+      ],
+    },
+    allow: {
+      type: 'array',
+      items: {
+        type: 'string',
+      },
+      minItems: 1,
+      nullable: true,
+      default: null,
+    },
+    ignore: {
+      type: 'array',
+      items: {
+        type: 'string',
+      },
+      nullable: true,
+      default: null,
+    },
+  },
+  additionalProperties: false,
+}
+
 module.exports.server = server
-module.exports.cores = cors
+module.exports.cors = cors
+module.exports.watch = watch
