@@ -698,6 +698,7 @@ class Runtime extends EventEmitter {
     // Setup ITC
     service[kITC] = new ITC({ port: service })
     service[kITC].listen()
+    service[kITC].handle('getServiceMeta', this.#getServiceMeta.bind(this))
 
     // Handle services changes
     // This is not purposely activated on when this.#configManager.current.watch === true
@@ -785,6 +786,25 @@ class Runtime extends EventEmitter {
     }
 
     return service
+  }
+
+  async #getServiceMeta (id) {
+    const service = this.#services.get(id)
+
+    if (!service) {
+      throw new errors.ServiceNotFoundError(id, Array.from(this.#services.keys()).join(', '))
+    }
+
+    try {
+      return await service[kITC].send('getServiceMeta')
+    } catch (e) {
+      // The service exports no meta, return an empty object
+      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
+        return {}
+      }
+
+      throw e
+    }
   }
 
   async #getRuntimePackageJson () {

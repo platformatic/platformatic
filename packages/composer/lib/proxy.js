@@ -4,6 +4,38 @@ const { getGlobalDispatcher } = require('undici')
 const httpProxy = require('@fastify/http-proxy')
 const fp = require('fastify-plugin')
 
+const kITC = Symbol.for('plt.runtime.itc')
+
+async function resolveServiceProxyParameters (service) {
+  let {
+    origin,
+    proxy: { prefix },
+  } = service
+
+  if (prefix.endsWith('/')) {
+    prefix = prefix.slice(0, -1)
+  }
+
+  let rewritePrefix = ''
+
+  // Get meta information from the service, if any, to eventually hook up to a TCP port
+  const meta = (await globalThis[kITC]?.send('getServiceMeta', service.id))?.composer ?? {}
+
+  if (meta.tcp) {
+    origin = meta.url
+  }
+
+  if (meta.prefix) {
+    prefix = meta.prefix
+  }
+
+  if (meta.wantsAbsoluteUrls) {
+    rewritePrefix = prefix
+  }
+
+  return { origin, prefix, rewritePrefix }
+}
+
 module.exports = fp(async function (app, opts) {
   const config = app.platformatic.config
 
@@ -18,10 +50,7 @@ module.exports = fp(async function (app, opts) {
       }
     }
 
-    const { origin, proxy } = service
-    const prefix = proxy.prefix.at(-1) === '/'
-      ? proxy.prefix.slice(0, -1)
-      : proxy.prefix
+    const { prefix, origin, rewritePrefix } = await resolveServiceProxyParameters(service)
 
     app.log.info(`Proxying ${prefix} to ${origin}`)
 
@@ -29,6 +58,7 @@ module.exports = fp(async function (app, opts) {
 
     await app.register(httpProxy, {
       prefix,
+      rewritePrefix,
       upstream: origin,
       websocket: true,
       undici: dispatcher,
@@ -37,7 +67,11 @@ module.exports = fp(async function (app, opts) {
         rewriteRequestHeaders: (request, headers) => {
           const targetUrl = `${origin}${request.url}`
           const context = request.span?.context
-          const { span, telemetryHeaders } = app.openTelemetry?.startHTTPSpanClient(targetUrl, request.method, context) || { span: null, telemetryHeaders: {} }
+          const { span, telemetryHeaders } = app.openTelemetry?.startHTTPSpanClient(
+            targetUrl,
+            request.method,
+            context
+          ) || { span: null, telemetryHeaders: {} }
           // We need to store the span in a different object
           // to correctly close it in the onResponse hook
           // Note that we have 2 spans:

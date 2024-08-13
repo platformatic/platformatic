@@ -20,6 +20,9 @@ importers:
 
   packages/basic:
     dependencies:
+      '@fastify/error':
+        specifier: ^4.0.0
+        version: 4.0.0
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
@@ -29,6 +32,9 @@ importers:
       pino:
         specifier: ^9.3.2
         version: 9.3.2
+      semver:
+        specifier: ^7.6.3
+        version: 7.6.3
       undici:
         specifier: ^6.19.5
         version: 6.19.7
@@ -60,6 +66,12 @@ importers:
       typescript:
         specifier: ^5.5.4
         version: 5.5.4
+      vite:
+        specifier: ^5.4.0
+        version: 5.4.0(@types/node@20.14.15)
+      ws:
+        specifier: ^8.18.0
+        version: 8.18.0
 
   packages/cli:
     dependencies:
@@ -2413,6 +2425,9 @@ packages:
 
   '@fastify/error@3.4.1':
     resolution: {integrity: sha512-wWSvph+29GR783IhmvdwWnN4bUxTD01Vm5Xad4i7i1VuAOItLvbPAb69sb0IQ2N57yprvhNIwAP5B6xfKTmjmQ==}
+
+  '@fastify/error@4.0.0':
+    resolution: {integrity: sha512-OO/SA8As24JtT1usTUTKgGH7uLvhfwZPwlptRi2Dp5P4KKmJI3gvsZ8MIHnNwDs4sLf/aai5LzTyl66xr7qMxA==}
 
   '@fastify/express@3.0.0':
     resolution: {integrity: sha512-Ug6aulXCUiHgMyrHVYQqnQbGdsAV0aTad6nZxbOr6w3QjKn1mdQS3Kyzvc+I0xMjZ9yIyMUWHSooHgZ0l7nOng==}
@@ -6699,6 +6714,8 @@ snapshots:
   '@fastify/deepmerge@1.3.0': {}
 
   '@fastify/error@3.4.1': {}
+
+  '@fastify/error@4.0.0': {}
 
   '@fastify/express@3.0.0':
     dependencies:
