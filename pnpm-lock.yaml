@@ -26,6 +26,9 @@ importers:
       light-my-request:
         specifier: ^5.13.0
         version: 5.13.0
+      pino:
+        specifier: ^9.3.2
+        version: 9.3.2
       undici:
         specifier: ^6.19.5
         version: 6.19.7
