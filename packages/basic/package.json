@@ -24,6 +24,7 @@
   "dependencies": {
     "@platformatic/config": "workspace:*",
     "light-my-request": "^5.13.0",
+    "pino": "^9.3.2",
     "undici": "^6.19.5"
   },
   "devDependencies": {
