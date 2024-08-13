@@ -188,12 +188,16 @@ class PlatformaticApp extends EventEmitter {
   }
 
   #wrapStackable (stackable) {
+    const newStackable = {}
     for (const method of Object.keys(defaultStackable)) {
-      if (!stackable[method]) {
-        stackable[method] = defaultStackable[method]
+      newStackable[method] = (...args) => {
+        if (stackable[method]) {
+          return stackable[method](...args)
+        }
+        return defaultStackable[method](...args)
       }
     }
-    return stackable
+    return newStackable
   }
 }
 
