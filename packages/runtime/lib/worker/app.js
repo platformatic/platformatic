@@ -13,11 +13,8 @@ class PlatformaticApp extends EventEmitter {
   #listening
   #watch
   #fileWatcher
-  #telemetryConfig
-  #serverConfig
   #debouncedRestart
-  #hasManagementApi
-  #metricsConfig
+  #context
 
   constructor (appConfig, telemetryConfig, serverConfig, hasManagementApi, watch, metricsConfig) {
     super()
@@ -28,16 +25,29 @@ class PlatformaticApp extends EventEmitter {
     this.#listening = false
     this.stackable = null
     this.#fileWatcher = null
-    this.#hasManagementApi = !!hasManagementApi
-    this.#telemetryConfig = telemetryConfig
-    this.#metricsConfig = metricsConfig
-    this.#serverConfig = serverConfig
+
+    this.#context = {
+      serviceId: this.appConfig.id,
+      isEntrypoint: this.appConfig.entrypoint,
+      telemetryConfig,
+      metricsConfig,
+      serverConfig,
+      hasManagementApi: !!hasManagementApi,
+      localServiceEnvVars: this.appConfig.localServiceEnvVars,
+    }
   }
 
   getStatus () {
     if (this.#starting) return 'starting'
     if (this.#started) return 'started'
     return 'stopped'
+  }
+
+  async updateContext (context) {
+    this.#context = { ...this.#context, ...context }
+    if (this.stackable) {
+      this.stackable.updateContext(context)
+    }
   }
 
   async getBootstrapDependencies () {
@@ -55,15 +65,7 @@ class PlatformaticApp extends EventEmitter {
       this.stackable = await app.buildStackable({
         onMissingEnv: this.#fetchServiceUrl,
         config: this.appConfig.config,
-        context: {
-          serviceId: this.appConfig.id,
-          isEntrypoint: this.appConfig.entrypoint,
-          telemetryConfig: this.#telemetryConfig,
-          metricsConfig: this.#metricsConfig,
-          serverConfig: this.#serverConfig,
-          hasManagementApi: this.#hasManagementApi,
-          localServiceEnvVars: this.appConfig.localServiceEnvVars,
-        },
+        context: this.#context,
       })
     } catch (err) {
       this.#logAndExit(err)

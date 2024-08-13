@@ -127,6 +127,11 @@ class ServiceStackable {
     this.app.log[logLevel](message)
   }
 
+  async updateContext (context) {
+    this.context = { ...this.context, ...context }
+    this.#updateConfig()
+  }
+
   #updateConfig () {
     if (!this.context) return
 
