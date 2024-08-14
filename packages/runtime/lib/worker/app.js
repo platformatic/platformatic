@@ -5,6 +5,7 @@ const { FileWatcher } = require('@platformatic/utils')
 const debounce = require('debounce')
 
 const errors = require('../errors')
+const defaultStackable = require('./default-stackable')
 const { getServiceUrl, loadConfig, loadEmptyConfig } = require('../utils')
 
 class PlatformaticApp extends EventEmitter {
@@ -13,11 +14,8 @@ class PlatformaticApp extends EventEmitter {
   #listening
   #watch
   #fileWatcher
-  #telemetryConfig
-  #serverConfig
   #debouncedRestart
-  #hasManagementApi
-  #metricsConfig
+  #context
 
   constructor (appConfig, telemetryConfig, serverConfig, hasManagementApi, watch, metricsConfig) {
     super()
@@ -28,10 +26,17 @@ class PlatformaticApp extends EventEmitter {
     this.#listening = false
     this.stackable = null
     this.#fileWatcher = null
-    this.#hasManagementApi = !!hasManagementApi
-    this.#telemetryConfig = telemetryConfig
-    this.#metricsConfig = metricsConfig
-    this.#serverConfig = serverConfig
+
+    this.#context = {
+      serviceId: this.appConfig.id,
+      directory: this.appConfig.path,
+      isEntrypoint: this.appConfig.entrypoint,
+      telemetryConfig,
+      metricsConfig,
+      serverConfig,
+      hasManagementApi: !!hasManagementApi,
+      localServiceEnvVars: this.appConfig.localServiceEnvVars,
+    }
   }
 
   getStatus () {
@@ -40,8 +45,15 @@ class PlatformaticApp extends EventEmitter {
     return 'stopped'
   }
 
+  async updateContext (context) {
+    this.#context = { ...this.#context, ...context }
+    if (this.stackable) {
+      this.stackable.updateContext(context)
+    }
+  }
+
   async getBootstrapDependencies () {
-    return this.stackable.getBootstrapDependencies?.() || []
+    return this.stackable.getBootstrapDependencies()
   }
 
   async init () {
@@ -72,20 +84,12 @@ class PlatformaticApp extends EventEmitter {
 
       const app = loadedConfig.app
 
-      this.stackable = await app.buildStackable({
+      const stackable = await app.buildStackable({
         onMissingEnv: this.#fetchServiceUrl,
         config: this.appConfig.config,
-        context: {
-          serviceId: this.appConfig.id,
-          directory: appConfig.path,
-          isEntrypoint: this.appConfig.entrypoint,
-          telemetryConfig: this.#telemetryConfig,
-          metricsConfig: this.#metricsConfig,
-          serverConfig: this.#serverConfig,
-          hasManagementApi: this.#hasManagementApi,
-          localServiceEnvVars: this.appConfig.localServiceEnvVars,
-        },
+        context: this.#context,
       })
+      this.stackable = this.#wrapStackable(stackable)
     } catch (err) {
       this.#logAndExit(err)
     }
@@ -105,10 +109,7 @@ class PlatformaticApp extends EventEmitter {
     }
 
     if (this.#watch) {
-      const watchConfig = (await this.stackable.getWatchConfig?.()) || {
-        enabled: false,
-      }
-
+      const watchConfig = await this.stackable.getWatchConfig()
       if (watchConfig.enabled !== false) {
         /* c8 ignore next 4 */
         this.#debouncedRestart = debounce(() => {
@@ -207,6 +208,16 @@ class PlatformaticApp extends EventEmitter {
       })
     )
     process.exit(1)
+  }
+
+  #wrapStackable (stackable) {
+    const newStackable = {}
+    for (const method of Object.keys(defaultStackable)) {
+      newStackable[method] = stackable[method]
+        ? stackable[method].bind(stackable)
+        : defaultStackable[method]
+    }
+    return newStackable
   }
 }
 

@@ -207,3 +207,32 @@ test('returns application statuses', async (t) => {
   assert.strictEqual(app.getStatus(), 'stopped')
   assert.notStrictEqual(app.stackable, null)
 })
+
+test('supports configuration overrides', async (t) => {
+  const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
+  const configFile = join(appPath, 'platformatic.service.json')
+  const config = {
+    id: 'serviceApp',
+    config: configFile,
+    path: appPath,
+    entrypoint: true,
+    watch: true,
+    dependencies: [],
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
+  }
+
+  const app = new PlatformaticApp(config)
+
+  app.updateContext({
+    serverConfig: {
+      keepAliveTimeout: 1,
+      port: 2222,
+    },
+  })
+
+  await app.init()
+
+  const stackableConfig = await app.stackable.getConfig()
+  assert.strictEqual(stackableConfig.server.keepAliveTimeout, 1)
+  assert.strictEqual(stackableConfig.server.port, 2222)
+})

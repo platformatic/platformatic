@@ -86,13 +86,13 @@ class ServiceStackable {
     return this.app
   }
 
-  async getOpenAPISchema () {
+  async getOpenapiSchema () {
     await this.init()
     await this.app.ready()
     return this.app.swagger ? this.app.swagger() : null
   }
 
-  async getGraphQLSchema () {
+  async getGraphqlSchema () {
     await this.init()
     await this.app.ready()
     return this.app.graphql ? printSchema(this.app.graphql.schema) : null
@@ -125,6 +125,11 @@ class ServiceStackable {
     if (!message) return
 
     this.app.log[logLevel](message)
+  }
+
+  async updateContext (context) {
+    this.context = { ...this.context, ...context }
+    this.#updateConfig()
   }
 
   #updateConfig () {
