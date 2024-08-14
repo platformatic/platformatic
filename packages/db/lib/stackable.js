@@ -15,9 +15,6 @@ class DbStackable extends ServiceStackable {
     const config = this.configManager.current
 
     if (isProduction) {
-      if (config.migrations) {
-        config.migrations.autoApply = true
-      }
       if (config.autogenerate) {
         config.autogenerate = false
       }
