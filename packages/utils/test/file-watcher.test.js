@@ -5,15 +5,16 @@ const { mkdtemp, writeFile } = require('fs/promises')
 const { join } = require('path')
 const { test } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
+const { withResolvers } = require('@platformatic/utils')
 const { FileWatcher } = require('..')
 const { setTimeout: sleep } = require('timers/promises')
 
-test('should throw an error if there is no path argument', async (t) => {
+test('should throw an error if there is no path argument', async t => {
   const { throws } = tspl(t, { plan: 1 })
   throws(() => new FileWatcher({}), { message: 'path option is required' })
 })
 
-test('initialize watchIgnore and allowToWatch arrays', async (t) => {
+test('initialize watchIgnore and allowToWatch arrays', async t => {
   const { deepEqual } = tspl(t, { plan: 4 })
   {
     const fileWatcher = new FileWatcher({ path: os.tmpdir() })
@@ -31,7 +32,7 @@ test('initialize watchIgnore and allowToWatch arrays', async (t) => {
   }
 })
 
-test('should not watch ignored files', async (t) => {
+test('should not watch ignored files', async t => {
   const { equal } = tspl(t, { plan: 5 })
 
   const fileWatcher = new FileWatcher({
@@ -45,7 +46,7 @@ test('should not watch ignored files', async (t) => {
   equal(true, fileWatcher.shouldFileBeWatched('another.file'))
 })
 
-test('should not watch not allowed files', async (t) => {
+test('should not watch not allowed files', async t => {
   const { equal } = tspl(t, { plan: 5 })
 
   const fileWatcher = new FileWatcher({
@@ -59,22 +60,19 @@ test('should not watch not allowed files', async (t) => {
   equal(false, fileWatcher.shouldFileBeWatched('another.file'))
 })
 
-test('should emit event if file is updated', async (t) => {
+test('should emit event if file is updated', async t => {
   const { ok } = tspl(t, { plan: 1 })
 
   const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
   const filename = join(tmpDir, 'test.file')
   const fileWatcher = new FileWatcher({ path: tmpDir })
 
-  let _resolve = null
-  const p = new Promise((resolve) => {
-    _resolve = resolve
-  })
+  const { promise, resolve } = withResolvers()
 
   fileWatcher.once('update', async () => {
     ok('update is emitted')
     await fileWatcher.stopWatching()
-    _resolve()
+    resolve()
   })
 
   fileWatcher.startWatching()
@@ -82,26 +80,23 @@ test('should emit event if file is updated', async (t) => {
 
   await writeFile(filename, 'foobar')
 
-  await Promise.race([sleep(5000), p])
+  await Promise.race([sleep(5000), promise])
 })
 
-test('should not call fs watch twice', async (t) => {
+test('should not call fs watch twice', async t => {
   const { ok } = tspl(t, { plan: 1 })
 
   const tmpDir = await mkdtemp(join(os.tmpdir(), 'plt-utils-test-'))
   const filename = join(tmpDir, 'test.file')
   const fileWatcher = new FileWatcher({ path: tmpDir })
 
-  let _resolve = null
-  const p = new Promise((resolve) => {
-    _resolve = resolve
-  })
+  const { promise, resolve } = withResolvers()
 
   fileWatcher.once('update', async () => {
     ok('update is emitted')
     await fileWatcher.stopWatching()
     await fileWatcher.stopWatching()
-    _resolve()
+    resolve()
   })
 
   fileWatcher.startWatching()
@@ -109,5 +104,5 @@ test('should not call fs watch twice', async (t) => {
   await sleep(1000)
 
   await writeFile(filename, 'foobar')
-  await Promise.race([sleep(5000), p])
+  await Promise.race([sleep(5000), promise])
 })

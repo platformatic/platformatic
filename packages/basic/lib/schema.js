@@ -25,6 +25,29 @@ export const schema = {
         },
       ],
     },
+    application: {
+      type: 'object',
+      properties: {
+        base: {
+          type: 'string',
+        },
+      },
+      additionalProperties: false,
+    },
+    vite: {
+      type: 'object',
+      properties: {
+        configFile: {
+          oneOf: [{ type: 'string' }, { type: 'boolean' }],
+        },
+      },
+      additionalProperties: false,
+    },
   },
   additionalProperties: false,
+}
+
+/* c8 ignore next 3 */
+if (process.argv[1] === import.meta.filename) {
+  console.log(JSON.stringify(schema, null, 2))
 }

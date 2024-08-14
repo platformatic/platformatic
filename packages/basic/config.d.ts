@@ -5,23 +5,8 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type HttpsSchemasPlatformaticDevPlatformaticRuntime200Alpha3Json = {
-  [k: string]: unknown;
-} & {
+export interface PlatformaticStackable {
   $schema?: string;
-  preload?: string;
-  autoload?: {
-    path: string;
-    exclude?: string[];
-    mappings?: {
-      [k: string]: {
-        id: string;
-        config?: string;
-        useHttp?: boolean;
-      };
-    };
-  };
-  telemetry?: OpenTelemetry;
   server?: {
     hostname?: string;
     port?: number | string;
@@ -154,132 +139,15 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime200Alpha3Json = {
       hideOptionsRoute?: boolean;
     };
   };
-  entrypoint?: string;
-  watch?: boolean | string;
-  inspectorOptions?: {
-    host?: string;
-    port?: number;
-    breakFirstLine?: boolean;
-    watchDisabled?: boolean;
-    [k: string]: unknown;
-  };
-  undici?: {
-    agentOptions?: {
-      [k: string]: unknown;
-    };
-    interceptors?:
-      | UndiciInterceptor[]
-      | {
-          Client?: UndiciInterceptor[];
-          Pool?: UndiciInterceptor[];
-          Agent?: UndiciInterceptor[];
-          [k: string]: unknown;
-        };
-    [k: string]: unknown;
-  };
-  managementApi?:
-    | boolean
-    | string
+  watch?:
     | {
-        logs?: {
-          [k: string]: unknown;
-        };
-      };
-  metrics?:
-    | boolean
-    | {
-        port?: number | string;
-        hostname?: string;
-        endpoint?: string;
-        auth?: {
-          username: string;
-          password: string;
-        };
-        labels?: {
-          [k: string]: string;
-        };
-      };
-  restartOnError?: boolean | number;
-  services?: {
-    id: string;
-    path: string;
-    config?: string;
-    useHttp?: boolean;
-    [k: string]: unknown;
-  }[];
-};
-
-export interface OpenTelemetry {
-  /**
-   * The name of the service. Defaults to the folder name if not specified.
-   */
-  serviceName: string;
-  /**
-   * The version of the service (optional)
-   */
-  version?: string;
-  /**
-   * An array of paths to skip when creating spans. Useful for health checks and other endpoints that do not need to be traced.
-   */
-  skip?: {
-    /**
-     * The path to skip. Can be a string or a regex.
-     */
-    path?: string;
-    /**
-     * HTTP method to skip
-     */
-    method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
-    [k: string]: unknown;
-  }[];
-  exporter?:
-    | {
-        type?: "console" | "otlp" | "zipkin" | "memory";
+        enabled?: boolean | string;
         /**
-         * Options for the exporter. These are passed directly to the exporter.
+         * @minItems 1
          */
-        options?: {
-          /**
-           * The URL to send the traces to. Not used for console or memory exporters.
-           */
-          url?: string;
-          /**
-           * Headers to send to the exporter. Not used for console or memory exporters.
-           */
-          headers?: {
-            [k: string]: unknown;
-          };
-          [k: string]: unknown;
-        };
-        additionalProperties?: never;
-        [k: string]: unknown;
-      }[]
-    | {
-        type?: "console" | "otlp" | "zipkin" | "memory";
-        /**
-         * Options for the exporter. These are passed directly to the exporter.
-         */
-        options?: {
-          /**
-           * The URL to send the traces to. Not used for console or memory exporters.
-           */
-          url?: string;
-          /**
-           * Headers to send to the exporter. Not used for console or memory exporters.
-           */
-          headers?: {
-            [k: string]: unknown;
-          };
-          [k: string]: unknown;
-        };
-        additionalProperties?: never;
-        [k: string]: unknown;
-      };
-}
-export interface UndiciInterceptor {
-  module: string;
-  options: {
-    [k: string]: unknown;
-  };
-  [k: string]: unknown;
+        allow?: [string, ...string[]];
+        ignore?: string[];
+      }
+    | boolean
+    | string;
 }

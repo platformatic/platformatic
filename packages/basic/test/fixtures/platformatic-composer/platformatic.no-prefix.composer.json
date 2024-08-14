@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
+  "composer": {
+    "services": [
+      {
+        "id": "frontend",
+        "proxy": {
+          "prefix": ""
+        }
+      },
+      {
+        "id": "service"
+      }
+    ]
+  },
+  "plugins": {
+    "paths": [
+      {
+        "path": "./plugin.js"
+      }
+    ]
+  }
+}

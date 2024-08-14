@@ -31,6 +31,7 @@ class PlatformaticApp extends EventEmitter {
       serviceId: this.appConfig.id,
       directory: this.appConfig.path,
       isEntrypoint: this.appConfig.entrypoint,
+      isProduction: false,
       telemetryConfig,
       metricsConfig,
       serverConfig,

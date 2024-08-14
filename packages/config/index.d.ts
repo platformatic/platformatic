@@ -97,6 +97,7 @@ export interface StackableInterface {
   getOpenapiSchema?: () => Promise<object>
   getGraphqlSchema?: () => Promise<string>
   getMetrics?: () => Promise<string>
+  getMeta?(): () => Promise<object>
   inject?: (injectParams: object) => Promise<{    
     statusCode: number
     statusMessage: string
@@ -114,14 +115,15 @@ export interface StackableInterface {
 }
 
 export interface StackableContext {
-  serviceId: string
-  isEntrypoint: boolean
+  serviceId: string,
+  isEntrypoint: boolean,
+  isProduction: boolean,
   directory: string
-  telemetryConfig: object
-  metricsConfig: object
-  serverConfig: object
-  hasManagementApi: boolean
-  localServiceEnvVars: Map<string, string>
+  telemetryConfig: object,
+  metricsConfig: object,
+  serverConfig: object,
+  hasManagementApi: boolean,
+  localServiceEnvVars: Map<string, string>,
 }
 
 export interface BuildStackableArgs {

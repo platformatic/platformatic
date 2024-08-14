@@ -9,7 +9,6 @@
   "scripts": {
     "test": "pnpm run lint && pnpm run unit",
     "unit": "borp --concurrency=1 --timeout=180000",
-    "build": "node lib/schema.js | json2ts > config.d.ts",
     "lint": "eslint"
   },
   "author": "Matteo Collina <hello@matteocollina.com>",

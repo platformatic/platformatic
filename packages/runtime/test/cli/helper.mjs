@@ -1,4 +1,4 @@
-import { safeRemove } from '@platformatic/utils'
+import { safeRemove, withResolvers } from '@platformatic/utils'
 import { join } from 'desm'
 import { execa } from 'execa'
 import split from 'split2'
@@ -20,13 +20,7 @@ export async function start (...args) {
   const child = execa(process.execPath, [cliPath, 'start', ...args])
   child.stderr.pipe(process.stdout)
 
-  // When we fully switch to Node 22, replace with Promise.withResolvers
-  let resolve
-  let reject
-  const promise = new Promise((_resolve, _reject) => {
-    resolve = _resolve
-    reject = _reject
-  })
+  const { promise, resolve, reject } = withResolvers()
 
   let serverStarted = false
   const errorTimeout = setTimeout(() => {
