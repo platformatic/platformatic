@@ -8,10 +8,10 @@ on:
         required: true
         type: string
       prerelease:
-        description: "Release as pre-release"
+        description: 'Release as pre-release'
         required: false
         type: boolean
-        default: false        
+        default: false
 
 env:
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -41,6 +41,7 @@ jobs:
       - name: Change version number and sync
         run: |
           node scripts/update-version.mjs ${{ inputs.version }}
+          pnpm -r run --if-present prepublishOnly
           sh scripts/sync-version.sh
       - name: update lockfile
         uses: nick-fields/retry@v3.0.0
