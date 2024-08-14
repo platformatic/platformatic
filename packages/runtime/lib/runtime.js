@@ -28,6 +28,8 @@ const MAX_LISTENERS_COUNT = 100
 const MAX_METRICS_QUEUE_LENGTH = 5 * 60 // 5 minutes in seconds
 const COLLECT_METRICS_TIMEOUT = 1000
 
+const MAX_BOOTSTRAP_ATTEMPTS = 5
+
 class Runtime extends EventEmitter {
   #configManager
   #runtimeTmpDir
@@ -47,6 +49,7 @@ class Runtime extends EventEmitter {
   #prometheusServer
   #startedServices
   #crashedServicesTimers
+  #bootstrapAttempts
 
   constructor (configManager, runtimeLogsDir, env) {
     super()
@@ -64,6 +67,7 @@ class Runtime extends EventEmitter {
     this.#status = undefined
     this.#startedServices = new Map()
     this.#crashedServicesTimers = new Map()
+    this.#bootstrapAttempts = new Map()
   }
 
   async init () {
@@ -126,8 +130,15 @@ class Runtime extends EventEmitter {
     this.#updateStatus('starting')
 
     // Important: do not use Promise.all here since it won't properly manage dependencies
-    for (const service of this.#servicesIds) {
-      await this.startService(service)
+    try {
+      for (const service of this.#servicesIds) {
+        await this.startService(service)
+      }
+    } catch (error) {
+      // Wait for the next tick so that the error is logged first
+      await sleep(1)
+      await this.close()
+      throw error
     }
 
     this.#updateStatus('started')
@@ -226,10 +237,36 @@ class Runtime extends EventEmitter {
       service = await this.#getServiceById(id)
     }
 
-    const serviceUrl = await sendViaITC(service, 'start')
+    try {
+      const serviceUrl = await sendViaITC(service, 'start')
+      if (serviceUrl) {
+        this.#url = serviceUrl
+      }
+      this.#bootstrapAttempts.set(id, 0)
+    } catch (error) {
+      // TODO: handle port allocation error here
+      if (error.code === 'EADDRINUSE') throw error
 
-    if (serviceUrl) {
-      this.#url = serviceUrl
+      this.logger.error({ error }, `Failed to start service "${id}".`)
+
+      const config = this.#configManager.current
+      const restartOnError = config.restartOnError
+
+      let bootstrapAttempt = this.#bootstrapAttempts.get(id)
+      if (bootstrapAttempt++ >= MAX_BOOTSTRAP_ATTEMPTS || restartOnError === 0) {
+        this.logger.error(
+          `Failed to start service "${id}" after ${MAX_BOOTSTRAP_ATTEMPTS} attempts.`
+        )
+        throw error
+      }
+
+      this.logger.warn(
+        `Starting a service "${id}" in ${restartOnError}ms. ` +
+        `Attempt ${bootstrapAttempt} of ${MAX_BOOTSTRAP_ATTEMPTS}...`
+      )
+
+      this.#bootstrapAttempts.set(id, bootstrapAttempt)
+      await this.#restartCrashedService(id)
     }
   }
 
@@ -242,6 +279,8 @@ class Runtime extends EventEmitter {
     }
 
     this.#startedServices.set(id, false)
+
+    this.logger.info(`Stopping service "${id}"...`)
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
     try {
@@ -645,6 +684,10 @@ class Runtime extends EventEmitter {
     const { port1: loggerDestination, port2: loggingPort } = new MessageChannel()
     loggerDestination.on('message', this.#forwardThreadLog.bind(this))
 
+    if (!this.#bootstrapAttempts.has(id)) {
+      this.#bootstrapAttempts.set(id, 0)
+    }
+
     const service = new Worker(kWorkerFile, {
       workerData: {
         config,
@@ -677,16 +720,21 @@ class Runtime extends EventEmitter {
       loggerDestination.close()
       loggingPort.close()
 
+      if (this.#status === 'stopping') return
+
       // Wait for the next tick so that crashed from the thread are logged first
       setImmediate(() => {
-        // If this was started, it means it crashed
-        if (started && (this.#status === 'started' || this.#status === 'starting')) {
+        this.logger.warn(`Service "${id}" unexpectedly exited with code ${code}.`)
+
+        // Restart the service if it was started
+        if (started && this.#status === 'started') {
           if (restartOnError > 0) {
-            this.#restartCrashedService(serviceConfig, code, started)
+            this.logger.warn(`Restarting a service "${id}" in ${restartOnError}ms...`)
+            this.#restartCrashedService(id).catch((err) => {
+              this.logger.error({ err }, `Failed to restart service "${id}".`)
+            })
           } else {
-            this.logger.warn(
-              `Service ${id} unexpectedly exited with code ${code}. The service is no longer available ...`
-            )
+            this.logger.warn(`The "${id}" service is no longer available.`)
           }
         }
       })
@@ -743,26 +791,29 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async #restartCrashedService (serviceConfig, code, started) {
-    const restartTimeout = this.#configManager.current.restartOnError
-    const id = serviceConfig.id
+  async #restartCrashedService (id) {
+    const config = this.#configManager.current
+    const restartTimeout = config.restartOnError
+    const serviceConfig = config.services.find(s => s.id === id)
 
-    this.logger.warn(`Service ${id} unexpectedly exited with code ${code}. Restarting in ${restartTimeout}ms ...`)
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(async () => {
+        try {
+          await this.#setupService(serviceConfig)
 
-    const timer = setTimeout(async () => {
-      try {
-        await this.#setupService(serviceConfig)
-
-        if (started) {
-          this.#startedServices.set(id, false)
-          await this.startService(id)
+          const started = this.#startedServices.get(id)
+          if (started) {
+            this.#startedServices.set(id, false)
+            const url = await this.startService(id)
+            resolve(url)
+          }
+        } catch (err) {
+          reject(err)
         }
-      } catch (err) {
-        this.logger.error({ err }, `Failed to restart service ${id}.`)
-      }
-    }, restartTimeout).unref()
+      }, restartTimeout).unref()
 
-    this.#crashedServicesTimers.set(id, timer)
+      this.#crashedServicesTimers.set(id, timer)
+    })
   }
 
   async #getServiceById (id, ensureStarted = false, mustExist = true) {
