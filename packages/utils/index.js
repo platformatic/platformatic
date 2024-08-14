@@ -12,6 +12,7 @@ const getPkgManager = require('./lib/get-pkg-manager')
 const match = require('./lib/match')
 const schemas = require('./lib/fastify-schema')
 const { createDirectory, safeRemove } = require('./lib/directory')
+const { withResolvers } = require('./lib/promises')
 
 module.exports.FileWatcher = FileWatcher
 module.exports.findNearestString = findNearestString
@@ -30,3 +31,4 @@ module.exports.match = match
 module.exports.schemas = schemas
 module.exports.createDirectory = createDirectory
 module.exports.safeRemove = safeRemove
+module.exports.withResolvers = withResolvers

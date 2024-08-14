@@ -8,6 +8,7 @@ import { ConfigManager } from '@platformatic/config'
 
 import { packageJson, schema } from './lib/schema.js'
 import { ServerStackable } from './lib/server.js'
+import { ViteStackable } from './lib/vite.js'
 
 const validFields = [
   'main',
@@ -84,12 +85,21 @@ function transformConfig () {
 
 export async function buildStackable (opts) {
   const root = opts.context.directory
-  const { entrypoint, hadEntrypointField } = await parsePackageJson(root)
+  const {
+    entrypoint,
+    hadEntrypointField,
+    packageJson: { dependencies, devDependencies },
+  } = await parsePackageJson(root)
 
   const configManager = new ConfigManager({ schema, source: opts.config ?? {} })
   await configManager.parseAndValidate()
 
-  const stackable = new ServerStackable(opts, root, configManager, entrypoint, hadEntrypointField)
+  let stackable
+  if (dependencies?.vite || devDependencies?.vite) {
+    stackable = new ViteStackable(opts, root, configManager)
+  } else {
+    stackable = new ServerStackable(opts, root, configManager, entrypoint, hadEntrypointField)
+  }
 
   return stackable
 }

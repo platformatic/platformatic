@@ -21,8 +21,8 @@ export class BaseStackable {
 
     // Setup globals
     globalThis.platformatic = {
-      setOpenAPISchema: this.setOpenAPISchema.bind(this),
-      setGraphQLSchema: this.setGraphQLSchema.bind(this),
+      setOpenapiSchema: this.setOpenapiSchema.bind(this),
+      setGraphqlSchema: this.setGraphqlSchema.bind(this),
     }
   }
 
@@ -67,11 +67,11 @@ export class BaseStackable {
     return this.graphqlSchema
   }
 
-  setOpenAPISchema (schema) {
+  setOpenapiSchema (schema) {
     this.openapiSchema = schema
   }
 
-  setGraphQLSchema (schema) {
+  setGraphqlSchema (schema) {
     this.graphqlSchema = schema
   }
 
