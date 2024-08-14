@@ -20,7 +20,7 @@ export async function start (...args) {
   const child = execa(process.execPath, [cliPath, 'start', ...args])
   child.stderr.pipe(process.stdout)
 
-  const { promise, resolve, reject } = withResolvers
+  const { promise, resolve, reject } = withResolvers()
 
   let serverStarted = false
   const errorTimeout = setTimeout(() => {
