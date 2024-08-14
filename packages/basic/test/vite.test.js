@@ -62,7 +62,9 @@ async function verifyHMR (url, basePath, versionFile) {
 
       switch (message.type) {
         case 'connected':
-          connection.resolve()
+          setTimeout(() => {
+            connection.resolve()
+          }, 1000)
           break
         case 'full-reload':
           clearTimeout(timeout)
