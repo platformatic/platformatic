@@ -40,7 +40,7 @@ test('should start composer with a graphql service', async t => {
   })
   await stackable.start()
 
-  const graphqlSchema = await stackable.getGraphQLSchema()
+  const graphqlSchema = await stackable.getGraphqlSchema()
   assert.strictEqual(graphqlSchema, 'type Query {\n  add(x: Int, y: Int): Int\n}')
 })
 
@@ -57,6 +57,6 @@ test('get null if server does not expose openapi', async (t) => {
   })
   await stackable.start()
 
-  const openapiSchema = await stackable.getGraphQLSchema()
+  const openapiSchema = await stackable.getGraphqlSchema()
   assert.strictEqual(openapiSchema, null)
 })

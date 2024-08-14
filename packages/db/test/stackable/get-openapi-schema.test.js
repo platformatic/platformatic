@@ -34,7 +34,7 @@ test('get service openapi schema via stackable api', async (t) => {
   })
   await stackable.start()
 
-  const openapiSchema = await stackable.getOpenAPISchema()
+  const openapiSchema = await stackable.getOpenapiSchema()
   assert.strictEqual(openapiSchema.openapi, '3.0.3')
   assert.deepStrictEqual(openapiSchema.info, {
     description: 'Exposing a SQL database as REST',
@@ -81,6 +81,6 @@ test('get null if server does not expose openapi', async (t) => {
   })
   await stackable.start()
 
-  const openapiSchema = await stackable.getOpenAPISchema()
+  const openapiSchema = await stackable.getOpenapiSchema()
   assert.strictEqual(openapiSchema, null)
 })

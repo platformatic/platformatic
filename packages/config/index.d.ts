@@ -89,20 +89,21 @@ export interface StackableInterface {
   init?: () => Promise<void>
   start: (options: StartOptions) => Promise<void>
   stop: () => Promise<void>
-  getUrl: () => string
-  getConfig: () => Promise<object>
-  getInfo: () => Promise<StackableInfo>
-  getDispatchFunc: () => Promise<Function>
-  getOpenAPISchema?: () => Promise<object>
-  getGraphQLSchema?: () => Promise<string>
-  getMetrics: () => Promise<string>
-  inject?: (injectParams: object) => Promise<{
+  getUrl?: () => string
+  updateContext?: (context: Partial<StackableContext>) => Promise<void>
+  getConfig?: () => Promise<object>
+  getInfo?: () => Promise<StackableInfo>
+  getDispatchFunc?: () => Promise<Function>
+  getOpenapiSchema?: () => Promise<object>
+  getGraphqlSchema?: () => Promise<string>
+  getMetrics?: () => Promise<string>
+  inject?: (injectParams: object) => Promise<{    
     statusCode: number
     statusMessage: string
     headers: object
     body: object
-  }>
-  log: (options: { message: string; level: string }) => Promise<void>
+  }>,
+  log?: (options: { message: string, level: string }) => Promise<void>
   getBootstrapDependencies?: () => Promise<StackableDependency[]>
   getWatchConfig?: () => Promise<{
     enabled: boolean
