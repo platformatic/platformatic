@@ -114,14 +114,15 @@ export interface StackableInterface {
 }
 
 export interface StackableContext {
-  serviceId: string
-  isEntrypoint: boolean
+  serviceId: string,
+  isEntrypoint: boolean,
+  isProduction: boolean,
   directory: string
-  telemetryConfig: object
-  metricsConfig: object
-  serverConfig: object
-  hasManagementApi: boolean
-  localServiceEnvVars: Map<string, string>
+  telemetryConfig: object,
+  metricsConfig: object,
+  serverConfig: object,
+  hasManagementApi: boolean,
+  localServiceEnvVars: Map<string, string>,
 }
 
 export interface BuildStackableArgs {
