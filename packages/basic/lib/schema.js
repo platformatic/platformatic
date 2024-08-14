@@ -28,3 +28,8 @@ export const schema = {
   },
   additionalProperties: false,
 }
+
+/* c8 ignore next 3 */
+if (process.argv[1] === import.meta.filename) {
+  console.log(JSON.stringify(schema, null, 2))
+}

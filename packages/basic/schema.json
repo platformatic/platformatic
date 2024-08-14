@@ -1,166 +1,11 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0-alpha.3.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/basic/2.0.0-alpha.3.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Platformatic Stackable",
   "type": "object",
   "properties": {
     "$schema": {
       "type": "string"
-    },
-    "preload": {
-      "type": "string",
-      "resolvePath": true
-    },
-    "autoload": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "path"
-      ],
-      "properties": {
-        "path": {
-          "type": "string",
-          "resolvePath": true
-        },
-        "exclude": {
-          "type": "array",
-          "default": [],
-          "items": {
-            "type": "string"
-          }
-        },
-        "mappings": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "id"
-            ],
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "config": {
-                "type": "string"
-              },
-              "useHttp": {
-                "type": "boolean"
-              }
-            }
-          }
-        }
-      }
-    },
-    "telemetry": {
-      "$id": "/OpenTelemetry",
-      "type": "object",
-      "properties": {
-        "serviceName": {
-          "type": "string",
-          "description": "The name of the service. Defaults to the folder name if not specified."
-        },
-        "version": {
-          "type": "string",
-          "description": "The version of the service (optional)"
-        },
-        "skip": {
-          "type": "array",
-          "description": "An array of paths to skip when creating spans. Useful for health checks and other endpoints that do not need to be traced.",
-          "items": {
-            "type": "object",
-            "properties": {
-              "path": {
-                "type": "string",
-                "description": "The path to skip. Can be a string or a regex."
-              },
-              "method": {
-                "description": "HTTP method to skip",
-                "type": "string",
-                "enum": [
-                  "GET",
-                  "POST",
-                  "PUT",
-                  "DELETE",
-                  "PATCH",
-                  "HEAD",
-                  "OPTIONS"
-                ]
-              }
-            }
-          }
-        },
-        "exporter": {
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "console",
-                      "otlp",
-                      "zipkin",
-                      "memory"
-                    ],
-                    "default": "console"
-                  },
-                  "options": {
-                    "type": "object",
-                    "description": "Options for the exporter. These are passed directly to the exporter.",
-                    "properties": {
-                      "url": {
-                        "type": "string",
-                        "description": "The URL to send the traces to. Not used for console or memory exporters."
-                      },
-                      "headers": {
-                        "type": "object",
-                        "description": "Headers to send to the exporter. Not used for console or memory exporters."
-                      }
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            },
-            {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": [
-                    "console",
-                    "otlp",
-                    "zipkin",
-                    "memory"
-                  ],
-                  "default": "console"
-                },
-                "options": {
-                  "type": "object",
-                  "description": "Options for the exporter. These are passed directly to the exporter.",
-                  "properties": {
-                    "url": {
-                      "type": "string",
-                      "description": "The URL to send the traces to. Not used for console or memory exporters."
-                    },
-                    "headers": {
-                      "type": "object",
-                      "description": "Headers to send to the exporter. Not used for console or memory exporters."
-                    }
-                  }
-                },
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      },
-      "required": [
-        "serviceName"
-      ],
-      "additionalProperties": false
     },
     "server": {
       "type": "object",
@@ -603,222 +448,50 @@
       },
       "additionalProperties": false
     },
-    "entrypoint": {
-      "type": "string"
-    },
     "watch": {
       "anyOf": [
         {
-          "type": "boolean"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "inspectorOptions": {
-      "type": "object",
-      "properties": {
-        "host": {
-          "type": "string"
-        },
-        "port": {
-          "type": "number"
-        },
-        "breakFirstLine": {
-          "type": "boolean"
-        },
-        "watchDisabled": {
-          "type": "boolean"
-        }
-      }
-    },
-    "undici": {
-      "type": "object",
-      "properties": {
-        "agentOptions": {
-          "type": "object",
-          "additionalProperties": true
-        },
-        "interceptors": {
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/undiciInterceptor"
-              }
-            },
-            {
-              "type": "object",
-              "properties": {
-                "Client": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/$defs/undiciInterceptor"
-                  }
-                },
-                "Pool": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/$defs/undiciInterceptor"
-                  }
-                },
-                "Agent": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/$defs/undiciInterceptor"
-                  }
-                }
-              }
-            }
-          ]
-        }
-      }
-    },
-    "managementApi": {
-      "anyOf": [
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "string"
-        },
-        {
           "type": "object",
           "properties": {
-            "logs": {
-              "maxSize": {
-                "type": "number",
-                "minimum": 5,
-                "default": 200
-              }
-            }
-          },
-          "additionalProperties": false
-        }
-      ],
-      "default": true
-    },
-    "metrics": {
-      "anyOf": [
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "object",
-          "properties": {
-            "port": {
+            "enabled": {
+              "default": true,
               "anyOf": [
                 {
-                  "type": "integer"
+                  "type": "boolean"
                 },
                 {
                   "type": "string"
                 }
               ]
             },
-            "hostname": {
-              "type": "string"
-            },
-            "endpoint": {
-              "type": "string"
-            },
-            "auth": {
-              "type": "object",
-              "properties": {
-                "username": {
-                  "type": "string"
-                },
-                "password": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": false,
-              "required": [
-                "username",
-                "password"
-              ]
-            },
-            "labels": {
-              "type": "object",
-              "additionalProperties": {
+            "allow": {
+              "type": "array",
+              "items": {
                 "type": "string"
-              }
+              },
+              "minItems": 1,
+              "nullable": true,
+              "default": null
+            },
+            "ignore": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "nullable": true,
+              "default": null
             }
           },
           "additionalProperties": false
-        }
-      ]
-    },
-    "restartOnError": {
-      "default": true,
-      "anyOf": [
+        },
         {
           "type": "boolean"
         },
         {
-          "type": "number",
-          "minimum": 100
+          "type": "string"
         }
       ]
-    },
-    "services": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": [
-          "id",
-          "path"
-        ],
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "path": {
-            "type": "string",
-            "resolvePath": true
-          },
-          "config": {
-            "type": "string"
-          },
-          "useHttp": {
-            "type": "boolean"
-          }
-        }
-      }
     }
   },
-  "anyOf": [
-    {
-      "required": [
-        "autoload",
-        "entrypoint"
-      ]
-    },
-    {
-      "required": [
-        "services",
-        "entrypoint"
-      ]
-    }
-  ],
-  "additionalProperties": false,
-  "$defs": {
-    "undiciInterceptor": {
-      "type": "object",
-      "properties": {
-        "module": {
-          "type": "string"
-        },
-        "options": {
-          "type": "object",
-          "additionalProperties": true
-        }
-      },
-      "required": [
-        "module",
-        "options"
-      ]
-    }
-  }
+  "additionalProperties": false
 }
