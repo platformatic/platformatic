@@ -68,7 +68,6 @@ test('do not restart in case of a crash in case it\'s so specified', async () =>
         found = true
       }
 
-      console.log(message)
       if (/The \\"a\\" service is no longer available./i.test(message)) {
         foundUnavailable = true
       }
