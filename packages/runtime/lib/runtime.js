@@ -752,9 +752,9 @@ class Runtime extends EventEmitter {
           await this.startService(id)
         }
 
-        this.logger.info(`Service ${id} has been successfully reloaded ...`)
+        this.logger?.info(`Service ${id} has been successfully reloaded ...`)
       } catch (e) {
-        this.logger.error(e)
+        this.logger?.error(e)
       }
     })
 
