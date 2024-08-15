@@ -48,7 +48,7 @@ class Runtime extends EventEmitter {
   #managementApi
   #prometheusServer
   #startedServices
-  #crashedServicesTimers
+  #restartPromises
   #bootstrapAttempts
 
   constructor (configManager, runtimeLogsDir, env) {
@@ -66,7 +66,7 @@ class Runtime extends EventEmitter {
     this.#interceptor = createThreadInterceptor({ domain: '.plt.local' })
     this.#status = undefined
     this.#startedServices = new Map()
-    this.#crashedServicesTimers = new Map()
+    this.#restartPromises = new Map()
     this.#bootstrapAttempts = new Map()
   }
 
@@ -156,13 +156,7 @@ class Runtime extends EventEmitter {
     }
 
     this.#updateStatus('stopping')
-
-    for (const timer of this.#crashedServicesTimers.values()) {
-      clearTimeout(timer)
-    }
-
     this.#startedServices.clear()
-    this.#crashedServicesTimers.clear()
 
     await Promise.all(this.#servicesIds.map(service => this._stopService(service)))
 
@@ -220,12 +214,6 @@ class Runtime extends EventEmitter {
     // This is set here so that if the service fails while starting we track the status
     this.#startedServices.set(id, true)
 
-    // Make sure we don't restart twice
-    const crashedTimer = this.#crashedServicesTimers.get(id)
-    if (crashedTimer) {
-      clearTimeout(crashedTimer)
-    }
-
     let service = await this.#getServiceById(id, false, false)
 
     // The service was stopped, recreate the thread
@@ -280,13 +268,13 @@ class Runtime extends EventEmitter {
 
     this.#startedServices.set(id, false)
 
-    this.logger.info(`Stopping service "${id}"...`)
+    this.logger?.info(`Stopping service "${id}"...`)
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
     try {
       await Promise.race([sendViaITC(service, 'stop'), sleep(10000, 'timeout', { ref: false })])
     } catch (error) {
-      this.logger.info(`Failed to stop service "${id}". Killing a worker thread.`, error)
+      this.logger?.info(`Failed to stop service "${id}". Killing a worker thread.`, error)
     }
 
     // Wait for the worker thread to finish, we're going to create a new one if the service is ever restarted
@@ -677,6 +665,8 @@ class Runtime extends EventEmitter {
   }
 
   async #setupService (serviceConfig) {
+    if (this.#status === 'stopping' || this.#status === 'closed') return
+
     const config = this.#configManager.current
     const { autoload, restartOnError } = config
 
@@ -794,27 +784,36 @@ class Runtime extends EventEmitter {
 
   async #restartCrashedService (id) {
     const config = this.#configManager.current
-    const restartTimeout = config.restartOnError
     const serviceConfig = config.services.find(s => s.id === id)
 
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(async () => {
+    let restartPromise = this.#restartPromises.get(id)
+    if (restartPromise) {
+      await restartPromise
+      return
+    }
+
+    restartPromise = new Promise((resolve, reject) => {
+      setTimeout(async () => {
+        this.#restartPromises.delete(id)
+
         try {
           await this.#setupService(serviceConfig)
 
           const started = this.#startedServices.get(id)
           if (started) {
             this.#startedServices.set(id, false)
-            const url = await this.startService(id)
-            resolve(url)
+            await this.startService(id)
           }
+
+          resolve()
         } catch (err) {
           reject(err)
         }
-      }, restartTimeout).unref()
-
-      this.#crashedServicesTimers.set(id, timer)
+      }, config.restartOnError)
     })
+
+    this.#restartPromises.set(id, restartPromise)
+    await restartPromise
   }
 
   async #getServiceById (id, ensureStarted = false, mustExist = true) {
