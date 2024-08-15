@@ -45,7 +45,7 @@ test('telemetry correctly propagates from a service client to a server for an Op
 
   targetApp.addHook('onRequest', async req => {
     if (req.url === '/movies/') {
-      const clientTelemetryId = req.headers['x-telemetry-id']
+      const clientTelemetryId = req.headers['x-platformatic-telemetry-id']
       assert.strictEqual(clientTelemetryId, 'test-client')
     }
   })

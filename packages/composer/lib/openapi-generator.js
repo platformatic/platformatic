@@ -129,7 +129,7 @@ async function composeOpenAPI (app, opts) {
 
             const telemetryId = config.telemetry?.serviceName
             if (telemetryId) {
-              headers['x-telemetry-id'] = telemetryId
+              headers['x-platformatic-telemetry-id'] = telemetryId
             }
 
             return headers

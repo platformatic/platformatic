@@ -2,6 +2,7 @@
 
 const { EventEmitter } = require('node:events')
 const { FileWatcher } = require('@platformatic/utils')
+const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
 const debounce = require('debounce')
 
 const errors = require('../errors')
@@ -91,6 +92,8 @@ class PlatformaticApp extends EventEmitter {
         context: this.#context,
       })
       this.stackable = this.#wrapStackable(stackable)
+
+      this.#updateDispatcher()
     } catch (err) {
       this.#logAndExit(err)
     }
@@ -219,6 +222,28 @@ class PlatformaticApp extends EventEmitter {
         : defaultStackable[method]
     }
     return newStackable
+  }
+
+  #updateDispatcher () {
+    const telemetryConfig = this.#context.telemetryConfig
+    const telemetryId = telemetryConfig?.serviceName
+
+    const interceptor = dispatch => {
+      return function InterceptedDispatch (opts, handler) {
+        if (telemetryId) {
+          opts.headers = {
+            ...opts.headers,
+            'x-platformatic-telemetry-id': telemetryId,
+          }
+        }
+        return dispatch(opts, handler)
+      }
+    }
+
+    const dispatcher = getGlobalDispatcher()
+      .compose(interceptor)
+
+    setGlobalDispatcher(dispatcher)
   }
 }
 

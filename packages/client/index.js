@@ -221,7 +221,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
     }
 
     if (telemetryId) {
-      headers['x-telemetry-id'] = telemetryId
+      headers['x-platformatic-telemetry-id'] = telemetryId
     }
 
     let res
@@ -337,7 +337,7 @@ async function graphql (url, log, headers, query, variables, openTelemetry, tele
   }
 
   if (telemetryId) {
-    headers['x-telemetry-id'] = telemetryId
+    headers['x-platformatic-telemetry-id'] = telemetryId
   }
 
   let res

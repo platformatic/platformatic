@@ -13,7 +13,7 @@ test('should compose openapi with prefixes', async (t) => {
 
   api1.addHook('onRequest', async (req, reply) => {
     if (req.url === '/users') {
-      const telemetryId = req.headers['x-telemetry-id']
+      const telemetryId = req.headers['x-platformatic-telemetry-id']
       assert.strictEqual(telemetryId, 'test-composer')
     }
   })
