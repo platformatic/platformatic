@@ -85,22 +85,22 @@ test('composer should restart and update schema if one of the services shuts dow
     dogs: [Dog]!
     dog(id: ID!): Dog
   }
-  
+
   type Mutation {
     createDog(dog: CreateDogInput!): Dog!
     updateDog(id: ID!, dog: UpdateDogInput!): Dog
     deleteDog(id: ID!): ID
   }
-  
+
   type Dog {
     id: ID!
     name: String
   }
-  
+
   input CreateDogInput {
     name: String!
   }
-  
+
   input UpdateDogInput {
     name: String!
   }`
@@ -109,22 +109,22 @@ test('composer should restart and update schema if one of the services shuts dow
     dogs: [Dog]!
     dog(id: ID!): Dog
   }
-  
+
   type Mutation {
     createDog(dog: CreateDogInput!): Dog!
     updateDog(id: ID!, dog: UpdateDogInput!): Dog
     deleteDog(id: ID!): ID
   }
-  
+
   type Dog {
     id: ID!
     name: String
   }
-  
+
   input CreateDogInput {
     name: String!
   }
-  
+
   input UpdateDogInput {
     name: String!
   }`
@@ -224,22 +224,22 @@ test('should not watch when refreshTimeout is 0', async t => {
     dogs: [Dog]!
     dog(id: ID!): Dog
   }
-  
+
   type Mutation {
     createDog(dog: CreateDogInput!): Dog!
     updateDog(id: ID!, dog: UpdateDogInput!): Dog
     deleteDog(id: ID!): ID
   }
-  
+
   type Dog {
     id: ID!
     name: String
   }
-  
+
   input CreateDogInput {
     name: String!
   }
-  
+
   input UpdateDogInput {
     name: String!
   }`
@@ -314,5 +314,5 @@ test('should handle errors watching services', async t => {
 
   const messages = await getRuntimeLogs(runtime)
 
-  assert.ok(messages.find(l => l.startsWith('Service composer unexpectedly exited with code 1')))
+  assert.ok(messages.find(l => l.startsWith('Service "composer" unexpectedly exited with code 1')))
 })

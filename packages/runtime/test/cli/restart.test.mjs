@@ -68,7 +68,7 @@ test('do not restart in case of a crash in case it\'s so specified', async () =>
         found = true
       }
 
-      if (/service a unexpectedly exited with code 1. the service is no longer available/i.test(message)) {
+      if (/The \\"a\\" service is no longer available./i.test(message)) {
         foundUnavailable = true
       }
     }

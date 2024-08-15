@@ -21,7 +21,7 @@ test('logs errors during db migrations', async (t) => {
     await runtime.close()
   })
 
-  await assert.rejects(async () => {
+  const startPromise = assert.rejects(async () => {
     await runtime.start()
   }, /The service mysimplename exited prematurely with error code 1/)
 
@@ -38,4 +38,6 @@ test('logs errors during db migrations', async (t) => {
 
   assert.ok(messages.some(m => m.msg.match(/running 001.do.sql/)))
   assert.ok(messages.some(m => m.payload?.msg?.match(/near "fiddlesticks": syntax error/)))
+
+  await startPromise
 })

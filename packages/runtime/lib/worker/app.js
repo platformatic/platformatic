@@ -104,7 +104,7 @@ class PlatformaticApp extends EventEmitter {
     this.#starting = true
 
     try {
-      await this.stackable.init?.()
+      await this.stackable.init()
     } catch (err) {
       this.#logAndExit(err)
     }
