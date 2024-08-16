@@ -389,7 +389,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.24.76
+        version: 1.25.0
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -1510,7 +1510,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.24.76
+        version: 1.25.0
       '@types/ws':
         specifier: ^8.5.10
         version: 8.5.12
@@ -1890,7 +1890,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.24.76
+        version: 1.25.0
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -2767,8 +2767,20 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@scalar/fastify-api-reference@1.24.76':
-    resolution: {integrity: sha512-TUsSM0zKQxyU11J3pjjU4n58JV9NEgEJRaajk3o3+XQdBPmpPOwdvOdffRvj1W+D9GrgRrkV1QGr8SLuCuJsvw==}
+  '@scalar/fastify-api-reference@1.25.0':
+    resolution: {integrity: sha512-X44hcJzAvUK84cIgfxjvnNNVD/s93QChVjseNVCrjoFgQLEj42Y2JyPHb1CJRM/8So+8nnhdLYNlhRSgoco5Xg==}
+    engines: {node: '>=18'}
+
+  '@scalar/openapi-types@0.0.1':
+    resolution: {integrity: sha512-qMcUrhe+JRXlI9VGWcY/xGHkGplHdZ5UdGFXJ0q9e20gFVk2HMApE98Mo2iUp42Gff0xHIcNHaEQKAhdfW3R2Q==}
+    engines: {node: '>=18'}
+
+  '@scalar/themes@0.9.25':
+    resolution: {integrity: sha512-95LjyXF3jImbzp8WbYD5mNXulcJ196EeA0A1e6k8OmLkVXlXEomOKXkSlVOCR6dNR2NpbF6gKkorrUHgIe7cgQ==}
+    engines: {node: '>=18'}
+
+  '@scalar/types@0.0.1':
+    resolution: {integrity: sha512-fWF9hpXGN0n4jcZIDk6ZU0UEvyy9ixenWxxX0Bso9Rab+zRKLzb9+Jd7Y+eK//S3UF4HnJl7YgBnDTi9ZioxMw==}
     engines: {node: '>=18'}
 
   '@sec-ant/readable-stream@0.4.1':
@@ -2944,6 +2956,9 @@ packages:
   '@typescript-eslint/visitor-keys@8.0.1':
     resolution: {integrity: sha512-W5E+o0UfUcK5EgchLZsyVWqARmsM7v54/qEq6PY3YI5arkgmCzHiuk0zKSJJbm71V0xdRna4BGomkCTXz2/LkQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@unhead/schema@1.9.16':
+    resolution: {integrity: sha512-V2BshX+I6D2wN4ys5so8RQDUgsggsxW9FVBiuQi4h8oPWtHclogxzDiHa5BH2TgvNIoUxLnLYNAShMGipmVuUw==}
 
   '@vitejs/plugin-react@3.1.0':
     resolution: {integrity: sha512-AfgcRL8ZBhAlc3BFdigClmTUMISmmzHn7sB2h9U1odvc5U/MjWXsAaz18b/WoppUTDBzxOJwo2VdClfUcItu9g==}
@@ -4204,6 +4219,9 @@ packages:
 
   hmac-drbg@1.0.1:
     resolution: {integrity: sha512-Tti3gMqLdZfhOQY1Mzf/AanLiqh1WTiJgEj26ZuYQ9fbkLomzGchCws4FyrSd4VkpBfiNhaE1On+lOz894jvXg==}
+
+  hookable@5.5.3:
+    resolution: {integrity: sha512-Yc+BQe8SvoXH1643Qez1zqLRmbA5rCL+sSmk6TVos0LWVfNIB7PGncdlId77WzLGSIB5KaWgTaNTs2lNVEI6VQ==}
 
   hosted-git-info@2.8.9:
     resolution: {integrity: sha512-mxIDAb9Lsm6DoOJ7xH+5+X4y1LU/4Hi50L9C5sIswK3JzULS4bwk1FvjdBgvYR4bzT4tuUQiC15FE2f5HbLvYw==}
@@ -6316,6 +6334,9 @@ packages:
     resolution: {integrity: sha512-GQHQqAopRhwU8Kt1DDM8NjibDXHC8eoh1erhGAJPEyveY9qqVeXvVikNKrDz69sHowPMorbPUrH/mx8c50eiBQ==}
     engines: {node: '>=18'}
 
+  zhead@2.2.4:
+    resolution: {integrity: sha512-8F0OI5dpWIA5IGG5NHUg9staDwz/ZPxZtvGVf01j7vHqSyZ0raHY+78atOVxRqb73AotX22uV1pXt3gYSstGag==}
+
 snapshots:
 
   '@actions/core@1.10.1':
@@ -7111,9 +7132,20 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.20.0':
     optional: true
 
-  '@scalar/fastify-api-reference@1.24.76':
+  '@scalar/fastify-api-reference@1.25.0':
     dependencies:
+      '@scalar/types': 0.0.1
       fastify-plugin: 4.5.1
+
+  '@scalar/openapi-types@0.0.1': {}
+
+  '@scalar/themes@0.9.25': {}
+
+  '@scalar/types@0.0.1':
+    dependencies:
+      '@scalar/openapi-types': 0.0.1
+      '@scalar/themes': 0.9.25
+      '@unhead/schema': 1.9.16
 
   '@sec-ant/readable-stream@0.4.1': {}
 
@@ -7428,6 +7460,11 @@ snapshots:
     dependencies:
       '@typescript-eslint/types': 8.0.1
       eslint-visitor-keys: 3.4.3
+
+  '@unhead/schema@1.9.16':
+    dependencies:
+      hookable: 5.5.3
+      zhead: 2.2.4
 
   '@vitejs/plugin-react@3.1.0(vite@5.4.1(@types/node@20.14.15))':
     dependencies:
@@ -8930,6 +8967,8 @@ snapshots:
       hash.js: 1.1.7
       minimalistic-assert: 1.0.1
       minimalistic-crypto-utils: 1.0.1
+
+  hookable@5.5.3: {}
 
   hosted-git-info@2.8.9: {}
 
@@ -11235,3 +11274,5 @@ snapshots:
   yoctocolors-cjs@2.1.2: {}
 
   yoctocolors@2.1.1: {}
+
+  zhead@2.2.4: {}
