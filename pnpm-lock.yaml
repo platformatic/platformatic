@@ -1625,7 +1625,7 @@ importers:
         version: 1.2.0
       self-cert:
         specifier: ^2.0.0
-        version: 2.0.0
+        version: 2.0.1
       split2:
         specifier: ^4.2.0
         version: 4.2.0
@@ -5029,9 +5029,6 @@ packages:
   obliterator@2.0.4:
     resolution: {integrity: sha512-lgHwxlxV1qIg1Eap7LgIeoBWIMFibOjbrYPIPJZcI1mmGAI2m3lNYpK12Y+GBdPQ0U1hRwSord7GIaawz962qQ==}
 
-  on-exit-leak-free@0.2.0:
-    resolution: {integrity: sha512-dqaz3u44QbRXQooZLTUKU41ZrzYrcvLISVgbrzbyCMxpmSLJvZ3ZamIJIZ29P6OhZIkNIQKosdeM6t1LYbA9hg==}
-
   on-exit-leak-free@2.1.2:
     resolution: {integrity: sha512-0eJJY6hXLGf1udHwfNftBqH+g73EU4B504nZeKpz1sYRKafAghwxEJunB2O7rDZkL4PGfsMVnTXZ2EjibbqcsA==}
     engines: {node: '>=14.0.0'}
@@ -5238,9 +5235,6 @@ packages:
     resolution: {integrity: sha512-M7BAV6Rlcy5u+m6oPhAPFgJTzAioX/6B0DxyvDlo9l8+T3nLKbrczg2WLUyzd45L8RqfUMyGPzekbMvX2Ldkwg==}
     engines: {node: '>=12'}
 
-  pino-abstract-transport@0.5.0:
-    resolution: {integrity: sha512-+KAgmVeqXYbTtU2FScx1XS3kNyfZ5TrXY07V96QnUSFqo2gAqlvmaxH67Lj7SWazqsMabf+58ctdTcBgnOLUOQ==}
-
   pino-abstract-transport@1.2.0:
     resolution: {integrity: sha512-Guhh8EZfPCfH+PMXAb6rKOjGQEoy0xlAIn+irODG5kgfYV+BQ0rGYYWTIel3P5mmyXqkYkPmdIkywsn6QKUR1Q==}
 
@@ -5251,9 +5245,6 @@ packages:
   pino-roll@1.2.0:
     resolution: {integrity: sha512-0jbkS6X37FCzZh2iId5ayLL9xvbx2yvqhL5bZeFVdXelISAGUfKpA1i2snSI/QuIQGuBaVuCagD6FBBVn0Z+JQ==}
 
-  pino-std-serializers@4.0.0:
-    resolution: {integrity: sha512-cK0pekc1Kjy5w9V2/n+8MkZwusa6EyyxfeQCB799CQRhRt/CqYKiWs5adeu8Shve2ZNffvfC/7J64A2PJo1W/Q==}
-
   pino-std-serializers@6.2.2:
     resolution: {integrity: sha512-cHjPPsE+vhj/tnhCy/wiMh3M3z3h/j15zHQX+S9GkTBgqJuTuJzYJ4gUyACLhDaJ7kk9ba9iRDmbH2tJU03OiA==}
 
@@ -5262,10 +5253,6 @@ packages:
 
   pino-test@1.0.1:
     resolution: {integrity: sha512-ISdyVW8D6xJez8tEC2D0JBXeaKVU40GjMjxd/YgKP/6Am1c+yHb7F4ysY6ZyKVblQSREetW0f1irKXeku6tJGw==}
-
-  pino@7.11.0:
-    resolution: {integrity: sha512-dMACeu63HtRLmCG8VKdy4cShCPKaYDR4youZqoSWLxl5Gu99HUw8bw75thbPv9Nip+H+QYX8o3ZJbTdVZZ2TVg==}
-    hasBin: true
 
   pino@8.21.0:
     resolution: {integrity: sha512-ip4qdzjkAyDDZklUaZkcRFb2iA118H9SgRh8yzTkSQK8HilsOJF7rSY8HoW5+I0M46AZgX/pxbprf2vvzQCE0Q==}
@@ -5345,9 +5332,6 @@ packages:
 
   process-nextick-args@2.0.1:
     resolution: {integrity: sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==}
-
-  process-warning@1.0.0:
-    resolution: {integrity: sha512-du4wfLyj4yCZq1VupnVSZmRsPJsNuxoDQFdCFHLaYiEbFBD7QE0a+I4D7hOxrVnh78QE/YipFAj9lXHiXocV+Q==}
 
   process-warning@3.0.0:
     resolution: {integrity: sha512-mqn0kFRl0EoqhnL0GQ0veqFHyIN1yig9RHh/InzORTUiZHFRAur+aMtRkELNwGs9aNwKS6tg/An4NYBPGwvtzQ==}
@@ -5487,10 +5471,6 @@ packages:
     resolution: {integrity: sha512-asaikDeqAQg7JifRsZn1NJZXo9E+VwlyCfbkZhwyISinqk5zNS6266HS5kah6P0SaQKGF6SkNnZVHUzHFYxYDw==}
     deprecated: This functionality has been moved to @npmcli/fs
 
-  real-require@0.1.0:
-    resolution: {integrity: sha512-r/H9MzAWtrv8aSVjPCMFpDMl5q66GqtmmRkRjpHTsp4zBAa+snZyiQNlMONiUmEJcsnaw0wCauJ2GWODr/aFkg==}
-    engines: {node: '>= 12.13.0'}
-
   real-require@0.2.0:
     resolution: {integrity: sha512-57frrGM/OCTLqLOAh0mhVA9VBMHd+9U7Zb2THMGdBUoZVOtGbJzjxsYGDJ3A9AYYCP4hn6y1TVbaOfzWtm5GFg==}
     engines: {node: '>= 12.13.0'}
@@ -5626,8 +5606,8 @@ packages:
   secure-json-parse@2.7.0:
     resolution: {integrity: sha512-6aU+Rwsezw7VR8/nyvKTx8QpWH9FrcYiXXlqC4z5d5XQBDRqtbfsRjnwGyqbi3gddNtWHuEk9OANUotL26qKUw==}
 
-  self-cert@2.0.0:
-    resolution: {integrity: sha512-dXulXTFP05tuc646sCBMd7jgnjZek1zRx+HwUJUeSf4A5JgdpXIp+aYyYI8MSWVxz7X8HIKCKcQRWM0DFe72IA==}
+  self-cert@2.0.1:
+    resolution: {integrity: sha512-m66vbn9/NSLHS8o6bgGoGdQ8OXJY+Arm6ng6xr5CtfFUc2S/LwwwbfbjYTv2CGp4wyErUiabYP57VD22P5JwCg==}
     hasBin: true
 
   semgrator@0.3.0:
@@ -5726,9 +5706,6 @@ packages:
 
   slide@1.1.6:
     resolution: {integrity: sha512-NwrtjCg+lZoqhFU8fOwl4ay2ei8PaqCBOUV3/ektPY9trO1yQ1oXEfmHAhKArUVUr/hOHvy5f6AdP17dCM0zMw==}
-
-  sonic-boom@2.8.0:
-    resolution: {integrity: sha512-kuonw1YOYYNOve5iHdSahXPOK49GqwA+LZhI6Wz/l0rP57iKyXXIHaRagOBHAPmGwJC6od2Z9zgvZ5loSgMlVg==}
 
   sonic-boom@3.8.1:
     resolution: {integrity: sha512-y4Z8LCDBuum+PBP3lSV7RHrXscqksve/bi0as7mhwVnBW+/wUqKT/2Kb7um8yqcFy0duYbbPxzt89Zy2nOCaxg==}
@@ -5913,9 +5890,6 @@ packages:
 
   text-table@0.2.0:
     resolution: {integrity: sha512-N+8UisAXDGk8PFXP4HAzVR9nbfmVJ3zYLAWiTIoqC5v5isinhr+r5uaO8+7r3BMfuNIufIsA7RdpVgacC2cSpw==}
-
-  thread-stream@0.15.2:
-    resolution: {integrity: sha512-UkEhKIg2pD+fjkHQKyJO3yoIvAP3N6RlNFt2dUhcS1FGvCD1cQa1M/PGknCLFIyZdtJOWQjejp7bdNqmN7zwdA==}
 
   thread-stream@2.7.0:
     resolution: {integrity: sha512-qQiRWsU/wvNolI6tbbCKd9iKaTnCXsTwVxhhKM6nctPdujTyztjlbUkUTUymidWcMnZ5pWR0ej4a0tjsW021vw==}
@@ -9817,8 +9791,6 @@ snapshots:
 
   obliterator@2.0.4: {}
 
-  on-exit-leak-free@0.2.0: {}
-
   on-exit-leak-free@2.1.2: {}
 
   on-finished@2.4.1:
@@ -10026,11 +9998,6 @@ snapshots:
 
   picomatch@4.0.2: {}
 
-  pino-abstract-transport@0.5.0:
-    dependencies:
-      duplexify: 4.1.3
-      split2: 4.2.0
-
   pino-abstract-transport@1.2.0:
     dependencies:
       readable-stream: 4.5.2
@@ -10057,8 +10024,6 @@ snapshots:
     dependencies:
       sonic-boom: 3.8.1
 
-  pino-std-serializers@4.0.0: {}
-
   pino-std-serializers@6.2.2: {}
 
   pino-std-serializers@7.0.0: {}
@@ -10066,20 +10031,6 @@ snapshots:
   pino-test@1.0.1:
     dependencies:
       split2: 4.2.0
-
-  pino@7.11.0:
-    dependencies:
-      atomic-sleep: 1.0.0
-      fast-redact: 3.5.0
-      on-exit-leak-free: 0.2.0
-      pino-abstract-transport: 0.5.0
-      pino-std-serializers: 4.0.0
-      process-warning: 1.0.0
-      quick-format-unescaped: 4.0.4
-      real-require: 0.1.0
-      safe-stable-stringify: 2.4.3
-      sonic-boom: 2.8.0
-      thread-stream: 0.15.2
 
   pino@8.21.0:
     dependencies:
@@ -10175,8 +10126,6 @@ snapshots:
       parse-ms: 4.0.0
 
   process-nextick-args@2.0.1: {}
-
-  process-warning@1.0.0: {}
 
   process-warning@3.0.0: {}
 
@@ -10355,8 +10304,6 @@ snapshots:
       graceful-fs: 4.2.11
       once: 1.4.0
 
-  real-require@0.1.0: {}
-
   real-require@0.2.0: {}
 
   redent@3.0.0:
@@ -10506,12 +10453,12 @@ snapshots:
 
   secure-json-parse@2.7.0: {}
 
-  self-cert@2.0.0:
+  self-cert@2.0.1:
     dependencies:
       abstract-logging: 2.0.1
       edtf: 4.6.0
       node-forge: 1.3.1
-      pino: 7.11.0
+      pino: 9.3.2
       sade: 1.8.1
 
   semgrator@0.3.0:
@@ -10628,10 +10575,6 @@ snapshots:
       is-fullwidth-code-point: 5.0.0
 
   slide@1.1.6: {}
-
-  sonic-boom@2.8.0:
-    dependencies:
-      atomic-sleep: 1.0.0
 
   sonic-boom@3.8.1:
     dependencies:
@@ -10848,10 +10791,6 @@ snapshots:
       minimatch: 9.0.5
 
   text-table@0.2.0: {}
-
-  thread-stream@0.15.2:
-    dependencies:
-      real-require: 0.1.0
 
   thread-stream@2.7.0:
     dependencies:
