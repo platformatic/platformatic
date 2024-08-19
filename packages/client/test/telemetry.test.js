@@ -43,13 +43,6 @@ test('telemetry correctly propagates from a service client to a server for an Op
     await safeRemove(tmpDir)
   })
 
-  targetApp.addHook('onRequest', async req => {
-    if (req.url === '/movies/') {
-      const clientTelemetryId = req.headers['x-telemetry-id']
-      assert.strictEqual(clientTelemetryId, 'test-client')
-    }
-  })
-
   await targetApp.start()
   const targetAppUrl = targetApp.url
 

@@ -93,10 +93,18 @@ async function main () {
     }
   }
 
+  let telemetryConfig = config.telemetry
+  if (telemetryConfig) {
+    telemetryConfig = {
+      ...telemetryConfig,
+      serviceName: `${telemetryConfig.serviceName}-${service.id}`,
+    }
+  }
+
   // Create the application
   app = new PlatformaticApp(
     service,
-    config.telemetry,
+    telemetryConfig,
     serverConfig,
     !!config.managementApi,
     !!config.watch,

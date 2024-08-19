@@ -32,8 +32,6 @@ async function getOpenApiSchema (origin, openapi) {
 async function composeOpenAPI (app, opts) {
   if (!opts.services.some(s => s.openapi)) { return }
 
-  const config = app.platformatic.config
-
   const { services } = opts
 
   const openApiSchemas = []
@@ -125,11 +123,6 @@ async function composeOpenAPI (app, opts) {
               ...telemetryHeaders,
               'x-forwarded-for': request.ip,
               'x-forwarded-host': request.hostname,
-            }
-
-            const telemetryId = config.telemetry?.serviceName
-            if (telemetryId) {
-              headers['x-telemetry-id'] = telemetryId
             }
 
             return headers
