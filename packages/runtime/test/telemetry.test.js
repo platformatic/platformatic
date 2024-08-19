@@ -36,7 +36,7 @@ test('propagate the traceId correctly to runtime services', async (t) => {
   assert.strictEqual(response.traceId, traceId)
 })
 
-test('attach x-platformatic-telemetry-id header', async (t) => {
+test('attach x-plt-telemetry-id header', async (t) => {
   const configFile = join(fixturesDir, 'telemetry', 'platformatic.runtime.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildRuntime(config.configManager)
@@ -56,6 +56,6 @@ test('attach x-platformatic-telemetry-id header', async (t) => {
   const response = await res.body.json()
 
   const echoReqHeaders = response.headers
-  const telemetryIdHeader = echoReqHeaders['x-platformatic-telemetry-id']
+  const telemetryIdHeader = echoReqHeaders['x-plt-telemetry-id']
   assert.strictEqual(telemetryIdHeader, 'test-runtime-echo')
 })

@@ -34,7 +34,7 @@ const metricsPlugin = fp(async function (app, opts = {}) {
       enabled: true,
       customLabels: {
         // TODO: check if this is set in prom
-        telemetry_id: (req) => req.headers['x-platformatic-telemetry-id'] ?? 'unknown',
+        telemetry_id: (req) => req.headers['x-plt-telemetry-id'] ?? 'unknown',
       },
       overrides: {
         histogram: {

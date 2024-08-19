@@ -88,7 +88,7 @@ module.exports = fp(async function (app, opts) {
 
           const telemetryId = config.telemetry?.serviceName
           if (telemetryId) {
-            headers['x-platformatic-telemetry-id'] = telemetryId
+            headers['x-plt-telemetry-id'] = telemetryId
           }
 
           return headers

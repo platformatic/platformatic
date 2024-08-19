@@ -233,7 +233,7 @@ class PlatformaticApp extends EventEmitter {
         if (telemetryId) {
           opts.headers = {
             ...opts.headers,
-            'x-platformatic-telemetry-id': telemetryId,
+            'x-plt-telemetry-id': telemetryId,
           }
         }
         return dispatch(opts, handler)
