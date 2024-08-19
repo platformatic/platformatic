@@ -12,13 +12,6 @@ const {
 test('should proxy openapi requests with telemetry span', async (t) => {
   const service1 = await createOpenApiService(t, ['users'])
 
-  service1.addHook('onRequest', async (req, reply) => {
-    if (req.url === '/users') {
-      const telemetryId = req.headers['x-plt-telemetry-id']
-      assert.strictEqual(telemetryId, 'test-composer')
-    }
-  })
-
   const origin1 = await service1.listen({ host: '127.0.0.1', port: 0 })
 
   const config = {

@@ -37,8 +37,6 @@ async function resolveServiceProxyParameters (service) {
 }
 
 module.exports = fp(async function (app, opts) {
-  const config = app.platformatic.config
-
   for (const service of opts.services) {
     if (!service.proxy) {
       // When a service defines no expose config at all
@@ -84,11 +82,6 @@ module.exports = fp(async function (app, opts) {
             ...telemetryHeaders,
             'x-forwarded-for': request.ip,
             'x-forwarded-host': request.hostname,
-          }
-
-          const telemetryId = config.telemetry?.serviceName
-          if (telemetryId) {
-            headers['x-plt-telemetry-id'] = telemetryId
           }
 
           return headers

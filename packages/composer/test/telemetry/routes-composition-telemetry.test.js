@@ -11,13 +11,6 @@ const {
 test('should compose openapi with prefixes', async (t) => {
   const api1 = await createOpenApiService(t, ['users'])
 
-  api1.addHook('onRequest', async (req, reply) => {
-    if (req.url === '/users') {
-      const telemetryId = req.headers['x-plt-telemetry-id']
-      assert.strictEqual(telemetryId, 'test-composer')
-    }
-  })
-
   const api1Origin = await api1.listen({ host: '127.0.0.1', port: 0 })
 
   const composer = await createComposer(t, {

@@ -213,15 +213,10 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
     urlToCall.pathname = pathToCall
 
     const { span, telemetryHeaders } = openTelemetry?.startHTTPSpanClient(urlToCall.toString(), method, telemetryContext) || { span: null, telemetryHeaders: {} }
-    const telemetryId = openTelemetry?.tracer?.resource?._attributes?.['service.name']
 
     if (this[kGetHeaders]) {
       const options = { url: urlToCall, method, headers, telemetryHeaders, body }
       headers = { ...headers, ...(await this[kGetHeaders](options)) }
-    }
-
-    if (telemetryId) {
-      headers['x-plt-telemetry-id'] = telemetryId
     }
 
     let res
@@ -328,16 +323,11 @@ function isArrayQueryParam ({ schema }) {
 // TODO: For some unknown reason c8 is not picking up the coverage for this function
 async function graphql (url, log, headers, query, variables, openTelemetry, telemetryContext) {
   const { span, telemetryHeaders } = openTelemetry?.startHTTPSpanClient(url.toString(), 'POST', telemetryContext) || { span: null, telemetryHeaders: {} }
-  const telemetryId = openTelemetry?.tracer?.resource?._attributes?.['service.name']
 
   headers = {
     ...headers,
     ...telemetryHeaders,
     'content-type': 'application/json; charset=utf-8',
-  }
-
-  if (telemetryId) {
-    headers['x-plt-telemetry-id'] = telemetryId
   }
 
   let res
