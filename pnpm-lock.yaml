@@ -389,7 +389,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.3
+        version: 1.25.4
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -1510,7 +1510,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.3
+        version: 1.25.4
       '@types/ws':
         specifier: ^8.5.10
         version: 8.5.12
@@ -1890,7 +1890,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.3
+        version: 1.25.4
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -2767,20 +2767,20 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@scalar/fastify-api-reference@1.25.3':
-    resolution: {integrity: sha512-Y1D9MaXFGSMfnzYFxEQHer7FlPH3GzjO7WneKHM3GuzWRuStbdlF5HJt4NF8CdzWnqw1jnJXzvqusIygnlmX8w==}
+  '@scalar/fastify-api-reference@1.25.4':
+    resolution: {integrity: sha512-/M6x1/QYxiJiAWe+5ri0c+GO8UkeU1oW0Q9s9X5UiCjxQLB9j5wDn61ij8MGUuMMuaZkW5DJUiAhss07kvAxWg==}
     engines: {node: '>=18'}
 
   '@scalar/openapi-types@0.0.1':
     resolution: {integrity: sha512-qMcUrhe+JRXlI9VGWcY/xGHkGplHdZ5UdGFXJ0q9e20gFVk2HMApE98Mo2iUp42Gff0xHIcNHaEQKAhdfW3R2Q==}
     engines: {node: '>=18'}
 
-  '@scalar/themes@0.9.25':
-    resolution: {integrity: sha512-95LjyXF3jImbzp8WbYD5mNXulcJ196EeA0A1e6k8OmLkVXlXEomOKXkSlVOCR6dNR2NpbF6gKkorrUHgIe7cgQ==}
+  '@scalar/themes@0.9.26':
+    resolution: {integrity: sha512-94bEZgnTYZLaZiaiM/e7dY8EiK3UZxfd7Tp88f+8MWz314Jtg1klb2QOu7aJLgPIxoenSmF15IKkdKHB2bNKyQ==}
     engines: {node: '>=18'}
 
-  '@scalar/types@0.0.2':
-    resolution: {integrity: sha512-+rzKOSoq4qsVVCURceIXfhuGDOMeoRRrMBKTe2Imri4+wsEmfIcFUnEJ9vbGCfIgMHtZ6dQEh2hAnbNRcfKUAw==}
+  '@scalar/types@0.0.3':
+    resolution: {integrity: sha512-urSd+/ydgAQPNEpc6vvCMRjPi9rxx3whEne6JimVyPUefmzkIvamMce0DpJFKTbbwy/eYceLNCPbyq4NzWo/4A==}
     engines: {node: '>=18'}
 
   '@sec-ant/readable-stream@0.4.1':
@@ -7106,19 +7106,19 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.20.0':
     optional: true
 
-  '@scalar/fastify-api-reference@1.25.3':
+  '@scalar/fastify-api-reference@1.25.4':
     dependencies:
-      '@scalar/types': 0.0.2
+      '@scalar/types': 0.0.3
       fastify-plugin: 4.5.1
 
   '@scalar/openapi-types@0.0.1': {}
 
-  '@scalar/themes@0.9.25': {}
+  '@scalar/themes@0.9.26': {}
 
-  '@scalar/types@0.0.2':
+  '@scalar/types@0.0.3':
     dependencies:
       '@scalar/openapi-types': 0.0.1
-      '@scalar/themes': 0.9.25
+      '@scalar/themes': 0.9.26
       '@unhead/schema': 1.9.16
 
   '@sec-ant/readable-stream@0.4.1': {}
