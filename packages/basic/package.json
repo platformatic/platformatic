@@ -24,8 +24,13 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
+    "@babel/generator": "^7.25.0",
+    "@babel/parser": "^7.25.3",
+    "@babel/traverse": "^7.25.3",
+    "@babel/types": "^7.25.2",
     "@fastify/error": "^4.0.0",
     "@platformatic/config": "workspace:*",
+    "@platformatic/itc": "workspace:*",
     "light-my-request": "^5.13.0",
     "pino": "^9.3.2",
     "semver": "^7.6.3",
@@ -40,6 +45,9 @@
     "eslint": "9",
     "fastify": "^4.28.1",
     "neostandard": "^0.11.1",
+    "next": "^14.2.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "typescript": "^5.5.4",
     "vite": "^5.4.0",
     "ws": "^8.18.0"

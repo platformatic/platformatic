@@ -2,21 +2,27 @@
 
 const { Writable } = require('node:stream')
 
-class MessagePortWritable extends Writable {
-  #port
+class DestinationWritable extends Writable {
   #metadata
 
   constructor (options) {
-    const { port, metadata, ...opts } = options
+    const { metadata, ...opts } = options
 
     super({ ...opts, decodeStrings: false })
-    this.#port = port
     this.#metadata = metadata
+  }
+
+  _send (message) {
+    throw new Error('DestinationWritable._send not implemented')
+  }
+
+  _close () {
+    // Default is a no-op
   }
 
   // Since this is only invoked by pino, we only receive strings
   _write (chunk, encoding, callback) {
-    this.#port.postMessage({ metadata: this.#metadata, logs: [chunk.toString(encoding ?? 'utf-8')] })
+    this._send({ metadata: this.#metadata, logs: [chunk.toString(encoding ?? 'utf-8')] })
 
     // Important: do not remove nextTick otherwise _writev will never be used
     process.nextTick(callback)
@@ -24,21 +30,21 @@ class MessagePortWritable extends Writable {
 
   // Since this is only invoked by pino, we only receive strings
   _writev (chunks, callback) {
-    this.#port.postMessage({ metadata: this.#metadata, logs: chunks.map(c => c.chunk.toString(c.encoding ?? 'utf-8')) })
+    this._send({ metadata: this.#metadata, logs: chunks.map(c => c.chunk.toString(c.encoding ?? 'utf-8')) })
 
     // Important: do not remove nextTick otherwise _writev will never be used
     process.nextTick(callback)
   }
 
   _final (callback) {
-    this.#port.close()
+    this._close()
     callback()
   }
 
   _destroy (err, callback) {
-    this.#port.close()
+    this._close()
     callback(err)
   }
 }
 
-module.exports = { MessagePortWritable }
+module.exports = { DestinationWritable }

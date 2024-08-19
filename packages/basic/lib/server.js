@@ -3,7 +3,8 @@ import { Server } from 'node:http'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { BaseStackable } from './base.js'
-import { createPortManager, getServerUrl, injectViaRequest, isFastify } from './utils.js'
+import { getServerUrl, injectViaRequest, isFastify } from './utils.js'
+import { createServerListener } from './worker/server-listener.js'
 
 export class ServerStackable extends BaseStackable {
   #entrypoint
@@ -39,16 +40,16 @@ export class ServerStackable extends BaseStackable {
       )
     }
 
-    // The port manager must be created before requiring the entrypoint even if it's not going to be used
+    // The server promise must be created before requiring the entrypoint even if it's not going to be used
     // at all. Otherwise there is chance we miss the listen event.
-    const portManager = createPortManager()
+    const serverPromise = createServerListener()
     this.#module = await import(pathToFileURL(join(this.root, this.#entrypoint)))
     this.#module = this.#module.default || this.#module
 
     // Deal with application
     if (typeof this.#module.build === 'function') {
       // We have build function, this Stackable will not use HTTP unless it is the entrypoint
-      portManager.destroy()
+      serverPromise.cancel()
 
       this.#app = await this.#module.build()
       this.#isFastify = isFastify(this.#app)
@@ -61,9 +62,8 @@ export class ServerStackable extends BaseStackable {
       }
     } else {
       // User blackbox function, we wait for it to listen on a port
-      this.#server = await portManager.getServer()
+      this.#server = await serverPromise
       this.url = getServerUrl(this.#server)
-      portManager.destroy()
     }
 
     return this.url

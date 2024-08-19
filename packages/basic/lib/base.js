@@ -12,7 +12,9 @@ export class BaseStackable {
     this.getGraphqlSchema = null
 
     // Setup the logger
-    const pinoOptions = { level: this.serverConfig?.logger?.level ?? 'trace' }
+    const pinoOptions = {
+      level: (this.configManager.current.server ?? this.serverConfig)?.logger?.level ?? 'trace',
+    }
 
     if (this.id) {
       pinoOptions.name = this.id

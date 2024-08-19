@@ -1,5 +1,3 @@
-'use strict'
-
 import { test } from 'node:test'
 import {
   createRuntime,
@@ -12,34 +10,32 @@ import {
 } from './helper.js'
 
 function websocketHMRHandler (message, resolveConnection, resolveReload) {
-  switch (message.type) {
-    case 'connected':
+  switch (message.action) {
+    case 'sync':
       resolveConnection()
       break
-    case 'full-reload':
+    case 'serverComponentChanges':
       resolveReload()
   }
 }
 
-test('can detect and start a Vite application', async t => {
+test('can detect and start a Next application', async t => {
   const versionFile = await updateHMRVersion()
-  const { url } = await createRuntime(t, 'vite/standalone/platformatic.runtime.json')
+  const { url } = await createRuntime(t, 'next/standalone/platformatic.runtime.json')
 
-  const htmlContents = ['<title>Vite App</title>', '<script type="module" src="/main.js"></script>']
-
-  await verifyHTMLViaHTTP(url, '/', htmlContents)
-  await verifyHMR(url, '/', versionFile, 'vite-hmr', websocketHMRHandler)
+  await verifyHTMLViaHTTP(url, '/', ['<script src="/_next/static/chunks/main-app.js'])
+  await verifyHMR(url, '/_next/webpack-hmr', versionFile, undefined, websocketHMRHandler)
 })
 
-test('can detect and start a Vite application when exposed in a composer with a prefix', async t => {
+test('can detect and start a Next application when exposed in a composer with a prefix', async t => {
   const versionFile = await updateHMRVersion()
-  const { runtime, url } = await createRuntime(t, 'vite/composer-with-prefix/platformatic.runtime.json')
+  const { runtime, url } = await createRuntime(t, 'next/composer-with-prefix/platformatic.runtime.json')
 
-  const htmlContents = ['<title>Vite App</title>', '<script type="module" src="/frontend/main.js"></script>']
+  const htmlContents = ['<script src="/frontend/_next/static/chunks/main-app.js']
 
   await verifyHTMLViaHTTP(url, '/frontend/', htmlContents)
   await verifyHTMLViaInject(runtime, 'main', '/frontend', htmlContents)
-  await verifyHMR(url, '/frontend/', versionFile, 'vite-hmr', websocketHMRHandler)
+  await verifyHMR(url, '/frontend/_next/webpack-hmr', versionFile, undefined, websocketHMRHandler)
 
   await verifyJSONViaHTTP(url, '/plugin', 200, { ok: true })
   await verifyJSONViaHTTP(url, '/frontend/plugin', 200, { ok: true })
@@ -50,15 +46,15 @@ test('can detect and start a Vite application when exposed in a composer with a 
   await verifyJSONViaInject(runtime, 'service', 'GET', '/direct', 200, { ok: true })
 })
 
-test('can detect and start a Vite application when exposed in a composer without a prefix', async t => {
+test('can detect and start a Next application when exposed in a composer without a prefix', async t => {
   const versionFile = await updateHMRVersion()
-  const { runtime, url } = await createRuntime(t, 'vite/composer-without-prefix/platformatic.runtime.json')
+  const { runtime, url } = await createRuntime(t, 'next/composer-without-prefix/platformatic.runtime.json')
 
-  const htmlContents = ['<title>Vite App</title>', '<script type="module" src="/main.js"></script>']
+  const htmlContents = ['<script src="/_next/static/chunks/main-app.js']
 
   await verifyHTMLViaHTTP(url, '/', htmlContents)
   await verifyHTMLViaInject(runtime, 'main', '/', htmlContents)
-  await verifyHMR(url, '/', versionFile, 'vite-hmr', websocketHMRHandler)
+  await verifyHMR(url, '/_next/webpack-hmr', versionFile, undefined, websocketHMRHandler)
 
   await verifyJSONViaHTTP(url, '/plugin', 200, { ok: true })
   await verifyJSONViaHTTP(url, '/frontend/plugin', 200, { ok: true })
@@ -69,15 +65,15 @@ test('can detect and start a Vite application when exposed in a composer without
   await verifyJSONViaInject(runtime, 'service', 'GET', '/direct', 200, { ok: true })
 })
 
-test('can detect and start a Vite application when exposed in a composer with a custom config and by autodetecting the prefix', async t => {
+test('can detect and start a Next application when exposed in a composer with a custom config and by autodetecting the prefix', async t => {
   const versionFile = await updateHMRVersion()
-  const { runtime, url } = await createRuntime(t, 'vite/composer-autodetect-prefix/platformatic.runtime.json')
+  const { runtime, url } = await createRuntime(t, 'next/composer-autodetect-prefix/platformatic.runtime.json')
 
-  const htmlContents = ['<title>Vite App</title>', '<script type="module" src="/nested/base/dir/main.js"></script>']
+  const htmlContents = ['<script src="/nested/base/dir/_next/static/chunks/main-app.js']
 
   await verifyHTMLViaHTTP(url, '/nested/base/dir/', htmlContents)
   await verifyHTMLViaInject(runtime, 'main', '/nested/base/dir', htmlContents)
-  await verifyHMR(url, '/nested/base/dir/', versionFile, 'vite-hmr', websocketHMRHandler)
+  await verifyHMR(url, '/nested/base/dir/_next/webpack-hmr', versionFile, undefined, websocketHMRHandler)
 
   await verifyJSONViaHTTP(url, '/plugin', 200, { ok: true })
   await verifyJSONViaHTTP(url, '/frontend/plugin', 200, { ok: true })

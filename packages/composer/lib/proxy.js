@@ -17,6 +17,7 @@ async function resolveServiceProxyParameters (service) {
   }
 
   let rewritePrefix = ''
+  let internalRewriteLocationHeader = true
 
   // Get meta information from the service, if any, to eventually hook up to a TCP port
   const meta = (await globalThis[kITC]?.send('getServiceMeta', service.id))?.composer ?? {}
@@ -31,9 +32,10 @@ async function resolveServiceProxyParameters (service) {
 
   if (meta.wantsAbsoluteUrls) {
     rewritePrefix = prefix
+    internalRewriteLocationHeader = false
   }
 
-  return { origin, prefix, rewritePrefix }
+  return { origin, prefix, rewritePrefix, internalRewriteLocationHeader }
 }
 
 module.exports = fp(async function (app, opts) {
@@ -48,7 +50,8 @@ module.exports = fp(async function (app, opts) {
       }
     }
 
-    const { prefix, origin, rewritePrefix } = await resolveServiceProxyParameters(service)
+    const { prefix, origin, rewritePrefix, internalRewriteLocationHeader } =
+      await resolveServiceProxyParameters(service)
 
     app.log.info(`Proxying ${prefix} to ${origin}`)
 
@@ -61,6 +64,7 @@ module.exports = fp(async function (app, opts) {
       websocket: true,
       undici: dispatcher,
       destroyAgent: false,
+      internalRewriteLocationHeader,
       replyOptions: {
         rewriteRequestHeaders: (request, headers) => {
           const targetUrl = `${origin}${request.url}`
