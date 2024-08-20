@@ -43,8 +43,6 @@ jobs:
           node scripts/update-version.mjs ${{ inputs.version }}
           pnpm -r run --if-present prepublishOnly
           sh scripts/sync-version.sh
-      - name: Update schema versions
-        run: pnpm run gen-schema
       - name: update lockfile
         uses: nick-fields/retry@v3.0.0
         with:

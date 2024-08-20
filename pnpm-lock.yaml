@@ -75,6 +75,9 @@ importers:
       fastify:
         specifier: ^4.28.1
         version: 4.28.1
+      json2ts:
+        specifier: ^0.0.7
+        version: 0.0.7
       neostandard:
         specifier: ^0.11.1
         version: 0.11.2(eslint@9.9.0)(typescript@5.5.4)
@@ -4654,6 +4657,9 @@ packages:
 
   json-stable-stringify-without-jsonify@1.0.1:
     resolution: {integrity: sha512-Bdboy+l7tA3OGW6FjyFHWkP5LuByj1Tk33Ljyq0axyzdk9//JSi2u3fP1QSmd1KNwq6VOKYGlAu87CisVir6Pw==}
+
+  json2ts@0.0.7:
+    resolution: {integrity: sha512-7g41Foq7xRPmZ+4o8HGCsNFBe9ar/egOpuktCdlI3OHzAY34WJh28LKrc3523sLV4wPdgZk2LjOPDs5Za1HzAg==}
 
   json5@2.2.3:
     resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
@@ -9437,6 +9443,10 @@ snapshots:
   json-schema-traverse@1.0.0: {}
 
   json-stable-stringify-without-jsonify@1.0.1: {}
+
+  json2ts@0.0.7:
+    dependencies:
+      underscore: 1.12.1
 
   json5@2.2.3: {}
 
