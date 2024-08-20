@@ -11,8 +11,6 @@ import {
   variableDeclarator,
 } from '@babel/types'
 import { readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 const originalId = '__pltOriginalNextConfig'
 
@@ -113,7 +111,7 @@ function transformESM (source) {
 
 export function initialize (data) {
   // Keep in sync with https://github.com/vercel/next.js/blob/main/packages/next/src/shared/lib/constants.ts
-  candidates = ['next.config.js', 'next.config.mjs'].map(c => join(data.root, c))
+  candidates = ['./next.config.js', './next.config.mjs'].map(c => new URL(c, data.root + '/').toString())
   basePath = data.basePath ?? ''
 }
 
@@ -125,9 +123,7 @@ export async function load (url, context, nextLoad) {
     return result
   }
 
-  const path = fileURLToPath(new URL(url))
-
-  if (!candidates.includes(path)) {
+  if (!candidates.includes(url)) {
     return result
   }
 

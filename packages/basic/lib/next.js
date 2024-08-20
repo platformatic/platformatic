@@ -2,6 +2,7 @@ import { once } from 'node:events'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { dirname, resolve as pathResolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { satisfies } from 'semver'
 import { BaseStackable } from './base.js'
 import { UnsupportedVersion } from './errors.js'
@@ -54,7 +55,8 @@ export class NextStackable extends BaseStackable {
     this.#manager = new ChildManager({
       loader: new URL('./worker/next-loader.js', import.meta.url),
       context: {
-        root: this.root,
+        // Always use URL to avoid serialization problem in Windows
+        root: pathToFileURL(this.root),
         basePath: this.#basePath,
         logger: { id: this.id, level: this.logger.level },
       },
