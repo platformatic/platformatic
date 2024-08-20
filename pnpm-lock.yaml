@@ -2218,7 +2218,7 @@ importers:
         version: 5.5.4
       vite:
         specifier: ^5.4.0
-        version: 5.4.1(@types/node@20.14.15)
+        version: 5.4.1(@types/node@20.16.1)
       ws:
         specifier: ^8.18.0
         version: 8.18.0
