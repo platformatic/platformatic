@@ -1,9 +1,8 @@
 import inject from 'light-my-request'
 import { Server } from 'node:http'
-import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { resolve as pathResolve } from 'node:path'
 import { BaseStackable } from './base.js'
-import { getServerUrl, injectViaRequest, isFastify } from './utils.js'
+import { getServerUrl, importFile, injectViaRequest, isFastify } from './utils.js'
 import { createServerListener } from './worker/server-listener.js'
 
 export class ServerStackable extends BaseStackable {
@@ -43,7 +42,7 @@ export class ServerStackable extends BaseStackable {
     // The server promise must be created before requiring the entrypoint even if it's not going to be used
     // at all. Otherwise there is chance we miss the listen event.
     const serverPromise = createServerListener()
-    this.#module = await import(pathToFileURL(join(this.root, this.#entrypoint)))
+    this.#module = await importFile(pathResolve(this.root, this.#entrypoint))
     this.#module = this.#module.default || this.#module
 
     // Deal with application

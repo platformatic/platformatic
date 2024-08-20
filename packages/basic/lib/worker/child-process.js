@@ -29,10 +29,6 @@ class ChildProcess extends ITC {
     this.listen()
     this.#setupLogger()
     this.#setupServer()
-
-    this.handle('kill', () => {
-      this.close()
-    })
   }
 
   _setupListener (listener) {

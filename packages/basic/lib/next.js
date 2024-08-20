@@ -5,6 +5,7 @@ import { dirname, resolve as pathResolve } from 'node:path'
 import { satisfies } from 'semver'
 import { BaseStackable } from './base.js'
 import { UnsupportedVersion } from './errors.js'
+import { importFile } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
 
 const supportedVersions = '^14.0.0'
@@ -26,7 +27,7 @@ export class NextStackable extends BaseStackable {
     const nextPackage = JSON.parse(await readFile(pathResolve(this.#next, 'package.json')))
 
     if (!satisfies(nextPackage.version, supportedVersions)) {
-      throw new UnsupportedVersion('vite', nextPackage.version, supportedVersions)
+      throw new UnsupportedVersion('next', nextPackage.version, supportedVersions)
     }
   }
 
@@ -70,10 +71,9 @@ export class NextStackable extends BaseStackable {
 
   async stop () {
     const exitPromise = once(this.#manager, 'exit')
-    await this.#manager.send('kill')
-    await exitPromise
 
     this.#manager.close()
+    await exitPromise
   }
 
   async getWatchConfig () {
@@ -94,7 +94,7 @@ export class NextStackable extends BaseStackable {
   }
 
   async #startNext (nextRoot, serverOptions) {
-    const { nextDev } = await import(pathResolve(this.#next, './dist/cli/next-dev.js'))
+    const { nextDev } = await importFile(pathResolve(this.#next, './dist/cli/next-dev.js'))
 
     this.#manager.inject()
     await nextDev(serverOptions, 'default', this.root)

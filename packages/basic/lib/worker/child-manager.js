@@ -1,10 +1,9 @@
 import { ITC } from '@platformatic/itc'
 import { subscribe, unsubscribe } from 'node:diagnostics_channel'
 import { once } from 'node:events'
-import { fileURLToPath } from 'node:url'
 import { workerData } from 'node:worker_threads'
 
-export const childProcessWorkerFile = fileURLToPath(new URL('./child-process.js', import.meta.url))
+export const childProcessWorkerFile = new URL('./child-process.js', import.meta.url)
 
 export class ChildManager extends ITC {
   #child
@@ -58,6 +57,7 @@ export class ChildManager extends ITC {
 
   _close () {
     this.#child.removeListener('message', this.#listener)
+    this.#child.kill('SIGKILL')
   }
 
   #prepareChildEnvironment (loader, context) {

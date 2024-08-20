@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url'
 import { request } from 'undici'
 
 export function getServerUrl (server) {
@@ -40,4 +41,8 @@ export async function injectViaRequest (baseUrl, injectParams, onInject) {
 
     throw error
   }
+}
+
+export function importFile (path) {
+  return import(pathToFileURL(path))
 }

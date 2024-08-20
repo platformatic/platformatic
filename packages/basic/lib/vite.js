@@ -1,9 +1,8 @@
 import { createRequire } from 'node:module'
 import { dirname, resolve as pathResolve } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { satisfies } from 'semver'
 import { BaseStackable } from './base.js'
-import { getServerUrl } from './utils.js'
+import { getServerUrl, importFile } from './utils.js'
 import { createServerListener } from './worker/server-listener.js'
 
 import { readFile } from 'node:fs/promises'
@@ -60,7 +59,7 @@ export class ViteStackable extends BaseStackable {
 
     // Require Vite
     const serverPromise = createServerListener()
-    const { createServer } = await import(pathToFileURL(pathResolve(this.#vite, 'dist/node/index.js')))
+    const { createServer } = await importFile(pathResolve(this.#vite, 'dist/node/index.js'))
 
     // Create the server and listen
     this.#app = await createServer({
