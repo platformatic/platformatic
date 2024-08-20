@@ -150,10 +150,4 @@ export interface PlatformaticStackable {
       }
     | boolean
     | string;
-  application?: {
-    base?: string;
-  };
-  vite?: {
-    configFile?: string | boolean;
-  };
 }
