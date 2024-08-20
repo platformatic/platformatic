@@ -36,10 +36,8 @@ export const schema = {
     $schema: {
       type: 'string',
     },
-    server: schemas.server,
-    watch,
   },
-  additionalProperties: false,
+  additionalProperties: true,
 }
 
 /* c8 ignore next 3 */

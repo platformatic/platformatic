@@ -1,6 +1,7 @@
 import { createDirectory, withResolvers } from '@platformatic/utils'
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
-import { writeFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { readFile, symlink, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { Client, request } from 'undici'
@@ -17,8 +18,26 @@ export function setFixturesDir (directory) {
   fixturesDir = directory
 }
 
-export async function createRuntime (t, path) {
+export async function ensureDependency (directory, pkg, source) {
+  const [namespace, name] = pkg.includes('/') ? pkg.split('/') : ['', pkg]
+  const basedir = resolve(fixturesDir, directory, `node_modules/${namespace}`)
+  const destination = resolve(basedir, name)
+
+  await createDirectory(basedir)
+  if (!existsSync(destination)) {
+    await symlink(source, destination, 'dir')
+  }
+}
+
+export async function createRuntime (t, path, packageRoot) {
   const configFile = resolve(fixturesDir, path)
+
+  if (packageRoot) {
+    const packageName = JSON.parse(await readFile(resolve(packageRoot, 'package.json'), 'utf-8')).name
+    const root = dirname(configFile)
+    await ensureDependency(root, packageName, packageRoot)
+  }
+
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const runtime = await buildServer(config.configManager.current)
   const url = await runtime.start()

@@ -21,11 +21,12 @@ function websocketHMRHandler (message, resolveConnection, resolveReload) {
   }
 }
 
+const packageRoot = resolve(import.meta.dirname, '..')
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('can detect and start a Vite application', async t => {
   const versionFile = await updateHMRVersion()
-  const { url } = await createRuntime(t, 'vite/standalone/platformatic.runtime.json')
+  const { url } = await createRuntime(t, 'vite/standalone/platformatic.runtime.json', packageRoot)
 
   const htmlContents = ['<title>Vite App</title>', '<script type="module" src="/main.js"></script>']
 
@@ -35,7 +36,7 @@ test('can detect and start a Vite application', async t => {
 
 test('can detect and start a Vite application when exposed in a composer with a prefix', async t => {
   const versionFile = await updateHMRVersion()
-  const { runtime, url } = await createRuntime(t, 'vite/composer-with-prefix/platformatic.runtime.json')
+  const { runtime, url } = await createRuntime(t, 'vite/composer-with-prefix/platformatic.runtime.json', packageRoot)
 
   const htmlContents = ['<title>Vite App</title>', '<script type="module" src="/frontend/main.js"></script>']
 
@@ -54,7 +55,7 @@ test('can detect and start a Vite application when exposed in a composer with a 
 
 test('can detect and start a Vite application when exposed in a composer without a prefix', async t => {
   const versionFile = await updateHMRVersion()
-  const { runtime, url } = await createRuntime(t, 'vite/composer-without-prefix/platformatic.runtime.json')
+  const { runtime, url } = await createRuntime(t, 'vite/composer-without-prefix/platformatic.runtime.json', packageRoot)
 
   const htmlContents = ['<title>Vite App</title>', '<script type="module" src="/main.js"></script>']
 
@@ -74,7 +75,11 @@ test('can detect and start a Vite application when exposed in a composer without
 // In this file the application purposely does not specify a platformatic.application.json to see if we automatically detect one
 test('can detect and start a Vite application when exposed in a composer with a custom config and by autodetecting the prefix', async t => {
   const versionFile = await updateHMRVersion()
-  const { runtime, url } = await createRuntime(t, 'vite/composer-autodetect-prefix/platformatic.runtime.json')
+  const { runtime, url } = await createRuntime(
+    t,
+    'vite/composer-autodetect-prefix/platformatic.runtime.json',
+    packageRoot
+  )
 
   const htmlContents = ['<title>Vite App</title>', '<script type="module" src="/nested/base/dir/main.js"></script>']
 

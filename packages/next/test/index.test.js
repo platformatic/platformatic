@@ -21,11 +21,12 @@ function websocketHMRHandler (message, resolveConnection, resolveReload) {
   }
 }
 
+const packageRoot = resolve(import.meta.dirname, '..')
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('can detect and start a Next application', async t => {
   const versionFile = await updateHMRVersion()
-  const { url } = await createRuntime(t, 'next/standalone/platformatic.runtime.json')
+  const { url } = await createRuntime(t, 'next/standalone/platformatic.runtime.json', packageRoot)
 
   await verifyHTMLViaHTTP(url, '/', ['<script src="/_next/static/chunks/main-app.js'])
   await verifyHMR(url, '/_next/webpack-hmr', versionFile, undefined, websocketHMRHandler)
@@ -33,7 +34,7 @@ test('can detect and start a Next application', async t => {
 
 test('can detect and start a Next application when exposed in a composer with a prefix', async t => {
   const versionFile = await updateHMRVersion()
-  const { runtime, url } = await createRuntime(t, 'next/composer-with-prefix/platformatic.runtime.json')
+  const { runtime, url } = await createRuntime(t, 'next/composer-with-prefix/platformatic.runtime.json', packageRoot)
 
   const htmlContents = ['<script src="/frontend/_next/static/chunks/main-app.js']
 
@@ -52,7 +53,7 @@ test('can detect and start a Next application when exposed in a composer with a 
 
 test('can detect and start a Next application when exposed in a composer without a prefix', async t => {
   const versionFile = await updateHMRVersion()
-  const { runtime, url } = await createRuntime(t, 'next/composer-without-prefix/platformatic.runtime.json')
+  const { runtime, url } = await createRuntime(t, 'next/composer-without-prefix/platformatic.runtime.json', packageRoot)
 
   const htmlContents = ['<script src="/_next/static/chunks/main-app.js']
 
@@ -72,7 +73,11 @@ test('can detect and start a Next application when exposed in a composer without
 // In this file the application purposely does not specify a platformatic.application.json to see if we automatically detect one
 test('can detect and start a Next application when exposed in a composer with a custom config and by autodetecting the prefix', async t => {
   const versionFile = await updateHMRVersion()
-  const { runtime, url } = await createRuntime(t, 'next/composer-autodetect-prefix/platformatic.runtime.json')
+  const { runtime, url } = await createRuntime(
+    t,
+    'next/composer-autodetect-prefix/platformatic.runtime.json',
+    packageRoot
+  )
 
   const htmlContents = ['<script src="/nested/base/dir/_next/static/chunks/main-app.js']
 

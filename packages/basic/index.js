@@ -1,12 +1,22 @@
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import { relative, resolve } from 'node:path'
 import { workerData } from 'node:worker_threads'
 import { packageJson, schema } from './lib/schema.js'
+import { importFile } from './lib/utils.js'
 
 async function importStackablePackage (opts, pkg, autodetectDescription) {
   try {
-    return await import(pkg)
+    try {
+      // Try regular import
+      return await import(pkg)
+    } catch (e) {
+      // Scope to the service
+      const require = createRequire(resolve(opts.context.directory, 'index.js'))
+      const imported = require.resolve(pkg)
+      return await importFile(imported)
+    }
   } catch (e) {
     const rootFolder = relative(process.cwd(), workerData.dirname)
 
