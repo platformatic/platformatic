@@ -6,7 +6,7 @@ import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
 import { cliPath } from './helper.mjs'
 
-const version = JSON.parse(await readFile(join(import.meta.url, '..', '..', 'package.json'))).version
+const version = JSON.parse(await readFile(join(import.meta.url, '..', '..', 'package.json'), 'utf-8')).version
 
 test('version', async (t) => {
   const { stdout } = await execa('node', [cliPath, '--version'])

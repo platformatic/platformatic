@@ -6,7 +6,7 @@ import { join } from 'desm'
 import { execa } from 'execa'
 import { cliPath } from './helper.mjs'
 
-const version = JSON.parse(await readFile(join(import.meta.url, '..', '..', 'package.json'))).version
+const version = JSON.parse(await readFile(join(import.meta.url, '..', '..', 'package.json'), 'utf-8')).version
 
 test('version', async () => {
   const { stdout } = await execa(process.execPath, [cliPath, '--version'])

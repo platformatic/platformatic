@@ -73,7 +73,7 @@ myPlugin.schema = schema
 
 // The configuration of the ConfigManager
 myPlugin.configManagerConfig = {
-  version: JSON.parse(readFileSync(new URL(import.meta.url, 'package.json'))).version
+  version: JSON.parse(readFileSync(new URL(import.meta.url, 'package.json'), 'utf-8')).version
   schema: foo.schema,
   allowToWatch: ['.env'],
   schemaOptions: {
@@ -270,7 +270,7 @@ function buildStackable () : Stackable<AcmeBaseConfig> {
     schema,
     version: require('./package.json').version
     //// use the following if the file is compiled as ESM:
-    // version: JSON.parse(readFileSync(new URL(import.meta.url, 'package.json'))).version
+    // version: JSON.parse(readFileSync(new URL(import.meta.url, 'package.json'), 'utf-8')).version
     allowToWatch: ['.env'],
     schemaOptions: {
       useDefaults: true,

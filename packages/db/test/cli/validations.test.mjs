@@ -7,7 +7,7 @@ import stripAnsi from 'strip-ansi'
 import { getConnectionInfo } from '../helper.js'
 import { cliPath } from './helper.js'
 
-const version = JSON.parse(await readFile(join(import.meta.url, '..', '..', 'package.json'))).version
+const version = JSON.parse(await readFile(join(import.meta.url, '..', '..', 'package.json'), 'utf-8')).version
 
 test('version', async (t) => {
   const { stdout } = await execa('node', [cliPath, '--version'])

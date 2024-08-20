@@ -53,7 +53,7 @@ test('should update valid config without updating the file', async (t) => {
   }
   await cm.update(newConfig)
   assert.deepEqual(cm.current, newConfig)
-  const configData = JSON.parse(await readFile(file))
+  const configData = JSON.parse(await readFile(file, 'utf-8'))
   assert.deepEqual(configData, original)
 
   assert.equal(isConfigTransformed, true)
@@ -99,6 +99,6 @@ test('should not update with invalid config', async (t) => {
   const updateRes = await cm.update(newConfig)
   assert.deepEqual(updateRes, false)
   assert.deepEqual(cm.current, config)
-  const configData = JSON.parse(await readFile(file))
+  const configData = JSON.parse(await readFile(file, 'utf-8'))
   assert.deepEqual(configData, config)
 })

@@ -241,7 +241,7 @@ class Store {
     // we should probably refactor this to only read the file once
     if (!app) {
       const parser = getParser(configFile)
-      const parsed = parser(await readFile(configFile))
+      const parsed = parser(await readFile(configFile, 'utf-8'))
 
       const res = await this._get(parsed, opts)
       app = res.app

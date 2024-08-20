@@ -7,7 +7,7 @@ for i in $FOLDERS; do
   cp NOTICE $i
   echo "adjusting SPDX in $i"
   cd $i
-  node -e 'const fs = require("fs"); const pkg = JSON.parse(fs.readFileSync("package.json")); pkg.license = "Apache-2.0"; fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));'
+  node -e 'const fs = require("fs"); const pkg = JSON.parse(fs.readFileSync("package.json"), 'utf-8'); pkg.license = "Apache-2.0"; fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));'
   cd ../..
 done
 

@@ -202,7 +202,7 @@ class RuntimeGenerator extends BaseGenerator {
     })
 
     if (!this.existingConfig) {
-      this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
+      this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md'), 'utf-8') })
     }
 
     return {
@@ -375,7 +375,7 @@ class RuntimeGenerator extends BaseGenerator {
 
         // delete dependencies
         const servicePackageJson = JSON.parse(
-          await readFile(join(this.targetDirectory, 'services', s.name, 'platformatic.json'))
+          await readFile(join(this.targetDirectory, 'services', s.name, 'platformatic.json'), 'utf-8')
         )
         if (servicePackageJson.plugins && servicePackageJson.plugins.packages) {
           servicePackageJson.plugins.packages.forEach(p => {

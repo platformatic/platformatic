@@ -197,7 +197,7 @@ test('config support with folder', async (t) => {
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--folder', 'uncanny'])
 
   {
-    const config = JSON.parse(await fs.readFile('./platformatic.service.json'))
+    const config = JSON.parse(await fs.readFile('./platformatic.service.json', 'utf-8'))
     equal(matchObj(config, {
       clients: [{
         schema: posix.join('uncanny', 'movies.openapi.json'),

@@ -170,27 +170,27 @@ test('generate correct file names', async (t) => {
 
   // Without --name will create api/client filenames
   await execa('node', [cliPath, app.url, '--language', 'ts', '--frontend'])
-  ok(await readFile(join(dir, 'api', 'api.ts')))
-  ok(await readFile(join(dir, 'api', 'api-types.d.ts')))
+  ok(await readFile(join(dir, 'api', 'api.ts'), 'utf-8'))
+  ok(await readFile(join(dir, 'api', 'api-types.d.ts'), 'utf-8'))
 
   await execa('node', [cliPath, app.url])
-  ok(await readFile(join(dir, 'client', 'client.cjs')))
-  ok(await readFile(join(dir, 'client', 'client.d.ts')))
+  ok(await readFile(join(dir, 'client', 'client.cjs'), 'utf-8'))
+  ok(await readFile(join(dir, 'client', 'client.d.ts'), 'utf-8'))
 
   // With --name will create foobar.ts and foobar-types.d.ts
   await execa('node', [cliPath, app.url, '--language', 'ts', '--name', 'foobar', '--frontend'])
-  ok(await readFile(join(dir, 'foobar', 'foobar.ts')))
-  ok(await readFile(join(dir, 'foobar', 'foobar-types.d.ts')))
+  ok(await readFile(join(dir, 'foobar', 'foobar.ts'), 'utf-8'))
+  ok(await readFile(join(dir, 'foobar', 'foobar-types.d.ts'), 'utf-8'))
 
   // Without --name will create api.ts and api-types.d.ts
   await execa('node', [cliPath, app.url, '--language', 'ts', '--frontend'])
-  ok(await readFile(join(dir, 'api', 'api.ts')))
-  ok(await readFile(join(dir, 'api', 'api-types.d.ts')))
+  ok(await readFile(join(dir, 'api', 'api.ts'), 'utf-8'))
+  ok(await readFile(join(dir, 'api', 'api-types.d.ts'), 'utf-8'))
 
   // Convert dashes to camelCase
   await execa('node', [cliPath, app.url, '--language', 'ts', '--name', 'sample-name', '--frontend'])
-  ok(await readFile(join(dir, 'sample-name', 'sample-name.ts')))
-  ok(await readFile(join(dir, 'sample-name', 'sample-name-types.d.ts')))
+  ok(await readFile(join(dir, 'sample-name', 'sample-name.ts'), 'utf-8'))
+  ok(await readFile(join(dir, 'sample-name', 'sample-name-types.d.ts'), 'utf-8'))
 })
 
 test('test factory and client', async (t) => {

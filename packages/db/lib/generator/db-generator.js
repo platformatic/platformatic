@@ -117,7 +117,7 @@ class DBGenerator extends BaseGenerator {
         this.createMigrationFiles()
       }
 
-      this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
+      this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md'), 'utf-8') })
 
       if (this.config.plugin) {
         let jsHelper = { pre: '', config: '', post: '' }
