@@ -16,7 +16,7 @@ export class NextStackable extends BaseStackable {
   #manager
 
   constructor (options, root, configManager) {
-    super('vite', packageJson.version, options, root, configManager)
+    super('next', packageJson.version, options, root, configManager)
   }
 
   async init () {
