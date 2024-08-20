@@ -35,4 +35,8 @@ module.exports = async function adjustConfig (configManager) {
       [configManager.current.migrations.table || migrationsTableName]: true,
     }, configManager.current.db.ignore)
   }
+
+  if (configManager.current.types?.autogenerate === 'true') {
+    configManager.current.types.autogenerate = true
+  }
 }

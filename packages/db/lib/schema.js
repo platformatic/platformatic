@@ -383,7 +383,12 @@ const types = {
   type: 'object',
   properties: {
     autogenerate: {
-      type: 'boolean',
+      anyOf: [{
+        type: 'string',
+      }, {
+        type: 'boolean',
+      }],
+      description: 'Should types be auto generated.'
     },
     dir: {
       type: 'string',
