@@ -1,118 +1,91 @@
-'use strict'
-
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
-
-import { ConfigManager } from '@platformatic/config'
-
-import { NextStackable } from './lib/next.js'
+import { createRequire } from 'node:module'
+import { relative, resolve } from 'node:path'
+import { workerData } from 'node:worker_threads'
 import { packageJson, schema } from './lib/schema.js'
-import { ServerStackable } from './lib/server.js'
-import { ViteStackable } from './lib/vite.js'
+import { importFile } from './lib/utils.js'
 
-const validFields = [
-  'main',
-  'exports',
-  'exports',
-  'exports#node',
-  'exports#import',
-  'exports#require',
-  'exports#default',
-  'exports#.#node',
-  'exports#.#import',
-  'exports#.#require',
-  'exports#.#default',
-]
-
-const validFilesBasenames = ['index', 'main', 'app', 'application', 'server', 'start', 'bundle', 'run', 'entrypoint']
-
-async function parsePackageJson (root) {
-  let entrypoint
-  let packageJson
-  let hadEntrypointField = false
-
+async function importStackablePackage (opts, pkg, autodetectDescription) {
   try {
-    packageJson = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf-8'))
-  } catch {
-    // No package.json, we only load the index.js file
-    packageJson = {}
-  }
+    try {
+      // Try regular import
+      return await import(pkg)
+    } catch (e) {
+      // Scope to the service
+      const require = createRequire(resolve(opts.context.directory, 'index.js'))
+      const imported = require.resolve(pkg)
+      return await importFile(imported)
+    }
+  } catch (e) {
+    const rootFolder = relative(process.cwd(), workerData.dirname)
 
-  for (const field of validFields) {
-    let current = packageJson
-    const sequence = field.split('#')
+    let errorMessage = `Unable to import package, "${pkg}". Please add it as a dependency `
 
-    while (current && sequence.length && typeof current !== 'string') {
-      current = current[sequence.shift()]
+    if (rootFolder) {
+      errorMessage += `in the package.json file in the folder ${rootFolder}.`
+    } else {
+      errorMessage += 'in the root package.json file.'
     }
 
-    if (typeof current === 'string') {
-      entrypoint = current
-      hadEntrypointField = true
-      break
+    if (!opts.config) {
+      const serviceRoot = relative(process.cwd(), opts.context.directory)
+      errorMessage += [
+        '', // Do not remove this
+        `Platformatic has auto-detected that service ${opts.context.serviceId} ${autodetectDescription}.`,
+        `We suggest you create a platformatic.application.json file in the folder ${serviceRoot} with the "$schema" property set to "https://schemas.platformatic.dev/${pkg}/${packageJson.version}.json".`,
+      ].join('\n')
     }
-  }
 
-  if (!entrypoint) {
-    for (const basename of validFilesBasenames) {
-      for (const ext of ['js', 'mjs', 'cjs']) {
-        const file = `${basename}.${ext}`
-
-        if (existsSync(resolve(root, file))) {
-          entrypoint = file
-          break
-        }
-      }
-
-      if (entrypoint) {
-        break
-      }
-    }
-  }
-
-  return { packageJson, entrypoint, hadEntrypointField }
-}
-
-function transformConfig () {
-  if (this.current.watch === undefined) {
-    this.current.watch = { enabled: false }
-  }
-
-  if (typeof this.current.watch !== 'object') {
-    this.current.watch = { enabled: this.current.watch || false }
+    throw new Error(errorMessage)
   }
 }
 
-export async function buildStackable (opts) {
+async function buildStackable (opts) {
   const root = opts.context.directory
-  const {
-    entrypoint,
-    hadEntrypointField,
-    packageJson: { dependencies, devDependencies },
-  } = await parsePackageJson(root)
+  let toImport = '@platformatic/node'
+  let autodetectDescription = 'is using a generic Node.js application'
 
-  const configManager = new ConfigManager({ schema, source: opts.config ?? {} })
-  await configManager.parseAndValidate()
-
-  let stackable
-  if (dependencies?.next || devDependencies?.next) {
-    stackable = new NextStackable(opts, root, configManager)
-  } else if (dependencies?.vite || devDependencies?.vite) {
-    stackable = new ViteStackable(opts, root, configManager)
-  } else {
-    stackable = new ServerStackable(opts, root, configManager, entrypoint, hadEntrypointField)
+  let rootPackageJson
+  try {
+    rootPackageJson = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf-8'))
+  } catch {
+    rootPackageJson = {}
   }
 
-  return stackable
+  if (!opts.config) {
+    const candidate = resolve(root, 'platformatic.application.json')
+
+    if (existsSync(candidate)) {
+      opts.config = candidate
+    }
+  }
+
+  const { dependencies, devDependencies } = rootPackageJson
+
+  if (dependencies?.next || devDependencies?.next) {
+    autodetectDescription = 'is using Next.js'
+    toImport = '@platformatic/next'
+  } else if (dependencies?.vite || devDependencies?.vite) {
+    autodetectDescription = 'is using Vite'
+    toImport = '@platformatic/vite'
+  }
+
+  const imported = await importStackablePackage(opts, toImport, autodetectDescription)
+  return imported.buildStackable(opts)
 }
 
 export default {
   configType: 'nodejs',
-  configManagerConfig: {
-    transformConfig,
-  },
+  configManagerConfig: {},
   buildStackable,
   schema,
   version: packageJson.version,
 }
+
+export * from './lib/base.js'
+export * as errors from './lib/errors.js'
+export { schema, schemaComponents } from './lib/schema.js'
+export * from './lib/utils.js'
+export * from './lib/worker/child-manager.js'
+export * from './lib/worker/server-listener.js'

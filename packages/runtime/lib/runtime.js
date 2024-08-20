@@ -240,17 +240,20 @@ class Runtime extends EventEmitter {
       const config = this.#configManager.current
       const restartOnError = config.restartOnError
 
+      if (!restartOnError) {
+        this.logger.error(`Failed to start service "${id}".`)
+        throw error
+      }
+
       let bootstrapAttempt = this.#bootstrapAttempts.get(id)
       if (bootstrapAttempt++ >= MAX_BOOTSTRAP_ATTEMPTS || restartOnError === 0) {
-        this.logger.error(
-          `Failed to start service "${id}" after ${MAX_BOOTSTRAP_ATTEMPTS} attempts.`
-        )
+        this.logger.error(`Failed to start service "${id}" after ${MAX_BOOTSTRAP_ATTEMPTS} attempts.`)
         throw error
       }
 
       this.logger.warn(
         `Starting a service "${id}" in ${restartOnError}ms. ` +
-        `Attempt ${bootstrapAttempt} of ${MAX_BOOTSTRAP_ATTEMPTS}...`
+          `Attempt ${bootstrapAttempt} of ${MAX_BOOTSTRAP_ATTEMPTS}...`
       )
 
       this.#bootstrapAttempts.set(id, bootstrapAttempt)
@@ -720,7 +723,7 @@ class Runtime extends EventEmitter {
         if (started && this.#status === 'started') {
           if (restartOnError > 0) {
             this.logger.warn(`Restarting a service "${id}" in ${restartOnError}ms...`)
-            this.#restartCrashedService(id).catch((err) => {
+            this.#restartCrashedService(id).catch(err => {
               this.logger.error({ err }, `Failed to restart service "${id}".`)
             })
           } else {

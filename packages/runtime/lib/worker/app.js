@@ -205,21 +205,14 @@ class PlatformaticApp extends EventEmitter {
 
   #logAndExit (err) {
     // Runtime logs here with console.error because stackable is not initialized
-    console.error(
-      JSON.stringify({
-        msg: err.message,
-        name: this.appConfig.id,
-      })
-    )
+    console.error(err.message)
     process.exit(1)
   }
 
   #wrapStackable (stackable) {
     const newStackable = {}
     for (const method of Object.keys(defaultStackable)) {
-      newStackable[method] = stackable[method]
-        ? stackable[method].bind(stackable)
-        : defaultStackable[method]
+      newStackable[method] = stackable[method] ? stackable[method].bind(stackable) : defaultStackable[method]
     }
     return newStackable
   }
@@ -240,8 +233,7 @@ class PlatformaticApp extends EventEmitter {
       }
     }
 
-    const dispatcher = getGlobalDispatcher()
-      .compose(interceptor)
+    const dispatcher = getGlobalDispatcher().compose(interceptor)
 
     setGlobalDispatcher(dispatcher)
   }

@@ -98,13 +98,13 @@ export interface StackableInterface {
   getGraphqlSchema?: () => Promise<string>
   getMetrics?: () => Promise<string>
   getMeta?(): () => Promise<object>
-  inject?: (injectParams: object) => Promise<{    
+  inject?: (injectParams: object) => Promise<{
     statusCode: number
     statusMessage: string
     headers: object
     body: object
-  }>,
-  log?: (options: { message: string, level: string }) => Promise<void>
+  }>
+  log?: (options: { message: string; level: string }) => Promise<void>
   getBootstrapDependencies?: () => Promise<StackableDependency[]>
   getWatchConfig?: () => Promise<{
     enabled: boolean
@@ -115,15 +115,15 @@ export interface StackableInterface {
 }
 
 export interface StackableContext {
-  serviceId: string,
-  isEntrypoint: boolean,
-  isProduction: boolean,
+  serviceId: string
+  isEntrypoint: boolean
+  isProduction: boolean
   directory: string
-  telemetryConfig: object,
-  metricsConfig: object,
-  serverConfig: object,
-  hasManagementApi: boolean,
-  localServiceEnvVars: Map<string, string>,
+  telemetryConfig: object
+  metricsConfig: object
+  serverConfig: object
+  hasManagementApi: boolean
+  localServiceEnvVars: Map<string, string>
 }
 
 export interface BuildStackableArgs {

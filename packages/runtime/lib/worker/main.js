@@ -38,7 +38,7 @@ function handleUnhandled (type, err) {
 
 function createLogger () {
   const destination = new MessagePortWritable({ port: workerData.loggingPort })
-  const loggerInstance = pino({ level: 'trace' }, destination)
+  const loggerInstance = pino({ level: 'trace', name: workerData.serviceConfig.id }, destination)
 
   Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(loggerInstance, 'info') })
   Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(loggerInstance, 'error') })

@@ -1,9 +1,9 @@
 import pino from 'pino'
-import { packageJson } from './schema.js'
 
 export class BaseStackable {
-  constructor (options, root, configManager) {
-    this.type = 'nodejs'
+  constructor (type, version, options, root, configManager) {
+    this.type = type
+    this.version = version
     this.id = options.context.serviceId
     this.root = root
     this.configManager = configManager
@@ -50,7 +50,7 @@ export class BaseStackable {
   }
 
   async getInfo () {
-    return { type: this.type, version: packageJson.version }
+    return { type: this.type, version: this.version }
   }
 
   getDispatchFunc () {

@@ -20,18 +20,6 @@ importers:
 
   packages/basic:
     dependencies:
-      '@babel/generator':
-        specifier: ^7.25.0
-        version: 7.25.0
-      '@babel/parser':
-        specifier: ^7.25.3
-        version: 7.25.3
-      '@babel/traverse':
-        specifier: ^7.25.3
-        version: 7.25.3
-      '@babel/types':
-        specifier: ^7.25.2
-        version: 7.25.2
       '@fastify/error':
         specifier: ^4.0.0
         version: 4.0.0
@@ -41,9 +29,9 @@ importers:
       '@platformatic/itc':
         specifier: workspace:*
         version: link:../itc
-      light-my-request:
-        specifier: ^5.13.0
-        version: 5.13.0
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
       pino:
         specifier: ^9.3.2
         version: 9.3.2
@@ -60,9 +48,6 @@ importers:
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
-      '@platformatic/utils':
-        specifier: workspace:*
-        version: link:../utils
       borp:
         specifier: ^0.17.0
         version: 0.17.0
@@ -1280,6 +1265,104 @@ importers:
         specifier: ^5.5.4
         version: 5.5.4
 
+  packages/next:
+    dependencies:
+      '@babel/generator':
+        specifier: ^7.25.0
+        version: 7.25.0
+      '@babel/parser':
+        specifier: ^7.25.3
+        version: 7.25.3
+      '@babel/traverse':
+        specifier: ^7.25.3
+        version: 7.25.3
+      '@babel/types':
+        specifier: ^7.25.2
+        version: 7.25.2
+      '@platformatic/basic':
+        specifier: workspace:*
+        version: link:../basic
+      '@platformatic/config':
+        specifier: workspace:*
+        version: link:../config
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
+      semver:
+        specifier: ^7.6.3
+        version: 7.6.3
+    devDependencies:
+      '@platformatic/composer':
+        specifier: workspace:*
+        version: link:../composer
+      '@platformatic/service':
+        specifier: workspace:*
+        version: link:../service
+      borp:
+        specifier: ^0.17.0
+        version: 0.17.0
+      eslint:
+        specifier: '9'
+        version: 9.9.0
+      neostandard:
+        specifier: ^0.11.1
+        version: 0.11.2(eslint@9.9.0)(typescript@5.5.4)
+      next:
+        specifier: ^14.2.5
+        version: 14.2.5(@opentelemetry/api@1.9.0)(@playwright/test@1.46.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+      typescript:
+        specifier: ^5.5.4
+        version: 5.5.4
+      ws:
+        specifier: ^8.18.0
+        version: 8.18.0
+
+  packages/node:
+    dependencies:
+      '@platformatic/basic':
+        specifier: workspace:*
+        version: link:../basic
+      '@platformatic/config':
+        specifier: workspace:*
+        version: link:../config
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
+      light-my-request:
+        specifier: ^5.13.0
+        version: 5.13.0
+    devDependencies:
+      '@platformatic/composer':
+        specifier: workspace:*
+        version: link:../composer
+      '@platformatic/service':
+        specifier: workspace:*
+        version: link:../service
+      borp:
+        specifier: ^0.17.0
+        version: 0.17.0
+      eslint:
+        specifier: '9'
+        version: 9.9.0
+      express:
+        specifier: ^4.19.2
+        version: 4.19.2
+      fastify:
+        specifier: ^4.28.1
+        version: 4.28.1
+      neostandard:
+        specifier: ^0.11.1
+        version: 0.11.2(eslint@9.9.0)(typescript@5.5.4)
+      typescript:
+        specifier: ^5.5.4
+        version: 5.5.4
+
   packages/rpc:
     dependencies:
       fastify:
@@ -2090,6 +2173,46 @@ importers:
       typescript:
         specifier: ^5.5.4
         version: 5.5.4
+
+  packages/vite:
+    dependencies:
+      '@platformatic/basic':
+        specifier: workspace:*
+        version: link:../basic
+      '@platformatic/config':
+        specifier: workspace:*
+        version: link:../config
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
+      semver:
+        specifier: ^7.6.3
+        version: 7.6.3
+    devDependencies:
+      '@platformatic/composer':
+        specifier: workspace:*
+        version: link:../composer
+      '@platformatic/service':
+        specifier: workspace:*
+        version: link:../service
+      borp:
+        specifier: ^0.17.0
+        version: 0.17.0
+      eslint:
+        specifier: '9'
+        version: 9.9.0
+      neostandard:
+        specifier: ^0.11.1
+        version: 0.11.2(eslint@9.9.0)(typescript@5.5.4)
+      typescript:
+        specifier: ^5.5.4
+        version: 5.5.4
+      vite:
+        specifier: ^5.4.0
+        version: 5.4.1(@types/node@20.16.1)
+      ws:
+        specifier: ^8.18.0
+        version: 8.18.0
 
 packages:
 

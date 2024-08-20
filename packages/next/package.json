@@ -1,0 +1,48 @@
+{
+  "name": "@platformatic/next",
+  "version": "2.0.0-alpha.3",
+  "description": "Platformatic Next.js Stackable",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "npm run lint && borp --concurrency=1 --timeout=180000",
+    "coverage": "npm run lint && borp -C -X test -X test/fixtures --concurrency=1 --timeout=180000",
+    "gen-schema": "node lib/schema.js > schema.json",
+    "gen-types": "json2ts > config.d.ts < schema.json",
+    "build": "pnpm run gen-schema && pnpm run gen-types",
+    "prepublishOnly": "pnpm run build",
+    "lint": "eslint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "author": "Paolo Insogna <paolo@cowtech.it>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "dependencies": {
+    "@babel/generator": "^7.25.0",
+    "@babel/parser": "^7.25.3",
+    "@babel/traverse": "^7.25.3",
+    "@babel/types": "^7.25.2",
+    "@platformatic/basic": "workspace:*",
+    "@platformatic/config": "workspace:*",
+    "@platformatic/utils": "workspace:*",
+    "semver": "^7.6.3"
+  },
+  "devDependencies": {
+    "@platformatic/composer": "workspace:*",
+    "@platformatic/service": "workspace:*",
+    "borp": "^0.17.0",
+    "eslint": "9",
+    "neostandard": "^0.11.1",
+    "next": "^14.2.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.5.4",
+    "ws": "^8.18.0"
+  }
+}
