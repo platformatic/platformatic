@@ -89,7 +89,7 @@ const args = minimist(process.argv.slice(2), {
 })
 
 if (args.version && !args._.includes('inject')) {
-  const version = JSON.parse(await readFile(join(import.meta.url, 'package.json'))).version
+  const version = JSON.parse(await readFile(join(import.meta.url, 'package.json'), 'utf-8')).version
   console.log('v' + version)
   process.exit(0)
 }

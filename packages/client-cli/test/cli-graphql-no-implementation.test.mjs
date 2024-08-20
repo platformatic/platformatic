@@ -74,14 +74,14 @@ module.exports = async function (app) {
   }), true)
 
   {
-    const envs = dotenv.parse(await fs.readFile(join(dir, '.env')))
+    const envs = dotenv.parse(await fs.readFile(join(dir, '.env'), 'utf-8'))
     same(envs, {
       PLT_MOVIES_URL: app.url + '/graphql',
     })
   }
 
   {
-    const envs = dotenv.parse(await fs.readFile(join(dir, '.env.sample')))
+    const envs = dotenv.parse(await fs.readFile(join(dir, '.env.sample'), 'utf-8'))
     same(envs, {
       PLT_MOVIES_URL: app.url + '/graphql',
     })

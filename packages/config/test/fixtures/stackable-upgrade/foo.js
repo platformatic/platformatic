@@ -3,7 +3,7 @@
 const { readFileSync } = require('node:fs')
 const { join } = require('node:path')
 
-const schema = JSON.parse(readFileSync(join(__dirname, 'stackable.schema.json')))
+const schema = JSON.parse(readFileSync(join(__dirname, 'stackable.schema.json'), 'utf-8'))
 
 function foo () {
 }

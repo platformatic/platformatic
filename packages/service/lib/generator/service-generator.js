@@ -83,7 +83,7 @@ declare module 'fastify' {
 }
 `
       this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
-      this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md')) })
+      this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md'), 'utf-8') })
     }
   }
 

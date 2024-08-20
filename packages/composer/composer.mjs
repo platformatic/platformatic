@@ -37,7 +37,7 @@ export async function runComposer (argv) {
   })
 
   if (args.version) {
-    console.log('v' + JSON.parse(await readFile(join(import.meta.url, 'package.json'))).version)
+    console.log('v' + JSON.parse(await readFile(join(import.meta.url, 'package.json'), 'utf-8')).version)
     process.exit(0)
   }
 

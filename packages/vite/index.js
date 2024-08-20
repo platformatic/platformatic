@@ -22,7 +22,7 @@ export class ViteStackable extends BaseStackable {
     globalThis[Symbol.for('plt.runtime.itc')].handle('getServiceMeta', this.getMeta.bind(this))
 
     this.#vite = dirname(createRequire(this.root).resolve('vite'))
-    const vitePackage = JSON.parse(await readFile(resolve(this.#vite, 'package.json')))
+    const vitePackage = JSON.parse(await readFile(resolve(this.#vite, 'package.json'), 'utf-8'))
 
     /* c8 ignore next 3 */
     if (!satisfies(vitePackage.version, supportedVersions)) {

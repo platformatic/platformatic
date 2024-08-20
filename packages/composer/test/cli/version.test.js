@@ -11,6 +11,6 @@ test('version', async (t) => {
   const { execa } = await import('execa')
   const { stdout } = await execa('node', [cliPath, '--version'])
 
-  const version = JSON.parse(await readFile(join(__dirname, '..', '..', 'package.json'))).version
+  const version = JSON.parse(await readFile(join(__dirname, '..', '..', 'package.json'), 'utf-8')).version
   assert.ok(stdout.includes('v' + version))
 })

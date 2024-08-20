@@ -426,7 +426,7 @@ test('dotenv & config support', async (t) => {
 
   const url = app.url + '/'
   {
-    const envs = dotenv.parse(await fs.readFile(join(dir, '.env')))
+    const envs = dotenv.parse(await fs.readFile(join(dir, '.env'), 'utf-8'))
     same(envs, {
       FOO: 'bar',
       PLT_MOVIES_URL: url,
@@ -434,7 +434,7 @@ test('dotenv & config support', async (t) => {
   }
 
   {
-    const envs = dotenv.parse(await fs.readFile(join(dir, '.env.sample')))
+    const envs = dotenv.parse(await fs.readFile(join(dir, '.env.sample'), 'utf-8'))
     same(envs, {
       FOO: 'bar',
       PLT_MOVIES_URL: url,
@@ -601,7 +601,7 @@ test('name with dashes', async (t) => {
   }
 
   {
-    const pkg = JSON.parse(await fs.readFile(join(dir, 'uncanny-movies', 'package.json')))
+    const pkg = JSON.parse(await fs.readFile(join(dir, 'uncanny-movies', 'package.json'), 'utf-8'))
     same(pkg, {
       name: 'uncanny-movies',
       main: './uncanny-movies.cjs',
@@ -751,7 +751,7 @@ test('name with tilde', async (t) => {
   }
 
   {
-    const pkg = JSON.parse(await fs.readFile(join(dir, 'uncanny~movies', 'package.json')))
+    const pkg = JSON.parse(await fs.readFile(join(dir, 'uncanny~movies', 'package.json'), 'utf-8'))
     same(pkg, {
       name: 'uncanny~movies',
       main: './uncanny~movies.cjs',

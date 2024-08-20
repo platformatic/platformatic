@@ -98,7 +98,7 @@ for (const cliHelp of cliHelps) {
   if (cliHelp === 'help.txt') continue
 
   const cliHelpPath = path.join(cliHelpDir, cliHelp)
-  const content = await readFile(cliHelpPath)
+  const content = await readFile(cliHelpPath, 'utf-8')
   out += `
 #### ${cliHelp.replace('.txt', '')}
 
@@ -122,7 +122,7 @@ const clientHelps = await readdir(clientHelpsDir)
 
 for (const clientHelp of clientHelps) {
   const clientHelpPath = path.join(clientHelpsDir, clientHelp)
-  const content = await readFile(clientHelpPath)
+  const content = await readFile(clientHelpPath, 'utf-8')
   out += `
 #### ${clientHelp.replace('.txt', '')}
 
@@ -146,7 +146,7 @@ const composerHelps = await readdir(composerHelpsDir)
 
 for (const composerHelp of composerHelps) {
   const composerHelpPath = path.join(composerHelpsDir, composerHelp)
-  const content = await readFile(composerHelpPath)
+  const content = await readFile(composerHelpPath, 'utf-8')
   out += `
 #### ${composerHelp.replace('.txt', '')}
 
@@ -170,7 +170,7 @@ const dbHelps = await readdir(dbHelpsDir)
 
 for (const dbHelp of dbHelps) {
   const dbHelpPath = path.join(dbHelpsDir, dbHelp)
-  const content = await readFile(dbHelpPath)
+  const content = await readFile(dbHelpPath, 'utf-8')
   out += `
 #### ${dbHelp.replace('.txt', '')}
 
@@ -194,7 +194,7 @@ const serviceHelps = await readdir(serviceHelpsDir)
 
 for (const serviceHelp of serviceHelps) {
   const serviceHelpPath = path.join(serviceHelpsDir, serviceHelp)
-  const content = await readFile(serviceHelpPath)
+  const content = await readFile(serviceHelpPath, 'utf-8')
   out += `
 #### ${serviceHelp.replace('.txt', '')}
 
@@ -241,7 +241,7 @@ const runtimeHelps = await readdir(runtimeHelpsDir)
 
 for (const runtimeHelp of runtimeHelps) {
   const runtimeHelpPath = path.join(runtimeHelpsDir, runtimeHelp)
-  const content = await readFile(runtimeHelpPath)
+  const content = await readFile(runtimeHelpPath, 'utf-8')
   out += `
 #### ${runtimeHelp.replace('.txt', '')}
 
@@ -279,7 +279,7 @@ const controlHelps = await readdir(controlHelpsDir)
 
 for (const controlHelp of controlHelps) {
   const controlHelpPath = path.join(controlHelpsDir, controlHelp)
-  const content = await readFile(controlHelpPath)
+  const content = await readFile(controlHelpPath, 'utf-8')
   out += `
 #### ${controlHelp.replace('.txt', '')}
 

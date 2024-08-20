@@ -37,7 +37,7 @@ test('migrate creates a schema.lock file on a different path', { skip: true }, a
     } catch {}
   })
 
-  const data = await readFile(expectedFile)
+  const data = await readFile(expectedFile, 'utf-8')
   // Let's just validate this is a valid JSON file
   JSON.parse(data)
 })
@@ -89,7 +89,7 @@ test('start creates schema.lock if it is missing', { skip: true }, async (t) => 
   }
   assert.equal(found, true)
 
-  const data = await readFile(expectedFile)
+  const data = await readFile(expectedFile, 'utf-8')
   // Let's just validate this is a valid JSON file
   JSON.parse(data)
 })

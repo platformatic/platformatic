@@ -17,7 +17,7 @@ setGlobalDispatcher(new Agent({
   },
 }))
 
-const version = JSON.parse(await readFile(join(import.meta.url, '..', 'package.json'))).version
+const version = JSON.parse(await readFile(join(import.meta.url, '..', 'package.json'), 'utf-8')).version
 const help = await readFile(join(import.meta.url, '..', 'help', 'help.txt'), 'utf8')
 
 // This reads a file from packages/db

@@ -228,7 +228,7 @@ test('migrate creates a schema.lock file', async (t) => {
     }
   )
 
-  const data = await readFile(expectedFile)
+  const data = await readFile(expectedFile, 'utf-8')
   // Let's just validate this is a valid JSON file
   JSON.parse(data)
 
