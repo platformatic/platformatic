@@ -1,8 +1,31 @@
 import { schemas } from '@platformatic/utils'
 import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
 
-export const packageJson = JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', import.meta.url))))
+export const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url)))
+
+const application = {
+  type: 'object',
+  properties: {
+    basePath: {
+      type: 'string',
+    },
+  },
+  additionalProperties: false,
+}
+
+const watch = {
+  anyOf: [
+    schemas.watch,
+    {
+      type: 'boolean',
+    },
+    {
+      type: 'string',
+    },
+  ],
+}
+
+export const schemaComponents = { application, watch }
 
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/basic/${packageJson.version}.json`,
@@ -14,35 +37,7 @@ export const schema = {
       type: 'string',
     },
     server: schemas.server,
-    watch: {
-      anyOf: [
-        schemas.watch,
-        {
-          type: 'boolean',
-        },
-        {
-          type: 'string',
-        },
-      ],
-    },
-    application: {
-      type: 'object',
-      properties: {
-        base: {
-          type: 'string',
-        },
-      },
-      additionalProperties: false,
-    },
-    vite: {
-      type: 'object',
-      properties: {
-        configFile: {
-          oneOf: [{ type: 'string' }, { type: 'boolean' }],
-        },
-      },
-      additionalProperties: false,
-    },
+    watch,
   },
   additionalProperties: false,
 }

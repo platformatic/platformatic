@@ -17,6 +17,9 @@
   "packageManager": "pnpm@9.7.1",
   "devDependencies": {
     "@fastify/pre-commit": "^2.1.0",
+    "@platformatic/next": "workspace:*",
+    "@platformatic/node": "workspace:*",
+    "@platformatic/vite": "workspace:*",
     "desm": "^1.3.1",
     "markdownlint-cli2": "^0.13.0"
   },

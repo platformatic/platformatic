@@ -7,11 +7,6 @@ export function getServerUrl (server) {
   return new URL(family === 'IPv6' ? `http://[${address}]:${port}` : `http://${address}:${port}`).origin
 }
 
-// Paolo: This is kinda hackish but there is no better way. I apologize.
-export function isFastify (app) {
-  return Object.getOwnPropertySymbols(app).some(s => s.description === 'fastify.state')
-}
-
 export async function injectViaRequest (baseUrl, injectParams, onInject) {
   const url = new URL(injectParams.url, baseUrl).href
   const requestParams = { method: injectParams.method, headers: injectParams.headers }
@@ -43,6 +38,7 @@ export async function injectViaRequest (baseUrl, injectParams, onInject) {
   }
 }
 
+// This is to avoid common path/URL problems on Windows
 export function importFile (path) {
   return import(pathToFileURL(path))
 }

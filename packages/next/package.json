@@ -1,10 +1,12 @@
 {
-  "name": "@platformatic/basic",
-  "version": "2.0.0-alpha.4",
-  "description": "",
+  "name": "@platformatic/next",
+  "version": "2.0.0-alpha.3",
+  "description": "Platformatic Next.js Stackable",
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "test": "npm run lint && borp --concurrency=1 --timeout=180000",
+    "coverage": "npm run lint && borp -C -X test -X test/fixtures --concurrency=1 --timeout=180000",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "pnpm run gen-schema && pnpm run gen-types",
@@ -22,28 +24,25 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
-    "@fastify/error": "^4.0.0",
+    "@babel/generator": "^7.25.0",
+    "@babel/parser": "^7.25.3",
+    "@babel/traverse": "^7.25.3",
+    "@babel/types": "^7.25.2",
+    "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
-    "@platformatic/itc": "workspace:*",
     "@platformatic/utils": "workspace:*",
-    "pino": "^9.3.2",
-    "semver": "^7.6.3",
-    "undici": "^6.19.5"
+    "semver": "^7.6.3"
   },
   "devDependencies": {
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
     "borp": "^0.17.0",
     "eslint": "9",
-    "express": "^4.19.2",
-    "fastify": "^4.28.1",
-    "json-schema-to-typescript": "^15.0.0",
     "neostandard": "^0.11.1",
     "next": "^14.2.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "typescript": "^5.5.4",
-    "vite": "^5.4.0",
     "ws": "^8.18.0"
   }
 }

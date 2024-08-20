@@ -11,7 +11,11 @@ import { buildServer, platformaticRuntime } from '../../runtime/index.js'
 export { setTimeout as sleep } from 'node:timers/promises'
 
 let hrmVersion = Date.now()
-export const fixturesDir = resolve(import.meta.dirname, './fixtures')
+export let fixturesDir
+
+export function setFixturesDir (directory) {
+  fixturesDir = directory
+}
 
 export async function createRuntime (t, path) {
   const configFile = resolve(fixturesDir, path)
