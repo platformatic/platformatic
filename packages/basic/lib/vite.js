@@ -1,9 +1,9 @@
 import { createRequire } from 'node:module'
 import { dirname, resolve as pathResolve } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { satisfies } from 'semver'
 import { BaseStackable } from './base.js'
-import { createPortManager, getServerUrl } from './utils.js'
+import { getServerUrl, importFile } from './utils.js'
+import { createServerListener } from './worker/server-listener.js'
 
 import { readFile } from 'node:fs/promises'
 import { UnsupportedVersion } from './errors.js'
@@ -14,6 +14,7 @@ export class ViteStackable extends BaseStackable {
   #vite
   #app
   #server
+  #basePath
 
   constructor (options, root, configManager) {
     super(options, root, configManager)
@@ -57,8 +58,8 @@ export class ViteStackable extends BaseStackable {
     }
 
     // Require Vite
-    const portManager = createPortManager()
-    const { createServer } = await import(pathToFileURL(pathResolve(this.#vite, 'dist/node/index.js')))
+    const serverPromise = createServerListener()
+    const { createServer } = await importFile(pathResolve(this.#vite, 'dist/node/index.js'))
 
     // Create the server and listen
     this.#app = await createServer({
@@ -73,9 +74,8 @@ export class ViteStackable extends BaseStackable {
     })
 
     await this.#app.listen()
-    this.#server = this.#app.httpServer
+    this.#server = await serverPromise
     this.url = getServerUrl(this.#server)
-    portManager?.destroy()
   }
 
   async stop () {
@@ -89,11 +89,15 @@ export class ViteStackable extends BaseStackable {
   }
 
   getMeta () {
+    if (!this.#basePath) {
+      this.#basePath = this.#app.config.base.replace(/(^\/)|(\/$)/g, '')
+    }
+
     return {
       composer: {
         tcp: true,
         url: this.url,
-        prefix: this.#app.config.base.replace(/(^\/)|(\/$)/g, ''),
+        prefix: this.#basePath,
         wantsAbsoluteUrls: true,
       },
     }

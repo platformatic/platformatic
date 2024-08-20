@@ -1,7 +1,7 @@
 {
   "name": "@platformatic/utils",
   "version": "2.0.0-alpha.3",
-  "description": "Platformatic DB Utils",
+  "description": "Platformatic Utils",
   "main": "index.js",
   "scripts": {
     "test": "npm run lint && borp --timeout=180000 --coverage",

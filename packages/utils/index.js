@@ -13,6 +13,9 @@ const match = require('./lib/match')
 const schemas = require('./lib/fastify-schema')
 const { createDirectory, safeRemove } = require('./lib/directory')
 const { withResolvers } = require('./lib/promises')
+const { DestinationWritable } = require('./lib/streams/destination-writable')
+const { MessagePortWritable } = require('./lib/streams/message-port-writable')
+const { PinoWritable, createPinoWritable } = require('./lib/streams/pino-writable')
 
 module.exports.FileWatcher = FileWatcher
 module.exports.findNearestString = findNearestString
@@ -32,3 +35,7 @@ module.exports.schemas = schemas
 module.exports.createDirectory = createDirectory
 module.exports.safeRemove = safeRemove
 module.exports.withResolvers = withResolvers
+module.exports.DestinationWritable = DestinationWritable
+module.exports.MessagePortWritable = MessagePortWritable
+module.exports.PinoWritable = PinoWritable
+module.exports.createPinoWritable = createPinoWritable

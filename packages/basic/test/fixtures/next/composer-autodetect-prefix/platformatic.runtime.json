@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
+  "entrypoint": "main",
+  "watch": false,
+  "managementApi": false,
+  "metrics": false,
+  "server": {
+    "logger": {
+      "level": "error"
+    }
+  },
+  "services": [
+    {
+      "id": "frontend",
+      "path": ".",
+      "config": "platformatic.application.json"
+    },
+    { "id": "service", "config": "platformatic.service.json", "path": "../../platformatic-service" },
+    { "id": "main", "config": "platformatic.no-prefix.composer.json", "path": "../../platformatic-composer" }
+  ]
+}

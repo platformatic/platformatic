@@ -6,6 +6,7 @@ import { resolve } from 'node:path'
 
 import { ConfigManager } from '@platformatic/config'
 
+import { NextStackable } from './lib/next.js'
 import { packageJson, schema } from './lib/schema.js'
 import { ServerStackable } from './lib/server.js'
 import { ViteStackable } from './lib/vite.js'
@@ -95,7 +96,9 @@ export async function buildStackable (opts) {
   await configManager.parseAndValidate()
 
   let stackable
-  if (dependencies?.vite || devDependencies?.vite) {
+  if (dependencies?.next || devDependencies?.next) {
+    stackable = new NextStackable(opts, root, configManager)
+  } else if (dependencies?.vite || devDependencies?.vite) {
     stackable = new ViteStackable(opts, root, configManager)
   } else {
     stackable = new ServerStackable(opts, root, configManager, entrypoint, hadEntrypointField)

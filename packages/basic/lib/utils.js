@@ -1,6 +1,4 @@
-'use strict'
-
-import { tracingChannel } from 'node:diagnostics_channel'
+import { pathToFileURL } from 'node:url'
 import { request } from 'undici'
 
 export function getServerUrl (server) {
@@ -12,37 +10,6 @@ export function getServerUrl (server) {
 // Paolo: This is kinda hackish but there is no better way. I apologize.
 export function isFastify (app) {
   return Object.getOwnPropertySymbols(app).some(s => s.description === 'fastify.state')
-}
-
-export function createPortManager () {
-  let resolve
-  let reject
-
-  const promise = new Promise((_resolve, _reject) => {
-    resolve = _resolve
-    reject = _reject
-  })
-
-  const subscribers = {
-    asyncStart ({ options }) {
-      options.port = 0
-    },
-    asyncEnd: ({ server }) => {
-      resolve(server)
-    },
-    error: reject,
-  }
-
-  tracingChannel('net.server.listen').subscribe(subscribers)
-
-  return {
-    getServer () {
-      return promise
-    },
-    destroy () {
-      tracingChannel('net.server.listen').unsubscribe(subscribers)
-    },
-  }
 }
 
 export async function injectViaRequest (baseUrl, injectParams, onInject) {
@@ -74,4 +41,8 @@ export async function injectViaRequest (baseUrl, injectParams, onInject) {
 
     throw error
   }
+}
+
+export function importFile (path) {
+  return import(pathToFileURL(path))
 }

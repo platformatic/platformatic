@@ -38,7 +38,8 @@ class ITC extends EventEmitter {
     }
 
     const request = this.#generateRequest(name, message)
-    this.port.postMessage(request)
+
+    this._send(request)
 
     const responsePromise = once(this.#requestEmitter, request.reqId).then(([response]) => response)
 
@@ -49,7 +50,7 @@ class ITC extends EventEmitter {
   }
 
   async notify (name, message) {
-    this.port.postMessage(this.#generateNotification(name, message))
+    this._send(this.#generateNotification(name, message))
   }
 
   handle (message, handler) {
@@ -62,7 +63,7 @@ class ITC extends EventEmitter {
     }
     this.#listening = true
 
-    this.port.on('message', message => {
+    this._setupListener(message => {
       const messageType = message.type
       if (messageType === PLT_ITC_REQUEST_TYPE) {
         this.#handleRequest(message)
@@ -80,7 +81,7 @@ class ITC extends EventEmitter {
       }
     })
 
-    this.#closePromise = once(this.port, 'close').then(() => {
+    this.#closePromise = this._createClosePromise().then(() => {
       this.#listening = false
       const error = new errors.MessagePortClosed()
       return { error, data: null }
@@ -93,6 +94,22 @@ class ITC extends EventEmitter {
       return
     }
 
+    this._close()
+  }
+
+  _setupListener (listener) {
+    this.port.on('message', listener)
+  }
+
+  _send (request) {
+    this.port.postMessage(request)
+  }
+
+  _createClosePromise () {
+    return once(this.port, 'close')
+  }
+
+  _close () {
     this.port.close()
   }
 
@@ -130,7 +147,7 @@ class ITC extends EventEmitter {
       this.#handling = false
     }
 
-    this.port.postMessage(response)
+    this._send(response)
 
     if (this.#closeAfterCurrentRequest) {
       this.close()
@@ -155,7 +172,7 @@ class ITC extends EventEmitter {
       response = this.#parseResponse(response)
     } catch (error) {
       response = this.#generateUnhandledErrorResponse(error)
-      this.port.postMessage(response)
+      this._send(response)
       return
     }
 
