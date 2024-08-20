@@ -12,6 +12,7 @@ const defaultStackable = {
   getInfo: () => null,
   getDispatchFunc: () => null,
   getOpenapiSchema: () => null,
+  getDBInfo: () => null,
   getGraphqlSchema: () => null,
   getMetrics: () => null,
   inject: () => {

@@ -72,6 +72,12 @@ async function managementApiPlugin (app, opts) {
     return runtime.getServiceGraphqlSchema(id)
   })
 
+  app.get('/services/:id/db-info', async request => {
+    const { id } = request.params
+    app.log.debug('get db info', { id })
+    return runtime.getServiceDBInfo(id)
+  })
+
   app.post('/services/:id/start', async request => {
     const { id } = request.params
     app.log.debug('start service', { id })

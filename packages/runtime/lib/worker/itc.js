@@ -110,6 +110,14 @@ function setupITC (app, service, dispatcher) {
     }
   })
 
+  itc.handle('getServiceDBInfo', async () => {
+    try {
+      return app.stackable.getDBInfo()
+    } catch (err) {
+      throw new errors.FailedToRetrieveDBInfoError(service.id, err.message)
+    }
+  })
+
   itc.handle('getMetrics', async format => {
     return app.stackable.getMetrics({ format })
   })

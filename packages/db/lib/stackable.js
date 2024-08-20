@@ -22,5 +22,16 @@ class DbStackable extends ServiceStackable {
 
     this.configManager.update(config)
   }
+
+  async getDBInfo () {
+    await this.init()
+    await this.app.ready()
+    if (this.app.platformatic.db) {
+      const connectionInfo = this.app.platformatic.db.connectionInfo
+      const dbschema = this.app.platformatic.dbschema
+      return { connectionInfo, dbschema }
+    }
+    return null
+  }
 }
 module.exports = { DbStackable }

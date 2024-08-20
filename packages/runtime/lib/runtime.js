@@ -507,6 +507,12 @@ class Runtime extends EventEmitter {
     return sendViaITC(service, 'getServiceGraphQLSchema')
   }
 
+  async getServiceDBInfo (id) {
+    const service = await this.#getServiceById(id, true)
+
+    return sendViaITC(service, 'getServiceDBInfo')
+  }
+
   async getMetrics (format = 'json') {
     let metrics = null
 
