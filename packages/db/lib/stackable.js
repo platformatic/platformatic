@@ -1,21 +1,11 @@
 'use strict'
 
-const kITC = Symbol.for('plt.runtime.itc')
-
 const { ServiceStackable } = require('@platformatic/service')
 
 class DbStackable extends ServiceStackable {
   constructor (options) {
     super(options)
     this.#updateConfig()
-  }
-
-  async init () {
-    await super.init()
-    const itc = globalThis[kITC]
-    if (itc) {
-      globalThis[kITC].handle('getServiceMeta', this.getMeta.bind(this))
-    }
   }
 
   #updateConfig () {

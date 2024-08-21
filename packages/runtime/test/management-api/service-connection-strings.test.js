@@ -37,6 +37,7 @@ test('should get service db connection strings', async (t) => {
   })
 
   const connectionStrings = await body.json()
+  console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@', connectionStrings)
   assert.strictEqual(statusCode, 200)
   const database = join(fixturesDir, 'management-api', 'services', 'service-db', 'db.sqlite')
 
