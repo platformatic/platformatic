@@ -120,6 +120,8 @@ async function connect ({ connectionString, log, onDatabaseLoad, poolSize, inclu
   let queries
   const { db, sql } = await createConnectionPool({ log, connectionString, poolSize, queueTimeoutMilliseconds, acquireLockTimeoutMilliseconds, idleTimeoutMilliseconds })
 
+  db.connectionString = connectionString
+
   /* istanbul ignore next */
   if (db.isPg) {
     queries = queriesFactory.pg
