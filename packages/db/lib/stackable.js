@@ -36,8 +36,13 @@ class DbStackable extends ServiceStackable {
   async getMeta () {
     await this.init()
     await this.app.ready()
-    if (this.app.platformatic.db) {
-      const connectionString = this.app.platformatic.db.connectionString
+
+    const config = this.configManager.current
+
+    const dbConfig = config.db
+    const connectionString = dbConfig?.connectionString
+
+    if (connectionString) {
       return {
         db: {
           connectionStrings: [connectionString]
