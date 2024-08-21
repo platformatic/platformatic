@@ -6,15 +6,19 @@ function wrapQuery (app, db, request) {
     const query = arguments[0]
     const connectionInfo = db.connectionInfo
 
-    let namePrefix
+    let namePrefix, dbSystem
     if (connectionInfo.isPg) {
       namePrefix = 'pg.query:'
+      dbSystem = 'postgresql'
     } else if (connectionInfo.isMySql) {
       namePrefix = 'mysql.query:'
+      dbSystem = 'mysql'
     } else if (connectionInfo.isSQLite) {
       namePrefix = 'sqlite.query:'
+      dbSystem = 'sqlite'
     } else {
       namePrefix = 'db.query:'
+      dbSystem = 'unknown'
     }
 
     const format = {
@@ -29,7 +33,7 @@ function wrapQuery (app, db, request) {
 
     const ctx = request.span?.context
 
-    const { database, host, port, user, dbSystem } = connectionInfo
+    const { database, host, port, user } = connectionInfo
     const telemetryAttributes = {
       'db.statement': queryText,
       'db.system': dbSystem,

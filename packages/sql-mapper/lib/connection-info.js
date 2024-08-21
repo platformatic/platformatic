@@ -3,7 +3,6 @@
 // (with the exception of SQLite)
 const getConnectionInfo = async (db, connectionString) => {
   let database, host, port, user
-  let dbSystem = 'unknown'
   if (db.isPg) {
     const driver = await db._pool.getConnection()
     const connectionParameters = driver.connection.client.connectionParameters
@@ -11,7 +10,6 @@ const getConnectionInfo = async (db, connectionString) => {
     port = connectionParameters.port
     database = connectionParameters.database
     user = connectionParameters.user
-    dbSystem = 'postgresql'
     driver.release()
   } else if (db.isMySql || db.isMariaDB || db.isMySql8) {
     const driver = await db._pool.getConnection()
@@ -20,10 +18,8 @@ const getConnectionInfo = async (db, connectionString) => {
     host = connectionParameters.host
     port = connectionParameters.port
     user = connectionParameters.user
-    dbSystem = 'mysql'
     driver.release()
   } else if (db.isSQLite) {
-    dbSystem = 'sqlite'
     database = connectionString?.split('sqlite://')[1]
   }
 
@@ -35,7 +31,6 @@ const getConnectionInfo = async (db, connectionString) => {
     isPg: db.isPg,
     isMySql: db.isMySql,
     isSQLite: db.isSQLite,
-    dbSystem,
   }
 }
 
