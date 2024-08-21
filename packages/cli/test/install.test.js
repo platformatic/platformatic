@@ -7,7 +7,7 @@ import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { cliPath } from './helper.js'
 
-test('updates a runtime', async t => {
+test('installs runtime external services', async t => {
   const dest = await mkdtemp(join(tmpdir(), `test-cli-${process.pid}-`))
 
   await cp(join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'runtime-install'), dest, {
@@ -44,7 +44,7 @@ test('updates a runtime', async t => {
   assert.deepStrictEqual(config.services, [
     {
       id: 'piquant-combat',
-      path: 'services/piquant-combat',
+      path: join('services', 'piquant-combat'),
       config: 'services/piquant-combat/platformatic.json',
       useHttp: false,
     },
@@ -52,19 +52,19 @@ test('updates a runtime', async t => {
       id: 'external-service-1',
       url: 'http://github.com/test-owner/test-app-1.git',
       config: 'platformatic.json',
-      path: 'external/external-service-1',
+      path: join('external', 'external-service-1'),
     },
     {
       id: 'external-service-2',
       url: 'http://github.com/test-owner/test-app-2.git',
       config: 'platformatic.json',
-      path: './custom-external/external-service-2',
+      path: join('custom-external', 'external-service-2'),
     },
     {
       id: 'external-service-3',
       url: 'http://github.com/test-owner/test-app-3.git',
       config: 'platformatic.json',
-      path: 'external/external-service-3',
+      path: join('external', 'external-service-3'),
     },
   ])
 })
