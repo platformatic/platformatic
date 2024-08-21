@@ -191,7 +191,10 @@ const platformaticRuntimeSchema = {
       type: 'array',
       items: {
         type: 'object',
-        required: ['id', 'path'],
+        anyOf: [
+          { required: ['id', 'path'] },
+          { required: ['id', 'url'] },
+        ],
         properties: {
           id: {
             type: 'string',
@@ -201,6 +204,9 @@ const platformaticRuntimeSchema = {
             resolvePath: true,
           },
           config: {
+            type: 'string',
+          },
+          url: {
             type: 'string',
           },
           useHttp: {
