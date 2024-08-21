@@ -118,8 +118,8 @@ function setupITC (app, service, dispatcher) {
     }
   })
 
-  itc.handle('getmetrics', async format => {
-    return app.stackable.getmetrics({ format })
+  itc.handle('getMetrics', async format => {
+    return app.stackable.getMetrics({ format })
   })
 
   itc.handle('inject', async injectParams => {
