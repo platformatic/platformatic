@@ -73,7 +73,7 @@
     "@platformatic/ts-compiler": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "camelcase": "^6.3.0",
-    "close-with-grace": "^1.3.0",
+    "close-with-grace": "^2.0.0",
     "code-block-writer": "^13.0.1",
     "commist": "^3.2.0",
     "console-table-printer": "^2.12.0",
