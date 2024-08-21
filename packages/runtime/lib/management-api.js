@@ -77,10 +77,10 @@ async function managementApiPlugin (app, opts) {
     try {
       app.log.debug('get connection strings', { id })
       const meta = await runtime.getServiceMeta(id)
-      if (!meta || !(meta.db)) {
-        return null
+      if (meta.db) {
+        return meta.db
       }
-      return meta.db
+      return null
     } catch (err) {
       throw new errors.FailedToRetrieveMetaError(id, err.message)
     }

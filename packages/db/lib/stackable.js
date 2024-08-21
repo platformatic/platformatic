@@ -49,7 +49,7 @@ class DbStackable extends ServiceStackable {
         }
       }
     }
-    return null
+    return {}
   }
 }
 module.exports = { DbStackable }
