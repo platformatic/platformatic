@@ -32,9 +32,9 @@ const getConnectionInfo = async (db, connectionString) => {
     host,
     port,
     user,
-    isPg: db.isPg,
-    isMySql: db.isMySql,
-    isSQLite: db.isSQLite,
+    isPg: !!db.isPg,
+    isMySql: !!db.isMySql,
+    isSQLite: !!db.isSQLite,
     dbSystem,
   }
 }
