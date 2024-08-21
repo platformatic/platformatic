@@ -2,6 +2,7 @@ import { ITC } from '@platformatic/itc'
 import { subscribe, unsubscribe } from 'node:diagnostics_channel'
 import { once } from 'node:events'
 import { workerData } from 'node:worker_threads'
+import { request } from 'undici'
 
 export const childProcessWorkerFile = new URL('./child-process.js', import.meta.url)
 
@@ -30,6 +31,8 @@ export class ChildManager extends ITC {
     this.handle('log', message => {
       workerData.loggingPort.postMessage(JSON.parse(message))
     })
+
+    this.handle('fetch', this.#fetch.bind(this))
 
     this.#prepareChildEnvironment(loader, context)
   }
@@ -74,5 +77,14 @@ export class ChildManager extends ITC {
       `--import=${childProcessWorkerFile}`,
       process.env.NODE_OPTIONS ?? '',
     ].join(' ')
+  }
+
+  async #fetch (opts) {
+    const { statusCode, headers, body } = await request(opts)
+
+    const rawPayload = Buffer.from(await body.arrayBuffer())
+    const payload = rawPayload.toString()
+
+    return { statusCode, headers, body: payload, payload, rawPayload }
   }
 }

@@ -18,6 +18,12 @@ export function setFixturesDir (directory) {
   fixturesDir = directory
 }
 
+// This is used to debug tests
+export function pause (url, timeout = 300000) {
+  console.log(`Server is listening at ${url}`)
+  return sleep(timeout)
+}
+
 export async function ensureDependency (directory, pkg, source) {
   const [namespace, name] = pkg.includes('/') ? pkg.split('/') : ['', pkg]
   const basedir = resolve(fixturesDir, directory, `node_modules/${namespace}`)
@@ -81,8 +87,8 @@ export async function getLogs (app) {
     .map(m => JSON.parse(m))
 }
 
-export async function updateHMRVersion () {
-  const versionFile = resolve(fixturesDir, '../tmp/version.js')
+export async function updateHMRVersion (versionFile) {
+  versionFile ??= resolve(fixturesDir, '../tmp/version.js')
   await createDirectory(dirname(versionFile))
   await writeFile(versionFile, `export const version = ${hrmVersion++}\n`, 'utf-8')
 }
@@ -104,10 +110,10 @@ export async function verifyHTMLViaHTTP (baseUrl, path, contents) {
   const html = await body.text()
 
   deepStrictEqual(statusCode, 200)
-  ok(headers['content-type'].startsWith('text/html'))
+  ok(headers['content-type']?.startsWith('text/html'))
 
   for (const content of contents) {
-    ok(html.includes(content))
+    ok(content instanceof RegExp ? content.test(html) : html.includes(content))
   }
 }
 
@@ -118,11 +124,11 @@ export async function verifyHTMLViaInject (app, serviceId, url, contents) {
   ok(headers['content-type'].startsWith('text/html'))
 
   for (const content of contents) {
-    ok(html.includes(content))
+    ok(content instanceof RegExp ? content.test(html) : html.includes(content))
   }
 }
 
-export async function verifyHMR (baseUrl, path, versionFile, protocol, handler) {
+export async function verifyHMR (baseUrl, path, protocol, handler) {
   const connection = withResolvers()
   const reload = withResolvers()
   const ac = new AbortController()

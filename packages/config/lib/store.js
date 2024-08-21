@@ -12,7 +12,7 @@ const abstractLogger = require('./logger')
 
 const pltVersion = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8')).version
 
-const defaultTypes = ['service', 'db', 'composer', 'basic']
+const defaultTypes = ['service', 'db', 'composer', 'basic', 'node', 'vite', 'next']
 const defaultTypesConfigurationAliases = { basic: 'application' }
 
 class Store {
