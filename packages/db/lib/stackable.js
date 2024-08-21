@@ -1,11 +1,21 @@
 'use strict'
 
+const kITC = Symbol.for('plt.runtime.itc')
+
 const { ServiceStackable } = require('@platformatic/service')
 
 class DbStackable extends ServiceStackable {
   constructor (options) {
     super(options)
     this.#updateConfig()
+  }
+
+  async init () {
+    await super.init()
+    const itc = globalThis[kITC]
+    if (itc) {
+      globalThis[kITC].handle('getServiceMeta', this.getMeta.bind(this))
+    }
   }
 
   #updateConfig () {
@@ -21,6 +31,20 @@ class DbStackable extends ServiceStackable {
     }
 
     this.configManager.update(config)
+  }
+
+  async getMeta () {
+    await this.init()
+    await this.app.ready()
+    if (this.app.platformatic.db) {
+      const connectionString = this.app.platformatic.db.connectionString
+      return {
+        db: {
+          connectionStrings: [connectionString]
+        }
+      }
+    }
+    return null
   }
 }
 module.exports = { DbStackable }
