@@ -44,7 +44,7 @@ test('installs runtime external services', async t => {
   assert.deepStrictEqual(config.services, [
     {
       id: 'piquant-combat',
-      path: join('services', 'piquant-combat'),
+      path: 'services/piquant-combat',
       config: 'services/piquant-combat/platformatic.json',
       useHttp: false,
     },
@@ -58,7 +58,7 @@ test('installs runtime external services', async t => {
       id: 'external-service-2',
       url: 'http://github.com/test-owner/test-app-2.git',
       config: 'platformatic.json',
-      path: join('custom-external', 'external-service-2'),
+      path: 'custom-external/external-service-2',
     },
     {
       id: 'external-service-3',
