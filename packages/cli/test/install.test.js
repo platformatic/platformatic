@@ -17,13 +17,13 @@ test('updates a runtime', async t => {
   const child = await execa('node', [cliPath, 'install', '--test'], { cwd: dest })
 
   assert.ok(child.stdout.includes(
-    'Cloning http://github.com/test-owner/test-app-1.git into external/external-service-1'
+    `Cloning http://github.com/test-owner/test-app-1.git into ${join('external', 'external-service-1')}`
   ))
   assert.ok(child.stdout.includes(
-    'Cloning http://github.com/test-owner/test-app-2.git into custom-external/external-service-2'
+    `Cloning http://github.com/test-owner/test-app-2.git into ${join('custom-external', 'external-service-2')}`
   ))
   assert.ok(child.stdout.includes(
-    'Cloning http://github.com/test-owner/test-app-3.git into external/external-service-3'
+    `Cloning http://github.com/test-owner/test-app-3.git into ${join('external', 'external-service-3')}`
   ))
 
   assert.ok(child.stdout.includes(
