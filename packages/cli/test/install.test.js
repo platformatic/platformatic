@@ -15,6 +15,7 @@ test('updates a runtime', async t => {
   })
 
   const child = await execa('node', [cliPath, 'install', '--test'], { cwd: dest })
+  console.log(child.stdout)
 
   assert.ok(child.stdout.includes(
     'Cloning http://github.com/test-owner/test-app-1.git into external/external-service-1'
