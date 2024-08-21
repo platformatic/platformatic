@@ -95,7 +95,7 @@ async function installServices (config, logger) {
 
   await writeFile(configManager.fullPath, newConfig, 'utf8')
 
-  // logger.info(`✅ Updated ${configManager.fullPath}`)
+  logger.info('✅ All external services have been installed')
 }
 
 async function isDirectoryNotEmpty (directoryPath) {
