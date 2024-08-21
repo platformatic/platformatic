@@ -15,6 +15,8 @@ export async function install (argv) {
     alias: {
       config: 'c',
     },
+    boolean: ['test'],
+    default: { test: false },
   })
 
   const logger = pino(pretty({
@@ -22,14 +24,14 @@ export async function install (argv) {
     ignore: 'hostname,pid',
   }))
   try {
-    await installServices(args.config, logger)
+    await installServices(args.config, logger, args.test)
   } catch (err) {
     console.log(err)
     process.exit(1)
   }
 }
 
-async function installServices (config, logger) {
+async function installServices (config, logger, isTest = false) {
   const store = new Store({
     cwd: process.cwd(),
     logger,
@@ -46,7 +48,7 @@ async function installServices (config, logger) {
     },
   })
 
-  await configManager.parseAndValidate(false)
+  await configManager.parseAndValidate(true)
   config = configManager.current
 
   // If the schema is present, we use it to format the config
@@ -58,13 +60,19 @@ async function installServices (config, logger) {
   const projectDir = configManager.dirname
   const externalDir = join(projectDir, INSTALLED_SERVICES_DIRNAME)
 
+  if (!config.services || config.services.length === 0) {
+    logger.info('No external services to install')
+    return
+  }
+
   const services = config.services || []
   for (const service of services) {
     if (service.url) {
       let path = service.path
-      if (!path) {
+      if (!path || (path.startsWith('{') && path.endsWith('}'))) {
         await mkdir(externalDir, { recursive: true })
         path = join(externalDir, service.id)
+        service.path = relative(projectDir, path)
       } else {
         path = join(projectDir, path)
       }
@@ -78,11 +86,15 @@ async function installServices (config, logger) {
       const relativePath = relative(projectDir, path)
 
       logger.info(`Cloning ${service.url} into ${relativePath}`)
-      await execa('git', ['clone', service.url, path])
+      if (!isTest) {
+        await execa('git', ['clone', service.url, path])
+      }
 
       // TODO: replace it with a proper runtime build step
       logger.info(`Installing dependencies for service "${service.id}"`)
-      await execa('npm', ['i'], { cwd: path })
+      if (!isTest) {
+        await execa('npm', ['i'], { cwd: path })
+      }
 
       if (!service.path) {
         service.path = relativePath
