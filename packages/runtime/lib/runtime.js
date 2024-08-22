@@ -739,7 +739,7 @@ class Runtime extends EventEmitter {
     // Setup ITC
     service[kITC] = new ITC({ port: service })
     service[kITC].listen()
-    service[kITC].handle('getServiceMeta', this.#getServiceMeta.bind(this))
+    service[kITC].handle('getServiceMeta', this.getServiceMeta.bind(this))
 
     // Handle services changes
     // This is not purposely activated on when this.#configManager.current.watch === true
@@ -841,7 +841,7 @@ class Runtime extends EventEmitter {
     return service
   }
 
-  async #getServiceMeta (id) {
+  async getServiceMeta (id) {
     const service = this.#services.get(id)
 
     if (!service) {

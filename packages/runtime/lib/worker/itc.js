@@ -110,6 +110,14 @@ function setupITC (app, service, dispatcher) {
     }
   })
 
+  itc.handle('getServiceMeta', async () => {
+    try {
+      return app.stackable.getMeta()
+    } catch (err) {
+      throw new errors.FailedToRetrieveMetaError(service.id, err.message)
+    }
+  })
+
   itc.handle('getMetrics', async format => {
     return app.stackable.getMetrics({ format })
   })
