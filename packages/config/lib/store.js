@@ -13,7 +13,12 @@ const abstractLogger = require('./logger')
 const pltVersion = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8')).version
 
 const defaultTypes = ['service', 'db', 'composer', 'basic', 'node', 'vite', 'next']
-const defaultTypesConfigurationAliases = { basic: 'application' }
+const defaultTypesConfigurationAliases = {
+  basic: 'application',
+  node: 'application',
+  vite: 'application',
+  next: 'application'
+}
 
 class Store {
   #map = new Map()
@@ -125,7 +130,7 @@ class Store {
     const knownTypes = Array.from(this.#map.entries()).map(([id, app]) => {
       return {
         id,
-        configType: app.configType,
+        configType: app.configType
       }
     })
 
@@ -147,7 +152,7 @@ class Store {
         `platformatic.${type}.yaml`,
         `platformatic.${type}.yml`,
         `platformatic.${type}.toml`,
-        `platformatic.${type}.tml`,
+        `platformatic.${type}.tml`
       ]
     }
 
@@ -165,8 +170,8 @@ class Store {
           `platformatic.${type}.yaml`,
           `platformatic.${type}.yml`,
           `platformatic.${type}.toml`,
-          `platformatic.${type}.tml`,
-        ],
+          `platformatic.${type}.tml`
+        ]
       }
 
       types.push(_)
@@ -179,24 +184,26 @@ class Store {
         'platformatic.yaml',
         'platformatic.yml',
         'platformatic.toml',
-        'platformatic.tml',
-      ],
+        'platformatic.tml'
+      ]
     })
 
     const lookup = new Map()
-    const filenames = []
+    const uniqueFilenames = new Set()
     for (const type of types) {
       for (const filename of type.filenames) {
-        filenames.push(filename)
+        uniqueFilenames.add(filename)
         lookup.set(filename, type)
       }
     }
+
+    const filenames = Array.from(uniqueFilenames)
 
     const configFilesAccessibility = await Promise.all(
       filenames.map(async filename => {
         return {
           filename,
-          found: await isFileAccessible(filename, this.#cwd),
+          found: await isFileAccessible(filename, this.#cwd)
         }
       })
     )
@@ -221,7 +228,7 @@ class Store {
 
     return {
       path: join(this.#cwd, found.filename),
-      app,
+      app
     }
   }
 
@@ -253,12 +260,12 @@ class Store {
       configVersion: version,
       logger: this.logger,
       ...app.configManagerConfig,
-      ...overrides,
+      ...overrides
     }
 
     const configManager = new ConfigManager({
       source: configFile,
-      ...configManagerConfig,
+      ...configManagerConfig
     })
 
     return { configManager, app }
@@ -274,7 +281,7 @@ class Store {
       configVersion: version,
       logger: this.logger,
       ...app.configManagerConfig,
-      ...overrides,
+      ...overrides
     })
 
     return { configManager, app }
