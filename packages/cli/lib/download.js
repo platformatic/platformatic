@@ -14,8 +14,11 @@ export async function download (argv) {
   const args = parseArgs(argv, {
     alias: {
       config: 'c',
+      username: 'u',
+      password: 'p',
     },
     boolean: ['test'],
+    string: ['config', 'username', 'password'],
     default: { test: false },
   })
 
@@ -24,14 +27,18 @@ export async function download (argv) {
     ignore: 'hostname,pid',
   }))
   try {
-    await downloadServices(args.config, logger, args.test)
+    await downloadServices(args.config, logger, {
+      test: args.test,
+      username: args.username,
+      password: args.password,
+    })
   } catch (err) {
     console.log(err)
     process.exit(1)
   }
 }
 
-async function downloadServices (config, logger, isTest = false) {
+async function downloadServices (config, logger, options = {}) {
   const store = new Store({
     cwd: process.cwd(),
     logger,
@@ -86,13 +93,22 @@ async function downloadServices (config, logger, isTest = false) {
       const relativePath = relative(projectDir, path)
 
       logger.info(`Cloning ${service.url} into ${relativePath}`)
-      if (!isTest) {
-        await execa('git', ['clone', service.url, path])
+      if (!options.test) {
+        let url = service.url
+        if (options.username && options.password) {
+          const urlObj = new URL(service.url)
+          if (!urlObj.username && !urlObj.password) {
+            urlObj.username = options.username
+            urlObj.password = options.password
+          }
+          url = urlObj.href
+        }
+        await execa('git', ['clone', url, path])
       }
 
       // TODO: replace it with a proper runtime build step
       logger.info(`Downloading dependencies for service "${service.id}"`)
-      if (!isTest) {
+      if (!options.test) {
         await execa('npm', ['i'], { cwd: path })
       }
 
