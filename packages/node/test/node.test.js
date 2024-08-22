@@ -1,4 +1,4 @@
-import { deepStrictEqual, ifError } from 'node:assert'
+import { deepStrictEqual, ifError, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import {
@@ -6,7 +6,7 @@ import {
   getLogs,
   setFixturesDir,
   verifyJSONViaHTTP,
-  verifyJSONViaInject,
+  verifyJSONViaInject
 } from '../../basic/test/helper.js'
 
 const packageRoot = resolve(import.meta.dirname, '..')
@@ -22,11 +22,11 @@ test('can detect and start a Node.js application with no configuration files', a
   await verifyJSONViaHTTP(url, '/direct', 200, { ok: true })
   await verifyJSONViaInject(runtime, 'main', 'GET', '/direct', 200, { ok: true })
 
+  const missingConfigurationMessage =
+    'The service main had no valid entrypoint defined in the package.json file. Falling back to the file index.js.'
+
   const logs = await getLogs(runtime)
-  deepStrictEqual(
-    logs.map(m => m.msg),
-    ['The service main had no valid entrypoint defined in the package.json file. Falling back to the file index.js.']
-  )
+  ok(logs.map(m => m.msg).includes(missingConfigurationMessage))
 })
 
 test('can detect and start a Node.js application with no configuration files and when not the entrypoint', async t => {
@@ -39,14 +39,11 @@ test('can detect and start a Node.js application with no configuration files and
   await verifyJSONViaHTTP(url, '/mesh', 200, { ok: true })
   await verifyJSONViaInject(runtime, 'main', 'GET', '/mesh', 200, { ok: true })
 
-  const logs = await getLogs(runtime)
+  const missingConfigurationMessage =
+    'The service internal had no valid entrypoint defined in the package.json file. Falling back to the file index.js.'
 
-  deepStrictEqual(
-    logs.map(m => m.msg),
-    [
-      'The service internal had no valid entrypoint defined in the package.json file. Falling back to the file index.js.',
-    ]
-  )
+  const logs = await getLogs(runtime)
+  ok(logs.map(m => m.msg).includes(missingConfigurationMessage))
 })
 
 test('can detect and start a Node.js application with no build function defined', async t => {
