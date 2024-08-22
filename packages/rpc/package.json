@@ -34,6 +34,6 @@
     "fastify-plugin": "^4.5.1",
     "help-me": "^5.0.0",
     "typescript": "~5.1.0",
-    "typescript-json-schema": "^0.64.0"
+    "typescript-json-schema": "^0.65.0"
   }
 }
