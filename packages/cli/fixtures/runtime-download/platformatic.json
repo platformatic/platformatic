@@ -1,0 +1,39 @@
+{
+  "entrypoint": "piquant-combat",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
+  "server": {
+    "hostname": "{PLT_SERVER_HOSTNAME}",
+    "port": "{PORT}",
+    "keepAliveTimeout": 5000,
+    "logger": {
+      "level": "{PLT_SERVER_LOGGER_LEVEL}"
+    }
+  },
+  "watch": true,
+  "managementApi": true,
+  "services": [
+    {
+      "id": "piquant-combat",
+      "path": "services/piquant-combat",
+      "config": "services/piquant-combat/platformatic.json",
+      "useHttp": false
+    },
+    {
+      "id": "external-service-1",
+      "config": "platformatic.json",
+      "url": "http://github.com/test-owner/test-app-1.git"
+    },
+    {
+      "id": "external-service-2",
+      "config": "platformatic.json",
+      "path": "{SOME_ENV_VAR}",
+      "url": "http://github.com/test-owner/test-app-2.git"
+    },
+    {
+      "id": "external-service-3",
+      "config": "platformatic.json",
+      "path": "{MISSING_ENV_VAR}",
+      "url": "http://github.com/test-owner/test-app-3.git"
+    }
+  ]
+}

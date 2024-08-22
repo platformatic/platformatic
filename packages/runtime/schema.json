@@ -766,9 +766,19 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": [
-          "id",
-          "path"
+        "anyOf": [
+          {
+            "required": [
+              "id",
+              "path"
+            ]
+          },
+          {
+            "required": [
+              "id",
+              "url"
+            ]
+          }
         ],
         "properties": {
           "id": {
@@ -779,6 +789,9 @@
             "resolvePath": true
           },
           "config": {
+            "type": "string"
+          },
+          "url": {
             "type": "string"
           },
           "useHttp": {
