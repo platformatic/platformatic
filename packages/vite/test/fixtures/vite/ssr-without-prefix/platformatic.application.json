@@ -5,7 +5,7 @@
       "level": "error"
     }
   },
-  "application": {
-    "basePath": "/frontend"
+  "vite": {
+    "ssr": true
   }
 }

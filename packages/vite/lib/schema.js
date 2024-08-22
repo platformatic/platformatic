@@ -22,6 +22,17 @@ export const schema = {
         configFile: {
           oneOf: [{ type: 'string' }, { type: 'boolean' }],
         },
+        ssr: {
+          oneOf: [
+            {
+              type: 'object',
+              properties: { entrypoint: { type: 'string' } },
+              required: ['entrypoint'],
+              additionalProperties: false,
+            },
+            { type: 'boolean' },
+          ],
+        },
       },
       additionalProperties: false,
     },

@@ -51,7 +51,7 @@ export class NodeStackable extends BaseStackable {
 
     // Listen if entrypoint
     if (this.#app && listen) {
-      await this.#listen()
+      await this._listen()
       return this.url
     }
 
@@ -136,7 +136,7 @@ export class NodeStackable extends BaseStackable {
     return { statusCode, headers, body, payload, rawPayload }
   }
 
-  async #listen () {
+  async _listen () {
     const serverOptions = this.serverConfig
 
     if (this.#isFastify) {
@@ -156,6 +156,10 @@ export class NodeStackable extends BaseStackable {
     }
 
     return this.url
+  }
+
+  _getApplication () {
+    return this.#app
   }
 }
 

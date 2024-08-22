@@ -1,8 +1,10 @@
 import { BaseStackable, createServerListener, errors, getServerUrl, importFile } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
+import { NodeStackable } from '@platformatic/node'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { dirname, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { satisfies } from 'semver'
 import { packageJson, schema } from './lib/schema.js'
 
@@ -103,6 +105,59 @@ export class ViteStackable extends BaseStackable {
   }
 }
 
+export class ViteSSRStackable extends NodeStackable {
+  #basePath
+
+  constructor (options, root, configManager, entrypoint) {
+    super(options, root, configManager, entrypoint, true)
+
+    this.type = 'vite'
+  }
+
+  async init () {
+    globalThis[Symbol.for('plt.runtime.itc')].handle('getServiceMeta', this.getMeta.bind(this))
+
+    const config = this.configManager.current
+
+    this.#basePath = config.application?.basePath
+      ? `/${config.application?.basePath}`.replaceAll(/\/+/g, '/').replace(/\/$/, '')
+      : ''
+
+    globalThis.platformatic = {
+      // Always use URL to avoid serialization problem in Windows
+      root: pathToFileURL(this.root),
+      basePath: this.#basePath,
+      logger: { id: this.id, level: this.logger.level },
+    }
+  }
+
+  async start ({ listen }) {
+    // Make this idempotent
+    /* c8 ignore next 3 */
+    if (this.url) {
+      return this.url
+    }
+
+    await super.start({ listen })
+    await super._listen()
+  }
+
+  getMeta () {
+    if (!this.#basePath) {
+      this.#basePath = this._getApplication().vite.devServer.config.base.replace(/(^\/)|(\/$)/g, '')
+    }
+
+    return {
+      composer: {
+        tcp: true,
+        url: this.url,
+        prefix: this.#basePath,
+        wantsAbsoluteUrls: true,
+      },
+    }
+  }
+}
+
 /* c8 ignore next 9 */
 function transformConfig () {
   if (this.current.watch === undefined) {
@@ -112,6 +167,10 @@ function transformConfig () {
   if (typeof this.current.watch !== 'object') {
     this.current.watch = { enabled: this.current.watch || false }
   }
+
+  if (this.current.vite?.ssr === true) {
+    this.current.vite.ssr = { entrypoint: 'server.js' }
+  }
 }
 
 export async function buildStackable (opts) {
@@ -119,6 +178,11 @@ export async function buildStackable (opts) {
 
   const configManager = new ConfigManager({ schema, source: opts.config ?? {}, transformConfig })
   await configManager.parseAndValidate()
+
+  // When in SSR mode, we use @platformatic/node
+  if (configManager.current.vite?.ssr) {
+    return new ViteSSRStackable(opts, root, configManager, configManager.current.vite.ssr.entrypoint)
+  }
 
   return new ViteStackable(opts, root, configManager)
 }

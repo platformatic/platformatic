@@ -2,6 +2,67 @@ import { ITC } from '@platformatic/itc'
 import { createPinoWritable, DestinationWritable, withResolvers } from '@platformatic/utils'
 import { tracingChannel } from 'node:diagnostics_channel'
 import pino from 'pino'
+import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
+
+function createInterceptor (itc) {
+  return function (dispatch) {
+    return async (opts, handler) => {
+      let url = opts.origin
+      if (!(url instanceof URL)) {
+        url = new URL(opts.path, url)
+      }
+
+      // Other URLs are handled normally
+      if (!url.hostname.endsWith('.plt.local')) {
+        return dispatch(opts, handler)
+      }
+
+      const headers = {
+        ...opts?.headers,
+      }
+
+      delete headers.connection
+      delete headers['transfer-encoding']
+      headers.host = url.host
+
+      const requestOpts = {
+        ...opts,
+        headers,
+      }
+      delete requestOpts.dispatcher
+
+      itc
+        .send('fetch', requestOpts)
+        .then(res => {
+          if (res.rawPayload && !Buffer.isBuffer(res.rawPayload)) {
+            res.rawPayload = Buffer.from(res.rawPayload.data)
+          }
+
+          const headers = []
+          for (const [key, value] of Object.entries(res.headers)) {
+            if (Array.isArray(value)) {
+              for (const v of value) {
+                headers.push(key)
+                headers.push(v)
+              }
+            } else {
+              headers.push(key)
+              headers.push(value)
+            }
+          }
+
+          handler.onHeaders(res.statusCode, headers, () => {}, res.statusMessage)
+          handler.onData(res.rawPayload)
+          handler.onComplete([])
+        })
+        .catch(e => {
+          handler.onError(new Error(e.message))
+        })
+
+      return true
+    }
+  }
+}
 
 class ChildProcessWritable extends DestinationWritable {
   #itc
@@ -29,6 +90,7 @@ class ChildProcess extends ITC {
     this.listen()
     this.#setupLogger()
     this.#setupServer()
+    this.#setupInterceptors()
   }
 
   _setupListener (listener) {
@@ -78,6 +140,10 @@ class ChildProcess extends ITC {
     }
 
     tracingChannel('net.server.listen').subscribe(subscribers)
+  }
+
+  #setupInterceptors () {
+    setGlobalDispatcher(getGlobalDispatcher().compose(createInterceptor(this)))
   }
 }
 
