@@ -37,6 +37,7 @@
     "eslint": "9",
     "fastify": "^4.28.1",
     "neostandard": "^0.11.1",
+    "json-schema-to-typescript": "^15.0.0",
     "typescript": "^5.5.4"
   }
 }
