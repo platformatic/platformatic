@@ -381,7 +381,10 @@ export interface PlatformaticDB {
         };
       };
   types?: {
-    autogenerate?: boolean;
+    /**
+     * Should types be auto generated.
+     */
+    autogenerate?: string | boolean;
     /**
      * The path to the directory the types should be generated in.
      */

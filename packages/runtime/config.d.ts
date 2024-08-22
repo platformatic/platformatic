@@ -201,10 +201,6 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime200Alpha4Json = {
       };
   restartOnError?: boolean | number;
   services?: {
-    id: string;
-    path: string;
-    config?: string;
-    useHttp?: boolean;
     [k: string]: unknown;
   }[];
 };

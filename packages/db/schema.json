@@ -1022,7 +1022,7 @@
               "type": "boolean"
             }
           ],
-          "description": "Should types be auto generated."          
+          "description": "Should types be auto generated."
         },
         "dir": {
           "type": "string",

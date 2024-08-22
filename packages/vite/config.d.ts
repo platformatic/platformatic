@@ -155,5 +155,10 @@ export interface PlatformaticViteStackable {
   };
   vite?: {
     configFile?: string | boolean;
+    ssr?:
+      | {
+          entrypoint: string;
+        }
+      | boolean;
   };
 }
