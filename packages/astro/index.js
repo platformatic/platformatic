@@ -50,7 +50,7 @@ export class AstroStackable extends BaseStackable {
       port: port || 0
     }
 
-    // Require Vite
+    // Require Astro
     const serverPromise = createServerListener()
     const { dev } = await importFile(resolve(this.#astro, 'dist/core/index.js'))
 

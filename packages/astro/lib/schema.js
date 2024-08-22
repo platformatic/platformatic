@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs'
 export const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'))
 
 export const schema = {
-  $id: `https://schemas.platformatic.dev/@platformatic/vite/${packageJson.version}.json`,
+  $id: `https://schemas.platformatic.dev/@platformatic/astro/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
   title: 'Platformatic Astro Stackable',
   type: 'object',
