@@ -7,14 +7,14 @@ import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { cliPath } from './helper.js'
 
-test('installs runtime external services', async t => {
+test('download runtime external services', async t => {
   const dest = await mkdtemp(join(tmpdir(), `test-cli-${process.pid}-`))
 
-  await cp(join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'runtime-install'), dest, {
+  await cp(join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'runtime-download'), dest, {
     recursive: true,
   })
 
-  const child = await execa('node', [cliPath, 'install', '--test'], { cwd: dest })
+  const child = await execa('node', [cliPath, 'download', '--test'], { cwd: dest })
 
   assert.ok(child.stdout.includes(
     `Cloning http://github.com/test-owner/test-app-1.git into ${join('external', 'external-service-1')}`
@@ -27,17 +27,17 @@ test('installs runtime external services', async t => {
   ))
 
   assert.ok(child.stdout.includes(
-    'Installing dependencies for service "external-service-1"'
+    'Downloading dependencies for service "external-service-1"'
   ))
   assert.ok(child.stdout.includes(
-    'Installing dependencies for service "external-service-2"'
+    'Downloading dependencies for service "external-service-2"'
   ))
   assert.ok(child.stdout.includes(
-    'Installing dependencies for service "external-service-3"'
+    'Downloading dependencies for service "external-service-3"'
   ))
 
   assert.ok(child.stdout.includes(
-    'All external services have been installed'
+    'All external services have been downloaded'
   ))
 
   const config = JSON.parse(await readFile(join(dest, 'platformatic.json'), 'utf8'))

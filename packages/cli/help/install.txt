@@ -1,18 +1,18 @@
-Install Platformatic Runtime external services
+Download Platformatic Runtime external services
 
 ``` bash
- $ platformatic install
+ $ platformatic download
 ```
 
 Options:
 
 * `-c, --config FILE` - Path to the runtime configuration file.
 
-Platformatic install command install runtime services that have the `url` in their configuration.
+Platformatic download command downloads runtime services that have the `url` in their configuration.
 By default services are cloned with `git` to the `external` directory inside the runtime directory.
 To change the directory where a service is cloned, you can set the `path` property in the service configuration.
 
-After cloning the service, the install command will set the relative path to the service in the runtime configuration file.
+After cloning the service, the download command will set the relative path to the service in the runtime configuration file.
 
 Example of the runtime platformatic.json configuration file:
 

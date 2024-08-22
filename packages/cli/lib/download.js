@@ -8,9 +8,9 @@ import pretty from 'pino-pretty'
 import { execa } from 'execa'
 import fjs from 'fast-json-stringify'
 
-const INSTALLED_SERVICES_DIRNAME = 'external'
+const DOWNLOAD_SERVICES_DIRNAME = 'external'
 
-export async function install (argv) {
+export async function download (argv) {
   const args = parseArgs(argv, {
     alias: {
       config: 'c',
@@ -24,14 +24,14 @@ export async function install (argv) {
     ignore: 'hostname,pid',
   }))
   try {
-    await installServices(args.config, logger, args.test)
+    await downloadServices(args.config, logger, args.test)
   } catch (err) {
     console.log(err)
     process.exit(1)
   }
 }
 
-async function installServices (config, logger, isTest = false) {
+async function downloadServices (config, logger, isTest = false) {
   const store = new Store({
     cwd: process.cwd(),
     logger,
@@ -58,10 +58,10 @@ async function installServices (config, logger, isTest = false) {
   }
 
   const projectDir = configManager.dirname
-  const externalDir = join(projectDir, INSTALLED_SERVICES_DIRNAME)
+  const externalDir = join(projectDir, DOWNLOAD_SERVICES_DIRNAME)
 
   if (!config.services || config.services.length === 0) {
-    logger.info('No external services to install')
+    logger.info('No external services to download')
     return
   }
 
@@ -91,7 +91,7 @@ async function installServices (config, logger, isTest = false) {
       }
 
       // TODO: replace it with a proper runtime build step
-      logger.info(`Installing dependencies for service "${service.id}"`)
+      logger.info(`Downloading dependencies for service "${service.id}"`)
       if (!isTest) {
         await execa('npm', ['i'], { cwd: path })
       }
@@ -107,7 +107,7 @@ async function installServices (config, logger, isTest = false) {
 
   await writeFile(configManager.fullPath, newConfig, 'utf8')
 
-  logger.info('✅ All external services have been installed')
+  logger.info('✅ All external services have been downloaded')
 }
 
 async function isDirectoryNotEmpty (directoryPath) {
