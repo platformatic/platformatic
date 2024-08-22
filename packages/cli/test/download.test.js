@@ -18,27 +18,29 @@ test('download runtime external services', async t => {
 
   assert.ok(child.stdout.includes(
     `Cloning http://github.com/test-owner/test-app-1.git into ${join('external', 'external-service-1')}`
-  ))
+  ), child.stdout)
+
   assert.ok(child.stdout.includes(
     `Cloning http://github.com/test-owner/test-app-2.git into ${join('custom-external', 'external-service-2')}`
-  ))
+  ), child.stdout)
+
   assert.ok(child.stdout.includes(
     `Cloning http://github.com/test-owner/test-app-3.git into ${join('external', 'external-service-3')}`
-  ))
+  ), child.stdout)
 
   assert.ok(child.stdout.includes(
     'Downloading dependencies for service "external-service-1"'
-  ))
+  ), child.stdout)
   assert.ok(child.stdout.includes(
     'Downloading dependencies for service "external-service-2"'
-  ))
+  ), child.stdout)
   assert.ok(child.stdout.includes(
     'Downloading dependencies for service "external-service-3"'
-  ))
+  ), child.stdout)
 
   assert.ok(child.stdout.includes(
     'All external services have been downloaded'
-  ))
+  ), child.stdout)
 
   const config = JSON.parse(await readFile(join(dest, 'platformatic.json'), 'utf8'))
   assert.deepStrictEqual(config.services, [
