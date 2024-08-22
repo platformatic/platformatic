@@ -1,7 +1,7 @@
 {
-  "name": "@platformatic/node",
-  "version": "2.0.0-alpha.5",
-  "description": "Platformatic Node.js Stackable",
+  "name": "@platformatic/astro",
+  "version": "2.0.0-alpha.3",
+  "description": "Platformatic Astro Stackable",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -27,18 +27,17 @@
     "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/utils": "workspace:*",
-    "light-my-request": "^5.13.0"
+    "semver": "^7.6.3"
   },
   "devDependencies": {
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
+    "astro": "^4.14.4",
     "borp": "^0.17.0",
-    "express": "^4.19.2",
     "eslint": "9",
-    "fastify": "^4.28.1",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.11.1",
-    "json-schema-to-typescript": "^15.0.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "ws": "^8.18.0"
   }
 }

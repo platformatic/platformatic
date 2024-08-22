@@ -1,0 +1,8 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/astro/2.0.0.json",
+  "server": {
+    "logger": {
+      "level": "error"
+    }
+  }
+}

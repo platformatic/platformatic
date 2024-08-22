@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { relative, resolve } from 'node:path'
 import { workerData } from 'node:worker_threads'
+import pino from 'pino'
 import { packageJson, schema } from './lib/schema.js'
 import { importFile } from './lib/utils.js'
 
@@ -28,15 +29,6 @@ async function importStackablePackage (opts, pkg, autodetectDescription) {
       errorMessage += 'in the root package.json file.'
     }
 
-    if (!opts.config) {
-      const serviceRoot = relative(process.cwd(), opts.context.directory)
-      errorMessage += [
-        '', // Do not remove this
-        `Platformatic has auto-detected that service ${opts.context.serviceId} ${autodetectDescription}.`,
-        `We suggest you create a platformatic.application.json file in the folder ${serviceRoot} with the "$schema" property set to "https://schemas.platformatic.dev/${pkg}/${packageJson.version}.json".`,
-      ].join('\n')
-    }
-
     throw new Error(errorMessage)
   }
 }
@@ -53,7 +45,9 @@ async function buildStackable (opts) {
     rootPackageJson = {}
   }
 
-  if (!opts.config) {
+  const hadConfig = opts.config
+
+  if (!hadConfig) {
     const candidate = resolve(root, 'platformatic.application.json')
 
     if (existsSync(candidate)) {
@@ -69,9 +63,29 @@ async function buildStackable (opts) {
   } else if (dependencies?.vite || devDependencies?.vite) {
     autodetectDescription = 'is using Vite'
     toImport = '@platformatic/vite'
+  } else if (dependencies?.astro || devDependencies?.astro) {
+    autodetectDescription = 'is using Astro'
+    toImport = '@platformatic/astro'
   }
 
   const imported = await importStackablePackage(opts, toImport, autodetectDescription)
+
+  if (!hadConfig) {
+    const serviceRoot = relative(process.cwd(), opts.context.directory)
+    const logger = pino({
+      level: opts.context.serverConfig?.logger?.level ?? 'warn',
+      name: opts.context.serviceId
+    })
+
+    logger.warn(
+      [
+        `Platformatic has auto-detected that service ${opts.context.serviceId} ${autodetectDescription}.\n`,
+        `We suggest you create a platformatic.application.json file in the folder ${serviceRoot} with the "$schema" `,
+        `property set to "https://schemas.platformatic.dev/${toImport}/${packageJson.version}.json".`
+      ].join('')
+    )
+  }
+
   return imported.buildStackable(opts)
 }
 
@@ -80,7 +94,7 @@ export default {
   configManagerConfig: {},
   buildStackable,
   schema,
-  version: packageJson.version,
+  version: packageJson.version
 }
 
 export * from './lib/base.js'

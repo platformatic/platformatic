@@ -123,6 +123,7 @@ test('can detect and start a Next application with working React Server Componen
   await verifyJSONViaHTTP(url, '/plugin', 200, { ok: true })
   await verifyJSONViaHTTP(url, '/frontend/plugin', 200, { ok: true })
   await verifyJSONViaHTTP(url, '/service/direct', 200, { ok: true })
+  await verifyJSONViaHTTP(url, '/service/mesh', 200, { ok: true })
 
   await verifyJSONViaInject(runtime, 'main', 'GET', 'plugin', 200, { ok: true })
   await verifyJSONViaInject(runtime, 'main', 'GET', '/frontend/plugin', 200, { ok: true })

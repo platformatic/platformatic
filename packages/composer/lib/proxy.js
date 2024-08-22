@@ -57,6 +57,37 @@ module.exports = fp(async function (app, opts) {
 
     const dispatcher = getGlobalDispatcher()
 
+    /*
+      Some frontends, like Astro (https://github.com/withastro/astro/issues/11445)
+      generate invalid paths in development mode which ignore the basePath.
+      In that case we try to properly redirect the browser by trying to understand the prefix
+      from the Referer header.
+    */
+    app.addHook('preHandler', (req, reply, done) => {
+      // If the URL is already targeted to the service, do nothing
+      if (req.url.startsWith(`/${prefix}`)) {
+        done()
+        return
+      }
+
+      // Use the referer to understand the desired intent
+      const referer = req.headers.referer
+
+      if (!referer) {
+        done()
+        return
+      }
+
+      const path = new URL(referer).pathname.split('/')[1]
+
+      // If we have a match redirect
+      if (path === prefix) {
+        reply.redirect(`/${prefix}${req.url}`, 308)
+      }
+
+      done()
+    })
+
     await app.register(httpProxy, {
       prefix,
       rewritePrefix,

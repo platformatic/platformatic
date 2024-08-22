@@ -12,12 +12,16 @@ const abstractLogger = require('./logger')
 
 const pltVersion = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8')).version
 
-const defaultTypes = ['service', 'db', 'composer', 'basic', 'node', 'vite', 'next']
-const defaultTypesConfigurationAliases = {
+// Keys are default types, values are the suffix for the default configuration file
+const defaultTypesWithAliases = {
+  service: 'service',
+  db: 'db',
+  composer: 'composer',
   basic: 'application',
   node: 'application',
   vite: 'application',
-  next: 'application'
+  next: 'application',
+  astro: 'application'
 }
 
 class Store {
@@ -90,7 +94,7 @@ class Store {
         app = this.#map.get(toLoad)
       }
 
-      if (!app && defaultTypes.includes(type)) {
+      if (!app && defaultTypesWithAliases[type]) {
         app = await loadModule(require, `@platformatic/${type}`)
         this.add(app)
       }
@@ -156,21 +160,20 @@ class Store {
       ]
     }
 
-    for (let type of defaultTypes) {
+    for (const [type, alias] of Object.entries(defaultTypesWithAliases)) {
       if (typeSet.has(type)) {
         continue
       }
 
-      type = defaultTypesConfigurationAliases[type] ?? type
       const _ = {
         configType: type,
         filenames: [
-          `platformatic.${type}.json`,
-          `platformatic.${type}.json5`,
-          `platformatic.${type}.yaml`,
-          `platformatic.${type}.yml`,
-          `platformatic.${type}.toml`,
-          `platformatic.${type}.tml`
+          `platformatic.${alias}.json`,
+          `platformatic.${alias}.json5`,
+          `platformatic.${alias}.yaml`,
+          `platformatic.${alias}.yml`,
+          `platformatic.${alias}.toml`,
+          `platformatic.${alias}.tml`
         ]
       }
 
