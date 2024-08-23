@@ -74,11 +74,11 @@ export interface WhereCondition {
     /**
      * Equal to value.
      */
-    eq?: string | null,
+    eq?: string | number | null,
     /**
      * Not equal to value.
      */
-    neq?: string | null,
+    neq?: string | number | null,
     /**
      * Greater than value.
      */
