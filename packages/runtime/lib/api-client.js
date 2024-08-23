@@ -8,7 +8,7 @@ const { createReadStream, watch } = require('node:fs')
 const { readdir, readFile, stat, access } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
 const errors = require('./errors')
-const race = require('race-as-promised')
+const { Unpromise } = require('@watchable/unpromise')
 const ts = require('tail-file-stream')
 
 const platformaticVersion = require('../package.json').version
@@ -100,7 +100,7 @@ class RuntimeApiClient extends EventEmitter {
     await this.#sendCommand('plt:stop-services')
 
     this.worker.postMessage({ command: 'plt:close' })
-    const res = await race([
+    const res = await Unpromise.race([
       this.#exitPromise,
       // We must kill the worker if it doesn't exit in 10 seconds
       // because it may be stuck in an infinite loop.
@@ -448,7 +448,7 @@ class RuntimeApiClient extends EventEmitter {
   async #sendCommand (command, params = {}) {
     const operationId = randomUUID()
     this.worker.postMessage({ operationId, command, params })
-    const [message] = await race(
+    const [message] = await Unpromise.race(
       [once(this, operationId), this.#exitPromise]
     )
 
