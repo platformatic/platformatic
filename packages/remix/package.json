@@ -1,0 +1,49 @@
+{
+  "name": "@platformatic/remix",
+  "version": "2.0.0-alpha.5",
+  "description": "Platformatic Remix Stackable",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "npm run lint && borp --concurrency=1 --timeout=180000",
+    "coverage": "npm run lint && borp -C -X test -X test/fixtures --concurrency=1 --timeout=180000",
+    "gen-schema": "node lib/schema.js > schema.json",
+    "gen-types": "json2ts > config.d.ts < schema.json",
+    "build": "pnpm run gen-schema && pnpm run gen-types",
+    "prepublishOnly": "pnpm run build",
+    "lint": "eslint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "author": "Paolo Insogna <paolo@cowtech.it>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "dependencies": {
+    "@platformatic/config": "workspace:*",
+    "@platformatic/utils": "workspace:*",
+    "@platformatic/vite": "workspace:*",
+    "semver": "^7.6.3"
+  },
+  "devDependencies": {
+    "@platformatic/composer": "workspace:*",
+    "@platformatic/service": "workspace:*",
+    "@remix-run/dev": "^2.11.2",
+    "@remix-run/node": "^2.11.2",
+    "@remix-run/react": "^2.11.2",
+    "borp": "^0.17.0",
+    "eslint": "9",
+    "isbot": "^5.1.17",
+    "json-schema-to-typescript": "^15.0.1",
+    "neostandard": "^0.11.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2",
+    "ws": "^8.18.0"
+  }
+}

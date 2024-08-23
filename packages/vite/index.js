@@ -54,7 +54,7 @@ export class ViteStackable extends BaseStackable {
       https,
       cors,
       origin: 'http://localhost',
-      hmr: true,
+      hmr: true
     }
 
     // Require Vite
@@ -70,7 +70,7 @@ export class ViteStackable extends BaseStackable {
       logLevel: this.logger.level,
       clearScreen: false,
       optimizeDeps: { force: false },
-      server: serverOptions,
+      server: serverOptions
     })
 
     await this.#app.listen()
@@ -85,7 +85,7 @@ export class ViteStackable extends BaseStackable {
   /* c8 ignore next 5 */
   async getWatchConfig () {
     return {
-      enabled: false,
+      enabled: false
     }
   }
 
@@ -99,9 +99,13 @@ export class ViteStackable extends BaseStackable {
         tcp: true,
         url: this.url,
         prefix: this.#basePath,
-        wantsAbsoluteUrls: true,
-      },
+        wantsAbsoluteUrls: true
+      }
     }
+  }
+
+  _getVite () {
+    return this.#app
   }
 }
 
@@ -123,12 +127,12 @@ export class ViteSSRStackable extends NodeStackable {
       ? `/${config.application?.basePath}`.replaceAll(/\/+/g, '/').replace(/\/$/, '')
       : ''
 
-    globalThis.platformatic = {
+    this.registerGlobals({
       // Always use URL to avoid serialization problem in Windows
       root: pathToFileURL(this.root),
       basePath: this.#basePath,
-      logger: { id: this.id, level: this.logger.level },
-    }
+      logger: { id: this.id, level: this.logger.level }
+    })
   }
 
   async start ({ listen }) {
@@ -152,8 +156,8 @@ export class ViteSSRStackable extends NodeStackable {
         tcp: true,
         url: this.url,
         prefix: this.#basePath,
-        wantsAbsoluteUrls: true,
-      },
+        wantsAbsoluteUrls: true
+      }
     }
   }
 }
@@ -190,9 +194,9 @@ export async function buildStackable (opts) {
 export default {
   configType: 'vite',
   configManagerConfig: {
-    transformConfig,
+    transformConfig
   },
   buildStackable,
   schema,
-  version: packageJson.version,
+  version: packageJson.version
 }

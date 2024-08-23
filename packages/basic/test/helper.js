@@ -11,6 +11,7 @@ import { buildServer, platformaticRuntime } from '../../runtime/index.js'
 
 export { setTimeout as sleep } from 'node:timers/promises'
 
+const HMR_TIMEOUT = process.env.CI ? 20000 : 10000
 let hrmVersion = Date.now()
 export let fixturesDir
 
@@ -59,12 +60,12 @@ export async function getLogs (app) {
   const client = new Client(
     {
       hostname: 'localhost',
-      protocol: 'http:',
+      protocol: 'http:'
     },
     {
       socketPath: app.getManagementApiUrl(),
       keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10,
+      keepAliveMaxTimeout: 10
     }
   )
 
@@ -73,7 +74,7 @@ export async function getLogs (app) {
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/logs/all',
+    path: '/api/v1/logs/all'
   })
 
   strictEqual(statusCode, 200)
@@ -113,7 +114,7 @@ export async function verifyHTMLViaHTTP (baseUrl, path, contents) {
   ok(headers['content-type']?.startsWith('text/html'))
 
   for (const content of contents) {
-    ok(content instanceof RegExp ? content.test(html) : html.includes(content))
+    ok(content instanceof RegExp ? content.test(html) : html.includes(content), content)
   }
 }
 
@@ -124,7 +125,7 @@ export async function verifyHTMLViaInject (app, serviceId, url, contents) {
   ok(headers['content-type'].startsWith('text/html'))
 
   for (const content of contents) {
-    ok(content instanceof RegExp ? content.test(html) : html.includes(content))
+    ok(content instanceof RegExp ? content.test(html) : html.includes(content), content)
   }
 }
 
@@ -132,7 +133,7 @@ export async function verifyHMR (baseUrl, path, protocol, handler) {
   const connection = withResolvers()
   const reload = withResolvers()
   const ac = new AbortController()
-  const timeout = sleep(10000, 'timeout', { signal: ac.signal })
+  const timeout = sleep(HMR_TIMEOUT, 'timeout', { signal: ac.signal })
 
   const url = baseUrl.replace('http:', 'ws:') + path
   const webSocket = new WebSocket(url, protocol)
