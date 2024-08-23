@@ -1414,6 +1414,9 @@ importers:
 
   packages/remix:
     dependencies:
+      '@platformatic/basic':
+        specifier: workspace:*
+        version: link:../basic
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config

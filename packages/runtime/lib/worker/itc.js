@@ -18,7 +18,7 @@ async function sendViaITC (worker, name, message) {
       worker[kITC].send(name, message),
       once(worker, 'exit', { signal: ac.signal }).then(([code]) => {
         exitCode = code
-      }),
+      })
     ])
 
     if (typeof exitCode === 'number') {
@@ -42,88 +42,91 @@ async function sendViaITC (worker, name, message) {
 }
 
 function setupITC (app, service, dispatcher) {
-  const itc = new ITC({ port: parentPort })
+  const itc = new ITC({
+    port: parentPort,
+    handlers: {
+      async start () {
+        const status = app.getStatus()
 
-  itc.handle('start', async () => {
-    const status = app.getStatus()
+        if (status === 'starting') {
+          await once(app, 'start')
+        } else {
+          await app.start()
+        }
 
-    if (status === 'starting') {
-      await once(app, 'start')
-    } else {
-      await app.start()
+        if (service.entrypoint) {
+          await app.listen()
+        }
+
+        const url = app.stackable.getUrl()
+
+        const dispatchFunc = await app.stackable.getDispatchFunc()
+        dispatcher.replaceServer(url ?? dispatchFunc)
+
+        return service.entrypoint ? url : null
+      },
+
+      async stop () {
+        const status = app.getStatus()
+
+        if (status === 'starting') {
+          await once(app, 'start')
+        }
+
+        if (status !== 'stopped') {
+          await app.stop()
+        }
+
+        dispatcher.interceptor.close()
+        itc.close()
+      },
+
+      getStatus () {
+        return app.getStatus()
+      },
+
+      getServiceInfo () {
+        return app.stackable.getInfo()
+      },
+
+      async getServiceConfig () {
+        const current = await app.stackable.getConfig()
+        // Remove all undefined keys from the config
+        return JSON.parse(JSON.stringify(current))
+      },
+
+      async getServiceOpenAPISchema () {
+        try {
+          return await app.stackable.getOpenapiSchema()
+        } catch (err) {
+          throw new errors.FailedToRetrieveOpenAPISchemaError(service.id, err.message)
+        }
+      },
+
+      async getServiceGraphQLSchema () {
+        try {
+          return await app.stackable.getGraphqlSchema()
+        } catch (err) {
+          throw new errors.FailedToRetrieveGraphQLSchemaError(service.id, err.message)
+        }
+      },
+
+      async getServiceMeta () {
+        try {
+          return await app.stackable.getMeta()
+        } catch (err) {
+          throw new errors.FailedToRetrieveMetaError(service.id, err.message)
+        }
+      },
+
+      getMetrics (format) {
+        return app.stackable.getMetrics({ format })
+      },
+
+      inject (injectParams) {
+        return app.stackable.inject(injectParams)
+      }
     }
-
-    if (service.entrypoint) {
-      await app.listen()
-    }
-
-    const url = app.stackable.getUrl()
-
-    const dispatchFunc = await app.stackable.getDispatchFunc()
-    dispatcher.replaceServer(url ?? dispatchFunc)
-
-    return service.entrypoint ? url : null
-  })
-
-  itc.handle('stop', async () => {
-    const status = app.getStatus()
-
-    if (status === 'starting') {
-      await once(app, 'start')
-    }
-
-    if (status !== 'stopped') {
-      await app.stop()
-    }
-
-    dispatcher.interceptor.close()
-    itc.close()
-  })
-
-  itc.handle('getStatus', async () => {
-    return app.getStatus()
-  })
-
-  itc.handle('getServiceInfo', async () => {
-    return app.stackable.getInfo()
-  })
-
-  itc.handle('getServiceConfig', async () => {
-    const current = await app.stackable.getConfig()
-    // Remove all undefined keys from the config
-    return JSON.parse(JSON.stringify(current))
-  })
-
-  itc.handle('getServiceOpenAPISchema', async () => {
-    try {
-      return app.stackable.getOpenapiSchema()
-    } catch (err) {
-      throw new errors.FailedToRetrieveOpenAPISchemaError(service.id, err.message)
-    }
-  })
-
-  itc.handle('getServiceGraphQLSchema', async () => {
-    try {
-      return app.stackable.getGraphqlSchema()
-    } catch (err) {
-      throw new errors.FailedToRetrieveGraphQLSchemaError(service.id, err.message)
-    }
-  })
-
-  itc.handle('getServiceMeta', async () => {
-    try {
-      return app.stackable.getMeta()
-    } catch (err) {
-      throw new errors.FailedToRetrieveMetaError(service.id, err.message)
-    }
-  })
-
-  itc.handle('getMetrics', async format => {
-    return app.stackable.getMetrics({ format })
-  })
-
-  itc.handle('inject', async injectParams => {
-    return app.stackable.inject(injectParams)
   })
 
   app.on('changed', () => {

@@ -38,19 +38,25 @@ test('should send a request between threads', async t => {
 test('should support close while replying to a message', async t => {
   const { port1, port2 } = new MessageChannel()
 
-  const itc1 = new ITC({ port: port1 })
-  const itc2 = new ITC({ port: port2 })
-
   const requestName = 'test-command'
   const testRequest = { test: 'test-req-message' }
   const testResponse = { test: 'test-res-message' }
 
   const requests = []
-  itc2.handle(requestName, async request => {
-    requests.push(request)
-    itc2.close()
-    return testResponse
+
+  const itc1 = new ITC({ port: port1 })
+  const itc2 = new ITC({
+    port: port2,
+    handlers: {
+      [requestName] (request) {
+        requests.push(request)
+        itc2.close()
+        return testResponse
+      }
+    }
   })
+
+  itc2.handle()
 
   itc1.listen()
   itc2.listen()
@@ -360,8 +366,8 @@ test('should sanitize a request before sending', async t => {
     nested: {
       test: 'test-req-message',
       foo: () => {},
-      bar: Symbol('test'),
-    },
+      bar: Symbol('test')
+    }
   }
   const testResponse = { test: 'test-res-message' }
 
@@ -382,8 +388,8 @@ test('should sanitize a request before sending', async t => {
   assert.deepStrictEqual(requests, [
     {
       test: 'test-req-message',
-      nested: { test: 'test-req-message' },
-    },
+      nested: { test: 'test-req-message' }
+    }
   ])
 })
 

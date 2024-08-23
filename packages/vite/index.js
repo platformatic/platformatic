@@ -21,8 +21,6 @@ export class ViteStackable extends BaseStackable {
   }
 
   async init () {
-    globalThis[Symbol.for('plt.runtime.itc')].handle('getServiceMeta', this.getMeta.bind(this))
-
     this.#vite = dirname(createRequire(this.root).resolve('vite'))
     const vitePackage = JSON.parse(await readFile(resolve(this.#vite, 'package.json'), 'utf-8'))
 
@@ -119,8 +117,6 @@ export class ViteSSRStackable extends NodeStackable {
   }
 
   async init () {
-    globalThis[Symbol.for('plt.runtime.itc')].handle('getServiceMeta', this.getMeta.bind(this))
-
     const config = this.configManager.current
 
     this.#basePath = config.application?.basePath

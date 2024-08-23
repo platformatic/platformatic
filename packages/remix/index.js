@@ -24,8 +24,6 @@ export class RemixStackable extends ViteStackable {
   async init () {
     await super.init()
 
-    globalThis[Symbol.for('plt.runtime.itc')].handle('getServiceMeta', this.getMeta.bind(this))
-
     this.#remix = resolve(dirname(createRequire(this.root).resolve('@remix-run/dev')), '..')
     const remixPackage = JSON.parse(await readFile(resolve(this.#remix, 'package.json'), 'utf-8'))
 

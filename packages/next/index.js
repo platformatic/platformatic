@@ -20,8 +20,6 @@ export class NextStackable extends BaseStackable {
   }
 
   async init () {
-    globalThis[Symbol.for('plt.runtime.itc')].handle('getServiceMeta', this.getMeta.bind(this))
-
     this.#next = pathResolve(dirname(createRequire(this.root).resolve('next')), '../..')
     const nextPackage = JSON.parse(await readFile(pathResolve(this.#next, 'package.json'), 'utf-8'))
 
