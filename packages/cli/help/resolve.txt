@@ -1,7 +1,7 @@
-Download Platformatic Runtime external services
+Resolve Platformatic Runtime external services
 
 ``` bash
- $ platformatic download
+ $ platformatic resolve
 ```
 
 Options:
@@ -10,11 +10,11 @@ Options:
 * `-u, --username string` - Username for the service repository.
 * `-p, --password string` - Password for the service repository.
 
-Platformatic download command downloads runtime services that have the `url` in their configuration.
+Platformatic resolve command resolves runtime services that have the `url` in their configuration.
 By default services are cloned with `git` to the `external` directory inside the runtime directory.
 To change the directory where a service is cloned, you can set the `path` property in the service configuration.
 
-After cloning the service, the download command will set the relative path to the service in the runtime configuration file.
+After cloning the service, the resolve command will set the relative path to the service in the runtime configuration file.
 
 Example of the runtime platformatic.json configuration file:
 
