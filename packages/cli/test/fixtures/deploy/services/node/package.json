@@ -1,0 +1,12 @@
+{
+  "name": "temp",
+  "scripts": {
+    "precustom-build": "mkdir -p dist/pre; node -e 'console.log(Date.now())' > dist/pre/timestamp",
+    "custom-build": "tsc -P ."
+  },
+  "dependencies": {
+    "@platformatic/node": "workspace:*",
+    "@types/node": "^22.5.0",
+    "typescript": "^5.5.4"
+  }
+}

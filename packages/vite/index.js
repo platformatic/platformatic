@@ -1,4 +1,11 @@
-import { BaseStackable, createServerListener, errors, getServerUrl, importFile } from '@platformatic/basic'
+import {
+  BaseStackable,
+  transformConfig as basicTransformConfig,
+  createServerListener,
+  errors,
+  getServerUrl,
+  importFile
+} from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
 import { NodeStackable } from '@platformatic/node'
 import { readFile } from 'node:fs/promises'
@@ -88,18 +95,23 @@ export class ViteStackable extends BaseStackable {
   }
 
   getMeta () {
-    if (!this.#basePath) {
-      this.#basePath = this.#app.config.base.replace(/(^\/)|(\/$)/g, '')
-    }
+    const deploy = this.configManager.current.deploy
+    let composer
 
-    return {
-      composer: {
+    if (this.url) {
+      if (!this.#basePath) {
+        this.#basePath = this.#app.config.base.replace(/(^\/)|(\/$)/g, '')
+      }
+
+      composer = {
         tcp: true,
         url: this.url,
         prefix: this.#basePath,
         wantsAbsoluteUrls: true
       }
     }
+
+    return { deploy, composer }
   }
 
   _getVite () {
@@ -143,18 +155,23 @@ export class ViteSSRStackable extends NodeStackable {
   }
 
   getMeta () {
-    if (!this.#basePath) {
-      this.#basePath = this._getApplication().vite.devServer.config.base.replace(/(^\/)|(\/$)/g, '')
-    }
+    const deploy = this.configManager.current.deploy
+    let composer
 
-    return {
-      composer: {
+    if (this.url) {
+      if (!this.#basePath) {
+        this.#basePath = this._getApplication().vite.devServer.config.base.replace(/(^\/)|(\/$)/g, '')
+      }
+
+      composer = {
         tcp: true,
         url: this.url,
         prefix: this.#basePath,
         wantsAbsoluteUrls: true
       }
     }
+
+    return { deploy, composer }
   }
 }
 
@@ -171,6 +188,8 @@ function transformConfig () {
   if (this.current.vite?.ssr === true) {
     this.current.vite.ssr = { entrypoint: 'server.js' }
   }
+
+  basicTransformConfig.call(this)
 }
 
 export async function buildStackable (opts) {

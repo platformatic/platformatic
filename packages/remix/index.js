@@ -1,4 +1,4 @@
-import { errors, importFile } from '@platformatic/basic'
+import { transformConfig as basicTransformConfig, errors, importFile } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
 import { ViteStackable } from '@platformatic/vite'
 import { readFile } from 'node:fs/promises'
@@ -71,6 +71,8 @@ function transformConfig () {
   if (typeof this.current.watch !== 'object') {
     this.current.watch = { enabled: this.current.watch || false }
   }
+
+  basicTransformConfig.call(this)
 }
 
 export async function buildStackable (opts) {

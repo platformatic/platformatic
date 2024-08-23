@@ -73,6 +73,14 @@ class ServiceStackable {
     return config
   }
 
+  getMeta () {
+    return {
+      deploy: {
+        buildCommand: 'platformatic compile'
+      }
+    }
+  }
+
   async getWatchConfig () {
     const config = this.configManager.current
 

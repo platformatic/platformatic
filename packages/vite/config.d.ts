@@ -161,4 +161,11 @@ export interface PlatformaticViteStackable {
         }
       | boolean;
   };
+  deploy?: {
+    include?: string[];
+    buildCommand?: string;
+    installCommand?: string;
+    startCommand?: string;
+    [k: string]: unknown;
+  };
 }

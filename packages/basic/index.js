@@ -73,8 +73,8 @@ async function buildStackable (opts) {
 
   const imported = await importStackablePackage(opts, toImport, autodetectDescription)
 
-  if (!hadConfig) {
-    const serviceRoot = relative(process.cwd(), opts.context.directory)
+  const serviceRoot = relative(process.cwd(), opts.context.directory)
+  if (!hadConfig && !existsSync(resolve(serviceRoot, 'platformatic.application.json'))) {
     const logger = pino({
       level: opts.context.serverConfig?.logger?.level ?? 'warn',
       name: opts.context.serviceId
@@ -92,9 +92,34 @@ async function buildStackable (opts) {
   return imported.buildStackable(opts)
 }
 
+/* c8 ignore next 9 */
+export function transformConfig () {
+  if (typeof this.current.deploy === 'undefined') {
+    this.current.deploy = {}
+  }
+
+  if (typeof this.current.deploy.installCommand === 'undefined') {
+    this.current.deploy.installCommand = 'npm ci --omit=dev'
+  }
+
+  if (typeof this.current.deploy.buildCommand === 'undefined') {
+    this.current.deploy.buildCommand = 'npm run build'
+  }
+
+  if (typeof this.current.deploy.startCommand === 'undefined') {
+    this.current.deploy.startCommand = 'npm run start'
+  }
+
+  if (typeof this.current.deploy.include === 'undefined') {
+    this.current.deploy.include = ['dist']
+  }
+}
+
 export default {
   configType: 'nodejs',
-  configManagerConfig: {},
+  configManagerConfig: {
+    transformConfig
+  },
   buildStackable,
   schema,
   version: packageJson.version

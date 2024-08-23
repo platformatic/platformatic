@@ -7,25 +7,46 @@ const application = {
   type: 'object',
   properties: {
     basePath: {
-      type: 'string',
-    },
+      type: 'string'
+    }
   },
-  additionalProperties: false,
+  additionalProperties: false
 }
 
 const watch = {
   anyOf: [
     schemas.watch,
     {
-      type: 'boolean',
+      type: 'boolean'
     },
     {
-      type: 'string',
-    },
-  ],
+      type: 'string'
+    }
+  ]
 }
 
-export const schemaComponents = { application, watch }
+const deploy = {
+  type: 'object',
+  properties: {
+    include: {
+      type: 'array',
+      items: {
+        type: 'string'
+      }
+    },
+    buildCommand: {
+      type: 'string'
+    },
+    installCommand: {
+      type: 'string'
+    },
+    startCommand: {
+      type: 'string'
+    }
+  }
+}
+
+export const schemaComponents = { application, deploy, watch }
 
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/basic/${packageJson.version}.json`,
@@ -34,10 +55,10 @@ export const schema = {
   type: 'object',
   properties: {
     $schema: {
-      type: 'string',
-    },
+      type: 'string'
+    }
   },
-  additionalProperties: true,
+  additionalProperties: true
 }
 
 /* c8 ignore next 3 */

@@ -150,4 +150,11 @@ export interface PlatformaticNodeJsStackable {
       }
     | boolean
     | string;
+  deploy?: {
+    include?: string[];
+    buildCommand?: string;
+    installCommand?: string;
+    startCommand?: string;
+    [k: string]: unknown;
+  };
 }

@@ -133,6 +133,9 @@ importers:
       '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
+      '@platformatic/basic':
+        specifier: workspace:*
+        version: link:../basic
       '@platformatic/client-cli':
         specifier: workspace:*
         version: link:../client-cli
@@ -170,8 +173,8 @@ importers:
         specifier: ^16.4.5
         version: 16.4.5
       execa:
-        specifier: ^8.0.1
-        version: 8.0.1
+        specifier: ^9.3.1
+        version: 9.3.1
       fast-json-stringify:
         specifier: ^5.14.1
         version: 5.16.1
@@ -193,16 +196,34 @@ importers:
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
+      split2:
+        specifier: ^4.2.0
+        version: 4.2.0
       undici:
         specifier: ^6.9.0
         version: 6.19.8
     devDependencies:
+      '@platformatic/astro':
+        specifier: workspace:*
+        version: link:../astro
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
+      '@platformatic/next':
+        specifier: workspace:*
+        version: link:../next
+      '@platformatic/node':
+        specifier: workspace:*
+        version: link:../node
+      '@platformatic/remix':
+        specifier: workspace:*
+        version: link:../remix
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
+      '@platformatic/vite':
+        specifier: workspace:*
+        version: link:../vite
       add:
         specifier: ^2.0.6
         version: 2.0.6
@@ -221,15 +242,15 @@ importers:
       license-checker:
         specifier: ^25.0.1
         version: 25.0.1
+      minimatch:
+        specifier: ^10.0.1
+        version: 10.0.1
       mkdirp:
         specifier: ^2.1.6
         version: 2.1.6
       neostandard:
         specifier: ^0.11.1
         version: 0.11.4(eslint@9.9.1)(typescript@5.5.4)
-      split2:
-        specifier: ^4.2.0
-        version: 4.2.0
       typescript:
         specifier: ^5.5.3
         version: 5.5.4
@@ -6403,6 +6424,10 @@ packages:
 
   minimalistic-crypto-utils@1.0.1:
     resolution: {integrity: sha512-JIYlbt6g8i5jKfJ3xz7rF0LXmv2TkDxBLUkiBeZ7bAx4GnnNMr8xFpGnOxn6GhTEHx3SjRrZEoU+j04prX1ktg==}
+
+  minimatch@10.0.1:
+    resolution: {integrity: sha512-ethXTt3SGGR+95gudmqJ1eNhRO7eGEGIgYA9vnPatK4/etz2MEVDno5GMCibdMTuBMyElzIlgxMna3K94XDIDQ==}
+    engines: {node: 20 || >=22}
 
   minimatch@3.1.2:
     resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
@@ -13528,6 +13553,10 @@ snapshots:
   minimalistic-assert@1.0.1: {}
 
   minimalistic-crypto-utils@1.0.1: {}
+
+  minimatch@10.0.1:
+    dependencies:
+      brace-expansion: 2.0.1
 
   minimatch@3.1.2:
     dependencies:

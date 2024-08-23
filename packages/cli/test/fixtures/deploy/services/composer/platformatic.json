@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.0.0.json",
+  "composer": {
+    "services": [
+      {
+        "id": "service",
+        "openapi": {
+          "url": "/documentation/json",
+          "prefix": "/service"
+        }
+      },
+      {
+        "id": "db",
+        "openapi": {
+          "url": "/documentation/json",
+          "prefix": "/db"
+        }
+      }
+    ]
+  },
+  "watch": false,
+  "plugins": {
+    "paths": [
+      {
+        "path": "./plugins",
+        "encapsulate": false
+      },
+      "./routes"
+    ],
+    "typescript": true
+  }
+}
