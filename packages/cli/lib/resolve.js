@@ -8,9 +8,9 @@ import pretty from 'pino-pretty'
 import { execa } from 'execa'
 import fjs from 'fast-json-stringify'
 
-const DOWNLOAD_SERVICES_DIRNAME = 'external'
+const RESOLVED_SERVICES_DIRNAME = 'external'
 
-export async function download (argv) {
+export async function resolve (argv) {
   const args = parseArgs(argv, {
     alias: {
       config: 'c',
@@ -27,7 +27,7 @@ export async function download (argv) {
     ignore: 'hostname,pid',
   }))
   try {
-    await downloadServices(args.config, logger, {
+    await resolveServices(args.config, logger, {
       test: args.test,
       username: args.username,
       password: args.password,
@@ -38,7 +38,7 @@ export async function download (argv) {
   }
 }
 
-async function downloadServices (config, logger, options = {}) {
+async function resolveServices (config, logger, options = {}) {
   const store = new Store({
     cwd: process.cwd(),
     logger,
@@ -65,10 +65,10 @@ async function downloadServices (config, logger, options = {}) {
   }
 
   const projectDir = configManager.dirname
-  const externalDir = join(projectDir, DOWNLOAD_SERVICES_DIRNAME)
+  const externalDir = join(projectDir, RESOLVED_SERVICES_DIRNAME)
 
   if (!config.services || config.services.length === 0) {
-    logger.info('No external services to download')
+    logger.info('No external services to resolve')
     return
   }
 
@@ -107,7 +107,7 @@ async function downloadServices (config, logger, options = {}) {
       }
 
       // TODO: replace it with a proper runtime build step
-      logger.info(`Downloading dependencies for service "${service.id}"`)
+      logger.info(`Resolving dependencies for service "${service.id}"`)
       if (!options.test) {
         await execa('npm', ['i'], { cwd: path })
       }
@@ -123,7 +123,7 @@ async function downloadServices (config, logger, options = {}) {
 
   await writeFile(configManager.fullPath, newConfig, 'utf8')
 
-  logger.info('✅ All external services have been downloaded')
+  logger.info('✅ All external services have been resolved')
 }
 
 async function isDirectoryNotEmpty (directoryPath) {

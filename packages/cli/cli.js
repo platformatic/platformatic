@@ -13,7 +13,7 @@ import { join } from 'desm'
 import { isColorSupported } from 'colorette'
 import helpMe from 'help-me'
 import { upgrade } from './lib/upgrade.js'
-import { download } from './lib/download.js'
+import { resolve } from './lib/resolve.js'
 import { logo } from './lib/ascii.js'
 import {
   runControl,
@@ -67,7 +67,7 @@ program.register('ps', async (args) => getRuntimesCommand(args))
 program.register('inject', async (args) => injectRuntimeCommand(args))
 program.register('logs', async (args) => streamRuntimeLogsCommand(args))
 program.register('upgrade', upgrade)
-program.register('download', download)
+program.register('resolve', resolve)
 program.register('client', client)
 program.register('compile', async (args) => await compile(args) ? null : process.exit(1))
 program.register('help', help.toStdout)
