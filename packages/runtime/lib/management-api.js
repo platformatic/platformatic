@@ -72,20 +72,6 @@ async function managementApiPlugin (app, opts) {
     return runtime.getServiceGraphqlSchema(id)
   })
 
-  app.get('/services/:id/connection-strings', async request => {
-    const { id } = request.params
-    try {
-      app.log.debug('get connection strings', { id })
-      const meta = await runtime.getServiceMeta(id)
-      if (meta.db) {
-        return meta.db
-      }
-      return null
-    } catch (err) {
-      throw new errors.FailedToRetrieveMetaError(id, err.message)
-    }
-  })
-
   app.post('/services/:id/start', async request => {
     const { id } = request.params
     app.log.debug('start service', { id })
