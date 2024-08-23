@@ -1288,9 +1288,9 @@ importers:
       '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
-      race-as-promised:
-        specifier: ^0.0.3
-        version: 0.0.3
+      '@watchable/unpromise':
+        specifier: ^1.0.2
+        version: 1.0.2
     devDependencies:
       '@types/node':
         specifier: ^20.14.11
@@ -1548,6 +1548,9 @@ importers:
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
+      '@watchable/unpromise':
+        specifier: ^1.0.2
+        version: 1.0.2
       boring-name-generator:
         specifier: ^1.0.3
         version: 1.0.3
@@ -1599,9 +1602,6 @@ importers:
       pino-roll:
         specifier: ^1.0.0
         version: 1.2.0
-      race-as-promised:
-        specifier: ^0.0.3
-        version: 0.0.3
       semgrator:
         specifier: ^0.3.0
         version: 0.3.0
@@ -3842,6 +3842,9 @@ packages:
 
   '@vscode/l10n@0.0.18':
     resolution: {integrity: sha512-KYSIHVmslkaCDyw013pphY+d7x1qV8IZupYfeIfzNA+nsaWHbn5uPuQRvdRFsa9zFzGeudPuoGoZ1Op4jrJXIQ==}
+
+  '@watchable/unpromise@1.0.2':
+    resolution: {integrity: sha512-yGCKYzCrAfJQ9yzm76r1bl4WUIWyqmh4vqidXn5LyOfPbgdiZrKOyvW2ivqIvtmsRVb7u3ModEpc4q901VRgXw==}
 
   '@web3-storage/multipart-parser@1.0.0':
     resolution: {integrity: sha512-BEO6al7BYqcnfX15W2cnGR+Q566ACXAT9UQykORCWW80lmkpWsnEob6zJS1ZVBKsSJC8+7vJkHwlp+lXG1UCdw==}
@@ -7216,9 +7219,6 @@ packages:
     resolution: {integrity: sha512-ARhCpm70fzdcvNQfPoy49IaanKkTlRWF2JMzqhcJbhSFRZv7nPTvZJdcY7301IPmvW+/p0RgIWnQDLJxifsQ7g==}
     engines: {node: '>=8'}
 
-  race-as-promised@0.0.3:
-    resolution: {integrity: sha512-BH1qgNWMG4Mhp4wlX2uYE6reVsIXogb+aPEcosVDmnPjpkQVcWRxqDIlP1hGUiGZG8ohoiyaUlwX3xiu8O7tzw==}
-
   railroad-diagrams@1.0.0:
     resolution: {integrity: sha512-cz93DjNeLY0idrCNOH6PviZGRN9GJhsdm9hpn1YCS879fj4W+x5IFJhhkRZcwVgMmFF7R82UA/7Oh+R8lLZg6A==}
 
@@ -10224,6 +10224,8 @@ snapshots:
       - supports-color
 
   '@vscode/l10n@0.0.18': {}
+
+  '@watchable/unpromise@1.0.2': {}
 
   '@web3-storage/multipart-parser@1.0.0': {}
 
@@ -14409,8 +14411,6 @@ snapshots:
   quick-format-unescaped@4.0.4: {}
 
   quick-lru@4.0.1: {}
-
-  race-as-promised@0.0.3: {}
 
   railroad-diagrams@1.0.0: {}
 

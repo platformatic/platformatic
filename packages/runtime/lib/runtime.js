@@ -9,7 +9,7 @@ const { setTimeout: sleep } = require('node:timers/promises')
 const { Worker } = require('node:worker_threads')
 
 const { ITC } = require('@platformatic/itc')
-const race = require('race-as-promised')
+const { Unpromise } = require('@watchable/unpromise')
 const ts = require('tail-file-stream')
 const { createThreadInterceptor } = require('undici-thread-interceptor')
 
@@ -276,13 +276,13 @@ class Runtime extends EventEmitter {
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
     try {
-      await race([sendViaITC(service, 'stop'), sleep(10000, 'timeout', { ref: false })])
+      await Unpromise.race([sendViaITC(service, 'stop'), sleep(10000, 'timeout', { ref: false })])
     } catch (error) {
       this.logger?.info(`Failed to stop service "${id}". Killing a worker thread.`, error)
     }
 
     // Wait for the worker thread to finish, we're going to create a new one if the service is ever restarted
-    const res = await race([once(service, 'exit'), sleep(10000, 'timeout', { ref: false })])
+    const res = await Unpromise.race([once(service, 'exit'), sleep(10000, 'timeout', { ref: false })])
 
     // If the worker didn't exit in time, kill it
     if (res === 'timeout') {
