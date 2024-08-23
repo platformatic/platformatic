@@ -422,7 +422,7 @@ class Runtime extends EventEmitter {
       packageName: packageJson.name ?? null,
       packageVersion: packageJson.version ?? null,
       url: entrypointDetails?.url ?? null,
-      platformaticVersion,
+      platformaticVersion
     }
   }
 
@@ -449,7 +449,7 @@ class Runtime extends EventEmitter {
   async getServices () {
     return {
       entrypoint: this.#entrypointId,
-      services: await Promise.all(this.#servicesIds.map(id => this.getServiceDetails(id))),
+      services: await Promise.all(this.#servicesIds.map(id => this.getServiceDetails(id)))
     }
   }
 
@@ -478,7 +478,7 @@ class Runtime extends EventEmitter {
       version,
       localUrl,
       entrypoint,
-      dependencies,
+      dependencies
     }
 
     if (entrypoint) {
@@ -610,9 +610,9 @@ class Runtime extends EventEmitter {
             p50: p50Value,
             p90: p90Value,
             p95: p95Value,
-            p99: p99Value,
-          },
-        },
+            p99: p99Value
+          }
+        }
       }
 
       return formattedMetrics
@@ -649,7 +649,7 @@ class Runtime extends EventEmitter {
       }
       runtimesLogsIds.push({
         pid: runtime.runtimePID,
-        indexes: runtimeLogIds,
+        indexes: runtimeLogIds
       })
     }
 
@@ -687,7 +687,7 @@ class Runtime extends EventEmitter {
         serviceConfig,
         dirname: this.#configManager.dirname,
         runtimeLogsDir: this.#runtimeLogsDir,
-        loggingPort,
+        loggingPort
       },
       execArgv: [], // Avoid side effects
       env: this.#env,
@@ -700,7 +700,7 @@ class Runtime extends EventEmitter {
         The author of this (Paolo and Matteo) are not proud of the solution. Forgive us.
       */
       stdout: true,
-      stderr: true,
+      stderr: true
     })
 
     // Make sure the listener can handle a lot of API requests at once before raising a warning
@@ -737,9 +737,13 @@ class Runtime extends EventEmitter {
     service[kConfig] = serviceConfig
 
     // Setup ITC
-    service[kITC] = new ITC({ port: service })
+    service[kITC] = new ITC({
+      port: service,
+      handlers: {
+        getServiceMeta: this.getServiceMeta.bind(this)
+      }
+    })
     service[kITC].listen()
-    service[kITC].handle('getServiceMeta', this.getServiceMeta.bind(this))
 
     // Handle services changes
     // This is not purposely activated on when this.#configManager.current.watch === true
@@ -904,7 +908,7 @@ class Runtime extends EventEmitter {
       runtimesLogFiles.push({
         runtimePID: parseInt(runtimePID),
         runtimeLogFiles,
-        lastModified,
+        lastModified
       })
     }
 

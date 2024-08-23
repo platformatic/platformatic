@@ -18,7 +18,7 @@ class ITC extends EventEmitter {
   #closePromise
   #closeAfterCurrentRequest
 
-  constructor ({ port }) {
+  constructor ({ port, handlers }) {
     super()
 
     this.port = port
@@ -30,6 +30,13 @@ class ITC extends EventEmitter {
 
     // Make sure the emitter handle a lot of listeners at once before raising a warning
     this.#requestEmitter.setMaxListeners(1e3)
+
+    // Register handlers provided with the constructor
+    if (typeof handlers === 'object') {
+      for (const [name, fn] of Object.entries(handlers)) {
+        this.handle(name, fn)
+      }
+    }
   }
 
   async send (name, message) {
@@ -207,7 +214,7 @@ class ITC extends EventEmitter {
       version: PLT_ITC_VERSION,
       reqId: randomUUID(),
       name,
-      data,
+      data
     }
   }
 
@@ -218,7 +225,7 @@ class ITC extends EventEmitter {
       reqId: request.reqId,
       name: request.name,
       error,
-      data,
+      data
     }
   }
 
@@ -227,7 +234,7 @@ class ITC extends EventEmitter {
       type: PLT_ITC_NOTIFICATION_TYPE,
       version: PLT_ITC_VERSION,
       name,
-      data,
+      data
     }
   }
 
@@ -236,7 +243,7 @@ class ITC extends EventEmitter {
       type: PLT_ITC_UNHANDLED_ERROR_TYPE,
       version: PLT_ITC_VERSION,
       error,
-      data: null,
+      data: null
     }
   }
 

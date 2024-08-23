@@ -13,7 +13,16 @@ export class ChildManager extends ITC {
   #originalNodeOptions
 
   constructor ({ loader, context }) {
-    super({})
+    super({
+      handlers: {
+        log (message) {
+          workerData.loggingPort.postMessage(JSON.parse(message))
+        },
+        fetch: request => {
+          return this.#fetch(request)
+        }
+      }
+    })
 
     const childHandler = ({ process: child }) => {
       unsubscribe('child_process', childHandler)
@@ -27,12 +36,6 @@ export class ChildManager extends ITC {
     }
 
     subscribe('child_process', childHandler)
-
-    this.handle('log', message => {
-      workerData.loggingPort.postMessage(JSON.parse(message))
-    })
-
-    this.handle('fetch', this.#fetch.bind(this))
 
     this.#prepareChildEnvironment(loader, context)
   }
@@ -75,7 +78,7 @@ export class ChildManager extends ITC {
     this.#injectedNodeOptions = [
       `--import="data:text/javascript,${loaderScript.replaceAll(/\n/g, '')}"`,
       `--import=${childProcessWorkerFile}`,
-      process.env.NODE_OPTIONS ?? '',
+      process.env.NODE_OPTIONS ?? ''
     ].join(' ')
   }
 

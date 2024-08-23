@@ -19,8 +19,6 @@ export class AstroStackable extends BaseStackable {
   }
 
   async init () {
-    globalThis[Symbol.for('plt.runtime.itc')].handle('getServiceMeta', this.getMeta.bind(this))
-
     this.#astro = resolve(dirname(createRequire(this.root).resolve('astro')), '../..')
     const astroPackage = JSON.parse(await readFile(resolve(this.#astro, 'package.json'), 'utf-8'))
 
