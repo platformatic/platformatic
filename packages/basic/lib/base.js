@@ -13,7 +13,7 @@ export class BaseStackable {
 
     // Setup the logger
     const pinoOptions = {
-      level: (this.configManager.current.server ?? this.serverConfig)?.logger?.level ?? 'trace',
+      level: (this.configManager.current.server ?? this.serverConfig)?.logger?.level ?? 'trace'
     }
 
     if (this.id) {
@@ -22,10 +22,10 @@ export class BaseStackable {
     this.logger = pino(pinoOptions)
 
     // Setup globals
-    globalThis.platformatic = {
+    this.registerGlobals({
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
-      setGraphqlSchema: this.setGraphqlSchema.bind(this),
-    }
+      setGraphqlSchema: this.setGraphqlSchema.bind(this)
+    })
   }
 
   getUrl () {
@@ -45,7 +45,7 @@ export class BaseStackable {
       enabled,
       path: this.root,
       allow: config.watch?.allow,
-      ignore: config.watch?.ignore,
+      ignore: config.watch?.ignore
     }
   }
 
@@ -80,5 +80,9 @@ export class BaseStackable {
   async log ({ message, level }) {
     const logLevel = level ?? 'info'
     this.logger[logLevel](message)
+  }
+
+  registerGlobals (globals) {
+    globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, globals)
   }
 }

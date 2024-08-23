@@ -60,6 +60,9 @@ async function buildStackable (opts) {
   if (dependencies?.next || devDependencies?.next) {
     autodetectDescription = 'is using Next.js'
     toImport = '@platformatic/next'
+  } else if (dependencies?.['@remix-run/dev'] || devDependencies?.['@remix-run/dev']) {
+    autodetectDescription = 'is using Remix'
+    toImport = '@platformatic/remix'
   } else if (dependencies?.vite || devDependencies?.vite) {
     autodetectDescription = 'is using Vite'
     toImport = '@platformatic/vite'

@@ -21,7 +21,8 @@ const defaultTypesWithAliases = {
   node: 'application',
   vite: 'application',
   next: 'application',
-  astro: 'application'
+  astro: 'application',
+  remix: 'application'
 }
 
 class Store {
