@@ -1288,6 +1288,9 @@ importers:
       '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
+      race-as-promised:
+        specifier: ^0.0.3
+        version: 0.0.3
     devDependencies:
       '@types/node':
         specifier: ^20.14.11
@@ -1596,6 +1599,9 @@ importers:
       pino-roll:
         specifier: ^1.0.0
         version: 1.2.0
+      race-as-promised:
+        specifier: ^0.0.3
+        version: 0.0.3
       semgrator:
         specifier: ^0.3.0
         version: 0.3.0
@@ -2993,6 +2999,7 @@ packages:
 
   '@fastify/vite@6.0.7':
     resolution: {integrity: sha512-+dRo9KUkvmbqdmBskG02SwigWl06Mwkw8SBDK1zTNH6vd4DyXbRvI7RmJEmBkLouSU81KTzy1+OzwHSffqSD6w==}
+    bundledDependencies: []
 
   '@fastify/websocket@10.0.1':
     resolution: {integrity: sha512-8/pQIxTPRD8U94aILTeJ+2O3el/r19+Ej5z1O1mXlqplsUH7KzCjAI0sgd5DM/NoPjAi5qLFNIjgM5+9/rGSNw==}
@@ -7208,6 +7215,9 @@ packages:
   quick-lru@4.0.1:
     resolution: {integrity: sha512-ARhCpm70fzdcvNQfPoy49IaanKkTlRWF2JMzqhcJbhSFRZv7nPTvZJdcY7301IPmvW+/p0RgIWnQDLJxifsQ7g==}
     engines: {node: '>=8'}
+
+  race-as-promised@0.0.3:
+    resolution: {integrity: sha512-BH1qgNWMG4Mhp4wlX2uYE6reVsIXogb+aPEcosVDmnPjpkQVcWRxqDIlP1hGUiGZG8ohoiyaUlwX3xiu8O7tzw==}
 
   railroad-diagrams@1.0.0:
     resolution: {integrity: sha512-cz93DjNeLY0idrCNOH6PviZGRN9GJhsdm9hpn1YCS879fj4W+x5IFJhhkRZcwVgMmFF7R82UA/7Oh+R8lLZg6A==}
@@ -14399,6 +14409,8 @@ snapshots:
   quick-format-unescaped@4.0.4: {}
 
   quick-lru@4.0.1: {}
+
+  race-as-promised@0.0.3: {}
 
   railroad-diagrams@1.0.0: {}
 

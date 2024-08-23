@@ -2,6 +2,7 @@
 
 const { randomUUID } = require('node:crypto')
 const { EventEmitter, once } = require('node:events')
+const race = require('race-as-promised')
 const errors = require('./errors.js')
 
 const PLT_ITC_REQUEST_TYPE = 'PLT_ITC_REQUEST'
@@ -50,7 +51,7 @@ class ITC extends EventEmitter {
 
     const responsePromise = once(this.#requestEmitter, request.reqId).then(([response]) => response)
 
-    const { error, data } = await Promise.race([responsePromise, this.#closePromise])
+    const { error, data } = await race([responsePromise, this.#closePromise])
 
     if (error !== null) throw error
     return data

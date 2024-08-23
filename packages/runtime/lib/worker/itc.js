@@ -4,6 +4,7 @@ const { once } = require('node:events')
 const { parentPort } = require('node:worker_threads')
 
 const { ITC } = require('@platformatic/itc')
+const race = require('race-as-promised')
 
 const errors = require('../errors')
 const { kITC, kId } = require('./symbols')
@@ -14,7 +15,7 @@ async function sendViaITC (worker, name, message) {
     const ac = new AbortController()
     let exitCode
 
-    const response = await Promise.race([
+    const response = await race([
       worker[kITC].send(name, message),
       once(worker, 'exit', { signal: ac.signal }).then(([code]) => {
         exitCode = code
