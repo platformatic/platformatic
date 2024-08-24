@@ -6,6 +6,7 @@ const { setTimeout: sleep } = require('node:timers/promises')
 const { parentPort, workerData, threadId } = require('node:worker_threads')
 const { pathToFileURL } = require('node:url')
 
+const { Unpromise } = require('@watchable/unpromise')
 const pino = require('pino')
 const { fetch, setGlobalDispatcher, Agent } = require('undici')
 const { wire } = require('undici-thread-interceptor')
@@ -29,7 +30,7 @@ const logger = createLogger()
 function handleUnhandled (type, err) {
   logger.error({ err }, `application ${type}`)
 
-  Promise.race([app?.stop(), sleep(1000, 'timeout', { ref: false })])
+  Unpromise.race([app?.stop(), sleep(1000, 'timeout', { ref: false })])
     .catch()
     .finally(() => {
       process.exit(1)

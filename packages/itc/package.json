@@ -26,6 +26,7 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@fastify/error": "^3.4.1"
+    "@fastify/error": "^3.4.1",
+    "@watchable/unpromise": "^1.0.2"
   }
 }
