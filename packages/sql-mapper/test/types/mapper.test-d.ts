@@ -94,7 +94,11 @@ expectType<Partial<EntityFields>[]>(await entity.find({ where: { id: { neq: null
 
 const whereCondition: WhereCondition = {
   eq: { eq: '' },
+  eqNumber: { eq: 1 },
+  eqBoolean: { eq: true },
   neq: { neq: '' },
+  neqNumber: { neq: 1 },
+  neqBoolean: { neq: true },
   gt: { gt: '' },
   gte: { gte: '' },
   lt: { lt: '' },
