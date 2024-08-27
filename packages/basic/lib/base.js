@@ -57,8 +57,11 @@ export class BaseStackable {
     return this
   }
 
-  async getMetrics ({ format }) {
-    return null
+  async collectMetrics () {
+    return {
+      defaultMetrics: true,
+      httpMetrics: false
+    }
   }
 
   async getOpenapiSchema () {

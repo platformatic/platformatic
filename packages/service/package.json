@@ -62,6 +62,7 @@
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/ts-compiler": "workspace:*",
+    "@platformatic/fastify-http-metrics": "platformatic/fastify-http-metrics#add-fastify-http-metrics",
     "@platformatic/utils": "workspace:*",
     "@scalar/fastify-api-reference": "^1.19.5",
     "@types/ws": "^8.5.10",

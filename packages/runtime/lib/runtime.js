@@ -524,7 +524,6 @@ class Runtime extends EventEmitter {
         }
 
         const serviceMetrics = await sendViaITC(service, 'getMetrics', format)
-
         if (serviceMetrics) {
           if (metrics === null) {
             metrics = format === 'json' ? [] : ''
@@ -578,10 +577,10 @@ class Runtime extends EventEmitter {
       const metricName = 'http_request_all_summary_seconds'
       const httpLatencyMetrics = metrics.find(metric => metric.name === metricName)
 
-      p50Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.5).value || 0
-      p90Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.9).value || 0
-      p95Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.95).value || 0
-      p99Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.99).value || 0
+      p50Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.5)?.value || 0
+      p90Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.9)?.value || 0
+      p95Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.95)?.value || 0
+      p99Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.99)?.value || 0
 
       p50Value = Math.round(p50Value * 1000)
       p90Value = Math.round(p90Value * 1000)

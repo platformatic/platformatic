@@ -120,8 +120,12 @@ function setupITC (app, service, dispatcher) {
         }
       },
 
-      getMetrics (format) {
-        return app.stackable.getMetrics({ format })
+      async getMetrics (format) {
+        try {
+          return await app.getMetrics({ format })
+        } catch (err) {
+          throw new errors.FailedToRetrieveMetricsError(service.id, err.message)
+        }
       },
 
       inject (injectParams) {

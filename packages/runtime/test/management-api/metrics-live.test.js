@@ -103,7 +103,7 @@ test('should not throw if entrypoint does not have metrics enabled', async (t) =
       for (const record of records) {
         if (!record) continue
         const metrics = JSON.parse(record)
-        assert.strictEqual(metrics, null)
+        assert.notStrictEqual(metrics, null)
       }
     })
   })

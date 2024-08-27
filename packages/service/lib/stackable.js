@@ -3,12 +3,14 @@
 const { dirname } = require('node:path')
 const { printSchema } = require('graphql')
 const pino = require('pino')
+const httpMetrics = require('@platformatic/fastify-http-metrics')
 
 class ServiceStackable {
   constructor (options) {
     this.app = null
     this._init = options.init
     this.stackable = options.stackable
+    this.metricsRegistry = null
 
     this.configManager = options.configManager
     this.context = options.context
@@ -29,6 +31,10 @@ class ServiceStackable {
 
     if (this.app === null) {
       this.app = await this._init()
+
+      if (this.metricsRegistry) {
+        this.#setHttpMetrics()
+      }
     }
     return this.app
   }
@@ -105,15 +111,13 @@ class ServiceStackable {
     return this.app.graphql ? printSchema(this.app.graphql.schema) : null
   }
 
-  async getMetrics ({ format }) {
-    await this.init()
+  async collectMetrics ({ registry }) {
+    this.metricsRegistry = registry
 
-    const promRegister = this.app.metrics?.client?.register
-    if (!promRegister) return null
-
-    return format === 'json'
-      ? promRegister.getMetricsAsJSON()
-      : promRegister.metrics()
+    return {
+      defaultMetrics: true,
+      httpMetrics: false
+    }
   }
 
   async inject (injectParams) {
@@ -137,6 +141,34 @@ class ServiceStackable {
   async updateContext (context) {
     this.context = { ...this.context, ...context }
     this.#updateConfig()
+  }
+
+  #setHttpMetrics () {
+    this.app.register(httpMetrics, {
+      registry: this.metricsRegistry,
+      customLabels: ['telemetry_id'],
+      getCustomLabels: (req) => {
+        const telemetryId = req.headers['x-plt-telemetry-id'] ?? 'unknown'
+        return { telemetry_id: telemetryId }
+      },
+    })
+
+    this.app.register(httpMetrics, {
+      registry: this.metricsRegistry,
+      customLabels: ['telemetry_id'],
+      getCustomLabels: (req) => {
+        const telemetryId = req.headers['x-plt-telemetry-id'] ?? 'unknown'
+        return { telemetry_id: telemetryId }
+      },
+      histogram: {
+        name: 'http_request_all_duration_seconds',
+        help: 'request duration in seconds summary for all requests',
+      },
+      summary: {
+        name: 'http_request_all_summary_seconds',
+        help: 'request duration in seconds histogram for all requests',
+      },
+    })
   }
 
   #updateConfig () {
