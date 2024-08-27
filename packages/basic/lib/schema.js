@@ -32,18 +32,23 @@ const deploy = {
       type: 'array',
       items: {
         type: 'string'
-      }
+      },
+      default: ['dist']
     },
     buildCommand: {
-      type: 'string'
+      type: 'string',
+      default: 'npm run build'
     },
     installCommand: {
-      type: 'string'
+      type: 'string',
+      default: 'npm ci --omit-dev'
     },
     startCommand: {
-      type: 'string'
+      type: 'string',
+      default: 'npm run start'
     }
-  }
+  },
+  default: {}
 }
 
 export const schemaComponents = { application, deploy, watch }

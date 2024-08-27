@@ -3,7 +3,8 @@ import {
   transformConfig as basicTransformConfig,
   ChildManager,
   errors,
-  importFile
+  importFile,
+  schemaOptions
 } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
 import { once } from 'node:events'
@@ -129,7 +130,7 @@ function transformConfig () {
 export async function buildStackable (opts) {
   const root = opts.context.directory
 
-  const configManager = new ConfigManager({ schema, source: opts.config ?? {}, transformConfig })
+  const configManager = new ConfigManager({ schema, source: opts.config ?? {}, schemaOptions, transformConfig })
   await configManager.parseAndValidate()
 
   return new NextStackable(opts, root, configManager)
@@ -138,6 +139,7 @@ export async function buildStackable (opts) {
 export default {
   configType: 'next',
   configManagerConfig: {
+    schemaOptions,
     transformConfig
   },
   buildStackable,

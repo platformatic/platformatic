@@ -4,7 +4,8 @@ import {
   createServerListener,
   errors,
   getServerUrl,
-  importFile
+  importFile,
+  schemaOptions
 } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
 import { readFile } from 'node:fs/promises'
@@ -136,7 +137,7 @@ function transformConfig () {
 export async function buildStackable (opts) {
   const root = opts.context.directory
 
-  const configManager = new ConfigManager({ schema, source: opts.config ?? {}, transformConfig })
+  const configManager = new ConfigManager({ schema, source: opts.config ?? {}, schemaOptions, transformConfig })
   await configManager.parseAndValidate()
 
   return new AstroStackable(opts, root, configManager)
@@ -145,6 +146,7 @@ export async function buildStackable (opts) {
 export default {
   configType: 'astro',
   configManagerConfig: {
+    schemaOptions,
     transformConfig
   },
   buildStackable,

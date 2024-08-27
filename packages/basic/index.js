@@ -92,32 +92,22 @@ async function buildStackable (opts) {
   return imported.buildStackable(opts)
 }
 
-/* c8 ignore next 9 */
+/* c8 ignore next 3 */
 export function transformConfig () {
-  if (typeof this.current.deploy === 'undefined') {
-    this.current.deploy = {}
-  }
+  // This is currently empty but it left as a placeholder for the future
+}
 
-  if (typeof this.current.deploy.installCommand === 'undefined') {
-    this.current.deploy.installCommand = 'npm ci --omit=dev'
-  }
-
-  if (typeof this.current.deploy.buildCommand === 'undefined') {
-    this.current.deploy.buildCommand = 'npm run build'
-  }
-
-  if (typeof this.current.deploy.startCommand === 'undefined') {
-    this.current.deploy.startCommand = 'npm run start'
-  }
-
-  if (typeof this.current.deploy.include === 'undefined') {
-    this.current.deploy.include = ['dist']
-  }
+export const schemaOptions = {
+  useDefaults: true,
+  coerceTypes: true,
+  allErrors: true,
+  strict: false
 }
 
 export default {
   configType: 'nodejs',
   configManagerConfig: {
+    schemaOptions,
     transformConfig
   },
   buildStackable,

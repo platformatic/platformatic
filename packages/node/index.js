@@ -4,6 +4,7 @@ import {
   getServerUrl,
   importFile,
   injectViaRequest,
+  schemaOptions,
   transformConfig
 } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
@@ -228,7 +229,7 @@ export async function buildStackable (opts) {
 
   const { entrypoint, hadEntrypointField } = await getEntrypointInformation(root)
 
-  const configManager = new ConfigManager({ schema, source: opts.config ?? {}, transformConfig })
+  const configManager = new ConfigManager({ schema, source: opts.config ?? {}, schemaOptions, transformConfig })
   await configManager.parseAndValidate()
 
   return new NodeStackable(opts, root, configManager, entrypoint, hadEntrypointField)
@@ -237,6 +238,7 @@ export async function buildStackable (opts) {
 export default {
   configType: 'nodejs',
   configManagerConfig: {
+    schemaOptions,
     transformConfig
   },
   buildStackable,

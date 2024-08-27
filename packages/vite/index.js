@@ -4,7 +4,8 @@ import {
   createServerListener,
   errors,
   getServerUrl,
-  importFile
+  importFile,
+  schemaOptions
 } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
 import { NodeStackable } from '@platformatic/node'
@@ -195,7 +196,7 @@ function transformConfig () {
 export async function buildStackable (opts) {
   const root = opts.context.directory
 
-  const configManager = new ConfigManager({ schema, source: opts.config ?? {}, transformConfig })
+  const configManager = new ConfigManager({ schema, source: opts.config ?? {}, schemaOptions, transformConfig })
   await configManager.parseAndValidate()
 
   // When in SSR mode, we use @platformatic/node
@@ -209,6 +210,7 @@ export async function buildStackable (opts) {
 export default {
   configType: 'vite',
   configManagerConfig: {
+    schemaOptions,
     transformConfig
   },
   buildStackable,
