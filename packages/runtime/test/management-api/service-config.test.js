@@ -66,6 +66,7 @@ test('should get service config', async (t) => {
       },
       labels: {
         serviceId: 'service-1',
+        custom_label: 'custom-value',
       },
     },
   })
