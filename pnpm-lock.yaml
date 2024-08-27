@@ -992,7 +992,7 @@ importers:
         version: 6.19.8
       vscode-json-languageservice:
         specifier: ^5.3.9
-        version: 5.4.0
+        version: 5.4.1
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.3.0
@@ -1872,7 +1872,7 @@ importers:
         version: 5.5.4
       vscode-json-languageservice:
         specifier: ^5.3.9
-        version: 5.4.0
+        version: 5.4.1
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.3.0
@@ -8277,8 +8277,8 @@ packages:
       vite:
         optional: true
 
-  vscode-json-languageservice@5.4.0:
-    resolution: {integrity: sha512-NCkkCr63OHVkE4lcb0xlUAaix6vE5gHQW4NrswbLEh3ArXj81lrGuFTsGEYEUXlNHdnc53vWPcjeSy/nMTrfXg==}
+  vscode-json-languageservice@5.4.1:
+    resolution: {integrity: sha512-5czFGNyVPxz3ZJYl8R3a3SuIj5gjhmGF4Wv05MRPvD4DEnHK6b8km4VbNMJNHBlTCh7A0aHzUbPVzo+0C18mCA==}
 
   vscode-languageserver-textdocument@1.0.12:
     resolution: {integrity: sha512-cxWNPesCnQCcMPeenjKKsOCKQZ/L6Tv19DTRIGuLWe32lyzWhihGVJ/rcckZXJxfdKCFvRLS3fpBIsV/ZGX4zA==}
@@ -15707,7 +15707,7 @@ snapshots:
     optionalDependencies:
       vite: 5.4.2(@types/node@20.16.1)
 
-  vscode-json-languageservice@5.4.0:
+  vscode-json-languageservice@5.4.1:
     dependencies:
       '@vscode/l10n': 0.0.18
       jsonc-parser: 3.3.1
