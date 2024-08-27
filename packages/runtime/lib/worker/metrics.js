@@ -9,11 +9,10 @@ async function collectMetrics (stackable, serviceId, opts = {}) {
   const registry = new Registry()
   const metricsConfig = await stackable.collectMetrics({ registry })
 
+  const labels = opts.labels ?? {}
+  registry.setDefaultLabels({ ...labels, serviceId })
+
   if (metricsConfig.defaultMetrics) {
-    if (opts.labels) {
-      const labels = opts.labels ?? {}
-      registry.setDefaultLabels({ ...labels, serviceId })
-    }
     collectDefaultMetrics({ register: registry })
     collectEluMetric(registry)
   }
@@ -38,10 +37,16 @@ async function collectMetrics (stackable, serviceId, opts = {}) {
       histogram: {
         name: 'http_request_all_duration_seconds',
         help: 'request duration in seconds summary for all requests',
+        collect: function () {
+          process.nextTick(() => this.reset())
+        },
       },
       summary: {
         name: 'http_request_all_summary_seconds',
         help: 'request duration in seconds histogram for all requests',
+        collect: function () {
+          process.nextTick(() => this.reset())
+        },
       },
     })
   }
