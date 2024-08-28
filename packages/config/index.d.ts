@@ -96,7 +96,10 @@ export interface StackableInterface {
   getDispatchFunc?: () => Promise<Function>
   getOpenapiSchema?: () => Promise<object>
   getGraphqlSchema?: () => Promise<string>
-  getMetrics?: () => Promise<string>
+  collectMetrics?: ({ registry: object }) => Promise<{
+    defaultMetrics: boolean
+    httpMetrics: boolean
+  }>
   getMeta?(): () => Promise<object>
   inject?: (injectParams: object) => Promise<{
     statusCode: number

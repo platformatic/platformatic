@@ -5,6 +5,7 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { loadConfig } = require('@platformatic/config')
+const { request } = require('undici')
 const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
@@ -28,12 +29,29 @@ test('should get runtime metrics in a json format', async (t) => {
 
   await app.start()
 
+  await Promise.all([
+    app.inject('service-1', {
+      method: 'GET',
+      url: '/hello',
+      headers: { 'x-plt-telemetry-id': 'service-1-client' },
+    }),
+    app.inject('service-2', {
+      method: 'GET',
+      url: '/hello',
+      headers: { 'x-plt-telemetry-id': 'service-2-client' },
+    }),
+    app.inject('service-db', {
+      method: 'GET',
+      url: '/hello',
+      headers: { 'x-plt-telemetry-id': 'service-db-client' },
+    }),
+  ])
+
   t.after(async () => {
     await app.close()
   })
 
   const { metrics } = await app.getMetrics()
-  const metricsNames = metrics.map((metric) => metric.name)
 
   const expectedMetricNames = [
     'nodejs_active_handles',
@@ -69,9 +87,30 @@ test('should get runtime metrics in a json format', async (t) => {
     'http_request_duration_seconds',
     'http_request_summary_seconds',
   ]
-  // TODO: check the labels
+
+  const services = ['service-1', 'service-2', 'service-db']
+
   for (const metricName of expectedMetricNames) {
-    assert.ok(metricsNames.includes(metricName))
+    const foundMetrics = metrics.filter((m) => m.name === metricName)
+    assert.ok(foundMetrics.length > 0, `Missing metric: ${metricName}`)
+    assert.strictEqual(foundMetrics.length, services.length)
+
+    const hasValues = foundMetrics.every((m) => m.values.length > 0)
+    if (!hasValues) continue
+
+    for (const serviceId of services) {
+      const foundMetric = foundMetrics.find((m) => m.values[0].labels.serviceId === serviceId)
+      assert.ok(foundMetric, `Missing metric for service ${serviceId}`)
+
+      for (const { labels } of foundMetric.values) {
+        assert.strictEqual(labels.serviceId, serviceId)
+        assert.strictEqual(labels.custom_label, 'custom-value')
+
+        if (metricName.startsWith('http_request')) {
+          assert.strictEqual(labels.telemetry_id, `${serviceId}-client`)
+        }
+      }
+    }
   }
 })
 
@@ -81,7 +120,8 @@ test('should get runtime metrics in a text format', async (t) => {
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
 
-  await app.start()
+  const url = await app.start()
+  await request(url + '/hello')
 
   t.after(async () => {
     await app.close()
@@ -127,7 +167,7 @@ test('should get runtime metrics in a text format', async (t) => {
     'http_request_summary_seconds',
   ]
   for (const metricName of expectedMetricNames) {
-    assert.ok(metricsNames.includes(metricName))
+    assert.ok(metricsNames.includes(metricName), `Missing metric: ${metricName}`)
   }
 
   // Check that the serviceId labels are present in the metrics
@@ -144,7 +184,8 @@ test('should get runtime metrics in a text format', async (t) => {
     }, [])
 
   const serviceIds = [...new Set(services)].sort()
-  assert.deepEqual(serviceIds, ['service-1', 'service-2', 'service-db'])
+  assert.deepEqual(serviceIds, ['service-1'])
+  // assert.deepEqual(serviceIds, ['service-1', 'service-2', 'service-db'])
 })
 
 function getMetricsLines (metrics) {

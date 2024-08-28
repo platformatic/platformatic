@@ -1557,6 +1557,9 @@ importers:
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
+      '@platformatic/http-metrics':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@platformatic/itc':
         specifier: workspace:*
         version: link:../itc
@@ -1623,6 +1626,9 @@ importers:
       pino-roll:
         specifier: ^1.0.0
         version: 1.2.0
+      prom-client:
+        specifier: ^15.1.2
+        version: 15.1.3
       semgrator:
         specifier: ^0.3.0
         version: 0.3.0
@@ -1746,6 +1752,9 @@ importers:
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
+      '@platformatic/fastify-http-metrics':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
@@ -3386,8 +3395,14 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
+  '@platformatic/fastify-http-metrics@0.1.0':
+    resolution: {integrity: sha512-NrAesrQTXgjznjV1wwHa6glWxpKtB2bPSPF/jG8bTdtonqWkjrMgwIb3KNQF2oYwsQIOHIbhlHxxKUDCagt9AQ==}
+
   '@platformatic/graphql-composer@0.7.0':
     resolution: {integrity: sha512-+G5uXDiKSHCKrbLhwWTsa40gOoc5HncEiCAWcH8Hg0yMJWGOET7vHQQv03QsY2HYocgFwaj7O5+F3vTNQ7nrEQ==}
+
+  '@platformatic/http-metrics@0.1.0':
+    resolution: {integrity: sha512-pJXFydQjHDH7sstvVsm2J+7O23zw47yreW10ooVTi09UUbXy5cQ54rMJ7dTfRN0Qkbijwp2i0N3tx8oasL5W9A==}
 
   '@playwright/test@1.46.1':
     resolution: {integrity: sha512-Fq6SwLujA/DOIvNC2EL/SojJnkKf/rAwJ//APpJJHRyMi1PdKrY3Az+4XNQ51N4RTbItbIByQ0jgd1tayq1aeA==}
@@ -9623,6 +9638,11 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
+  '@platformatic/fastify-http-metrics@0.1.0':
+    dependencies:
+      fastify-plugin: 4.5.1
+      prom-client: 15.1.3
+
   '@platformatic/graphql-composer@0.7.0':
     dependencies:
       abstract-logger: 0.2.5
@@ -9635,6 +9655,10 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+
+  '@platformatic/http-metrics@0.1.0':
+    dependencies:
+      prom-client: 15.1.3
 
   '@playwright/test@1.46.1':
     dependencies:

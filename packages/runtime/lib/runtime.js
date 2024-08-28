@@ -526,7 +526,6 @@ class Runtime extends EventEmitter {
         }
 
         const serviceMetrics = await sendViaITC(service, 'getMetrics', format)
-
         if (serviceMetrics) {
           if (metrics === null) {
             metrics = format === 'json' ? [] : ''
@@ -578,17 +577,26 @@ class Runtime extends EventEmitter {
       let p99Value = 0
 
       const metricName = 'http_request_all_summary_seconds'
-      const httpLatencyMetrics = metrics.find(metric => metric.name === metricName)
+      const httpLatencyMetrics = metrics.filter(
+        metric => metric.name === metricName
+      )
 
-      p50Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.5).value || 0
-      p90Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.9).value || 0
-      p95Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.95).value || 0
-      p99Value = httpLatencyMetrics.values.find(value => value.labels.quantile === 0.99).value || 0
+      if (httpLatencyMetrics) {
+        const entrypointMetrics = httpLatencyMetrics.find(
+          metric => metric.values?.[0]?.labels?.serviceId === this.#entrypointId
+        )
+        if (entrypointMetrics) {
+          p50Value = entrypointMetrics.values.find(value => value.labels.quantile === 0.5)?.value || 0
+          p90Value = entrypointMetrics.values.find(value => value.labels.quantile === 0.9)?.value || 0
+          p95Value = entrypointMetrics.values.find(value => value.labels.quantile === 0.95)?.value || 0
+          p99Value = entrypointMetrics.values.find(value => value.labels.quantile === 0.99)?.value || 0
 
-      p50Value = Math.round(p50Value * 1000)
-      p90Value = Math.round(p90Value * 1000)
-      p95Value = Math.round(p95Value * 1000)
-      p99Value = Math.round(p99Value * 1000)
+          p50Value = Math.round(p50Value * 1000)
+          p90Value = Math.round(p90Value * 1000)
+          p95Value = Math.round(p95Value * 1000)
+          p99Value = Math.round(p99Value * 1000)
+        }
+      }
 
       const cpu = cpuMetric.values[0].value
       const rss = rssMetric.values[0].value

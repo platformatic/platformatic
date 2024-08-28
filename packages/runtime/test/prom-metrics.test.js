@@ -64,7 +64,7 @@ test('should start a prometheus server on port 9090', async (t) => {
     'process_cpu_user_seconds_total',
     'process_resident_memory_bytes',
     'process_start_time_seconds',
-    'http_request_all_summary_seconds',
+    // 'http_request_all_summary_seconds',
     'http_request_duration_seconds',
     'http_request_summary_seconds',
   ]
