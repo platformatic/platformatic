@@ -1,4 +1,4 @@
-import { errors, importFile } from '@platformatic/basic'
+import { transformConfig as basicTransformConfig, errors, importFile, schemaOptions } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
 import { ViteStackable } from '@platformatic/vite'
 import { readFile } from 'node:fs/promises'
@@ -71,12 +71,14 @@ function transformConfig () {
   if (typeof this.current.watch !== 'object') {
     this.current.watch = { enabled: this.current.watch || false }
   }
+
+  basicTransformConfig.call(this)
 }
 
 export async function buildStackable (opts) {
   const root = opts.context.directory
 
-  const configManager = new ConfigManager({ schema, source: opts.config ?? {}, transformConfig })
+  const configManager = new ConfigManager({ schema, source: opts.config ?? {}, schemaOptions, transformConfig })
   await configManager.parseAndValidate()
 
   return new RemixStackable(opts, root, configManager)
@@ -85,6 +87,7 @@ export async function buildStackable (opts) {
 export default {
   configType: 'remix',
   configManagerConfig: {
+    schemaOptions,
     transformConfig
   },
   buildStackable,

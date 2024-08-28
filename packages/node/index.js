@@ -1,4 +1,12 @@
-import { BaseStackable, createServerListener, getServerUrl, importFile, injectViaRequest } from '@platformatic/basic'
+import {
+  BaseStackable,
+  createServerListener,
+  getServerUrl,
+  importFile,
+  injectViaRequest,
+  schemaOptions,
+  transformConfig
+} from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
 import inject from 'light-my-request'
 import { existsSync } from 'node:fs'
@@ -18,7 +26,7 @@ const validFields = [
   'exports#.#node',
   'exports#.#import',
   'exports#.#require',
-  'exports#.#default',
+  'exports#.#default'
 ]
 
 const validFilesBasenames = ['index', 'main', 'app', 'application', 'server', 'start', 'bundle', 'run', 'entrypoint']
@@ -136,6 +144,12 @@ export class NodeStackable extends BaseStackable {
     return { statusCode, headers, body, payload, rawPayload }
   }
 
+  getMeta () {
+    return {
+      deploy: this.configManager.current.deploy
+    }
+  }
+
   async _listen () {
     const serverOptions = this.serverConfig
 
@@ -215,7 +229,7 @@ export async function buildStackable (opts) {
 
   const { entrypoint, hadEntrypointField } = await getEntrypointInformation(root)
 
-  const configManager = new ConfigManager({ schema, source: opts.config ?? {} })
+  const configManager = new ConfigManager({ schema, source: opts.config ?? {}, schemaOptions, transformConfig })
   await configManager.parseAndValidate()
 
   return new NodeStackable(opts, root, configManager, entrypoint, hadEntrypointField)
@@ -223,8 +237,11 @@ export async function buildStackable (opts) {
 
 export default {
   configType: 'nodejs',
-  configManagerConfig: {},
+  configManagerConfig: {
+    schemaOptions,
+    transformConfig
+  },
   buildStackable,
   schema,
-  version: packageJson.version,
+  version: packageJson.version
 }

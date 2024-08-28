@@ -80,9 +80,9 @@ async function platformaticService (app, opts) {
     }
 
     if (registerTsCompiler) {
-      app.register(setupTsCompiler)
+      app.register(setupTsCompiler, { context: opts.context })
     }
-    app.register(loadPlugins)
+    app.register(loadPlugins, { context: opts.context })
   }
 
   if (isKeyEnabled('cors', config.server)) {
@@ -168,7 +168,7 @@ async function buildStackable (
   }
 
   const stackable = new Stackable({
-    init: () => buildServer(configManager.current, app),
+    init: () => buildServer(configManager.current, app, options.context),
     stackable: app,
     configManager,
     context: options.context,

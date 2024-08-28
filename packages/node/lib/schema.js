@@ -15,6 +15,7 @@ export const schema = {
     },
     server: utilsSchema.server,
     watch: schemaComponents.watch,
+    deploy: schemaComponents.deploy
   },
   additionalProperties: false,
 }

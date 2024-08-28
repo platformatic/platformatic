@@ -1,4 +1,11 @@
-import { BaseStackable, ChildManager, errors, importFile } from '@platformatic/basic'
+import {
+  BaseStackable,
+  transformConfig as basicTransformConfig,
+  ChildManager,
+  errors,
+  importFile,
+  schemaOptions
+} from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
 import { once } from 'node:events'
 import { readFile } from 'node:fs/promises'
@@ -42,7 +49,7 @@ export class NextStackable extends BaseStackable {
     const { hostname, port } = this.serverConfig ?? {}
     const serverOptions = {
       host: hostname || '127.0.0.1',
-      port: port || 0,
+      port: port || 0
     }
 
     this.#basePath = config.application?.basePath
@@ -55,8 +62,8 @@ export class NextStackable extends BaseStackable {
         // Always use URL to avoid serialization problem in Windows
         root: pathToFileURL(this.root),
         basePath: this.#basePath,
-        logger: { id: this.id, level: this.logger.level },
-      },
+        logger: { id: this.id, level: this.logger.level }
+      }
     })
 
     this.#manager.on('config', config => {
@@ -78,19 +85,24 @@ export class NextStackable extends BaseStackable {
   /* c8 ignore next 5 */
   async getWatchConfig () {
     return {
-      enabled: false,
+      enabled: false
     }
   }
 
   getMeta () {
-    return {
-      composer: {
+    const deploy = this.configManager.current.deploy
+    let composer
+
+    if (this.url) {
+      composer = {
         tcp: true,
         url: this.url,
         prefix: this.#basePath,
-        wantsAbsoluteUrls: true,
-      },
+        wantsAbsoluteUrls: true
+      }
     }
+
+    return { deploy, composer }
   }
 
   async #startNext (nextRoot, serverOptions) {
@@ -111,12 +123,14 @@ function transformConfig () {
   if (typeof this.current.watch !== 'object') {
     this.current.watch = { enabled: this.current.watch || false }
   }
+
+  basicTransformConfig.call(this)
 }
 
 export async function buildStackable (opts) {
   const root = opts.context.directory
 
-  const configManager = new ConfigManager({ schema, source: opts.config ?? {}, transformConfig })
+  const configManager = new ConfigManager({ schema, source: opts.config ?? {}, schemaOptions, transformConfig })
   await configManager.parseAndValidate()
 
   return new NextStackable(opts, root, configManager)
@@ -125,9 +139,10 @@ export async function buildStackable (opts) {
 export default {
   configType: 'next',
   configManagerConfig: {
-    transformConfig,
+    schemaOptions,
+    transformConfig
   },
   buildStackable,
   schema,
-  version: packageJson.version,
+  version: packageJson.version
 }

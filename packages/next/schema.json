@@ -500,6 +500,26 @@
         }
       },
       "additionalProperties": false
+    },
+    "deploy": {
+      "type": "object",
+      "properties": {
+        "include": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "buildCommand": {
+          "type": "string"
+        },
+        "installCommand": {
+          "type": "string"
+        },
+        "startCommand": {
+          "type": "string"
+        }
+      }
     }
   },
   "additionalProperties": false

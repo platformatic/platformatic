@@ -11,7 +11,7 @@ export const schema = {
   type: 'object',
   properties: {
     $schema: {
-      type: 'string',
+      type: 'string'
     },
     server: utilsSchema.server,
     watch: schemaComponents.watch,
@@ -20,7 +20,7 @@ export const schema = {
       type: 'object',
       properties: {
         configFile: {
-          oneOf: [{ type: 'string' }, { type: 'boolean' }],
+          oneOf: [{ type: 'string' }, { type: 'boolean' }]
         },
         ssr: {
           oneOf: [
@@ -28,16 +28,17 @@ export const schema = {
               type: 'object',
               properties: { entrypoint: { type: 'string' } },
               required: ['entrypoint'],
-              additionalProperties: false,
+              additionalProperties: false
             },
-            { type: 'boolean' },
-          ],
-        },
+            { type: 'boolean' }
+          ]
+        }
       },
-      additionalProperties: false,
+      additionalProperties: false
     },
+    deploy: schemaComponents.deploy
   },
-  additionalProperties: false,
+  additionalProperties: false
 }
 
 /* c8 ignore next 3 */

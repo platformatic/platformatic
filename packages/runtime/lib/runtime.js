@@ -151,7 +151,7 @@ class Runtime extends EventEmitter {
     return this.#url
   }
 
-  async stop () {
+  async stop (silent = false) {
     if (this.#status === 'starting') {
       await once(this, 'started')
     }
@@ -159,7 +159,7 @@ class Runtime extends EventEmitter {
     this.#updateStatus('stopping')
     this.#startedServices.clear()
 
-    await Promise.all(this.#servicesIds.map(service => this._stopService(service)))
+    await Promise.all(this.#servicesIds.map(service => this._stopService(service, silent)))
 
     this.#updateStatus('stopped')
   }
@@ -175,12 +175,12 @@ class Runtime extends EventEmitter {
     return this.#url
   }
 
-  async close (fromManagementApi) {
+  async close (fromManagementApi = false, silent = false) {
     this.#updateStatus('closing')
 
     clearInterval(this.#metricsTimeout)
 
-    await this.stop()
+    await this.stop(silent)
 
     if (this.#managementApi) {
       if (fromManagementApi) {
@@ -263,7 +263,7 @@ class Runtime extends EventEmitter {
   }
 
   // Do not rename to #stopService as this is used in tests
-  async _stopService (id) {
+  async _stopService (id, silent) {
     const service = await this.#getServiceById(id, false, false)
 
     if (!service) {
@@ -272,7 +272,9 @@ class Runtime extends EventEmitter {
 
     this.#startedServices.set(id, false)
 
-    this.logger?.info(`Stopping service "${id}"...`)
+    if (!silent) {
+      this.logger?.info(`Stopping service "${id}"...`)
+    }
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
     try {
