@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@platformatic/vite": "workspace:*",
+    "@platformatic/vite": "^2.0.0-alpha.6",
     "vite": "^5.3.4"
   }
 }

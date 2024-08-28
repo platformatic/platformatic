@@ -1,5 +1,6 @@
 import { createDirectory, safeRemove } from '@platformatic/utils'
 import { execa } from 'execa'
+import { minimatch } from 'minimatch'
 import { fail, ok } from 'node:assert'
 import { cp, readdir, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -8,32 +9,45 @@ import { test } from 'node:test'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { cliPath } from './helper.js'
 
-import { minimatch } from 'minimatch'
-
-async function prepareService (root, temporary, subpath) {
-  const serviceRoot = resolve(temporary, subpath)
-  const packageJson = JSON.parse(await readFile(resolve(serviceRoot, 'package.json'), 'utf-8'))
-
+async function packPackages (root, temporary) {
+  const overrides = {}
   const packages = await readdir(resolve(root, 'packages'))
 
-  const overrides = {}
+  const originalCwd = process.cwd()
   for (const pkg of packages) {
-    if (!pkg.startsWith('.')) {
-      if (pkg === 'cli') {
-        overrides.platformatic = pathToFileURL(resolve(root, `packages/${pkg}`)).toString()
-      } else if (pkg === 'create-platformatic') {
-        overrides[pkg] = pathToFileURL(resolve(root, `packages/${pkg}`)).toString()
-      } else {
-        overrides[`@platformatic/${pkg}`] = pathToFileURL(resolve(root, `packages/${pkg}`)).toString()
-      }
+    if (pkg.startsWith('.')) {
+      continue
     }
+
+    let name = `@platformatic/${pkg}`
+
+    if (pkg === 'cli') {
+      name = 'platformatic'
+    } else if (pkg === 'create-platformatic') {
+      name = pkg
+    }
+
+    process.chdir(resolve(root, 'packages', pkg))
+    const { stdout: path } = await execa('pnpm', ['pack', '--pack-destination', resolve(temporary, 'packages')])
+
+    overrides[name] = pathToFileURL(path.trim()).toString()
   }
 
-  packageJson.pnpm = { overrides }
+  process.chdir(originalCwd)
+  return overrides
+}
 
-  await writeFile(resolve(serviceRoot, 'package.json'), JSON.stringify(packageJson, null, 2), 'utf-8')
+async function prepareService (root, temporary, subpath, overrides) {
+  const serviceRoot = resolve(temporary, subpath)
   process.chdir(serviceRoot)
   await execa('pnpm', ['install'])
+
+  const packageJson = JSON.parse(await readFile(resolve(serviceRoot, 'package.json'), 'utf-8'))
+  packageJson.pnpm = { overrides }
+  await writeFile(resolve(serviceRoot, 'package.json'), JSON.stringify(packageJson, null, 2), 'utf-8')
+
+  process.chdir(serviceRoot)
+  await execa('pnpm', ['install', '--no-frozen-lockfile'])
 }
 
 async function ensureExists (path) {
@@ -67,8 +81,9 @@ test('should build all service that support the build command', async t => {
   await createDirectory(dirname(temporary))
   t.after(() => safeRemove(temporary))
   await cp(fixtures, temporary, { recursive: true })
+  const overrides = await packPackages(root, temporary)
 
-  await prepareService(root, temporary, '.')
+  await prepareService(root, temporary, '.', overrides)
   await Promise.all(
     [
       'services/astro',
@@ -79,7 +94,7 @@ test('should build all service that support the build command', async t => {
       'services/remix',
       'services/service',
       'services/vite'
-    ].map(p => prepareService(root, temporary, p))
+    ].map(p => prepareService(root, temporary, p, overrides))
   )
 
   await execa('node', [cliPath, 'build'], { stdio: 'inherit', cwd: temporary })

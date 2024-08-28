@@ -20,20 +20,29 @@ async function buildService (logger, id, cwd, command) {
     lines: false,
     stripFinalNewline: false,
     reject: false,
+    preferLocal: true,
     cwd
   })
 
   const exitPromise = once(subprocess, 'exit')
 
+  const output = []
   for await (const line of subprocess.all.pipe(split())) {
-    logger.info(`  ${line}`)
+    logger.debug(`  ${line}`)
+    output.push(line)
   }
-  logger.info('')
+  logger.debug('')
+  output.push('')
 
   const [exitCode] = await exitPromise
 
   if (exitCode !== 0) {
-    logger.error(`❌ Command failed with exit code ${exitCode}.`)
+    logger.error(`❌ Building service ${id} (${command}) failed with exit code ${exitCode}: `)
+
+    for (const line of output) {
+      logger.error(`  ${line}`)
+    }
+
     process.exit(1)
   }
 }

@@ -9,6 +9,6 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@platformatic/db": "workspace:*"
+    "@platformatic/db": "^2.0.0-alpha.6"
   }
 }

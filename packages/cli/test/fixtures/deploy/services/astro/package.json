@@ -12,7 +12,7 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "@platformatic/astro": "workspace:*",
+    "@platformatic/astro": "^2.0.0-alpha.6",
     "astro": "^4.1.4"
   }
 }

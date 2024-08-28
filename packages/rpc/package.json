@@ -23,7 +23,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "@fastify/autoload": "^5.10.0",
-    "@types/node": "^20.11.28",
+    "@types/node": "^22.5.0",
     "borp": "^0.17.0",
     "eslint": "9",
     "execa": "^8.0.1",
