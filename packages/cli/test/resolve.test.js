@@ -60,7 +60,7 @@ test('resolve runtime external services', async t => {
       id: 'external-service-2',
       url: 'http://github.com/test-owner/test-app-2.git',
       config: 'platformatic.json',
-      path: 'custom-external/external-service-2',
+      path: '{SOME_ENV_VAR}',
     },
     {
       id: 'external-service-3',

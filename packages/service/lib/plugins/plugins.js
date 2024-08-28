@@ -7,14 +7,14 @@ const wrapper = require('./sandbox-wrapper')
 
 const { getJSPluginPath, isFileAccessible } = require('../utils')
 
-async function loadPlugins (app) {
+async function loadPlugins (app, opts) {
   const configManager = app.platformatic.configManager
   const config = configManager.current
 
   let isOutDirAccessible = false
   let outDir = null
 
-  const workingDir = configManager.dirname
+  const workingDir = opts?.context?.directory ?? configManager.dirname
   const tsConfigPath = configManager.current.plugins.typescript?.tsConfig || join(workingDir, 'tsconfig.json')
 
   // If the tsconfig.json file exists, then we need to adjust the plugin paths

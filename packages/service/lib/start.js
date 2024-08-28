@@ -25,8 +25,8 @@ async function adjustHttpsKeyAndCert (arg) {
   return arg
 }
 
-async function createServer (context) {
-  const { app, configManager } = context
+async function createServer (serverContext) {
+  const { app, configManager, context } = serverContext
   const config = configManager.current
   let fastifyOptions = {}
 
@@ -42,14 +42,14 @@ async function createServer (context) {
   fastifyOptions.genReqId = function (req) { return randomUUID() }
   const root = fastify(fastifyOptions)
   root.decorate('platformatic', { configManager, config })
-  await root.register(app)
+  await root.register(app, { context })
   if (!root.hasRoute({ url: '/', method: 'GET' })) {
     await root.register(require('./root-endpoint'))
   }
 
   root.decorate('url', {
     getter () {
-      return context.url
+      return serverContext.url
     },
   })
 
@@ -65,7 +65,7 @@ async function buildConfigManager (options, app) {
   return configManager
 }
 
-async function buildServer (options, app) {
+async function buildServer (options, app, context) {
   const configManager = await buildConfigManager(options, app)
   const config = configManager.current
 
@@ -84,17 +84,18 @@ async function buildServer (options, app) {
     }
   }
 
-  const context = {
+  const serverContext = {
     app: typeof app === 'function' ? app : app.app,
     configManager,
+    context
   }
-  const handler = await createServer(context)
+  const handler = await createServer(serverContext)
   handler.decorate('start', async () => {
-    context.url = await handler.listen({
+    serverContext.url = await handler.listen({
       host: options.server?.hostname || '127.0.0.1',
       port: options.server?.port || 0,
     })
-    return context.url
+    return serverContext.url
   })
   configManager.on('error', function (err) {
     /* c8 ignore next 1 */

@@ -73,8 +73,8 @@ async function buildStackable (opts) {
 
   const imported = await importStackablePackage(opts, toImport, autodetectDescription)
 
-  if (!hadConfig) {
-    const serviceRoot = relative(process.cwd(), opts.context.directory)
+  const serviceRoot = relative(process.cwd(), opts.context.directory)
+  if (!hadConfig && !existsSync(resolve(serviceRoot, 'platformatic.application.json'))) {
     const logger = pino({
       level: opts.context.serverConfig?.logger?.level ?? 'warn',
       name: opts.context.serviceId
@@ -92,9 +92,24 @@ async function buildStackable (opts) {
   return imported.buildStackable(opts)
 }
 
+/* c8 ignore next 3 */
+export function transformConfig () {
+  // This is currently empty but it left as a placeholder for the future
+}
+
+export const schemaOptions = {
+  useDefaults: true,
+  coerceTypes: true,
+  allErrors: true,
+  strict: false
+}
+
 export default {
   configType: 'nodejs',
-  configManagerConfig: {},
+  configManagerConfig: {
+    schemaOptions,
+    transformConfig
+  },
   buildStackable,
   schema,
   version: packageJson.version

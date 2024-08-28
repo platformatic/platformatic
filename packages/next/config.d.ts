@@ -153,4 +153,11 @@ export interface PlatformaticNextJsStackable {
   application?: {
     basePath?: string;
   };
+  deploy?: {
+    include?: string[];
+    buildCommand?: string;
+    installCommand?: string;
+    startCommand?: string;
+    [k: string]: unknown;
+  };
 }

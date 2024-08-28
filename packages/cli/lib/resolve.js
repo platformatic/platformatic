@@ -1,12 +1,11 @@
-import { join, relative } from 'node:path'
-import { access, writeFile, mkdir, readdir } from 'node:fs/promises'
-import { Store, getStringifier } from '@platformatic/config'
+import { join, relative, resolve as resolvePath } from 'node:path'
+import { access, writeFile, readFile, mkdir, readdir } from 'node:fs/promises'
+import { Store, getParser, getStringifier } from '@platformatic/config'
 import { platformaticRuntime } from '@platformatic/runtime'
 import parseArgs from 'minimist'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { execa } from 'execa'
-import fjs from 'fast-json-stringify'
 
 const RESOLVED_SERVICES_DIRNAME = 'external'
 
@@ -38,7 +37,7 @@ export async function resolve (argv) {
   }
 }
 
-async function resolveServices (config, logger, options = {}) {
+async function resolveServices (configPath, logger, options = {}) {
   const store = new Store({
     cwd: process.cwd(),
     logger,
@@ -46,42 +45,47 @@ async function resolveServices (config, logger, options = {}) {
   store.add(platformaticRuntime)
 
   const { configManager } = await store.loadConfig({
-    config,
+    config: configPath,
     overrides: {
-      fixPaths: false,
       onMissingEnv (key) {
         return '{' + key + '}'
       },
     },
   })
 
-  await configManager.parseAndValidate(true)
-  config = configManager.current
+  configPath = configManager.fullPath
 
-  // If the schema is present, we use it to format the config
-  if (configManager.schema) {
-    const stringify = fjs(configManager.schema)
-    config = JSON.parse(stringify(config))
-  }
-
-  const projectDir = configManager.dirname
-  const externalDir = join(projectDir, RESOLVED_SERVICES_DIRNAME)
+  const parseConfig = getParser(configPath)
+  const configFile = await readFile(configPath, 'utf8')
+  const config = await parseConfig(configFile)
 
   if (!config.services || config.services.length === 0) {
     logger.info('No external services to resolve')
     return
   }
 
+  const projectDir = configManager.dirname
+  const externalDir = join(projectDir, RESOLVED_SERVICES_DIRNAME)
+
   const services = config.services || []
   for (const service of services) {
     if (service.url) {
       let path = service.path
-      if (!path || (path.startsWith('{') && path.endsWith('}'))) {
+      if (path && path.startsWith('{') && path.endsWith('}')) {
+        path = await configManager.replaceEnv(path)
+
+        // Failed to resolve the path
+        if (path.startsWith('{') && path.endsWith('}')) {
+          path = null
+        }
+      }
+
+      if (!path) {
         await mkdir(externalDir, { recursive: true })
         path = join(externalDir, service.id)
         service.path = relative(projectDir, path)
       } else {
-        path = join(projectDir, path)
+        path = resolvePath(projectDir, path)
       }
 
       const isNotEmpty = await isDirectoryNotEmpty(path)
@@ -118,8 +122,8 @@ async function resolveServices (config, logger, options = {}) {
     }
   }
 
-  const stringify = getStringifier(configManager.fullPath)
-  const newConfig = stringify(config)
+  const stringifyConfig = getStringifier(configPath)
+  const newConfig = stringifyConfig(config)
 
   await writeFile(configManager.fullPath, newConfig, 'utf8')
 

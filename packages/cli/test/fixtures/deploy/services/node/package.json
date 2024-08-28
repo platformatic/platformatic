@@ -1,0 +1,12 @@
+{
+  "name": "temp",
+  "scripts": {
+    "precustom-build": "node --input-type module -e \"import {mkdirSync,writeFileSync} from 'fs'; mkdirSync('dist/pre', {recursive: true}); writeFileSync('dist/pre/timestamp', Date.now().toString())\"",
+    "custom-build": "tsc -P ."
+  },
+  "dependencies": {
+    "@platformatic/node": "^2.0.0-alpha.6",
+    "@types/node": "^22.5.0",
+    "typescript": "^5.5.4"
+  }
+}

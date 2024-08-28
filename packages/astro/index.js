@@ -1,4 +1,12 @@
-import { BaseStackable, createServerListener, errors, getServerUrl, importFile } from '@platformatic/basic'
+import {
+  BaseStackable,
+  transformConfig as basicTransformConfig,
+  createServerListener,
+  errors,
+  getServerUrl,
+  importFile,
+  schemaOptions
+} from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
@@ -97,14 +105,19 @@ export class AstroStackable extends BaseStackable {
   }
 
   getMeta () {
-    return {
-      composer: {
+    const deploy = this.configManager.current.deploy
+    let composer
+
+    if (this.url) {
+      composer = {
         tcp: true,
         url: this.url,
         prefix: this.#basePath,
         wantsAbsoluteUrls: true
       }
     }
+
+    return { deploy, composer }
   }
 }
 
@@ -117,12 +130,14 @@ function transformConfig () {
   if (typeof this.current.watch !== 'object') {
     this.current.watch = { enabled: this.current.watch || false }
   }
+
+  basicTransformConfig.call(this)
 }
 
 export async function buildStackable (opts) {
   const root = opts.context.directory
 
-  const configManager = new ConfigManager({ schema, source: opts.config ?? {}, transformConfig })
+  const configManager = new ConfigManager({ schema, source: opts.config ?? {}, schemaOptions, transformConfig })
   await configManager.parseAndValidate()
 
   return new AstroStackable(opts, root, configManager)
@@ -131,6 +146,7 @@ export async function buildStackable (opts) {
 export default {
   configType: 'astro',
   configManagerConfig: {
+    schemaOptions,
     transformConfig
   },
   buildStackable,

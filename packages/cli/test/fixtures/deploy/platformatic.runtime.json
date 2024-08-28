@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
+  "entrypoint": "vite",
+  "server": {
+    "logger": {
+      "level": "error"
+    }
+  },
+  "services": [
+    {
+      "id": "astro",
+      "path": "./services/astro"
+    },
+    {
+      "id": "composer",
+      "config": "platformatic.json",
+      "path": "./services/composer"
+    },
+    {
+      "id": "db",
+      "config": "platformatic.json",
+      "path": "./services/db"
+    },
+    {
+      "id": "node",
+      "path": "./services/node"
+    },
+    {
+      "id": "next",
+      "path": "./services/next"
+    },
+    {
+      "id": "remix",
+      "path": "./services/remix"
+    },
+    {
+      "id": "service",
+      "config": "platformatic.json",
+      "path": "./services/service"
+    },
+    {
+      "id": "vite",
+      "path": "./services/vite"
+    }
+  ]
+}

@@ -6,11 +6,12 @@ const errors = require('./lib/errors')
 const { platformaticRuntime, wrapConfigInRuntimeConfig } = require('./lib/config')
 const RuntimeGenerator = require('./lib/generator/runtime-generator')
 const { Runtime } = require('./lib/runtime')
-const { start, startCommand } = require('./lib/start')
+const { buildRuntime, start, startCommand } = require('./lib/start')
 const symbols = require('./lib/worker/symbols')
 const { loadConfig, getRuntimeLogsDir } = require('./lib/utils')
 
 module.exports.buildServer = buildServer
+module.exports.buildRuntime = buildRuntime
 module.exports.compile = compile
 module.exports.errors = errors
 module.exports.Generator = RuntimeGenerator

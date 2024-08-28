@@ -1,13 +1,13 @@
-import assert from 'node:assert/strict'
-import { test } from 'node:test'
-import { EOL, tmpdir } from 'node:os'
-import { readFile } from 'node:fs/promises'
 import { join } from 'desm'
-import { execa } from 'execa'
-import { cliPath } from './helper.js'
-import { Agent, setGlobalDispatcher, request } from 'undici'
-import split from 'split2'
 import { on } from 'events'
+import { execa } from 'execa'
+import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
+import { EOL, tmpdir } from 'node:os'
+import { test } from 'node:test'
+import split from 'split2'
+import { Agent, request, setGlobalDispatcher } from 'undici'
+import { cliPath } from './helper.js'
 
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 10,
@@ -30,6 +30,41 @@ const helpRuntime = await readFile(join(import.meta.url, '..', '..', 'runtime', 
 const helpService = await readFile(join(import.meta.url, '..', '..', 'service', 'help', 'help.txt'), 'utf8')
 
 const localTmp = tmpdir()
+
+function matchOutput (actual, expected) {
+  assert.equal(actual.replaceAll(EOL, '\n').trim(), expected.replaceAll(EOL, '\n').trim())
+}
+
+async function start (...args) {
+  const controller = new AbortController()
+  const { execa } = await import('execa')
+  const child = execa('node', [cliPath, ...args], { cancelSignal: controller.signal })
+  child.stderr.pipe(process.stdout)
+  const output = child.stdout.pipe(split(function (line) {
+    try {
+      const obj = JSON.parse(line)
+      return obj
+    } catch (err) {
+      console.log(line)
+    }
+  }))
+  child.ndj = output
+
+  const errorTimeout = setTimeout(() => {
+    throw new Error('Couldn\'t start server')
+  }, 10000)
+
+  for await (const messages of on(output, 'data')) {
+    for (const message of messages) {
+      const text = message.msg
+      if (text && text.includes('Server listening at')) {
+        const url = text.match(/Server listening at (.*)/)[1]
+        clearTimeout(errorTimeout)
+        return { child, url, output, cancel: controller.abort.bind(controller) }
+      }
+    }
+  }
+}
 
 test('version', async (t) => {
   const { stdout } = await execa('node', [cliPath, '--version'])
@@ -86,75 +121,50 @@ test('prints the help if command requires a subcommand', async (t) => {
     await execa('node', [cliPath, 'db'])
     assert.fail('bug')
   } catch (err) {
-    assert.equal(err.stdout + EOL, helpDB)
+    matchOutput(err.stdout, helpDB)
   }
 })
 
 test('prints the help with help command', async (t) => {
   const { stdout } = await execa('node', [cliPath, 'help'])
-  assert.equal(stdout + EOL, help)
+  matchOutput(stdout, help)
 })
 
 test('prints the help with help flag', async (t) => {
   const { stdout } = await execa('node', [cliPath, '--help'])
-  assert.equal(stdout + EOL, help)
+  matchOutput(stdout, help)
 })
 
 test('prints the help of db', async (t) => {
   const { stdout } = await execa('node', [cliPath, 'help', 'db'])
-  assert.equal(stdout + EOL, helpDB)
+  matchOutput(stdout, helpDB)
 })
 
 test('prints the help if not commands are specified', async (t) => {
   const { stdout } = await execa('node', [cliPath])
-  assert.equal(stdout + EOL, help)
+  matchOutput(stdout, help)
 })
 
 test('prints the help of runtime', async (t) => {
   const { stdout } = await execa('node', [cliPath, 'help', 'runtime'])
-  assert.equal(stdout + EOL, helpRuntime)
+  matchOutput(stdout, helpRuntime)
 })
 
 test('prints the help of service', async (t) => {
   const { stdout } = await execa('node', [cliPath, 'help', 'service'])
-  assert.equal(stdout + EOL, helpService)
+  matchOutput(stdout, helpService)
 })
-
-async function start (...args) {
-  const { execa } = await import('execa')
-  const child = execa('node', [cliPath, ...args])
-  child.stderr.pipe(process.stdout)
-  const output = child.stdout.pipe(split(function (line) {
-    try {
-      const obj = JSON.parse(line)
-      return obj
-    } catch (err) {
-      console.log(line)
-    }
-  }))
-  child.ndj = output
-
-  const errorTimeout = setTimeout(() => {
-    throw new Error('Couldn\'t start server')
-  }, 10000)
-
-  for await (const messages of on(output, 'data')) {
-    for (const message of messages) {
-      const text = message.msg
-      if (text && text.includes('Server listening at')) {
-        const url = text.match(/Server listening at (.*)/)[1]
-        clearTimeout(errorTimeout)
-        return { child, url, output }
-      }
-    }
-  }
-}
 
 test('start the database and do a call', async (t) => {
   const config = join(import.meta.url, '..', 'fixtures/sqlite/platformatic.db.json')
-  const { child, url } = await start('db', 'start', '-c', config)
+  const { child, url, cancel } = await start('db', 'start', '-c', config)
   t.after(() => {
-    child.kill('SIGINT')
+    cancel()
+    return child.catch(err => {
+      if (!err.isCanceled) {
+        throw err
+      }
+    })
   })
 
   const res = await request(`${url}/graphql`, {

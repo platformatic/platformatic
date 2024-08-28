@@ -24,7 +24,8 @@ export const schema = {
         }
       },
       additionalProperties: false
-    }
+    },
+    deploy: schemaComponents.deploy
   },
   additionalProperties: false
 }
