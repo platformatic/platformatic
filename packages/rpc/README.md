@@ -25,15 +25,25 @@ import { readFile } from 'node:fs/promises'
 import fastify from 'fastify'
 import fastifyRpc from '@platformatic/rpc'
 
-const fastify = fastify()
+const app = fastify()
 
-const openapiSchemaPath = join(__dirname, 'openapi.json')
-const openapiSchemaFile = await readFile(openapiSchemaPath, 'utf8')
-const openapiSchema = JSON.parse(openapiSchemaFile)
+app.register(async (app) => {
+  const openapiSchemaPath = join(__dirname, 'openapi.json')
+  const openapiSchemaFile = await readFile(openapiSchemaPath, 'utf8')
+  const openapiSchema = JSON.parse(openapiSchemaFile)
+  
+  await app.register(fastifyRpc, {
+    openapi: openapiSchema,
+    prefix: '/rpc',
+  })
+})
 
-fastify.register(fastifyRpc, {
-  openapi: openapiSchema,
-  prefix: '/rpc',
+app.listen({ port: 3042 }, (err) => {
+  if (err) {
+    console.error(err)
+    process.exit(1)
+  }
+  console.log(`Server listening on http://localhost:3042`)
 })
 ```
 
@@ -41,19 +51,47 @@ fastify.register(fastifyRpc, {
 All parameters will be passed as properties of the options object.
 
 ```ts
-type User = {
-  name: string
-  age: number
-}
+import { join } from 'node:path'
+import { readFile } from 'node:fs/promises'
+import fastify from 'fastify'
+import fastifyRpc from '@platformatic/rpc'
 
-const users = [
-  { name: 'Alice', age: 30 },
-  { name: 'Bob', age: 25 },
-  { name: 'Charlie', age: 35 },
-]
+const app = fastify()
 
-fastify.rpc('getUsers', async (options: { maxAge: number }): Promise<User[]> => {
-  return users.filter(user => user.age <= options.maxAge)
+app.register(async (app) => {
+  const openapiSchemaPath = join(__dirname, 'openapi.json')
+  const openapiSchemaFile = await readFile(openapiSchemaPath, 'utf8')
+  const openapiSchema = JSON.parse(openapiSchemaFile)
+  
+  await app.register(fastifyRpc, {
+    openapi: openapiSchema,
+    prefix: '/rpc',
+  })
+
+  app.register(async (app) => {
+    type User = {
+      name: string
+      age: number
+    }
+
+    const users = [
+      { name: 'Alice', age: 30 },
+      { name: 'Bob', age: 25 },
+      { name: 'Charlie', age: 35 },
+    ]
+    
+    app.rpc('getUsers', async (options: { maxAge: number }): Promise<User[]> => {
+      return users.filter(user => user.age <= options.maxAge)
+    })
+  })
+})
+
+app.listen({ port: 3042 }, (err) => {
+  if (err) {
+    console.error(err)
+    process.exit(1)
+  }
+  console.log(`Server listening on http://localhost:3042`)
 })
 ```
 
