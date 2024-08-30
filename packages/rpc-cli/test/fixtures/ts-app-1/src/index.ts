@@ -2,7 +2,7 @@ import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import fastify from 'fastify'
 import fastifyAutoload from '@fastify/autoload'
-import fastifyRpc from '../../../../index'
+import fastifyRpc from '@platformatic/rpc'
 
 async function main () {
   const app = fastify()
