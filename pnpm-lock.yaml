@@ -50,7 +50,7 @@ importers:
         version: 9.9.1
       json-schema-to-typescript:
         specifier: ^15.0.1
-        version: 15.0.1
+        version: 15.0.2
       neostandard:
         specifier: ^0.11.1
         version: 0.11.4(eslint@9.9.1)(typescript@5.5.4)
@@ -105,7 +105,7 @@ importers:
         version: 4.28.1
       json-schema-to-typescript:
         specifier: ^15.0.0
-        version: 15.0.1
+        version: 15.0.2
       neostandard:
         specifier: ^0.11.1
         version: 0.11.4(eslint@9.9.1)(typescript@5.5.4)
@@ -550,7 +550,7 @@ importers:
         version: 9.9.1
       json-schema-to-typescript:
         specifier: ^15.0.0
-        version: 15.0.1
+        version: 15.0.2
       neostandard:
         specifier: ^0.11.1
         version: 0.11.4(eslint@9.9.1)(typescript@5.5.4)
@@ -986,7 +986,7 @@ importers:
         version: 9.9.1
       json-schema-to-typescript:
         specifier: ^15.0.0
-        version: 15.0.1
+        version: 15.0.2
       mercurius:
         specifier: ^14.0.0
         version: 14.1.0(graphql@16.9.0)
@@ -1373,7 +1373,7 @@ importers:
         version: 9.9.1
       json-schema-to-typescript:
         specifier: ^15.0.1
-        version: 15.0.1
+        version: 15.0.2
       neostandard:
         specifier: ^0.11.1
         version: 0.11.4(eslint@9.9.1)(typescript@5.5.4)
@@ -1428,7 +1428,7 @@ importers:
         version: 4.28.1
       json-schema-to-typescript:
         specifier: ^15.0.1
-        version: 15.0.1
+        version: 15.0.2
       neostandard:
         specifier: ^0.11.1
         version: 0.11.4(eslint@9.9.1)(typescript@5.5.4)
@@ -1480,7 +1480,7 @@ importers:
         version: 5.1.17
       json-schema-to-typescript:
         specifier: ^15.0.1
-        version: 15.0.1
+        version: 15.0.2
       neostandard:
         specifier: ^0.11.1
         version: 0.11.4(eslint@9.9.1)(typescript@5.5.4)
@@ -1708,7 +1708,7 @@ importers:
         version: 7.1.0
       json-schema-to-typescript:
         specifier: ^15.0.0
-        version: 15.0.1
+        version: 15.0.2
       neostandard:
         specifier: ^0.11.1
         version: 0.11.4(eslint@9.9.1)(typescript@5.5.4)
@@ -1894,7 +1894,7 @@ importers:
         version: 9.9.1
       json-schema-to-typescript:
         specifier: ^15.0.0
-        version: 15.0.1
+        version: 15.0.2
       neostandard:
         specifier: ^0.11.1
         version: 0.11.4(eslint@9.9.1)(typescript@5.5.4)
@@ -2380,7 +2380,7 @@ importers:
         version: 4.28.1
       json-schema-to-typescript:
         specifier: ^15.0.1
-        version: 15.0.1
+        version: 15.0.2
       neostandard:
         specifier: ^0.11.1
         version: 0.11.4(eslint@9.9.1)(typescript@5.5.4)
@@ -3730,6 +3730,9 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
+
+  '@types/lodash@4.17.7':
+    resolution: {integrity: sha512-8wTvZawATi/lsmNu10/j2hk1KEP0IvjubqPE3cu1Xz7xfXXt5oCq3SNUz4fMIP4XGF9Ky+Ue2tBA3hcS7LSBlA==}
 
   '@types/mdast@3.0.15':
     resolution: {integrity: sha512-LnwD+mUEfxWMa1QpDraczIn6k0Ee3SMicuYSSzS6ZYl2gKS09EClnJYGd8Du6rfc5r/GZEk5o1mRb8TaTj03sQ==}
@@ -5853,8 +5856,8 @@ packages:
     resolution: {integrity: sha512-pJ4XLQP4Q9HTxl6RVDLJ8Cyh1uitSs0CzDBAz1uoJ4sRD/Bk7cFSXL1FUXDW3zJ7YnfliJx6eu8Jn283bpZ4Yg==}
     engines: {node: '>=10'}
 
-  json-schema-to-typescript@15.0.1:
-    resolution: {integrity: sha512-gSSg20skxv+ZQqR8Y8itZt+2iYFGNgneuTgf/Va0TBw+zo6JsykDG1bqhkhMs5g/vIdqmZx55oQJLbgOEuxPJw==}
+  json-schema-to-typescript@15.0.2:
+    resolution: {integrity: sha512-+cRBw+bBJ3k783mZroDIgz1pLNPB4hvj6nnbHTWwEVl0dkW8qdZ+M9jWhBb+Y0FAdHvNsXACga3lewGO8lktrw==}
     engines: {node: '>=16.0.0'}
     hasBin: true
 
@@ -10017,6 +10020,8 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
+  '@types/lodash@4.17.7': {}
+
   '@types/mdast@3.0.15':
     dependencies:
       '@types/unist': 2.0.11
@@ -12555,10 +12560,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  json-schema-to-typescript@15.0.1:
+  json-schema-to-typescript@15.0.2:
     dependencies:
       '@apidevtools/json-schema-ref-parser': 11.7.0
       '@types/json-schema': 7.0.15
+      '@types/lodash': 4.17.7
       glob: 10.4.5
       is-glob: 4.0.3
       js-yaml: 4.1.0
