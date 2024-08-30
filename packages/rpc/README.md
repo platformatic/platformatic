@@ -1,6 +1,6 @@
 # Platformatic RPC
 
-Fastify plugin and CLI command to generate a server RPC api for a Fastify application.
+Fastify plugin to generate a server RPC api for a Fastify application.
 
 > [!WARNING]  
 > Platformatic RPC API is in the experimental stage. The feature is not subject to semantic versioning rules.
@@ -10,7 +10,8 @@ Fastify plugin and CLI command to generate a server RPC api for a Fastify applic
 ## Installation
 
 ```bash
-npm install @platformatic/rpc
+npm install @platformatic/rpc-cli
+npm install --save-dev @platformatic/rpc-cli
 ```
 
 ## Usage
