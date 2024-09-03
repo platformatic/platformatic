@@ -949,7 +949,7 @@ importers:
         version: 11.2.2
       postgrator:
         specifier: ^7.2.0
-        version: 7.2.0
+        version: 7.3.0
       rfdc:
         specifier: ^1.3.1
         version: 1.4.1
@@ -7105,8 +7105,8 @@ packages:
     resolution: {integrity: sha512-Aweb9unOEpQ3ezu4Q00DPvvM2ZTUitJdNKeP/+uQgr1IBIqu574IaZoURId7BKtWMREwzKa9OgzPzezWGPWFQw==}
     engines: {node: ^10 || ^12 || >=14}
 
-  postgrator@7.2.0:
-    resolution: {integrity: sha512-rVi/X5//51Sj5SWsBb2knBn/GCWdFOXRdq4VATnNePLK1h2774j0byr5tsDDb5B+UWVAZftjq5VYCQaB6dXMWw==}
+  postgrator@7.3.0:
+    resolution: {integrity: sha512-u8IDRKmFdCM4jM6qFFrCVQG6KE+7AdX6v1p95wpCOz1XrTo2aBu7u84F0NrKIcCCiZ9PFgmAd8s7AkRwvyDs/w==}
     engines: {node: '>=14.0.0'}
 
   postgres-array@2.0.0:
@@ -14332,7 +14332,7 @@ snapshots:
       picocolors: 1.1.0
       source-map-js: 1.2.0
 
-  postgrator@7.2.0:
+  postgrator@7.3.0:
     dependencies:
       glob: 7.2.3
 
