@@ -9,7 +9,7 @@ const { setTimeout: sleep } = require('node:timers/promises')
 const { Worker } = require('node:worker_threads')
 
 const { ITC } = require('@platformatic/itc')
-const { Unpromise } = require('@watchable/unpromise')
+const { executeWithTimeout } = require('@platformatic/utils')
 const ts = require('tail-file-stream')
 const { createThreadInterceptor } = require('undici-thread-interceptor')
 
@@ -278,13 +278,13 @@ class Runtime extends EventEmitter {
 
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
     try {
-      await Unpromise.race([sendViaITC(service, 'stop'), sleep(10000, 'timeout', { ref: false })])
+      await executeWithTimeout(sendViaITC(service, 'stop'), 10000)
     } catch (error) {
-      this.logger?.info(`Failed to stop service "${id}". Killing a worker thread.`, error)
+      this.logger?.info(error, `Failed to stop service "${id}". Killing a worker thread.`)
     }
 
     // Wait for the worker thread to finish, we're going to create a new one if the service is ever restarted
-    const res = await Unpromise.race([once(service, 'exit'), sleep(10000, 'timeout', { ref: false })])
+    const res = await executeWithTimeout(once(service, 'exit'), 10000)
 
     // If the worker didn't exit in time, kill it
     if (res === 'timeout') {
@@ -577,9 +577,7 @@ class Runtime extends EventEmitter {
       let p99Value = 0
 
       const metricName = 'http_request_all_summary_seconds'
-      const httpLatencyMetrics = metrics.filter(
-        metric => metric.name === metricName
-      )
+      const httpLatencyMetrics = metrics.filter(metric => metric.name === metricName)
 
       if (httpLatencyMetrics) {
         const entrypointMetrics = httpLatencyMetrics.find(

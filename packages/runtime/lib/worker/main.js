@@ -2,11 +2,9 @@
 
 const { createRequire } = require('node:module')
 const { join } = require('node:path')
-const { setTimeout: sleep } = require('node:timers/promises')
 const { parentPort, workerData, threadId } = require('node:worker_threads')
 const { pathToFileURL } = require('node:url')
 
-const { Unpromise } = require('@watchable/unpromise')
 const pino = require('pino')
 const { fetch, setGlobalDispatcher, Agent } = require('undici')
 const { wire } = require('undici-thread-interceptor')
@@ -14,7 +12,7 @@ const { wire } = require('undici-thread-interceptor')
 const { PlatformaticApp } = require('./app')
 const { setupITC } = require('./itc')
 const loadInterceptors = require('./interceptors')
-const { MessagePortWritable, createPinoWritable } = require('@platformatic/utils')
+const { MessagePortWritable, createPinoWritable, executeWithTimeout } = require('@platformatic/utils')
 const { kId, kITC } = require('./symbols')
 
 process.on('uncaughtException', handleUnhandled.bind(null, 'uncaught exception'))
@@ -30,7 +28,7 @@ const logger = createLogger()
 function handleUnhandled (type, err) {
   logger.error({ err }, `application ${type}`)
 
-  Unpromise.race([app?.stop(), sleep(1000, 'timeout', { ref: false })])
+  executeWithTimeout(app?.stop(), 1000)
     .catch()
     .finally(() => {
       process.exit(1)
@@ -73,7 +71,7 @@ async function main () {
 
   const globalDispatcher = new Agent({
     ...config.undici,
-    interceptors,
+    interceptors
   }).compose(composedInterceptors)
 
   setGlobalDispatcher(globalDispatcher)
@@ -89,7 +87,7 @@ async function main () {
     serverConfig = {
       port: 0,
       hostname: '127.0.0.1',
-      keepAliveTimeout: 5000,
+      keepAliveTimeout: 5000
     }
   }
 
@@ -97,7 +95,7 @@ async function main () {
   if (telemetryConfig) {
     telemetryConfig = {
       ...telemetryConfig,
-      serviceName: `${telemetryConfig.serviceName}-${service.id}`,
+      serviceName: `${telemetryConfig.serviceName}-${service.id}`
     }
   }
 

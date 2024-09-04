@@ -1,7 +1,6 @@
 'use strict'
 
 const { join } = require('node:path')
-const { setTimeout } = require('node:timers/promises')
 const { on } = require('node:events')
 const why = require('why-is-node-running')
 const { Agent, setGlobalDispatcher } = require('undici')
