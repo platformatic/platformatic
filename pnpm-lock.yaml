@@ -2313,6 +2313,9 @@ importers:
       '@fastify/error':
         specifier: ^3.4.1
         version: 3.4.1
+      '@watchable/unpromise':
+        specifier: ^1.0.2
+        version: 1.0.2
       leven:
         specifier: ~3.1.0
         version: 3.1.0
