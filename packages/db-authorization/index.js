@@ -154,6 +154,7 @@ async function auth (app, opts) {
           find: true,
           save: true,
           delete: true,
+          updateMany: true
         })
       }
 
