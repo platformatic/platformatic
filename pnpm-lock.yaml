@@ -465,7 +465,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.9
+        version: 1.25.10
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -1791,7 +1791,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.9
+        version: 1.25.10
       '@types/ws':
         specifier: ^8.5.10
         version: 8.5.12
@@ -2171,7 +2171,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.9
+        version: 1.25.10
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -3622,8 +3622,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@scalar/fastify-api-reference@1.25.9':
-    resolution: {integrity: sha512-LNXkN0mbBM4MSdj6EGb6AimhnIzpWD5MVwxflFyao4s9fedauU7B0ZuFga5it/f8e3E69LQ8TuW8l9y7hpJWoA==}
+  '@scalar/fastify-api-reference@1.25.10':
+    resolution: {integrity: sha512-DIH4Txd5iAsrKp67/lkLWUl+P+08CIz+YWLFaJ+KNHSDeA7aWEsbm7YWXWMMUfvN8IhsptJuhOZGDOVyFomIgw==}
     engines: {node: '>=18'}
 
   '@scalar/openapi-types@0.1.0':
@@ -3634,8 +3634,8 @@ packages:
     resolution: {integrity: sha512-2pFGnjSBL2daPA5roRNRDy8xAHpeTI5QYpfyTj88iIaYT68EVnDUheUA2i3vRB705FCGEbDR0xKD7poTSfAYng==}
     engines: {node: '>=18'}
 
-  '@scalar/types@0.0.6':
-    resolution: {integrity: sha512-MeL08EQO+lA8rJwS8Efch7KYs15G3Bm4XtNmJPRS1Ae85exWXkVS73TDlIyNBfk4eV+COs3tbBBLaUHpxUlRbQ==}
+  '@scalar/types@0.0.7':
+    resolution: {integrity: sha512-ylMAM8Kx+mSVu1yBipz7h2pQrEXyMTHkYWc/UigGdn3dpuBArTnkBdJte85yH/7+R630HGm3FSbAHSioOCT+vA==}
     engines: {node: '>=18'}
 
   '@sec-ant/readable-stream@0.4.1':
@@ -3855,8 +3855,8 @@ packages:
   '@ungap/structured-clone@1.2.0':
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
 
-  '@unhead/schema@1.10.2':
-    resolution: {integrity: sha512-/GneC9eUwIysdBCho0lDyKg+8qvV4WF2qIkPkyMbuX/tu24G40MAa21/OeY6xQYTwbTHW+p0WBX6immvWGx9iw==}
+  '@unhead/schema@1.11.1':
+    resolution: {integrity: sha512-oEl5vV3+zZyY1Y3PVE1+gWNMj2wJczP6w0gscp8RnFRSik9p94XqYzBnzeb0tezIyVJWKWycGne9ocV0uGHbzw==}
 
   '@vanilla-extract/babel-plugin-debug-ids@1.0.6':
     resolution: {integrity: sha512-C188vUEYmw41yxg3QooTs8r1IdbDQQ2mH7L5RkORBnHx74QlmsNfqVmKwAVTgrlYt8JoRaWMtPfGm/Ql0BNQrA==}
@@ -9919,20 +9919,20 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.21.2':
     optional: true
 
-  '@scalar/fastify-api-reference@1.25.9':
+  '@scalar/fastify-api-reference@1.25.10':
     dependencies:
-      '@scalar/types': 0.0.6
+      '@scalar/types': 0.0.7
       fastify-plugin: 4.5.1
 
   '@scalar/openapi-types@0.1.0': {}
 
   '@scalar/themes@0.9.28': {}
 
-  '@scalar/types@0.0.6':
+  '@scalar/types@0.0.7':
     dependencies:
       '@scalar/openapi-types': 0.1.0
       '@scalar/themes': 0.9.28
-      '@unhead/schema': 1.10.2
+      '@unhead/schema': 1.11.1
 
   '@sec-ant/readable-stream@0.4.1': {}
 
@@ -10195,7 +10195,7 @@ snapshots:
 
   '@ungap/structured-clone@1.2.0': {}
 
-  '@unhead/schema@1.10.2':
+  '@unhead/schema@1.11.1':
     dependencies:
       hookable: 5.5.3
       zhead: 2.2.4
