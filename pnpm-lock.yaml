@@ -1068,7 +1068,7 @@ importers:
         version: 9.10.0
       fast-jwt:
         specifier: ^4.0.0
-        version: 4.0.3
+        version: 4.0.5
       fastify:
         specifier: ^4.26.2
         version: 4.28.1
@@ -1702,7 +1702,7 @@ importers:
         version: 4.19.2
       fast-jwt:
         specifier: ^4.0.0
-        version: 4.0.3
+        version: 4.0.5
       get-port:
         specifier: ^7.1.0
         version: 7.1.0
@@ -5006,8 +5006,8 @@ packages:
   fast-json-stringify@5.16.1:
     resolution: {integrity: sha512-KAdnLvy1yu/XrRtP+LJnxbBGrhN+xXu+gt3EUvZhYGKCr3lFHq/7UFJHHFgmJKoqlh6B40bZLEv7w46B0mqn1g==}
 
-  fast-jwt@4.0.3:
-    resolution: {integrity: sha512-t6mpAYoVV58zAs/0/zgQ0hv4sis9/ea/JchsnrnTtX2MH55B0GMI60x0ESZFP9/fl7xW7cgk+zdpP4C4xTllPQ==}
+  fast-jwt@4.0.5:
+    resolution: {integrity: sha512-QnpNdn0955GT7SlT8iMgYfhTsityUWysrQjM+Q7bGFijLp6+TNWzlbSMPvgalbrQGRg4ZaHZgMcns5fYOm5avg==}
     engines: {node: '>=16'}
 
   fast-levenshtein@2.0.6:
@@ -9176,7 +9176,7 @@ snapshots:
     dependencies:
       '@fastify/error': 3.4.1
       '@lukeed/ms': 2.0.2
-      fast-jwt: 4.0.3
+      fast-jwt: 4.0.5
       fastify-plugin: 4.5.1
       steed: 1.1.3
 
@@ -11626,7 +11626,7 @@ snapshots:
       json-schema-ref-resolver: 1.0.1
       rfdc: 1.4.1
 
-  fast-jwt@4.0.3:
+  fast-jwt@4.0.5:
     dependencies:
       '@lukeed/ms': 2.0.2
       asn1.js: 5.4.1
@@ -15490,7 +15490,7 @@ snapshots:
 
   undici-oidc-interceptor@0.5.0:
     dependencies:
-      fast-jwt: 4.0.3
+      fast-jwt: 4.0.5
       undici: 6.19.8
 
   undici-thread-interceptor@0.5.1(typescript@5.5.4):
