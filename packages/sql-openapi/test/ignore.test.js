@@ -130,7 +130,7 @@ test('ignore a table from OpenAPI', async (t) => {
 
 test('show a warning if there is no ignored entity', async (t) => {
   const app = fastify({
-    logger: {
+    loggerInstance: {
       info () {},
       debug () {},
       trace () {},
@@ -168,7 +168,7 @@ test('show a warning if there is no ignored entity', async (t) => {
 
 test('show a warning if database is empty', async (t) => {
   const app = fastify({
-    logger: {
+    loggerInstance: {
       info () {},
       debug () {},
       trace () {},
@@ -250,7 +250,7 @@ test('show a warning if there is no ignored entity field', async (t) => {
   const { ok: pass } = tspl(t, { plan: 2 })
 
   const app = fastify({
-    logger: {
+    loggerInstance: {
       info () {},
       debug () {},
       trace () {},

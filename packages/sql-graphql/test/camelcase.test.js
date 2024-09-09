@@ -293,6 +293,9 @@ test('subscription - crud with a primary key to be camelised, two schemas and a 
   {
     const [chunk] = await once(client, 'data')
     const data = JSON.parse(chunk)
-    equal(data.payload, 'The subscription field "categorySaved" is not defined.')
+    same(data.payload, [{
+      locations: [{ line: 2, column: 7 }],
+      message: 'The subscription field "categorySaved" is not defined.',
+    }])
   }
 })

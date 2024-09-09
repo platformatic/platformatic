@@ -27,13 +27,14 @@
   "devDependencies": {
     "@matteo.collina/snap": "^0.3.0",
     "@matteo.collina/tspl": "^0.1.1",
-    "@mercuriusjs/gateway": "^3.0.0",
+    "@mercuriusjs/gateway": "^4.0.1",
     "@platformatic/sql-events": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "borp": "^0.17.0",
     "eslint": "9",
-    "fastify": "^4.26.2",
+    "fastify": "^5.0.0-alpha.4",
+    "fastify-tsconfig": "^2.0.0",
     "neostandard": "^0.11.1",
     "tsd": "^0.31.0",
     "typescript": "^5.5.4",
@@ -42,15 +43,15 @@
   },
   "dependencies": {
     "@fastify/error": "^3.4.1",
-    "@mercuriusjs/federation": "^3.0.0",
+    "@mercuriusjs/federation": "^4.0.0",
     "@platformatic/utils": "workspace:*",
     "camelcase": "^6.3.0",
-    "fastify-plugin": "^4.5.1",
+    "fastify-plugin": "^5.0.0",
     "graphql": "^16.8.1",
     "graphql-scalars": "^1.22.5",
     "graphql-type-json": "^0.3.2",
     "inflected": "^2.1.0",
-    "mercurius": "^14.0.0"
+    "mercurius": "^15.0.0"
   },
   "tsd": {
     "directory": "test/types"

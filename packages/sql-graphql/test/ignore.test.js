@@ -164,7 +164,7 @@ test('show a warning if there is no ignored entity', async (t) => {
   const { ok: pass } = tspl(t, { plan: 2 })
 
   const app = fastify({
-    logger: {
+    loggerInstance: {
       info () {},
       debug () {},
       trace () {},
@@ -252,7 +252,7 @@ test('show a warning if there is no ignored entity field', async (t) => {
   const { ok: pass } = tspl(t, { plan: 2 })
 
   const app = fastify({
-    logger: {
+    loggerInstance: {
       info () {},
       debug () {},
       trace () {},

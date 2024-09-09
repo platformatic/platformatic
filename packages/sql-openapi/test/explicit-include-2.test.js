@@ -46,7 +46,7 @@ test('include entity and partially ignore an entity with OpenAPI', async (t) => 
 test('show a warning if included entity is not found', async (t) => {
   const { ok } = tspl(t, { plan: 1 })
   const app = fastify({
-    logger: {
+    loggerInstance: {
       info () {},
       debug () {},
       trace () {},
@@ -85,7 +85,7 @@ test('show a warning if included entity is not found', async (t) => {
 test('show a warning if database is empty', async (t) => {
   const { ok } = tspl(t, { plan: 1 })
   const app = fastify({
-    logger: {
+    loggerInstance: {
       info () {},
       debug () {},
       trace () {},
