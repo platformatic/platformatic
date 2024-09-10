@@ -12,11 +12,11 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@platformatic/utils": "workspace:*",
-    "@fastify/error": "^3.4.1",
+    "@fastify/error": "^4.0.0",
     "boring-name-generator": "^1.0.3",
     "change-case-all": "^2.1.0",
-    "fastify": "^4.26.2",
-    "pino": "^8.19.0",
+    "fastify": "5.0.0-alpha.4",
+    "pino": "^9.0.0",
     "undici": "^6.9.0"
   },
   "devDependencies": {

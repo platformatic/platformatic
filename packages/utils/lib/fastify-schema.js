@@ -224,6 +224,9 @@ const server = {
         },
       ],
     },
+    loggerInstance: {
+      type: 'object',
+    },
     serializerOpts: {
       type: 'object',
       properties: {

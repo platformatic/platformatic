@@ -170,7 +170,7 @@ async function createMetricsServer (app, hostname, port) {
       httpServer.on('request', handler)
       return httpServer
     },
-    logger: app.log.child({ name: 'prometheus' }),
+    loggerInstance: app.log.child({ name: 'prometheus' }),
   })
 
   app.addHook('onClose', async () => {

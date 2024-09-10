@@ -44,7 +44,7 @@
     "borp": "^0.17.0",
     "c8": "^10.0.0",
     "eslint": "9",
-    "fastify": "^4.26.2",
+    "fastify": "5.0.0-alpha.4",
     "license-checker": "^25.0.1",
     "mkdirp": "^2.1.6",
     "minimatch": "^10.0.1",
@@ -53,7 +53,7 @@
     "typescript": "^5.5.3"
   },
   "dependencies": {
-    "@fastify/error": "^3.4.1",
+    "@fastify/error": "^4.0.0",
     "@platformatic/client-cli": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/control": "workspace:*",
@@ -73,7 +73,7 @@
     "help-me": "^5.0.0",
     "inquirer": "^9.2.16",
     "minimist": "^1.2.8",
-    "pino": "^8.19.0",
+    "pino": "^9.0.0",
     "pino-pretty": "^11.0.0",
     "split2": "^4.2.0",
     "undici": "^6.9.0"

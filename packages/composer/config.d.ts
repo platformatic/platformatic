@@ -61,6 +61,9 @@ export interface PlatformaticComposer {
           };
           [k: string]: unknown;
         };
+    loggerInstance?: {
+      [k: string]: unknown;
+    };
     serializerOpts?: {
       schema?: {
         [k: string]: unknown;

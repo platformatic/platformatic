@@ -20,11 +20,14 @@ async function buildServer (_args, onServer) {
 
     await configManager.parseAndValidate()
     const config = configManager.current
-    config.logger = logger
+    delete config.logger
+    config.loggerInstance = logger
 
     const serverConfig = createServerConfig(config)
     serverConfig.originalConfig = config
     serverConfig.configManager = configManager
+    delete serverConfig.logger
+    serverConfig.loggerInstance = logger
 
     const app = Fastify(serverConfig)
     app.decorate('platformatic', { configManager, config: configManager.current })

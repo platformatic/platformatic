@@ -68,7 +68,7 @@ class ServiceStackable {
     const config = this.configManager.current
     const logger = config.server.logger
 
-    if (logger) {
+    if (typeof logger === 'boolean' && logger) {
       config.server.logger = {}
 
       if (logger.level) {
@@ -249,7 +249,9 @@ class ServiceStackable {
       pinoOptions.name = this.context.serviceId
     }
 
-    this.configManager.current.server.logger = pino(pinoOptions)
+    // Only one of logger and loggerInstance should be set
+    delete this.configManager.current.server.logger
+    this.configManager.current.server.loggerInstance = pino(pinoOptions)
   }
 }
 
