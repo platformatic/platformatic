@@ -1033,11 +1033,8 @@ importers:
         specifier: ^4.5.1
         version: 4.5.1
       fastify-user:
-        specifier: ^0.3.3
-        version: 0.3.3
-      get-jwks:
-        specifier: ^9.0.1
-        version: 9.0.2
+        specifier: ^0.4.0
+        version: 0.4.1
       leven:
         specifier: ~3.1.0
         version: 3.1.0
@@ -1072,6 +1069,9 @@ importers:
       fastify:
         specifier: ^4.26.2
         version: 4.28.1
+      get-jwks:
+        specifier: ^9.0.1
+        version: 9.0.2
       neostandard:
         specifier: ^0.11.1
         version: 0.11.4(eslint@9.10.0)(typescript@5.5.4)
@@ -3051,6 +3051,7 @@ packages:
 
   '@fastify/vite@6.0.7':
     resolution: {integrity: sha512-+dRo9KUkvmbqdmBskG02SwigWl06Mwkw8SBDK1zTNH6vd4DyXbRvI7RmJEmBkLouSU81KTzy1+OzwHSffqSD6w==}
+    bundledDependencies: []
 
   '@fastify/websocket@10.0.1':
     resolution: {integrity: sha512-8/pQIxTPRD8U94aILTeJ+2O3el/r19+Ej5z1O1mXlqplsUH7KzCjAI0sgd5DM/NoPjAi5qLFNIjgM5+9/rGSNw==}
@@ -5061,8 +5062,8 @@ packages:
   fastify-undici-dispatcher@0.6.0:
     resolution: {integrity: sha512-xSt3eCZHsZOh5cDBbEObWHIYYz+g8QmyqFgxVypTjxvE74QOcpx9KGonrHQkKKCnkY31CmXFoBgZjSvwIDZWPQ==}
 
-  fastify-user@0.3.3:
-    resolution: {integrity: sha512-M6gUmTPtVaqnuKNv0nHMejJs67AsLduYgKX1yblQkZLq131JRDrGn9ueOHUPRyRK2oLhB0F1PE/AttCiyaz9Ug==}
+  fastify-user@0.4.1:
+    resolution: {integrity: sha512-9oFzJ3iiNV6DH4itnssoWDaHr+fQLJ0N25DA/D5oyWde0/u/v1pb/hja/R0yxVJztYcQ3SdK3gdz4ssuDUJzOA==}
 
   fastify@4.28.1:
     resolution: {integrity: sha512-kFWUtpNr4i7t5vY2EJPCN2KgMVpuqfU4NjnJNCgiNB900oiDeYqaNDRcAfeBbOF5hGixixxcKnOU4KN9z6QncQ==}
@@ -5217,10 +5218,6 @@ packages:
   get-intrinsic@1.2.4:
     resolution: {integrity: sha512-5uYhsJH8VJBTv7oslg4BznJYhDoRI6waYCxMmCdnTrcCrHA/fCFKoTFz2JKKE0HdDFUF7/oQuhzumXJK7paBRQ==}
     engines: {node: '>= 0.4'}
-
-  get-jwks@8.3.1:
-    resolution: {integrity: sha512-fh7kfT1pW5Qynzx5Ug+yOi9DSRIGyabCsWZErDZqh/mh7YbeG2uaOTSWocA1pt0AuTTQasUm6EBJ1k0c8NAgWg==}
-    engines: {node: '>=14'}
 
   get-jwks@9.0.2:
     resolution: {integrity: sha512-zn2OvElozYtckpYJvgRWMOMhEkW8KgFp+lN0B7Q6SXPZg/CFfeiPoh73Wbhacj4fYXDJxkxbcwI9j+/cubpzSQ==}
@@ -11680,13 +11677,13 @@ snapshots:
     dependencies:
       undici: 6.19.8
 
-  fastify-user@0.3.3:
+  fastify-user@0.4.1:
     dependencies:
-      '@fastify/error': 3.4.1
+      '@fastify/error': 4.0.0
       '@fastify/jwt': 8.0.1
       fastify: 4.28.1
       fastify-plugin: 4.5.1
-      get-jwks: 8.3.1
+      get-jwks: 9.0.2
     transitivePeerDependencies:
       - encoding
 
@@ -11870,14 +11867,6 @@ snapshots:
       has-proto: 1.0.3
       has-symbols: 1.0.3
       hasown: 2.0.2
-
-  get-jwks@8.3.1:
-    dependencies:
-      jwk-to-pem: 2.0.6
-      lru-cache: 10.4.3
-      node-fetch: 2.7.0
-    transitivePeerDependencies:
-      - encoding
 
   get-jwks@9.0.2:
     dependencies:
