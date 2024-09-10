@@ -65,16 +65,19 @@ class ServiceStackable {
   }
 
   async getConfig () {
-    const config = this.configManager.current
-    const logger = config.server.logger
+    const config = Object.assign({}, this.configManager.current)
+    config.server = Object.assign({}, config.server)
+    const logger = config.server.loggerInstance
 
-    if (typeof logger === 'boolean' && logger) {
+    if (logger) {
       config.server.logger = {}
 
       if (logger.level) {
         config.server.logger.level = logger.level
       }
     }
+
+    delete config.server.loggerInstance
 
     return config
   }
