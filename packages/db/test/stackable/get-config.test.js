@@ -37,5 +37,25 @@ test('get service config via stackable api', async (t) => {
   await stackable.start()
 
   const stackableConfig = await stackable.getConfig()
-  assert.deepStrictEqual(stackableConfig, config)
+  assert.deepStrictEqual(stackableConfig, {
+    db: {
+      ...connectionInfo,
+    },
+    metrics: false,
+    plugins: {
+      paths: [join(workingDir, 'routes')],
+    },
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+      keepAliveTimeout: 5000,
+      logger: {
+        level: 'trace',
+      },
+      pluginTimeout: 60000,
+    },
+    watch: {
+      enabled: false,
+    },
+  })
 })

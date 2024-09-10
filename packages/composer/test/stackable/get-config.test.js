@@ -22,5 +22,23 @@ test('get service config via stackable api', async (t) => {
   await stackable.start()
 
   const stackableConfig = await stackable.getConfig()
-  assert.deepStrictEqual(stackableConfig, config)
+  assert.deepStrictEqual(stackableConfig, {
+    composer: {
+      services: [],
+      refreshTimeout: 1000,
+      addEmptySchema: false,
+    },
+    plugins: {
+      paths: [join(__dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')],
+    },
+    server: {
+      keepAliveTimeout: 5000,
+      logger: {
+        level: 'trace',
+      },
+    },
+    watch: {
+      enabled: false,
+    },
+  })
 })
