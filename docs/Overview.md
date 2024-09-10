@@ -13,7 +13,7 @@ It enhances productivity through features like auto-generated schemas, a built-i
 
 Platformatic enables developers to efficiently develop and run APIs at scale. Historically, API developers have had to repetitively build infrastructure to satisfy foundational requirements, like authentication, authorization, caching, and connection to databases, and have had to manage microservices with technologies such as service mesh or centralized registries. 
 
-This is time consuming, and painstakingly complex. With growing demands of SaaS applications, the amount of API permutations has grown exponentially and has become a development bottleneck. This has led large organizations to create dedicated platform API engineering teams to help teams deliver on business demands.
+This is time-consuming, and painstakingly complex. With growing demands of SaaS applications, the amount of API permutations has grown exponentially and has become a development bottleneck. This has led large organizations to create dedicated platform API engineering teams to help teams deliver on business demands.
 
 At Platformatic, Our goal is to make API development simple: we aim to remove friction from the day-to-day of backend developers.
 
@@ -67,13 +67,13 @@ The composer acts as a proxy for the underlying services, and automatically gene
 Platformatic Runtime is an environment for running multiple Platformatic microservices as a single monolithic deployment unit.
 
 In a Platformatic Runtime, each service is a separate process that communicates with Interservice communication using private message passing.
-The Runtime exposes an "entrypoint" API for the whole runtime. Only the entrypoint binds to an operating system port and can be reached from outside of the runtime.
+The Runtime exposes an "entrypoint" API for the whole runtime. Only the entrypoint binds to an operating system port and can be reached from outside the runtime.
 
 ## Platformatic Stackables 
 
 ![Platformatic Stackables Architecture](./images/Platformatic_Stackables_Diagram_(Light_Mode).png)
 
-Platformatic Stackables are reusable components that can be used to build Platformatic Services. Services can extends these modules and add custom functionalities.
+Platformatic Stackables are reusable components that can be used to build Platformatic Services. Services can extend these modules and add custom functionalities.
 
 This is useful to publish the application on the public npm registry (or a private one!), including building your own CLI, or to create a specialized template for your organization to allow for centralized bugfixes and updates.
 

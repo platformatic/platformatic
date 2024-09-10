@@ -106,7 +106,7 @@ Now you'll see this screen when you open `http://0.0.0.0:3042/` in your browser:
 
 ### Testing API endpoints
 
-To test our API endpoints from Platformatic, click on the **OpenAPI Documentation link**  on this page `http://0.0.0.0:3042/`. This will open the [Swagger editor](https://docs.scalar.com/swagger-editor) editor with all the API endpoints we just created.
+To test our API endpoints from Platformatic, click on the **OpenAPI Documentation link**  on this page `http://0.0.0.0:3042/`. This will open the [Swagger editor](https://docs.scalar.com/swagger-editor) with all the API endpoints we just created.
 
 ![Todo API endpoints](../images/plt-endpoints.png)
 

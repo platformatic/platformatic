@@ -15,7 +15,7 @@ These objects contain the following properties:
 - `sqlType`: The original field type. It may vary depending on the underlying DB Engine
 - `isNullable`: Whether the field can be `null` or not
 - `primaryKey`: Whether the field is the primary key or not
-- `camelcase`: The _camelcased_ value of the field
+- `camelcase`: The _camel cased_ value of the field
 
 ## Example
 Given this SQL Schema (for PostgreSQL):

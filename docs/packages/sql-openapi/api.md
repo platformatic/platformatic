@@ -21,7 +21,7 @@ CREATE TABLE pages (
 
 ## GET and POST parameters
 
-Some APIs needs the `GET` method, where parameters must be defined in the URL, or `POST/PUT` methods, where parameters can be defined in the `HTTP` request payload.
+Some APIs need the `GET` method, where parameters must be defined in the URL, or `POST/PUT` methods, where parameters can be defined in the `HTTP` request payload.
 
 ## Fields
 
@@ -342,7 +342,7 @@ Delete the entity in the "join table", e.g. `DELETE /editors/page/1/user/1`.
 
 See the [above](#plural).
 
-*Offset* only accepts values `>= 0`. Otherwise an error is returned.
+*Offset* only accepts values `>= 0`. Otherwise, an error is returned.
 
 ## Pagination
 
@@ -369,7 +369,7 @@ This returns 5 movies starting from position 10. The [TotalCount](#total-count) 
 
 ### Limit
 
-By default a *limit* value (`10`) is applied to each request. Clients can override this behavior by passing a value. In this case the server validates the input, and an error is return if exceeds the `max` accepted value (`100`).
+By default, a *limit* value (`10`) is applied to each request. Clients can override this behavior by passing a value. In this case the server validates the input, and an error is return if exceeds the `max` accepted value (`100`).
 
 Limit's values can be customized through configuration:
 
@@ -386,15 +386,15 @@ Limit's values can be customized through configuration:
 }
 ```
 
-*Limit* only accepts values `>= 0`. Otherwise an error is return.
+*Limit* only accepts values `>= 0`. Otherwise, an error is returned.
 
 
 ### Offset
 
-By default *offset* is not applied to the request.
+By default, *offset* is not applied to the request.
 Clients can override this behavior by passing a value.
 
-*Offset* only accepts values `>= 0`. Otherwise an error is return.
+*Offset* only accepts values `>= 0`. Otherwise, an error is returned.
 
 ## Allow the primary keys in the input
 

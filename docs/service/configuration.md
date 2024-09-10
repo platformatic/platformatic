@@ -21,7 +21,7 @@ Configuration settings containing sensitive data, such as database connection UR
 
 ### `server` **(required)**
 
-A object with the following settings:
+An object with the following settings:
 
 - **`hostname`** (**required**, `string`) — Hostname where Platformatic Service server will listen for connections.
 - **`port`** (**required**, `number` or `string`) — Port where Platformatic Service server will listen for connections.
@@ -55,7 +55,7 @@ A object with the following settings:
 - **`pluginTimeout`** (`integer`) -- the number of milliseconds to wait for a Fastify plugin to load
 - **`bodyLimit`** (`integer`) -- the maximum request body size in bytes
 - **`maxParamLength`** (`integer`) -- the maximum length of a request parameter
-- **`caseSensitive`** (`boolean`) -- if `true`, the router will be case sensitive
+- **`caseSensitive`** (`boolean`) -- if `true`, the router will be case-sensitive
 - **`ignoreTrailingSlash`** (`boolean`) -- if `true`, the router will ignore the trailing slash
 - **`connectionTimeout`** (`integer`) -- the milliseconds to wait for a new HTTP request
 - **`keepAliveTimeout`** (`integer`) -- the milliseconds to wait for a keep-alive HTTP request
@@ -106,7 +106,7 @@ An optional object that defines the plugins loaded by Platformatic Service.
   or an array of objects composed as follows,
   - `path` (`string`): Relative path to plugin's entry point.
   - `options` (`object`): Optional plugin options.
-  - `encapsulate` (`boolean`): if the path is a folder, it instruct Platformatic to not encapsulate those plugins.
+  - `encapsulate` (`boolean`): if the path is a folder, it instructs Platformatic to not encapsulate those plugins.
   - `maxDepth` (`integer`): if the path is a folder, it limits the depth to load the content from.
   - `autoHooks` (`boolean`): Apply hooks from autohooks.js file(s) to plugins found in folder.
   - `autoHooksPattern` (`string`): Regex to override the autohooks naming convention.
@@ -233,7 +233,7 @@ Configure `@platformatic/service` specific settings such as `graphql` or `openap
 
 - **`openapi`** (`boolean` or `object`, default: `false`) — Enables OpenAPI REST support.
 
-  - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed. Also a `prefix` property can be passed to set the OpenAPI prefix.
+  - If value is an object, all [OpenAPI v3](https://swagger.io/specification/) allowed properties can be passed. Also, a `prefix` property can be passed to set the OpenAPI prefix.
   - Platformatic Service uses [`@fastify/swagger`](https://github.com/fastify/fastify-swagger) under the hood to manage this configuration.
 
   _Examples_

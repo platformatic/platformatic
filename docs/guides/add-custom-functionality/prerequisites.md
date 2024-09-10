@@ -1,7 +1,7 @@
 # Prerequisites
 
 In the following examples we assume you already
-- cloned `platformatic/platformatic` repo from Github
+- cloned `platformatic/platformatic` repo from GitHub
 - ran `pnpm install` to install all dependencies
 - have [Docker](https://docker.io) and [`docker-compose`](https://docs.docker.com/compose/install/) installed and running on your machine
 

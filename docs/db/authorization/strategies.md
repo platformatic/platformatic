@@ -31,7 +31,7 @@ forward the request to the webhook.
 ## JSON Web Token (JWT)
 
 
-The JWT strategy is built on top of the [`@fastify/jwt`](https://github.com/fastify/fastify-jwt) plugin. By default `@fastify/jwt` looks for JWTs primarily in the `Authorization` header of HTTP requests.
+The JWT strategy is built on top of the [`@fastify/jwt`](https://github.com/fastify/fastify-jwt) plugin. By default, `@fastify/jwt` looks for JWTs primarily in the `Authorization` header of HTTP requests.
 
 ![Platformatic DB JWT integration](./images/jwt.png)
 
@@ -54,7 +54,7 @@ Set up JWT by specifying a shared `secret` in the Platformatic DB configuration 
 ```
 
 See the [`@fastify/jwt` documentation](https://github.com/fastify/fastify-jwt#options)
-for all of the available configuration options.
+for all the available configuration options.
 
 ### JSON Web Key Sets (JWKS)
 
@@ -75,7 +75,7 @@ The JWT authorization strategy includes support for [JSON Web Key](https://www.r
 
 When a JSON Web Token is included in a request to Platformatic DB, it retrieves the
 correct public key from `https:/ISSUER_DOMAIN/.well-known/jwks.json` and uses it to
-verify the JWT signature. The token carries all the informations, like the `kid`,
+verify the JWT signature. The token carries all the information, like the `kid`,
 which is the key id used to sign the token itself, so no other configuration is required.
 
 JWKS can be enabled without any options:
