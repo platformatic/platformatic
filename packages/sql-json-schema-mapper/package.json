@@ -25,14 +25,14 @@
   "devDependencies": {
     "@platformatic/sql-mapper": "workspace:*",
     "borp": "^0.16.0",
-    "dtsgenerator": "^3.19.1",
-    "fastify": "^4.26.2",
+    "dtsgenerator": "^3.19.2",
+    "fastify": "^4.28.1",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "why-is-node-running": "^2.2.2"
+    "why-is-node-running": "^2.3.0"
   },
   "dependencies": {
-    "code-block-writer": "^13.0.1",
+    "code-block-writer": "^13.0.2",
     "safe-identifier": "^0.4.2"
   }
 }

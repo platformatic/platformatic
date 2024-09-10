@@ -30,16 +30,16 @@
     "snazzy": "^9.0.0",
     "split2": "^4.2.0",
     "standard": "^17.1.0",
-    "tsd": "^0.31.0"
+    "tsd": "^0.31.2"
   },
   "dependencies": {
     "@fastify/error": "^3.4.1",
     "commist": "^3.2.0",
     "help-me": "^5.0.0",
-    "pino": "^8.19.0",
-    "pino-pretty": "^11.0.0",
-    "table": "^6.8.1",
-    "undici": "^6.9.0",
-    "ws": "^8.16.0"
+    "pino": "^8.21.0",
+    "pino-pretty": "^11.2.2",
+    "table": "^6.8.2",
+    "undici": "^6.19.8",
+    "ws": "^8.18.0"
   }
 }

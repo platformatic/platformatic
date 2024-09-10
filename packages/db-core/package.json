@@ -19,10 +19,10 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
     "borp": "^0.16.0",
-    "fastify": "^4.26.2",
+    "fastify": "^4.28.1",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "why-is-node-running": "^2.2.2"
+    "why-is-node-running": "^2.3.0"
   },
   "dependencies": {
     "@platformatic/sql-events": "workspace:*",

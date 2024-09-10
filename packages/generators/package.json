@@ -14,17 +14,17 @@
     "@fastify/error": "^3.4.1",
     "boring-name-generator": "^1.0.3",
     "change-case-all": "^2.1.0",
-    "fastify": "^4.26.2",
-    "pino": "^8.19.0",
-    "undici": "^6.9.0"
+    "fastify": "^4.28.1",
+    "pino": "^8.21.0",
+    "undici": "^6.19.8"
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.7",
     "borp": "^0.16.0",
-    "c8": "^10.0.0",
+    "c8": "^10.1.2",
     "snazzy": "^9.0.0",
     "standard": "^17.1.0",
-    "tsd": "^0.31.0",
-    "typescript": "^5.4.2"
+    "tsd": "^0.31.2",
+    "typescript": "^5.6.2"
   }
 }
