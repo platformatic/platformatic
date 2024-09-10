@@ -364,6 +364,7 @@ test('should generate tsConfig file and typescript files', async t => {
       incremental: true,
       strict: true,
       outDir: 'dist',
+      skipLibCheck: true,
     },
     watchOptions: {
       watchFile: 'fixedPollingInterval',

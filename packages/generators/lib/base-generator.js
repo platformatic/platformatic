@@ -281,6 +281,7 @@ class BaseGenerator extends FileGenerator {
         incremental: true,
         strict: true,
         outDir: 'dist',
+        skipLibCheck: true,
       },
       watchOptions: {
         watchFile: 'fixedPollingInterval',
