@@ -47,8 +47,7 @@ test('should get service config', async (t) => {
     server: {
       hostname: '127.0.0.1',
       port: 0,
-      keepAliveTimeout: 5000,
-      logger: serviceConfig.server.logger,
+      keepAliveTimeout: 5000
     },
     service: { openapi: true },
     plugins: {

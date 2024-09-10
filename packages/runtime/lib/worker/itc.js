@@ -92,8 +92,13 @@ function setupITC (app, service, dispatcher) {
 
       async getServiceConfig () {
         const current = await app.stackable.getConfig()
+
         // Remove all undefined keys from the config
-        return JSON.parse(JSON.stringify(current))
+        const res = JSON.parse(JSON.stringify(current))
+
+        delete res.server.loggerInstance
+
+        return res
       },
 
       async getServiceOpenAPISchema () {
