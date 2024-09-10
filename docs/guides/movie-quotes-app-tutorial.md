@@ -41,8 +41,8 @@ To follow along with this tutorial you'll need to have these things installed:
 - [npm](https://docs.npmjs.com/cli/) v7 or later
 - A code editor, for example [Visual Studio Code](https://code.visualstudio.com/)
 
-You'll also need to have some experience with JavaScript, and be comfortable with
-running commands in a terminal.
+You'll also need to have some experience with JavaScript, and be comfortable running
+commands in a terminal.
 
 ## Build the backend
 
@@ -171,7 +171,7 @@ Let's stop the Platformatic DB server with `Ctrl + C`, and then start it again:
 npm run start
 ```
 
-The new migration should be automatically applied and we'll see the log message
+The new migration should be automatically applied, and we'll see the log message
 `running 002.do.sql`.
 
 <Tabs>
@@ -266,7 +266,7 @@ we can run this command in our terminal:
 npx platformatic db schema graphql
 ```
 
-The GraphQL schema shows all of the queries and mutations that we can run
+The GraphQL schema shows all the queries and mutations that we can run
 against our GraphQL API, as well as the types of data that it expects as input.
 </TabItem>
 <TabItem value="rest" label="Rest API">
@@ -546,7 +546,7 @@ Learn more about how validation works in the
 
 Our API route is currently returning an empty object (`{}`). Let's wire things
 up so that it increments the number of likes for the quote with the specified ID.
-To do this we'll add a new function inside of our plugin:
+To do this we'll add a new function inside our plugin:
 
 ```javascript
 module.exports = async function plugin (app) {

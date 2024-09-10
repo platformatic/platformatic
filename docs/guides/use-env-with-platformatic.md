@@ -30,7 +30,7 @@
 
 ## Introduction
 
-Environment variables (env) are key-value pairs that can store data outside of your application code. This can include details such as API keys, and [configuration](https://12factor.net/config) options, which are isolated from your source code. 
+Environment variables (env) are key-value pairs that can store data outside your application code. This can include details such as API keys, and [configuration](https://12factor.net/config) options, which are isolated from your source code. 
 
 This guide provides a step-by-step guide on adding and using environment variables (env) in a Platformatic application.  
 

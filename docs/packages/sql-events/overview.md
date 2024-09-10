@@ -104,7 +104,7 @@ The `setupEmitter` functions adds the following properties to the `mapper` objec
 - `subscribe(topics)` — a method to create a node [`Readable`](https://nodejs.org/api/stream.html#new-streamreadableoptions)
   that will contain the events emitted by those topics.
 
-Each entities of `app.platformatic.entities` will be augmented with two functions:
+Each entity of `app.platformatic.entities` will be augmented with two functions:
 
 * `entity.getPublishTopic({ ctx, data, action })` 
 * `entity.getSubscriptionTopic({ ctx, action })`

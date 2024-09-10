@@ -1,6 +1,6 @@
 # Configure JWT with Keycloak
 
-[Keycloak](https://www.keycloak.org/) is a open source identity and access management solution that can be integrated with Platformatic DB through [JSON Web Tokens](https://jwt.io/) (JWT) tokens. 
+[Keycloak](https://www.keycloak.org/) is an open source identity and access management solution that can be integrated with Platformatic DB through [JSON Web Tokens](https://jwt.io/) (JWT) tokens. 
 Keycloak is a powerful and complete solution, in this guide we will show how to integate it with Platformatic in a simple case. For more complex scenarios on the Keycloak side, please refer to the latest [Keycloak documentation](https://www.keycloak.org/documentation.html).
 
 ## Keycloak Setup 
@@ -24,7 +24,7 @@ Name the realm `plt` and click "Create".
 ![Create Realm](./keycloak-images/create_realm_2.png)
 
 Now click on the "Clients" tab and click on "Create Client" (clients are
-applications that can authenticate with Keycloak.
+applications that can authenticate with Keycloak).
 
 ![Create Client](./keycloak-images/create_client.png)
 

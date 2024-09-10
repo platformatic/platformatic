@@ -20,7 +20,7 @@ Check that the server is running by opening [http://localhost:16686/](http://loc
 
 Will test this with a Platformatic Composer that proxy requests to a Platformatic Service, which in turn invokes a Platformatic DB Service.
 In this way we show that the telemetry is propagated from the Composer throughout the services and the collected correctly.
-Let's setup all this components:
+Let's setup all these components:
 
 ### Platformatic DB Service
 Create a folder for DB and cd into it:

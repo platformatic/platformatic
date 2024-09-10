@@ -49,7 +49,7 @@ The path can also be a directory. In that case, the directory will be loaded wit
 └── platformatic.service.json
 ```
 
-By default the folder will be added as a prefix to all the routes defined within them.
+By default, the folder will be added as a prefix to all the routes defined within them.
 See the [autoload](../runtime/configuration.md#autoload) documentation for all the options to customize this behavior.
 
 ## Multiple Plugins

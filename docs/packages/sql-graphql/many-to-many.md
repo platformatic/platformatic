@@ -1,4 +1,4 @@
-# Many To Many Relationship
+# Many-To-Many Relationship
 
 Many-to-Many relationships allow you to relate each row in one table to many rows in another table and vice versa.
 

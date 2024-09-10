@@ -103,7 +103,7 @@ DB as user metadata.
 
 User metadata is parsed from an HTTP request and stored in a `user` object on the
 Fastify request object. This object is populated on-demand, but it's possible
-to populate it explicity with `await request.setupDBAuthorizationUser()`.
+to populate it explicitly with `await request.setupDBAuthorizationUser()`.
 
 ```javascript
 await request.setupDBAuthorizationUser();

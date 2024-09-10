@@ -48,7 +48,7 @@ npm create platformatic@latest
 npm install platformatic
 ```
 
-Follow our [Quick Start Guide](https://docs.platformatic.dev/docs/getting-started/quick-start-guide) guide to get up and running with Platformatic.
+Follow our [Quick Start Guide](https://docs.platformatic.dev/docs/getting-started/quick-start-guide) to get up and running with Platformatic.
 
 ### Documentation
 <hr />
@@ -68,7 +68,7 @@ For a dedicated support, explore our [Enterprise Plans](https://www.platformatic
 ## Platformatic for Teams 
 <hr />
 
-Find out more about the enterprise command center that simplifies the development, management and oeprations of your Node.js apps at [platformaticHQ.com](https://www.platformatichq.com).
+Find out more about the enterprise command center that simplifies the development, management and operations of your Node.js apps at [platformaticHQ.com](https://www.platformatichq.com).
 
 ![Command Center](./assets/Hompage_Solution_White.png)
 

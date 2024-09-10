@@ -49,7 +49,7 @@ or as a Platformatic Runtime service. Runtime service enables certain compile an
 
 Platformatic Runtime allows multiple microservice applications to run
 within a single process. Only the entrypoint binds to an operating system
-port and can be reached from outside of the runtime.
+port and can be reached from outside the runtime.
 
 Within the runtime, all interservice communication happens by injecting HTTP
 requests into the running servers, without binding them to ports. This injection

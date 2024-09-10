@@ -52,7 +52,7 @@ We recommend that you use [environment variable placeholders](/reference/db/conf
 in your Platformatic DB configuration. This will allow you to configure
 different settings in your development and production environments.
 
-In development you can set the  environment variables via a **`.env`** file
+In development, you can set the  environment variables via a **`.env`** file
 that will be automatically loaded by Platformatic DB. For example:
 
 ```
