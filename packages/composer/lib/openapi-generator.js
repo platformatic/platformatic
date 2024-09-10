@@ -99,12 +99,12 @@ async function composeOpenAPI (app, opts) {
           const newRoutePath = mapRoutePath(routePath)
 
           const replyOptions = {}
-          const onResponse = (request, reply, res) => {
+          const onResponse = (request, reply, { stream }) => {
             app.openTelemetry?.endHTTPSpanClient(reply.request.proxedCallSpan, { statusCode: reply.statusCode })
             if (req.routeOptions.config?.onComposerResponse) {
-              req.routeOptions.config?.onComposerResponse(request, reply, res)
+              req.routeOptions.config?.onComposerResponse(request, reply, stream)
             } else {
-              reply.send(res)
+              reply.send(stream)
             }
           }
           const rewriteRequestHeaders = (request, headers) => {
@@ -122,7 +122,7 @@ async function composeOpenAPI (app, opts) {
               ...headers,
               ...telemetryHeaders,
               'x-forwarded-for': request.ip,
-              'x-forwarded-host': request.hostname,
+              'x-forwarded-host': request.host,
             }
 
             return headers

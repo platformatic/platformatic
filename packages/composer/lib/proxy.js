@@ -116,14 +116,14 @@ module.exports = fp(async function (app, opts) {
             ...headers,
             ...telemetryHeaders,
             'x-forwarded-for': request.ip,
-            'x-forwarded-host': request.hostname,
+            'x-forwarded-host': request.host,
           }
 
           return headers
         },
         onResponse: (request, reply, res) => {
           app.openTelemetry?.endHTTPSpanClient(reply.request.proxedCallSpan, { statusCode: reply.statusCode })
-          reply.send(res)
+          reply.send(res.stream)
         },
       },
     })

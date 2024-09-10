@@ -67,6 +67,7 @@ test('should add multiple onRoute hooks for one route', async (t) => {
     assert.equal(statusCode, 200)
 
     const routeSchema = JSON.parse(body)
+    console.log(routeSchema)
     assert.equal(routeSchema.response[200].description, 'This is a test')
   }
 })

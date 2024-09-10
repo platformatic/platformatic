@@ -9,9 +9,9 @@ module.exports = async function (app) {
   })
 
   app.platformatic.addComposerOnRouteHook('/users/{id}', ['GET'], routeOptions => {
-    routeOptions.onSend = async (req, reply) => {
+    routeOptions.onSend = async (req, reply, payload) => {
       reply.status(200)
-      return JSON.stringify(req.routeSchema)
+      return JSON.stringify(routeOptions.schema)
     }
   })
 }

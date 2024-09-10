@@ -354,10 +354,10 @@ async function createGraphqlService (t, { schema, resolvers, extend, file, expos
   return app
 }
 
-async function createComposer (t, composerConfig, logger = false) {
+async function createComposer (t, composerConfig, loggerInstance = undefined) {
   const defaultConfig = {
     server: {
-      logger,
+      loggerInstance,
       hostname: '127.0.0.1',
       port: 0,
       keepAliveTimeout: 10,
