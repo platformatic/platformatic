@@ -1033,8 +1033,8 @@ importers:
         specifier: ^4.5.1
         version: 4.5.1
       fastify-user:
-        specifier: ^0.3.3
-        version: 0.3.3
+        specifier: ^0.4.0
+        version: 0.4.0
       get-jwks:
         specifier: ^9.0.1
         version: 9.0.2
@@ -5061,8 +5061,8 @@ packages:
   fastify-undici-dispatcher@0.6.0:
     resolution: {integrity: sha512-xSt3eCZHsZOh5cDBbEObWHIYYz+g8QmyqFgxVypTjxvE74QOcpx9KGonrHQkKKCnkY31CmXFoBgZjSvwIDZWPQ==}
 
-  fastify-user@0.3.3:
-    resolution: {integrity: sha512-M6gUmTPtVaqnuKNv0nHMejJs67AsLduYgKX1yblQkZLq131JRDrGn9ueOHUPRyRK2oLhB0F1PE/AttCiyaz9Ug==}
+  fastify-user@0.4.0:
+    resolution: {integrity: sha512-b5e1AvL7gfVecvD7V1UgGCo2EmAeFuv4QhIn3kBIseSjfDkuAu4/JAXCYWVLnl7Ky57IaqnkyfdHo691IJkJ+g==}
 
   fastify@4.28.1:
     resolution: {integrity: sha512-kFWUtpNr4i7t5vY2EJPCN2KgMVpuqfU4NjnJNCgiNB900oiDeYqaNDRcAfeBbOF5hGixixxcKnOU4KN9z6QncQ==}
@@ -5217,10 +5217,6 @@ packages:
   get-intrinsic@1.2.4:
     resolution: {integrity: sha512-5uYhsJH8VJBTv7oslg4BznJYhDoRI6waYCxMmCdnTrcCrHA/fCFKoTFz2JKKE0HdDFUF7/oQuhzumXJK7paBRQ==}
     engines: {node: '>= 0.4'}
-
-  get-jwks@8.3.1:
-    resolution: {integrity: sha512-fh7kfT1pW5Qynzx5Ug+yOi9DSRIGyabCsWZErDZqh/mh7YbeG2uaOTSWocA1pt0AuTTQasUm6EBJ1k0c8NAgWg==}
-    engines: {node: '>=14'}
 
   get-jwks@9.0.2:
     resolution: {integrity: sha512-zn2OvElozYtckpYJvgRWMOMhEkW8KgFp+lN0B7Q6SXPZg/CFfeiPoh73Wbhacj4fYXDJxkxbcwI9j+/cubpzSQ==}
@@ -11680,13 +11676,13 @@ snapshots:
     dependencies:
       undici: 6.19.8
 
-  fastify-user@0.3.3:
+  fastify-user@0.4.0:
     dependencies:
-      '@fastify/error': 3.4.1
+      '@fastify/error': 4.0.0
       '@fastify/jwt': 8.0.1
       fastify: 4.28.1
       fastify-plugin: 4.5.1
-      get-jwks: 8.3.1
+      get-jwks: 9.0.2
     transitivePeerDependencies:
       - encoding
 
@@ -11870,14 +11866,6 @@ snapshots:
       has-proto: 1.0.3
       has-symbols: 1.0.3
       hasown: 2.0.2
-
-  get-jwks@8.3.1:
-    dependencies:
-      jwk-to-pem: 2.0.6
-      lru-cache: 10.4.3
-      node-fetch: 2.7.0
-    transitivePeerDependencies:
-      - encoding
 
   get-jwks@9.0.2:
     dependencies:

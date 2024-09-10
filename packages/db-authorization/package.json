@@ -34,7 +34,7 @@
     "@fastify/error": "^3.4.1",
     "@fastify/jwt": "^8.0.0",
     "fastify-plugin": "^4.5.1",
-    "fastify-user": "^0.3.3",
+    "fastify-user": "^0.4.0",
     "get-jwks": "^9.0.1",
     "leven": "~3.1.0",
     "undici": "^6.9.0"
