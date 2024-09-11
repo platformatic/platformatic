@@ -1,6 +1,7 @@
 import { ITC, generateNotification } from '@platformatic/itc'
 import { createDirectory, errors } from '@platformatic/utils'
 import { once } from 'node:events'
+import { rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { register } from 'node:module'
 import { platform, tmpdir } from 'node:os'
@@ -9,17 +10,24 @@ import { workerData } from 'node:worker_threads'
 import { request } from 'undici'
 import { WebSocketServer } from 'ws'
 
+const isWindows = platform() === 'win32'
+
+// In theory we could use the context.id to namespace even more, but due to
+// UNIX socket length limitation on MacOS, we don't.
+function generateUniquePath (context) {
+  return [process.pid, Date.now()].join('-')
+}
+
 function createSocketPath (context) {
-  const id = context.id
-  const pid = process.pid
+  const path = generateUniquePath(context)
 
   let socketPath = null
   if (platform() === 'win32') {
-    socketPath = `\\\\.\\pipe\\platformatic-service-${id}-${pid}`
+    socketPath = `\\\\.\\pipe\\${path}`
   } else {
     // As stated in https://nodejs.org/dist/latest-v20.x/docs/api/net.html#identifying-paths-for-ipc-connections,
     // Node will take care of deleting the file for us
-    socketPath = resolve(tmpdir(), 'platformatic', 'runtimes', `service-${id}-${pid}.socket`)
+    socketPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${path}.socket`)
   }
 
   return socketPath
@@ -36,16 +44,16 @@ export class ChildManager extends ITC {
   #requests
   #currentClient
   #listener
-  #injectedNodeOptions
   #originalNodeOptions
+  #injectedSourcePath
+  #injectedDataPath
 
   constructor (opts) {
     let { loader, context, scripts, handlers, skipProcessManager, ...itcOpts } = opts
 
     context ??= {}
-    context.socketPath ??= createSocketPath(context)
-
     scripts ??= []
+
     if (!skipProcessManager) {
       scripts.push(new URL('./child-process.js', import.meta.url))
     }
@@ -63,90 +71,21 @@ export class ChildManager extends ITC {
       }
     })
 
-    this.#logger = globalThis.platformatic.logger
-    this.#server = createServer()
-    this.#socketPath = context.socketPath
-    this.#clients = new Set()
-    this.#requests = new Map()
-    this.#init(loader, context, scripts)
-    this.#listen().catch(error => {
-      this.#logger.error({ error: errors.ensureLoggableError(error) }, 'Cannot start child manager socket.')
-    })
-  }
-
-  inject () {
-    process.env.NODE_OPTIONS = this.#injectedNodeOptions
-  }
-
-  eject () {
-    process.env.NODE_OPTIONS = this.#originalNodeOptions
-  }
-
-  register () {
-    register(this.#loader, { data: this.#context })
-  }
-
-  send (client, name, message) {
-    this.#currentClient = client
-    super.send(name, message)
-  }
-
-  close (signal) {
-    for (const client of this.#clients) {
-      this.#currentClient = client
-      this._send(generateNotification('close', signal))
-    }
-
-    super.close()
-  }
-
-  _send (message) {
-    if (!this.#currentClient) {
-      this.#currentClient = this.#requests.get(message.reqId)
-      this.#requests.delete(message.reqId)
-
-      if (!this.#currentClient) {
-        return
-      }
-    }
-
-    this.#currentClient.send(JSON.stringify(message))
-    this.#currentClient = null
-  }
-
-  _setupListener (listener) {
-    this.#listener = listener
-  }
-
-  _createClosePromise () {
-    return once(this.#server, 'exit')
-  }
-
-  _close () {
-    this.#server.close()
-  }
-
-  #init (loader, context, scripts) {
     this.#loader = loader
     this.#context = context
+    this.#scripts = scripts
     this.#originalNodeOptions = process.env.NODE_OPTIONS
-
-    this.#injectedNodeOptions = [
-      `--import="data:text/javascript,globalThis.platformatic=${JSON.stringify(context).replaceAll('"', '\\"')};"`,
-      loader
-        ? `--import="data:text/javascript,import { register} from 'node:module';register('${loader}',{ data: globalThis.platformatic });"`
-        : undefined,
-      ...(scripts ?? []).map(s => `--import=${s}`),
-      process.env.NODE_OPTIONS ?? ''
-    ]
-      .filter(i => i)
-      .join(' ')
+    this.#logger = globalThis.platformatic.logger
+    this.#server = createServer()
+    this.#socketPath ??= createSocketPath(context)
+    this.#clients = new Set()
+    this.#requests = new Map()
   }
 
-  async #listen () {
+  async listen () {
     super.listen()
 
-    if (platform() !== 'win32') {
+    if (!isWindows) {
       await createDirectory(dirname(this.#socketPath))
     }
 
@@ -178,6 +117,93 @@ export class ChildManager extends ITC {
     return new Promise((resolve, reject) => {
       this.#server.listen({ path: this.#socketPath }, resolve).on('error', reject)
     })
+  }
+
+  async close (signal) {
+    await rm(this.#injectedDataPath)
+    await rm(this.#injectedSourcePath)
+
+    for (const client of this.#clients) {
+      this.#currentClient = client
+      this._send(generateNotification('close', signal))
+    }
+
+    super.close()
+  }
+
+  async inject () {
+    await this.listen()
+
+    // To avoid issues on Windows, we put all our imports in a single JS file
+    this.#injectedDataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${generateUniquePath(this.#context)}.json`)
+    this.#injectedSourcePath = resolve(tmpdir(), 'platformatic', 'runtimes', `${generateUniquePath(this.#context)}.mjs`)
+    await createDirectory(dirname(this.#injectedSourcePath))
+
+    const content = [
+      'import { register } from "node:module"',
+      'import { readFile } from "node:fs/promises"',
+      '',
+      'globalThis.platformatic = JSON.parse(await readFile(process.env.PLT_SERVICE_DATA_PATH))'
+    ]
+
+    if (this.#loader) {
+      content.push(`register('${this.#loader}',{ data: globalThis.platformatic })\n`)
+    }
+
+    for (const script of this.#scripts) {
+      content.push(`await import('${script}')`)
+    }
+
+    // We write the data to a different location for future expansion
+    await writeFile(
+      this.#injectedDataPath,
+      JSON.stringify({ ...this.#context, __pltSocketPath: this.#socketPath }, null, 2),
+      'utf-8'
+    )
+    await writeFile(this.#injectedSourcePath, content.join('\n'), 'utf-8')
+
+    process.env.PLT_SERVICE_DATA_PATH = this.#injectedDataPath
+    process.env.NODE_OPTIONS = `--import=${this.#injectedSourcePath} ${process.env.NODE_OPTIONS ?? ''}`
+  }
+
+  async eject () {
+    process.env.NODE_OPTIONS = this.#originalNodeOptions
+    process.env.PLT_SERVICE_DATA_PATH = ''
+  }
+
+  register () {
+    register(this.#loader, { data: this.#context })
+  }
+
+  send (client, name, message) {
+    this.#currentClient = client
+    super.send(name, message)
+  }
+
+  _send (message) {
+    if (!this.#currentClient) {
+      this.#currentClient = this.#requests.get(message.reqId)
+      this.#requests.delete(message.reqId)
+
+      if (!this.#currentClient) {
+        return
+      }
+    }
+
+    this.#currentClient.send(JSON.stringify(message))
+    this.#currentClient = null
+  }
+
+  _setupListener (listener) {
+    this.#listener = listener
+  }
+
+  _createClosePromise () {
+    return once(this.#server, 'exit')
+  }
+
+  _close () {
+    this.#server.close()
   }
 
   #log (message) {

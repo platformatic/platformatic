@@ -73,7 +73,7 @@ export class NextStackable extends BaseStackable {
       })
     } else {
       const exitPromise = once(this.#child, 'exit')
-      this.#manager.close()
+      await this.#manager.close()
       process.kill(this.#child.pid, 'SIGKILL')
       await exitPromise
     }
@@ -158,12 +158,12 @@ export class NextStackable extends BaseStackable {
     })
 
     try {
-      this.#manager.inject()
+      await this.#manager.inject()
       const childPromise = createChildProcessListener()
       await nextDev(serverOptions, 'default', this.root)
       this.#child = await childPromise
     } finally {
-      this.#manager.eject()
+      await this.#manager.eject()
     }
   }
 
@@ -195,26 +195,31 @@ export class NextStackable extends BaseStackable {
   }
 
   async #startProductionNext () {
-    const { nextStart } = await importFile(pathResolve(this.#next, './dist/cli/next-start.js'))
+    try {
+      await this.#manager.inject()
+      const { nextStart } = await importFile(pathResolve(this.#next, './dist/cli/next-start.js'))
 
-    const { hostname, port } = this.serverConfig ?? {}
-    const serverOptions = {
-      hostname: hostname || '127.0.0.1',
-      port: port || 0
+      const { hostname, port } = this.serverConfig ?? {}
+      const serverOptions = {
+        hostname: hostname || '127.0.0.1',
+        port: port || 0
+      }
+
+      // Since we are in the same process
+      process.once('plt:next:config', config => {
+        this.#basePath = config.basePath.replace(/(^\/)|(\/$)/g, '')
+      })
+
+      this.#manager.register()
+      const serverPromise = createServerListener((this.isEntrypoint ? serverOptions?.port : undefined) ?? true)
+
+      await nextStart(serverOptions, this.root)
+
+      this.#server = await serverPromise
+      this.url = getServerUrl(this.#server)
+    } finally {
+      await this.#manager.eject()
     }
-
-    // Since we are in the same process
-    process.once('plt:next:config', config => {
-      this.#basePath = config.basePath.replace(/(^\/)|(\/$)/g, '')
-    })
-
-    this.#manager.register()
-    const serverPromise = createServerListener((this.isEntrypoint ? serverOptions?.port : undefined) ?? true)
-
-    await nextStart(serverOptions, this.root)
-
-    this.#server = await serverPromise
-    this.url = getServerUrl(this.#server)
   }
 }
 
