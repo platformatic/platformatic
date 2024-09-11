@@ -1,8 +1,21 @@
-import { schemaComponents } from '@platformatic/basic'
-import { schemas as utilsSchema } from '@platformatic/utils'
+import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
+import { schemaComponents as utilsSchemaComponents } from '@platformatic/utils'
 import { readFileSync } from 'node:fs'
 
 export const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'))
+
+const node = {
+  type: 'object',
+  properties: {
+    entrypoint: {
+      type: 'string'
+    }
+  },
+  default: {},
+  additionalProperties: false
+}
+
+export const schemaComponents = { node }
 
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/vite/${packageJson.version}.json`,
@@ -11,13 +24,14 @@ export const schema = {
   type: 'object',
   properties: {
     $schema: {
-      type: 'string',
+      type: 'string'
     },
-    server: utilsSchema.server,
-    watch: schemaComponents.watch,
-    deploy: schemaComponents.deploy
+    server: utilsSchemaComponents.server,
+    watch: basicSchemaComponents.watch,
+    application: basicSchemaComponents.application,
+    node
   },
-  additionalProperties: false,
+  additionalProperties: false
 }
 
 /* c8 ignore next 3 */

@@ -24,12 +24,16 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
+    "@fastify/middie": "^8.3.1",
+    "@fastify/static": "^7.0.4",
     "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/utils": "workspace:*",
+    "fastify": "^4.28.1",
     "semver": "^7.6.3"
   },
   "devDependencies": {
+    "@astrojs/node": "^8.3.3",
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
     "astro": "^4.14.4",

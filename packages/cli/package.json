@@ -10,7 +10,7 @@
   },
   "homepage": "https://docs.platformatic.dev/",
   "scripts": {
-    "test": "pnpm run lint && borp --timeout=600000 --concurrency 1",
+    "test": "pnpm run lint && borp --timeout=180000 --concurrency 1",
     "lint": "eslint",
     "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause;BSD-3-Clause;CC-BY-4.0'"
   },
@@ -49,7 +49,6 @@
     "mkdirp": "^2.1.6",
     "minimatch": "^10.0.1",
     "neostandard": "^0.11.1",
-    "split2": "^4.2.0",
     "typescript": "^5.5.3"
   },
   "dependencies": {

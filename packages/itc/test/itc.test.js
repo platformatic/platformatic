@@ -186,6 +186,23 @@ test('should throw if handler is not found', async t => {
   }
 })
 
+test('should allow missing handlers using throwOnMissingHandler', async t => {
+  const { port1, port2 } = new MessageChannel()
+
+  const itc1 = new ITC({ port: port1 })
+  const itc2 = new ITC({ port: port2, throwOnMissingHandler: false })
+
+  const requestName = 'test-command'
+
+  itc1.listen()
+  itc2.listen()
+
+  t.after(() => itc1.close())
+  t.after(() => itc2.close())
+
+  assert.ifError(await itc1.send(requestName, 'test-request'))
+})
+
 test('should skip non-platformatic message', async t => {
   const { port1, port2 } = new MessageChannel()
 

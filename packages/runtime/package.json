@@ -83,7 +83,7 @@
     "semgrator": "^0.3.0",
     "tail-file-stream": "^0.2.0",
     "undici": "^6.9.0",
-    "undici-thread-interceptor": "^0.5.1",
+    "undici-thread-interceptor": "^0.6.1",
     "ws": "^8.16.0"
   }
 }

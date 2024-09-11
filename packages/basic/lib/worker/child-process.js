@@ -1,8 +1,10 @@
 import { ITC } from '@platformatic/itc'
-import { createPinoWritable, DestinationWritable, withResolvers } from '@platformatic/utils'
+import { createPinoWritable, DestinationWritable } from '@platformatic/utils'
 import { tracingChannel } from 'node:diagnostics_channel'
+import { once } from 'node:events'
 import pino from 'pino'
 import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
+import { WebSocket } from 'ws'
 
 function createInterceptor (itc) {
   return function (dispatch) {
@@ -18,7 +20,7 @@ function createInterceptor (itc) {
       }
 
       const headers = {
-        ...opts?.headers,
+        ...opts?.headers
       }
 
       delete headers.connection
@@ -27,7 +29,7 @@ function createInterceptor (itc) {
 
       const requestOpts = {
         ...opts,
-        headers,
+        headers
       }
       delete requestOpts.dispatcher
 
@@ -81,40 +83,69 @@ class ChildProcessWritable extends DestinationWritable {
 
 class ChildProcess extends ITC {
   #listener
+  #socket
   #child
   #logger
+  #pendingMessages
 
   constructor () {
-    super({})
+    super({ throwOnMissingHandler: false })
 
     this.listen()
     this.#setupLogger()
     this.#setupServer()
     this.#setupInterceptors()
+    this.#pendingMessages = []
+
+    this.on('close', signal => {
+      process.kill(process.pid, signal)
+    })
   }
 
   _setupListener (listener) {
     this.#listener = listener
-    process.on('message', this.#listener)
+
+    this.#socket = new WebSocket(`ws+unix:${globalThis.platformatic.socketPath}`)
+
+    this.#socket.on('open', () => {
+      for (const message of this.#pendingMessages) {
+        this.#socket.send(message)
+      }
+    })
+
+    this.#socket.on('message', message => {
+      this.#listener(JSON.parse(message))
+    })
+
+    this.#socket.on('error', () => {
+      // There is nothing to log here as the connection with the parent thread is lost. Exit with a special code
+      process.exit(2)
+    })
   }
 
-  _send (request) {
-    process.send(request)
+  _send (message) {
+    if (this.#socket.readyState === WebSocket.CONNECTING) {
+      this.#pendingMessages.push(JSON.stringify(message))
+      return
+    }
+
+    this.#socket.send(JSON.stringify(message))
   }
 
   _createClosePromise () {
-    const { promise } = withResolvers()
-    return promise
+    return once(this.#socket, 'close')
   }
 
   _close () {
-    process.kill(process.pid, 'SIGKILL')
-    this.#child.removeListener('message', this.#listener)
+    this.#socket.close()
   }
 
   #setupLogger () {
     const destination = new ChildProcessWritable({ itc: this })
-    this.#logger = pino({ level: 'info', ...globalThis.platformatic.logger }, destination)
+    this.#logger = pino(
+      { level: 'info', name: globalThis.platformatic.id, ...globalThis.platformatic.logger },
+      destination
+    )
 
     Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(this.#logger, 'info') })
     Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(this.#logger, 'error') })
@@ -123,7 +154,11 @@ class ChildProcess extends ITC {
   #setupServer () {
     const subscribers = {
       asyncStart ({ options }) {
-        options.port = 0
+        const port = globalThis.platformatic.port
+
+        if (port !== false) {
+          options.port = typeof port === 'number' ? port : 0
+        }
       },
       asyncEnd: ({ server }) => {
         tracingChannel('net.server.listen').unsubscribe(subscribers)
@@ -136,7 +171,7 @@ class ChildProcess extends ITC {
       error: error => {
         tracingChannel('net.server.listen').unsubscribe(subscribers)
         this.notify('error', error)
-      },
+      }
     }
 
     tracingChannel('net.server.listen').subscribe(subscribers)

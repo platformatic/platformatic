@@ -1,0 +1,13 @@
+packages:
+  - 'standalone'
+  - 'standalone/services/*'
+  - 'composer-with-prefix'
+  - 'composer-with-prefix/services/*'
+  - 'composer-without-prefix'
+  - 'composer-without-prefix/services/*'
+  - 'composer-autodetect-prefix'
+  - 'composer-autodetect-prefix/services/*'
+  - 'composer-custom-commands'
+  - 'composer-custom-commands/services/*'
+  - 'server-side'
+  - 'server-side/services/*'

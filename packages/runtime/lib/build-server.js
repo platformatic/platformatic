@@ -9,7 +9,7 @@ const { platformaticRuntime } = require('./config')
 const { buildRuntime } = require('./start')
 const { loadConfig } = require('./utils')
 
-async function buildServerRuntime (options = {}) {
+async function buildServerRuntime (options = {}, args = undefined) {
   const { serviceMap } = options
 
   if (!options.configManager) {
@@ -18,7 +18,7 @@ async function buildServerRuntime (options = {}) {
     // Instantiate a new config manager from the current options.
     const cm = new ConfigManager({
       ...platformaticRuntime.configManagerConfig,
-      source: options,
+      source: options
     })
     await cm.parseAndValidate()
 
@@ -31,10 +31,14 @@ async function buildServerRuntime (options = {}) {
     }
   }
 
+  if (args) {
+    options.configManager.args = args
+  }
+
   return buildRuntime(options.configManager, options.env)
 }
 
-async function buildServer (options) {
+async function buildServer (options, args) {
   if (typeof options === 'string') {
     const config = await loadConfig({}, ['-c', options])
     options = config.configManager.current
@@ -47,7 +51,7 @@ async function buildServer (options) {
   delete options.app
 
   if (app === platformaticRuntime || !app) {
-    return buildServerRuntime(options)
+    return buildServerRuntime(options, args)
   }
 
   if (app.buildServer) {

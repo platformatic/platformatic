@@ -24,10 +24,12 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
+    "@fastify/static": "^7.0.4",
     "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/node": "workspace:*",
     "@platformatic/utils": "workspace:*",
+    "fastify": "^4.28.1",
     "semver": "^7.6.3"
   },
   "devDependencies": {
@@ -36,7 +38,6 @@
     "@platformatic/service": "workspace:*",
     "borp": "^0.17.0",
     "eslint": "9",
-    "fastify": "^4.28.1",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.11.1",
     "react": "^18.3.1",

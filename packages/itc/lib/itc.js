@@ -11,6 +11,97 @@ const PLT_ITC_NOTIFICATION_TYPE = 'PLT_ITC_NOTIFICATION'
 const PLT_ITC_UNHANDLED_ERROR_TYPE = 'PLT_ITC_UNHANDLED_ERROR'
 const PLT_ITC_VERSION = '1.0.0'
 
+function parseRequest (request) {
+  if (request.reqId === undefined) {
+    throw new errors.MissingRequestReqId()
+  }
+  if (request.version !== PLT_ITC_VERSION) {
+    throw new errors.InvalidRequestVersion(request.version)
+  }
+  if (request.name === undefined) {
+    throw new errors.MissingRequestName()
+  }
+  return request
+}
+
+function parseResponse (response) {
+  if (response.reqId === undefined) {
+    throw new errors.MissingResponseReqId()
+  }
+  if (response.version !== PLT_ITC_VERSION) {
+    throw new errors.InvalidResponseVersion(response.version)
+  }
+  if (response.name === undefined) {
+    throw new errors.MissingResponseName()
+  }
+  return response
+}
+
+function generateRequest (name, data) {
+  if (typeof name !== 'string') {
+    throw new errors.RequestNameIsNotString(name.toString())
+  }
+
+  if (typeof data === 'object') {
+    data = sanitize(data)
+  }
+
+  return {
+    type: PLT_ITC_REQUEST_TYPE,
+    version: PLT_ITC_VERSION,
+    reqId: randomUUID(),
+    name,
+    data
+  }
+}
+
+function generateResponse (request, error, data) {
+  return {
+    type: PLT_ITC_RESPONSE_TYPE,
+    version: PLT_ITC_VERSION,
+    reqId: request.reqId,
+    name: request.name,
+    error,
+    data
+  }
+}
+
+function generateNotification (name, data) {
+  return {
+    type: PLT_ITC_NOTIFICATION_TYPE,
+    version: PLT_ITC_VERSION,
+    name,
+    data
+  }
+}
+
+function generateUnhandledErrorResponse (error) {
+  return {
+    type: PLT_ITC_UNHANDLED_ERROR_TYPE,
+    version: PLT_ITC_VERSION,
+    error,
+    data: null
+  }
+}
+
+function sanitize (data) {
+  const sanitizedObject = {}
+  for (const key in data) {
+    const value = data[key]
+    const type = typeof value
+
+    if (type === 'object') {
+      sanitizedObject[key] = sanitize(value)
+      continue
+    }
+
+    if (type !== 'function' && type !== 'symbol') {
+      sanitizedObject[key] = value
+    }
+  }
+  return sanitizedObject
+}
+
 class ITC extends EventEmitter {
   #requestEmitter
   #handlers
@@ -18,8 +109,9 @@ class ITC extends EventEmitter {
   #handling
   #closePromise
   #closeAfterCurrentRequest
+  #throwOnMissingHandler
 
-  constructor ({ port, handlers }) {
+  constructor ({ port, handlers, throwOnMissingHandler }) {
     super()
 
     this.port = port
@@ -28,6 +120,7 @@ class ITC extends EventEmitter {
     this.#listening = false
     this.#handling = false
     this.#closeAfterCurrentRequest = false
+    this.#throwOnMissingHandler = throwOnMissingHandler ?? true
 
     // Make sure the emitter handle a lot of listeners at once before raising a warning
     this.#requestEmitter.setMaxListeners(1e3)
@@ -45,7 +138,7 @@ class ITC extends EventEmitter {
       throw new errors.SendBeforeListen()
     }
 
-    const request = this.#generateRequest(name, message)
+    const request = generateRequest(name, message)
 
     this._send(request)
 
@@ -58,7 +151,7 @@ class ITC extends EventEmitter {
   }
 
   async notify (name, message) {
-    this._send(this.#generateNotification(name, message))
+    this._send(generateNotification(name, message))
   }
 
   handle (message, handler) {
@@ -129,27 +222,31 @@ class ITC extends EventEmitter {
     this.#handling = true
 
     try {
-      request = this.#parseRequest(raw)
+      request = parseRequest(raw)
       handler = this.#handlers.get(request.name)
 
-      if (handler === undefined) {
-        throw new errors.HandlerNotFound(request.name)
-      }
+      if (handler) {
+        const result = await handler(request.data)
+        response = generateResponse(request, null, result)
+      } else {
+        if (this.#throwOnMissingHandler) {
+          throw new errors.HandlerNotFound(request.name)
+        }
 
-      const result = await handler(request.data)
-      response = this.#generateResponse(request, null, result)
+        response = generateResponse(request, null)
+      }
     } catch (error) {
       if (!request) {
-        response = this.#generateUnhandledErrorResponse(error)
+        response = generateUnhandledErrorResponse(error)
       } else if (!handler) {
-        response = this.#generateResponse(request, error, null)
+        response = generateResponse(request, error, null)
       } else {
         const failedError = new errors.HandlerFailed(error.message)
         failedError.handlerError = error
         // This is needed as the code might be lost when sending the message over the port
         failedError.handlerErrorCode = error.code
 
-        response = this.#generateResponse(request, failedError, null)
+        response = generateResponse(request, failedError, null)
       }
     } finally {
       this.#handling = false
@@ -162,24 +259,11 @@ class ITC extends EventEmitter {
     }
   }
 
-  #parseRequest (request) {
-    if (request.reqId === undefined) {
-      throw new errors.MissingRequestReqId()
-    }
-    if (request.version !== PLT_ITC_VERSION) {
-      throw new errors.InvalidRequestVersion(request.version)
-    }
-    if (request.name === undefined) {
-      throw new errors.MissingRequestName()
-    }
-    return request
-  }
-
   #handleResponse (response) {
     try {
-      response = this.#parseResponse(response)
+      response = parseResponse(response)
     } catch (error) {
-      response = this.#generateUnhandledErrorResponse(error)
+      response = generateUnhandledErrorResponse(error)
       this._send(response)
       return
     }
@@ -187,84 +271,15 @@ class ITC extends EventEmitter {
     const reqId = response.reqId
     this.#requestEmitter.emit(reqId, response)
   }
-
-  #parseResponse (response) {
-    if (response.reqId === undefined) {
-      throw new errors.MissingResponseReqId()
-    }
-    if (response.version !== PLT_ITC_VERSION) {
-      throw new errors.InvalidResponseVersion(response.version)
-    }
-    if (response.name === undefined) {
-      throw new errors.MissingResponseName()
-    }
-    return response
-  }
-
-  #generateRequest (name, data) {
-    if (typeof name !== 'string') {
-      throw new errors.RequestNameIsNotString(name.toString())
-    }
-
-    if (typeof data === 'object') {
-      data = this.#sanitize(data)
-    }
-
-    return {
-      type: PLT_ITC_REQUEST_TYPE,
-      version: PLT_ITC_VERSION,
-      reqId: randomUUID(),
-      name,
-      data
-    }
-  }
-
-  #generateResponse (request, error, data) {
-    return {
-      type: PLT_ITC_RESPONSE_TYPE,
-      version: PLT_ITC_VERSION,
-      reqId: request.reqId,
-      name: request.name,
-      error,
-      data
-    }
-  }
-
-  #generateNotification (name, data) {
-    return {
-      type: PLT_ITC_NOTIFICATION_TYPE,
-      version: PLT_ITC_VERSION,
-      name,
-      data
-    }
-  }
-
-  #generateUnhandledErrorResponse (error) {
-    return {
-      type: PLT_ITC_UNHANDLED_ERROR_TYPE,
-      version: PLT_ITC_VERSION,
-      error,
-      data: null
-    }
-  }
-
-  #sanitize (data) {
-    const sanitizedObject = {}
-    for (const key in data) {
-      const value = data[key]
-      const type = typeof value
-
-      if (type === 'object') {
-        sanitizedObject[key] = this.#sanitize(value)
-        continue
-      }
-
-      if (type !== 'function' && type !== 'symbol') {
-        sanitizedObject[key] = value
-      }
-    }
-    return sanitizedObject
-  }
 }
 
-module.exports = ITC
+module.exports = {
+  ITC,
+  parseRequest,
+  parseResponse,
+  generateRequest,
+  generateResponse,
+  generateNotification,
+  generateUnhandledErrorResponse,
+  sanitize
+}

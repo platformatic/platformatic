@@ -10,7 +10,7 @@ import { cliPath } from './helper.js'
 test('resolve runtime external services', async t => {
   const dest = await mkdtemp(join(tmpdir(), `test-cli-${process.pid}-`))
 
-  await cp(join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'runtime-resolve'), dest, {
+  await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime-resolve'), dest, {
     recursive: true,
   })
 

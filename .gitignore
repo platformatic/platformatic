@@ -121,7 +121,7 @@ packages/db/test/fixtures/sqlite/db
 tags
 
 # tmp filees for packages
-
+tmp/
 packages/service/test/tmp
 packages/cli/fixtures/sqlite/db
 packages/client-cli/test/tmp

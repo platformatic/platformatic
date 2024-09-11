@@ -7,18 +7,35 @@ import pino from 'pino'
 import { packageJson, schema } from './lib/schema.js'
 import { importFile } from './lib/utils.js'
 
+function isImportFailedError (error, pkg) {
+  if (error.code !== 'ERR_MODULE_NOT_FOUND') {
+    return false
+  }
+
+  const match = error.message.match(/Cannot find package '(.+)' imported from (.+)/)
+  return match?.[1] === pkg
+}
+
 async function importStackablePackage (opts, pkg, autodetectDescription) {
   try {
     try {
       // Try regular import
       return await import(pkg)
     } catch (e) {
+      if (!isImportFailedError(e, pkg)) {
+        throw e
+      }
+
       // Scope to the service
       const require = createRequire(resolve(opts.context.directory, 'index.js'))
       const imported = require.resolve(pkg)
       return await importFile(imported)
     }
   } catch (e) {
+    if (!isImportFailedError(e, pkg)) {
+      throw e
+    }
+
     const rootFolder = relative(process.cwd(), workerData.dirname)
 
     let errorMessage = `Unable to import package, "${pkg}". Please add it as a dependency `
@@ -120,4 +137,4 @@ export * as errors from './lib/errors.js'
 export { schema, schemaComponents } from './lib/schema.js'
 export * from './lib/utils.js'
 export * from './lib/worker/child-manager.js'
-export * from './lib/worker/server-listener.js'
+export * from './lib/worker/listeners.js'

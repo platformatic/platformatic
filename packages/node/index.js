@@ -1,6 +1,8 @@
 import {
   BaseStackable,
+  cleanBasePath,
   createServerListener,
+  ensureTrailingSlash,
   getServerUrl,
   importFile,
   injectViaRequest,
@@ -13,6 +15,7 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { Server } from 'node:http'
 import { resolve as pathResolve, resolve } from 'node:path'
+import { pathToFileURL } from 'url'
 import { packageJson, schema } from './lib/schema.js'
 
 const validFields = [
@@ -37,18 +40,14 @@ function isFastify (app) {
 }
 
 export class NodeStackable extends BaseStackable {
-  #entrypoint
-  #hadEntrypointField
   #module
   #app
   #server
   #dispatcher
   #isFastify
 
-  constructor (options, root, configManager, entrypoint, hadEntrypointField) {
+  constructor (options, root, configManager) {
     super('nodejs', packageJson.version, options, root, configManager)
-    this.#entrypoint = entrypoint
-    this.#hadEntrypointField = hadEntrypointField
   }
 
   async start ({ listen }) {
@@ -63,17 +62,36 @@ export class NodeStackable extends BaseStackable {
       return this.url
     }
 
-    // Require the application
-    if (!this.#hadEntrypointField) {
-      this.logger.warn(
-        `The service ${this.id} had no valid entrypoint defined in the package.json file. Falling back to the file ${this.#entrypoint}.`
-      )
+    const config = this.configManager.current
+    const command = config.application.commands[this.isProduction ? 'production' : 'development']
+
+    if (command) {
+      return this.startWithCommand(command)
     }
+
+    // Resolve the entrypoint
+    // The priority is platformatic.application.json, then package.json and finally autodetect.
+    // Only when autodetecting we eventually search in the dist folder when in production mode
+    const finalEntrypoint = await this._findEntrypoint()
+
+    // Require the application
+    const basePath = config.application?.basePath
+      ? ensureTrailingSlash(cleanBasePath(config.application?.basePath))
+      : undefined
+
+    this.registerGlobals({
+      // Always use URL to avoid serialization problem in Windows
+      id: this.id,
+      root: pathToFileURL(this.root).toString(),
+      basePath,
+      logLevel: this.logger.level
+    })
 
     // The server promise must be created before requiring the entrypoint even if it's not going to be used
     // at all. Otherwise there is chance we miss the listen event.
-    const serverPromise = createServerListener()
-    this.#module = await importFile(pathResolve(this.root, this.#entrypoint))
+    const serverOptions = this.serverConfig
+    const serverPromise = createServerListener((this.isEntrypoint ? serverOptions?.port : undefined) ?? true)
+    this.#module = await importFile(finalEntrypoint)
     this.#module = this.#module.default || this.#module
 
     // Deal with application
@@ -100,37 +118,60 @@ export class NodeStackable extends BaseStackable {
   }
 
   async stop () {
+    if (this.subprocess) {
+      return this.stopCommand()
+    }
+
     if (this.#isFastify) {
       return this.#app.close()
     }
 
-    if (this.#server) {
-      /* c8 ignore next 3 */
-      if (!this.#server.listening) {
-        return
-      }
-
-      return new Promise((resolve, reject) => {
-        this.#server.close(error => {
-          /* c8 ignore next 3 */
-          if (error) {
-            return reject(error)
-          }
-
-          resolve(error)
-        })
-      })
+    /* c8 ignore next 3 */
+    if (!this.#server?.listening) {
+      return
     }
+
+    return new Promise((resolve, reject) => {
+      this.#server.close(error => {
+        /* c8 ignore next 3 */
+        if (error) {
+          return reject(error)
+        }
+
+        resolve()
+      })
+    })
+  }
+
+  async build () {
+    const command = this.configManager.current.application.commands.build
+
+    if (command) {
+      return this.buildWithCommand(command, null)
+    }
+
+    // If no command was specified, we try to see if there is a build script defined in package.json.
+    const hasBuildScript = await this.#hasBuildScript()
+
+    if (!hasBuildScript) {
+      this.logger.warn(
+        'No "application.commands.build" configuration value specified and no build script found in package.json. Skipping build ...'
+      )
+      return
+    }
+
+    return this.buildWithCommand('npm run build', null)
   }
 
   async inject (injectParams, onInject) {
     let res
-    if (this.#isFastify) {
-      res = await this.#app.inject(injectParams, onInject)
-    } else if (this.#dispatcher) {
-      res = await inject(this.#dispatcher, injectParams, onInject)
-    } else {
+
+    if (this.url) {
       res = await injectViaRequest(this.url, injectParams, onInject)
+    } else if (this.#isFastify) {
+      res = await this.#app.inject(injectParams, onInject)
+    } else {
+      res = await inject(this.#dispatcher ?? this.#app, injectParams, onInject)
     }
 
     /* c8 ignore next 3 */
@@ -145,9 +186,22 @@ export class NodeStackable extends BaseStackable {
   }
 
   getMeta () {
-    return {
-      deploy: this.configManager.current.deploy
+    const config = this.configManager.current
+    let composer = { prefix: this.servicePrefix, wantsAbsoluteUrls: true, needsRootRedirect: true }
+
+    if (this.url) {
+      composer = {
+        tcp: true,
+        url: this.url,
+        prefix: config.application?.basePath
+          ? ensureTrailingSlash(cleanBasePath(config.application?.basePath))
+          : this.servicePrefix,
+        wantsAbsoluteUrls: true,
+        needsRootRedirect: true
+      }
     }
+
+    return { composer }
   }
 
   async _listen () {
@@ -174,6 +228,58 @@ export class NodeStackable extends BaseStackable {
 
   _getApplication () {
     return this.#app
+  }
+
+  async _findEntrypoint () {
+    const config = this.configManager.current
+    const outputRoot = resolve(this.root, config.application.outputDirectory)
+
+    if (config.node.entrypoint) {
+      return pathResolve(this.root, config.node.entrypoint)
+    }
+
+    const { entrypoint, hadEntrypointField } = await getEntrypointInformation(this.root)
+
+    if (!entrypoint) {
+      this.logger.error(
+        `The service ${this.id} had no valid entrypoint defined in the package.json file and no valid entrypoint file was found.`
+      )
+
+      process.exit(1)
+    }
+
+    if (!hadEntrypointField) {
+      this.logger.warn(
+        `The service ${this.id} had no valid entrypoint defined in the package.json file. Falling back to the file "${entrypoint}".`
+      )
+    }
+
+    let root = this.root
+
+    if (this.isProduction) {
+      const hasCommand = this.configManager.current.application.commands.build
+      const hasBuildScript = await this.#hasBuildScript()
+
+      if (hasCommand || hasBuildScript) {
+        this.verifyOutputDirectory(outputRoot)
+        root = outputRoot
+      }
+    }
+
+    return pathResolve(root, entrypoint)
+  }
+
+  async #hasBuildScript () {
+    // If no command was specified, we try to see if there is a build script defined in package.json.
+    let hasBuildScript
+    try {
+      const packageJson = JSON.parse(await readFile(resolve(this.root, 'package.json'), 'utf-8'))
+      hasBuildScript = typeof packageJson.scripts.build === 'string' && packageJson.scripts.build
+    } catch (e) {
+      // No-op
+    }
+
+    return hasBuildScript
   }
 }
 
@@ -227,13 +333,13 @@ async function getEntrypointInformation (root) {
 export async function buildStackable (opts) {
   const root = opts.context.directory
 
-  const { entrypoint, hadEntrypointField } = await getEntrypointInformation(root)
-
   const configManager = new ConfigManager({ schema, source: opts.config ?? {}, schemaOptions, transformConfig })
   await configManager.parseAndValidate()
 
-  return new NodeStackable(opts, root, configManager, entrypoint, hadEntrypointField)
+  return new NodeStackable(opts, root, configManager)
 }
+
+export { schema, schemaComponents } from './lib/schema.js'
 
 export default {
   configType: 'nodejs',
