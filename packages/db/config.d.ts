@@ -7,19 +7,19 @@
 
 export type CrudOperationAuth =
   | {
-    /**
-     * checks for the operation
-     */
-    checks?: {
-      [k: string]: {
-        [k: string]: unknown;
+      /**
+       * checks for the operation
+       */
+      checks?: {
+        [k: string]: {
+          [k: string]: unknown;
+        };
       };
-    };
-    /**
-     * array of enabled field for the operation
-     */
-    fields?: string[];
-  }
+      /**
+       * array of enabled field for the operation
+       */
+      fields?: string[];
+    }
   | boolean;
 
 export interface PlatformaticDB {
@@ -28,12 +28,12 @@ export interface PlatformaticDB {
     port?: number | string;
     pluginTimeout?: number;
     healthCheck?:
-    | boolean
-    | {
-      enabled?: boolean;
-      interval?: number;
-      [k: string]: unknown;
-    };
+      | boolean
+      | {
+          enabled?: boolean;
+          interval?: number;
+          [k: string]: unknown;
+        };
     ignoreTrailingSlash?: boolean;
     ignoreDuplicateSlashes?: boolean;
     connectionTimeout?: number;
@@ -46,38 +46,38 @@ export interface PlatformaticDB {
     disableRequestLogging?: boolean;
     exposeHeadRoutes?: boolean;
     logger?:
-    | boolean
-    | {
-      level?: string;
-      transport?:
+      | boolean
       | {
-        target?: string;
-        options?: {
-          [k: string]: unknown;
-        };
-      }
-      | {
-        targets?: {
-          target?: string;
-          options?: {
-            [k: string]: unknown;
-          };
           level?: string;
-          additionalProperties?: never;
-          [k: string]: unknown;
-        }[];
-        options?: {
+          transport?:
+            | {
+                target?: string;
+                options?: {
+                  [k: string]: unknown;
+                };
+              }
+            | {
+                targets?: {
+                  target?: string;
+                  options?: {
+                    [k: string]: unknown;
+                  };
+                  level?: string;
+                  additionalProperties?: never;
+                  [k: string]: unknown;
+                }[];
+                options?: {
+                  [k: string]: unknown;
+                };
+              };
+          pipeline?: {
+            target?: string;
+            options?: {
+              [k: string]: unknown;
+            };
+          };
           [k: string]: unknown;
         };
-      };
-      pipeline?: {
-        target?: string;
-        options?: {
-          [k: string]: unknown;
-        };
-      };
-      [k: string]: unknown;
-    };
     serializerOpts?: {
       schema?: {
         [k: string]: unknown;
@@ -97,47 +97,49 @@ export interface PlatformaticDB {
     requestIdLogLabel?: string;
     jsonShorthand?: boolean;
     trustProxy?: boolean | string | string[] | number;
+    http2?: boolean;
     https?: {
+      allowHTTP1?: boolean;
       key:
-      | string
-      | {
-        path?: string;
-      }
-      | (
         | string
         | {
-          path?: string;
-        }
-      )[];
+            path?: string;
+          }
+        | (
+            | string
+            | {
+                path?: string;
+              }
+          )[];
       cert:
-      | string
-      | {
-        path?: string;
-      }
-      | (
         | string
         | {
-          path?: string;
-        }
-      )[];
+            path?: string;
+          }
+        | (
+            | string
+            | {
+                path?: string;
+              }
+          )[];
       requestCert?: boolean;
       rejectUnauthorized?: boolean;
     };
     cors?: {
       origin?:
-      | boolean
-      | string
-      | (
+        | boolean
         | string
+        | (
+            | string
+            | {
+                regexp: string;
+                [k: string]: unknown;
+              }
+          )[]
         | {
-          regexp: string;
-          [k: string]: unknown;
-        }
-      )[]
-      | {
-        regexp: string;
-        [k: string]: unknown;
-      };
+            regexp: string;
+            [k: string]: unknown;
+          };
       methods?: string[];
       /**
        * Comma separated string of allowed headers.
@@ -157,81 +159,85 @@ export interface PlatformaticDB {
     connectionString: string;
     schema?: string[];
     schemalock?:
-    | boolean
-    | {
-      path?: string;
-      [k: string]: unknown;
-    };
+      | boolean
+      | {
+          path?: string;
+          [k: string]: unknown;
+        };
     poolSize?: number;
     idleTimeoutMilliseconds?: number;
     queueTimeoutMilliseconds?: number;
     acquireLockTimeoutMilliseconds?: number;
     autoTimestamp?:
-    | {
-      createdAt?: string;
-      updatedAt?: string;
-      [k: string]: unknown;
-    }
-    | boolean;
+      | {
+          createdAt?: string;
+          updatedAt?: string;
+          [k: string]: unknown;
+        }
+      | boolean;
     graphql?:
-    | boolean
-    | {
-      graphiql?: boolean;
-      include?: {
-        [k: string]: boolean;
-      };
-      ignore?: {
-        [k: string]:
-        | boolean
-        | {
-          [k: string]: boolean;
+      | boolean
+      | {
+          graphiql?: boolean;
+          include?: {
+            [k: string]: boolean;
+          };
+          ignore?: {
+            [k: string]:
+              | boolean
+              | {
+                  [k: string]: boolean;
+                };
+          };
+          subscriptionIgnore?: string[];
+          schema?: string;
+          schemaPath?: string;
+          enabled?: boolean | string;
+          [k: string]: unknown;
         };
-      };
-      subscriptionIgnore?: string[];
-      schema?: string;
-      schemaPath?: string;
-      enabled?: boolean | string;
-      [k: string]: unknown;
-    };
     openapi?:
-    | boolean
-    | {
-      info?: Info;
-      jsonSchemaDialect?: string;
-      servers?: Server[];
-      paths?: Paths;
-      webhooks?: {
-        [k: string]: PathItemOrReference;
-      };
-      components?: Components;
-      security?: SecurityRequirement[];
-      tags?: Tag[];
-      externalDocs?: ExternalDocumentation;
-      /**
-       * Base URL for the OpenAPI Swagger Documentation
-       */
-      swaggerPrefix?: string;
-      /**
-       * Path to an OpenAPI spec file
-       */
-      path?: string;
-      allowPrimaryKeysInInput?: boolean;
-      include?: {
-        [k: string]: boolean;
-      };
-      ignore?: {
-        [k: string]:
-        | boolean
-        | {
-          [k: string]: boolean;
+      | boolean
+      | {
+          info?: Info;
+          jsonSchemaDialect?: string;
+          servers?: Server[];
+          paths?: Paths;
+          webhooks?: {
+            [k: string]: PathItemOrReference;
+          };
+          components?: Components;
+          security?: SecurityRequirement[];
+          tags?: Tag[];
+          externalDocs?: ExternalDocumentation;
+          /**
+           * Base URL for the OpenAPI Swagger Documentation
+           */
+          swaggerPrefix?: string;
+          /**
+           * Path to an OpenAPI spec file
+           */
+          path?: string;
+          allowPrimaryKeysInInput?: boolean;
+          include?: {
+            [k: string]: boolean;
+          };
+          ignore?: {
+            [k: string]:
+              | boolean
+              | {
+                  [k: string]: boolean;
+                };
+          };
+          ignoreRoutes?: {
+            method: string;
+            path: string;
+          }[];
+          enabled?: boolean | string;
+          /**
+           * Base URL for generated Platformatic DB routes
+           */
+          prefix?: string;
         };
-      };
-      enabled?: boolean | string;
-      /**
-       * Base URL for generated Platformatic DB routes
-       */
-      prefix?: string;
-    };
     include?: {
       [k: string]: boolean;
     };
@@ -244,11 +250,11 @@ export interface PlatformaticDB {
       [k: string]: unknown;
     };
     events?:
-    | boolean
-    | {
-      connectionString?: string;
-      enabled?: boolean | string;
-    };
+      | boolean
+      | {
+          connectionString?: string;
+          enabled?: boolean | string;
+        };
     cache?: boolean;
     [k: string]: unknown;
   };
@@ -271,19 +277,19 @@ export interface PlatformaticDB {
     anonymousRole?: string;
     jwt?: {
       secret?:
-      | string
-      | {
-        [k: string]: unknown;
-      };
+        | string
+        | {
+            [k: string]: unknown;
+          };
       /**
        * the namespace for JWT custom claims
        */
       namespace?: string;
       jwks?:
-      | boolean
-      | {
-        [k: string]: unknown;
-      };
+        | boolean
+        | {
+            [k: string]: unknown;
+          };
       [k: string]: unknown;
     };
     webhook?: {
@@ -294,43 +300,43 @@ export interface PlatformaticDB {
     };
     rules?: (
       | {
-        /**
-         * the DB entity type to which the rule applies
-         */
-        entity?: string;
-        /**
-         * the role name to match the rule
-         */
-        role: string;
-        /**
-         * defaults for entity creation
-         */
-        defaults?: {
-          [k: string]: string;
-        };
-        find?: CrudOperationAuth;
-        save?: CrudOperationAuth;
-        delete?: CrudOperationAuth;
-      }
+          /**
+           * the DB entity type to which the rule applies
+           */
+          entity?: string;
+          /**
+           * the role name to match the rule
+           */
+          role: string;
+          /**
+           * defaults for entity creation
+           */
+          defaults?: {
+            [k: string]: string;
+          };
+          find?: CrudOperationAuth;
+          save?: CrudOperationAuth;
+          delete?: CrudOperationAuth;
+        }
       | {
-        /**
-         * the DB entity types to which the rule applies
-         */
-        entities?: string[];
-        /**
-         * the role name to match the rule
-         */
-        role: string;
-        /**
-         * defaults for entity creation
-         */
-        defaults?: {
-          [k: string]: string;
-        };
-        find?: CrudOperationAuth;
-        save?: CrudOperationAuth;
-        delete?: CrudOperationAuth;
-      }
+          /**
+           * the DB entity types to which the rule applies
+           */
+          entities?: string[];
+          /**
+           * the role name to match the rule
+           */
+          role: string;
+          /**
+           * defaults for entity creation
+           */
+          defaults?: {
+            [k: string]: string;
+          };
+          find?: CrudOperationAuth;
+          save?: CrudOperationAuth;
+          delete?: CrudOperationAuth;
+        }
     )[];
   };
   migrations?: {
@@ -357,20 +363,24 @@ export interface PlatformaticDB {
     currentSchema?: string;
   };
   metrics?:
-  | boolean
-  | {
-    port?: number | string;
-    hostname?: string;
-    endpoint?: string;
-    server?: "own" | "parent";
-    auth?: {
-      username: string;
-      password: string;
-    };
-    labels?: {
-      [k: string]: string;
-    };
-  };
+    | boolean
+    | {
+        port?: number | string;
+        hostname?: string;
+        endpoint?: string;
+        server?: "own" | "parent" | "hide";
+        defaultMetrics?: {
+          enabled: boolean;
+        };
+        prefix?: string;
+        auth?: {
+          username: string;
+          password: string;
+        };
+        labels?: {
+          [k: string]: string;
+        };
+      };
   types?: {
     autogenerate?: boolean;
     /**
@@ -389,18 +399,21 @@ export interface PlatformaticDB {
     path?: string;
     schema?: string;
     url?: string;
+    fullResponse?: boolean;
+    fullRequest?: boolean;
+    validateResponse?: boolean;
   }[];
   watch?:
-  | {
-    enabled?: boolean | string;
-    /**
-     * @minItems 1
-     */
-    allow?: [string, ...string[]];
-    ignore?: string[];
-  }
-  | boolean
-  | string;
+    | {
+        enabled?: boolean | string;
+        /**
+         * @minItems 1
+         */
+        allow?: [string, ...string[]];
+        ignore?: string[];
+      }
+    | boolean
+    | string;
   $schema?: string;
 }
 export interface Info {
@@ -621,46 +634,46 @@ export interface OpenTelemetry {
     [k: string]: unknown;
   }[];
   exporter?:
-  | {
-    type?: "console" | "otlp" | "zipkin" | "memory";
-    /**
-     * Options for the exporter. These are passed directly to the exporter.
-     */
-    options?: {
-      /**
-       * The URL to send the traces to. Not used for console or memory exporters.
-       */
-      url?: string;
-      /**
-       * Headers to send to the exporter. Not used for console or memory exporters.
-       */
-      headers?: {
+    | {
+        type?: "console" | "otlp" | "zipkin" | "memory";
+        /**
+         * Options for the exporter. These are passed directly to the exporter.
+         */
+        options?: {
+          /**
+           * The URL to send the traces to. Not used for console or memory exporters.
+           */
+          url?: string;
+          /**
+           * Headers to send to the exporter. Not used for console or memory exporters.
+           */
+          headers?: {
+            [k: string]: unknown;
+          };
+          [k: string]: unknown;
+        };
+        additionalProperties?: never;
+        [k: string]: unknown;
+      }[]
+    | {
+        type?: "console" | "otlp" | "zipkin" | "memory";
+        /**
+         * Options for the exporter. These are passed directly to the exporter.
+         */
+        options?: {
+          /**
+           * The URL to send the traces to. Not used for console or memory exporters.
+           */
+          url?: string;
+          /**
+           * Headers to send to the exporter. Not used for console or memory exporters.
+           */
+          headers?: {
+            [k: string]: unknown;
+          };
+          [k: string]: unknown;
+        };
+        additionalProperties?: never;
         [k: string]: unknown;
       };
-      [k: string]: unknown;
-    };
-    additionalProperties?: never;
-    [k: string]: unknown;
-  }[]
-  | {
-    type?: "console" | "otlp" | "zipkin" | "memory";
-    /**
-     * Options for the exporter. These are passed directly to the exporter.
-     */
-    options?: {
-      /**
-       * The URL to send the traces to. Not used for console or memory exporters.
-       */
-      url?: string;
-      /**
-       * Headers to send to the exporter. Not used for console or memory exporters.
-       */
-      headers?: {
-        [k: string]: unknown;
-      };
-      [k: string]: unknown;
-    };
-    additionalProperties?: never;
-    [k: string]: unknown;
-  };
 }
