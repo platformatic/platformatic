@@ -10,30 +10,29 @@ import { workerData } from 'node:worker_threads'
 import { request } from 'undici'
 import { WebSocketServer } from 'ws'
 
-const isWindows = platform() === 'win32'
+export const isWindows = platform() === 'win32'
 
 // In theory we could use the context.id to namespace even more, but due to
 // UNIX socket length limitation on MacOS, we don't.
-function generateUniquePath (context) {
+function generateChildrenId (context) {
   return [process.pid, Date.now()].join('-')
 }
 
-function createSocketPath (context) {
-  const path = generateUniquePath(context)
-
+export function getSocketPath (id) {
   let socketPath = null
   if (platform() === 'win32') {
-    socketPath = `\\\\.\\pipe\\${path}`
+    socketPath = `\\\\.\\pipe\\plt-${id}`
   } else {
     // As stated in https://nodejs.org/dist/latest-v20.x/docs/api/net.html#identifying-paths-for-ipc-connections,
     // Node will take care of deleting the file for us
-    socketPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${path}.socket`)
+    socketPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${id}.socket`)
   }
 
   return socketPath
 }
 
 export class ChildManager extends ITC {
+  #id
   #loader
   #context
   #scripts
@@ -45,18 +44,13 @@ export class ChildManager extends ITC {
   #currentClient
   #listener
   #originalNodeOptions
-  #injectedSourcePath
-  #injectedDataPath
+  #dataPath
 
   constructor (opts) {
-    let { loader, context, scripts, handlers, skipProcessManager, ...itcOpts } = opts
+    let { loader, context, scripts, handlers, ...itcOpts } = opts
 
     context ??= {}
     scripts ??= []
-
-    if (!skipProcessManager) {
-      scripts.push(new URL('./child-process.js', import.meta.url))
-    }
 
     super({
       ...itcOpts,
@@ -71,13 +65,14 @@ export class ChildManager extends ITC {
       }
     })
 
+    this.#id = generateChildrenId(context)
     this.#loader = loader
     this.#context = context
     this.#scripts = scripts
     this.#originalNodeOptions = process.env.NODE_OPTIONS
     this.#logger = globalThis.platformatic.logger
     this.#server = createServer()
-    this.#socketPath ??= createSocketPath(context)
+    this.#socketPath ??= getSocketPath(this.#id)
     this.#clients = new Set()
     this.#requests = new Map()
   }
@@ -120,8 +115,7 @@ export class ChildManager extends ITC {
   }
 
   async close (signal) {
-    await rm(this.#injectedDataPath)
-    await rm(this.#injectedSourcePath)
+    await rm(this.#dataPath)
 
     for (const client of this.#clients) {
       this.#currentClient = client
@@ -134,41 +128,25 @@ export class ChildManager extends ITC {
   async inject () {
     await this.listen()
 
-    // To avoid issues on Windows, we put all our imports in a single JS file
-    this.#injectedDataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${generateUniquePath(this.#context)}.json`)
-    this.#injectedSourcePath = resolve(tmpdir(), 'platformatic', 'runtimes', `${generateUniquePath(this.#context)}.mjs`)
-    await createDirectory(dirname(this.#injectedSourcePath))
+    // Serialize data into a JSON file for the stackable to use
+    this.#dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${this.#id}.json`)
+    await createDirectory(dirname(this.#dataPath))
 
-    const content = [
-      'import { register } from "node:module"',
-      'import { readFile } from "node:fs/promises"',
-      '',
-      'globalThis.platformatic = JSON.parse(await readFile(process.env.PLT_SERVICE_DATA_PATH))'
-    ]
-
-    if (this.#loader) {
-      content.push(`register('${this.#loader}',{ data: globalThis.platformatic })\n`)
-    }
-
-    for (const script of this.#scripts) {
-      content.push(`await import('${script}')`)
-    }
-
-    // We write the data to a different location for future expansion
+    // We write all the data to a JSON file
     await writeFile(
-      this.#injectedDataPath,
-      JSON.stringify({ ...this.#context, __pltSocketPath: this.#socketPath }, null, 2),
+      this.#dataPath,
+      JSON.stringify({ data: this.#context, loader: this.loader, scripts: this.#scripts }, null, 2),
       'utf-8'
     )
-    await writeFile(this.#injectedSourcePath, content.join('\n'), 'utf-8')
 
-    process.env.PLT_SERVICE_DATA_PATH = this.#injectedDataPath
-    process.env.NODE_OPTIONS = `--import=${this.#injectedSourcePath} ${process.env.NODE_OPTIONS ?? ''}`
+    process.env.PLT_MANAGER_ID = this.#id
+    process.env.NODE_OPTIONS =
+      `--import="${new URL('./child-process.js', import.meta.url)}" ${process.env.NODE_OPTIONS ?? ''}`.trim()
   }
 
   async eject () {
     process.env.NODE_OPTIONS = this.#originalNodeOptions
-    process.env.PLT_SERVICE_DATA_PATH = ''
+    process.env.PLT_MANAGER_ID = ''
   }
 
   register () {

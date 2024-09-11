@@ -128,7 +128,6 @@ export class BaseStackable {
     this.#childManager = new ChildManager({
       logger: this.logger,
       loader,
-      skipProcessManager: true,
       context: {
         id: this.id,
         // Always use URL to avoid serialization problem in Windows
@@ -142,7 +141,7 @@ export class BaseStackable {
     try {
       await this.#childManager.inject()
 
-      const { exitCode } = await executeCommand(
+      const { exitCode, output } = await executeCommand(
         this.options.context.directory,
         command,
         this.logger,
@@ -150,7 +149,7 @@ export class BaseStackable {
       )
 
       if (exitCode !== 0) {
-        throw new Error(`Building failed with exit code ${exitCode}`)
+        throw new Error(`Building failed with exit code ${exitCode}:\n\n${output}`)
       }
     } finally {
       await this.#childManager.eject()

@@ -1,11 +1,15 @@
 import { ITC } from '@platformatic/itc'
-import { createPinoWritable, DestinationWritable } from '@platformatic/utils'
+import { DestinationWritable, createPinoWritable } from '@platformatic/utils'
 import { tracingChannel } from 'node:diagnostics_channel'
 import { once } from 'node:events'
-import { platform } from 'node:os'
+import { readFile } from 'node:fs/promises'
+import { register } from 'node:module'
+import { platform, tmpdir } from 'node:os'
+import { basename, resolve } from 'node:path'
 import pino from 'pino'
 import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
+import { getSocketPath, isWindows } from './child-manager.js'
 
 function createInterceptor (itc) {
   return function (dispatch) {
@@ -92,11 +96,14 @@ class ChildProcess extends ITC {
   constructor () {
     super({ throwOnMissingHandler: false })
 
+    const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
+    this.#socket = new WebSocket(`${protocol}${getSocketPath(process.env.PLT_MANAGER_ID)}`)
+    this.#pendingMessages = []
+
     this.listen()
     this.#setupLogger()
     this.#setupServer()
     this.#setupInterceptors()
-    this.#pendingMessages = []
 
     this.on('close', signal => {
       process.kill(process.pid, signal)
@@ -106,10 +113,10 @@ class ChildProcess extends ITC {
   _setupListener (listener) {
     this.#listener = listener
 
-    const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-    this.#socket = new WebSocket(`${protocol}${globalThis.platformatic.__pltSocketPath}`)
-
     this.#socket.on('open', () => {
+      // Never hang the process due to this socket
+      this.#socket._socket.unref()
+
       for (const message of this.#pendingMessages) {
         this.#socket.send(message)
       }
@@ -184,4 +191,23 @@ class ChildProcess extends ITC {
   }
 }
 
-globalThis[Symbol.for('plt.children.itc')] = new ChildProcess()
+async function main () {
+  const dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${process.env.PLT_MANAGER_ID}.json`)
+  const { data, loader, scripts } = JSON.parse(await readFile(dataPath))
+
+  globalThis.platformatic = data
+
+  if (loader) {
+    register(global.loader, { data })
+  }
+
+  for (const script of scripts) {
+    await import(script)
+  }
+
+  globalThis[Symbol.for('plt.children.itc')] = new ChildProcess()
+}
+
+if (!isWindows || basename(process.argv.at(-1)) !== 'npm-prefix.js') {
+  await main()
+}

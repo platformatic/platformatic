@@ -186,8 +186,7 @@ export class NextStackable extends BaseStackable {
         root: pathToFileURL(this.root).toString(),
         basePath: this.#basePath,
         logLeveL: this.logger.level
-      },
-      skipProcessManager: true
+      }
     })
 
     this.verifyOutputDirectory(pathResolve(this.root, '.next'))

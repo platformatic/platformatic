@@ -7,7 +7,7 @@
   "type": "commonjs",
   "scripts": {
     "dev": "astro dev",
-    "start": "astro dev",
+    "start": "astro preview",
     "build": "astro build"
   },
   "dependencies": {
