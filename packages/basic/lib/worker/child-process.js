@@ -2,6 +2,7 @@ import { ITC } from '@platformatic/itc'
 import { createPinoWritable, DestinationWritable } from '@platformatic/utils'
 import { tracingChannel } from 'node:diagnostics_channel'
 import { once } from 'node:events'
+import { platform } from 'node:os'
 import pino from 'pino'
 import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
@@ -105,7 +106,8 @@ class ChildProcess extends ITC {
   _setupListener (listener) {
     this.#listener = listener
 
-    this.#socket = new WebSocket(`ws+unix:${globalThis.platformatic.socketPath}`)
+    const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
+    this.#socket = new WebSocket(`${protocol}${globalThis.platformatic.__pltSocketPath}`)
 
     this.#socket.on('open', () => {
       for (const message of this.#pendingMessages) {

@@ -3,6 +3,7 @@ import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
 import { existsSync } from 'node:fs'
+import { platform } from 'node:os'
 import { pathToFileURL } from 'node:url'
 import pino from 'pino'
 import { cleanBasePath } from './utils.js'
@@ -139,7 +140,7 @@ export class BaseStackable {
     })
 
     try {
-      this.#childManager.inject()
+      await this.#childManager.inject()
 
       const { exitCode } = await executeCommand(
         this.options.context.directory,
@@ -152,8 +153,8 @@ export class BaseStackable {
         throw new Error(`Building failed with exit code ${exitCode}`)
       }
     } finally {
-      this.#childManager.eject()
-      this.#childManager.close()
+      await this.#childManager.eject()
+      await this.#childManager.close()
     }
   }
 
@@ -181,8 +182,12 @@ export class BaseStackable {
     try {
       const [executable, ...args] = parseCommandString(command)
 
-      this.#childManager.inject()
-      this.subprocess = spawn(executable, args, { cwd: this.root })
+      await this.#childManager.inject()
+
+      this.subprocess =
+        platform() === 'win32'
+          ? spawn(command, { cwd: this.root, shell: true, windowsVerbatimArguments: true })
+          : spawn(executable, args, { cwd: this.root })
 
       await new Promise((resolve, reject) => {
         this.subprocess.on('spawn', resolve)
@@ -193,7 +198,7 @@ export class BaseStackable {
     } catch (e) {
       throw new Error(`Cannot execute command "${command}": executable not found`)
     } finally {
-      this.#childManager.eject()
+      await this.#childManager.eject()
     }
 
     // // If the process exits prematurely, terminate the thread with the same code
