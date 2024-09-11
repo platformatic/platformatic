@@ -7,9 +7,8 @@
   "type": "commonjs",
   "scripts": {
     "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview"
+    "start": "astro preview",
+    "build": "astro build"
   },
   "dependencies": {
     "@platformatic/astro": "^2.0.0-alpha.6",

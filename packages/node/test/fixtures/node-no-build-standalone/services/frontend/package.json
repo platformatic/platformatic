@@ -12,6 +12,7 @@
     "@platformatic/node": "^2.0.0-alpha.6"
   },
   "devDependencies": {
+    "@types/node": "^22.5.4",
     "tsx": "^4.19.0"
   }
 }
