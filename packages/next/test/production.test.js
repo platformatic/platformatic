@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url'
 import {
+  isCIOnWindows,
   verifyFrontendAPIOnPrefix,
   verifyFrontendOnAutodetectedPrefix,
   verifyFrontendOnPrefix,
@@ -12,6 +13,7 @@ import {
 const configurations = [
   { id: 'standalone', name: 'Next.js (standalone)', checks: [verifyFrontendOnRoot] },
   {
+    only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Next.js (in composer with prefix)',
     checks: [verifyFrontendOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]

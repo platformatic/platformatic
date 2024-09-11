@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import { internalServicesFiles, verifyBuild } from '../../cli/test/helper.js'
+import { internalServicesFiles, isCIOnWindows, verifyBuild } from '../../cli/test/helper.js'
 
 const viteFiles = ['services/frontend/dist/index.html', 'services/frontend/dist/assets/index-*.js']
 const viteSSRFiles = [
@@ -10,6 +10,7 @@ const viteSSRFiles = [
 const configurations = [
   { id: 'standalone', name: 'Vite (standalone)', files: [...viteFiles] },
   {
+    only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Vite (in composer with prefix)',
     files: [...viteFiles, ...internalServicesFiles]
@@ -31,6 +32,7 @@ const configurations = [
   },
   { id: 'ssr-standalone', name: 'Vite SSR (standalone)', files: [...viteSSRFiles] },
   {
+    only: isCIOnWindows,
     id: 'ssr-with-prefix',
     name: 'Vite SSR (in composer with prefix)',
     files: [...viteSSRFiles, ...internalServicesFiles]

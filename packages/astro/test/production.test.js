@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url'
 import {
+  isCIOnWindows,
   verifyFrontendAPIOnPrefix,
   verifyFrontendAPIOnRoot,
   verifyFrontendOnAutodetectedPrefix,
@@ -19,6 +20,7 @@ const configurations = [
     checks: [verifyFrontendOnRoot]
   },
   {
+    only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Astro (in composer with prefix)',
     checks: [verifyFrontendOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
@@ -44,6 +46,7 @@ const configurations = [
     checks: [verifyFrontendOnRoot, verifyFrontendAPIOnRoot]
   },
   {
+    only: isCIOnWindows,
     id: 'ssr-with-prefix',
     name: 'Astro SSR (in composer with prefix)',
     checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]

@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url'
 import {
+  isCIOnWindows,
   verifyFrontendAPIOnAutodetectedPrefix,
   verifyFrontendAPIOnPrefix,
   verifyFrontendAPIOnRoot,
@@ -14,6 +15,7 @@ import {
 const configurations = [
   { id: 'standalone', name: 'Remix (standalone)', checks: [verifyFrontendOnRoot, verifyFrontendAPIOnRoot] },
   {
+    only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Remix (in composer with prefix)',
     checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]

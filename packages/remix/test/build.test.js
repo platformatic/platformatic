@@ -1,11 +1,12 @@
 import { fileURLToPath } from 'node:url'
-import { internalServicesFiles, verifyBuild } from '../../cli/test/helper.js'
+import { internalServicesFiles, isCIOnWindows, verifyBuild } from '../../cli/test/helper.js'
 
 const remixFiles = ['services/frontend/build/client/assets/entry.client-*.js']
 
 const configurations = [
   { id: 'standalone', name: 'Remix (standalone)', files: [...remixFiles] },
   {
+    only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Remix (in composer with prefix)',
     files: [...remixFiles, ...internalServicesFiles]
