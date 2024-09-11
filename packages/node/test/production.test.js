@@ -1,7 +1,12 @@
 import { ok } from 'node:assert'
 import { fileURLToPath } from 'node:url'
 import { verifyJSONViaHTTP } from '../../basic/test/helper.js'
-import { verifyPlatformaticComposer, verifyPlatformaticService, verifyProductionMode } from '../../cli/test/helper.js'
+import {
+  isCIOnWindows,
+  verifyPlatformaticComposer,
+  verifyPlatformaticService,
+  verifyProductionMode
+} from '../../cli/test/helper.js'
 
 process.setMaxListeners(100)
 
@@ -77,6 +82,7 @@ const configurations = [
     checks: [verifyStandalone]
   },
   {
+    only: isCIOnWindows,
     id: 'node-with-build-composer-with-prefix',
     name: 'Node.js application with (with a build function in development mode when exposed in a composer with a prefix)',
     checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
@@ -117,6 +123,7 @@ const configurations = [
     checks: [verifyStandalone]
   },
   {
+    only: isCIOnWindows,
     id: 'express-with-build-composer-with-prefix',
     name: 'Express with (with a build function in development mode when exposed in a composer with a prefix)',
     checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
@@ -157,6 +164,7 @@ const configurations = [
     checks: [verifyStandalone]
   },
   {
+    only: isCIOnWindows,
     id: 'fastify-with-build-composer-with-prefix',
     name: 'Fastify with (with a build function in development mode when exposed in a composer with a prefix)',
     checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]

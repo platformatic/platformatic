@@ -12,8 +12,13 @@
   },
   "dependencies": {
     "@platformatic/astro": "^2.0.0-alpha.6",
+    "@platformatic/basic": "^2.0.0-alpha.6",
     "@astrojs/node": "^8.3.3",
-    "astro": "^4.1.4"
+    "@fastify/middie": "^8.3.2",
+    "@fastify/static": "^7.0.4",
+    "astro": "^4.1.4",
+    "fastify": "^4.28.1",
+    "vite": "^5.4.4"
   },
   "devDependencies": {
     "@types/react": "^18.3.5",

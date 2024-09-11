@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import { internalServicesFiles, verifyBuild } from '../../cli/test/helper.js'
+import { internalServicesFiles, isCIOnWindows, verifyBuild } from '../../cli/test/helper.js'
 
 const nextFiles = ['services/frontend/.next//server/app/index.html']
 const nextSSRFiles = ['services/frontend/.next/server/app/direct/route.js']
@@ -7,6 +7,7 @@ const nextSSRFiles = ['services/frontend/.next/server/app/direct/route.js']
 const configurations = [
   { id: 'standalone', name: 'Next.js (standalone)', files: [...nextFiles] },
   {
+    only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Next.js (in composer with prefix)',
     files: [...nextFiles, ...internalServicesFiles]

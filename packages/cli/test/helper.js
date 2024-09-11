@@ -5,7 +5,7 @@ import fastify from 'fastify'
 import { minimatch } from 'minimatch'
 import { fail, ok } from 'node:assert'
 import { cp, readdir, readFile, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { platform, tmpdir } from 'node:os'
 import { basename, dirname, resolve } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -21,6 +21,8 @@ let count = 0
   in verifyBuild and verifyProduction. Setting a value to keep the folder should be used for debugging only.
 */
 const temporaryWorkingDirectory = process.env.PLT_TEMPORARY_DIRECTORY
+
+export const isCIOnWindows = process.env.CI && platform() === 'win32'
 
 export const cliPath = join(import.meta.url, '..', 'cli.js')
 
@@ -237,7 +239,7 @@ export async function packPackages (root, destination) {
   return overrides
 }
 
-export async function prepareWorkingDirectory (t, source, destination) {
+export async function prepareWorkingDirectory (t, source, destination, configurations) {
   // This is to fix temporary to a specific directory
   if (!destination) {
     destination = resolve(tmpdir(), `test-cli-packages-${process.pid}-${count++}`)
@@ -273,6 +275,15 @@ export async function prepareWorkingDirectory (t, source, destination) {
       await writeFile(resolve(destination, '.npmrc'), `registry=http://localhost:${verdaccio.address().port}`, 'utf-8')
     }
 
+    // Create the pnpm-workspace.yml file
+    let workspaceFile = 'packages:\n'
+    for (const configuration of configurations) {
+      workspaceFile += `  - '${configuration.id}'\n`
+      workspaceFile += `  - '${configuration.id}/services/*'\n`
+    }
+
+    await writeFile(resolve(destination, 'pnpm-workspace.yaml'), workspaceFile, 'utf-8')
+
     await execa('pnpm', ['install', '--no-frozen-lockfile'], { cwd: destination })
   } finally {
     if (useVerdaccio) {
@@ -298,7 +309,12 @@ export function installAndBuild (workingDirectory, temporaryRoot, configurations
 
   if (!skipInstall) {
     test.before(async t => {
-      const configurationWorkingDirectory = await prepareWorkingDirectory(t, workingDirectory, temporaryRoot)
+      const configurationWorkingDirectory = await prepareWorkingDirectory(
+        t,
+        workingDirectory,
+        temporaryRoot,
+        configurations
+      )
 
       if (!temporaryRoot) {
         console.log(`Temporary working directory is "${configurationWorkingDirectory}".`)

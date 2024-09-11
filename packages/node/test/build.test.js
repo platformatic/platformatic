@@ -1,10 +1,10 @@
 import { fileURLToPath } from 'node:url'
-import { internalServicesFiles, verifyBuild } from '../../cli/test/helper.js'
+import { internalServicesFiles, isCIOnWindows, verifyBuild } from '../../cli/test/helper.js'
 
 process.setMaxListeners(100)
 
-const nodeCJSFiles = ['services/frontend/index.mjs']
-const nodeESMFiles = ['services/frontend/index.js']
+const nodeCJSFiles = ['services/frontend/index.js']
+const nodeESMFiles = ['services/frontend/index.mjs']
 const nodeCustomBuildFiles = ['services/frontend/dist/pre/timestamp', 'services/frontend/dist/index.js']
 
 const configurations = [
@@ -54,6 +54,7 @@ const configurations = [
     files: ['services/frontend/unusual.js']
   },
   {
+    only: isCIOnWindows,
     id: 'node-with-build-composer-with-prefix',
     name: 'Node.js application with (with a build function in development mode when exposed in a composer with a prefix)',
     files: [...nodeCJSFiles, ...internalServicesFiles]
@@ -94,6 +95,7 @@ const configurations = [
     files: nodeCJSFiles
   },
   {
+    only: isCIOnWindows,
     id: 'express-with-build-composer-with-prefix',
     name: 'Express with (with a build function in development mode when exposed in a composer with a prefix)',
     files: [...nodeCJSFiles, ...internalServicesFiles]
@@ -134,6 +136,7 @@ const configurations = [
     files: nodeCJSFiles
   },
   {
+    only: isCIOnWindows,
     id: 'fastify-with-build-composer-with-prefix',
     name: 'Fastify with (with a build function in development mode when exposed in a composer with a prefix)',
     files: [...nodeCJSFiles, ...internalServicesFiles]

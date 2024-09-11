@@ -1,6 +1,7 @@
 import { fileURLToPath } from 'node:url'
 import { verifyHTMLViaHTTP } from '../../basic/test/helper.js'
 import {
+  isCIOnWindows,
   verifyFrontendAPIOnPrefix,
   verifyFrontendAPIOnRoot,
   verifyFrontendOnAutodetectedPrefix,
@@ -41,6 +42,7 @@ async function verifyFrontendWithBundleOnAutodetectedPrefix (t, url) {
 const configurations = [
   { id: 'standalone', name: 'Vite (standalone)', checks: [verifyFrontendWithBundleOnRoot] },
   {
+    only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Vite (in composer with prefix)',
     checks: [verifyFrontendWithBundleOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
@@ -66,6 +68,7 @@ const configurations = [
     checks: [verifyFrontendOnRoot, verifyFrontendAPIOnRoot]
   },
   {
+    only: isCIOnWindows,
     id: 'ssr-with-prefix',
     name: 'Vite SSR (in composer with prefix)',
     checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]

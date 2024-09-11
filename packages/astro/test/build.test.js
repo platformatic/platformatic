@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import { internalServicesFiles, verifyBuild } from '../../cli/test/helper.js'
+import { internalServicesFiles, isCIOnWindows, verifyBuild } from '../../cli/test/helper.js'
 
 const astroFiles = ['services/frontend/dist/index.html']
 const astroSSRFiles = ['services/frontend/dist/server/entry.mjs']
@@ -7,6 +7,7 @@ const astroSSRFiles = ['services/frontend/dist/server/entry.mjs']
 const configurations = [
   { id: 'standalone', name: 'Astro (standalone)', files: [...astroFiles] },
   {
+    only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Astro (in composer with prefix)',
     files: [...astroFiles, ...internalServicesFiles]
@@ -28,6 +29,7 @@ const configurations = [
   },
   { id: 'ssr-standalone', name: 'Astro SSR (standalone)', files: [...astroSSRFiles] },
   {
+    only: isCIOnWindows,
     id: 'ssr-with-prefix',
     name: 'Astro SSR (in composer with prefix)',
     files: [...astroSSRFiles, ...internalServicesFiles]
