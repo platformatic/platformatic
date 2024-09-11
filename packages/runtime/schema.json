@@ -1,0 +1,828 @@
+{
+  "$id": "https://platformatic.dev/schemas/v1.53.1/runtime",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "preload": {
+      "type": "string",
+      "resolvePath": true
+    },
+    "autoload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "resolvePath": true
+        },
+        "exclude": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        },
+        "mappings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "config"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "config": {
+                "type": "string"
+              },
+              "useHttp": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    },
+    "telemetry": {
+      "$id": "/OpenTelemetry",
+      "type": "object",
+      "properties": {
+        "serviceName": {
+          "type": "string",
+          "description": "The name of the service. Defaults to the folder name if not specified."
+        },
+        "version": {
+          "type": "string",
+          "description": "The version of the service (optional)"
+        },
+        "skip": {
+          "type": "array",
+          "description": "An array of paths to skip when creating spans. Useful for health checks and other endpoints that do not need to be traced.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "The path to skip. Can be a string or a regex."
+              },
+              "method": {
+                "description": "HTTP method to skip",
+                "type": "string",
+                "enum": [
+                  "GET",
+                  "POST",
+                  "PUT",
+                  "DELETE",
+                  "PATCH",
+                  "HEAD",
+                  "OPTIONS"
+                ]
+              }
+            }
+          }
+        },
+        "exporter": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "console",
+                      "otlp",
+                      "zipkin",
+                      "memory"
+                    ],
+                    "default": "console"
+                  },
+                  "options": {
+                    "type": "object",
+                    "description": "Options for the exporter. These are passed directly to the exporter.",
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "description": "The URL to send the traces to. Not used for console or memory exporters."
+                      },
+                      "headers": {
+                        "type": "object",
+                        "description": "Headers to send to the exporter. Not used for console or memory exporters."
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "console",
+                    "otlp",
+                    "zipkin",
+                    "memory"
+                  ],
+                  "default": "console"
+                },
+                "options": {
+                  "type": "object",
+                  "description": "Options for the exporter. These are passed directly to the exporter.",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "description": "The URL to send the traces to. Not used for console or memory exporters."
+                    },
+                    "headers": {
+                      "type": "object",
+                      "description": "Headers to send to the exporter. Not used for console or memory exporters."
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "serviceName"
+      ],
+      "additionalProperties": false
+    },
+    "server": {
+      "type": "object",
+      "properties": {
+        "hostname": {
+          "type": "string"
+        },
+        "port": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "pluginTimeout": {
+          "type": "integer"
+        },
+        "healthCheck": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "interval": {
+                  "type": "integer"
+                }
+              },
+              "additionalProperties": true
+            }
+          ]
+        },
+        "ignoreTrailingSlash": {
+          "type": "boolean"
+        },
+        "ignoreDuplicateSlashes": {
+          "type": "boolean"
+        },
+        "connectionTimeout": {
+          "type": "integer"
+        },
+        "keepAliveTimeout": {
+          "type": "integer",
+          "default": 5000
+        },
+        "maxRequestsPerSocket": {
+          "type": "integer"
+        },
+        "forceCloseConnections": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "^idle$"
+            }
+          ]
+        },
+        "requestTimeout": {
+          "type": "integer"
+        },
+        "bodyLimit": {
+          "type": "integer"
+        },
+        "maxParamLength": {
+          "type": "integer"
+        },
+        "disableRequestLogging": {
+          "type": "boolean"
+        },
+        "exposeHeadRoutes": {
+          "type": "boolean"
+        },
+        "logger": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "level": {
+                  "type": "string"
+                },
+                "transport": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "target": {
+                          "type": "string",
+                          "resolveModule": true
+                        },
+                        "options": {
+                          "type": "object"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "targets": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "target": {
+                                "type": "string",
+                                "resolveModule": true
+                              },
+                              "options": {
+                                "type": "object"
+                              },
+                              "level": {
+                                "type": "string"
+                              },
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "options": {
+                          "type": "object"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "pipeline": {
+                  "type": "object",
+                  "properties": {
+                    "target": {
+                      "type": "string",
+                      "resolveModule": true
+                    },
+                    "options": {
+                      "type": "object"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": true
+            }
+          ]
+        },
+        "serializerOpts": {
+          "type": "object",
+          "properties": {
+            "schema": {
+              "type": "object"
+            },
+            "ajv": {
+              "type": "object"
+            },
+            "rounding": {
+              "type": "string",
+              "enum": [
+                "floor",
+                "ceil",
+                "round",
+                "trunc"
+              ],
+              "default": "trunc"
+            },
+            "debugMode": {
+              "type": "boolean"
+            },
+            "mode": {
+              "type": "string",
+              "enum": [
+                "debug",
+                "standalone"
+              ]
+            },
+            "largeArraySize": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "default": 20000
+            },
+            "largeArrayMechanism": {
+              "type": "string",
+              "enum": [
+                "default",
+                "json-stringify"
+              ],
+              "default": "default"
+            }
+          }
+        },
+        "caseSensitive": {
+          "type": "boolean"
+        },
+        "requestIdHeader": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "boolean",
+              "const": false
+            }
+          ]
+        },
+        "requestIdLogLabel": {
+          "type": "string"
+        },
+        "jsonShorthand": {
+          "type": "boolean"
+        },
+        "trustProxy": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "integer"
+            }
+          ]
+        },
+        "http2": {
+          "type": "boolean"
+        },
+        "https": {
+          "type": "object",
+          "properties": {
+            "allowHTTP1": {
+              "type": "boolean"
+            },
+            "key": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "resolvePath": true
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "path": {
+                            "type": "string",
+                            "resolvePath": true
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "cert": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "resolvePath": true
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "path": {
+                            "type": "string",
+                            "resolvePath": true
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "requestCert": {
+              "type": "boolean"
+            },
+            "rejectUnauthorized": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "key",
+            "cert"
+          ]
+        },
+        "cors": {
+          "type": "object",
+          "$comment": "See https://github.com/fastify/fastify-cors",
+          "properties": {
+            "origin": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "regexp": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "regexp"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "regexp": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "regexp"
+                  ]
+                }
+              ]
+            },
+            "methods": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "allowedHeaders": {
+              "type": "string",
+              "description": "Comma separated string of allowed headers."
+            },
+            "exposedHeaders": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "description": "Comma separated string of exposed headers."
+                }
+              ]
+            },
+            "credentials": {
+              "type": "boolean"
+            },
+            "maxAge": {
+              "type": "integer"
+            },
+            "preflightContinue": {
+              "type": "boolean",
+              "default": false
+            },
+            "optionsSuccessStatus": {
+              "type": "integer",
+              "default": 204
+            },
+            "preflight": {
+              "type": "boolean",
+              "default": true
+            },
+            "strictPreflight": {
+              "type": "boolean",
+              "default": true
+            },
+            "hideOptionsRoute": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "entrypoint": {
+      "type": "string"
+    },
+    "hotReload": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "allowCycles": {
+      "type": "boolean"
+    },
+    "inspectorOptions": {
+      "type": "object",
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "number"
+        },
+        "breakFirstLine": {
+          "type": "boolean"
+        },
+        "hotReloadDisabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "undici": {
+      "type": "object",
+      "properties": {
+        "agentOptions": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "interceptors": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/undiciInterceptor"
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "Client": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/undiciInterceptor"
+                  }
+                },
+                "Pool": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/undiciInterceptor"
+                  }
+                },
+                "Agent": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/undiciInterceptor"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "managementApi": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "logs": {
+              "maxSize": {
+                "type": "number",
+                "minimum": 5,
+                "default": 200
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ],
+      "default": true
+    },
+    "metrics": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "port": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "hostname": {
+              "type": "string"
+            },
+            "endpoint": {
+              "type": "string"
+            },
+            "auth": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string"
+                },
+                "password": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "username",
+                "password"
+              ]
+            },
+            "labels": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "restartOnError": {
+      "default": true,
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "services": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "path",
+          "config"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "resolvePath": true
+          },
+          "config": {
+            "type": "string"
+          },
+          "useHttp": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  },
+  "anyOf": [
+    {
+      "required": [
+        "autoload",
+        "entrypoint"
+      ]
+    },
+    {
+      "required": [
+        "services",
+        "entrypoint"
+      ]
+    }
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "undiciInterceptor": {
+      "type": "object",
+      "properties": {
+        "module": {
+          "type": "string"
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "module",
+        "options"
+      ]
+    }
+  }
+}

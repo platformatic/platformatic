@@ -59,7 +59,8 @@ jobs:
         run: |
           git config --global user.name "mcollina"
           git config --global user.email "hello@matteocollina.com"
-          git commit -a -m "Bumped ${{ inputs.version }}"
+          git add -u
+          git commit -m "Bumped ${{ inputs.version }}"
           git push origin HEAD:${{ github.ref }}
         # TODO(mcollina): make the following work for both releases
       - run: pnpm -r publish --access public --tag ${{ inputs.prerelease == true && 'next' || 'latest' }} --publish-branch ${{ github.ref_name }}
