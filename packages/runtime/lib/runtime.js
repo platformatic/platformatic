@@ -55,7 +55,7 @@ class Runtime extends EventEmitter {
   #restartPromises
   #bootstrapAttempts
 
-  constructor(configManager, runtimeLogsDir, env) {
+  constructor (configManager, runtimeLogsDir, env) {
     super()
     this.setMaxListeners(MAX_LISTENERS_COUNT)
 
@@ -74,7 +74,7 @@ class Runtime extends EventEmitter {
     this.#bootstrapAttempts = new Map()
   }
 
-  async init() {
+  async init () {
     const config = this.#configManager.current
     const autoloadEnabled = config.autoload
 
@@ -130,7 +130,7 @@ class Runtime extends EventEmitter {
     this.#updateStatus('init')
   }
 
-  async start() {
+  async start () {
     this.#updateStatus('starting')
 
     // Important: do not use Promise.all here since it won't properly manage dependencies
@@ -155,7 +155,7 @@ class Runtime extends EventEmitter {
     return this.#url
   }
 
-  async stop(silent = false) {
+  async stop (silent = false) {
     if (this.#status === 'starting') {
       await once(this, 'started')
     }
@@ -168,7 +168,7 @@ class Runtime extends EventEmitter {
     this.#updateStatus('stopped')
   }
 
-  async restart() {
+  async restart () {
     this.emit('restarting')
 
     await this.stop()
@@ -180,7 +180,7 @@ class Runtime extends EventEmitter {
     return this.#url
   }
 
-  async close(fromManagementApi = false, silent = false) {
+  async close (fromManagementApi = false, silent = false) {
     this.#updateStatus('closing')
 
     clearInterval(this.#metricsTimeout)
@@ -212,7 +212,7 @@ class Runtime extends EventEmitter {
     this.#updateStatus('closed')
   }
 
-  async startService(id) {
+  async startService (id) {
     if (this.#startedServices.get(id)) {
       throw new errors.ApplicationAlreadyStartedError()
     }
@@ -268,7 +268,7 @@ class Runtime extends EventEmitter {
   }
 
   // Do not rename to #stopService as this is used in tests
-  async _stopService(id, silent) {
+  async _stopService (id, silent) {
     const service = await this.#getServiceById(id, false, false)
 
     if (!service) {
@@ -300,7 +300,7 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async buildService(id) {
+  async buildService (id) {
     const service = this.#services.get(id)
 
     if (!service) {
@@ -319,12 +319,12 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async inject(id, injectParams) {
+  async inject (id, injectParams) {
     const service = await this.#getServiceById(id, true)
     return sendViaITC(service, 'inject', injectParams)
   }
 
-  startCollectingMetrics() {
+  startCollectingMetrics () {
     this.#metrics = []
     this.#metricsTimeout = setInterval(async () => {
       if (this.#status !== 'started') {
@@ -350,7 +350,7 @@ class Runtime extends EventEmitter {
     }, COLLECT_METRICS_TIMEOUT).unref()
   }
 
-  async pipeLogsStream(writableStream, logger, startLogId, endLogId, runtimePID) {
+  async pipeLogsStream (writableStream, logger, startLogId, endLogId, runtimePID) {
     endLogId = endLogId || Infinity
     runtimePID = runtimePID ?? process.pid
 
@@ -437,7 +437,7 @@ class Runtime extends EventEmitter {
     this.on('closed', onClose)
   }
 
-  async getRuntimeMetadata() {
+  async getRuntimeMetadata () {
     const packageJson = await this.#getRuntimePackageJson()
     const entrypointDetails = await this.getEntrypointDetails()
 
@@ -456,34 +456,34 @@ class Runtime extends EventEmitter {
     }
   }
 
-  getRuntimeConfig() {
+  getRuntimeConfig () {
     return this.#configManager.current
   }
 
-  getInterceptor() {
+  getInterceptor () {
     return this.#interceptor
   }
 
-  getManagementApi() {
+  getManagementApi () {
     return this.#managementApi
   }
 
-  getManagementApiUrl() {
+  getManagementApiUrl () {
     return this.#managementApi?.server.address()
   }
 
-  async getEntrypointDetails() {
+  async getEntrypointDetails () {
     return this.getServiceDetails(this.#entrypointId)
   }
 
-  async getServices() {
+  async getServices () {
     return {
       entrypoint: this.#entrypointId,
       services: await Promise.all(this.#servicesIds.map(id => this.getServiceDetails(id)))
     }
   }
 
-  async getServiceDetails(id, allowUnloaded = false) {
+  async getServiceDetails (id, allowUnloaded = false) {
     let service
 
     try {
@@ -518,29 +518,29 @@ class Runtime extends EventEmitter {
     return serviceDetails
   }
 
-  async getService(id) {
+  async getService (id) {
     return this.#getServiceById(id, true)
   }
 
-  async getServiceConfig(id) {
+  async getServiceConfig (id) {
     const service = await this.#getServiceById(id, true)
 
     return sendViaITC(service, 'getServiceConfig')
   }
 
-  async getServiceOpenapiSchema(id) {
+  async getServiceOpenapiSchema (id) {
     const service = await this.#getServiceById(id, true)
 
     return sendViaITC(service, 'getServiceOpenAPISchema')
   }
 
-  async getServiceGraphqlSchema(id) {
+  async getServiceGraphqlSchema (id) {
     const service = await this.#getServiceById(id, true)
 
     return sendViaITC(service, 'getServiceGraphQLSchema')
   }
 
-  async getMetrics(format = 'json') {
+  async getMetrics (format = 'json') {
     let metrics = null
 
     for (const id of this.#servicesIds) {
@@ -577,11 +577,11 @@ class Runtime extends EventEmitter {
     return { metrics }
   }
 
-  getCachedMetrics() {
+  getCachedMetrics () {
     return this.#metrics
   }
 
-  async getFormattedMetrics() {
+  async getFormattedMetrics () {
     try {
       const { metrics } = await this.getMetrics()
 
@@ -660,7 +660,7 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async getServiceMeta(id) {
+  async getServiceMeta (id) {
     const service = this.#services.get(id)
 
     if (!service) {
@@ -679,7 +679,7 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async getLogIds(runtimePID) {
+  async getLogIds (runtimePID) {
     runtimePID = runtimePID ?? process.pid
 
     const runtimeLogFiles = await this.#getRuntimeLogFiles(runtimePID)
@@ -692,7 +692,7 @@ class Runtime extends EventEmitter {
     return runtimeLogIds
   }
 
-  async getAllLogIds() {
+  async getAllLogIds () {
     const runtimesLogFiles = await this.#getAllLogsFiles()
     const runtimesLogsIds = []
 
@@ -711,18 +711,18 @@ class Runtime extends EventEmitter {
     return runtimesLogsIds
   }
 
-  async getLogFileStream(logFileId, runtimePID) {
+  async getLogFileStream (logFileId, runtimePID) {
     const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
     const filePath = join(runtimeLogsDir, `logs.${logFileId}`)
     return createReadStream(filePath)
   }
 
-  #updateStatus(status) {
+  #updateStatus (status) {
     this.#status = status
     this.emit(status)
   }
 
-  async #setupService(serviceConfig) {
+  async #setupService (serviceConfig) {
     if (this.#status === 'stopping' || this.#status === 'closed') return
 
     const config = this.#configManager.current
@@ -847,7 +847,7 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async #restartCrashedService(id) {
+  async #restartCrashedService (id) {
     const config = this.#configManager.current
     const serviceConfig = config.services.find(s => s.id === id)
 
@@ -881,7 +881,7 @@ class Runtime extends EventEmitter {
     await restartPromise
   }
 
-  async #getServiceById(id, ensureStarted = false, mustExist = true) {
+  async #getServiceById (id, ensureStarted = false, mustExist = true) {
     const service = this.#services.get(id)
 
     if (!service) {
@@ -903,7 +903,7 @@ class Runtime extends EventEmitter {
     return service
   }
 
-  async #getRuntimePackageJson() {
+  async #getRuntimePackageJson () {
     const runtimeDir = this.#configManager.dirname
     const packageJsonPath = join(runtimeDir, 'package.json')
     const packageJsonFile = await readFile(packageJsonPath, 'utf8')
@@ -911,11 +911,11 @@ class Runtime extends EventEmitter {
     return packageJson
   }
 
-  #getRuntimeLogsDir(runtimePID) {
+  #getRuntimeLogsDir (runtimePID) {
     return join(this.#runtimeTmpDir, runtimePID.toString(), 'logs')
   }
 
-  async #getRuntimeLogFiles(runtimePID) {
+  async #getRuntimeLogFiles (runtimePID) {
     const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
     const runtimeLogsFiles = await readdir(runtimeLogsDir)
     return runtimeLogsFiles
@@ -927,7 +927,7 @@ class Runtime extends EventEmitter {
       })
   }
 
-  async #getAllLogsFiles() {
+  async #getAllLogsFiles () {
     try {
       await access(this.#runtimeTmpDir)
     } catch (err) {
@@ -954,7 +954,7 @@ class Runtime extends EventEmitter {
     return runtimesLogFiles.sort((runtime1, runtime2) => runtime1.lastModified - runtime2.lastModified)
   }
 
-  #forwardThreadLog(message) {
+  #forwardThreadLog (message) {
     if (!this.#loggerDestination) {
       return
     }

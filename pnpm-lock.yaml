@@ -1389,6 +1389,9 @@ importers:
       eslint:
         specifier: '9'
         version: 9.10.0
+      fastify:
+        specifier: ^4.28.1
+        version: 4.28.1
       json-schema-to-typescript:
         specifier: ^15.0.1
         version: 15.0.2
@@ -1508,6 +1511,9 @@ importers:
       eslint:
         specifier: '9'
         version: 9.10.0
+      fastify:
+        specifier: ^4.28.1
+        version: 4.28.1
       isbot:
         specifier: ^5.1.17
         version: 5.1.17

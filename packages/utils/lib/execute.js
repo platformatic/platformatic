@@ -6,7 +6,7 @@ const { Unpromise } = require('@watchable/unpromise')
 let execa
 let parseCommandString
 
-async function executeCommand(cwd, command, logger, errorPrefix) {
+async function executeCommand (cwd, command, logger, errorPrefix) {
   if (!execa) {
     const { execa: _execa, parseCommandString: _parseCommandString } = await import('execa')
     execa = _execa
@@ -49,7 +49,7 @@ async function executeCommand(cwd, command, logger, errorPrefix) {
   return { exitCode, output }
 }
 
-async function executeWithTimeout(promise, timeout, timeoutValue = 'timeout') {
+async function executeWithTimeout (promise, timeout, timeoutValue = 'timeout') {
   const ac = new AbortController()
 
   return Unpromise.race([promise, sleep(timeout, timeoutValue, { signal: ac.signal, ref: false })]).then(value => {

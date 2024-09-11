@@ -112,7 +112,7 @@ test('should detect and start a Node.js application with no configuration files 
   const { runtime } = await verifyStandalone(t, 'node-no-configuration-standalone')
 
   const missingConfigurationMessage =
-    'The service frontend had no valid entrypoint defined in the package.json file. Falling back to the file "index.js".'
+    'The service frontend had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
 
   const logs = await getLogs(runtime)
   ok(logs.map(m => m.msg).includes(missingConfigurationMessage))
@@ -122,7 +122,7 @@ test('should detect and start a Node.js application with no configuration files 
   const { runtime } = await verifyComposerWithPrefix(t, 'node-no-configuration-composer-with-prefix')
 
   const missingConfigurationMessage =
-    'The service frontend had no valid entrypoint defined in the package.json file. Falling back to the file "index.js".'
+    'The service frontend had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
 
   const logs = await getLogs(runtime)
   ok(logs.map(m => m.msg).includes(missingConfigurationMessage))
@@ -132,7 +132,7 @@ test('should detect and start a Node.js application with no configuration files 
   const { runtime } = await verifyComposerWithoutPrefix(t, 'node-no-configuration-composer-without-prefix')
 
   const missingConfigurationMessage =
-    'The service frontend had no valid entrypoint defined in the package.json file. Falling back to the file "index.js".'
+    'The service frontend had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
 
   const logs = await getLogs(runtime)
   ok(logs.map(m => m.msg).includes(missingConfigurationMessage))
@@ -142,7 +142,7 @@ test('should detect and start a Node.js application with no configuration files 
   const { runtime } = await verifyComposerAutodetectPrefix(t, 'node-no-configuration-composer-autodetect-prefix')
 
   const missingConfigurationMessage =
-    'The service frontend had no valid entrypoint defined in the package.json file. Falling back to the file "index.js".'
+    'The service frontend had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
 
   const logs = await getLogs(runtime)
   ok(logs.map(m => m.msg).includes(missingConfigurationMessage))
