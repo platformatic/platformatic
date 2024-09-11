@@ -12,6 +12,7 @@ import { buildServer, platformaticRuntime } from '../../runtime/index.js'
 export { setTimeout as sleep } from 'node:timers/promises'
 
 const HMR_TIMEOUT = process.env.CI ? 20000 : 10000
+const DEFAULT_PAUSE_TIMEOUT = 300000
 let hrmVersion = Date.now()
 export let fixturesDir
 
@@ -20,9 +21,25 @@ export function setFixturesDir (directory) {
 }
 
 // This is used to debug tests
-export function pause (url, timeout = 300000) {
-  console.log(`Server is listening at ${url}`)
-  return sleep(timeout)
+export function pause (t, url, timeout) {
+  if (timeout && typeof timeout !== 'number') {
+    timeout = DEFAULT_PAUSE_TIMEOUT
+  }
+
+  console.log(`--- Pausing on test "${t.name}" - Server is listening at ${url}. Press any key to resume ...`)
+
+  return new Promise(resolve => {
+    let handler = null
+
+    function listener () {
+      clearTimeout(handler)
+      process.stdin.removeListener('data', listener)
+      resolve()
+    }
+
+    handler = setTimeout(listener, timeout)
+    process.stdin.once('data', listener)
+  })
 }
 
 export async function ensureDependency (directory, pkg, source) {
@@ -36,7 +53,7 @@ export async function ensureDependency (directory, pkg, source) {
   }
 }
 
-export async function createRuntime (t, path, packageRoot) {
+export async function createRuntime (t, path, packageRoot, pauseAfterCreation = false) {
   const configFile = resolve(fixturesDir, path)
 
   if (packageRoot) {
@@ -49,9 +66,11 @@ export async function createRuntime (t, path, packageRoot) {
   const runtime = await buildServer(config.configManager.current)
   const url = await runtime.start()
 
-  t.after(async () => {
-    await runtime.close()
-  })
+  t.after(() => runtime.close())
+
+  if (pauseAfterCreation) {
+    await pause(t, url, pauseAfterCreation)
+  }
 
   return { runtime, url }
 }
@@ -88,21 +107,31 @@ export async function getLogs (app) {
     .map(m => JSON.parse(m))
 }
 
-export async function updateHMRVersion (versionFile) {
-  versionFile ??= resolve(fixturesDir, '../tmp/version.js')
+export async function upsertVersionFile (versionFile) {
+  versionFile ??= resolve(fixturesDir, './tmp/version.js')
   await createDirectory(dirname(versionFile))
   await writeFile(versionFile, `export const version = ${hrmVersion++}\n`, 'utf-8')
 }
 
 export async function verifyJSONViaHTTP (baseUrl, path, expectedCode, expectedContent) {
-  const { statusCode, body } = await request(baseUrl + path)
+  const { statusCode, body } = await request(baseUrl + path, { maxRedirections: 1 })
   strictEqual(statusCode, expectedCode)
+
+  if (typeof expectedContent === 'function') {
+    return expectedContent(await body.json())
+  }
+
   deepStrictEqual(await body.json(), expectedContent)
 }
 
 export async function verifyJSONViaInject (app, serviceId, method, url, expectedCode, expectedContent) {
   const { statusCode, body } = await app.inject(serviceId, { method, url })
   strictEqual(statusCode, expectedCode)
+
+  if (typeof expectedContent === 'function') {
+    return expectedContent(JSON.parse(body))
+  }
+
   deepStrictEqual(JSON.parse(body), expectedContent)
 }
 
@@ -113,6 +142,10 @@ export async function verifyHTMLViaHTTP (baseUrl, path, contents) {
   deepStrictEqual(statusCode, 200)
   ok(headers['content-type']?.startsWith('text/html'))
 
+  if (typeof contents === 'function') {
+    return contents(html)
+  }
+
   for (const content of contents) {
     ok(content instanceof RegExp ? content.test(html) : html.includes(content), content)
   }
@@ -121,8 +154,16 @@ export async function verifyHTMLViaHTTP (baseUrl, path, contents) {
 export async function verifyHTMLViaInject (app, serviceId, url, contents) {
   const { statusCode, headers, body: html } = await app.inject(serviceId, { method: 'GET', url })
 
+  if (statusCode === 308) {
+    return app.inject(serviceId, { method: 'GET', url: headers.location })
+  }
+
   deepStrictEqual(statusCode, 200)
   ok(headers['content-type'].startsWith('text/html'))
+
+  if (typeof contents === 'function') {
+    return contents(html)
+  }
 
   for (const content of contents) {
     ok(content instanceof RegExp ? content.test(html) : html.includes(content), content)
@@ -154,7 +195,7 @@ export async function verifyHMR (baseUrl, path, protocol, handler) {
     }
 
     await sleep(1000)
-    await updateHMRVersion()
+    await upsertVersionFile()
 
     if ((await Promise.race([reload.promise, timeout])) === 'timeout') {
       throw new Error('Timeout while waiting for HMR reload')

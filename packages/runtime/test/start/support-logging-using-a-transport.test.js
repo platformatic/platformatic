@@ -11,7 +11,7 @@ const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { setTimeout: sleep } = require('node:timers/promises')
 const tmpdir = os.tmpdir()
 
-test('supports logging using a transport', async (t) => {
+test('supports logging using a transport', async t => {
   const configFile = join(fixturesDir, 'server', 'logger-transport', 'platformatic.runtime.json')
   const dest = join(tmpdir, `logger-transport-${process.pid}.log`)
 
@@ -22,7 +22,7 @@ test('supports logging using a transport', async (t) => {
 
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   config.configManager.current.server.logger.transport.options = {
-    path: dest,
+    path: dest
   }
   const app = await buildServer(config.configManager.current)
   await app.start()
@@ -31,7 +31,10 @@ test('supports logging using a transport', async (t) => {
   await sleep(3000)
 
   const written = await fs.readFile(dest, 'utf8')
-  const parsed = JSON.parse(written)
 
-  assert.strictEqual(parsed.fromTransport, true)
+  for (const line of written.trim().split('\n')) {
+    const parsed = JSON.parse(line)
+
+    assert.strictEqual(parsed.fromTransport, true)
+  }
 })

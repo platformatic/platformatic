@@ -26,9 +26,11 @@
     "@platformatic/config": "workspace:*",
     "@platformatic/itc": "workspace:*",
     "@platformatic/utils": "workspace:*",
+    "execa": "^9.3.1",
     "pino": "^9.3.2",
     "semver": "^7.6.3",
-    "undici": "^6.19.5"
+    "undici": "^6.19.5",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@platformatic/composer": "workspace:*",
@@ -43,7 +45,6 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "typescript": "^5.5.4",
-    "vite": "^5.4.0",
-    "ws": "^8.18.0"
+    "vite": "^5.4.0"
   }
 }

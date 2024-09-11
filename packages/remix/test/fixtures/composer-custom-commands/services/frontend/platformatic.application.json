@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/remix/2.0.0.json",
+  "server": {
+    "logger": {
+      "level": "error"
+    }
+  },
+  "application": {
+    "basePath": "/frontend",
+    "commands": {
+      "build": "npm run build",
+      "development": "npm run dev",
+      "production": "npm run start"
+    }
+  }
+}

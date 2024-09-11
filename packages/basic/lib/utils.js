@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
 import { request } from 'undici'
 
@@ -41,4 +42,18 @@ export async function injectViaRequest (baseUrl, injectParams, onInject) {
 // This is to avoid common path/URL problems on Windows
 export function importFile (path) {
   return import(pathToFileURL(path))
+}
+
+export function resolvePackage (root, pkg) {
+  const require = createRequire(root)
+
+  return require.resolve(pkg, { paths: [root, ...require.main.paths] })
+}
+
+export function cleanBasePath (basePath) {
+  return basePath ? `/${basePath}`.replaceAll(/\/+/g, '/').replace(/\/$/, '') : '/'
+}
+
+export function ensureTrailingSlash (basePath) {
+  return basePath ? `${basePath}${basePath.endsWith('/') ? '' : '/'}` : '/'
 }

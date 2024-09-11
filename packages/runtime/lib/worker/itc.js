@@ -82,6 +82,10 @@ function setupITC (app, service, dispatcher) {
         itc.close()
       },
 
+      async build () {
+        return app.stackable.build()
+      },
+
       getStatus () {
         return app.getStatus()
       },

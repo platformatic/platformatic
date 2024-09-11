@@ -34,12 +34,19 @@ async function loadPlugins (app, opts) {
     isOutDirAccessible = await isFileAccessible(outDir)
   }
 
+  if (opts.context?.isProduction && !isOutDirAccessible) {
+    throw new Error(
+      `Cannot access directory '${outDir}'. Please run the 'build' command before running in production mode.`
+    )
+  }
+
   if (config.plugins.paths && isOutDirAccessible) {
-    config.plugins.paths = config.plugins.paths.map((plugin) => {
+    config.plugins.paths = config.plugins.paths.map(plugin => {
       /* c8 ignore next 3 */
-      const tmp = typeof plugin === 'string'
-        ? getJSPluginPath(workingDir, plugin, outDir)
-        : { ...plugin, path: getJSPluginPath(workingDir, plugin.path, outDir) }
+      const tmp =
+        typeof plugin === 'string'
+          ? getJSPluginPath(workingDir, plugin, outDir)
+          : { ...plugin, path: getJSPluginPath(workingDir, plugin.path, outDir) }
       return tmp
     })
   }

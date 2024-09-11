@@ -35,12 +35,12 @@ class PlatformaticApp extends EventEmitter {
       serviceId: this.appConfig.id,
       directory: this.appConfig.path,
       isEntrypoint: this.appConfig.entrypoint,
-      isProduction: false,
+      isProduction: this.appConfig.isProduction,
       telemetryConfig,
       metricsConfig,
       serverConfig,
       hasManagementApi: !!hasManagementApi,
-      localServiceEnvVars: this.appConfig.localServiceEnvVars,
+      localServiceEnvVars: this.appConfig.localServiceEnvVars
     }
   }
 
@@ -71,7 +71,7 @@ class PlatformaticApp extends EventEmitter {
           appConfig.path,
           {
             onMissingEnv: this.#fetchServiceUrl,
-            context: appConfig,
+            context: appConfig
           },
           true
         )
@@ -81,7 +81,7 @@ class PlatformaticApp extends EventEmitter {
           ['-c', appConfig.config],
           {
             onMissingEnv: this.#fetchServiceUrl,
-            context: appConfig,
+            context: appConfig
           },
           true
         )
@@ -89,10 +89,14 @@ class PlatformaticApp extends EventEmitter {
 
       const app = loadedConfig.app
 
+      if (appConfig.isProduction && !process.env.NODE_ENV) {
+        process.env.NODE_ENV = 'production'
+      }
+
       const stackable = await app.buildStackable({
         onMissingEnv: this.#fetchServiceUrl,
         config: this.appConfig.config,
-        context: this.#context,
+        context: this.#context
       })
       this.stackable = this.#wrapStackable(stackable)
 
@@ -203,7 +207,7 @@ class PlatformaticApp extends EventEmitter {
       path: watch.path,
       /* c8 ignore next 2 */
       allowToWatch: watch?.allow,
-      watchIgnore: watch?.ignore || [],
+      watchIgnore: watch?.ignore || []
     })
 
     fileWatcher.on('update', this.#debouncedRestart)
@@ -246,7 +250,7 @@ class PlatformaticApp extends EventEmitter {
         if (telemetryId) {
           opts.headers = {
             ...opts.headers,
-            'x-plt-telemetry-id': telemetryId,
+            'x-plt-telemetry-id': telemetryId
           }
         }
         return dispatch(opts, handler)

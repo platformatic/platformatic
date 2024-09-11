@@ -152,12 +152,30 @@ export interface PlatformaticRemixStackable {
     | string;
   application?: {
     basePath?: string;
-  };
-  deploy?: {
+    outputDirectory?: string;
     include?: string[];
-    buildCommand?: string;
-    installCommand?: string;
-    startCommand?: string;
-    [k: string]: unknown;
+    commands?: {
+      install?: string;
+      build?: string;
+      development?: string;
+      production?: string;
+    };
+  };
+  vite?: {
+    configFile?: string | boolean;
+    devServer?: {
+      strict?: boolean;
+    };
+    ssr?:
+      | {
+          enabled?: boolean;
+          entrypoint: string;
+          clientDirectory?: string;
+          serverDirectory?: string;
+        }
+      | boolean;
+  };
+  remix?: {
+    outputDirectory?: string;
   };
 }

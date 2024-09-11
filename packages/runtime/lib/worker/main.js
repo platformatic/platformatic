@@ -23,10 +23,10 @@ globalThis[kId] = threadId
 
 let app
 const config = workerData.config
-const logger = createLogger()
+globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, { logger: createLogger() })
 
 function handleUnhandled (type, err) {
-  logger.error({ err }, `application ${type}`)
+  globalThis.platformatic.logger.error({ err }, `application ${type}`)
 
   executeWithTimeout(app?.stop(), 1000)
     .catch()
@@ -77,7 +77,7 @@ async function main () {
   setGlobalDispatcher(globalDispatcher)
 
   // Setup mesh networker
-  const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp })
+  const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp, timeout: true })
 
   // If the service is an entrypoint and runtime server config is defined, use it.
   let serverConfig = null

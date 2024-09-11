@@ -1,0 +1,26 @@
+{
+  "name": "remix",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "remix vite:dev",
+    "build": "remix vite:build",
+    "start": "node runner.js"
+  },
+  "dependencies": {
+    "@platformatic/remix": "^2.0.0-alpha.6",
+    "@remix-run/dev": "^2.11.2",
+    "@remix-run/express": "^2.11.2",
+    "@remix-run/node": "^2.11.2",
+    "@remix-run/react": "^2.11.2",
+    "isbot": "^4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "vite": "^5.3.4"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0"
+  }
+}

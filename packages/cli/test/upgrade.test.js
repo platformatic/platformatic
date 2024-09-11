@@ -83,7 +83,7 @@ test('no config file no party', async t => {
 test('updates a runtime', async t => {
   const dest = join(tmpdir(), `test-cli-${process.pid}-${count++}`)
 
-  await cp(join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'runtime-upgrade'), dest, {
+  await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime-upgrade'), dest, {
     recursive: true,
   })
 

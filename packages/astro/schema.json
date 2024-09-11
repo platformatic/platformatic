@@ -497,9 +497,43 @@
       "properties": {
         "basePath": {
           "type": "string"
+        },
+        "outputDirectory": {
+          "type": "string",
+          "default": "dist"
+        },
+        "include": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "dist"
+          ]
+        },
+        "commands": {
+          "type": "object",
+          "properties": {
+            "install": {
+              "type": "string",
+              "default": "npm ci --omit-dev"
+            },
+            "build": {
+              "type": "string"
+            },
+            "development": {
+              "type": "string"
+            },
+            "production": {
+              "type": "string"
+            }
+          },
+          "default": {},
+          "additionalProperties": false
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "default": {}
     },
     "astro": {
       "type": "object",
@@ -515,34 +549,8 @@
           ]
         }
       },
+      "default": {},
       "additionalProperties": false
-    },
-    "deploy": {
-      "type": "object",
-      "properties": {
-        "include": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [
-            "dist"
-          ]
-        },
-        "buildCommand": {
-          "type": "string",
-          "default": "npm run build"
-        },
-        "installCommand": {
-          "type": "string",
-          "default": "npm ci --omit-dev"
-        },
-        "startCommand": {
-          "type": "string",
-          "default": "npm run start"
-        }
-      },
-      "default": {}
     }
   },
   "additionalProperties": false

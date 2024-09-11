@@ -18,7 +18,7 @@ const errors = require('./lib/errors')
 
 const EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE = 'graphql composer is an experimental feature'
 
-async function platformaticComposer (app) {
+async function platformaticComposer (app, opts) {
   const configManager = app.platformatic.configManager
   const config = configManager.current
   let hasGraphqlServices, hasOpenapiServices
@@ -39,9 +39,9 @@ async function platformaticComposer (app) {
   if (hasOpenapiServices) {
     app.register(openapi, config.composer)
   }
-  app.register(serviceProxy, config.composer)
+  app.register(serviceProxy, { ...config.composer, context: opts.context })
   app.register(composerHook)
-  await app.register(platformaticService, config)
+  await app.register(platformaticService, { config, context: opts.context })
 
   if (hasOpenapiServices) {
     await app.register(openapiGenerator, config.composer)
@@ -57,7 +57,9 @@ async function platformaticComposer (app) {
     await app.register(require('./lib/root-endpoint'), config)
   }
 
-  await watchServices(app, config)
+  if (!opts.context?.isProduction) {
+    await watchServices(app, config)
+  }
 }
 
 platformaticComposer[Symbol.for('skip-override')] = true
@@ -71,14 +73,14 @@ platformaticComposer.configManagerConfig = {
     useDefaults: true,
     coerceTypes: true,
     allErrors: true,
-    strict: false,
+    strict: false
   },
-  transformConfig: platformaticService.configManagerConfig.transformConfig,
+  transformConfig: platformaticService.configManagerConfig.transformConfig
 }
 
 // TODO review no need to be async
 async function buildComposerServer (options) {
-// TODO ConfigManager is not been used, it's attached to platformaticComposer, can be removed
+  // TODO ConfigManager is not been used, it's attached to platformaticComposer, can be removed
   return buildServer(options, platformaticComposer, ConfigManager)
 }
 
@@ -127,7 +129,7 @@ async function detectServicesUpdate ({ app, services, fetchOpenApiSchema, fetchG
  * poll services to detect changes, every `opts.composer.refreshTimeout`
  * polling is disabled on refreshTimeout = 0
  * or there are no network openapi nor graphql remote services (the services are from file or they don't have a schema/graph to fetch)
-*/
+ */
 async function watchServices (app, opts) {
   const { services, refreshTimeout } = opts.composer
   if (refreshTimeout < 1) {
@@ -157,12 +159,15 @@ async function watchServices (app, opts) {
         globalThis[Symbol.for('plt.runtime.itc')].notify('changed')
       }
     } catch (error) {
-      app.log.error({
-        err: {
-          message: error.message,
-          stack: error.stack,
+      app.log.error(
+        {
+          err: {
+            message: error.message,
+            stack: error.stack
+          }
         },
-      }, 'failed to get services info')
+        'failed to get services info'
+      )
     }
   }, refreshTimeout).unref()
 

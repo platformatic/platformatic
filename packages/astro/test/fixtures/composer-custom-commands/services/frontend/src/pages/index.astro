@@ -1,0 +1,19 @@
+---
+import { version } from '../../../../tmp/version.js'
+
+let time
+try {
+  const response = await fetch('http://backend.plt.local/time')
+  const json = await response.json()
+  time = json.time
+} catch(e) {
+  time = Date.now()
+} 
+
+---
+
+<html lang='en'>
+  <body>
+    <div>Hello from v{version} t{time}</div>
+  </body>
+</html>

@@ -9,7 +9,10 @@ const { setTimeout: sleep } = require('node:timers/promises')
 const { Worker } = require('node:worker_threads')
 
 const { ITC } = require('@platformatic/itc')
-const { executeWithTimeout } = require('@platformatic/utils')
+const {
+  errors: { ensureLoggableError },
+  executeWithTimeout
+} = require('@platformatic/utils')
 const ts = require('tail-file-stream')
 const { createThreadInterceptor } = require('undici-thread-interceptor')
 
@@ -52,7 +55,7 @@ class Runtime extends EventEmitter {
   #restartPromises
   #bootstrapAttempts
 
-  constructor (configManager, runtimeLogsDir, env) {
+  constructor(configManager, runtimeLogsDir, env) {
     super()
     this.setMaxListeners(MAX_LISTENERS_COUNT)
 
@@ -64,14 +67,14 @@ class Runtime extends EventEmitter {
     this.#servicesIds = []
     this.#url = undefined
     // Note: nothing hits the main thread so there is no reason to set the globalDispatcher here
-    this.#interceptor = createThreadInterceptor({ domain: '.plt.local' })
+    this.#interceptor = createThreadInterceptor({ domain: '.plt.local', timeout: true })
     this.#status = undefined
     this.#startedServices = new Map()
     this.#restartPromises = new Map()
     this.#bootstrapAttempts = new Map()
   }
 
-  async init () {
+  async init() {
     const config = this.#configManager.current
     const autoloadEnabled = config.autoload
 
@@ -127,7 +130,7 @@ class Runtime extends EventEmitter {
     this.#updateStatus('init')
   }
 
-  async start () {
+  async start() {
     this.#updateStatus('starting')
 
     // Important: do not use Promise.all here since it won't properly manage dependencies
@@ -148,10 +151,11 @@ class Runtime extends EventEmitter {
       this.startCollectingMetrics()
     }
 
+    this.logger.info(`Platformatic is now listening at ${this.#url}`)
     return this.#url
   }
 
-  async stop (silent = false) {
+  async stop(silent = false) {
     if (this.#status === 'starting') {
       await once(this, 'started')
     }
@@ -164,7 +168,7 @@ class Runtime extends EventEmitter {
     this.#updateStatus('stopped')
   }
 
-  async restart () {
+  async restart() {
     this.emit('restarting')
 
     await this.stop()
@@ -172,10 +176,11 @@ class Runtime extends EventEmitter {
 
     this.emit('restarted')
 
+    this.logger.info(`Platformatic is now listening at ${this.#url}`)
     return this.#url
   }
 
-  async close (fromManagementApi = false, silent = false) {
+  async close(fromManagementApi = false, silent = false) {
     this.#updateStatus('closing')
 
     clearInterval(this.#metricsTimeout)
@@ -207,7 +212,7 @@ class Runtime extends EventEmitter {
     this.#updateStatus('closed')
   }
 
-  async startService (id) {
+  async startService(id) {
     if (this.#startedServices.get(id)) {
       throw new errors.ApplicationAlreadyStartedError()
     }
@@ -236,7 +241,7 @@ class Runtime extends EventEmitter {
       // TODO: handle port allocation error here
       if (error.code === 'EADDRINUSE') throw error
 
-      this.logger.error({ error }, `Failed to start service "${id}".`)
+      this.logger.error({ error: ensureLoggableError(error) }, `Failed to start service "${id}".`)
 
       const config = this.#configManager.current
       const restartOnError = config.restartOnError
@@ -263,7 +268,7 @@ class Runtime extends EventEmitter {
   }
 
   // Do not rename to #stopService as this is used in tests
-  async _stopService (id, silent) {
+  async _stopService(id, silent) {
     const service = await this.#getServiceById(id, false, false)
 
     if (!service) {
@@ -280,7 +285,10 @@ class Runtime extends EventEmitter {
     try {
       await executeWithTimeout(sendViaITC(service, 'stop'), 10000)
     } catch (error) {
-      this.logger?.info(error, `Failed to stop service "${id}". Killing a worker thread.`)
+      this.logger?.info(
+        { error: ensureLoggableError(error) },
+        `Failed to stop service "${id}". Killing a worker thread.`
+      )
     }
 
     // Wait for the worker thread to finish, we're going to create a new one if the service is ever restarted
@@ -292,12 +300,31 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async inject (id, injectParams) {
+  async buildService(id) {
+    const service = this.#services.get(id)
+
+    if (!service) {
+      throw new errors.ServiceNotFoundError(id, Array.from(this.#services.keys()).join(', '))
+    }
+
+    try {
+      return await service[kITC].send('build')
+    } catch (e) {
+      // The service exports no meta, return an empty object
+      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
+        return {}
+      }
+
+      throw e
+    }
+  }
+
+  async inject(id, injectParams) {
     const service = await this.#getServiceById(id, true)
     return sendViaITC(service, 'inject', injectParams)
   }
 
-  startCollectingMetrics () {
+  startCollectingMetrics() {
     this.#metrics = []
     this.#metricsTimeout = setInterval(async () => {
       if (this.#status !== 'started') {
@@ -323,7 +350,7 @@ class Runtime extends EventEmitter {
     }, COLLECT_METRICS_TIMEOUT).unref()
   }
 
-  async pipeLogsStream (writableStream, logger, startLogId, endLogId, runtimePID) {
+  async pipeLogsStream(writableStream, logger, startLogId, endLogId, runtimePID) {
     endLogId = endLogId || Infinity
     runtimePID = runtimePID ?? process.pid
 
@@ -410,7 +437,7 @@ class Runtime extends EventEmitter {
     this.on('closed', onClose)
   }
 
-  async getRuntimeMetadata () {
+  async getRuntimeMetadata() {
     const packageJson = await this.#getRuntimePackageJson()
     const entrypointDetails = await this.getEntrypointDetails()
 
@@ -429,34 +456,34 @@ class Runtime extends EventEmitter {
     }
   }
 
-  getRuntimeConfig () {
+  getRuntimeConfig() {
     return this.#configManager.current
   }
 
-  getInterceptor () {
+  getInterceptor() {
     return this.#interceptor
   }
 
-  getManagementApi () {
+  getManagementApi() {
     return this.#managementApi
   }
 
-  getManagementApiUrl () {
+  getManagementApiUrl() {
     return this.#managementApi?.server.address()
   }
 
-  async getEntrypointDetails () {
+  async getEntrypointDetails() {
     return this.getServiceDetails(this.#entrypointId)
   }
 
-  async getServices () {
+  async getServices() {
     return {
       entrypoint: this.#entrypointId,
       services: await Promise.all(this.#servicesIds.map(id => this.getServiceDetails(id)))
     }
   }
 
-  async getServiceDetails (id, allowUnloaded = false) {
+  async getServiceDetails(id, allowUnloaded = false) {
     let service
 
     try {
@@ -491,29 +518,29 @@ class Runtime extends EventEmitter {
     return serviceDetails
   }
 
-  async getService (id) {
+  async getService(id) {
     return this.#getServiceById(id, true)
   }
 
-  async getServiceConfig (id) {
+  async getServiceConfig(id) {
     const service = await this.#getServiceById(id, true)
 
     return sendViaITC(service, 'getServiceConfig')
   }
 
-  async getServiceOpenapiSchema (id) {
+  async getServiceOpenapiSchema(id) {
     const service = await this.#getServiceById(id, true)
 
     return sendViaITC(service, 'getServiceOpenAPISchema')
   }
 
-  async getServiceGraphqlSchema (id) {
+  async getServiceGraphqlSchema(id) {
     const service = await this.#getServiceById(id, true)
 
     return sendViaITC(service, 'getServiceGraphQLSchema')
   }
 
-  async getMetrics (format = 'json') {
+  async getMetrics(format = 'json') {
     let metrics = null
 
     for (const id of this.#servicesIds) {
@@ -550,11 +577,11 @@ class Runtime extends EventEmitter {
     return { metrics }
   }
 
-  getCachedMetrics () {
+  getCachedMetrics() {
     return this.#metrics
   }
 
-  async getFormattedMetrics () {
+  async getFormattedMetrics() {
     try {
       const { metrics } = await this.getMetrics()
 
@@ -633,7 +660,26 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async getLogIds (runtimePID) {
+  async getServiceMeta(id) {
+    const service = this.#services.get(id)
+
+    if (!service) {
+      throw new errors.ServiceNotFoundError(id, Array.from(this.#services.keys()).join(', '))
+    }
+
+    try {
+      return await service[kITC].send('getServiceMeta')
+    } catch (e) {
+      // The service exports no meta, return an empty object
+      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
+        return {}
+      }
+
+      throw e
+    }
+  }
+
+  async getLogIds(runtimePID) {
     runtimePID = runtimePID ?? process.pid
 
     const runtimeLogFiles = await this.#getRuntimeLogFiles(runtimePID)
@@ -646,7 +692,7 @@ class Runtime extends EventEmitter {
     return runtimeLogIds
   }
 
-  async getAllLogIds () {
+  async getAllLogIds() {
     const runtimesLogFiles = await this.#getAllLogsFiles()
     const runtimesLogsIds = []
 
@@ -665,18 +711,18 @@ class Runtime extends EventEmitter {
     return runtimesLogsIds
   }
 
-  async getLogFileStream (logFileId, runtimePID) {
+  async getLogFileStream(logFileId, runtimePID) {
     const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
     const filePath = join(runtimeLogsDir, `logs.${logFileId}`)
     return createReadStream(filePath)
   }
 
-  #updateStatus (status) {
+  #updateStatus(status) {
     this.#status = status
     this.emit(status)
   }
 
-  async #setupService (serviceConfig) {
+  async #setupService(serviceConfig) {
     if (this.#status === 'stopping' || this.#status === 'closed') return
 
     const config = this.#configManager.current
@@ -693,7 +739,10 @@ class Runtime extends EventEmitter {
     const service = new Worker(kWorkerFile, {
       workerData: {
         config,
-        serviceConfig,
+        serviceConfig: {
+          ...serviceConfig,
+          isProduction: this.#configManager.args?.production ?? false
+        },
         dirname: this.#configManager.dirname,
         runtimeLogsDir: this.#runtimeLogsDir,
         loggingPort
@@ -733,7 +782,7 @@ class Runtime extends EventEmitter {
           if (restartOnError > 0) {
             this.logger.warn(`Restarting a service "${id}" in ${restartOnError}ms...`)
             this.#restartCrashedService(id).catch(err => {
-              this.logger.error({ err }, `Failed to restart service "${id}".`)
+              this.logger.error({ err: ensureLoggableError(err) }, `Failed to restart service "${id}".`)
             })
           } else {
             this.logger.warn(`The "${id}" service is no longer available.`)
@@ -798,7 +847,7 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async #restartCrashedService (id) {
+  async #restartCrashedService(id) {
     const config = this.#configManager.current
     const serviceConfig = config.services.find(s => s.id === id)
 
@@ -832,7 +881,7 @@ class Runtime extends EventEmitter {
     await restartPromise
   }
 
-  async #getServiceById (id, ensureStarted = false, mustExist = true) {
+  async #getServiceById(id, ensureStarted = false, mustExist = true) {
     const service = this.#services.get(id)
 
     if (!service) {
@@ -854,26 +903,7 @@ class Runtime extends EventEmitter {
     return service
   }
 
-  async getServiceMeta (id) {
-    const service = this.#services.get(id)
-
-    if (!service) {
-      throw new errors.ServiceNotFoundError(id, Array.from(this.#services.keys()).join(', '))
-    }
-
-    try {
-      return await service[kITC].send('getServiceMeta')
-    } catch (e) {
-      // The service exports no meta, return an empty object
-      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
-        return {}
-      }
-
-      throw e
-    }
-  }
-
-  async #getRuntimePackageJson () {
+  async #getRuntimePackageJson() {
     const runtimeDir = this.#configManager.dirname
     const packageJsonPath = join(runtimeDir, 'package.json')
     const packageJsonFile = await readFile(packageJsonPath, 'utf8')
@@ -881,11 +911,11 @@ class Runtime extends EventEmitter {
     return packageJson
   }
 
-  #getRuntimeLogsDir (runtimePID) {
+  #getRuntimeLogsDir(runtimePID) {
     return join(this.#runtimeTmpDir, runtimePID.toString(), 'logs')
   }
 
-  async #getRuntimeLogFiles (runtimePID) {
+  async #getRuntimeLogFiles(runtimePID) {
     const runtimeLogsDir = this.#getRuntimeLogsDir(runtimePID)
     const runtimeLogsFiles = await readdir(runtimeLogsDir)
     return runtimeLogsFiles
@@ -897,11 +927,11 @@ class Runtime extends EventEmitter {
       })
   }
 
-  async #getAllLogsFiles () {
+  async #getAllLogsFiles() {
     try {
       await access(this.#runtimeTmpDir)
     } catch (err) {
-      this.logger.error({ err }, 'Cannot access temporary folder.')
+      this.logger.error({ err: ensureLoggableError(err) }, 'Cannot access temporary folder.')
       return []
     }
 
@@ -924,7 +954,7 @@ class Runtime extends EventEmitter {
     return runtimesLogFiles.sort((runtime1, runtime2) => runtime1.lastModified - runtime2.lastModified)
   }
 
-  #forwardThreadLog (message) {
+  #forwardThreadLog(message) {
     if (!this.#loggerDestination) {
       return
     }

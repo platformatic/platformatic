@@ -1,4 +1,4 @@
-import { schemas } from '@platformatic/utils'
+import { schemaComponents as utilsSchemaComponents } from '@platformatic/utils'
 import { readFileSync } from 'node:fs'
 
 export const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'))
@@ -8,14 +8,48 @@ const application = {
   properties: {
     basePath: {
       type: 'string'
+    },
+    outputDirectory: {
+      type: 'string',
+      default: 'dist'
+    },
+    include: {
+      type: 'array',
+      items: {
+        type: 'string'
+      },
+      default: ['dist']
+    },
+    commands: {
+      type: 'object',
+      properties: {
+        install: {
+          type: 'string',
+          default: 'npm ci --omit-dev'
+        },
+        // All the following options purposely don't have a default so
+        // that stackables can detect if the user explicitly set them.
+        build: {
+          type: 'string'
+        },
+        development: {
+          type: 'string'
+        },
+        production: {
+          type: 'string'
+        }
+      },
+      default: {},
+      additionalProperties: false
     }
   },
-  additionalProperties: false
+  additionalProperties: false,
+  default: {}
 }
 
 const watch = {
   anyOf: [
-    schemas.watch,
+    utilsSchemaComponents.watch,
     {
       type: 'boolean'
     },
@@ -25,33 +59,7 @@ const watch = {
   ]
 }
 
-const deploy = {
-  type: 'object',
-  properties: {
-    include: {
-      type: 'array',
-      items: {
-        type: 'string'
-      },
-      default: ['dist']
-    },
-    buildCommand: {
-      type: 'string',
-      default: 'npm run build'
-    },
-    installCommand: {
-      type: 'string',
-      default: 'npm ci --omit-dev'
-    },
-    startCommand: {
-      type: 'string',
-      default: 'npm run start'
-    }
-  },
-  default: {}
-}
-
-export const schemaComponents = { application, deploy, watch }
+export const schemaComponents = { application, watch }
 
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/basic/${packageJson.version}.json`,
