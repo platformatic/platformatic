@@ -449,8 +449,8 @@ importers:
         specifier: workspace:*
         version: link:../generators
       '@platformatic/graphql-composer':
-        specifier: ^0.7.0
-        version: 0.7.0
+        specifier: ^0.8.0
+        version: 0.8.0
       '@platformatic/scalar-theme':
         specifier: workspace:*
         version: link:../scalar-theme
@@ -3046,9 +3046,6 @@ packages:
   '@fastify/static@6.12.0':
     resolution: {integrity: sha512-KK1B84E6QD/FcQWxDI2aiUCwHxMJBI1KeCUzm1BwYpPY1b742+jeKruGHP2uOluuM6OkBPI8CIANrXcCRtC2oQ==}
 
-  '@fastify/static@7.0.4':
-    resolution: {integrity: sha512-p2uKtaf8BMOZWLs6wu+Ihg7bWNBdjNgCwDza4MJtTqg+5ovKmcbgbR9Xs5/smZ1YISfzKOCNYmZV8LaCj+eJ1Q==}
-
   '@fastify/static@8.0.0':
     resolution: {integrity: sha512-VKGn1PQslB2VqzspyMKPu9xasF9vj+YuyGhVLb1ih6V60VVcRvcf0fFRcl3opt6c6YWwhKKdTUTfVE6COnpw6A==}
 
@@ -3432,8 +3429,8 @@ packages:
   '@platformatic/fastify-http-metrics@0.1.0':
     resolution: {integrity: sha512-NrAesrQTXgjznjV1wwHa6glWxpKtB2bPSPF/jG8bTdtonqWkjrMgwIb3KNQF2oYwsQIOHIbhlHxxKUDCagt9AQ==}
 
-  '@platformatic/graphql-composer@0.7.0':
-    resolution: {integrity: sha512-+G5uXDiKSHCKrbLhwWTsa40gOoc5HncEiCAWcH8Hg0yMJWGOET7vHQQv03QsY2HYocgFwaj7O5+F3vTNQ7nrEQ==}
+  '@platformatic/graphql-composer@0.8.0':
+    resolution: {integrity: sha512-a15GmCiXmhxUwdql2xWH+Ji9c/Bl11mPZbGzWNumxCeStG5IneHCebUsC7Fwxgmw2nlNRlTbD7CbcT1MT6G4lQ==}
 
   '@platformatic/http-metrics@0.1.0':
     resolution: {integrity: sha512-pJXFydQjHDH7sstvVsm2J+7O23zw47yreW10ooVTi09UUbXy5cQ54rMJ7dTfRN0Qkbijwp2i0N3tx8oasL5W9A==}
@@ -5353,11 +5350,6 @@ packages:
   graphemer@1.4.0:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
 
-  graphql-jit@0.8.4:
-    resolution: {integrity: sha512-4KRrJ1ROy3Usgbl3eAoUMfdfZCRjkcw9cCGT7QwTUIHm9dPGaSaldxzGUttyjErU0rsYEb6WWyb6mMh5r6lEoQ==}
-    peerDependencies:
-      graphql: '>=15'
-
   graphql-jit@0.8.6:
     resolution: {integrity: sha512-oVJteh/uYDpIA/M4UHrI+DmzPnX1zTD0a7Je++JA8q8P68L/KbuepimDyrT5FhL4HAq3filUxaFvfsL6/A4msw==}
     peerDependencies:
@@ -6239,12 +6231,6 @@ packages:
     resolution: {integrity: sha512-+obSblOQmRhcyBt62furQqRAQpNyWXo8BuQ5bN7dG8wmwQ+vwHKp/rCFD4CrTP8CsDQD1sjoZ94K417XEUk8IQ==}
     engines: {node: '>=10'}
 
-  mercurius@14.1.0:
-    resolution: {integrity: sha512-A83Z+s4wVRJI/sqN5ZmyB7ISma9atAk4aRipnklSCvQ62hioJ00N9wwR3QRh5mY5lKbKG6rRn/iF8VlU6FsisQ==}
-    engines: {node: '>=14.19.3'}
-    peerDependencies:
-      graphql: ^16.0.0
-
   mercurius@15.0.0:
     resolution: {integrity: sha512-Kb/EznlDZEJ4lztD1QfDp/01SiC8doO1cvlM6FfjiljL3LMCa40RIZxWVUZAl8KOnSEKBc940gmAxEFmgWBLvA==}
     engines: {node: ^20.9.0 || >=22.0.0}
@@ -6580,10 +6566,6 @@ packages:
 
   mqemitter-redis@6.0.0:
     resolution: {integrity: sha512-FxhEZXDUqSpe2DmZrbgJ0XKxW0nx/ox6qD7JhCFNRgsodxW1jMjjCxoJt3Kw/vwN/996SziqOkXJRk1zqi35WA==}
-
-  mqemitter@5.0.0:
-    resolution: {integrity: sha512-rqNRQhGgl0W/NV+Zrx0rpAUTZcSlAtivCVUmXBUPcFYt+AeDEpoJgy5eKlFWJP6xnatONL59WIFdV0W6niOMhw==}
-    engines: {node: '>=10'}
 
   mqemitter@6.0.2:
     resolution: {integrity: sha512-8RGlznQx/Nb1xC3xKUFXHWov7pn7JdH++YVwlr6SLT6k3ft1h+ImGqZdVudbdKruFckIq9wheq9s4hgCivJDow==}
@@ -7295,10 +7277,6 @@ packages:
     resolution: {integrity: sha512-FLpr4flz5xZTSJxSeaheeMKN/EDzMdK7b8PTOC6a5PYFKTucWbdqjgqaEyH0shFiSJrVB1+Qqi4Tk19ccU6Aug==}
     engines: {node: '>=12.20'}
 
-  qlobber@7.0.1:
-    resolution: {integrity: sha512-FsFg9lMuMEFNKmTO9nV7tlyPhx8BmskPPjH2akWycuYVTtWaVwhW5yCHLJQ6Q+3mvw5cFX2vMfW2l9z2SiYAbg==}
-    engines: {node: '>= 14'}
-
   qlobber@8.0.1:
     resolution: {integrity: sha512-O+Wd1chXj5YE1DwmD+ae0bXiSLehmnS3czlC1R9FL/Nt/3q8uMS1bIHmg2lJfCoiimCxClWM8AAuJrF0EvNiog==}
     engines: {node: '>= 16'}
@@ -7726,9 +7704,6 @@ packages:
 
   simple-wcswidth@1.0.1:
     resolution: {integrity: sha512-xMO/8eNREtaROt7tJvWJqHBDTMFN4eiQ5I4JRMuilwfnFcV5W9u7RUkueNkdw0jPqGMX36iCywelS5yilTuOxg==}
-
-  single-user-cache@0.6.0:
-    resolution: {integrity: sha512-uMrANoiybpbsrVDbZ2M7GPzxeqZiirwkVnsDAre1zGhXAAw+2dImTxu7h0l1sIVtwGeJnVsRxgG4I5rZrUX0rw==}
 
   single-user-cache@1.0.1:
     resolution: {integrity: sha512-xFW/TuZUKoMZl47xqfC2jb7dO1XtJ5VgZxQliOKQWTueIH96CX6USaPiZcyDN0HFb4Ow+tsXpJZViRyIkl/rDA==}
@@ -9338,15 +9313,6 @@ snapshots:
       glob: 8.1.0
       p-limit: 3.1.0
 
-  '@fastify/static@7.0.4':
-    dependencies:
-      '@fastify/accept-negotiator': 1.1.0
-      '@fastify/send': 2.1.0
-      content-disposition: 0.5.4
-      fastify-plugin: 4.5.1
-      fastq: 1.17.1
-      glob: 10.4.5
-
   '@fastify/static@8.0.0':
     dependencies:
       '@fastify/accept-negotiator': 2.0.0
@@ -9776,14 +9742,14 @@ snapshots:
       fastify-plugin: 4.5.1
       prom-client: 15.1.3
 
-  '@platformatic/graphql-composer@0.7.0':
+  '@platformatic/graphql-composer@0.8.0':
     dependencies:
       abstract-logger: 0.2.5
-      fastify: 4.28.1
+      fastify: 5.0.0-alpha.4
       graphql: 16.9.0
-      mercurius: 14.1.0(graphql@16.9.0)
+      mercurius: 15.0.0(graphql@16.9.0)
       metaline: 1.1.0
-      pino: 8.21.0
+      pino: 9.4.0
       undici: 6.19.8
     transitivePeerDependencies:
       - bufferutil
@@ -12167,16 +12133,6 @@ snapshots:
 
   graphemer@1.4.0: {}
 
-  graphql-jit@0.8.4(graphql@16.9.0):
-    dependencies:
-      '@graphql-typed-document-node/core': 3.2.0(graphql@16.9.0)
-      fast-json-stringify: 5.16.1
-      generate-function: 2.3.1
-      graphql: 16.9.0
-      lodash.memoize: 4.1.2
-      lodash.merge: 4.6.2
-      lodash.mergewith: 4.6.2
-
   graphql-jit@0.8.6(graphql@16.9.0):
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.9.0)
@@ -13266,27 +13222,6 @@ snapshots:
       type-fest: 0.18.1
       yargs-parser: 20.2.9
 
-  mercurius@14.1.0(graphql@16.9.0):
-    dependencies:
-      '@fastify/error': 3.4.1
-      '@fastify/static': 7.0.4
-      '@fastify/websocket': 10.0.1
-      fastify-plugin: 4.5.1
-      graphql: 16.9.0
-      graphql-jit: 0.8.4(graphql@16.9.0)
-      mqemitter: 5.0.0
-      p-map: 4.0.0
-      readable-stream: 4.5.2
-      safe-stable-stringify: 2.5.0
-      secure-json-parse: 2.7.0
-      single-user-cache: 0.6.0
-      tiny-lru: 11.2.11
-      undici: 5.28.4
-      ws: 8.18.0
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
   mercurius@15.0.0(graphql@16.9.0):
     dependencies:
       '@fastify/error': 4.0.0
@@ -13846,11 +13781,6 @@ snapshots:
       msgpack-lite: 0.1.26
     transitivePeerDependencies:
       - supports-color
-
-  mqemitter@5.0.0:
-    dependencies:
-      fastparallel: 2.4.1
-      qlobber: 7.0.1
 
   mqemitter@6.0.2:
     dependencies:
@@ -14641,8 +14571,6 @@ snapshots:
     dependencies:
       escape-goat: 4.0.0
 
-  qlobber@7.0.1: {}
-
   qlobber@8.0.1: {}
 
   qs@6.11.0:
@@ -15236,10 +15164,6 @@ snapshots:
     optional: true
 
   simple-wcswidth@1.0.1: {}
-
-  single-user-cache@0.6.0:
-    dependencies:
-      safe-stable-stringify: 2.5.0
 
   single-user-cache@1.0.1:
     dependencies:
