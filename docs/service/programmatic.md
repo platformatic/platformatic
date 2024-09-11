@@ -122,7 +122,7 @@ async function myPlugin (app, opts) {
 
 ## TypeScript Support
 
-To ensure this module works in a TypeScript setup (outside of an application created with `create-platformatic`), you need to add the following to your types:
+To ensure this module works in a TypeScript setup (outside an application created with `create-platformatic`), you need to add the following to your types:
 
 ### Type Declarations 
 
@@ -177,7 +177,7 @@ You can construct `platformatic` like any other union types, adding other defini
 
 ## Writing a Custom Stackable with TypeScript
 
-Creating a reusable application with TypeScript requires a bit of setup. First, create a `schema.ts` file that generates the JSON Schema for your your application.
+Creating a reusable application with TypeScript requires a bit of setup. First, create a `schema.ts` file that generates the JSON Schema for your application.
 
 ### Schema Definition
 

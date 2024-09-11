@@ -55,7 +55,7 @@ main()
 
 #### TypeScript support
 
-In order for this module to work on a TypeScript setup (outside of a Platformatic application),
+In order for this module to work on a TypeScript setup (outside a Platformatic application),
 you have to add the following to your types:
 
 ```ts

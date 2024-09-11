@@ -14,7 +14,7 @@ Building production ready Node.js application with Fastify can require a certain
 
 The good news is that the path to migrate a Fastify application to use Platformatic Service is fairly straightforward. This guide covers some of the things you'll need to know when migrating an application, as well as tips on different migration approaches.
 
-This guide assumes that you have some experience building applications with the [Fastify](https://www.fastify.io/) framework. If you'd like to learn more about about building web applications with Fastify, we recommend taking a look at:
+This guide assumes that you have some experience building applications with the [Fastify](https://www.fastify.io/) framework. If you'd like to learn more about building web applications with Fastify, we recommend taking a look at:
 
 - The [Fastify Getting Started guide](https://www.fastify.io/docs/latest/Guides/Getting-Started/).
 - The [Building a modular monolith with Fastify](https://www.youtube.com/watch?v=e1jkA-ee_aY) talk by Fastify co-creator and Platformatic co-founder, [Matteo Collina](https://twitter.com/matteocollina).
@@ -77,7 +77,7 @@ async function dataSource (app) {
 export default fastifyPlugin(dataSource)
 ```
 
-> [`fastify-plugin`](https://www.npmjs.com/package/fastify-plugin) is used to to prevent Fastify from creating a new encapsulation context for the plugin. This makes the decorators that are registered in the `dataSource` plugin available in the route plugins. You can learn about this fundamental Fastify concept in the Fastify [Encapsulation](https://www.fastify.io/docs/latest/Reference/Encapsulation/) documentation.
+> [`fastify-plugin`](https://www.npmjs.com/package/fastify-plugin) is used to prevent Fastify from creating a new encapsulation context for the plugin. This makes the decorators that are registered in the `dataSource` plugin available in the route plugins. You can learn about this fundamental Fastify concept in the Fastify [Encapsulation](https://www.fastify.io/docs/latest/Reference/Encapsulation/) documentation.
 
 ```javascript
 // routes/movies.js
@@ -190,7 +190,7 @@ test('Basic API', async (t) => {
 })
 ```
 
-These tests are using the built in Node.js test runner, [node:test](https://nodejs.org/api/test.html). They can be run with the command: `node --test --test-reporter=spec test/*.test.js`.
+These tests are using the built-in Node.js test runner, [node:test](https://nodejs.org/api/test.html). They can be run with the command: `node --test --test-reporter=spec test/*.test.js`.
 
 > The `@param` lines in this application code are [JSDoc](https://jsdoc.app/) blocks that import the `FastifyInstance` type. This allows many code editors to provide auto-suggest, type hinting and type checking for your code.
 
@@ -422,7 +422,7 @@ All Platformatic Service features are fully configurable via `platformatic.servi
 - Write your plugins in JavaScript or TypeScript — TypeScript support is provided out-of-the-box and supports hot reloading.
 - Pretty printed logs — Making it easier to understand and debug your application during development.
 
-> See the [Platformatic Service Configuration](../service/configuration.md) documentation for all of the features which can be configured.
+> See the [Platformatic Service Configuration](../service/configuration.md) documentation for all the features which can be configured.
 
 ## Next steps
 

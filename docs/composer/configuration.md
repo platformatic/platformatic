@@ -35,8 +35,8 @@ Configure `@platformatic/composer` specific settings such as `services` or `refr
 - **`services`** (`array`, default: `[]`) — is an array of objects that defines
 the services managed by the composer. Each service object supports the following settings:
 
-  - **`id`** (**required**, `string`) - A unique identifier for the service. Use a Platformatic Runtime service id if the service is executing inside of [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context). 
-  - **`origin`** (`string`) - A service origin. Skip this option if the service is executing inside of [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context). In this case, service `id` will be used instead of origin. 
+  - **`id`** (**required**, `string`) - A unique identifier for the service. Use a Platformatic Runtime service id if the service is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context). 
+  - **`origin`** (`string`) - A service origin. Skip this option if the service is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context). In this case, service `id` will be used instead of origin. 
   - **`openapi`** (`object`) - The configuration file used to compose [OpenAPI](#openapi) specification. 
   - **`graphql`** (`object`) - The configuration for the [GraphQL](#graphql) service. 
   - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the service proxy is disabled.
@@ -63,7 +63,7 @@ the services managed by the composer. Each service object supports the following
     - `error` (`error`) - The error message
     - `subgraphName` (`string`) - The erroring subgraph
 
-    Its important to note GraphQL subscriptions are not supported in the composer yet.
+    It's important to note GraphQL subscriptions are not supported in the composer yet.
 
 - **`refreshTimeout`** (`number`) - The number of milliseconds to wait for check for changes in the services. If not specified, the default value is `1000`; set to `0` to disable. This is only supported if the Composer is running within a [Platformatic Runtime](../runtime/overview.md).
 
@@ -161,7 +161,7 @@ Use json schema format to describe the response structure, this only for  `200` 
   }
   ```
 
-  Composition of two local services inside of Platformatic Runtime:
+  Composition of two local services inside Platformatic Runtime:
 
   ```json title="Example JSON object"
   {
@@ -193,7 +193,7 @@ Use json schema format to describe the response structure, this only for  `200` 
 - **`graphqlEndpoint`** (`string`) - The graphql endpoint path, the default value is the common `'/graphql'`.
 - **`composeEndpoint`** (`string`) - The endpoint to retrieve the introspection query from, default is `'/.well-known/graphql-composition'`. In case the endpoint is not available, a second call with introspection query will be sent to the `graphqlEndpoint`.
 - **`entities`** (`object`) - Configuration object for working with entities in this subgraph, the values are objects with the following schema:
-  - **`resolver`** (`object`) - The resolver to retrieve a list of objects - should return a list - and should accept as a arguments a list of primary keys or foreign keys.
+  - **`resolver`** (`object`) - The resolver to retrieve a list of objects - should return a list - and should accept as an arguments a list of primary keys or foreign keys.
     - **`name`** (`string`, **required**) - The name of the resolver.
     - **`argsAdapter (partialResults)`** (`function` or `string`) - The function invoked with a subset of the result of the initial query, where `partialResults` is an array of the parent node. It should return an object to be used as argument for `resolver` query. Can be a function or a [metaline](https://github.com/platformatic/metaline) string.
   **Default:** if missing, the `defaultArgsAdapter` function will be used; if that is missing too, a [generic one](lib/utils.js#L3) will be used.

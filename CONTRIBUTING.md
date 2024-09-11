@@ -17,7 +17,7 @@ cd platformatic
 
 2. **Install pnpm**: Install pnpm: Follow the official [pnpm installation guide](https://pnpm.io/installation) to install pnpm globally on your machine.
 
-3. **Setup pnpm**: Run the setup script to configure the local path and restart your termina.
+3. **Setup pnpm**: Run the setup script to configure the local path and restart your terminal.
 
 ```sh
 pnpm setup 

@@ -74,7 +74,7 @@ Let's enter the following settings for our new service:
 - **What port do you want to use?**
   - `3042`
 
-After answering these questions, the creator will create all of the files for the `people-service`. 
+After answering these questions, the creator will create all the files for the `people-service`. 
 
 Once the creator has finished, our `library-app` directory should look like this:
 
@@ -228,7 +228,7 @@ Created person: {
 
 ### Test the People service
 
-Let's refresh the API documentation page for our People service (http://127.0.0.1:3042/documentation/). We should now see all of the `/people` API routes that Platformatic DB has automatically generated based on our database schema.
+Let's refresh the API documentation page for our People service (http://127.0.0.1:3042/documentation/). We should now see all the `/people` API routes that Platformatic DB has automatically generated based on our database schema.
 
 <!-- SCREENSHOT: test-the-people-service-01.png -->
 ![Test the People service - 01](./build-modular-monolith-images/test-the-people-service-01.png)
@@ -864,7 +864,7 @@ module.exports = async function peopleDataPlugin (app) {
 
 The code we've just added is the skeleton structure for our plugin. The `<reference path="..." />` statement pulls in the types from the People client, providing us with type hinting and type checking (if it's supported by our code editor).
 
-To be able to modify the responses that are sent from one of our Media service's composed API routes, we need to add a Composer `onRoute` hook for the route, and then set an `onComposerResponse` callback function inside of it, for example:
+To be able to modify the responses that are sent from one of our Media service's composed API routes, we need to add a Composer `onRoute` hook for the route, and then set an `onComposerResponse` callback function inside it, for example:
 
 ```javascript
 app.platformatic.addComposerOnRouteHook('/books/', ['GET'], function (routeOptions) {
@@ -878,7 +878,7 @@ With the code above, when Composer registers the `GET` route for `/books/` in th
 
 > To get a clearer picture of how this works, take a look at our [Composer API modification](https://docs.platformatic.dev/docs/reference/composer/api-modification/?utm_campaign=Build%20and%20deploy%20a%20modular%20monolith%20with%20Platformatic&utm_medium=blog&utm_source=Platformatic%20Blog) documentation.
 
-Let's now apply what we've just learnt about Composer hooks and callbacks. First, let's add the following code inside of the `peopleDataPlugin` function in `services/media-service/plugin.js`:
+Let's now apply what we've just learnt about Composer hooks and callbacks. First, let's add the following code inside the `peopleDataPlugin` function in `services/media-service/plugin.js`:
 
 ```javascript
 // services/media-service/plugin.js

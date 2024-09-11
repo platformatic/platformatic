@@ -12,4 +12,4 @@ Published whenever an entity is saved, e.g. when the mutation `insert[ENTITY]` o
 
 ## `[ENTITY]Deleted`
 
-Published whenever an entity is deleted, e.g. when the mutation `delete[ENTITY]` is called..
+Published whenever an entity is deleted, e.g. when the mutation `delete[ENTITY]` is called.

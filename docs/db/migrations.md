@@ -41,7 +41,7 @@ $ platformatic db migrations apply --to 002
 
 This command will execute rollback migrations starting from `004.undo.sql` to `003.undo.sql`. It will execute `003.do.sql` and `004.do.sql` when the server restarts if you keep these files in the migrations directory and `autoApply` is set to true in the config file. You can also manually apply the migration by running the `db migrations apply` command. 
 
-To rollback a single migration, use the `-r` flag:
+To roll back a single migration, use the `-r` flag:
 
 ```bash 
 $ platformatic db migrations apply -r 

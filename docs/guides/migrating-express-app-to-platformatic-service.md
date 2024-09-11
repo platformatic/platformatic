@@ -4,7 +4,7 @@
 
 Our open-source tools are built on top of the modern and flexible [Fastify](https://www.fastify.io/) web framework. It provides logging, request validation and a powerful plugin system out-of-the-box, as well as [incredible performance](https://www.fastify.io/benchmarks/).
 
-If you have an existing [Express](http://expressjs.com/) application, migrating it to Fastify could potentially be time consuming, and might not be something that you're able to prioritise right now. You can however still take advantage of Fastify and our open-source tools. In this guide you'll learn how to use the [`@fastify/express`](https://www.npmjs.com/package/@fastify/express) plugin to help you rapidly migrate your existing Express application to use Platformatic Service.
+If you have an existing [Express](http://expressjs.com/) application, migrating it to Fastify could potentially be time-consuming, and might not be something that you're able to prioritise right now. You can however still take advantage of Fastify and our open-source tools. In this guide you'll learn how to use the [`@fastify/express`](https://www.npmjs.com/package/@fastify/express) plugin to help you rapidly migrate your existing Express application to use Platformatic Service.
 
 This guide assumes that you have some experience building applications with the [Express](https://expressjs.com/) framework.
 

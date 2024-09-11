@@ -34,10 +34,10 @@ The `autoload` configuration is intended to be used with monorepo applications.
 - **`path`** (**required**, `string`) - The path to a directory containing the
 microservices to load. In a traditional monorepo application, this directory is
 typically named `packages`.
-- **`exclude`** (`array` of `string`s) - Child directories inside of `path` that
+- **`exclude`** (`array` of `string`s) - Child directories inside `path` that
 should not be processed.
 - **`mappings`** (`object`) - Each microservice is given an ID and is expected
-to have a Platformatic configuration file. By default the ID is the
+to have a Platformatic configuration file. By default, the ID is the
 microservice's directory name, and the configuration file is expected to be a
 well-known Platformatic configuration file. `mappings` can be used to override
 these default values.
@@ -48,7 +48,7 @@ these default values.
   - **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
   on `127.0.0.1`, and exposed to the other services via that port and on default, it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
 
-If the microservice exports a `getBootstrapDependencies` function, then it will used
+If the microservice exports a `getBootstrapDependencies` function, then it will be used
 to build a services dependencies graph and services will be reordered and started accordingly.
 
 ### `preload`
@@ -56,7 +56,7 @@ to build a services dependencies graph and services will be reordered and starte
 The `preload` configuration is intended to be used to register
 Application Performance Monitoring (APM) agents. `preload` should contain
 a path pointing to a CommonJS or ES module that is loaded at the start of
-of the app worker thread.
+the app worker thread.
 
 ### `services`
 

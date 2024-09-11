@@ -115,7 +115,7 @@ It returns 5 users starting from position 10.
 
 ### Limit
 
-By default a *limit* value (`10`) is applied to each request.
+By default, a *limit* value (`10`) is applied to each request.
 
 Clients can override this behavior by passing a value.
 In this case the server validates the input and an error is return if exceeds the `max` accepted value (`100`).
@@ -135,12 +135,12 @@ Limit's values can be customized through configuration:
 }
 ```
 
-*Limit* only accepts values `>= 0`. Otherwise an error is return.
+*Limit* only accepts values `>= 0`. Otherwise, an error is returned.
 
 
 ### Offset
 
-By default *offset* is not applied to the request.
+By default, *offset* is not applied to the request.
 Clients can override this behavior by passing a value.
 
-*Offset* only accepts values `>= 0`. Otherwise an error is return.
+*Offset* only accepts values `>= 0`. Otherwise, an error is returned.

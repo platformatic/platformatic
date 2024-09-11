@@ -2,7 +2,7 @@
 
 [Platformatic Service](/reference/service/introduction.md) provides automatic TypeScript compilation during the startup
 of your Node.js server. While this provides an amazing developer experience, in production it adds additional
-start time and it requires more resources. In this guide, we show how to compile your TypeScript
+start time, and it requires more resources. In this guide, we show how to compile your TypeScript
 source files before shipping to a server.
 
 ## Setup

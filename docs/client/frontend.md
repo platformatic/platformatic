@@ -17,7 +17,7 @@ This command creates two files: `clientname.js` (or `clientname.ts`) and `client
 
 ## Usage
 
-The generally implementation exports named operations and a factory object. 
+The general implementation exports named operations and a factory object. 
 
 ### Named operations
 
@@ -62,7 +62,7 @@ const movies = await getMovies({})
 console.log(movies)
 ```
 
-With the factory approach you'll setup `headers` as option in the `build` method
+With the factory approach you'll set up `headers` as option in the `build` method
 
 ```js
 import build from './api.js'

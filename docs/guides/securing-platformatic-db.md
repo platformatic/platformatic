@@ -49,7 +49,7 @@ Configuring JWT or Web Hooks will have the same result of configuring an admin s
 
 ## Authorization rules
 
-Rules can be provided based on entity and role in order to restrict access and provide fine grained access.
+Rules can be provided based on entity and role in order to restrict access and provide fine-grained access.
 To make an admin only query and save the `page` table / `page` entity using `adminSecret` this structure should be used in the `platformatic.db` configuration file:
 
 ```

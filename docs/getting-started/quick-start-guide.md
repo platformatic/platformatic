@@ -221,7 +221,7 @@ This means that the movie was successfully added to your database
 
 :::tip
 
-Learn more about your API's GraphQL interface in the
+Learn more about your APIs GraphQL interface in the
 [GraphQL API reference](../packages/sql-graphql/overview.md).
 
 :::

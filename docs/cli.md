@@ -241,7 +241,7 @@ To create a client for a remote Graphql API, you can use the following command:
 $ platformatic client http://example.com/graphql -n myclient
 ```
 
-Instead of an URL, you can also use a local file:
+Instead of a URL, you can also use a local file:
 
 ```bash
 $ platformatic client path/to/schema -n myclient
@@ -496,7 +496,7 @@ Here is an example migration:
   );
 ```
 
-You can always rollback to a specific migration with:
+You can always roll back to a specific migration with:
 
 ``` bash
   $ platformatic db migrations apply --to VERSION
@@ -876,7 +876,7 @@ Compile all typescript plugins for all services.
 ```
 
 This command will compile the TypeScript
-plugins for each services registered in the runtime.
+plugins for each service registered in the runtime.
 
 
 #### help

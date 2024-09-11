@@ -211,7 +211,7 @@ npm link
 
 If you chose to use TypeScript, you will need to run `npm run build` first to compile the Stackable.
 
-To create an application based on your Stackable you can run the `create-my-stackable` cli command. This command uses the `cli/create.js` script to generate the application. By default application will be generated in a `./my-stackable-app` folder. To change the default folder you can use the `--dir` option. For other options check the `cli/create.js` script.
+To create an application based on your Stackable you can run the `create-my-stackable` cli command. This command uses the `cli/create.js` script to generate the application. By default, application will be generated in a `./my-stackable-app` folder. To change the default folder you can use the `--dir` option. For other options check the `cli/create.js` script.
 
 After generating the application you can find a stackable app config file `./app/platformatic.json` with the custom greeting option. Option value is set in a `.env` file as a `PLT_GREETING_TEXT` environment variable.
 
@@ -255,7 +255,7 @@ __Example__
 
 ### Starting a Stackable application
 
-To start the application you can run the `start-my-stackable` cli command. This command uses the `cli/start.js` script to start the application. By default `start-my-stackable` looks for a project in the current folder. To change the default folder you can use the `-c` option to specify a path to the `platformatic.json` file.
+To start the application you can run the `start-my-stackable` cli command. This command uses the `cli/start.js` script to start the application. By default, `start-my-stackable` looks for a project in the current folder. To change the default folder you can use the `-c` option to specify a path to the `platformatic.json` file.
 
 In the logs you should see the custom greeting logged from the stackable `./plugins/example.js` plugin.
 
