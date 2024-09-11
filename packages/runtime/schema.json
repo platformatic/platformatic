@@ -1,5 +1,5 @@
 {
-  "$id": "https://platformatic.dev/schemas/v1.53.1/runtime",
+  "$id": "https://platformatic.dev/schemas/v1.53.3/runtime",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
