@@ -289,6 +289,8 @@ class Runtime extends EventEmitter {
         { error: ensureLoggableError(error) },
         `Failed to stop service "${id}". Killing a worker thread.`
       )
+    } finally {
+      service[kITC].close()
     }
 
     // Wait for the worker thread to finish, we're going to create a new one if the service is ever restarted
@@ -769,6 +771,7 @@ class Runtime extends EventEmitter {
       const started = this.#startedServices.get(id)
       this.#services.delete(id)
       loggerDestination.close()
+      service[kITC].close()
       loggingPort.close()
 
       if (this.#status === 'stopping') return
@@ -796,6 +799,7 @@ class Runtime extends EventEmitter {
 
     // Setup ITC
     service[kITC] = new ITC({
+      name: id + '-runtime',
       port: service,
       handlers: {
         getServiceMeta: this.getServiceMeta.bind(this)
