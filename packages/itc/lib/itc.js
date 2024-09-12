@@ -117,7 +117,7 @@ class ITC extends EventEmitter {
     super()
 
     if (!name) {
-      throw new Error('missing name')
+      throw new errors.MissingName()
     }
 
     // The name property is useful only for debugging purposes.
@@ -269,6 +269,8 @@ class ITC extends EventEmitter {
         response = generateResponse(request, null)
       }
     } catch (error) {
+      process._rawDebug('HANDLER FAILURE', this.name, request, error)
+
       if (!request) {
         response = generateUnhandledErrorResponse(error)
       } else if (!handler) {

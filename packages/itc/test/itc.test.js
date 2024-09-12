@@ -459,6 +459,6 @@ test('should throw if sender ITC port was closed', async t => {
   }
 })
 
-test('should throw if sender ITC port was closed', async t => {
-  assert.throws(() => new ITC({ }))
+test('should throw if ITC is created without a name', async t => {
+  assert.throws(() => new ITC({}))
 })
