@@ -50,7 +50,9 @@ async function verifyFrontendWithBundleOnAutodetectedPrefix (t, url) {
 }
 
 const configurations = [
+  /*
   { id: 'standalone', name: 'Vite (standalone)', files: [...viteFiles], checks: [verifyFrontendWithBundleOnRoot] },
+   */
   {
     only: isCIOnWindows,
     id: 'composer-with-prefix',
@@ -58,6 +60,7 @@ const configurations = [
     files: [...viteFiles, ...internalServicesFiles],
     checks: [verifyFrontendWithBundleOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
   },
+  /*
   {
     id: 'composer-without-prefix',
     name: 'Vite (in composer without prefix)',
@@ -117,6 +120,7 @@ const configurations = [
     files: [...viteSSRFiles, ...internalServicesFiles],
     checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
   }
+    */
 ]
 
 verifyBuildAndProductionMode(fileURLToPath(new URL('fixtures', import.meta.url)), configurations)

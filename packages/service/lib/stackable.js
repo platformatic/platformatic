@@ -5,6 +5,8 @@ const { printSchema } = require('graphql')
 const pino = require('pino')
 const httpMetrics = require('@platformatic/fastify-http-metrics')
 const { executeCommand } = require('@platformatic/utils')
+const { join } = require('path')
+const { createRequire } = require('node:module')
 
 class ServiceStackable {
   constructor (options) {
@@ -60,11 +62,15 @@ class ServiceStackable {
     // We don't use this.app.log as the app has not being initialized.
     const logger = globalThis.platformatic.logger
 
-    logger.debug("Executing 'platformatic compile' ...")
+    // This is a hack to avoid a circular dependency
+    const _require = createRequire(this.context.directory)
+    const cmd =  `node ${require.resolve('@platformatic/runtime/runtime.mjs')} compile`
+
+    logger.debug({ cmd }, "Executing...")
 
     const { exitCode } = await executeCommand(
       this.context.directory,
-      'platformatic compile',
+      cmd,
       logger,
       'Compilation failed with exit code {EXIT_CODE}'
     )
