@@ -7,7 +7,7 @@
     "dev": "node server.js",
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build --outDir dist/client --ssrManifest",
-    "build:server": "vite build --outDir dist/server --ssr /index.js",
+    "build:server": "vite build --outDir dist/server --ssr index.js",
     "start": "node server.js"
   },
   "dependencies": {

@@ -22,7 +22,8 @@ let count = 0
 */
 const temporaryWorkingDirectory = process.env.PLT_TEMPORARY_DIRECTORY
 
-export const isCIOnWindows = process.env.CI && platform() === 'win32'
+export const isWindows = platform() === 'win32'
+export const isCIOnWindows = process.env.CI && isWindows
 
 export const cliPath = join(import.meta.url, '..', 'cli.js')
 
@@ -303,12 +304,11 @@ export async function prepareWorkingDirectory (t, source, destination, configura
 }
 
 export function filterConfigurations (configurations) {
-  return configurations.find(c => c.only)
-    ? configurations.filter(c => c.only)
-    : configurations.filter(c => c.skip !== true)
+  const skipped = configurations.filter(c => c.skip !== true)
+  return skipped.find(c => c.only) ? skipped.filter(c => c.only) : skipped
 }
 
-export function installAndBuild (workingDirectory, temporaryRoot, configurations, skipInstall, skipBuild) {
+export function install (workingDirectory, temporaryRoot, configurations, skipInstall) {
   if (temporaryRoot) {
     test.before(t => {
       console.log(`Persistent working directory is "${temporaryRoot}".`)
@@ -339,11 +339,16 @@ export function installAndBuild (workingDirectory, temporaryRoot, configurations
       configuration.workingDirectory = resolve(temporaryRoot, configuration.id)
     }
   }
+}
 
-  if (!skipBuild) {
-    // Do not move destructuring up here since baseWorkingDirectory might the test.before and therefore empty
-    for (const configuration of configurations) {
-      test(`should build configuration "${configuration.name}"`, async t => {
+export function verifyBuildAndProductionMode (workingDirectory, configurations, skipInstall, skipBuild, pauseTimeout) {
+  configurations = filterConfigurations(configurations)
+  install(workingDirectory, temporaryWorkingDirectory, configurations, skipInstall)
+
+  // Do not move destructuring up here since workingDirectory might the test.before and therefore empty
+  for (const configuration of configurations) {
+    if (!skipBuild) {
+      test(`configuration "${configuration.name}" - should build and create all required files`, async t => {
         const { id, baseWorkingDirectory } = configuration
         configuration.workingDirectory = resolve(baseWorkingDirectory, id)
 
@@ -352,32 +357,14 @@ export function installAndBuild (workingDirectory, temporaryRoot, configurations
 
         // Build using "platformatic build"
         await execa('node', [cliPath, 'build'], { cwd: configuration.workingDirectory })
+
+        for (const file of configuration.files) {
+          await ensureExists(resolve(configuration.workingDirectory, file))
+        }
       })
     }
-  }
-}
 
-export function verifyBuild (workingDirectory, configurations, skipInstall, skipBuild) {
-  configurations = filterConfigurations(configurations)
-  installAndBuild(workingDirectory, temporaryWorkingDirectory, configurations, skipInstall, skipBuild)
-
-  // Do not move destructuring up here since workingDirectory might the test.before and therefore empty
-  for (const configuration of configurations) {
-    test(`should create all required files for configuration "${configuration.name}"`, async t => {
-      for (const file of configuration.files) {
-        await ensureExists(resolve(configuration.workingDirectory, file))
-      }
-    })
-  }
-}
-
-export function verifyProductionMode (workingDirectory, configurations, skipInstall, skipBuild, pauseTimeout) {
-  configurations = filterConfigurations(configurations)
-  installAndBuild(workingDirectory, temporaryWorkingDirectory, configurations, skipInstall, skipBuild)
-
-  // Do not move destructuring up here since workingDirectory might the test.before and therefore empty
-  for (const configuration of configurations) {
-    test(`should start configuration "${configuration.name}" in production mode`, async t => {
+    test(`configuration "${configuration.name}" - should start in production mode`, async t => {
       // Start in production mode
       const { url } = await createProductionRuntime(
         t,

@@ -13,6 +13,10 @@ import {
 } from '../../basic/test/helper.js'
 import { safeRemove } from '../../utils/index.js'
 
+process.setMaxListeners(100)
+
+const packageRoot = resolve(import.meta.dirname, '..')
+
 function websocketHMRHandler (message, resolveConnection, resolveReload) {
   switch (message.action) {
     case 'sync':
@@ -22,8 +26,6 @@ function websocketHMRHandler (message, resolveConnection, resolveReload) {
       resolveReload()
   }
 }
-
-const packageRoot = resolve(import.meta.dirname, '..')
 
 // Make sure no temporary files exist after execution
 test.afterEach(() => {

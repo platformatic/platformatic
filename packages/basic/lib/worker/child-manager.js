@@ -135,7 +135,7 @@ export class ChildManager extends ITC {
     // We write all the data to a JSON file
     await writeFile(
       this.#dataPath,
-      JSON.stringify({ data: this.#context, loader: this.loader, scripts: this.#scripts }, null, 2),
+      JSON.stringify({ data: this.#context, loader: this.#loader, scripts: this.#scripts }, null, 2),
       'utf-8'
     )
 

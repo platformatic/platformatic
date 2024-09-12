@@ -2,14 +2,13 @@ import { safeRemove } from '@platformatic/utils'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import {
-  verifyBuild,
+  verifyBuildAndProductionMode,
   verifyPlatformaticComposer,
   verifyPlatformaticDB,
-  verifyPlatformaticService,
-  verifyProductionMode
+  verifyPlatformaticService
 } from './helper.js'
 
-verifyBuild(fileURLToPath(new URL('fixtures/internal-build-and-production', import.meta.url)), [
+verifyBuildAndProductionMode(fileURLToPath(new URL('fixtures/internal-build-and-production', import.meta.url)), [
   {
     id: 'main',
     name: '@platformatic/db and @platformatic/service (in composer)',
@@ -20,14 +19,7 @@ verifyBuild(fileURLToPath(new URL('fixtures/internal-build-and-production', impo
       'services/db/dist/routes/root.js',
       'services/service/dist/plugins/example.js',
       'services/service/dist/routes/root.js'
-    ]
-  }
-])
-
-verifyProductionMode(fileURLToPath(new URL('fixtures/internal-build-and-production', import.meta.url)), [
-  {
-    id: 'main',
-    name: '@platformatic/db and @platformatic/service (in composer)',
+    ],
     checks: [verifyPlatformaticComposer, verifyPlatformaticDB, verifyPlatformaticService]
   }
 ])

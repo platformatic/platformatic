@@ -1,6 +1,8 @@
 import { fileURLToPath } from 'node:url'
 import {
+  internalServicesFiles,
   isCIOnWindows,
+  verifyBuildAndProductionMode,
   verifyFrontendAPIOnAutodetectedPrefix,
   verifyFrontendAPIOnPrefix,
   verifyFrontendAPIOnRoot,
@@ -8,26 +10,37 @@ import {
   verifyFrontendOnPrefix,
   verifyFrontendOnRoot,
   verifyPlatformaticComposer,
-  verifyPlatformaticService,
-  verifyProductionMode
+  verifyPlatformaticService
 } from '../../cli/test/helper.js'
 
+process.setMaxListeners(100)
+
+const remixFiles = ['services/frontend/build/client/assets/entry.client-*.js']
+
 const configurations = [
-  { id: 'standalone', name: 'Remix (standalone)', checks: [verifyFrontendOnRoot, verifyFrontendAPIOnRoot] },
+  {
+    id: 'standalone',
+    name: 'Remix (standalone)',
+    files: [...remixFiles],
+    checks: [verifyFrontendOnRoot, verifyFrontendAPIOnRoot]
+  },
   {
     only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Remix (in composer with prefix)',
+    files: [...remixFiles, ...internalServicesFiles],
     checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
   },
   {
     id: 'composer-without-prefix',
     name: 'Remix (in composer without prefix)',
+    files: [...remixFiles, ...internalServicesFiles],
     checks: [verifyFrontendOnRoot, verifyFrontendAPIOnRoot, verifyPlatformaticComposer, verifyPlatformaticService]
   },
   {
     id: 'composer-autodetect-prefix',
     name: 'Remix (in composer with autodetected prefix)',
+    files: [...remixFiles, ...internalServicesFiles],
     checks: [
       verifyFrontendOnAutodetectedPrefix,
       verifyFrontendAPIOnAutodetectedPrefix,
@@ -38,8 +51,9 @@ const configurations = [
   {
     id: 'composer-custom-commands',
     name: 'Remix (in composer with prefix using custom commands)',
+    files: [...remixFiles, ...internalServicesFiles],
     checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
   }
 ]
 
-verifyProductionMode(fileURLToPath(new URL('fixtures', import.meta.url)), configurations)
+verifyBuildAndProductionMode(fileURLToPath(new URL('fixtures', import.meta.url)), configurations)
