@@ -41,7 +41,7 @@ Prometheus recommends using a port different from the main application port for 
 All the configuration settings are optional. To use the default settings, set `"metrics": true`. See the [configuration reference](../db/configuration.md#metrics) for more details.md#metrics
 
 :::caution
-Use [environment variable placeholders](/reference/db/configuration.md#environment-variable-placeholders) in your Platformatic DB configuration file to avoid exposing credentials.
+Use [environment variable placeholders](../service/configuration.md#environment-variable-placeholders) in your Platformatic DB configuration file to avoid exposing credentials.
 :::
 
 ## Prometheus Configuration
