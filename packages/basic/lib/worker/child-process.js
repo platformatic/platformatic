@@ -9,6 +9,7 @@ import { basename, resolve } from 'node:path'
 import pino from 'pino'
 import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
+import { importFile } from '../utils.js'
 import { getSocketPath, isWindows } from './child-manager.js'
 
 function createInterceptor (itc) {
@@ -200,7 +201,7 @@ async function main () {
   }
 
   for (const script of scripts) {
-    await import(script)
+    await importFile(script)
   }
 
   globalThis[Symbol.for('plt.children.itc')] = new ChildProcess()

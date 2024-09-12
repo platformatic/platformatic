@@ -9,6 +9,7 @@ import { dirname, resolve } from 'node:path'
 import { workerData } from 'node:worker_threads'
 import { request } from 'undici'
 import { WebSocketServer } from 'ws'
+import { ensureFileUrl } from '../utils.js'
 
 export const isWindows = platform() === 'win32'
 
@@ -135,7 +136,15 @@ export class ChildManager extends ITC {
     // We write all the data to a JSON file
     await writeFile(
       this.#dataPath,
-      JSON.stringify({ data: this.#context, loader: this.#loader, scripts: this.#scripts }, null, 2),
+      JSON.stringify(
+        {
+          data: this.#context,
+          loader: ensureFileUrl(this.#loader),
+          scripts: this.#scripts.map(s => ensureFileUrl(s))
+        },
+        null,
+        2
+      ),
       'utf-8'
     )
 
