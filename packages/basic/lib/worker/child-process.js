@@ -95,7 +95,7 @@ class ChildProcess extends ITC {
   #pendingMessages
 
   constructor () {
-    super({ throwOnMissingHandler: false })
+    super({ throwOnMissingHandler: false, name: `${process.env.PLT_MANAGER_ID}-child-process` })
 
     const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
     this.#socket = new WebSocket(`${protocol}${getSocketPath(process.env.PLT_MANAGER_ID)}`)

@@ -54,6 +54,7 @@ export class ChildManager extends ITC {
     scripts ??= []
 
     super({
+      name: 'child-manager',
       ...itcOpts,
       handlers: {
         log: message => {
