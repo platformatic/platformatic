@@ -1,7 +1,10 @@
-import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // This is needed for GitHub actions due to https://github.com/vitejs/vite/issues/10802
+  resolve: {
+    preserveSymlinks: true
+  }
 })
