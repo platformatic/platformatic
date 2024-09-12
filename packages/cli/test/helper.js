@@ -247,15 +247,21 @@ export async function prepareWorkingDirectory (t, source, destination, configura
   }
 
   // Recreate the folder
+  console.time('Create folder')
   await safeRemove(destination)
   await createDirectory(dirname(destination))
+  console.timeEnd('Create folder')
 
   // Pack packages
+  console.time('Pack packages')
   const root = fileURLToPath(new URL('../../..', import.meta.url))
   const overrides = await packPackages(root, destination)
+  console.timeEnd('Pack packages')
 
   // Copy files
+  console.time('Copy files')
   await cp(source, destination, { recursive: true })
+  console.timeEnd('Copy files')
 
   // Start Verdaccio
   const useVerdaccio = process.env.VERDACCIO === 'true'
@@ -284,7 +290,9 @@ export async function prepareWorkingDirectory (t, source, destination, configura
 
     await writeFile(resolve(destination, 'pnpm-workspace.yaml'), workspaceFile, 'utf-8')
 
+    console.time('pnpm install')
     await execa('pnpm', ['install', '--no-frozen-lockfile'], { cwd: destination })
+    console.time('pnpm install')
   } finally {
     if (useVerdaccio) {
       await stopVerdaccio(verdaccio)
