@@ -292,7 +292,7 @@ export async function prepareWorkingDirectory (t, source, destination, configura
 
     console.time('pnpm install')
     await execa('pnpm', ['install', '--no-frozen-lockfile'], { cwd: destination })
-    console.time('pnpm install')
+    console.timeEnd('pnpm install')
   } finally {
     if (useVerdaccio) {
       await stopVerdaccio(verdaccio)
