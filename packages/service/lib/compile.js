@@ -1,18 +1,19 @@
 'use strict'
 
 const { compile } = require('@platformatic/ts-compiler')
-const { loadConfig } = require('@platformatic/config')
+const { loadConfig, Store } = require('@platformatic/config')
 const pino = require('pino')
 const pretty = require('pino-pretty')
 const { dirname } = require('path')
 
-function buildCompileCmd (app) {
+function buildCompileCmd () {
   return async function compileCmd (_args) {
     let fullPath = null
     let config = null
 
     try {
-      const { configManager } = await loadConfig({}, _args, app, {
+      const store = new Store()
+      const { configManager } = await loadConfig({}, _args, store, {
         watch: false,
       })
       await configManager.parseAndValidate()

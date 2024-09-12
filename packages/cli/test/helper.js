@@ -281,7 +281,7 @@ export async function prepareWorkingDirectory (t, source, destination, configura
     if (useVerdaccio) {
       await writeFile(resolve(destination, '.npmrc'), ```
 registry=http://localhost:${verdaccio.address().port}
-hoist=false
+hoist=true
 node-linker=hoisted
 ```, 'utf-8')
     }

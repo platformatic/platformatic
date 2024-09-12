@@ -64,7 +64,7 @@ class ServiceStackable {
 
     // This is a hack to avoid a circular dependency
     const _require = createRequire(this.context.directory)
-    const cmd =  `node ${require.resolve('@platformatic/runtime/runtime.mjs')} compile`
+    const cmd =  `node ${require.resolve('../service.mjs')} compile`
 
     logger.debug({ cmd }, "Executing...")
 
