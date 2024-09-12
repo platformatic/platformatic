@@ -13,11 +13,16 @@ export { setTimeout as sleep } from 'node:timers/promises'
 
 const HMR_TIMEOUT = process.env.CI ? 20000 : 10000
 const DEFAULT_PAUSE_TIMEOUT = 300000
-let hrmVersion = Date.now()
+
 export let fixturesDir
+let hmrTriggerFileRelative
 
 export function setFixturesDir (directory) {
   fixturesDir = directory
+}
+
+export function setHMRTriggerFile (file) {
+  hmrTriggerFileRelative = file
 }
 
 // This is used to debug tests
@@ -107,17 +112,6 @@ export async function getLogs (app) {
     .map(m => JSON.parse(m))
 }
 
-export async function upsertVersionFile (versionFile) {
-  versionFile ??= resolve(fixturesDir, './tmp/version.js')
-  await createDirectory(dirname(versionFile))
-  await writeFile(versionFile, `export const version = ${hrmVersion++}\n`, 'utf-8')
-
-  // On the CI, give sometime for the file to be written
-  if (process.env.CI) {
-    await sleep(1000)
-  }
-}
-
 export async function verifyJSONViaHTTP (baseUrl, path, expectedCode, expectedContent) {
   const { statusCode, body } = await request(baseUrl + path, { maxRedirections: 1 })
   strictEqual(statusCode, expectedCode)
@@ -194,13 +188,15 @@ export async function verifyHMR (baseUrl, path, protocol, handler) {
     handler(JSON.parse(data), connection.resolve, reload.resolve)
   })
 
+  const hmrTriggerFile = resolve(fixturesDir, hmrTriggerFileRelative)
+  const originalContents = await readFile(hmrTriggerFile, 'utf-8')
   try {
     if ((await Promise.race([connection.promise, timeout])) === 'timeout') {
       throw new Error('Timeout while waiting for HMR connection')
     }
 
-    await sleep(1000)
-    await upsertVersionFile()
+    await sleep(500)
+    await writeFile(hmrTriggerFile, originalContents.replace('const version = 123', 'const version = 456'), 'utf-8')
 
     if ((await Promise.race([reload.promise, timeout])) === 'timeout') {
       throw new Error('Timeout while waiting for HMR reload')
@@ -208,5 +204,6 @@ export async function verifyHMR (baseUrl, path, protocol, handler) {
   } finally {
     webSocket.terminate()
     ac.abort()
+    await writeFile(hmrTriggerFile, originalContents, 'utf-8')
   }
 }

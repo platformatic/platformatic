@@ -10,7 +10,7 @@ import { basename, dirname, resolve } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { runServer } from 'verdaccio'
-import { pause, upsertVersionFile, verifyHTMLViaHTTP, verifyJSONViaHTTP } from '../../basic/test/helper.js'
+import { pause, verifyHTMLViaHTTP, verifyJSONViaHTTP } from '../../basic/test/helper.js'
 import { loadConfig } from '../../config/index.js'
 import { buildServer, platformaticRuntime } from '../../runtime/index.js'
 
@@ -351,9 +351,6 @@ export function verifyBuildAndProductionMode (workingDirectory, configurations, 
       test(`configuration "${configuration.name}" - should build and create all required files`, async t => {
         const { id, baseWorkingDirectory } = configuration
         configuration.workingDirectory = resolve(baseWorkingDirectory, id)
-
-        // Create the version file, required for the frontends
-        upsertVersionFile(resolve(configuration.workingDirectory, 'tmp/version.js'))
 
         // Build using "platformatic build"
         await execa('node', [cliPath, 'build'], { cwd: configuration.workingDirectory })

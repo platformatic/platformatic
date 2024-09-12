@@ -1,5 +1,5 @@
 import neostandard from 'neostandard'
 
 export default neostandard({
-  ignores: ['test/tmp/version.js', '**/.vite', '**/tmp']
+  ignores: ['**/.vite', '**/tmp']
 })
