@@ -149,7 +149,10 @@ export class BaseStackable {
       )
 
       if (exitCode !== 0) {
-        throw new Error(`Building failed with exit code ${exitCode}:\n\n${output}`)
+        process._rawDebug('----')
+        process._rawDebug(output)
+        process._rawDebug('----')
+        throw new Error(`Building has failed with exit code ${exitCode}:\n\n${output}`)
       }
     } finally {
       await this.#childManager.eject()
