@@ -7,5 +7,9 @@ const root = resolve(dirname(path), 'client')
 export default {
   root,
   base: globalThis.platformatic?.basePath ?? '/',
-  logLevel: globalThis.platformatic?.logLevel ?? 'info'
+  logLevel: globalThis.platformatic?.logLevel ?? 'info',
+  // This is needed for GitHub actions due to https://github.com/vitejs/vite/issues/10802
+  resolve: {
+    preserveSymlinks: true
+  }
 }
