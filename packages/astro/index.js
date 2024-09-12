@@ -256,7 +256,7 @@ export class AstroStackable extends BaseStackable {
     const ssrEntrypoint = resolve(this.root, outputDirectory, 'server/entry.mjs')
 
     if (existsSync(ssrEntrypoint)) {
-      const { handler } = await import(ssrEntrypoint)
+      const { handler } = await importFile(ssrEntrypoint)
 
       await this.#app.register(fastifyStatic, {
         root: resolve(this.root, outputDirectory, 'client'),

@@ -111,6 +111,11 @@ export async function upsertVersionFile (versionFile) {
   versionFile ??= resolve(fixturesDir, './tmp/version.js')
   await createDirectory(dirname(versionFile))
   await writeFile(versionFile, `export const version = ${hrmVersion++}\n`, 'utf-8')
+
+  // On the CI, give sometime for the file to be written
+  if (process.env.CI) {
+    await sleep(1000)
+  }
 }
 
 export async function verifyJSONViaHTTP (baseUrl, path, expectedCode, expectedContent) {

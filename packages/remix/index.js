@@ -178,7 +178,7 @@ export class RemixStackable extends ViteStackable {
     const outputDirectory = this.configManager.current.remix.outputDirectory
     this.verifyOutputDirectory(resolve(this.root, outputDirectory))
 
-    const build = await import(resolve(this.root, `${outputDirectory}/server/index.js`))
+    const build = await importFile(resolve(this.root, `${outputDirectory}/server/index.js`))
     this.#basePath = ensureTrailingSlash(cleanBasePath(build.basename))
 
     this.#app = express()

@@ -82,4 +82,4 @@ const configurations = [
   }
 ]
 
-verifyBuildAndProductionMode(fileURLToPath(new URL('fixtures', import.meta.url)), configurations, true)
+verifyBuildAndProductionMode(fileURLToPath(new URL('fixtures', import.meta.url)), configurations)

@@ -39,9 +39,23 @@ export async function injectViaRequest (baseUrl, injectParams, onInject) {
   }
 }
 
+export function ensureFileUrl (pathOrUrl) {
+  if (!pathOrUrl) {
+    return pathOrUrl
+  }
+
+  pathOrUrl = pathOrUrl.toString()
+
+  if (pathOrUrl.startsWith('file://')) {
+    return pathOrUrl
+  }
+
+  return pathToFileURL(pathOrUrl)
+}
+
 // This is to avoid common path/URL problems on Windows
 export function importFile (path) {
-  return import(pathToFileURL(path))
+  return import(ensureFileUrl(path))
 }
 
 export function resolvePackage (root, pkg) {
