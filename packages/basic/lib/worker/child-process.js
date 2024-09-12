@@ -1,5 +1,5 @@
 import { ITC } from '@platformatic/itc'
-import { DestinationWritable, createPinoWritable } from '@platformatic/utils'
+import { DestinationWritable } from '@platformatic/utils'
 import { tracingChannel } from 'node:diagnostics_channel'
 import { once } from 'node:events'
 import { readFile } from 'node:fs/promises'
@@ -158,8 +158,8 @@ class ChildProcess extends ITC {
       destination
     )
 
-    Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(this.#logger, 'info') })
-    Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(this.#logger, 'error') })
+    // Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(this.#logger, 'info') })
+    // Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(this.#logger, 'error') })
   }
 
   #setupServer () {
