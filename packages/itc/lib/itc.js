@@ -113,9 +113,16 @@ class ITC extends EventEmitter {
   #keepAlive
   #keepAliveCount
 
-  constructor ({ port, handlers, throwOnMissingHandler }) {
+  constructor ({ port, handlers, throwOnMissingHandler, name }) {
     super()
 
+    if (!name) {
+      throw new Error('missing name')
+    }
+
+    // The name property is useful only for debugging purposes.
+    // Without it, it's impossible to know which "side" of the ITC is being used.
+    this.name = name
     this.port = port
     this.#requestEmitter = new EventEmitter()
     this.#handlers = new Map()
@@ -136,7 +143,10 @@ class ITC extends EventEmitter {
       We unref() it again as soon as the response is received.
       This ensures the event loop stays up as intended.
     */
-    this.#keepAlive = setInterval(() => {}, 60000).unref()
+    this.#keepAlive = setInterval(() => {
+      // Debugging line used to know who is not closing the ITC
+      // process._rawDebug('Keep alive', this.name, this.#keepAliveCount)
+    }, 10000).unref()
     this.#keepAliveCount = 0
 
     // Register handlers provided with the constructor
@@ -205,6 +215,8 @@ class ITC extends EventEmitter {
     this.#closePromise = this._createClosePromise().then(() => {
       this.#listening = false
       const error = new errors.MessagePortClosed()
+      clearInterval(this.#keepAlive)
+      this.#keepAliveCount = -1000
       return { error, data: null }
     })
   }
@@ -231,7 +243,8 @@ class ITC extends EventEmitter {
   }
 
   _close () {
-    this.port.close()
+    clearTimeout(this.#keepAlive)
+    this.port?.close?.()
   }
 
   async #handleRequest (raw) {
