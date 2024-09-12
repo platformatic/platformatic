@@ -115,6 +115,9 @@ class ChildProcess extends ITC {
     this.#listener = listener
 
     this.#socket.on('open', () => {
+      // Never hang the process on this socket.
+      this.#socket._socket.unref()
+
       for (const message of this.#pendingMessages) {
         this.#socket.send(message)
       }
