@@ -10,5 +10,8 @@ export default defineConfig({
         globalThis[Symbol.for('plt.children.itc')]?.notify('config', config)
       }
     }
-  ]
+  ],
+  resolve: {
+    preserveSymlinks: true
+  }
 })
