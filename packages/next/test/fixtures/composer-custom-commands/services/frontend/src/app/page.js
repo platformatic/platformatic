@@ -1,4 +1,4 @@
-import { version } from '../../../../tmp/version.js'
+const version = 123
 
 export default function Home () {
   return <div>Hello from v{version}</div>

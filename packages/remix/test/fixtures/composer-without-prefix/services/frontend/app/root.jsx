@@ -1,6 +1,7 @@
 import { json } from '@remix-run/node'
 import { Links, Meta, Outlet, Scripts, useLoaderData } from '@remix-run/react'
-import { version } from '../../../tmp/version.js'
+
+const version = 123
 
 export async function loader () {
   const response = await fetch('http://backend.plt.local/time')

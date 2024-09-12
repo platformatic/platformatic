@@ -1,4 +1,4 @@
-import { version } from '../../../tmp/version.js'
+const version = 123
 
 export async function generate () {
   const response = await fetch('http://backend.plt.local/time')
