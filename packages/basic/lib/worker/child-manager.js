@@ -107,7 +107,8 @@ export class ChildManager extends ITC {
           { error: errors.ensureLoggableError(error) },
           'Error while communicating with the children process.'
         )
-        process.exit(1)
+        process._rawDebug(error)
+        process.exit(3)
       })
     })
 
