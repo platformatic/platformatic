@@ -12,6 +12,7 @@ import {
 import { safeRemove } from '../../utils/index.js'
 
 process.setMaxListeners(100)
+
 const packageRoot = resolve(import.meta.dirname, '..')
 
 function isTime (body) {

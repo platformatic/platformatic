@@ -114,9 +114,6 @@ class ChildProcess extends ITC {
     this.#listener = listener
 
     this.#socket.on('open', () => {
-      // Never hang the process due to this socket
-      this.#socket._socket.unref()
-
       for (const message of this.#pendingMessages) {
         this.#socket.send(message)
       }
@@ -126,7 +123,8 @@ class ChildProcess extends ITC {
       this.#listener(JSON.parse(message))
     })
 
-    this.#socket.on('error', () => {
+    this.#socket.on('error', error => {
+      process._rawDebug(error)
       // There is nothing to log here as the connection with the parent thread is lost. Exit with a special code
       process.exit(2)
     })
@@ -198,7 +196,7 @@ async function main () {
   globalThis.platformatic = data
 
   if (loader) {
-    register(global.loader, { data })
+    register(loader, { data })
   }
 
   for (const script of scripts) {
