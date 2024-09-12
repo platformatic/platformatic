@@ -110,6 +110,8 @@ class ITC extends EventEmitter {
   #closePromise
   #closeAfterCurrentRequest
   #throwOnMissingHandler
+  #keepAlive
+  #keepAliveCount
 
   constructor ({ port, handlers, throwOnMissingHandler }) {
     super()
@@ -125,6 +127,18 @@ class ITC extends EventEmitter {
     // Make sure the emitter handle a lot of listeners at once before raising a warning
     this.#requestEmitter.setMaxListeners(1e3)
 
+    /*
+      There some contexts in which a message is sent and the event loop empties up while waiting for a response.
+      For instance @platformatic/astro when doing build with custom commands.
+
+      The interval below is immediately unref() after creation.
+      Everytime a message is sent and awaiting for a response we ref() it.
+      We unref() it again as soon as the response is received.
+      This ensures the event loop stays up as intended.
+    */
+    this.#keepAlive = setInterval(() => {}, 60000).unref()
+    this.#keepAliveCount = 0
+
     // Register handlers provided with the constructor
     if (typeof handlers === 'object') {
       for (const [name, fn] of Object.entries(handlers)) {
@@ -138,16 +152,22 @@ class ITC extends EventEmitter {
       throw new errors.SendBeforeListen()
     }
 
-    const request = generateRequest(name, message)
+    try {
+      this.#enableKeepAlive()
 
-    this._send(request)
+      const request = generateRequest(name, message)
 
-    const responsePromise = once(this.#requestEmitter, request.reqId).then(([response]) => response)
+      this._send(request)
 
-    const { error, data } = await Unpromise.race([responsePromise, this.#closePromise])
+      const responsePromise = once(this.#requestEmitter, request.reqId).then(([response]) => response)
 
-    if (error !== null) throw error
-    return data
+      const { error, data } = await Unpromise.race([responsePromise, this.#closePromise])
+
+      if (error !== null) throw error
+      return data
+    } finally {
+      this.#manageKeepAlive()
+    }
   }
 
   async notify (name, message) {
@@ -270,6 +290,23 @@ class ITC extends EventEmitter {
 
     const reqId = response.reqId
     this.#requestEmitter.emit(reqId, response)
+  }
+
+  #enableKeepAlive () {
+    this.#keepAlive.ref()
+    this.#keepAliveCount++
+  }
+
+  #manageKeepAlive () {
+    this.#keepAliveCount--
+
+    /* c8 ignore next 3 */
+    if (this.#keepAliveCount > 0) {
+      return
+    }
+
+    this.#keepAlive.unref()
+    this.#keepAliveCount = 0
   }
 }
 
