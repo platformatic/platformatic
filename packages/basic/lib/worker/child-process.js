@@ -6,6 +6,7 @@ import { readFile } from 'node:fs/promises'
 import { register } from 'node:module'
 import { platform, tmpdir } from 'node:os'
 import { basename, resolve } from 'node:path'
+import { isMainThread } from 'node:worker_threads'
 import pino from 'pino'
 import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
@@ -153,8 +154,11 @@ export class ChildProcess extends ITC {
       }
     })
 
-    Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(this.#logger, 'info') })
-    Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(this.#logger, 'error') })
+    // Since this is executed by user code, make sure we only override this in the main thread
+    if (isMainThread) {
+      Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(this.#logger, 'info') })
+      Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(this.#logger, 'error') })
+    }
   }
 
   #setupServer () {
@@ -189,6 +193,7 @@ export class ChildProcess extends ITC {
 
   #setupHandlers () {
     function handleUnhandled (type, err) {
+      process._rawDebug(globalThis.platformatic.id, err)
       this.#logger.error(
         { err: errors.ensureLoggableError(err) },
         `Child process for service ${globalThis.platformatic.id} threw an ${type}.`
