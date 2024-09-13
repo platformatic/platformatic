@@ -1181,6 +1181,9 @@ importers:
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
+      scheduler:
+        specifier: ^0.23.2
+        version: 0.23.2
       undici:
         specifier: ^6.9.0
         version: 6.19.8
