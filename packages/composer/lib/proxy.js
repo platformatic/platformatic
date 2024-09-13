@@ -23,7 +23,7 @@ async function resolveServiceProxyParameters (service) {
   const a = process.hrtime()
   process._rawDebug('proxy get for', service.id)
   const meta = (await globalThis[kITC]?.send('getServiceMeta', service.id))?.composer ?? {}
-  process._rawDebug('proxy get for', service.id, process.hrtime(a))
+  process._rawDebug('proxy get for', service.id, process.hrtime(a), meta)
 
   if (meta.tcp) {
     origin = meta.url
