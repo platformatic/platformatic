@@ -118,7 +118,7 @@ test('should detect and start a Remix application in development mode when expos
   await verifyJSONViaInject(runtime, 'backend', 'GET', '/mesh', 200, { ok: true })
 })
 
-test.only('should detect and start a Remix application in development mode when exposed in a composer with a prefix using custom commands', async t => {
+test('should detect and start a Remix application in development mode when exposed in a composer with a prefix using custom commands', async t => {
   setFixturesDir(resolve(import.meta.dirname, './fixtures/composer-custom-commands'))
 
   const { runtime, url } = await createRuntime(t, 'platformatic.runtime.json', packageRoot)
