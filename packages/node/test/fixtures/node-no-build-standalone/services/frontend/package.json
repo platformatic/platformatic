@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "node --import tsx src/index.ts",
     "start": "node dist/index.js",
-    "precustom-build": "node --input-type module -e \"import {mkdirSync,writeFileSync} from 'fs'; mkdirSync('dist/pre', {recursive: true}); writeFileSync('dist/pre/timestamp', Date.now().toString())\"",
+    "precustom-build": "node -e \"const {mkdirSync,writeFileSync} = require('fs'); mkdirSync('dist/pre', {recursive: true}); writeFileSync('dist/pre/timestamp', Date.now().toString())\"",
     "custom-build": "tsc -P ."
   },
   "dependencies": {

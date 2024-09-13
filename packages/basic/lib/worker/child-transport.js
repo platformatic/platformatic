@@ -28,15 +28,26 @@ export default async function (opts) {
 
     await once(socket, 'open')
 
+    // Do not process responses but empty the socket inbound queue
+    socket.on('message', () => {})
+
     socket.on('error', error => {
       logDirectError('threw a socket error', error)
     })
 
-    return build(async function (source) {
-      for await (const obj of source) {
-        socket.send(JSON.stringify(generateRequest('log', { logs: [obj] })))
+    return build(
+      async function (source) {
+        for await (const obj of source) {
+          socket.send(JSON.stringify(generateRequest('log', { logs: [obj] })))
+        }
+      },
+      {
+        close (_, cb) {
+          socket.close()
+          cb()
+        }
       }
-    })
+    )
   } catch (error) {
     logDirectError('threw a connection error', error)
   }

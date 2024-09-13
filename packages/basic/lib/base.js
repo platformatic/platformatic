@@ -120,11 +120,11 @@ export class BaseStackable {
   }
 
   async buildWithCommand (command, basePath, loader) {
-    if (typeof command === 'string') {
-      this.logger.debug(`Executing '${command}' ...`)
-    } else {
-      this.logger.debug(`Executing '${command.join(' ')}' ...`)
+    if (Array.isArray(command)) {
+      command = command.join(' ')
     }
+
+    this.logger.debug(`Executing "${command}" ...`)
 
     this.#childManager = new ChildManager({
       logger: this.logger,
