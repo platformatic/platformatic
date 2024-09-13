@@ -87,7 +87,11 @@ function sanitize (data) {
 
   let sanitized
 
-  if (Array.isArray(data)) {
+  if (Buffer.isBuffer(data)) {
+    return {
+      data: Array.from(data.values())
+    }
+  } else if (Array.isArray(data)) {
     sanitized = []
 
     for (const value of data) {

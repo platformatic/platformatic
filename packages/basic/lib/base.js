@@ -198,6 +198,15 @@ export class BaseStackable {
 
       this.subprocess = this.spawn(command)
 
+      // Route anything not catched by child process logger to the logger manually
+      this.subprocess.stdout.pipe(split2()).on('data', line => {
+        this.logger.info(line)
+      })
+
+      this.subprocess.stderr.pipe(split2()).on('data', line => {
+        this.logger.error(line)
+      })
+
       // Wait for the process to be started
       await new Promise((resolve, reject) => {
         this.subprocess.on('spawn', resolve)
