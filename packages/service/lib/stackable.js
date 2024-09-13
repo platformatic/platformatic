@@ -5,6 +5,8 @@ const { printSchema } = require('graphql')
 const pino = require('pino')
 const httpMetrics = require('@platformatic/fastify-http-metrics')
 const { executeCommand } = require('@platformatic/utils')
+const { extractTypeScriptCompileOptionsFromConfig } = require('./compile')
+const { compile } = require('@platformatic/ts-compiler')
 
 class ServiceStackable {
   constructor (options) {
@@ -57,20 +59,16 @@ class ServiceStackable {
   }
 
   async build () {
-    // We don't use this.app.log as the app has not being initialized.
-    const logger = globalThis.platformatic.logger
-
-    logger.debug("Executing 'platformatic compile' ...")
-
-    const { exitCode } = await executeCommand(
-      this.context.directory,
-      'platformatic compile',
-      logger,
-      'Compilation failed with exit code {EXIT_CODE}'
-    )
-
-    if (exitCode !== 0) {
-      throw new Error(`Building failed with exit code ${exitCode}`)
+    this.#initLogger()
+    const typeScriptCompileOptions = extractTypeScriptCompileOptionsFromConfig(this.configManager.current)
+    const cwd = dirname(this.configManager.fullPath)
+    const compileOptions = {
+      ...typeScriptCompileOptions,
+      cwd,
+      logger: this.configManager.current.server.logger,
+    }
+    if (!await compile(compileOptions)){
+      throw new Error(`Failed to compile ${cwd}`)
     }
   }
 
