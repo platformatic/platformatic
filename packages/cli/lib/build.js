@@ -1,6 +1,7 @@
 import platformaticBasic from '@platformatic/basic'
 import { Store, loadConfig as pltConfigLoadConfig } from '@platformatic/config'
 import { buildRuntime, platformaticRuntime } from '@platformatic/runtime'
+import { errors } from '@platformatic/utils'
 
 async function loadConfig (minimistConfig, args, overrides, replaceEnv = true) {
   const store = new Store()
@@ -23,7 +24,18 @@ export async function build (args) {
 
   for (const { id } of services) {
     logger.info(`Building service "${id}" ...`)
-    await runtime.buildService(id)
+
+    try {
+      await runtime.buildService(id)
+    } catch (error) {
+      if (error.code === 'PLT_BASIC_NON_ZERO_EXIT_CODE') {
+        logger.error(`Building service "${id}" has failed with exit code ${error.exitCode}.`)
+      } else {
+        logger.error({ err: errors.ensureLoggableError(error) }, `Building service "${id}" has throw an exception.`)
+      }
+
+      process.exit(1)
+    }
   }
 
   logger.info('✅ All services have been built.')

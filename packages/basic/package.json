@@ -28,7 +28,9 @@
     "@platformatic/utils": "workspace:*",
     "execa": "^9.3.1",
     "pino": "^9.3.2",
+    "pino-abstract-transport": "^2.0.0",
     "semver": "^7.6.3",
+    "split2": "^4.2.0",
     "undici": "^6.19.5",
     "ws": "^8.18.0"
   },

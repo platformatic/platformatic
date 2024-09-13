@@ -352,8 +352,15 @@ export function verifyBuildAndProductionMode (workingDirectory, configurations, 
         const { id, baseWorkingDirectory } = configuration
         configuration.workingDirectory = resolve(baseWorkingDirectory, id)
 
+        const runtimeConfig = JSON.parse(
+          await readFile(resolve(configuration.workingDirectory, 'platformatic.runtime.json'))
+        )
+
         // Build using "platformatic build"
-        await execa('node', [cliPath, 'build'], { cwd: configuration.workingDirectory })
+        await execa('node', [cliPath, 'build'], {
+          cwd: configuration.workingDirectory,
+          stdio: runtimeConfig.server?.logger?.level !== 'error' ? 'inherit' : undefined
+        })
 
         for (const file of configuration.files) {
           await ensureExists(resolve(configuration.workingDirectory, file))

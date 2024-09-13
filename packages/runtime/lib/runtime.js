@@ -310,7 +310,7 @@ class Runtime extends EventEmitter {
     }
 
     try {
-      return await service[kITC].send('build')
+      return await sendViaITC(service, 'build')
     } catch (e) {
       // The service exports no meta, return an empty object
       if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
@@ -670,7 +670,7 @@ class Runtime extends EventEmitter {
     }
 
     try {
-      return await service[kITC].send('getServiceMeta')
+      return await sendViaITC(service, 'getServiceMeta')
     } catch (e) {
       // The service exports no meta, return an empty object
       if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {

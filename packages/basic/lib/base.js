@@ -1,4 +1,3 @@
-import { executeCommand } from '@platformatic/utils'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
@@ -6,6 +5,8 @@ import { existsSync } from 'node:fs'
 import { platform } from 'node:os'
 import { pathToFileURL } from 'node:url'
 import pino from 'pino'
+import split2 from 'split2'
+import { NonZeroExitCode } from './errors.js'
 import { cleanBasePath } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
 
@@ -141,18 +142,29 @@ export class BaseStackable {
     try {
       await this.#childManager.inject()
 
-      const { exitCode, output } = await executeCommand(
-        this.options.context.directory,
-        command,
-        this.logger,
-        'Execution failed with exit code {EXIT_CODE}'
-      )
+      const subprocess = this.spawn(command)
+
+      // Wait for the process to be started
+      await new Promise((resolve, reject) => {
+        subprocess.on('spawn', resolve)
+        subprocess.on('error', reject)
+      })
+
+      // Route anything not catched by child process logger to the logger manually
+      subprocess.stdout.pipe(split2()).on('data', line => {
+        this.logger.info(line)
+      })
+
+      subprocess.stderr.pipe(split2()).on('data', line => {
+        this.logger.error(line)
+      })
+
+      const [exitCode] = await once(subprocess, 'exit')
 
       if (exitCode !== 0) {
-        process._rawDebug('----')
-        process._rawDebug(output)
-        process._rawDebug('----')
-        throw new Error(`Building has failed with exit code ${exitCode}:\n\n${output}`)
+        const error = new NonZeroExitCode(exitCode)
+        error.exitCode = exitCode
+        throw error
       }
     } finally {
       await this.#childManager.eject()
@@ -182,15 +194,11 @@ export class BaseStackable {
     })
 
     try {
-      const [executable, ...args] = parseCommandString(command)
-
       await this.#childManager.inject()
 
-      this.subprocess =
-        platform() === 'win32'
-          ? spawn(command, { cwd: this.root, shell: true, windowsVerbatimArguments: true })
-          : spawn(executable, args, { cwd: this.root })
+      this.subprocess = this.spawn(command)
 
+      // Wait for the process to be started
       await new Promise((resolve, reject) => {
         this.subprocess.on('spawn', resolve)
         this.subprocess.on('error', reject)
@@ -221,5 +229,13 @@ export class BaseStackable {
     this.#childManager.close(this.subprocessTerminationSignal ?? 'SIGINT')
     this.subprocess.kill(this.subprocessTerminationSignal ?? 'SIGINT')
     await exitPromise
+  }
+
+  spawn (command) {
+    const [executable, ...args] = parseCommandString(command)
+
+    return platform() === 'win32'
+      ? spawn(command, { cwd: this.root, shell: true, windowsVerbatimArguments: true })
+      : spawn(executable, args, { cwd: this.root })
   }
 }

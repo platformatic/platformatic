@@ -99,9 +99,15 @@ importers:
       pino:
         specifier: ^9.3.2
         version: 9.4.0
+      pino-abstract-transport:
+        specifier: ^2.0.0
+        version: 2.0.0
       semver:
         specifier: ^7.6.3
         version: 7.6.3
+      split2:
+        specifier: ^4.2.0
+        version: 4.2.0
       undici:
         specifier: ^6.19.5
         version: 6.19.8
@@ -2364,18 +2370,12 @@ importers:
       '@watchable/unpromise':
         specifier: ^1.0.2
         version: 1.0.2
-      execa:
-        specifier: ^9.3.1
-        version: 9.3.1
       leven:
         specifier: ~3.1.0
         version: 3.1.0
       minimatch:
         specifier: ^8.0.4
         version: 8.0.4
-      split2:
-        specifier: ^4.2.0
-        version: 4.2.0
       undici:
         specifier: ^6.9.0
         version: 6.19.8
@@ -7633,6 +7633,9 @@ packages:
 
   pino-abstract-transport@1.2.0:
     resolution: {integrity: sha512-Guhh8EZfPCfH+PMXAb6rKOjGQEoy0xlAIn+irODG5kgfYV+BQ0rGYYWTIel3P5mmyXqkYkPmdIkywsn6QKUR1Q==}
+
+  pino-abstract-transport@2.0.0:
+    resolution: {integrity: sha512-F63x5tizV6WCh4R6RHyi2Ml+M70DNRXt/+HANowMflpgGFMAym/VKm6G7ZOQRjqN7XbGxK1Lg9t6ZrtzOaivMw==}
 
   pino-http@10.2.0:
     resolution: {integrity: sha512-am03BxnV3Ckx68OkbH0iZs3indsrH78wncQ6w1w51KroIbvJZNImBKX2X1wjdY8lSyaJ0UrX/dnO2DY3cTeCRw==}
@@ -15647,6 +15650,10 @@ snapshots:
   pino-abstract-transport@1.2.0:
     dependencies:
       readable-stream: 4.5.2
+      split2: 4.2.0
+
+  pino-abstract-transport@2.0.0:
+    dependencies:
       split2: 4.2.0
 
   pino-http@10.2.0:

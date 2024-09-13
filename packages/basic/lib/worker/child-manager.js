@@ -9,6 +9,7 @@ import { dirname, resolve } from 'node:path'
 import { workerData } from 'node:worker_threads'
 import { request } from 'undici'
 import { WebSocketServer } from 'ws'
+import { exitCodes } from '../errors.js'
 import { ensureFileUrl } from '../utils.js'
 
 export const isWindows = platform() === 'win32'
@@ -92,10 +93,13 @@ export class ChildManager extends ITC {
       this.#clients.add(ws)
 
       ws.on('message', raw => {
-        const message = JSON.parse(raw)
-
-        this.#requests.set(message.reqId, ws)
-        this.#listener(message)
+        try {
+          const message = JSON.parse(raw)
+          this.#requests.set(message.reqId, ws)
+          this.#listener(message)
+        } catch (error) {
+          this.#handleUnexpectedError(error, 'Handling a message failed.', exitCodes.MANAGER_MESSAGE_HANDLING_FAILED)
+        }
       })
 
       ws.on('close', () => {
@@ -103,12 +107,11 @@ export class ChildManager extends ITC {
       })
 
       ws.on('error', error => {
-        this.#logger.error(
-          { error: errors.ensureLoggableError(error) },
-          'Error while communicating with the children process.'
+        this.#handleUnexpectedError(
+          error,
+          'Error while communicating with the children process.',
+          exitCodes.MANAGER_SOCKET_ERROR
         )
-        process._rawDebug(error)
-        process.exit(3)
       })
     })
 
@@ -196,17 +199,8 @@ export class ChildManager extends ITC {
   }
 
   #log (message) {
-    const messages = []
-
-    for (const raw of JSON.parse(message).logs) {
-      const log = JSON.parse(raw)
-
-      for (const line of log.raw.split('\n')) {
-        messages.push(JSON.stringify({ ...log, raw: line }))
-      }
-    }
-
-    workerData.loggingPort.postMessage({ logs: messages })
+    const logs = Array.isArray(message.logs) ? message.logs : [message.logs]
+    workerData.loggingPort.postMessage({ logs: logs.map(m => JSON.stringify(m)) })
   }
 
   async #fetch (opts) {
@@ -216,5 +210,10 @@ export class ChildManager extends ITC {
     const payload = rawPayload.toString()
 
     return { statusCode, headers, body: payload, payload, rawPayload }
+  }
+
+  #handleUnexpectedError (error, message, exitCode) {
+    this.#logger.error({ err: errors.ensureLoggableError(error) }, message)
+    process.exit(exitCode)
   }
 }

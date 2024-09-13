@@ -385,7 +385,8 @@ test('should sanitize a request before sending', async t => {
       test: 'test-req-message',
       foo: () => {},
       bar: Symbol('test')
-    }
+    },
+    array: [1, 2, { a: 1 }]
   }
   const testResponse = { test: 'test-res-message' }
 
@@ -406,7 +407,8 @@ test('should sanitize a request before sending', async t => {
   assert.deepStrictEqual(requests, [
     {
       test: 'test-req-message',
-      nested: { test: 'test-req-message' }
+      nested: { test: 'test-req-message' },
+      array: [1, 2, { a: 1 }]
     }
   ])
 })

@@ -1,5 +1,5 @@
 import { ITC } from '@platformatic/itc'
-import { DestinationWritable } from '@platformatic/utils'
+import { createPinoWritable, errors } from '@platformatic/utils'
 import { tracingChannel } from 'node:diagnostics_channel'
 import { once } from 'node:events'
 import { readFile } from 'node:fs/promises'
@@ -9,6 +9,7 @@ import { basename, resolve } from 'node:path'
 import pino from 'pino'
 import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
+import { exitCodes } from '../errors.js'
 import { importFile } from '../utils.js'
 import { getSocketPath, isWindows } from './child-manager.js'
 
@@ -72,22 +73,7 @@ function createInterceptor (itc) {
   }
 }
 
-class ChildProcessWritable extends DestinationWritable {
-  #itc
-
-  constructor (options) {
-    const { itc, ...opts } = options
-
-    super(opts)
-    this.#itc = itc
-  }
-
-  _send (message) {
-    this.#itc.send('log', JSON.stringify(message))
-  }
-}
-
-class ChildProcess extends ITC {
+export class ChildProcess extends ITC {
   #listener
   #socket
   #child
@@ -103,6 +89,7 @@ class ChildProcess extends ITC {
 
     this.listen()
     this.#setupLogger()
+    this.#setupHandlers()
     this.#setupServer()
     this.#setupInterceptors()
 
@@ -124,13 +111,18 @@ class ChildProcess extends ITC {
     })
 
     this.#socket.on('message', message => {
-      this.#listener(JSON.parse(message))
+      try {
+        this.#listener(JSON.parse(message))
+      } catch (error) {
+        this.#logger.error({ err: errors.ensureLoggableError(error) }, 'Handling a message failed.')
+        process.exit(exitCodes.PROCESS_MESSAGE_HANDLING_FAILED)
+      }
     })
 
     this.#socket.on('error', error => {
       process._rawDebug(error)
       // There is nothing to log here as the connection with the parent thread is lost. Exit with a special code
-      process.exit(2)
+      process.exit(exitCodes.PROCESS_SOCKET_ERROR)
     })
   }
 
@@ -152,14 +144,17 @@ class ChildProcess extends ITC {
   }
 
   #setupLogger () {
-    const destination = new ChildProcessWritable({ itc: this })
-    this.#logger = pino(
-      { level: 'info', name: globalThis.platformatic.id, ...globalThis.platformatic.logger },
-      destination
-    )
+    this.#logger = pino({
+      level: 'trace',
+      name: globalThis.platformatic.id,
+      transport: {
+        target: new URL('./child-transport.js', import.meta.url).toString(),
+        options: { id: globalThis.platformatic.id }
+      }
+    })
 
-    // Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(this.#logger, 'info') })
-    // Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(this.#logger, 'error') })
+    Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(this.#logger, 'info') })
+    Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(this.#logger, 'error') })
   }
 
   #setupServer () {
@@ -190,6 +185,20 @@ class ChildProcess extends ITC {
 
   #setupInterceptors () {
     setGlobalDispatcher(getGlobalDispatcher().compose(createInterceptor(this)))
+  }
+
+  #setupHandlers () {
+    function handleUnhandled (type, err) {
+      this.#logger.error(
+        { err: errors.ensureLoggableError(err) },
+        `Child process for service ${globalThis.platformatic.id} threw an ${type}.`
+      )
+
+      process.exit(exitCodes.PROCESS_UNHANDLED_ERROR)
+    }
+
+    process.on('uncaughtException', handleUnhandled.bind(this, 'uncaught exception'))
+    process.on('unhandledRejection', handleUnhandled.bind(this, 'unhandled rejection'))
   }
 }
 

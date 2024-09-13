@@ -42,16 +42,12 @@ function generateRequest (name, data) {
     throw new errors.RequestNameIsNotString(name.toString())
   }
 
-  if (typeof data === 'object') {
-    data = sanitize(data)
-  }
-
   return {
     type: PLT_ITC_REQUEST_TYPE,
     version: PLT_ITC_VERSION,
     reqId: randomUUID(),
     name,
-    data
+    data: sanitize(data)
   }
 }
 
@@ -62,7 +58,7 @@ function generateResponse (request, error, data) {
     reqId: request.reqId,
     name: request.name,
     error,
-    data
+    data: sanitize(data)
   }
 }
 
@@ -71,7 +67,7 @@ function generateNotification (name, data) {
     type: PLT_ITC_NOTIFICATION_TYPE,
     version: PLT_ITC_VERSION,
     name,
-    data
+    data: sanitize(data)
   }
 }
 
@@ -85,21 +81,40 @@ function generateUnhandledErrorResponse (error) {
 }
 
 function sanitize (data) {
-  const sanitizedObject = {}
-  for (const key in data) {
-    const value = data[key]
-    const type = typeof value
+  if (!data || typeof data !== 'object') {
+    return data
+  }
 
-    if (type === 'object') {
-      sanitizedObject[key] = sanitize(value)
-      continue
+  let sanitized
+
+  if (Array.isArray(data)) {
+    sanitized = []
+
+    for (const value of data) {
+      const valueType = typeof value
+
+      /* c8 ignore next 3 */
+      if (valueType === 'function' || valueType === 'symbol') {
+        continue
+      }
+
+      sanitized.push(value && typeof value === 'object' ? sanitize(value) : value)
     }
+  } else {
+    sanitized = {}
 
-    if (type !== 'function' && type !== 'symbol') {
-      sanitizedObject[key] = value
+    for (const [key, value] of Object.entries(data)) {
+      const valueType = typeof value
+
+      if (valueType === 'function' || valueType === 'symbol') {
+        continue
+      }
+
+      sanitized[key] = value && typeof value === 'object' ? sanitize(value) : value
     }
   }
-  return sanitizedObject
+
+  return sanitized
 }
 
 class ITC extends EventEmitter {
@@ -143,6 +158,7 @@ class ITC extends EventEmitter {
       We unref() it again as soon as the response is received.
       This ensures the event loop stays up as intended.
     */
+    /* c8 ignore next 4 */
     this.#keepAlive = setInterval(() => {
       // Debugging line used to know who is not closing the ITC
       // process._rawDebug('Keep alive', this.name, this.#keepAliveCount)
@@ -269,8 +285,6 @@ class ITC extends EventEmitter {
         response = generateResponse(request, null)
       }
     } catch (error) {
-      process._rawDebug('HANDLER FAILURE', this.name, request, error)
-
       if (!request) {
         response = generateUnhandledErrorResponse(error)
       } else if (!handler) {
