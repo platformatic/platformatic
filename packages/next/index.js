@@ -88,7 +88,7 @@ export class NextStackable extends BaseStackable {
 
     if (!command) {
       await this.init()
-      command = [pathResolve(this.#next, './dist/bin/next'), 'build', this.root]
+      command = ['node', pathResolve(this.#next, './dist/bin/next'), 'build', this.root]
     }
 
     return this.buildWithCommand(command, this.#basePath, loader)
