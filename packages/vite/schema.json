@@ -497,9 +497,43 @@
       "properties": {
         "basePath": {
           "type": "string"
+        },
+        "outputDirectory": {
+          "type": "string",
+          "default": "dist"
+        },
+        "include": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "dist"
+          ]
+        },
+        "commands": {
+          "type": "object",
+          "properties": {
+            "install": {
+              "type": "string",
+              "default": "npm ci --omit-dev"
+            },
+            "build": {
+              "type": "string"
+            },
+            "development": {
+              "type": "string"
+            },
+            "production": {
+              "type": "string"
+            }
+          },
+          "default": {},
+          "additionalProperties": false
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "default": {}
     },
     "vite": {
       "type": "object",
@@ -514,13 +548,36 @@
             }
           ]
         },
+        "devServer": {
+          "type": "object",
+          "properties": {
+            "strict": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "additionalProperties": false,
+          "default": {}
+        },
         "ssr": {
           "oneOf": [
             {
               "type": "object",
               "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
                 "entrypoint": {
-                  "type": "string"
+                  "type": "string",
+                  "default": "server.js"
+                },
+                "clientDirectory": {
+                  "type": "string",
+                  "default": "client"
+                },
+                "serverDirectory": {
+                  "type": "string",
+                  "default": "server"
                 }
               },
               "required": [
@@ -531,37 +588,12 @@
             {
               "type": "boolean"
             }
-          ]
+          ],
+          "default": false
         }
       },
+      "default": {},
       "additionalProperties": false
-    },
-    "deploy": {
-      "type": "object",
-      "properties": {
-        "include": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [
-            "dist"
-          ]
-        },
-        "buildCommand": {
-          "type": "string",
-          "default": "npm run build"
-        },
-        "installCommand": {
-          "type": "string",
-          "default": "npm ci --omit-dev"
-        },
-        "startCommand": {
-          "type": "string",
-          "default": "npm run start"
-        }
-      },
-      "default": {}
     }
   },
   "additionalProperties": false

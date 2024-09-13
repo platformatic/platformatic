@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/vite/2.0.0.json",
+  "server": {
+    "logger": {
+      "level": "error"
+    }
+  },
+  "vite": {
+    "ssr": true
+  }
+}

@@ -8,9 +8,10 @@ import {
   restElement,
   returnStatement,
   variableDeclaration,
-  variableDeclarator,
+  variableDeclarator
 } from '@babel/types'
-import { readFile } from 'node:fs/promises'
+import { readFile, realpath } from 'node:fs/promises'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const originalId = '__pltOriginalNextConfig'
 
@@ -30,13 +31,17 @@ function parseSingleExpression (expr) {
       __pltOriginalNextConfig = await __pltOriginalNextConfig(...args);
     }
 
-    if(typeof __pltOriginalNextConfig === 'undefined') {
+    if(typeof __pltOriginalNextConfig.basePath === 'undefined') {
       __pltOriginalNextConfig.basePath = basePath
     }
 
-    return __pltOriginalNextConfig,
-      basePath: $BASEPATH
-    };
+    // This is to send the configuraion when Next is executed in a child process (development)
+    globalThis[Symbol.for('plt.children.itc')]?.notify('config', __pltOriginalNextConfig)
+
+    // This is to send the configuraion when Next is executed in the same process (production)
+    process.emit('plt:next:config', __pltOriginalNextConfig)
+
+    return __pltOriginalNextConfig;
   }
 */
 function createEvaluatorWrapperFunction (original) {
@@ -51,8 +56,9 @@ function createEvaluatorWrapperFunction (original) {
       parseSingleExpression(
         `if (typeof ${originalId}.basePath === 'undefined') { ${originalId}.basePath = "${basePath}" }`
       ),
-      parseSingleExpression(`globalThis[Symbol.for('plt.children.itc')].notify('config', ${originalId})`),
-      returnStatement(identifier(originalId)),
+      parseSingleExpression(`globalThis[Symbol.for('plt.children.itc')]?.notify('config', ${originalId})`),
+      parseSingleExpression(`process.emit('plt:next:config', ${originalId})`),
+      returnStatement(identifier(originalId))
     ]),
     false,
     true
@@ -72,7 +78,7 @@ function transformCJS (source) {
         path.node.right = createEvaluatorWrapperFunction(right)
         path.skip()
       }
-    },
+    }
   })
 
   return generate.default(ast).code
@@ -103,15 +109,21 @@ function transformESM (source) {
         // export default $EXPRESSION
         path.node.declaration = createEvaluatorWrapperFunction(declaration)
       }
-    },
+    }
   })
 
   return generate.default(ast).code
 }
 
-export function initialize (data) {
+export async function initialize (data) {
+  const realRoot = pathToFileURL(await realpath(fileURLToPath(data.root)))
+
+  if (!realRoot.pathname.endsWith('/')) {
+    realRoot.pathname += '/'
+  }
+
   // Keep in sync with https://github.com/vercel/next.js/blob/main/packages/next/src/shared/lib/constants.ts
-  candidates = ['./next.config.js', './next.config.mjs'].map(c => new URL(c, data.root + '/').toString())
+  candidates = ['next.config.js', 'next.config.mjs'].map(c => new URL(c, realRoot).toString())
   basePath = data.basePath ?? ''
 }
 
@@ -123,11 +135,14 @@ export async function load (url, context, nextLoad) {
     return result
   }
 
+  url = pathToFileURL(await realpath(fileURLToPath(url))).toString()
+
   if (!candidates.includes(url)) {
     return result
   }
 
   if (result.format === 'commonjs') {
+    await readFile(new URL(result.responseURL ?? url), 'utf-8')
     result.source = transformCJS(result.source ?? (await readFile(new URL(result.responseURL ?? url), 'utf-8')))
   } else {
     result.source = transformESM(result.source)

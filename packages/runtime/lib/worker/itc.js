@@ -44,6 +44,7 @@ async function sendViaITC (worker, name, message) {
 
 function setupITC (app, service, dispatcher) {
   const itc = new ITC({
+    name: app.appConfig.id + '-worker',
     port: parentPort,
     handlers: {
       async start () {
@@ -80,6 +81,10 @@ function setupITC (app, service, dispatcher) {
 
         dispatcher.interceptor.close()
         itc.close()
+      },
+
+      async build () {
+        return app.stackable.build()
       },
 
       getStatus () {

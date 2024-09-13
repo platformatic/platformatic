@@ -89,6 +89,7 @@ export interface StackableInterface {
   init?: () => Promise<void>
   start: (options: StartOptions) => Promise<void>
   stop: () => Promise<void>
+  build: () => Promise<void>
   getUrl?: () => string
   updateContext?: (context: Partial<StackableContext>) => Promise<void>
   getConfig?: () => Promise<object>

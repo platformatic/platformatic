@@ -152,15 +152,16 @@ export interface PlatformaticAstroStackable {
     | string;
   application?: {
     basePath?: string;
+    outputDirectory?: string;
+    include?: string[];
+    commands?: {
+      install?: string;
+      build?: string;
+      development?: string;
+      production?: string;
+    };
   };
   astro?: {
     configFile?: string | boolean;
-  };
-  deploy?: {
-    include?: string[];
-    buildCommand?: string;
-    installCommand?: string;
-    startCommand?: string;
-    [k: string]: unknown;
   };
 }

@@ -1,5 +1,5 @@
 import neostandard from 'neostandard'
 
 export default neostandard({
-  ignores: ['test/tmp/version.js', '**/.next'],
+  ignores: ['**/.next', '**/dist', '**/tmp', 'test/fixtures/**'],
 })

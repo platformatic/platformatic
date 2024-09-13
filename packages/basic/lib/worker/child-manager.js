@@ -1,85 +1,206 @@
-import { ITC } from '@platformatic/itc'
-import { subscribe, unsubscribe } from 'node:diagnostics_channel'
+import { ITC, generateNotification } from '@platformatic/itc'
+import { createDirectory, errors } from '@platformatic/utils'
 import { once } from 'node:events'
+import { rm, writeFile } from 'node:fs/promises'
+import { createServer } from 'node:http'
+import { register } from 'node:module'
+import { platform, tmpdir } from 'node:os'
+import { dirname, resolve } from 'node:path'
 import { workerData } from 'node:worker_threads'
 import { request } from 'undici'
+import { WebSocketServer } from 'ws'
+import { exitCodes } from '../errors.js'
+import { ensureFileUrl } from '../utils.js'
 
-export const childProcessWorkerFile = new URL('./child-process.js', import.meta.url)
+export const isWindows = platform() === 'win32'
+
+// In theory we could use the context.id to namespace even more, but due to
+// UNIX socket length limitation on MacOS, we don't.
+function generateChildrenId (context) {
+  return [process.pid, Date.now()].join('-')
+}
+
+export function getSocketPath (id) {
+  let socketPath = null
+  if (platform() === 'win32') {
+    socketPath = `\\\\.\\pipe\\plt-${id}`
+  } else {
+    // As stated in https://nodejs.org/dist/latest-v20.x/docs/api/net.html#identifying-paths-for-ipc-connections,
+    // Node will take care of deleting the file for us
+    socketPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${id}.socket`)
+  }
+
+  return socketPath
+}
 
 export class ChildManager extends ITC {
-  #child
+  #id
+  #loader
+  #context
+  #scripts
+  #logger
+  #server
+  #socketPath
+  #clients
+  #requests
+  #currentClient
   #listener
-  #injectedNodeOptions
   #originalNodeOptions
+  #dataPath
 
-  constructor ({ loader, context }) {
+  constructor (opts) {
+    let { loader, context, scripts, handlers, ...itcOpts } = opts
+
+    context ??= {}
+    scripts ??= []
+
     super({
+      name: 'child-manager',
+      ...itcOpts,
       handlers: {
-        log (message) {
-          workerData.loggingPort.postMessage(JSON.parse(message))
+        log: message => {
+          return this.#log(message)
         },
         fetch: request => {
           return this.#fetch(request)
-        }
+        },
+        ...itcOpts.handlers
       }
     })
 
-    const childHandler = ({ process: child }) => {
-      unsubscribe('child_process', childHandler)
+    this.#id = generateChildrenId(context)
+    this.#loader = loader
+    this.#context = context
+    this.#scripts = scripts
+    this.#originalNodeOptions = process.env.NODE_OPTIONS
+    this.#logger = globalThis.platformatic.logger
+    this.#server = createServer()
+    this.#socketPath ??= getSocketPath(this.#id)
+    this.#clients = new Set()
+    this.#requests = new Map()
+  }
 
-      this.#child = child
-      this.#child.once('exit', () => {
-        this.emit('exit')
-      })
+  async listen () {
+    super.listen()
 
-      this.listen()
+    if (!isWindows) {
+      await createDirectory(dirname(this.#socketPath))
     }
 
-    subscribe('child_process', childHandler)
+    const wssServer = new WebSocketServer({ server: this.#server })
 
-    this.#prepareChildEnvironment(loader, context)
+    wssServer.on('connection', ws => {
+      this.#clients.add(ws)
+
+      ws.on('message', raw => {
+        try {
+          const message = JSON.parse(raw)
+          this.#requests.set(message.reqId, ws)
+          this.#listener(message)
+        } catch (error) {
+          this.#handleUnexpectedError(error, 'Handling a message failed.', exitCodes.MANAGER_MESSAGE_HANDLING_FAILED)
+        }
+      })
+
+      ws.on('close', () => {
+        this.#clients.delete(ws)
+      })
+
+      ws.on('error', error => {
+        this.#handleUnexpectedError(
+          error,
+          'Error while communicating with the children process.',
+          exitCodes.MANAGER_SOCKET_ERROR
+        )
+      })
+    })
+
+    return new Promise((resolve, reject) => {
+      this.#server.listen({ path: this.#socketPath }, resolve).on('error', reject)
+    })
   }
 
-  inject () {
-    process.env.NODE_OPTIONS = this.#injectedNodeOptions
+  async close (signal) {
+    await rm(this.#dataPath)
+
+    for (const client of this.#clients) {
+      this.#currentClient = client
+      this._send(generateNotification('close', signal))
+    }
+
+    super.close()
   }
 
-  eject () {
+  async inject () {
+    await this.listen()
+
+    // Serialize data into a JSON file for the stackable to use
+    this.#dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${this.#id}.json`)
+    await createDirectory(dirname(this.#dataPath))
+
+    // We write all the data to a JSON file
+    await writeFile(
+      this.#dataPath,
+      JSON.stringify(
+        {
+          data: this.#context,
+          loader: ensureFileUrl(this.#loader),
+          scripts: this.#scripts.map(s => ensureFileUrl(s))
+        },
+        null,
+        2
+      ),
+      'utf-8'
+    )
+
+    process.env.PLT_MANAGER_ID = this.#id
+    process.env.NODE_OPTIONS =
+      `--import="${new URL('./child-process.js', import.meta.url)}" ${process.env.NODE_OPTIONS ?? ''}`.trim()
+  }
+
+  async eject () {
     process.env.NODE_OPTIONS = this.#originalNodeOptions
+    process.env.PLT_MANAGER_ID = ''
+  }
+
+  register () {
+    register(this.#loader, { data: this.#context })
+  }
+
+  send (client, name, message) {
+    this.#currentClient = client
+    super.send(name, message)
+  }
+
+  _send (message) {
+    if (!this.#currentClient) {
+      this.#currentClient = this.#requests.get(message.reqId)
+      this.#requests.delete(message.reqId)
+
+      if (!this.#currentClient) {
+        return
+      }
+    }
+
+    this.#currentClient.send(JSON.stringify(message))
+    this.#currentClient = null
   }
 
   _setupListener (listener) {
     this.#listener = listener
-    this.#child.on('message', this.#listener)
-  }
-
-  _send (request) {
-    this.#child.send(request)
   }
 
   _createClosePromise () {
-    return once(this.#child, 'exit')
+    return once(this.#server, 'exit')
   }
 
   _close () {
-    this.#child.removeListener('message', this.#listener)
-    this.#child.kill('SIGKILL')
+    this.#server.close()
   }
 
-  #prepareChildEnvironment (loader, context) {
-    this.#originalNodeOptions = process.env.NODE_OPTIONS
-
-    const loaderScript = `
-      import { register } from 'node:module';
-      globalThis.platformatic=${JSON.stringify(context).replaceAll('"', '\\"')};    
-      register('${loader}',{ data: globalThis.platformatic });
-    `
-
-    this.#injectedNodeOptions = [
-      `--import="data:text/javascript,${loaderScript.replaceAll(/\n/g, '')}"`,
-      `--import=${childProcessWorkerFile}`,
-      process.env.NODE_OPTIONS ?? ''
-    ].join(' ')
+  #log (message) {
+    const logs = Array.isArray(message.logs) ? message.logs : [message.logs]
+    workerData.loggingPort.postMessage({ logs: logs.map(m => JSON.stringify(m)) })
   }
 
   async #fetch (opts) {
@@ -89,5 +210,10 @@ export class ChildManager extends ITC {
     const payload = rawPayload.toString()
 
     return { statusCode, headers, body: payload, payload, rawPayload }
+  }
+
+  #handleUnexpectedError (error, message, exitCode) {
+    this.#logger.error({ err: errors.ensureLoggableError(error) }, message)
+    process.exit(exitCode)
   }
 }

@@ -1,8 +1,21 @@
-import { schemaComponents } from '@platformatic/basic'
-import { schemas as utilsSchema } from '@platformatic/utils'
+import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
+import { schemaComponents as utilsSchemaComponents } from '@platformatic/utils'
 import { readFileSync } from 'node:fs'
 
 export const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'))
+
+export const astro = {
+  type: 'object',
+  properties: {
+    configFile: {
+      oneOf: [{ type: 'string' }, { type: 'boolean' }]
+    }
+  },
+  default: {},
+  additionalProperties: false
+}
+
+export const schemaComponents = { astro }
 
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/astro/${packageJson.version}.json`,
@@ -13,19 +26,10 @@ export const schema = {
     $schema: {
       type: 'string'
     },
-    server: utilsSchema.server,
-    watch: schemaComponents.watch,
-    application: schemaComponents.application,
-    astro: {
-      type: 'object',
-      properties: {
-        configFile: {
-          oneOf: [{ type: 'string' }, { type: 'boolean' }]
-        }
-      },
-      additionalProperties: false
-    },
-    deploy: schemaComponents.deploy
+    server: utilsSchemaComponents.server,
+    watch: basicSchemaComponents.watch,
+    application: basicSchemaComponents.application,
+    astro
   },
   additionalProperties: false
 }

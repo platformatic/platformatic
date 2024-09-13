@@ -4,6 +4,8 @@ const { dirname } = require('node:path')
 const { printSchema } = require('graphql')
 const pino = require('pino')
 const httpMetrics = require('@platformatic/fastify-http-metrics')
+const { extractTypeScriptCompileOptionsFromConfig } = require('./compile')
+const { compile } = require('@platformatic/ts-compiler')
 
 class ServiceStackable {
   constructor (options) {
@@ -13,13 +15,14 @@ class ServiceStackable {
     this.metricsRegistry = null
 
     this.configManager = options.configManager
-    this.context = options.context
+    this.context = options.context ?? {}
+    this.context.stackable = this
 
-    this.configManager.on('error', (err) => {
+    this.configManager.on('error', err => {
       /* c8 ignore next */
       this.stackable.log({
         message: 'error reloading the configuration' + err,
-        level: 'error',
+        level: 'error'
       })
     })
 
@@ -54,6 +57,20 @@ class ServiceStackable {
     await this.app.close()
   }
 
+  async build () {
+    this.#initLogger()
+    const typeScriptCompileOptions = extractTypeScriptCompileOptionsFromConfig(this.configManager.current)
+    const cwd = dirname(this.configManager.fullPath)
+    const compileOptions = {
+      ...typeScriptCompileOptions,
+      cwd,
+      logger: this.configManager.current.server.logger,
+    }
+    if (!await compile(compileOptions)) {
+      throw new Error(`Failed to compile ${cwd}`)
+    }
+  }
+
   getUrl () {
     return this.app !== null ? this.app.url : null
   }
@@ -79,26 +96,16 @@ class ServiceStackable {
     return config
   }
 
-  getMeta () {
-    return {
-      deploy: {
-        buildCommand: 'platformatic compile'
-      }
-    }
-  }
-
   async getWatchConfig () {
     const config = this.configManager.current
 
-    const enabled =
-      config.watch?.enabled !== false &&
-      config.plugins !== undefined
+    const enabled = config.watch?.enabled !== false && config.plugins !== undefined
 
     return {
       enabled,
       path: dirname(this.configManager.fullPath),
       allow: config.watch?.allow,
-      ignore: config.watch?.ignore,
+      ignore: config.watch?.ignore
     }
   }
 
@@ -155,16 +162,16 @@ class ServiceStackable {
     this.app.register(httpMetrics, {
       registry: this.metricsRegistry,
       customLabels: ['telemetry_id'],
-      getCustomLabels: (req) => {
+      getCustomLabels: req => {
         const telemetryId = req.headers['x-plt-telemetry-id'] ?? 'unknown'
         return { telemetry_id: telemetryId }
-      },
+      }
     })
 
     this.app.register(httpMetrics, {
       registry: this.metricsRegistry,
       customLabels: ['telemetry_id'],
-      getCustomLabels: (req) => {
+      getCustomLabels: req => {
         const telemetryId = req.headers['x-plt-telemetry-id'] ?? 'unknown'
         return { telemetry_id: telemetryId }
       },
@@ -173,30 +180,23 @@ class ServiceStackable {
         help: 'request duration in seconds summary for all requests',
         collect: function () {
           process.nextTick(() => this.reset())
-        },
+        }
       },
       summary: {
         name: 'http_request_all_summary_seconds',
         help: 'request duration in seconds histogram for all requests',
         collect: function () {
           process.nextTick(() => this.reset())
-        },
-      },
+        }
+      }
     })
   }
 
   #updateConfig () {
     if (!this.context) return
 
-    const {
-      serviceId,
-      telemetryConfig,
-      metricsConfig,
-      serverConfig,
-      hasManagementApi,
-      isEntrypoint,
-      isProduction,
-    } = this.context
+    const { serviceId, telemetryConfig, metricsConfig, serverConfig, hasManagementApi, isEntrypoint, isProduction } =
+      this.context
 
     const config = this.configManager.current
 
@@ -210,15 +210,13 @@ class ServiceStackable {
       config.server = serverConfig
     }
 
-    if (
-      (hasManagementApi && config.metrics === undefined) || config.metrics
-    ) {
+    if ((hasManagementApi && config.metrics === undefined) || config.metrics) {
       const labels = config.metrics?.labels || {}
       config.metrics = {
         server: 'hide',
         defaultMetrics: { enabled: isEntrypoint },
         ...config.metrics,
-        labels: { serviceId, ...labels },
+        labels: { serviceId, ...labels }
       }
     }
 
@@ -242,7 +240,7 @@ class ServiceStackable {
     const level = this.configManager.current.server.logger?.level
 
     const pinoOptions = {
-      level: level ?? 'trace',
+      level: level ?? 'trace'
     }
 
     if (this.context?.serviceId) {

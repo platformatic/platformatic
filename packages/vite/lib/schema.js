@@ -1,8 +1,51 @@
-import { schemaComponents } from '@platformatic/basic'
-import { schemas as utilsSchema } from '@platformatic/utils'
+import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
+import { schemaComponents as utilsSchemaComponents } from '@platformatic/utils'
 import { readFileSync } from 'node:fs'
 
 export const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'))
+
+const vite = {
+  type: 'object',
+  properties: {
+    configFile: {
+      oneOf: [{ type: 'string' }, { type: 'boolean' }]
+    },
+    devServer: {
+      type: 'object',
+      properties: {
+        strict: {
+          type: 'boolean',
+          // This required to avoid showing error users when the node_modules
+          // for vite or similar are in some nested parent folders
+          default: false
+        }
+      },
+      additionalProperties: false,
+      default: {}
+    },
+    ssr: {
+      oneOf: [
+        {
+          type: 'object',
+          properties: {
+            enabled: { type: 'boolean' },
+            entrypoint: { type: 'string', default: 'server.js' },
+            clientDirectory: { type: 'string', default: 'client' },
+            serverDirectory: { type: 'string', default: 'server' }
+          },
+          required: ['entrypoint'],
+          additionalProperties: false
+        },
+        { type: 'boolean' }
+      ],
+      default: false
+    }
+  },
+  default: {},
+  additionalProperties: false
+}
+
+export const schemaComponents = { vite }
 
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/vite/${packageJson.version}.json`,
@@ -13,30 +56,10 @@ export const schema = {
     $schema: {
       type: 'string'
     },
-    server: utilsSchema.server,
-    watch: schemaComponents.watch,
-    application: schemaComponents.application,
-    vite: {
-      type: 'object',
-      properties: {
-        configFile: {
-          oneOf: [{ type: 'string' }, { type: 'boolean' }]
-        },
-        ssr: {
-          oneOf: [
-            {
-              type: 'object',
-              properties: { entrypoint: { type: 'string' } },
-              required: ['entrypoint'],
-              additionalProperties: false
-            },
-            { type: 'boolean' }
-          ]
-        }
-      },
-      additionalProperties: false
-    },
-    deploy: schemaComponents.deploy
+    server: utilsSchemaComponents.server,
+    watch: basicSchemaComponents.watch,
+    application: basicSchemaComponents.application,
+    vite
   },
   additionalProperties: false
 }
