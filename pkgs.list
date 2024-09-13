@@ -1,5 +1,4 @@
-#node/
-#remix/
-#runtime/
-#sql-events/
-#vite/
+remix/
+runtime/
+sql-events/
+vite/

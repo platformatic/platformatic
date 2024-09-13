@@ -154,6 +154,9 @@ importers:
       vite:
         specifier: ^5.4.0
         version: 5.4.5(@types/node@22.5.4)
+      why-is-node-running:
+        specifier: ^3.2.0
+        version: 3.2.0
 
   packages/cli:
     dependencies:
@@ -9234,6 +9237,11 @@ packages:
     engines: {node: '>=8'}
     hasBin: true
 
+  why-is-node-running@3.2.0:
+    resolution: {integrity: sha512-euOPfZRxdZBcD/vL0sH+NtuC/nDpdsZ/aeoq9w5sOcQtfkmhztf/JS76IiD0CJEULlSAPSMy/ZLejex5MsFCcw==}
+    engines: {node: '>=20.11'}
+    hasBin: true
+
   widest-line@4.0.1:
     resolution: {integrity: sha512-o0cyEG0e8GPzT4iGHphIOh0cJOV8fivsXxddQasHPHfoZf1ZexrfeA21w2NaEN1RHE+fXlfISmOE8R9N3u3Qig==}
     engines: {node: '>=12'}
@@ -17633,6 +17641,8 @@ snapshots:
     dependencies:
       siginfo: 2.0.0
       stackback: 0.0.2
+
+  why-is-node-running@3.2.0: {}
 
   widest-line@4.0.1:
     dependencies:
