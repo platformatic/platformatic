@@ -525,6 +525,7 @@ jobs:
         run: |
           cd packages/frontend-template
           pnpm run test:prepare
+          pnpm run build
           pnpm test
 
   ci-rpc:
