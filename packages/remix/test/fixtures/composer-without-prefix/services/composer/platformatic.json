@@ -1,8 +1,5 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.0.0.json",
-  "server": {
-    "pluginTimeout": 60000
-  },
   "composer": {
     "services": [
       {
