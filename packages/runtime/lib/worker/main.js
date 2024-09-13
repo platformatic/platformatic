@@ -28,7 +28,7 @@ globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, { logger:
 function handleUnhandled (type, err) {
   globalThis.platformatic.logger.error(
     { err: errors.ensureLoggableError(err) },
-    `Service ${workerData.serverConfig.id} threw an ${type}.`
+    `Service ${workerData.serviceConfig.id} threw an ${type}.`
   )
 
   executeWithTimeout(app?.stop(), 1000)
