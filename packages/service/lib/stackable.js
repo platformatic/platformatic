@@ -4,7 +4,6 @@ const { dirname } = require('node:path')
 const { printSchema } = require('graphql')
 const pino = require('pino')
 const httpMetrics = require('@platformatic/fastify-http-metrics')
-const { executeCommand } = require('@platformatic/utils')
 const { extractTypeScriptCompileOptionsFromConfig } = require('./compile')
 const { compile } = require('@platformatic/ts-compiler')
 
@@ -67,7 +66,7 @@ class ServiceStackable {
       cwd,
       logger: this.configManager.current.server.logger,
     }
-    if (!await compile(compileOptions)){
+    if (!await compile(compileOptions)) {
       throw new Error(`Failed to compile ${cwd}`)
     }
   }
