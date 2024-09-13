@@ -279,18 +279,26 @@ export async function prepareWorkingDirectory (t, source, destination, configura
     await writeFile(resolve(destination, 'package.json'), JSON.stringify(packageJson, null, 2), 'utf-8')
 
     if (useVerdaccio) {
-      await writeFile(resolve(destination, '.npmrc'), `
+      await writeFile(
+        resolve(destination, '.npmrc'),
+        `
 registry=http://localhost:${verdaccio.address().port}
 node-linker=hoisted
 package-import-method=copy
 hoist=false
-`, 'utf-8')
+`,
+        'utf-8'
+      )
     } else {
-      await writeFile(resolve(destination, '.npmrc'), `
+      await writeFile(
+        resolve(destination, '.npmrc'),
+        `
 node-linker=hoisted
-package-import-method=clone-or-copy
+package-import-method=copy
 hoist=false
-`, 'utf-8')
+`,
+        'utf-8'
+      )
     }
 
     // Create the pnpm-workspace.yml file
