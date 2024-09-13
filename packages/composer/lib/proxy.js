@@ -20,6 +20,7 @@ async function resolveServiceProxyParameters (service) {
   let internalRewriteLocationHeader = true
 
   // Get meta information from the service, if any, to eventually hook up to a TCP port
+  process._rawDebug('proxy get for', service.id)
   console.time('proxy ' + service.id)
   const meta = (await globalThis[kITC]?.send('getServiceMeta', service.id))?.composer ?? {}
   console.timeEnd('proxy ' + service.id)
