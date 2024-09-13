@@ -286,6 +286,7 @@ registry=http://localhost:${verdaccio.address().port}
 node-linker=hoisted
 package-import-method=copy
 hoist=false
+shamefully-hoist=true
 `,
         'utf-8'
       )
@@ -296,6 +297,7 @@ hoist=false
 node-linker=hoisted
 package-import-method=copy
 hoist=false
+shamefully-hoist=true
 `,
         'utf-8'
       )
