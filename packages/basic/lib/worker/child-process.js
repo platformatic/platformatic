@@ -146,6 +146,7 @@ export class ChildProcess extends ITC {
 
   #setupLogger () {
     // Since this is executed by user code, make sure we only override this in the main thread
+    // The rest will be intercepted by the BaseStackable.
     if (isMainThread) {
       this.#logger = pino({
         level: 'info',
