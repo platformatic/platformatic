@@ -9,7 +9,7 @@ const kITC = Symbol.for('plt.runtime.itc')
 async function resolveServiceProxyParameters (service) {
   let {
     origin,
-    proxy: { prefix },
+    proxy: { prefix }
   } = service
 
   if (prefix.endsWith('/')) {
@@ -35,10 +35,12 @@ async function resolveServiceProxyParameters (service) {
     internalRewriteLocationHeader = false
   }
 
-  return { origin, prefix, rewritePrefix, internalRewriteLocationHeader }
+  return { origin, prefix, rewritePrefix, internalRewriteLocationHeader, needsRootRedirect: meta.needsRootRedirect }
 }
 
 module.exports = fp(async function (app, opts) {
+  const meta = { proxies: {} }
+
   for (const service of opts.services) {
     if (!service.proxy) {
       // When a service defines no expose config at all
@@ -50,12 +52,22 @@ module.exports = fp(async function (app, opts) {
       }
     }
 
-    const { prefix, origin, rewritePrefix, internalRewriteLocationHeader } =
-      await resolveServiceProxyParameters(service)
+    const parameters = await resolveServiceProxyParameters(service)
+    const { prefix, origin, rewritePrefix, internalRewriteLocationHeader, needsRootRedirect } = parameters
+    meta.proxies[service.id] = parameters
 
-    app.log.info(`Proxying ${prefix} to ${origin}`)
-
+    const basePath = `/${prefix ?? ''}`.replaceAll(/\/+/g, '/').replace(/\/$/, '')
     const dispatcher = getGlobalDispatcher()
+
+    if (needsRootRedirect) {
+      app.addHook('preHandler', (req, reply, done) => {
+        if (req.url === basePath) {
+          reply.redirect(`${req.url}/`, 308)
+        }
+
+        done()
+      })
+    }
 
     /*
       Some frontends, like Astro (https://github.com/withastro/astro/issues/11445)
@@ -65,7 +77,7 @@ module.exports = fp(async function (app, opts) {
     */
     app.addHook('preHandler', (req, reply, done) => {
       // If the URL is already targeted to the service, do nothing
-      if (req.url.startsWith(`/${prefix}`)) {
+      if (req.url.startsWith(basePath)) {
         done()
         return
       }
@@ -78,15 +90,25 @@ module.exports = fp(async function (app, opts) {
         return
       }
 
-      const path = new URL(referer).pathname.split('/')[1]
+      const path = new URL(referer).pathname
 
       // If we have a match redirect
-      if (path === prefix) {
-        reply.redirect(`/${prefix}${req.url}`, 308)
+      if (path.startsWith(basePath)) {
+        reply.redirect(`${basePath}${req.url}`, 308)
       }
 
       done()
     })
+
+    // Do not show proxied services in Swagger
+    if (!service.openapi) {
+      app.addHook('onRoute', routeOptions => {
+        if (routeOptions.url.startsWith(basePath)) {
+          routeOptions.schema ??= {}
+          routeOptions.schema.hide = true
+        }
+      })
+    }
 
     await app.register(httpProxy, {
       prefix,
@@ -128,4 +150,6 @@ module.exports = fp(async function (app, opts) {
       },
     })
   }
+
+  opts.context?.stackable?.registerMeta(meta)
 })

@@ -11,8 +11,8 @@ const { generateItcRequest, generateItcResponse } = require('./helper.js')
 test('should send a request between threads', async t => {
   const { port1, port2 } = new MessageChannel()
 
-  const itc1 = new ITC({ port: port1 })
-  const itc2 = new ITC({ port: port2 })
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
 
   const requestName = 'test-command'
   const testRequest = { test: 'test-req-message' }
@@ -44,9 +44,10 @@ test('should support close while replying to a message', async t => {
 
   const requests = []
 
-  const itc1 = new ITC({ port: port1 })
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
   const itc2 = new ITC({
     port: port2,
+    name: 'itc2',
     handlers: {
       [requestName] (request) {
         requests.push(request)
@@ -72,7 +73,7 @@ test('should support close while replying to a message', async t => {
 test('should throw an error if send req before listen', async t => {
   const { port1 } = new MessageChannel()
 
-  const itc = new ITC({ port: port1 })
+  const itc = new ITC({ port: port1, name: 'itc' })
   t.after(() => itc.close())
 
   try {
@@ -87,7 +88,7 @@ test('should throw an error if send req before listen', async t => {
 test('should throw an error if request name is not a string', async t => {
   const { port1 } = new MessageChannel()
 
-  const itc = new ITC({ port: port1 })
+  const itc = new ITC({ port: port1, name: 'itc' })
   t.after(() => itc.close())
 
   itc.listen()
@@ -104,8 +105,8 @@ test('should throw an error if request name is not a string', async t => {
 test('should send a notification between threads', async t => {
   const { port1, port2 } = new MessageChannel()
 
-  const itc1 = new ITC({ port: port1 })
-  const itc2 = new ITC({ port: port2 })
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
 
   const notificationName = 'notification'
   const testNotification = { test: 'test-notification' }
@@ -121,7 +122,7 @@ test('should send a notification between threads', async t => {
 test('should throw if call listen twice', async t => {
   const { port1 } = new MessageChannel()
 
-  const itc = new ITC({ port: port1 })
+  const itc = new ITC({ port: port1, name: 'itc' })
   t.after(() => itc.close())
 
   itc.listen()
@@ -138,8 +139,8 @@ test('should throw if call listen twice', async t => {
 test('should throw an error if handler fails', async t => {
   const { port1, port2 } = new MessageChannel()
 
-  const itc1 = new ITC({ port: port1 })
-  const itc2 = new ITC({ port: port2 })
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
 
   const requestName = 'test-command'
 
@@ -166,8 +167,8 @@ test('should throw an error if handler fails', async t => {
 test('should throw if handler is not found', async t => {
   const { port1, port2 } = new MessageChannel()
 
-  const itc1 = new ITC({ port: port1 })
-  const itc2 = new ITC({ port: port2 })
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
 
   const requestName = 'test-command'
 
@@ -186,11 +187,28 @@ test('should throw if handler is not found', async t => {
   }
 })
 
+test('should allow missing handlers using throwOnMissingHandler', async t => {
+  const { port1, port2 } = new MessageChannel()
+
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, throwOnMissingHandler: false, name: 'itc2' })
+
+  const requestName = 'test-command'
+
+  itc1.listen()
+  itc2.listen()
+
+  t.after(() => itc1.close())
+  t.after(() => itc2.close())
+
+  assert.ifError(await itc1.send(requestName, 'test-request'))
+})
+
 test('should skip non-platformatic message', async t => {
   const { port1, port2 } = new MessageChannel()
 
-  const itc1 = new ITC({ port: port1 })
-  const itc2 = new ITC({ port: port2 })
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
 
   const requests = []
   itc1.handle('test', async request => {
@@ -215,8 +233,8 @@ test('should skip non-platformatic message', async t => {
 test('should emit unhandledError if request version is wrong', (t, done) => {
   const { port1, port2 } = new MessageChannel()
 
-  const itc1 = new ITC({ port: port1 })
-  const itc2 = new ITC({ port: port2 })
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
 
   t.after(() => itc1.close())
   t.after(() => itc2.close())
@@ -237,8 +255,8 @@ test('should emit unhandledError if request version is wrong', (t, done) => {
 test('should emit unhandledError if request reqId is missing', (t, done) => {
   const { port1, port2 } = new MessageChannel()
 
-  const itc1 = new ITC({ port: port1 })
-  const itc2 = new ITC({ port: port2 })
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
 
   t.after(() => itc1.close())
   t.after(() => itc2.close())
@@ -261,8 +279,8 @@ test('should emit unhandledError if request reqId is missing', (t, done) => {
 test('should emit unhandledError if request name is missing', (t, done) => {
   const { port1, port2 } = new MessageChannel()
 
-  const itc1 = new ITC({ port: port1 })
-  const itc2 = new ITC({ port: port2 })
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
 
   t.after(() => itc1.close())
   t.after(() => itc2.close())
@@ -285,8 +303,8 @@ test('should emit unhandledError if request name is missing', (t, done) => {
 test('should emit unhandledError if response version is wrong', (t, done) => {
   const { port1, port2 } = new MessageChannel()
 
-  const itc1 = new ITC({ port: port1 })
-  const itc2 = new ITC({ port: port2 })
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
 
   t.after(() => itc1.close())
   t.after(() => itc2.close())
@@ -307,8 +325,8 @@ test('should emit unhandledError if response version is wrong', (t, done) => {
 test('should emit unhandledError if response reqId is missing', (t, done) => {
   const { port1, port2 } = new MessageChannel()
 
-  const itc1 = new ITC({ port: port1 })
-  const itc2 = new ITC({ port: port2 })
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
 
   t.after(() => itc1.close())
   t.after(() => itc2.close())
@@ -331,8 +349,8 @@ test('should emit unhandledError if response reqId is missing', (t, done) => {
 test('should emit unhandledError if response name is missing', (t, done) => {
   const { port1, port2 } = new MessageChannel()
 
-  const itc1 = new ITC({ port: port1 })
-  const itc2 = new ITC({ port: port2 })
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
 
   t.after(() => itc1.close())
   t.after(() => itc2.close())
@@ -355,8 +373,8 @@ test('should emit unhandledError if response name is missing', (t, done) => {
 test('should sanitize a request before sending', async t => {
   const { port1, port2 } = new MessageChannel()
 
-  const itc1 = new ITC({ port: port1 })
-  const itc2 = new ITC({ port: port2 })
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
 
   const requestName = 'test-command'
   const testRequest = {
@@ -367,7 +385,8 @@ test('should sanitize a request before sending', async t => {
       test: 'test-req-message',
       foo: () => {},
       bar: Symbol('test')
-    }
+    },
+    array: [1, 2, { a: 1 }]
   }
   const testResponse = { test: 'test-res-message' }
 
@@ -388,7 +407,8 @@ test('should sanitize a request before sending', async t => {
   assert.deepStrictEqual(requests, [
     {
       test: 'test-req-message',
-      nested: { test: 'test-req-message' }
+      nested: { test: 'test-req-message' },
+      array: [1, 2, { a: 1 }]
     }
   ])
 })
@@ -396,8 +416,8 @@ test('should sanitize a request before sending', async t => {
 test('should throw if receiver ITC port was closed', async t => {
   const { port1, port2 } = new MessageChannel()
 
-  const itc1 = new ITC({ port: port1 })
-  const itc2 = new ITC({ port: port2 })
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
 
   const requestName = 'test-command'
   const testRequest = { test: 'test-req-message' }
@@ -427,7 +447,7 @@ test('should throw if receiver ITC port was closed', async t => {
 test('should throw if sender ITC port was closed', async t => {
   const { port1 } = new MessageChannel()
 
-  const itc = new ITC({ port: port1 })
+  const itc = new ITC({ port: port1, name: 'itc' })
   itc.listen()
 
   port1.close()
@@ -439,4 +459,8 @@ test('should throw if sender ITC port was closed', async t => {
     assert.strictEqual(error.code, 'PLT_ITC_MESSAGE_PORT_CLOSED')
     assert.strictEqual(error.message, 'ITC MessagePort is closed')
   }
+})
+
+test('should throw if ITC is created without a name', async t => {
+  assert.throws(() => new ITC({}))
 })

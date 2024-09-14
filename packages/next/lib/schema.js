@@ -1,5 +1,5 @@
 import { schemaComponents } from '@platformatic/basic'
-import { schemas as utilsSchema } from '@platformatic/utils'
+import { schemaComponents as utilsSchemaComponents } from '@platformatic/utils'
 import { readFileSync } from 'node:fs'
 
 export const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'))
@@ -11,14 +11,13 @@ export const schema = {
   type: 'object',
   properties: {
     $schema: {
-      type: 'string',
+      type: 'string'
     },
-    server: utilsSchema.server,
+    server: utilsSchemaComponents.server,
     watch: schemaComponents.watch,
     application: schemaComponents.application,
-    deploy: schemaComponents.deploy
   },
-  additionalProperties: false,
+  additionalProperties: false
 }
 
 /* c8 ignore next 3 */

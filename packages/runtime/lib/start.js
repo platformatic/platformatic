@@ -5,6 +5,9 @@ const { writeFile } = require('node:fs/promises')
 const { join, resolve, dirname } = require('node:path')
 
 const { printConfigValidationErrors } = require('@platformatic/config')
+const {
+  errors: { ensureLoggableError }
+} = require('@platformatic/utils')
 const closeWithGrace = require('close-with-grace')
 const pino = require('pino')
 const pretty = require('pino-pretty')
@@ -38,7 +41,7 @@ async function buildRuntime (configManager, env) {
     try {
       await runtime.restart()
     } catch (err) {
-      runtime.logger.error({ err }, 'Failed to restart services.')
+      runtime.logger.error({ err: ensureLoggableError(err) }, 'Failed to restart services.')
     }
   })
 
@@ -96,7 +99,7 @@ async function setupAndStartRuntime (config) {
     const logger = pino(
       pretty({
         translateTime: 'SYS:HH:MM:ss',
-        ignore: 'hostname,pid',
+        ignore: 'hostname,pid'
       })
     )
     logger.warn(`Port: ${originalPort} is already in use!`)
@@ -107,7 +110,15 @@ async function setupAndStartRuntime (config) {
 
 async function startCommand (args) {
   try {
-    const config = await loadConfig({}, args)
+    const config = await loadConfig(
+      {
+        alias: {
+          p: 'production'
+        },
+        boolean: ['p', 'production']
+      },
+      args
+    )
 
     const startResult = await setupAndStartRuntime(config)
 
@@ -130,16 +141,16 @@ async function startCommand (args) {
           hostname: '127.0.0.1',
           port: 3042,
           logger: {
-            level: 'info',
-          },
+            level: 'info'
+          }
         },
         plugins: {
-          paths: [args[0]],
+          paths: [args[0]]
         },
         service: {
-          openapi: true,
+          openapi: true
         },
-        watch: true,
+        watch: true
       }
       const toWrite = join(dirname(resolve(args[0])), 'platformatic.service.json')
       console.log(`No config file found, creating ${join(dirname(args[0]), 'platformatic.service.json')}`)

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.0.0.json",
+  "composer": {
+    "services": [
+      {
+        "id": "backend",
+        "openapi": {
+          "url": "/documentation/json",
+          "prefix": "/backend"
+        }
+      },
+      {
+        "id": "frontend",
+        "proxy": {
+          "prefix": ""
+        }
+      }
+    ]
+  },
+  "watch": false,
+  "plugins": {
+    "paths": [
+      {
+        "path": "./plugins",
+        "encapsulate": false
+      },
+      "./routes"
+    ],
+    "typescript": true
+  }
+}

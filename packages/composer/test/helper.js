@@ -1,5 +1,6 @@
 'use strict'
 
+const why = require('why-is-node-running')
 const path = require('path')
 const fs = require('fs')
 const assert = require('node:assert/strict')
@@ -18,6 +19,10 @@ const { createDirectory, safeRemove } = require('@platformatic/utils')
 // This is to avoid a circular dependency
 const { buildServer: buildRuntime, symbols } = require('../../runtime')
 const { buildServer } = require('..')
+
+setInterval(() => {
+  console.log(why())
+}, 10000).unref()
 
 const agent = new Agent({
   keepAliveMaxTimeout: 10,
@@ -678,6 +683,8 @@ async function getRuntimeLogs (runtime) {
   const { statusCode, body } = await client.request({ method: 'GET', path: '/api/v1/logs/all' })
   assert.strictEqual(statusCode, 200)
   const messages = (await body.text()).trim().split('\n').map(JSON.parse)
+
+  client.close()
 
   return messages.map(m => m.payload?.msg ?? m.msg)
 }

@@ -9,7 +9,10 @@ const { setTimeout: sleep } = require('node:timers/promises')
 const { Worker } = require('node:worker_threads')
 
 const { ITC } = require('@platformatic/itc')
-const { executeWithTimeout } = require('@platformatic/utils')
+const {
+  errors: { ensureLoggableError },
+  executeWithTimeout
+} = require('@platformatic/utils')
 const ts = require('tail-file-stream')
 const { createThreadInterceptor } = require('undici-thread-interceptor')
 
@@ -64,7 +67,7 @@ class Runtime extends EventEmitter {
     this.#servicesIds = []
     this.#url = undefined
     // Note: nothing hits the main thread so there is no reason to set the globalDispatcher here
-    this.#interceptor = createThreadInterceptor({ domain: '.plt.local' })
+    this.#interceptor = createThreadInterceptor({ domain: '.plt.local', timeout: true })
     this.#status = undefined
     this.#startedServices = new Map()
     this.#restartPromises = new Map()
@@ -148,6 +151,7 @@ class Runtime extends EventEmitter {
       this.startCollectingMetrics()
     }
 
+    this.logger.info(`Platformatic is now listening at ${this.#url}`)
     return this.#url
   }
 
@@ -172,6 +176,7 @@ class Runtime extends EventEmitter {
 
     this.emit('restarted')
 
+    this.logger.info(`Platformatic is now listening at ${this.#url}`)
     return this.#url
   }
 
@@ -236,7 +241,7 @@ class Runtime extends EventEmitter {
       // TODO: handle port allocation error here
       if (error.code === 'EADDRINUSE') throw error
 
-      this.logger.error({ error }, `Failed to start service "${id}".`)
+      this.logger.error({ error: ensureLoggableError(error) }, `Failed to start service "${id}".`)
 
       const config = this.#configManager.current
       const restartOnError = config.restartOnError
@@ -280,7 +285,12 @@ class Runtime extends EventEmitter {
     try {
       await executeWithTimeout(sendViaITC(service, 'stop'), 10000)
     } catch (error) {
-      this.logger?.info(error, `Failed to stop service "${id}". Killing a worker thread.`)
+      this.logger?.info(
+        { error: ensureLoggableError(error) },
+        `Failed to stop service "${id}". Killing a worker thread.`
+      )
+    } finally {
+      service[kITC].close()
     }
 
     // Wait for the worker thread to finish, we're going to create a new one if the service is ever restarted
@@ -289,6 +299,25 @@ class Runtime extends EventEmitter {
     // If the worker didn't exit in time, kill it
     if (res === 'timeout') {
       await service.terminate()
+    }
+  }
+
+  async buildService (id) {
+    const service = this.#services.get(id)
+
+    if (!service) {
+      throw new errors.ServiceNotFoundError(id, Array.from(this.#services.keys()).join(', '))
+    }
+
+    try {
+      return await sendViaITC(service, 'build')
+    } catch (e) {
+      // The service exports no meta, return an empty object
+      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
+        return {}
+      }
+
+      throw e
     }
   }
 
@@ -633,6 +662,25 @@ class Runtime extends EventEmitter {
     }
   }
 
+  async getServiceMeta (id) {
+    const service = this.#services.get(id)
+
+    if (!service) {
+      throw new errors.ServiceNotFoundError(id, Array.from(this.#services.keys()).join(', '))
+    }
+
+    try {
+      return await sendViaITC(service, 'getServiceMeta')
+    } catch (e) {
+      // The service exports no meta, return an empty object
+      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
+        return {}
+      }
+
+      throw e
+    }
+  }
+
   async getLogIds (runtimePID) {
     runtimePID = runtimePID ?? process.pid
 
@@ -693,7 +741,10 @@ class Runtime extends EventEmitter {
     const service = new Worker(kWorkerFile, {
       workerData: {
         config,
-        serviceConfig,
+        serviceConfig: {
+          ...serviceConfig,
+          isProduction: this.#configManager.args?.production ?? false
+        },
         dirname: this.#configManager.dirname,
         runtimeLogsDir: this.#runtimeLogsDir,
         loggingPort
@@ -720,6 +771,7 @@ class Runtime extends EventEmitter {
       const started = this.#startedServices.get(id)
       this.#services.delete(id)
       loggerDestination.close()
+      service[kITC].close()
       loggingPort.close()
 
       if (this.#status === 'stopping') return
@@ -733,7 +785,7 @@ class Runtime extends EventEmitter {
           if (restartOnError > 0) {
             this.logger.warn(`Restarting a service "${id}" in ${restartOnError}ms...`)
             this.#restartCrashedService(id).catch(err => {
-              this.logger.error({ err }, `Failed to restart service "${id}".`)
+              this.logger.error({ err: ensureLoggableError(err) }, `Failed to restart service "${id}".`)
             })
           } else {
             this.logger.warn(`The "${id}" service is no longer available.`)
@@ -747,6 +799,7 @@ class Runtime extends EventEmitter {
 
     // Setup ITC
     service[kITC] = new ITC({
+      name: id + '-runtime',
       port: service,
       handlers: {
         getServiceMeta: this.getServiceMeta.bind(this)
@@ -854,25 +907,6 @@ class Runtime extends EventEmitter {
     return service
   }
 
-  async getServiceMeta (id) {
-    const service = this.#services.get(id)
-
-    if (!service) {
-      throw new errors.ServiceNotFoundError(id, Array.from(this.#services.keys()).join(', '))
-    }
-
-    try {
-      return await service[kITC].send('getServiceMeta')
-    } catch (e) {
-      // The service exports no meta, return an empty object
-      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
-        return {}
-      }
-
-      throw e
-    }
-  }
-
   async #getRuntimePackageJson () {
     const runtimeDir = this.#configManager.dirname
     const packageJsonPath = join(runtimeDir, 'package.json')
@@ -901,7 +935,7 @@ class Runtime extends EventEmitter {
     try {
       await access(this.#runtimeTmpDir)
     } catch (err) {
-      this.logger.error({ err }, 'Cannot access temporary folder.')
+      this.logger.error({ err: ensureLoggableError(err) }, 'Cannot access temporary folder.')
       return []
     }
 

@@ -6,6 +6,7 @@ const defaultStackable = {
     throw new Error('Stackable start not implemented')
   },
   stop: () => {},
+  build: () => {},
   getUrl: () => null,
   updateContext: () => {},
   getConfig: () => null,

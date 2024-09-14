@@ -5,7 +5,7 @@
 const pkg = require('../package.json')
 const openApiDefs = require('./openapi-schema-defs')
 const telemetry = require('@platformatic/telemetry').schema
-const { server, cors, watch } = require('@platformatic/utils').schemas
+const { server, cors, watch } = require('@platformatic/utils').schemaComponents
 
 const plugins = {
   type: 'object',
@@ -15,23 +15,23 @@ const plugins = {
       items: {
         anyOf: [
           {
-            type: 'string',
+            type: 'string'
           },
           {
             type: 'object',
             properties: {
               name: {
-                type: 'string',
+                type: 'string'
               },
               options: {
                 type: 'object',
-                additionalProperties: true,
-              },
+                additionalProperties: true
+              }
             },
-            required: ['name'],
-          },
-        ],
-      },
+            required: ['name']
+          }
+        ]
+      }
     },
     paths: {
       type: 'array',
@@ -39,63 +39,63 @@ const plugins = {
         anyOf: [
           {
             type: 'string',
-            resolvePath: true,
+            resolvePath: true
           },
           {
             type: 'object',
             properties: {
               path: {
                 type: 'string',
-                resolvePath: true,
+                resolvePath: true
               },
               encapsulate: {
                 type: 'boolean',
-                default: true,
+                default: true
               },
               maxDepth: {
-                type: 'integer',
+                type: 'integer'
               },
               autoHooks: {
-                type: 'boolean',
+                type: 'boolean'
               },
               autoHooksPattern: {
-                type: 'string',
+                type: 'string'
               },
               cascadeHooks: {
-                type: 'boolean',
+                type: 'boolean'
               },
               overwriteHooks: {
-                type: 'boolean',
+                type: 'boolean'
               },
               routeParams: {
-                type: 'boolean',
+                type: 'boolean'
               },
               forceESM: {
-                type: 'boolean',
+                type: 'boolean'
               },
               ignoreFilter: {
-                type: 'string',
+                type: 'string'
               },
               matchFilter: {
-                type: 'string',
+                type: 'string'
               },
               ignorePattern: {
-                type: 'string',
+                type: 'string'
               },
               scriptPattern: {
-                type: 'string',
+                type: 'string'
               },
               indexPattern: {
-                type: 'string',
+                type: 'string'
               },
               options: {
                 type: 'object',
-                additionalProperties: true,
-              },
-            },
-          },
-        ],
-      },
+                additionalProperties: true
+              }
+            }
+          }
+        ]
+      }
     },
     typescript: {
       anyOf: [
@@ -105,47 +105,47 @@ const plugins = {
             enabled: {
               anyOf: [
                 {
-                  type: 'boolean',
+                  type: 'boolean'
                 },
                 {
-                  type: 'string',
-                },
-              ],
+                  type: 'string'
+                }
+              ]
             },
             tsConfig: {
               type: 'string',
-              resolvePath: true,
+              resolvePath: true
             },
             outDir: {
               type: 'string',
-              resolvePath: true,
+              resolvePath: true
             },
             flags: {
               type: 'array',
               items: {
-                type: 'string',
-              },
-            },
-          },
+                type: 'string'
+              }
+            }
+          }
         },
         {
-          type: 'boolean',
+          type: 'boolean'
         },
         {
-          type: 'string',
-        },
-      ],
-    },
+          type: 'string'
+        }
+      ]
+    }
   },
   additionalProperties: false,
   anyOf: [
     {
-      required: ['paths'],
+      required: ['paths']
     },
     {
-      required: ['packages'],
-    },
-  ],
+      required: ['packages']
+    }
+  ]
 }
 
 const metrics = {
@@ -155,143 +155,143 @@ const metrics = {
       type: 'object',
       properties: {
         port: {
-          anyOf: [{ type: 'integer' }, { type: 'string' }],
+          anyOf: [{ type: 'integer' }, { type: 'string' }]
         },
         hostname: { type: 'string' },
         endpoint: { type: 'string' },
         server: {
           type: 'string',
-          enum: ['own', 'parent', 'hide'],
+          enum: ['own', 'parent', 'hide']
         },
         defaultMetrics: {
           type: 'object',
           properties: {
-            enabled: { type: 'boolean' },
+            enabled: { type: 'boolean' }
           },
           required: ['enabled'],
-          additionalProperties: false,
+          additionalProperties: false
         },
         auth: {
           type: 'object',
           properties: {
             username: { type: 'string' },
-            password: { type: 'string' },
+            password: { type: 'string' }
           },
           additionalProperties: false,
-          required: ['username', 'password'],
+          required: ['username', 'password']
         },
         labels: {
           type: 'object',
-          additionalProperties: { type: 'string' },
-        },
+          additionalProperties: { type: 'string' }
+        }
       },
-      additionalProperties: false,
-    },
-  ],
+      additionalProperties: false
+    }
+  ]
 }
 
 const openApiBase = {
   type: 'object',
   properties: {
     info: {
-      $ref: '#/$defs/info',
+      $ref: '#/$defs/info'
     },
     jsonSchemaDialect: {
       type: 'string',
 
-      default: 'https://spec.openapis.org/oas/3.1/dialect/base',
+      default: 'https://spec.openapis.org/oas/3.1/dialect/base'
     },
     servers: {
       type: 'array',
       items: {
-        $ref: '#/$defs/server',
+        $ref: '#/$defs/server'
       },
       default: [
         {
-          url: '/',
-        },
-      ],
+          url: '/'
+        }
+      ]
     },
     paths: {
-      $ref: '#/$defs/paths',
+      $ref: '#/$defs/paths'
     },
     webhooks: {
       type: 'object',
       additionalProperties: {
-        $ref: '#/$defs/path-item-or-reference',
-      },
+        $ref: '#/$defs/path-item-or-reference'
+      }
     },
     components: {
-      $ref: '#/$defs/components',
+      $ref: '#/$defs/components'
     },
     security: {
       type: 'array',
       items: {
-        $ref: '#/$defs/security-requirement',
-      },
+        $ref: '#/$defs/security-requirement'
+      }
     },
     tags: {
       type: 'array',
       items: {
-        $ref: '#/$defs/tag',
-      },
+        $ref: '#/$defs/tag'
+      }
     },
     externalDocs: {
-      $ref: '#/$defs/external-documentation',
+      $ref: '#/$defs/external-documentation'
     },
     swaggerPrefix: {
       type: 'string',
-      description: 'Base URL for the OpenAPI Swagger Documentation',
+      description: 'Base URL for the OpenAPI Swagger Documentation'
     },
     path: {
       type: 'string',
       description: 'Path to an OpenAPI spec file',
-      resolvePath: true,
-    },
-  },
+      resolvePath: true
+    }
+  }
 }
 
 const openapi = {
   anyOf: [
     {
       ...openApiBase,
-      additionalProperties: false,
+      additionalProperties: false
     },
     {
-      type: 'boolean',
-    },
-  ],
+      type: 'boolean'
+    }
+  ]
 }
 
 const graphqlBase = {
   type: 'object',
   properties: {
     graphiql: {
-      type: 'boolean',
-    },
+      type: 'boolean'
+    }
   },
-  additionalProperties: false,
+  additionalProperties: false
 }
 
 const graphql = {
   anyOf: [
     {
       ...graphqlBase,
-      additionalProperties: false,
+      additionalProperties: false
     },
     {
-      type: 'boolean',
-    },
-  ],
+      type: 'boolean'
+    }
+  ]
 }
 
 const service = {
   type: 'object',
   properties: {
     openapi,
-    graphql,
+    graphql
   },
-  additionalProperties: false,
+  additionalProperties: false
 }
 
 const clients = {
@@ -300,32 +300,32 @@ const clients = {
     type: 'object',
     properties: {
       serviceId: {
-        type: 'string',
+        type: 'string'
       },
       name: {
-        type: 'string',
+        type: 'string'
       },
       type: {
         type: 'string',
-        enum: ['openapi', 'graphql'],
+        enum: ['openapi', 'graphql']
       },
       path: {
         type: 'string',
-        resolvePath: true,
+        resolvePath: true
       },
       schema: {
         type: 'string',
-        resolvePath: true,
+        resolvePath: true
       },
       url: {
-        type: 'string',
+        type: 'string'
       },
       fullResponse: { type: 'boolean' },
       fullRequest: { type: 'boolean' },
-      validateResponse: { type: 'boolean' },
+      validateResponse: { type: 'boolean' }
     },
-    additionalProperties: false,
-  },
+    additionalProperties: false
+  }
 }
 
 const platformaticServiceSchema = {
@@ -342,24 +342,24 @@ const platformaticServiceSchema = {
       anyOf: [
         watch,
         {
-          type: 'boolean',
+          type: 'boolean'
         },
         {
-          type: 'string',
-        },
-      ],
+          type: 'string'
+        }
+      ]
     },
     $schema: {
-      type: 'string',
+      type: 'string'
     },
     module: {
-      type: 'string',
+      type: 'string'
     },
     service,
-    clients,
+    clients
   },
   additionalProperties: false,
-  $defs: openApiDefs,
+  $defs: openApiDefs
 }
 
 /*
@@ -368,52 +368,52 @@ const platformaticServiceSchema = {
  */
 Object.defineProperty(platformaticServiceSchema, 'schema', {
   enumerable: false,
-  value: platformaticServiceSchema,
+  value: platformaticServiceSchema
 })
 
 Object.defineProperty(platformaticServiceSchema, 'server', {
   enumerable: false,
-  value: server,
+  value: server
 })
 
 Object.defineProperty(platformaticServiceSchema, 'cors', {
   enumerable: false,
-  value: cors,
+  value: cors
 })
 
 Object.defineProperty(platformaticServiceSchema, 'metrics', {
   enumerable: false,
-  value: metrics,
+  value: metrics
 })
 
 Object.defineProperty(platformaticServiceSchema, 'plugins', {
   enumerable: false,
-  value: plugins,
+  value: plugins
 })
 
 Object.defineProperty(platformaticServiceSchema, 'watch', {
   enumerable: false,
-  value: watch,
+  value: watch
 })
 
 Object.defineProperty(platformaticServiceSchema, 'openApiDefs', {
   enumerable: false,
-  value: openApiDefs,
+  value: openApiDefs
 })
 
 Object.defineProperty(platformaticServiceSchema, 'openApiBase', {
   enumerable: false,
-  value: openApiBase,
+  value: openApiBase
 })
 
 Object.defineProperty(platformaticServiceSchema, 'graphqlBase', {
   enumerable: false,
-  value: graphqlBase,
+  value: graphqlBase
 })
 
 Object.defineProperty(platformaticServiceSchema, 'clients', {
   enumerable: false,
-  value: clients,
+  value: clients
 })
 
 /* end */

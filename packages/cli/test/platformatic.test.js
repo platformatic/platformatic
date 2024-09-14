@@ -156,7 +156,7 @@ test('prints the help of service', async (t) => {
 })
 
 test('start the database and do a call', async (t) => {
-  const config = join(import.meta.url, '..', 'fixtures/sqlite/platformatic.db.json')
+  const config = join(import.meta.url, 'fixtures/sqlite/platformatic.db.json')
   const { child, url, cancel } = await start('db', 'start', '-c', config)
   t.after(() => {
     cancel()

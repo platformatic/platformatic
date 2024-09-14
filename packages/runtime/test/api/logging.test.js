@@ -35,12 +35,12 @@ test('logs stdio from the service thread', async t => {
     const client = new Client(
       {
         hostname: 'localhost',
-        protocol: 'http:',
+        protocol: 'http:'
       },
       {
         socketPath: app.getManagementApiUrl(),
         keepAliveTimeout: 10,
-        keepAliveMaxTimeout: 10,
+        keepAliveMaxTimeout: 10
       }
     )
 
@@ -48,7 +48,7 @@ test('logs stdio from the service thread', async t => {
 
     const { statusCode, body } = await client.request({
       method: 'GET',
-      path: '/api/v1/logs/all',
+      path: '/api/v1/logs/all'
     })
 
     strictEqual(statusCode, 200)
@@ -68,7 +68,7 @@ test('logs stdio from the service thread', async t => {
         hostname,
         name: 'stdio',
         msg: 'This is an info',
-        payload: undefined,
+        payload: undefined
       },
       {
         level: 40,
@@ -76,7 +76,7 @@ test('logs stdio from the service thread', async t => {
         hostname,
         name: 'stdio',
         msg: 'This is a warn',
-        payload: undefined,
+        payload: undefined
       },
       {
         level: 40,
@@ -84,7 +84,7 @@ test('logs stdio from the service thread', async t => {
         hostname,
         name: 'stdio',
         msg: 'This is an error',
-        payload: undefined,
+        payload: undefined
       },
       {
         level: 30,
@@ -92,7 +92,15 @@ test('logs stdio from the service thread', async t => {
         hostname,
         name: 'stdio',
         msg: `Server listening at ${url}`,
-        payload: undefined,
+        payload: undefined
+      },
+      {
+        level: 30,
+        pid,
+        hostname,
+        name: undefined,
+        msg: `Platformatic is now listening at ${url}`,
+        payload: undefined
       },
       {
         level: 30,
@@ -100,7 +108,7 @@ test('logs stdio from the service thread', async t => {
         hostname,
         name: 'stdio',
         msg: 'incoming request',
-        payload: undefined,
+        payload: undefined
       },
       {
         level: 30,
@@ -108,7 +116,7 @@ test('logs stdio from the service thread', async t => {
         hostname,
         name: 'stdio',
         msg: 'This is a\n console.log',
-        payload: undefined,
+        payload: undefined
       },
       {
         level: 50,
@@ -116,7 +124,7 @@ test('logs stdio from the service thread', async t => {
         hostname,
         name: 'stdio',
         msg: 'This is a\n console.error',
-        payload: undefined,
+        payload: undefined
       },
       {
         level: 30,
@@ -124,7 +132,7 @@ test('logs stdio from the service thread', async t => {
         hostname,
         name: 'stdio',
         msg: undefined,
-        payload: { ts: '123', foo: 'bar' },
+        payload: { ts: '123', foo: 'bar' }
       },
       {
         level: 30,
@@ -132,7 +140,7 @@ test('logs stdio from the service thread', async t => {
         hostname,
         name: 'stdio',
         msg: '#'.repeat(1e4),
-        payload: undefined,
+        payload: undefined
       },
       {
         level: 30,
@@ -140,7 +148,7 @@ test('logs stdio from the service thread', async t => {
         hostname,
         name: 'stdio',
         msg: '<Buffer 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f 30 31 ... 50 more bytes>',
-        payload: undefined,
+        payload: undefined
       },
       {
         level: 10,
@@ -148,7 +156,7 @@ test('logs stdio from the service thread', async t => {
         hostname,
         name: undefined,
         msg: 'This is a trace',
-        payload: undefined,
+        payload: undefined
       },
       {
         level: 60,
@@ -156,7 +164,7 @@ test('logs stdio from the service thread', async t => {
         hostname,
         name: undefined,
         msg: 'This is a fatal with object',
-        payload: { ts: '123', foo: 'bar' },
+        payload: { ts: '123', foo: 'bar' }
       },
       {
         level: 30,
@@ -164,8 +172,8 @@ test('logs stdio from the service thread', async t => {
         hostname,
         name: 'stdio',
         msg: 'request completed',
-        payload: undefined,
-      },
+        payload: undefined
+      }
     ])
   }
 })

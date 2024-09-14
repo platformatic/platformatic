@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/next/2.0.0-alpha.7.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/next/2.0.0-alpha.8.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Next.js Stackable",
   "type": "object",
@@ -497,13 +497,11 @@
       "properties": {
         "basePath": {
           "type": "string"
-        }
-      },
-      "additionalProperties": false
-    },
-    "deploy": {
-      "type": "object",
-      "properties": {
+        },
+        "outputDirectory": {
+          "type": "string",
+          "default": "dist"
+        },
         "include": {
           "type": "array",
           "items": {
@@ -513,19 +511,28 @@
             "dist"
           ]
         },
-        "buildCommand": {
-          "type": "string",
-          "default": "npm run build"
-        },
-        "installCommand": {
-          "type": "string",
-          "default": "npm ci --omit-dev"
-        },
-        "startCommand": {
-          "type": "string",
-          "default": "npm run start"
+        "commands": {
+          "type": "object",
+          "properties": {
+            "install": {
+              "type": "string",
+              "default": "npm ci --omit-dev"
+            },
+            "build": {
+              "type": "string"
+            },
+            "development": {
+              "type": "string"
+            },
+            "production": {
+              "type": "string"
+            }
+          },
+          "default": {},
+          "additionalProperties": false
         }
       },
+      "additionalProperties": false,
       "default": {}
     }
   },

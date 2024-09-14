@@ -1,4 +1,2 @@
-coverage
-.nyc_output
 test
-
+coverage

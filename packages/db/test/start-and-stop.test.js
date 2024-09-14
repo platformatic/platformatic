@@ -214,8 +214,8 @@ test('inject', async t => {
 })
 
 test('ignore and sqlite3', async t => {
-  const dbLocation = join(__dirname, '..', 'fixtures', 'sqlite', 'db-ignore-and-sqlite3')
-  const migrations = join(__dirname, '..', 'fixtures', 'sqlite', 'migrations')
+  const dbLocation = join(__dirname, 'fixtures', 'sqlite', 'db-ignore-and-sqlite3')
+  const migrations = join(__dirname, 'fixtures', 'sqlite', 'migrations')
 
   try {
     await safeRemove(dbLocation)

@@ -12,7 +12,7 @@ const { wire } = require('undici-thread-interceptor')
 const { PlatformaticApp } = require('./app')
 const { setupITC } = require('./itc')
 const loadInterceptors = require('./interceptors')
-const { MessagePortWritable, createPinoWritable, executeWithTimeout } = require('@platformatic/utils')
+const { MessagePortWritable, createPinoWritable, executeWithTimeout, errors } = require('@platformatic/utils')
 const { kId, kITC } = require('./symbols')
 
 process.on('uncaughtException', handleUnhandled.bind(null, 'uncaught exception'))
@@ -23,10 +23,13 @@ globalThis[kId] = threadId
 
 let app
 const config = workerData.config
-const logger = createLogger()
+globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, { logger: createLogger() })
 
 function handleUnhandled (type, err) {
-  logger.error({ err }, `application ${type}`)
+  globalThis.platformatic.logger.error(
+    { err: errors.ensureLoggableError(err) },
+    `Service ${workerData.serviceConfig.id} threw an ${type}.`
+  )
 
   executeWithTimeout(app?.stop(), 1000)
     .catch()
@@ -77,7 +80,7 @@ async function main () {
   setGlobalDispatcher(globalDispatcher)
 
   // Setup mesh networker
-  const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp })
+  const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp, timeout: true })
 
   // If the service is an entrypoint and runtime server config is defined, use it.
   let serverConfig = null
