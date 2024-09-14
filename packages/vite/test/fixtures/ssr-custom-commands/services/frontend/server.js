@@ -3,7 +3,7 @@ import { cleanBasePath, ensureTrailingSlash } from '@platformatic/basic'
 import fastify from 'fastify'
 
 const server = fastify({
-  logger: globalThis.platformatic?.logger?.child({}, { level: globalThis.platformatic?.logLevel ?? 'info' })
+  loggerInstance: globalThis.platformatic?.logger?.child({}, { level: globalThis.platformatic?.logLevel ?? 'info' })
 })
 
 await server.register(fastifyVite, {

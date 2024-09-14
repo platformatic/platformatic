@@ -3,7 +3,7 @@ import fastify from 'fastify'
 globalThis.platformatic?.setServicePrefix('/nested/base/dir')
 
 const app = fastify({
-  logger: globalThis.platformatic?.logger?.child({}, { level: globalThis.platformatic?.logLevel ?? 'info' })
+  loggerInstance: globalThis.platformatic?.logger?.child({}, { level: globalThis.platformatic?.logLevel ?? 'info' })
 })
 
 app.get('/nested/base/dir/', async () => {
