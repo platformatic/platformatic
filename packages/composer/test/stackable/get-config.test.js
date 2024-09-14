@@ -36,6 +36,7 @@ test('get service config via stackable api', async (t) => {
       logger: {
         level: 'trace',
       },
+      trustProxy: true,
     },
     watch: {
       enabled: false,

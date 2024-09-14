@@ -36,6 +36,7 @@ test('get service config via stackable api', async (t) => {
         level: 'trace'
       },
       keepAliveTimeout: 5000,
+      trustProxy: true
     },
     plugins: {
       paths: [join(__dirname, '..', 'fixtures', 'directories', 'routes')],

@@ -53,6 +53,7 @@ test('get service config via stackable api', async (t) => {
         level: 'trace',
       },
       pluginTimeout: 60000,
+      trustProxy: true,
     },
     watch: {
       enabled: false,
