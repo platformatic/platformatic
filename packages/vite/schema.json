@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/vite/2.0.0-alpha.8.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/vite/2.0.0-alpha.9.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Vite Stackable",
   "type": "object",
@@ -160,6 +160,9 @@
               "additionalProperties": true
             }
           ]
+        },
+        "loggerInstance": {
+          "type": "object"
         },
         "serializerOpts": {
           "type": "object",
