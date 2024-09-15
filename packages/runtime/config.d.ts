@@ -77,6 +77,9 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime200Alpha8Json = {
           };
           [k: string]: unknown;
         };
+    loggerInstance?: {
+      [k: string]: unknown;
+    };
     serializerOpts?: {
       schema?: {
         [k: string]: unknown;

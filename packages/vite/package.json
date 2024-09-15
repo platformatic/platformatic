@@ -29,11 +29,11 @@
     "@platformatic/config": "workspace:*",
     "@platformatic/node": "workspace:*",
     "@platformatic/utils": "workspace:*",
-    "fastify": "^4.28.1",
+    "fastify": "5.0.0-alpha.4",
     "semver": "^7.6.3"
   },
   "devDependencies": {
-    "@fastify/vite": "^6.0.7",
+    "@fastify/vite": "7.0.0-alpha.1",
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
     "borp": "^0.17.0",

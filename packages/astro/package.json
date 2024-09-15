@@ -24,12 +24,12 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
-    "@fastify/middie": "^8.3.1",
-    "@fastify/static": "^7.0.4",
+    "@fastify/middie": "^9.0.0",
+    "@fastify/static": "^8.0.0",
     "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/utils": "workspace:*",
-    "fastify": "^4.28.1",
+    "fastify": "5.0.0-alpha.4",
     "semver": "^7.6.3"
   },
   "devDependencies": {

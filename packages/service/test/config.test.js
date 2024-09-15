@@ -15,7 +15,7 @@ test('config is adjusted to handle custom loggers', async t => {
     server: {
       hostname: '127.0.0.1',
       port: 0,
-      logger: {
+      loggerInstance: {
         info () {},
         error () {},
         debug () {},
@@ -27,7 +27,7 @@ test('config is adjusted to handle custom loggers', async t => {
   }
 
   let called = false
-  Object.defineProperty(options.server.logger, 'child', {
+  Object.defineProperty(options.server.loggerInstance, 'child', {
     value: function child () {
       called = true
       return this

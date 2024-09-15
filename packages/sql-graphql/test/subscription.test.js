@@ -318,6 +318,9 @@ test('subscription - crud with two schemas and a ignore', async t => {
   {
     const [chunk] = await once(client, 'data')
     const data = JSON.parse(chunk)
-    equal(data.payload, 'The subscription field "categorySaved" is not defined.')
+    same(data.payload, [{
+      message: 'The subscription field "categorySaved" is not defined.',
+      locations: [{ line: 2, column: 7 }],
+    }])
   }
 })

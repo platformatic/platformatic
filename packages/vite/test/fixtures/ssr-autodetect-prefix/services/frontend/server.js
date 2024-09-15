@@ -4,7 +4,7 @@ import fastify from 'fastify'
 
 export async function build () {
   const server = fastify({
-    logger: globalThis.platformatic?.logger?.child({}, { level: globalThis.platformatic?.logLevel ?? 'info' })
+    loggerInstance: globalThis.platformatic?.logger?.child({}, { level: globalThis.platformatic?.logLevel ?? 'info' })
   })
 
   await server.register(fastifyVite, {

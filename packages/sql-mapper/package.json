@@ -30,7 +30,7 @@
     "@opentelemetry/api": "^1.8.0",
     "borp": "^0.17.0",
     "eslint": "9",
-    "fastify": "^4.26.2",
+    "fastify": "5.0.0-alpha.4",
     "neostandard": "^0.11.1",
     "tsd": "^0.31.0",
     "typescript": "^5.5.4"
@@ -39,14 +39,14 @@
     "@databases/mysql": "^6.0.0",
     "@databases/pg": "^5.5.0",
     "@databases/sql": "^3.3.0",
-    "@fastify/error": "^3.4.1",
+    "@fastify/error": "^4.0.0",
     "@hapi/topo": "^6.0.2",
     "@matteo.collina/sqlite-pool": "^0.4.0",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "async-cache-dedupe": "^2.1.0",
     "camelcase": "^6.3.0",
-    "fastify-plugin": "^4.5.1",
+    "fastify-plugin": "^5.0.0",
     "inflected": "^2.1.0"
   },
   "tsd": {

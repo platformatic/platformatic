@@ -26,8 +26,8 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "@fastify/express": "^3.0.0",
-    "@fastify/formbody": "^7.4.0",
+    "@fastify/express": "^4.0.0",
+    "@fastify/formbody": "^8.0.0",
     "@platformatic/composer": "workspace:*",
     "@platformatic/db": "workspace:*",
     "@platformatic/service": "workspace:*",
@@ -50,7 +50,7 @@
     "why-is-node-running": "^2.2.2"
   },
   "dependencies": {
-    "@fastify/error": "^3.4.1",
+    "@fastify/error": "^4.0.0",
     "@fastify/websocket": "^10.0.0",
     "@hapi/topo": "^6.0.2",
     "@platformatic/basic": "workspace:*",
@@ -71,7 +71,7 @@
     "dotenv-tool": "^0.1.1",
     "es-main": "^1.3.0",
     "fastest-levenshtein": "^1.0.16",
-    "fastify": "^4.26.2",
+    "fastify": "5.0.0-alpha.4",
     "fastify-undici-dispatcher": "^0.6.0",
     "graphql": "^16.8.1",
     "help-me": "^5.0.0",

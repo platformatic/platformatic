@@ -24,11 +24,11 @@ importers:
   packages/astro:
     dependencies:
       '@fastify/middie':
-        specifier: ^8.3.1
-        version: 8.3.3
+        specifier: ^9.0.0
+        version: 9.0.1
       '@fastify/static':
-        specifier: ^7.0.4
-        version: 7.0.4
+        specifier: ^8.0.0
+        version: 8.0.0
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
@@ -39,8 +39,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       fastify:
-        specifier: ^4.28.1
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       semver:
         specifier: ^7.6.3
         version: 7.6.3
@@ -131,8 +131,8 @@ importers:
         specifier: ^4.19.2
         version: 4.21.0
       fastify:
-        specifier: ^4.28.1
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       json-schema-to-typescript:
         specifier: ^15.0.0
         version: 15.0.2
@@ -158,8 +158,8 @@ importers:
   packages/cli:
     dependencies:
       '@fastify/error':
-        specifier: ^3.4.1
-        version: 3.4.1
+        specifier: ^4.0.0
+        version: 4.0.0
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
@@ -218,8 +218,8 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8
       pino:
-        specifier: ^8.19.0
-        version: 8.21.0
+        specifier: ^9.0.0
+        version: 9.4.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -264,8 +264,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       license-checker:
         specifier: ^25.0.1
         version: 25.0.1
@@ -288,8 +288,8 @@ importers:
         specifier: ^11.5.4
         version: 11.7.0
       '@fastify/error':
-        specifier: ^3.4.1
-        version: 3.4.1
+        specifier: ^4.0.0
+        version: 4.0.0
       abstract-logging:
         specifier: ^2.0.1
         version: 2.0.1
@@ -328,8 +328,8 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -346,8 +346,8 @@ importers:
   packages/client-cli:
     dependencies:
       '@fastify/error':
-        specifier: ^3.4.1
-        version: 3.4.1
+        specifier: ^4.0.0
+        version: 4.0.0
       '@platformatic/client':
         specifier: workspace:*
         version: link:../client
@@ -388,8 +388,8 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8
       pino:
-        specifier: ^8.19.0
-        version: 8.21.0
+        specifier: ^9.0.0
+        version: 9.4.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -428,8 +428,8 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       fastify-tsconfig:
         specifier: ^2.0.0
         version: 2.0.0
@@ -455,20 +455,20 @@ importers:
   packages/composer:
     dependencies:
       '@fastify/error':
-        specifier: ^3.4.1
-        version: 3.4.1
+        specifier: ^4.0.0
+        version: 4.0.0
       '@fastify/http-proxy':
-        specifier: ^9.4.0
-        version: 9.5.0
+        specifier: ^10.0.0
+        version: 10.0.0
       '@fastify/reply-from':
-        specifier: ^9.7.0
-        version: 9.8.0
+        specifier: ^11.0.0
+        version: 11.0.0
       '@fastify/static':
-        specifier: ^7.0.1
-        version: 7.0.4
+        specifier: ^8.0.0
+        version: 8.0.0
       '@fastify/swagger':
-        specifier: ^8.14.0
-        version: 8.15.0
+        specifier: ^9.0.0
+        version: 9.0.0
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
@@ -476,8 +476,8 @@ importers:
         specifier: workspace:*
         version: link:../generators
       '@platformatic/graphql-composer':
-        specifier: ^0.7.0
-        version: 0.7.2
+        specifier: ^0.8.0
+        version: 0.8.0
       '@platformatic/scalar-theme':
         specifier: workspace:*
         version: link:../scalar-theme
@@ -515,14 +515,14 @@ importers:
         specifier: ^3.1.3
         version: 3.1.3
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       fastify-openapi-glue:
         specifier: ^4.6.0
         version: 4.7.1
       fastify-plugin:
-        specifier: ^4.5.1
-        version: 4.5.1
+        specifier: ^5.0.0
+        version: 5.0.0
       graphql:
         specifier: ^16.8.1
         version: 16.9.0
@@ -533,8 +533,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       mercurius:
-        specifier: ^14.0.0
-        version: 14.1.0(graphql@16.9.0)
+        specifier: ^15.0.0
+        version: 15.0.0(graphql@16.9.0)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -606,11 +606,11 @@ importers:
   packages/config:
     dependencies:
       '@fastify/deepmerge':
-        specifier: ^1.3.0
-        version: 1.3.0
+        specifier: ^2.0.0
+        version: 2.0.0
       '@fastify/error':
-        specifier: ^3.4.1
-        version: 3.4.1
+        specifier: ^4.0.0
+        version: 4.0.0
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -655,8 +655,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       json5:
         specifier: ^2.2.3
         version: 2.2.3
@@ -664,8 +664,8 @@ importers:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
       pino:
-        specifier: ^8.17.2
-        version: 8.21.0
+        specifier: ^9.0.0
+        version: 9.4.0
       pino-test:
         specifier: ^1.0.1
         version: 1.0.1
@@ -679,8 +679,8 @@ importers:
   packages/control:
     dependencies:
       '@fastify/error':
-        specifier: ^3.4.1
-        version: 3.4.1
+        specifier: ^4.0.0
+        version: 4.0.0
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -785,8 +785,8 @@ importers:
         specifier: ^6.3.1
         version: 6.3.1
       pino:
-        specifier: ^8.19.0
-        version: 8.21.0
+        specifier: ^9.0.0
+        version: 9.4.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -843,8 +843,8 @@ importers:
         specifier: ^2.6.4
         version: 2.6.7
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -858,26 +858,26 @@ importers:
   packages/db:
     dependencies:
       '@fastify/accepts':
-        specifier: ^4.3.0
-        version: 4.3.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fastify/basic-auth':
-        specifier: ^5.1.1
-        version: 5.1.1
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fastify/cors':
-        specifier: ^9.0.1
-        version: 9.0.1
+        specifier: ^10.0.0
+        version: 10.0.0
       '@fastify/deepmerge':
-        specifier: ^1.3.0
-        version: 1.3.0
+        specifier: ^2.0.0
+        version: 2.0.0
       '@fastify/error':
-        specifier: ^3.4.1
-        version: 3.4.1
+        specifier: ^4.0.0
+        version: 4.0.0
       '@fastify/static':
-        specifier: ^7.0.1
-        version: 7.0.4
+        specifier: ^8.0.0
+        version: 8.0.0
       '@fastify/swagger':
-        specifier: ^8.14.0
-        version: 8.15.0
+        specifier: ^9.0.0
+        version: 9.0.0
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
@@ -945,14 +945,14 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       fastify-metrics:
         specifier: ^11.0.0
-        version: 11.0.0(fastify@4.28.1)
+        version: 11.0.0(fastify@5.0.0-alpha.4)
       fastify-plugin:
-        specifier: ^4.5.1
-        version: 4.5.1
+        specifier: ^5.0.0
+        version: 5.0.0
       fastify-print-routes:
         specifier: ^3.1.1
         version: 3.2.0
@@ -1018,8 +1018,8 @@ importers:
         specifier: ^15.0.0
         version: 15.0.2
       mercurius:
-        specifier: ^14.0.0
-        version: 14.1.0(graphql@16.9.0)
+        specifier: ^15.0.0
+        version: 15.0.0(graphql@16.9.0)
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -1054,17 +1054,17 @@ importers:
   packages/db-authorization:
     dependencies:
       '@fastify/error':
-        specifier: ^3.4.1
-        version: 3.4.1
+        specifier: ^4.0.0
+        version: 4.0.0
       '@fastify/jwt':
-        specifier: ^8.0.0
-        version: 8.0.1
+        specifier: ^9.0.0
+        version: 9.0.0
       fastify-plugin:
-        specifier: ^4.5.1
-        version: 4.5.1
+        specifier: ^5.0.0
+        version: 5.0.0
       fastify-user:
-        specifier: ^0.4.0
-        version: 0.4.1
+        specifier: ^1.0.0
+        version: 1.0.1
       leven:
         specifier: ~3.1.0
         version: 3.1.0
@@ -1097,8 +1097,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.5
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
+        specifier: ^5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       get-jwks:
         specifier: ^9.0.1
         version: 9.0.2
@@ -1133,8 +1133,8 @@ importers:
         specifier: workspace:*
         version: link:../sql-openapi
       fastify-plugin:
-        specifier: ^4.5.1
-        version: 4.5.1
+        specifier: ^5.0.0
+        version: 5.0.0
     devDependencies:
       borp:
         specifier: ^0.17.0
@@ -1143,8 +1143,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -1294,8 +1294,8 @@ importers:
   packages/generators:
     dependencies:
       '@fastify/error':
-        specifier: ^3.4.1
-        version: 3.4.1
+        specifier: ^4.0.0
+        version: 4.0.0
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -1306,11 +1306,11 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       pino:
-        specifier: ^8.19.0
-        version: 8.21.0
+        specifier: ^9.0.0
+        version: 9.4.0
       undici:
         specifier: ^6.9.0
         version: 6.19.8
@@ -1340,8 +1340,8 @@ importers:
   packages/itc:
     dependencies:
       '@fastify/error':
-        specifier: ^3.4.1
-        version: 3.4.1
+        specifier: ^4.0.0
+        version: 4.0.0
       '@watchable/unpromise':
         specifier: ^1.0.2
         version: 1.0.2
@@ -1405,8 +1405,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: ^4.28.1
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       json-schema-to-typescript:
         specifier: ^15.0.1
         version: 15.0.2
@@ -1460,8 +1460,8 @@ importers:
         specifier: ^4.19.2
         version: 4.21.0
       fastify:
-        specifier: ^4.28.1
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       json-schema-to-typescript:
         specifier: ^15.0.1
         version: 15.0.2
@@ -1496,8 +1496,8 @@ importers:
         specifier: ^4.19.2
         version: 4.21.0
       light-my-request:
-        specifier: ^5.13.0
-        version: 5.13.0
+        specifier: ^6.0.0
+        version: 6.0.0
       pino-http:
         specifier: ^10.2.0
         version: 10.3.0
@@ -1527,8 +1527,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: ^4.28.1
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       isbot:
         specifier: ^5.1.17
         version: 5.1.17
@@ -1557,8 +1557,8 @@ importers:
   packages/rpc:
     dependencies:
       fastify-plugin:
-        specifier: ^4.5.1
-        version: 4.5.1
+        specifier: ^5.0.0
+        version: 5.0.0
     devDependencies:
       borp:
         specifier: ^0.17.0
@@ -1567,8 +1567,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: ^4.28.1
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -1586,8 +1586,8 @@ importers:
         version: 0.65.1
     devDependencies:
       '@fastify/autoload':
-        specifier: ^5.8.0
-        version: 5.10.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@platformatic/rpc':
         specifier: workspace:*
         version: link:../rpc
@@ -1604,8 +1604,8 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       fastify:
-        specifier: ^4.28.1
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -1613,8 +1613,8 @@ importers:
   packages/runtime:
     dependencies:
       '@fastify/error':
-        specifier: ^3.4.1
-        version: 3.4.1
+        specifier: ^4.0.0
+        version: 4.0.0
       '@fastify/websocket':
         specifier: ^10.0.0
         version: 10.0.1
@@ -1676,8 +1676,8 @@ importers:
         specifier: ^1.0.16
         version: 1.0.16
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       fastify-undici-dispatcher:
         specifier: ^0.6.0
         version: 0.6.0
@@ -1719,11 +1719,11 @@ importers:
         version: 8.18.0
     devDependencies:
       '@fastify/express':
-        specifier: ^3.0.0
-        version: 3.0.0
+        specifier: ^4.0.0
+        version: 4.0.0
       '@fastify/formbody':
-        specifier: ^7.4.0
-        version: 7.4.0
+        specifier: ^8.0.0
+        version: 8.0.0
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
@@ -1790,35 +1790,35 @@ importers:
   packages/service:
     dependencies:
       '@fastify/accepts':
-        specifier: ^4.3.0
-        version: 4.3.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fastify/autoload':
-        specifier: ^5.8.0
-        version: 5.10.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fastify/basic-auth':
-        specifier: ^5.1.1
-        version: 5.1.1
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fastify/cors':
-        specifier: ^9.0.1
-        version: 9.0.1
+        specifier: ^10.0.0
+        version: 10.0.0
       '@fastify/deepmerge':
-        specifier: ^1.3.0
-        version: 1.3.0
+        specifier: ^2.0.0
+        version: 2.0.0
       '@fastify/error':
-        specifier: ^3.4.1
-        version: 3.4.1
+        specifier: ^4.0.0
+        version: 4.0.0
       '@fastify/static':
-        specifier: ^7.0.1
-        version: 7.0.4
+        specifier: ^8.0.0
+        version: 8.0.0
       '@fastify/swagger':
-        specifier: ^8.14.0
-        version: 8.15.0
+        specifier: ^9.0.0
+        version: 9.0.0
       '@fastify/under-pressure':
-        specifier: ^8.3.0
-        version: 8.5.1
+        specifier: ^9.0.0
+        version: 9.0.0
       '@mercuriusjs/federation':
-        specifier: ^3.0.0
-        version: 3.0.0
+        specifier: ^4.0.0
+        version: 4.0.0
       '@platformatic/client':
         specifier: workspace:*
         version: link:../client
@@ -1883,17 +1883,11 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       fastify:
-        specifier: ^4.28.1
-        version: 4.28.1
-      fastify-metrics:
-        specifier: ^11.0.0
-        version: 11.0.0(fastify@4.28.1)
-      fastify-openapi-glue:
-        specifier: ^4.4.3
-        version: 4.7.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       fastify-plugin:
-        specifier: ^4.5.1
-        version: 4.5.1
+        specifier: ^5.0.0
+        version: 5.0.0
       graphql:
         specifier: ^16.9.0
         version: 16.9.0
@@ -1901,8 +1895,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
       mercurius:
-        specifier: ^14.0.0
-        version: 14.1.0(graphql@16.9.0)
+        specifier: ^15.0.0
+        version: 15.0.0(graphql@16.9.0)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -1913,8 +1907,8 @@ importers:
         specifier: ^6.3.1
         version: 6.3.1
       pino:
-        specifier: ^8.19.0
-        version: 8.21.0
+        specifier: ^9.0.0
+        version: 9.4.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -1935,8 +1929,8 @@ importers:
         specifier: ^4.0.0
         version: 4.1.0
       '@fastify/compress':
-        specifier: ^7.0.0
-        version: 7.0.3
+        specifier: ^8.0.0
+        version: 8.0.0
       bindings:
         specifier: ^1.5.0
         version: 1.5.0
@@ -1956,8 +1950,8 @@ importers:
         specifier: ^12.1.3
         version: 12.1.3
       pino-abstract-transport:
-        specifier: ^1.1.0
-        version: 1.2.0
+        specifier: ^2.0.0
+        version: 2.0.0
       self-cert:
         specifier: ^2.0.0
         version: 2.0.1
@@ -1986,14 +1980,14 @@ importers:
   packages/sql-events:
     dependencies:
       '@fastify/error':
-        specifier: ^3.4.1
-        version: 3.4.1
+        specifier: ^4.0.0
+        version: 4.0.0
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
       fastify-plugin:
-        specifier: ^4.5.1
-        version: 4.5.1
+        specifier: ^5.0.0
+        version: 5.0.0
       mqemitter:
         specifier: ^6.0.0
         version: 6.0.2
@@ -2014,8 +2008,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
+        specifier: ^5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       ioredis:
         specifier: ^5.3.2
         version: 5.4.1
@@ -2035,8 +2029,8 @@ importers:
         specifier: ^3.4.1
         version: 3.4.1
       '@mercuriusjs/federation':
-        specifier: ^3.0.0
-        version: 3.0.0
+        specifier: ^4.0.0
+        version: 4.0.0
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -2044,8 +2038,8 @@ importers:
         specifier: ^6.3.0
         version: 6.3.0
       fastify-plugin:
-        specifier: ^4.5.1
-        version: 4.5.1
+        specifier: ^5.0.0
+        version: 5.0.0
       graphql:
         specifier: ^16.8.1
         version: 16.9.0
@@ -2059,8 +2053,8 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
       mercurius:
-        specifier: ^14.0.0
-        version: 14.1.0(graphql@16.9.0)
+        specifier: ^15.0.0
+        version: 15.0.0(graphql@16.9.0)
     devDependencies:
       '@matteo.collina/snap':
         specifier: ^0.3.0
@@ -2069,8 +2063,8 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1
       '@mercuriusjs/gateway':
-        specifier: ^3.0.0
-        version: 3.0.1
+        specifier: ^4.0.1
+        version: 4.0.1
       '@platformatic/sql-events':
         specifier: workspace:*
         version: link:../sql-events
@@ -2087,8 +2081,11 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
+        specifier: ^5.0.0-alpha.4
+        version: 5.0.0-alpha.4
+      fastify-tsconfig:
+        specifier: ^2.0.0
+        version: 2.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2127,8 +2124,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2151,8 +2148,8 @@ importers:
         specifier: ^3.3.0
         version: 3.3.0
       '@fastify/error':
-        specifier: ^3.4.1
-        version: 3.4.1
+        specifier: ^4.0.0
+        version: 4.0.0
       '@hapi/topo':
         specifier: ^6.0.2
         version: 6.0.2
@@ -2172,8 +2169,8 @@ importers:
         specifier: ^6.3.0
         version: 6.3.0
       fastify-plugin:
-        specifier: ^4.5.1
-        version: 4.5.1
+        specifier: ^5.0.0
+        version: 5.0.0
       inflected:
         specifier: ^2.1.0
         version: 2.1.0
@@ -2191,8 +2188,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2209,11 +2206,11 @@ importers:
         specifier: ^1.3.0
         version: 1.3.0
       '@fastify/error':
-        specifier: ^3.4.1
-        version: 3.4.1
+        specifier: ^4.0.0
+        version: 4.0.0
       '@fastify/swagger':
-        specifier: ^8.14.0
-        version: 8.15.0
+        specifier: ^9.0.0
+        version: 9.0.0
       '@platformatic/scalar-theme':
         specifier: workspace:*
         version: link:../scalar-theme
@@ -2230,8 +2227,8 @@ importers:
         specifier: ^6.3.0
         version: 6.3.0
       fastify-plugin:
-        specifier: ^4.5.1
-        version: 4.5.1
+        specifier: ^5.0.0
+        version: 5.0.0
       inflected:
         specifier: ^2.1.0
         version: 2.1.0
@@ -2252,11 +2249,8 @@ importers:
         specifier: ^9.4.0
         version: 9.10.0
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
-      mercurius:
-        specifier: ^14.0.0
-        version: 14.1.0(graphql@16.9.0)
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2279,8 +2273,8 @@ importers:
   packages/telemetry:
     dependencies:
       '@fastify/swagger':
-        specifier: ^8.14.0
-        version: 8.15.0
+        specifier: ^9.0.0
+        version: 9.0.0
       '@opentelemetry/api':
         specifier: ^1.8.0
         version: 1.9.0
@@ -2306,15 +2300,15 @@ importers:
         specifier: ^2.3.0
         version: 2.4.0
       fastify-plugin:
-        specifier: ^4.5.1
-        version: 4.5.1
+        specifier: ^5.0.0
+        version: 5.0.0
     devDependencies:
       borp:
         specifier: ^0.17.0
         version: 0.17.0
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2347,8 +2341,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2362,11 +2356,11 @@ importers:
   packages/utils:
     dependencies:
       '@fastify/deepmerge':
-        specifier: ^1.3.0
-        version: 1.3.0
+        specifier: ^2.0.0
+        version: 2.0.0
       '@fastify/error':
-        specifier: ^3.4.1
-        version: 3.4.1
+        specifier: ^4.0.0
+        version: 4.0.0
       '@watchable/unpromise':
         specifier: ^1.0.2
         version: 1.0.2
@@ -2390,8 +2384,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: ^4.26.2
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2417,15 +2411,15 @@ importers:
         specifier: workspace:*
         version: link:../utils
       fastify:
-        specifier: ^4.28.1
-        version: 4.28.1
+        specifier: 5.0.0-alpha.4
+        version: 5.0.0-alpha.4
       semver:
         specifier: ^7.6.3
         version: 7.6.3
     devDependencies:
       '@fastify/vite':
-        specifier: ^6.0.7
-        version: 6.0.7(@types/node@22.5.5)
+        specifier: 7.0.0-alpha.1
+        version: 7.0.0-alpha.1(@types/node@22.5.5)
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
@@ -3177,36 +3171,42 @@ packages:
     resolution: {integrity: sha512-OIHZrb2ImZ7XG85HXOONLcJWGosv7sIvM2ifAPQVhg9Lv7qdmMBNVaai4QTdyuaqbKM5eO6sLSQOYI7wEQeCJQ==}
     engines: {node: '>=14'}
 
-  '@fastify/accepts@4.3.0':
-    resolution: {integrity: sha512-QK4FoqXdwwPmaPOLL6NrxsyaXVvdviYVoS6ltHyOLdFlUyREIaMykHQIp+x0aJz9hB3B3n/Ht6QRdvBeGkptGQ==}
+  '@fastify/accept-negotiator@2.0.0':
+    resolution: {integrity: sha512-/Sce/kBzuTxIq5tJh85nVNOq9wKD8s+viIgX0fFMDBdw95gnpf53qmF1oBgJym3cPFliWUuSloVg/1w/rH0FcQ==}
 
-  '@fastify/ajv-compiler@3.6.0':
-    resolution: {integrity: sha512-LwdXQJjmMD+GwLOkP7TVC68qa+pSSogeWWmznRJ/coyTcfe9qA05AHFSe1eZFwK6q+xVRpChnvFUkf1iYaSZsQ==}
+  '@fastify/accepts@5.0.0':
+    resolution: {integrity: sha512-5wpgycrn+DXPkATGqUbXY9tyqLNgxo9S8f0EHUyIWvUacor2cXa3liYZggsqoyMXgpIqUbGLPBl+dN2hRcU9jQ==}
 
-  '@fastify/autoload@5.10.0':
-    resolution: {integrity: sha512-4A6s86qMbjcpWHmJL7cErtjIxOPuW8c67DLiuO8HoJQxuK97vaptoUnK5BTOwRg1ntYqfc3tjwerTTo5NQ3fEQ==}
+  '@fastify/ajv-compiler@4.0.0':
+    resolution: {integrity: sha512-dt0jyLAlay14LpIn4Fg1SY7V5NJ9KH0YFDpYVQY5cgIVBvdI8908AMx5zQ0bBYPGT6Wh+bM3f2caMmOXLP3QsQ==}
+
+  '@fastify/autoload@6.0.0':
+    resolution: {integrity: sha512-6L8LNxpgjBoY1MU0iUwDpDh3BEFY7yqZB3b8az4CpxvfvwizAxNp8/IdEWKgybSPIc8dxIP4EWIoaD5NKo3JVQ==}
 
   '@fastify/aws-lambda@4.1.0':
     resolution: {integrity: sha512-293HSdtr4muZZi4UxjrDgddxlLRDbNxT5x/eOX78obMA1Du3tfpuP7WuyfnA4GXaeckj/soJ2jiuD2sM4VIW9Q==}
 
-  '@fastify/basic-auth@5.1.1':
-    resolution: {integrity: sha512-L4b7EK5LKZnV6fdH1+rQbjhkKGXjCfiKJ0JkdGHZQPBMHMiXDZF8xbZsCakWGf9c7jDXJicP3FPcIXUPBkuSeQ==}
+  '@fastify/basic-auth@6.0.0':
+    resolution: {integrity: sha512-OpVFSvkNGplt2C7cd3ijC2XKZkmteZYagnjCiLdHpunZLGIDCw1UDCdOcTlqbqjl5VrxpIqRfmFO35UnU9kNcA==}
 
   '@fastify/busboy@2.1.1':
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
-  '@fastify/compress@7.0.3':
-    resolution: {integrity: sha512-xa9fo5/DgK1s0bkS6xrYgNn8HmofO5tJvbCDk8QuXshSgLd2cFZANv1ox/Qv7zswS7JroHwTlCVv/XGTVO98tg==}
+  '@fastify/compress@8.0.0':
+    resolution: {integrity: sha512-HZrmgqXPKEK9yHCzM4cPPhRq8N5EvuAJC/kwPUlPwxIUKXe/pbzodyiff9XmzUHXRX5v7szXpKSQbEA2Oy7BwA==}
 
   '@fastify/cookie@8.3.0':
     resolution: {integrity: sha512-P9hY9GO11L20TnZ33XN3i0bt+3x0zaT7S0ohAzWO950E9PB2xnNhLYzPFJIGFi5AVN0yr5+/iZhWxeYvR6KCzg==}
 
-  '@fastify/cors@9.0.1':
-    resolution: {integrity: sha512-YY9Ho3ovI+QHIL2hW+9X4XqQjXLjJqsU+sMV/xFsxZkE8p3GNnYVFpoOxF7SsP5ZL76gwvbo3V9L+FIekBGU4Q==}
+  '@fastify/cors@10.0.0':
+    resolution: {integrity: sha512-kb9fkc/LVbLTQ3lhA+ZZjC/Styzysodo/MTCdVCvTtgHa/gBwxrEEkcp3fuoKIfAQt85wksrpXjUGbw5NQffEQ==}
 
   '@fastify/deepmerge@1.3.0':
     resolution: {integrity: sha512-J8TOSBq3SoZbDhM9+R/u77hP93gz/rajSA+K2kGyijPpORPWUXHUpTaleoj+92As0S9uPRP7Oi8IqMf0u+ro6A==}
+
+  '@fastify/deepmerge@2.0.0':
+    resolution: {integrity: sha512-fsaybTGDyQ5KpPsplQqb9yKdCf2x/pbNpMNk8Tvp3rRz7lVcupKysH4b2ELMN2P4Hak1+UqTYdTj/u4FNV2p0g==}
 
   '@fastify/error@3.4.1':
     resolution: {integrity: sha512-wWSvph+29GR783IhmvdwWnN4bUxTD01Vm5Xad4i7i1VuAOItLvbPAb69sb0IQ2N57yprvhNIwAP5B6xfKTmjmQ==}
@@ -3214,20 +3214,20 @@ packages:
   '@fastify/error@4.0.0':
     resolution: {integrity: sha512-OO/SA8As24JtT1usTUTKgGH7uLvhfwZPwlptRi2Dp5P4KKmJI3gvsZ8MIHnNwDs4sLf/aai5LzTyl66xr7qMxA==}
 
-  '@fastify/express@3.0.0':
-    resolution: {integrity: sha512-Ug6aulXCUiHgMyrHVYQqnQbGdsAV0aTad6nZxbOr6w3QjKn1mdQS3Kyzvc+I0xMjZ9yIyMUWHSooHgZ0l7nOng==}
+  '@fastify/express@4.0.0':
+    resolution: {integrity: sha512-e+IMKKV9+HRCVm7LVW8PaMrpEerHfqNLpRkbiVHYfVm0xeOphiwyNEoge4VA3Sh8gubtDfo9yKkpRzx6gx63kg==}
 
   '@fastify/fast-json-stringify-compiler@4.3.0':
     resolution: {integrity: sha512-aZAXGYo6m22Fk1zZzEUKBvut/CIIQe/BapEORnxiD5Qr0kPHqqI69NtEMCme74h+at72sPhbkb4ZrLd1W3KRLA==}
 
-  '@fastify/formbody@7.4.0':
-    resolution: {integrity: sha512-H3C6h1GN56/SMrZS8N2vCT2cZr7mIHzBHzOBa5OPpjfB/D6FzP9mMpE02ZzrFX0ANeh0BAJdoXKOF2e7IbV+Og==}
+  '@fastify/formbody@8.0.0':
+    resolution: {integrity: sha512-iM9DLCwMnPx2gUu5HaPLylQox9ApPMFksf4Yw+1d2mWe7uvRDzg4/1BB1T19OjZK+UWZOQ7Q4o2FnoBQ973UMQ==}
 
-  '@fastify/http-proxy@9.5.0':
-    resolution: {integrity: sha512-1iqIdV10d5k9YtfHq9ylX5zt1NiM50fG+rIX40qt00R694sqWso3ukyTFZVk33SDoSiBW8roB7n11RUVUoN+Ag==}
+  '@fastify/http-proxy@10.0.0':
+    resolution: {integrity: sha512-n5/EPspNKtzpCUavuDflYtvtB+aEkablb2sZM83gDKbxM9GF+93maJYQrGozJ2HNRqpt7wfzsDeUuGVFFkYzMQ==}
 
-  '@fastify/jwt@8.0.1':
-    resolution: {integrity: sha512-295bd7V6bDCnZOu8MAQgM6r7V1KILB+kdEq1q6nbHfXCnML569n7NSo3WzeLDG6IAqDl+Rhzi1vjxwaNHhRCBA==}
+  '@fastify/jwt@9.0.0':
+    resolution: {integrity: sha512-3XKFgpK/D/6vGY6gqy9Fe8TvUEk+UYBkFcIHvTvwLhe4wmmlNCE1si16wUdCZmeHRajjZKxfdBwRUklK8cHGIA==}
 
   '@fastify/merge-json-schemas@0.1.1':
     resolution: {integrity: sha512-fERDVz7topgNjtXsJTTW1JKLy0rhuLRcquYqNR9rF7OcVpCa2OVW49ZPDIhaRRCaUuvVxI+N416xUoF76HNSXA==}
@@ -3235,14 +3235,20 @@ packages:
   '@fastify/middie@8.3.3':
     resolution: {integrity: sha512-+WHavMQr9CNTZoy2cjoDxoWp76kZ3JKjAtZj5sXNlxX5XBzHig0TeCPfPc+1+NQmliXtndT3PFwAjrQHE/6wnQ==}
 
+  '@fastify/middie@9.0.1':
+    resolution: {integrity: sha512-NCOu4sTSuON0n3iFPhvDbpQoi9RPHHF1GEbKF3vFlYNIgKUu/OY2jzPIdtVZmx9itqbg1h2FrvsP495uN4xxpg==}
+
   '@fastify/pre-commit@2.1.0':
     resolution: {integrity: sha512-UM1Fv4NJ+SErNJzCaR6LBk+4GE4wYtv+/R4ePY7Utx+0PktLVxHsLYnnJWgOfyHqtKCjSchZrn3H8tOPuhCfYA==}
 
-  '@fastify/reply-from@9.8.0':
-    resolution: {integrity: sha512-bPNVaFhEeNI0Lyl6404YZaPFokudCplidE3QoOcr78yOy6H9sYw97p5KPYvY/NJNUHfFtvxOaSAHnK+YSiv/Mg==}
+  '@fastify/reply-from@11.0.0':
+    resolution: {integrity: sha512-dv3o8hyy4sxhg1RN9l6ueM+PMMaIPKLjtL2T99H5M7h1Xt8d1RX3r+xC+sL5AqJqLvReX4N+7mTq9QDeB8i6Lg==}
 
   '@fastify/send@2.1.0':
     resolution: {integrity: sha512-yNYiY6sDkexoJR0D8IDy3aRP3+L4wdqCpvx5WP+VtEU58sn7USmKynBzDQex5X42Zzvw2gNzzYgP90UfWShLFA==}
+
+  '@fastify/send@3.1.0':
+    resolution: {integrity: sha512-2y1Fd2JI7jbn2LS2bIn7eakFJLfdk/9tEeWGM8yHla2YSKmViL5J3aMbmSz+TJGGmUS5zE7HT/ew5SH9T/fp/A==}
 
   '@fastify/session@10.9.0':
     resolution: {integrity: sha512-u/c42RuAaxCeEuRCAwK2+/SfGqKOd0NSyRzEvDwFBWySQoKUZQyb9OmmJSWJBbOP1OfaU2OsDrjbPbghE1l/YQ==}
@@ -3253,17 +3259,23 @@ packages:
   '@fastify/static@7.0.4':
     resolution: {integrity: sha512-p2uKtaf8BMOZWLs6wu+Ihg7bWNBdjNgCwDza4MJtTqg+5ovKmcbgbR9Xs5/smZ1YISfzKOCNYmZV8LaCj+eJ1Q==}
 
-  '@fastify/swagger@8.15.0':
-    resolution: {integrity: sha512-zy+HEEKFqPMS2sFUsQU5X0MHplhKJvWeohBwTCkBAJA/GDYGLGUWQaETEhptiqxK7Hs0fQB9B4MDb3pbwIiCwA==}
+  '@fastify/static@8.0.0':
+    resolution: {integrity: sha512-VKGn1PQslB2VqzspyMKPu9xasF9vj+YuyGhVLb1ih6V60VVcRvcf0fFRcl3opt6c6YWwhKKdTUTfVE6COnpw6A==}
 
-  '@fastify/under-pressure@8.5.1':
-    resolution: {integrity: sha512-4PRp1Y29yNSqNnMIwL9CyBtNP6rqLnY0JmZ0TMzCYj28k9Lw0nrqI6A2JxNQZd0jzbls/8LN4TcuRW2HEqQVmw==}
+  '@fastify/swagger@9.0.0':
+    resolution: {integrity: sha512-E7TQbBCbhvS2djGLxJ7t2OFbhc2F+KCsOZCNhh6xQIlJxq9H4ZR5KuLKG+vn6COVqkLxRVUOZ9qtbbzdf5Jfqw==}
 
-  '@fastify/vite@6.0.7':
-    resolution: {integrity: sha512-+dRo9KUkvmbqdmBskG02SwigWl06Mwkw8SBDK1zTNH6vd4DyXbRvI7RmJEmBkLouSU81KTzy1+OzwHSffqSD6w==}
+  '@fastify/under-pressure@9.0.0':
+    resolution: {integrity: sha512-rALvGGIhEXgbxiP9iIczF5o6ct5MytCk6T3SvcPRkMjiq81RoWTMXtrpgHhQsIqP3qdqYH6QrYKo4mnt4fyhnA==}
+
+  '@fastify/vite@7.0.0-alpha.1':
+    resolution: {integrity: sha512-S3zw9Hslv31SExnOELFLVBUMWx5otOMDTBwqy5jrvbRauWYVFj+6u9WHVDUP222v6l1vAKj4BWQ/g4TI4k4VkA==}
 
   '@fastify/websocket@10.0.1':
     resolution: {integrity: sha512-8/pQIxTPRD8U94aILTeJ+2O3el/r19+Ej5z1O1mXlqplsUH7KzCjAI0sgd5DM/NoPjAi5qLFNIjgM5+9/rGSNw==}
+
+  '@fastify/websocket@11.0.0':
+    resolution: {integrity: sha512-T+QeUaIDgEYyn+RN5vbbO2EZBRJOLGyZ5Y/N8dHxNREll4bN8ArRYsuXZ/WAVFZsqjz0HBjLw1eYq7eFwBzfiw==}
 
   '@graphql-typed-document-node/core@3.2.0':
     resolution: {integrity: sha512-mB9oAsNCm9aM3/SOv4YtBMqZbYj10R7dkq8byBqxGY/ncFwhf2oQzMV+LCRlWoDSEBJ3COiR1yeDvMtsoOsuFQ==}
@@ -3457,15 +3469,15 @@ packages:
   '@mdx-js/mdx@2.3.0':
     resolution: {integrity: sha512-jLuwRlz8DQfQNiUCJR50Y09CGPq3fLtmtUQfVrj79E0JWu3dvsVcxVIcfhR5h0iXu+/z++zDrYeiJqifRynJkA==}
 
-  '@mercuriusjs/federation@3.0.0':
-    resolution: {integrity: sha512-GVk6n314p6rs2gfF3OtqsREftyuzYztiAq0XFl7wg/8w6bJMNctzn/nMkBcA8JYl++d52uchzWLD7eo2yQXQTw==}
+  '@mercuriusjs/federation@4.0.0':
+    resolution: {integrity: sha512-dNwEjiXxSXOAvGO49wQq6YwOiD53dpu0m1ViP7V+weLeYN4h4n2b/RHeOs0fo2JBEWLQniDHUNfaw2Z+qIEM1Q==}
 
-  '@mercuriusjs/gateway@3.0.1':
-    resolution: {integrity: sha512-t/a3U3SQS4bd0iiOzHUaqbnp7VSoHIGICyQFKYsQHPEGO8yhmZGk2zfAvDG5J2dgioPnk2af6BGA+/WZRlAlnw==}
+  '@mercuriusjs/gateway@4.0.1':
+    resolution: {integrity: sha512-wa4QTrHRSgESa7mrB95Pm7L+je0SEOOBzKsfKOwy/12wj02QUhRGQ9thJTrn1sNJ/PbD8le04JG0eJbeG0Ptxw==}
 
-  '@mercuriusjs/subscription-client@1.0.0':
-    resolution: {integrity: sha512-hIGqNp6FBdcy7ZkrWNk4mHl/Qodtwvbu9/iRl3zQdNRl4UtlVI7xW/FPU+2AJy0qTB567yrpvtQPwtmQLuYHYg==}
-    engines: {node: '>=14.19.3'}
+  '@mercuriusjs/subscription-client@2.0.0':
+    resolution: {integrity: sha512-rjYVWfFa0Z6L1OjQ3akp5RrFZ2dnlgF+sfnZ7AjGJgj5vrIvv/S4UFYIWmdrRjVaxJwPvBLJVHiY0fDqnFjWEQ==}
+    engines: {node: '>=20.16.0'}
     peerDependencies:
       graphql: ^16.0.0
 
@@ -3630,8 +3642,8 @@ packages:
   '@platformatic/fastify-http-metrics@0.1.0':
     resolution: {integrity: sha512-NrAesrQTXgjznjV1wwHa6glWxpKtB2bPSPF/jG8bTdtonqWkjrMgwIb3KNQF2oYwsQIOHIbhlHxxKUDCagt9AQ==}
 
-  '@platformatic/graphql-composer@0.7.2':
-    resolution: {integrity: sha512-Re4ER7Pv5vyGQHMwvBWl0ATR7UYXnUtJEY35lSQwaf1zQbjNGSjcW8OiAUl1vnYMB/hGuhCCgiNwPvkWXHO8HQ==}
+  '@platformatic/graphql-composer@0.8.0':
+    resolution: {integrity: sha512-a15GmCiXmhxUwdql2xWH+Ji9c/Bl11mPZbGzWNumxCeStG5IneHCebUsC7Fwxgmw2nlNRlTbD7CbcT1MT6G4lQ==}
 
   '@platformatic/http-metrics@0.1.0':
     resolution: {integrity: sha512-pJXFydQjHDH7sstvVsm2J+7O23zw47yreW10ooVTi09UUbXy5cQ54rMJ7dTfRN0Qkbijwp2i0N3tx8oasL5W9A==}
@@ -4431,8 +4443,8 @@ packages:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
 
-  avvio@8.4.0:
-    resolution: {integrity: sha512-CDSwaxINFy59iNwhYnkvALBwZiTydGkOecZyPkqBpABYR1KqGEsET0VOOYDwtleZSUIdeY36DC2bSZ24CO1igA==}
+  avvio@9.0.0:
+    resolution: {integrity: sha512-UbYrOXgE/I+knFG+3kJr9AgC7uNo8DG+FGGODpH9Bj1O1kL/QDjBXnTem9leD3VdQKtaHjV3O85DQ7hHh4IIHw==}
 
   aws-sign2@0.7.0:
     resolution: {integrity: sha512-08kcGqnYf/YmjoRhfxyu+CLxBjUtHLXLXX/vUfx9l2LYzG3c1m61nrpyFUZI6zeS+Li/wWMMidD9KgrqtGq3mA==}
@@ -5417,8 +5429,8 @@ packages:
     resolution: {integrity: sha512-11Ndz7Nv+mvAC1j0ktTa7fAb0vLyGGX+rMHNBYQviQDGU0Hw7lhctJANqbPhu9nV9/izT/IntTgZ7Im/9LJs9g==}
     engines: {'0': node >=0.6.0}
 
-  fast-content-type-parse@1.1.0:
-    resolution: {integrity: sha512-fBHHqSTFLVnR61C+gltJuE5GkVQMV0S2nqUO8TJ+5Z3qAKG8vAx4FKai1s5jq/inV1+sREynIWSuQ6HgoSXpDQ==}
+  fast-content-type-parse@2.0.0:
+    resolution: {integrity: sha512-fCqg/6Sps8tqk8p+kqyKqYfOF0VjPNYrqpLiqNl0RBKmD80B080AJWVV6EkSkscjToNExcXg1+Mfzftrx6+iSA==}
 
   fast-copy@3.0.2:
     resolution: {integrity: sha512-dl0O9Vhju8IrcLndv2eU4ldt1ftXMqqfgN4H1cpmGV7P6jeB9FwpN9a2c8DPGE1Ys88rNUJVYDHq73CGAGOPfQ==}
@@ -5441,6 +5453,9 @@ packages:
 
   fast-json-stringify@5.16.1:
     resolution: {integrity: sha512-KAdnLvy1yu/XrRtP+LJnxbBGrhN+xXu+gt3EUvZhYGKCr3lFHq/7UFJHHFgmJKoqlh6B40bZLEv7w46B0mqn1g==}
+
+  fast-json-stringify@6.0.0:
+    resolution: {integrity: sha512-FGMKZwniMTgZh7zQp9b6XnBVxUmKVahQLQeRQHqwYmPDqDhcEKZ3BaQsxelFFI5PY7nN71OEeiL47/zUWcYe1A==}
 
   fast-jwt@4.0.5:
     resolution: {integrity: sha512-QnpNdn0955GT7SlT8iMgYfhTsityUWysrQjM+Q7bGFijLp6+TNWzlbSMPvgalbrQGRg4ZaHZgMcns5fYOm5avg==}
@@ -5486,6 +5501,9 @@ packages:
   fastify-plugin@4.5.1:
     resolution: {integrity: sha512-stRHYGeuqpEZTL1Ef0Ovr2ltazUT9g844X5z/zEBFLG8RYlpDiOCIG+ATvYEp+/zmc7sN29mcIMp8gvYplYPIQ==}
 
+  fastify-plugin@5.0.0:
+    resolution: {integrity: sha512-0725fmH/yYi8ugsjszLci+lLnGBK6cG+WSxM7edY2OXJEU7gr2JiGBoieL2h9mhTych1vFsEfXsAsGGDJ/Rd5w==}
+
   fastify-print-routes@3.2.0:
     resolution: {integrity: sha512-vbNliaT+SlZlH9sPYR1FYe3AJptbadf20/SjmramOxoeS6fdrAkMQu0H0/ZENaU4ruBlxCrUs0hUfV2J0dGyZw==}
     engines: {node: '>= 18.18.0'}
@@ -5497,11 +5515,11 @@ packages:
   fastify-undici-dispatcher@0.6.0:
     resolution: {integrity: sha512-xSt3eCZHsZOh5cDBbEObWHIYYz+g8QmyqFgxVypTjxvE74QOcpx9KGonrHQkKKCnkY31CmXFoBgZjSvwIDZWPQ==}
 
-  fastify-user@0.4.1:
-    resolution: {integrity: sha512-9oFzJ3iiNV6DH4itnssoWDaHr+fQLJ0N25DA/D5oyWde0/u/v1pb/hja/R0yxVJztYcQ3SdK3gdz4ssuDUJzOA==}
+  fastify-user@1.0.1:
+    resolution: {integrity: sha512-1eON2baYZXG+kadJuGLW1VmZse1fWslMSBDmel3SOPD/QjWUWRtuk8mmHbPFHy74GL/U4YDwCdFulzYO2YkXIQ==}
 
-  fastify@4.28.1:
-    resolution: {integrity: sha512-kFWUtpNr4i7t5vY2EJPCN2KgMVpuqfU4NjnJNCgiNB900oiDeYqaNDRcAfeBbOF5hGixixxcKnOU4KN9z6QncQ==}
+  fastify@5.0.0-alpha.4:
+    resolution: {integrity: sha512-g1+50I1uOP7HvIQQPonsI7TwVZdzuxoOjZlTwaOwW1EPt2PsSZ4GJE2fUpyKPqPastcQ8esQvyxqNcWAe5wR8g==}
 
   fastparallel@2.4.1:
     resolution: {integrity: sha512-qUmhxPgNHmvRjZKBFUNI0oZuuH9OlSIOXmJ98lhKPxMZZ7zS/Fi0wRHOihDSz0R1YiIOjxzOY4bq65YTcdBi2Q==}
@@ -5534,8 +5552,8 @@ packages:
     resolution: {integrity: sha512-6BN9trH7bp3qvnrRyzsBz+g3lZxTNZTbVO2EV1CS0WIcDbawYVdYvGflME/9QP0h0pYlCDBCTjYa9nZzMDpyxQ==}
     engines: {node: '>= 0.8'}
 
-  find-my-way@8.2.0:
-    resolution: {integrity: sha512-HdWXgFYc6b1BJcOBDBwjqWuHJj1WYiqrxSh25qtU4DabpMFdj/gSunNBQb83t+8Zt67D7CXEzJWTkxaShMTMOA==}
+  find-my-way@9.0.0:
+    resolution: {integrity: sha512-ToMeNaAQccQlhWtaf9KJK9BJlm1hhpTDJBztftbdGkkwZ1Ic9nbEOhBk0XLX5nYmJd9qjWoC/FiixVfi2xazSg==}
     engines: {node: '>=14'}
 
   find-up-simple@1.0.0:
@@ -5713,6 +5731,11 @@ packages:
     resolution: {integrity: sha512-7Bv8RF0k6xjo7d4A/PxYLbUCfb6c+Vpd2/mB2yRDlew7Jb5hEXiCD9ibfO7wpk8i4sevK6DFny9h7EYbM3/sHg==}
     hasBin: true
 
+  glob@11.0.0:
+    resolution: {integrity: sha512-9UiX/Bl6J2yaBbxKoEBRm4Cipxgok8kQYcOPEhScPwebu2I0HoQOuYdIO6S3hLuWoZgpDpwQZMzTFxgpkyT76g==}
+    engines: {node: 20 || >=22}
+    hasBin: true
+
   glob@6.0.4:
     resolution: {integrity: sha512-MKZeRNyYZAVVVG1oZeLaWie1uweH40m9AZwIwxyPbTSX4hHrVYSzLg0Ro5Z5R7XKkIX+Cc6oD1rqeDJnwsB8/A==}
     deprecated: Glob versions prior to v9 are no longer supported
@@ -5763,8 +5786,8 @@ packages:
   graphemer@1.4.0:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
 
-  graphql-jit@0.8.4:
-    resolution: {integrity: sha512-4KRrJ1ROy3Usgbl3eAoUMfdfZCRjkcw9cCGT7QwTUIHm9dPGaSaldxzGUttyjErU0rsYEb6WWyb6mMh5r6lEoQ==}
+  graphql-jit@0.8.6:
+    resolution: {integrity: sha512-oVJteh/uYDpIA/M4UHrI+DmzPnX1zTD0a7Je++JA8q8P68L/KbuepimDyrT5FhL4HAq3filUxaFvfsL6/A4msw==}
     peerDependencies:
       graphql: '>=15'
 
@@ -6287,6 +6310,10 @@ packages:
   jackspeak@3.4.3:
     resolution: {integrity: sha512-OGlZQpz2yfahA/Rd1Y8Cd9SIEsqvXkLVoSw/cgwhnhFMDbsQFeZYoJJ7bIZBS9BcamUW96asq/npPWugM+RQBw==}
 
+  jackspeak@4.0.1:
+    resolution: {integrity: sha512-cub8rahkh0Q/bw1+GxP7aeSe29hHHn2V4m29nnDlvCdlgU+3UGxkZp7Z53jLUdpX3jdTO0nJZUDl3xvbWc2Xog==}
+    engines: {node: 20 || >=22}
+
   javascript-stringify@2.1.0:
     resolution: {integrity: sha512-JVAfqNPTvNq3sB/VHQJAFxN/sPgKnsKrCwyRt15zwNCdrMMJDdcEOdubuy+DuJYYdm0ox1J4uzEuYKkN+9yhVg==}
 
@@ -6441,9 +6468,6 @@ packages:
     resolution: {integrity: sha512-mET5AIwl7MR2IAKYYoVBBpV0OnkKQ1xGj2IMMeEFIs42QAkEVjRtFZGWmQ28WeU7MP779iAgOaOy93Mn44mn6g==}
     hasBin: true
 
-  light-my-request@5.13.0:
-    resolution: {integrity: sha512-9IjUN9ZyCS9pTG+KqTDEQo68Sui2lHsYBrfMyVUTTZ3XhH8PMZq7xO94Kr+eP9dhi/kcKsx4N41p2IXEBil1pQ==}
-
   light-my-request@6.0.0:
     resolution: {integrity: sha512-kFkFXrmKCL0EEeOmJybMH5amWFd+AFvlvMlvFTRxCUwbhfapZqDmeLMPoWihntnYY6JpoQDE9k+vOzObF1fDqg==}
 
@@ -6567,6 +6591,10 @@ packages:
 
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
+
+  lru-cache@11.0.1:
+    resolution: {integrity: sha512-CgeuL5uom6j/ZVrg7G/+1IXqRY8JXX4Hghfy5YE0EhoYQWvndP1kufu58cmZLNIDKnRhZrXfdS9urVWx98AipQ==}
+    engines: {node: 20 || >=22}
 
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
@@ -6719,9 +6747,9 @@ packages:
     resolution: {integrity: sha512-+obSblOQmRhcyBt62furQqRAQpNyWXo8BuQ5bN7dG8wmwQ+vwHKp/rCFD4CrTP8CsDQD1sjoZ94K417XEUk8IQ==}
     engines: {node: '>=10'}
 
-  mercurius@14.1.0:
-    resolution: {integrity: sha512-A83Z+s4wVRJI/sqN5ZmyB7ISma9atAk4aRipnklSCvQ62hioJ00N9wwR3QRh5mY5lKbKG6rRn/iF8VlU6FsisQ==}
-    engines: {node: '>=14.19.3'}
+  mercurius@15.0.0:
+    resolution: {integrity: sha512-Kb/EznlDZEJ4lztD1QfDp/01SiC8doO1cvlM6FfjiljL3LMCa40RIZxWVUZAl8KOnSEKBc940gmAxEFmgWBLvA==}
+    engines: {node: ^20.9.0 || >=22.0.0}
     peerDependencies:
       graphql: ^16.0.0
 
@@ -7052,9 +7080,6 @@ packages:
   mlly@1.7.1:
     resolution: {integrity: sha512-rrVRZRELyQzrIUAVMHxP97kv+G786pHmOKzuFII8zDYahFBS7qnHh2AlYSl1GAHhaMPCz6/oHjVMcfFYgFYHgA==}
 
-  mnemonist@0.39.6:
-    resolution: {integrity: sha512-A/0v5Z59y63US00cRSLiloEIw3t5G+MiKz4BhX21FI+YBJXBOGW0ohFxTxO08dsOYlzxo87T7vGfZKYp2bcAWA==}
-
   mnemonist@0.39.8:
     resolution: {integrity: sha512-vyWo2K3fjrUw8YeeZ1zF0fy6Mu59RHokURlld8ymdUPjMlD9EC9ov1/YPqTgqRvUN9nTr3Gqfz29LYAmu0PHPQ==}
 
@@ -7066,10 +7091,6 @@ packages:
 
   mqemitter-redis@6.0.0:
     resolution: {integrity: sha512-FxhEZXDUqSpe2DmZrbgJ0XKxW0nx/ox6qD7JhCFNRgsodxW1jMjjCxoJt3Kw/vwN/996SziqOkXJRk1zqi35WA==}
-
-  mqemitter@5.0.0:
-    resolution: {integrity: sha512-rqNRQhGgl0W/NV+Zrx0rpAUTZcSlAtivCVUmXBUPcFYt+AeDEpoJgy5eKlFWJP6xnatONL59WIFdV0W6niOMhw==}
-    engines: {node: '>=10'}
 
   mqemitter@6.0.2:
     resolution: {integrity: sha512-8RGlznQx/Nb1xC3xKUFXHWov7pn7JdH++YVwlr6SLT6k3ft1h+ImGqZdVudbdKruFckIq9wheq9s4hgCivJDow==}
@@ -7466,6 +7487,10 @@ packages:
     resolution: {integrity: sha512-Xa4Nw17FS9ApQFJ9umLiJS4orGjm7ZzwUrwamcGQuHSzDyth9boKDaycYdDcZDuqYATXw4HFXgaqWTctW/v1HA==}
     engines: {node: '>=16 || 14 >=14.18'}
 
+  path-scurry@2.0.0:
+    resolution: {integrity: sha512-ypGJsmGtdXUOeM5u93TyeIEfEhM6s+ljAhrk5vAvSx8uyY/02OvrZnA0YNGUrPXfpJMgI1ODd3nwz8Npx4O4cg==}
+    engines: {node: 20 || >=22}
+
   path-to-regexp@0.1.10:
     resolution: {integrity: sha512-7lf7qcQidTku0Gu3YDPc8DJ1q7OOucfa/BSsIwjuh56VU7katFvuM8hULfkwB3Fns/rsVF7PwPKVw1sl5KQS9w==}
 
@@ -7474,6 +7499,10 @@ packages:
 
   path-to-regexp@6.3.0:
     resolution: {integrity: sha512-Yhpw4T9C6hPpgPeA28us07OJeqZ5EzQTkbfwuhsUg0c237RomFoETJgmp2sa3F/41gfLE6G5cqcYwznmeEeOlQ==}
+
+  path-to-regexp@8.1.0:
+    resolution: {integrity: sha512-Bqn3vc8CMHty6zuD+tG23s6v2kwxslHEhTj4eYaVKGIEB+YX/2wd0/rgXLFD9G9id9KCtbVy/3ZgmvZjpa0UdQ==}
+    engines: {node: '>=16'}
 
   path-type@4.0.0:
     resolution: {integrity: sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==}
@@ -7847,10 +7876,6 @@ packages:
     resolution: {integrity: sha512-FLpr4flz5xZTSJxSeaheeMKN/EDzMdK7b8PTOC6a5PYFKTucWbdqjgqaEyH0shFiSJrVB1+Qqi4Tk19ccU6Aug==}
     engines: {node: '>=12.20'}
 
-  qlobber@7.0.1:
-    resolution: {integrity: sha512-FsFg9lMuMEFNKmTO9nV7tlyPhx8BmskPPjH2akWycuYVTtWaVwhW5yCHLJQ6Q+3mvw5cFX2vMfW2l9z2SiYAbg==}
-    engines: {node: '>= 14'}
-
   qlobber@8.0.1:
     resolution: {integrity: sha512-O+Wd1chXj5YE1DwmD+ae0bXiSLehmnS3czlC1R9FL/Nt/3q8uMS1bIHmg2lJfCoiimCxClWM8AAuJrF0EvNiog==}
     engines: {node: '>= 16'}
@@ -7878,6 +7903,10 @@ packages:
   quick-lru@4.0.1:
     resolution: {integrity: sha512-ARhCpm70fzdcvNQfPoy49IaanKkTlRWF2JMzqhcJbhSFRZv7nPTvZJdcY7301IPmvW+/p0RgIWnQDLJxifsQ7g==}
     engines: {node: '>=8'}
+
+  quick-lru@7.0.0:
+    resolution: {integrity: sha512-MX8gB7cVYTrYcFfAnfLlhRd0+Toyl8yX8uBx1MrX7K0jegiz9TumwOK27ldXrgDlHRdVi+MqU9Ssw6dr4BNreg==}
+    engines: {node: '>=18'}
 
   railroad-diagrams@1.0.0:
     resolution: {integrity: sha512-cz93DjNeLY0idrCNOH6PviZGRN9GJhsdm9hpn1YCS879fj4W+x5IFJhhkRZcwVgMmFF7R82UA/7Oh+R8lLZg6A==}
@@ -8100,8 +8129,8 @@ packages:
     resolution: {integrity: sha512-M0b3YWQs7R3Z917WRQy1HHA7Ba7D8hvZg6UE5mLykJxQVE2ju0IXbGlaHPPlkY+WN7wFP+wUMXmBFA0aV6vYGQ==}
     engines: {node: '>=4'}
 
-  ret@0.4.3:
-    resolution: {integrity: sha512-0f4Memo5QP7WQyUEAYUO3esD/XjOc3Zjjg5CPsAq1p8sIu0XPeMbHJemKA0BO7tV0X7+A0FoEpbmHXWxPyD3wQ==}
+  ret@0.5.0:
+    resolution: {integrity: sha512-I1XxrZSQ+oErkRR4jYbAyEEu2I0avBvvMM5JN+6EBprOGRCs63ENqZ3vjavq8fBw2+62G5LF5XelKwuJpcvcxw==}
     engines: {node: '>=10'}
 
   retext-latin@4.0.0:
@@ -8173,8 +8202,8 @@ packages:
     resolution: {integrity: sha512-CdASjNJPvRa7roO6Ra/gLYBTzYzzPyyBXxIMdGW3USQLyjWEls2RgW5UBTXaQVp+OrpeCK3bLem8smtmheoRuw==}
     engines: {node: '>= 0.4'}
 
-  safe-regex2@3.1.0:
-    resolution: {integrity: sha512-RAAZAGbap2kBfbVhvmnTFv73NWLMvDGOITFYTZBAaY8eR+Ir4ef7Up/e7amo+y1+AH+3PtLkrt9mvcTsG9LXug==}
+  safe-regex2@4.0.0:
+    resolution: {integrity: sha512-Hvjfv25jPDVr3U+4LDzBuZPPOymELG3PYcSk5hcevooo1yxxamQL/bHs/GrEPGmMoMEwRrHVGiCA1pXi97B8Ew==}
 
   safe-stable-stringify@2.5.0:
     resolution: {integrity: sha512-b3rppTKm9T+PsVCBEOUR46GWI7fdOs00VKZ1+9c1EWDaDMvjQc6tUwuFyIprgGgTcWoVHSKrU8H31ZHA2e0RHA==}
@@ -8192,6 +8221,9 @@ packages:
 
   secure-json-parse@2.7.0:
     resolution: {integrity: sha512-6aU+Rwsezw7VR8/nyvKTx8QpWH9FrcYiXXlqC4z5d5XQBDRqtbfsRjnwGyqbi3gddNtWHuEk9OANUotL26qKUw==}
+
+  secure-json-parse@3.0.0:
+    resolution: {integrity: sha512-YO+gVWyp97H+nCG/qdC8X819iKx5g+BpnO9nYT4uFq4uyI0rSxwtx5qD9rGfScg7FGLYu/YBf8uOtwQKv+gq8g==}
 
   self-cert@2.0.1:
     resolution: {integrity: sha512-m66vbn9/NSLHS8o6bgGoGdQ8OXJY+Arm6ng6xr5CtfFUc2S/LwwwbfbjYTv2CGp4wyErUiabYP57VD22P5JwCg==}
@@ -8285,9 +8317,6 @@ packages:
 
   simple-wcswidth@1.0.1:
     resolution: {integrity: sha512-xMO/8eNREtaROt7tJvWJqHBDTMFN4eiQ5I4JRMuilwfnFcV5W9u7RUkueNkdw0jPqGMX36iCywelS5yilTuOxg==}
-
-  single-user-cache@0.6.0:
-    resolution: {integrity: sha512-uMrANoiybpbsrVDbZ2M7GPzxeqZiirwkVnsDAre1zGhXAAw+2dImTxu7h0l1sIVtwGeJnVsRxgG4I5rZrUX0rw==}
 
   single-user-cache@1.0.1:
     resolution: {integrity: sha512-xFW/TuZUKoMZl47xqfC2jb7dO1XtJ5VgZxQliOKQWTueIH96CX6USaPiZcyDN0HFb4Ow+tsXpJZViRyIkl/rDA==}
@@ -9932,32 +9961,34 @@ snapshots:
 
   '@fastify/accept-negotiator@1.1.0': {}
 
-  '@fastify/accepts@4.3.0':
+  '@fastify/accept-negotiator@2.0.0': {}
+
+  '@fastify/accepts@5.0.0':
     dependencies:
       accepts: 1.3.8
-      fastify-plugin: 4.5.1
+      fastify-plugin: 5.0.0
 
-  '@fastify/ajv-compiler@3.6.0':
+  '@fastify/ajv-compiler@4.0.0':
     dependencies:
       ajv: 8.17.1
-      ajv-formats: 2.1.1(ajv@8.17.1)
-      fast-uri: 2.4.0
+      ajv-formats: 3.0.1(ajv@8.17.1)
+      fast-uri: 3.0.1
 
-  '@fastify/autoload@5.10.0': {}
+  '@fastify/autoload@6.0.0': {}
 
   '@fastify/aws-lambda@4.1.0': {}
 
-  '@fastify/basic-auth@5.1.1':
+  '@fastify/basic-auth@6.0.0':
     dependencies:
-      '@fastify/error': 3.4.1
-      fastify-plugin: 4.5.1
+      '@fastify/error': 4.0.0
+      fastify-plugin: 5.0.0
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fastify/compress@7.0.3':
+  '@fastify/compress@8.0.0':
     dependencies:
-      '@fastify/accept-negotiator': 1.1.0
-      fastify-plugin: 4.5.1
+      '@fastify/accept-negotiator': 2.0.0
+      fastify-plugin: 5.0.0
       mime-db: 1.53.0
       minipass: 7.1.2
       peek-stream: 1.1.3
@@ -9970,21 +10001,23 @@ snapshots:
       cookie: 0.5.0
       fastify-plugin: 4.5.1
 
-  '@fastify/cors@9.0.1':
+  '@fastify/cors@10.0.0':
     dependencies:
-      fastify-plugin: 4.5.1
-      mnemonist: 0.39.6
+      fastify-plugin: 5.0.0
+      mnemonist: 0.39.8
 
   '@fastify/deepmerge@1.3.0': {}
+
+  '@fastify/deepmerge@2.0.0': {}
 
   '@fastify/error@3.4.1': {}
 
   '@fastify/error@4.0.0': {}
 
-  '@fastify/express@3.0.0':
+  '@fastify/express@4.0.0':
     dependencies:
       express: 4.21.0
-      fastify-plugin: 4.5.1
+      fastify-plugin: 5.0.0
     transitivePeerDependencies:
       - supports-color
 
@@ -9992,27 +10025,27 @@ snapshots:
     dependencies:
       fast-json-stringify: 5.16.1
 
-  '@fastify/formbody@7.4.0':
+  '@fastify/formbody@8.0.0':
     dependencies:
       fast-querystring: 1.1.2
-      fastify-plugin: 4.5.1
+      fastify-plugin: 5.0.0
 
-  '@fastify/http-proxy@9.5.0':
+  '@fastify/http-proxy@10.0.0':
     dependencies:
-      '@fastify/reply-from': 9.8.0
+      '@fastify/reply-from': 11.0.0
       fast-querystring: 1.1.2
-      fastify-plugin: 4.5.1
+      fastify-plugin: 5.0.0
       ws: 8.18.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@fastify/jwt@8.0.1':
+  '@fastify/jwt@9.0.0':
     dependencies:
-      '@fastify/error': 3.4.1
+      '@fastify/error': 4.0.0
       '@lukeed/ms': 2.0.2
       fast-jwt: 4.0.5
-      fastify-plugin: 4.5.1
+      fastify-plugin: 5.0.0
       steed: 1.1.3
 
   '@fastify/merge-json-schemas@0.1.1':
@@ -10026,22 +10059,37 @@ snapshots:
       path-to-regexp: 6.3.0
       reusify: 1.0.4
 
+  '@fastify/middie@9.0.1':
+    dependencies:
+      '@fastify/error': 4.0.0
+      fastify-plugin: 5.0.0
+      path-to-regexp: 8.1.0
+      reusify: 1.0.4
+
   '@fastify/pre-commit@2.1.0':
     dependencies:
       cross-spawn: 7.0.3
       which: 4.0.0
 
-  '@fastify/reply-from@9.8.0':
+  '@fastify/reply-from@11.0.0':
     dependencies:
-      '@fastify/error': 3.4.1
+      '@fastify/error': 4.0.0
       end-of-stream: 1.4.4
-      fast-content-type-parse: 1.1.0
+      fast-content-type-parse: 2.0.0
       fast-querystring: 1.1.2
       fastify-plugin: 4.5.1
       toad-cache: 3.7.0
-      undici: 5.28.4
+      undici: 6.19.8
 
   '@fastify/send@2.1.0':
+    dependencies:
+      '@lukeed/ms': 2.0.2
+      escape-html: 1.0.3
+      fast-decode-uri-component: 1.0.1
+      http-errors: 2.0.0
+      mime: 3.0.0
+
+  '@fastify/send@3.1.0':
     dependencies:
       '@lukeed/ms': 2.0.2
       escape-html: 1.0.3
@@ -10072,9 +10120,18 @@ snapshots:
       fastq: 1.17.1
       glob: 10.4.5
 
-  '@fastify/swagger@8.15.0':
+  '@fastify/static@8.0.0':
     dependencies:
-      fastify-plugin: 4.5.1
+      '@fastify/accept-negotiator': 2.0.0
+      '@fastify/send': 3.1.0
+      content-disposition: 0.5.4
+      fastify-plugin: 5.0.0
+      fastq: 1.17.1
+      glob: 11.0.0
+
+  '@fastify/swagger@9.0.0':
+    dependencies:
+      fastify-plugin: 5.0.0
       json-schema-resolver: 2.0.0
       openapi-types: 12.1.3
       rfdc: 1.4.1
@@ -10082,12 +10139,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fastify/under-pressure@8.5.1':
+  '@fastify/under-pressure@9.0.0':
     dependencies:
-      '@fastify/error': 3.4.1
-      fastify-plugin: 4.5.1
+      '@fastify/error': 4.0.0
+      fastify-plugin: 5.0.0
 
-  '@fastify/vite@6.0.7(@types/node@22.5.5)':
+  '@fastify/vite@7.0.0-alpha.1(@types/node@22.5.5)':
     dependencies:
       '@fastify/middie': 8.3.3
       '@fastify/static': 6.12.0
@@ -10109,6 +10166,15 @@ snapshots:
     dependencies:
       duplexify: 4.1.3
       fastify-plugin: 4.5.1
+      ws: 8.18.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@fastify/websocket@11.0.0':
+    dependencies:
+      duplexify: 4.1.3
+      fastify-plugin: 5.0.0
       ws: 8.18.0
     transitivePeerDependencies:
       - bufferutil
@@ -10290,25 +10356,25 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@mercuriusjs/federation@3.0.0':
+  '@mercuriusjs/federation@4.0.0':
     dependencies:
-      '@fastify/error': 3.4.1
+      '@fastify/error': 4.0.0
       graphql: 16.9.0
-      mercurius: 14.1.0(graphql@16.9.0)
+      mercurius: 15.0.0(graphql@16.9.0)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@mercuriusjs/gateway@3.0.1':
+  '@mercuriusjs/gateway@4.0.1':
     dependencies:
-      '@mercuriusjs/federation': 3.0.0
-      '@mercuriusjs/subscription-client': 1.0.0(graphql@16.9.0)
-      fastify-plugin: 4.5.1
+      '@mercuriusjs/federation': 4.0.0
+      '@mercuriusjs/subscription-client': 2.0.0(graphql@16.9.0)
+      fastify-plugin: 5.0.0
       graphql: 16.9.0
       graphql-ws: 5.16.0(graphql@16.9.0)
-      mercurius: 14.1.0(graphql@16.9.0)
+      mercurius: 15.0.0(graphql@16.9.0)
       p-map: 4.0.0
-      single-user-cache: 0.6.0
+      single-user-cache: 1.0.1
       tiny-lru: 11.2.11
       use-strict: 1.0.1
       ws: 8.18.0
@@ -10316,11 +10382,11 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@mercuriusjs/subscription-client@1.0.0(graphql@16.9.0)':
+  '@mercuriusjs/subscription-client@2.0.0(graphql@16.9.0)':
     dependencies:
-      '@fastify/error': 3.4.1
+      '@fastify/error': 4.0.0
       graphql: 16.9.0
-      secure-json-parse: 2.7.0
+      secure-json-parse: 3.0.0
       ws: 8.18.0
     transitivePeerDependencies:
       - bufferutil
@@ -10483,14 +10549,14 @@ snapshots:
       fastify-plugin: 4.5.1
       prom-client: 15.1.3
 
-  '@platformatic/graphql-composer@0.7.2':
+  '@platformatic/graphql-composer@0.8.0':
     dependencies:
       abstract-logger: 0.2.5
-      fastify: 4.28.1
+      fastify: 5.0.0-alpha.4
       graphql: 16.9.0
-      mercurius: 14.1.0(graphql@16.9.0)
+      mercurius: 15.0.0(graphql@16.9.0)
       metaline: 1.1.0
-      pino: 8.21.0
+      pino: 9.4.0
       undici: 6.19.8
     transitivePeerDependencies:
       - bufferutil
@@ -11571,9 +11637,9 @@ snapshots:
     dependencies:
       possible-typed-array-names: 1.0.0
 
-  avvio@8.4.0:
+  avvio@9.0.0:
     dependencies:
-      '@fastify/error': 3.4.1
+      '@fastify/error': 4.0.0
       fastq: 1.17.1
 
   aws-sign2@0.7.0: {}
@@ -12737,7 +12803,7 @@ snapshots:
 
   extsprintf@1.3.0: {}
 
-  fast-content-type-parse@1.1.0: {}
+  fast-content-type-parse@2.0.0: {}
 
   fast-copy@3.0.2: {}
 
@@ -12758,6 +12824,16 @@ snapshots:
   fast-json-stable-stringify@2.1.0: {}
 
   fast-json-stringify@5.16.1:
+    dependencies:
+      '@fastify/merge-json-schemas': 0.1.1
+      ajv: 8.17.1
+      ajv-formats: 3.0.1(ajv@8.17.1)
+      fast-deep-equal: 3.1.3
+      fast-uri: 2.4.0
+      json-schema-ref-resolver: 1.0.1
+      rfdc: 1.4.1
+
+  fast-json-stringify@6.0.0:
     dependencies:
       '@fastify/merge-json-schemas': 0.1.1
       ajv: 8.17.1
@@ -12794,9 +12870,9 @@ snapshots:
     dependencies:
       reusify: 1.0.4
 
-  fastify-metrics@11.0.0(fastify@4.28.1):
+  fastify-metrics@11.0.0(fastify@5.0.0-alpha.4):
     dependencies:
-      fastify: 4.28.1
+      fastify: 5.0.0-alpha.4
       fastify-plugin: 4.5.1
       prom-client: 15.1.3
 
@@ -12808,6 +12884,8 @@ snapshots:
       minimist: 1.2.8
 
   fastify-plugin@4.5.1: {}
+
+  fastify-plugin@5.0.0: {}
 
   fastify-print-routes@3.2.0:
     dependencies:
@@ -12821,29 +12899,28 @@ snapshots:
     dependencies:
       undici: 6.19.8
 
-  fastify-user@0.4.1:
+  fastify-user@1.0.1:
     dependencies:
       '@fastify/error': 4.0.0
-      '@fastify/jwt': 8.0.1
-      fastify: 4.28.1
-      fastify-plugin: 4.5.1
+      '@fastify/jwt': 9.0.0
+      fastify: 5.0.0-alpha.4
+      fastify-plugin: 5.0.0
       get-jwks: 9.0.2
     transitivePeerDependencies:
       - encoding
 
-  fastify@4.28.1:
+  fastify@5.0.0-alpha.4:
     dependencies:
-      '@fastify/ajv-compiler': 3.6.0
-      '@fastify/error': 3.4.1
+      '@fastify/ajv-compiler': 4.0.0
+      '@fastify/error': 4.0.0
       '@fastify/fast-json-stringify-compiler': 4.3.0
       abstract-logging: 2.0.1
-      avvio: 8.4.0
-      fast-content-type-parse: 1.1.0
-      fast-json-stringify: 5.16.1
-      find-my-way: 8.2.0
-      light-my-request: 5.13.0
+      avvio: 9.0.0
+      fast-json-stringify: 6.0.0
+      find-my-way: 9.0.0
+      light-my-request: 6.0.0
       pino: 9.4.0
-      process-warning: 3.0.0
+      process-warning: 4.0.0
       proxy-addr: 2.0.7
       rfdc: 1.4.1
       secure-json-parse: 2.7.0
@@ -12894,11 +12971,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  find-my-way@8.2.0:
+  find-my-way@9.0.0:
     dependencies:
       fast-deep-equal: 3.1.3
       fast-querystring: 1.1.2
-      safe-regex2: 3.1.0
+      safe-regex2: 4.0.0
 
   find-up-simple@1.0.0: {}
 
@@ -13076,6 +13153,15 @@ snapshots:
       package-json-from-dist: 1.0.0
       path-scurry: 1.11.1
 
+  glob@11.0.0:
+    dependencies:
+      foreground-child: 3.3.0
+      jackspeak: 4.0.1
+      minimatch: 10.0.1
+      minipass: 7.1.2
+      package-json-from-dist: 1.0.0
+      path-scurry: 2.0.0
+
   glob@6.0.4:
     dependencies:
       inflight: 1.0.6
@@ -13145,7 +13231,7 @@ snapshots:
 
   graphemer@1.4.0: {}
 
-  graphql-jit@0.8.4(graphql@16.9.0):
+  graphql-jit@0.8.6(graphql@16.9.0):
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.9.0)
       fast-json-stringify: 5.16.1
@@ -13709,6 +13795,12 @@ snapshots:
     optionalDependencies:
       '@pkgjs/parseargs': 0.11.0
 
+  jackspeak@4.0.1:
+    dependencies:
+      '@isaacs/cliui': 8.0.2
+    optionalDependencies:
+      '@pkgjs/parseargs': 0.11.0
+
   javascript-stringify@2.1.0: {}
 
   jest-diff@29.7.0:
@@ -13882,12 +13974,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  light-my-request@5.13.0:
-    dependencies:
-      cookie: 0.6.0
-      process-warning: 3.0.0
-      set-cookie-parser: 2.7.0
-
   light-my-request@6.0.0:
     dependencies:
       cookie: 0.6.0
@@ -14006,6 +14092,8 @@ snapshots:
       steno: 0.4.4
 
   lru-cache@10.4.3: {}
+
+  lru-cache@11.0.1: {}
 
   lru-cache@5.1.1:
     dependencies:
@@ -14323,22 +14411,23 @@ snapshots:
       type-fest: 0.18.1
       yargs-parser: 20.2.9
 
-  mercurius@14.1.0(graphql@16.9.0):
+  mercurius@15.0.0(graphql@16.9.0):
     dependencies:
-      '@fastify/error': 3.4.1
-      '@fastify/static': 7.0.4
-      '@fastify/websocket': 10.0.1
-      fastify-plugin: 4.5.1
+      '@fastify/error': 4.0.0
+      '@fastify/static': 8.0.0
+      '@fastify/websocket': 11.0.0
+      fastify-plugin: 5.0.0
       graphql: 16.9.0
-      graphql-jit: 0.8.4(graphql@16.9.0)
-      mqemitter: 5.0.0
+      graphql-jit: 0.8.6(graphql@16.9.0)
+      mqemitter: 6.0.2
       p-map: 4.0.0
+      quick-lru: 7.0.0
       readable-stream: 4.5.2
       safe-stable-stringify: 2.5.0
       secure-json-parse: 2.7.0
-      single-user-cache: 0.6.0
+      single-user-cache: 1.0.1
       tiny-lru: 11.2.11
-      undici: 5.28.4
+      undici: 6.19.8
       ws: 8.18.0
     transitivePeerDependencies:
       - bufferutil
@@ -14869,10 +14958,6 @@ snapshots:
       pkg-types: 1.2.0
       ufo: 1.5.4
 
-  mnemonist@0.39.6:
-    dependencies:
-      obliterator: 2.0.4
-
   mnemonist@0.39.8:
     dependencies:
       obliterator: 2.0.4
@@ -14891,11 +14976,6 @@ snapshots:
       msgpack-lite: 0.1.26
     transitivePeerDependencies:
       - supports-color
-
-  mqemitter@5.0.0:
-    dependencies:
-      fastparallel: 2.4.1
-      qlobber: 7.0.1
 
   mqemitter@6.0.2:
     dependencies:
@@ -15331,11 +15411,18 @@ snapshots:
       lru-cache: 10.4.3
       minipass: 7.1.2
 
+  path-scurry@2.0.0:
+    dependencies:
+      lru-cache: 11.0.1
+      minipass: 7.1.2
+
   path-to-regexp@0.1.10: {}
 
   path-to-regexp@6.2.2: {}
 
   path-to-regexp@6.3.0: {}
+
+  path-to-regexp@8.1.0: {}
 
   path-type@4.0.0: {}
 
@@ -15761,8 +15848,6 @@ snapshots:
     dependencies:
       escape-goat: 4.0.0
 
-  qlobber@7.0.1: {}
-
   qlobber@8.0.1: {}
 
   qs@6.10.4:
@@ -15782,6 +15867,8 @@ snapshots:
   quick-format-unescaped@4.0.4: {}
 
   quick-lru@4.0.1: {}
+
+  quick-lru@7.0.0: {}
 
   railroad-diagrams@1.0.0: {}
 
@@ -16090,7 +16177,7 @@ snapshots:
   ret@0.2.2:
     optional: true
 
-  ret@0.4.3: {}
+  ret@0.5.0: {}
 
   retext-latin@4.0.0:
     dependencies:
@@ -16186,9 +16273,9 @@ snapshots:
       es-errors: 1.3.0
       is-regex: 1.1.4
 
-  safe-regex2@3.1.0:
+  safe-regex2@4.0.0:
     dependencies:
-      ret: 0.4.3
+      ret: 0.5.0
 
   safe-stable-stringify@2.5.0: {}
 
@@ -16204,6 +16291,8 @@ snapshots:
       kind-of: 6.0.3
 
   secure-json-parse@2.7.0: {}
+
+  secure-json-parse@3.0.0: {}
 
   self-cert@2.0.1:
     dependencies:
@@ -16363,10 +16452,6 @@ snapshots:
     optional: true
 
   simple-wcswidth@1.0.1: {}
-
-  single-user-cache@0.6.0:
-    dependencies:
-      safe-stable-stringify: 2.5.0
 
   single-user-cache@1.0.1:
     dependencies:

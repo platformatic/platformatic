@@ -82,8 +82,9 @@ class ServiceStackable {
   }
 
   async getConfig () {
-    const config = this.configManager.current
-    const logger = config.server.logger
+    const config = Object.assign({}, this.configManager.current)
+    config.server = Object.assign({}, config.server)
+    const logger = config.server.loggerInstance
 
     if (logger) {
       config.server.logger = {}
@@ -92,6 +93,8 @@ class ServiceStackable {
         config.server.logger.level = logger.level
       }
     }
+
+    delete config.server.loggerInstance
 
     return config
   }
@@ -247,7 +250,9 @@ class ServiceStackable {
       pinoOptions.name = this.context.serviceId
     }
 
-    this.configManager.current.server.logger = pino(pinoOptions)
+    // Only one of logger and loggerInstance should be set
+    delete this.configManager.current.server.logger
+    this.configManager.current.server.loggerInstance = pino(pinoOptions)
   }
 }
 
