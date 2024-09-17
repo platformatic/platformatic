@@ -8,19 +8,6 @@ const PLT_ROOT = 'PLT_ROOT'
 const { EOL } = require('node:os')
 const { createDirectory } = require('@platformatic/utils')
 
-/**
- * Strip all extra characters from a simple semver version string
- * @param {string} version
- * @returns string
- */
-function stripVersion (version) {
-  const match = version.match(/(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)/)
-  if (match) {
-    return match[0]
-  }
-  return version
-}
-
 function convertServiceNameToPrefix (serviceName) {
   return serviceName.replace(/-/g, '_').toUpperCase()
 }
@@ -188,7 +175,6 @@ module.exports = {
   flattenObject,
   getServiceTemplateFromSchemaUrl,
   createDirectory,
-  stripVersion,
   PLT_ROOT,
   getLatestNpmVersion,
 }

@@ -7,6 +7,8 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import fastify from 'fastify'
 
+process.env.MARKETPLACE_TEST = 'true'
+
 const sleep = promisify(setTimeout)
 
 export const keys = {

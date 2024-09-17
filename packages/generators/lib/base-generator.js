@@ -2,7 +2,6 @@
 
 const { readFile } = require('node:fs/promises')
 const {
-  stripVersion,
   convertServiceNameToPrefix,
   extractEnvVariablesFromText,
   getPackageConfigurationObject,
@@ -368,12 +367,12 @@ class BaseGenerator extends FileGenerator {
 
   async getFastifyVersion () {
     const pkgData = await this.readPackageJsonFile()
-    this.fastifyVersion = stripVersion(pkgData.dependencies.fastify)
+    this.fastifyVersion = pkgData.dependencies.fastify
   }
 
   async getPlatformaticVersion () {
     const pkgData = await this.readPackageJsonFile()
-    this.platformaticVersion = stripVersion(pkgData.version)
+    this.platformaticVersion = pkgData.version
   }
 
   async generatePackageJson () {
