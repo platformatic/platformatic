@@ -1,5 +1,5 @@
 {
-  "name": "watt",
+  "name": "wattpm",
   "version": "1.0.0",
   "description": "The Node.js Application Server",
   "main": "index.js",
@@ -13,7 +13,7 @@
   "bugs": {
     "url": "https://github.com/platformatic/platformatic/issues"
   },
-  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "homepage": "https://watt.pm",
   "scripts": {
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
