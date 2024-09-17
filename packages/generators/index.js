@@ -6,7 +6,6 @@ const { generateTests } = require('./lib/create-plugin')
 const utils = require('./lib/utils')
 module.exports = {
   BaseGenerator,
-  StackableGenerator,
   generateTests,
   ...utils,
 }
