@@ -23,6 +23,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
     "@fastify/error": "^4.0.0",
+    "@fastify/deepmerge": "^2.0.0",
     "@platformatic/config": "workspace:*",
     "@platformatic/itc": "workspace:*",
     "@platformatic/utils": "workspace:*",

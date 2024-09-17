@@ -17,7 +17,7 @@ async function compile (options = {}) {
   if (!tsConfigExists) {
     const msg = 'No typescript configuration file was found, skipping compilation.'
     logger.info(msg)
-    return false
+    return true
   }
 
   try {
