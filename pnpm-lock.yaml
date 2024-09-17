@@ -1073,8 +1073,8 @@ importers:
         version: 6.19.8
     devDependencies:
       '@fastify/cookie':
-        specifier: ^9.0.0
-        version: 9.4.0
+        specifier: ^10.0.0
+        version: 10.0.0
       '@fastify/session':
         specifier: ^11.0.0
         version: 11.0.0
@@ -3196,8 +3196,8 @@ packages:
   '@fastify/compress@8.0.0':
     resolution: {integrity: sha512-HZrmgqXPKEK9yHCzM4cPPhRq8N5EvuAJC/kwPUlPwxIUKXe/pbzodyiff9XmzUHXRX5v7szXpKSQbEA2Oy7BwA==}
 
-  '@fastify/cookie@9.4.0':
-    resolution: {integrity: sha512-Th+pt3kEkh4MQD/Q2q1bMuJIB5NX/D5SwSpOKu3G/tjoGbwfpurIMJsWSPS0SJJ4eyjtmQ8OipDQspf8RbUOlg==}
+  '@fastify/cookie@10.0.0':
+    resolution: {integrity: sha512-S43spazwAfzm5nKlqq/spAGW+O6r+WQzg5vXXI1ArCXXFa8KBA/tiU3XRVQUehSNtbN5PA6+g183hzh5/dZ6Iw==}
 
   '@fastify/cors@10.0.0':
     resolution: {integrity: sha512-kb9fkc/LVbLTQ3lhA+ZZjC/Styzysodo/MTCdVCvTtgHa/gBwxrEEkcp3fuoKIfAQt85wksrpXjUGbw5NQffEQ==}
@@ -10000,10 +10000,10 @@ snapshots:
       pumpify: 2.0.1
       readable-stream: 4.5.2
 
-  '@fastify/cookie@9.4.0':
+  '@fastify/cookie@10.0.0':
     dependencies:
       cookie-signature: 1.2.1
-      fastify-plugin: 4.5.1
+      fastify-plugin: 5.0.0
 
   '@fastify/cors@10.0.0':
     dependencies:
