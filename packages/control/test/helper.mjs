@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import { on } from 'node:events'
+import { on, once } from 'node:events'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { createRequire } from 'node:module'
 import { execa } from 'execa'
@@ -54,4 +54,12 @@ export async function startRuntime (configPath, env = {}) {
       }
     }
   }
+}
+
+export async function kill (runtime, signal = 'SIGKILL') {
+  if (typeof runtime.exitCode === 'number') {
+    return
+  }
+  runtime.kill(signal)
+  await once(runtime, 'exit')
 }

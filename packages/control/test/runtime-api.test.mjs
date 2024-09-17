@@ -11,7 +11,7 @@ import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import split from 'split2'
 import { RuntimeApiClient } from '../index.js'
-import { startRuntime } from './helper.mjs'
+import { startRuntime, kill } from './helper.mjs'
 
 const fixturesDir = desm.join(import.meta.url, 'fixtures')
 
@@ -24,7 +24,7 @@ test('should get runtime log indexes', async t => {
 
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
-    runtime.kill('SIGINT')
+    await kill(runtime)
     await safeRemove(runtimeTmpDir)
   })
 
@@ -53,7 +53,7 @@ test('should get all runtime log indexes', async t => {
 
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
-    runtime.kill('SIGINT')
+    await kill(runtime)
     await safeRemove(runtimeTmpDir)
   })
 
@@ -85,7 +85,7 @@ test('should get runtime history log', async t => {
 
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
-    runtime.kill('SIGINT')
+    await kill(runtime)
     await safeRemove(runtimeTmpDir)
   })
 
@@ -114,7 +114,7 @@ test('should get runtime history log for prev run', async t => {
 
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
-    runtime.kill('SIGINT')
+    await kill(runtime)
     await safeRemove(runtimeTmpDir)
   })
 
@@ -135,7 +135,7 @@ test('should get runtime all logs', async t => {
 
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
-    runtime.kill('SIGINT')
+    await kill(runtime)
     await safeRemove(runtimeTmpDir)
   })
 
@@ -172,7 +172,7 @@ test('should get runtime all logs for prev run', async t => {
 
   const { runtime } = await startRuntime(configFile)
   t.after(async () => {
-    runtime.kill('SIGINT')
+    await kill(runtime)
     await safeRemove(runtimeTmpDir)
   })
 
@@ -191,7 +191,7 @@ test('should get runtime live metrics', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
   const { runtime } = await startRuntime(configFile)
-  t.after(() => runtime.kill('SIGINT'))
+  t.after(async () => { await kill(runtime) })
 
   // Wait for the runtime to collect some metrics
   await sleep(5000)
