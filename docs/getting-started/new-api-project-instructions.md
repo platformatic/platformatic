@@ -30,7 +30,6 @@ pnpm create platformatic@latest
 This interactive command-line tool will guide you through setting up a new Platformatic project. For this guide, please choose the following options:
 
 ```
-- What kind of project do you want to create?   => Application
 - Where would you like to create your project?  => quick-start
 - Which kind of project do you want to create?  => @platformatic/db
 - What is the name of the service?              => (generated-randomly), e.g. legal-soup
