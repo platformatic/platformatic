@@ -1616,8 +1616,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       '@fastify/websocket':
-        specifier: ^10.0.0
-        version: 10.0.1
+        specifier: ^11.0.0
+        version: 11.0.0
       '@hapi/topo':
         specifier: ^6.0.2
         version: 6.0.2
@@ -3273,9 +3273,6 @@ packages:
 
   '@fastify/vite@7.0.0-alpha.1':
     resolution: {integrity: sha512-S3zw9Hslv31SExnOELFLVBUMWx5otOMDTBwqy5jrvbRauWYVFj+6u9WHVDUP222v6l1vAKj4BWQ/g4TI4k4VkA==}
-
-  '@fastify/websocket@10.0.1':
-    resolution: {integrity: sha512-8/pQIxTPRD8U94aILTeJ+2O3el/r19+Ej5z1O1mXlqplsUH7KzCjAI0sgd5DM/NoPjAi5qLFNIjgM5+9/rGSNw==}
 
   '@fastify/websocket@11.0.0':
     resolution: {integrity: sha512-T+QeUaIDgEYyn+RN5vbbO2EZBRJOLGyZ5Y/N8dHxNREll4bN8ArRYsuXZ/WAVFZsqjz0HBjLw1eYq7eFwBzfiw==}
@@ -10175,15 +10172,6 @@ snapshots:
       - stylus
       - sugarss
       - terser
-
-  '@fastify/websocket@10.0.1':
-    dependencies:
-      duplexify: 4.1.3
-      fastify-plugin: 4.5.1
-      ws: 8.18.0
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
 
   '@fastify/websocket@11.0.0':
     dependencies:

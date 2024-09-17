@@ -51,7 +51,7 @@
   },
   "dependencies": {
     "@fastify/error": "^4.0.0",
-    "@fastify/websocket": "^10.0.0",
+    "@fastify/websocket": "^11.0.0",
     "@hapi/topo": "^6.0.2",
     "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
