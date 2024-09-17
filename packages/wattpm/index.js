@@ -8,7 +8,7 @@ import { initCommand } from './lib/commands/init.js'
 import { injectCommand } from './lib/commands/inject.js'
 import { logsCommand } from './lib/commands/logs.js'
 import { configCommand, envCommand, psCommand, servicesCommand } from './lib/commands/management.js'
-import { parseArgs, setVerbose } from './lib/utils.js'
+import { overrideFatal, parseArgs, setVerbose } from './lib/utils.js'
 
 export async function main () {
   const logger = pino(
@@ -28,11 +28,7 @@ export async function main () {
     })
   )
 
-  const originalFatal = logger.fatal.bind(logger)
-  logger.fatal = function (...args) {
-    originalFatal(...args)
-    process.exit(1)
-  }
+  overrideFatal(logger)
 
   const options = {
     verbose: {

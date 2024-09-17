@@ -1,7 +1,7 @@
 import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { resolve } from 'node:path'
-import { buildRuntime, findConfigurationFile, parseArgs } from '../utils.js'
+import { buildRuntime, findConfigurationFile, overrideFatal, parseArgs } from '../utils.js'
 
 export async function buildCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
@@ -9,21 +9,23 @@ export async function buildCommand (logger, args) {
 
   const configurationFile = await findConfigurationFile(logger, root)
 
-  const runtime = await buildRuntime(logger, resolve(root, configurationFile))
+  const runtime = await buildRuntime(logger, configurationFile)
 
   // Gather informations for all services before starting
   const { services } = await runtime.getServices()
 
   for (const { id } of services) {
-    logger.info(`Building service ${bold(id)} ...`)
+    const currentLogger = logger.child({ name: id })
+    currentLogger.info(`Building service ${bold(id)} ...`)
+    overrideFatal(currentLogger)
 
     try {
       await runtime.buildService(id)
     } catch (error) {
       if (error.code === 'PLT_BASIC_NON_ZERO_EXIT_CODE') {
-        logger.error(`Building service "${id}" has failed with exit code ${error.exitCode}.`)
+        currentLogger.error(`Building service "${id}" has failed with exit code ${error.exitCode}.`)
       } else {
-        logger.error(
+        currentLogger.error(
           { err: ensureLoggableError(error) },
           `Building service "${id}" has throw an exception: ${error.message}`
         )

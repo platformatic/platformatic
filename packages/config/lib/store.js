@@ -75,6 +75,11 @@ class Store {
       type = match?.[1]
     }
 
+    // TODO@mcollina: This will be changed once watt.pm is online
+    if (type === 'wattpm') {
+      type = 'runtime'
+    }
+
     const require = this.#createRequire(type, directory)
 
     // Legacy Platformatic apps

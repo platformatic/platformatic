@@ -11,7 +11,7 @@ export async function devCommand (logger, args) {
   const root = resolve(process.cwd(), positionals[0] ?? '')
 
   const configurationFile = await findConfigurationFile(logger, root)
-  await pltStartCommand(['-c', resolve(root, configurationFile)], true)
+  await pltStartCommand(['-c', configurationFile], true)
 }
 
 export async function startCommand (logger, args) {
@@ -19,7 +19,7 @@ export async function startCommand (logger, args) {
   const root = resolve(process.cwd(), positionals[0] ?? '')
 
   const configurationFile = await findConfigurationFile(logger, root)
-  await pltStartCommand(['--production', '-c', resolve(root, configurationFile)], true)
+  await pltStartCommand(['--production', '-c', configurationFile], true)
 }
 
 export async function stopCommand (logger, args) {

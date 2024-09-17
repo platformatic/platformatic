@@ -1,12 +1,21 @@
 import { ConfigManager, Store, loadConfig as pltConfigLoadConfig } from '@platformatic/config'
 import { platformaticRuntime, buildRuntime as pltBuildRuntime } from '@platformatic/runtime'
 import { bold } from 'colorette'
+import { resolve } from 'node:path'
 import { parseArgs as nodeParseArgs } from 'node:util'
 
 export let verbose = false
 
 export function setVerbose (value) {
   verbose = value
+}
+
+export function overrideFatal (logger) {
+  const originalFatal = logger.fatal.bind(logger)
+  logger.fatal = function (...args) {
+    originalFatal(...args)
+    process.exit(1)
+  }
 }
 
 export function parseArgs (args, options, stopAtFirstPositional = true) {
@@ -62,7 +71,7 @@ export async function findConfigurationFile (logger, root) {
     logger.fatal(`Cannot find a ${bold('wattpm.json')} or ${bold('watt.json')} file in ${bold(root)}.`)
   }
 
-  return configurationFile
+  return resolve(root, configurationFile)
 }
 
 export async function buildRuntime (logger, configurationFile) {
