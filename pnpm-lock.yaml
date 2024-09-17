@@ -1073,11 +1073,11 @@ importers:
         version: 6.19.8
     devDependencies:
       '@fastify/cookie':
-        specifier: ^8.3.0
-        version: 8.3.0
+        specifier: ^9.0.0
+        version: 9.4.0
       '@fastify/session':
-        specifier: ^10.7.0
-        version: 10.9.0
+        specifier: ^11.0.0
+        version: 11.0.0
       '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
@@ -3196,8 +3196,8 @@ packages:
   '@fastify/compress@8.0.0':
     resolution: {integrity: sha512-HZrmgqXPKEK9yHCzM4cPPhRq8N5EvuAJC/kwPUlPwxIUKXe/pbzodyiff9XmzUHXRX5v7szXpKSQbEA2Oy7BwA==}
 
-  '@fastify/cookie@8.3.0':
-    resolution: {integrity: sha512-P9hY9GO11L20TnZ33XN3i0bt+3x0zaT7S0ohAzWO950E9PB2xnNhLYzPFJIGFi5AVN0yr5+/iZhWxeYvR6KCzg==}
+  '@fastify/cookie@9.4.0':
+    resolution: {integrity: sha512-Th+pt3kEkh4MQD/Q2q1bMuJIB5NX/D5SwSpOKu3G/tjoGbwfpurIMJsWSPS0SJJ4eyjtmQ8OipDQspf8RbUOlg==}
 
   '@fastify/cors@10.0.0':
     resolution: {integrity: sha512-kb9fkc/LVbLTQ3lhA+ZZjC/Styzysodo/MTCdVCvTtgHa/gBwxrEEkcp3fuoKIfAQt85wksrpXjUGbw5NQffEQ==}
@@ -3253,8 +3253,8 @@ packages:
   '@fastify/send@3.1.1':
     resolution: {integrity: sha512-LdiV2mle/2tH8vh6GwGl0ubfUAgvY+9yF9oGI1iiwVyNUVOQamvw5n+OFu6iCNNoyuCY80FFURBn4TZCbTe8LA==}
 
-  '@fastify/session@10.9.0':
-    resolution: {integrity: sha512-u/c42RuAaxCeEuRCAwK2+/SfGqKOd0NSyRzEvDwFBWySQoKUZQyb9OmmJSWJBbOP1OfaU2OsDrjbPbghE1l/YQ==}
+  '@fastify/session@11.0.0':
+    resolution: {integrity: sha512-DHSpAv5YQprxMHOgMH6hailioPpa48ewnn3IQhpriiLVlN/1i/kFkVR/kOOlaIwSlkmgl5TyOAFFCFojr1Pq2w==}
 
   '@fastify/static@6.12.0':
     resolution: {integrity: sha512-KK1B84E6QD/FcQWxDI2aiUCwHxMJBI1KeCUzm1BwYpPY1b742+jeKruGHP2uOluuM6OkBPI8CIANrXcCRtC2oQ==}
@@ -4816,10 +4816,6 @@ packages:
   cookie-signature@1.2.1:
     resolution: {integrity: sha512-78KWk9T26NhzXtuL26cIJ8/qNHANyJ/ZYrmEXFzUmhZdjpBv+DlWlOANRTGBt48YcyslsLrj0bMLFTmXvLRCOw==}
     engines: {node: '>=6.6.0'}
-
-  cookie@0.5.0:
-    resolution: {integrity: sha512-YZ3GUyn/o8gfKJlnlX7g7xq4gyO6OSuhGPKaaGssGB2qgDUS0gPgtTvoyZLTt9Ab6dC4hfc9dV5arkvc/OCmrw==}
-    engines: {node: '>= 0.6'}
 
   cookie@0.6.0:
     resolution: {integrity: sha512-U71cyTamuh1CRNCfpGY6to28lxvNwPG4Guz/EVjgf3Jmzv0vlDp1atT9eS5dDjMYHucpHbWns6Lwf3BKz6svdw==}
@@ -10010,9 +10006,9 @@ snapshots:
       pumpify: 2.0.1
       readable-stream: 4.5.2
 
-  '@fastify/cookie@8.3.0':
+  '@fastify/cookie@9.4.0':
     dependencies:
-      cookie: 0.5.0
+      cookie-signature: 1.2.1
       fastify-plugin: 4.5.1
 
   '@fastify/cors@10.0.0':
@@ -10115,7 +10111,7 @@ snapshots:
       http-errors: 2.0.0
       mime: 3.0.0
 
-  '@fastify/session@10.9.0':
+  '@fastify/session@11.0.0':
     dependencies:
       fastify-plugin: 4.5.1
       safe-stable-stringify: 2.5.0
@@ -12043,8 +12039,6 @@ snapshots:
   cookie-signature@1.0.6: {}
 
   cookie-signature@1.2.1: {}
-
-  cookie@0.5.0: {}
 
   cookie@0.6.0: {}
 
