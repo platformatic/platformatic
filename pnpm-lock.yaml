@@ -2418,8 +2418,8 @@ importers:
         version: 7.6.3
     devDependencies:
       '@fastify/vite':
-        specifier: 7.0.0-alpha.1
-        version: 7.0.0-alpha.1(@types/node@22.5.5)
+        specifier: 7.0.0
+        version: 7.0.0(@types/node@22.5.5)
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
@@ -3268,8 +3268,8 @@ packages:
   '@fastify/under-pressure@9.0.0':
     resolution: {integrity: sha512-rALvGGIhEXgbxiP9iIczF5o6ct5MytCk6T3SvcPRkMjiq81RoWTMXtrpgHhQsIqP3qdqYH6QrYKo4mnt4fyhnA==}
 
-  '@fastify/vite@7.0.0-alpha.1':
-    resolution: {integrity: sha512-S3zw9Hslv31SExnOELFLVBUMWx5otOMDTBwqy5jrvbRauWYVFj+6u9WHVDUP222v6l1vAKj4BWQ/g4TI4k4VkA==}
+  '@fastify/vite@7.0.0':
+    resolution: {integrity: sha512-nhI6+dcDcaXEFDJJ8NYFR2Rq30yEJtJGhrX8LdmCM+BQslzJnA9/O/zpcG4v2zFJOvx+KhlTlJ6VCnU765DnUw==}
 
   '@fastify/websocket@11.0.0':
     resolution: {integrity: sha512-T+QeUaIDgEYyn+RN5vbbO2EZBRJOLGyZ5Y/N8dHxNREll4bN8ArRYsuXZ/WAVFZsqjz0HBjLw1eYq7eFwBzfiw==}
@@ -10143,7 +10143,7 @@ snapshots:
       '@fastify/error': 4.0.0
       fastify-plugin: 5.0.0
 
-  '@fastify/vite@7.0.0-alpha.1(@types/node@22.5.5)':
+  '@fastify/vite@7.0.0(@types/node@22.5.5)':
     dependencies:
       '@fastify/middie': 8.3.3
       '@fastify/static': 6.12.0
