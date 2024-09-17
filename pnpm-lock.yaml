@@ -1063,8 +1063,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
       fastify-user:
-        specifier: ^1.0.0
-        version: 1.0.1
+        specifier: ^1.0.2
+        version: 1.0.2
       leven:
         specifier: ~3.1.0
         version: 3.1.0
@@ -5508,8 +5508,8 @@ packages:
   fastify-undici-dispatcher@0.6.0:
     resolution: {integrity: sha512-xSt3eCZHsZOh5cDBbEObWHIYYz+g8QmyqFgxVypTjxvE74QOcpx9KGonrHQkKKCnkY31CmXFoBgZjSvwIDZWPQ==}
 
-  fastify-user@1.0.1:
-    resolution: {integrity: sha512-1eON2baYZXG+kadJuGLW1VmZse1fWslMSBDmel3SOPD/QjWUWRtuk8mmHbPFHy74GL/U4YDwCdFulzYO2YkXIQ==}
+  fastify-user@1.0.2:
+    resolution: {integrity: sha512-Cx5Wu8nOuN9Rv2RXAN+UIVNmKw+iAEcQFTr2grRd8t7w3CbcRXVrWyZIAOc1dwQsqk/r/RwtqPMF49lZYHBA4w==}
 
   fastify@5.0.0:
     resolution: {integrity: sha512-Qe4dU+zGOzg7vXjw4EvcuyIbNnMwTmcuOhlOrOJsgwzvjEZmsM/IeHulgJk+r46STjdJS/ZJbxO8N70ODXDMEQ==}
@@ -12888,7 +12888,7 @@ snapshots:
     dependencies:
       undici: 6.19.8
 
-  fastify-user@1.0.1:
+  fastify-user@1.0.2:
     dependencies:
       '@fastify/error': 4.0.0
       '@fastify/jwt': 9.0.0
