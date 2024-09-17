@@ -4,7 +4,6 @@ const { test, describe } = require('node:test')
 const { EOL } = require('node:os')
 const assert = require('node:assert')
 const {
-  stripVersion,
   convertServiceNameToPrefix,
   envObjectToString,
   extractEnvVariablesFromText,
@@ -16,18 +15,6 @@ const { getServiceTemplateFromSchemaUrl } = require('../lib/utils')
 const { envStringToObject } = require('../lib/utils')
 
 describe('utils', () => {
-  describe('stripVersion', async () => {
-    test('should return the same string if not semver', async (t) => {
-      assert.equal('no-version', stripVersion('no-version'))
-    })
-
-    test('should match semver', async (t) => {
-      assert.equal('1.2.3', stripVersion('v1.2.3'))
-      assert.equal('1.2.3', stripVersion('~1.2.3'))
-      assert.equal('1.2.3', stripVersion('^1.2.3'))
-    })
-  })
-
   describe('convertServiceNameToPrefix', () => {
     test('should convert service name to env prefix', async (t) => {
       const expectations = {
