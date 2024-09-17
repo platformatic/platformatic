@@ -348,10 +348,12 @@ class ConfigManager extends EventEmitter {
     }
   }
 
-  static async findConfigFile (directory, type) {
+  static async findConfigFile (directory, typeOrCandidates) {
     directory ??= process.cwd()
-    const configFileNames = this.listConfigFiles(type)
-    const configFilesAccessibility = await Promise.all(configFileNames.map((fileName) => isFileAccessible(fileName, directory)))
+    const configFileNames = Array.isArray(typeOrCandidates) ? typeOrCandidates : this.listConfigFiles(typeOrCandidates)
+    const configFilesAccessibility = await Promise.all(
+      configFileNames.map(fileName => isFileAccessible(fileName, directory))
+    )
     const accessibleConfigFilename = configFileNames.find((value, index) => configFilesAccessibility[index])
     return accessibleConfigFilename
   }

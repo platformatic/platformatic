@@ -1,0 +1,12 @@
+> POST / HTTP/1.1
+> Authorization: foo
+>
+< HTTP/1.1 415
+< content-type: application/json; charset=utf-8
+< content-length: 137
+< date: Tue, 17 Sep 2024 10:31:29 GMT
+< connection: keep-alive
+< keep-alive: timeout=72
+<
+
+{"statusCode":415,"code":"FST_ERR_CTP_INVALID_MEDIA_TYPE","error":"Unsupported Media Type","message":"Unsupported Media Type: undefined"}

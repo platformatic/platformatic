@@ -9,10 +9,7 @@ const { setTimeout: sleep } = require('node:timers/promises')
 const { Worker } = require('node:worker_threads')
 
 const { ITC } = require('@platformatic/itc')
-const {
-  errors: { ensureLoggableError },
-  executeWithTimeout
-} = require('@platformatic/utils')
+const { ensureLoggableError, executeWithTimeout } = require('@platformatic/utils')
 const ts = require('tail-file-stream')
 const { createThreadInterceptor } = require('undici-thread-interceptor')
 
@@ -176,7 +173,6 @@ class Runtime extends EventEmitter {
 
     this.emit('restarted')
 
-    this.logger.info(`Platformatic is now listening at ${this.#url}`)
     return this.#url
   }
 
@@ -528,6 +524,12 @@ class Runtime extends EventEmitter {
     const service = await this.#getServiceById(id, true)
 
     return sendViaITC(service, 'getServiceConfig')
+  }
+
+  async getServiceEnv (id) {
+    const service = await this.#getServiceById(id, true)
+
+    return sendViaITC(service, 'getServiceEnv')
   }
 
   async getServiceOpenapiSchema (id) {

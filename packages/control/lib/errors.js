@@ -6,6 +6,7 @@ const ERROR_PREFIX = 'PLT_CTR'
 
 module.exports = {
   RuntimeNotFound: createError(`${ERROR_PREFIX}_RUNTIME_NOT_FOUND`, 'Runtime not found.'),
+  ServiceNotFound: createError(`${ERROR_PREFIX}_SERVICE_NOT_FOUND`, 'Service not found.'),
   MissingRuntimeIdentifier: createError(`${ERROR_PREFIX}_MISSING_RUNTIME_IDENTIFIER`, 'Runtime name or PID is required.'),
   MissingRequestURL: createError(`${ERROR_PREFIX}_MISSING_REQUEST_URL`, 'Request URL is required.'),
   FailedToGetRuntimeMetadata: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_METADATA`, 'Failed to get runtime metadata %s.'),

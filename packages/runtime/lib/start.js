@@ -108,7 +108,7 @@ async function setupAndStartRuntime (config) {
   return { address, runtime }
 }
 
-async function startCommand (args) {
+async function startCommand (args, throwAllErrors = false) {
   try {
     const config = await loadConfig(
       {
@@ -134,6 +134,10 @@ async function startCommand (args) {
 
     return res
   } catch (err) {
+    if (throwAllErrors) {
+      throw err
+    }
+
     if (err.code === 'PLT_CONFIG_NO_CONFIG_FILE_FOUND' && args.length === 1) {
       const config = {
         $schema: `https://schemas.platformatic.dev/@platformatic/service/${pkg.version}.json`,

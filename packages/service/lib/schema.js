@@ -5,7 +5,7 @@
 const pkg = require('../package.json')
 const openApiDefs = require('./openapi-schema-defs')
 const telemetry = require('@platformatic/telemetry').schema
-const { server, cors, watch } = require('@platformatic/utils').schemaComponents
+const { fastifyServer: server, cors, watch } = require('@platformatic/utils').schemaComponents
 
 const plugins = {
   type: 'object',

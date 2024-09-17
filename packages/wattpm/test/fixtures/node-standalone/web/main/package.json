@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@platformatic/node": "^2.0.0-alpha.9"
+  }
+}

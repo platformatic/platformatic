@@ -1,5 +1,5 @@
 import { ITC } from '@platformatic/itc'
-import { createPinoWritable, errors } from '@platformatic/utils'
+import { createPinoWritable, ensureLoggableError } from '@platformatic/utils'
 import { tracingChannel } from 'node:diagnostics_channel'
 import { once } from 'node:events'
 import { readFile } from 'node:fs/promises'
@@ -115,7 +115,7 @@ export class ChildProcess extends ITC {
       try {
         this.#listener(JSON.parse(message))
       } catch (error) {
-        this.#logger.error({ err: errors.ensureLoggableError(error) }, 'Handling a message failed.')
+        this.#logger.error({ err: ensureLoggableError(error) }, 'Handling a message failed.')
         process.exit(exitCodes.PROCESS_MESSAGE_HANDLING_FAILED)
       }
     })
@@ -158,7 +158,7 @@ export class ChildProcess extends ITC {
       })
 
       Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(this.#logger, 'info') })
-      Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(this.#logger, 'error') })
+      Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(this.#logger, 'error', true) })
     } else {
       this.#logger = pino({ level: 'info', name: globalThis.platformatic.id })
     }
@@ -196,9 +196,8 @@ export class ChildProcess extends ITC {
 
   #setupHandlers () {
     function handleUnhandled (type, err) {
-      process._rawDebug(globalThis.platformatic.id, err)
       this.#logger.error(
-        { err: errors.ensureLoggableError(err) },
+        { err: ensureLoggableError(err) },
         `Child process for service ${globalThis.platformatic.id} threw an ${type}.`
       )
 

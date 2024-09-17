@@ -1,5 +1,5 @@
 import { ITC, generateNotification } from '@platformatic/itc'
-import { createDirectory, errors } from '@platformatic/utils'
+import { createDirectory, ensureLoggableError } from '@platformatic/utils'
 import { once } from 'node:events'
 import { rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
@@ -213,7 +213,7 @@ export class ChildManager extends ITC {
   }
 
   #handleUnexpectedError (error, message, exitCode) {
-    this.#logger.error({ err: errors.ensureLoggableError(error) }, message)
+    this.#logger.error({ err: ensureLoggableError(error) }, message)
     process.exit(exitCode)
   }
 }

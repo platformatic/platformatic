@@ -1,0 +1,17 @@
+{
+  "$schema": "https://s.wattpm.dev/wattpm/1.0.0.json",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 3042
+  },
+  "logger": {
+    "level": "info"
+  },
+  "entrypoint": "main",
+  "web": [
+    {
+      "id": "main",
+      "path": "web/main"
+    }
+  ]
+}

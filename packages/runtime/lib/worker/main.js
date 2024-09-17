@@ -12,7 +12,12 @@ const { wire } = require('undici-thread-interceptor')
 const { PlatformaticApp } = require('./app')
 const { setupITC } = require('./itc')
 const loadInterceptors = require('./interceptors')
-const { MessagePortWritable, createPinoWritable, executeWithTimeout, errors } = require('@platformatic/utils')
+const {
+  MessagePortWritable,
+  createPinoWritable,
+  executeWithTimeout,
+  ensureLoggableError
+} = require('@platformatic/utils')
 const { kId, kITC } = require('./symbols')
 
 process.on('uncaughtException', handleUnhandled.bind(null, 'uncaught exception'))
@@ -27,7 +32,7 @@ globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, { logger:
 
 function handleUnhandled (type, err) {
   globalThis.platformatic.logger.error(
-    { err: errors.ensureLoggableError(err) },
+    { err: ensureLoggableError(err) },
     `Service ${workerData.serviceConfig.id} threw an ${type}.`
   )
 

@@ -221,10 +221,10 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8
       pino:
-        specifier: ^9.0.0
+        specifier: ^9.4.0
         version: 9.4.0
       pino-pretty:
-        specifier: ^11.0.0
+        specifier: ^11.2.2
         version: 11.2.2
       split2:
         specifier: ^4.2.0
@@ -2453,6 +2453,55 @@ importers:
       ws:
         specifier: ^8.18.0
         version: 8.18.0
+
+  packages/wattpm:
+    dependencies:
+      '@platformatic/config':
+        specifier: workspace:*
+        version: link:../config
+      '@platformatic/control':
+        specifier: workspace:*
+        version: link:../control
+      '@platformatic/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
+      colorette:
+        specifier: ^2.0.20
+        version: 2.0.20
+      commist:
+        specifier: ^3.2.0
+        version: 3.2.0
+      help-me:
+        specifier: ^5.0.0
+        version: 5.0.0
+      minimist:
+        specifier: ^1.2.8
+        version: 1.2.8
+      split2:
+        specifier: ^4.2.0
+        version: 4.2.0
+      table:
+        specifier: ^6.8.2
+        version: 6.8.2
+    devDependencies:
+      borp:
+        specifier: ^0.17.0
+        version: 0.17.0
+      eslint:
+        specifier: '9'
+        version: 9.10.0
+      json-schema-to-typescript:
+        specifier: ^15.0.0
+        version: 15.0.2
+      neostandard:
+        specifier: ^0.11.1
+        version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
+      typescript:
+        specifier: ^5.5.4
+        version: 5.6.2
 
 packages:
 
