@@ -16,7 +16,7 @@
   "devDependencies": {
     "c8": "^10.0.0",
     "eslint": "9",
-    "fastify": "5.0.0-alpha.4",
+    "fastify": "^5.0.0",
     "neostandard": "^0.11.1",
     "pino-test": "^1.0.1",
     "typescript": "^5.5.4"
