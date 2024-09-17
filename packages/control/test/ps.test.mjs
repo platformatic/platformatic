@@ -8,7 +8,7 @@ import { readdir, writeFile } from 'node:fs/promises'
 import { platform, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { getPlatformaticVersion, startRuntime } from './helper.mjs'
+import { getPlatformaticVersion, startRuntime, kill } from './helper.mjs'
 
 const cliPath = desm.join(import.meta.url, '..', 'control.js')
 const fixturesDir = desm.join(import.meta.url, 'fixtures')
@@ -21,12 +21,12 @@ test('should get all runtimes', async t => {
   const runtimeProjectDir1 = join(fixturesDir, 'runtime-1')
   const runtimeConfigPath1 = join(runtimeProjectDir1, 'platformatic.json')
   const { runtime: runtime1, url: runtime1Url } = await startRuntime(runtimeConfigPath1)
-  t.after(() => runtime1.kill('SIGKILL'))
+  t.after(() => kill(runtime1))
 
   const runtimeProjectDir2 = join(fixturesDir, 'runtime-2')
   const runtimeConfigPath2 = join(runtimeProjectDir2, 'platformatic.json')
   const { runtime: runtime2, url: runtime2Url } = await startRuntime(runtimeConfigPath2)
-  t.after(() => runtime2.kill('SIGKILL'))
+  t.after(() => kill(runtime2))
 
   const child = await execa('node', [cliPath, 'ps'])
   assert.strictEqual(child.exitCode, 0)

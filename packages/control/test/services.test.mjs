@@ -5,7 +5,7 @@ import { test } from 'node:test'
 import { join } from 'node:path'
 import { execa } from 'execa'
 import * as desm from 'desm'
-import { startRuntime } from './helper.mjs'
+import { startRuntime, kill } from './helper.mjs'
 
 const cliPath = desm.join(import.meta.url, '..', 'control.js')
 const fixturesDir = desm.join(import.meta.url, 'fixtures')
@@ -14,7 +14,7 @@ test('should get all runtime services by pid', async (t) => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configPath = join(projectDir, 'platformatic.json')
   const { runtime } = await startRuntime(configPath)
-  t.after(() => runtime.kill('SIGKILL'))
+  t.after(() => kill(runtime))
 
   const child = await execa('node', [cliPath, 'services', '-p', runtime.pid])
   assert.strictEqual(child.exitCode, 0)
@@ -45,7 +45,7 @@ test('should get all runtime services by name', async (t) => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configPath = join(projectDir, 'platformatic.json')
   const { runtime } = await startRuntime(configPath)
-  t.after(() => runtime.kill('SIGKILL'))
+  t.after(() => kill(runtime))
 
   const child = await execa('node', [cliPath, 'services', '-n', 'runtime-1'])
   assert.strictEqual(child.exitCode, 0)

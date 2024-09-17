@@ -5,7 +5,7 @@ import { test } from 'node:test'
 import { join } from 'node:path'
 import { execa } from 'execa'
 import * as desm from 'desm'
-import { startRuntime } from './helper.mjs'
+import { startRuntime, kill } from './helper.mjs'
 
 const cliPath = desm.join(import.meta.url, '..', 'control.js')
 const fixturesDir = desm.join(import.meta.url, 'fixtures')
@@ -16,7 +16,7 @@ test('should get runtime env by pid', async (t) => {
   const { runtime } = await startRuntime(configFile, { FOO: 'bar' })
 
   t.after(() => {
-    runtime.kill('SIGKILL')
+    return kill(runtime)
   })
 
   const child = await execa('node', [cliPath, 'env', '-p', runtime.pid])
@@ -30,7 +30,7 @@ test('should get runtime env by name', async (t) => {
   const { runtime } = await startRuntime(configFile, { FOO: 'bar' })
 
   t.after(() => {
-    runtime.kill('SIGKILL')
+    return kill(runtime)
   })
 
   const child = await execa('node', [cliPath, 'env', '-n', 'runtime-1'])
@@ -44,7 +44,7 @@ test('should use the runtime if there is only one', async (t) => {
   const { runtime } = await startRuntime(configFile, { FOO: 'bar' })
 
   t.after(() => {
-    runtime.kill('SIGKILL')
+    return kill(runtime)
   })
 
   const child = await execa('node', [cliPath, 'env'])
