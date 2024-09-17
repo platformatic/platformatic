@@ -1,3 +1,4 @@
+import deepmerge from '@fastify/deepmerge'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
@@ -22,7 +23,7 @@ export class BaseStackable {
     this.options = options
     this.root = root
     this.configManager = configManager
-    this.serverConfig = options.context.serverConfig
+    this.serverConfig = deepmerge(options.context.serverConfig, configManager.current.server)
     this.openapiSchema = null
     this.getGraphqlSchema = null
     this.isEntrypoint = options.context.isEntrypoint
@@ -30,7 +31,7 @@ export class BaseStackable {
 
     // Setup the logger
     const pinoOptions = {
-      level: (this.configManager.current.server ?? this.serverConfig)?.logger?.level ?? 'trace'
+      level: this.serverConfig?.logger?.level ?? 'trace'
     }
 
     if (this.id) {
