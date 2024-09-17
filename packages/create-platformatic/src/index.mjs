@@ -1,4 +1,3 @@
-import { StackableGenerator } from '@platformatic/generators'
 import { createDirectory, getPkgManager } from '@platformatic/utils'
 import generateName from 'boring-name-generator'
 import { execa } from 'execa'
@@ -95,23 +94,7 @@ export const createPlatformatic = async argv => {
   )
 
   const pkgManager = getPkgManager()
-
-  const { projectType } = await inquirer.prompt({
-    type: 'list',
-    name: 'projectType',
-    message: 'What kind of project do you want to create?',
-    default: 'application',
-    choices: [
-      { name: 'Application', value: 'application' },
-      { name: 'Stackable', value: 'stackable' },
-    ],
-  })
-
-  if (projectType === 'application') {
-    await createApplication(args, logger, pkgManager)
-  } else {
-    await createStackable(args, logger, pkgManager)
-  }
+  await createApplication(args, logger, pkgManager)
 }
 
 async function createApplication (args, logger, pkgManager) {
@@ -276,39 +259,4 @@ async function createApplication (args, logger, pkgManager) {
   logger.info('Project created successfully, executing post-install actions...')
   await generator.postInstallActions()
   logger.info('You are all set! Run `npm start` to start your project.')
-}
-
-async function createStackable (args, logger, pkgManager) {
-  logger.info('Creating a stackable project...')
-
-  const generator = new StackableGenerator({ logger, inquirer })
-  await generator.ask()
-  await generator.prepare()
-  await generator.writeFiles()
-
-  const projectDir = path.resolve(process.cwd(), generator.config.targetDirectory)
-
-  const { initGitRepository } = await inquirer.prompt({
-    type: 'list',
-    name: 'initGitRepository',
-    message: 'Do you want to init the git repository?',
-    default: false,
-    choices: [
-      { name: 'yes', value: true },
-      { name: 'no', value: false },
-    ],
-  })
-
-  if (initGitRepository) {
-    await createGitRepository(logger, projectDir)
-  }
-
-  if (args.install) {
-    const spinner = ora('Installing dependencies...').start()
-    await execa(pkgManager, ['install'], { cwd: projectDir })
-    spinner.succeed()
-  }
-
-  await generator.postInstallActions()
-  logger.info('Stackable created successfully! Run `npm run create` to create an application.')
 }
