@@ -102,7 +102,7 @@ export async function injectCommand (logger, args) {
 
   try {
     const client = new RuntimeApiClient()
-    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(positionals))
+    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(logger, positionals))
 
     const { service, method, url } = await getRequest(client, runtime, positionals.slice(1))
 
@@ -160,5 +160,47 @@ export async function injectCommand (logger, args) {
     }
 
     logger.fatal({ error: ensureLoggableError(error) }, `Cannot perform a request: ${error.message}`)
+  }
+}
+
+export const help = {
+  inject: {
+    usage: 'inject <id> [service] [method] [url]',
+    description: 'Injects a request to a Platformatic application',
+    footer: `
+The \`inject\` command sends a request to the runtime service and prints the
+response to the standard output. If the service is not specified the
+request is sent to the runtime entry point.
+
+The \`inject\` command uses the Platformatic Runtime Management API. To enable it
+set the \`managementApi\` option to \`true\` in the wattpm configuration file.
+
+To get the list of runtimes with enabled management API use the \`wattpm ps\` command.    
+    `,
+    options: [
+      { usage: '-h, --header <value>', description: 'The request header. Can be used multiple times.' },
+      { usage: '-d, --data <value>', description: 'The request body.' },
+      { usage: '-D, --data-file <path>', description: 'Read the request body from the specified file' },
+      { usage: '-o, --output <path>', description: 'Write the response to the specified file' },
+      { usage: '-f, --full-output', description: 'Include the response headers in the output (default is false)' }
+    ],
+    args: [
+      {
+        name: 'id',
+        description: 'The process ID or the name of the application'
+      },
+      {
+        name: 'service',
+        description: 'The service name (default is the entrypoint)'
+      },
+      {
+        name: 'method',
+        description: 'The HTTP method to use (default is "GET")'
+      },
+      {
+        name: 'url',
+        description: 'The URL to inject (default is "/")'
+      }
+    ]
   }
 }

@@ -30,23 +30,21 @@ async function parseConfiguration (logger, configurationFile) {
 }
 
 export async function importCommand (logger, args) {
-  const {
-    values: { directory: root },
-    positionals
-  } = parseArgs(
-    args,
-    {
-      directory: {
-        type: 'string',
-        short: 'd',
-        default: process.cwd()
-      }
-    },
-    false
-  )
+  const { positionals } = parseArgs(args, {}, false)
+
+  let root
+  let rawUrl
+
+  if (positionals.length < 2) {
+    rawUrl = positionals[0]
+  } else {
+    root = positionals[0]
+    rawUrl = positionals[1]
+  }
+
+  root = resolve(process.cwd(), positionals[0] ?? '')
 
   const configurationFile = await findConfigurationFile(logger, root)
-  const rawUrl = positionals[0]
 
   if (!rawUrl) {
     logger.fatal('Please specify the resource to import.')
@@ -147,4 +145,91 @@ export async function resolveCommand (logger, args) {
   }
 
   logger.done('All services have been resolved.')
+}
+
+export const help = {
+  import: {
+    usage: 'import [root] <url>',
+    description: 'Imports an external resource as a service',
+    args: [
+      {
+        name: 'root',
+        description: 'The directory containing the application (default is the current directory)'
+      },
+      {
+        name: 'url',
+        description: 'The URL to import (can be in the form $USER/$REPOSITORY for GitHub repositories)'
+      }
+    ]
+  },
+  resolve: {
+    usage: 'resolve [root]',
+    description: 'Resolves all external services',
+    args: [
+      {
+        name: 'root',
+        description: 'The directory containing the application (default is the current directory)'
+      }
+    ],
+    options: [
+      {
+        usage: '-u, --username',
+        description: 'The username to use for HTTP URLs'
+      },
+      {
+        usage: '-p, --password',
+        description: 'The password to use for HTTP URLs'
+      },
+      {
+        usage: '-s, --skip-dependencies',
+        description: 'Do not install services dependencies'
+      }
+    ],
+    footer: `
+wattpm resolve command resolves runtime services that have the \`url\` in their configuration.
+To change the directory where a service is cloned, you can set the \`path\` property in the service configuration.
+
+After cloning the service, the resolve command will set the relative path to the service in the wattpm configuration file.
+
+Example of the runtime platformatic.json configuration file:
+
+\`\`\`json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/wattpm/1.0.0.json",
+  "entrypoint": "service-1",
+  "services": [
+    {
+      "id": "service-1",
+      "path": "./services/service-1",
+      "config": "platformatic.json"
+    },
+    {
+      "id": "service-2",
+      "config": "platformatic.json",
+      "url": "https://github.com/test-owner/test-service.git"
+    },
+    {
+      "id": "service-3",
+      "config": "platformatic.json",
+      "path": "./custom-external/service-3",
+      "url": "https://github.com/test-owner/test-service.git"
+    }
+  ],
+}
+\`\`\`
+
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* \`platformatic.json\`, or
+* \`platformatic.yml\`, or 
+* \`platformatic.tml\`, or 
+* \`platformatic.json\`, or
+* \`platformatic.yml\`, or 
+* \`platformatic.tml\`
+
+You can find more details about the configuration format here:
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
+* [Platformatic Service Configuration](https://docs.platformatic.dev/docs/service/configuration)
+    `
+  }
 }

@@ -38,3 +38,16 @@ export async function buildCommand (logger, args) {
   logger.done('All services have been built.')
   await runtime.close(false, true)
 }
+
+export const help = {
+  build: {
+    usage: 'build [root]',
+    description: 'Builds all services of a Platformatic application',
+    args: [
+      {
+        name: 'root',
+        description: 'The directory containing the application (default is the current directory)'
+      }
+    ]
+  }
+}

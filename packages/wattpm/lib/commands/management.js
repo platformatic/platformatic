@@ -88,7 +88,7 @@ export async function servicesCommand (logger, args) {
 
   try {
     const client = new RuntimeApiClient()
-    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(positionals))
+    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(logger, positionals))
     const services = await client.getRuntimeServices(runtime.pid)
     await client.close()
 
@@ -110,11 +110,12 @@ export async function servicesCommand (logger, args) {
 
 export async function envCommand (logger, args) {
   const { values, positionals } = parseArgs(args, { table: { type: 'boolean', short: 't' } }, false)
+
   const service = positionals[1]
 
   try {
     const client = new RuntimeApiClient()
-    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(positionals))
+    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(logger, positionals))
 
     const env = service
       ? await client.getRuntimeServiceEnv(runtime.pid, service)
@@ -156,7 +157,7 @@ export async function configCommand (logger, args) {
 
   try {
     const client = new RuntimeApiClient()
-    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(positionals))
+    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(logger, positionals))
 
     const config = service
       ? await client.getRuntimeServiceConfig(runtime.pid, service)
@@ -175,5 +176,61 @@ export async function configCommand (logger, args) {
       { error: ensureLoggableError(error) },
       `Cannot get ${service ? 'service' : 'runtime'} configuration: ${error.message}`
     )
+  }
+}
+
+export const help = {
+  ps: {
+    usage: 'ps',
+    description: 'Lists all running Platformatic applications',
+    footer: `
+The \`ps\` command uses the Platformatic Runtime Management API. To enable it
+set the \`managementApi\` option to \`true\` in the wattpm configuration file.
+
+    `
+  },
+  services: {
+    usage: 'services <id>',
+    description: 'Lists all services of a Platformatic application',
+    args: [
+      {
+        name: 'id',
+        description: 'The process ID or the name of the application'
+      }
+    ]
+  },
+  env: {
+    usage: 'env <id> [service]',
+    description: 'Show the environment variables of a Platformatic application or a service',
+    options: [
+      {
+        usage: '-t, --table',
+        description: 'Show variables in tabular way'
+      }
+    ],
+    args: [
+      {
+        name: 'id',
+        description: 'The process ID or the name of the application'
+      },
+      {
+        name: 'service',
+        description: 'The service name'
+      }
+    ]
+  },
+  config: {
+    usage: 'config <id> [service]',
+    description: 'Show the configuration of a Platformatic application or a service',
+    args: [
+      {
+        name: 'id',
+        description: 'The process ID or the name of the application'
+      },
+      {
+        name: 'service',
+        description: 'The service name'
+      }
+    ]
   }
 }

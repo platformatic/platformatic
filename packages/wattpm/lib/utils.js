@@ -52,11 +52,12 @@ export function parseArgs (args, options, stopAtFirstPositional = true) {
   return { values, positionals, unparsed, tokens }
 }
 
-export function getMatchingRuntimeArgs (positional) {
+export function getMatchingRuntimeArgs (logger, positional) {
   const args = {}
   const pidOrName = positional[0]
 
   if (pidOrName) {
+    logger.fatal('Please provide the process ID or the name of the application as first argument.')
     args[pidOrName?.match(/^\d+$/) ? 'pid' : 'name'] = pidOrName
   }
 

@@ -75,3 +75,16 @@ export async function initCommand (logger, args) {
 
   logger.done(`Created a wattpm application in ${bold(web)}.`)
 }
+
+export const help = {
+  init: {
+    usage: 'init [root]',
+    description: 'Creates a new application',
+    args: [
+      {
+        name: 'root',
+        description: 'The directory containing the application (default is the current directory)'
+      }
+    ]
+  }
+}

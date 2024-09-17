@@ -27,7 +27,7 @@ export async function stopCommand (logger, args) {
 
   try {
     const client = new RuntimeApiClient()
-    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(positionals))
+    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(logger, positionals))
 
     await client.stopRuntime(runtime.pid)
     await client.close()
@@ -47,7 +47,7 @@ export async function restartCommand (logger, args) {
 
   try {
     const client = new RuntimeApiClient()
-    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(positionals))
+    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(logger, positionals))
 
     await client.restartRuntime(runtime.pid)
     await client.close()
@@ -67,7 +67,7 @@ export async function reloadCommand (logger, args) {
 
   try {
     const client = new RuntimeApiClient()
-    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(positionals))
+    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(logger, positionals))
 
     // Stop the previous runtime
     await client.stopRuntime(runtime.pid)
@@ -92,5 +92,58 @@ export async function reloadCommand (logger, args) {
     }
 
     logger.fatal({ error: ensureLoggableError(error) }, `Cannot reload the runtime: ${error.message}`)
+  }
+}
+
+export const help = {
+  dev: {
+    usage: 'dev [root]',
+    description: 'Starts an application in development mode',
+    args: [
+      {
+        name: 'root',
+        description: 'The directory containing the application (default is the current directory)'
+      }
+    ]
+  },
+  start: {
+    usage: 'start [root]',
+    description: 'Starts an application in production mode',
+    args: [
+      {
+        name: 'root',
+        description: 'The directory containing the application (default is the current directory)'
+      }
+    ]
+  },
+  stop: {
+    usage: 'stop <id>',
+    description: 'Stops an application',
+    args: [
+      {
+        name: 'id',
+        description: 'The process ID or the name of the application'
+      }
+    ]
+  },
+  restart: {
+    usage: 'restart <id>',
+    description: 'Restarts all services of an application',
+    args: [
+      {
+        name: 'id',
+        description: 'The process ID or the name of the application'
+      }
+    ]
+  },
+  reload: {
+    usage: 'reload <id>',
+    description: 'Reloads an application',
+    args: [
+      {
+        name: 'id',
+        description: 'The process ID or the name of the application'
+      }
+    ]
   }
 }
