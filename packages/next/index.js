@@ -141,7 +141,8 @@ export class NextStackable extends BaseStackable {
         // Always use URL to avoid serialization problem in Windows
         root: pathToFileURL(this.root).toString(),
         basePath: this.#basePath,
-        logLevel: this.logger.level
+        logLevel: this.logger.level,
+        port: false
       }
     })
 

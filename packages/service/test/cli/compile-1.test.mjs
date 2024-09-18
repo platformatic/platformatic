@@ -168,14 +168,11 @@ test('missing tsconfig file', async t => {
 
   await rename(pathToTSConfig, pathToTSConfigBackup)
 
-  try {
-    await execa('node', [cliPath, 'compile'], { cwd })
-    assert.fail('should not compile typescript plugin')
-  } catch (err) {
-    console.log(err.stdout)
-    console.log(err.stderr)
-    assert.strictEqual(err.stdout.includes('No typescript configuration file was found, skipping compilation.'), true)
-  }
+  const subprocess = await execa('node', [cliPath, 'compile'], { cwd })
+  assert.strictEqual(
+    subprocess.stdout.includes('No typescript configuration file was found, skipping compilation.'),
+    true
+  )
 })
 
 test('start command should not compile typescript plugin with errors', async t => {

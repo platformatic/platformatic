@@ -63,7 +63,7 @@ async function importOrLocal ({ pkgManager, name, projectDir, pkg }) {
 
     let version = ''
 
-    if (defaultStackables.includes(pkg)) {
+    if (defaultStackables.includes(pkg) || pkg === '@platformatic/runtime') {
       // Let's find if we are using one of the default stackables
       // If we are, we have to use the "local" version of the package
 
