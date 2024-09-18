@@ -658,7 +658,7 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: 5.0.0
+        specifier: ^5.0.0
         version: 5.0.0
       json5:
         specifier: ^2.2.3
@@ -1682,8 +1682,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
       fastify-undici-dispatcher:
-        specifier: ^0.6.0
-        version: 0.6.0
+        specifier: ^0.7.0
+        version: 0.7.0
       graphql:
         specifier: ^16.8.1
         version: 16.9.0
@@ -5492,8 +5492,8 @@ packages:
     resolution: {integrity: sha512-pvYwdtbZUJr/aTD7ZE0rGlvtYpx7IThHKVLBoqCKmT3FJpwm23XA2+PDmq8ZzfqqG4ajpyrHd5bkIixcIFjPhQ==}
     engines: {node: '>=18.0.0'}
 
-  fastify-undici-dispatcher@0.6.0:
-    resolution: {integrity: sha512-xSt3eCZHsZOh5cDBbEObWHIYYz+g8QmyqFgxVypTjxvE74QOcpx9KGonrHQkKKCnkY31CmXFoBgZjSvwIDZWPQ==}
+  fastify-undici-dispatcher@0.7.0:
+    resolution: {integrity: sha512-PiI0Ssxh65A+XS64w82w0dlTlvoOenTkAwHSjoqjMQKwbPzRB4satJvHIOOQ6r2noThgaVyEUAWneM5z6ZmOqA==}
 
   fastify-user@1.0.2:
     resolution: {integrity: sha512-Cx5Wu8nOuN9Rv2RXAN+UIVNmKw+iAEcQFTr2grRd8t7w3CbcRXVrWyZIAOc1dwQsqk/r/RwtqPMF49lZYHBA4w==}
@@ -12826,7 +12826,7 @@ snapshots:
 
   fastify-tsconfig@2.0.0: {}
 
-  fastify-undici-dispatcher@0.6.0:
+  fastify-undici-dispatcher@0.7.0:
     dependencies:
       undici: 6.19.8
 
