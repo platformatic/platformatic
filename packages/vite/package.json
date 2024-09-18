@@ -33,7 +33,7 @@
     "semver": "^7.6.3"
   },
   "devDependencies": {
-    "@fastify/vite": "7.0.0",
+    "@fastify/vite": "^7.0.1",
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
     "borp": "^0.17.0",
