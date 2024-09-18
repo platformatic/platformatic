@@ -40,7 +40,7 @@ importers:
         version: link:../utils
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       semver:
         specifier: ^7.6.3
         version: 7.6.3
@@ -135,7 +135,7 @@ importers:
         version: 4.21.0
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       json-schema-to-typescript:
         specifier: ^15.0.0
         version: 15.0.2
@@ -268,7 +268,7 @@ importers:
         version: 9.10.0
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       license-checker:
         specifier: ^25.0.1
         version: 25.0.1
@@ -332,7 +332,7 @@ importers:
         version: 8.0.1
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -432,7 +432,7 @@ importers:
         version: 8.0.1
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       fastify-tsconfig:
         specifier: ^2.0.0
         version: 2.0.0
@@ -519,7 +519,7 @@ importers:
         version: 3.1.3
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       fastify-openapi-glue:
         specifier: ^4.6.0
         version: 4.7.1
@@ -659,7 +659,7 @@ importers:
         version: 9.10.0
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       json5:
         specifier: ^2.2.3
         version: 2.2.3
@@ -847,7 +847,7 @@ importers:
         version: 2.6.7
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -949,10 +949,10 @@ importers:
         version: 8.0.1
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       fastify-metrics:
         specifier: ^11.0.0
-        version: 11.0.0(fastify@5.0.0-alpha.4)
+        version: 11.0.0(fastify@5.0.0)
       fastify-plugin:
         specifier: ^5.0.0
         version: 5.0.0
@@ -1101,7 +1101,7 @@ importers:
         version: 4.0.5
       fastify:
         specifier: ^5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       get-jwks:
         specifier: ^9.0.1
         version: 9.0.2
@@ -1147,7 +1147,7 @@ importers:
         version: 9.10.0
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -1310,7 +1310,7 @@ importers:
         version: 2.1.0
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       pino:
         specifier: ^9.0.0
         version: 9.4.0
@@ -1409,7 +1409,7 @@ importers:
         version: 9.10.0
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       json-schema-to-typescript:
         specifier: ^15.0.1
         version: 15.0.2
@@ -1464,7 +1464,7 @@ importers:
         version: 4.21.0
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       json-schema-to-typescript:
         specifier: ^15.0.1
         version: 15.0.2
@@ -1531,7 +1531,7 @@ importers:
         version: 9.10.0
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       isbot:
         specifier: ^5.1.17
         version: 5.1.17
@@ -1571,7 +1571,7 @@ importers:
         version: 9.10.0
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -1608,7 +1608,7 @@ importers:
         version: 8.0.1
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -1680,7 +1680,7 @@ importers:
         version: 1.0.16
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       fastify-undici-dispatcher:
         specifier: ^0.6.0
         version: 0.6.0
@@ -1887,7 +1887,7 @@ importers:
         version: 8.0.1
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       fastify-plugin:
         specifier: ^5.0.0
         version: 5.0.0
@@ -2012,7 +2012,7 @@ importers:
         version: 9.10.0
       fastify:
         specifier: ^5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       ioredis:
         specifier: ^5.3.2
         version: 5.4.1
@@ -2085,7 +2085,7 @@ importers:
         version: 9.10.0
       fastify:
         specifier: ^5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       fastify-tsconfig:
         specifier: ^2.0.0
         version: 2.0.0
@@ -2128,7 +2128,7 @@ importers:
         version: 9.10.0
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2192,7 +2192,7 @@ importers:
         version: 9.10.0
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2253,7 +2253,7 @@ importers:
         version: 9.10.0
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2311,7 +2311,7 @@ importers:
         version: 0.17.0
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2345,7 +2345,7 @@ importers:
         version: 9.10.0
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2388,7 +2388,7 @@ importers:
         version: 9.10.0
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2415,7 +2415,7 @@ importers:
         version: link:../utils
       fastify:
         specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        version: 5.0.0
       semver:
         specifier: ^7.6.3
         version: 7.6.3
@@ -3220,8 +3220,8 @@ packages:
   '@fastify/express@4.0.0':
     resolution: {integrity: sha512-e+IMKKV9+HRCVm7LVW8PaMrpEerHfqNLpRkbiVHYfVm0xeOphiwyNEoge4VA3Sh8gubtDfo9yKkpRzx6gx63kg==}
 
-  '@fastify/fast-json-stringify-compiler@4.3.0':
-    resolution: {integrity: sha512-aZAXGYo6m22Fk1zZzEUKBvut/CIIQe/BapEORnxiD5Qr0kPHqqI69NtEMCme74h+at72sPhbkb4ZrLd1W3KRLA==}
+  '@fastify/fast-json-stringify-compiler@5.0.0':
+    resolution: {integrity: sha512-tywfuZfXsyxLC5kEqrMubbFa9vpAxNtuPE7j9w5si1r+6p5b981pDfZ5Y8HBqmjDQl+PABT7cV5jZgXI2j+I5g==}
 
   '@fastify/formbody@8.0.0':
     resolution: {integrity: sha512-iM9DLCwMnPx2gUu5HaPLylQox9ApPMFksf4Yw+1d2mWe7uvRDzg4/1BB1T19OjZK+UWZOQ7Q4o2FnoBQ973UMQ==}
@@ -5515,8 +5515,8 @@ packages:
   fastify-user@1.0.1:
     resolution: {integrity: sha512-1eON2baYZXG+kadJuGLW1VmZse1fWslMSBDmel3SOPD/QjWUWRtuk8mmHbPFHy74GL/U4YDwCdFulzYO2YkXIQ==}
 
-  fastify@5.0.0-alpha.4:
-    resolution: {integrity: sha512-g1+50I1uOP7HvIQQPonsI7TwVZdzuxoOjZlTwaOwW1EPt2PsSZ4GJE2fUpyKPqPastcQ8esQvyxqNcWAe5wR8g==}
+  fastify@5.0.0:
+    resolution: {integrity: sha512-Qe4dU+zGOzg7vXjw4EvcuyIbNnMwTmcuOhlOrOJsgwzvjEZmsM/IeHulgJk+r46STjdJS/ZJbxO8N70ODXDMEQ==}
 
   fastparallel@2.4.1:
     resolution: {integrity: sha512-qUmhxPgNHmvRjZKBFUNI0oZuuH9OlSIOXmJ98lhKPxMZZ7zS/Fi0wRHOihDSz0R1YiIOjxzOY4bq65YTcdBi2Q==}
@@ -5549,8 +5549,8 @@ packages:
     resolution: {integrity: sha512-6BN9trH7bp3qvnrRyzsBz+g3lZxTNZTbVO2EV1CS0WIcDbawYVdYvGflME/9QP0h0pYlCDBCTjYa9nZzMDpyxQ==}
     engines: {node: '>= 0.8'}
 
-  find-my-way@9.0.0:
-    resolution: {integrity: sha512-ToMeNaAQccQlhWtaf9KJK9BJlm1hhpTDJBztftbdGkkwZ1Ic9nbEOhBk0XLX5nYmJd9qjWoC/FiixVfi2xazSg==}
+  find-my-way@9.0.1:
+    resolution: {integrity: sha512-/5NN/R0pFWuff16TMajeKt2JyiW+/OE8nOO8vo1DwZTxLaIURb7lcBYPIgRPh61yCNh9l8voeKwcrkUzmB00vw==}
     engines: {node: '>=14'}
 
   find-up-simple@1.0.0:
@@ -10014,9 +10014,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fastify/fast-json-stringify-compiler@4.3.0':
+  '@fastify/fast-json-stringify-compiler@5.0.0':
     dependencies:
-      fast-json-stringify: 5.16.1
+      fast-json-stringify: 6.0.0
 
   '@fastify/formbody@8.0.0':
     dependencies:
@@ -10529,7 +10529,7 @@ snapshots:
   '@platformatic/graphql-composer@0.8.0':
     dependencies:
       abstract-logger: 0.2.5
-      fastify: 5.0.0-alpha.4
+      fastify: 5.0.0
       graphql: 16.9.0
       mercurius: 15.0.0(graphql@16.9.0)
       metaline: 1.1.0
@@ -12848,9 +12848,9 @@ snapshots:
     dependencies:
       reusify: 1.0.4
 
-  fastify-metrics@11.0.0(fastify@5.0.0-alpha.4):
+  fastify-metrics@11.0.0(fastify@5.0.0):
     dependencies:
-      fastify: 5.0.0-alpha.4
+      fastify: 5.0.0
       fastify-plugin: 4.5.1
       prom-client: 15.1.3
 
@@ -12881,21 +12881,21 @@ snapshots:
     dependencies:
       '@fastify/error': 4.0.0
       '@fastify/jwt': 9.0.0
-      fastify: 5.0.0-alpha.4
+      fastify: 5.0.0
       fastify-plugin: 5.0.0
       get-jwks: 9.0.2
     transitivePeerDependencies:
       - encoding
 
-  fastify@5.0.0-alpha.4:
+  fastify@5.0.0:
     dependencies:
       '@fastify/ajv-compiler': 4.0.0
       '@fastify/error': 4.0.0
-      '@fastify/fast-json-stringify-compiler': 4.3.0
+      '@fastify/fast-json-stringify-compiler': 5.0.0
       abstract-logging: 2.0.1
       avvio: 9.0.0
       fast-json-stringify: 6.0.0
-      find-my-way: 9.0.0
+      find-my-way: 9.0.1
       light-my-request: 6.0.0
       pino: 9.4.0
       process-warning: 4.0.0
@@ -12949,7 +12949,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  find-my-way@9.0.0:
+  find-my-way@9.0.1:
     dependencies:
       fast-deep-equal: 3.1.3
       fast-querystring: 1.1.2
