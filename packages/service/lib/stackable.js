@@ -6,6 +6,7 @@ const pino = require('pino')
 const httpMetrics = require('@platformatic/fastify-http-metrics')
 const { extractTypeScriptCompileOptionsFromConfig } = require('./compile')
 const { compile } = require('@platformatic/ts-compiler')
+const { deepmerge } = require('@platformatic/utils')
 
 class ServiceStackable {
   constructor (options) {
@@ -210,7 +211,7 @@ class ServiceStackable {
       config.metrics = metricsConfig
     }
     if (serverConfig) {
-      config.server = serverConfig
+      config.server = deepmerge(config.server ?? {}, serverConfig ?? {})
     }
 
     if ((hasManagementApi && config.metrics === undefined) || config.metrics) {
@@ -239,8 +240,13 @@ class ServiceStackable {
   }
 
   #initLogger () {
+    if (this.configManager.current.server?.loggerInstance) {
+      this.logger = this.configManager.current.server?.loggerInstance
+      return
+    }
+
     this.configManager.current.server ??= {}
-    this.loggerConfig = this.configManager.current.server.logger ?? this.context.loggerConfig
+    this.loggerConfig = deepmerge(this.context.loggerConfig ?? {}, this.configManager.current.server?.logger ?? {})
 
     const pinoOptions = {
       level: this.loggerConfig?.level ?? 'trace'

@@ -187,7 +187,14 @@ class RuntimeApiClient {
     await this.stopRuntime(pid)
 
     const [startCommand, ...startArgs] = runtime.argv
-    const child = spawn(startCommand, startArgs, { cwd: runtime.cwd, ...options })
+    const child = spawn(startCommand, startArgs, { cwd: runtime.cwd, ...options, stdio: 'ignore', detached: true })
+
+    await new Promise((resolve, reject) => {
+      child.on('spawn', resolve)
+      child.on('error', reject)
+    })
+
+    child.unref()
     return child
   }
 

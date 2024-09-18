@@ -4,7 +4,6 @@
   "server": {
     "hostname": "{PLT_SERVER_HOSTNAME}",
     "port": "{PORT}",
-    "keepAliveTimeout": 5000,
     "logger": {
       "level": "{PLT_SERVER_LOGGER_LEVEL}"
     }

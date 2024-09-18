@@ -5,5 +5,10 @@
   },
   "plugins": {
     "paths": ["plugin.js"]
+  },
+  "server": {
+    "logger": {
+      "level": "trace"
+    }
   }
 }

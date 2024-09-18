@@ -49,7 +49,7 @@ test('should get service config', async (t) => {
       port: 0,
       keepAliveTimeout: 5000,
       logger: {
-        level: 'trace',
+        level: 'info',
       },
     },
     service: { openapi: true },
