@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "@fastify/aws-lambda": "^4.0.0",
+    "@fastify/aws-lambda": "^5.0.0",
     "@fastify/compress": "^8.0.0",
     "bindings": "^1.5.0",
     "borp": "^0.17.0",
