@@ -66,7 +66,7 @@ export function getMatchingRuntimeArgs (logger, positional) {
 
 export async function findConfigurationFile (logger, root) {
   // Find a wattpm.json or watt.json file
-  const configurationFile = await ConfigManager.findConfigFile(root, ['wattpm.json', 'watt.json'])
+  const configurationFile = await ConfigManager.findConfigFile(root, ['wattpm.json', 'watt.json', 'platformatic.json'])
 
   if (typeof configurationFile !== 'string') {
     logger.fatal(`Cannot find a ${bold('wattpm.json')} or ${bold('watt.json')} file in ${bold(root)}.`)

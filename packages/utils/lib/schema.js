@@ -97,13 +97,76 @@ const logger = {
   properties: {
     level: {
       type: 'string',
-      enum: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'],
-      default: 'info'
+      default: 'info',
+      oneOf: [
+        {
+          enum: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']
+        },
+        { pattern: '^\\{.+\\}$' }
+      ]
+    },
+    transport: {
+      anyOf: [
+        {
+          type: 'object',
+          properties: {
+            target: {
+              type: 'string',
+              resolveModule: true
+            },
+            options: {
+              type: 'object'
+            }
+          },
+          additionalProperties: false
+        },
+        {
+          type: 'object',
+          properties: {
+            targets: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  target: {
+                    type: 'string',
+                    resolveModule: true
+                  },
+                  options: {
+                    type: 'object'
+                  },
+                  level: {
+                    type: 'string'
+                  },
+                  additionalProperties: false
+                }
+              }
+            },
+            options: {
+              type: 'object'
+            }
+          },
+          additionalProperties: false
+        }
+      ]
+    },
+    pipeline: {
+      type: 'object',
+      properties: {
+        target: {
+          type: 'string',
+          resolveModule: true
+        },
+        options: {
+          type: 'object'
+        }
+      },
+      additionalProperties: false
     }
   },
-  additionalProperties: false,
   required: ['level'],
-  default: {}
+  default: {},
+  additionalProperties: true
 }
 
 const watch = {
@@ -300,76 +363,7 @@ const fastifyServer = {
       type: 'boolean'
     },
     logger: {
-      anyOf: [
-        { type: 'boolean' },
-        {
-          type: 'object',
-          properties: {
-            level: {
-              type: 'string'
-            },
-            transport: {
-              anyOf: [
-                {
-                  type: 'object',
-                  properties: {
-                    target: {
-                      type: 'string',
-                      resolveModule: true
-                    },
-                    options: {
-                      type: 'object'
-                    }
-                  },
-                  additionalProperties: false
-                },
-                {
-                  type: 'object',
-                  properties: {
-                    targets: {
-                      type: 'array',
-                      items: {
-                        type: 'object',
-                        properties: {
-                          target: {
-                            type: 'string',
-                            resolveModule: true
-                          },
-                          options: {
-                            type: 'object'
-                          },
-                          level: {
-                            type: 'string'
-                          },
-                          additionalProperties: false
-                        }
-                      }
-                    },
-                    options: {
-                      type: 'object'
-                    }
-                  },
-                  additionalProperties: false
-                }
-              ]
-            },
-            pipeline: {
-              type: 'object',
-              properties: {
-                target: {
-                  type: 'string',
-                  resolveModule: true
-                },
-                options: {
-                  type: 'object'
-                }
-              },
-              additionalProperties: false
-            }
-          },
-          additionalProperties: true
-        }
-      ]
+      anyOf: [{ type: 'boolean' }, logger]
     },
     loggerInstance: {
       type: 'object'

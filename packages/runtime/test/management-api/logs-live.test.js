@@ -129,7 +129,7 @@ test('should support custom use transport', async t => {
   const logsPath = join(tmpdir(), 'platformatic-management-api-logs.txt')
   await safeRemove(logsPath)
 
-  config.server.logger = {
+  config.logger = {
     level: 'trace',
     transport: {
       target: 'pino/file',

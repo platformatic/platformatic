@@ -7,7 +7,7 @@ const pino = require('pino')
 const pretty = require('pino-pretty')
 
 function createLogger (config, runtimeLogsDir) {
-  const loggerConfig = { ...config.server?.logger }
+  const loggerConfig = { ...config.logger }
   const cliStream = isatty(1) ? pretty() : pino.destination(1)
 
   if (!config.managementApi) {

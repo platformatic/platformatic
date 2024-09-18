@@ -20,10 +20,8 @@
       }
     }
   },
-  "server": {
-    "logger": {
-      "level": "trace"
-    }
+  "logger": {
+    "level": "trace"
   },
   "restartOnError": 1000
 }

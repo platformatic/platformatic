@@ -29,7 +29,41 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime200Alpha15Json = {
     [k: string]: unknown;
   }[];
   logger?: {
-    level: "fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent";
+    level: (
+      | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+      | {
+          [k: string]: unknown;
+        }
+    ) &
+      string;
+    transport?:
+      | {
+          target?: string;
+          options?: {
+            [k: string]: unknown;
+          };
+        }
+      | {
+          targets?: {
+            target?: string;
+            options?: {
+              [k: string]: unknown;
+            };
+            level?: string;
+            additionalProperties?: never;
+            [k: string]: unknown;
+          }[];
+          options?: {
+            [k: string]: unknown;
+          };
+        };
+    pipeline?: {
+      target?: string;
+      options?: {
+        [k: string]: unknown;
+      };
+    };
+    [k: string]: unknown;
   };
   server?: {
     hostname?: string;
