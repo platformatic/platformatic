@@ -39,8 +39,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       semver:
         specifier: ^7.6.3
         version: 7.6.3
@@ -134,8 +134,8 @@ importers:
         specifier: ^4.19.2
         version: 4.21.0
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       json-schema-to-typescript:
         specifier: ^15.0.0
         version: 15.0.2
@@ -267,8 +267,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       license-checker:
         specifier: ^25.0.1
         version: 25.0.1
@@ -331,8 +331,8 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -431,8 +431,8 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       fastify-tsconfig:
         specifier: ^2.0.0
         version: 2.0.0
@@ -518,8 +518,8 @@ importers:
         specifier: ^3.1.3
         version: 3.1.3
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       fastify-openapi-glue:
         specifier: ^4.6.0
         version: 4.7.1
@@ -846,8 +846,8 @@ importers:
         specifier: ^2.6.4
         version: 2.6.7
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -948,11 +948,11 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       fastify-metrics:
         specifier: ^11.0.0
-        version: 11.0.0(fastify@5.0.0-alpha.4)
+        version: 11.0.0(fastify@5.0.0)
       fastify-plugin:
         specifier: ^5.0.0
         version: 5.0.0
@@ -1066,8 +1066,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
       fastify-user:
-        specifier: ^1.0.0
-        version: 1.0.1
+        specifier: ^1.0.2
+        version: 1.0.2
       leven:
         specifier: ~3.1.0
         version: 3.1.0
@@ -1076,11 +1076,11 @@ importers:
         version: 6.19.8
     devDependencies:
       '@fastify/cookie':
-        specifier: ^8.3.0
-        version: 8.3.0
+        specifier: ^10.0.0
+        version: 10.0.0
       '@fastify/session':
-        specifier: ^10.7.0
-        version: 10.9.0
+        specifier: ^11.0.0
+        version: 11.0.0
       '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
@@ -1100,8 +1100,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.5
       fastify:
-        specifier: ^5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       get-jwks:
         specifier: ^9.0.1
         version: 9.0.2
@@ -1146,8 +1146,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -1309,8 +1309,8 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       pino:
         specifier: ^9.0.0
         version: 9.4.0
@@ -1408,8 +1408,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       json-schema-to-typescript:
         specifier: ^15.0.1
         version: 15.0.2
@@ -1463,8 +1463,8 @@ importers:
         specifier: ^4.19.2
         version: 4.21.0
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       json-schema-to-typescript:
         specifier: ^15.0.1
         version: 15.0.2
@@ -1530,8 +1530,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       isbot:
         specifier: ^5.1.17
         version: 5.1.17
@@ -1570,8 +1570,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -1607,8 +1607,8 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -1619,8 +1619,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       '@fastify/websocket':
-        specifier: ^10.0.0
-        version: 10.0.1
+        specifier: ^11.0.0
+        version: 11.0.0
       '@hapi/topo':
         specifier: ^6.0.2
         version: 6.0.2
@@ -1679,8 +1679,8 @@ importers:
         specifier: ^1.0.16
         version: 1.0.16
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       fastify-undici-dispatcher:
         specifier: ^0.6.0
         version: 0.6.0
@@ -1886,8 +1886,8 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       fastify-plugin:
         specifier: ^5.0.0
         version: 5.0.0
@@ -2011,8 +2011,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: ^5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       ioredis:
         specifier: ^5.3.2
         version: 5.4.1
@@ -2084,8 +2084,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: ^5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       fastify-tsconfig:
         specifier: ^2.0.0
         version: 2.0.0
@@ -2127,8 +2127,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2191,8 +2191,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2252,8 +2252,8 @@ importers:
         specifier: ^9.4.0
         version: 9.10.0
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2310,8 +2310,8 @@ importers:
         specifier: ^0.17.0
         version: 0.17.0
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2344,8 +2344,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2387,8 +2387,8 @@ importers:
         specifier: '9'
         version: 9.10.0
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       neostandard:
         specifier: ^0.11.1
         version: 0.11.5(eslint@9.10.0)(typescript@5.6.2)
@@ -2399,8 +2399,8 @@ importers:
   packages/vite:
     dependencies:
       '@fastify/static':
-        specifier: ^7.0.4
-        version: 7.0.4
+        specifier: ^8.0.0
+        version: 8.0.0
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
@@ -2414,14 +2414,14 @@ importers:
         specifier: workspace:*
         version: link:../utils
       fastify:
-        specifier: 5.0.0-alpha.4
-        version: 5.0.0-alpha.4
+        specifier: ^5.0.0
+        version: 5.0.0
       semver:
         specifier: ^7.6.3
         version: 7.6.3
     devDependencies:
       '@fastify/vite':
-        specifier: 7.0.1
+        specifier: ^7.0.1
         version: 7.0.1(@types/node@22.5.5)
       '@platformatic/composer':
         specifier: workspace:*
@@ -3170,10 +3170,6 @@ packages:
     resolution: {integrity: sha512-autAXT203ixhqei9xt+qkYOvY8l6LAFIdT2UXc/RPNeUVfqRF1BV94GTJyVPFKT8nFM6MyVJhjLj9E8JWvf5zQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@fastify/accept-negotiator@1.1.0':
-    resolution: {integrity: sha512-OIHZrb2ImZ7XG85HXOONLcJWGosv7sIvM2ifAPQVhg9Lv7qdmMBNVaai4QTdyuaqbKM5eO6sLSQOYI7wEQeCJQ==}
-    engines: {node: '>=14'}
-
   '@fastify/accept-negotiator@2.0.0':
     resolution: {integrity: sha512-/Sce/kBzuTxIq5tJh85nVNOq9wKD8s+viIgX0fFMDBdw95gnpf53qmF1oBgJym3cPFliWUuSloVg/1w/rH0FcQ==}
 
@@ -3199,8 +3195,8 @@ packages:
   '@fastify/compress@8.0.0':
     resolution: {integrity: sha512-HZrmgqXPKEK9yHCzM4cPPhRq8N5EvuAJC/kwPUlPwxIUKXe/pbzodyiff9XmzUHXRX5v7szXpKSQbEA2Oy7BwA==}
 
-  '@fastify/cookie@8.3.0':
-    resolution: {integrity: sha512-P9hY9GO11L20TnZ33XN3i0bt+3x0zaT7S0ohAzWO950E9PB2xnNhLYzPFJIGFi5AVN0yr5+/iZhWxeYvR6KCzg==}
+  '@fastify/cookie@10.0.0':
+    resolution: {integrity: sha512-S43spazwAfzm5nKlqq/spAGW+O6r+WQzg5vXXI1ArCXXFa8KBA/tiU3XRVQUehSNtbN5PA6+g183hzh5/dZ6Iw==}
 
   '@fastify/cors@10.0.0':
     resolution: {integrity: sha512-kb9fkc/LVbLTQ3lhA+ZZjC/Styzysodo/MTCdVCvTtgHa/gBwxrEEkcp3fuoKIfAQt85wksrpXjUGbw5NQffEQ==}
@@ -3223,6 +3219,9 @@ packages:
   '@fastify/fast-json-stringify-compiler@4.3.0':
     resolution: {integrity: sha512-aZAXGYo6m22Fk1zZzEUKBvut/CIIQe/BapEORnxiD5Qr0kPHqqI69NtEMCme74h+at72sPhbkb4ZrLd1W3KRLA==}
 
+  '@fastify/fast-json-stringify-compiler@5.0.0':
+    resolution: {integrity: sha512-tywfuZfXsyxLC5kEqrMubbFa9vpAxNtuPE7j9w5si1r+6p5b981pDfZ5Y8HBqmjDQl+PABT7cV5jZgXI2j+I5g==}
+
   '@fastify/formbody@8.0.0':
     resolution: {integrity: sha512-iM9DLCwMnPx2gUu5HaPLylQox9ApPMFksf4Yw+1d2mWe7uvRDzg4/1BB1T19OjZK+UWZOQ7Q4o2FnoBQ973UMQ==}
 
@@ -3244,17 +3243,11 @@ packages:
   '@fastify/reply-from@11.0.0':
     resolution: {integrity: sha512-dv3o8hyy4sxhg1RN9l6ueM+PMMaIPKLjtL2T99H5M7h1Xt8d1RX3r+xC+sL5AqJqLvReX4N+7mTq9QDeB8i6Lg==}
 
-  '@fastify/send@2.1.0':
-    resolution: {integrity: sha512-yNYiY6sDkexoJR0D8IDy3aRP3+L4wdqCpvx5WP+VtEU58sn7USmKynBzDQex5X42Zzvw2gNzzYgP90UfWShLFA==}
-
   '@fastify/send@3.1.1':
     resolution: {integrity: sha512-LdiV2mle/2tH8vh6GwGl0ubfUAgvY+9yF9oGI1iiwVyNUVOQamvw5n+OFu6iCNNoyuCY80FFURBn4TZCbTe8LA==}
 
-  '@fastify/session@10.9.0':
-    resolution: {integrity: sha512-u/c42RuAaxCeEuRCAwK2+/SfGqKOd0NSyRzEvDwFBWySQoKUZQyb9OmmJSWJBbOP1OfaU2OsDrjbPbghE1l/YQ==}
-
-  '@fastify/static@7.0.4':
-    resolution: {integrity: sha512-p2uKtaf8BMOZWLs6wu+Ihg7bWNBdjNgCwDza4MJtTqg+5ovKmcbgbR9Xs5/smZ1YISfzKOCNYmZV8LaCj+eJ1Q==}
+  '@fastify/session@11.0.0':
+    resolution: {integrity: sha512-DHSpAv5YQprxMHOgMH6hailioPpa48ewnn3IQhpriiLVlN/1i/kFkVR/kOOlaIwSlkmgl5TyOAFFCFojr1Pq2w==}
 
   '@fastify/static@8.0.0':
     resolution: {integrity: sha512-VKGn1PQslB2VqzspyMKPu9xasF9vj+YuyGhVLb1ih6V60VVcRvcf0fFRcl3opt6c6YWwhKKdTUTfVE6COnpw6A==}
@@ -3267,9 +3260,6 @@ packages:
 
   '@fastify/vite@7.0.1':
     resolution: {integrity: sha512-kFmuJa7ltQIcuuii3rmtBqbTORxNwcGSsWOXuLdK0D35Swqbmmdz4o+ir34NNLxKDpb4nU35zfO52iYI9toDkQ==}
-
-  '@fastify/websocket@10.0.1':
-    resolution: {integrity: sha512-8/pQIxTPRD8U94aILTeJ+2O3el/r19+Ej5z1O1mXlqplsUH7KzCjAI0sgd5DM/NoPjAi5qLFNIjgM5+9/rGSNw==}
 
   '@fastify/websocket@11.0.0':
     resolution: {integrity: sha512-T+QeUaIDgEYyn+RN5vbbO2EZBRJOLGyZ5Y/N8dHxNREll4bN8ArRYsuXZ/WAVFZsqjz0HBjLw1eYq7eFwBzfiw==}
@@ -4811,10 +4801,6 @@ packages:
     resolution: {integrity: sha512-78KWk9T26NhzXtuL26cIJ8/qNHANyJ/ZYrmEXFzUmhZdjpBv+DlWlOANRTGBt48YcyslsLrj0bMLFTmXvLRCOw==}
     engines: {node: '>=6.6.0'}
 
-  cookie@0.5.0:
-    resolution: {integrity: sha512-YZ3GUyn/o8gfKJlnlX7g7xq4gyO6OSuhGPKaaGssGB2qgDUS0gPgtTvoyZLTt9Ab6dC4hfc9dV5arkvc/OCmrw==}
-    engines: {node: '>= 0.6'}
-
   cookie@0.6.0:
     resolution: {integrity: sha512-U71cyTamuh1CRNCfpGY6to28lxvNwPG4Guz/EVjgf3Jmzv0vlDp1atT9eS5dDjMYHucpHbWns6Lwf3BKz6svdw==}
     engines: {node: '>= 0.6'}
@@ -5512,8 +5498,11 @@ packages:
   fastify-undici-dispatcher@0.6.0:
     resolution: {integrity: sha512-xSt3eCZHsZOh5cDBbEObWHIYYz+g8QmyqFgxVypTjxvE74QOcpx9KGonrHQkKKCnkY31CmXFoBgZjSvwIDZWPQ==}
 
-  fastify-user@1.0.1:
-    resolution: {integrity: sha512-1eON2baYZXG+kadJuGLW1VmZse1fWslMSBDmel3SOPD/QjWUWRtuk8mmHbPFHy74GL/U4YDwCdFulzYO2YkXIQ==}
+  fastify-user@1.0.2:
+    resolution: {integrity: sha512-Cx5Wu8nOuN9Rv2RXAN+UIVNmKw+iAEcQFTr2grRd8t7w3CbcRXVrWyZIAOc1dwQsqk/r/RwtqPMF49lZYHBA4w==}
+
+  fastify@5.0.0:
+    resolution: {integrity: sha512-Qe4dU+zGOzg7vXjw4EvcuyIbNnMwTmcuOhlOrOJsgwzvjEZmsM/IeHulgJk+r46STjdJS/ZJbxO8N70ODXDMEQ==}
 
   fastify@5.0.0-alpha.4:
     resolution: {integrity: sha512-g1+50I1uOP7HvIQQPonsI7TwVZdzuxoOjZlTwaOwW1EPt2PsSZ4GJE2fUpyKPqPastcQ8esQvyxqNcWAe5wR8g==}
@@ -9952,8 +9941,6 @@ snapshots:
     dependencies:
       levn: 0.4.1
 
-  '@fastify/accept-negotiator@1.1.0': {}
-
   '@fastify/accept-negotiator@2.0.0': {}
 
   '@fastify/accepts@5.0.0':
@@ -9989,10 +9976,10 @@ snapshots:
       pumpify: 2.0.1
       readable-stream: 4.5.2
 
-  '@fastify/cookie@8.3.0':
+  '@fastify/cookie@10.0.0':
     dependencies:
-      cookie: 0.5.0
-      fastify-plugin: 4.5.1
+      cookie-signature: 1.2.1
+      fastify-plugin: 5.0.0
 
   '@fastify/cors@10.0.0':
     dependencies:
@@ -10017,6 +10004,10 @@ snapshots:
   '@fastify/fast-json-stringify-compiler@4.3.0':
     dependencies:
       fast-json-stringify: 5.16.1
+
+  '@fastify/fast-json-stringify-compiler@5.0.0':
+    dependencies:
+      fast-json-stringify: 6.0.0
 
   '@fastify/formbody@8.0.0':
     dependencies:
@@ -10067,14 +10058,6 @@ snapshots:
       toad-cache: 3.7.0
       undici: 6.19.8
 
-  '@fastify/send@2.1.0':
-    dependencies:
-      '@lukeed/ms': 2.0.2
-      escape-html: 1.0.3
-      fast-decode-uri-component: 1.0.1
-      http-errors: 2.0.0
-      mime: 3.0.0
-
   '@fastify/send@3.1.1':
     dependencies:
       '@lukeed/ms': 2.0.2
@@ -10083,19 +10066,10 @@ snapshots:
       http-errors: 2.0.0
       mime: 3.0.0
 
-  '@fastify/session@10.9.0':
+  '@fastify/session@11.0.0':
     dependencies:
       fastify-plugin: 4.5.1
       safe-stable-stringify: 2.5.0
-
-  '@fastify/static@7.0.4':
-    dependencies:
-      '@fastify/accept-negotiator': 1.1.0
-      '@fastify/send': 2.1.0
-      content-disposition: 0.5.4
-      fastify-plugin: 4.5.1
-      fastq: 1.17.1
-      glob: 10.4.5
 
   '@fastify/static@8.0.0':
     dependencies:
@@ -10138,15 +10112,6 @@ snapshots:
       - stylus
       - sugarss
       - terser
-
-  '@fastify/websocket@10.0.1':
-    dependencies:
-      duplexify: 4.1.3
-      fastify-plugin: 4.5.1
-      ws: 8.18.0
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
 
   '@fastify/websocket@11.0.0':
     dependencies:
@@ -10529,7 +10494,7 @@ snapshots:
   '@platformatic/graphql-composer@0.8.0':
     dependencies:
       abstract-logger: 0.2.5
-      fastify: 5.0.0-alpha.4
+      fastify: 5.0.0
       graphql: 16.9.0
       mercurius: 15.0.0(graphql@16.9.0)
       metaline: 1.1.0
@@ -12003,8 +11968,6 @@ snapshots:
 
   cookie-signature@1.2.1: {}
 
-  cookie@0.5.0: {}
-
   cookie@0.6.0: {}
 
   core-js@3.37.1: {}
@@ -12848,9 +12811,9 @@ snapshots:
     dependencies:
       reusify: 1.0.4
 
-  fastify-metrics@11.0.0(fastify@5.0.0-alpha.4):
+  fastify-metrics@11.0.0(fastify@5.0.0):
     dependencies:
-      fastify: 5.0.0-alpha.4
+      fastify: 5.0.0
       fastify-plugin: 4.5.1
       prom-client: 15.1.3
 
@@ -12877,15 +12840,33 @@ snapshots:
     dependencies:
       undici: 6.19.8
 
-  fastify-user@1.0.1:
+  fastify-user@1.0.2:
     dependencies:
       '@fastify/error': 4.0.0
       '@fastify/jwt': 9.0.0
-      fastify: 5.0.0-alpha.4
+      fastify: 5.0.0
       fastify-plugin: 5.0.0
       get-jwks: 9.0.2
     transitivePeerDependencies:
       - encoding
+
+  fastify@5.0.0:
+    dependencies:
+      '@fastify/ajv-compiler': 4.0.0
+      '@fastify/error': 4.0.0
+      '@fastify/fast-json-stringify-compiler': 5.0.0
+      abstract-logging: 2.0.1
+      avvio: 9.0.0
+      fast-json-stringify: 6.0.0
+      find-my-way: 9.0.0
+      light-my-request: 6.0.0
+      pino: 9.4.0
+      process-warning: 4.0.0
+      proxy-addr: 2.0.7
+      rfdc: 1.4.1
+      secure-json-parse: 2.7.0
+      semver: 7.6.3
+      toad-cache: 3.7.0
 
   fastify@5.0.0-alpha.4:
     dependencies:

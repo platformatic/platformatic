@@ -24,16 +24,16 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
-    "@fastify/static": "^7.0.4",
+    "@fastify/static": "^8.0.0",
     "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/node": "workspace:*",
     "@platformatic/utils": "workspace:*",
-    "fastify": "5.0.0-alpha.4",
+    "fastify": "^5.0.0",
     "semver": "^7.6.3"
   },
   "devDependencies": {
-    "@fastify/vite": "7.0.1",
+    "@fastify/vite": "^7.0.1",
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
     "borp": "^0.17.0",

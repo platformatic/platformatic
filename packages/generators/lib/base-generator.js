@@ -7,6 +7,7 @@ const {
   getPackageConfigurationObject,
   PLT_ROOT,
   getLatestNpmVersion,
+  stripVersion,
 } = require('./utils')
 const { join } = require('node:path')
 const { FileGenerator } = require('./file-generator')
@@ -367,7 +368,7 @@ class BaseGenerator extends FileGenerator {
 
   async getFastifyVersion () {
     const pkgData = await this.readPackageJsonFile()
-    this.fastifyVersion = pkgData.dependencies.fastify
+    this.fastifyVersion = stripVersion(pkgData.dependencies.fastify)
   }
 
   async getPlatformaticVersion () {
