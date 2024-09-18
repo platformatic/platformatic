@@ -2399,8 +2399,8 @@ importers:
   packages/vite:
     dependencies:
       '@fastify/static':
-        specifier: ^7.0.4
-        version: 7.0.4
+        specifier: ^8.0.0
+        version: 8.0.0
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
@@ -3170,10 +3170,6 @@ packages:
     resolution: {integrity: sha512-autAXT203ixhqei9xt+qkYOvY8l6LAFIdT2UXc/RPNeUVfqRF1BV94GTJyVPFKT8nFM6MyVJhjLj9E8JWvf5zQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@fastify/accept-negotiator@1.1.0':
-    resolution: {integrity: sha512-OIHZrb2ImZ7XG85HXOONLcJWGosv7sIvM2ifAPQVhg9Lv7qdmMBNVaai4QTdyuaqbKM5eO6sLSQOYI7wEQeCJQ==}
-    engines: {node: '>=14'}
-
   '@fastify/accept-negotiator@2.0.0':
     resolution: {integrity: sha512-/Sce/kBzuTxIq5tJh85nVNOq9wKD8s+viIgX0fFMDBdw95gnpf53qmF1oBgJym3cPFliWUuSloVg/1w/rH0FcQ==}
 
@@ -3244,17 +3240,11 @@ packages:
   '@fastify/reply-from@11.0.0':
     resolution: {integrity: sha512-dv3o8hyy4sxhg1RN9l6ueM+PMMaIPKLjtL2T99H5M7h1Xt8d1RX3r+xC+sL5AqJqLvReX4N+7mTq9QDeB8i6Lg==}
 
-  '@fastify/send@2.1.0':
-    resolution: {integrity: sha512-yNYiY6sDkexoJR0D8IDy3aRP3+L4wdqCpvx5WP+VtEU58sn7USmKynBzDQex5X42Zzvw2gNzzYgP90UfWShLFA==}
-
   '@fastify/send@3.1.1':
     resolution: {integrity: sha512-LdiV2mle/2tH8vh6GwGl0ubfUAgvY+9yF9oGI1iiwVyNUVOQamvw5n+OFu6iCNNoyuCY80FFURBn4TZCbTe8LA==}
 
   '@fastify/session@10.9.0':
     resolution: {integrity: sha512-u/c42RuAaxCeEuRCAwK2+/SfGqKOd0NSyRzEvDwFBWySQoKUZQyb9OmmJSWJBbOP1OfaU2OsDrjbPbghE1l/YQ==}
-
-  '@fastify/static@7.0.4':
-    resolution: {integrity: sha512-p2uKtaf8BMOZWLs6wu+Ihg7bWNBdjNgCwDza4MJtTqg+5ovKmcbgbR9Xs5/smZ1YISfzKOCNYmZV8LaCj+eJ1Q==}
 
   '@fastify/static@8.0.0':
     resolution: {integrity: sha512-VKGn1PQslB2VqzspyMKPu9xasF9vj+YuyGhVLb1ih6V60VVcRvcf0fFRcl3opt6c6YWwhKKdTUTfVE6COnpw6A==}
@@ -9952,8 +9942,6 @@ snapshots:
     dependencies:
       levn: 0.4.1
 
-  '@fastify/accept-negotiator@1.1.0': {}
-
   '@fastify/accept-negotiator@2.0.0': {}
 
   '@fastify/accepts@5.0.0':
@@ -10067,14 +10055,6 @@ snapshots:
       toad-cache: 3.7.0
       undici: 6.19.8
 
-  '@fastify/send@2.1.0':
-    dependencies:
-      '@lukeed/ms': 2.0.2
-      escape-html: 1.0.3
-      fast-decode-uri-component: 1.0.1
-      http-errors: 2.0.0
-      mime: 3.0.0
-
   '@fastify/send@3.1.1':
     dependencies:
       '@lukeed/ms': 2.0.2
@@ -10087,15 +10067,6 @@ snapshots:
     dependencies:
       fastify-plugin: 4.5.1
       safe-stable-stringify: 2.5.0
-
-  '@fastify/static@7.0.4':
-    dependencies:
-      '@fastify/accept-negotiator': 1.1.0
-      '@fastify/send': 2.1.0
-      content-disposition: 0.5.4
-      fastify-plugin: 4.5.1
-      fastq: 1.17.1
-      glob: 10.4.5
 
   '@fastify/static@8.0.0':
     dependencies:
