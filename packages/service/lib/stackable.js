@@ -64,9 +64,9 @@ class ServiceStackable {
     const compileOptions = {
       ...typeScriptCompileOptions,
       cwd,
-      logger: this.configManager.current.server.logger,
+      logger: this.logger
     }
-    if (!await compile(compileOptions)) {
+    if (!(await compile(compileOptions))) {
       throw new Error(`Failed to compile ${cwd}`)
     }
   }
@@ -239,20 +239,22 @@ class ServiceStackable {
   }
 
   #initLogger () {
-    this.configManager.current.server = this.configManager.current.server || {}
-    const level = this.configManager.current.server.logger?.level
+    this.configManager.current.server ??= {}
+    this.loggerConfig = this.configManager.current.server.logger ?? this.context.loggerConfig
 
     const pinoOptions = {
-      level: level ?? 'trace'
+      level: this.loggerConfig?.level ?? 'trace'
     }
 
     if (this.context?.serviceId) {
       pinoOptions.name = this.context.serviceId
     }
 
+    this.logger = pino(pinoOptions)
+
     // Only one of logger and loggerInstance should be set
     delete this.configManager.current.server.logger
-    this.configManager.current.server.loggerInstance = pino(pinoOptions)
+    this.configManager.current.server.loggerInstance = this.logger
   }
 }
 

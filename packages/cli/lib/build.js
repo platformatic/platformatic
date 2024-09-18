@@ -6,7 +6,7 @@ export async function build (args) {
   const store = new Store()
   store.add(platformaticRuntime)
 
-  const config = pltConfigLoadConfig({}, args, store)
+  const config = await pltConfigLoadConfig({}, args, store)
   config.configManager.args = config.args
 
   const runtimeConfig = config.configManager

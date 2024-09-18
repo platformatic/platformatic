@@ -111,10 +111,11 @@ async function main () {
   app = new PlatformaticApp(
     service,
     telemetryConfig,
+    config.logger,
     serverConfig,
+    config.metrics,
     !!config.managementApi,
-    !!config.watch,
-    config.metrics
+    !!config.watch
   )
 
   await app.init()
