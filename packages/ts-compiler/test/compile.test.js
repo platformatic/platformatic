@@ -25,9 +25,9 @@ test('empty folder', async t => {
 
   const res = await compile({ cwd: tmpDir, logger })
 
-  assert.strictEqual(res, false)
+  assert.strictEqual(res, true)
 
-  pinoTest.consecutive(stream, [{ level: 40, msg: 'The tsc executable was not found.' }])
+  pinoTest.consecutive(stream, [{ level: 30, msg: 'No typescript configuration file was found, skipping compilation.' }])
 })
 
 test('successfully compile', async t => {

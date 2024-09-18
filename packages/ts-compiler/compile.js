@@ -8,16 +8,16 @@ const { safeRemove } = require('@platformatic/utils')
 async function compile (options = {}) {
   const { execa, logger, tscExecutablePath, tsConfigPath, tsConfigExists } = await setup(options)
 
-  if (tscExecutablePath === undefined) {
-    const msg = 'The tsc executable was not found.'
-    logger.warn(msg)
-    return false
-  }
-
   if (!tsConfigExists) {
     const msg = 'No typescript configuration file was found, skipping compilation.'
     logger.info(msg)
     return true
+  }
+
+  if (tscExecutablePath === undefined) {
+    const msg = 'The tsc executable was not found.'
+    logger.warn(msg)
+    return false
   }
 
   try {
