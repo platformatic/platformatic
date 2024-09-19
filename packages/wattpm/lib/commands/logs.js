@@ -59,7 +59,7 @@ export async function logsCommand (logger, args) {
 
 export const help = {
   logs: {
-    usage: 'logs <id> [service]',
+    usage: 'logs [id] [service]',
     description: 'Streams logs from the Platformatic application',
     args: [
       {

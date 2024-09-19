@@ -159,7 +159,7 @@ export async function resolveCommand (logger, args) {
 
 export const help = {
   import: {
-    usage: 'import [root] <url> [path]',
+    usage: 'import [root] <url>',
     description: 'Imports an external resource as a service',
     args: [
       {
