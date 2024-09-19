@@ -26,6 +26,7 @@
     "@fastify/deepmerge": "^2.0.0",
     "@platformatic/config": "workspace:*",
     "@platformatic/itc": "workspace:*",
+    "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "execa": "^9.3.1",
     "pino": "^9.3.2",

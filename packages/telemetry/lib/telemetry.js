@@ -2,22 +2,12 @@
 
 const fp = require('fastify-plugin')
 const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
-const {
-  ConsoleSpanExporter,
-  BatchSpanProcessor,
-  SimpleSpanProcessor,
-  InMemorySpanExporter,
-} = require('@opentelemetry/sdk-trace-base')
-const {
-  SemanticResourceAttributes,
-} = require('@opentelemetry/semantic-conventions')
-const { Resource } = require('@opentelemetry/resources')
-const { PlatformaticTracerProvider } = require('./platformatic-trace-provider')
 const { PlatformaticContext } = require('./platformatic-context')
 const {
   fastifyTextMapGetter,
   fastifyTextMapSetter,
 } = require('./fastify-text-map')
+const setup = require('./telemetry-config')
 const { formatParamUrl } = require('@fastify/swagger')
 const fastUri = require('fast-uri')
 
@@ -35,9 +25,6 @@ const fastUri = require('fast-uri')
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-const { name: moduleName, version: moduleVersion } = require('../package.json')
-
 const extractPath = (request) => {
   // We must user RouterPath, because otherwise `/test/123` will be considered as
   // a different operation than `/test/321`. In case is not set (this should actually happen only for HTTP/404) we fallback to the path.
@@ -85,72 +72,8 @@ const formatSpanAttributes = {
   },
 }
 
-const setupProvider = (app, opts) => {
-  const { serviceName, version } = opts
-  let exporter = opts.exporter
-  if (!exporter) {
-    app.log.warn('No exporter configured, defaulting to console.')
-    exporter = { type: 'console' }
-  }
-
-  const exporters = Array.isArray(exporter) ? exporter : [exporter]
-
-  app.log.info(
-    `Setting up telemetry for service: ${serviceName}${version ? ' version: ' + version : ''} with exporter of type ${exporter.type}`
-  )
-
-  const provider = new PlatformaticTracerProvider({
-    resource: new Resource({
-      [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
-      [SemanticResourceAttributes.SERVICE_VERSION]: version,
-    }),
-  })
-
-  const exporterObjs = []
-  const spanProcessors = []
-  for (const exporter of exporters) {
-    // Exporter config:
-    // https://open-telemetry.github.io/opentelemetry-js/interfaces/_opentelemetry_exporter_zipkin.ExporterConfig.html
-    const exporterOptions = { ...exporter.options, serviceName }
-
-    let exporterObj
-    if (exporter.type === 'console') {
-      exporterObj = new ConsoleSpanExporter(exporterOptions)
-    } else if (exporter.type === 'otlp') {
-      // We require here because this require (and only the require!) creates some issue with c8 on some mjs tests on other modules. Since we need an assignemet here, we don't use a switch.
-      const {
-        OTLPTraceExporter,
-      } = require('@opentelemetry/exporter-trace-otlp-proto')
-      exporterObj = new OTLPTraceExporter(exporterOptions)
-    } else if (exporter.type === 'zipkin') {
-      const { ZipkinExporter } = require('@opentelemetry/exporter-zipkin')
-      exporterObj = new ZipkinExporter(exporterOptions)
-    } else if (exporter.type === 'memory') {
-      exporterObj = new InMemorySpanExporter()
-    } else {
-      app.log.warn(
-        `Unknown exporter type: ${exporter.type}, defaulting to console.`
-      )
-      exporterObj = new ConsoleSpanExporter(exporterOptions)
-    }
-
-    // We use a SimpleSpanProcessor for the console/memory exporters and a BatchSpanProcessor for the others.
-    const spanProcessor = ['memory', 'console'].includes(exporter.type)
-      ? new SimpleSpanProcessor(exporterObj)
-      : new BatchSpanProcessor(exporterObj)
-    spanProcessors.push(spanProcessor)
-    exporterObjs.push(exporterObj)
-  }
-
-  provider.addSpanProcessor(spanProcessors)
-  const tracer = provider.getTracer(moduleName, moduleVersion)
-  const propagator = provider.getPropagator()
-
-  return { tracer, exporters: exporterObjs, propagator, provider }
-}
-
 async function setupTelemetry (app, opts) {
-  const openTelemetryAPIs = setupProvider(app, opts)
+  const openTelemetryAPIs = setup(opts, app.log)
   const { tracer, propagator, provider } = openTelemetryAPIs
   const skipOperations =
     opts?.skip?.map((skip) => {

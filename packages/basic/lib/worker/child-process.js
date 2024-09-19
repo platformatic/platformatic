@@ -13,6 +13,7 @@ import { WebSocket } from 'ws'
 import { exitCodes } from '../errors.js'
 import { importFile } from '../utils.js'
 import { getSocketPath, isWindows } from './child-manager.js'
+import { setupNodeHTTPTelemetry } from '@platformatic/telemetry'
 
 function createInterceptor (itc) {
   return function (dispatch) {
@@ -90,6 +91,7 @@ export class ChildProcess extends ITC {
 
     this.listen()
     this.#setupLogger()
+    this.#setupTelemetry()
     this.#setupHandlers()
     this.#setupServer()
     this.#setupInterceptors()
@@ -161,6 +163,12 @@ export class ChildProcess extends ITC {
       Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(this.#logger, 'error') })
     } else {
       this.#logger = pino({ level: 'info', name: globalThis.platformatic.id })
+    }
+  }
+
+  #setupTelemetry () {
+    if (globalThis.platformatic.telemetry) {
+      setupNodeHTTPTelemetry(globalThis.platformatic.telemetry, this.#logger)
     }
   }
 
