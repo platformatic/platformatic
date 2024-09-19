@@ -371,6 +371,7 @@ export function verifyBuildAndProductionMode (workingDirectory, configurations, 
     if (!skipBuild) {
       test(`configuration "${configuration.name}" - should build and create all required files`, async t => {
         const { id, baseWorkingDirectory } = configuration
+        t.diagnostic(`starting build for ${id}`)
         configuration.workingDirectory = resolve(baseWorkingDirectory, id)
 
         const runtimeConfig = JSON.parse(
@@ -390,6 +391,7 @@ export function verifyBuildAndProductionMode (workingDirectory, configurations, 
     }
 
     test(`configuration "${configuration.name}" - should start in production mode`, async t => {
+      t.diagnostic(`starting production for ${configuration.id}`)
       // Start in production mode
       const { url } = await createProductionRuntime(
         t,

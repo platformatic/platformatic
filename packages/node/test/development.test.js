@@ -31,7 +31,7 @@ async function verifyStandalone (t, configuration) {
   return { runtime, url }
 }
 
-async function verifyComposerWithPrefix (t, configuration) {
+async function verifyComposerWithPrefix (t, configuration, absoluteUrl = true) {
   setFixturesDir(resolve(import.meta.dirname, `./fixtures/${configuration}`))
 
   const { runtime, url } = await createRuntime(t, 'platformatic.runtime.json', packageRoot)
@@ -44,10 +44,14 @@ async function verifyComposerWithPrefix (t, configuration) {
   await verifyJSONViaHTTP(url, '/backend/example', 200, { hello: 'foobar' })
   await verifyJSONViaHTTP(url, '/backend/mesh', 200, { ok: true })
 
-  await verifyJSONViaInject(runtime, 'frontend', 'GET', '/frontend/', 200, { production: false })
-  await verifyJSONViaInject(runtime, 'frontend', 'GET', '/frontend/time', 200, isTime)
+  if (absoluteUrl) {
+    await verifyJSONViaInject(runtime, 'frontend', 'GET', '/frontend/', 200, { production: false })
+    await verifyJSONViaInject(runtime, 'frontend', 'GET', '/frontend/time', 200, isTime)
+  } else {
+    await verifyJSONViaInject(runtime, 'frontend', 'GET', '/', 200, { production: false })
+    await verifyJSONViaInject(runtime, 'frontend', 'GET', '/time', 200, isTime)
+  }
   await verifyJSONViaInject(runtime, 'composer', 'GET', '/example', 200, { hello: 'foobar' })
-  await verifyJSONViaInject(runtime, 'composer', 'GET', '/frontend/on-composer', 200, { ok: true })
   await verifyJSONViaInject(runtime, 'backend', 'GET', '/example', 200, { hello: 'foobar' })
   await verifyJSONViaInject(runtime, 'backend', 'GET', '/mesh', 200, { ok: true })
 
@@ -76,7 +80,7 @@ async function verifyComposerWithoutPrefix (t, configuration) {
   return { runtime, url }
 }
 
-async function verifyComposerAutodetectPrefix (t, configuration) {
+async function verifyComposerAutodetectPrefix (t, configuration, absoluteUrl = true) {
   setFixturesDir(resolve(import.meta.dirname, `./fixtures/${configuration}`))
 
   const { runtime, url } = await createRuntime(t, 'platformatic.runtime.json', packageRoot)
@@ -89,8 +93,13 @@ async function verifyComposerAutodetectPrefix (t, configuration) {
   await verifyJSONViaHTTP(url, '/backend/example', 200, { hello: 'foobar' })
   await verifyJSONViaHTTP(url, '/backend/mesh', 200, { ok: true })
 
-  await verifyJSONViaInject(runtime, 'frontend', 'GET', '/nested/base/dir/', 200, { production: false })
-  await verifyJSONViaInject(runtime, 'frontend', 'GET', '/nested/base/dir/time', 200, isTime)
+  if (absoluteUrl) {
+    await verifyJSONViaInject(runtime, 'frontend', 'GET', '/nested/base/dir/', 200, { production: false })
+    await verifyJSONViaInject(runtime, 'frontend', 'GET', '/nested/base/dir/time', 200, isTime)
+  } else {
+    await verifyJSONViaInject(runtime, 'frontend', 'GET', '/', 200, { production: false })
+    await verifyJSONViaInject(runtime, 'frontend', 'GET', '/time', 200, isTime)
+  }
   await verifyJSONViaInject(runtime, 'composer', 'GET', '/example', 200, { hello: 'foobar' })
   await verifyJSONViaInject(runtime, 'composer', 'GET', '/nested/base/dir/on-composer', 200, { ok: true })
   await verifyJSONViaInject(runtime, 'backend', 'GET', '/example', 200, { hello: 'foobar' })
@@ -120,7 +129,7 @@ test('should detect and start a Node.js application with no configuration files 
 })
 
 test('should detect and start a Node.js application with no configuration files in development mode when exposed in a composer with a prefix', async t => {
-  const { runtime } = await verifyComposerWithPrefix(t, 'node-no-configuration-composer-with-prefix')
+  const { runtime } = await verifyComposerWithPrefix(t, 'node-no-configuration-composer-with-prefix', false)
 
   const missingConfigurationMessage =
     'The service frontend had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
@@ -140,7 +149,7 @@ test('should detect and start a Node.js application with no configuration files 
 })
 
 test('should detect and start a Node.js application with no configuration files in development mode when exposed in a composer by autodetecting the prefix', async t => {
-  const { runtime } = await verifyComposerAutodetectPrefix(t, 'node-no-configuration-composer-autodetect-prefix')
+  const { runtime } = await verifyComposerAutodetectPrefix(t, 'node-no-configuration-composer-autodetect-prefix', false)
 
   const missingConfigurationMessage =
     'The service frontend had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'

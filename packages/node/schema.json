@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/vite/2.0.0-alpha.14.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/node/2.0.0-alpha.14.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Node.js Stackable",
   "type": "object",
@@ -541,8 +541,13 @@
     "node": {
       "type": "object",
       "properties": {
-        "entrypoint": {
+        "main": {
           "type": "string"
+        },
+        "absoluteUrl": {
+          "description": "This Node.js application requires the Absolute URL from the Composer",
+          "type": "boolean",
+          "default": false
         }
       },
       "default": {},

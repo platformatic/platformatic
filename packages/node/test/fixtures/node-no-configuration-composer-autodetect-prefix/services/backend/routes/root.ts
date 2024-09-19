@@ -13,14 +13,7 @@ export default async function (fastify: FastifyInstance, opts: FastifyPluginOpti
   })
 
   fastify.get('/mesh', async () => {
-    // @ts-expect-error
-    const meta = await globalThis[Symbol.for('plt.runtime.itc')].send('getServiceMeta', 'composer')
-
-    const url = new URL(
-      `${meta.composer.proxies.frontend.prefix}/direct`.replaceAll(/\/+/g, '/'),
-      'http://frontend.plt.local'
-    )
-    const response = await fetch(url)
+    const response = await fetch('http://frontend.plt.local/direct')
     return response.json()
   })
 

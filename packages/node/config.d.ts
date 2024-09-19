@@ -165,6 +165,10 @@ export interface PlatformaticNodeJsStackable {
     };
   };
   node?: {
-    entrypoint?: string;
+    main?: string;
+    /**
+     * This Node.js application requires the Absolute URL from the Composer
+     */
+    absoluteUrl?: boolean;
   };
 }
