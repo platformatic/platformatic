@@ -2502,6 +2502,9 @@ importers:
       typescript:
         specifier: ^5.5.4
         version: 5.6.2
+      undici:
+        specifier: ^6.19.8
+        version: 6.19.8
 
 packages:
 
