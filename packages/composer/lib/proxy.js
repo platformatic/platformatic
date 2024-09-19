@@ -7,24 +7,18 @@ const fp = require('fastify-plugin')
 const kITC = Symbol.for('plt.runtime.itc')
 
 async function resolveServiceProxyParameters (service) {
-  let {
-    origin,
-    proxy: { prefix }
-  } = service
+  // Get meta information from the service, if any, to eventually hook up to a TCP port
+  const meta = (await globalThis[kITC]?.send('getServiceMeta', service.id))?.composer ?? {}
 
+  const origin = meta.tcp ? meta.url : service.origin
+
+  let prefix = service.proxy?.prefix ?? meta.prefix ?? service.id
   if (prefix.endsWith('/')) {
     prefix = prefix.slice(0, -1)
   }
 
   let rewritePrefix = ''
   let internalRewriteLocationHeader = true
-
-  // Get meta information from the service, if any, to eventually hook up to a TCP port
-  const meta = (await globalThis[kITC]?.send('getServiceMeta', service.id))?.composer ?? {}
-
-  if (meta.tcp) {
-    origin = meta.url
-  }
 
   if (meta.wantsAbsoluteUrls) {
     rewritePrefix = meta.prefix
@@ -40,10 +34,8 @@ module.exports = fp(async function (app, opts) {
   for (const service of opts.services) {
     if (!service.proxy) {
       // When a service defines no expose config at all
-      // we assume a proxy exposed with a prefix equals to its id
-      if (service.proxy !== false && !service.openapi && !service.graphql) {
-        service.proxy = { prefix: service.id }
-      } else {
+      // we assume a proxy exposed with a prefix equals to its id or meta.prefix
+      if (service.proxy === false || service.openapi || service.graphql) {
         continue
       }
     }
