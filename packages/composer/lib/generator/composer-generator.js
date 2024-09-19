@@ -17,8 +17,9 @@ class ComposerGenerator extends BaseGenerator {
     const defaultBaseConfig = super.getDefaultConfig()
     return {
       ...defaultBaseConfig,
-      plugin: true,
-      tests: true,
+      plugin: false,
+      routes: false,
+      tests: false,
     }
   }
 
