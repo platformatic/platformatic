@@ -1,6 +1,6 @@
 {
   "name": "wattpm",
-  "version": "1.0.0",
+  "version": "2.0.0-alpha.14",
   "description": "The Node.js Application Server",
   "main": "index.js",
   "type": "module",
@@ -16,7 +16,7 @@
   "homepage": "https://watt.pm",
   "scripts": {
     "test": "npm run lint && borp --concurrency=1 --timeout=180000",
-    "coverage": "npm run lint && borp -X=test -C --concurrency=1 --timeout=180000",
+    "coverage": "npm run lint && borp -X test -C --concurrency=1 --timeout=180000",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "pnpm run gen-schema && pnpm run gen-types",
@@ -41,6 +41,8 @@
     "execa": "^9.4.0",
     "help-me": "^5.0.0",
     "minimist": "^1.2.8",
+    "pino": "^9.4.0",
+    "pino-pretty": "^11.2.2",
     "split2": "^4.2.0",
     "table": "^6.8.2"
   },

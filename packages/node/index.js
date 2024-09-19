@@ -195,7 +195,11 @@ export class NodeStackable extends BaseStackable {
 
   getMeta () {
     const config = this.configManager.current
-    let composer = { prefix: this.servicePrefix, wantsAbsoluteUrls: this._getWantsAbsoluteUrls(), needsRootRedirect: true }
+    let composer = {
+      prefix: this.servicePrefix,
+      wantsAbsoluteUrls: this._getWantsAbsoluteUrls(),
+      needsRootRedirect: true
+    }
 
     if (this.url) {
       composer = {
@@ -341,7 +345,13 @@ async function getEntrypointInformation (root) {
 export async function buildStackable (opts) {
   const root = opts.context.directory
 
-  const configManager = new ConfigManager({ schema, source: opts.config ?? {}, schemaOptions, transformConfig })
+  const configManager = new ConfigManager({
+    schema,
+    source: opts.config ?? {},
+    schemaOptions,
+    transformConfig,
+    dirname: root
+  })
   await configManager.parseAndValidate()
 
   return new NodeStackable(opts, root, configManager)

@@ -121,9 +121,8 @@ export const help = {
       }
     ]
   },
-  // TODO@ShogunPanda: Make it optional
   stop: {
-    usage: 'stop <id>',
+    usage: 'stop [id]',
     description: 'Stops an application',
     args: [
       {
@@ -133,7 +132,7 @@ export const help = {
     ]
   },
   restart: {
-    usage: 'restart <id>',
+    usage: 'restart [id]',
     description: 'Restarts all services of an application',
     args: [
       {
@@ -143,7 +142,7 @@ export const help = {
     ]
   },
   reload: {
-    usage: 'reload <id>',
+    usage: 'reload [id]',
     description: 'Reloads an application',
     args: [
       {

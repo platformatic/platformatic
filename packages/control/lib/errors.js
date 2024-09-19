@@ -18,6 +18,7 @@ module.exports = {
   FailedToStopRuntime: createError(`${ERROR_PREFIX}_FAILED_TO_STOP_RUNTIME`, 'Failed to stop the runtime %s.'),
   FailedToReloadRuntime: createError(`${ERROR_PREFIX}_FAILED_TO_RELOAD_RUNTIME`, 'Failed to reload the runtime %s.'),
   FailedToGetRuntimeConfig: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_CONFIG`, 'Failed to get runtime config %s.'),
+  FailedToGetRuntimeServiceEnv: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_SERVICE_ENV`, 'Failed to get runtime service environment variables %s.'),
   FailedToGetRuntimeServiceConfig: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_SERVICE_CONFIG`, 'Failed to get runtime service config %s.'),
   FailedToGetRuntimeHistoryLogs: createError(`${ERROR_PREFIX}_FAILED_TO_GET_HISTORY_LOGS`, 'Failed to get history logs %s.'),
   FailedToGetRuntimeAllLogs: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_ALL_LOGS`, 'Failed to get runtime all logs %s.'),

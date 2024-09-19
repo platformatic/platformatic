@@ -2480,6 +2480,12 @@ importers:
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
+      pino:
+        specifier: ^9.4.0
+        version: 9.4.0
+      pino-pretty:
+        specifier: ^11.2.2
+        version: 11.2.2
       split2:
         specifier: ^4.2.0
         version: 4.2.0

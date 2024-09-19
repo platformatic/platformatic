@@ -55,6 +55,10 @@ export class BaseStackable {
     return this.configManager.current
   }
 
+  async getEnv () {
+    return this.configManager.env
+  }
+
   async getWatchConfig () {
     const config = this.configManager.current
 

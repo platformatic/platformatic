@@ -113,7 +113,9 @@ export async function main () {
       command = helpCommand
       break
     default:
-      logger.fatal(`Unknown command ${bold(unparsed[0])}. Please run ${bold('wattpm help')} to see available commands.`)
+      logger.fatal(
+        `Unknown command ${bold(unparsed[0])}. Please run ${bold("'wattpm help'")} to see available commands.`
+      )
       break
   }
 

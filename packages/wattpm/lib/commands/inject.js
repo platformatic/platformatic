@@ -7,46 +7,6 @@ import { finished } from 'node:stream/promises'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { getMatchingRuntimeArgs, parseArgs, verbose } from '../utils.js'
 
-async function getRequest (client, runtime, positionals) {
-  /*
-      There are several ways to invoke this command:
-
-        1. wattpm inject $SERVICE $METHOD $URL
-        2. wattpm inject $SERVICE $URL
-        3. wattpm inject $METHOD
-        4. wattpm inject $URL
-    */
-  let service
-  let method
-  let url
-
-  // TODO@ShogunPanda: Make id also optional
-  if (positionals.length === 3) {
-    service = positionals[0]
-    method = positionals[1]
-    url = positionals[2]
-  } else if (positionals.length === 2) {
-    const servicesInfo = await client.getRuntimeServices(runtime.pid)
-    const services = servicesInfo.services.map(s => s.id)
-
-    // If the first argument is a valid service, we use it
-    if (services.includes(positionals[0])) {
-      service = positionals[0]
-      method = 'GET'
-      url = positionals[1]
-    } else {
-      service = servicesInfo.entrypoint
-      method = positionals[0]
-      url = positionals[1]
-    }
-  } else {
-    method = 'GET'
-    url = positionals[1] ?? '/'
-  }
-
-  return { service, method, url }
-}
-
 function appendOutput (logger, stream, fullOutput, line) {
   if (verbose) {
     logger.info(line)
@@ -59,11 +19,21 @@ function appendOutput (logger, stream, fullOutput, line) {
 
 export async function injectCommand (logger, args) {
   const {
-    values: { header: rawHeaders, data, 'data-file': file, output, 'full-output': fullOutput },
+    values: { method, path: url, header: rawHeaders, data, 'data-file': file, output, 'full-output': fullOutput },
     positionals
   } = parseArgs(
     args,
     {
+      method: {
+        type: 'string',
+        short: 'm',
+        default: 'GET'
+      },
+      path: {
+        type: 'string',
+        short: 'p',
+        default: '/'
+      },
       header: {
         type: 'string',
         short: 'h',
@@ -93,7 +63,7 @@ export async function injectCommand (logger, args) {
 
   const headers = Object.fromEntries(
     rawHeaders.map(h => {
-      const [k, ...value] = h.split(':')
+      const [k, ...value] = h.split(/:\s+/)
 
       return [k, value.join(':')]
     })
@@ -104,8 +74,12 @@ export async function injectCommand (logger, args) {
   try {
     const client = new RuntimeApiClient()
     const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(logger, positionals))
+    let service = positionals[1]
 
-    const { service, method, url } = await getRequest(client, runtime, positionals.slice(1))
+    if (!service) {
+      const servicesInfo = await client.getRuntimeServices(runtime.pid)
+      service = servicesInfo.entrypoint
+    }
 
     let body
     if (file) {
@@ -138,6 +112,15 @@ export async function injectCommand (logger, args) {
     // Show the response
     const responseBody = await response.body.text()
 
+    if (response.statusCode === 500) {
+      const json = JSON.parse(responseBody)
+
+      if (json?.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND') {
+        const error = new Error('Cannot find a service.')
+        error.code = 'PLT_CTR_SERVICE_NOT_FOUND'
+        throw error
+      }
+    }
     if (verbose && !output) {
       await sleep(100)
     }
@@ -158,15 +141,16 @@ export async function injectCommand (logger, args) {
       logger.fatal('Cannot find a matching runtime.')
     } else if (error.code === 'PLT_CTR_SERVICE_NOT_FOUND') {
       logger.fatal('Cannot find a matching service.')
+      /* c8 ignore next 3 */
+    } else {
+      logger.fatal({ error: ensureLoggableError(error) }, `Cannot perform a request: ${error.message}`)
     }
-
-    logger.fatal({ error: ensureLoggableError(error) }, `Cannot perform a request: ${error.message}`)
   }
 }
 
 export const help = {
   inject: {
-    usage: 'inject <id> [service] [method] [url]',
+    usage: 'inject [id] [service]',
     description: 'Injects a request to a Platformatic application',
     footer: `
 The \`inject\` command sends a request to the runtime service and prints the
@@ -179,6 +163,8 @@ set the \`managementApi\` option to \`true\` in the wattpm configuration file.
 To get the list of runtimes with enabled management API use the \`wattpm ps\` command.    
     `,
     options: [
+      { usage: '-m, --method <value>', description: 'The request method (default is GET).' },
+      { usage: '-p, --path <value>', description: 'The request path (default is /).' },
       { usage: '-h, --header <value>', description: 'The request header. Can be used multiple times.' },
       { usage: '-d, --data <value>', description: 'The request body.' },
       { usage: '-D, --data-file <path>', description: 'Read the request body from the specified file' },
@@ -193,14 +179,6 @@ To get the list of runtimes with enabled management API use the \`wattpm ps\` co
       {
         name: 'service',
         description: 'The service name (default is the entrypoint)'
-      },
-      {
-        name: 'method',
-        description: 'The HTTP method to use (default is "GET")'
-      },
-      {
-        name: 'url',
-        description: 'The URL to inject (default is "/")'
       }
     ]
   }

@@ -20,7 +20,7 @@ async function showGeneralHelp () {
     { usage: '--help', description: 'Show this help' }
   ]
 
-  console.log('Usage: wattpm [options] [command]\n')
+  console.log('\nUsage: wattpm [options] [command]\n')
 
   // Compute the maximum length of options or commands
   const maximumLength = Math.max(...options.map(c => c.usage.length), ...commands.map(c => c.usage.length)) + 5
@@ -77,6 +77,7 @@ export async function helpCommand (logger, args) {
   const command = args?.[0]
 
   if (!command) {
+    /* c8 ignore next 3 */
     if (isColorSupported && process.stdout.isTTY) {
       console.log(logo)
     }
@@ -86,7 +87,7 @@ export async function helpCommand (logger, args) {
 
   const commands = await loadCommands()
   if (!commands[command]) {
-    logger.fatal(`Unknown command ${bold(command)}. Please run ${bold('wattpm help')} to see available commands.`)
+    logger.fatal(`Unknown command ${bold(command)}. Please run ${bold("'wattpm help'")} to see available commands.`)
   }
 
   showHelp(commands[command])

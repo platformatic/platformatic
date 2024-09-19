@@ -111,7 +111,7 @@ function setupITC (app, service, dispatcher) {
 
       async getServiceEnv () {
         // Remove all undefined keys from the config
-        return JSON.parse(JSON.stringify(process.env))
+        return JSON.parse(JSON.stringify({ ...process.env, ...(await app.stackable.getEnv()) }))
       },
 
       async getServiceOpenAPISchema () {

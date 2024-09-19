@@ -148,6 +148,12 @@ class ConfigManager extends EventEmitter {
         }
 
         this.current = config
+      } else if (replaceEnv) {
+        this.current = await this.replaceEnv(this.current, {
+          escapeJSON: false,
+          ignore: this._replaceEnvIgnore,
+          context: this.context
+        })
       }
 
       if (this._stackableUpgrade) {
@@ -360,8 +366,9 @@ class ConfigManager extends EventEmitter {
 
   async #loadEnv () {
     let dotEnvPath
-    let currentPath = this.fullPath
-    const rootPath = parse(this.fullPath).root
+    let currentPath = this.fullPath ?? this.dirname
+    const rootPath = parse(currentPath).root
+
     while (currentPath !== rootPath) {
       try {
         const candidatePath = join(currentPath, '.env')
@@ -394,7 +401,7 @@ class ConfigManager extends EventEmitter {
     return {
       ...process.env,
       ...this.env,
-      [PLT_ROOT]: join(this.fullPath, '..'),
+      [PLT_ROOT]: this.fullPath ? join(this.fullPath, '..') : this.dirname
     }
   }
 }

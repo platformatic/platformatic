@@ -68,15 +68,14 @@ class Store {
     const { module: extendedModule, version } = splitModuleFromVersion(_extends || module)
     let app = this.#map.get($schema)
 
-    let match = $schema?.match(/\/schemas\/(.*)\/(.*)/)
+    let match = $schema?.match(/^https:\/\/platformatic.dev\/schemas\/(.*)\/(.*)/)
     let type = match?.[2]
     if (!match) {
-      match = $schema?.match(/\/@platformatic\/(.*)\/(.*)\.json/)
+      match = $schema?.match(/^https:\/\/schemas.platformatic.dev\/@platformatic\/(.*)\/(.*)\.json/)
       type = match?.[1]
     }
-
-    // TODO@mcollina: This will be changed once watt.pm is online
-    if (type === 'wattpm') {
+    if (!match) {
+      match = $schema?.match(/^https:\/\/schemas.platformatic.dev\/wattpm\/(.*)\.json/)
       type = 'runtime'
     }
 

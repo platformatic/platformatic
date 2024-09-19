@@ -10,6 +10,7 @@ const defaultStackable = {
   getUrl: () => null,
   updateContext: () => {},
   getConfig: () => null,
+  getEnv: () => null,
   getInfo: () => null,
   getDispatchFunc: () => null,
   getOpenapiSchema: () => null,
@@ -17,7 +18,7 @@ const defaultStackable = {
   getMeta: () => ({}),
   collectMetrics: () => ({
     defaultMetrics: true,
-    httpMetrics: true,
+    httpMetrics: true
   }),
   inject: () => {
     throw new Error('Stackable inject not implemented')
@@ -26,7 +27,7 @@ const defaultStackable = {
     console.log(message)
   },
   getBootstrapDependencies: () => [],
-  getWatchConfig: () => ({ enabled: false }),
+  getWatchConfig: () => ({ enabled: false })
 }
 
 module.exports = defaultStackable

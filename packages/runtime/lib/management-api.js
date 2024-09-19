@@ -31,7 +31,7 @@ async function managementApiPlugin (app, opts) {
   })
 
   app.get('/env', async () => {
-    return process.env
+    return { ...process.env, ...runtime.getRuntimeEnv() }
   })
 
   app.post('/stop', async () => {

@@ -10,6 +10,7 @@ const ONE_HOUR = 3600
 const ONE_MINUTE = 60
 
 const tableConfig = {
+  /* c8 ignore next */
   border: getBorderCharacters(process.stdout.isTTY ? 'norc' : 'ramac'),
   drawHorizontalLine (index, rowCount) {
     return index < 2 || index === rowCount
@@ -27,8 +28,13 @@ function formatPath (path) {
   return tokens.join(sep)
 }
 
+/* c8 ignore next 30 */
 function formatDuration (duration) {
   let result = ''
+
+  if (duration === 0) {
+    return 'now'
+  }
 
   if (duration >= ONE_DAY) {
     const days = Math.floor(duration / ONE_DAY)
@@ -78,6 +84,7 @@ export async function psCommand (logger, args) {
           tableConfig
         )
     )
+    /* c8 ignore next 3 */
   } catch (error) {
     logger.fatal({ error: ensureLoggableError(error) }, `Cannot list runtime: ${error.message}`)
   }
@@ -95,6 +102,7 @@ export async function servicesCommand (logger, args) {
     const rows = services.services.map(runtime => {
       const { id, type, entrypoint } = runtime
 
+      /* c8 ignore next */
       return [id, type, entrypoint ? 'Yes' : 'No']
     })
 
@@ -102,9 +110,10 @@ export async function servicesCommand (logger, args) {
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       logger.fatal('Cannot find a matching runtime.')
+      /* c8 ignore next 3 */
+    } else {
+      logger.fatal({ error: ensureLoggableError(error) }, `Cannot list runtime services: ${error.message}`)
     }
-
-    logger.fatal({ error: ensureLoggableError(error) }, `Cannot list runtime services: ${error.message}`)
   }
 }
 
@@ -142,12 +151,13 @@ export async function envCommand (logger, args) {
       logger.fatal('Cannot find a matching runtime.')
     } else if (error.code === 'PLT_CTR_SERVICE_NOT_FOUND') {
       logger.fatal('Cannot find a matching service.')
+      /* c8 ignore next 6 */
+    } else {
+      logger.fatal(
+        { error: ensureLoggableError(error) },
+        `Cannot get ${service ? 'service' : 'runtime'} environment variables: ${error.message}`
+      )
     }
-
-    logger.fatal(
-      { error: ensureLoggableError(error) },
-      `Cannot get ${service ? 'service' : 'runtime'} environment variables: ${error.message}`
-    )
   }
 }
 
@@ -170,16 +180,16 @@ export async function configCommand (logger, args) {
       logger.fatal('Cannot find a matching runtime.')
     } else if (error.code === 'PLT_CTR_SERVICE_NOT_FOUND') {
       logger.fatal('Cannot find a matching service.')
+      /* c8 ignore next 6 */
+    } else {
+      logger.fatal(
+        { error: ensureLoggableError(error) },
+        `Cannot get ${service ? 'service' : 'runtime'} configuration: ${error.message}`
+      )
     }
-
-    logger.fatal(
-      { error: ensureLoggableError(error) },
-      `Cannot get ${service ? 'service' : 'runtime'} configuration: ${error.message}`
-    )
   }
 }
 
-// TODO@ShogunPanda: Make id optional
 export const help = {
   ps: {
     usage: 'ps',
@@ -191,7 +201,7 @@ set the \`managementApi\` option to \`true\` in the wattpm configuration file.
     `
   },
   services: {
-    usage: 'services <id>',
+    usage: 'services [id]',
     description: 'Lists all services of a Platformatic application',
     args: [
       {
@@ -201,7 +211,7 @@ set the \`managementApi\` option to \`true\` in the wattpm configuration file.
     ]
   },
   env: {
-    usage: 'env <id> [service]',
+    usage: 'env [id] [service]',
     description: 'Show the environment variables of a Platformatic application or a service',
     options: [
       {
@@ -221,7 +231,7 @@ set the \`managementApi\` option to \`true\` in the wattpm configuration file.
     ]
   },
   config: {
-    usage: 'config <id> [service]',
+    usage: 'config [id] [service]',
     description: 'Show the configuration of a Platformatic application or a service',
     args: [
       {

@@ -13,7 +13,7 @@ export async function initCommand (logger, args) {
   /* c8 ignore next */
   const root = resolve(process.cwd(), positionals[0] ?? '')
   const web = resolve(root, 'web')
-  const configurationFile = resolve(root, 'wattpm.json')
+  const configurationFile = resolve(root, 'watt.json')
 
   // Check that the target directory is empty, otherwise cloning will likely fail
   await checkEmptyDirectory(logger, root, root)

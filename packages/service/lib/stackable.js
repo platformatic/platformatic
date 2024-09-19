@@ -100,6 +100,10 @@ class ServiceStackable {
     return config
   }
 
+  async getEnv () {
+    return this.configManager.env
+  }
+
   async getWatchConfig () {
     const config = this.configManager.current
 

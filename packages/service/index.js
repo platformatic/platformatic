@@ -104,7 +104,7 @@ module.exports.configManagerConfig = {
     useDefaults: true,
     coerceTypes: true,
     allErrors: true,
-    strict: false,
+    strict: false
   },
   async transformConfig () {
     // Set watch to true by default. This is not possible
@@ -134,7 +134,7 @@ module.exports.configManagerConfig = {
       this.current.watch.ignore.push(outDir + '/**/*')
     }
   },
-  upgrade,
+  upgrade
 }
 
 platformaticService.configType = 'service'
@@ -145,23 +145,26 @@ function _buildServer (options, app) {
   return buildServer(options, app || module.exports)
 }
 
-async function buildStackable (
-  options,
-  app = platformaticService,
-  Stackable = ServiceStackable
-) {
+async function buildStackable (options, app = platformaticService, Stackable = ServiceStackable) {
   let configManager = options.configManager
 
   if (configManager === undefined) {
     if (typeof options.config === 'string') {
-      ({ configManager } = await loadConfig({}, ['-c', options.config], app, {
-        onMissingEnv: options.onMissingEnv,
-        context: options.context,
-      }, true))
+      ;({ configManager } = await loadConfig(
+        {},
+        ['-c', options.config],
+        app,
+        {
+          onMissingEnv: options.onMissingEnv,
+          context: options.context
+        },
+        true
+      ))
     } else {
       configManager = new ConfigManager({
         ...app.configManagerConfig,
         source: options.config,
+        dirname: options.context.directory
       })
       await configManager.parseAndValidate()
     }
@@ -171,7 +174,7 @@ async function buildStackable (
     init: () => buildServer(configManager.current, app, options.context),
     stackable: app,
     configManager,
-    context: options.context,
+    context: options.context
   })
 
   return stackable

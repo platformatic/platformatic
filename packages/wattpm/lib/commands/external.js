@@ -17,6 +17,7 @@ async function parseConfiguration (logger, configurationFile) {
   const { configManager } = await store.loadConfig({
     config: configurationFile,
     overrides: {
+      /* c8 ignore next 3 */
       onMissingEnv (key) {
         return ''
       }
@@ -29,7 +30,20 @@ async function parseConfiguration (logger, configurationFile) {
 }
 
 export async function importCommand (logger, args) {
-  const { positionals } = parseArgs(args, {}, false)
+  const { values, positionals } = parseArgs(
+    args,
+    {
+      id: {
+        type: 'string',
+        short: 'i'
+      },
+      path: {
+        type: 'string',
+        short: 'p'
+      }
+    },
+    false
+  )
 
   let root
   let rawUrl
@@ -41,7 +55,8 @@ export async function importCommand (logger, args) {
     rawUrl = positionals[1]
   }
 
-  root = resolve(process.cwd(), positionals[0] ?? '')
+  /* c8 ignore next */
+  root = resolve(process.cwd(), root ?? '')
 
   const configurationFile = await findConfigurationFile(logger, root)
 
@@ -50,10 +65,11 @@ export async function importCommand (logger, args) {
   }
 
   const url = rawUrl.match(/^[a-z0-9-_.]+\/[a-z0-9-_.]+$/i) ? `git@github.com:${rawUrl}.git` : rawUrl
-  const service = positionals[1] ?? basename(url, '.git')
-  const path = positionals[2] ?? service
+  const service = values.id ?? basename(rawUrl, '.git')
+  const path = values.path ?? `web/${service}`
 
   const config = JSON.parse(await readFile(configurationFile))
+  /* c8 ignore next */
   config.web ??= []
   config.web.push({ id: service, path, url })
 
@@ -85,6 +101,8 @@ export async function resolveCommand (logger, args) {
     },
     false
   )
+
+  /* c8 ignore next */
   const root = resolve(process.cwd(), positionals[0] ?? '')
 
   const configurationFile = await findConfigurationFile(logger, root)
@@ -108,7 +126,6 @@ export async function resolveCommand (logger, args) {
       await checkEmptyDirectory(childLogger, service.path, relativePath)
 
       operation = 'clone repository'
-      childLogger.info(`Cloning ${bold(service.url)} into ${bold(relativePath)} ...`)
 
       let url = service.url
 
@@ -117,6 +134,12 @@ export async function resolveCommand (logger, args) {
         parsed.username ||= username
         parsed.password ||= password
         url = parsed.toString()
+      }
+
+      if (username) {
+        childLogger.info(`Cloning ${bold(service.url)} as user ${bold(username)} into ${bold(relativePath)} ...`)
+      } else {
+        childLogger.info(`Cloning ${bold(service.url)} into ${bold(relativePath)} ...`)
       }
 
       await execa('git', ['clone', url, service.path])
@@ -136,7 +159,7 @@ export async function resolveCommand (logger, args) {
 
 export const help = {
   import: {
-    usage: 'import [root] <url>',
+    usage: 'import [root] <url> [path]',
     description: 'Imports an external resource as a service',
     args: [
       {
@@ -146,6 +169,16 @@ export const help = {
       {
         name: 'url',
         description: 'The URL to import (can be in the form $USER/$REPOSITORY for GitHub repositories)'
+      }
+    ],
+    options: [
+      {
+        usage: '-i, --id',
+        description: 'The id of the service (default is the basename of the URL)'
+      },
+      {
+        usage: '-p, --path',
+        description: 'The path where to import the service (default is the service id)'
       }
     ]
   },
@@ -182,7 +215,7 @@ Example of the runtime platformatic.json configuration file:
 
 \`\`\`json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/wattpm/1.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/wattpm/2.0.0.json",
   "entrypoint": "service-1",
   "services": [
     {

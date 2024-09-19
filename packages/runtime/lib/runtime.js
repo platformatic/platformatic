@@ -453,6 +453,10 @@ class Runtime extends EventEmitter {
     }
   }
 
+  getRuntimeEnv () {
+    return this.#configManager.env
+  }
+
   getRuntimeConfig () {
     return this.#configManager.current
   }
