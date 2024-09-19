@@ -20,6 +20,7 @@ async function getRequest (client, runtime, positionals) {
   let method
   let url
 
+  // TODO@ShogunPanda: Make id also optional
   if (positionals.length === 3) {
     service = positionals[0]
     method = positionals[1]

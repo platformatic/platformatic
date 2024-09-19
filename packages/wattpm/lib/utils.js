@@ -1,6 +1,8 @@
-import { ConfigManager, Store, loadConfig as pltConfigLoadConfig } from '@platformatic/config'
+import { ConfigManager, loadConfig as pltConfigLoadConfig, Store } from '@platformatic/config'
 import { platformaticRuntime, buildRuntime as pltBuildRuntime } from '@platformatic/runtime'
 import { bold } from 'colorette'
+import { existsSync } from 'node:fs'
+import { readdir, stat } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { parseArgs as nodeParseArgs } from 'node:util'
 
@@ -57,7 +59,6 @@ export function getMatchingRuntimeArgs (logger, positional) {
   const pidOrName = positional[0]
 
   if (pidOrName) {
-    logger.fatal('Please provide the process ID or the name of the application as first argument.')
     args[pidOrName?.match(/^\d+$/) ? 'pid' : 'name'] = pidOrName
   }
 
@@ -75,6 +76,22 @@ export async function findConfigurationFile (logger, root) {
   return resolve(root, configurationFile)
 }
 
+export async function checkEmptyDirectory (logger, path, relativePath) {
+  if (existsSync(path)) {
+    const statObject = await stat(path)
+
+    if (!statObject.isDirectory()) {
+      logger.fatal(`Path ${bold(relativePath)} exists but it is not a directory.`)
+    }
+
+    const entries = await readdir(path)
+
+    if (entries.length) {
+      logger.fatal(`Directory ${bold(relativePath)} is not empty.`)
+    }
+  }
+}
+
 export async function buildRuntime (logger, configurationFile) {
   const store = new Store()
   store.add(platformaticRuntime)
@@ -83,5 +100,9 @@ export async function buildRuntime (logger, configurationFile) {
   config.configManager.args = config.args
 
   const runtimeConfig = config.configManager
-  return pltBuildRuntime(runtimeConfig)
+  try {
+    return await pltBuildRuntime(runtimeConfig)
+  } catch (e) {
+    process.exit(1)
+  }
 }

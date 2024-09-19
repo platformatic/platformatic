@@ -45,7 +45,13 @@ async function buildRuntime (configManager, env) {
     }
   })
 
-  await runtime.init()
+  try {
+    await runtime.init()
+  } catch (e) {
+    await runtime.close()
+    throw e
+  }
+
   return runtime
 }
 

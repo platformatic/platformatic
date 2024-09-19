@@ -48,7 +48,7 @@ export async function main () {
 
   const { values, unparsed } = parseArgs(process.argv.slice(2), options)
 
-  if (values.version) {
+  if (values.version || unparsed[0] === 'version') {
     console.log(version)
     process.exit(0)
   }

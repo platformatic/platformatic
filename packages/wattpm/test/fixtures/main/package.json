@@ -1,5 +1,5 @@
 {
-  "name": "node-standalone",
+  "name": "main",
   "private": true,
   "scripts": {
     "dev": "wattpm dev",

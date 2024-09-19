@@ -7,13 +7,16 @@ import pino from 'pino'
 import { packageJson, schema } from './lib/schema.js'
 import { importFile } from './lib/utils.js'
 
+const importStackablePackageMarker = '__pltImportStackablePackage.js'
+
 function isImportFailedError (error, pkg) {
-  if (error.code !== 'ERR_MODULE_NOT_FOUND') {
+  if (error.code !== 'ERR_MODULE_NOT_FOUND' && error.code !== 'MODULE_NOT_FOUND') {
     return false
   }
 
   const match = error.message.match(/Cannot find package '(.+)' imported from (.+)/)
-  return match?.[1] === pkg
+
+  return match?.[1] === pkg || error.requireStack?.[0].endsWith(importStackablePackageMarker)
 }
 
 async function importStackablePackage (opts, pkg, autodetectDescription) {
@@ -27,7 +30,7 @@ async function importStackablePackage (opts, pkg, autodetectDescription) {
       }
 
       // Scope to the service
-      const require = createRequire(resolve(opts.context.directory, 'index.js'))
+      const require = createRequire(resolve(opts.context.directory, importStackablePackageMarker))
       const imported = require.resolve(pkg)
       return await importFile(imported)
     }
@@ -38,10 +41,10 @@ async function importStackablePackage (opts, pkg, autodetectDescription) {
 
     const rootFolder = relative(process.cwd(), workerData.dirname)
 
-    let errorMessage = `Unable to import package, "${pkg}". Please add it as a dependency `
+    let errorMessage = `Unable to import package '${pkg}'. Please add it as a dependency `
 
     if (rootFolder) {
-      errorMessage += `in the package.json file in the folder ${rootFolder}.`
+      errorMessage += `in the package.json file in the folder ${relative(rootFolder, opts.context.directory)}.`
     } else {
       errorMessage += 'in the root package.json file.'
     }

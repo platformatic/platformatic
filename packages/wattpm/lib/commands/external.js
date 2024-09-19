@@ -3,10 +3,9 @@ import { platformaticRuntime } from '@platformatic/runtime'
 import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { execa } from 'execa'
-import { existsSync } from 'node:fs'
-import { readdir, readFile, stat, writeFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import { basename, relative, resolve } from 'node:path'
-import { findConfigurationFile, overrideFatal, parseArgs } from '../utils.js'
+import { checkEmptyDirectory, findConfigurationFile, overrideFatal, parseArgs } from '../utils.js'
 
 async function parseConfiguration (logger, configurationFile) {
   const store = new Store({
@@ -106,19 +105,7 @@ export async function resolveCommand (logger, args) {
       const relativePath = relative(root, service.path)
 
       // Check that the target directory is empty, otherwise cloning will likely fail
-      if (existsSync(service.path)) {
-        const statObject = await stat(service.path)
-
-        if (!statObject.isDirectory()) {
-          childLogger.fatal(`Path ${bold(relativePath)} exists but it is not a directory.`)
-        }
-
-        const entries = await readdir(service.path)
-
-        if (entries.length) {
-          childLogger.fatal(`Directory ${bold(relativePath)} is not empty.`)
-        }
-      }
+      await checkEmptyDirectory(childLogger, service.path, relativePath)
 
       operation = 'clone repository'
       childLogger.info(`Cloning ${bold(service.url)} into ${bold(relativePath)} ...`)

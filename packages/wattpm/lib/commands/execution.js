@@ -8,6 +8,7 @@ import { findConfigurationFile, getMatchingRuntimeArgs, parseArgs } from '../uti
 
 export async function devCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
+  /* c8 ignore next */
   const root = resolve(process.cwd(), positionals[0] ?? '')
 
   const configurationFile = await findConfigurationFile(logger, root)
@@ -16,6 +17,7 @@ export async function devCommand (logger, args) {
 
 export async function startCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
+  /* c8 ignore next */
   const root = resolve(process.cwd(), positionals[0] ?? '')
 
   const configurationFile = await findConfigurationFile(logger, root)
@@ -36,9 +38,10 @@ export async function stopCommand (logger, args) {
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       logger.fatal('Cannot find a matching runtime.')
+      /* c8 ignore next 3 */
+    } else {
+      logger.fatal({ error: ensureLoggableError(error) }, `Cannot stop the runtime: ${error.message}`)
     }
-
-    logger.fatal({ error: ensureLoggableError(error) }, `Cannot stop the runtime: ${error.message}`)
   }
 }
 
@@ -56,9 +59,10 @@ export async function restartCommand (logger, args) {
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       logger.fatal('Cannot find a matching runtime.')
+      /* c8 ignore next 3 */
+    } else {
+      logger.fatal({ error: ensureLoggableError(error) }, `Cannot restart the runtime: ${error.message}`)
     }
-
-    logger.fatal({ error: ensureLoggableError(error) }, `Cannot restart the runtime: ${error.message}`)
   }
 }
 
@@ -89,9 +93,10 @@ export async function reloadCommand (logger, args) {
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       logger.fatal('Cannot find a matching runtime.')
+      /* c8 ignore next 3 */
+    } else {
+      logger.fatal({ error: ensureLoggableError(error) }, `Cannot reload the runtime: ${error.message}`)
     }
-
-    logger.fatal({ error: ensureLoggableError(error) }, `Cannot reload the runtime: ${error.message}`)
   }
 }
 
@@ -116,6 +121,7 @@ export const help = {
       }
     ]
   },
+  // TODO@ShogunPanda: Make it optional
   stop: {
     usage: 'stop <id>',
     description: 'Stops an application',

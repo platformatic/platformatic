@@ -15,7 +15,9 @@ export async function logsCommand (logger, args) {
   )
 
   const service = positionals[1]
+
   const minimumLevel = logger.levels.values[values.level]
+  /* c8 ignore next */
   const output = values.pretty ? pinoPretty({ colorize: true }) : process.stdout
 
   try {
@@ -41,17 +43,17 @@ export async function logsCommand (logger, args) {
 
       output.write(line + '\n')
     }
+    /* c8 ignore next */ // Mistakenly reported as missing by c8
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       logger.fatal('Cannot find a matching runtime.')
-    } else if (error.code === 'PLT_CTR_SERVICE_NOT_FOUND') {
-      logger.fatal('Cannot find a matching service.')
+      /* c8 ignore next 6 */
+    } else {
+      logger.fatal(
+        { error: ensureLoggableError(error) },
+        `Cannot stream ${service ? 'service' : 'runtime'} logs: ${error.message}`
+      )
     }
-
-    logger.fatal(
-      { error: ensureLoggableError(error) },
-      `Cannot get ${service ? 'service' : 'runtime'} configuration: ${error.message}`
-    )
   }
 }
 

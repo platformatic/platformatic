@@ -179,6 +179,7 @@ export async function configCommand (logger, args) {
   }
 }
 
+// TODO@ShogunPanda: Make id optional
 export const help = {
   ps: {
     usage: 'ps',

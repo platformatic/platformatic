@@ -7,7 +7,6 @@ const inspector = require('node:inspector')
 const { join } = require('node:path')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { Worker } = require('node:worker_threads')
-
 const { ITC } = require('@platformatic/itc')
 const { ensureLoggableError, executeWithTimeout } = require('@platformatic/utils')
 const ts = require('tail-file-stream')
@@ -19,7 +18,7 @@ const { createLogger } = require('./logger')
 const { startManagementApi } = require('./management-api')
 const { startPrometheusServer } = require('./prom-server')
 const { getRuntimeTmpDir } = require('./utils')
-const { sendViaITC } = require('./worker/itc')
+const { sendViaITC, waitEventFromITC } = require('./worker/itc')
 const { kId, kITC, kConfig } = require('./worker/symbols')
 
 const platformaticVersion = require('../package.json').version
@@ -841,7 +840,7 @@ class Runtime extends EventEmitter {
     this.#interceptor.route(id, service)
 
     // Store dependencies
-    const [{ dependencies }] = await once(service[kITC], 'init')
+    const [{ dependencies }] = await waitEventFromITC(service, 'init')
 
     if (autoload) {
       serviceConfig.dependencies = dependencies

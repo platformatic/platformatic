@@ -1,5 +1,5 @@
 {
-  "name": "node-ts-standalone",
+  "name": "build",
   "private": true,
   "scripts": {
     "dev": "wattpm dev",

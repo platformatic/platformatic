@@ -93,5 +93,6 @@ export async function helpCommand (logger, args) {
 }
 
 export const help = {
-  help: { usage: 'help [command]', description: 'Show help about a command or the application' }
+  help: { usage: 'help [command]', description: 'Show help about a command or the application' },
+  version: { usage: 'version', description: 'Show wattpm version' }
 }

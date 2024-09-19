@@ -5,12 +5,12 @@ import { buildRuntime, findConfigurationFile, overrideFatal, parseArgs } from '.
 
 export async function buildCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
+  /* c8 ignore next */
   const root = resolve(process.cwd(), positionals[0] ?? '')
 
   const configurationFile = await findConfigurationFile(logger, root)
 
   const runtime = await buildRuntime(logger, configurationFile)
-
   // Gather informations for all services before starting
   const { services } = await runtime.getServices()
 
@@ -24,6 +24,7 @@ export async function buildCommand (logger, args) {
     } catch (error) {
       if (error.code === 'PLT_BASIC_NON_ZERO_EXIT_CODE') {
         currentLogger.error(`Building service "${id}" has failed with exit code ${error.exitCode}.`)
+        /* c8 ignore next 6 */
       } else {
         currentLogger.error(
           { err: ensureLoggableError(error) },
