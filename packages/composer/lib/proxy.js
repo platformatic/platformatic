@@ -26,12 +26,8 @@ async function resolveServiceProxyParameters (service) {
     origin = meta.url
   }
 
-  if (meta.prefix) {
-    prefix = meta.prefix
-  }
-
   if (meta.wantsAbsoluteUrls) {
-    rewritePrefix = prefix
+    rewritePrefix = meta.prefix
     internalRewriteLocationHeader = false
   }
 
