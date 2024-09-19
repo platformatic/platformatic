@@ -75,6 +75,6 @@ test('Creates a Platformatic Composer', { timeout }, async t => {
   console.log(baseServiceDir)
   equal(await isFileAccessible(join(baseServiceDir, 'platformatic.json')), true)
   equal(await isFileAccessible(join(baseServiceDir, 'README.md')), true)
-  equal(await isFileAccessible(join(baseServiceDir, 'routes', 'root.js')), true)
-  equal(await isFileAccessible(join(baseServiceDir, 'plugins', 'example.js')), true)
+  equal(await isFileAccessible(join(baseServiceDir, 'routes', 'root.js')), false)
+  equal(await isFileAccessible(join(baseServiceDir, 'plugins', 'example.js')), false)
 })
