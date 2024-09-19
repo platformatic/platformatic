@@ -167,10 +167,13 @@ export class NodeStackable extends BaseStackable {
     let res
 
     if (this.url) {
+      this.logger.trace({ injectParams, url: this.url }, 'injecting via request')
       res = await injectViaRequest(this.url, injectParams, onInject)
     } else if (this.#isFastify) {
+      this.logger.trace({ injectParams }, 'injecting via fastify')
       res = await this.#app.inject(injectParams, onInject)
     } else {
+      this.logger.trace({ injectParams }, 'injecting via light-my-request')
       res = await inject(this.#dispatcher ?? this.#app, injectParams, onInject)
     }
 
@@ -185,9 +188,14 @@ export class NodeStackable extends BaseStackable {
     return { statusCode, headers, body, payload, rawPayload }
   }
 
+  _getWantsAbsoluteUrls () {
+    const config = this.configManager.current
+    return config.node.absoluteUrl
+  }
+
   getMeta () {
     const config = this.configManager.current
-    let composer = { prefix: this.servicePrefix, wantsAbsoluteUrls: true, needsRootRedirect: true }
+    let composer = { prefix: this.servicePrefix, wantsAbsoluteUrls: this._getWantsAbsoluteUrls(), needsRootRedirect: true }
 
     if (this.url) {
       composer = {
@@ -196,7 +204,7 @@ export class NodeStackable extends BaseStackable {
         prefix: config.application?.basePath
           ? ensureTrailingSlash(cleanBasePath(config.application?.basePath))
           : this.servicePrefix,
-        wantsAbsoluteUrls: true,
+        wantsAbsoluteUrls: this._getWantsAbsoluteUrls(),
         needsRootRedirect: true
       }
     }
@@ -234,8 +242,8 @@ export class NodeStackable extends BaseStackable {
     const config = this.configManager.current
     const outputRoot = resolve(this.root, config.application.outputDirectory)
 
-    if (config.node.entrypoint) {
-      return pathResolve(this.root, config.node.entrypoint)
+    if (config.node.main) {
+      return pathResolve(this.root, config.node.main)
     }
 
     const { entrypoint, hadEntrypointField } = await getEntrypointInformation(this.root)

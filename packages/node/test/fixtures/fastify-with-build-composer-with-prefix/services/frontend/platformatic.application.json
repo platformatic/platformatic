@@ -2,5 +2,8 @@
   "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.0.0.json",
   "application": {
     "basePath": "/frontend"
+  },
+  "node": {
+    "absoluteUrl": true
   }
 }

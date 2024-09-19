@@ -3,19 +3,20 @@ import { createServer } from 'node:http'
 globalThis.platformatic?.setServicePrefix('/nested/base/dir')
 
 const server = createServer((req, res) => {
-  if (req.url === '/nested/base/dir/') {
+  console.log('Incoming', req.url)
+  if (req.url === '/') {
     res.writeHead(200, {
       'content-type': 'application/json',
       connection: 'close'
     })
     res.end(JSON.stringify({ production: process.env.NODE_ENV === 'production' }))
-  } else if (req.url === '/nested/base/dir/direct') {
+  } else if (req.url === '/direct') {
     res.writeHead(200, {
       'content-type': 'application/json',
       connection: 'close'
     })
     res.end(JSON.stringify({ ok: true }))
-  } else if (req.url === '/nested/base/dir/time') {
+  } else if (req.url === '/time') {
     fetch('http://backend.plt.local/time')
       .then(response => response.json())
       .then(json => {

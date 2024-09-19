@@ -261,6 +261,10 @@ export class ViteSSRStackable extends NodeStackable {
     this.type = 'vite'
   }
 
+  _getWantsAbsoluteUrls () {
+    return true
+  }
+
   async init () {
     const config = this.configManager.current
 

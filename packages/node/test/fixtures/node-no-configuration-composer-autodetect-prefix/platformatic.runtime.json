@@ -3,7 +3,7 @@
   "entrypoint": "composer",
   "server": {
     "logger": {
-      "level": "error"
+      "level": "trace"
     }
   },
   "services": [

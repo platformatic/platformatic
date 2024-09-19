@@ -7,8 +7,13 @@ export const packageJson = JSON.parse(readFileSync(new URL('../package.json', im
 const node = {
   type: 'object',
   properties: {
-    entrypoint: {
-      type: 'string'
+    main: {
+      type: 'string',
+    },
+    absoluteUrl: {
+      description: 'This Node.js application requires the Absolute URL from the Composer',
+      type: 'boolean',
+      default: false,
     }
   },
   default: {},
@@ -18,7 +23,7 @@ const node = {
 export const schemaComponents = { node }
 
 export const schema = {
-  $id: `https://schemas.platformatic.dev/@platformatic/vite/${packageJson.version}.json`,
+  $id: `https://schemas.platformatic.dev/@platformatic/node/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
   title: 'Platformatic Node.js Stackable',
   type: 'object',
