@@ -3,7 +3,7 @@
   "entrypoint": "frontend",
   "server": {
     "logger": {
-      "level": "trace"
+      "level": "error"
     }
   },
   "services": [

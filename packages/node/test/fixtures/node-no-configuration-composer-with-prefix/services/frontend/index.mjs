@@ -1,7 +1,6 @@
 import { createServer } from 'node:http'
 
 const server = createServer((req, res) => {
-  console.log('Incoming', req.url)
   if (req.url === '/') {
     res.writeHead(200, {
       'content-type': 'application/json',

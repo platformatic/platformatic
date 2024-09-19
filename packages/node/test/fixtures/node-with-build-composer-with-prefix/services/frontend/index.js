@@ -3,10 +3,8 @@ import { createServer } from 'node:http'
 
 export function build () {
   const prefix = globalThis.platformatic?.basePath ?? ''
-  console.log('prefix', prefix)
 
   return createServer((req, res) => {
-    console.log('url', req.url)
     if (req.url === ensureTrailingSlash(cleanBasePath(prefix))) {
       res.writeHead(200, {
         'content-type': 'application/json',
