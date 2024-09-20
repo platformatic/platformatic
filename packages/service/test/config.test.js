@@ -16,6 +16,7 @@ test('config is adjusted to handle custom loggers', async t => {
       hostname: '127.0.0.1',
       port: 0,
       loggerInstance: {
+        level: 'trace',
         info () {},
         error () {},
         debug () {},

@@ -582,6 +582,7 @@ async function startServices (t, names) {
 
 function createLoggerSpy () {
   return {
+    level: 'trace',
     _trace: [],
     _debug: [],
     _info: [],

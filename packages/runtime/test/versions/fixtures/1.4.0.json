@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.4.0.json",
+  "$schema": "https://platformatic.dev/schemas/v1.4.0/runtime",
   "entrypoint": "service1",
   "hotReload": true,
   "services": [
