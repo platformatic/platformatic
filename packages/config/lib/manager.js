@@ -1,6 +1,6 @@
 'use strict'
 
-const { basename, join, resolve, dirname, parse } = require('node:path')
+const { basename, join, resolve, dirname, parse, isAbsolute } = require('node:path')
 const { readFile, access } = require('node:fs/promises')
 const EventEmitter = require('node:events')
 const { createRequire } = require('node:module')
@@ -367,6 +367,11 @@ class ConfigManager extends EventEmitter {
   async #loadEnv () {
     let dotEnvPath
     let currentPath = this.fullPath ?? this.dirname
+
+    if (!isAbsolute(currentPath)) {
+      currentPath = resolve(process.cwd(), currentPath)
+    }
+
     const rootPath = parse(currentPath).root
 
     while (currentPath !== rootPath) {
