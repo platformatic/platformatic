@@ -174,37 +174,39 @@ test('config - should list configuration for an application', async t => {
 
   deepStrictEqual(
     configProcess.stdout,
-    `
-{
-  "$schema": "https://schemas.platformatic.dev/wattpm/2.0.0.json",
-  "server": {
-    "hostname": "127.0.0.1"
-  },
-  "logger": {
-    "level": "info"
-  },
-  "entrypoint": "main",
-  "autoload": {
-    "path": "${resolve(rootDir, 'web')}",
-    "exclude": []
-  },
-  "restartOnError": 5000,
-  "managementApi": true,
-  "serviceMap": {},
-  "services": [
-    {
-      "id": "main",
-      "path": "${serviceDir}",
-      "useHttp": false,
-      "entrypoint": true,
-      "watch": false,
-      "dependencies": [],
-      "localServiceEnvVars": {},
-      "localUrl": "http://main.plt.local"
-    }
-  ]
-}
-      `.trim()
+    JSON.stringify(
+      {
+        $schema: 'https://schemas.platformatic.dev/wattpm/2.0.0.json',
+        server: {
+          hostname: '127.0.0.1'
+        },
+        logger: {
+          level: 'info'
+        },
+        entrypoint: 'main',
+        autoload: {
+          path: `${resolve(rootDir, 'web')}`,
+          exclude: []
+        },
+        restartOnError: 5000,
+        managementApi: true,
+        serviceMap: {},
+        services: [
+          {
+            id: 'main',
+            path: serviceDir,
+            useHttp: false,
+            entrypoint: true,
+            watch: false,
+            dependencies: [],
+            localServiceEnvVars: {},
+            localUrl: 'http://main.plt.local'
+          }
+        ]
+      },
+      null,
+      2
+    )
   )
 })
 
@@ -226,25 +228,25 @@ test('config - should list configuration for an service', async t => {
 
   deepStrictEqual(
     configProcess.stdout,
-    `
-{
-  "logger": {
-    "level": "info"
-  },
-  "application": {
-    "outputDirectory": "dist",
-    "include": [
-      "dist"
-    ],
-    "commands": {
-      "install": "npm ci --omit-dev"
-    }
-  },
-  "node": {
-    "absoluteUrl": false
-  }
-}
-      `.trim()
+    JSON.stringify(
+      {
+        logger: {
+          level: 'info'
+        },
+        application: {
+          outputDirectory: 'dist',
+          include: ['dist'],
+          commands: {
+            install: 'npm ci --omit-dev'
+          }
+        },
+        node: {
+          absoluteUrl: false
+        }
+      },
+      null,
+      2
+    )
   )
 })
 

@@ -24,12 +24,13 @@ test('dev - should start in development mode', async t => {
 })
 
 test('dev - should complain if no configuration file is found', async t => {
-  const devstartProcess = await wattpm('dev', '/non/existent', { reject: false })
+  const nonExistentDirectory = resolve('/non/existent') // Use resolve to have this test pass on Windows
+  const devstartProcess = await wattpm('dev', nonExistentDirectory, { reject: false })
 
   deepStrictEqual(devstartProcess.exitCode, 1)
   ok(
     devstartProcess.stdout.includes(
-      'Cannot find a watt.json, a wattpm.json or a platformatic.json file in /non/existent.'
+      `Cannot find a watt.json, a wattpm.json or a platformatic.json file in ${nonExistentDirectory}.`
     )
   )
 })

@@ -1,7 +1,7 @@
 import { safeRemove } from '@platformatic/utils'
 import { deepStrictEqual, ok } from 'node:assert'
 import { readFile, writeFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { resolve, sep } from 'node:path'
 import { test } from 'node:test'
 import { fixturesDir, wattpm } from './helper.js'
 
@@ -89,7 +89,7 @@ test('resolve - should clone a URL', async t => {
 
   ok(
     resolveProcess.stdout.includes(
-      'Cloning https://github.com/mcollina/undici-thread-interceptor.git into web/resolved'
+      `Cloning https://github.com/mcollina/undici-thread-interceptor.git into web${sep}resolved`
     )
   )
   ok(resolveProcess.stdout.includes('Installing dependencies ...'))
@@ -118,7 +118,7 @@ test('resolve - should attempt to clone with username and password', async t => 
   deepStrictEqual(resolveProcess.exitCode, 1)
   ok(
     resolveProcess.stdout.includes(
-      'Cloning https://gitlab.com/mcollina/undici-thread-interceptor.git as user foo into web/resolved'
+      `Cloning https://gitlab.com/mcollina/undici-thread-interceptor.git as user foo into web${sep}resolved`
     )
   )
   ok(resolveProcess.stdout.includes('HTTP Basic: Access denied'))
