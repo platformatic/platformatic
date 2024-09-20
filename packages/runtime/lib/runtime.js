@@ -778,7 +778,7 @@ class Runtime extends EventEmitter {
 
       // Wait for the next tick so that crashed from the thread are logged first
       setImmediate(() => {
-        if (code !== 0) {
+        if (code !== 0 && !!config.watch) {
           this.logger.warn(`Service "${id}" unexpectedly exited with code ${code}.`)
         }
 
