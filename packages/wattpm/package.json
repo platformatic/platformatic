@@ -1,0 +1,57 @@
+{
+  "name": "wattpm",
+  "version": "2.0.0-alpha.14",
+  "description": "The Node.js Application Server",
+  "main": "index.js",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "author": "Paolo Insogna <paolo@cowtech.it>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://watt.pm",
+  "scripts": {
+    "test": "npm run lint && borp --concurrency=1 --timeout=180000",
+    "coverage": "npm run lint && borp -X test -C --concurrency=1 --timeout=180000",
+    "gen-schema": "node lib/schema.js > schema.json",
+    "gen-types": "json2ts > config.d.ts < schema.json",
+    "build": "pnpm run gen-schema && pnpm run gen-types",
+    "prepublishOnly": "pnpm run build",
+    "lint": "eslint"
+  },
+  "bin": {
+    "watt": "./bin/wattpm.js",
+    "wattpm": "./bin/wattpm.js"
+  },
+  "files": [
+    "index.js",
+    "lib"
+  ],
+  "dependencies": {
+    "@platformatic/config": "workspace:*",
+    "@platformatic/control": "workspace:*",
+    "@platformatic/runtime": "workspace:*",
+    "@platformatic/utils": "workspace:*",
+    "colorette": "^2.0.20",
+    "commist": "^3.2.0",
+    "execa": "^9.4.0",
+    "help-me": "^5.0.0",
+    "minimist": "^1.2.8",
+    "pino": "^9.4.0",
+    "pino-pretty": "^11.2.2",
+    "split2": "^4.2.0",
+    "table": "^6.8.2"
+  },
+  "devDependencies": {
+    "borp": "^0.17.0",
+    "eslint": "9",
+    "json-schema-to-typescript": "^15.0.0",
+    "neostandard": "^0.11.1",
+    "typescript": "^5.5.4",
+    "undici": "^6.19.8"
+  }
+}

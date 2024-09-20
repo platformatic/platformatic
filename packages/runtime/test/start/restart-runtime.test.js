@@ -46,7 +46,7 @@ test('do not restart if service is not started', async (t) => {
   const logsPath = join(tmpdir(), 'platformatic-crash-logs.txt')
   await rm(logsPath, { force: true })
 
-  config.server.logger = {
+  config.logger = {
     level: 'trace',
     transport: {
       target: 'pino/file',

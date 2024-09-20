@@ -13,7 +13,7 @@ test('restart in case of a crash', async () => {
 
   {
     const res = await request(url + '/crash', {
-      method: 'POST',
+      method: 'POST'
     })
 
     assert.strictEqual(res.statusCode, 200)
@@ -50,13 +50,13 @@ test('restart in case of a crash', async () => {
   await child.catch(() => {})
 })
 
-test('do not restart in case of a crash in case it\'s so specified', async () => {
+test("do not restart in case of a crash in case it's so specified", async () => {
   process.env.PORT = await getPort()
   const config = join(import.meta.url, '..', '..', 'fixtures', 'do-not-restart-on-crash', 'platformatic.runtime.json')
   const { child, url } = await start('-c', config)
 
   request(url + '/crash', {
-    method: 'POST',
+    method: 'POST'
   })
 
   let found = false

@@ -9,17 +9,21 @@ const errors = require('./errors')
 const { schema } = require('./schema')
 const upgrade = require('./upgrade')
 
-const kServicesAutoloaded = Symbol('plt.servicesAutoloaded')
-
 async function _transformConfig (configManager) {
   const config = configManager.current
-  const services = config.services ?? []
 
-  if (config.autoload) {
-    if (config.services && !config.services[kServicesAutoloaded]) {
-      throw new errors.InvalidAutoloadWithServicesError()
+  let services
+  if (config.web?.length) {
+    if (config.services?.length) {
+      throw new errors.InvalidServicesWithWebError()
     }
 
+    services = config.web
+  } else {
+    services = config.services ?? []
+  }
+
+  if (config.autoload) {
     const { exclude = [], mappings = {} } = config.autoload
     let { path } = config.autoload
 
@@ -41,13 +45,13 @@ async function _transformConfig (configManager) {
       const mapping = mappings[entry.name] ?? {}
       const id = mapping.id ?? entry.name
       const entryPath = join(path, entry.name)
-      const configFilename = mapping.config ?? await ConfigManager.findConfigFile(entryPath)
 
-      if (typeof configFilename !== 'string') {
-        throw new errors.NoConfigFileFoundError(id)
+      let config
+      const configFilename = mapping.config ?? (await ConfigManager.findConfigFile(entryPath))
+
+      if (typeof configFilename === 'string') {
+        config = join(entryPath, configFilename)
       }
-
-      const config = join(entryPath, configFilename)
 
       const service = { id, config, path: entryPath, useHttp: !!mapping.useHttp }
       const existingServiceId = services.findIndex(service => service.id === id)
@@ -89,7 +93,7 @@ async function _transformConfig (configManager) {
   }
 
   configManager.current.services = services
-  configManager.current.services[kServicesAutoloaded] = true
+  configManager.current.web = undefined
 
   if (configManager.current.restartOnError === true) {
     configManager.current.restartOnError = 5000
@@ -111,12 +115,12 @@ platformaticRuntime.configManagerConfig = {
     useDefaults: true,
     coerceTypes: true,
     allErrors: true,
-    strict: false,
+    strict: false
   },
   async transformConfig () {
     await _transformConfig(this)
   },
-  upgrade,
+  upgrade
 }
 
 async function wrapConfigInRuntimeConfig ({ configManager, args }) {
@@ -140,9 +144,9 @@ async function wrapConfigInRuntimeConfig ({ configManager, args }) {
       {
         id: serviceId,
         path: configManager.dirname,
-        config: configManager.fullPath,
-      },
-    ],
+        config: configManager.fullPath
+      }
+    ]
   }
   const cm = new ConfigManager({
     source: wrapperConfig,
@@ -151,9 +155,11 @@ async function wrapConfigInRuntimeConfig ({ configManager, args }) {
       useDefaults: true,
       coerceTypes: true,
       allErrors: true,
-      strict: false,
+      strict: false
     },
-    transformConfig () { return _transformConfig(this) },
+    transformConfig () {
+      return _transformConfig(this)
+    }
   })
 
   await cm.parseAndValidate()
@@ -205,7 +211,7 @@ function parseInspectorOptions (configManager) {
       host,
       port,
       breakFirstLine: hasInspectBrk,
-      watchDisabled: !!current.watch,
+      watchDisabled: !!current.watch
     }
 
     current.watch = false
@@ -215,5 +221,5 @@ function parseInspectorOptions (configManager) {
 module.exports = {
   parseInspectorOptions,
   platformaticRuntime,
-  wrapConfigInRuntimeConfig,
+  wrapConfigInRuntimeConfig
 }

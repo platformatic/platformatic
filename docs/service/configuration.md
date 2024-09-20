@@ -19,12 +19,12 @@ For detailed information on supported file formats and extensions, please visit 
 
 Configuration settings containing sensitive data, such as database connection URLs and passwords, should be set using [configuration placeholders](#configuration-placeholders).
 
-### `server` **(required)**
+### `server`
 
 An object with the following settings:
 
-- **`hostname`** (**required**, `string`) — Hostname where Platformatic Service server will listen for connections.
-- **`port`** (**required**, `number` or `string`) — Port where Platformatic Service server will listen for connections.
+- **`hostname`** — Hostname where Platformatic Service server will listen for connections.
+- **`port`** — Port where Platformatic Service server will listen for connections.
 - **`healthCheck`** (`boolean` or `object`) — Enables the health check endpoint.
 
   - Powered by [`@fastify/under-pressure`](https://github.com/fastify/under-pressure).

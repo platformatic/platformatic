@@ -31,7 +31,7 @@ async function managementApiPlugin (app, opts) {
   })
 
   app.get('/env', async () => {
-    return process.env
+    return { ...process.env, ...runtime.getRuntimeEnv() }
   })
 
   app.post('/stop', async () => {
@@ -39,8 +39,8 @@ async function managementApiPlugin (app, opts) {
     await runtime.close(true)
   })
 
-  app.post('/reload', async () => {
-    app.log.debug('reload services')
+  app.post('/restart', async () => {
+    app.log.debug('restart services')
     await runtime.restart()
   })
 
@@ -58,6 +58,12 @@ async function managementApiPlugin (app, opts) {
     const { id } = request.params
     app.log.debug('get service config', { id })
     return runtime.getServiceConfig(id)
+  })
+
+  app.get('/services/:id/env', async request => {
+    const { id } = request.params
+    app.log.debug('get service config', { id })
+    return runtime.getServiceEnv(id)
   })
 
   app.get('/services/:id/openapi-schema', async request => {
@@ -98,10 +104,13 @@ async function managementApiPlugin (app, opts) {
       url: requestUrl || '/',
       headers: request.headers,
       query: request.query,
-      body: request.body,
+      body: request.body
     }
 
     const res = await runtime.inject(id, injectParams)
+
+    delete res.headers['content-length']
+    delete res.headers['transfer-encoding']
 
     reply.code(res.statusCode).headers(res.headers).send(res.body)
   })

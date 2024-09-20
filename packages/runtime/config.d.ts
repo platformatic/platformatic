@@ -10,6 +10,7 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime200Alpha15Json = {
 } & {
   $schema?: string;
   preload?: string;
+  entrypoint?: string;
   autoload?: {
     path: string;
     exclude?: string[];
@@ -21,87 +22,54 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime200Alpha15Json = {
       };
     };
   };
-  telemetry?: OpenTelemetry;
-  server?: {
-    hostname?: string;
-    port?: number | string;
-    pluginTimeout?: number;
-    healthCheck?:
-      | boolean
+  services?: {
+    [k: string]: unknown;
+  }[];
+  web?: {
+    [k: string]: unknown;
+  }[];
+  logger?: {
+    level: (
+      | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
       | {
-          enabled?: boolean;
-          interval?: number;
           [k: string]: unknown;
-        };
-    ignoreTrailingSlash?: boolean;
-    ignoreDuplicateSlashes?: boolean;
-    connectionTimeout?: number;
-    keepAliveTimeout?: number;
-    maxRequestsPerSocket?: number;
-    forceCloseConnections?: boolean | string;
-    requestTimeout?: number;
-    bodyLimit?: number;
-    maxParamLength?: number;
-    disableRequestLogging?: boolean;
-    exposeHeadRoutes?: boolean;
-    logger?:
-      | boolean
+        }
+    ) &
+      string;
+    transport?:
       | {
-          level?: string;
-          transport?:
-            | {
-                target?: string;
-                options?: {
-                  [k: string]: unknown;
-                };
-              }
-            | {
-                targets?: {
-                  target?: string;
-                  options?: {
-                    [k: string]: unknown;
-                  };
-                  level?: string;
-                  additionalProperties?: never;
-                  [k: string]: unknown;
-                }[];
-                options?: {
-                  [k: string]: unknown;
-                };
-              };
-          pipeline?: {
+          target?: string;
+          options?: {
+            [k: string]: unknown;
+          };
+        }
+      | {
+          targets?: {
             target?: string;
             options?: {
               [k: string]: unknown;
             };
+            level?: string;
+            additionalProperties?: never;
+            [k: string]: unknown;
+          }[];
+          options?: {
+            [k: string]: unknown;
           };
-          [k: string]: unknown;
         };
-    loggerInstance?: {
-      [k: string]: unknown;
-    };
-    serializerOpts?: {
-      schema?: {
+    pipeline?: {
+      target?: string;
+      options?: {
         [k: string]: unknown;
       };
-      ajv?: {
-        [k: string]: unknown;
-      };
-      rounding?: "floor" | "ceil" | "round" | "trunc";
-      debugMode?: boolean;
-      mode?: "debug" | "standalone";
-      largeArraySize?: number | string;
-      largeArrayMechanism?: "default" | "json-stringify";
-      [k: string]: unknown;
     };
-    caseSensitive?: boolean;
-    requestIdHeader?: string | false;
-    requestIdLogLabel?: string;
-    jsonShorthand?: boolean;
-    trustProxy?: boolean | string | string[] | number;
+    [k: string]: unknown;
+  };
+  server?: {
+    hostname?: string;
+    port?: number | string;
     http2?: boolean;
     https?: {
-      allowHTTP1?: boolean;
       key:
         | string
         | {
@@ -124,48 +92,9 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime200Alpha15Json = {
                 path?: string;
               }
           )[];
-      requestCert?: boolean;
-      rejectUnauthorized?: boolean;
-    };
-    cors?: {
-      origin?:
-        | boolean
-        | string
-        | (
-            | string
-            | {
-                regexp: string;
-                [k: string]: unknown;
-              }
-          )[]
-        | {
-            regexp: string;
-            [k: string]: unknown;
-          };
-      methods?: string[];
-      /**
-       * Comma separated string of allowed headers.
-       */
-      allowedHeaders?: string;
-      exposedHeaders?: string[] | string;
-      credentials?: boolean;
-      maxAge?: number;
-      preflightContinue?: boolean;
-      optionsSuccessStatus?: number;
-      preflight?: boolean;
-      strictPreflight?: boolean;
-      hideOptionsRoute?: boolean;
     };
   };
-  entrypoint?: string;
-  watch?: boolean | string;
-  inspectorOptions?: {
-    host?: string;
-    port?: number;
-    breakFirstLine?: boolean;
-    watchDisabled?: boolean;
-    [k: string]: unknown;
-  };
+  restartOnError?: boolean | number;
   undici?: {
     agentOptions?: {
       [k: string]: unknown;
@@ -180,12 +109,13 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime200Alpha15Json = {
         };
     [k: string]: unknown;
   };
+  watch?: boolean | string;
   managementApi?:
     | boolean
     | string
     | {
         logs?: {
-          [k: string]: unknown;
+          maxSize?: number;
         };
       };
   metrics?:
@@ -202,12 +132,23 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime200Alpha15Json = {
           [k: string]: string;
         };
       };
-  restartOnError?: boolean | number;
-  services?: {
+  telemetry?: OpenTelemetry;
+  inspectorOptions?: {
+    host?: string;
+    port?: number;
+    breakFirstLine?: boolean;
+    watchDisabled?: boolean;
     [k: string]: unknown;
-  }[];
+  };
 };
 
+export interface UndiciInterceptor {
+  module: string;
+  options: {
+    [k: string]: unknown;
+  };
+  [k: string]: unknown;
+}
 export interface OpenTelemetry {
   /**
    * The name of the service. Defaults to the folder name if not specified.
@@ -274,11 +215,4 @@ export interface OpenTelemetry {
         additionalProperties?: never;
         [k: string]: unknown;
       };
-}
-export interface UndiciInterceptor {
-  module: string;
-  options: {
-    [k: string]: unknown;
-  };
-  [k: string]: unknown;
 }
