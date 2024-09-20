@@ -1395,6 +1395,9 @@ importers:
         specifier: ^7.6.3
         version: 7.6.3
     devDependencies:
+      '@fastify/reply-from':
+        specifier: ^11.0.0
+        version: 11.0.0
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
