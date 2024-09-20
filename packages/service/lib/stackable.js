@@ -6,6 +6,7 @@ const pino = require('pino')
 const httpMetrics = require('@platformatic/fastify-http-metrics')
 const { extractTypeScriptCompileOptionsFromConfig } = require('./compile')
 const { compile } = require('@platformatic/ts-compiler')
+const { deepmerge } = require('@platformatic/utils')
 
 class ServiceStackable {
   constructor (options) {
@@ -64,9 +65,9 @@ class ServiceStackable {
     const compileOptions = {
       ...typeScriptCompileOptions,
       cwd,
-      logger: this.configManager.current.server.logger,
+      logger: this.logger
     }
-    if (!await compile(compileOptions)) {
+    if (!(await compile(compileOptions))) {
       throw new Error(`Failed to compile ${cwd}`)
     }
   }
@@ -97,6 +98,10 @@ class ServiceStackable {
     delete config.server.loggerInstance
 
     return config
+  }
+
+  async getEnv () {
+    return this.configManager.env
   }
 
   async getWatchConfig () {
@@ -210,7 +215,7 @@ class ServiceStackable {
       config.metrics = metricsConfig
     }
     if (serverConfig) {
-      config.server = serverConfig
+      config.server = deepmerge(config.server ?? {}, serverConfig ?? {})
     }
 
     if ((hasManagementApi && config.metrics === undefined) || config.metrics) {
@@ -239,20 +244,27 @@ class ServiceStackable {
   }
 
   #initLogger () {
-    this.configManager.current.server = this.configManager.current.server || {}
-    const level = this.configManager.current.server.logger?.level
+    if (this.configManager.current.server?.loggerInstance) {
+      this.logger = this.configManager.current.server?.loggerInstance
+      return
+    }
+
+    this.configManager.current.server ??= {}
+    this.loggerConfig = deepmerge(this.context.loggerConfig ?? {}, this.configManager.current.server?.logger ?? {})
 
     const pinoOptions = {
-      level: level ?? 'trace'
+      level: this.loggerConfig?.level ?? 'trace'
     }
 
     if (this.context?.serviceId) {
       pinoOptions.name = this.context.serviceId
     }
 
+    this.logger = pino(pinoOptions)
+
     // Only one of logger and loggerInstance should be set
     delete this.configManager.current.server.logger
-    this.configManager.current.server.loggerInstance = pino(pinoOptions)
+    this.configManager.current.server.loggerInstance = this.logger
   }
 }
 

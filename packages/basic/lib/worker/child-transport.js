@@ -1,5 +1,5 @@
 import { generateRequest } from '@platformatic/itc'
-import { errors } from '@platformatic/utils'
+import { ensureLoggableError } from '@platformatic/utils'
 import { once } from 'node:events'
 import { platform } from 'node:os'
 import { workerData } from 'node:worker_threads'
@@ -9,7 +9,7 @@ import { getSocketPath } from './child-manager.js'
 
 function logDirectError (message, error) {
   process._rawDebug(`Logger thread for child process of service ${workerData.id} ${message}.`, {
-    error: errors.ensureLoggableError(error)
+    error: ensureLoggableError(error)
   })
 }
 

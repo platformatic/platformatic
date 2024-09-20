@@ -17,6 +17,7 @@ import { Server } from 'node:http'
 import { resolve as pathResolve, resolve } from 'node:path'
 import { pathToFileURL } from 'url'
 import { packageJson, schema } from './lib/schema.js'
+import { setupNodeHTTPTelemetry } from '@platformatic/telemetry'
 
 const validFields = [
   'main',
@@ -91,6 +92,11 @@ export class NodeStackable extends BaseStackable {
     // at all. Otherwise there is chance we miss the listen event.
     const serverOptions = this.serverConfig
     const serverPromise = createServerListener((this.isEntrypoint ? serverOptions?.port : undefined) ?? true)
+    // If telemetry is set, configure it
+    const telemetryConfig = this.telemetryConfig
+    if (telemetryConfig) {
+      setupNodeHTTPTelemetry(telemetryConfig, this.logger)
+    }
     this.#module = await importFile(finalEntrypoint)
     this.#module = this.#module.default || this.#module
 
@@ -195,7 +201,11 @@ export class NodeStackable extends BaseStackable {
 
   getMeta () {
     const config = this.configManager.current
-    let composer = { prefix: this.servicePrefix, wantsAbsoluteUrls: this._getWantsAbsoluteUrls(), needsRootRedirect: true }
+    let composer = {
+      prefix: this.servicePrefix,
+      wantsAbsoluteUrls: this._getWantsAbsoluteUrls(),
+      needsRootRedirect: true
+    }
 
     if (this.url) {
       composer = {
@@ -341,7 +351,13 @@ async function getEntrypointInformation (root) {
 export async function buildStackable (opts) {
   const root = opts.context.directory
 
-  const configManager = new ConfigManager({ schema, source: opts.config ?? {}, schemaOptions, transformConfig })
+  const configManager = new ConfigManager({
+    schema,
+    source: opts.config ?? {},
+    schemaOptions,
+    transformConfig,
+    dirname: root
+  })
   await configManager.parseAndValidate()
 
   return new NodeStackable(opts, root, configManager)

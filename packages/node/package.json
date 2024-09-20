@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/node",
-  "version": "2.0.0-alpha.15",
+  "version": "2.0.0-alpha.17",
   "description": "Platformatic Node.js Stackable",
   "main": "index.js",
   "type": "module",
@@ -27,6 +27,7 @@
     "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/utils": "workspace:*",
+    "@platformatic/telemetry": "workspace:*",
     "light-my-request": "^6.0.0"
   },
   "devDependencies": {

@@ -16,6 +16,11 @@ module.exports = {
 
     config.$schema = `https://schemas.platformatic.dev/@platformatic/runtime/${pkg.version}.json`
 
+    if (config.server?.logger) {
+      config.logger = config.server.logger
+      delete config.server.logger
+    }
+
     return config
-  },
+  }
 }

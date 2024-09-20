@@ -1,6 +1,6 @@
 'use strict'
 
-const { basename, join, resolve, dirname, parse } = require('node:path')
+const { basename, join, resolve, dirname, parse, isAbsolute } = require('node:path')
 const { readFile, access } = require('node:fs/promises')
 const EventEmitter = require('node:events')
 const { createRequire } = require('node:module')
@@ -148,6 +148,12 @@ class ConfigManager extends EventEmitter {
         }
 
         this.current = config
+      } else if (replaceEnv) {
+        this.current = await this.replaceEnv(this.current, {
+          escapeJSON: false,
+          ignore: this._replaceEnvIgnore,
+          context: this.context
+        })
       }
 
       if (this._stackableUpgrade) {
@@ -348,18 +354,26 @@ class ConfigManager extends EventEmitter {
     }
   }
 
-  static async findConfigFile (directory, type) {
+  static async findConfigFile (directory, typeOrCandidates) {
     directory ??= process.cwd()
-    const configFileNames = this.listConfigFiles(type)
-    const configFilesAccessibility = await Promise.all(configFileNames.map((fileName) => isFileAccessible(fileName, directory)))
+    const configFileNames = Array.isArray(typeOrCandidates) ? typeOrCandidates : this.listConfigFiles(typeOrCandidates)
+    const configFilesAccessibility = await Promise.all(
+      configFileNames.map(fileName => isFileAccessible(fileName, directory))
+    )
     const accessibleConfigFilename = configFileNames.find((value, index) => configFilesAccessibility[index])
     return accessibleConfigFilename
   }
 
   async #loadEnv () {
     let dotEnvPath
-    let currentPath = this.fullPath
-    const rootPath = parse(this.fullPath).root
+    let currentPath = this.fullPath ?? this.dirname
+
+    if (!isAbsolute(currentPath)) {
+      currentPath = resolve(process.cwd(), currentPath)
+    }
+
+    const rootPath = parse(currentPath).root
+
     while (currentPath !== rootPath) {
       try {
         const candidatePath = join(currentPath, '.env')
@@ -392,7 +406,7 @@ class ConfigManager extends EventEmitter {
     return {
       ...process.env,
       ...this.env,
-      [PLT_ROOT]: join(this.fullPath, '..'),
+      [PLT_ROOT]: this.fullPath ? join(this.fullPath, '..') : this.dirname
     }
   }
 }

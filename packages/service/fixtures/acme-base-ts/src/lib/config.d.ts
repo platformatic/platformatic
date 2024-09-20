@@ -31,36 +31,42 @@ export interface AcmeBase {
     logger?:
       | boolean
       | {
-          level?: string;
-          transport?:
-            | {
+        level: (
+          | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+          | {
+              [k: string]: unknown;
+            }
+        ) &
+          string;
+        transport?:
+          | {
+              target?: string;
+              options?: {
+                [k: string]: unknown;
+              };
+            }
+          | {
+              targets?: {
                 target?: string;
                 options?: {
                   [k: string]: unknown;
                 };
-              }
-            | {
-                targets?: {
-                  target?: string;
-                  options?: {
-                    [k: string]: unknown;
-                  };
-                  level?: string;
-                  additionalProperties?: never;
-                  [k: string]: unknown;
-                }[];
-                options?: {
-                  [k: string]: unknown;
-                };
+                level?: string;
+                additionalProperties?: never;
+                [k: string]: unknown;
+              }[];
+              options?: {
+                [k: string]: unknown;
               };
-          pipeline?: {
-            target?: string;
-            options?: {
-              [k: string]: unknown;
             };
+        pipeline?: {
+          target?: string;
+          options?: {
+            [k: string]: unknown;
           };
-          [k: string]: unknown;
         };
+        [k: string]: unknown;
+      };
     serializerOpts?: {
       schema?: {
         [k: string]: unknown;

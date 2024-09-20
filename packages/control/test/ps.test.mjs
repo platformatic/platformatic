@@ -8,7 +8,7 @@ import { readdir, writeFile } from 'node:fs/promises'
 import { platform, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { getPlatformaticVersion, startRuntime, kill } from './helper.mjs'
+import { getPlatformaticVersion, kill, startRuntime } from './helper.mjs'
 
 const cliPath = desm.join(import.meta.url, '..', 'control.js')
 const fixturesDir = desm.join(import.meta.url, 'fixtures')
@@ -33,6 +33,7 @@ test('should get all runtimes', async t => {
 
   const runtimesTable = child.stdout
   const runtimesTableRows = runtimesTable.split('\n').filter(Boolean)
+  process._rawDebug(runtimesTableRows.length)
   assert.strictEqual(runtimesTableRows.length, 3)
 
   const [headersRow, runtime1Row, runtime2Row] = runtimesTableRows

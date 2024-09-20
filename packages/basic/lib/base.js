@@ -1,4 +1,4 @@
-import deepmerge from '@fastify/deepmerge'
+import { deepmerge } from '@platformatic/utils'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
@@ -11,8 +11,6 @@ import { NonZeroExitCode } from './errors.js'
 import { cleanBasePath } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
 
-const merge = deepmerge()
-
 export class BaseStackable {
   #childManager
   #subprocess
@@ -22,10 +20,11 @@ export class BaseStackable {
     this.type = type
     this.version = version
     this.id = options.context.serviceId
+    this.telemetryConfig = options.context.telemetryConfig
     this.options = options
     this.root = root
     this.configManager = configManager
-    this.serverConfig = merge(options.context.serverConfig, configManager.current.server)
+    this.serverConfig = deepmerge(options.context.serverConfig ?? {}, configManager.current.server ?? {})
     this.openapiSchema = null
     this.getGraphqlSchema = null
     this.isEntrypoint = options.context.isEntrypoint
@@ -55,6 +54,10 @@ export class BaseStackable {
 
   async getConfig () {
     return this.configManager.current
+  }
+
+  async getEnv () {
+    return this.configManager.env
   }
 
   async getWatchConfig () {
@@ -178,7 +181,6 @@ export class BaseStackable {
   async startWithCommand (command, loader) {
     const config = this.configManager.current
     const basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
-
     this.#childManager = new ChildManager({
       logger: this.logger,
       loader,
@@ -188,7 +190,8 @@ export class BaseStackable {
         root: pathToFileURL(this.root).toString(),
         basePath,
         logLevel: this.logger.level,
-        port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true
+        port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
+        telemetry: this.telemetryConfig
       }
     })
 

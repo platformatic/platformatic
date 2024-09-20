@@ -2,13 +2,15 @@
   "$schema": "https://schemas.platformatic.dev/@platformatic/service/1.52.0.json",
   "server": {
     "logger": {
-      "level": "warn"
+      "level": "info"
     }
   },
   "plugins": {
-    "paths": [{
-      "path": "plugin.js",
-      "encapsulate": false
-    }]
+    "paths": [
+      {
+        "path": "plugin.js",
+        "encapsulate": false
+      }
+    ]
   }
 }
