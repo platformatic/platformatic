@@ -59,6 +59,8 @@ async function buildConfigManager (options, app) {
   const loggerInstance = options.server?.loggerInstance
   if (loggerInstance) {
     delete options.server.loggerInstance
+    options.server ||= {}
+    options.server.logger = { level: loggerInstance.level }
   }
 
   let configManager = options.configManager
@@ -70,6 +72,7 @@ async function buildConfigManager (options, app) {
 
   if (loggerInstance) {
     configManager.current.server ||= {}
+    delete configManager.current.server.logger
     configManager.current.server.loggerInstance = loggerInstance
   }
   return configManager
