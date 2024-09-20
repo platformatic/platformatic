@@ -61,6 +61,7 @@ async function buildConfigManager (options, app) {
     delete options.server.loggerInstance
     options.server ||= {}
     options.server.logger = { level: loggerInstance.level }
+    process._rawDebug('loggerInstance', options.server.logger)
   }
 
   let configManager = options.configManager
