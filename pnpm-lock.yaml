@@ -952,7 +952,7 @@ importers:
         version: 5.0.0
       fastify-metrics:
         specifier: ^12.0.0
-        version: 12.0.0(fastify@5.0.0)
+        version: 12.1.0(fastify@5.0.0)
       fastify-plugin:
         specifier: ^5.0.0
         version: 5.0.0
@@ -1893,7 +1893,7 @@ importers:
         version: 5.0.0
       fastify-metrics:
         specifier: ^12.0.0
-        version: 12.0.0(fastify@5.0.0)
+        version: 12.1.0(fastify@5.0.0)
       fastify-plugin:
         specifier: ^5.0.0
         version: 5.0.0
@@ -5958,8 +5958,8 @@ packages:
     resolution: {integrity: sha512-KH6p+Z8AKPXnmA7+Iz2Lh8ARCMr+8WNPVludm1LGkZoD2MjY6LVnRMtTKhkdzI+jr0RzQWXKzKyBJm1zoHEL4Q==}
     engines: {node: '>=0.10.0'}
 
-  fastify-metrics@12.0.0:
-    resolution: {integrity: sha512-+rvm0Ai+9GzqUmdnDaK8/GsL12RAp8oDf7C6WR+ApfIKBiJWBSN5wWLrsqJrDLvybPK2zXnGufsRzESkXZ7uJg==}
+  fastify-metrics@12.1.0:
+    resolution: {integrity: sha512-EpbT+W1jm8kMbkCPvfW4j23y3BZlXGOcO6+75EFTKDxbJIyXbldrFIoVoP0oD4CsqrKeIARvrOjbZNqK5MdRwQ==}
     peerDependencies:
       fastify: '>=5'
 
@@ -13920,7 +13920,7 @@ snapshots:
     dependencies:
       reusify: 1.0.4
 
-  fastify-metrics@12.0.0(fastify@5.0.0):
+  fastify-metrics@12.1.0(fastify@5.0.0):
     dependencies:
       fastify: 5.0.0
       fastify-plugin: 5.0.0
