@@ -1,0 +1,8 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/service/2.0.0-alpha.13.json",
+  "watch": false,
+  "plugins": {
+    "paths": ["./proxy.js"],
+    "typescript": false
+  }
+}

@@ -32,12 +32,12 @@ async function loadPlugins (app, opts) {
 
   if (outDir) {
     isOutDirAccessible = await isFileAccessible(outDir)
-  }
 
-  if (opts.context?.isProduction && !isOutDirAccessible) {
-    throw new Error(
-      `Cannot access directory '${outDir}'. Please run the 'build' command before running in production mode.`
-    )
+    if (opts.context?.isProduction && !isOutDirAccessible) {
+      throw new Error(
+        `Cannot access directory '${outDir}'. Please run the 'build' command before running in production mode.`
+      )
+    }
   }
 
   if (config.plugins.paths && isOutDirAccessible) {

@@ -6,9 +6,12 @@ import {
   verifyFrontendAPIOnPrefix,
   verifyFrontendOnAutodetectedPrefix,
   verifyFrontendOnPrefix,
+  verifyFrontendOnPrefixWithProxy,
   verifyFrontendOnRoot,
   verifyPlatformaticComposer,
-  verifyPlatformaticService
+  verifyPlatformaticComposerWithProxy,
+  verifyPlatformaticService,
+  verifyPlatformaticServiceWithProxy
 } from '../../cli/test/helper.js'
 
 process.setMaxListeners(100)
@@ -24,6 +27,17 @@ const configurations = [
     name: 'Next.js (in composer with prefix)',
     files: [...nextFiles, ...internalServicesFiles],
     checks: [verifyFrontendOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+  },
+  {
+    only: isCIOnWindows,
+    id: 'composer-with-external-proxy',
+    name: 'Next.js (in composer with prefix)',
+    files: [...nextFiles, ...internalServicesFiles],
+    checks: [
+      verifyFrontendOnPrefixWithProxy,
+      verifyPlatformaticComposerWithProxy,
+      verifyPlatformaticServiceWithProxy
+    ]
   },
   {
     id: 'composer-without-prefix',
