@@ -8,6 +8,23 @@ import { packageJson, schema } from './lib/schema.js'
 import { importFile } from './lib/utils.js'
 
 const importStackablePackageMarker = '__pltImportStackablePackage.js'
+const configCandidates = [
+  'platformatic.application.json',
+  'platformatic.json',
+  'watt.json',
+  'platformatic.application.yaml',
+  'platformatic.yaml',
+  'watt.yaml',
+  'platformatic.application.yml',
+  'platformatic.yml',
+  'watt.yml',
+  'platformatic.application.toml',
+  'platformatic.toml',
+  'watt.toml',
+  'platformatic.application.tml',
+  'platformatic.tml',
+  'watt.tml',
+]
 
 function isImportFailedError (error, pkg) {
   if (error.code !== 'ERR_MODULE_NOT_FOUND' && error.code !== 'MODULE_NOT_FOUND') {
@@ -68,10 +85,13 @@ async function buildStackable (opts) {
   const hadConfig = opts.config
 
   if (!hadConfig) {
-    const candidate = resolve(root, 'platformatic.application.json')
+    for (const candidate of configCandidates) {
+      const candidatePath = resolve(root, candidate)
 
-    if (existsSync(candidate)) {
-      opts.config = candidate
+      if (existsSync(candidatePath)) {
+        opts.config = candidatePath
+        break
+      }
     }
   }
 
@@ -94,7 +114,7 @@ async function buildStackable (opts) {
   const imported = await importStackablePackage(opts, toImport, autodetectDescription)
 
   const serviceRoot = relative(process.cwd(), opts.context.directory)
-  if (!hadConfig && !existsSync(resolve(serviceRoot, 'platformatic.application.json'))) {
+  if (!hadConfig && !(existsSync(resolve(serviceRoot, 'platformatic.json') || existsSync(resolve(serviceRoot, 'watt.json'))))) {
     const logger = pino({
       level: opts.context.serverConfig?.logger?.level ?? 'warn',
       name: opts.context.serviceId
@@ -103,7 +123,7 @@ async function buildStackable (opts) {
     logger.warn(
       [
         `Platformatic has auto-detected that service ${opts.context.serviceId} ${autodetectDescription}.\n`,
-        `We suggest you create a platformatic.application.json file in the folder ${serviceRoot} with the "$schema" `,
+        `We suggest you create a platformatic.json or watt.json file in the folder ${serviceRoot} with the "$schema" `,
         `property set to "https://schemas.platformatic.dev/${toImport}/${packageJson.version}.json".`
       ].join('')
     )
