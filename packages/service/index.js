@@ -171,7 +171,10 @@ async function buildStackable (options, app = platformaticService, Stackable = S
   }
 
   const stackable = new Stackable({
-    init: () => buildServer(configManager.current, app, options.context),
+    init: () => buildServer({
+      configManager,
+      ...configManager.current,
+    }, app, options.context),
     stackable: app,
     configManager,
     context: options.context
