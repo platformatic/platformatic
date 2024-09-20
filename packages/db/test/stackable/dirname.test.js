@@ -5,8 +5,6 @@ const { test } = require('node:test')
 const { join } = require('node:path')
 const { buildStackable } = require('../..')
 
-const pltVersion = require('../../package.json').version
-
 test('get service info via stackable api', async (t) => {
   const projectRoot = join(__dirname, '..', '..', 'fixtures', 'sqlite')
   const config = join(projectRoot, 'platformatic.db.json')
