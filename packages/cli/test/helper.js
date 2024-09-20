@@ -62,9 +62,20 @@ export function verifyPlatformaticComposer (t, url) {
   return verifyJSONViaHTTP(url, '/example', 200, { hello: 'foobar' })
 }
 
+export function verifyPlatformaticComposerWithProxy (t, url) {
+  return verifyJSONViaHTTP(url, '/external-proxy/example', 200, { hello: 'foobar' })
+}
+
 export async function verifyPlatformaticService (t, url) {
   await verifyJSONViaHTTP(url, '/backend/example', 200, { hello: 'foobar' })
   await verifyJSONViaHTTP(url, '/backend/time', 200, body => {
+    ok(typeof body.time === 'number')
+  })
+}
+
+export async function verifyPlatformaticServiceWithProxy (t, url) {
+  await verifyJSONViaHTTP(url, '/external-proxy/backend/example', 200, { hello: 'foobar' })
+  await verifyJSONViaHTTP(url, '/external-proxy/backend/time', 200, body => {
     ok(typeof body.time === 'number')
   })
 }
@@ -81,6 +92,11 @@ export async function verifyFrontendOnRoot (t, url) {
 export async function verifyFrontendOnPrefix (t, url) {
   await verifyHTMLViaHTTP(url, '/frontend', [htmlHelloMatcher])
   await verifyHTMLViaHTTP(url, '/frontend/', [htmlHelloMatcher])
+}
+
+export async function verifyFrontendOnPrefixWithProxy (t, url) {
+  await verifyHTMLViaHTTP(url, '/external-proxy/frontend', [htmlHelloMatcher])
+  await verifyHTMLViaHTTP(url, '/external-proxy/frontend/', [htmlHelloMatcher])
 }
 
 export async function verifyFrontendOnAutodetectedPrefix (t, url) {

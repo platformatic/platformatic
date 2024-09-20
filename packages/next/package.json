@@ -34,6 +34,7 @@
     "semver": "^7.6.3"
   },
   "devDependencies": {
+    "@fastify/reply-from": "^11.0.0",
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
     "borp": "^0.17.0",
