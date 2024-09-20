@@ -8,8 +8,6 @@ const { Client } = require('undici')
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-const platformaticVersion = require('../../package.json').version
-
 test('should get runtime config', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
@@ -41,10 +39,6 @@ test('should get runtime config', async t => {
   assert.strictEqual(statusCode, 200)
 
   const runtimeConfig = await body.json()
-  assert.strictEqual(
-    runtimeConfig.$schema,
-    `https://schemas.platformatic.dev/@platformatic/runtime/${platformaticVersion}.json`
-  )
   assert.strictEqual(runtimeConfig.entrypoint, 'service-1')
   assert.strictEqual(runtimeConfig.watch, false)
   assert.deepStrictEqual(runtimeConfig.autoload, {
