@@ -56,11 +56,21 @@ async function createServer (serverContext) {
   return root
 }
 async function buildConfigManager (options, app) {
+  const loggerInstance = options.server?.loggerInstance
+  if (loggerInstance) {
+    delete options.server.loggerInstance
+  }
+
   let configManager = options.configManager
   if (!configManager) {
     // instantiate a new config manager from current options
     configManager = new ConfigManager({ ...app.configManagerConfig, source: options })
     await configManager.parseAndValidate()
+  }
+
+  if (loggerInstance) {
+    configManager.current.server ||= {}
+    configManager.current.server.loggerInstance = loggerInstance
   }
   return configManager
 }
