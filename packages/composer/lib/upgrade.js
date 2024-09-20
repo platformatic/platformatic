@@ -9,7 +9,7 @@ module.exports = async function upgrade (config, version) {
     version,
     path: join(__dirname, 'versions'),
     input: config,
-    logger: this.logger.child({ name: '@platformatic/service' }),
+    logger: this.logger.child({ name: '@platformatic/composer' }),
   })
 
   let result

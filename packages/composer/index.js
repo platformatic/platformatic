@@ -15,6 +15,7 @@ const { isSameGraphqlSchema, fetchGraphqlSubgraphs } = require('./lib/graphql-fe
 const { isFetchable } = require('./lib/utils')
 const { ComposerStackable } = require('./lib/stackable')
 const errors = require('./lib/errors')
+const upgrade = require('./lib/upgrade')
 
 const EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE = 'graphql composer is an experimental feature'
 
@@ -75,7 +76,8 @@ platformaticComposer.configManagerConfig = {
     allErrors: true,
     strict: false
   },
-  transformConfig: platformaticService.configManagerConfig.transformConfig
+  transformConfig: platformaticService.configManagerConfig.transformConfig,
+  upgrade,
 }
 
 // TODO review no need to be async

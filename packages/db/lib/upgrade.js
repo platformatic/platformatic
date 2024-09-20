@@ -2,7 +2,6 @@
 
 const { join } = require('path')
 const zeroSixteen = require('@platformatic/service/lib/versions/0.16.0.js')
-const pkg = require('../package.json')
 
 module.exports = async function upgrade (config, version) {
   const { semgrator, loadMigrationsFromPath } = await import('semgrator')
@@ -29,8 +28,6 @@ module.exports = async function upgrade (config, version) {
   for await (const updated of res) {
     result = updated.result
   }
-
-  result.$schema = `https://schemas.platformatic.dev/@platformatic/db/${pkg.version}.json`
 
   return result
 }

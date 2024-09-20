@@ -1,5 +1,7 @@
 'use strict'
 
+const pkg = require('../../package.json')
+
 module.exports = {
   version: '1.99.0', // This is to account alpha versions as well
   up: function (config) {
@@ -11,6 +13,8 @@ module.exports = {
       config.watch = config.hotReload
       delete config.hotReload
     }
+
+    config.$schema = `https://schemas.platformatic.dev/@platformatic/runtime/${pkg.version}.json`
 
     return config
   },
