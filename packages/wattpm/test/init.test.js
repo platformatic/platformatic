@@ -6,7 +6,7 @@ import { defaultConfiguration, defaultPackageJson } from '../lib/defaults.js'
 import { schema, version } from '../lib/schema.js'
 import { createTemporaryDirectory, isDirectory, wattpm } from './helper.js'
 
-test('init - should create a new application', async t => {
+test('init - should create a new application for NPM', async t => {
   const directory = await createTemporaryDirectory(t, 'init')
   await wattpm('init', directory)
 
@@ -20,8 +20,29 @@ test('init - should create a new application', async t => {
   deepStrictEqual(JSON.parse(await readFile(resolve(directory, 'package.json'), 'utf-8')), {
     name: basename(directory),
     ...defaultPackageJson,
+    dependencies: { wattpm: `^${version}` },
+    workspaces: ['web/*']
+  })
+})
+
+test('init - should create a new application for PNPM', async t => {
+  const directory = await createTemporaryDirectory(t, 'init')
+  await wattpm('init', '-p', 'pnpm', directory)
+
+  ok(isDirectory(resolve(directory, 'web')))
+
+  deepStrictEqual(JSON.parse(await readFile(resolve(directory, 'watt.json'), 'utf-8')), {
+    $schema: schema.$id,
+    ...defaultConfiguration
+  })
+
+  deepStrictEqual(JSON.parse(await readFile(resolve(directory, 'package.json'), 'utf-8')), {
+    name: basename(directory),
+    ...defaultPackageJson,
     dependencies: { wattpm: `^${version}` }
   })
+
+  deepStrictEqual(await readFile(resolve(directory, 'pnpm-workspace.yaml'), 'utf-8'), `packages:\n  - 'web/*'`)
 })
 
 test('init - should fail if the destination is a file', async t => {
