@@ -27,7 +27,7 @@ test('import - should import a URL', async t => {
   })
 })
 
-test('import - should import a GitHub repo', async t => {
+test('import - should import a GitHub repo via SSH', async t => {
   const rootDir = await resolve(fixturesDir, 'main')
   const configurationFile = resolve(rootDir, 'watt.json')
   const originalFileContents = await readFile(configurationFile, 'utf-8')
@@ -48,6 +48,27 @@ test('import - should import a GitHub repo', async t => {
   })
 })
 
+test('import - should import a GitHub repo via HTTP', async t => {
+  const rootDir = await resolve(fixturesDir, 'main')
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await readFile(configurationFile, 'utf-8')
+
+  t.after(() => writeFile(configurationFile, originalFileContents))
+
+  await wattpm('import', rootDir, 'foo/bar', '-h', '-i', 'id', '-p', 'path')
+
+  deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), {
+    ...JSON.parse(originalFileContents),
+    web: [
+      {
+        id: 'id',
+        path: 'path',
+        url: 'https://github.com/foo/bar.git'
+      }
+    ]
+  })
+})
+
 test('import - should complain when the URL is missing', async t => {
   const importProcess = await wattpm('import', { reject: false })
 
@@ -63,13 +84,18 @@ test('resolve - should clone a URL', async t => {
   t.after(() => writeFile(configurationFile, originalFileContents))
   t.after(() => safeRemove(resolve(rootDir, 'web/resolved')))
 
-  await wattpm('import', rootDir, '-i', 'resolved', '-p', 'web/resolved', 'mcollina/undici-thread-interceptor')
+  await wattpm('import', rootDir, '-h', '-i', 'resolved', '-p', 'web/resolved', 'mcollina/undici-thread-interceptor')
   const resolveProcess = await wattpm('resolve', rootDir)
 
-  ok(resolveProcess.stdout.includes('Cloning git@github.com:mcollina/undici-thread-interceptor.git into web/resolved'))
+  ok(
+    resolveProcess.stdout.includes(
+      'Cloning https://github.com/mcollina/undici-thread-interceptor.git into web/resolved'
+    )
+  )
   ok(resolveProcess.stdout.includes('Installing dependencies ...'))
 })
 
+// Note that this test purposely uses gitlab to have a HTTP authentication error, GitHub ignores those parameters
 test('resolve - should attempt to clone with username and password', async t => {
   const rootDir = await resolve(fixturesDir, 'main')
   const configurationFile = resolve(rootDir, 'watt.json')

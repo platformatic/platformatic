@@ -40,6 +40,10 @@ export async function importCommand (logger, args) {
       path: {
         type: 'string',
         short: 'p'
+      },
+      http: {
+        type: 'boolean',
+        short: 'h'
       }
     },
     false
@@ -64,7 +68,11 @@ export async function importCommand (logger, args) {
     logger.fatal('Please specify the resource to import.')
   }
 
-  const url = rawUrl.match(/^[a-z0-9-_.]+\/[a-z0-9-_.]+$/i) ? `git@github.com:${rawUrl}.git` : rawUrl
+  let url = rawUrl
+  if (rawUrl.match(/^[a-z0-9-_.]+\/[a-z0-9-_.]+$/i)) {
+    url = values.http ? `https://github.com/${rawUrl}.git` : `git@github.com:${rawUrl}.git`
+  }
+
   const service = values.id ?? basename(rawUrl, '.git')
   const path = values.path ?? `web/${service}`
 
@@ -179,6 +187,10 @@ export const help = {
       {
         usage: '-p, --path',
         description: 'The path where to import the service (default is the service id)'
+      },
+      {
+        usage: '-h, --http',
+        description: 'Use HTTP URL when expanding GitHub repositories'
       }
     ]
   },

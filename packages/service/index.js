@@ -164,7 +164,7 @@ async function buildStackable (options, app = platformaticService, Stackable = S
       configManager = new ConfigManager({
         ...app.configManagerConfig,
         source: options.config,
-        dirname: options.context.directory
+        dirname: options.context?.directory
       })
       await configManager.parseAndValidate()
     }
