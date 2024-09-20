@@ -28,7 +28,9 @@
     "wattpm": "./bin/wattpm.js"
   },
   "files": [
+    "bin",
     "index.js",
+    "schema.json",
     "lib"
   ],
   "dependencies": {
