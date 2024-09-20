@@ -1,10 +1,8 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
   "entrypoint": "external-proxy",
-  "server": {
-    "logger": {
-      "level": "error"
-    }
+  "logger": {
+    "level": "error"
   },
   "services": [
     {
