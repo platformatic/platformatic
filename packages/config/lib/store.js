@@ -202,7 +202,13 @@ class Store {
         'platformatic.yaml',
         'platformatic.yml',
         'platformatic.toml',
-        'platformatic.tml'
+        'platformatic.tml',
+        'watt.json',
+        'watt.json5',
+        'watt.yaml',
+        'watt.yml',
+        'watt.toml',
+        'watt.tml'
       ]
     })
 

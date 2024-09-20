@@ -29,6 +29,24 @@ test('happy path', async t => {
   assert.deepEqual(configManager.current, JSON.parse(await readFile(file, 'utf8')))
 })
 
+test('watt.json', async t => {
+  {
+    const cwd = process.cwd()
+    process.chdir(join(__dirname, 'fixtures', 'app2'))
+    t.after(() => {
+      process.chdir(cwd)
+    })
+  }
+
+  const file = join(__dirname, 'fixtures', 'app2', 'watt.json')
+  const { configManager, args } = await loadConfig({}, [], app)
+
+  assert.deepEqual(args, {
+    _: [],
+  })
+  assert.deepEqual(configManager.current, JSON.parse(await readFile(file, 'utf8')))
+})
+
 test('cwd', async t => {
   {
     const cwd = process.cwd()
@@ -88,6 +106,12 @@ test('empty rejects with an error', async t => {
       'platformatic.yml',
       'platformatic.toml',
       'platformatic.tml',
+      'watt.json',
+      'watt.json5',
+      'watt.yaml',
+      'watt.yml',
+      'watt.toml',
+      'watt.tml',
     ])
   }
 })
