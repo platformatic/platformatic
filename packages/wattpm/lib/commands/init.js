@@ -8,7 +8,20 @@ import { schema, version } from '../schema.js'
 import { checkEmptyDirectory, parseArgs, verbose } from '../utils.js'
 
 export async function initCommand (logger, args) {
-  const { positionals } = parseArgs(args, {}, false)
+  const {
+    values: { 'package-manager': packageManager },
+    positionals
+  } = parseArgs(
+    args,
+    {
+      'package-manager': {
+        type: 'string',
+        short: 'p',
+        default: 'npm'
+      }
+    },
+    false
+  )
 
   /* c8 ignore next */
   const root = resolve(process.cwd(), positionals[0] ?? '')
@@ -45,20 +58,20 @@ export async function initCommand (logger, args) {
     'utf-8'
   )
 
+  const packageJson = {
+    name: basename(root),
+    ...defaultPackageJson,
+    dependencies: { wattpm: `^${version}` }
+  }
+
+  if (packageManager === 'npm') {
+    packageJson.workspaces = ['web/*']
+  } else if (packageManager === 'pnpm') {
+    await writeFile(resolve(root, 'pnpm-workspace.yaml'), "packages:\n  - 'web/*'", 'utf-8')
+  }
+
   // Write the package.json file
-  await writeFile(
-    resolve(root, 'package.json'),
-    JSON.stringify(
-      {
-        name: basename(root),
-        ...defaultPackageJson,
-        dependencies: { wattpm: `^${version}` }
-      },
-      null,
-      2
-    ),
-    'utf-8'
-  )
+  await writeFile(resolve(root, 'package.json'), JSON.stringify(packageJson, null, 2), 'utf-8')
 
   logger.done(`Created a wattpm application in ${bold(web)}.`)
 }
