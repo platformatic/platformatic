@@ -17,6 +17,7 @@ import { Server } from 'node:http'
 import { resolve as pathResolve, resolve } from 'node:path'
 import { pathToFileURL } from 'url'
 import { packageJson, schema } from './lib/schema.js'
+import { setupNodeHTTPTelemetry } from '@platformatic/telemetry'
 
 const validFields = [
   'main',
@@ -91,6 +92,11 @@ export class NodeStackable extends BaseStackable {
     // at all. Otherwise there is chance we miss the listen event.
     const serverOptions = this.serverConfig
     const serverPromise = createServerListener((this.isEntrypoint ? serverOptions?.port : undefined) ?? true)
+    // If telemetry is set, configure it
+    const telemetryConfig = this.telemetryConfig
+    if (telemetryConfig) {
+      setupNodeHTTPTelemetry(telemetryConfig, this.logger)
+    }
     this.#module = await importFile(finalEntrypoint)
     this.#module = this.#module.default || this.#module
 

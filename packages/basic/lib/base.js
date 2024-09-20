@@ -20,6 +20,7 @@ export class BaseStackable {
     this.type = type
     this.version = version
     this.id = options.context.serviceId
+    this.telemetryConfig = options.context.telemetryConfig
     this.options = options
     this.root = root
     this.configManager = configManager
@@ -180,7 +181,6 @@ export class BaseStackable {
   async startWithCommand (command, loader) {
     const config = this.configManager.current
     const basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
-
     this.#childManager = new ChildManager({
       logger: this.logger,
       loader,
@@ -190,7 +190,8 @@ export class BaseStackable {
         root: pathToFileURL(this.root).toString(),
         basePath,
         logLevel: this.logger.level,
-        port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true
+        port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
+        telemetry: this.telemetryConfig
       }
     })
 
