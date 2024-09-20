@@ -20,7 +20,7 @@ class PlatformaticApp extends EventEmitter {
   #debouncedRestart
   #context
 
-  constructor (appConfig, telemetryConfig, serverConfig, hasManagementApi, watch, metricsConfig) {
+  constructor (appConfig, telemetryConfig, loggerConfig, serverConfig, metricsConfig, hasManagementApi, watch) {
     super()
     this.appConfig = appConfig
     this.#watch = watch
@@ -38,6 +38,7 @@ class PlatformaticApp extends EventEmitter {
       isProduction: this.appConfig.isProduction,
       telemetryConfig,
       metricsConfig,
+      loggerConfig,
       serverConfig,
       hasManagementApi: !!hasManagementApi,
       localServiceEnvVars: this.appConfig.localServiceEnvVars
@@ -102,11 +103,7 @@ class PlatformaticApp extends EventEmitter {
 
       const metricsConfig = this.#context.metricsConfig
       if (metricsConfig !== false) {
-        this.#metricsRegistry = await collectMetrics(
-          this.stackable,
-          this.appConfig.id,
-          metricsConfig
-        )
+        this.#metricsRegistry = await collectMetrics(this.stackable, this.appConfig.id, metricsConfig)
       }
 
       this.#updateDispatcher()
@@ -183,9 +180,7 @@ class PlatformaticApp extends EventEmitter {
   async getMetrics ({ format }) {
     if (!this.#metricsRegistry) return null
 
-    return format === 'json'
-      ? this.#metricsRegistry.getMetricsAsJSON()
-      : this.#metricsRegistry.metrics()
+    return format === 'json' ? this.#metricsRegistry.getMetricsAsJSON() : this.#metricsRegistry.metrics()
   }
 
   #fetchServiceUrl (key, { parent, context: service }) {

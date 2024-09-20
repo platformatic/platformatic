@@ -1,18 +1,12 @@
-import platformaticBasic from '@platformatic/basic'
 import { Store, loadConfig as pltConfigLoadConfig } from '@platformatic/config'
 import { buildRuntime, platformaticRuntime } from '@platformatic/runtime'
-import { errors } from '@platformatic/utils'
-
-async function loadConfig (minimistConfig, args, overrides, replaceEnv = true) {
-  const store = new Store()
-  store.add(platformaticRuntime)
-  store.add(platformaticBasic)
-
-  return pltConfigLoadConfig(minimistConfig, args, store, overrides, replaceEnv)
-}
+import { ensureLoggableError } from '@platformatic/utils'
 
 export async function build (args) {
-  const config = await loadConfig({}, args)
+  const store = new Store()
+  store.add(platformaticRuntime)
+
+  const config = await pltConfigLoadConfig({}, args, store)
   config.configManager.args = config.args
 
   const runtimeConfig = config.configManager
@@ -23,7 +17,7 @@ export async function build (args) {
   const { services } = await runtime.getServices()
 
   for (const { id } of services) {
-    logger.info(`Building service "${id}" ...`)
+    logger.info(`Building service ${id}" ...`)
 
     try {
       await runtime.buildService(id)
@@ -31,7 +25,7 @@ export async function build (args) {
       if (error.code === 'PLT_BASIC_NON_ZERO_EXIT_CODE') {
         logger.error(`Building service "${id}" has failed with exit code ${error.exitCode}.`)
       } else {
-        logger.error({ err: errors.ensureLoggableError(error) }, `Building service "${id}" has throw an exception.`)
+        logger.error({ err: ensureLoggableError(error) }, `Building service "${id}" has throw an exception.`)
       }
 
       process.exit(1)

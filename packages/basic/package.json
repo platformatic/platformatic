@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/basic",
-  "version": "2.0.0-alpha.14",
+  "version": "2.0.0-alpha.17",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -23,9 +23,9 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
     "@fastify/error": "^4.0.0",
-    "@fastify/deepmerge": "^2.0.0",
     "@platformatic/config": "workspace:*",
     "@platformatic/itc": "workspace:*",
+    "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "execa": "^9.3.1",
     "pino": "^9.3.2",

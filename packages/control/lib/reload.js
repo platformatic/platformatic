@@ -8,16 +8,16 @@ async function reloadRuntimeCommand (argv) {
     args: argv,
     options: {
       pid: { type: 'string', short: 'p' },
-      name: { type: 'string', short: 'n' },
+      name: { type: 'string', short: 'n' }
     },
-    strict: false,
+    strict: false
   }).values
 
   const client = new RuntimeApiClient()
   const runtime = await client.getMatchingRuntime(args)
 
-  await client.reloadRuntime(runtime.pid)
-  console.log(`Reloaded runtime "${runtime.packageName}".`)
+  const child = await client.reloadRuntime(runtime.pid)
+  console.log(`Reloaded runtime "${runtime.packageName}". The new PID is ${child.pid}.`)
 
   await client.close()
 }

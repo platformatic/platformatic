@@ -12,6 +12,11 @@ module.exports = {
       delete config.hotReload
     }
 
+    if (config.server?.logger) {
+      config.logger = config.server.logger
+      delete config.server.logger
+    }
+
     return config
-  },
+  }
 }

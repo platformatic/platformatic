@@ -62,7 +62,7 @@ class RuntimeApiClient {
 
     const { statusCode, body } = await client.request({
       path: '/api/v1/metadata',
-      method: 'GET',
+      method: 'GET'
     })
 
     if (statusCode !== 200) {
@@ -79,7 +79,7 @@ class RuntimeApiClient {
 
     const { statusCode, body } = await client.request({
       path: '/api/v1/services',
-      method: 'GET',
+      method: 'GET'
     })
 
     if (statusCode !== 200) {
@@ -91,29 +91,12 @@ class RuntimeApiClient {
     return runtimeServices
   }
 
-  async getRuntimeServiceConfig (pid, serviceId) {
-    const client = this.#getUndiciClient(pid)
-
-    const { statusCode, body } = await client.request({
-      path: `/api/v1/services/${serviceId}/config`,
-      method: 'GET',
-    })
-
-    if (statusCode !== 200) {
-      const error = await body.text()
-      throw new errors.FailedToGetRuntimeServiceConfig(error)
-    }
-
-    const serviceConfig = await body.json()
-    return serviceConfig
-  }
-
   async getRuntimeConfig (pid) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
       path: '/api/v1/config',
-      method: 'GET',
+      method: 'GET'
     })
 
     if (statusCode !== 200) {
@@ -125,12 +108,40 @@ class RuntimeApiClient {
     return runtimeConfig
   }
 
+  async getRuntimeServiceConfig (pid, serviceId) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: `/api/v1/services/${serviceId}/config`,
+      method: 'GET'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      let jsonError
+      try {
+        jsonError = JSON.parse(error)
+      } catch {
+        // No-op
+      }
+
+      if (jsonError?.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND') {
+        throw new errors.ServiceNotFound(error)
+      }
+
+      throw new errors.FailedToGetRuntimeServiceConfig(error)
+    }
+
+    const serviceConfig = await body.json()
+    return serviceConfig
+  }
+
   async getRuntimeEnv (pid) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
       path: '/api/v1/env',
-      method: 'GET',
+      method: 'GET'
     })
 
     if (statusCode !== 200) {
@@ -142,22 +153,57 @@ class RuntimeApiClient {
     return runtimeEnv
   }
 
-  async restartRuntime (pid, options = {}) {
+  async getRuntimeServiceEnv (pid, serviceId) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: `/api/v1/services/${serviceId}/env`,
+      method: 'GET'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      let jsonError
+      try {
+        jsonError = JSON.parse(error)
+      } catch {
+        // No-op
+      }
+
+      if (jsonError?.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND') {
+        throw new errors.ServiceNotFound(error)
+      }
+
+      throw new errors.FailedToGetRuntimeServiceEnv(error)
+    }
+
+    const serviceConfig = await body.json()
+    return serviceConfig
+  }
+
+  async reloadRuntime (pid, options = {}) {
     const runtime = await this.getMatchingRuntime({ pid })
 
     await this.stopRuntime(pid)
 
     const [startCommand, ...startArgs] = runtime.argv
-    const child = spawn(startCommand, startArgs, { cwd: runtime.cwd, ...options })
+    const child = spawn(startCommand, startArgs, { cwd: runtime.cwd, ...options, stdio: 'ignore', detached: true })
+
+    await new Promise((resolve, reject) => {
+      child.on('spawn', resolve)
+      child.on('error', reject)
+    })
+
+    child.unref()
     return child
   }
 
-  async reloadRuntime (pid) {
+  async restartRuntime (pid) {
     const client = this.#getUndiciClient(pid)
 
     const { statusCode, body } = await client.request({
-      path: '/api/v1/reload',
-      method: 'POST',
+      path: '/api/v1/restart',
+      method: 'POST'
     })
 
     if (statusCode !== 200) {
@@ -171,7 +217,7 @@ class RuntimeApiClient {
 
     const { statusCode, body } = await client.request({
       path: '/api/v1/stop',
-      method: 'POST',
+      method: 'POST'
     })
 
     if (statusCode !== 200) {
@@ -210,7 +256,7 @@ class RuntimeApiClient {
     const { statusCode, body } = await client.request({
       path: '/api/v1/logs/' + logsId,
       method: 'GET',
-      query: { pid: runtimePID },
+      query: { pid: runtimePID }
     })
 
     if (statusCode !== 200) {
@@ -228,7 +274,7 @@ class RuntimeApiClient {
     const { statusCode, body } = await client.request({
       path: '/api/v1/logs/all',
       method: 'GET',
-      query: { pid: runtimePID },
+      query: { pid: runtimePID }
     })
 
     if (statusCode !== 200) {
@@ -246,7 +292,7 @@ class RuntimeApiClient {
     const { statusCode, body } = await client.request({
       path: '/api/v1/logs/indexes',
       method: 'GET',
-      query: { all },
+      query: { all }
     })
 
     if (statusCode !== 200) {
@@ -268,7 +314,7 @@ class RuntimeApiClient {
       method: options.method,
       headers: options.headers,
       query: options.query,
-      body: options.body,
+      body: options.body
     })
     return response
   }
@@ -289,7 +335,7 @@ class RuntimeApiClient {
       undiciClient = new Client(
         {
           hostname: 'localhost',
-          protocol: 'http:',
+          protocol: 'http:'
         },
         { socketPath }
       )
@@ -312,10 +358,15 @@ class RuntimeApiClient {
     } catch {
       return []
     }
-    const runtimeDirs = await readdir(PLATFORMATIC_TMP_DIR)
+
+    const runtimeDirs = await readdir(PLATFORMATIC_TMP_DIR, { withFileTypes: true })
     const runtimePIDs = []
-    for (const runtimeDirName of runtimeDirs) {
-      runtimePIDs.push(parseInt(runtimeDirName))
+
+    for (const runtimeDir of runtimeDirs) {
+      // Only consider directory that can be a PID
+      if (runtimeDir.isDirectory() && runtimeDir.name.match(/^\d+$/)) {
+        runtimePIDs.push(parseInt(runtimeDir.name))
+      }
     }
     return runtimePIDs
   }

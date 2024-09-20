@@ -26,6 +26,7 @@ export const schema = {
     $schema: {
       type: 'string'
     },
+    logger: utilsSchemaComponents.logger,
     server: utilsSchemaComponents.server,
     watch: basicSchemaComponents.watch,
     application: basicSchemaComponents.application,

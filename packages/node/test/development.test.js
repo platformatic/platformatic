@@ -231,37 +231,37 @@ test('should detect and start an Express with a build function in development mo
 })
 
 // In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start an Fastify with no build function in development mode when standalone', async t => {
+test('should detect and start a Fastify with no build function in development mode when standalone', async t => {
   await verifyStandalone(t, 'fastify-no-build-standalone')
 })
 
 // In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start an Fastify with no build function in development mode when exposed in a composer with a prefix', async t => {
+test('should detect and start a Fastify with no build function in development mode when exposed in a composer with a prefix', async t => {
   await verifyComposerWithPrefix(t, 'fastify-no-build-composer-with-prefix')
 })
 
 // In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start an Fastify with no build function in development mode when exposed in a composer without a prefix', async t => {
+test('should detect and start a Fastify with no build function in development mode when exposed in a composer without a prefix', async t => {
   await verifyComposerWithoutPrefix(t, 'fastify-no-build-composer-without-prefix')
 })
 
 // In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start an Fastify with no build function in development mode when exposed in a composer by autodetecting the prefix', async t => {
+test('should detect and start a Fastify with no build function in development mode when exposed in a composer by autodetecting the prefix', async t => {
   await verifyComposerAutodetectPrefix(t, 'fastify-no-build-composer-autodetect-prefix')
 })
 
-test('should detect and start an Fastify with a build function in development mode when standalone', async t => {
+test('should detect and start a Fastify with a build function in development mode when standalone', async t => {
   await verifyStandalone(t, 'fastify-with-build-standalone')
 })
 
-test('should detect and start an Fastify with a build function in development mode when exposed in a composer with a prefix', async t => {
+test('should detect and start a Fastify with a build function in development mode when exposed in a composer with a prefix', async t => {
   await verifyComposerWithPrefix(t, 'fastify-with-build-composer-with-prefix')
 })
 
-test('should detect and start an Fastify with a build function in development mode when exposed in a composer without a prefix', async t => {
+test('should detect and start a Fastify with a build function in development mode when exposed in a composer without a prefix', async t => {
   await verifyComposerWithoutPrefix(t, 'fastify-with-build-composer-without-prefix')
 })
 
-test('should detect and start an Fastify with a build function in development mode when exposed in a composer by autodetecting the prefix', async t => {
+test('should detect and start a Fastify with a build function in development mode when exposed in a composer by autodetecting the prefix', async t => {
   await verifyComposerAutodetectPrefix(t, 'fastify-with-build-composer-autodetect-prefix')
 })

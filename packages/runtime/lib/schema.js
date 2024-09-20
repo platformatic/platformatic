@@ -3,10 +3,37 @@
 
 const telemetry = require('@platformatic/telemetry').schema
 const {
-  schemaComponents: { server }
+  schemaComponents: { server, logger }
 } = require('@platformatic/utils')
 
+const services = {
+  type: 'array',
+  items: {
+    type: 'object',
+    anyOf: [{ required: ['id', 'path'] }, { required: ['id', 'url'] }],
+    properties: {
+      id: {
+        type: 'string'
+      },
+      path: {
+        type: 'string',
+        resolvePath: true
+      },
+      config: {
+        type: 'string'
+      },
+      url: {
+        type: 'string'
+      },
+      useHttp: {
+        type: 'boolean'
+      }
+    }
+  }
+}
+
 const pkg = require('../package.json')
+
 const platformaticRuntimeSchema = {
   $id: `https://schemas.platformatic.dev/@platformatic/runtime/${pkg.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
@@ -18,6 +45,9 @@ const platformaticRuntimeSchema = {
     preload: {
       type: 'string',
       resolvePath: true
+    },
+    entrypoint: {
+      type: 'string'
     },
     autoload: {
       type: 'object',
@@ -56,37 +86,19 @@ const platformaticRuntimeSchema = {
         }
       }
     },
-    telemetry,
+    services,
+    web: services,
+    logger,
     server,
-    entrypoint: {
-      type: 'string'
-    },
-    watch: {
+    restartOnError: {
+      default: true,
       anyOf: [
+        { type: 'boolean' },
         {
-          type: 'boolean'
-        },
-        {
-          type: 'string'
+          type: 'number',
+          minimum: 100
         }
       ]
-    },
-    inspectorOptions: {
-      type: 'object',
-      properties: {
-        host: {
-          type: 'string'
-        },
-        port: {
-          type: 'number'
-        },
-        breakFirstLine: {
-          type: 'boolean'
-        },
-        watchDisabled: {
-          type: 'boolean'
-        }
-      }
     },
     undici: {
       type: 'object',
@@ -130,6 +142,16 @@ const platformaticRuntimeSchema = {
         }
       }
     },
+    watch: {
+      anyOf: [
+        {
+          type: 'boolean'
+        },
+        {
+          type: 'string'
+        }
+      ]
+    },
     managementApi: {
       anyOf: [
         { type: 'boolean' },
@@ -138,11 +160,15 @@ const platformaticRuntimeSchema = {
           type: 'object',
           properties: {
             logs: {
-              maxSize: {
-                type: 'number',
-                minimum: 5,
-                default: 200
-              }
+              type: 'object',
+              properties: {
+                maxSize: {
+                  type: 'number',
+                  minimum: 5,
+                  default: 200
+                }
+              },
+              additionalProperties: false
             }
           },
           additionalProperties: false
@@ -179,43 +205,30 @@ const platformaticRuntimeSchema = {
         }
       ]
     },
-    restartOnError: {
-      default: true,
-      anyOf: [
-        { type: 'boolean' },
-        {
-          type: 'number',
-          minimum: 100
-        }
-      ]
-    },
-    services: {
-      type: 'array',
-      items: {
-        type: 'object',
-        anyOf: [{ required: ['id', 'path'] }, { required: ['id', 'url'] }],
-        properties: {
-          id: {
-            type: 'string'
-          },
-          path: {
-            type: 'string',
-            resolvePath: true
-          },
-          config: {
-            type: 'string'
-          },
-          url: {
-            type: 'string'
-          },
-          useHttp: {
-            type: 'boolean'
-          }
+    telemetry,
+    inspectorOptions: {
+      type: 'object',
+      properties: {
+        host: {
+          type: 'string'
+        },
+        port: {
+          type: 'number'
+        },
+        breakFirstLine: {
+          type: 'boolean'
+        },
+        watchDisabled: {
+          type: 'boolean'
         }
       }
     }
   },
-  anyOf: [{ required: ['autoload', 'entrypoint'] }, { required: ['services', 'entrypoint'] }],
+  anyOf: [
+    { required: ['autoload', 'entrypoint'] },
+    { required: ['services', 'entrypoint'] },
+    { required: ['web', 'entrypoint'] }
+  ],
   additionalProperties: false,
   $defs: {
     undiciInterceptor: {

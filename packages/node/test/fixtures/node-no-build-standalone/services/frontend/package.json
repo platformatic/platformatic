@@ -5,7 +5,7 @@
     "dev": "node --import tsx src/index.ts",
     "start": "node dist/index.js",
     "precustom-build": "node -e \"const {mkdirSync,writeFileSync} = require('fs'); mkdirSync('dist/pre', {recursive: true}); writeFileSync('dist/pre/timestamp', Date.now().toString())\"",
-    "custom-build": "tsc -P ."
+    "custom-build": "tsc -p ."
   },
   "dependencies": {
     "@platformatic/basic": "^2.0.0-alpha.6",

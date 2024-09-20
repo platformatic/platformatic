@@ -421,3 +421,84 @@ export function verifyBuildAndProductionMode (workingDirectory, configurations, 
     })
   }
 }
+
+export async function prepareWorkingDirectorySingleRuntime (t, source, destination) {
+  // This is to fix temporary to a specific directory
+  if (!destination) {
+    destination = resolve(tmpdir(), `test-cli-packages-${process.pid}-${count++}`)
+    t.after(() => safeRemove(destination))
+  }
+
+  // Recreate the folder
+  console.time('Create folder')
+  await safeRemove(destination)
+  await createDirectory(dirname(destination))
+  console.timeEnd('Create folder')
+
+  // Pack packages
+  console.time('Pack packages')
+  const root = fileURLToPath(new URL('../../..', import.meta.url))
+  const overrides = await packPackages(root, destination)
+  console.timeEnd('Pack packages')
+
+  // Copy files
+  console.time('Copy files')
+  await cp(source, destination, { recursive: true })
+  console.timeEnd('Copy files')
+
+  // Start Verdaccio
+  const useVerdaccio = process.env.VERDACCIO === 'true'
+  let verdaccio
+
+  if (useVerdaccio) {
+    verdaccio = await startVerdaccio(root)
+  }
+
+  try {
+    // Override package.json and .npmrc
+    const packageJson = JSON.parse(await readFile(resolve(destination, 'package.json'), 'utf-8'))
+    packageJson.pnpm = { overrides }
+    await writeFile(resolve(destination, 'package.json'), JSON.stringify(packageJson, null, 2), 'utf-8')
+
+    if (useVerdaccio) {
+      await writeFile(
+        resolve(destination, '.npmrc'),
+        `
+registry=http://localhost:${verdaccio.address().port}
+node-linker=hoisted
+package-import-method=copy
+hoist=false
+shamefully-hoist=true
+`,
+        'utf-8'
+      )
+    } else {
+      await writeFile(
+        resolve(destination, '.npmrc'),
+        `
+node-linker=hoisted
+package-import-method=copy
+hoist=false
+shamefully-hoist=true
+`,
+        'utf-8'
+      )
+    }
+
+    // Create the pnpm-workspace.yml file
+    let workspaceFile = 'packages:\n'
+    workspaceFile += `  - 'services/*'\n`
+
+    await writeFile(resolve(destination, 'pnpm-workspace.yaml'), workspaceFile, 'utf-8')
+
+    console.time('pnpm install')
+    await execa('pnpm', ['install', '--no-frozen-lockfile'], { cwd: destination })
+    console.timeEnd('pnpm install')
+  } finally {
+    if (useVerdaccio) {
+      await stopVerdaccio(verdaccio)
+    }
+  }
+
+  return destination
+}

@@ -10,6 +10,8 @@ const { buildRuntime, start, startCommand } = require('./lib/start')
 const symbols = require('./lib/worker/symbols')
 const { loadConfig, getRuntimeLogsDir } = require('./lib/utils')
 
+const platformaticVersion = require('./package.json').version
+
 module.exports.buildServer = buildServer
 module.exports.buildRuntime = buildRuntime
 module.exports.compile = compile
@@ -24,3 +26,4 @@ module.exports.startCommand = startCommand
 module.exports.symbols = symbols
 module.exports.Runtime = Runtime
 module.exports.wrapConfigInRuntimeConfig = wrapConfigInRuntimeConfig
+module.exports.version = platformaticVersion

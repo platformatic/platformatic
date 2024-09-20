@@ -165,12 +165,12 @@ class RuntimeGenerator extends BaseGenerator {
         path: 'services',
         exclude: ['docs'],
       },
+      logger: {
+        level: '{PLT_SERVER_LOGGER_LEVEL}',
+      },
       server: {
         hostname: '{PLT_SERVER_HOSTNAME}',
-        port: '{PORT}',
-        logger: {
-          level: '{PLT_SERVER_LOGGER_LEVEL}',
-        },
+        port: '{PORT}'
       },
       managementApi: '{PLT_MANAGEMENT_API}',
     }

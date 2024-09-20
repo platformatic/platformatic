@@ -31,7 +31,13 @@ export interface PlatformaticComposer {
     logger?:
       | boolean
       | {
-          level?: string;
+          level: (
+            | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+            | {
+                [k: string]: unknown;
+              }
+          ) &
+            string;
           transport?:
             | {
                 target?: string;

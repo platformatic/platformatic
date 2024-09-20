@@ -4,9 +4,12 @@
     "openapi": true
   },
   "plugins": {
-    "paths": [
-      "plugin.js"
-    ]
+    "paths": ["plugin.js"]
   },
-  "watch": true
+  "watch": true,
+  "server": {
+    "logger": {
+      "level": "trace"
+    }
+  }
 }

@@ -9,14 +9,14 @@ const { Unpromise } = require('@watchable/unpromise')
 const errors = require('../errors')
 const { kITC, kId } = require('./symbols')
 
-async function sendViaITC (worker, name, message) {
+async function safeHandleInITC (worker, fn) {
   try {
     // Make sure to catch when the worker exits, otherwise we're stuck forever
     const ac = new AbortController()
     let exitCode
 
     const response = await Unpromise.race([
-      worker[kITC].send(name, message),
+      fn(),
       once(worker, 'exit', { signal: ac.signal }).then(([code]) => {
         exitCode = code
       })
@@ -40,6 +40,14 @@ async function sendViaITC (worker, name, message) {
 
     throw error.handlerError
   }
+}
+
+async function sendViaITC (worker, name, message) {
+  return safeHandleInITC(worker, () => worker[kITC].send(name, message))
+}
+
+async function waitEventFromITC (worker, event) {
+  return safeHandleInITC(worker, () => once(worker[kITC], event))
 }
 
 function setupITC (app, service, dispatcher) {
@@ -101,6 +109,11 @@ function setupITC (app, service, dispatcher) {
         return JSON.parse(JSON.stringify(current))
       },
 
+      async getServiceEnv () {
+        // Remove all undefined keys from the config
+        return JSON.parse(JSON.stringify({ ...process.env, ...(await app.stackable.getEnv()) }))
+      },
+
       async getServiceOpenAPISchema () {
         try {
           return await app.stackable.getOpenapiSchema()
@@ -146,4 +159,4 @@ function setupITC (app, service, dispatcher) {
   return itc
 }
 
-module.exports = { sendViaITC, setupITC }
+module.exports = { sendViaITC, setupITC, waitEventFromITC }

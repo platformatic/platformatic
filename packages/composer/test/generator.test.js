@@ -28,21 +28,6 @@ describe('generator', () => {
         '',
       ].join('\n'))
     }
-
-    {
-      svc.setConfig({
-        typescript: true,
-      })
-
-      await svc.prepare()
-
-      const configFile = svc.getFileObject('platformatic.json')
-      const configFileJson = JSON.parse(configFile.contents)
-      assert.equal(configFileJson.plugins.typescript, '{PLT_TYPESCRIPT}')
-
-      const dotEnvFile = svc.getFileObject('.env')
-      assert.ok(dotEnvFile.contents.includes('PLT_TYPESCRIPT=true'))
-    }
   })
 
   test('have @platformatic/composer dependency', async (t) => {
@@ -101,10 +86,7 @@ declare module 'fastify' {
       logger: { level: '{PLT_SERVER_LOGGER_LEVEL}' },
     })
 
-    assert.deepEqual(contents.plugins, {
-      paths: [{ path: './plugins', encapsulate: false }, './routes'],
-      typescript: '{PLT_TYPESCRIPT}',
-    })
+    assert.strictEqual(contents.plugins, undefined)
   })
 
   test('support packages', async (t) => {
@@ -175,13 +157,6 @@ declare module 'fastify' {
       const contents = JSON.parse(platformaticConfigFile.contents)
 
       assert.deepEqual(contents.plugins, {
-        paths: [
-          {
-            encapsulate: false,
-            path: './plugins',
-          },
-          './routes',
-        ],
         packages: [
           {
             name: '@fastify/compress',
@@ -190,7 +165,6 @@ declare module 'fastify' {
             },
           },
         ],
-        typescript: '{PLT_TYPESCRIPT}',
       })
     }
   })
