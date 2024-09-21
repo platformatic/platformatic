@@ -223,6 +223,12 @@ test('ConfigManager.listConfigFiles() lists possible configs by type', async t =
     'platformatic.yml',
     'platformatic.toml',
     'platformatic.tml',
+    'watt.json',
+    'watt.json5',
+    'watt.yaml',
+    'watt.yml',
+    'watt.toml',
+    'watt.tml',
   ])
   assert.deepEqual(ConfigManager.listConfigFiles('service'), [
     'platformatic.service.json',
@@ -237,6 +243,12 @@ test('ConfigManager.listConfigFiles() lists possible configs by type', async t =
     'platformatic.yml',
     'platformatic.toml',
     'platformatic.tml',
+    'watt.json',
+    'watt.json5',
+    'watt.yaml',
+    'watt.yml',
+    'watt.toml',
+    'watt.tml',
   ])
   assert.deepEqual(ConfigManager.listConfigFiles('runtime'), [
     'platformatic.runtime.json',
@@ -251,6 +263,12 @@ test('ConfigManager.listConfigFiles() lists possible configs by type', async t =
     'platformatic.yml',
     'platformatic.toml',
     'platformatic.tml',
+    'watt.json',
+    'watt.json5',
+    'watt.yaml',
+    'watt.yml',
+    'watt.toml',
+    'watt.tml',
   ])
 })
 
@@ -268,6 +286,12 @@ test('ConfigManager.listConfigFiles() lists all possible configs', async t => {
     'platformatic.yml',
     'platformatic.toml',
     'platformatic.tml',
+    'watt.json',
+    'watt.json5',
+    'watt.yaml',
+    'watt.yml',
+    'watt.toml',
+    'watt.tml',
     'platformatic.db.json',
     'platformatic.db.json5',
     'platformatic.db.yaml',

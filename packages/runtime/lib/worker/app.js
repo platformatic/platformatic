@@ -108,7 +108,12 @@ class PlatformaticApp extends EventEmitter {
 
       this.#updateDispatcher()
     } catch (err) {
-      this.#logAndExit(err)
+      if (err.validationErrors) {
+        console.error('Validation errors:', err.validationErrors)
+        process.exit(1)
+      } else {
+        this.#logAndExit(err)
+      }
     }
   }
 
