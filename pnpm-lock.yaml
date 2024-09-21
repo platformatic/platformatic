@@ -465,7 +465,7 @@ importers:
         version: 10.0.0
       '@fastify/reply-from':
         specifier: ^11.0.0
-        version: 11.0.0
+        version: 11.0.1
       '@fastify/static':
         specifier: ^8.0.0
         version: 8.0.0
@@ -1400,7 +1400,7 @@ importers:
     devDependencies:
       '@fastify/reply-from':
         specifier: ^11.0.0
-        version: 11.0.0
+        version: 11.0.1
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
@@ -3316,8 +3316,8 @@ packages:
   '@fastify/pre-commit@2.1.0':
     resolution: {integrity: sha512-UM1Fv4NJ+SErNJzCaR6LBk+4GE4wYtv+/R4ePY7Utx+0PktLVxHsLYnnJWgOfyHqtKCjSchZrn3H8tOPuhCfYA==}
 
-  '@fastify/reply-from@11.0.0':
-    resolution: {integrity: sha512-dv3o8hyy4sxhg1RN9l6ueM+PMMaIPKLjtL2T99H5M7h1Xt8d1RX3r+xC+sL5AqJqLvReX4N+7mTq9QDeB8i6Lg==}
+  '@fastify/reply-from@11.0.1':
+    resolution: {integrity: sha512-F2Qk88gcqIIiug9V+4I6WeeV1faj1Wu798JyOnwbJcjQhm4LYrHdkpFSVwJE0g1cVjYCFFmH3OVh1HHaninttQ==}
 
   '@fastify/send@3.1.1':
     resolution: {integrity: sha512-LdiV2mle/2tH8vh6GwGl0ubfUAgvY+9yF9oGI1iiwVyNUVOQamvw5n+OFu6iCNNoyuCY80FFURBn4TZCbTe8LA==}
@@ -10472,7 +10472,7 @@ snapshots:
 
   '@fastify/http-proxy@10.0.0':
     dependencies:
-      '@fastify/reply-from': 11.0.0
+      '@fastify/reply-from': 11.0.1
       fast-querystring: 1.1.2
       fastify-plugin: 5.0.0
       ws: 8.18.0
@@ -10504,7 +10504,7 @@ snapshots:
       cross-spawn: 7.0.3
       which: 4.0.0
 
-  '@fastify/reply-from@11.0.0':
+  '@fastify/reply-from@11.0.1':
     dependencies:
       '@fastify/error': 4.0.0
       end-of-stream: 1.4.4
