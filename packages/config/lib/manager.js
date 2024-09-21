@@ -340,6 +340,12 @@ class ConfigManager extends EventEmitter {
         'platformatic.yml',
         'platformatic.toml',
         'platformatic.tml',
+        'watt.json',
+        'watt.json5',
+        'watt.yaml',
+        'watt.yml',
+        'watt.toml',
+        'watt.tml',
       ]
     } else {
       // A config type was not provided. Search for all known types and
