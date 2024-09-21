@@ -1824,7 +1824,7 @@ importers:
         version: 9.0.0
       '@fastify/under-pressure':
         specifier: ^9.0.0
-        version: 9.0.0
+        version: 9.0.1
       '@mercuriusjs/federation':
         specifier: ^4.0.0
         version: 4.0.0
@@ -3331,8 +3331,8 @@ packages:
   '@fastify/swagger@9.0.0':
     resolution: {integrity: sha512-E7TQbBCbhvS2djGLxJ7t2OFbhc2F+KCsOZCNhh6xQIlJxq9H4ZR5KuLKG+vn6COVqkLxRVUOZ9qtbbzdf5Jfqw==}
 
-  '@fastify/under-pressure@9.0.0':
-    resolution: {integrity: sha512-rALvGGIhEXgbxiP9iIczF5o6ct5MytCk6T3SvcPRkMjiq81RoWTMXtrpgHhQsIqP3qdqYH6QrYKo4mnt4fyhnA==}
+  '@fastify/under-pressure@9.0.1':
+    resolution: {integrity: sha512-aafxmJYJBgbYad4eoKwaWXtyBwoLoUCpVDahjzsvRcCjR8esm0F6s3jACWWtZqgcE498gV7fG1X4vzGt9lWw9A==}
 
   '@fastify/vite@7.0.1':
     resolution: {integrity: sha512-kFmuJa7ltQIcuuii3rmtBqbTORxNwcGSsWOXuLdK0D35Swqbmmdz4o+ir34NNLxKDpb4nU35zfO52iYI9toDkQ==}
@@ -5972,9 +5972,6 @@ packages:
 
   fastify-plugin@4.5.1:
     resolution: {integrity: sha512-stRHYGeuqpEZTL1Ef0Ovr2ltazUT9g844X5z/zEBFLG8RYlpDiOCIG+ATvYEp+/zmc7sN29mcIMp8gvYplYPIQ==}
-
-  fastify-plugin@5.0.0:
-    resolution: {integrity: sha512-0725fmH/yYi8ugsjszLci+lLnGBK6cG+WSxM7edY2OXJEU7gr2JiGBoieL2h9mhTych1vFsEfXsAsGGDJ/Rd5w==}
 
   fastify-plugin@5.0.1:
     resolution: {integrity: sha512-HCxs+YnRaWzCl+cWRYFnHmeRFyR5GVnJTAaCJQiYzQSDwK9MgJdyAsuL3nh0EWRCYMgQ5MeziymvmAhUHYHDUQ==}
@@ -10549,7 +10546,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fastify/under-pressure@9.0.0':
+  '@fastify/under-pressure@9.0.1':
     dependencies:
       '@fastify/error': 4.0.0
       fastify-plugin: 5.0.1
@@ -13897,8 +13894,6 @@ snapshots:
       minimist: 1.2.8
 
   fastify-plugin@4.5.1: {}
-
-  fastify-plugin@5.0.0: {}
 
   fastify-plugin@5.0.1: {}
 
