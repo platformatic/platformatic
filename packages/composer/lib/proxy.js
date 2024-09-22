@@ -50,13 +50,27 @@ module.exports = fp(async function (app, opts) {
     if (needsRootRedirect) {
       app.addHook('preHandler', (req, reply, done) => {
         if (req.url === basePath) {
-          reply.redirect(`${req.url}/`, 308)
+          app.inject({
+            method: req.method,
+            url: `${basePath}/`,
+            headers: req.headers,
+            payload: req.body
+          }, (err, result) => {
+            if (err) {
+              done(err)
+              return
+            }
+            reply
+              .code(result.statusCode)
+              .headers(result.headers)
+              .send(result.rawPayload)
+            done()
+          })
+        } else {
+          done()
         }
-
-        done()
       })
     }
-
     /*
       Some frontends, like Astro (https://github.com/withastro/astro/issues/11445)
       generate invalid paths in development mode which ignore the basePath.
