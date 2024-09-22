@@ -871,7 +871,7 @@ importers:
         version: 6.0.0
       '@fastify/cors':
         specifier: ^10.0.0
-        version: 10.0.0
+        version: 10.0.1
       '@fastify/deepmerge':
         specifier: ^2.0.0
         version: 2.0.0
@@ -1809,7 +1809,7 @@ importers:
         version: 6.0.0
       '@fastify/cors':
         specifier: ^10.0.0
-        version: 10.0.0
+        version: 10.0.1
       '@fastify/deepmerge':
         specifier: ^2.0.0
         version: 2.0.0
@@ -3277,8 +3277,8 @@ packages:
   '@fastify/cookie@10.0.0':
     resolution: {integrity: sha512-S43spazwAfzm5nKlqq/spAGW+O6r+WQzg5vXXI1ArCXXFa8KBA/tiU3XRVQUehSNtbN5PA6+g183hzh5/dZ6Iw==}
 
-  '@fastify/cors@10.0.0':
-    resolution: {integrity: sha512-kb9fkc/LVbLTQ3lhA+ZZjC/Styzysodo/MTCdVCvTtgHa/gBwxrEEkcp3fuoKIfAQt85wksrpXjUGbw5NQffEQ==}
+  '@fastify/cors@10.0.1':
+    resolution: {integrity: sha512-O8JIf6448uQbOgzSkCqhClw6gFTAqrdfeA6R3fc/3gwTJGUp7gl8/3tbNB+6INuu4RmgVOq99BmvdGbtu5pgOA==}
 
   '@fastify/deepmerge@1.3.0':
     resolution: {integrity: sha512-J8TOSBq3SoZbDhM9+R/u77hP93gz/rajSA+K2kGyijPpORPWUXHUpTaleoj+92As0S9uPRP7Oi8IqMf0u+ro6A==}
@@ -10441,7 +10441,7 @@ snapshots:
       cookie-signature: 1.2.1
       fastify-plugin: 5.0.1
 
-  '@fastify/cors@10.0.0':
+  '@fastify/cors@10.0.1':
     dependencies:
       fastify-plugin: 5.0.1
       mnemonist: 0.39.8
