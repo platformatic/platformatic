@@ -868,7 +868,7 @@ importers:
         version: 5.0.1
       '@fastify/basic-auth':
         specifier: ^6.0.0
-        version: 6.0.0
+        version: 6.0.1
       '@fastify/cors':
         specifier: ^10.0.0
         version: 10.0.1
@@ -1806,7 +1806,7 @@ importers:
         version: 6.0.0
       '@fastify/basic-auth':
         specifier: ^6.0.0
-        version: 6.0.0
+        version: 6.0.1
       '@fastify/cors':
         specifier: ^10.0.0
         version: 10.0.1
@@ -3264,8 +3264,8 @@ packages:
   '@fastify/aws-lambda@5.0.0':
     resolution: {integrity: sha512-yroOd+VkuNd+OsbcyT0NVgLWMsfsp1S2Uef7y5UomLMlrB5/vxi+BPwMz9hn0EZSHzNk2w4TFwMvu14iC6zX8g==}
 
-  '@fastify/basic-auth@6.0.0':
-    resolution: {integrity: sha512-OpVFSvkNGplt2C7cd3ijC2XKZkmteZYagnjCiLdHpunZLGIDCw1UDCdOcTlqbqjl5VrxpIqRfmFO35UnU9kNcA==}
+  '@fastify/basic-auth@6.0.1':
+    resolution: {integrity: sha512-qEc2GvqqKg6LdkG4/a/95lmOfJVY1iImv+F8hyYtmnQjqihmB1s0GZJUgSUjGpJRZcl7bta09/nKIlRfGbhu1w==}
 
   '@fastify/busboy@2.1.1':
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
@@ -10418,7 +10418,7 @@ snapshots:
 
   '@fastify/aws-lambda@5.0.0': {}
 
-  '@fastify/basic-auth@6.0.0':
+  '@fastify/basic-auth@6.0.1':
     dependencies:
       '@fastify/error': 4.0.0
       fastify-plugin: 5.0.1
