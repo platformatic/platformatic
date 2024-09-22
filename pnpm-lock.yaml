@@ -1732,7 +1732,7 @@ importers:
         version: 4.0.1
       '@fastify/formbody':
         specifier: ^8.0.0
-        version: 8.0.0
+        version: 8.0.1
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
@@ -3298,8 +3298,8 @@ packages:
   '@fastify/fast-json-stringify-compiler@5.0.0':
     resolution: {integrity: sha512-tywfuZfXsyxLC5kEqrMubbFa9vpAxNtuPE7j9w5si1r+6p5b981pDfZ5Y8HBqmjDQl+PABT7cV5jZgXI2j+I5g==}
 
-  '@fastify/formbody@8.0.0':
-    resolution: {integrity: sha512-iM9DLCwMnPx2gUu5HaPLylQox9ApPMFksf4Yw+1d2mWe7uvRDzg4/1BB1T19OjZK+UWZOQ7Q4o2FnoBQ973UMQ==}
+  '@fastify/formbody@8.0.1':
+    resolution: {integrity: sha512-LPrcadSIK8TrQk510Zdj56fnw7cyHq0/PW0YHGGM8ycGL4X7XAex+FKcwpzB4i5lF9eykc71a4EtcO9AEoByqw==}
 
   '@fastify/http-proxy@10.0.0':
     resolution: {integrity: sha512-n5/EPspNKtzpCUavuDflYtvtB+aEkablb2sZM83gDKbxM9GF+93maJYQrGozJ2HNRqpt7wfzsDeUuGVFFkYzMQ==}
@@ -10465,7 +10465,7 @@ snapshots:
     dependencies:
       fast-json-stringify: 6.0.0
 
-  '@fastify/formbody@8.0.0':
+  '@fastify/formbody@8.0.1':
     dependencies:
       fast-querystring: 1.1.2
       fastify-plugin: 5.0.1
