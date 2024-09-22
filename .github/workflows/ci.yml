@@ -513,7 +513,7 @@ jobs:
       - uses: pnpm/action-setup@v4.0.0
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 20
           cache: 'pnpm'
       - name: Start docker containers for testing
         run: docker compose up -d postgresql

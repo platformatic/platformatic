@@ -1,5 +1,5 @@
 #! /usr/bin/env node
-
+import { checkNodeVersionForServices } from '../../scripts/check-node-version.js'
 import { command as client } from '@platformatic/client-cli'
 import {
   getRuntimesCommand,
@@ -22,6 +22,8 @@ import { logo } from './lib/ascii.js'
 import { build } from './lib/build.js'
 import { resolve } from './lib/resolve.js'
 import { upgrade } from './lib/upgrade.js'
+
+checkNodeVersionForServices()
 
 const program = commist({ maxDistance: 2 })
 const help = helpMe({
