@@ -60,9 +60,14 @@ module.exports = fp(async function (app, opts) {
               done(err)
               return
             }
+
+            const replyHeaders = result.headers
+            delete replyHeaders['content-length']
+            delete replyHeaders['transfer-encoding']
+
             reply
               .code(result.statusCode)
-              .headers(result.headers)
+              .headers(replyHeaders)
               .send(result.rawPayload)
             done()
           })
