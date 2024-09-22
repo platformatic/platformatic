@@ -1942,7 +1942,7 @@ importers:
         version: 5.0.0
       '@fastify/compress':
         specifier: ^8.0.0
-        version: 8.0.0
+        version: 8.0.1
       bindings:
         specifier: ^1.5.0
         version: 1.5.0
@@ -3271,8 +3271,8 @@ packages:
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
-  '@fastify/compress@8.0.0':
-    resolution: {integrity: sha512-HZrmgqXPKEK9yHCzM4cPPhRq8N5EvuAJC/kwPUlPwxIUKXe/pbzodyiff9XmzUHXRX5v7szXpKSQbEA2Oy7BwA==}
+  '@fastify/compress@8.0.1':
+    resolution: {integrity: sha512-yWNfKhvL4orfN45LKCHCo8Fcsbj1kdNgwyShw2xpdHfzPf4A3MESmgSfUm3TCKQwgqDdrPnLfy1E+3I/DVP+BQ==}
 
   '@fastify/cookie@10.0.0':
     resolution: {integrity: sha512-S43spazwAfzm5nKlqq/spAGW+O6r+WQzg5vXXI1ArCXXFa8KBA/tiU3XRVQUehSNtbN5PA6+g183hzh5/dZ6Iw==}
@@ -10425,7 +10425,7 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fastify/compress@8.0.0':
+  '@fastify/compress@8.0.1':
     dependencies:
       '@fastify/accept-negotiator': 2.0.0
       fastify-plugin: 5.0.1
