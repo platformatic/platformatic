@@ -16,7 +16,7 @@ export async function buildCommand (logger, args) {
 
   for (const { id } of services) {
     const currentLogger = logger.child({ name: id })
-    currentLogger.info(`Building service ${bold(id)} ...`)
+    currentLogger.debug(`Building service ${bold(id)} ...`)
     overrideFatal(currentLogger)
 
     try {

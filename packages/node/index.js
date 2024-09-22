@@ -160,7 +160,7 @@ export class NodeStackable extends BaseStackable {
     const hasBuildScript = await this.#hasBuildScript()
 
     if (!hasBuildScript) {
-      this.logger.warn(
+      this.logger.debug(
         'No "application.commands.build" configuration value specified and no build script found in package.json. Skipping build ...'
       )
       return
