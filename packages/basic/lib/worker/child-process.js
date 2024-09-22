@@ -1,4 +1,5 @@
 import { ITC } from '@platformatic/itc'
+import { setupNodeHTTPTelemetry } from '@platformatic/telemetry'
 import { createPinoWritable, ensureLoggableError } from '@platformatic/utils'
 import { tracingChannel } from 'node:diagnostics_channel'
 import { once } from 'node:events'
@@ -6,6 +7,7 @@ import { readFile } from 'node:fs/promises'
 import { register } from 'node:module'
 import { platform, tmpdir } from 'node:os'
 import { basename, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { isMainThread } from 'node:worker_threads'
 import pino from 'pino'
 import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
@@ -13,7 +15,6 @@ import { WebSocket } from 'ws'
 import { exitCodes } from '../errors.js'
 import { importFile } from '../utils.js'
 import { getSocketPath, isWindows } from './child-manager.js'
-import { setupNodeHTTPTelemetry } from '@platformatic/telemetry'
 
 function createInterceptor (itc) {
   return function (dispatch) {
@@ -222,6 +223,10 @@ async function main () {
   const { data, loader, scripts } = JSON.parse(await readFile(dataPath))
 
   globalThis.platformatic = data
+
+  if (data.root && isMainThread) {
+    process.chdir(fileURLToPath(data.root))
+  }
 
   if (loader) {
     register(loader, { data })

@@ -133,7 +133,7 @@ class ConfigManager extends EventEmitter {
 
   _transformConfig () {}
 
-  async parse (replaceEnv = true) {
+  async parse (replaceEnv = true, args = {}) {
     try {
       if (this.fullPath) {
         const configString = await this.load()
@@ -211,7 +211,7 @@ class ConfigManager extends EventEmitter {
         return false
       }
 
-      await this._transformConfig()
+      await this._transformConfig(args)
       return true
     } catch (err) {
       if (err.name === 'MissingValueError') {
