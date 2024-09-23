@@ -2,7 +2,7 @@ const semver = require('semver');
 
 function checkNodeVersionForServices() {
   const currentVersion = process.version;
-  const minVersions = ['20.0.0', '22.3.0'];
+  const minVersions = ['20.16.0', '22.3.0'];
   
   const isCompatible = minVersions.some(version => semver.gte(currentVersion, version));
   
