@@ -1599,7 +1599,7 @@ importers:
     devDependencies:
       '@fastify/autoload':
         specifier: ^6.0.0
-        version: 6.0.0
+        version: 6.0.1
       '@platformatic/rpc':
         specifier: workspace:*
         version: link:../rpc
@@ -1803,7 +1803,7 @@ importers:
         version: 5.0.1
       '@fastify/autoload':
         specifier: ^6.0.0
-        version: 6.0.0
+        version: 6.0.1
       '@fastify/basic-auth':
         specifier: ^6.0.0
         version: 6.0.1
@@ -3258,8 +3258,8 @@ packages:
   '@fastify/ajv-compiler@4.0.0':
     resolution: {integrity: sha512-dt0jyLAlay14LpIn4Fg1SY7V5NJ9KH0YFDpYVQY5cgIVBvdI8908AMx5zQ0bBYPGT6Wh+bM3f2caMmOXLP3QsQ==}
 
-  '@fastify/autoload@6.0.0':
-    resolution: {integrity: sha512-6L8LNxpgjBoY1MU0iUwDpDh3BEFY7yqZB3b8az4CpxvfvwizAxNp8/IdEWKgybSPIc8dxIP4EWIoaD5NKo3JVQ==}
+  '@fastify/autoload@6.0.1':
+    resolution: {integrity: sha512-NVVu/g9yUFkv4nNxsDHhNKz37jINXlPxwNYbA4Hu8pnho6sDVeKo24pt+dnax1SeUapxxs/yulXukbUai6Aebw==}
 
   '@fastify/aws-lambda@5.0.0':
     resolution: {integrity: sha512-yroOd+VkuNd+OsbcyT0NVgLWMsfsp1S2Uef7y5UomLMlrB5/vxi+BPwMz9hn0EZSHzNk2w4TFwMvu14iC6zX8g==}
@@ -10414,7 +10414,7 @@ snapshots:
       ajv-formats: 3.0.1(ajv@8.17.1)
       fast-uri: 3.0.1
 
-  '@fastify/autoload@6.0.0': {}
+  '@fastify/autoload@6.0.1': {}
 
   '@fastify/aws-lambda@5.0.0': {}
 
