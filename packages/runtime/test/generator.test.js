@@ -353,7 +353,6 @@ describe('Generator', () => {
     {
       const rg = new RuntimeGenerator({
         targetDirectory,
-        logger
       })
 
       rg.setConfig({
@@ -381,7 +380,6 @@ describe('Generator', () => {
     {
       const rg = new RuntimeGenerator({
         targetDirectory,
-        logger
       })
 
       // adding another service
