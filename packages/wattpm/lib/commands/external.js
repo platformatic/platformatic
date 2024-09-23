@@ -5,8 +5,8 @@ import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { execa } from 'execa'
 import { existsSync } from 'node:fs'
-import { readFile, writeFile } from 'node:fs/promises'
-import { basename, isAbsolute, relative, resolve, sep } from 'node:path'
+import { readdir, readFile, writeFile } from 'node:fs/promises'
+import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { defaultServiceJson } from '../defaults.js'
 import { version } from '../schema.js'
 import { checkEmptyDirectory, findConfigurationFile, overrideFatal, parseArgs } from '../utils.js'
@@ -58,7 +58,23 @@ async function parseLocalFolder (path) {
     }
   }
 
-  return { id: packageJson.name ?? basename(path), url, packageJson }
+  // Check which stackable we should use
+  const { dependencies, devDependencies } = packageJson
+
+  /* c8 ignore next 11 */
+  let stackable = '@platformatic/node'
+
+  if (dependencies?.next || devDependencies?.next) {
+    stackable = '@platformatic/next'
+  } else if (dependencies?.['@remix-run/dev'] || devDependencies?.['@remix-run/dev']) {
+    stackable = '@platformatic/remix'
+  } else if (dependencies?.vite || devDependencies?.vite) {
+    stackable = '@platformatic/vite'
+  } else if (dependencies?.astro || devDependencies?.astro) {
+    stackable = '@platformatic/astro'
+  }
+
+  return { id: packageJson.name ?? basename(path), url, packageJson, stackable }
 }
 
 async function findExistingConfiguration (root, path) {
@@ -80,8 +96,51 @@ async function addService (configurationFile, id, path, url) {
   await writeFile(configurationFile, JSON.stringify(config, null, 2), 'utf-8')
 }
 
+async function fixConfiguration (logger, root) {
+  const configurationFile = await findConfigurationFile(logger, root)
+  const config = JSON.parse(await readFile(configurationFile, 'utf-8'))
+
+  // Load all services in the autoload and the one manually specified
+  const services = []
+  const autoLoadPath = config.autoload?.path
+  if (autoLoadPath) {
+    for (const path of await readdir(resolve(root, autoLoadPath))) {
+      services.push(join(autoLoadPath, path))
+    }
+  }
+
+  /* c8 ignore next */
+  for (const service of config.services ?? []) {
+    services.push(service.path)
+  }
+
+  // For each service, if there is no watt.json, create one and fix package dependencies
+  for (const service of services) {
+    const wattConfiguration = await findExistingConfiguration(root, service)
+
+    /* c8 ignore next 3 */
+    if (wattConfiguration) {
+      continue
+    }
+
+    const { id, packageJson, stackable } = await parseLocalFolder(resolve(root, service))
+
+    packageJson.dependencies ??= {}
+    packageJson.dependencies[stackable] = `^${version}`
+
+    const wattJson = {
+      ...defaultServiceJson,
+      $schema: `https://schemas.platformatic.dev/${stackable}/${version}.json`
+    }
+
+    logger.debug(`Detected stackable ${bold(stackable)} for service ${bold(id)}, adding to the service dependencies.`)
+    await writeFile(resolve(root, service, 'package.json'), JSON.stringify(packageJson, null, 2), 'utf-8')
+    await writeFile(resolve(root, service, 'watt.json'), JSON.stringify(wattJson, null, 2), 'utf-8')
+  }
+}
+
 async function importLocal (logger, root, configurationFile, path) {
-  const { id, url, packageJson } = await parseLocalFolder(path)
+  const { id, url, packageJson, stackable } = await parseLocalFolder(path)
 
   // Modify the configuration
   const config = JSON.parse(await readFile(configurationFile, 'utf-8'))
@@ -109,22 +168,6 @@ async function importLocal (logger, root, configurationFile, path) {
     return
   }
 
-  // Check which stackable we should use
-  const { dependencies, devDependencies } = packageJson
-
-  /* c8 ignore next 11 */
-  let stackable = '@platformatic/node'
-
-  if (dependencies?.next || devDependencies?.next) {
-    stackable = '@platformatic/next'
-  } else if (dependencies?.['@remix-run/dev'] || devDependencies?.['@remix-run/dev']) {
-    stackable = '@platformatic/remix'
-  } else if (dependencies?.vite || devDependencies?.vite) {
-    stackable = '@platformatic/vite'
-  } else if (dependencies?.astro || devDependencies?.astro) {
-    stackable = '@platformatic/astro'
-  }
-
   packageJson.dependencies ??= {}
   packageJson.dependencies[stackable] = `^${version}`
 
@@ -133,7 +176,7 @@ async function importLocal (logger, root, configurationFile, path) {
     $schema: `https://schemas.platformatic.dev/${stackable}/${version}.json`
   }
 
-  logger.debug(`Detected stackable ${bold(stackable)}, adding to the service dependencies.`)
+  logger.debug(`Detected stackable ${bold(stackable)} for service ${bold(id)}, adding to the service dependencies.`)
   await writeFile(resolve(path, 'package.json'), JSON.stringify(packageJson, null, 2), 'utf-8')
   await writeFile(resolve(path, 'watt.json'), JSON.stringify(wattJson, null, 2), 'utf-8')
 }
@@ -174,7 +217,8 @@ export async function importCommand (logger, args) {
   let rawUrl
 
   if (positionals.length < 2) {
-    rawUrl = positionals[0]
+    /* c8 ignore next */
+    return fixConfiguration(logger, positionals[0] ?? '')
   } else {
     root = positionals[0]
     rawUrl = positionals[1]
@@ -183,10 +227,6 @@ export async function importCommand (logger, args) {
   root = resolve(process.cwd(), root ?? '')
 
   const configurationFile = await findConfigurationFile(logger, root)
-
-  if (!rawUrl) {
-    logger.fatal('Please specify the resource to import.')
-  }
 
   // If the rawUrl exists as local folder, import a local folder, otherwise go for Git.
   // Try a relative from the root folder or from process.cwd()
@@ -284,7 +324,7 @@ export async function resolveCommand (logger, args) {
 
 export const help = {
   import: {
-    usage: 'import [root] <url>',
+    usage: 'import [root]',
     description: 'Imports an external resource as a service',
     args: [
       {

@@ -16,7 +16,7 @@ test('import - should import a URL', async t => {
   t.after(() => writeFile(configurationFile, originalFileContents))
 
   process.chdir(rootDir)
-  await wattpm('import', 'http://github.com/foo/bar.git')
+  await wattpm('import', rootDir, 'http://github.com/foo/bar.git')
 
   deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), {
     ...JSON.parse(originalFileContents),
@@ -215,11 +215,38 @@ for (const [name, dependency] of Object.entries(autodetect)) {
   })
 }
 
-test('import - should complain when the URL is missing', async t => {
-  const importProcess = await wattpm('import', { reject: false })
+test('import - when launched without a URL, should fix the configuration of all known services', async t => {
+  const rootDir = await resolve(fixturesDir, 'no-dependencies')
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await readFile(configurationFile, 'utf-8')
 
-  deepStrictEqual(importProcess.exitCode, 1)
-  ok(importProcess.stdout.includes('Please specify the resource to import.'))
+  t.after(() => {
+    return Promise.all([
+      safeRemove(resolve(rootDir, 'web-1/first/watt.json')),
+      safeRemove(resolve(rootDir, 'web-1/first/package.json')),
+      safeRemove(resolve(rootDir, 'web-1/second/watt.json')),
+      safeRemove(resolve(rootDir, 'web-1/second/package.json')),
+      safeRemove(resolve(rootDir, 'web-2/third/watt.json')),
+      safeRemove(resolve(rootDir, 'web-2/third/package.json'))
+    ])
+  })
+
+  await wattpm('import', rootDir)
+
+  deepStrictEqual(await readFile(configurationFile, 'utf-8'), originalFileContents)
+
+  for (const servicePath of ['web-1/first', 'web-1/second', 'web-2/third']) {
+    deepStrictEqual(JSON.parse(await readFile(resolve(rootDir, servicePath, 'package.json'), 'utf-8')), {
+      dependencies: {
+        '@platformatic/node': `^${version}`
+      }
+    })
+
+    deepStrictEqual(JSON.parse(await readFile(resolve(rootDir, servicePath, 'watt.json'), 'utf-8')), {
+      ...defaultServiceJson,
+      $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`
+    })
+  }
 })
 
 test('resolve - should clone a URL', async t => {
