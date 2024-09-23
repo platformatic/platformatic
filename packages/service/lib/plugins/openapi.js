@@ -60,6 +60,7 @@ async function setupOpenAPI (app, opts) {
     ...opts,
     ...openapi,
     routePrefix,
+    publicPath: './',
     configuration: {
       customCss: scalarTheme.theme,
     },
