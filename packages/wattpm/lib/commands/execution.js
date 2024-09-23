@@ -3,6 +3,7 @@ import { startCommand as pltStartCommand } from '@platformatic/runtime'
 import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
+import { watch } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { findConfigurationFile, getMatchingRuntimeArgs, parseArgs } from '../utils.js'
 
@@ -12,7 +13,23 @@ export async function devCommand (logger, args) {
   const root = resolve(process.cwd(), positionals[0] ?? '')
 
   const configurationFile = await findConfigurationFile(logger, root)
-  await pltStartCommand(['-c', configurationFile], true)
+  let runtime = await pltStartCommand(['-c', configurationFile], true, true)
+
+  // Add a watcher on the configurationFile so that we can eventually restart the runtime
+  try {
+    const watcher = watch(configurationFile, { persistent: false })
+    // eslint-disable-next-line no-unused-vars
+    for await (const _ of watcher) {
+      runtime.logger.info('The configuration file has changed, reloading the application ...')
+      await runtime.close()
+      runtime = await pltStartCommand(['-c', configurationFile], true, true)
+    }
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      return
+    }
+    throw err
+  }
 }
 
 export async function startCommand (logger, args) {

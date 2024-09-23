@@ -114,7 +114,7 @@ async function setupAndStartRuntime (config) {
   return { address, runtime }
 }
 
-async function startCommand (args, throwAllErrors = false) {
+async function startCommand (args, throwAllErrors = false, returnRuntime = false) {
   try {
     const config = await loadConfig(
       {
@@ -138,7 +138,7 @@ async function startCommand (args, throwAllErrors = false) {
       await runtime.close()
     })
 
-    return res
+    return returnRuntime ? runtime : res
   } catch (err) {
     if (throwAllErrors) {
       throw err

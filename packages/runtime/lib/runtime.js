@@ -147,7 +147,7 @@ class Runtime extends EventEmitter {
       this.startCollectingMetrics()
     }
 
-    this.logger.info(`Platformatic is now listening at ${this.#url}`)
+    this.#showUrl()
     return this.#url
   }
 
@@ -729,6 +729,10 @@ class Runtime extends EventEmitter {
     this.emit(status)
   }
 
+  #showUrl () {
+    this.logger.info(`Platformatic is now listening at ${this.#url}`)
+  }
+
   async #setupService (serviceConfig) {
     if (this.#status === 'stopping' || this.#status === 'closed') return
 
@@ -829,6 +833,10 @@ class Runtime extends EventEmitter {
         }
 
         this.logger?.info(`Service ${id} has been successfully reloaded ...`)
+
+        if (serviceConfig.entrypoint) {
+          this.#showUrl()
+        }
       } catch (e) {
         this.logger?.error(e)
       }

@@ -51,7 +51,7 @@ export async function waitForStart (stream) {
   for await (const log of on(stream.pipe(split2()), 'data')) {
     const parsed = JSON.parse(log.toString())
 
-    const mo = parsed.msg.match(/Platformatic is now listening at (.+)/)
+    const mo = parsed.msg?.match(/Platformatic is now listening at (.+)/)
     if (mo) {
       url = mo[1]
       break

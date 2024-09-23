@@ -8,6 +8,10 @@ app.get('/', async () => {
   return { production: process.env.NODE_ENV === 'production' }
 })
 
+app.get('/version', async () => {
+  return { version: 123 }
+})
+
 app.post('/', async request => {
   return { body: request.body }
 })

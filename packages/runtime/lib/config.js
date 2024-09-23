@@ -28,13 +28,13 @@ async function _transformConfig (configManager, args) {
   if (watchType === 'string') {
     config.watch = config.watch === 'true'
   } else if (watchType === 'undefined') {
-    const { values: production } = parseArgs({
+    const { values } = parseArgs({
       args,
       strict: false,
       options: { production: { type: 'boolean', short: 'p', default: false } }
     })
 
-    config.watch = !production
+    config.watch = !values.production
   }
 
   if (config.autoload) {
@@ -134,8 +134,8 @@ platformaticRuntime.configManagerConfig = {
     allErrors: true,
     strict: false
   },
-  async transformConfig () {
-    await _transformConfig(this)
+  async transformConfig (args) {
+    await _transformConfig(this, args)
   },
   upgrade
 }
