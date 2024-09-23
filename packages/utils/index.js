@@ -17,6 +17,7 @@ const { withResolvers } = require('./lib/promises')
 const { DestinationWritable } = require('./lib/streams/destination-writable')
 const { MessagePortWritable } = require('./lib/streams/message-port-writable')
 const { PinoWritable, createPinoWritable } = require('./lib/streams/pino-writable')
+const { checkNodeVersionForServices } = require('./lib/check-node-version')
 
 module.exports.FileWatcher = FileWatcher
 module.exports.findNearestString = findNearestString
@@ -42,3 +43,4 @@ module.exports.DestinationWritable = DestinationWritable
 module.exports.MessagePortWritable = MessagePortWritable
 module.exports.PinoWritable = PinoWritable
 module.exports.createPinoWritable = createPinoWritable
+module.exports.checkNodeVersionForServices = checkNodeVersionForServices

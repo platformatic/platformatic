@@ -31,6 +31,7 @@
     "@watchable/unpromise": "^1.0.2",
     "leven": "~3.1.0",
     "minimatch": "^8.0.4",
+    "semver": "^7.6.3",
     "undici": "^6.9.0"
   }
 }

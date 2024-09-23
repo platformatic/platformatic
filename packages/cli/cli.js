@@ -1,5 +1,5 @@
 #! /usr/bin/env node
-import { checkNodeVersionForServices } from '../../scripts/check-node-version.js'
+import { checkNodeVersionForServices } from '@platformatic/utils'
 import { command as client } from '@platformatic/client-cli'
 import {
   getRuntimesCommand,
