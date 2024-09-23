@@ -192,7 +192,11 @@
     </div>
 
     <script>
-      const currentPath = window.location.pathname
+      let currentPath = window.location.pathname
+
+      if (!currentPath.endsWith('/')) {
+        currentPath += '/'
+      }
     
       const openApiLink = document.getElementById('openapi-link')
       openApiLink.href = currentPath + 'documentation'
@@ -203,18 +207,18 @@
       const prefersLightScheme = window.matchMedia('(prefers-color-scheme: light)');
       if (prefersLightScheme.matches) {
         document.body.classList.add('light-theme');
-        document.getElementById('logo').src = './images/platformatic-logo-light.svg'
+        document.getElementById('logo').src = currentPath + 'images/platformatic-logo-light.svg'
       } else {
         document.body.classList.remove('light-theme');
-        document.getElementById('logo').src = './images/platformatic-logo-dark.svg'
+        document.getElementById('logo').src = currentPath + 'images/platformatic-logo-dark.svg'
       }
       
       const toggleLightMode = function() {
         document.body.classList.toggle('light-theme');
         if (document.body.classList.contains('light-theme')) {
-          document.getElementById('logo').src = './images/platformatic-logo-light.svg'
+          document.getElementById('logo').src = currentPath + 'images/platformatic-logo-light.svg'
         } else {
-          document.getElementById('logo').src = './images/platformatic-logo-dark.svg'
+          document.getElementById('logo').src = currentPath + 'images/platformatic-logo-dark.svg'
         }
       }
     </script>
