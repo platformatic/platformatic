@@ -216,26 +216,32 @@ export async function importCommand (logger, args) {
   let root
   let rawUrl
 
-  if (positionals.length < 2) {
+  /*
+    No arguments = Fix configuration for existing services.
+    One argument = URL
+    Two arguments = root and URL
+  */
+  if (positionals.length === 0) {
     /* c8 ignore next */
-    return fixConfiguration(logger, positionals[0] ?? '')
+    return fixConfiguration(logger, '')
+  } else if (positionals.length === 1) {
+    root = ''
+    rawUrl = positionals[0]
   } else {
     root = positionals[0]
     rawUrl = positionals[1]
   }
   /* c8 ignore next */
-  root = resolve(process.cwd(), root ?? '')
+  root = resolve(process.cwd(), root)
 
   const configurationFile = await findConfigurationFile(logger, root)
 
   // If the rawUrl exists as local folder, import a local folder, otherwise go for Git.
-  // Try a relative from the root folder or from process.cwd()
-  if (!URL.canParse(rawUrl)) {
-    const local = [resolve(root, rawUrl), resolve(process.cwd(), rawUrl)].find(c => existsSync(c))
+  // Try a relative from the root folder or from process.cwd().
+  const local = [resolve(root, rawUrl), resolve(process.cwd(), rawUrl)].find(c => existsSync(c))
 
-    if (local) {
-      return importLocal(logger, root, configurationFile, local)
-    }
+  if (local) {
+    return importLocal(logger, root, configurationFile, local)
   }
 
   return importURL(logger, root, configurationFile, values, rawUrl)
@@ -324,7 +330,7 @@ export async function resolveCommand (logger, args) {
 
 export const help = {
   import: {
-    usage: 'import [root]',
+    usage: 'import [root] [url]',
     description: 'Imports an external resource as a service',
     args: [
       {
@@ -380,11 +386,11 @@ To change the directory where a service is cloned, you can set the \`path\` prop
 
 After cloning the service, the resolve command will set the relative path to the service in the wattpm configuration file.
 
-Example of the runtime platformatic.json configuration file:
+Example of the runtime \`watt.json\` configuration file:
 
 \`\`\`json
 {
-  "$schema": "https://schemas.platformatic.dev/wattpm/2.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/wattpm/2.0.0.json",
   "entrypoint": "service-1",
   "services": [
     {
@@ -409,11 +415,20 @@ Example of the runtime platformatic.json configuration file:
 
 If not specified, the configuration will be loaded from any of the following, in the current directory.
 
+* \`watt.json\`, or
+* \`platformatic.application.json\`, or
 * \`platformatic.json\`, or
-* \`platformatic.yml\`, or 
-* \`platformatic.tml\`, or 
-* \`platformatic.json\`, or
-* \`platformatic.yml\`, or 
+* \`watt.yaml\`, or
+* \`platformatic.application.yaml\`, or
+* \`platformatic.yaml\`, or
+* \`watt.yml\`, or
+* \`platformatic.application.yml\`, or
+* \`platformatic.yml\`, or
+* \`watt.toml\`, or
+* \`platformatic.application.toml\`, or
+* \`platformatic.toml\`, or
+* \`watt.tml\`, or
+* \`platformatic.application.tml\`, or
 * \`platformatic.tml\`
 
 You can find more details about the configuration format here:

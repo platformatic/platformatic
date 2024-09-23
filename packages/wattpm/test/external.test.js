@@ -16,7 +16,7 @@ test('import - should import a URL', async t => {
   t.after(() => writeFile(configurationFile, originalFileContents))
 
   process.chdir(rootDir)
-  await wattpm('import', rootDir, 'http://github.com/foo/bar.git')
+  await wattpm('import', 'http://github.com/foo/bar.git')
 
   deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), {
     ...JSON.parse(originalFileContents),
@@ -215,7 +215,7 @@ for (const [name, dependency] of Object.entries(autodetect)) {
   })
 }
 
-test('import - when launched without a URL, should fix the configuration of all known services', async t => {
+test('import - when launched without arguments, should fix the configuration of all known services', async t => {
   const rootDir = await resolve(fixturesDir, 'no-dependencies')
   const configurationFile = resolve(rootDir, 'watt.json')
   const originalFileContents = await readFile(configurationFile, 'utf-8')
@@ -231,7 +231,8 @@ test('import - when launched without a URL, should fix the configuration of all 
     ])
   })
 
-  await wattpm('import', rootDir)
+  process.chdir(rootDir)
+  await wattpm('import')
 
   deepStrictEqual(await readFile(configurationFile, 'utf-8'), originalFileContents)
 
