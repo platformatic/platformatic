@@ -343,4 +343,69 @@ describe('Generator', () => {
     const packageJson = JSON.parse(rg.getFileObject('package.json').contents)
     assert.ok(packageJson.devDependencies.typescript)
   })
+
+  test('add services to an existing folder (web/)', async (t) => {
+    const targetDirectory = await mkdtemp(join(tmpdir(), 'platformatic-runtime-generator-'))
+    t.after(async () => {
+      await safeRemove(targetDirectory)
+    })
+
+    {
+      const rg = new RuntimeGenerator({
+        targetDirectory,
+      })
+
+      rg.setConfig({
+        autoload: 'web'
+      })
+
+      // adding one service
+      const firstService = new ServiceGenerator()
+      rg.addService(firstService, 'first-service')
+
+      // adding another service
+      const secondService = new ServiceGenerator()
+      rg.addService(secondService, 'second-service')
+
+      rg.setEntryPoint('first-service')
+
+      rg.setConfig({
+        port: 3043,
+      })
+
+      await rg.prepare()
+      await rg.writeFiles()
+    }
+
+    {
+      const rg = new RuntimeGenerator({
+        targetDirectory,
+      })
+
+      // adding another service
+      const thirdService = new ServiceGenerator()
+      rg.addService(thirdService, 'first-service')
+
+      const output = await rg.prepare()
+
+      assert.deepEqual(output, {
+        targetDirectory,
+        env: {
+          PLT_FIRST_SERVICE_TYPESCRIPT: false,
+          PLT_SECOND_SERVICE_TYPESCRIPT: 'false',
+          PLT_SERVER_HOSTNAME: '127.0.0.1',
+          PLT_SERVER_LOGGER_LEVEL: 'info',
+          PLT_MANAGEMENT_API: 'true',
+          PORT: 3043,
+        },
+      })
+
+      // should list only runtime files
+      const runtimeFileList = rg.listFiles()
+      assert.deepEqual(runtimeFileList, ['.env', '.env.sample'])
+
+      // services have correct target directory
+      assert.equal(thirdService.targetDirectory, join(rg.targetDirectory, 'web', thirdService.config.serviceName))
+    }
+  })
 })
