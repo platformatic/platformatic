@@ -1,7 +1,7 @@
 import { cleanBasePath, ensureTrailingSlash } from '@platformatic/basic'
 import { createServer } from 'node:http'
 
-export function build () {
+export function create() {
   const prefix = globalThis.platformatic?.basePath ?? ''
 
   return createServer((req, res) => {
