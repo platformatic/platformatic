@@ -73,7 +73,7 @@ export async function initCommand (logger, args) {
   // Write the package.json file
   await writeFile(resolve(root, 'package.json'), JSON.stringify(packageJson, null, 2), 'utf-8')
 
-  logger.done(`Created a wattpm application in ${bold(root)}.`)
+  logger.done(`Created a watt application in ${bold(root)}.`)
 }
 
 export const help = {
