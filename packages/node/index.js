@@ -10,6 +10,7 @@ import {
   transformConfig
 } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
+import { setupNodeHTTPTelemetry } from '@platformatic/telemetry'
 import inject from 'light-my-request'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
@@ -17,7 +18,6 @@ import { Server } from 'node:http'
 import { resolve as pathResolve, resolve } from 'node:path'
 import { pathToFileURL } from 'url'
 import { packageJson, schema } from './lib/schema.js'
-import { setupNodeHTTPTelemetry } from '@platformatic/telemetry'
 
 const validFields = [
   'main',
@@ -101,11 +101,12 @@ export class NodeStackable extends BaseStackable {
     this.#module = this.#module.default || this.#module
 
     // Deal with application
-    if (typeof this.#module.build === 'function') {
+    const factory = ['build', 'create'].find(f => typeof this.#module[f] === 'function')
+    if (factory) {
       // We have build function, this Stackable will not use HTTP unless it is the entrypoint
       serverPromise.cancel()
 
-      this.#app = await this.#module.build()
+      this.#app = await this.#module[factory]()
       this.#isFastify = isFastify(this.#app)
 
       if (this.#isFastify) {
