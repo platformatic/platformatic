@@ -21,3 +21,5 @@ export const defaultPackageJson = {
   },
   dependencies: {}
 }
+
+export const defaultServiceJson = {}

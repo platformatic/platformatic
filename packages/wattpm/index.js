@@ -1,6 +1,4 @@
-import { bgGreen, black, bold } from 'colorette'
-import pino from 'pino'
-import pinoPretty from 'pino-pretty'
+import { bold } from 'colorette'
 import { buildCommand } from './lib/commands/build.js'
 import { devCommand, reloadCommand, restartCommand, startCommand, stopCommand } from './lib/commands/execution.js'
 import { importCommand, resolveCommand } from './lib/commands/external.js'
@@ -10,25 +8,10 @@ import { injectCommand } from './lib/commands/inject.js'
 import { logsCommand } from './lib/commands/logs.js'
 import { configCommand, envCommand, psCommand, servicesCommand } from './lib/commands/management.js'
 import { version } from './lib/schema.js'
-import { overrideFatal, parseArgs, setVerbose } from './lib/utils.js'
+import { createLogger, overrideFatal, parseArgs, setVerbose } from './lib/utils.js'
 
 export async function main () {
-  const logger = pino(
-    {
-      level: 'info',
-      customLevels: {
-        done: 35
-      }
-    },
-    pinoPretty({
-      colorize: true,
-      customPrettifiers: {
-        level (logLevel, _u1, _u2, { label, labelColorized, colors }) {
-          return logLevel === 35 ? bgGreen(black(label)) : labelColorized
-        }
-      }
-    })
-  )
+  const logger = createLogger('info')
 
   overrideFatal(logger)
 

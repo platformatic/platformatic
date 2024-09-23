@@ -1,11 +1,17 @@
+import { configCandidates } from '@platformatic/basic'
 import { Store } from '@platformatic/config'
 import { platformaticRuntime } from '@platformatic/runtime'
 import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { execa } from 'execa'
+import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
-import { basename, relative, resolve } from 'node:path'
+import { basename, isAbsolute, relative, resolve, sep } from 'node:path'
+import { defaultServiceJson } from '../defaults.js'
+import { version } from '../schema.js'
 import { checkEmptyDirectory, findConfigurationFile, overrideFatal, parseArgs } from '../utils.js'
+
+const originCandidates = ['origin', 'upstream']
 
 async function parseConfiguration (logger, configurationFile) {
   const store = new Store({
@@ -27,6 +33,121 @@ async function parseConfiguration (logger, configurationFile) {
   await configManager.parse()
 
   return configManager.current
+}
+
+async function parseLocalFolder (path) {
+  // Read the package.json, if any
+  const packageJsonPath = resolve(path, 'package.json')
+  let packageJson
+  try {
+    packageJson = JSON.parse(await readFile(packageJsonPath, 'utf-8'))
+  } catch {
+    packageJson = {}
+  }
+
+  let url
+
+  // Detect if there is a git folder and eventually get the remote
+  for (const candidate of originCandidates) {
+    try {
+      const result = await execa('git', ['remote', 'get-url', candidate], { cwd: path })
+      url = result.stdout.trim()
+      break
+    } catch (e) {
+      // No-op
+    }
+  }
+
+  return { id: packageJson.name ?? basename(path), url, packageJson }
+}
+
+async function findExistingConfiguration (root, path) {
+  for (const candidate of configCandidates) {
+    const candidatePath = resolve(root, path, candidate)
+
+    if (existsSync(candidatePath)) {
+      return candidate
+    }
+  }
+}
+
+async function addService (configurationFile, id, path, url) {
+  const config = JSON.parse(await readFile(configurationFile, 'utf-8'))
+  /* c8 ignore next */
+  config.web ??= []
+  config.web.push({ id, path, url })
+
+  await writeFile(configurationFile, JSON.stringify(config, null, 2), 'utf-8')
+}
+
+async function importLocal (logger, root, configurationFile, path) {
+  const { id, url, packageJson } = await parseLocalFolder(path)
+
+  // Modify the configuration
+  const config = JSON.parse(await readFile(configurationFile, 'utf-8'))
+  let isAutoloaded = false
+  const autoLoadPath = config.autoload?.path
+  if (autoLoadPath) {
+    const relativePath = relative(root, path)
+
+    isAutoloaded = relativePath.startsWith(`${autoLoadPath}${sep}`)
+  }
+
+  if (!isAutoloaded) {
+    await addService(configurationFile, id, path, url)
+  }
+
+  // Check if there is any configuration file we recognize. If so, don't do anything
+  const wattConfiguration = await findExistingConfiguration(root, path)
+  if (wattConfiguration) {
+    /* c8 ignore next */
+    const displayPath = isAbsolute(path) ? path : relative(root, path)
+
+    logger.debug(
+      `Path ${bold(resolve(displayPath, wattConfiguration))} already exists. Skipping configuration management ...`
+    )
+    return
+  }
+
+  // Check which stackable we should use
+  const { dependencies, devDependencies } = packageJson
+
+  /* c8 ignore next 11 */
+  let stackable = '@platformatic/node'
+
+  if (dependencies?.next || devDependencies?.next) {
+    stackable = '@platformatic/next'
+  } else if (dependencies?.['@remix-run/dev'] || devDependencies?.['@remix-run/dev']) {
+    stackable = '@platformatic/remix'
+  } else if (dependencies?.vite || devDependencies?.vite) {
+    stackable = '@platformatic/vite'
+  } else if (dependencies?.astro || devDependencies?.astro) {
+    stackable = '@platformatic/astro'
+  }
+
+  packageJson.dependencies ??= {}
+  packageJson.dependencies[stackable] = `^${version}`
+
+  const wattJson = {
+    ...defaultServiceJson,
+    $schema: `https://schemas.platformatic.dev/${stackable}/${version}.json`
+  }
+
+  logger.debug(`Detected stackable ${bold(stackable)}, adding to the service dependencies.`)
+  await writeFile(resolve(path, 'package.json'), JSON.stringify(packageJson, null, 2), 'utf-8')
+  await writeFile(resolve(path, 'watt.json'), JSON.stringify(wattJson, null, 2), 'utf-8')
+}
+
+async function importURL (logger, root, configurationFile, values, rawUrl) {
+  let url = rawUrl
+  if (rawUrl.match(/^[a-z0-9-]+\/[a-z0-9-]+$/i)) {
+    url = values.http ? `https://github.com/${rawUrl}.git` : `git@github.com:${rawUrl}.git`
+  }
+
+  const service = values.id ?? basename(rawUrl, '.git')
+  const path = values.path ?? `web/${service}`
+
+  await addService(configurationFile, service, path, url)
 }
 
 export async function importCommand (logger, args) {
@@ -58,7 +179,6 @@ export async function importCommand (logger, args) {
     root = positionals[0]
     rawUrl = positionals[1]
   }
-
   /* c8 ignore next */
   root = resolve(process.cwd(), root ?? '')
 
@@ -68,20 +188,17 @@ export async function importCommand (logger, args) {
     logger.fatal('Please specify the resource to import.')
   }
 
-  let url = rawUrl
-  if (rawUrl.match(/^[a-z0-9-_.]+\/[a-z0-9-_.]+$/i)) {
-    url = values.http ? `https://github.com/${rawUrl}.git` : `git@github.com:${rawUrl}.git`
+  // If the rawUrl exists as local folder, import a local folder, otherwise go for Git.
+  // Try a relative from the root folder or from process.cwd()
+  if (!URL.canParse(rawUrl)) {
+    const local = [resolve(root, rawUrl), resolve(process.cwd(), rawUrl)].find(c => existsSync(c))
+
+    if (local) {
+      return importLocal(logger, root, configurationFile, local)
+    }
   }
 
-  const service = values.id ?? basename(rawUrl, '.git')
-  const path = values.path ?? `web/${service}`
-
-  const config = JSON.parse(await readFile(configurationFile))
-  /* c8 ignore next */
-  config.web ??= []
-  config.web.push({ id: service, path, url })
-
-  await writeFile(configurationFile, JSON.stringify(config, null, 2), 'utf-8')
+  return importURL(logger, root, configurationFile, values, rawUrl)
 }
 
 export async function resolveCommand (logger, args) {
