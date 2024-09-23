@@ -350,8 +350,6 @@ describe('Generator', () => {
       await safeRemove(targetDirectory)
     })
 
-    const logger = pino()
-
     {
       const rg = new RuntimeGenerator({
         targetDirectory,
