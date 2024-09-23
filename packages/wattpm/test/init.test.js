@@ -1,10 +1,11 @@
-import { deepStrictEqual, ok } from 'node:assert'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { test } from 'node:test'
 import { defaultConfiguration, defaultPackageJson } from '../lib/defaults.js'
 import { schema, version } from '../lib/schema.js'
 import { createTemporaryDirectory, isDirectory, wattpm } from './helper.js'
+import { gitignore } from '../lib/gitignore.js'
 
 test('init - should create a new application for NPM', async t => {
   const directory = await createTemporaryDirectory(t, 'init')
@@ -23,6 +24,8 @@ test('init - should create a new application for NPM', async t => {
     dependencies: { wattpm: `^${version}` },
     workspaces: ['web/*']
   })
+
+  strictEqual(await readFile(resolve(directory, '.gitignore'), 'utf-8'), gitignore)
 })
 
 test('init - should create a new application for PNPM', async t => {
