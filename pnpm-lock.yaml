@@ -2391,6 +2391,9 @@ importers:
       minimatch:
         specifier: ^8.0.4
         version: 8.0.4
+      semver:
+        specifier: ^7.6.3
+        version: 7.6.3
       undici:
         specifier: ^6.9.0
         version: 6.19.8
