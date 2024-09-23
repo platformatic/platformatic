@@ -8,7 +8,6 @@ module.exports = {
   ConfigurationDoesNotValidateAgainstSchemaError: createError(`${ERROR_PREFIX}_CONFIGURATION_DOES_NOT_VALIDATE_AGAINST_SCHEMA`, 'The configuration does not validate against the configuration schema'),
   SourceMissingError: createError(`${ERROR_PREFIX}_SOURCE_MISSING`, 'Source missing.'),
   InvalidPlaceholderError: createError(`${ERROR_PREFIX}_INVALID_PLACEHOLDER`, '%s is an invalid placeholder. All placeholders must be prefixed with PLT_.\nDid you mean PLT_%s?'),
-  EnvVarMissingError: createError(`${ERROR_PREFIX}_ENV_VAR_MISSING`, '%s env variable is missing.'),
   CannotParseConfigFileError: createError(`${ERROR_PREFIX}_CANNOT_PARSE_CONFIG_FILE`, 'Cannot parse config file. %s'),
   ValidationErrors: createError(`${ERROR_PREFIX}_VALIDATION_ERRORS`, 'Validation errors: %s'),
   AppMustBeAFunctionError: createError(`${ERROR_PREFIX}_APP_MUST_BE_A_FUNCTION`, 'app must be a function', undefined, TypeError),
