@@ -6,15 +6,15 @@ const parseArgs = require('minimist')
 const deepmerge = require('@fastify/deepmerge')
 const errors = require('./errors')
 
-async function loadConfig (minimistConfig, _args, app, overrides = {}, replaceEnv = true, logger) {
-  const args = parseArgs(
-    _args,
+async function loadConfig (minimistConfig, args, app, overrides = {}, replaceEnv = true, logger) {
+  const providedArgs = parseArgs(
+    args,
     deepmerge({ all: true })(
       {
         alias: {
           v: 'version',
-          c: 'config',
-        },
+          c: 'config'
+        }
       },
       minimistConfig
     )
@@ -31,22 +31,22 @@ async function loadConfig (minimistConfig, _args, app, overrides = {}, replaceEn
 
   const loaded = await store.loadConfig({
     app,
-    directory: args.config && dirname(args.config),
-    config: args.config,
-    overrides,
+    directory: providedArgs.config && dirname(providedArgs.config),
+    config: providedArgs.config,
+    overrides
   })
 
   app = loaded.app
   const configManager = loaded.configManager
 
-  const parsingResult = await configManager.parse(replaceEnv)
+  const parsingResult = await configManager.parse(replaceEnv, args)
   if (!parsingResult) {
     const err = new errors.ConfigurationDoesNotValidateAgainstSchemaError()
     err.validationErrors = configManager.validationErrors
     throw err
   }
 
-  return { configManager, args, app, configType: app.configType }
+  return { configManager, args: providedArgs, app, configType: app.configType }
 }
 
 async function loadEmptyConfig (path, app, overrides, replaceEnv, logger) {
@@ -69,7 +69,7 @@ function printConfigValidationErrors (err) {
   const tabularData = err.validationErrors.map(err => {
     return {
       path: err.path,
-      message: err.message,
+      message: err.message
     }
   })
   console.table(tabularData, ['path', 'message'])

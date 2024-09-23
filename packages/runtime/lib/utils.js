@@ -7,7 +7,7 @@ const { join } = require('node:path')
 const {
   Store,
   loadConfig: pltConfigLoadConfig,
-  loadEmptyConfig: pltConfigLoadEmptyConfig,
+  loadEmptyConfig: pltConfigLoadEmptyConfig
 } = require('@platformatic/config')
 
 const { platformaticRuntime } = require('./config')
@@ -41,16 +41,16 @@ async function loadConfig (minimistConfig, args, overrides, replaceEnv = true) {
   const id = platformaticRuntime.schema.$id.replace('@platformatic/runtime', 'wattpm')
   const schema = {
     ...platformaticRuntime.schema,
-    $id: id,
+    $id: id
   }
   const configManagerConfig = {
     ...platformaticRuntime.configManagerConfig,
-    schema,
+    schema
   }
   const wattpm = {
     ...platformaticRuntime,
     schema,
-    configManagerConfig,
+    configManagerConfig
   }
   store.add(wattpm)
   store.add(platformaticBasic)
@@ -70,5 +70,5 @@ module.exports = {
   getRuntimeTmpDir,
   getServiceUrl,
   loadConfig,
-  loadEmptyConfig,
+  loadEmptyConfig
 }

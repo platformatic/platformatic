@@ -56,17 +56,10 @@ async function importStackablePackage (opts, pkg, autodetectDescription) {
       throw e
     }
 
-    const rootFolder = relative(process.cwd(), workerData.dirname)
-
-    let errorMessage = `Unable to import package '${pkg}'. Please add it as a dependency `
-
-    if (rootFolder) {
-      errorMessage += `in the package.json file in the folder ${relative(rootFolder, opts.context.directory)}.`
-    } else {
-      errorMessage += 'in the root package.json file.'
-    }
-
-    throw new Error(errorMessage)
+    const serviceDirectory = relative(workerData.dirname, opts.context.directory)
+    throw new Error(
+      `Unable to import package '${pkg}'. Please add it as a dependency  in the package.json file in the folder ${serviceDirectory}.`
+    )
   }
 }
 

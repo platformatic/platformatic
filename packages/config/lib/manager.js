@@ -64,7 +64,7 @@ class ConfigManager extends EventEmitter {
     return async (app, opts) => {
       return fastifyPlugin(app, {
         ...opts,
-        configManager: this,
+        configManager: this
       })
     }
   }
@@ -77,7 +77,7 @@ class ConfigManager extends EventEmitter {
 
     if (opts.ignore !== undefined) {
       for (const path of opts.ignore) {
-        jsonPath.apply(config, path, (value) => {
+        jsonPath.apply(config, path, value => {
           value[skipReplaceEnv] = true
           return value
         })
@@ -85,7 +85,7 @@ class ConfigManager extends EventEmitter {
     }
 
     const escapeJSON = opts.escapeJSON ?? true
-    const env = opts.env ?? await this.#loadEnv()
+    const env = opts.env ?? (await this.#loadEnv())
 
     if (typeof config === 'object' && config !== null) {
       if (config[skipReplaceEnv]) {
@@ -95,16 +95,13 @@ class ConfigManager extends EventEmitter {
 
       for (const key of Object.keys(config)) {
         const value = config[key]
-        config[key] = await this.replaceEnv(
-          value,
-          {
-            env,
-            context: opts.context,
-            escapeJSON: false,
-            parent: config,
-            tree: [...opts.tree ?? [], config],
-          }
-        )
+        config[key] = await this.replaceEnv(value, {
+          env,
+          context: opts.context,
+          escapeJSON: false,
+          parent: config,
+          tree: [...(opts.tree ?? []), config]
+        })
       }
       return config
     }
@@ -133,7 +130,7 @@ class ConfigManager extends EventEmitter {
 
   _transformConfig () {}
 
-  async parse (replaceEnv = true) {
+  async parse (replaceEnv = true, args = []) {
     try {
       if (this.fullPath) {
         const configString = await this.load()
@@ -143,7 +140,7 @@ class ConfigManager extends EventEmitter {
           config = await this.replaceEnv(config, {
             escapeJSON: false,
             ignore: this._replaceEnvIgnore,
-            context: this.context,
+            context: this.context
           })
         }
 
@@ -211,7 +208,7 @@ class ConfigManager extends EventEmitter {
         return false
       }
 
-      await this._transformConfig()
+      await this._transformConfig(args)
       return true
     } catch (err) {
       if (err.name === 'MissingValueError') {
@@ -244,7 +241,7 @@ class ConfigManager extends EventEmitter {
           data.parentData[data.parentDataProperty] = resolved
         }
         return true
-      },
+      }
     })
     ajv.addKeyword({
       keyword: 'resolveModule',
@@ -268,17 +265,19 @@ class ConfigManager extends EventEmitter {
         } catch {
           return false
         }
-      },
+      }
     })
 
     ajv.addKeyword({
       keyword: 'typeof',
       validate: function validate (schema, value, _, data) {
         // eslint-disable-next-line valid-typeof
-        if (typeof value === schema) { return true }
+        if (typeof value === schema) {
+          return true
+        }
         validate.errors = [{ message: `"${data.parentDataProperty}" shoud be a ${schema}.`, params: data.parentData }]
         return false
-      },
+      }
     })
 
     const ajvValidate = ajv.compile(this.schema)
@@ -286,10 +285,10 @@ class ConfigManager extends EventEmitter {
     const res = ajvValidate(this.current)
     /* c8 ignore next 12 */
     if (!res) {
-      this.validationErrors = ajvValidate.errors.map((err) => {
+      this.validationErrors = ajvValidate.errors.map(err => {
         return {
           path: err.instancePath === '' ? '/' : err.instancePath,
-          message: err.message + ' ' + JSON.stringify(err.params),
+          message: err.message + ' ' + JSON.stringify(err.params)
         }
       })
       return false
@@ -301,9 +300,13 @@ class ConfigManager extends EventEmitter {
   async parseAndValidate (replaceEnv = true) {
     const validationResult = await this.parse(replaceEnv)
     if (!validationResult) {
-      throw new errors.ValidationErrors(this.validationErrors.map((err) => {
-        return err.message
-      }).join('\n'))
+      throw new errors.ValidationErrors(
+        this.validationErrors
+          .map(err => {
+            return err.message
+          })
+          .join('\n')
+      )
     }
   }
 
@@ -345,18 +348,20 @@ class ConfigManager extends EventEmitter {
         'watt.yaml',
         'watt.yml',
         'watt.toml',
-        'watt.tml',
+        'watt.tml'
       ]
     } else {
       // A config type was not provided. Search for all known types and
       // formats. Unfortunately, this means the ConfigManager needs to be
       // aware of the different application types (but that should be small).
-      return [...new Set([
-        ...this.listConfigFiles('service'),
-        ...this.listConfigFiles('db'),
-        ...this.listConfigFiles('composer'),
-        ...this.listConfigFiles('runtime'),
-      ])]
+      return [
+        ...new Set([
+          ...this.listConfigFiles('service'),
+          ...this.listConfigFiles('db'),
+          ...this.listConfigFiles('composer'),
+          ...this.listConfigFiles('runtime')
+        ])
+      ]
     }
   }
 

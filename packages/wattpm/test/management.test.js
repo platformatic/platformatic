@@ -172,42 +172,37 @@ test('config - should list configuration for an application', async t => {
 
   const configProcess = await wattpm('config', 'main')
 
-  deepStrictEqual(
-    configProcess.stdout,
-    JSON.stringify(
+  deepStrictEqual(JSON.parse(configProcess.stdout), {
+    $schema: 'https://schemas.platformatic.dev/wattpm/2.0.0.json',
+    server: {
+      hostname: '127.0.0.1'
+    },
+    logger: {
+      level: 'info'
+    },
+    entrypoint: 'main',
+    autoload: {
+      path: `${resolve(rootDir, 'web')}`,
+      exclude: []
+    },
+    restartOnError: 5000,
+    managementApi: true,
+    serviceMap: {},
+    services: [
       {
-        $schema: 'https://schemas.platformatic.dev/wattpm/2.0.0.json',
-        server: {
-          hostname: '127.0.0.1'
-        },
-        logger: {
-          level: 'info'
-        },
-        entrypoint: 'main',
-        autoload: {
-          path: `${resolve(rootDir, 'web')}`,
-          exclude: []
-        },
-        restartOnError: 5000,
-        managementApi: true,
-        serviceMap: {},
-        services: [
-          {
-            id: 'main',
-            path: serviceDir,
-            useHttp: false,
-            entrypoint: true,
-            watch: false,
-            dependencies: [],
-            localServiceEnvVars: {},
-            localUrl: 'http://main.plt.local'
-          }
-        ]
-      },
-      null,
-      2
-    )
-  )
+        id: 'main',
+        path: serviceDir,
+        config: resolve(serviceDir, 'watt.json'),
+        useHttp: false,
+        entrypoint: true,
+        watch: false,
+        dependencies: [],
+        localServiceEnvVars: {},
+        localUrl: 'http://main.plt.local'
+      }
+    ],
+    watch: false
+  })
 })
 
 test('config - should list configuration for an service', async t => {
@@ -226,28 +221,23 @@ test('config - should list configuration for an service', async t => {
 
   const configProcess = await wattpm('config', 'main', 'main')
 
-  deepStrictEqual(
-    configProcess.stdout,
-    JSON.stringify(
-      {
-        logger: {
-          level: 'info'
-        },
-        application: {
-          outputDirectory: 'dist',
-          include: ['dist'],
-          commands: {
-            install: 'npm ci --omit-dev'
-          }
-        },
-        node: {
-          absoluteUrl: false
-        }
-      },
-      null,
-      2
-    )
-  )
+  deepStrictEqual(JSON.parse(configProcess.stdout), {
+    $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.0.0-alpha.20.json',
+    logger: {
+      level: 'info'
+    },
+    application: {
+      outputDirectory: 'dist',
+      include: ['dist'],
+      commands: {
+        install: 'npm ci --omit-dev'
+      }
+    },
+    node: {
+      absoluteUrl: false,
+      main: 'index.js'
+    }
+  })
 })
 
 test('config - should complain when a runtime is not found', async t => {

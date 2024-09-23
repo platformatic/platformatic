@@ -8,8 +8,9 @@ const ConfigManager = require('@platformatic/config')
 const errors = require('./errors')
 const { schema } = require('./schema')
 const upgrade = require('./upgrade')
+const { parseArgs } = require('node:util')
 
-async function _transformConfig (configManager) {
+async function _transformConfig (configManager, args) {
   const config = configManager.current
 
   let services
@@ -21,6 +22,19 @@ async function _transformConfig (configManager) {
     services = config.web
   } else {
     services = config.services ?? []
+  }
+
+  const watchType = typeof config.watch
+  if (watchType === 'string') {
+    config.watch = config.watch === 'true'
+  } else if (watchType === 'undefined') {
+    const { values } = parseArgs({
+      args,
+      strict: false,
+      options: { production: { type: 'boolean', short: 'p', default: false } }
+    })
+
+    config.watch = !values.production
   }
 
   if (config.autoload) {
@@ -76,10 +90,13 @@ async function _transformConfig (configManager) {
       service.config = pathResolve(service.path, service.config)
     }
     service.entrypoint = service.id === config.entrypoint
-    service.watch = !!config.watch
     service.dependencies = []
     service.localServiceEnvVars = new Map()
     service.localUrl = `http://${service.id}.plt.local`
+
+    if (typeof service.watch === 'undefined') {
+      service.watch = config.watch
+    }
 
     if (service.entrypoint) {
       hasValidEntrypoint = true
@@ -117,8 +134,8 @@ platformaticRuntime.configManagerConfig = {
     allErrors: true,
     strict: false
   },
-  async transformConfig () {
-    await _transformConfig(this)
+  async transformConfig (args) {
+    await _transformConfig(this, args)
   },
   upgrade
 }
@@ -157,8 +174,8 @@ async function wrapConfigInRuntimeConfig ({ configManager, args }) {
       allErrors: true,
       strict: false
     },
-    transformConfig () {
-      return _transformConfig(this)
+    transformConfig (args) {
+      return _transformConfig(this, args)
     }
   })
 
