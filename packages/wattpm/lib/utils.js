@@ -1,15 +1,36 @@
 import { ConfigManager, loadConfig as pltConfigLoadConfig, Store } from '@platformatic/config'
 import { platformaticRuntime, buildRuntime as pltBuildRuntime } from '@platformatic/runtime'
-import { bold } from 'colorette'
+import { bgGreen, black, bold } from 'colorette'
 import { existsSync } from 'node:fs'
 import { readdir, stat } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { parseArgs as nodeParseArgs } from 'node:util'
+import pino from 'pino'
+import pinoPretty from 'pino-pretty'
 
 export let verbose = false
 
 export function setVerbose (value) {
   verbose = value
+}
+
+export function createLogger (level) {
+  return pino(
+    {
+      level,
+      customLevels: {
+        done: 35
+      }
+    },
+    pinoPretty({
+      colorize: true,
+      customPrettifiers: {
+        level (logLevel, _u1, _u2, { label, labelColorized, colors }) {
+          return logLevel === 35 ? bgGreen(black(label)) : labelColorized
+        }
+      }
+    })
+  )
 }
 
 export function overrideFatal (logger) {

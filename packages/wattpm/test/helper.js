@@ -2,7 +2,7 @@ import { createDirectory, safeRemove } from '@platformatic/utils'
 import { execa } from 'execa'
 import { on } from 'node:events'
 import { existsSync } from 'node:fs'
-import { stat, symlink } from 'node:fs/promises'
+import { mkdir, stat, symlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -19,6 +19,7 @@ export async function createTemporaryDirectory (t, prefix) {
     await safeRemove(directory)
   })
 
+  await mkdir(directory)
   return directory
 }
 
@@ -61,8 +62,12 @@ export async function waitForStart (stream) {
   return url
 }
 
-export function wattpm (...args) {
+export function executeCommand (cmd, ...args) {
   const options = typeof args.at(-1) === 'object' ? args.pop() : {}
 
-  return execa('node', [cliPath, ...args], { env: { NO_COLOR: 'true' }, ...options })
+  return execa(cmd, args, { env: { NO_COLOR: 'true' }, ...options })
+}
+
+export function wattpm (...args) {
+  return executeCommand('node', cliPath, ...args)
 }

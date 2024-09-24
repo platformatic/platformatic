@@ -30,13 +30,14 @@ test('init - should create a new application for NPM', async t => {
 
 test('init - should create a new application for PNPM', async t => {
   const directory = await createTemporaryDirectory(t, 'init')
-  await wattpm('init', '-p', 'pnpm', directory)
+  await wattpm('init', '-p', 'pnpm', directory, 'entrypoint')
 
   ok(isDirectory(resolve(directory, 'web')))
 
   deepStrictEqual(JSON.parse(await readFile(resolve(directory, 'watt.json'), 'utf-8')), {
     $schema: schema.$id,
-    ...defaultConfiguration
+    ...defaultConfiguration,
+    entrypoint: 'entrypoint'
   })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(directory, 'package.json'), 'utf-8')), {

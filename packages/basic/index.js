@@ -8,7 +8,8 @@ import { packageJson, schema } from './lib/schema.js'
 import { importFile } from './lib/utils.js'
 
 const importStackablePackageMarker = '__pltImportStackablePackage.js'
-const configCandidates = [
+
+export const configCandidates = [
   'platformatic.application.json',
   'platformatic.json',
   'watt.json',
@@ -23,7 +24,7 @@ const configCandidates = [
   'watt.toml',
   'platformatic.application.tml',
   'platformatic.tml',
-  'watt.tml',
+  'watt.tml'
 ]
 
 function isImportFailedError (error, pkg) {
@@ -107,7 +108,10 @@ async function buildStackable (opts) {
   const imported = await importStackablePackage(opts, toImport, autodetectDescription)
 
   const serviceRoot = relative(process.cwd(), opts.context.directory)
-  if (!hadConfig && !(existsSync(resolve(serviceRoot, 'platformatic.json') || existsSync(resolve(serviceRoot, 'watt.json'))))) {
+  if (
+    !hadConfig &&
+    !existsSync(resolve(serviceRoot, 'platformatic.json') || existsSync(resolve(serviceRoot, 'watt.json')))
+  ) {
     const logger = pino({
       level: opts.context.serverConfig?.logger?.level ?? 'warn',
       name: opts.context.serviceId

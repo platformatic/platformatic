@@ -16,20 +16,14 @@ export async function devCommand (logger, args) {
   let runtime = await pltStartCommand(['-c', configurationFile], true, true)
 
   // Add a watcher on the configurationFile so that we can eventually restart the runtime
-  try {
-    const watcher = watch(configurationFile, { persistent: false })
-    // eslint-disable-next-line no-unused-vars
-    for await (const _ of watcher) {
-      runtime.logger.info('The configuration file has changed, reloading the application ...')
-      await runtime.close()
-      runtime = await pltStartCommand(['-c', configurationFile], true, true)
-    }
-  } catch (err) {
-    if (err.name === 'AbortError') {
-      return
-    }
-    throw err
+  const watcher = watch(configurationFile, { persistent: false })
+  // eslint-disable-next-line no-unused-vars
+  for await (const _ of watcher) {
+    runtime.logger.info('The configuration file has changed, reloading the application ...')
+    await runtime.close()
+    runtime = await pltStartCommand(['-c', configurationFile], true, true)
   }
+  /* c8 ignore next */
 }
 
 export async function startCommand (logger, args) {

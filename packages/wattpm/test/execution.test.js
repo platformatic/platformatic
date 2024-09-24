@@ -308,7 +308,7 @@ test('reload - should reload an application', async t => {
   process.kill(parseInt(mo[1]), 'SIGINT')
 })
 
-test('reload -should complain when a runtime is not found', async t => {
+test('reload - should complain when a runtime is not found', async t => {
   const logsProcess = await wattpm('reload', 'p-' + Date.now.toString(), { reject: false })
 
   deepStrictEqual(logsProcess.exitCode, 1)

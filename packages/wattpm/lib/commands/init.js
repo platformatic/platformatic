@@ -55,7 +55,7 @@ export async function initCommand (logger, args) {
 
   await writeFile(
     configurationFile,
-    JSON.stringify({ $schema: schema.$id, ...configManager.current }, null, 2),
+    JSON.stringify({ $schema: schema.$id, ...configManager.current, entrypoint: positionals[1] ?? '' }, null, 2),
     'utf-8'
   )
 
@@ -82,12 +82,16 @@ export async function initCommand (logger, args) {
 
 export const help = {
   init: {
-    usage: 'init [root]',
+    usage: 'init [root] [entrypoint]',
     description: 'Creates a new application',
     args: [
       {
         name: 'root',
         description: 'The directory containing the application (default is the current directory)'
+      },
+      {
+        name: 'entrypoint',
+        description: 'The name of the entrypoint service'
       }
     ]
   }
