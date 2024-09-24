@@ -135,7 +135,7 @@ Run the following command in your project directory to start your Watt server:
 npm start
 ```
 
-This will interanlly run `wattpm start` and start your Watt server.
+This will internally run `wattpm start` and start your Watt server.
 
 If you want to have have a "watch mode" to automatically restart the server when you make changes, you can run:
 
