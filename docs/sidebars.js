@@ -69,7 +69,7 @@ const sidebars = {
       collapsed: true,
       items: [
         'watt/overview',
-        'watt/commands',
+        'watt/reference',
       ],
     },
     {

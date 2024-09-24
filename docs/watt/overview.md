@@ -19,6 +19,14 @@ Some are run inside worker threads, allowing faster startups and lower overhead,
 - **Integrated OpenTelemetry tracing**: Gain deep insights into your app’s performance with built-in OpenTelemetry, enabling real-time monitoring of distributed services and pinpointing dependencies and bottlenecks.
 - **Unified logging with Pino**: Implement a cohesive logging strategy using Pino, ensuring structured logging across all your Node.js apps and enabling you to track performance seamlessly.
 
+## Installation
+
+To install Watt, run the following command:
+
+```bash
+npm install -g wattpm
+```
+
 ## Getting started
 
 For more details, see the [reference](./reference.md).
