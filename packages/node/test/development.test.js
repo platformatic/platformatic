@@ -265,3 +265,39 @@ test('should detect and start a Fastify with a build function in development mod
 test('should detect and start a Fastify with a build function in development mode when exposed in a composer by autodetecting the prefix', async t => {
   await verifyComposerAutodetectPrefix(t, 'fastify-with-build-composer-autodetect-prefix')
 })
+
+// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
+test('should detect and start a Koa with no build function in development mode when standalone', async t => {
+  await verifyStandalone(t, 'koa-no-build-standalone')
+})
+
+// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
+test('should detect and start a Koa with no build function in development mode when exposed in a composer with a prefix', async t => {
+  await verifyComposerWithPrefix(t, 'koa-no-build-composer-with-prefix')
+})
+
+// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
+test('should detect and start a Koa with no build function in development mode when exposed in a composer without a prefix', async t => {
+  await verifyComposerWithoutPrefix(t, 'koa-no-build-composer-without-prefix')
+})
+
+// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
+test('should detect and start a Koa with no build function in development mode when exposed in a composer by autodetecting the prefix', async t => {
+  await verifyComposerAutodetectPrefix(t, 'koa-no-build-composer-autodetect-prefix')
+})
+
+test('should detect and start a Koa with a build function in development mode when standalone', async t => {
+  await verifyStandalone(t, 'koa-with-build-standalone')
+})
+
+test('should detect and start a Koa with a build function in development mode when exposed in a composer with a prefix', async t => {
+  await verifyComposerWithPrefix(t, 'koa-with-build-composer-with-prefix')
+})
+
+test('should detect and start a Koa with a build function in development mode when exposed in a composer without a prefix', async t => {
+  await verifyComposerWithoutPrefix(t, 'koa-with-build-composer-without-prefix')
+})
+
+test('should detect and start a Koa with a build function in development mode when exposed in a composer by autodetecting the prefix', async t => {
+  await verifyComposerAutodetectPrefix(t, 'koa-with-build-composer-autodetect-prefix')
+})

@@ -40,12 +40,17 @@ function isFastify (app) {
   return Object.getOwnPropertySymbols(app).some(s => s.description === 'fastify.state')
 }
 
+function isKoa (app) {
+  return typeof app.callback === 'function'
+}
+
 export class NodeStackable extends BaseStackable {
   #module
   #app
   #server
   #dispatcher
   #isFastify
+  #isKoa
 
   constructor (options, root, configManager) {
     super('nodejs', packageJson.version, options, root, configManager)
@@ -102,15 +107,19 @@ export class NodeStackable extends BaseStackable {
 
     // Deal with application
     const factory = ['build', 'create'].find(f => typeof this.#module[f] === 'function')
+
     if (factory) {
       // We have build function, this Stackable will not use HTTP unless it is the entrypoint
       serverPromise.cancel()
 
       this.#app = await this.#module[factory]()
       this.#isFastify = isFastify(this.#app)
+      this.#isKoa = isKoa(this.#app)
 
       if (this.#isFastify) {
         await this.#app.ready()
+      } else if (this.#isKoa) {
+        this.#dispatcher = this.#app.callback()
       } else if (this.#app instanceof Server) {
         this.#server = this.#app
         this.#dispatcher = this.#server.listeners('request')[0]
@@ -230,7 +239,7 @@ export class NodeStackable extends BaseStackable {
       await this.#app.listen({ host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 })
       this.url = getServerUrl(this.#app.server)
     } else {
-      // Express / Node
+      // Express / Node / Koa
       this.#server = await new Promise((resolve, reject) => {
         return this.#app
           .listen({ host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }, function () {
