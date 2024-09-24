@@ -4,11 +4,6 @@
   "workspaces": [
     "services/*"
   ],
-  "devDependencies": {
-    "fastify": "^4.26.2",
-    "borp": "^0.17.0",
-    "typescript": "^5.5.4"
-  },
   "dependencies": {
     "@platformatic/runtime": "^2.0.0-alpha.6",
     "platformatic": "^2.0.0-alpha.6",
