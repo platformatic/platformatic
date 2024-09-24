@@ -20,6 +20,7 @@ module.exports = {
   ConfigPathMustBeStringError: createError(`${ERROR_PREFIX}_CONFIG_PATH_MUST_BE_STRING`, 'Config path must be a string'),
   NoConfigFileFoundError: createError(`${ERROR_PREFIX}_NO_CONFIG_FILE_FOUND`, "No config file found for service '%s'"),
   InvalidEntrypointError: createError(`${ERROR_PREFIX}_INVALID_ENTRYPOINT`, "Invalid entrypoint: '%s' does not exist"),
+  MissingEntrypointError: createError(`${ERROR_PREFIX}_MISSING_ENTRYPOINT`, 'Missing application entrypoint.'),
   InvalidServicesWithWebError: createError(`${ERROR_PREFIX}_INVALID_SERVICES_WITH_WEB`, 'The "services" property cannot be used when the "web" property is also defined'),
   MissingDependencyError: createError(`${ERROR_PREFIX}_MISSING_DEPENDENCY`, 'Missing dependency: "%s"'),
   InspectAndInspectBrkError: createError(`${ERROR_PREFIX}_INSPECT_AND_INSPECT_BRK`, '--inspect and --inspect-brk cannot be used together'),

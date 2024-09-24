@@ -600,20 +600,17 @@
   "anyOf": [
     {
       "required": [
-        "autoload",
-        "entrypoint"
+        "autoload"
       ]
     },
     {
       "required": [
-        "services",
-        "entrypoint"
+        "services"
       ]
     },
     {
       "required": [
-        "web",
-        "entrypoint"
+        "web"
       ]
     }
   ],

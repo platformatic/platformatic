@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
+  "services": [
+    {
+      "id": "main",
+      "path": "../monorepo/serviceAppWithLogger",
+      "config": "platformatic.service.json"
+    },
+    {
+      "id": "composer-1",
+      "path": "../no-entrypoint-composer",
+      "config": "platformatic.composer.json"
+    },
+    {
+      "id": "composer-2",
+      "path": "../no-entrypoint-composer",
+      "config": "platformatic.composer.json"
+    }
+  ],
+  "logger": {
+    "level": "error"
+  }
+}

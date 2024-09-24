@@ -6,7 +6,6 @@ export const defaultConfiguration = {
   logger: {
     level: 'info'
   },
-  entrypoint: '',
   autoload: {
     path: 'web'
   }
