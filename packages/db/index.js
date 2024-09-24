@@ -142,3 +142,4 @@ module.exports.errors = errors
 module.exports.createConnectionPool = createConnectionPool
 module.exports.Generator = require('./lib/generator/db-generator').Generator
 module.exports.buildStackable = buildDbStackable
+module.exports.DbStackable = DbStackable
