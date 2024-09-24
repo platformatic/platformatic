@@ -60,24 +60,18 @@ export async function logsCommand (logger, args) {
 export const help = {
   logs: {
     usage: 'logs [id] [service]',
-    description: 'Streams logs from the Platformatic application',
+    description: 'Streams logs from a running application or service',
     args: [
       {
         name: 'id',
-        description: 'The process ID or the name of the application'
+        description:
+          'The process ID or the name of the application (it can be omitted only if there is a single application running)'
       },
       {
         name: 'service',
         description: 'The service name'
       }
     ],
-    footer: `
-If service is not specified, the command will stream logs from all services.
-
-The \`logs\` command uses the Platformatic Runtime Management API. To enable it
-set the \`managementApi\` option to \`true\` in the wattpm configuration file.
-
-To get the list of runtimes with enabled management API use the \`wattpm ps\` command.    
-`
+    footer: 'If service is not specified, the command will stream logs from all services.'
   }
 }

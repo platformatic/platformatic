@@ -43,11 +43,11 @@ export async function buildCommand (logger, args) {
 export const help = {
   build: {
     usage: 'build [root]',
-    description: 'Builds all services of a Platformatic application',
+    description: 'Builds all services of an application',
     args: [
       {
         name: 'root',
-        description: 'The directory containing the application (default is the current directory)'
+        description: 'The directory containing the application (the default is the current directory)'
       }
     ]
   }

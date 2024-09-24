@@ -118,7 +118,7 @@ export const help = {
     args: [
       {
         name: 'root',
-        description: 'The directory containing the application (default is the current directory)'
+        description: 'The directory containing the application (the default is the current directory)'
       }
     ]
   },
@@ -128,37 +128,40 @@ export const help = {
     args: [
       {
         name: 'root',
-        description: 'The directory containing the application (default is the current directory)'
+        description: 'The directory containing the application (the default is the current directory)'
       }
     ]
   },
   stop: {
     usage: 'stop [id]',
-    description: 'Stops an application',
+    description: 'Stops a running application',
     args: [
       {
         name: 'id',
-        description: 'The process ID or the name of the application'
+        description:
+          'The process ID or the name of the application (it can be omitted only if there is a single application running)'
       }
     ]
   },
   restart: {
     usage: 'restart [id]',
-    description: 'Restarts all services of an application',
+    description: 'Restarts all services of a running application',
     args: [
       {
         name: 'id',
-        description: 'The process ID or the name of the application'
+        description:
+          'The process ID or the name of the application (it can be omitted only if there is a single application running)'
       }
     ]
   },
   reload: {
     usage: 'reload [id]',
-    description: 'Reloads an application',
+    description: 'Reloads a running application',
     args: [
       {
         name: 'id',
-        description: 'The process ID or the name of the application'
+        description:
+          'The process ID or the name of the application (it can be omitted only if there is a single application running)'
       }
     ]
   }

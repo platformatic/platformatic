@@ -4,9 +4,9 @@ import { bold } from 'colorette'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { defaultConfiguration, defaultPackageJson } from '../defaults.js'
+import { gitignore } from '../gitignore.js'
 import { schema, version } from '../schema.js'
 import { checkEmptyDirectory, parseArgs, verbose } from '../utils.js'
-import { gitignore } from '../gitignore.js'
 
 export async function initCommand (logger, args) {
   const {
@@ -87,7 +87,7 @@ export const help = {
     args: [
       {
         name: 'root',
-        description: 'The directory containing the application (default is the current directory)'
+        description: 'The directory where to create the application (the default is the current directory)'
       },
       {
         name: 'entrypoint',

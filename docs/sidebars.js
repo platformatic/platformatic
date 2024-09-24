@@ -65,6 +65,15 @@ const sidebars = {
     },
     {
       type: 'category',
+      label: 'Watt',
+      collapsed: true,
+      items: [
+        'watt/overview',
+        'watt/commands',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Platformatic Service',
       collapsed: true,
       items: [
