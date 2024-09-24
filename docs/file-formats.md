@@ -2,6 +2,8 @@
 
 Platformatic will automatically detect and load configuration files found in the current working directory. The supported file names include:
 
+- `watt.json`
+- `watt.json5`
 - `platformatic.json`
 - `platformatic.json5`
 - `platformatic.yml` or `platformatic.yaml`

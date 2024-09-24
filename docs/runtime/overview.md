@@ -13,9 +13,8 @@ Platformatic Runtime provides a unified environment for running multiple Platfor
 
 - **Command-line interface**: [`platformatic runtime`](../cli.md#runtime) provides a powerful and flexible CLI for managing your runtime environment.
 - **Programmatic start**: Start Platformatic Runtime [programmatically](../runtime/programmatic.md) in tests or other applications for enhanced integration.
-- **Monorepo support**: Efficiently manage applications within a monorepo setup. 
-- **Interservice communication**:  Enable [interservice communication](#interservice-communication) using private message passing to streamline service interactions.
-
+- **Monorepo support**: Efficiently manage applications within a monorepo setup.
+- **Interservice communication**: Enable [interservice communication](#interservice-communication) using private message passing to streamline service interactions.
 
 ## Standalone usage
 
@@ -27,7 +26,7 @@ The following configuration file can be used to start a new Platformatic Runtime
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
   "autoload": {
     "path": "./packages",
     "exclude": ["docs"]
@@ -43,7 +42,7 @@ Platformatic Runtime streamlines the compilation of all services built on TypeSc
 ## Platformatic Runtime context
 
 Every Platformatic Runtime application can be run as a standalone application
-or as a Platformatic Runtime service. Runtime service enables certain compile and runtime optimizations, enhancing performance and resource management. You can see the [interservice communication](#interservice-communication) for more features. 
+or as a Platformatic Runtime service. Runtime service enables certain compile and runtime optimizations, enhancing performance and resource management. You can see the [interservice communication](#interservice-communication) for more features.
 
 ## Interservice communication
 
@@ -53,14 +52,23 @@ port and can be reached from outside the runtime.
 
 Within the runtime, all interservice communication happens by injecting HTTP
 requests into the running servers, without binding them to ports. This injection
-is handled by [`fastify-undici-dispatcher`](https://www.npmjs.com/package/fastify-undici-dispatcher).
+is handled by [`fastify-undici-dispatcher`](https://www.npmjs.com/package/fastify-undici-dispatcher) and [`undici-thread-interceptor`](https://www.npmjs.com/package/undici-thread-interceptor).
 
 Each microservice is assigned an internal domain name based on its unique ID.
 For example, a microservice with the ID `awesome` is given the internal domain
-of `http://awesome.plt.local`. The `fastify-undici-dispatcher` module maps that
+of `http://awesome.plt.local`. The dispatcher packages module map that
 domain to the Fastify server running the `awesome` microservice. Any Node.js
 APIs based on Undici, such as `fetch()`, will then automatically route requests
 addressed to `awesome.plt.local` to the corresponding Fastify server.
+
+## Threading and networking model
+
+By default, each service is executed in a separate and dedicated [Node.js Worker Thread](https://nodejs.org/dist/latest/docs/api/worker_threads.html) within the same process.
+This means that `worker.isMainThread` will return `false` and there are some limitations like the inability to use `process.chdir`.
+
+The service application runtime configuration is accessible via the `workerData` and `globalThis.platformatic` objects, which allows to bypass such limitations.
+
+If an application requires to be executed in a separate process, Platformatic Runtime will take care of setting `globalThis.platformatic` and the interservice communication automatically.
 
 # TrustProxy
 
