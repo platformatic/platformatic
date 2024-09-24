@@ -2,12 +2,14 @@ import { bold, isColorSupported } from 'colorette'
 import { logo } from '../logo.js'
 
 async function loadCommands () {
-  const commands = { ...help }
+  const commands = {}
 
   for (const file of ['init', 'build', 'execution', 'management', 'logs', 'inject', 'external']) {
     const category = await import(`./${file}.js`)
     Object.assign(commands, category.help)
   }
+
+  Object.assign(commands, help)
 
   return commands
 }
@@ -94,6 +96,6 @@ export async function helpCommand (logger, args) {
 }
 
 export const help = {
-  help: { usage: 'help [command]', description: 'Show help about a command or the application' },
-  version: { usage: 'version', description: 'Show wattpm version' }
+  help: { usage: 'help [command]', description: 'Show help about Watt or one of its commands' },
+  version: { usage: 'version', description: 'Show current Watt version' }
 }

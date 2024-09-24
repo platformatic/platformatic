@@ -193,26 +193,22 @@ export async function configCommand (logger, args) {
 export const help = {
   ps: {
     usage: 'ps',
-    description: 'Lists all running Platformatic applications',
-    footer: `
-The \`ps\` command uses the Platformatic Runtime Management API. To enable it
-set the \`managementApi\` option to \`true\` in the wattpm configuration file.
-
-    `
+    description: 'Lists all running applications'
   },
   services: {
     usage: 'services [id]',
-    description: 'Lists all services of a Platformatic application',
+    description: 'Lists all services of a running application',
     args: [
       {
         name: 'id',
-        description: 'The process ID or the name of the application'
+        description:
+          'The process ID or the name of the application (it can be omitted only if there is a single application running)'
       }
     ]
   },
   env: {
     usage: 'env [id] [service]',
-    description: 'Show the environment variables of a Platformatic application or a service',
+    description: 'Show the environment variables of a running application or one of its services',
     options: [
       {
         usage: '-t, --table',
@@ -222,7 +218,8 @@ set the \`managementApi\` option to \`true\` in the wattpm configuration file.
     args: [
       {
         name: 'id',
-        description: 'The process ID or the name of the application'
+        description:
+          'The process ID or the name of the application (it can be omitted only if there is a single application running)'
       },
       {
         name: 'service',
@@ -232,11 +229,12 @@ set the \`managementApi\` option to \`true\` in the wattpm configuration file.
   },
   config: {
     usage: 'config [id] [service]',
-    description: 'Show the configuration of a Platformatic application or a service',
+    description: 'Show the configuration of a running application or one of its services',
     args: [
       {
         name: 'id',
-        description: 'The process ID or the name of the application'
+        description:
+          'The process ID or the name of the application (it can be omitted only if there is a single application running)'
       },
       {
         name: 'service',

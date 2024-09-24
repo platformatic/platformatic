@@ -335,7 +335,7 @@ export const help = {
     args: [
       {
         name: 'root',
-        description: 'The directory containing the application (default is the current directory)'
+        description: 'The directory containing the application (the default is the current directory)'
       },
       {
         name: 'url',
@@ -344,12 +344,12 @@ export const help = {
     ],
     options: [
       {
-        usage: '-i, --id',
-        description: 'The id of the service (default is the basename of the URL)'
+        usage: '-i, --id <value>',
+        description: 'The id of the service (the default is the basename of the URL)'
       },
       {
-        usage: '-p, --path',
-        description: 'The path where to import the service (default is the service id)'
+        usage: '-p, --path <value>',
+        description: 'The path where to import the service (the default is the service id)'
       },
       {
         usage: '-h, --http',
@@ -363,16 +363,16 @@ export const help = {
     args: [
       {
         name: 'root',
-        description: 'The directory containing the application (default is the current directory)'
+        description: 'The directory containing the application (the default is the current directory)'
       }
     ],
     options: [
       {
-        usage: '-u, --username',
+        usage: '-u, --username <value>',
         description: 'The username to use for HTTP URLs'
       },
       {
-        usage: '-p, --password',
+        usage: '-p, --password <value>',
         description: 'The password to use for HTTP URLs'
       },
       {
