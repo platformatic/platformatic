@@ -152,6 +152,7 @@ const sidebars = {
   Learn: [
     'learn/overview',
     'getting-started/quick-start-guide',
+    'getting-started/quick-start-watt',
     {
       type: 'category',
       label: 'Beginner Tutorials',

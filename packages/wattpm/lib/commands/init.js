@@ -77,7 +77,7 @@ export async function initCommand (logger, args) {
   // Write the .gitignore file
   await writeFile(resolve(root, '.gitignore'), gitignore, 'utf-8')
 
-  logger.done(`Created a wattpm application in ${bold(root)}.`)
+  logger.done(`Created a watt application in ${bold(root)}.`)
 }
 
 export const help = {
