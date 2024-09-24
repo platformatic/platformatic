@@ -9,7 +9,7 @@ of environment variables as setting values with [configuration placeholders](#co
 
 The Platformatic CLI automatically detects and loads configuration files found in the current working directory with the file names listed [here](../file-formats.md#configuration-files).
 
-Alternatively, you can specify a configuration file path using the [`--config` option](../cli.md#db) for most `platformatic runtime` CLI commands. The configuration examples in this reference use the JSON format.
+Alternatively, you can specify a configuration file path using the `--config` option for most `platformatic runtime` CLI commands. The configuration examples in this reference use the JSON format.
 
 ### Supported File Formats
 
@@ -339,6 +339,9 @@ The value for any configuration setting can be replaced with an environment vari
 
 Platformatic will replace the placeholders in this example with the environment
 variables of the same name.
+
+If no environment variable is found, then the placeholder will be replaced with an empty string.
+Note that this can lead to a schema validation error.
 
 ### Setting Environment Variables
 

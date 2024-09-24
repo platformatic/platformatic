@@ -9,9 +9,9 @@ use of environment variables as setting values with [environment variable placeh
 
 The Platformatic CLI automatically detects and loads configuration files found in the current working directory with the file names listed [here](../file-formats.md#configuration-files).
 
-Alternatively, you can use the [`--config` option](../cli.md#db) to specify a configuration file path for most `platformatic runtime` CLI commands. The configuration examples in this reference use the JSON format.
+Alternatively, you can use the `--config` option to specify a configuration file path for most `platformatic runtime` CLI commands. The configuration examples in this reference use the JSON format.
 
-## Supported File Formats 
+## Supported File Formats
 
 For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page.
 
@@ -32,24 +32,22 @@ The `autoload` configuration is intended to be used with monorepo applications.
 `autoload` is an object with the following settings:
 
 - **`path`** (**required**, `string`) - The path to a directory containing the
-microservices to load. In a traditional monorepo application, this directory is
-typically named `packages`.
+  microservices to load. In a traditional monorepo application, this directory is
+  typically named `packages`.
 - **`exclude`** (`array` of `string`s) - Child directories inside `path` that
-should not be processed.
+  should not be processed.
 - **`mappings`** (`object`) - Each microservice is given an ID and is expected
-to have a Platformatic configuration file. By default, the ID is the
-microservice's directory name, and the configuration file is expected to be a
-well-known Platformatic configuration file. `mappings` can be used to override
-these default values.
+  to have a Platformatic configuration file. By default, the ID is the
+  microservice's directory name, and the configuration file is expected to be a
+  well-known Platformatic configuration file. `mappings` can be used to override
+  these default values.
   - **`id`** (**required**, `string`) - The overridden ID. This becomes the new
-  microservice ID.
-  - **`config` (`string`) - The overridden configuration file
-  name. This is the file that will be used when starting the microservice.
+    microservice ID.
+  - \*\*`config` (`string`) - The overridden configuration file
+    name. This is the file that will be used when starting the microservice.
   - **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
-  on `127.0.0.1`, and exposed to the other services via that port and on default, it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
-
-If the microservice exports a `getBootstrapDependencies` function, then it will be used
-to build a services dependencies graph and services will be reordered and started accordingly.
+    on `127.0.0.1`, and exposed to the other services via that port and on default,
+    it is set to `false`.
 
 ### `preload`
 
@@ -64,17 +62,17 @@ the app worker thread.
 runtime. Each service object supports the following settings:
 
 - **`id`** (**required**, `string`) - A unique identifier for the microservice.
-When working with the Platformatic Composer, this value corresponds to the `id`
-property of each object in the `services` section of the config file. When
-working with client objects, this corresponds to the optional `serviceId`
-property or the `name` field in the client's `package.json` file if a
-`serviceId` is not explicitly provided.
+  When working with the Platformatic Composer, this value corresponds to the `id`
+  property of each object in the `services` section of the config file. When
+  working with client objects, this corresponds to the optional `serviceId`
+  property or the `name` field in the client's `package.json` file if a
+  `serviceId` is not explicitly provided.
 - **`path`** (**required**, `string`) - The path to the directory containing
-the microservice.
+  the microservice.
 - **`config`** (`string`) - The configuration file used to start
-the microservice.
+  the microservice.
 - **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
-on `127.0.0.1`, and exposed to the other services via that port, on default it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
+  on `127.0.0.1`, and exposed to the other services via that port, on default it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
 
 If this property is present, then the services will not be reordered according to the
 `getBootstrapDependencies` function and they will be started in the order they are defined in
@@ -102,47 +100,64 @@ While hot reloading is useful for development, it is not recommended for use in 
 
 ### `restartOnError`
 
-The number of milliseconds to wait before attempting to restart a service that unexpectedly exit. 
+The number of milliseconds to wait before attempting to restart a service that unexpectedly exit.
 
 If not specified or set to `true`, the default value is `5000`, set to `0` or `false` to disable.
 
 ### `telemetry`
+
 [Open Telemetry](https://opentelemetry.io/) is optionally supported with these settings:
 
 - **`serviceName`** (**required**, `string`) — Name of the service as will be reported in open telemetry. In the `runtime` case, the name of the services as reported in traces is `${serviceName}-${serviceId}`, where `serviceId` is the id of the service in the runtime.
 - **`version`** (`string`) — Optional version (free form)
-- **`skip`** (`array`). Optional list of operations to skip when exporting telemetry defined `object` with properties: 
-    - `method`: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE
-    - `path`. e.g.: `/documentation/json` 
+- **`skip`** (`array`). Optional list of operations to skip when exporting telemetry defined `object` with properties:
+  - `method`: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE
+  - `path`. e.g.: `/documentation/json`
 - **`exporter`** (`object` or `array`) — Exporter configuration. If not defined, the exporter defaults to `console`. If an array of objects is configured, every object must be a valid exporter object. The exporter object has the following properties:
-    - **`type`** (`string`) — Exporter type. Supported values are `console`, `otlp`, `zipkin` and `memory` (default: `console`). `memory` is only supported for testing purposes. 
-    - **`options`** (`object`) — These options are supported:
-        - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console` and `memory` exporters.
-        - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console` and `memory` exporters.
+  - **`type`** (`string`) — Exporter type. Supported values are `console`, `otlp`, `zipkin` and `memory` (default: `console`). `memory` is only supported for testing purposes.
+  - **`options`** (`object`) — These options are supported:
+    - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console` and `memory` exporters.
+    - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console` and `memory` exporters.
 
-:::important        
+:::important  
 OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). See the full list [here](https://opentelemetry.io/ecosystem/vendors/).
 :::
 
-  ```json title="Example JSON object"
-  {
-    "telemetry": {
-        "serviceName": "test-service",
-        "exporter": {
-            "type": "otlp",
-            "options": {
-                "url": "http://localhost:4318/v1/traces"
-            }
-        }
+```json title="Example JSON object"
+{
+  "telemetry": {
+    "serviceName": "test-service",
+    "exporter": {
+      "type": "otlp",
+      "options": {
+        "url": "http://localhost:4318/v1/traces"
+      }
     }
   }
-  ```
+}
+```
 
 ### `server`
 
-This configures the Platformatic Runtime entrypoint `server`. If the entrypoint has also a `server` configured, when the runtime is started, this configuration is used. 
+This configures the Platformatic Runtime entrypoint `server`.
 
-See the Platformatic [Service server documentation](../service/configuration.md#server) for more details. 
+If the entrypoint has also a `server` configured, then the runtime settings override the service settings.
+
+An object with the following settings:
+
+- **`hostname`** — Hostname where Platformatic Service server will listen for connections.
+- **`port`** — Port where Platformatic Service server will listen for connections.
+- **`http2`** (`boolean`) — Enables HTTP/2 support. Default: `false`.
+- **`https`** (`object`) - Configuration for HTTPS supporting the following options. Requires `https`.
+  - `allowHTTP1` (`boolean`) - If `true`, the server will also accept HTTP/1.1 connections when `http2` is enabled. Default: `false`.
+  - `key` (**required**, `string`, `object`, or `array`) - If `key` is a string, it specifies the private key to be used. If `key` is an object, it must have a `path` property specifying the private key file. Multiple keys are supported by passing an array of keys.
+  - `cert` (**required**, `string`, `object`, or `array`) - If `cert` is a string, it specifies the certificate to be used. If `cert` is an object, it must have a `path` property specifying the certificate file. Multiple certificates are supported by passing an array of keys.
+
+### `logger`
+
+This configures the Platformatic Runtime logger.
+
+See the [logger configuration](https://www.fastify.io/docs/latest/Reference/Server/#logger) for more information.
 
 ### `undici`
 
@@ -150,24 +165,25 @@ This configures the [`undici`](https://undici.nodejs.org) global
 [Dispatcher](https://undici.nodejs.org/#/docs/api/Dispatcher).
 Allowing to configure the options in the agent as well as [interceptors](https://undici.nodejs.org/#/docs/api/Dispatcher?id=dispatchercomposeinterceptors-interceptor).
 
-
-  ```json title="Example JSON object"
-  {
-    "undici": {
-        "keepAliveTimeout": 1000,
-        "keepAliveMaxTimeout": 1000,
-        "interceptors": [{
-            "module": "undici-oidc-interceptor",
-            "options": {
-                "clientId": "{PLT_CLIENT_ID}",
-                "clientSecret": "{PLT_CLIENT_SECRET}",
-                "idpTokenUrl": "{PLT_IDP_TOKEN_URL}",
-                "origins": ["{PLT_EXTERNAL_SERVICE}"]
-            }
-        }]
-    }
+```json title="Example JSON object"
+{
+  "undici": {
+    "keepAliveTimeout": 1000,
+    "keepAliveMaxTimeout": 1000,
+    "interceptors": [
+      {
+        "module": "undici-oidc-interceptor",
+        "options": {
+          "clientId": "{PLT_CLIENT_ID}",
+          "clientSecret": "{PLT_CLIENT_SECRET}",
+          "idpTokenUrl": "{PLT_IDP_TOKEN_URL}",
+          "origins": ["{PLT_EXTERNAL_SERVICE}"]
+        }
+      }
+    ]
   }
-  ```
+}
+```
 
 It's important to note that `IDP` stands for Identity Provider, and its token `url` is the URL that will be called to generate a new token.
 
@@ -179,8 +195,8 @@ This configures the Platformatic Runtime Prometheus server. The Prometheus serve
 - **`port`** (`number`). The port where the Prometheus server will be listening. Default: `9090`.
 - **`endpoint`** (`string`). The endpoint where the Prometheus server will be listening. Default: `/metrics`.
 - **`auth`** (`object`). Optional configuration for the Prometheus server authentication.
-    - **`username`** (`string`). The username for the Prometheus server authentication.
-    - **`password`** (`string`). The password for the Prometheus server authentication.
+  - **`username`** (`string`). The username for the Prometheus server authentication.
+  - **`password`** (`string`). The password for the Prometheus server authentication.
 
 ### `managementApi`
 
@@ -192,7 +208,7 @@ it will listen to UNIX Socket/Windows named pipe located at `platformatic/pids/<
 inside the OS temporary folder.
 
 - **`logs`** (`object`). Optional configuration for the runtime logs.
-    - **`maxSize`** (`number`). Maximum size of the logs that will be stored in the file system in MB. Default: `200`. Minimum: `5`.
+  - **`maxSize`** (`number`). Maximum size of the logs that will be stored in the file system in MB. Default: `200`. Minimum: `5`.
 
 ## Setting and Using ENV placeholders
 
@@ -223,6 +239,5 @@ Learn how to [set](../service/configuration.md#setting-environment-variables) an
 ### PLT_ROOT
 
 The `{PLT_ROOT}` placeholder is automatically set to the directory containing the configuration file, so it can be used to configure relative paths. See our [documentation](../service/configuration.md#plt_root) to learn more on PLT_ROOT placeholders.
-
 
 <Issues />
