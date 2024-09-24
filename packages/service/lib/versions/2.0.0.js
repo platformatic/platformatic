@@ -1,11 +1,17 @@
 'use strict'
 
-const pkg = require('../../package.json')
+const { version } = require('../../package.json')
 
-module.exports = {
+module.exports.migration = {
   version: '2.0.0',
+  toVersion: version,
   up: function (config) {
-    config.$schema = `https://schemas.platformatic.dev/@platformatic/service/${pkg.version}.json`
+    if (typeof config.allowCycles === 'boolean') {
+      delete config.allowCycles
+    }
+
+    config.$schema = `https://schemas.platformatic.dev/@platformatic/service/${version}.json`
+
     return config
-  }
+  },
 }
