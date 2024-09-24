@@ -1,7 +1,7 @@
 import { cleanBasePath, ensureTrailingSlash } from '@platformatic/basic'
 import Koa from 'koa'
 
-export function build() {
+export function build () {
   const app = new Koa()
   const prefix = globalThis.platformatic?.basePath ?? ''
 
