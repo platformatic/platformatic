@@ -15,14 +15,10 @@ test('should throw if file is not found', async () => {
   }
 })
 
-test('should throw if placeholder is missing', async (t) => {
-  try {
-    const cm = new ConfigManager({ source: resolve(__dirname, './fixtures/bad-placeholder.json') })
-    await cm.parse()
-    assert.fail()
-  } catch (err) {
-    assert.equal(err.message, 'PORT env variable is missing.')
-  }
+test('should replace with empty string if placeholder is missing', async t => {
+  const cm = new ConfigManager({ source: resolve(__dirname, './fixtures/bad-placeholder.json') })
+  await cm.parse()
+  assert.deepStrictEqual(cm.current.server.port, '')
 })
 
 // TODO

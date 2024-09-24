@@ -111,6 +111,14 @@ class ConfigManager extends EventEmitter {
         value = this._onMissingEnv(key, opts)
       }
 
+      /*
+        When the value is undefined, which means that the key was missing,
+        just replace with an empty string. The JSON schema will eventually throw an error.
+      */
+      if (typeof value === 'undefined') {
+        value = ''
+      }
+
       // TODO this should handle all the escapes chars
       // defined in https://www.json.org/json-en.html
       // but it's good enough for now.
@@ -211,9 +219,6 @@ class ConfigManager extends EventEmitter {
       await this._transformConfig(args)
       return true
     } catch (err) {
-      if (err.name === 'MissingValueError') {
-        throw new errors.EnvVarMissingError(err.key)
-      }
       const newerr = new errors.CannotParseConfigFileError(err.message)
       newerr.cause = err
       throw newerr
