@@ -3,7 +3,6 @@ import Koa from 'koa'
 globalThis.platformatic?.setServicePrefix('/nested/base/dir')
 
 const app = new Koa()
-const prefix = globalThis.platformatic?.basePath ?? ''
 
 app.use(async ctx => {
   if (ctx.request.url === '/nested/base/dir/') {
