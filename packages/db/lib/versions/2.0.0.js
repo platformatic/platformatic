@@ -3,7 +3,7 @@
 const pkg = require('../../package.json')
 
 module.exports = {
-  version: '2.0.0',
+  version: '1.99.0',
   up: function (config) {
     config.$schema = `https://schemas.platformatic.dev/@platformatic/db/${pkg.version}.json`
     return config
