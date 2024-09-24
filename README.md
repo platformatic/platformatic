@@ -1,8 +1,11 @@
+<div align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="assets/banner-light.png">
   <img alt="The Platformatic logo" src="assets/banner-light.png">
 </picture>
+
+</div>
 
 <div align="center">
 
