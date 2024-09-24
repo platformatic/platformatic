@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "platformatic": "^2.0.0",
-    "@platformatic/service": "^1.25.0"
+    "@platformatic/service": "^2.0.0"
   },
   "engines": {
     "node": ">=20.16.0"
