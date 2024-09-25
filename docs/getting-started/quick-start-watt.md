@@ -101,25 +101,6 @@ Then, we need to add a `web/node/watt.json`:
 }
 ```
 
-In `watt.json`, we need to set the application entrypoint:
-
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/wattpm/2.0.0.json",
-  "server": {
-    "hostname": "127.0.0.1",
-    "port": 3042
-  },
-  "logger": {
-    "level": "info"
-  },
-  "entrypoint": "node",
-  "autoload": {
-    "path": "web"
-  }
-}
-```
-
 In the root of the project, run:
 
 
@@ -203,25 +184,6 @@ Then, edit `web/composer/platformatic.json` to add the `node` app:
     "refreshTimeout": 1000
   },
   "watch": true
-}
-```
-
-Then, update the `entrypoint` in `watt.json`:
-
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/wattpm/2.0.0.json",
-  "server": {
-    "hostname": "127.0.0.1",
-    "port": 3042
-  },
-  "logger": {
-    "level": "info"
-  },
-  "entrypoint": "composer",
-  "autoload": {
-    "path": "web"
-  }
 }
 ```
 
