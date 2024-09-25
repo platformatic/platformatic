@@ -228,8 +228,7 @@ class PlatformaticApp extends EventEmitter {
   }
 
   #logAndExit (err) {
-    // Runtime logs here with console.error because stackable is not initialized
-    console.error(err.message)
+    console.error(err)
     process.exit(1)
   }
 

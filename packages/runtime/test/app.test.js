@@ -77,13 +77,7 @@ test('logs errors if an env variable is missing', async t => {
   assert.strictEqual(process.exit.mock.calls.length, 1)
   assert.strictEqual(process.exit.mock.calls[0].arguments[0], 1)
 
-  const lastLine = data
-    .split('\n')
-    .filter(Boolean)
-    .pop()
-    // eslint-disable-next-line no-control-regex
-    .replaceAll(/\u001b\[\d+m/g, '')
-  assert.strictEqual(lastLine, "Cannot parse config file. Cannot read properties of undefined (reading 'has')")
+  assert.strictEqual(data.includes("Cannot parse config file. Cannot read properties of undefined (reading 'has')"), true)
 })
 
 test('Uses the server config if passed', async t => {
@@ -167,12 +161,7 @@ test('logs errors during startup', async t => {
   assert.strictEqual(process.exit.mock.calls.length, 1)
   assert.strictEqual(process.exit.mock.calls[0].arguments[0], 1)
 
-  const lastLine = data
-    .split('\n')
-    .filter(Boolean)
-    .pop() // eslint-disable-next-line no-control-regex
-    .replaceAll(/\u001b\[\d+m/g, '')
-  assert.strictEqual(lastLine, 'boom')
+  assert.strictEqual(data.includes('Error: boom'), true)
 })
 
 test('returns application statuses', async t => {

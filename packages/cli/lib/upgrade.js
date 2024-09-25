@@ -42,7 +42,9 @@ async function upgradeApp (config, logger) {
     },
   })
 
-  await configManager.parseAndValidate(false)
+  configManager.schemaOptions.useDefaults = false
+
+  await configManager.parse(false, [], { validation: false, transform: false })
   config = configManager.current
 
   // If the schema is present, we use it to format the config

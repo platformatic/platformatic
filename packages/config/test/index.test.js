@@ -405,3 +405,36 @@ describe('upgrade', () => {
     await cm.parse()
   })
 })
+
+test('configManager.parse should skip validation and transformation if asked', async () => {
+  const config = {
+    name: 'Platformatic',
+    props: {
+      foo: 'bar',
+    },
+  }
+  const schema = {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      props: {
+        type: 'object',
+        properties: {
+          foo: { type: 'string' },
+          bar: { type: 'integer' },
+        },
+        required: ['foo', 'bar'],
+      },
+    },
+  }
+
+  const cm = new ConfigManager({
+    source: config,
+    schema,
+    transformConfig () {
+      assert.fail('should not be called')
+    }
+  })
+  await cm.parse({}, [], { validate: false, transform: false })
+  assert.deepEqual(cm.current, config)
+})
