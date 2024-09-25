@@ -1,6 +1,6 @@
 import { expectType, expectError } from 'tsd'
 import { FastifyInstance } from 'fastify'
-import ConfigManager from '@platformatic/config'
+import ConfigManager, { StackableInterface } from '@platformatic/config'
 import { OpenAPI } from 'openapi-types'
 import type { MercuriusPlugin } from 'mercurius'
 import { PlatformaticService } from './config'
@@ -57,6 +57,7 @@ function buildStackable (): Stackable<PlatformaticServiceConfig> {
       }
       return config
     },
+    buildStackable: () => Promise.resolve({} as StackableInterface),
   }
 
   // configVersion is not part of ConfigManagerConfig
@@ -95,6 +96,7 @@ function buildStackable2 (): Stackable<PlatformaticServiceConfig> {
         }
       },
     },
+    buildStackable: () => Promise.resolve({} as StackableInterface),
   }
 
   await start(myApp, ['--help'])
