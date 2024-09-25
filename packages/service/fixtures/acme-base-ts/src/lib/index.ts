@@ -1,5 +1,5 @@
 import fp from 'fastify-plugin'
-import platformaticService, { buildServer as buildServiceServer, Stackable, PlatformaticServiceConfig } from '../../../../index.js'
+import platformaticService, { buildServer as buildServiceServer, Stackable, PlatformaticServiceConfig, buildStackable as buildServiceStackable } from '../../../../index.js'
 import { schema } from './schema.js'
 import dynamite from './dynamite.js'
 import { lstat } from 'node:fs/promises'
@@ -93,8 +93,12 @@ function buildStackable () : Stackable<AcmeBaseConfig> {
             },
           }
         }
-      }
+      },
     },
+
+    buildStackable: async (opts: { config: string }) => {
+      return buildServiceStackable(opts)
+    }
   }
 
   // break Fastify encapsulation

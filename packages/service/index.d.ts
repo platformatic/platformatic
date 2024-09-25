@@ -35,6 +35,7 @@ export interface Stackable<ConfigType, Generator = DefaultGenerator> extends _St
   version?: string
   upgrade?: (config: any, version: string) => Promise<any>
   transformConfig?: (config: any) => Promise<any>
+  buildStackable: (opts: { config: string }, app?: object) => Promise<StackableInterface>
 }
 
 interface TSCompilerOptions {
