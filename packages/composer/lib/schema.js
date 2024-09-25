@@ -25,13 +25,13 @@ const entityResolver = {
   properties: {
     name: { type: 'string' },
     argsAdapter: {
-      oneOf: [
+      anyOf: [
         { typeof: 'function' },
         { type: 'string' },
       ],
     },
     partialResults: {
-      oneOf: [
+      anyOf: [
         { typeof: 'function' },
         { type: 'string' },
       ],

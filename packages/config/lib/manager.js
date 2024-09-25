@@ -138,7 +138,7 @@ class ConfigManager extends EventEmitter {
 
   _transformConfig () {}
 
-  async parse (replaceEnv = true, args = []) {
+  async parse (replaceEnv = true, args = [], opts = {}) {
     try {
       if (this.fullPath) {
         const configString = await this.load()
@@ -211,12 +211,16 @@ class ConfigManager extends EventEmitter {
         }
       }
 
-      const validationResult = this.validate()
-      if (!validationResult) {
-        return false
+      if (opts.validation !== false) {
+        const validationResult = this.validate()
+        if (!validationResult) {
+          return false
+        }
       }
 
-      await this._transformConfig(args)
+      if (opts.tranform !== false) {
+        await this._transformConfig(args)
+      }
       return true
     } catch (err) {
       const newerr = new errors.CannotParseConfigFileError(err.message)

@@ -14,6 +14,8 @@ module.exports = {
       delete config.hotReload
     }
 
+    delete config.allowCycles
+
     config.$schema = `https://schemas.platformatic.dev/@platformatic/runtime/${pkg.version}.json`
 
     if (config.server?.logger) {
