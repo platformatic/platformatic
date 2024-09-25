@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type HttpsSchemasPlatformaticDevWattpm202Json = {
+export type HttpsSchemasPlatformaticDevWattpm210Json = {
   [k: string]: unknown;
 } & {
   $schema?: string;
