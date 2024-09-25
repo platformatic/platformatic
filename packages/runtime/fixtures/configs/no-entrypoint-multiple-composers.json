@@ -9,7 +9,7 @@
     {
       "id": "composer-1",
       "path": "../no-entrypoint-composer",
-      "config": "platformatic.composer.json"
+      "config": "platformatic.composer.toml"
     },
     {
       "id": "composer-2",

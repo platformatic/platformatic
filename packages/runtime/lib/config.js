@@ -1,6 +1,6 @@
 'use strict'
 
-const { readdir, readFile } = require('node:fs/promises')
+const { readdir } = require('node:fs/promises')
 const { join, resolve: pathResolve } = require('node:path')
 
 const ConfigManager = require('@platformatic/config')
@@ -121,8 +121,9 @@ async function _transformConfig (configManager, args) {
           continue
         }
 
-        const config = JSON.parse(await readFile(pathResolve(service.path, service.config), 'utf-8'))
-
+        const manager = new ConfigManager({ source: pathResolve(service.path, service.config) })
+        await manager.parse()
+        const config = manager.current
         const type = config.$schema ? ConfigManager.matchKnownSchema(config.$schema) : undefined
 
         if (type === 'composer') {

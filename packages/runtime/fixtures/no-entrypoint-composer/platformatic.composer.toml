@@ -1,0 +1,16 @@
+"$schema" = 'https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json'
+watch = false
+
+[server]
+hostname = '127.0.0.1'
+port = 0
+pluginTimeout = 0  
+
+[server.logger]
+level = 'info'
+
+[composer]
+refreshTimeout = 5000
+  
+[[composer.services]]
+id = 'main'

@@ -9,7 +9,7 @@
     {
       "id": "composer",
       "path": "../no-entrypoint-composer",
-      "config": "platformatic.composer.json"
+      "config": "platformatic.composer.yml"
     }
   ],
   "logger": {
