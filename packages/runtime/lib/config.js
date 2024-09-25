@@ -105,8 +105,44 @@ async function _transformConfig (configManager, args) {
     configManager.current.serviceMap.set(service.id, service)
   }
 
+  // If there is no entrypoint, autodetect one
+  if (!config.entrypoint) {
+    // If there is only one service, it becomes the entrypoint
+    if (services.length === 1) {
+      services[0].entrypoint = true
+      config.entrypoint = services[0].id
+      hasValidEntrypoint = true
+    } else {
+      // Search if exactly service uses @platformatic/composer
+      const composers = []
+
+      for (const service of services) {
+        if (!service.config) {
+          continue
+        }
+
+        const manager = new ConfigManager({ source: pathResolve(service.path, service.config) })
+        await manager.parse()
+        const config = manager.current
+        const type = config.$schema ? ConfigManager.matchKnownSchema(config.$schema) : undefined
+
+        if (type === 'composer') {
+          composers.push(service.id)
+        }
+      }
+
+      if (composers.length === 1) {
+        services.find(s => s.id === composers[0]).entrypoint = true
+        config.entrypoint = composers[0]
+        hasValidEntrypoint = true
+      }
+    }
+  }
+
   if (!hasValidEntrypoint) {
-    throw new errors.InvalidEntrypointError(config.entrypoint)
+    throw typeof config.entrypoint !== 'undefined'
+      ? new errors.InvalidEntrypointError(config.entrypoint)
+      : new errors.MissingEntrypointError()
   }
 
   configManager.current.services = services

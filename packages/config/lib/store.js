@@ -337,3 +337,4 @@ async function loadModule (require, extendedModule) {
 }
 
 module.exports.Store = Store
+module.exports.matchKnownSchema = matchKnownSchema

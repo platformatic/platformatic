@@ -55,7 +55,7 @@ export async function initCommand (logger, args) {
 
   await writeFile(
     configurationFile,
-    JSON.stringify({ $schema: schema.$id, ...configManager.current, entrypoint: positionals[1] ?? '' }, null, 2),
+    JSON.stringify({ $schema: schema.$id, ...configManager.current, entrypoint: positionals[1] ?? undefined }, null, 2),
     'utf-8'
   )
 

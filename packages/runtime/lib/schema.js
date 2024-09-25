@@ -224,11 +224,7 @@ const platformaticRuntimeSchema = {
       }
     }
   },
-  anyOf: [
-    { required: ['autoload', 'entrypoint'] },
-    { required: ['services', 'entrypoint'] },
-    { required: ['web', 'entrypoint'] }
-  ],
+  anyOf: [{ required: ['autoload'] }, { required: ['services'] }, { required: ['web'] }],
   additionalProperties: false,
   $defs: {
     undiciInterceptor: {

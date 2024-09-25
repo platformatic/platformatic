@@ -35,6 +35,7 @@ export module errors {
   export const ConfigPathMustBeStringError: () => FastifyError
   export const NoConfigFileFoundError: (id: string) => FastifyError
   export const InvalidEntrypointError: (entrypoint: string) => FastifyError
+  export const MissingEntrypointError: () => FastifyError
   export const MissingDependencyError: (dependency: string) => FastifyError
   export const InspectAndInspectBrkError: () => FastifyError
   export const InspectorPortError: () => FastifyError

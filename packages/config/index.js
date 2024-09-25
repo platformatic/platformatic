@@ -1,12 +1,12 @@
 'use strict'
 
 const { ConfigManager } = require('./lib/manager')
-const { Store } = require('./lib/store')
+const { Store, matchKnownSchema } = require('./lib/store')
 const {
   loadConfig,
   loadEmptyConfig,
   printConfigValidationErrors,
-  printAndExitLoadConfigError,
+  printAndExitLoadConfigError
 } = require('./lib/load-config')
 const { getParser, getStringifier } = require('./lib/formats')
 const errors = require('./lib/errors')
@@ -14,6 +14,7 @@ const errors = require('./lib/errors')
 module.exports = ConfigManager
 module.exports.ConfigManager = ConfigManager
 module.exports.Store = Store
+module.exports.matchKnownSchema = matchKnownSchema
 module.exports.loadConfig = loadConfig
 module.exports.loadEmptyConfig = loadEmptyConfig
 module.exports.printConfigValidationErrors = printConfigValidationErrors
