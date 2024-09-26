@@ -2,10 +2,12 @@
 
 const why = require('why-is-node-running')
 
-setInterval(() => {
-  console.log('why is node running?')
-  why()
-}, 1000 * 30).unref() // 30 seconds
+if (process.env.WHY === 'true') {
+  setInterval(() => {
+    console.log('why is node running?')
+    why()
+  }, 60000).unref()
+}
 
 // Needed to work with dates & postgresql
 // See https://node-postgres.com/features/types/
@@ -39,51 +41,41 @@ module.exports.connInfo = connInfo
 module.exports.clear = async function (db, sql) {
   try {
     await db.query(sql`DROP TABLE pages`)
-  } catch (err) {
-  }
+  } catch (err) {}
 
   try {
     await db.query(sql`DROP TABLE categories`)
-  } catch {
-  }
+  } catch {}
 
   try {
     await db.query(sql`DROP TABLE posts`)
-  } catch {
-  }
+  } catch {}
 
   try {
     await db.query(sql`DROP TABLE simple_types`)
-  } catch {
-  }
+  } catch {}
 
   try {
     await db.query(sql`DROP TABLE owners`)
-  } catch {
-  }
+  } catch {}
 
   try {
     await db.query(sql`DROP TABLE users`)
-  } catch {
-  }
+  } catch {}
 
   try {
     await db.query(sql`DROP TABLE versions`)
-  } catch {
-  }
+  } catch {}
 
   try {
     await db.query(sql`DROP TABLE graphs`)
-  } catch {
-  }
+  } catch {}
 
   try {
     await db.query(sql`DROP Type pagetype`)
-  } catch {
-  }
+  } catch {}
 
   try {
     await db.query(sql`DROP TABLE generated_test`)
-  } catch {
-  }
+  } catch {}
 }

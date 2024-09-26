@@ -1,6 +1,6 @@
 import Koa from 'koa'
 
-globalThis.platformatic?.setServicePrefix('/nested/base/dir')
+globalThis.platformatic?.setBasePath('/nested/base/dir')
 
 const app = new Koa()
 

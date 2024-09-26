@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/service/2.0.0.json",
+  "basePath": "whatever",
+  "watch": false,
+  "plugins": {
+    "paths": [
+      {
+        "path": "./routes.js"
+      }
+    ]
+  }
+}

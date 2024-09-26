@@ -1,6 +1,9 @@
 'use strict'
 
+const { existsSync } = require('node:fs')
 const { EventEmitter } = require('node:events')
+const { resolve } = require('node:path')
+const { ConfigManager } = require('@platformatic/config')
 const { FileWatcher } = require('@platformatic/utils')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
 const debounce = require('debounce')
@@ -66,6 +69,16 @@ class PlatformaticApp extends EventEmitter {
     try {
       const appConfig = this.appConfig
       let loadedConfig
+
+      // Before returning the base application, check if there is any file we recognize
+      // and the user just forgot to specify in the configuration.
+      if (!appConfig.config) {
+        const candidate = ConfigManager.listConfigFiles().find(f => existsSync(resolve(appConfig.path, f)))
+
+        if (candidate) {
+          appConfig.config = resolve(appConfig.path, candidate)
+        }
+      }
 
       if (!appConfig.config) {
         loadedConfig = await loadEmptyConfig(

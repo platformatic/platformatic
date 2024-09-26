@@ -1,7 +1,7 @@
 import { createServer } from 'node:http'
 
 export function build () {
-  globalThis.platformatic?.setServicePrefix('/nested/base/dir')
+  globalThis.platformatic?.setBasePath('/nested/base/dir')
 
   return createServer((req, res) => {
     if (req.url === '/nested/base/dir/') {

@@ -28,6 +28,13 @@ class ServiceStackable {
     })
 
     this.#updateConfig()
+
+    // Setup globals
+    this.registerGlobals({
+      setOpenapiSchema: this.setOpenapiSchema.bind(this),
+      setGraphqlSchema: this.setGraphqlSchema.bind(this),
+      setBasePath: this.setBasePath.bind(this)
+    })
   }
 
   async init () {
@@ -104,6 +111,18 @@ class ServiceStackable {
     return this.configManager.env
   }
 
+  getMeta () {
+    const config = this.configManager.current
+
+    return {
+      composer: {
+        prefix: config.basePath ?? this.basePath ?? this.context?.serviceId,
+        wantsAbsoluteUrls: false,
+        needsRootRedirect: false
+      }
+    }
+  }
+
   async getWatchConfig () {
     const config = this.configManager.current
 
@@ -164,6 +183,22 @@ class ServiceStackable {
   async updateContext (context) {
     this.context = { ...this.context, ...context }
     this.#updateConfig()
+  }
+
+  setOpenapiSchema (schema) {
+    this.openapiSchema = schema
+  }
+
+  setGraphqlSchema (schema) {
+    this.graphqlSchema = schema
+  }
+
+  setBasePath (basePath) {
+    this.basePath = basePath
+  }
+
+  registerGlobals (globals) {
+    globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, globals)
   }
 
   #setHttpMetrics () {

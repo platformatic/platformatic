@@ -221,8 +221,10 @@ export class NodeStackable extends BaseStackable {
 
   getMeta () {
     const config = this.configManager.current
+    const basePath = ensureTrailingSlash(cleanBasePath(this.basePath ?? config.application?.basePath))
+
     let composer = {
-      prefix: this.servicePrefix,
+      prefix: basePath,
       wantsAbsoluteUrls: this._getWantsAbsoluteUrls(),
       needsRootRedirect: true
     }
@@ -231,9 +233,7 @@ export class NodeStackable extends BaseStackable {
       composer = {
         tcp: true,
         url: this.url,
-        prefix: config.application?.basePath
-          ? ensureTrailingSlash(cleanBasePath(config.application?.basePath))
-          : this.servicePrefix,
+        prefix: basePath,
         wantsAbsoluteUrls: this._getWantsAbsoluteUrls(),
         needsRootRedirect: true
       }

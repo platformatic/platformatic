@@ -813,7 +813,8 @@ class Runtime extends EventEmitter {
       name: id + '-runtime',
       port: service,
       handlers: {
-        getServiceMeta: this.getServiceMeta.bind(this)
+        getServiceMeta: this.getServiceMeta.bind(this),
+        getServices: this.getServices.bind(this)
       }
     })
     service[kITC].listen()

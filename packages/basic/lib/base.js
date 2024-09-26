@@ -44,7 +44,7 @@ export class BaseStackable {
     this.registerGlobals({
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
-      setServicePrefix: this.setServicePrefix.bind(this)
+      setBasePath: this.setBasePath.bind(this)
     })
   }
 
@@ -104,8 +104,8 @@ export class BaseStackable {
     this.graphqlSchema = schema
   }
 
-  setServicePrefix (prefix) {
-    this.servicePrefix = prefix
+  setBasePath (basePath) {
+    this.basePath = basePath
   }
 
   async log ({ message, level }) {

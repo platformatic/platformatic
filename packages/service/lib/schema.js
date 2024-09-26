@@ -334,6 +334,9 @@ const platformaticServiceSchema = {
   title: 'Platformatic Service',
   type: 'object',
   properties: {
+    basePath: {
+      type: 'string'
+    },
     server,
     plugins,
     metrics,

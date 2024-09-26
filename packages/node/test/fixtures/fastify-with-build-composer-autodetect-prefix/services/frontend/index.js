@@ -1,7 +1,7 @@
 import fastify from 'fastify'
 
 export function build () {
-  globalThis.platformatic?.setServicePrefix('/nested/base/dir')
+  globalThis.platformatic?.setBasePath('/nested/base/dir')
 
   const app = fastify({
     loggerInstance: globalThis.platformatic?.logger?.child({}, { level: globalThis.platformatic?.logLevel ?? 'info' })

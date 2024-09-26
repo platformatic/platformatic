@@ -23,6 +23,7 @@ export type CrudOperationAuth =
   | boolean;
 
 export interface PlatformaticDB {
+  basePath?: string;
   server?: {
     hostname?: string;
     port?: number | string;

@@ -43,9 +43,12 @@ class ComposerStackable extends ServiceStackable {
   }
 
   async getMeta () {
+    const serviceMeta = super.getMeta()
+    const composerMeta = this.#meta ? { composer: this.#meta } : undefined
+
     return {
-      ...super.getMeta?.(),
-      composer: this.#meta
+      ...serviceMeta,
+      ...composerMeta
     }
   }
 
