@@ -229,3 +229,27 @@ test('request id is a uuid', async (t) => {
   const json = await res.body.json()
   assert.match(json.request_id, UUID_REGEX)
 })
+
+test('ready in plugin', async (t) => {
+  const app = await buildServer(buildConfig({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+      healthCheck: {
+        enabled: true,
+        interval: 2000,
+      },
+    },
+    plugins: {
+      paths: [{
+        path: join(__dirname, 'fixtures', 'ready-directory'),
+        encapsulate: false,
+      }],
+    },
+  }))
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+})
