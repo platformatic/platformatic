@@ -103,13 +103,13 @@ async function buildServer (options, app, context) {
     context
   }
   const handler = await createServer(serverContext)
-  handler.decorate('start', async () => {
+  handler.start = async function () {
     serverContext.url = await handler.listen({
       host: options.server?.hostname || '127.0.0.1',
       port: options.server?.port || 0,
     })
     return serverContext.url
-  })
+  }
   configManager.on('error', function (err) {
     /* c8 ignore next 1 */
     handler.log.error({ err }, 'error reloading the configuration')
