@@ -22,10 +22,13 @@ class DestinationWritable extends Writable {
 
   // Since this is only invoked by pino, we only receive strings
   _write (chunk, encoding, callback) {
+    Error.stackTraceLimit = 100
+    process._rawDebug(new Error().stack)
     this._send({ metadata: this.#metadata, logs: [chunk.toString(encoding ?? 'utf-8')] })
 
-    // Important: do not remove nextTick otherwise _writev will never be used
-    process.nextTick(callback)
+    // Important: do not remove queueMicrotask otherwise _writev will never be used
+    // Do not use nextTick here, or else some logs would have to be lost during shutdown
+    queueMicrotask(callback)
   }
 
   // Since this is only invoked by pino, we only receive strings
