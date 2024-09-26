@@ -159,6 +159,13 @@ export class NodeStackable extends BaseStackable {
     })
   }
 
+  async collectMetrics () {
+    return {
+      defaultMetrics: true,
+      httpMetrics: true
+    }
+  }
+
   async build () {
     const command = this.configManager.current.application.commands.build
 
