@@ -211,7 +211,10 @@ export class NextStackable extends BaseStackable {
       })
 
       this.#manager.register()
-      const serverPromise = createServerListener((this.isEntrypoint ? serverOptions?.port : undefined) ?? true)
+      const serverPromise = createServerListener(
+        (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
+        (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true
+      )
 
       await nextStart(serverOptions, this.root)
 

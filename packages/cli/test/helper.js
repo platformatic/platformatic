@@ -3,7 +3,7 @@ import { join } from 'desm'
 import { execa } from 'execa'
 import fastify from 'fastify'
 import { minimatch } from 'minimatch'
-import { fail, ok } from 'node:assert'
+import { fail, ok, strictEqual } from 'node:assert'
 import { cp, readdir, readFile, writeFile } from 'node:fs/promises'
 import { platform, tmpdir } from 'node:os'
 import { basename, dirname, resolve } from 'node:path'
@@ -382,6 +382,8 @@ export function verifyBuildAndProductionMode (workingDirectory, configurations, 
   configurations = filterConfigurations(configurations)
   install(workingDirectory, temporaryWorkingDirectory, configurations, skipInstall)
 
+  let runtimeConfig = null
+
   // Do not move destructuring up here since workingDirectory might the test.before and therefore empty
   for (const configuration of configurations) {
     if (!skipBuild) {
@@ -390,7 +392,7 @@ export function verifyBuildAndProductionMode (workingDirectory, configurations, 
         t.diagnostic(`starting build for ${id}`)
         configuration.workingDirectory = resolve(baseWorkingDirectory, id)
 
-        const runtimeConfig = JSON.parse(
+        runtimeConfig = JSON.parse(
           await readFile(resolve(configuration.workingDirectory, 'platformatic.runtime.json'))
         )
 
@@ -414,6 +416,19 @@ export function verifyBuildAndProductionMode (workingDirectory, configurations, 
         resolve(configuration.workingDirectory, 'platformatic.runtime.json'),
         pauseTimeout
       )
+
+      const runtimeHost = runtimeConfig.server?.hostname ?? null
+      const runtimePort = runtimeConfig.server?.port ?? null
+
+      if (runtimeHost) {
+        const actualHost = new URL(url).hostname
+        strictEqual(actualHost, runtimeHost, `hostname should be ${runtimeHost}`)
+      }
+
+      if (runtimePort) {
+        const actualPort = new URL(url).port
+        strictEqual(actualPort.toString(), runtimePort.toString(), `port should be ${runtimePort}`)
+      }
 
       for (const check of configuration.checks) {
         await check(t, url, check)

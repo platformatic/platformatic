@@ -181,7 +181,10 @@ export class AstroStackable extends BaseStackable {
     }
 
     // Require Astro
-    const serverPromise = createServerListener((this.isEntrypoint ? serverOptions?.port : undefined) ?? true)
+    const serverPromise = createServerListener(
+      (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
+      (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true
+    )
     const { dev } = await importFile(resolve(this.#astro, 'dist/core/index.js'))
 
     // Create the server and listen

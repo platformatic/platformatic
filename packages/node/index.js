@@ -96,7 +96,10 @@ export class NodeStackable extends BaseStackable {
     // The server promise must be created before requiring the entrypoint even if it's not going to be used
     // at all. Otherwise there is chance we miss the listen event.
     const serverOptions = this.serverConfig
-    const serverPromise = createServerListener((this.isEntrypoint ? serverOptions?.port : undefined) ?? true)
+    const serverPromise = createServerListener(
+      (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
+      (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true
+    )
     // If telemetry is set, configure it
     const telemetryConfig = this.telemetryConfig
     if (telemetryConfig) {
