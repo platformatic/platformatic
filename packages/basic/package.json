@@ -38,8 +38,6 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@platformatic/composer": "workspace:*",
-    "@platformatic/service": "workspace:*",
     "borp": "^0.17.0",
     "eslint": "9",
     "express": "^4.19.2",

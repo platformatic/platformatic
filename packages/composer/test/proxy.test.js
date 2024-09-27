@@ -2,6 +2,7 @@
 
 const assert = require('assert/strict')
 const { resolve } = require('node:path')
+const { symlink } = require('node:fs/promises')
 const { test } = require('node:test')
 const { request } = require('undici')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
@@ -12,6 +13,7 @@ const {
   createComposerInRuntime,
   REFRESH_TIMEOUT
 } = require('./helper')
+const { safeRemove, createDirectory } = require('@platformatic/utils')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
@@ -366,7 +368,15 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
   }
 })
 
-test('should proxy all services if none are defined', async t => {
+test.only('should proxy all services if none are defined', async t => {
+  // Make sure there is @platformatic/node available in the node service.
+  // We can't simply specify it in the package.json due to circular dependencies.
+  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
+  await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
+  await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
+
+  t.after(() => safeRemove(nodeModulesRoot))
+
   const runtime = await createComposerInRuntime(
     t,
     'composer-prefix-in-code',
