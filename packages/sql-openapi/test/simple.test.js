@@ -767,9 +767,9 @@ test('expose the api with a prefix, if defined', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/documentation',
+      url: '/documentation/',
     })
-    equal(res.statusCode, 200, 'GET /documentation status code')
+    equal(res.statusCode, 200, 'GET /documentation/ status code')
   }
 })
 
