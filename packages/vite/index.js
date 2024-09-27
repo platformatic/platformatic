@@ -187,7 +187,10 @@ export class ViteStackable extends BaseStackable {
     }
 
     // Require Vite
-    const serverPromise = createServerListener((this.isEntrypoint ? serverOptions?.port : undefined) ?? true)
+    const serverPromise = createServerListener(
+      (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
+      (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true
+    )
     const { createServer } = await importFile(resolve(this.#vite, 'dist/node/index.js'))
 
     // Create the server and listen

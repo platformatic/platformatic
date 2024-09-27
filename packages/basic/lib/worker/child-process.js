@@ -177,9 +177,13 @@ export class ChildProcess extends ITC {
     const subscribers = {
       asyncStart ({ options }) {
         const port = globalThis.platformatic.port
+        const host = globalThis.platformatic.host
 
         if (port !== false) {
           options.port = typeof port === 'number' ? port : 0
+        }
+        if (typeof host === 'string') {
+          options.host = host
         }
       },
       asyncEnd: ({ server }) => {

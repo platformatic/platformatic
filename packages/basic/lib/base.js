@@ -141,7 +141,8 @@ export class BaseStackable {
         root: pathToFileURL(this.root).toString(),
         basePath,
         logLevel: this.logger.level,
-        port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true
+        port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
+        host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true
       }
     })
 
@@ -191,6 +192,7 @@ export class BaseStackable {
         basePath,
         logLevel: this.logger.level,
         port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
+        host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
         telemetry: this.telemetryConfig
       }
     })
