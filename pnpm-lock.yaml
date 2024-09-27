@@ -216,7 +216,7 @@ importers:
         version: 5.0.0
       inquirer:
         specifier: ^9.2.16
-        version: 9.3.6
+        version: 9.3.7
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -780,7 +780,7 @@ importers:
         version: 5.0.0
       inquirer:
         specifier: ^9.2.16
-        version: 9.3.6
+        version: 9.3.7
       log-update:
         specifier: ^6.0.0
         version: 6.1.0
@@ -6533,8 +6533,8 @@ packages:
   inline-style-parser@0.1.1:
     resolution: {integrity: sha512-7NXolsK4CAS5+xvdj5OMMbI962hU/wvwoxk+LWR9Ek9bVtyuuYScDN6eS0rUm6TxApFpw7CX1o4uJzcd4AyD3Q==}
 
-  inquirer@9.3.6:
-    resolution: {integrity: sha512-riK/iQB2ctwkpWYgjjWIRv3MBLt2gzb2Sj0JNQNbyTXgyXsLWcDPJ5WS5ZDTCx7BRFnJsARtYh+58fjP5M2Y0Q==}
+  inquirer@9.3.7:
+    resolution: {integrity: sha512-LJKFHCSeIRq9hanN14IlOtPSTe3lNES7TYDTE2xxdAy1LS5rYphajK1qtwvj3YmQXvvk0U2Vbmcni8P9EIQW9w==}
     engines: {node: '>=18'}
 
   int64-buffer@0.1.10:
@@ -14646,7 +14646,7 @@ snapshots:
 
   inline-style-parser@0.1.1: {}
 
-  inquirer@9.3.6:
+  inquirer@9.3.7:
     dependencies:
       '@inquirer/figures': 1.0.6
       ansi-escapes: 4.3.2
