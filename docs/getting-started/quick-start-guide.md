@@ -5,11 +5,11 @@ import NewApiProjectInstructions from './new-api-project-instructions.md';
 
 # Quick Start Guide
 
-Welcome to your first steps with [Platformatic DB](/docs/reference/db/introduction.md). This guide will help you set up and run your first API using Platformatic DB with [SQLite](https://www.sqlite.org/). By the end of this guide, you'll have a fully functional API ready to use.
+Welcome to your first steps with [Platformatic DB](/docs/db/overview.md). This guide will help you set up and run your first API using Platformatic DB with [SQLite](https://www.sqlite.org/). By the end of this guide, you'll have a fully functional API ready to use.
 
 :::note
 
-While this guide uses [SQLite](https://www.sqlite.org/), Platformatic DB also supports [PostgreSQL](https://www.postgresql.org/), [MySQL](https://www.mysql.com/), and [MariaDB](https://mariadb.org/). For more details on database compatibility, see the [Platformatic DB documentation](/docs/reference/db/introduction.md).
+While this guide uses [SQLite](https://www.sqlite.org/), Platformatic DB also supports [PostgreSQL](https://www.postgresql.org/), [MySQL](https://www.mysql.com/), and [MariaDB](https://mariadb.org/). For more details on database compatibility, see the [Platformatic DB documentation](/docs/db/overview.md#supported-databases).
 
 :::
 
