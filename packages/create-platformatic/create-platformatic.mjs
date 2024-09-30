@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { ensureSupportedNodeVersion } from '@platformatic/utils'
+import { checkNodeVersionForServices } from '@platformatic/utils'
 import { join } from 'desm'
 import isMain from 'es-main'
 import { readFile } from 'fs/promises'
@@ -7,7 +7,7 @@ import parseArgs from 'minimist'
 import { createPlatformatic } from './src/index.mjs'
 
 if (isMain(import.meta)) {
-  ensureSupportedNodeVersion()
+  checkNodeVersionForServices()
 
   const _args = process.argv.slice(2)
   const args = parseArgs(_args, {
