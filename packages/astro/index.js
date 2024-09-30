@@ -17,6 +17,7 @@ import fastify from 'fastify'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { satisfies } from 'semver'
 import { packageJson, schema } from './lib/schema.js'
 
@@ -152,6 +153,14 @@ export class AstroStackable extends BaseStackable {
       ? ensureTrailingSlash(cleanBasePath(config.application?.basePath))
       : undefined
 
+    this.registerGlobals({
+      id: this.id,
+      // Always use URL to avoid serialization problem in Windows
+      root: pathToFileURL(this.root).toString(),
+      basePath: this.#basePath,
+      logLevel: this.logger.level
+    })
+
     if (command) {
       return this.startWithCommand(command)
     }
@@ -213,6 +222,14 @@ export class AstroStackable extends BaseStackable {
     this.#basePath = config.application?.basePath
       ? ensureTrailingSlash(cleanBasePath(config.application?.basePath))
       : undefined
+
+    this.registerGlobals({
+      id: this.id,
+      // Always use URL to avoid serialization problem in Windows
+      root: pathToFileURL(this.root).toString(),
+      basePath: this.#basePath,
+      logLevel: this.logger.level
+    })
 
     if (command) {
       return this.startWithCommand(command)

@@ -150,6 +150,14 @@ export class ViteStackable extends BaseStackable {
       ? ensureTrailingSlash(cleanBasePath(config.application?.basePath))
       : undefined
 
+    this.registerGlobals({
+      id: this.id,
+      // Always use URL to avoid serialization problem in Windows
+      root: pathToFileURL(this.root).toString(),
+      basePath: this.#basePath,
+      logLevel: this.logger.level
+    })
+
     if (command) {
       return this.startWithCommand(command)
     }
@@ -203,6 +211,13 @@ export class ViteStackable extends BaseStackable {
       ? ensureTrailingSlash(cleanBasePath(config.application?.basePath))
       : undefined
 
+    this.registerGlobals({
+      id: this.id,
+      // Always use URL to avoid serialization problem in Windows
+      root: pathToFileURL(this.root).toString(),
+      basePath: this.#basePath,
+      logLevel: this.logger.level
+    })
     if (command) {
       return this.startWithCommand(command)
     }
