@@ -12,7 +12,7 @@
       {
         "id": "frontend",
         "proxy": {
-          "prefix": "/external-proxy/frontend"
+          "prefix": "/frontend"
         }
       }
     ]

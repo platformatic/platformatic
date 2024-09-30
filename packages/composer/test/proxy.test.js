@@ -368,7 +368,7 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
   }
 })
 
-test.only('should proxy all services if none are defined', async t => {
+test('should proxy all services if none are defined', async t => {
   // Make sure there is @platformatic/node available in the node service.
   // We can't simply specify it in the package.json due to circular dependencies.
   const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
