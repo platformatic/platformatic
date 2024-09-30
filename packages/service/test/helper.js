@@ -2,10 +2,12 @@
 
 const why = require('why-is-node-running')
 
-setInterval(() => {
-  console.log('why is node running?')
-  why()
-}, 1000 * 60 * 40).unref() // 1 minute
+if (process.env.WHY === 'true') {
+  setInterval(() => {
+    console.log('why is node running?')
+    why()
+  }, 60000).unref()
+}
 
 const { Agent, setGlobalDispatcher } = require('undici')
 
@@ -13,15 +15,15 @@ const agent = new Agent({
   keepAliveTimeout: 10,
   keepAliveMaxTimeout: 10,
   tls: {
-    rejectUnauthorized: false,
-  },
+    rejectUnauthorized: false
+  }
 })
 
 setGlobalDispatcher(agent)
 
 function buildConfig (options) {
   const base = {
-    server: {},
+    server: {}
   }
 
   return Object.assign(base, options)

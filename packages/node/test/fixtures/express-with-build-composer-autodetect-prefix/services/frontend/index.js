@@ -1,7 +1,7 @@
 import express from 'express'
 
 export function build () {
-  globalThis.platformatic?.setServicePrefix('/nested/base/dir')
+  globalThis.platformatic?.setBasePath('/nested/base/dir')
 
   const app = express()
 

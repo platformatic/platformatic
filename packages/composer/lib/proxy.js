@@ -8,20 +8,17 @@ const kITC = Symbol.for('plt.runtime.itc')
 
 async function resolveServiceProxyParameters (service) {
   // Get meta information from the service, if any, to eventually hook up to a TCP port
-  const meta = (await globalThis[kITC]?.send('getServiceMeta', service.id))?.composer ?? {}
-
+  const meta = (await globalThis[kITC]?.send('getServiceMeta', service.id))?.composer ?? { prefix: service.id }
   const origin = meta.tcp ? meta.url : service.origin
 
-  let prefix = service.proxy?.prefix ?? meta.prefix ?? service.id
-  if (prefix.endsWith('/')) {
-    prefix = prefix.slice(0, -1)
-  }
+  // If no prefix could be found, assume the service id
+  const prefix = (service.proxy?.prefix ?? meta.prefix ?? service.id).replace(/(\/$)/g, '')
 
   let rewritePrefix = ''
   let internalRewriteLocationHeader = true
 
   if (meta.wantsAbsoluteUrls) {
-    rewritePrefix = meta.prefix ?? service.id
+    rewritePrefix = prefix
     internalRewriteLocationHeader = false
   }
 
@@ -50,27 +47,27 @@ module.exports = fp(async function (app, opts) {
     if (needsRootRedirect) {
       app.addHook('preHandler', (req, reply, done) => {
         if (req.url === basePath) {
-          app.inject({
-            method: req.method,
-            url: `${basePath}/`,
-            headers: req.headers,
-            payload: req.body
-          }, (err, result) => {
-            if (err) {
-              done(err)
-              return
+          app.inject(
+            {
+              method: req.method,
+              url: `${basePath}/`,
+              headers: req.headers,
+              payload: req.body
+            },
+            (err, result) => {
+              if (err) {
+                done(err)
+                return
+              }
+
+              const replyHeaders = result.headers
+              delete replyHeaders['content-length']
+              delete replyHeaders['transfer-encoding']
+
+              reply.code(result.statusCode).headers(replyHeaders).send(result.rawPayload)
+              done()
             }
-
-            const replyHeaders = result.headers
-            delete replyHeaders['content-length']
-            delete replyHeaders['transfer-encoding']
-
-            reply
-              .code(result.statusCode)
-              .headers(replyHeaders)
-              .send(result.rawPayload)
-            done()
-          })
+          )
         } else {
           done()
         }
@@ -145,7 +142,7 @@ module.exports = fp(async function (app, opts) {
             ...headers,
             ...telemetryHeaders,
             'x-forwarded-for': request.ip,
-            'x-forwarded-host': request.host,
+            'x-forwarded-host': request.host
           }
 
           return headers
@@ -153,8 +150,8 @@ module.exports = fp(async function (app, opts) {
         onResponse: (request, reply, res) => {
           app.openTelemetry?.endHTTPSpanClient(reply.request.proxedCallSpan, { statusCode: reply.statusCode })
           reply.send(res.stream)
-        },
-      },
+        }
+      }
     })
   }
 

@@ -6,6 +6,7 @@
  */
 
 export interface PlatformaticService {
+  basePath?: string;
   server?: {
     hostname?: string;
     port?: number | string;

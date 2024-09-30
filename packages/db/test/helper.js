@@ -14,7 +14,7 @@ const { platformaticDB, ConfigManager } = require('..')
 // to track the open handles via why-is-node-running.
 setInterval(() => {
   why()
-}, 20000).unref()
+}, 60000).unref()
 
 const agent = new Agent({
   keepAliveTimeout: 10,

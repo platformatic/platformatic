@@ -118,12 +118,6 @@ importers:
         specifier: ^8.18.0
         version: 8.18.0
     devDependencies:
-      '@platformatic/composer':
-        specifier: workspace:*
-        version: link:../composer
-      '@platformatic/service':
-        specifier: workspace:*
-        version: link:../service
       borp:
         specifier: ^0.17.0
         version: 0.17.0

@@ -125,29 +125,14 @@ export class ViteStackable extends BaseStackable {
   }
 
   getMeta () {
-    let composer = { prefix: this.servicePrefix, wantsAbsoluteUrls: true, needsRootRedirect: true }
+    const config = this.subprocessConfig ?? this.#app?.config
 
-    if (this.isProduction) {
-      composer = {
-        tcp: typeof this.url !== 'undefined',
-        url: this.url,
-        prefix: (this.subprocessConfig?.base ?? this.#basePath).replace(/(^\/)|(\/$)/g, ''),
-        wantsAbsoluteUrls: true,
-        needsRootRedirect: true
-      }
-    } else if (this.url) {
-      if (!this.#basePath) {
-        const config = this.subprocessConfig ?? this.#app.config
-        this.#basePath = config.base.replace(/(^\/)|(\/$)/g, '')
-      }
-
-      composer = {
-        tcp: true,
-        url: this.url,
-        prefix: this.#basePath.replace(/(^\/)|(\/$)/g, ''),
-        wantsAbsoluteUrls: true,
-        needsRootRedirect: true
-      }
+    const composer = {
+      tcp: typeof this.url !== 'undefined',
+      url: this.url,
+      prefix: this.basePath ?? config?.base ?? this.#basePath,
+      wantsAbsoluteUrls: true,
+      needsRootRedirect: true
     }
 
     return { composer }
@@ -370,20 +355,16 @@ export class ViteSSRStackable extends NodeStackable {
   getMeta () {
     let composer = { prefix: this.servicePrefix, wantsAbsoluteUrls: true, needsRootRedirect: true }
 
-    if (this.url) {
-      if (!this.#basePath) {
-        const application = this._getApplication()
-        const config = application.vite.devServer?.config ?? application.vite.config.vite
-        this.#basePath = (config.base ?? '').replace(/(^\/)|(\/$)/g, '')
-      }
+    const vite = this._getApplication()?.vite
+    const config = vite?.devServer?.config ?? vite?.config.vite
+    const applicationBasePath = config?.base
 
-      composer = {
-        tcp: true,
-        url: this.url,
-        prefix: this.#basePath ?? this.servicePrefix,
-        wantsAbsoluteUrls: true,
-        needsRootRedirect: true
-      }
+    composer = {
+      tcp: typeof this.url !== 'undefined',
+      url: this.url,
+      prefix: this.basePath ?? applicationBasePath ?? this.#basePath,
+      wantsAbsoluteUrls: true,
+      needsRootRedirect: true
     }
 
     return { composer }

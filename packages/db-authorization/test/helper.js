@@ -5,9 +5,11 @@ const why = require('why-is-node-running')
 // This file must be required/imported as the first file
 // in the test suite. It sets up the global environment
 // to track the open handles via why-is-node-running.
-setInterval(() => {
-  why()
-}, 20000).unref()
+if (process.env.WHY === 'true') {
+  setInterval(() => {
+    why()
+  }, 60000).unref()
+}
 
 // Needed to work with dates & postgresql
 // See https://node-postgres.com/features/types/
@@ -40,12 +42,10 @@ module.exports.connInfo = connInfo
 module.exports.clear = async function (db, sql) {
   try {
     await db.query(sql`DROP TABLE IF EXISTS pages CASCADE`)
-  } catch (err) {
-  }
+  } catch (err) {}
   try {
     await db.query(sql`DROP TABLE IF EXISTS categories CASCADE`)
-  } catch (err) {
-  }
+  } catch (err) {}
 }
 
 async function createBasicPages (db, sql) {

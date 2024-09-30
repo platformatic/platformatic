@@ -3,10 +3,12 @@
 const why = require('why-is-node-running')
 const { dropAllTables } = require('@platformatic/sql-mapper')
 
-setInterval(() => {
-  console.log('why is node running?')
-  why()
-}, 1000 * 30).unref() // 30 seconds
+if (process.env.WHY === 'true') {
+  setInterval(() => {
+    console.log('why is node running?')
+    why()
+  }, 60000).unref()
+}
 
 // Needed to work with dates & postgresql
 // See https://node-postgres.com/features/types/
@@ -43,31 +45,25 @@ module.exports.clear = async function (db, sql) {
 
   try {
     await db.query(sql`DROP TYPE custom_enum`)
-  } catch (err) {
-  }
+  } catch (err) {}
 
   try {
     await db.query(sql`DROP TYPE simple_enum`)
-  } catch (err) {
-  }
+  } catch (err) {}
 
   try {
     await db.query(sql`DROP SCHEMA test4`)
-  } catch (err) {
-  }
+  } catch (err) {}
 
   try {
     await db.query(sql`DROP SCHEMA test3`)
-  } catch (err) {
-  }
+  } catch (err) {}
 
   try {
     await db.query(sql`DROP SCHEMA test2`)
-  } catch (err) {
-  }
+  } catch (err) {}
 
   try {
     await db.query(sql`DROP SCHEMA test1`)
-  } catch (err) {
-  }
+  } catch (err) {}
 }

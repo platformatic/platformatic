@@ -4,6 +4,9 @@
   "title": "Platformatic DB",
   "type": "object",
   "properties": {
+    "basePath": {
+      "type": "string"
+    },
     "server": {
       "type": "object",
       "properties": {

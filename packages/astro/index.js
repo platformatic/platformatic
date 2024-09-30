@@ -112,29 +112,14 @@ export class AstroStackable extends BaseStackable {
   }
 
   getMeta () {
-    let composer = { prefix: this.servicePrefix, wantsAbsoluteUrls: true, needsRootRedirect: true }
+    const config = this.subprocessConfig ?? this.#app?.config
 
-    if (this.isProduction) {
-      composer = {
-        tcp: typeof this.url !== 'undefined',
-        url: this.url,
-        prefix: (this.subprocessConfig?.base ?? this.#basePath).replace(/(^\/)|(\/$)/g, ''),
-        wantsAbsoluteUrls: true,
-        needsRootRedirect: true
-      }
-    } else if (this.url) {
-      if (!this.#basePath) {
-        const config = this.subprocessConfig ?? this.#app.config
-        this.#basePath = config.base.replace(/(^\/)|(\/$)/g, '')
-      }
-
-      composer = {
-        tcp: true,
-        url: this.url,
-        prefix: this.#basePath.replace(/(^\/)|(\/$)/g, ''),
-        wantsAbsoluteUrls: true,
-        needsRootRedirect: true
-      }
+    const composer = {
+      tcp: typeof this.url !== 'undefined',
+      url: this.url,
+      prefix: this.basePath ?? config?.base ?? this.#basePath,
+      wantsAbsoluteUrls: true,
+      needsRootRedirect: true
     }
 
     return { composer }

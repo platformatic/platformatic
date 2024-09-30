@@ -2,13 +2,13 @@ import Issues from '../getting-started/issues.md';
 
 # Configuration
 
-Platformatic Composer can be configured with a [configuration file](#configuration-files) in the different file formats below. The Composer also supports use of environment variables as setting values with [environment variable placeholders](../composer/configuration.md#setting-and-using-env-placeholders). 
+Platformatic Composer can be configured with a [configuration file](#configuration-files) in the different file formats below. The Composer also supports use of environment variables as setting values with [environment variable placeholders](../composer/configuration.md#setting-and-using-env-placeholders).
 
 ## Configuration Files
 
 Platformatic will automatically detect and load configuration files found in the current working directory with the file names listed [here](../file-formats.md#configuration-files).
 
-To specify a configuration file manually, use the [`--config` option](../cli.md#composer) with any `platformatic composer` CLI command. 
+To specify a configuration file manually, use the [`--config` option](../cli.md#composer) with any `platformatic composer` CLI command.
 
 ## Supported File Formats
 
@@ -16,15 +16,16 @@ For detailed information on supported file formats and extensions, visit our [Su
 
 ## Configuration Settings
 
-Configuration file settings are grouped as follows:  
+Configuration file settings are grouped as follows:
 
+- **`basePath`** **(required)**: Configures the [basePath](../service/configuration.md#basePath).
 - **`server`** **(required)**: Configures the [server settings](../service/configuration.md#server)
 - **`composer`**: Specific settings for Platformatic Composer, such as service management and API composition.
 - **`metrics`**: Monitors and records performance [metrics](../service/configuration.md#metrics).
 - **`plugins`**: Manages additional functionality through [plugins](../service/configuration.md#plugins).
 - **`telemetry`**: Handles [telemetry data reporting](../service/configuration.md#telemetry).
 - **`watch`**: Observes file changes for [dynamic updates](../service/configuration.md#watch).
-- **`clients`**: Configures [client-specific](../service/configuration.md#clients) settings. 
+- **`clients`**: Configures [client-specific](../service/configuration.md#clients) settings.
 
 Sensitive data within these settings should use [configuration placeholders](#configuration-placeholders) to ensure security.
 
@@ -33,24 +34,37 @@ Sensitive data within these settings should use [configuration placeholders](#co
 Configure `@platformatic/composer` specific settings such as `services` or `refreshTimeout`:
 
 - **`services`** (`array`, default: `[]`) — is an array of objects that defines
-the services managed by the composer. Each service object supports the following settings:
+  the services managed by the composer. Each service object supports the following settings:
 
-  - **`id`** (**required**, `string`) - A unique identifier for the service. Use a Platformatic Runtime service id if the service is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context). 
-  - **`origin`** (`string`) - A service origin. Skip this option if the service is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context). In this case, service `id` will be used instead of origin. 
-  - **`openapi`** (`object`) - The configuration file used to compose [OpenAPI](#openapi) specification. 
-  - **`graphql`** (`object`) - The configuration for the [GraphQL](#graphql) service. 
+  - **`id`** (**required**, `string`) - A unique identifier for the service. Use a Platformatic Runtime service id if the service is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context).
+  - **`origin`** (`string`) - A service origin. Skip this option if the service is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context). In this case, service `id` will be used instead of origin.
+  - **`openapi`** (`object`) - The configuration file used to compose [OpenAPI](#openapi) specification.
+  - **`graphql`** (`object`) - The configuration for the [GraphQL](#graphql) service.
   - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the service proxy is disabled.
-    - `prefix` (**required**, `string`) - Service proxy prefix. All service routes will be prefixed with this value.
+
+    - `prefix` (`string`) - Service proxy prefix. All service routes will be prefixed with this value.
+
+    :::note
+    If the prefix is not explictly set, the composer and the service will try to find the best prefix for the service.
+
+    First of all, if the application code used the `platformatic.setBasePath` (which is always available in each service),
+    then the value will become the service prefix.
+
+    The next attempt will be to let the service autodetect its own prefix by using the configuration (as the `basePath` setting for `@platformatic/service`)
+    or by autodetecting the prefix from the host application (like Next.js).
+
+    When none of the criteria above successfully lead to a prefix, the service ID is chosen as last fallback to ensure there are not routing conflicts.
+    :::
 
 - **`openapi`** (`object`) - See the Platformatic Service [openapi](../service/configuration.md#service) option for more details.
-- **`graphql`** (`object`) - Has the Platformatic Service [graphql](../service//configuration.md#service) options, plus 
-  
-  - **`addEntitiesResolvers`** (`boolean`) - Automatically add related entities on GraphQL types, following the services entities configuration. See [graphql-composer entities](https://github.com/platformatic/graphql-composer#composer-entities) for details. 
+- **`graphql`** (`object`) - Has the Platformatic Service [graphql](../service//configuration.md#service) options, plus
+
+  - **`addEntitiesResolvers`** (`boolean`) - Automatically add related entities on GraphQL types, following the services entities configuration. See [graphql-composer entities](https://github.com/platformatic/graphql-composer#composer-entities) for details.
   - **`defaultArgsAdapter`** (`function` or `string`) - The default `argsAdapter` function for the entities, for example for the platformatic db mapped entities queries.
 
   ```js
   graphql: {
-    defaultArgsAdapter: (partialResults) => ({ where: { id: { in: partialResults.map(r => r.id) } } })
+    defaultArgsAdapter: partialResults => ({ where: { id: { in: partialResults.map(r => r.id) } } })
   }
   ```
 
@@ -59,7 +73,9 @@ the services managed by the composer. Each service object supports the following
   ```json
   "defaultArgsAdapter": "where.id.in.$>#id"
   ```
+
   - **`onSubgraphError`** (`function`) - Hook called when an error occurs getting schema from a subgraph. The arguments are:
+
     - `error` (`error`) - The error message
     - `subgraphName` (`string`) - The erroring subgraph
 
@@ -74,14 +90,14 @@ the services managed by the composer. Each service object supports the following
 - **`url`** (`string`) - A path of the route that exposes the OpenAPI specification. If a service is a Platformatic Service or Platformatic DB, use `/documentation/json` as a value. Use this or `file` option to specify the OpenAPI specification.
 - **`file`** (`string`) - A path to the OpenAPI specification file. Use this or `url` option to specify the OpenAPI specification.
 - **`prefix`** (`string`) - A prefix for the OpenAPI specification. All service routes will be prefixed with this value.
-- **`config`** (`string`) - A path to the OpenAPI configuration file. This file is used to customize the [OpenAPI](#openapi-configuration)specification. 
+- **`config`** (`string`) - A path to the OpenAPI configuration file. This file is used to customize the [OpenAPI](#openapi-configuration)specification.
 
 ### OpenAPI Configuration
 
 The OpenAPI configuration file is a JSON file that is used to customize the OpenAPI specification. It supports the following options:
 
 - **`ignore`** (`boolean`) - If `true`, the route will be ignored by the composer.
-If you want to ignore a specific method, use the `ignore` option in the nested method object.
+  If you want to ignore a specific method, use the `ignore` option in the nested method object.
 
   ```json title="Example JSON object"
   {
@@ -99,7 +115,6 @@ If you want to ignore a specific method, use the `ignore` option in the nested m
 
 - **alias** (`string`) - Use it create an alias for the route path. Original route path will be ignored.
 
-
   ```json title="Example JSON object"
   {
     "paths": {
@@ -111,24 +126,24 @@ If you want to ignore a specific method, use the `ignore` option in the nested m
   ```
 
 - **`rename`** (`string`) - Use it to rename composed route response fields.
-Use json schema format to describe the response structure, this only for  `200` response. 
+  Use json schema format to describe the response structure, this only for `200` response.
 
   ```json title="Example JSON object"
   {
     "paths": {
       "/users": {
         "responses": {
-            "200": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "id": { "rename": "user_id" },
-                  "name": { "rename": "first_name" }
-                }
+          "200": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "rename": "user_id" },
+                "name": { "rename": "first_name" }
               }
             }
           }
+        }
       }
     }
   }
@@ -196,7 +211,7 @@ Use json schema format to describe the response structure, this only for  `200` 
   - **`resolver`** (`object`) - The resolver to retrieve a list of objects - should return a list - and should accept as an arguments a list of primary keys or foreign keys.
     - **`name`** (`string`, **required**) - The name of the resolver.
     - **`argsAdapter (partialResults)`** (`function` or `string`) - The function invoked with a subset of the result of the initial query, where `partialResults` is an array of the parent node. It should return an object to be used as argument for `resolver` query. Can be a function or a [metaline](https://github.com/platformatic/metaline) string.
-  **Default:** if missing, the `defaultArgsAdapter` function will be used; if that is missing too, a [generic one](lib/utils.js#L3) will be used.
+      **Default:** if missing, the `defaultArgsAdapter` function will be used; if that is missing too, a [generic one](lib/utils.js#L3) will be used.
     - **`partialResults`** (`function` or `string`) - The function to adapt the subset of the result to be passed to `argsAdapter` - usually is needed only on resolvers of `fkeys` and `many`. Can be a function or a [metaline](https://github.com/platformatic/metaline) string.
   - **`pkey`** (`string`, **required**) - The primary key field to identify the entity.
   - **`fkeys`** (`array of objects`) an array to describe the foreign keys of the entities, for example `fkeys: [{ type: 'Author', field: 'authorId' }]`.
@@ -217,9 +232,11 @@ Use json schema format to describe the response structure, this only for  `200` 
 ## Configuration References
 
 ### `telemetry`
+
 Telemetry involves the collection and analysis of data generated by the operations of services. See our [telemetry documentation](../service/configuration.md#telemetry) for details on configuring telemetry for Platformatic Service.
 
 ### `watch`
+
 The `watch` functionality helps in monitoring file changes and dynamically updating services. Learn more at Platformatic Service [watch](../service/configuration.md#watch)
 
 ### `clients`
@@ -232,6 +249,6 @@ Environment variable placeholders are used to securely inject runtime configurat
 
 ### PLT_ROOT
 
-The [PLT_ROOT](../service/configuration.md#plt_root) variable is used to configure relative path and is set to the directory containing the Service configuration file. 
+The [PLT_ROOT](../service/configuration.md#plt_root) variable is used to configure relative path and is set to the directory containing the Service configuration file.
 
 <Issues />

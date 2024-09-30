@@ -4,6 +4,9 @@
   "title": "Platformatic Composer",
   "type": "object",
   "properties": {
+    "basePath": {
+      "type": "string"
+    },
     "server": {
       "type": "object",
       "properties": {
@@ -718,9 +721,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "prefix"
-                    ],
+                    "required": [],
                     "additionalProperties": false
                   }
                 ]
@@ -990,9 +991,7 @@
           "default": 1000
         }
       },
-      "required": [
-        "services"
-      ],
+      "required": [],
       "additionalProperties": false
     },
     "metrics": {

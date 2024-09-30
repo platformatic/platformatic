@@ -19,6 +19,12 @@ For detailed information on supported file formats and extensions, please visit 
 
 Configuration settings containing sensitive data, such as database connection URLs and passwords, should be set using [configuration placeholders](#configuration-placeholders).
 
+### `basePath`
+
+Service proxy basePath when exposing this service in a [composer](../composer/configuration.md) when setting the `proxy` property.
+
+If not specified, the service will be exposed on the service or a value specified in the service code via `platformatic.setBasePath()`.
+
 ### `server`
 
 An object with the following settings:

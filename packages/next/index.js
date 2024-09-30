@@ -102,16 +102,11 @@ export class NextStackable extends BaseStackable {
   }
 
   getMeta () {
-    let composer = { prefix: this.servicePrefix, wantsAbsoluteUrls: true, needsRootRedirect: false }
+    const composer = { prefix: this.basePath ?? this.#basePath, wantsAbsoluteUrls: true, needsRootRedirect: false }
 
     if (this.url) {
-      composer = {
-        tcp: true,
-        url: this.url,
-        prefix: this.#basePath ?? this.servicePrefix,
-        wantsAbsoluteUrls: true,
-        needsRootRedirect: false
-      }
+      composer.tcp = true
+      composer.url = this.url
     }
 
     return { composer }
@@ -155,7 +150,7 @@ export class NextStackable extends BaseStackable {
     const { nextDev } = await importFile(pathResolve(this.#next, './dist/cli/next-dev.js'))
 
     this.#manager.on('config', config => {
-      this.#basePath = config.basePath.replace(/(^\/)|(\/$)/g, '')
+      this.#basePath = config.basePath
     })
 
     try {
@@ -207,7 +202,7 @@ export class NextStackable extends BaseStackable {
 
       // Since we are in the same process
       process.once('plt:next:config', config => {
-        this.#basePath = config.basePath.replace(/(^\/)|(\/$)/g, '')
+        this.#basePath = config.basePath
       })
 
       this.#manager.register()

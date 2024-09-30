@@ -27,6 +27,8 @@ class DbStackable extends ServiceStackable {
     await this.init()
     await this.app.ready()
 
+    const serviceMeta = await super.getMeta()
+
     const config = this.configManager.current
 
     const dbConfig = config.db
@@ -34,12 +36,14 @@ class DbStackable extends ServiceStackable {
 
     if (connectionString) {
       return {
+        ...serviceMeta,
         db: {
           connectionStrings: [connectionString]
         }
       }
     }
-    return {}
+
+    return serviceMeta
   }
 }
 module.exports = { DbStackable }

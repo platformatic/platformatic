@@ -150,7 +150,7 @@ export class RemixStackable extends ViteStackable {
       composer: {
         tcp: typeof this.url !== 'undefined',
         url: this.url,
-        prefix: this.#basePath,
+        prefix: this.basePath ?? this.#basePath,
         wantsAbsoluteUrls: true,
         needsRootRedirect: true
       }

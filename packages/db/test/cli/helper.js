@@ -10,17 +10,21 @@ const split = require('split2')
 // This file must be required/imported as the first file
 // in the test suite. It sets up the global environment
 // to track the open handles via why-is-node-running.
-setInterval(() => {
-  why()
-}, 20000).unref()
+if (process.env.WHY === 'true') {
+  setInterval(() => {
+    why()
+  }, 60000).unref()
+}
 
-setGlobalDispatcher(new Agent({
-  keepAliveTimeout: 10,
-  keepAliveMaxTimeout: 10,
-  tls: {
-    rejectUnauthorized: false,
-  },
-}))
+setGlobalDispatcher(
+  new Agent({
+    keepAliveTimeout: 10,
+    keepAliveMaxTimeout: 10,
+    tls: {
+      rejectUnauthorized: false
+    }
+  })
+)
 
 const cliPath = join(__dirname, '..', '..', 'db.mjs')
 
@@ -30,10 +34,10 @@ async function connectDB (connectionInfo) {
       debug: () => {},
       info: () => {},
       trace: () => {},
-      error: () => {},
+      error: () => {}
     },
     max: 1,
-    ...connectionInfo,
+    ...connectionInfo
   })
   return db
 }
@@ -50,18 +54,20 @@ async function start (commandOpts, exacaOpts = {}) {
   const { execa } = await import('execa')
   const child = execa('node', [cliPath, 'start', ...commandOpts], exacaOpts)
   child.stderr.pipe(process.stdout)
-  const output = child.stdout.pipe(split(function (line) {
-    try {
-      const obj = JSON.parse(line)
-      return obj
-    } catch (err) {
-      console.log(line)
-    }
-  }))
+  const output = child.stdout.pipe(
+    split(function (line) {
+      try {
+        const obj = JSON.parse(line)
+        return obj
+      } catch (err) {
+        console.log(line)
+      }
+    })
+  )
   child.ndj = output
 
   const errorTimeout = setTimeout(() => {
-    throw new Error('Couldn\'t start server')
+    throw new Error("Couldn't start server")
   }, 10000)
 
   for await (const messages of on(output, 'data')) {

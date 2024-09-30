@@ -36,6 +36,12 @@ export const internalServicesFiles = [
   'services/backend/dist/routes/root.js'
 ]
 
+function diagnostic (t, message) {
+  if (!process.env.CI) {
+    t.diagnostic(message)
+  }
+}
+
 async function ensureExists (path) {
   const directory = dirname(path)
   const pattern = basename(path)
@@ -389,7 +395,7 @@ export function verifyBuildAndProductionMode (workingDirectory, configurations, 
     if (!skipBuild) {
       test(`configuration "${configuration.name}" - should build and create all required files`, async t => {
         const { id, baseWorkingDirectory } = configuration
-        t.diagnostic(`starting build for ${id}`)
+        diagnostic(t, `starting build for ${id}`)
         configuration.workingDirectory = resolve(baseWorkingDirectory, id)
 
         runtimeConfig = JSON.parse(
@@ -409,7 +415,7 @@ export function verifyBuildAndProductionMode (workingDirectory, configurations, 
     }
 
     test(`configuration "${configuration.name}" - should start in production mode`, async t => {
-      t.diagnostic(`starting production for ${configuration.id}`)
+      diagnostic(t, `starting production for ${configuration.id}`)
       // Start in production mode
       const { url } = await createProductionRuntime(
         t,

@@ -31,13 +31,9 @@ const configurations = [
   {
     only: isCIOnWindows,
     id: 'composer-with-external-proxy',
-    name: 'Next.js (in composer with prefix)',
+    name: 'Next.js (in composer with external procy)',
     files: [...nextFiles, ...internalServicesFiles],
-    checks: [
-      verifyFrontendOnPrefixWithProxy,
-      verifyPlatformaticComposerWithProxy,
-      verifyPlatformaticServiceWithProxy
-    ]
+    checks: [verifyFrontendOnPrefixWithProxy, verifyPlatformaticComposerWithProxy, verifyPlatformaticServiceWithProxy]
   },
   {
     id: 'composer-without-prefix',
