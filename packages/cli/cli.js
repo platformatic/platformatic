@@ -1,5 +1,4 @@
 #! /usr/bin/env node
-import { checkNodeVersionForServices } from '@platformatic/utils'
 import { command as client } from '@platformatic/client-cli'
 import {
   getRuntimesCommand,
@@ -9,6 +8,7 @@ import {
 } from '@platformatic/control/control.js'
 import { startCommand } from '@platformatic/runtime'
 import { compile, run as runRuntime } from '@platformatic/runtime/runtime.mjs'
+import { checkNodeVersionForServices } from '@platformatic/utils'
 import { isColorSupported } from 'colorette'
 import commist from 'commist'
 import { join } from 'desm'
