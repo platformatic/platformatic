@@ -176,6 +176,11 @@ export class ChildProcess extends ITC {
   #setupServer () {
     const subscribers = {
       asyncStart ({ options }) {
+        // Unix socket, do nothing
+        if (options.path) {
+          return
+        }
+
         const port = globalThis.platformatic.port
         const host = globalThis.platformatic.host
 
@@ -189,8 +194,15 @@ export class ChildProcess extends ITC {
       asyncEnd: ({ server }) => {
         tracingChannel('net.server.listen').unsubscribe(subscribers)
 
-        const { family, address, port } = server.address()
-        const url = new URL(family === 'IPv6' ? `http://[${address}]:${port}` : `http://${address}:${port}`).origin
+        const address = server.address()
+
+        // Unix socket, do nothing
+        if (typeof address === 'string') {
+          return
+        }
+
+        const { family, address: host, port } = address
+        const url = new URL(family === 'IPv6' ? `http://[${host}]:${port}` : `http://${host}:${port}`).origin
 
         this.notify('url', url)
       },
