@@ -489,7 +489,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.24
+        version: 1.25.25
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -1851,7 +1851,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.24
+        version: 1.25.25
       '@types/ws':
         specifier: ^8.5.10
         version: 8.5.12
@@ -2231,7 +2231,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.24
+        version: 1.25.25
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -4300,8 +4300,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@scalar/fastify-api-reference@1.25.24':
-    resolution: {integrity: sha512-wRMLIcOSbGLE4D1ZjmkdgfM2LtCJqeSzr0e2AoxNbUht6aoldQs17R20X++twrB15Dx43sL5iXN0cai8CbWoJw==}
+  '@scalar/fastify-api-reference@1.25.25':
+    resolution: {integrity: sha512-nlztHWhkP5kdvHctld6L+vmrvC4Qe/kBW/OTQwIwkRn+uF6YbAmBALgFnf0NAHzY5dFB54MarP3TlQwOUo0bew==}
     engines: {node: '>=18'}
 
   '@scalar/openapi-types@0.1.1':
@@ -11834,7 +11834,7 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.22.5':
     optional: true
 
-  '@scalar/fastify-api-reference@1.25.24':
+  '@scalar/fastify-api-reference@1.25.25':
     dependencies:
       '@scalar/types': 0.0.11
       fastify-plugin: 4.5.1
