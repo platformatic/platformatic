@@ -21,7 +21,7 @@ Configuration settings containing sensitive data, such as database connection UR
 
 ### `basePath`
 
-Service proxy basePath when exposing this service in a [composer](../composer/configuration.md) when setting the `proxy` property.
+Service proxy base path when exposing this service in a [composer](../composer/configuration.md) when setting the `proxy` property.
 
 If not specified, the service will be exposed on the service or a value specified in the service code via `platformatic.setBasePath()`.
 

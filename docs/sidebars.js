@@ -100,6 +100,42 @@ const sidebars = {
       items: [
         {
           type: 'category',
+          label: 'Astro',
+          collapsed: true,
+          items: [
+            'packages/astro/overview',
+            'packages/astro/configuration',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Next',
+          collapsed: true,
+          items: [
+            'packages/next/overview',
+            'packages/next/configuration',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Remix',
+          collapsed: true,
+          items: [
+            'packages/remix/overview',
+            'packages/remix/configuration',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Vite',
+          collapsed: true,
+          items: [
+            'packages/vite/overview',
+            'packages/vite/configuration',
+          ],
+        },
+        {
+          type: 'category',
           label: 'SQL-to-OpenAPI',
           collapsed: true,
           items: [
