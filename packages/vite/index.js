@@ -300,9 +300,19 @@ export class ViteSSRStackable extends NodeStackable {
 
     if (this.isProduction) {
       const clientDirectory = config.vite.ssr.clientDirectory
-      this.verifyOutputDirectory(
-        resolve(this.root, clientDirectory, config.application.outputDirectory, clientDirectory)
-      )
+      const clientOutDir = resolve(this.root, clientDirectory, config.application.outputDirectory, clientDirectory)
+
+      this.verifyOutputDirectory(clientOutDir)
+
+      const buildInfoPath = resolve(clientOutDir, '.platformatic-build.json')
+      if (!this.#basePath && existsSync(buildInfoPath)) {
+        try {
+          const buildInfo = JSON.parse(await readFile(buildInfoPath, 'utf-8'))
+          this.#basePath = buildInfo.basePath
+        } catch (e) {
+          console.log(e)
+        }
+      }
     }
 
     await super.start({ listen })

@@ -18,7 +18,9 @@ async function resolveServiceProxyParameters (service) {
   let internalRewriteLocationHeader = true
 
   if (meta.wantsAbsoluteUrls) {
-    rewritePrefix = prefix
+    // The rewritePrefix purposely ignores service.proxy?.prefix to let
+    // the service always being able to configure their value
+    rewritePrefix = meta.prefix ?? service.id
     internalRewriteLocationHeader = false
   }
 
