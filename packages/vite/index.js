@@ -369,7 +369,6 @@ export class ViteSSRStackable extends NodeStackable {
     const config = vite?.devServer?.config ?? vite?.config.vite
     const applicationBasePath = config?.base
 
-    process._rawDebug(this.basePath, applicationBasePath, this.#basePath)
     composer = {
       tcp: typeof this.url !== 'undefined',
       url: this.url,
