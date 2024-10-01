@@ -47,7 +47,7 @@ importers:
     devDependencies:
       '@astrojs/node':
         specifier: ^8.3.3
-        version: 8.3.4(astro@4.15.9(@types/node@22.7.4)(rollup@4.22.5)(typescript@5.6.2))
+        version: 8.3.4(astro@4.15.10(@types/node@22.7.4)(rollup@4.22.5)(typescript@5.6.2))
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
@@ -56,7 +56,7 @@ importers:
         version: link:../service
       astro:
         specifier: ^4.14.4
-        version: 4.15.9(@types/node@22.7.4)(rollup@4.22.5)(typescript@5.6.2)
+        version: 4.15.10(@types/node@22.7.4)(rollup@4.22.5)(typescript@5.6.2)
       borp:
         specifier: ^0.17.0
         version: 0.17.0
@@ -4885,8 +4885,8 @@ packages:
     resolution: {integrity: sha512-LElXdjswlqjWrPpJFg1Fx4wpkOCxj1TDHlSV4PlaRxHGWko024xICaa97ZkMfs6DRKlCguiAI+rbXv5GWwXIkg==}
     hasBin: true
 
-  astro@4.15.9:
-    resolution: {integrity: sha512-51oXq9qrZ5OPWYmEXt1kGrvWmVeWsx28SgBTzi2XW6iwcnW/wC5ONm6ol6qBGSCF93tQvZplXvuzpaw1injECA==}
+  astro@4.15.10:
+    resolution: {integrity: sha512-2NA9VWkIAxruq7GyR6ojpEqPLVlN2pyXqUDxiuXSEaaF1ajoQzLkXUIfhJgYmmVSIeTnd4ps9T4nTOEjWaOKrw==}
     engines: {node: ^18.17.1 || ^20.3.0 || >=21.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0'}
     hasBin: true
 
@@ -4984,9 +4984,9 @@ packages:
     resolution: {integrity: sha512-NLtUDhth7C04exd4l7PqNameVJaGYRW4M1zcAkbmaLU2QSRNXjubR/PQ8VyE2Bqguf2CtJ0mwhAWBDlXyQ+VTA==}
     hasBin: true
 
-  boxen@7.1.1:
-    resolution: {integrity: sha512-2hCgjEmP8YLWQ130n2FerGv7rYpfBmnmp9Uy2Le1vge6X3gZIfSmEzP5QTDElFxcvVcXlEn8Aq6MU/PZygIOog==}
-    engines: {node: '>=14.16'}
+  boxen@8.0.1:
+    resolution: {integrity: sha512-F3PH5k5juxom4xktynS7MoFY+NUWH5LC4CnH11YB8NPew+HLpmBLCybSAEyb2F+4pRXhuhWqFesoQd6DAyc2hw==}
+    engines: {node: '>=18'}
 
   brace-expansion@1.1.11:
     resolution: {integrity: sha512-iCuPHDFgrHX7H2vEI/5xpz07zSHB00TpugqhmYtVmMO6518mCuRMoOYFldEBl0g187ufozdaHgWKcYFb61qGiA==}
@@ -5074,10 +5074,6 @@ packages:
   camelcase@6.3.0:
     resolution: {integrity: sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==}
     engines: {node: '>=10'}
-
-  camelcase@7.0.1:
-    resolution: {integrity: sha512-xlx1yCK2Oc1APsPXDL2LdlNP6+uu8OCDdhOBSVT279M/S+y75O30C2VuD8T2ogdePBBl7PfPF4504tnLgX3zfw==}
-    engines: {node: '>=14.16'}
 
   camelcase@8.0.0:
     resolution: {integrity: sha512-8WB3Jcas3swSvjIeA2yvCJ+Miyz5l1ZmB6HFb9R1317dt9LCQoswg/BGrmAmkWVEszSrrg4RwmO46qIm2OEnSA==}
@@ -5592,8 +5588,8 @@ packages:
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
-  electron-to-chromium@1.5.29:
-    resolution: {integrity: sha512-PF8n2AlIhCKXQ+gTpiJi0VhcHDb69kYX4MtCiivctc2QD3XuNZ/XIOlbGzt7WAjjEev0TtaH6Cu3arZExm5DOw==}
+  electron-to-chromium@1.5.30:
+    resolution: {integrity: sha512-sXI35EBN4lYxzc/pIGorlymYNzDBOqkSlVRe6MkgBsW/hW1tpC/HDJ2fjG7XnjakzfLEuvdmux0Mjs6jHq4UOA==}
 
   elliptic@6.5.7:
     resolution: {integrity: sha512-ESVCtTwiA+XhY3wyh24QqRGBoP3rEdDUl3EDUUo9tft074fi19IrdpH7hLCMMP3CIj7jb3W96rn8lt/BqIlt5Q==}
@@ -9262,9 +9258,9 @@ packages:
     resolution: {integrity: sha512-4dbzIzqvjtgiM5rw1k5rEHtBANKmdudhGyBEajN01fEyhaAIhsoKNy6y7+IN93IfpFtwY9iqi7kD+xwKhQsNJA==}
     engines: {node: '>=8'}
 
-  type-fest@2.19.0:
-    resolution: {integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==}
-    engines: {node: '>=12.20'}
+  type-fest@4.26.1:
+    resolution: {integrity: sha512-yOGpmOAL7CkKe/91I5O3gPICmJNLJ1G4zFYVAsRHg7M64biSnPtRj0WNQt++bRkjYOqjWXrhnUw1utzmVErAdg==}
+    engines: {node: '>=16'}
 
   type-is@1.6.18:
     resolution: {integrity: sha512-TkRKr9sUTxEH8MdfuCSP7VizJyzRNMjj2J2do2Jr3Kym598JVdEksuzPQCnlFPW4ky9Q+iA+ma9BGm06XQBy8g==}
@@ -9653,9 +9649,9 @@ packages:
     engines: {node: '>=8'}
     hasBin: true
 
-  widest-line@4.0.1:
-    resolution: {integrity: sha512-o0cyEG0e8GPzT4iGHphIOh0cJOV8fivsXxddQasHPHfoZf1ZexrfeA21w2NaEN1RHE+fXlfISmOE8R9N3u3Qig==}
-    engines: {node: '>=12'}
+  widest-line@5.0.0:
+    resolution: {integrity: sha512-c9bZp7b5YtRj2wOe6dlj32MK+Bx/M/d+9VB2SHM1OtsUHR0aV0tdP6DWh/iMt0kWi1t5g1Iudu6hQRNd1A4PVA==}
+    engines: {node: '>=18'}
 
   word-wrap@1.2.5:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
@@ -9835,9 +9831,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@astrojs/node@8.3.4(astro@4.15.9(@types/node@22.7.4)(rollup@4.22.5)(typescript@5.6.2))':
+  '@astrojs/node@8.3.4(astro@4.15.10(@types/node@22.7.4)(rollup@4.22.5)(typescript@5.6.2))':
     dependencies:
-      astro: 4.15.9(@types/node@22.7.4)(rollup@4.22.5)(typescript@5.6.2)
+      astro: 4.15.10(@types/node@22.7.4)(rollup@4.22.5)(typescript@5.6.2)
       send: 0.19.0
       server-destroy: 1.0.1
     transitivePeerDependencies:
@@ -12594,7 +12590,7 @@ snapshots:
 
   astring@1.9.0: {}
 
-  astro@4.15.9(@types/node@22.7.4)(rollup@4.22.5)(typescript@5.6.2):
+  astro@4.15.10(@types/node@22.7.4)(rollup@4.22.5)(typescript@5.6.2):
     dependencies:
       '@astrojs/compiler': 2.10.3
       '@astrojs/internal-helpers': 0.4.1
@@ -12610,7 +12606,7 @@ snapshots:
       acorn: 8.12.1
       aria-query: 5.3.2
       axobject-query: 4.1.0
-      boxen: 7.1.1
+      boxen: 8.0.1
       ci-info: 4.0.0
       clsx: 2.1.1
       common-ancestor-path: 1.0.1
@@ -12784,16 +12780,16 @@ snapshots:
     transitivePeerDependencies:
       - monocart-coverage-reports
 
-  boxen@7.1.1:
+  boxen@8.0.1:
     dependencies:
       ansi-align: 3.0.1
-      camelcase: 7.0.1
+      camelcase: 8.0.0
       chalk: 5.3.0
       cli-boxes: 3.0.0
-      string-width: 5.1.2
-      type-fest: 2.19.0
-      widest-line: 4.0.1
-      wrap-ansi: 8.1.0
+      string-width: 7.2.0
+      type-fest: 4.26.1
+      widest-line: 5.0.0
+      wrap-ansi: 9.0.0
 
   brace-expansion@1.1.11:
     dependencies:
@@ -12817,7 +12813,7 @@ snapshots:
   browserslist@4.24.0:
     dependencies:
       caniuse-lite: 1.0.30001664
-      electron-to-chromium: 1.5.29
+      electron-to-chromium: 1.5.30
       node-releases: 2.0.18
       update-browserslist-db: 1.1.1(browserslist@4.24.0)
 
@@ -12898,8 +12894,6 @@ snapshots:
   camelcase@5.3.1: {}
 
   camelcase@6.3.0: {}
-
-  camelcase@7.0.1: {}
 
   camelcase@8.0.0: {}
 
@@ -13346,7 +13340,7 @@ snapshots:
 
   ee-first@1.1.1: {}
 
-  electron-to-chromium@1.5.29: {}
+  electron-to-chromium@1.5.30: {}
 
   elliptic@6.5.7:
     dependencies:
@@ -18033,7 +18027,7 @@ snapshots:
 
   type-fest@0.8.1: {}
 
-  type-fest@2.19.0: {}
+  type-fest@4.26.1: {}
 
   type-is@1.6.18:
     dependencies:
@@ -18556,9 +18550,9 @@ snapshots:
       siginfo: 2.0.0
       stackback: 0.0.2
 
-  widest-line@4.0.1:
+  widest-line@5.0.0:
     dependencies:
-      string-width: 5.1.2
+      string-width: 7.2.0
 
   word-wrap@1.2.5: {}
 
