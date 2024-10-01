@@ -42,7 +42,7 @@
     "semver": "^7.6.0",
     "strip-ansi": "^7.1.0",
     "undici": "^6.9.0",
-    "which": "^3.0.1"
+    "which": "^5.0.0"
   },
   "devDependencies": {
     "@platformatic/composer": "workspace:*",
