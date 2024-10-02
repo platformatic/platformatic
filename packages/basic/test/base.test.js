@@ -5,7 +5,7 @@ import { deepStrictEqual, ok, rejects, throws } from 'node:assert'
 import { test } from 'node:test'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
-import { createMockedLogger, createStackable } from './helper.js'
+import { createMockedLogger, createStackable, temporaryFolder } from './helper.js'
 
 test('BaseStackable - should properly initialize', async t => {
   const stackable = createStackable({ serviceId: 'service' })
@@ -58,7 +58,7 @@ test('BaseStackable - other getters', async t => {
 test('BaseStackable - getWatchConfig - disabled', async t => {
   const stackable = createStackable({}, { current: { watch: { enabled: false } } })
 
-  deepStrictEqual(await stackable.getWatchConfig(), { enabled: false, path: '/tmp' })
+  deepStrictEqual(await stackable.getWatchConfig(), { enabled: false, path: temporaryFolder })
 })
 
 test('BaseStackable - getWatchConfig - disabled', async t => {
@@ -67,7 +67,7 @@ test('BaseStackable - getWatchConfig - disabled', async t => {
   deepStrictEqual(await stackable.getWatchConfig(), {
     allow: ['first'],
     enabled: true,
-    path: '/tmp',
+    path: temporaryFolder,
     ignore: ['second']
   })
 })
@@ -118,7 +118,7 @@ test('BaseStackable - buildWithCommand - should execute the requested command', 
 
   deepStrictEqual(messages, [
     ['DEBUG', `Executing "node ${executablePath}" ...`],
-    ['ERROR', '/private/tmp']
+    ['ERROR', temporaryFolder]
   ])
 })
 
@@ -174,7 +174,7 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
       host: '127.0.0.1',
       logLevel: 'trace',
       port: 0,
-      root: pathToFileURL('/tmp').toString(),
+      root: pathToFileURL(temporaryFolder).toString(),
       telemetry: {}
     })
   }

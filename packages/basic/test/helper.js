@@ -1,7 +1,8 @@
 import { createDirectory, withResolvers } from '@platformatic/utils'
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { existsSync } from 'node:fs'
-import { readFile, symlink, writeFile } from 'node:fs/promises'
+import { readFile, realpath, symlink, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import { dirname, resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { Client, request } from 'undici'
@@ -17,12 +18,14 @@ const DEFAULT_PAUSE_TIMEOUT = 300000
 export let fixturesDir
 let hmrTriggerFileRelative
 
+export const temporaryFolder = await realpath(tmpdir())
+
 export function createStackable (
   context = {},
   config = { current: {} },
   name = 'base',
   version = '1.0.0',
-  base = '/tmp'
+  base = temporaryFolder
 ) {
   return new BaseStackable(name, version, { context }, base, config)
 }
