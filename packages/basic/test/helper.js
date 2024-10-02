@@ -8,7 +8,7 @@ import { Client, request } from 'undici'
 import WebSocket from 'ws'
 import { loadConfig } from '../../config/index.js'
 import { buildServer, platformaticRuntime } from '../../runtime/index.js'
-
+import { BaseStackable } from '../lib/base.js'
 export { setTimeout as sleep } from 'node:timers/promises'
 
 const HMR_TIMEOUT = process.env.CI ? 20000 : 10000
@@ -16,6 +16,34 @@ const DEFAULT_PAUSE_TIMEOUT = 300000
 
 export let fixturesDir
 let hmrTriggerFileRelative
+
+export function createStackable (
+  context = {},
+  config = { current: {} },
+  name = 'base',
+  version = '1.0.0',
+  base = '/tmp'
+) {
+  return new BaseStackable(name, version, { context }, base, config)
+}
+
+export function createMockedLogger () {
+  const messages = []
+
+  const logger = {
+    debug (message) {
+      messages.push(['DEBUG', message])
+    },
+    info (message) {
+      messages.push(['INFO', message])
+    },
+    error (message) {
+      messages.push(['ERROR', message])
+    }
+  }
+
+  return { logger, messages }
+}
 
 export function setFixturesDir (directory) {
   fixturesDir = directory

@@ -7,12 +7,14 @@ import build from 'pino-abstract-transport'
 import { WebSocket } from 'ws'
 import { getSocketPath } from './child-manager.js'
 
+/* c8 ignore next 5 */
 function logDirectError (message, error) {
   process._rawDebug(`Logger thread for child process of service ${workerData.id} ${message}.`, {
     error: ensureLoggableError(error)
   })
 }
 
+/* c8 ignore next 4 */
 function handleUnhandled (type, error) {
   logDirectError(`threw an ${type}`, error)
   process.exit(6)
@@ -23,6 +25,7 @@ process.on('unhandledRejection', handleUnhandled.bind(null, 'unhandled rejection
 
 export default async function (opts) {
   try {
+    /* c8 ignore next */
     const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
     const socket = new WebSocket(`${protocol}${getSocketPath(process.env.PLT_MANAGER_ID)}`)
 
@@ -31,6 +34,7 @@ export default async function (opts) {
     // Do not process responses but empty the socket inbound queue
     socket.on('message', () => {})
 
+    /* c8 ignore next 3 */
     socket.on('error', error => {
       logDirectError('threw a socket error', error)
     })
@@ -48,6 +52,7 @@ export default async function (opts) {
         }
       }
     )
+    /* c8 ignore next 3 */
   } catch (error) {
     logDirectError('threw a connection error', error)
   }

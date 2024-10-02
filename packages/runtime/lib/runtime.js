@@ -236,7 +236,7 @@ class Runtime extends EventEmitter {
       // TODO: handle port allocation error here
       if (error.code === 'EADDRINUSE') throw error
 
-      this.logger.error({ error: ensureLoggableError(error) }, `Failed to start service "${id}".`)
+      this.logger.error({ err: ensureLoggableError(error) }, `Failed to start service "${id}".`)
 
       const config = this.#configManager.current
       const restartOnError = config.restartOnError

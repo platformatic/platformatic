@@ -17,5 +17,5 @@ export const UnsupportedVersion = createError(
 
 export const NonZeroExitCode = createError(
   `${ERROR_PREFIX}_NON_ZERO_EXIT_CODE`,
-  'Process exit with non zero exit code %d.'
+  'Process exited with non zero exit code %d.'
 )

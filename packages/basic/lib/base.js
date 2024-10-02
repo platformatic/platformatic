@@ -26,7 +26,7 @@ export class BaseStackable {
     this.configManager = configManager
     this.serverConfig = deepmerge(options.context.serverConfig ?? {}, configManager.current.server ?? {})
     this.openapiSchema = null
-    this.getGraphqlSchema = null
+    this.graphqlSchema = null
     this.isEntrypoint = options.context.isEntrypoint
     this.isProduction = options.context.isProduction
 
@@ -64,6 +64,10 @@ export class BaseStackable {
     const config = this.configManager.current
 
     const enabled = config.watch?.enabled !== false
+
+    if (!enabled) {
+      return { enabled, path: this.root }
+    }
 
     return {
       enabled,
@@ -125,7 +129,7 @@ export class BaseStackable {
     }
   }
 
-  async buildWithCommand (command, basePath, loader) {
+  async buildWithCommand (command, basePath, loader, scripts) {
     if (Array.isArray(command)) {
       command = command.join(' ')
     }
@@ -135,12 +139,14 @@ export class BaseStackable {
     this.#childManager = new ChildManager({
       logger: this.logger,
       loader,
+      scripts,
       context: {
         id: this.id,
         // Always use URL to avoid serialization problem in Windows
         root: pathToFileURL(this.root).toString(),
         basePath,
         logLevel: this.logger.level,
+        /* c8 ignore next 2 */
         port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
         host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true
       }
@@ -158,10 +164,12 @@ export class BaseStackable {
       })
 
       // Route anything not catched by child process logger to the logger manually
+      /* c8 ignore next 3 */
       subprocess.stdout.pipe(split2()).on('data', line => {
         this.logger.info(line)
       })
 
+      /* c8 ignore next 3 */
       subprocess.stderr.pipe(split2()).on('data', line => {
         this.logger.error(line)
       })
@@ -191,6 +199,7 @@ export class BaseStackable {
         root: pathToFileURL(this.root).toString(),
         basePath,
         logLevel: this.logger.level,
+        /* c8 ignore next 2 */
         port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
         host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
         telemetry: this.telemetryConfig
@@ -207,10 +216,12 @@ export class BaseStackable {
       this.subprocess = this.spawn(command)
 
       // Route anything not catched by child process logger to the logger manually
+      /* c8 ignore next 3 */
       this.subprocess.stdout.pipe(split2()).on('data', line => {
         this.logger.info(line)
       })
 
+      /* c8 ignore next 3 */
       this.subprocess.stderr.pipe(split2()).on('data', line => {
         this.logger.error(line)
       })
@@ -223,14 +234,16 @@ export class BaseStackable {
 
       this.#subprocessStarted = true
     } catch (e) {
+      this.#childManager.close('SIGKILL')
       throw new Error(`Cannot execute command "${command}": executable not found`)
     } finally {
       await this.#childManager.eject()
     }
 
-    // // If the process exits prematurely, terminate the thread with the same code
+    // If the process exits prematurely, terminate the thread with the same code
     this.subprocess.on('exit', code => {
       if (this.#subprocessStarted && typeof code === 'number' && code !== 0) {
+        this.#childManager.close('SIGKILL')
         process.exit(code)
       }
     })
@@ -248,9 +261,14 @@ export class BaseStackable {
     await exitPromise
   }
 
+  getChildManager () {
+    return this.#childManager
+  }
+
   spawn (command) {
     const [executable, ...args] = parseCommandString(command)
 
+    /* c8 ignore next 3 */
     return platform() === 'win32'
       ? spawn(command, { cwd: this.root, shell: true, windowsVerbatimArguments: true })
       : spawn(executable, args, { cwd: this.root })
