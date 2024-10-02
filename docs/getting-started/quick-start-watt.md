@@ -137,7 +137,7 @@ curl http://localhost:3042
 Inside `my-app`, let's create a new Platformatic Composer
 
 ```bash
-npx create-platformatic@2.0.0-alpha.23
+npx create-platformatic
 ```
 
 This will output:
@@ -178,7 +178,7 @@ Then, edit `web/composer/platformatic.json` to add the `node` app:
     "services": [{
       "id": "node",
       "proxy": {
-        "path": "/node"
+        "prefix": "/node"
       }
     }],
     "refreshTimeout": 1000
@@ -265,7 +265,7 @@ Finally, let's add `Next` to our composer:
     "services": [{
       "id": "node",
       "proxy": {
-        "path": "/node"
+        "prefix": "/node"
       }
     }, {
       "id": "next"
