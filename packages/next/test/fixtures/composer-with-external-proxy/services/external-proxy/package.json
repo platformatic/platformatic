@@ -9,7 +9,7 @@
     "fastify": "^5.0.0-alpha.4"
   },
   "dependencies": {
-    "@platformatic/service": "^2.0.0-alpha.13"
+    "@platformatic/service": "^2.3.1"
   },
   "engines": {
     "node": "^18.8.0 || >=20.6.0"

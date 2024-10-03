@@ -222,7 +222,7 @@ test('config - should list configuration for an service', async t => {
   const configProcess = await wattpm('config', 'main', 'main')
 
   deepStrictEqual(JSON.parse(configProcess.stdout), {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.0.0-alpha.20.json',
+    $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json',
     logger: {
       level: 'info'
     },
