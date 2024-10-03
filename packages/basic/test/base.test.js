@@ -2,11 +2,13 @@
 
 import { withResolvers } from '@platformatic/utils'
 import { deepStrictEqual, ok, rejects, throws } from 'node:assert'
+import { platform } from 'node:os'
 import { test } from 'node:test'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
 import { createMockedLogger, createStackable, temporaryFolder } from './helper.js'
 
+deepEqual()
 test('BaseStackable - should properly initialize', async t => {
   const stackable = createStackable({ serviceId: 'service' })
   deepStrictEqual(stackable.logger.level, 'trace')
@@ -182,14 +184,18 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
   await stackable.stopCommand()
 })
 
-test('BaseStackable - startCommand - should reject for non existing commands', async t => {
-  const stackable = createStackable()
+test(
+  'BaseStackable - startCommand - should reject for non existing commands',
+  { skip: platform() === 'win32' },
+  async t => {
+    const stackable = createStackable()
 
-  await rejects(
-    () => stackable.startWithCommand('non-existing-command'),
-    /Cannot execute command "non-existing-command": executable not found/
-  )
-})
+    await rejects(
+      () => stackable.startWithCommand('non-existing-command'),
+      /Cannot execute command "non-existing-command": executable not found/
+    )
+  }
+)
 
 test('BaseStackable - startCommand - should kill the process on non-zero exit code', async t => {
   const stackable = createStackable()
