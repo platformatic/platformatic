@@ -8,7 +8,6 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
 import { createMockedLogger, createStackable, temporaryFolder } from './helper.js'
 
-deepEqual()
 test('BaseStackable - should properly initialize', async t => {
   const stackable = createStackable({ serviceId: 'service' })
   deepStrictEqual(stackable.logger.level, 'trace')
