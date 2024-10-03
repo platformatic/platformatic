@@ -66,6 +66,12 @@ const configurations = [
     checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
   },
   {
+    id: 'node-no-configuration-composer-no-services',
+    name: 'Node.js application with (with no configuration files in development mode when exposed in a composer which defines no services)',
+    files: [...nodeESMFiles, ...internalServicesFiles],
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+  },
+  {
     id: 'node-no-build-standalone',
     name: 'Node.js application with (with no build function in development mode when standalone)',
     files: nodeCustomBuildFiles,

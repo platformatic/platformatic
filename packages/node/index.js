@@ -48,6 +48,7 @@ export class NodeStackable extends BaseStackable {
   #module
   #app
   #server
+  #basePath
   #dispatcher
   #isFastify
   #isKoa
@@ -81,7 +82,7 @@ export class NodeStackable extends BaseStackable {
     const finalEntrypoint = await this._findEntrypoint()
 
     // Require the application
-    const basePath = config.application?.basePath
+    this.#basePath = config.application?.basePath
       ? ensureTrailingSlash(cleanBasePath(config.application?.basePath))
       : undefined
 
@@ -89,7 +90,7 @@ export class NodeStackable extends BaseStackable {
       // Always use URL to avoid serialization problem in Windows
       id: this.id,
       root: pathToFileURL(this.root).toString(),
-      basePath,
+      basePath: this.#basePath,
       logLevel: this.logger.level
     })
 
@@ -220,26 +221,15 @@ export class NodeStackable extends BaseStackable {
   }
 
   getMeta () {
-    const config = this.configManager.current
-    const basePath = ensureTrailingSlash(cleanBasePath(this.basePath ?? config.application?.basePath))
-
-    let composer = {
-      prefix: basePath,
-      wantsAbsoluteUrls: this._getWantsAbsoluteUrls(),
-      needsRootRedirect: true
-    }
-
-    if (this.url) {
-      composer = {
-        tcp: true,
+    return {
+      composer: {
+        tcp: typeof this.url !== 'undefined',
         url: this.url,
-        prefix: basePath,
+        prefix: this.basePath ?? this.#basePath,
         wantsAbsoluteUrls: this._getWantsAbsoluteUrls(),
         needsRootRedirect: true
       }
     }
-
-    return { composer }
   }
 
   async _listen () {
