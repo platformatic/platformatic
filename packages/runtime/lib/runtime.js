@@ -3,7 +3,6 @@
 const { once, EventEmitter } = require('node:events')
 const { createReadStream, watch } = require('node:fs')
 const { readdir, readFile, stat, access } = require('node:fs/promises')
-const inspector = require('node:inspector')
 const { join } = require('node:path')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { Worker } = require('node:worker_threads')
@@ -50,6 +49,7 @@ class Runtime extends EventEmitter {
   #startedServices
   #restartPromises
   #bootstrapAttempts
+  #inspectors
 
   constructor (configManager, runtimeLogsDir, env) {
     super()
@@ -68,6 +68,7 @@ class Runtime extends EventEmitter {
     this.#startedServices = new Map()
     this.#restartPromises = new Map()
     this.#bootstrapAttempts = new Map()
+    this.#inspectors = 0
   }
 
   async init () {
@@ -89,17 +90,6 @@ class Runtime extends EventEmitter {
     const [logger, destination] = createLogger(config, this.#runtimeLogsDir)
     this.logger = logger
     this.#loggerDestination = destination
-
-    // Handle inspector
-    const inspectorOptions = config.inspectorOptions
-    if (inspectorOptions) {
-      /* c8 ignore next 6 */
-      if (inspectorOptions.watchDisabled) {
-        logger.info('debugging flags were detected. hot reloading has been disabled')
-      }
-
-      inspector.open(inspectorOptions.port, inspectorOptions.host, inspectorOptions.breakFirstLine)
-    }
 
     // Create all services, each in is own worker thread
     for (const serviceConfig of config.services) {
@@ -747,6 +737,17 @@ class Runtime extends EventEmitter {
       this.#bootstrapAttempts.set(id, 0)
     }
 
+    // Handle inspector
+    let inspectorOptions
+
+    if (this.#configManager.current.inspectorOptions) {
+      inspectorOptions = {
+        ...this.#configManager.current.inspectorOptions
+      }
+
+      inspectorOptions.port = inspectorOptions.port + this.#inspectors++ 
+    }
+
     const service = new Worker(kWorkerFile, {
       workerData: {
         config,
@@ -754,6 +755,7 @@ class Runtime extends EventEmitter {
           ...serviceConfig,
           isProduction: this.#configManager.args?.production ?? false
         },
+        inspectorOptions,
         dirname: this.#configManager.dirname,
         runtimeLogsDir: this.#runtimeLogsDir,
         loggingPort
