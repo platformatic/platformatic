@@ -10,7 +10,7 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@platformatic/runtime": "^2.0.0-alpha.6",
-    "platformatic": "^2.0.0-alpha.6"
+    "@platformatic/runtime": "^2.3.1",
+    "platformatic": "^2.3.1"
   }
 }

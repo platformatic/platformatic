@@ -158,6 +158,10 @@ test('should detect and start a Node.js application with no configuration files 
   ok(logs.map(m => m.msg).includes(missingConfigurationMessage))
 })
 
+test('should detect and start a Node.js application with no configuration files in development mode when exposed in a composer which defines no services', async t => {
+  await verifyComposerWithPrefix(t, 'node-no-configuration-composer-no-services', false)
+})
+
 // In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
 test('should detect and start a Node.js application with no build function in development mode when standalone', async t => {
   await verifyStandalone(t, 'node-no-build-standalone')

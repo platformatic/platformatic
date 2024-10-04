@@ -378,13 +378,11 @@ export class ViteSSRStackable extends NodeStackable {
   }
 
   getMeta () {
-    let composer = { prefix: this.servicePrefix, wantsAbsoluteUrls: true, needsRootRedirect: true }
-
     const vite = this._getApplication()?.vite
     const config = vite?.devServer?.config ?? vite?.config.vite
     const applicationBasePath = config?.base
 
-    composer = {
+    const composer = {
       tcp: typeof this.url !== 'undefined',
       url: this.url,
       prefix: this.basePath ?? applicationBasePath ?? this.#basePath,
