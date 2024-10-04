@@ -9,15 +9,15 @@ export function getServerUrl (server) {
 }
 
 export async function injectViaRequest (baseUrl, injectParams, onInject) {
-  const url = new URL(injectParams.url, baseUrl).href
-  const requestParams = { method: injectParams.method, headers: injectParams.headers }
-
-  if (injectParams.body) {
-    const body = injectParams.body
-    requestParams.body = typeof body === 'object' ? JSON.stringify(body) : body
-  }
-
   try {
+    const url = new URL(injectParams.url, baseUrl).href
+    const requestParams = { method: injectParams.method, headers: injectParams.headers }
+
+    if (injectParams.body) {
+      const body = injectParams.body
+      requestParams.body = typeof body === 'object' ? JSON.stringify(body) : body
+    }
+
     const { statusCode, headers, body } = await request(url, requestParams)
 
     const rawPayload = Buffer.from(await body.arrayBuffer())
@@ -53,11 +53,13 @@ export function ensureFileUrl (pathOrUrl) {
   return pathToFileURL(pathOrUrl)
 }
 
+/* c8 ignore next 4 */
 // This is to avoid common path/URL problems on Windows
 export function importFile (path) {
   return import(ensureFileUrl(path))
 }
 
+/* c8 ignore next 6 */
 export function resolvePackage (root, pkg) {
   const require = createRequire(root)
 
