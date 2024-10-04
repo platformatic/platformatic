@@ -20,6 +20,8 @@ const { getRuntimeTmpDir } = require('./utils')
 const { sendViaITC, waitEventFromITC } = require('./worker/itc')
 const { kId, kITC, kConfig } = require('./worker/symbols')
 
+const Fastify = require('fastify')
+
 const platformaticVersion = require('../package.json').version
 const kWorkerFile = join(__dirname, 'worker/main.js')
 
@@ -50,6 +52,7 @@ class Runtime extends EventEmitter {
   #restartPromises
   #bootstrapAttempts
   #inspectors
+  #inspectorServer
 
   constructor (configManager, runtimeLogsDir, env) {
     super()
@@ -68,7 +71,7 @@ class Runtime extends EventEmitter {
     this.#startedServices = new Map()
     this.#restartPromises = new Map()
     this.#bootstrapAttempts = new Map()
-    this.#inspectors = 0
+    this.#inspectors = []
   }
 
   async init () {
@@ -124,6 +127,33 @@ class Runtime extends EventEmitter {
       for (const service of this.#servicesIds) {
         await this.startService(service)
       }
+
+      if (this.#configManager.current.inspectorOptions) {
+        const { port } = this.#configManager.current.inspectorOptions
+
+        const server = Fastify({
+          loggerInstance: this.logger.child({ name: 'inspector' }, { level: 'warn' })
+        })
+
+        const version = await fetch(`http://127.0.0.1:${this.#configManager.current.inspectorOptions.port + 1}/json/version`).then((res) => res.json())
+
+        const data = (await Promise.all(this.#inspectors.map(async (data) => {
+          const res = await fetch(`http://127.0.0.1:${data.port}/json/list`)
+          const details = await res.json()
+          return {
+            ...details[0],
+            title: data.id
+          }
+        })))
+
+        server.get('/json/list', () => data)
+        server.get('/json', () => data)
+        server.get('/json/version', () => version)
+
+        await server.listen({ port })
+        this.logger.info('The inspector server is now listening for all services. Open `chrome://inspect` in Google Chrome to connect.')
+        this.#inspectorServer = server
+      }
     } catch (error) {
       // Wait for the next tick so that the error is logged first
       await sleep(1)
@@ -148,6 +178,10 @@ class Runtime extends EventEmitter {
 
     this.#updateStatus('stopping')
     this.#startedServices.clear()
+
+    if (this.#inspectorServer) {
+      await this.#inspectorServer.close()
+    }
 
     await Promise.all(this.#servicesIds.map(service => this._stopService(service, silent)))
 
@@ -745,7 +779,15 @@ class Runtime extends EventEmitter {
         ...this.#configManager.current.inspectorOptions
       }
 
-      inspectorOptions.port = inspectorOptions.port + this.#inspectors++ 
+      inspectorOptions.port = inspectorOptions.port + this.#inspectors.length + 1
+
+      const inspectorData = {
+        port: inspectorOptions.port,
+        id,
+        dirname: this.#configManager.dirname
+      }
+
+      this.#inspectors.push(inspectorData)
     }
 
     const service = new Worker(kWorkerFile, {
