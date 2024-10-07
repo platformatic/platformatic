@@ -7,7 +7,7 @@
     "test": "npm run lint && borp",
     "lint": "eslint"
   },
-  "author": "Marco Piraccini <marco.piraccini@gmail.com>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"
