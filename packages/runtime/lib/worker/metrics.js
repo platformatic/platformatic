@@ -30,7 +30,7 @@ async function collectMetrics (stackable, serviceId, opts = {}) {
       const { startTimer, endTimer } = collectHttpMetrics(registry, {
         customLabels: ['telemetry_id'],
         getCustomLabels: (req) => {
-          const telemetryId = req.headers['x-plt-telemetry-id'] ?? 'unknown'
+          const telemetryId = req.headers?.['x-plt-telemetry-id'] ?? 'unknown'
           return { telemetry_id: telemetryId }
         }
       })
@@ -44,7 +44,7 @@ async function collectMetrics (stackable, serviceId, opts = {}) {
       const { startTimer, endTimer } = collectHttpMetrics(registry, {
         customLabels: ['telemetry_id'],
         getCustomLabels: (req) => {
-          const telemetryId = req.headers['x-plt-telemetry-id'] ?? 'unknown'
+          const telemetryId = req.headers?.['x-plt-telemetry-id'] ?? 'unknown'
           return { telemetry_id: telemetryId }
         },
         histogram: {
