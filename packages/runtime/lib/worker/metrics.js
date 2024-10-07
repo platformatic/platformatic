@@ -7,7 +7,15 @@ const collectHttpMetrics = require('@platformatic/http-metrics')
 
 async function collectMetrics (stackable, serviceId, opts = {}) {
   const registry = new Registry()
-  const metricsConfig = await stackable.collectMetrics({ registry })
+
+  const httpRequestCallbacks = []
+  const httpResponseCallbacks = []
+
+  const metricsConfig = await stackable.collectMetrics({
+    registry,
+    startHttpTimer: options => httpRequestCallbacks.forEach(cb => cb(options)),
+    endHttpTimer: options => httpResponseCallbacks.forEach(cb => cb(options))
+  })
 
   const labels = opts.labels ?? {}
   registry.setDefaultLabels({ ...labels, serviceId })
@@ -18,37 +26,45 @@ async function collectMetrics (stackable, serviceId, opts = {}) {
   }
 
   if (metricsConfig.httpMetrics) {
-    collectHttpMetrics(registry, {
-      customLabels: ['telemetry_id'],
-      getCustomLabels: (req) => {
-        const telemetryId = req.headers['x-plt-telemetry-id'] ?? 'unknown'
-        return { telemetry_id: telemetryId }
-      }
-    })
+    {
+      const { startTimer, endTimer } = collectHttpMetrics(registry, {
+        customLabels: ['telemetry_id'],
+        getCustomLabels: (req) => {
+          const telemetryId = req.headers?.['x-plt-telemetry-id'] ?? 'unknown'
+          return { telemetry_id: telemetryId }
+        }
+      })
+      httpRequestCallbacks.push(startTimer)
+      httpResponseCallbacks.push(endTimer)
+    }
 
-    // TODO: check if it's a nodejs environment
-    // Needed for the Meraki metrics
-    collectHttpMetrics(registry, {
-      customLabels: ['telemetry_id'],
-      getCustomLabels: (req) => {
-        const telemetryId = req.headers['x-plt-telemetry-id'] ?? 'unknown'
-        return { telemetry_id: telemetryId }
-      },
-      histogram: {
-        name: 'http_request_all_duration_seconds',
-        help: 'request duration in seconds summary for all requests',
-        collect: function () {
-          process.nextTick(() => this.reset())
+    {
+      // TODO: check if it's a nodejs environment
+      // Needed for the Meraki metrics
+      const { startTimer, endTimer } = collectHttpMetrics(registry, {
+        customLabels: ['telemetry_id'],
+        getCustomLabels: (req) => {
+          const telemetryId = req.headers?.['x-plt-telemetry-id'] ?? 'unknown'
+          return { telemetry_id: telemetryId }
         },
-      },
-      summary: {
-        name: 'http_request_all_summary_seconds',
-        help: 'request duration in seconds histogram for all requests',
-        collect: function () {
-          process.nextTick(() => this.reset())
+        histogram: {
+          name: 'http_request_all_duration_seconds',
+          help: 'request duration in seconds summary for all requests',
+          collect: function () {
+            process.nextTick(() => this.reset())
+          },
         },
-      },
-    })
+        summary: {
+          name: 'http_request_all_summary_seconds',
+          help: 'request duration in seconds histogram for all requests',
+          collect: function () {
+            process.nextTick(() => this.reset())
+          },
+        },
+      })
+      httpRequestCallbacks.push(startTimer)
+      httpResponseCallbacks.push(endTimer)
+    }
   }
 
   return registry
