@@ -1718,8 +1718,8 @@ importers:
         specifier: ^6.9.0
         version: 6.19.8
       undici-thread-interceptor:
-        specifier: ^0.6.1
-        version: 0.6.1(typescript@5.6.2)
+        specifier: ^0.7.0
+        version: 0.7.0(typescript@5.6.2)
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -9375,8 +9375,8 @@ packages:
   undici-oidc-interceptor@0.5.0:
     resolution: {integrity: sha512-YU6ABaLFxzKZGjBmamrrRTlziIe6/jrEBUEyNEe2ZRtlXULorg6xo+/jsyEPZVizHdrTFFX3ZPEPxrNmO3pOEA==}
 
-  undici-thread-interceptor@0.6.1:
-    resolution: {integrity: sha512-Gos71I531VAc+aS3lzqnX3qptkY5ChILNDNmSPZoGGVRQc22q/1SfoaY06uuGKPH5hgDnb+VpoBvvBfA35HiJg==}
+  undici-thread-interceptor@0.7.0:
+    resolution: {integrity: sha512-qLznStrt6I3oggKh9FyIw7xkU64KkWRJn5+Ta2ZuFBIPNNWn2kmLTyhKZNrE9F9/JZve1OAnTvhPoRXWaMwsIQ==}
 
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
@@ -18252,7 +18252,7 @@ snapshots:
       fast-jwt: 4.0.5
       undici: 6.19.8
 
-  undici-thread-interceptor@0.6.1(typescript@5.6.2):
+  undici-thread-interceptor@0.7.0(typescript@5.6.2):
     dependencies:
       eslint: 9.12.0
       hyperid: 3.3.0
