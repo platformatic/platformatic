@@ -282,6 +282,21 @@ test('should proxy a @platformatic/service to its prefix by default', async t =>
     const body = await rawBody.json()
     assert.deepStrictEqual(body, { ok: true })
   }
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'POST',
+      path: '/main/echo',
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ ok: true })
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { ok: true })
+  }
 })
 
 test('should proxy a @platformatic/service to the chosen prefix by the user in the configuration', async t => {
