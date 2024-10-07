@@ -19,7 +19,7 @@
     "lint": "eslint"
   },
   "license": "Apache-2.0",
-  "author": "Matteo Collina <hello@matteocollina.com>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "dependencies": {
     "@platformatic/config": "workspace:*",
     "@platformatic/generators": "workspace:*",

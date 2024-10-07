@@ -7,7 +7,7 @@
     "test": "npm run lint && c8 node --test",
     "lint": "eslint"
   },
-  "author": "Matteo Collina <hello@matteocollina.com>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"

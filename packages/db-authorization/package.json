@@ -8,7 +8,7 @@
     "lint": "eslint"
   },
   "types": "index.d.ts",
-  "author": "Matteo Collina <hello@matteocollina.com>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"

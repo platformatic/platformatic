@@ -7,7 +7,7 @@
     "lint": "eslint",
     "generate-doc": "node generate.js"
   },
-  "author": "Marco Piraccini <marco@platformatic.dev>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"
