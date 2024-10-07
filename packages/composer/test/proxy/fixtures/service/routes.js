@@ -4,6 +4,6 @@ module.exports = async function (app) {
   })
 
   app.post('/echo', async (req) => {
-    return req.body 
+    return req.body
   })
 }
