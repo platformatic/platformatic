@@ -7,7 +7,7 @@
     "fastify": "^5.0.0"
   },
   "dependencies": {
-    "platformatic": "^2.0.0",
+    "platformatic": "^3.0.0",
     "@fastify/oauth2": "8.0.1"
   },
   "engines": {
