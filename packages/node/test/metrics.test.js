@@ -29,6 +29,13 @@ test('should configure metrics correctly with both node and http metrics', async
 
   setFixturesDir(resolve(import.meta.dirname, `./fixtures/${configuration}`))
   await createRuntime(t, 'platformatic.runtime.json', packageRoot)
+
+  // Test request to add http metrics
+  await request('http://127.0.0.1:3042', {
+    method: 'GET',
+    path: '/internal',
+  })
+
   const { body } = await request('http://127.0.0.1:9090', {
     method: 'GET',
     path: '/metrics',
@@ -77,4 +84,26 @@ test('should configure metrics correctly with both node and http metrics', async
   for (const metricName of expectedMetricNames) {
     assert.ok(metricsNames.includes(metricName))
   }
+
+  const entrypointRequestCountMetric = metrics.split('\n').find(
+    line =>
+      line.includes('http_request_summary_seconds_count') &&
+      line.includes('serviceId="api"')
+  )
+  if (!entrypointRequestCountMetric) {
+    assert.fail('Expected entrypoint request count metric not found')
+  }
+  const entrypointRequestCount = entrypointRequestCountMetric.split(' ')[1]
+  assert.strictEqual(entrypointRequestCount, '1')
+
+  const internalRequestCountMetric = metrics.split('\n').find(
+    line =>
+      line.includes('http_request_summary_seconds_count') &&
+      line.includes('serviceId="internal"')
+  )
+  if (!internalRequestCountMetric) {
+    assert.fail('Expected internal request count metric not found')
+  }
+  const internalRequestCount = internalRequestCountMetric.split(' ')[1]
+  assert.strictEqual(internalRequestCount, '1')
 })

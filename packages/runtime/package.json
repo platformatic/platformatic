@@ -56,7 +56,7 @@
     "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/generators": "workspace:*",
-    "@platformatic/http-metrics": "^0.1.0",
+    "@platformatic/http-metrics": "^0.2.0",
     "@platformatic/itc": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/ts-compiler": "workspace:*",

@@ -12,6 +12,11 @@
     {
       "id": "api",
       "path": "./services/api"
+    },
+    {
+      "id": "internal",
+      "path": "./services/internal",
+      "useHttp": false
     }
   ],
   "metrics": true
