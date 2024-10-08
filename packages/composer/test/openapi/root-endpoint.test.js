@@ -1,6 +1,7 @@
 'use strict'
 
 const assert = require('node:assert/strict')
+const { readFile } = require('node:fs/promises')
 const { test } = require('node:test')
 const {
   createComposer,
@@ -70,4 +71,19 @@ test('should not expose a default root endpoint if it is composed', async (t) =>
   const { statusCode, body } = await composer.inject({ method: 'GET', url: '/' })
   assert.equal(statusCode, 200)
   assert.deepEqual(JSON.parse(body), { message: 'Hello World!' })
+})
+
+test('should not expose a default root endpoint if there is a plugin exposing @fastify/static', async (t) => {
+  const composer = await createComposer(t, {
+    plugins: {
+      paths: [{
+        path: require.resolve('./fixtures/root-static.js'),
+      }]
+    },
+  })
+
+  const { statusCode, body } = await composer.inject({ method: 'GET', url: '/' })
+  const expected = await readFile(require.resolve('./fixtures/hello/index.html'), 'utf8')
+  assert.equal(statusCode, 200)
+  assert.deepEqual(body, expected)
 })
