@@ -7,6 +7,7 @@ const userAgentParser = require('my-ua-parser')
 module.exports = async (app, opts) => {
   app.register(fastifyStatic, {
     root: path.join(__dirname, 'public'),
+    widlcard: false,
   })
 
   // root endpoint
