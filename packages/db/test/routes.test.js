@@ -4,6 +4,7 @@ const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const { request } = require('undici')
+const { readFile } = require('node:fs/promises')
 const { buildServer } = require('..')
 const { buildConfigManager, getConnectionInfo } = require('./helper')
 
@@ -121,4 +122,40 @@ test('should exclude the root endpoint from the openapi documentation', async (t
   const openapi = await res.body.json()
   assert.equal(res.statusCode, 200)
   assert.equal(openapi.paths['/'], undefined)
+})
+
+test('should not overwrite a plugin which uses @fastify/static on root', async (t) => {
+  const { connectionInfo, dropTestDB } = await getConnectionInfo()
+
+  const config = {
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+      healthCheck: {
+        enabled: true,
+        interval: 2000,
+      },
+    },
+    db: {
+      ...connectionInfo,
+    },
+    plugins: {
+      paths: [join(__dirname, 'fixtures', 'root-static.js')],
+    },
+  }
+
+  const configManager = await buildConfigManager(config)
+  const app = await buildServer({ configManager })
+
+  t.after(async () => {
+    await app.close()
+    await dropTestDB()
+  })
+  await app.start()
+
+  const res = await (request(`${app.url}/`))
+  assert.equal(res.statusCode, 200)
+  const body = await res.body.text()
+  const expected = await readFile(join(__dirname, 'fixtures', 'hello', 'index.html'), 'utf8')
+  assert.equal(body, expected)
 })
