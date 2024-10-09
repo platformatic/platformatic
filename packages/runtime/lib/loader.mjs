@@ -95,7 +95,8 @@ export function globalPreload (context) {
 }
 
 export async function initialize (data) {
-  if (!data) return
+  if (data === undefined) return
+
   port = data.port
   port.on('message', () => {
     bustEsmCache()
