@@ -1,6 +1,6 @@
 {
-  "$id": "https://platformatic.dev/schemas/v1.53.3/service",
-  "version": "1.53.3",
+  "$id": "https://platformatic.dev/schemas/v1.53.4/service",
+  "version": "1.53.4",
   "title": "Platformatic Service",
   "type": "object",
   "properties": {
