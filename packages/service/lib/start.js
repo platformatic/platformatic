@@ -43,7 +43,7 @@ async function createServer (serverContext) {
   const root = fastify(fastifyOptions)
   root.decorate('platformatic', { configManager, config })
   await root.register(app, { context })
-  if (!root.hasRoute({ url: '/', method: 'GET' })) {
+  if (!root.hasRoute({ url: '/', method: 'GET' }) && !root.hasRoute({ url: '/*', method: 'GET' })) {
     await root.register(require('./root-endpoint'))
   }
 

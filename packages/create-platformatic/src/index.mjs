@@ -14,7 +14,7 @@ import resolve from 'resolve'
 import { request } from 'undici'
 import { createGitRepository } from './create-git-repository.mjs'
 import { say } from './say.mjs'
-import { getUsername, getVersion, isCurrentVersionSupported, minimumSupportedNodeVersions } from './utils.mjs'
+import { getUsername, getVersion } from './utils.mjs'
 
 const MARKETPLACE_HOST = 'https://marketplace.platformatic.dev'
 const defaultStackables = ['@platformatic/composer', '@platformatic/db', '@platformatic/service']
@@ -97,14 +97,6 @@ export const createPlatformatic = async argv => {
   const version = await getVersion()
   const greeting = username ? `Hello ${username},` : 'Hello,'
   await say(`${greeting} welcome to ${version ? `Platformatic ${version}!` : 'Platformatic!'}`)
-
-  const currentVersion = process.versions.node
-  const supported = isCurrentVersionSupported(currentVersion)
-  if (!supported) {
-    const supportedVersions = minimumSupportedNodeVersions.join(' or >= ')
-    await say(`Platformatic is not supported on Node.js v${currentVersion}.`)
-    await say(`Please use one of the following Node.js versions >= ${supportedVersions}.`)
-  }
 
   const logger = pino(
     pretty({

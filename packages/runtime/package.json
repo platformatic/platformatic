@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/runtime",
-  "version": "2.5.0",
+  "version": "2.5.2",
   "description": "",
   "main": "index.js",
   "bin": {
@@ -81,6 +81,7 @@
     "prom-client": "^15.1.2",
     "semgrator": "^0.3.0",
     "tail-file-stream": "^0.2.0",
+    "thread-cpu-usage": "^0.2.0",
     "undici": "^6.9.0",
     "undici-thread-interceptor": "^0.7.0",
     "ws": "^8.16.0"

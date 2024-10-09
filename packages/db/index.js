@@ -94,7 +94,7 @@ async function platformaticDB (app, opts) {
     beforePlugins: [toLoad],
   })
 
-  if (!app.hasRoute({ url: '/', method: 'GET' })) {
+  if (!app.hasRoute({ url: '/', method: 'GET' }) && !app.hasRoute({ url: '/*', method: 'GET' })) {
     app.register(require('./lib/root-endpoint'), config)
   }
 }

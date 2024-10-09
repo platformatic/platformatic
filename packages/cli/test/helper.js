@@ -508,7 +508,7 @@ shamefully-hoist=true
 
     // Create the pnpm-workspace.yml file
     let workspaceFile = 'packages:\n'
-    workspaceFile += `  - 'services/*'\n`
+    workspaceFile += '  - \'services/*\'\n'
 
     await writeFile(resolve(destination, 'pnpm-workspace.yaml'), workspaceFile, 'utf-8')
 

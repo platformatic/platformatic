@@ -5,7 +5,7 @@
   ],
   "rangeStrategy": "update-lockfile",
   "ignoreDeps": ["camelcase", "mysql", "swagger-ui-react", "leven", "ora", "graphiql"],
-  "prHourlyLimit": 10,
+  "prHourlyLimit": 1,
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],

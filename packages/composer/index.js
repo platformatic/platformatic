@@ -76,7 +76,7 @@ async function platformaticComposer (app, opts) {
     await app.register(graphqlGenerator, config.composer)
   }
 
-  if (!app.hasRoute({ url: '/', method: 'GET' })) {
+  if (!app.hasRoute({ url: '/', method: 'GET' }) && !app.hasRoute({ url: '/*', method: 'GET' })) {
     await app.register(require('./lib/root-endpoint'), config)
   }
 
