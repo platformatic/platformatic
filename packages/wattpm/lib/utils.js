@@ -3,7 +3,7 @@ import { platformaticRuntime, buildRuntime as pltBuildRuntime } from '@platforma
 import { bgGreen, black, bold } from 'colorette'
 import { existsSync } from 'node:fs'
 import { readdir, stat } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { resolve, dirname } from 'node:path'
 import { parseArgs as nodeParseArgs } from 'node:util'
 import pino from 'pino'
 import pinoPretty from 'pino-pretty'
@@ -88,8 +88,21 @@ export function getMatchingRuntimeArgs (logger, positional) {
 }
 
 export async function findConfigurationFile (logger, root) {
-  // Find a wattpm.json or watt.json file
-  const configurationFile = await ConfigManager.findConfigFile(root, ['watt.json', 'wattpm.json', 'platformatic.json'])
+  let current = root
+  let configurationFile
+  while (configurationFile === undefined) {
+    // Find a wattpm.json or watt.json file
+    configurationFile = await ConfigManager.findConfigFile(current, ['watt.json', 'wattpm.json', 'platformatic.json'])
+    if (!configurationFile) {
+      const newCurrent = dirname(current)
+
+      if (newCurrent === current) {
+        break
+      }
+
+      current = newCurrent
+    }
+  }
 
   if (typeof configurationFile !== 'string') {
     logger.fatal(
@@ -97,7 +110,8 @@ export async function findConfigurationFile (logger, root) {
     )
   }
 
-  return resolve(root, configurationFile)
+  const resolved = resolve(current, configurationFile)
+  return resolved
 }
 
 export async function checkEmptyDirectory (logger, path, relativePath) {
