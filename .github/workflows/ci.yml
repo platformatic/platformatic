@@ -35,7 +35,7 @@ jobs:
       - uses: pnpm/action-setup@v4.0.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'pnpm'
       - uses: 'nick-fields/retry@v3.0.0'
         with:
@@ -223,7 +223,7 @@ jobs:
       - uses: pnpm/action-setup@v4.0.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
           cache: 'pnpm'
       - name: pnpm install
         run: pnpm install --frozen-lockfile
@@ -513,7 +513,7 @@ jobs:
       - uses: pnpm/action-setup@v4.0.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'pnpm'
       - name: Start docker containers for testing
         run: docker compose up -d postgresql
