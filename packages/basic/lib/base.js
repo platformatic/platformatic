@@ -1,4 +1,5 @@
 import { deepmerge } from '@platformatic/utils'
+import { collectMetrics } from '@platformatic/metrics'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
@@ -29,6 +30,9 @@ export class BaseStackable {
     this.graphqlSchema = null
     this.isEntrypoint = options.context.isEntrypoint
     this.isProduction = options.context.isProduction
+    this.metricsRegistry = null
+    this.startHttpTimer = null
+    this.endHttpTimer = null
 
     // Setup the logger
     const pinoOptions = {
@@ -83,13 +87,6 @@ export class BaseStackable {
 
   getDispatchFunc () {
     return this
-  }
-
-  async collectMetrics () {
-    return {
-      defaultMetrics: true,
-      httpMetrics: false
-    }
   }
 
   async getOpenapiSchema () {
@@ -272,5 +269,28 @@ export class BaseStackable {
     return platform() === 'win32'
       ? spawn(command, { cwd: this.root, shell: true, windowsVerbatimArguments: true })
       : spawn(executable, args, { cwd: this.root })
+  }
+
+  async collectMetrics () {
+    const metricsConfig = this.options.context.metricsConfig
+    if (metricsConfig !== false) {
+      const { registry, startHttpTimer, endHttpTimer } = await collectMetrics(
+        this.id,
+        {
+          defaultMetrics: true,
+          httpMetrics: true,
+          ...metricsConfig
+        }
+      )
+      this.metricsRegistry = registry
+      this.startHttpTimer = startHttpTimer
+      this.endHttpTimer = endHttpTimer
+    }
+  }
+
+  async getMetrics ({ format } = {}) {
+    return format === 'json'
+      ? await this.metricsRegistry.getMetricsAsJSON()
+      : await this.metricsRegistry.metrics()
   }
 }

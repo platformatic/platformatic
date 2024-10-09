@@ -53,9 +53,6 @@ export class NodeStackable extends BaseStackable {
   #isFastify
   #isKoa
 
-  #startHttpTimer
-  #endHttpTimer
-
   constructor (options, root, configManager) {
     super('nodejs', packageJson.version, options, root, configManager)
   }
@@ -166,13 +163,6 @@ export class NodeStackable extends BaseStackable {
     })
   }
 
-  async collectMetrics ({ startHttpTimer, endHttpTimer }) {
-    this.#startHttpTimer = startHttpTimer
-    this.#endHttpTimer = endHttpTimer
-
-    return { defaultMetrics: true, httpMetrics: true }
-  }
-
   async build () {
     const command = this.configManager.current.application.commands.build
 
@@ -200,13 +190,13 @@ export class NodeStackable extends BaseStackable {
       this.logger.trace({ injectParams, url: this.url }, 'injecting via request')
       res = await injectViaRequest(this.url, injectParams, onInject)
     } else {
-      if (this.#startHttpTimer && this.#endHttpTimer) {
-        this.#startHttpTimer({ request: injectParams })
+      if (this.startHttpTimer && this.endHttpTimer) {
+        this.startHttpTimer({ request: injectParams })
 
         if (onInject) {
           const originalOnInject = onInject
           onInject = (err, response) => {
-            this.#endHttpTimer({ request: injectParams, response })
+            this.endHttpTimer({ request: injectParams, response })
             originalOnInject(err, response)
           }
         }
@@ -220,8 +210,8 @@ export class NodeStackable extends BaseStackable {
         res = await inject(this.#dispatcher ?? this.#app, injectParams, onInject)
       }
 
-      if (this.#endHttpTimer && !onInject) {
-        this.#endHttpTimer({ request: injectParams, response: res })
+      if (this.endHttpTimer && !onInject) {
+        this.endHttpTimer({ request: injectParams, response: res })
       }
     }
 

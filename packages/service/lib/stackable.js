@@ -3,6 +3,7 @@
 const { dirname } = require('node:path')
 const { printSchema } = require('graphql')
 const pino = require('pino')
+const { collectMetrics } = require('@platformatic/metrics')
 const httpMetrics = require('@platformatic/fastify-http-metrics')
 const { extractTypeScriptCompileOptionsFromConfig } = require('./compile')
 const { compile } = require('@platformatic/ts-compiler')
@@ -153,13 +154,25 @@ class ServiceStackable {
     return this.app.graphql ? printSchema(this.app.graphql.schema) : null
   }
 
-  async collectMetrics ({ registry }) {
-    this.metricsRegistry = registry
-
-    return {
-      defaultMetrics: true,
-      httpMetrics: false
+  async collectMetrics () {
+    const metricsConfig = this.context.metricsConfig
+    if (metricsConfig !== false) {
+      const { registry } = await collectMetrics(
+        this.id,
+        {
+          defaultMetrics: true,
+          httpMetrics: false,
+          ...metricsConfig
+        }
+      )
+      this.metricsRegistry = registry
     }
+  }
+
+  async getMetrics ({ format }) {
+    return format === 'json'
+      ? await this.metricsRegistry.getMetricsAsJSON()
+      : await this.metricsRegistry.metrics()
   }
 
   async inject (injectParams) {

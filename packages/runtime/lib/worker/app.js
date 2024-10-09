@@ -10,7 +10,6 @@ const debounce = require('debounce')
 
 const errors = require('../errors')
 const defaultStackable = require('./default-stackable')
-const { collectMetrics } = require('./metrics')
 const { getServiceUrl, loadConfig, loadEmptyConfig } = require('../utils')
 
 class PlatformaticApp extends EventEmitter {
@@ -19,7 +18,6 @@ class PlatformaticApp extends EventEmitter {
   #listening
   #watch
   #fileWatcher
-  #metricsRegistry
   #debouncedRestart
   #context
 
@@ -32,7 +30,6 @@ class PlatformaticApp extends EventEmitter {
     this.#listening = false
     this.stackable = null
     this.#fileWatcher = null
-    this.#metricsRegistry = null
 
     this.#context = {
       serviceId: this.appConfig.id,
@@ -114,10 +111,7 @@ class PlatformaticApp extends EventEmitter {
       })
       this.stackable = this.#wrapStackable(stackable)
 
-      const metricsConfig = this.#context.metricsConfig
-      if (metricsConfig !== false) {
-        this.#metricsRegistry = await collectMetrics(this.stackable, this.appConfig.id, metricsConfig)
-      }
+      await this.stackable.collectMetrics()
 
       this.#updateDispatcher()
     } catch (err) {
@@ -196,9 +190,7 @@ class PlatformaticApp extends EventEmitter {
   }
 
   async getMetrics ({ format }) {
-    if (!this.#metricsRegistry) return null
-
-    return format === 'json' ? this.#metricsRegistry.getMetricsAsJSON() : this.#metricsRegistry.metrics()
+    return this.stackable.getMetrics({ format })
   }
 
   #fetchServiceUrl (key, { parent, context: service }) {
