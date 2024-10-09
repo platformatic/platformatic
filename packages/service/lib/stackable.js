@@ -158,7 +158,7 @@ class ServiceStackable {
     const metricsConfig = this.context.metricsConfig
     if (metricsConfig !== false) {
       const { registry } = await collectMetrics(
-        this.id,
+        this.context.serviceId,
         {
           defaultMetrics: true,
           httpMetrics: false,
