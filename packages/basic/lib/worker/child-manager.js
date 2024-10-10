@@ -44,6 +44,7 @@ export class ChildManager extends ITC {
   #socketPath
   #clients
   #requests
+  #currentSender
   #currentClient
   #listener
   #originalNodeOptions
@@ -97,11 +98,14 @@ export class ChildManager extends ITC {
 
       ws.on('message', raw => {
         try {
+          this.#currentSender = ws
           const message = JSON.parse(raw)
           this.#requests.set(message.reqId, ws)
           this.#listener(message)
         } catch (error) {
           this.#handleUnexpectedError(error, 'Handling a message failed.', exitCodes.MANAGER_MESSAGE_HANDLING_FAILED)
+        } finally {
+          this.#currentSender = null
         }
       })
 
@@ -180,6 +184,10 @@ export class ChildManager extends ITC {
 
   register () {
     register(this.#loader, { data: this.#context })
+  }
+
+  emit (...args) {
+    super.emit(...args, this.#currentSender)
   }
 
   send (client, name, message) {

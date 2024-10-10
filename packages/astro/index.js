@@ -57,7 +57,7 @@ export class AstroStackable extends BaseStackable {
   }
 
   async stop () {
-    if (this.subprocess) {
+    if (this.childManager) {
       return this.stopCommand()
     }
 

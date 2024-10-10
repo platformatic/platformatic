@@ -24,7 +24,6 @@ const supportedVersions = '^14.0.0'
 export class NextStackable extends BaseStackable {
   #basePath
   #next
-  #manager
   #child
   #server
 
@@ -73,7 +72,7 @@ export class NextStackable extends BaseStackable {
       })
     } else {
       const exitPromise = once(this.#child, 'exit')
-      await this.#manager.close()
+      await this.childManager.close()
       process.kill(this.#child.pid, 'SIGKILL')
       await exitPromise
     }
@@ -129,7 +128,7 @@ export class NextStackable extends BaseStackable {
       port: port || 0
     }
 
-    this.#manager = new ChildManager({
+    this.childManager = new ChildManager({
       loader: loaderUrl,
       context: {
         id: this.id,
@@ -141,25 +140,27 @@ export class NextStackable extends BaseStackable {
       }
     })
 
-    const promise = once(this.#manager, 'url')
+    const promise = once(this.childManager, 'url')
     await this.#startDevelopmentNext(serverOptions)
-    this.url = (await promise)[0]
+    const [url, clientWs] = await promise
+    this.url = url
+    this.clientWs = clientWs
   }
 
   async #startDevelopmentNext (serverOptions) {
     const { nextDev } = await importFile(pathResolve(this.#next, './dist/cli/next-dev.js'))
 
-    this.#manager.on('config', config => {
+    this.childManager.on('config', config => {
       this.#basePath = config.basePath
     })
 
     try {
-      await this.#manager.inject()
+      await this.childManager.inject()
       const childPromise = createChildProcessListener()
       await nextDev(serverOptions, 'default', this.root)
       this.#child = await childPromise
     } finally {
-      await this.#manager.eject()
+      await this.childManager.eject()
     }
   }
 
@@ -174,7 +175,7 @@ export class NextStackable extends BaseStackable {
       return this.startWithCommand(command, loaderUrl)
     }
 
-    this.#manager = new ChildManager({
+    this.childManager = new ChildManager({
       loader: loaderUrl,
       context: {
         id: this.id,
@@ -191,7 +192,7 @@ export class NextStackable extends BaseStackable {
 
   async #startProductionNext () {
     try {
-      await this.#manager.inject()
+      await this.childManager.inject()
       const { nextStart } = await importFile(pathResolve(this.#next, './dist/cli/next-start.js'))
 
       const { hostname, port } = this.serverConfig ?? {}
@@ -205,7 +206,7 @@ export class NextStackable extends BaseStackable {
         this.#basePath = config.basePath
       })
 
-      this.#manager.register()
+      this.childManager.register()
       const serverPromise = createServerListener(
         (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
         (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true
@@ -216,7 +217,7 @@ export class NextStackable extends BaseStackable {
       this.#server = await serverPromise
       this.url = getServerUrl(this.#server)
     } finally {
-      await this.#manager.eject()
+      await this.childManager.eject()
     }
   }
 }

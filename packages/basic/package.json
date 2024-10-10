@@ -28,6 +28,7 @@
     "@platformatic/config": "workspace:*",
     "@platformatic/itc": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
+    "@platformatic/metrics": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "execa": "^9.3.1",
     "pino": "^9.3.2",

@@ -58,6 +58,7 @@
     "@mercuriusjs/federation": "^4.0.0",
     "@platformatic/client": "workspace:*",
     "@platformatic/config": "workspace:*",
+    "@platformatic/metrics": "workspace:*",
     "@platformatic/generators": "workspace:*",
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
