@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db",
-  "version": "2.3.1",
+  "version": "2.5.4",
   "description": "",
   "main": "index.js",
   "types": "index.d.ts",
@@ -18,7 +18,7 @@
     "prepublishOnly": "pnpm run build",
     "lint": "eslint"
   },
-  "author": "Matteo Collina <hello@matteocollina.com>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"

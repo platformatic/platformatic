@@ -183,7 +183,7 @@ class ITC extends EventEmitter {
     }
 
     try {
-      this.#enableKeepAlive()
+      this._enableKeepAlive()
 
       const request = generateRequest(name, message)
 
@@ -196,7 +196,7 @@ class ITC extends EventEmitter {
       if (error !== null) throw error
       return data
     } finally {
-      this.#manageKeepAlive()
+      this._manageKeepAlive()
     }
   }
 
@@ -325,12 +325,12 @@ class ITC extends EventEmitter {
     this.#requestEmitter.emit(reqId, response)
   }
 
-  #enableKeepAlive () {
+  _enableKeepAlive () {
     this.#keepAlive.ref()
     this.#keepAliveCount++
   }
 
-  #manageKeepAlive () {
+  _manageKeepAlive () {
     this.#keepAliveCount--
 
     /* c8 ignore next 3 */

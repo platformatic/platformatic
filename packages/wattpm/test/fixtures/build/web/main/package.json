@@ -3,6 +3,6 @@
     "build": "tsc -p ."
   },
   "dependencies": {
-    "@platformatic/node": "^2.0.0-alpha.12"
+    "@platformatic/node": "^2.3.1"
   }
 }

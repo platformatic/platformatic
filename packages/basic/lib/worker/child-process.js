@@ -86,6 +86,7 @@ export class ChildProcess extends ITC {
   constructor () {
     super({ throwOnMissingHandler: false, name: `${process.env.PLT_MANAGER_ID}-child-process` })
 
+    /* c8 ignore next */
     const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
     this.#socket = new WebSocket(`${protocol}${getSocketPath(process.env.PLT_MANAGER_ID)}`)
     this.#pendingMessages = []
@@ -109,6 +110,7 @@ export class ChildProcess extends ITC {
       // Never hang the process on this socket.
       this.#socket._socket.unref()
 
+      /* c8 ignore next 3 */
       for (const message of this.#pendingMessages) {
         this.#socket.send(message)
       }
@@ -123,6 +125,7 @@ export class ChildProcess extends ITC {
       }
     })
 
+    /* c8 ignore next 5 */
     this.#socket.on('error', error => {
       process._rawDebug(error)
       // There is nothing to log here as the connection with the parent thread is lost. Exit with a special code
@@ -131,6 +134,7 @@ export class ChildProcess extends ITC {
   }
 
   _send (message) {
+    /* c8 ignore next 4 */
     if (this.#socket.readyState === WebSocket.CONNECTING) {
       this.#pendingMessages.push(JSON.stringify(message))
       return
@@ -143,6 +147,7 @@ export class ChildProcess extends ITC {
     return once(this.#socket, 'close')
   }
 
+  /* c8 ignore next 3 */
   _close () {
     this.#socket.close()
   }
@@ -167,6 +172,7 @@ export class ChildProcess extends ITC {
     }
   }
 
+  /* c8 ignore next 5 */
   #setupTelemetry () {
     if (globalThis.platformatic.telemetry) {
       setupNodeHTTPTelemetry(globalThis.platformatic.telemetry, this.#logger)
@@ -202,11 +208,12 @@ export class ChildProcess extends ITC {
         }
 
         const { family, address: host, port } = address
+        /* c8 ignore next */
         const url = new URL(family === 'IPv6' ? `http://[${host}]:${port}` : `http://${host}:${port}`).origin
 
         this.notify('url', url)
       },
-      error: error => {
+      error: ({ error }) => {
         tracingChannel('net.server.listen').unsubscribe(subscribers)
         this.notify('error', error)
       }
@@ -226,7 +233,8 @@ export class ChildProcess extends ITC {
         `Child process for service ${globalThis.platformatic.id} threw an ${type}.`
       )
 
-      process.exit(exitCodes.PROCESS_UNHANDLED_ERROR)
+      // Give some time to the logger and ITC notifications to land before shutting down
+      setTimeout(() => process.exit(exitCodes.PROCESS_UNHANDLED_ERROR), 100)
     }
 
     process.on('uncaughtException', handleUnhandled.bind(this, 'uncaught exception'))
@@ -255,6 +263,7 @@ async function main () {
   globalThis[Symbol.for('plt.children.itc')] = new ChildProcess()
 }
 
+/* c8 ignore next 3 */
 if (!isWindows || basename(process.argv.at(-1)) !== 'npm-prefix.js') {
   await main()
 }

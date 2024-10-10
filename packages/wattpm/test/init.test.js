@@ -46,7 +46,7 @@ test('init - should create a new application for PNPM', async t => {
     dependencies: { wattpm: `^${version}` }
   })
 
-  deepStrictEqual(await readFile(resolve(directory, 'pnpm-workspace.yaml'), 'utf-8'), `packages:\n  - 'web/*'`)
+  deepStrictEqual(await readFile(resolve(directory, 'pnpm-workspace.yaml'), 'utf-8'), 'packages:\n  - \'web/*\'')
 })
 
 test('init - should fail if the destination is a file', async t => {

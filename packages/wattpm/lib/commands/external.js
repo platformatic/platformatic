@@ -6,7 +6,7 @@ import { bold } from 'colorette'
 import { execa } from 'execa'
 import { existsSync } from 'node:fs'
 import { readdir, readFile, writeFile } from 'node:fs/promises'
-import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path'
+import { basename, isAbsolute, join, relative, resolve, sep, dirname } from 'node:path'
 import { defaultServiceJson } from '../defaults.js'
 import { version } from '../schema.js'
 import { checkEmptyDirectory, findConfigurationFile, overrideFatal, parseArgs } from '../utils.js'
@@ -89,6 +89,17 @@ async function findExistingConfiguration (root, path) {
 
 async function addService (configurationFile, id, path, url) {
   const config = JSON.parse(await readFile(configurationFile, 'utf-8'))
+  const root = dirname(configurationFile)
+
+  let autoloadPath = config.autoload?.path
+
+  if (autoloadPath) {
+    autoloadPath = join(root, autoloadPath)
+    if (path.startsWith(autoloadPath)) {
+      return
+    }
+  }
+
   /* c8 ignore next */
   config.web ??= []
   config.web.push({ id, path, url })
@@ -133,7 +144,7 @@ async function fixConfiguration (logger, root) {
       $schema: `https://schemas.platformatic.dev/${stackable}/${version}.json`
     }
 
-    logger.debug(`Detected stackable ${bold(stackable)} for service ${bold(id)}, adding to the service dependencies.`)
+    logger.info(`Detected stackable ${bold(stackable)} for service ${bold(id)}, adding to the service dependencies.`)
     await writeFile(resolve(root, service, 'package.json'), JSON.stringify(packageJson, null, 2), 'utf-8')
     await writeFile(resolve(root, service, 'watt.json'), JSON.stringify(wattJson, null, 2), 'utf-8')
   }
@@ -162,7 +173,7 @@ async function importLocal (logger, root, configurationFile, path) {
     /* c8 ignore next */
     const displayPath = isAbsolute(path) ? path : relative(root, path)
 
-    logger.debug(
+    logger.info(
       `Path ${bold(resolve(displayPath, wattConfiguration))} already exists. Skipping configuration management ...`
     )
     return
@@ -176,7 +187,7 @@ async function importLocal (logger, root, configurationFile, path) {
     $schema: `https://schemas.platformatic.dev/${stackable}/${version}.json`
   }
 
-  logger.debug(`Detected stackable ${bold(stackable)} for service ${bold(id)}, adding to the service dependencies.`)
+  logger.info(`Detected stackable ${bold(stackable)} for service ${bold(id)}, adding to the service dependencies.`)
   await writeFile(resolve(path, 'package.json'), JSON.stringify(packageJson, null, 2), 'utf-8')
   await writeFile(resolve(path, 'watt.json'), JSON.stringify(wattJson, null, 2), 'utf-8')
 }
@@ -231,6 +242,7 @@ export async function importCommand (logger, args) {
     root = positionals[0]
     rawUrl = positionals[1]
   }
+
   /* c8 ignore next */
   root = resolve(process.cwd(), root)
 
@@ -238,7 +250,9 @@ export async function importCommand (logger, args) {
 
   // If the rawUrl exists as local folder, import a local folder, otherwise go for Git.
   // Try a relative from the root folder or from process.cwd().
-  const local = [resolve(root, rawUrl), resolve(process.cwd(), rawUrl)].find(c => existsSync(c))
+  const local = [resolve(root, rawUrl), resolve(process.cwd(), rawUrl)].find(c => {
+    return existsSync(c)
+  })
 
   if (local) {
     return importLocal(logger, root, configurationFile, local)

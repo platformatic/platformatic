@@ -120,6 +120,9 @@ class Runtime extends EventEmitter {
   }
 
   async start () {
+    if (typeof this.#configManager.current.entrypoint === 'undefined') {
+      throw new errors.MissingEntrypointError()
+    }
     this.#updateStatus('starting')
 
     // Important: do not use Promise.all here since it won't properly manage dependencies
@@ -260,7 +263,7 @@ class Runtime extends EventEmitter {
       // TODO: handle port allocation error here
       if (error.code === 'EADDRINUSE') throw error
 
-      this.logger.error({ error: ensureLoggableError(error) }, `Failed to start service "${id}".`)
+      this.logger.error({ err: ensureLoggableError(error) }, `Failed to start service "${id}".`)
 
       const config = this.#configManager.current
       const restartOnError = config.restartOnError

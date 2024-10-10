@@ -200,7 +200,7 @@ To ensure that a specific user has the correct access rights to use entities wit
 //plugin.js
 
 app.post('/', async (req, reply) => {
-  const ctx = req.createPlatformaticCtx()
+  const ctx = req.platformaticContext
   
   await app.platformatic.entities.movie.find({
     where: { /*...*/ },

@@ -34,7 +34,7 @@ Here's how you can integrate context into your plugin:
 
 ```js
 app.post('/', async (req, reply) => {
-  const ctx = req.createPlatformaticCtx()
+  const ctx = req.platformaticContext
 
   await app.platformatic.entities.movies.find({
     where: { /*...*/ },

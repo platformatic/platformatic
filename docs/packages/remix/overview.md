@@ -3,7 +3,7 @@ title: Overview
 label: Astro
 ---
 
-import Issues from '../getting-started/issues.md';
+import Issues from '../../getting-started/issues.md';
 
 # Platformatic Vite
 

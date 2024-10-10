@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/runtime",
-  "version": "2.3.1",
+  "version": "2.5.4",
   "description": "",
   "main": "index.js",
   "bin": {
@@ -15,7 +15,7 @@
     "prepublishOnly": "pnpm run build",
     "lint": "eslint"
   },
-  "author": "Matteo Collina <hello@matteocollina.com>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"
@@ -56,7 +56,7 @@
     "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/generators": "workspace:*",
-    "@platformatic/http-metrics": "^0.1.0",
+    "@platformatic/http-metrics": "^0.2.0",
     "@platformatic/itc": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/ts-compiler": "workspace:*",
@@ -81,8 +81,9 @@
     "prom-client": "^15.1.2",
     "semgrator": "^0.3.0",
     "tail-file-stream": "^0.2.0",
+    "thread-cpu-usage": "^0.2.0",
     "undici": "^6.9.0",
-    "undici-thread-interceptor": "^0.6.1",
+    "undici-thread-interceptor": "^0.7.0",
     "ws": "^8.16.0"
   }
 }

@@ -48,9 +48,13 @@ export class NodeStackable extends BaseStackable {
   #module
   #app
   #server
+  #basePath
   #dispatcher
   #isFastify
   #isKoa
+
+  #startHttpTimer
+  #endHttpTimer
 
   constructor (options, root, configManager) {
     super('nodejs', packageJson.version, options, root, configManager)
@@ -81,7 +85,7 @@ export class NodeStackable extends BaseStackable {
     const finalEntrypoint = await this._findEntrypoint()
 
     // Require the application
-    const basePath = config.application?.basePath
+    this.#basePath = config.application?.basePath
       ? ensureTrailingSlash(cleanBasePath(config.application?.basePath))
       : undefined
 
@@ -89,7 +93,7 @@ export class NodeStackable extends BaseStackable {
       // Always use URL to avoid serialization problem in Windows
       id: this.id,
       root: pathToFileURL(this.root).toString(),
-      basePath,
+      basePath: this.#basePath,
       logLevel: this.logger.level
     })
 
@@ -162,11 +166,11 @@ export class NodeStackable extends BaseStackable {
     })
   }
 
-  async collectMetrics () {
-    return {
-      defaultMetrics: true,
-      httpMetrics: true
-    }
+  async collectMetrics ({ startHttpTimer, endHttpTimer }) {
+    this.#startHttpTimer = startHttpTimer
+    this.#endHttpTimer = endHttpTimer
+
+    return { defaultMetrics: true, httpMetrics: true }
   }
 
   async build () {
@@ -195,12 +199,30 @@ export class NodeStackable extends BaseStackable {
     if (this.url) {
       this.logger.trace({ injectParams, url: this.url }, 'injecting via request')
       res = await injectViaRequest(this.url, injectParams, onInject)
-    } else if (this.#isFastify) {
-      this.logger.trace({ injectParams }, 'injecting via fastify')
-      res = await this.#app.inject(injectParams, onInject)
     } else {
-      this.logger.trace({ injectParams }, 'injecting via light-my-request')
-      res = await inject(this.#dispatcher ?? this.#app, injectParams, onInject)
+      if (this.#startHttpTimer && this.#endHttpTimer) {
+        this.#startHttpTimer({ request: injectParams })
+
+        if (onInject) {
+          const originalOnInject = onInject
+          onInject = (err, response) => {
+            this.#endHttpTimer({ request: injectParams, response })
+            originalOnInject(err, response)
+          }
+        }
+      }
+
+      if (this.#isFastify) {
+        this.logger.trace({ injectParams }, 'injecting via fastify')
+        res = await this.#app.inject(injectParams, onInject)
+      } else {
+        this.logger.trace({ injectParams }, 'injecting via light-my-request')
+        res = await inject(this.#dispatcher ?? this.#app, injectParams, onInject)
+      }
+
+      if (this.#endHttpTimer && !onInject) {
+        this.#endHttpTimer({ request: injectParams, response: res })
+      }
     }
 
     /* c8 ignore next 3 */
@@ -220,26 +242,15 @@ export class NodeStackable extends BaseStackable {
   }
 
   getMeta () {
-    const config = this.configManager.current
-    const basePath = ensureTrailingSlash(cleanBasePath(this.basePath ?? config.application?.basePath))
-
-    let composer = {
-      prefix: basePath,
-      wantsAbsoluteUrls: this._getWantsAbsoluteUrls(),
-      needsRootRedirect: true
-    }
-
-    if (this.url) {
-      composer = {
-        tcp: true,
+    return {
+      composer: {
+        tcp: typeof this.url !== 'undefined',
         url: this.url,
-        prefix: basePath,
+        prefix: this.basePath ?? this.#basePath,
         wantsAbsoluteUrls: this._getWantsAbsoluteUrls(),
         needsRootRedirect: true
       }
     }
-
-    return { composer }
   }
 
   async _listen () {

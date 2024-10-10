@@ -1,14 +1,6 @@
 ---
 const version = 123
-
-let time
-try {
-  const response = await fetch('http://backend.plt.local/time')
-  const json = await response.json()
-  time = json.time
-} catch(e) {
-  time = Date.now()
-} 
+const time = Date.now()
 
 ---
 

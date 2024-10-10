@@ -11,8 +11,8 @@
     "build": "astro build"
   },
   "dependencies": {
-    "@platformatic/astro": "^2.0.0-alpha.6",
-    "@platformatic/basic": "^2.0.0-alpha.6",
+    "@platformatic/astro": "^2.3.1",
+    "@platformatic/basic": "^2.3.1",
     "astro": "^4.1.4",
     "vite": "^5.4.4"
   },

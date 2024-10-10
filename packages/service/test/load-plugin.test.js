@@ -5,6 +5,7 @@ require('./helper')
 const assert = require('node:assert')
 const { test } = require('node:test')
 const { createGunzip } = require('node:zlib')
+const { readFile } = require('node:fs/promises')
 const { pipeline } = require('node:stream/promises')
 const { request } = require('undici')
 const app = require('..')
@@ -196,4 +197,29 @@ test('customize service with beforePlugins', async (t) => {
   const body = await res.body.text()
   assert.strictEqual(res.statusCode, 200)
   assert.strictEqual(body, 'hello world')
+})
+
+test('@fastify/static serving root without wildcards', async (t) => {
+  const app = await buildServer({
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+    },
+    plugins: {
+      paths: [{
+        path: require.resolve('./fixtures/root-static.js'),
+      }],
+    },
+  })
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const res = await (request(app.url))
+  const body = await res.body.text()
+  const expected = await readFile(require.resolve('./fixtures/hello/index.html'), 'utf8')
+  assert.strictEqual(res.statusCode, 200)
+  assert.strictEqual(body, expected)
 })

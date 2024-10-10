@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/config",
-  "version": "2.3.1",
+  "version": "2.5.4",
   "description": "Platformatic DB Config Manager",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"
   },
-  "author": "Leonardo Rossi <leonardo.rossi@gmail.com>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/platformatic/platformatic/issues"

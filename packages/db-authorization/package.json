@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db-authorization",
-  "version": "2.3.1",
+  "version": "2.5.4",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -8,14 +8,14 @@
     "lint": "eslint"
   },
   "types": "index.d.ts",
-  "author": "Matteo Collina <hello@matteocollina.com>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "@fastify/cookie": "^10.0.0",
+    "@fastify/cookie": "^11.0.0",
     "@fastify/session": "^11.0.0",
     "@matteo.collina/tspl": "^0.1.1",
     "@platformatic/db-core": "workspace:*",
