@@ -85,7 +85,7 @@ async function main () {
   setGlobalDispatcher(globalDispatcher)
 
   // Setup mesh networker
-  const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp, timeout: true })
+  const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp, timeout: false })
 
   // If the service is an entrypoint and runtime server config is defined, use it.
   let serverConfig = null
