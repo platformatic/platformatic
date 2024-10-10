@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
-    "@platformatic/http-metrics": "^0.2.0",
+    "@platformatic/http-metrics": "^0.2.1",
     "prom-client": "^15.1.2"
   },
   "devDependencies": {
