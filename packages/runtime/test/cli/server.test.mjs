@@ -98,15 +98,20 @@ test('starts the inspector', async (t) => {
     encoding: 'utf8',
   })
   let stderr = ''
+  let port = 0
   let found = false
 
   for await (const messages of on(child.stderr, 'data')) {
     for (const message of messages) {
+      console.log(message.toString())
       stderr += message
 
-      if (/Debugger listening on ws:\/\/127\.0\.0\.1:9229/.test(stderr)) {
-        found = true
-        break
+      if (new RegExp(`Debugger listening on ws://127\\.0\\.0\\.1:${9230 + port}`).test(stderr)) {
+        port++
+        if (port === 4) {
+          found = true
+          break
+        }
       }
     }
 
