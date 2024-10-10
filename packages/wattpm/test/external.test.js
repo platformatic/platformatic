@@ -297,3 +297,29 @@ test('resolve - should attempt to clone with username and password', async t => 
   )
   ok(resolveProcess.stdout.includes('HTTP Basic: Access denied'))
 })
+
+test('import - should find the nearest watt.json', async t => {
+  const fixture = await resolve(fixturesDir, 'main')
+  const rootDir = await createTemporaryDirectory(t, 'local-no-git')
+
+  await cp(fixture, rootDir, { recursive: true })
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await readFile(configurationFile, 'utf-8')
+
+  const directory = join(rootDir, 'web', 'next')
+  await mkdir(directory, { recursive: true })
+
+  process.chdir(join(rootDir, 'web', 'next'))
+  await wattpm('import', '.')
+
+  deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), JSON.parse(originalFileContents))
+
+  ok(!existsSync(resolve(directory, 'web', 'next', 'package.json'), 'utf-8'))
+  deepStrictEqual(JSON.parse(await readFile(join(rootDir, 'watt.json'), 'utf-8')), {
+    ...JSON.parse(originalFileContents),
+  })
+  deepStrictEqual(JSON.parse(await readFile(join(rootDir, 'web', 'next', 'watt.json'), 'utf-8')), {
+    $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`
+  })
+})

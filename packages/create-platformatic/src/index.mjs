@@ -15,6 +15,7 @@ import { request } from 'undici'
 import { createGitRepository } from './create-git-repository.mjs'
 import { say } from './say.mjs'
 import { getUsername, getVersion } from './utils.mjs'
+import { ConfigManager } from '@platformatic/config'
 
 const MARKETPLACE_HOST = 'https://marketplace.platformatic.dev'
 const defaultStackables = ['@platformatic/composer', '@platformatic/db', '@platformatic/service']
@@ -110,14 +111,17 @@ export const createPlatformatic = async argv => {
 }
 
 async function createApplication (args, logger, pkgManager) {
-  const optionsDir = await inquirer.prompt({
-    type: 'input',
-    name: 'dir',
-    message: 'Where would you like to create your project?',
-    default: 'platformatic',
-  })
+  let projectDir = process.cwd()
+  if (!(await ConfigManager.findConfigFile())) {
+    const optionsDir = await inquirer.prompt({
+      type: 'input',
+      name: 'dir',
+      message: 'Where would you like to create your project?',
+      default: 'platformatic',
+    })
 
-  const projectDir = path.resolve(process.cwd(), optionsDir.dir)
+    projectDir = path.resolve(process.cwd(), optionsDir.dir)
+  }
   const projectName = basename(projectDir)
 
   await createDirectory(projectDir)

@@ -127,6 +127,9 @@ class Runtime extends EventEmitter {
   }
 
   async start () {
+    if (typeof this.#configManager.current.entrypoint === 'undefined') {
+      throw new errors.MissingEntrypointError()
+    }
     this.#updateStatus('starting')
 
     // Important: do not use Promise.all here since it won't properly manage dependencies
