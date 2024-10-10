@@ -111,7 +111,9 @@ class PlatformaticApp extends EventEmitter {
       })
       this.stackable = this.#wrapStackable(stackable)
 
-      await this.stackable.collectMetrics()
+      this.once('start', () => {
+        this.stackable.collectMetrics()
+      })
 
       this.#updateDispatcher()
     } catch (err) {

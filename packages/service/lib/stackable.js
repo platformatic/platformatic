@@ -43,10 +43,7 @@ class ServiceStackable {
 
     if (this.app === null) {
       this.app = await this._init()
-
-      if (this.metricsRegistry) {
-        this.#setHttpMetrics()
-      }
+      await this.#collectMetrics()
     }
     return this.app
   }
@@ -154,7 +151,9 @@ class ServiceStackable {
     return this.app.graphql ? printSchema(this.app.graphql.schema) : null
   }
 
-  async collectMetrics () {
+  // This method is not a part of Stackable interface because we need to register
+  // fastify metrics before the server is started.
+  async #collectMetrics () {
     const metricsConfig = this.context.metricsConfig
     if (metricsConfig !== false) {
       const { registry } = await collectMetrics(
@@ -166,10 +165,13 @@ class ServiceStackable {
         }
       )
       this.metricsRegistry = registry
+      this.#setHttpMetrics()
     }
   }
 
   async getMetrics ({ format }) {
+    if (!this.metricsRegistry) return null
+
     return format === 'json'
       ? await this.metricsRegistry.getMetricsAsJSON()
       : await this.metricsRegistry.metrics()
