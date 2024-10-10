@@ -140,9 +140,14 @@ async function _transformConfig (configManager, args) {
   }
 
   if (!hasValidEntrypoint) {
-    throw typeof config.entrypoint !== 'undefined'
-      ? new errors.InvalidEntrypointError(config.entrypoint)
-      : new errors.MissingEntrypointError()
+    if (config.entrypoint) {
+      throw new errors.InvalidEntrypointError(config.entrypoint)
+    } else if (services.length >= 1) {
+      throw new errors.MissingEntrypointError()
+    }
+    // If there are no services, and no entrypoint it's an empty app.
+    // It won't start, but we should be able to parse and operate on it,
+    // like adding other services.
   }
 
   configManager.current.services = services

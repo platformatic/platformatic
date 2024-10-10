@@ -58,7 +58,7 @@ test('should automatically detect the entrypoint if it there exacty a composer',
 })
 
 test('should throw an exception if there is no composer', async t => {
-  const configFile = join(fixturesDir, 'configs', 'no-entrypoint-multiple-composers.json')
+  const configFile = join(fixturesDir, 'configs', 'no-entrypoint-no-composers.json')
 
   await rejects(
     () => loadConfig({}, ['-c', configFile], platformaticRuntime),
@@ -67,10 +67,25 @@ test('should throw an exception if there is no composer', async t => {
 })
 
 test('should throw an exception if there are multiple composer', async t => {
-  const configFile = join(fixturesDir, 'configs', 'no-entrypoint-no-composers.json')
+  const configFile = join(fixturesDir, 'configs', 'no-entrypoint-multiple-composers.json')
 
   await rejects(
     () => loadConfig({}, ['-c', configFile], platformaticRuntime),
     /Cannot parse config file. Missing application entrypoint./
+  )
+})
+
+test('should not throw if there are no services', async t => {
+  const configFile = join(fixturesDir, 'configs', 'no-services-no-entrypoint.config.json')
+
+  await loadConfig({}, ['-c', configFile], platformaticRuntime)
+})
+
+test('should throw an exception if there is an entrypoint with no services', async t => {
+  const configFile = join(fixturesDir, 'configs', 'no-services.config.json')
+
+  await rejects(
+    () => loadConfig({}, ['-c', configFile], platformaticRuntime),
+    /Cannot parse config file. Invalid entrypoint: 'doesNotExist' does not exist/
   )
 })
