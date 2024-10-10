@@ -1641,7 +1641,7 @@ importers:
         version: link:../generators
       '@platformatic/http-metrics':
         specifier: ^0.2.0
-        version: 0.2.0
+        version: 0.2.1
       '@platformatic/itc':
         specifier: workspace:*
         version: link:../itc
@@ -4112,8 +4112,8 @@ packages:
   '@platformatic/graphql-composer@0.8.1':
     resolution: {integrity: sha512-GhlDQgbPeMMZHxtKd5EA0/whaBsZs2LCGIWx+Xf4sb9OCZ+rRWveIv5jwy381SNkJ9gaEbFOxbNjlC+USKdiLw==}
 
-  '@platformatic/http-metrics@0.2.0':
-    resolution: {integrity: sha512-ex5ldj/tg8xTdLsX4zQDkyMl3NgsOealnd+bv6VCIUcRxS3Kce9k5oe2Vry75n2tLZ87rdphzTkf+v1ZJjmRXg==}
+  '@platformatic/http-metrics@0.2.1':
+    resolution: {integrity: sha512-Gy3NHUQT250MrJMlwzcSniVc+71DmCN1BpsuJcBlxyDpNacsH9axNonNWSNJqcWg8WOrv7tS6miBql2cugVuAg==}
 
   '@playwright/test@1.48.0':
     resolution: {integrity: sha512-W5lhqPUVPqhtc/ySvZI5Q8X2ztBOUgZ8LbAFy0JQgrXZs2xaILrUcNO3rQjwbLPfGK13+rZsDa1FpG+tqYkT5w==}
@@ -11644,7 +11644,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@platformatic/http-metrics@0.2.0':
+  '@platformatic/http-metrics@0.2.1':
     dependencies:
       prom-client: 15.1.3
 
