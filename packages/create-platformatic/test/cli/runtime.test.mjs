@@ -14,14 +14,13 @@ test.beforeEach(async () => {
 })
 
 test.afterEach(async () => {
-  console.log('==> removing', tmpDir)
   try {
     await safeRemove(tmpDir)
   } catch (e) {
     // on purpose, in win the resource might be still "busy"
   }
 })
-/*
+
 test('Creates a Platformatic Runtime with two Services', { timeout }, async t => {
   const marketplaceHost = await startMarketplace(t)
   // The actions must match IN ORDER
@@ -107,7 +106,6 @@ test('Creates a Platformatic Runtime with two Services', { timeout }, async t =>
   equal(await isFileAccessible(join(baseService1Dir, 'plugins', 'example.ts')), true)
   equal(await isFileAccessible(join(baseService1Dir, 'global.d.ts')), true)
 })
-*/
 
 test('Add another service to an existing application', { timeout }, async t => {
   const marketplaceHost = await startMarketplace(t)
