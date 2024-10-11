@@ -35,6 +35,10 @@ Arguments:
 
 - `root`: The directory containing the application (the default is the current directory)
 
+Options:
+
+- `-i, --inspect`: Start the inspector
+
 ## `stop`
 
 Stops a running application.

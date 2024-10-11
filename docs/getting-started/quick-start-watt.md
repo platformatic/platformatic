@@ -330,3 +330,18 @@ npm run start
 ```
 
 which will call `wattpm start`.
+
+## Debug individual services with Chrome DevTools
+
+You can debug your Watt server with Chrome DevTools by running:
+
+```bash
+npm run start -- --inspect
+```
+
+This will start an inspector instance in each service, and you can connect to it with Chrome DevTools.
+Open `chrome://inspect` in Chrome, and you will see the services listed there.
+
+![Chrome Inspector showing 4 services](./images/inspector.png)
+
+Then, you can click on `inspect` to open the DevTools for that service.

@@ -27,12 +27,21 @@ export async function devCommand (logger, args) {
 }
 
 export async function startCommand (logger, args) {
-  const { positionals } = parseArgs(args, {}, false)
+  const { positionals, values } = parseArgs(args, {
+    inspect: {
+      type: 'boolean',
+      short: 'i',
+    }
+  }, false)
   /* c8 ignore next */
   const root = resolve(process.cwd(), positionals[0] ?? '')
 
   const configurationFile = await findConfigurationFile(logger, root)
-  await pltStartCommand(['--production', '-c', configurationFile], true)
+  const cmd = ['--production', '-c', configurationFile]
+  if (values.inspect) {
+    cmd.push('--inspect')
+  }
+  await pltStartCommand(cmd, true)
 }
 
 export async function stopCommand (logger, args) {
@@ -130,7 +139,11 @@ export const help = {
         name: 'root',
         description: 'The directory containing the application (the default is the current directory)'
       }
-    ]
+    ],
+    options: [{
+      usage: '-i --inspect',
+      description: 'Enables the inspector for each service'
+    }]
   },
   stop: {
     usage: 'stop [id]',

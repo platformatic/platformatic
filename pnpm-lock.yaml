@@ -1791,6 +1791,9 @@ importers:
       get-port:
         specifier: ^7.1.0
         version: 7.1.0
+      inspector-client:
+        specifier: ^0.1.2
+        version: 0.1.2
       json-schema-to-typescript:
         specifier: ^15.0.0
         version: 15.0.2
@@ -2554,6 +2557,9 @@ importers:
       eslint:
         specifier: '9'
         version: 9.12.0
+      inspector-client:
+        specifier: ^0.1.2
+        version: 0.1.2
       json-schema-to-typescript:
         specifier: ^15.0.0
         version: 15.0.2
@@ -6588,6 +6594,9 @@ packages:
   inquirer@9.3.7:
     resolution: {integrity: sha512-LJKFHCSeIRq9hanN14IlOtPSTe3lNES7TYDTE2xxdAy1LS5rYphajK1qtwvj3YmQXvvk0U2Vbmcni8P9EIQW9w==}
     engines: {node: '>=18'}
+
+  inspector-client@0.1.2:
+    resolution: {integrity: sha512-GxBeI9JhB6Lz88jZoGLtNal2QX46S+Sf2pn/rl2KsDgReerDBMXMhgkRgvY7yFuNefwpLced3XfmhovgvgkuWA==}
 
   int64-buffer@0.1.10:
     resolution: {integrity: sha512-v7cSY1J8ydZ0GyjUHqF+1bshJ6cnEVLo9EnjB8p+4HDRPZc9N5jjmvUV7NvEsqQOKyH0pmIBFWXVQbiS0+OBbA==}
@@ -14774,6 +14783,10 @@ snapshots:
       strip-ansi: 6.0.1
       wrap-ansi: 6.2.0
       yoctocolors-cjs: 2.1.2
+
+  inspector-client@0.1.2:
+    dependencies:
+      undici: 6.20.0
 
   int64-buffer@0.1.10: {}
 
