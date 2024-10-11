@@ -92,7 +92,7 @@ test('does not start if node inspector flags are provided', async (t) => {
   await child.catch(() => {})
 })
 
-test.only('starts the inspector', async (t) => {
+test('starts the inspector', async (t) => {
   const { execa } = await import('execa')
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
   const child = execa(process.execPath, [cliPath, 'start', '-c', config, '--inspect'], {
@@ -141,7 +141,6 @@ test.only('starts the inspector', async (t) => {
 
     await client.close()
   }
-
 
   child.kill('SIGKILL')
 
