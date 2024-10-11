@@ -52,6 +52,7 @@
   "devDependencies": {
     "borp": "^0.17.0",
     "eslint": "9",
+    "inspector-client": "^0.1.2",
     "json-schema-to-typescript": "^15.0.0",
     "neostandard": "^0.11.1",
     "typescript": "^5.5.4",
