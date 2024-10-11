@@ -14,7 +14,7 @@ test('get meta info via stackable api', async t => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0
+      port: 3245
     },
     db: {
       ...connectionInfo,
@@ -43,7 +43,9 @@ test('get meta info via stackable api', async t => {
     composer: {
       needsRootRedirect: false,
       prefix: undefined,
-      wantsAbsoluteUrls: false
+      wantsAbsoluteUrls: false,
+      tcp: true,
+      url: 'http://127.0.0.1:3245',
     },
     db: {
       connectionStrings: [`postgres://postgres:postgres@127.0.0.1/${dbname}`]

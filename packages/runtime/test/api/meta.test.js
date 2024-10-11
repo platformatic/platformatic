@@ -23,7 +23,9 @@ test('should get meta for db services in runtime schema', async t => {
     composer: {
       needsRootRedirect: false,
       prefix: 'db-app',
-      wantsAbsoluteUrls: false
+      wantsAbsoluteUrls: false,
+      tcp: false,
+      url: undefined
     },
     db: {
       connectionStrings: [`sqlite://${database}`]
