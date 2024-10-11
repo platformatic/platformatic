@@ -4,6 +4,7 @@ import { on } from 'node:events'
 import { test } from 'node:test'
 import { request } from 'undici'
 import { cliPath, start } from './helper.mjs'
+import { connect } from 'inspector-client'
 
 test('autostart', async () => {
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
@@ -91,7 +92,7 @@ test('does not start if node inspector flags are provided', async (t) => {
   await child.catch(() => {})
 })
 
-test('starts the inspector', async (t) => {
+test.only('starts the inspector', async (t) => {
   const { execa } = await import('execa')
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
   const child = execa(process.execPath, [cliPath, 'start', '-c', config, '--inspect'], {
@@ -121,6 +122,26 @@ test('starts the inspector', async (t) => {
   }
 
   assert(found)
+
+  for (let i = 0; i < 4; i++) {
+    const [data] = await (await fetch(`http://127.0.0.1:${9230 + i}/json/list`)).json()
+    const { webSocketDebuggerUrl } = data
+
+    const client = await connect(webSocketDebuggerUrl)
+
+    const res = await client.post('Runtime.evaluate', {
+      expression: 'require(\'worker_threads\').threadId',
+      includeCommandLineAPI: true,
+      generatePreview: true,
+      returnByValue: true,
+      awaitPromise: true,
+    })
+
+    assert.strictEqual(res.result.value, i + 1)
+
+    await client.close()
+  }
+
 
   child.kill('SIGKILL')
 
