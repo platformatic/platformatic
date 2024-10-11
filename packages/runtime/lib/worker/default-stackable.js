@@ -16,10 +16,8 @@ const defaultStackable = {
   getOpenapiSchema: () => null,
   getGraphqlSchema: () => null,
   getMeta: () => ({}),
-  collectMetrics: () => ({
-    defaultMetrics: true,
-    httpMetrics: true
-  }),
+  collectMetrics: () => {},
+  getMetrics: () => null,
   inject: () => {
     throw new Error('Stackable inject not implemented')
   },

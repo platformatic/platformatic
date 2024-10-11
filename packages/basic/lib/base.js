@@ -1,4 +1,5 @@
 import { deepmerge } from '@platformatic/utils'
+import { collectMetrics } from '@platformatic/metrics'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
@@ -12,7 +13,7 @@ import { cleanBasePath } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
 
 export class BaseStackable {
-  #childManager
+  childManager
   #subprocess
   #subprocessStarted
 
@@ -29,6 +30,10 @@ export class BaseStackable {
     this.graphqlSchema = null
     this.isEntrypoint = options.context.isEntrypoint
     this.isProduction = options.context.isProduction
+    this.metricsRegistry = null
+    this.startHttpTimer = null
+    this.endHttpTimer = null
+    this.clientWs = null
 
     // Setup the logger
     const pinoOptions = {
@@ -85,13 +90,6 @@ export class BaseStackable {
     return this
   }
 
-  async collectMetrics () {
-    return {
-      defaultMetrics: true,
-      httpMetrics: false
-    }
-  }
-
   async getOpenapiSchema () {
     return this.openapiSchema
   }
@@ -136,7 +134,7 @@ export class BaseStackable {
 
     this.logger.debug(`Executing "${command}" ...`)
 
-    this.#childManager = new ChildManager({
+    this.childManager = new ChildManager({
       logger: this.logger,
       loader,
       scripts,
@@ -153,7 +151,7 @@ export class BaseStackable {
     })
 
     try {
-      await this.#childManager.inject()
+      await this.childManager.inject()
 
       const subprocess = this.spawn(command)
 
@@ -182,15 +180,15 @@ export class BaseStackable {
         throw error
       }
     } finally {
-      await this.#childManager.eject()
-      await this.#childManager.close()
+      await this.childManager.eject()
+      await this.childManager.close()
     }
   }
 
   async startWithCommand (command, loader) {
     const config = this.configManager.current
     const basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
-    this.#childManager = new ChildManager({
+    this.childManager = new ChildManager({
       logger: this.logger,
       loader,
       context: {
@@ -206,12 +204,12 @@ export class BaseStackable {
       }
     })
 
-    this.#childManager.on('config', config => {
+    this.childManager.on('config', config => {
       this.subprocessConfig = config
     })
 
     try {
-      await this.#childManager.inject()
+      await this.childManager.inject()
 
       this.subprocess = this.spawn(command)
 
@@ -234,35 +232,36 @@ export class BaseStackable {
 
       this.#subprocessStarted = true
     } catch (e) {
-      this.#childManager.close('SIGKILL')
+      this.childManager.close('SIGKILL')
       throw new Error(`Cannot execute command "${command}": executable not found`)
     } finally {
-      await this.#childManager.eject()
+      await this.childManager.eject()
     }
 
     // If the process exits prematurely, terminate the thread with the same code
     this.subprocess.on('exit', code => {
       if (this.#subprocessStarted && typeof code === 'number' && code !== 0) {
-        this.#childManager.close('SIGKILL')
+        this.childManager.close('SIGKILL')
         process.exit(code)
       }
     })
 
-    const [url] = await once(this.#childManager, 'url')
+    const [url, clientWs] = await once(this.childManager, 'url')
     this.url = url
+    this.clientWs = clientWs
   }
 
   async stopCommand () {
     this.#subprocessStarted = false
     const exitPromise = once(this.subprocess, 'exit')
 
-    this.#childManager.close(this.subprocessTerminationSignal ?? 'SIGINT')
+    this.childManager.close(this.subprocessTerminationSignal ?? 'SIGINT')
     this.subprocess.kill(this.subprocessTerminationSignal ?? 'SIGINT')
     await exitPromise
   }
 
   getChildManager () {
-    return this.#childManager
+    return this.childManager
   }
 
   spawn (command) {
@@ -272,5 +271,45 @@ export class BaseStackable {
     return platform() === 'win32'
       ? spawn(command, { cwd: this.root, shell: true, windowsVerbatimArguments: true })
       : spawn(executable, args, { cwd: this.root })
+  }
+
+  async collectMetrics () {
+    let metricsConfig = this.options.context.metricsConfig
+    if (metricsConfig !== false) {
+      metricsConfig = {
+        defaultMetrics: true,
+        httpMetrics: true,
+        ...metricsConfig
+      }
+
+      if (this.childManager) {
+        await this.childManager.send(this.clientWs, 'collectMetrics', {
+          serviceId: this.id,
+          metricsConfig
+        })
+        return
+      }
+
+      const { registry, startHttpTimer, endHttpTimer } = await collectMetrics(
+        this.id,
+        metricsConfig
+      )
+
+      this.metricsRegistry = registry
+      this.startHttpTimer = startHttpTimer
+      this.endHttpTimer = endHttpTimer
+    }
+  }
+
+  async getMetrics ({ format } = {}) {
+    if (this.childManager) {
+      return this.childManager.send(this.clientWs, 'getMetrics', { format })
+    }
+
+    if (!this.metricsRegistry) return null
+
+    return format === 'json'
+      ? await this.metricsRegistry.getMetricsAsJSON()
+      : await this.metricsRegistry.metrics()
   }
 }

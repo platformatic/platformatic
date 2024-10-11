@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/service",
-  "version": "2.5.4",
+  "version": "2.5.5-alpha.1",
   "description": "",
   "main": "index.js",
   "bin": {
@@ -58,6 +58,7 @@
     "@mercuriusjs/federation": "^4.0.0",
     "@platformatic/client": "workspace:*",
     "@platformatic/config": "workspace:*",
+    "@platformatic/metrics": "workspace:*",
     "@platformatic/generators": "workspace:*",
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/telemetry": "workspace:*",

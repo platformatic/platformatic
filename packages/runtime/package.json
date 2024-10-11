@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/runtime",
-  "version": "2.5.4",
+  "version": "2.5.5-alpha.1",
   "description": "",
   "main": "index.js",
   "bin": {
@@ -57,7 +57,7 @@
     "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/generators": "workspace:*",
-    "@platformatic/http-metrics": "^0.2.0",
+    "@platformatic/http-metrics": "^0.2.1",
     "@platformatic/itc": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/ts-compiler": "workspace:*",

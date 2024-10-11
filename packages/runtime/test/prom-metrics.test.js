@@ -75,6 +75,9 @@ test('should start a prometheus server on port 9090', async t => {
   ]
 
   for (const metricName of expectedMetricNames) {
-    assert.ok(metricsNames.includes(metricName))
+    assert.ok(
+      metricsNames.includes(metricName),
+      `Expected metric ${metricName} to be present`
+    )
   }
 })
