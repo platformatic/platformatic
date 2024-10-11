@@ -282,7 +282,7 @@ export class BaseStackable {
         ...metricsConfig
       }
 
-      if (this.childManager) {
+      if (this.childManager && this.clientWs) {
         await this.childManager.send(this.clientWs, 'collectMetrics', {
           serviceId: this.id,
           metricsConfig
@@ -302,7 +302,7 @@ export class BaseStackable {
   }
 
   async getMetrics ({ format } = {}) {
-    if (this.childManager) {
+    if (this.childManager && this.clientWs) {
       return this.childManager.send(this.clientWs, 'getMetrics', { format })
     }
 

@@ -177,7 +177,6 @@ export class ChildProcess extends ITC {
       ? await this.#metricsRegistry.getMetricsAsJSON()
       : await this.#metricsRegistry.metrics()
 
-    if (format !== 'json') { process._rawDebug(res) }
     return res
   }
 
