@@ -477,7 +477,7 @@ importers:
         version: link:../generators
       '@platformatic/graphql-composer':
         specifier: ^0.8.0
-        version: 0.8.1
+        version: 0.8.2
       '@platformatic/scalar-theme':
         specifier: workspace:*
         version: link:../scalar-theme
@@ -4140,8 +4140,8 @@ packages:
   '@platformatic/fastify-http-metrics@0.1.0':
     resolution: {integrity: sha512-NrAesrQTXgjznjV1wwHa6glWxpKtB2bPSPF/jG8bTdtonqWkjrMgwIb3KNQF2oYwsQIOHIbhlHxxKUDCagt9AQ==}
 
-  '@platformatic/graphql-composer@0.8.1':
-    resolution: {integrity: sha512-GhlDQgbPeMMZHxtKd5EA0/whaBsZs2LCGIWx+Xf4sb9OCZ+rRWveIv5jwy381SNkJ9gaEbFOxbNjlC+USKdiLw==}
+  '@platformatic/graphql-composer@0.8.2':
+    resolution: {integrity: sha512-gDgA/M/xBKd4BgbJiC4O/sMVEq8GJQSb5+kbL78OljxjKjoedl1wtkmCH7ufLRILboSFyyKtzBM3dweB95Tzpg==}
 
   '@platformatic/http-metrics@0.2.1':
     resolution: {integrity: sha512-Gy3NHUQT250MrJMlwzcSniVc+71DmCN1BpsuJcBlxyDpNacsH9axNonNWSNJqcWg8WOrv7tS6miBql2cugVuAg==}
@@ -11676,7 +11676,7 @@ snapshots:
       fastify-plugin: 4.5.1
       prom-client: 15.1.3
 
-  '@platformatic/graphql-composer@0.8.1':
+  '@platformatic/graphql-composer@0.8.2':
     dependencies:
       abstract-logger: 0.2.5
       fastify: 5.0.0
