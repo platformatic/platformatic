@@ -3,7 +3,7 @@ import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
 import { existsSync } from 'node:fs'
-import { platform } from 'node:os'
+import { hostname, platform } from 'node:os'
 import { pathToFileURL } from 'node:url'
 import pino from 'pino'
 import split2 from 'split2'
@@ -32,16 +32,26 @@ export class BaseStackable {
 
     // Setup the logger
     const pinoOptions = {
-      level: this.serverConfig?.logger?.level ?? 'trace'
+      level: this.configManager.current?.logger?.level ?? this.serverConfig?.logger?.level ?? 'trace'
     }
 
     if (this.id) {
       pinoOptions.name = this.id
     }
+
+    if (typeof options.context.worker?.index !== 'undefined') {
+      pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: options.context.worker.index }
+    }
+
     this.logger = pino(pinoOptions)
 
     // Setup globals
     this.registerGlobals({
+      id: this.id,
+      worker: this.options.context.worker.index,
+      logLevel: this.logger.level,
+      // Always use URL to avoid serialization problem in Windows
+      root: pathToFileURL(this.root).toString(),
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
       setBasePath: this.setBasePath.bind(this)

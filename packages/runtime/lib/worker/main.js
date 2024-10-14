@@ -1,6 +1,7 @@
 'use strict'
 
 const { createRequire } = require('node:module')
+const { hostname } = require('node:os')
 const { join } = require('node:path')
 const { parentPort, workerData, threadId } = require('node:worker_threads')
 const { pathToFileURL } = require('node:url')
@@ -27,14 +28,17 @@ globalThis.fetch = fetch
 globalThis[kId] = threadId
 
 let app
+
 const config = workerData.config
 globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, { logger: createLogger() })
 
 function handleUnhandled (type, err) {
-  globalThis.platformatic.logger.error(
-    { err: ensureLoggableError(err) },
-    `Service ${workerData.serviceConfig.id} threw an ${type}.`
-  )
+  const label =
+    workerData.worker.count > 1
+      ? `Worker ${workerData.worker.index} of service "${workerData.serviceConfig.id}"`
+      : `Service "${workerData.serviceConfig.id}"`
+
+  globalThis.platformatic.logger.error({ err: ensureLoggableError(err) }, `${label} threw an ${type}.`)
 
   executeWithTimeout(app?.stop(), 1000)
     .catch()
@@ -45,7 +49,13 @@ function handleUnhandled (type, err) {
 
 function createLogger () {
   const destination = new MessagePortWritable({ port: workerData.loggingPort })
-  const loggerInstance = pino({ level: 'trace', name: workerData.serviceConfig.id }, destination)
+  const pinoOptions = { level: 'trace', name: workerData.serviceConfig.id }
+
+  if (typeof workerData.worker?.index !== 'undefined') {
+    pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: workerData.worker.index }
+  }
+
+  const loggerInstance = pino(pinoOptions, destination)
 
   Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(loggerInstance, 'info') })
   Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(loggerInstance, 'error') })
@@ -112,6 +122,7 @@ async function main () {
   // Create the application
   app = new PlatformaticApp(
     service,
+    workerData.worker.index,
     telemetryConfig,
     config.logger,
     serverConfig,

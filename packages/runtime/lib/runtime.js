@@ -19,7 +19,8 @@ const { startManagementApi } = require('./management-api')
 const { startPrometheusServer } = require('./prom-server')
 const { getRuntimeTmpDir } = require('./utils')
 const { sendViaITC, waitEventFromITC } = require('./worker/itc')
-const { kId, kITC, kConfig } = require('./worker/symbols')
+const { RoundRobinMap } = require('./worker/round-robin-map.js')
+const { kId, kITC, kConfig, kLoggerDestination, kLoggingPort, kWorkerStatus } = require('./worker/symbols')
 
 const platformaticVersion = require('../package.json').version
 const kWorkerFile = join(__dirname, 'worker/main.js')
@@ -35,9 +36,7 @@ class Runtime extends EventEmitter {
   #runtimeTmpDir
   #runtimeLogsDir
   #env
-  #services
   #servicesIds
-  #entrypoint
   #entrypointId
   #url
   #loggerDestination
@@ -47,7 +46,9 @@ class Runtime extends EventEmitter {
   #interceptor
   #managementApi
   #prometheusServer
-  #startedServices
+  #workers
+
+  // TODO@ShogunPanda: Unify these
   #restartPromises
   #bootstrapAttempts
 
@@ -59,13 +60,12 @@ class Runtime extends EventEmitter {
     this.#runtimeTmpDir = getRuntimeTmpDir(configManager.dirname)
     this.#runtimeLogsDir = runtimeLogsDir
     this.#env = env
-    this.#services = new Map()
+    this.#workers = new RoundRobinMap()
     this.#servicesIds = []
     this.#url = undefined
     // Note: nothing hits the main thread so there is no reason to set the globalDispatcher here
     this.#interceptor = createThreadInterceptor({ domain: '.plt.local', timeout: true })
     this.#status = undefined
-    this.#startedServices = new Map()
     this.#restartPromises = new Map()
     this.#bootstrapAttempts = new Map()
   }
@@ -101,9 +101,10 @@ class Runtime extends EventEmitter {
       inspector.open(inspectorOptions.port, inspectorOptions.host, inspectorOptions.breakFirstLine)
     }
 
+    this.#workers.configure(config.services, this.#configManager.current.workers, this.#configManager.args?.production)
+
     // Create all services, each in is own worker thread
     for (const serviceConfig of config.services) {
-      // Setup forwarding of logs from the worker threads to the main thread
       await this.#setupService(serviceConfig)
     }
 
@@ -113,7 +114,7 @@ class Runtime extends EventEmitter {
 
       if (autoloadEnabled) {
         checkDependencies(config.services)
-        this.#services = topologicalSort(this.#services, config)
+        this.#workers = topologicalSort(this.#workers, config)
       }
 
       // Recompute the list of services after sorting
@@ -126,13 +127,13 @@ class Runtime extends EventEmitter {
     this.#updateStatus('init')
   }
 
-  async start () {
+  async start (silent = false) {
     this.#updateStatus('starting')
 
     // Important: do not use Promise.all here since it won't properly manage dependencies
     try {
       for (const service of this.#servicesIds) {
-        await this.startService(service)
+        await this.startService(service, silent)
       }
     } catch (error) {
       // Wait for the next tick so that the error is logged first
@@ -157,9 +158,8 @@ class Runtime extends EventEmitter {
     }
 
     this.#updateStatus('stopping')
-    this.#startedServices.clear()
 
-    await Promise.all(this.#servicesIds.map(service => this._stopService(service, silent)))
+    await Promise.all(this.#servicesIds.map(service => this.stopService(service, silent)))
 
     this.#updateStatus('stopped')
   }
@@ -207,102 +207,35 @@ class Runtime extends EventEmitter {
     this.#updateStatus('closed')
   }
 
-  async startService (id) {
-    if (this.#startedServices.get(id)) {
+  async startService (id, silent) {
+    // Since when a service is stopped the worker is deleted, we consider a service start if its first service
+    // is no longer in the init phase
+    const firstWorker = this.#workers.get(`${id}:0`)
+    if (firstWorker && firstWorker[kWorkerStatus] !== 'boot' && firstWorker[kWorkerStatus] !== 'init') {
       throw new errors.ApplicationAlreadyStartedError()
     }
 
-    // This is set here so that if the service fails while starting we track the status
-    this.#startedServices.set(id, true)
+    const config = this.#configManager.current
+    const serviceConfig = config.services.find(s => s.id === id)
+    const workersCount = await this.#workers.getCount(serviceConfig.id)
 
-    let service = await this.#getServiceById(id, false, false)
-
-    // The service was stopped, recreate the thread
-    if (!service) {
-      const config = this.#configManager.current
-      const serviceConfig = config.services.find(s => s.id === id)
-
-      await this.#setupService(serviceConfig)
-      service = await this.#getServiceById(id)
-    }
-
-    try {
-      const serviceUrl = await sendViaITC(service, 'start')
-      if (serviceUrl) {
-        this.#url = serviceUrl
-      }
-      this.#bootstrapAttempts.set(id, 0)
-    } catch (error) {
-      // TODO: handle port allocation error here
-      if (error.code === 'EADDRINUSE') throw error
-
-      this.logger.error({ err: ensureLoggableError(error) }, `Failed to start service "${id}".`)
-
-      const config = this.#configManager.current
-      const restartOnError = config.restartOnError
-
-      if (!restartOnError) {
-        this.logger.error(`Failed to start service "${id}".`)
-        throw error
-      }
-
-      let bootstrapAttempt = this.#bootstrapAttempts.get(id)
-      if (bootstrapAttempt++ >= MAX_BOOTSTRAP_ATTEMPTS || restartOnError === 0) {
-        this.logger.error(`Failed to start service "${id}" after ${MAX_BOOTSTRAP_ATTEMPTS} attempts.`)
-        throw error
-      }
-
-      this.logger.warn(
-        `Starting a service "${id}" in ${restartOnError}ms. ` +
-          `Attempt ${bootstrapAttempt} of ${MAX_BOOTSTRAP_ATTEMPTS}...`
-      )
-
-      this.#bootstrapAttempts.set(id, bootstrapAttempt)
-      await this.#restartCrashedService(id)
+    for (let i = 0; i < workersCount; i++) {
+      await this.#startWorker(config, serviceConfig, workersCount, id, i, silent)
     }
   }
 
-  // Do not rename to #stopService as this is used in tests
-  async _stopService (id, silent) {
-    const service = await this.#getServiceById(id, false, false)
+  async stopService (id, silent) {
+    const config = this.#configManager.current
+    const serviceConfig = config.services.find(s => s.id === id)
+    const workersCount = await this.#workers.getCount(serviceConfig.id)
 
-    if (!service) {
-      return
-    }
-
-    this.#startedServices.set(id, false)
-
-    if (!silent) {
-      this.logger?.info(`Stopping service "${id}"...`)
-    }
-
-    // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
-    try {
-      await executeWithTimeout(sendViaITC(service, 'stop'), 10000)
-    } catch (error) {
-      this.logger?.info(
-        { error: ensureLoggableError(error) },
-        `Failed to stop service "${id}". Killing a worker thread.`
-      )
-    } finally {
-      service[kITC].close()
-    }
-
-    // Wait for the worker thread to finish, we're going to create a new one if the service is ever restarted
-    const res = await executeWithTimeout(once(service, 'exit'), 10000)
-
-    // If the worker didn't exit in time, kill it
-    if (res === 'timeout') {
-      await service.terminate()
+    for (let i = 0; i < workersCount; i++) {
+      await this.#stopWorker(workersCount, id, i, silent)
     }
   }
 
   async buildService (id) {
-    const service = this.#services.get(id)
-
-    if (!service) {
-      throw new errors.ServiceNotFoundError(id, Array.from(this.#services.keys()).join(', '))
-    }
+    const service = this.#getServiceById(id)
 
     try {
       return await sendViaITC(service, 'build')
@@ -484,6 +417,7 @@ class Runtime extends EventEmitter {
     }
   }
 
+  // TODO@ShogunPanda: Handle workers here
   async getServiceDetails (id, allowUnloaded = false) {
     let service
 
@@ -667,12 +601,9 @@ class Runtime extends EventEmitter {
     }
   }
 
+  // TODO@ShogunPanda: Handle for composer
   async getServiceMeta (id) {
-    const service = this.#services.get(id)
-
-    if (!service) {
-      throw new errors.ServiceNotFoundError(id, Array.from(this.#services.keys()).join(', '))
-    }
+    const service = await this.#getServiceById(id)
 
     try {
       return await sendViaITC(service, 'getServiceMeta')
@@ -737,22 +668,36 @@ class Runtime extends EventEmitter {
     if (this.#status === 'stopping' || this.#status === 'closed') return
 
     const config = this.#configManager.current
-    const { autoload, restartOnError } = config
-
+    const workersCount = await this.#workers.getCount(serviceConfig.id)
     const id = serviceConfig.id
+
+    for (let i = 0; i < workersCount; i++) {
+      await this.#setupWorker(config, serviceConfig, workersCount, id, i)
+    }
+  }
+
+  async #setupWorker (config, serviceConfig, workersCount, id, index) {
+    const { autoload, restartOnError } = config
+    const workerId = `${id}:${index}`
+
     const { port1: loggerDestination, port2: loggingPort } = new MessageChannel()
     loggerDestination.on('message', this.#forwardThreadLog.bind(this))
 
-    if (!this.#bootstrapAttempts.has(id)) {
-      this.#bootstrapAttempts.set(id, 0)
+    if (!this.#bootstrapAttempts.has(workerId)) {
+      this.#bootstrapAttempts.set(workerId, 0)
     }
 
-    const service = new Worker(kWorkerFile, {
+    const worker = new Worker(kWorkerFile, {
       workerData: {
         config,
         serviceConfig: {
           ...serviceConfig,
           isProduction: this.#configManager.args?.production ?? false
+        },
+        worker: {
+          id: workerId,
+          index,
+          count: workersCount
         },
         dirname: this.#configManager.dirname,
         runtimeLogsDir: this.#runtimeLogsDir,
@@ -773,89 +718,101 @@ class Runtime extends EventEmitter {
     })
 
     // Make sure the listener can handle a lot of API requests at once before raising a warning
-    service.setMaxListeners(1e3)
+    worker.setMaxListeners(1e3)
 
     // Track service exiting
-    service.once('exit', code => {
-      const started = this.#startedServices.get(id)
-      this.#services.delete(id)
-      loggerDestination.close()
-      service[kITC].close()
-      loggingPort.close()
+    worker.once('exit', code => {
+      if (worker[kWorkerStatus] === 'exited') {
+        return
+      }
 
-      if (this.#status === 'stopping') return
+      const started = worker[kWorkerStatus] === 'started'
+      worker[kWorkerStatus] = 'exited'
+
+      this.#cleanupWorker(workerId, worker)
+
+      if (this.#status === 'stopping') {
+        return
+      }
 
       // Wait for the next tick so that crashed from the thread are logged first
       setImmediate(() => {
-        if (!config.watch || code !== 0) {
-          this.logger.warn(`Service "${id}" unexpectedly exited with code ${code}.`)
+        const errorLabel = workersCount > 1 ? `Worker ${index} of service "${id}"` : `Service "${id}"`
+
+        if (started && (!config.watch || code !== 0)) {
+          this.logger.warn(`${errorLabel} unexpectedly exited with code ${code}.`)
         }
 
         // Restart the service if it was started
         if (started && this.#status === 'started') {
           if (restartOnError > 0) {
-            this.logger.warn(`Restarting a service "${id}" in ${restartOnError}ms...`)
-            this.#restartCrashedService(id).catch(err => {
-              this.logger.error({ err: ensureLoggableError(err) }, `Failed to restart service "${id}".`)
+            this.logger.warn(`${errorLabel} will be restarted in ${restartOnError}ms...`)
+            this.#restartCrashedWorker(config, serviceConfig, workersCount, id, index).catch(err => {
+              this.logger.error({ err: ensureLoggableError(err) }, `${errorLabel} could not be restarted.`)
             })
           } else {
-            this.logger.warn(`The "${id}" service is no longer available.`)
+            this.logger.warn(`${errorLabel} is no longer available.`)
           }
         }
       })
     })
 
-    service[kId] = id
-    service[kConfig] = serviceConfig
+    worker[kId] = workerId
+    worker[kConfig] = serviceConfig
+    worker[kLoggerDestination] = loggerDestination
+    worker[kLoggingPort] = loggingPort
 
     // Setup ITC
-    service[kITC] = new ITC({
-      name: id + '-runtime',
-      port: service,
+    worker[kITC] = new ITC({
+      name: workerId + '-runtime',
+      port: worker,
       handlers: {
         getServiceMeta: this.getServiceMeta.bind(this),
         getServices: this.getServices.bind(this)
       }
     })
-    service[kITC].listen()
+    worker[kITC].listen()
 
-    // Handle services changes
-    // This is not purposely activated on when this.#configManager.current.watch === true
-    // so that services can eventually manually trigger a restart. This mechanism is current
-    // used by the composer
-    service[kITC].on('changed', async () => {
-      try {
-        const wasStarted = this.#startedServices.get(id)
+    // Only activate watch for the first instance
+    if (index === 0) {
+      // Handle services changes
+      // This is not purposely activated on when this.#configManager.current.watch === true
+      // so that services can eventually manually trigger a restart. This mechanism is current
+      // used by the composer.
+      worker[kITC].on('changed', async () => {
+        try {
+          const wasStarted = worker[kWorkerStatus].startsWith('start')
 
-        await this._stopService(id)
+          await this.stopService(id)
 
-        if (wasStarted) {
-          await this.startService(id)
+          if (wasStarted) {
+            await this.startService(id)
+          }
+
+          this.logger?.info(`Service ${id} has been successfully reloaded ...`)
+
+          if (serviceConfig.entrypoint) {
+            this.#showUrl()
+          }
+        } catch (e) {
+          this.logger?.error(e)
         }
-
-        this.logger?.info(`Service ${id} has been successfully reloaded ...`)
-
-        if (serviceConfig.entrypoint) {
-          this.#showUrl()
-        }
-      } catch (e) {
-        this.logger?.error(e)
-      }
-    })
+      })
+    }
 
     // Store locally
-    this.#services.set(id, service)
+    this.#workers.set(workerId, worker)
 
     if (serviceConfig.entrypoint) {
-      this.#entrypoint = service
       this.#entrypointId = id
     }
 
     // Setup the interceptor
-    this.#interceptor.route(id, service)
+    this.#interceptor.route(id, worker)
 
     // Store dependencies
-    const [{ dependencies }] = await waitEventFromITC(service, 'init')
+    const [{ dependencies }] = await waitEventFromITC(worker, 'init')
+    worker[kWorkerStatus] = 'boot'
 
     if (autoload) {
       serviceConfig.dependencies = dependencies
@@ -867,11 +824,116 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async #restartCrashedService (id) {
-    const config = this.#configManager.current
-    const serviceConfig = config.services.find(s => s.id === id)
+  async #startWorker (config, serviceConfig, workersCount, id, index, silent) {
+    const workerId = `${id}:${index}`
+    const label = workersCount > 1 ? `worker ${index} of service "${id}"` : `service "${id}"`
 
-    let restartPromise = this.#restartPromises.get(id)
+    if (!silent) {
+      this.logger?.info(`Starting ${label}...`)
+    }
+
+    let worker = await this.#getWorkerById(id, index, false, false)
+
+    // The service was stopped, recreate the thread
+    if (!worker) {
+      await this.#setupService(serviceConfig, index)
+      worker = await this.#getWorkerById(id, index)
+    }
+
+    worker[kWorkerStatus] = 'starting'
+
+    try {
+      const workerUrl = await sendViaITC(worker, 'start')
+      if (workerUrl) {
+        this.#url = workerUrl
+      }
+
+      this.#bootstrapAttempts.set(workerId, 0)
+      worker[kWorkerStatus] = 'started'
+
+      this.logger?.info(`Started ${label}...`)
+    } catch (error) {
+      // TODO: handle port allocation error here
+      if (error.code === 'EADDRINUSE') throw error
+
+      this.#cleanupWorker(workerId, worker)
+
+      if (worker[kWorkerStatus] !== 'exited') {
+        // This prevent the exit handler to restart service
+        worker[kWorkerStatus] = 'exited'
+        await worker.terminate()
+      }
+
+      this.logger.error({ err: ensureLoggableError(error) }, `Failed to start ${label}.`)
+
+      const restartOnError = config.restartOnError
+
+      if (!restartOnError) {
+        throw error
+      }
+
+      let bootstrapAttempt = this.#bootstrapAttempts.get(workerId)
+      if (bootstrapAttempt++ >= MAX_BOOTSTRAP_ATTEMPTS || restartOnError === 0) {
+        this.logger.error(`Failed to start ${label} after ${MAX_BOOTSTRAP_ATTEMPTS} attempts.`)
+        throw error
+      }
+
+      this.logger.warn(
+        `Attempt ${bootstrapAttempt} of ${MAX_BOOTSTRAP_ATTEMPTS} to start ${label} again will be performed in ${restartOnError}ms ...`
+      )
+
+      this.#bootstrapAttempts.set(workerId, bootstrapAttempt)
+      await this.#restartCrashedWorker(config, serviceConfig, workersCount, id, index)
+    }
+  }
+
+  async #stopWorker (workersCount, id, index, silent) {
+    const worker = await this.#getWorkerById(id, index, false, false)
+
+    if (!worker) {
+      return
+    }
+
+    worker[kWorkerStatus] = 'stopping'
+
+    const label = workersCount > 1 ? `worker ${index} of service "${id}"` : `service "${id}"`
+
+    if (!silent) {
+      this.logger?.info(`Stopping ${label}...`)
+    }
+
+    // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
+    try {
+      await executeWithTimeout(sendViaITC(worker, 'stop'), 10000)
+    } catch (error) {
+      this.logger?.info({ error: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
+    } finally {
+      worker[kITC].close()
+    }
+
+    // Wait for the worker thread to finish, we're going to create a new one if the service is ever restarted
+    const res = await executeWithTimeout(once(worker, 'exit'), 10000)
+
+    // If the worker didn't exit in time, kill it
+    if (res === 'timeout') {
+      await worker.terminate()
+    }
+
+    worker[kWorkerStatus] = 'stopped'
+  }
+
+  #cleanupWorker (workerId, worker) {
+    this.#workers.delete(workerId)
+
+    worker[kITC].close()
+    worker[kLoggerDestination].close()
+    worker[kLoggingPort].close()
+  }
+
+  async #restartCrashedWorker (config, serviceConfig, workersCount, id, index) {
+    const workerId = `${id}:${index}`
+
+    let restartPromise = this.#restartPromises.get(workerId)
     if (restartPromise) {
       await restartPromise
       return
@@ -879,48 +941,59 @@ class Runtime extends EventEmitter {
 
     restartPromise = new Promise((resolve, reject) => {
       setTimeout(async () => {
-        this.#restartPromises.delete(id)
+        this.#restartPromises.delete(workerId)
 
         try {
-          await this.#setupService(serviceConfig)
-
-          const started = this.#startedServices.get(id)
-          if (started) {
-            this.#startedServices.set(id, false)
-            await this.startService(id)
-          }
+          await this.#setupWorker(config, serviceConfig, workersCount, id, index)
+          await this.#startWorker(config, serviceConfig, workersCount, id, index)
 
           resolve()
         } catch (err) {
+          // The runtime was stopped while the restart was happening, ignore any error.
+          if (!this.#status.startsWith('start')) {
+            resolve()
+          }
+
           reject(err)
         }
       }, config.restartOnError)
     })
 
-    this.#restartPromises.set(id, restartPromise)
+    this.#restartPromises.set(workerId, restartPromise)
     await restartPromise
   }
 
   async #getServiceById (id, ensureStarted = false, mustExist = true) {
-    const service = this.#services.get(id)
+    // TODO@ShogunPanda: Use a round robin here
+    return this.#getWorkerById(id, undefined, ensureStarted, mustExist)
+  }
 
-    if (!service) {
-      if (!mustExist && this.#servicesIds.includes(id)) {
+  async #getWorkerById (serviceId, workerId, ensureStarted = false, mustExist = true) {
+    let worker
+
+    if (typeof workerId === 'number') {
+      worker = this.#workers.get(`${serviceId}:${workerId}`)
+    } else {
+      worker = this.#workers.next(serviceId)
+    }
+
+    if (!worker) {
+      if (!mustExist && this.#servicesIds.includes(serviceId)) {
         return null
       }
 
-      throw new errors.ServiceNotFoundError(id, Array.from(this.#services.keys()).join(', '))
+      throw new errors.ServiceNotFoundError(serviceId, Array.from(this.#servicesIds).join(', '))
     }
 
     if (ensureStarted) {
-      const serviceStatus = await sendViaITC(service, 'getStatus')
+      const serviceStatus = await sendViaITC(worker, 'getStatus')
 
       if (serviceStatus !== 'started') {
-        throw new errors.ServiceNotStartedError(id)
+        throw new errors.ServiceNotStartedError(serviceId)
       }
     }
 
-    return service
+    return worker
   }
 
   async #getRuntimePackageJson () {

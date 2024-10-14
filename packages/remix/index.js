@@ -14,7 +14,6 @@ import express from 'express'
 import inject from 'light-my-request'
 import { readFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { pinoHttp } from 'pino-http'
 import { satisfies } from 'semver'
 import { packageJson, schema } from './lib/schema.js'
@@ -51,13 +50,7 @@ export class RemixStackable extends ViteStackable {
       ? ensureTrailingSlash(cleanBasePath(config.application?.basePath))
       : undefined
 
-    this.registerGlobals({
-      id: this.id,
-      // Always use URL to avoid serialization problem in Windows
-      root: pathToFileURL(this.root).toString(),
-      basePath: this.#basePath,
-      logLevel: this.logger.level
-    })
+    this.registerGlobals({ basePath: this.#basePath })
 
     this.subprocessTerminationSignal = 'SIGKILL'
   }

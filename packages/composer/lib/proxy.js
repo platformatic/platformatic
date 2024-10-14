@@ -9,7 +9,7 @@ const kITC = Symbol.for('plt.runtime.itc')
 async function resolveServiceProxyParameters (service) {
   // Get meta information from the service, if any, to eventually hook up to a TCP port
   const meta = (await globalThis[kITC]?.send('getServiceMeta', service.id))?.composer ?? { prefix: service.id }
-  const origin = meta.tcp ? meta.url : service.origin
+  const origin = service.origin // meta.tcp ? meta.url : service.origin
 
   // If no prefix could be found, assume the service id
   const prefix = (service.proxy?.prefix ?? meta.prefix ?? service.id).replace(/(\/$)/g, '')

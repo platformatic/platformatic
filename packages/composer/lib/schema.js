@@ -144,6 +144,7 @@ const composer = {
     refreshTimeout: { type: 'integer', minimum: 0, default: 1000 }
   },
   required: [],
+  default: {},
   additionalProperties: false
 }
 
@@ -198,7 +199,6 @@ const platformaticComposerSchema = {
     }
   },
   additionalProperties: false,
-  required: ['composer'],
   $defs: openApiDefs
 }
 

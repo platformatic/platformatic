@@ -71,7 +71,7 @@ async function _transformConfig (configManager, args) {
       const existingServiceId = services.findIndex(service => service.id === id)
 
       if (existingServiceId !== -1) {
-        services[existingServiceId] = service
+        services[existingServiceId] = { ...service, ...services[existingServiceId] }
       } else {
         services.push(service)
       }

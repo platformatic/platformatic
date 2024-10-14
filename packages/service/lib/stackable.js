@@ -1,6 +1,8 @@
 'use strict'
 
+const { hostname } = require('node:os')
 const { dirname } = require('node:path')
+const { pathToFileURL } = require('node:url')
 const { printSchema } = require('graphql')
 const pino = require('pino')
 const httpMetrics = require('@platformatic/fastify-http-metrics')
@@ -31,6 +33,10 @@ class ServiceStackable {
 
     // Setup globals
     this.registerGlobals({
+      id: this.context.serviceId,
+      worker: this.context.worker.index,
+      // Always use URL to avoid serialization problem in Windows
+      root: pathToFileURL(this.context.directory).toString(),
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
       setBasePath: this.setBasePath.bind(this)
@@ -291,8 +297,16 @@ class ServiceStackable {
       level: this.loggerConfig?.level ?? 'trace'
     }
 
+    this.registerGlobals({
+      logLevel: pinoOptions.level
+    })
+
     if (this.context?.serviceId) {
       pinoOptions.name = this.context.serviceId
+    }
+
+    if (typeof this.context?.worker?.index !== 'undefined') {
+      pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: this.context.worker.index }
     }
 
     this.logger = pino(pinoOptions)

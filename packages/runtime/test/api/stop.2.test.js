@@ -18,7 +18,7 @@ test('should fail to stop service with a wrong id', async (t) => {
   })
 
   try {
-    await app._stopService('wrong-service-id')
+    await app.stopService('wrong-service-id')
     assert.fail('should have thrown')
   } catch (err) {
     assert.strictEqual(err.message,

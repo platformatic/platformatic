@@ -16,7 +16,6 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { Server } from 'node:http'
 import { resolve as pathResolve, resolve } from 'node:path'
-import { pathToFileURL } from 'url'
 import { packageJson, schema } from './lib/schema.js'
 
 const validFields = [
@@ -89,13 +88,7 @@ export class NodeStackable extends BaseStackable {
       ? ensureTrailingSlash(cleanBasePath(config.application?.basePath))
       : undefined
 
-    this.registerGlobals({
-      // Always use URL to avoid serialization problem in Windows
-      id: this.id,
-      root: pathToFileURL(this.root).toString(),
-      basePath: this.#basePath,
-      logLevel: this.logger.level
-    })
+    this.registerGlobals({ basePath: this.#basePath })
 
     // The server promise must be created before requiring the entrypoint even if it's not going to be used
     // at all. Otherwise there is chance we miss the listen event.
@@ -130,6 +123,10 @@ export class NodeStackable extends BaseStackable {
       } else if (this.#app instanceof Server) {
         this.#server = this.#app
         this.#dispatcher = this.#server.listeners('request')[0]
+      }
+
+      if (listen) {
+        await this._listen()
       }
     } else {
       // User blackbox function, we wait for it to listen on a port

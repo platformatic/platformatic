@@ -5,7 +5,7 @@ const { eventLoopUtilization } = require('node:perf_hooks').performance
 const { Registry, Gauge, Counter, collectDefaultMetrics } = require('prom-client')
 const collectHttpMetrics = require('@platformatic/http-metrics')
 
-async function collectMetrics (stackable, serviceId, opts = {}) {
+async function collectMetrics (stackable, serviceId, workerId, opts = {}) {
   const registry = new Registry()
 
   const httpRequestCallbacks = []
@@ -18,7 +18,7 @@ async function collectMetrics (stackable, serviceId, opts = {}) {
   })
 
   const labels = opts.labels ?? {}
-  registry.setDefaultLabels({ ...labels, serviceId })
+  registry.setDefaultLabels({ ...labels, serviceId, workerId })
 
   if (metricsConfig.defaultMetrics) {
     collectDefaultMetrics({ register: registry })

@@ -25,6 +25,7 @@ export type HttpsSchemasPlatformaticDevWattpm253Json = {
   services?: {
     [k: string]: unknown;
   }[];
+  workers?: number;
   web?: {
     [k: string]: unknown;
   }[];

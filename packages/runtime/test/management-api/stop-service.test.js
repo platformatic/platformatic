@@ -58,7 +58,7 @@ test('should start stopped service by service id', async t => {
 
   await app.start()
 
-  await app._stopService('service-1')
+  await app.stopService('service-1')
 
   {
     const serviceDetails = await app.getServiceDetails('service-1', true)

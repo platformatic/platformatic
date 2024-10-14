@@ -24,7 +24,7 @@ test('should stop service by service id', async (t) => {
     assert.strictEqual(serviceDetails.status, 'started')
   }
 
-  await app._stopService('with-logger')
+  await app.stopService('with-logger')
 
   {
     const serviceDetails = await app.getServiceDetails('with-logger', true)
