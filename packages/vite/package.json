@@ -36,7 +36,7 @@
     "@fastify/vite": "^7.0.1",
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "borp": "^0.17.0",
+    "borp": "^0.18.0",
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.11.1",

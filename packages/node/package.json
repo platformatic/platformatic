@@ -33,7 +33,7 @@
   "devDependencies": {
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "borp": "^0.17.0",
+    "borp": "^0.18.0",
     "express": "^4.19.2",
     "eslint": "9",
     "fastify": "^5.0.0",

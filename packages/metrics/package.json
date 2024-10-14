@@ -23,7 +23,7 @@
     "prom-client": "^15.1.2"
   },
   "devDependencies": {
-    "borp": "^0.17.0",
+    "borp": "^0.18.0",
     "eslint": "9",
     "neostandard": "^0.11.1"
   }
