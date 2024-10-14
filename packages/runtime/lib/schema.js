@@ -142,6 +142,13 @@ const platformaticRuntimeSchema = {
         }
       }
     },
+    httpCache: {
+      oneOf: [
+        {
+          type: 'boolean'
+        }
+      ]
+    },
     watch: {
       anyOf: [
         {
