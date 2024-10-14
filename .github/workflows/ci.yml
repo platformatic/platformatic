@@ -355,7 +355,7 @@ jobs:
   ci-runtime:
     needs: setup-node_modules
     runs-on: ${{matrix.os}}
-    timeout-minutes: 20
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [20, 22]
