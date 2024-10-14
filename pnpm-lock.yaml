@@ -273,8 +273,8 @@ importers:
         specifier: ^10.0.1
         version: 10.0.1
       mkdirp:
-        specifier: ^2.1.6
-        version: 2.1.6
+        specifier: ^3.0.0
+        version: 3.0.1
       neostandard:
         specifier: ^0.11.1
         version: 0.11.6(eslint@9.12.0)(typescript@5.6.3)
@@ -7656,8 +7656,8 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
-  mkdirp@2.1.6:
-    resolution: {integrity: sha512-+hEnITedc8LAtIP9u3HJDFIdcLV2vXP33sqLLIzkv1Db1zO/1OxbvYf0Y1OC/S/Qo5dxHXepofhmxL02PsKe+A==}
+  mkdirp@3.0.1:
+    resolution: {integrity: sha512-+NsyUUAZDmo6YVHzL/stxSu3t9YS1iljliy3BSDrXJ/dkn1KYdmtZODGGjLcc9XLgVVpH4KshHB8XmZgMhaBXg==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -16233,7 +16233,7 @@ snapshots:
 
   mkdirp@1.0.4: {}
 
-  mkdirp@2.1.6: {}
+  mkdirp@3.0.1: {}
 
   mlly@1.7.2:
     dependencies:
