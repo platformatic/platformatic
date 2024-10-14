@@ -1,4 +1,4 @@
-import { deepStrictEqual, ok } from 'node:assert'
+import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { on } from 'node:events'
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -6,6 +6,7 @@ import { test } from 'node:test'
 import split2 from 'split2'
 import { request } from 'undici'
 import { ensureDependency, fixturesDir, waitForStart, wattpm } from './helper.js'
+import { connect } from 'inspector-client'
 
 test('dev - should start in development mode', async t => {
   const rootDir = await resolve(fixturesDir, 'main')
@@ -234,6 +235,42 @@ test('start - should start in production mode', async t => {
   ok(config.watch === false)
   deepStrictEqual(config.services[0].id, 'main')
   ok(config.services[0].watch === false)
+})
+
+test('start - should start in production mode with the inspector', async t => {
+  const rootDir = await resolve(fixturesDir, 'main')
+  const serviceDir = await resolve(rootDir, 'web/main')
+  await ensureDependency(t, serviceDir, '@platformatic/node')
+  await ensureDependency(t, serviceDir, 'fastify')
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  const startProcess = wattpm('start', rootDir, '--inspect')
+  const url = await waitForStart(startProcess.stdout)
+
+  const { statusCode, body } = await request(url)
+  deepStrictEqual(statusCode, 200)
+  deepStrictEqual(await body.json(), { production: true })
+
+  const [data] = await (await fetch('http://127.0.0.1:9230/json/list')).json()
+  const { webSocketDebuggerUrl } = data
+
+  const client = await connect(webSocketDebuggerUrl)
+
+  const res = await client.post('Runtime.evaluate', {
+    expression: 'require(\'worker_threads\').threadId',
+    includeCommandLineAPI: true,
+    generatePreview: true,
+    returnByValue: true,
+    awaitPromise: true,
+  })
+
+  strictEqual(res.result.value, 2)
+
+  await client.close()
 })
 
 test('stop - should stop an application', async t => {

@@ -3,7 +3,6 @@ import { execa } from 'execa'
 import { access, constants, readFile } from 'fs/promises'
 import { createRequire } from 'module'
 import { dirname, join, resolve } from 'path'
-import semver from 'semver'
 import * as url from 'url'
 
 import ConfigManager from '@platformatic/config'
@@ -114,18 +113,6 @@ export const getDependencyVersion = async dependencyName => {
     const packageJson = JSON.parse(packageJsonFile)
     return packageJson.version
   }
-}
-
-export const minimumSupportedNodeVersions = ['18.8.0', '20.6.0']
-
-export const isCurrentVersionSupported = currentVersion => {
-  // TODO: add try/catch if some unsupported node version is passed
-  for (const version of minimumSupportedNodeVersions) {
-    if (semver.major(currentVersion) === semver.major(version) && semver.gte(currentVersion, version)) {
-      return true
-    }
-  }
-  return false
 }
 
 export function convertServiceNameToPrefix (serviceName) {

@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/client",
-  "version": "2.4.0",
+  "version": "2.5.5",
   "description": "A client for all platformatic backends",
   "main": "index.js",
   "scripts": {
@@ -12,7 +12,7 @@
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"
   },
-  "author": "Matteo Collina <hello@matteocollina.com>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/platformatic/platformatic/issues"
@@ -21,7 +21,7 @@
   "devDependencies": {
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:*",
-    "borp": "^0.17.0",
+    "borp": "^0.18.0",
     "c8": "^10.0.0",
     "eslint": "9",
     "execa": "^8.0.1",

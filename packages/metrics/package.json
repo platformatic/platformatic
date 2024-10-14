@@ -1,0 +1,30 @@
+{
+  "name": "@platformatic/metrics",
+  "version": "2.5.5",
+  "description": "Platformatic Stackable Metrics",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "npm run lint",
+    "lint": "eslint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/platformatic/platformatic.git"
+  },
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/platformatic/platformatic/issues"
+  },
+  "homepage": "https://github.com/platformatic/platformatic#readme",
+  "dependencies": {
+    "@platformatic/http-metrics": "^0.2.1",
+    "prom-client": "^15.1.2"
+  },
+  "devDependencies": {
+    "borp": "^0.18.0",
+    "eslint": "9",
+    "neostandard": "^0.11.1"
+  }
+}

@@ -1,6 +1,6 @@
 {
   "name": "create-platformatic",
-  "version": "2.4.0",
+  "version": "2.5.5",
   "description": "Create platformatic application interactive tool",
   "repository": {
     "type": "git",
@@ -19,7 +19,7 @@
     "lint": "eslint"
   },
   "license": "Apache-2.0",
-  "author": "Matteo Collina <hello@matteocollina.com>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "dependencies": {
     "@platformatic/config": "workspace:*",
     "@platformatic/generators": "workspace:*",
@@ -51,7 +51,7 @@
     "@platformatic/service": "workspace:*",
     "@types/node": "^22.5.0",
     "ajv": "^8.12.0",
-    "borp": "^0.17.0",
+    "borp": "^0.18.0",
     "c8": "^10.0.0",
     "cross-env": "^7.0.3",
     "dotenv": "^16.4.5",

@@ -51,7 +51,9 @@ Inside `my-app`, create a new directory and add a simple Node.js app:
 mkdir web/node
 ```
 
-```
+Then add a `package.json` like the following:
+
+```json
 {
   "main": "server.js",
   "type": "module",
@@ -93,15 +95,13 @@ or any other Node.js framework.
 :::
 
 
-Then, we need to add a `web/node/watt.json`:
+Then, we need to add the `watt.json` config file by running:
 
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.0.0.json"
-}
+```bash
+wattpm import web/node
 ```
 
-In the root of the project, run:
+Let's install the dependencies in the root of the project with 
 
 
 ```bash
@@ -169,7 +169,22 @@ Ok to proceed? (y) y
 [16:06:52] INFO: You are all set! Run `npm start` to start your project.
 ```
 
-Then, edit `web/composer/platformatic.json` to add the `node` app:
+Start your Watt server again:
+
+```bash
+npm start
+```
+
+Then, you can test it with:
+
+```bash
+curl http://localhost:3042/node
+```
+
+:::note
+
+You can customize how the various services are expsed by changing `web/composer/platformatic.json`.
+Here is the equivalent of the default configuration when exposing a Node.js application: 
 
 ```json
 {
@@ -187,20 +202,8 @@ Then, edit `web/composer/platformatic.json` to add the `node` app:
 }
 ```
 
-This now tells Watt to route the requests to the `composer` service, which will then route them to the `node` service
-by default.
+:::
 
-Start your Watt server again:
-
-```bash
-npm start
-```
-
-Then, you can test it with:
-
-```bash
-curl http://localhost:3042/node
-```
 
 ## Add a Next.js application to Watt
 
@@ -213,12 +216,12 @@ npx create-next-app@latest web/next
 Which will output:
 
 ```
-✔ Would you like to use TypeScript? … No / Yes
-✔ Would you like to use ESLint? … No / Yes
-✔ Would you like to use Tailwind CSS? … No / Yes
-✔ Would you like to use `src/` directory? … No / Yes
-✔ Would you like to use App Router? (recommended) … No / Yes
-✔ Would you like to customize the default import alias (@/*)? … No / Yes
+✔ Would you like to use TypeScript? … No
+✔ Would you like to use ESLint? … No
+✔ Would you like to use Tailwind CSS? … No
+✔ Would you like to use `src/` directory? … Yes
+✔ Would you like to use App Router? (recommended) … Yes
+✔ Would you like to customize the default import alias (@/*)? … No
 Creating a new Next.js app in /Users/matteo/tmp/my-app/web/next.
 
 Using npm.
@@ -239,13 +242,19 @@ added 18 packages in 4s
 Success! Created next at /Users/matteo/tmp/my-app/web/next
 ```
 
-Then, let's add the Next.js integration with:
+Then, let's import it to our watt server:
 
 ```bash
-npm i @platformatic/next
+wattpm import web/next
 ```
 
-Then, create a `web/next/watt.json`:
+We should also install the additional dependencies with:
+
+```bash
+npm i
+```
+
+Then, we need to tell Watt to expose our `next` server on `/next` by modifying `web/next/watt.json`:
 
 ```json
 {
@@ -253,26 +262,6 @@ Then, create a `web/next/watt.json`:
   "application": {
     "basePath": "/next"
   }
-}
-```
-
-Finally, let's add `Next` to our composer:
-
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.0.0.json",
-  "composer": {
-    "services": [{
-      "id": "node",
-      "proxy": {
-        "prefix": "/node"
-      }
-    }, {
-      "id": "next"
-    }],
-    "refreshTimeout": 1000
-  },
-  "watch": true
 }
 ```
 
@@ -285,7 +274,7 @@ Then, you can test it by opening your browser at [`http://localhost:3042/next`](
 
 In this example, we are exposing the Next.js app at `/next` and the Node.js app at `/node`.
 You can change the paths to suit your needs. Make sure to alter the `basePath` in `web/next/watt.json`
-and the `prefix` in `web/composer/platformatic.json` accordingly.
+and the `prefix` in `web/composer/platformatic.json` accordingly if you customize it.
 
 :::
 
@@ -341,3 +330,18 @@ npm run start
 ```
 
 which will call `wattpm start`.
+
+## Debug individual services with Chrome DevTools
+
+You can debug your Watt server with Chrome DevTools by running:
+
+```bash
+npm run start -- --inspect
+```
+
+This will start an inspector instance in each service, and you can connect to it with Chrome DevTools.
+Open `chrome://inspect` in Chrome, and you will see the services listed there.
+
+![Chrome Inspector showing 4 services](./images/inspector.png)
+
+Then, you can click on `inspect` to open the DevTools for that service.

@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/basic",
-  "version": "2.4.0",
+  "version": "2.5.5",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -17,7 +17,7 @@
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"
   },
-  "author": "Paolo Insogna <paolo@cowtech.it>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/platformatic/platformatic/issues"
@@ -28,6 +28,7 @@
     "@platformatic/config": "workspace:*",
     "@platformatic/itc": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
+    "@platformatic/metrics": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "execa": "^9.3.1",
     "pino": "^9.3.2",
@@ -38,7 +39,7 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "borp": "^0.17.0",
+    "borp": "^0.18.0",
     "eslint": "9",
     "express": "^4.19.2",
     "fastify": "^5.0.0",

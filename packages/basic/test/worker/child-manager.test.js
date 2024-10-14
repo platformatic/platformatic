@@ -50,7 +50,7 @@ test('ChildManager - listen - should log when receiving invalid messages', async
   socket.close()
   await manager.close()
 
-  deepStrictEqual(messages[0][1].err.message, `Unexpected token 'N', "NO-WAY" is not valid JSON`)
+  deepStrictEqual(messages[0][1].err.message, 'Unexpected token \'N\', "NO-WAY" is not valid JSON')
 })
 
 test('ChildManager - listen - should handle fetch request', async t => {

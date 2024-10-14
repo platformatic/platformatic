@@ -4,20 +4,19 @@ import { test } from 'node:test'
 import { join } from 'desm'
 import { cliPath } from '../helper.mjs'
 
-test('starts the inspector', async (t) => {
+test('do not start if there are no services', async (t) => {
   const { execa } = await import('execa')
-  const config = join(import.meta.url, '..', '..', '..', 'fixtures', 'configs', 'monorepo.json')
-  const child = execa(process.execPath, [cliPath, 'start', '-c', config, '--inspect'], {
-    encoding: 'utf8',
-  })
-  let stderr = ''
+  const config = join(import.meta.url, '..', '..', '..', 'fixtures', 'configs', 'no-services-no-entrypoint.config.json')
+  const child = execa(process.execPath, [cliPath, 'start', '-c', config], { encoding: 'utf8' })
+  let stdout = ''
   let found = false
 
+  child.stderr.setEncoding('utf8')
   for await (const messages of on(child.stderr, 'data')) {
     for (const message of messages) {
-      stderr += message
+      stdout += message
 
-      if (/Debugger listening on ws:\/\/127\.0\.0\.1:9229/.test(stderr)) {
+      if (/Missing application entrypoint/.test(stdout)) {
         found = true
         break
       }

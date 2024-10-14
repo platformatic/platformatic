@@ -355,7 +355,7 @@
         },
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "A Page",
             "content": {
               "application/json": {
                 "schema": {
@@ -656,7 +656,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "A Page",
             "content": {
               "application/json": {
                 "schema": {
@@ -711,7 +711,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "A Page",
             "content": {
               "application/json": {
                 "schema": {
@@ -757,7 +757,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "A Page",
             "content": {
               "application/json": {
                 "schema": {

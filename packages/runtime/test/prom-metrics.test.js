@@ -9,7 +9,7 @@ const { request } = require('undici')
 const { buildServer } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
-test('should start a prometheus server on port 9090', async (t) => {
+test('should start a prometheus server on port 9090', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
@@ -25,12 +25,13 @@ test('should start a prometheus server on port 9090', async (t) => {
 
   const { statusCode, body } = await request('http://127.0.0.1:9090', {
     method: 'GET',
-    path: '/metrics',
+    path: '/metrics'
   })
   assert.strictEqual(statusCode, 200)
 
   const metrics = await body.text()
-  const metricsNames = metrics.split('\n')
+  const metricsNames = metrics
+    .split('\n')
     .filter(line => line && line.startsWith('# TYPE'))
     .map(line => line.split(' ')[2])
 
@@ -64,11 +65,19 @@ test('should start a prometheus server on port 9090', async (t) => {
     'process_cpu_user_seconds_total',
     'process_resident_memory_bytes',
     'process_start_time_seconds',
+    'thread_cpu_user_system_seconds_total',
+    'thread_cpu_system_seconds_total',
+    'thread_cpu_seconds_total',
+    'thread_cpu_percent_usage',
     // 'http_request_all_summary_seconds',
     'http_request_duration_seconds',
-    'http_request_summary_seconds',
+    'http_request_summary_seconds'
   ]
+
   for (const metricName of expectedMetricNames) {
-    assert.ok(metricsNames.includes(metricName))
+    assert.ok(
+      metricsNames.includes(metricName),
+      `Expected metric ${metricName} to be present`
+    )
   }
 })

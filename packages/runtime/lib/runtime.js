@@ -3,7 +3,6 @@
 const { once, EventEmitter } = require('node:events')
 const { createReadStream, watch } = require('node:fs')
 const { readdir, readFile, stat, access } = require('node:fs/promises')
-const inspector = require('node:inspector')
 const { join } = require('node:path')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { Worker } = require('node:worker_threads')
@@ -20,6 +19,8 @@ const { startPrometheusServer } = require('./prom-server')
 const { getRuntimeTmpDir } = require('./utils')
 const { sendViaITC, waitEventFromITC } = require('./worker/itc')
 const { kId, kITC, kConfig } = require('./worker/symbols')
+
+const Fastify = require('fastify')
 
 const platformaticVersion = require('../package.json').version
 const kWorkerFile = join(__dirname, 'worker/main.js')
@@ -50,6 +51,8 @@ class Runtime extends EventEmitter {
   #startedServices
   #restartPromises
   #bootstrapAttempts
+  #inspectors
+  #inspectorServer
 
   constructor (configManager, runtimeLogsDir, env) {
     super()
@@ -68,6 +71,7 @@ class Runtime extends EventEmitter {
     this.#startedServices = new Map()
     this.#restartPromises = new Map()
     this.#bootstrapAttempts = new Map()
+    this.#inspectors = []
   }
 
   async init () {
@@ -89,17 +93,6 @@ class Runtime extends EventEmitter {
     const [logger, destination] = createLogger(config, this.#runtimeLogsDir)
     this.logger = logger
     this.#loggerDestination = destination
-
-    // Handle inspector
-    const inspectorOptions = config.inspectorOptions
-    if (inspectorOptions) {
-      /* c8 ignore next 6 */
-      if (inspectorOptions.watchDisabled) {
-        logger.info('debugging flags were detected. hot reloading has been disabled')
-      }
-
-      inspector.open(inspectorOptions.port, inspectorOptions.host, inspectorOptions.breakFirstLine)
-    }
 
     // Create all services, each in is own worker thread
     for (const serviceConfig of config.services) {
@@ -127,12 +120,42 @@ class Runtime extends EventEmitter {
   }
 
   async start () {
+    if (typeof this.#configManager.current.entrypoint === 'undefined') {
+      throw new errors.MissingEntrypointError()
+    }
     this.#updateStatus('starting')
 
     // Important: do not use Promise.all here since it won't properly manage dependencies
     try {
       for (const service of this.#servicesIds) {
         await this.startService(service)
+      }
+
+      if (this.#configManager.current.inspectorOptions) {
+        const { port } = this.#configManager.current.inspectorOptions
+
+        const server = Fastify({
+          loggerInstance: this.logger.child({ name: 'inspector' }, { level: 'warn' })
+        })
+
+        const version = await fetch(`http://127.0.0.1:${this.#configManager.current.inspectorOptions.port + 1}/json/version`).then((res) => res.json())
+
+        const data = (await Promise.all(this.#inspectors.map(async (data) => {
+          const res = await fetch(`http://127.0.0.1:${data.port}/json/list`)
+          const details = await res.json()
+          return {
+            ...details[0],
+            title: data.id
+          }
+        })))
+
+        server.get('/json/list', () => data)
+        server.get('/json', () => data)
+        server.get('/json/version', () => version)
+
+        await server.listen({ port })
+        this.logger.info('The inspector server is now listening for all services. Open `chrome://inspect` in Google Chrome to connect.')
+        this.#inspectorServer = server
       }
     } catch (error) {
       // Wait for the next tick so that the error is logged first
@@ -158,6 +181,10 @@ class Runtime extends EventEmitter {
 
     this.#updateStatus('stopping')
     this.#startedServices.clear()
+
+    if (this.#inspectorServer) {
+      await this.#inspectorServer.close()
+    }
 
     await Promise.all(this.#servicesIds.map(service => this._stopService(service, silent)))
 
@@ -747,6 +774,25 @@ class Runtime extends EventEmitter {
       this.#bootstrapAttempts.set(id, 0)
     }
 
+    // Handle inspector
+    let inspectorOptions
+
+    if (this.#configManager.current.inspectorOptions) {
+      inspectorOptions = {
+        ...this.#configManager.current.inspectorOptions
+      }
+
+      inspectorOptions.port = inspectorOptions.port + this.#inspectors.length + 1
+
+      const inspectorData = {
+        port: inspectorOptions.port,
+        id,
+        dirname: this.#configManager.dirname
+      }
+
+      this.#inspectors.push(inspectorData)
+    }
+
     const service = new Worker(kWorkerFile, {
       workerData: {
         config,
@@ -754,6 +800,7 @@ class Runtime extends EventEmitter {
           ...serviceConfig,
           isProduction: this.#configManager.args?.production ?? false
         },
+        inspectorOptions,
         dirname: this.#configManager.dirname,
         runtimeLogsDir: this.#runtimeLogsDir,
         loggingPort

@@ -90,7 +90,7 @@ export class RemixStackable extends ViteStackable {
   }
 
   async stop () {
-    if (this.subprocess) {
+    if (this.childManager) {
       return this.stopCommand()
     }
 

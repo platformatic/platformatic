@@ -1,20 +1,20 @@
 {
   "name": "@platformatic/telemetry",
-  "version": "2.4.0",
+  "version": "2.5.5",
   "description": "OpenTelemetry integration for Platformatic",
   "main": "index.js",
   "scripts": {
     "test": "npm run lint && borp",
     "lint": "eslint"
   },
-  "author": "Marco Piraccini <marco.piraccini@gmail.com>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "borp": "^0.17.0",
+    "borp": "^0.18.0",
     "fastify": "^5.0.0",
     "express": "^4.19.2",
     "neostandard": "^0.11.1",

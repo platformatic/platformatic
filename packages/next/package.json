@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/next",
-  "version": "2.4.0",
+  "version": "2.5.5",
   "description": "Platformatic Next.js Stackable",
   "main": "index.js",
   "type": "module",
@@ -17,7 +17,7 @@
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"
   },
-  "author": "Paolo Insogna <paolo@cowtech.it>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/platformatic/platformatic/issues"
@@ -37,7 +37,7 @@
     "@fastify/reply-from": "^11.0.0",
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "borp": "^0.17.0",
+    "borp": "^0.18.0",
     "eslint": "9",
     "fastify": "^5.0.0",
     "json-schema-to-typescript": "^15.0.1",

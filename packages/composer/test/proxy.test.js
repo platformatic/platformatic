@@ -282,6 +282,21 @@ test('should proxy a @platformatic/service to its prefix by default', async t =>
     const body = await rawBody.json()
     assert.deepStrictEqual(body, { ok: true })
   }
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'POST',
+      path: '/main/echo',
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ ok: true })
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { ok: true })
+  }
 })
 
 test('should proxy a @platformatic/service to the chosen prefix by the user in the configuration', async t => {
@@ -435,6 +450,91 @@ test('should proxy all services if none are defined', async t => {
     const { statusCode, body: rawBody } = await request(address, {
       method: 'GET',
       path: '/third/hello'
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { ok: true })
+  }
+})
+
+test('should fix the path using the referer only if asked to', async t => {
+  // Make sure there is @platformatic/node available in the node service.
+  // We can't simply specify it in the package.json due to circular dependencies.
+  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
+  await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
+  await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
+
+  // Make sure there is @platformatic/node available in the astro service.
+  // We can't simply specify it in the package.json due to circular dependencies.
+  const astroModulesRoot = resolve(__dirname, './proxy/fixtures/astro/node_modules')
+  await createDirectory(resolve(astroModulesRoot, '@platformatic'))
+  await symlink(resolve(__dirname, '../../astro'), resolve(astroModulesRoot, '@platformatic/astro'), 'dir')
+
+  t.after(() => Promise.all([safeRemove(nodeModulesRoot), safeRemove(astroModulesRoot)]))
+
+  const runtime = await createComposerInRuntime(
+    t,
+    'referer-redirect',
+    {
+      composer: {
+        refreshTimeout: REFRESH_TIMEOUT
+      }
+    },
+    [
+      {
+        id: 'first',
+        path: resolve(__dirname, './proxy/fixtures/service'),
+        config: 'platformatic.json'
+      },
+      {
+        id: 'astro',
+        path: resolve(__dirname, './proxy/fixtures/astro'),
+        config: 'platformatic.json'
+      },
+      {
+        id: 'third',
+        path: resolve(__dirname, './proxy/fixtures/node')
+      }
+    ]
+  )
+
+  t.after(() => {
+    runtime.close()
+  })
+
+  const address = await runtime.start()
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'GET',
+      path: '/first/hello'
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { ok: true })
+  }
+
+  {
+    const { statusCode, headers } = await request(address, {
+      method: 'GET',
+      path: '/third/hello',
+      headers: {
+        referer: `${address}/astro`
+      }
+    })
+    assert.equal(statusCode, 308)
+    assert.equal(headers.location, '/astro/third/hello')
+  }
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'GET',
+      path: '/third/hello',
+      headers: {
+        referer: `${address}/first`
+      }
     })
     assert.equal(statusCode, 200)
 

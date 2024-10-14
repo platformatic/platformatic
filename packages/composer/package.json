@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/composer",
-  "version": "2.4.0",
+  "version": "2.5.5",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -14,7 +14,7 @@
   "bin": {
     "plt-composer": "./composer.mjs"
   },
-  "author": "Ivan Tymoshenko <ivan@tymoshenko.me>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"
@@ -28,7 +28,7 @@
     "@platformatic/client": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/db": "workspace:*",
-    "borp": "^0.17.0",
+    "borp": "^0.18.0",
     "c8": "^10.0.0",
     "dedent": "^1.5.1",
     "eslint": "9",

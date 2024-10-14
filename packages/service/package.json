@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/service",
-  "version": "2.4.0",
+  "version": "2.5.5",
   "description": "",
   "main": "index.js",
   "bin": {
@@ -15,7 +15,7 @@
     "prepublishOnly": "pnpm run build",
     "lint": "eslint && tsd"
   },
-  "author": "Matteo Collina <hello@matteocollina.com>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"
@@ -29,7 +29,7 @@
     "@fastify/aws-lambda": "^5.0.0",
     "@fastify/compress": "^8.0.0",
     "bindings": "^1.5.0",
-    "borp": "^0.17.0",
+    "borp": "^0.18.0",
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.0",
     "neostandard": "^0.11.1",
@@ -58,6 +58,7 @@
     "@mercuriusjs/federation": "^4.0.0",
     "@platformatic/client": "workspace:*",
     "@platformatic/config": "workspace:*",
+    "@platformatic/metrics": "workspace:*",
     "@platformatic/generators": "workspace:*",
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/telemetry": "workspace:*",

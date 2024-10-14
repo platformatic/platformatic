@@ -4,6 +4,7 @@ import { on } from 'node:events'
 import { test } from 'node:test'
 import { request } from 'undici'
 import { cliPath, start } from './helper.mjs'
+import { connect } from 'inspector-client'
 
 test('autostart', async () => {
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
@@ -98,15 +99,20 @@ test('starts the inspector', async (t) => {
     encoding: 'utf8',
   })
   let stderr = ''
+  let port = 0
   let found = false
 
   for await (const messages of on(child.stderr, 'data')) {
     for (const message of messages) {
+      console.log(message.toString())
       stderr += message
 
-      if (/Debugger listening on ws:\/\/127\.0\.0\.1:9229/.test(stderr)) {
-        found = true
-        break
+      if (new RegExp(`Debugger listening on ws://127\\.0\\.0\\.1:${9230 + port}`).test(stderr)) {
+        port++
+        if (port === 4) {
+          found = true
+          break
+        }
       }
     }
 
@@ -116,6 +122,25 @@ test('starts the inspector', async (t) => {
   }
 
   assert(found)
+
+  for (let i = 0; i < 4; i++) {
+    const [data] = await (await fetch(`http://127.0.0.1:${9230 + i}/json/list`)).json()
+    const { webSocketDebuggerUrl } = data
+
+    const client = await connect(webSocketDebuggerUrl)
+
+    const res = await client.post('Runtime.evaluate', {
+      expression: 'require(\'worker_threads\').threadId',
+      includeCommandLineAPI: true,
+      generatePreview: true,
+      returnByValue: true,
+      awaitPromise: true,
+    })
+
+    assert.strictEqual(res.result.value, i + 1)
+
+    await client.close()
+  }
 
   child.kill('SIGKILL')
 

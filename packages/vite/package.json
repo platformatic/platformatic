@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/vite",
-  "version": "2.4.0",
+  "version": "2.5.5",
   "description": "Platformatic Vite Stackable",
   "main": "index.js",
   "type": "module",
@@ -17,7 +17,7 @@
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"
   },
-  "author": "Paolo Insogna <paolo@cowtech.it>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/platformatic/platformatic/issues"
@@ -36,7 +36,7 @@
     "@fastify/vite": "^7.0.1",
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "borp": "^0.17.0",
+    "borp": "^0.18.0",
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.11.1",

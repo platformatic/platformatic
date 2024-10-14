@@ -57,7 +57,7 @@ export class AstroStackable extends BaseStackable {
   }
 
   async stop () {
-    if (this.subprocess) {
+    if (this.childManager) {
       return this.stopCommand()
     }
 
@@ -120,7 +120,8 @@ export class AstroStackable extends BaseStackable {
       url: this.url,
       prefix: this.basePath ?? config?.base ?? this.#basePath,
       wantsAbsoluteUrls: true,
-      needsRootRedirect: true
+      needsRootRedirect: true,
+      needsRefererBasedRedirect: !this.isProduction
     }
 
     return { composer }

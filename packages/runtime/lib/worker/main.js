@@ -4,6 +4,7 @@ const { createRequire } = require('node:module')
 const { join } = require('node:path')
 const { parentPort, workerData, threadId } = require('node:worker_threads')
 const { pathToFileURL } = require('node:url')
+const inspector = require('node:inspector')
 
 const pino = require('pino')
 const { fetch, setGlobalDispatcher, Agent } = require('undici')
@@ -85,7 +86,9 @@ async function main () {
   setGlobalDispatcher(globalDispatcher)
 
   // Setup mesh networker
-  const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp, timeout: true })
+  // The timeout is set to 5 minutes to avoid long term memory leaks
+  // TODO: make this configurable
+  const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp, timeout: 5 * 60 * 1000 })
 
   // If the service is an entrypoint and runtime server config is defined, use it.
   let serverConfig = null
@@ -105,6 +108,24 @@ async function main () {
       ...telemetryConfig,
       serviceName: `${telemetryConfig.serviceName}-${service.id}`
     }
+  }
+
+  const inspectorOptions = workerData.inspectorOptions
+
+  if (inspectorOptions) {
+    for (let i = 0; !inspector.url(); i++) {
+      inspector.open(inspectorOptions.port + i, inspectorOptions.host, inspectorOptions.breakFirstLine)
+    }
+
+    const url = new URL(inspector.url())
+
+    url.protocol = 'http'
+    url.pathname = '/json/list'
+
+    const res = await fetch(url)
+    const [{ devtoolsFrontendUrl }] = await res.json()
+
+    console.log(`For ${service.id} debugger open the following in chrome: "${devtoolsFrontendUrl}"`)
   }
 
   // Create the application

@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/client-cli",
-  "version": "2.4.0",
+  "version": "2.5.5",
   "description": "A client for all platformatic backends",
   "main": "cli.mjs",
   "bin": {
@@ -14,7 +14,7 @@
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"
   },
-  "author": "Matteo Collina <hello@matteocollina.com>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/platformatic/platformatic/issues"
@@ -26,7 +26,7 @@
     "@platformatic/db": "workspace:*",
     "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "borp": "^0.17.0",
+    "borp": "^0.18.0",
     "dotenv": "^16.4.5",
     "eslint": "9",
     "execa": "^8.0.1",

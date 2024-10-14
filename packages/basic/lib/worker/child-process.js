@@ -1,6 +1,7 @@
 import { ITC } from '@platformatic/itc'
 import { setupNodeHTTPTelemetry } from '@platformatic/telemetry'
 import { createPinoWritable, ensureLoggableError } from '@platformatic/utils'
+import { collectMetrics } from '@platformatic/metrics'
 import { tracingChannel } from 'node:diagnostics_channel'
 import { once } from 'node:events'
 import { readFile } from 'node:fs/promises'
@@ -81,10 +82,22 @@ export class ChildProcess extends ITC {
   #socket
   #child
   #logger
+  #metricsRegistry
   #pendingMessages
 
   constructor () {
-    super({ throwOnMissingHandler: false, name: `${process.env.PLT_MANAGER_ID}-child-process` })
+    super({
+      throwOnMissingHandler: false,
+      name: `${process.env.PLT_MANAGER_ID}-child-process`,
+      handlers: {
+        collectMetrics: (...args) => {
+          return this.#collectMetrics(...args)
+        },
+        getMetrics: (...args) => {
+          return this.#getMetrics(...args)
+        },
+      }
+    })
 
     /* c8 ignore next */
     const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
@@ -150,6 +163,21 @@ export class ChildProcess extends ITC {
   /* c8 ignore next 3 */
   _close () {
     this.#socket.close()
+  }
+
+  async #collectMetrics ({ serviceId, metricsConfig }) {
+    const { registry } = await collectMetrics(serviceId, metricsConfig)
+    this.#metricsRegistry = registry
+  }
+
+  async #getMetrics ({ format } = {}) {
+    if (!this.#metricsRegistry) return null
+
+    const res = format === 'json'
+      ? await this.#metricsRegistry.getMetricsAsJSON()
+      : await this.#metricsRegistry.metrics()
+
+    return res
   }
 
   #setupLogger () {

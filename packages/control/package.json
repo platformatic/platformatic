@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/control",
-  "version": "2.4.0",
+  "version": "2.5.5",
   "description": "Platformatic Control",
   "main": "index.js",
   "bin": {
@@ -11,7 +11,7 @@
     "unit": "borp --concurrency=1 --timeout=180000",
     "lint": "eslint"
   },
-  "author": "Matteo Collina <hello@matteocollina.com>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"
@@ -24,7 +24,7 @@
   "devDependencies": {
     "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "borp": "^0.17.0",
+    "borp": "^0.18.0",
     "desm": "^1.3.1",
     "eslint": "9",
     "execa": "^8.0.1",

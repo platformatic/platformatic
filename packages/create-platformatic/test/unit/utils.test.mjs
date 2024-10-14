@@ -3,7 +3,7 @@
 import { safeRemove } from '@platformatic/utils'
 import esmock from 'esmock'
 import { mkdtemp, writeFile } from 'fs/promises'
-import { deepEqual, equal, notEqual } from 'node:assert'
+import { deepEqual, equal } from 'node:assert'
 import { test } from 'node:test'
 import { tmpdir } from 'os'
 import { join } from 'path'
@@ -16,9 +16,7 @@ import {
   findRuntimeConfigFile,
   findServiceConfigFile,
   getDependencyVersion,
-  isCurrentVersionSupported,
   isFileAccessible,
-  minimumSupportedNodeVersions,
   randomBetween,
   sleep,
 } from '../../src/utils.mjs'
@@ -199,71 +197,6 @@ test('isFileAccessible', async () => {
   const config2 = join(tmpDir1, 'platformatic2.db.yml')
   equal(await isFileAccessible(config2), false)
   await safeRemove(tmpDir1)
-})
-
-test('minimumSupportedNodeVersions', async () => {
-  equal(Array.isArray(minimumSupportedNodeVersions), true)
-  notEqual(minimumSupportedNodeVersions.length, 0)
-})
-
-test('isCurrentVersionSupported', async () => {
-  const { major, minor, patch } = semver.minVersion(minimumSupportedNodeVersions[0])
-  {
-    // major - 1 not supported
-    const nodeVersion = `${major - 1}.${minor}.${patch}`
-    const supported = isCurrentVersionSupported(nodeVersion)
-    equal(supported, false)
-  }
-  {
-    // minor - 1 not supported
-    const nodeVersion = `${major}.${minor - 1}.${patch}`
-    const supported = isCurrentVersionSupported(nodeVersion)
-    equal(supported, false)
-  }
-  {
-    // v16 more than minimum is supported
-    const supported = isCurrentVersionSupported(`${major}.${minor + 2}.${patch}`)
-    equal(supported, true)
-  }
-
-  // node version 20 test, to check greater and lesser major version
-  {
-    // v18.0.0 is not supported
-    const nodeVersion = '18.0.0'
-    const supported = isCurrentVersionSupported(nodeVersion)
-    equal(supported, false)
-  }
-  {
-    // v18.8.0 is supported
-    const nodeVersion = '18.8.0'
-    const supported = isCurrentVersionSupported(nodeVersion)
-    equal(supported, true)
-  }
-  {
-    // v20.5.1 is not supported
-    const supported = isCurrentVersionSupported('20.5.1')
-    equal(supported, false)
-  }
-  {
-    // v20.6.0 is supported
-    const nodeVersion = '20.6.0'
-    const supported = isCurrentVersionSupported(nodeVersion)
-    equal(supported, true)
-  }
-  {
-    // v19.0.0 is not supported
-    const supported = isCurrentVersionSupported('19.0.0')
-    equal(supported, false)
-  }
-  {
-    // v19.9.0 is not supported
-    const supported = isCurrentVersionSupported('19.9.0')
-    equal(supported, false)
-  }
-  for (const version of minimumSupportedNodeVersions) {
-    const supported = isCurrentVersionSupported(version)
-    equal(supported, true)
-  }
 })
 
 test('should convert service name to env prefix', async () => {

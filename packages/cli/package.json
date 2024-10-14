@@ -1,6 +1,6 @@
 {
   "name": "platformatic",
-  "version": "2.4.0",
+  "version": "2.5.5",
   "description": "Platformatic CLI",
   "main": "cli.js",
   "type": "module",
@@ -14,7 +14,7 @@
     "lint": "eslint",
     "license": "license-checker --production --onlyAllow 'Apache-2.0;MIT;ISC;BSD-2-Clause;BSD-3-Clause;CC-BY-4.0'"
   },
-  "author": "Matteo Collina <hello@matteocollina.com>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"
@@ -41,7 +41,7 @@
     "@platformatic/service": "workspace:*",
     "@platformatic/vite": "workspace:*",
     "add": "^2.0.6",
-    "borp": "^0.17.0",
+    "borp": "^0.18.0",
     "c8": "^10.0.0",
     "eslint": "9",
     "fastify": "^5.0.0",

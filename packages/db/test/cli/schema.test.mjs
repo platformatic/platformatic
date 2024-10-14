@@ -8,8 +8,10 @@ import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
 import jsonLanguageService from 'vscode-json-languageservice'
 import { getConnectionInfo } from '../helper.js'
+import Snap from '@matteo.collina/snap'
 import { cliPath } from './helper.js'
 
+const snap = Snap(import.meta.url)
 const pkg = JSON.parse(await readFile(desm.join(import.meta.url, '..', '..', 'package.json'), 'utf8'))
 
 test('print the graphql schema to stdout', async (t) => {
@@ -23,8 +25,8 @@ test('print the graphql schema to stdout', async (t) => {
     },
   })
 
-  const snapshot = await import('../../snapshots/test/cli/schema1.test.mjs')
-  assert.equal(stdout, snapshot.default)
+  const snapshot = await snap(stdout)
+  assert.deepEqual(stdout, snapshot)
 })
 
 test('print the openapi schema to stdout', async (t) => {
@@ -38,8 +40,8 @@ test('print the openapi schema to stdout', async (t) => {
     },
   })
 
-  const snapshot = await import('../../snapshots/test/cli/schema2.test.mjs')
-  assert.equal(stdout, snapshot.default)
+  const snapshot = await snap(stdout)
+  assert.deepEqual(stdout, snapshot)
 })
 
 test('generates the json schema config', async (t) => {

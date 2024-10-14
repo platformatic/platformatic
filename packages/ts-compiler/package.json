@@ -1,13 +1,13 @@
 {
   "name": "@platformatic/ts-compiler",
-  "version": "2.4.0",
+  "version": "2.5.5",
   "description": "Compiles TypeScript to JavaScript, Platformatic Edition",
   "main": "compile.js",
   "scripts": {
     "test": "npm run lint && c8 node --test",
     "lint": "eslint"
   },
-  "author": "Matteo Collina <hello@matteocollina.com>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/platformatic/platformatic.git"

@@ -12,20 +12,20 @@
         "description": "A Post",
         "type": "object",
         "properties": {
-          "id": {
+          "counter": {
             "type": "integer",
             "nullable": true
           },
-          "title": {
-            "type": "string",
+          "id": {
+            "type": "integer",
             "nullable": true
           },
           "longText": {
             "type": "string",
             "nullable": true
           },
-          "counter": {
-            "type": "integer",
+          "title": {
+            "type": "string",
             "nullable": true
           }
         },
@@ -36,17 +36,17 @@
         "description": "A Post",
         "type": "object",
         "properties": {
-          "id": {
+          "counter": {
             "type": "integer"
           },
-          "title": {
-            "type": "string"
+          "id": {
+            "type": "integer"
           },
           "longText": {
             "type": "string"
           },
-          "counter": {
-            "type": "integer"
+          "title": {
+            "type": "string"
           }
         },
         "additionalProperties": false,
@@ -589,7 +589,7 @@
         },
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "A Post",
             "content": {
               "application/json": {
                 "schema": {
@@ -1086,7 +1086,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "A Post",
             "content": {
               "application/json": {
                 "schema": {
@@ -1143,7 +1143,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "A Post",
             "content": {
               "application/json": {
                 "schema": {
@@ -1191,7 +1191,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "A Post",
             "content": {
               "application/json": {
                 "schema": {

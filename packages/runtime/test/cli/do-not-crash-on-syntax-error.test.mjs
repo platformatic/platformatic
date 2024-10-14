@@ -57,7 +57,7 @@ test('do not crash on syntax error', async t => {
   await waitForMessageAndWatch(child, 'RELOADED v1')
 
   // This has a syntax error, there is no trailing }
-  await writeFile(cjsPluginFilePath, ` module.exports = async (app) => { app.get('/version', () => 'v2')`)
+  await writeFile(cjsPluginFilePath, ' module.exports = async (app) => { app.get(\'/version\', () => \'v2\')')
   await waitForMessageAndWatch(child, 'Unexpected end of input', null)
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
