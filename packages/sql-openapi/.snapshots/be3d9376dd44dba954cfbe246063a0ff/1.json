@@ -472,7 +472,7 @@
         },
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "A Person",
             "content": {
               "application/json": {
                 "schema": {
@@ -897,7 +897,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "A Person",
             "content": {
               "application/json": {
                 "schema": {
@@ -966,7 +966,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "A Person",
             "content": {
               "application/json": {
                 "schema": {
@@ -1026,7 +1026,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "A Person",
             "content": {
               "application/json": {
                 "schema": {
@@ -1139,7 +1139,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "A Person",
             "content": {
               "application/json": {
                 "schema": {

@@ -12,16 +12,16 @@
         "description": "A Page",
         "type": "object",
         "properties": {
+          "counter": {
+            "type": "integer",
+            "nullable": true
+          },
           "id": {
             "type": "integer",
             "nullable": true
           },
           "title": {
             "type": "string",
-            "nullable": true
-          },
-          "counter": {
-            "type": "integer",
             "nullable": true
           }
         },
@@ -32,15 +32,15 @@
         "description": "A Page",
         "type": "object",
         "properties": {
+          "counter": {
+            "type": "integer",
+            "nullable": true
+          },
           "id": {
             "type": "integer"
           },
           "title": {
             "type": "string",
-            "nullable": true
-          },
-          "counter": {
-            "type": "integer",
             "nullable": true
           }
         },
@@ -470,7 +470,7 @@
         },
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "A Page",
             "content": {
               "application/json": {
                 "schema": {
@@ -869,7 +869,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "A Page",
             "content": {
               "application/json": {
                 "schema": {
@@ -925,7 +925,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "A Page",
             "content": {
               "application/json": {
                 "schema": {
@@ -972,7 +972,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response",
+            "description": "A Page",
             "content": {
               "application/json": {
                 "schema": {
