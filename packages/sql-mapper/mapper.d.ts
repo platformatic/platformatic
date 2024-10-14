@@ -177,7 +177,7 @@ interface Count {
      * Passing this to all sql-mapper functions allow to apply
      * authorization rules to the database queries (amongst other things).
      */
-    ctx: PlatformaticContext
+    ctx?: PlatformaticContext
   }): Promise<number>
 }
 
@@ -199,7 +199,7 @@ interface Insert<EntityFields> {
      * Passing this to all sql-mapper functions allow to apply
      * authorization rules to the database queries (amongst other things).
      */
-    ctx: PlatformaticContext
+    ctx?: PlatformaticContext
   }): Promise<Partial<EntityFields>[]>
 }
 
@@ -221,7 +221,7 @@ interface Save<EntityFields> {
      * Passing this to all sql-mapper functions allow to apply
      * authorization rules to the database queries (amongst other things).
      */
-    ctx: PlatformaticContext
+    ctx?: PlatformaticContext
   }): Promise<Partial<EntityFields>>
 }
 
@@ -243,7 +243,7 @@ interface Delete<EntityFields> {
      * Passing this to all sql-mapper functions allow to apply
      * authorization rules to the database queries (amongst other things).
      */
-    ctx: PlatformaticContext
+    ctx?: PlatformaticContext
   }): Promise<Partial<EntityFields>[]>,
 }
 
@@ -269,7 +269,7 @@ interface UpdateMany<EntityFields> {
      * Passing this to all sql-mapper functions allow to apply
      * authorization rules to the database queries (amongst other things).
      */
-    ctx: PlatformaticContext
+    ctx?: PlatformaticContext
   }): Promise<Partial<EntityFields>[]>
 }
 
