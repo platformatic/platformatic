@@ -8,7 +8,7 @@ const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('does not wait forever if worker exits during api operation', async (t) => {
+test('does not wait forever if worker exits during api operation', async t => {
   const configFile = join(fixturesDir, 'configs', 'service-throws-on-start.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
@@ -19,5 +19,5 @@ test('does not wait forever if worker exits during api operation', async (t) => 
 
   await assert.rejects(async () => {
     await app.start()
-  }, /The service serviceThrowsOnStart exited prematurely with error code 1/)
+  }, /The service "serviceThrowsOnStart" exited prematurely with error code 1/)
 })

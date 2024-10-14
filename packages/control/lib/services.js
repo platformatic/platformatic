@@ -7,36 +7,42 @@ const RuntimeApiClient = require('./runtime-api-client')
 const tableColumns = [
   {
     value: 'id',
-    alias: 'NAME',
+    alias: 'NAME'
+  },
+  {
+    value: 'workers',
+    alias: 'WORKERS',
+    production: true
   },
   {
     value: 'type',
-    alias: 'TYPE',
+    alias: 'TYPE'
   },
   {
     value: 'entrypoint',
     alias: 'ENTRYPOINT',
-    formatter: (entrypoint) => {
+    formatter: entrypoint => {
       return entrypoint ? 'yes' : 'no'
-    },
-  },
+    }
+  }
 ]
 
 const tableConfig = {
   border: getBorderCharacters('void'),
   columnDefault: {
     paddingLeft: 0,
-    paddingRight: 1,
+    paddingRight: 1
   },
-  drawHorizontalLine: () => false,
+  drawHorizontalLine: () => false
 }
 
-async function printRuntimeServices (services) {
-  const raws = [tableColumns.map(column => column.alias)]
+async function printRuntimeServices ({ production, services }) {
+  const columns = tableColumns.filter(c => typeof c.production === 'undefined' || c.production === production)
+  const raws = [columns.map(column => column.alias)]
 
-  for (const service of services.services) {
+  for (const service of services) {
     const raw = []
-    for (const column of tableColumns) {
+    for (const column of columns) {
       let value = service[column.value]
       if (column.formatter) {
         value = column.formatter(value)
@@ -56,9 +62,9 @@ async function getRuntimeServicesCommand (argv) {
     args: argv,
     options: {
       pid: { type: 'string', short: 'p' },
-      name: { type: 'string', short: 'n' },
+      name: { type: 'string', short: 'n' }
     },
-    strict: false,
+    strict: false
   }).values
 
   const client = new RuntimeApiClient()

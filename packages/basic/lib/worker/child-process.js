@@ -1,12 +1,12 @@
 import { ITC } from '@platformatic/itc'
+import { collectMetrics } from '@platformatic/metrics'
 import { setupNodeHTTPTelemetry } from '@platformatic/telemetry'
 import { createPinoWritable, ensureLoggableError } from '@platformatic/utils'
-import { collectMetrics } from '@platformatic/metrics'
 import { tracingChannel } from 'node:diagnostics_channel'
 import { once } from 'node:events'
 import { readFile } from 'node:fs/promises'
 import { register } from 'node:module'
-import { platform, tmpdir } from 'node:os'
+import { hostname, platform, tmpdir } from 'node:os'
 import { basename, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { isMainThread } from 'node:worker_threads'
@@ -95,7 +95,7 @@ export class ChildProcess extends ITC {
         },
         getMetrics: (...args) => {
           return this.#getMetrics(...args)
-        },
+        }
       }
     })
 
@@ -165,17 +165,16 @@ export class ChildProcess extends ITC {
     this.#socket.close()
   }
 
-  async #collectMetrics ({ serviceId, metricsConfig }) {
-    const { registry } = await collectMetrics(serviceId, metricsConfig)
+  async #collectMetrics ({ serviceId, workerId, metricsConfig }) {
+    const { registry } = await collectMetrics(serviceId, workerId, metricsConfig)
     this.#metricsRegistry = registry
   }
 
   async #getMetrics ({ format } = {}) {
     if (!this.#metricsRegistry) return null
 
-    const res = format === 'json'
-      ? await this.#metricsRegistry.getMetricsAsJSON()
-      : await this.#metricsRegistry.metrics()
+    const res =
+      format === 'json' ? await this.#metricsRegistry.getMetricsAsJSON() : await this.#metricsRegistry.metrics()
 
     return res
   }
@@ -183,20 +182,33 @@ export class ChildProcess extends ITC {
   #setupLogger () {
     // Since this is executed by user code, make sure we only override this in the main thread
     // The rest will be intercepted by the BaseStackable.
+    const pinoOptions = {
+      level: 'info',
+      name: globalThis.platformatic.serviceId,
+      transport: {
+        target: new URL('./child-transport.js', import.meta.url).toString()
+      }
+    }
+
+    if (typeof globalThis.platformatic.workerId !== 'undefined') {
+      pinoOptions.base = {
+        pid: process.pid,
+        hostname: hostname(),
+        worker: parseInt(globalThis.platformatic.workerId)
+      }
+    }
+
     if (isMainThread) {
-      this.#logger = pino({
-        level: 'info',
-        name: globalThis.platformatic.id,
-        transport: {
-          target: new URL('./child-transport.js', import.meta.url).toString(),
-          options: { id: globalThis.platformatic.id }
-        }
-      })
+      pinoOptions.transport = {
+        target: new URL('./child-transport.js', import.meta.url).toString()
+      }
+
+      this.#logger = pino(pinoOptions)
 
       Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(this.#logger, 'info') })
       Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(this.#logger, 'error', true) })
     } else {
-      this.#logger = pino({ level: 'info', name: globalThis.platformatic.id })
+      this.#logger = pino(pinoOptions)
     }
   }
 
@@ -255,11 +267,13 @@ export class ChildProcess extends ITC {
   }
 
   #setupHandlers () {
+    const errorLabel =
+      typeof globalThis.platformatic.workerId !== 'undefined'
+        ? `worker ${globalThis.platformatic.workerId} of the service "${globalThis.platformatic.serviceId}"`
+        : `service "${globalThis.platformatic.serviceId}"`
+
     function handleUnhandled (type, err) {
-      this.#logger.error(
-        { err: ensureLoggableError(err) },
-        `Child process for service ${globalThis.platformatic.id} threw an ${type}.`
-      )
+      this.#logger.error({ err: ensureLoggableError(err) }, `Child process for the ${errorLabel} threw an ${type}.`)
 
       // Give some time to the logger and ITC notifications to land before shutting down
       setTimeout(() => process.exit(exitCodes.PROCESS_UNHANDLED_ERROR), 100)

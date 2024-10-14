@@ -25,6 +25,7 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime255Json = {
   services?: {
     [k: string]: unknown;
   }[];
+  workers?: number;
   web?: {
     [k: string]: unknown;
   }[];

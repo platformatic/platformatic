@@ -88,9 +88,18 @@
           },
           "useHttp": {
             "type": "boolean"
+          },
+          "workers": {
+            "type": "number",
+            "minimum": 1
           }
         }
       }
+    },
+    "workers": {
+      "type": "number",
+      "minimum": 1,
+      "default": 1
     },
     "web": {
       "type": "array",
@@ -126,6 +135,10 @@
           },
           "useHttp": {
             "type": "boolean"
+          },
+          "workers": {
+            "type": "number",
+            "minimum": 1
           }
         }
       }

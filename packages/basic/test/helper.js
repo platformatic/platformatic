@@ -1,10 +1,12 @@
-import { createDirectory, withResolvers } from '@platformatic/utils'
+import { createDirectory, safeRemove, withResolvers } from '@platformatic/utils'
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { existsSync } from 'node:fs'
-import { readFile, realpath, symlink, writeFile } from 'node:fs/promises'
+import { cp, readFile, realpath, symlink, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
-import { dirname, resolve } from 'node:path'
+import { basename, dirname, resolve, sep } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
+import { fileURLToPath } from 'node:url'
 import { Client, request } from 'undici'
 import WebSocket from 'ws'
 import { loadConfig } from '../../config/index.js'
@@ -16,9 +18,15 @@ const HMR_TIMEOUT = process.env.CI ? 20000 : 10000
 const DEFAULT_PAUSE_TIMEOUT = 300000
 
 export let fixturesDir
+let currentWorkingDirectory
 let hmrTriggerFileRelative
 
 export const temporaryFolder = await realpath(tmpdir())
+export const pltRoot = fileURLToPath(new URL('../../..', import.meta.url))
+
+// These come from @platformatic/service, where they are not listed explicitly inside services
+export const defaultDependencies = ['fastify', 'typescript']
+let additionalDependencies
 
 export function createStackable (
   context = {},
@@ -56,6 +64,10 @@ export function setHMRTriggerFile (file) {
   hmrTriggerFileRelative = file
 }
 
+export function setAdditionalDependencies (dependencies) {
+  additionalDependencies = dependencies
+}
+
 // This is used to debug tests
 export function pause (t, url, timeout) {
   if (timeout && typeof timeout !== 'number') {
@@ -68,47 +80,150 @@ export function pause (t, url, timeout) {
     let handler = null
 
     function listener () {
+      console.log('--- Resuming execution ...')
       clearTimeout(handler)
       process.stdin.removeListener('data', listener)
       resolve()
     }
 
     handler = setTimeout(listener, timeout)
-    process.stdin.once('data', listener)
+    process.stdin.on('data', listener)
   })
 }
 
-export async function ensureDependency (directory, pkg, source) {
-  const [namespace, name] = pkg.includes('/') ? pkg.split('/') : ['', pkg]
-  const basedir = resolve(fixturesDir, directory, `node_modules/${namespace}`)
-  const destination = resolve(basedir, name)
+export async function ensureDependencies (config) {
+  const paths = [config.configManager.dirname, ...config.configManager.current.services.map(s => s.path)]
+  const require = createRequire(import.meta.url)
 
-  await createDirectory(basedir)
-  if (!existsSync(destination)) {
-    await symlink(source, destination, 'dir')
+  // Make sure dependencies are symlinked
+  for (const path of paths) {
+    const binFolder = resolve(path, 'node_modules/.bin')
+    await createDirectory(binFolder)
+
+    // Parse all dependencies from the package.json
+    const { dependencies, devDependencies } = existsSync(resolve(path, 'package.json'))
+      ? JSON.parse(await readFile(resolve(path, 'package.json'), 'utf-8'))
+      : {}
+
+    // Compute all dependencies
+    const allDeps = Array.from(
+      new Set([
+        ...Object.keys(dependencies ?? {}),
+        ...Object.keys(devDependencies ?? {}),
+        ...(defaultDependencies ?? []),
+        ...(additionalDependencies ?? [])
+      ])
+    )
+
+    for (const dep of allDeps) {
+      if (dep === 'platformatic') {
+        continue
+      }
+
+      const moduleRoot = resolve(path, 'node_modules', dep)
+
+      // If it is a @platformatic dependency, use the current repository, otherwise resolve
+      let resolved = resolve(pltRoot, 'node_modules', dep)
+
+      if (!existsSync(resolved)) {
+        resolved =
+          dep.startsWith('@platformatic') || dep === 'wattpm'
+            ? resolve(pltRoot, `packages/${dep.replace('@platformatic/', '')}`)
+            : require.resolve(dep)
+      }
+
+      // Some packages mistakenly insert package.json in the dist folder, force a resolving
+      if (dirname(resolved).endsWith('dist')) {
+        resolved = resolve(dirname(resolved), '..')
+      }
+
+      // If not in the package root, let's find it
+      while (!existsSync(resolve(resolved, 'package.json'))) {
+        resolved = dirname(resolved)
+
+        // Fallback to the current repository when nothing could be found
+        if (resolved === '/') {
+          resolved = pltRoot
+          break
+        }
+      }
+
+      // Create the subfolder if needed
+      if (dep.includes(sep)) {
+        await createDirectory(resolve(path, 'node_modules', dirname(dep)))
+      }
+
+      // Symlink the dependency
+      await symlink(resolved, moduleRoot, 'dir')
+
+      // Now link all the binaries
+      const { bin } = JSON.parse(await readFile(resolve(moduleRoot, 'package.json'), 'utf-8'))
+
+      for (const [name, destination] of Object.entries(bin ?? {})) {
+        await symlink(resolve(moduleRoot, destination), resolve(binFolder, name), 'file')
+      }
+    }
   }
 }
 
-export async function createRuntime (t, path, packageRoot, pauseAfterCreation = false) {
-  const configFile = resolve(fixturesDir, path)
+export async function prepareRuntime (fixturePath, production = false, configFile = 'platformatic.runtime.json') {
+  const root = resolve(temporaryFolder, basename(fixturePath) + '-' + Date.now())
+  currentWorkingDirectory = root
+  await createDirectory(root)
 
-  if (packageRoot) {
-    const packageName = JSON.parse(await readFile(resolve(packageRoot, 'package.json'), 'utf-8')).name
-    const root = dirname(configFile)
-    await ensureDependency(root, packageName, packageRoot)
+  // Copy the fixtures
+  await cp(resolve(fixturesDir, fixturePath), root, { recursive: true })
+
+  // Init the runtime
+  const args = ['-c', resolve(root, configFile)]
+
+  if (production) {
+    args.push('--production')
   }
 
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const runtime = await buildServer(config.configManager.current)
+  const config = await loadConfig({}, args, platformaticRuntime)
+
+  // Ensure the dependencies
+  await ensureDependencies(config)
+
+  return { root, config, args }
+}
+
+export async function startRuntime (t, root, config, pauseAfterCreation = false) {
+  const runtime = await buildServer(config.configManager.current, config.args)
   const url = await runtime.start()
 
-  t.after(() => runtime.close())
+  t.after(async () => {
+    await runtime.close()
+    await safeRemove(root)
+  })
 
   if (pauseAfterCreation) {
     await pause(t, url, pauseAfterCreation)
   }
 
   return { runtime, url }
+}
+
+export async function createRuntime (
+  t,
+  fixturePath,
+  pauseAfterCreation = false,
+  production = false,
+  configFile = 'platformatic.runtime.json'
+) {
+  const { root, config } = await prepareRuntime(fixturePath, production, configFile)
+
+  return startRuntime(t, root, config, pauseAfterCreation)
+}
+
+export async function createProductionRuntime (
+  t,
+  fixturePath,
+  pauseAfterCreation = false,
+  configFile = 'platformatic.runtime.json'
+) {
+  return createRuntime(t, fixturePath, pauseAfterCreation, true, configFile)
 }
 
 export async function getLogs (app) {
@@ -219,7 +334,7 @@ export async function verifyHMR (baseUrl, path, protocol, handler) {
     handler(JSON.parse(data), connection.resolve, reload.resolve)
   })
 
-  const hmrTriggerFile = resolve(fixturesDir, hmrTriggerFileRelative)
+  const hmrTriggerFile = resolve(currentWorkingDirectory, hmrTriggerFileRelative)
   const originalContents = await readFile(hmrTriggerFile, 'utf-8')
   try {
     if ((await Promise.race([connection.promise, timeout])) === 'timeout') {

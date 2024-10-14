@@ -27,6 +27,10 @@ const services = {
       },
       useHttp: {
         type: 'boolean'
+      },
+      workers: {
+        type: 'number',
+        minimum: 1
       }
     }
   }
@@ -87,6 +91,11 @@ const platformaticRuntimeSchema = {
       }
     },
     services,
+    workers: {
+      type: 'number',
+      minimum: 1,
+      default: 1
+    },
     web: services,
     logger,
     server,

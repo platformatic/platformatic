@@ -10,32 +10,32 @@ const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
 const platformaticVersion = require('../../package.json').version
 
-test('should get services topology', async (t) => {
+test('should get services topology', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
 
   await app.start()
 
-  const client = new Client({
-    hostname: 'localhost',
-    protocol: 'http:',
-  }, {
-    socketPath: app.getManagementApiUrl(),
-    keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10,
-  })
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:'
+    },
+    {
+      socketPath: app.getManagementApiUrl(),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10
+    }
+  )
 
   t.after(async () => {
-    await Promise.all([
-      client.close(),
-      app.close(),
-    ])
+    await Promise.all([client.close(), app.close()])
   })
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/services',
+    path: '/api/v1/services'
   })
 
   assert.strictEqual(statusCode, 200)
@@ -45,6 +45,7 @@ test('should get services topology', async (t) => {
 
   assert.deepStrictEqual(topology, {
     entrypoint: 'service-1',
+    production: false,
     services: [
       {
         id: 'service-1',
@@ -54,7 +55,7 @@ test('should get services topology', async (t) => {
         entrypoint: true,
         url: entrypointDetails.url,
         localUrl: 'http://service-1.plt.local',
-        dependencies: [],
+        dependencies: []
       },
       {
         id: 'service-2',
@@ -63,7 +64,7 @@ test('should get services topology', async (t) => {
         version: platformaticVersion,
         entrypoint: false,
         localUrl: 'http://service-2.plt.local',
-        dependencies: [],
+        dependencies: []
       },
       {
         id: 'service-db',
@@ -72,8 +73,8 @@ test('should get services topology', async (t) => {
         version: platformaticVersion,
         entrypoint: false,
         localUrl: 'http://service-db.plt.local',
-        dependencies: [],
-      },
-    ],
+        dependencies: []
+      }
+    ]
   })
 })

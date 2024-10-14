@@ -17,7 +17,7 @@ export async function build (args) {
   const { services } = await runtime.getServices()
 
   for (const { id } of services) {
-    logger.info(`Building service ${id}" ...`)
+    logger.info(`Building service "${id}" ...`)
 
     try {
       await runtime.buildService(id)

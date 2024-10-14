@@ -33,7 +33,6 @@ test('should get all runtimes', async t => {
 
   const runtimesTable = child.stdout
   const runtimesTableRows = runtimesTable.split('\n').filter(Boolean)
-  process._rawDebug(runtimesTableRows.length)
   assert.strictEqual(runtimesTableRows.length, 3)
 
   const [headersRow, runtime1Row, runtime2Row] = runtimesTableRows

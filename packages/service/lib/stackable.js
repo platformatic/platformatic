@@ -1,6 +1,8 @@
 'use strict'
 
+const { hostname } = require('node:os')
 const { dirname } = require('node:path')
+const { pathToFileURL } = require('node:url')
 const { printSchema } = require('graphql')
 const pino = require('pino')
 const { collectMetrics } = require('@platformatic/metrics')
@@ -20,6 +22,10 @@ class ServiceStackable {
     this.context = options.context ?? {}
     this.context.stackable = this
 
+    this.serviceId = this.context.serviceId
+    this.context.worker ??= { count: 1, index: 0 }
+    this.workerId = this.context.worker.count > 1 ? this.context.worker.index : undefined
+
     this.configManager.on('error', err => {
       /* c8 ignore next */
       this.stackable.log({
@@ -32,6 +38,10 @@ class ServiceStackable {
 
     // Setup globals
     this.registerGlobals({
+      serviceId: this.serviceId,
+      workerId: this.workerId,
+      // Always use URL to avoid serialization problem in Windows
+      root: this.context.directory ? pathToFileURL(this.context.directory).toString() : undefined,
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
       setBasePath: this.setBasePath.bind(this)
@@ -157,15 +167,13 @@ class ServiceStackable {
   // fastify metrics before the server is started.
   async #collectMetrics () {
     const metricsConfig = this.context.metricsConfig
+
     if (metricsConfig !== false) {
-      const { registry } = await collectMetrics(
-        this.context.serviceId,
-        {
-          defaultMetrics: true,
-          httpMetrics: false,
-          ...metricsConfig
-        }
-      )
+      const { registry } = await collectMetrics(this.context.serviceId, this.context.worker.index, {
+        defaultMetrics: true,
+        httpMetrics: false,
+        ...metricsConfig
+      })
       this.metricsRegistry = registry
       this.#setHttpMetrics()
     }
@@ -174,9 +182,7 @@ class ServiceStackable {
   async getMetrics ({ format }) {
     if (!this.metricsRegistry) return null
 
-    return format === 'json'
-      ? await this.metricsRegistry.getMetricsAsJSON()
-      : await this.metricsRegistry.metrics()
+    return format === 'json' ? await this.metricsRegistry.getMetricsAsJSON() : await this.metricsRegistry.metrics()
   }
 
   async inject (injectParams) {
@@ -308,8 +314,16 @@ class ServiceStackable {
       level: this.loggerConfig?.level ?? 'trace'
     }
 
+    this.registerGlobals({
+      logLevel: pinoOptions.level
+    })
+
     if (this.context?.serviceId) {
       pinoOptions.name = this.context.serviceId
+    }
+
+    if (typeof this.context?.worker?.index !== 'undefined') {
+      pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: this.context.worker.index }
     }
 
     this.logger = pino(pinoOptions)

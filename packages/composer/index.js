@@ -13,11 +13,9 @@ const openapiGenerator = require('./lib/openapi-generator')
 const graphqlGenerator = require('./lib/graphql-generator')
 const { isSameGraphqlSchema, fetchGraphqlSubgraphs } = require('./lib/graphql-fetch')
 const { isFetchable } = require('./lib/utils')
-const { ComposerStackable } = require('./lib/stackable')
+const { ComposerStackable, ensureServices } = require('./lib/stackable')
 const errors = require('./lib/errors')
 const upgrade = require('./lib/upgrade')
-
-const kITC = Symbol.for('plt.runtime.itc')
 
 const EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE = 'graphql composer is an experimental feature'
 
@@ -27,23 +25,7 @@ async function platformaticComposer (app, opts) {
   let hasGraphqlServices, hasOpenapiServices
 
   // When no services are specified, get the list from the runtime.
-  if (!configManager.current.composer.services?.length) {
-    const itcResponse = await globalThis[kITC]?.send('getServices')
-
-    if (itcResponse) {
-      // Remove ourself from the services
-      configManager.current.composer.services = itcResponse.services
-        .map(service => {
-          // Remove ourself
-          if (service.id === opts.context.serviceId) {
-            return null
-          }
-
-          return { id: service.id, proxy: {} }
-        })
-        .filter(f => f)
-    }
-  }
+  await ensureServices(config)
 
   const { services } = configManager.current.composer
 

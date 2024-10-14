@@ -5,9 +5,6 @@ const { writeFile } = require('node:fs/promises')
 const { join, resolve, dirname } = require('node:path')
 
 const { printConfigValidationErrors } = require('@platformatic/config')
-const {
-  errors: { ensureLoggableError }
-} = require('@platformatic/utils')
 const closeWithGrace = require('close-with-grace')
 const pino = require('pino')
 const pretty = require('pino-pretty')
@@ -33,17 +30,6 @@ async function buildRuntime (configManager, env) {
   const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
 
   const runtime = new Runtime(configManager, runtimeLogsDir, env)
-
-  /* c8 ignore next 3 */
-  process.on('SIGUSR2', async () => {
-    runtime.logger.info('Received SIGUSR2, restarting all services ...')
-
-    try {
-      await runtime.restart()
-    } catch (err) {
-      runtime.logger.error({ err: ensureLoggableError(err) }, 'Failed to restart services.')
-    }
-  })
 
   try {
     await runtime.init()
@@ -109,7 +95,7 @@ async function setupAndStartRuntime (config) {
       })
     )
     logger.warn(`Port: ${originalPort} is already in use!`)
-    logger.warn(`Starting service on port: ${runtimeConfig.current.server.port}`)
+    logger.warn(`Changing the port to ${runtimeConfig.current.server.port}`)
   }
   return { address, runtime }
 }

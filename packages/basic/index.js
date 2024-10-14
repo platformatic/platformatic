@@ -110,7 +110,8 @@ async function buildStackable (opts) {
   const serviceRoot = relative(process.cwd(), opts.context.directory)
   if (
     !hadConfig &&
-    !existsSync(resolve(serviceRoot, 'platformatic.json') || existsSync(resolve(serviceRoot, 'watt.json')))
+    !existsSync(resolve(serviceRoot, 'platformatic.json') || existsSync(resolve(serviceRoot, 'watt.json'))) &&
+    opts.context.worker?.count > 1
   ) {
     const logger = pino({
       level: opts.context.serverConfig?.logger?.level ?? 'warn',
@@ -119,7 +120,7 @@ async function buildStackable (opts) {
 
     logger.warn(
       [
-        `Platformatic has auto-detected that service ${opts.context.serviceId} ${autodetectDescription}.\n`,
+        `Platformatic has auto-detected that service "${opts.context.serviceId}" ${autodetectDescription}.\n`,
         `We suggest you create a platformatic.json or watt.json file in the folder ${serviceRoot} with the "$schema" `,
         `property set to "https://schemas.platformatic.dev/${toImport}/${packageJson.version}.json".`
       ].join('')

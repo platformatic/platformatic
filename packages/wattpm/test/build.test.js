@@ -3,12 +3,12 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { ensureDependency, fixturesDir, wattpm } from './helper.js'
+import { prepareRuntime } from '../../basic/test/helper.js'
+import { wattpm } from './helper.js'
 
 test('build - should build the application', async t => {
-  const buildDir = await resolve(fixturesDir, 'build')
-  const serviceDir = await resolve(buildDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
+  const { root: buildDir } = await prepareRuntime('build', false, 'watt.json')
+  const serviceDir = resolve(buildDir, 'web/main')
 
   t.after(async () => {
     await safeRemove(resolve(serviceDir, 'dist'))
@@ -20,9 +20,8 @@ test('build - should build the application', async t => {
 })
 
 test('build - should handle build errors', async t => {
-  const buildDir = await resolve(fixturesDir, 'build-error')
-  const serviceDir = await resolve(buildDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
+  const { root: buildDir } = await prepareRuntime('build-error', false, 'watt.json')
+  const serviceDir = resolve(buildDir, 'web/main')
 
   t.after(async () => {
     await safeRemove(resolve(serviceDir, 'web/main/dist'))

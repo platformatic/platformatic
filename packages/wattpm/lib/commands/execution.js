@@ -75,7 +75,7 @@ export async function restartCommand (logger, args) {
     await client.restartRuntime(runtime.pid)
     await client.close()
 
-    logger.done(`Runtime ${bold(runtime.packageName)} have been restarted.`)
+    logger.done(`Runtime ${bold(runtime.packageName)} has been restarted.`)
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       logger.fatal('Cannot find a matching runtime.')

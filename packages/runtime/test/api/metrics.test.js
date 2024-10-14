@@ -21,7 +21,7 @@ function findPrometheusLinesForMetric (metric, output) {
   return ret
 }
 
-test('should get runtime metrics in a json format', async (t) => {
+test('should get runtime metrics in a json format', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
@@ -33,18 +33,18 @@ test('should get runtime metrics in a json format', async (t) => {
     app.inject('service-1', {
       method: 'GET',
       url: '/hello',
-      headers: { 'x-plt-telemetry-id': 'service-1-client' },
+      headers: { 'x-plt-telemetry-id': 'service-1-client' }
     }),
     app.inject('service-2', {
       method: 'GET',
       url: '/hello',
-      headers: { 'x-plt-telemetry-id': 'service-2-client' },
+      headers: { 'x-plt-telemetry-id': 'service-2-client' }
     }),
     app.inject('service-db', {
       method: 'GET',
       url: '/hello',
-      headers: { 'x-plt-telemetry-id': 'service-db-client' },
-    }),
+      headers: { 'x-plt-telemetry-id': 'service-db-client' }
+    })
   ])
 
   t.after(async () => {
@@ -85,22 +85,22 @@ test('should get runtime metrics in a json format', async (t) => {
     'process_start_time_seconds',
     'http_request_all_summary_seconds',
     'http_request_duration_seconds',
-    'http_request_summary_seconds',
+    'http_request_summary_seconds'
   ]
 
   const services = ['service-1', 'service-2', 'service-db']
 
   for (const metricName of expectedMetricNames) {
-    const foundMetrics = metrics.filter((m) => m.name === metricName)
+    const foundMetrics = metrics.filter(m => m.name === metricName)
     assert.ok(foundMetrics.length > 0, `Missing metric: ${metricName}`)
     assert.strictEqual(foundMetrics.length, services.length)
 
-    const hasValues = foundMetrics.every((m) => m.values.length > 0)
+    const hasValues = foundMetrics.every(m => m.values.length > 0)
     if (!hasValues) continue
 
     for (const serviceId of services) {
-      const foundMetric = foundMetrics.find((m) => m.values[0].labels.serviceId === serviceId)
-      assert.ok(foundMetric, `Missing metric for service ${serviceId}`)
+      const foundMetric = foundMetrics.find(m => m.values[0].labels.serviceId === serviceId)
+      assert.ok(foundMetric, `Missing metric for service "${serviceId}"`)
 
       for (const { labels } of foundMetric.values) {
         assert.strictEqual(labels.serviceId, serviceId)
@@ -114,7 +114,7 @@ test('should get runtime metrics in a json format', async (t) => {
   }
 })
 
-test('should get runtime metrics in a text format', async (t) => {
+test('should get runtime metrics in a text format', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
@@ -128,7 +128,8 @@ test('should get runtime metrics in a text format', async (t) => {
   })
 
   const metrics = await app.getMetrics('text')
-  const metricsNames = metrics.metrics.split('\n')
+  const metricsNames = metrics.metrics
+    .split('\n')
     .filter(line => line && line.startsWith('# TYPE'))
     .map(line => line.split(' ')[2])
 
@@ -164,7 +165,7 @@ test('should get runtime metrics in a text format', async (t) => {
     'process_start_time_seconds',
     'http_request_all_summary_seconds',
     'http_request_duration_seconds',
-    'http_request_summary_seconds',
+    'http_request_summary_seconds'
   ]
   for (const metricName of expectedMetricNames) {
     assert.ok(metricsNames.includes(metricName), `Missing metric: ${metricName}`)
@@ -172,9 +173,10 @@ test('should get runtime metrics in a text format', async (t) => {
 
   // Check that the serviceId labels are present in the metrics
   const httpRequestsSummary = findPrometheusLinesForMetric('http_request_all_summary_seconds', metrics.metrics)
-  const httpRequestsSummaryLabels = httpRequestsSummary.map((line) => line.split('{')[1].split('}')[0].split(','))
-  const services = httpRequestsSummaryLabels.flat()
-    .filter((label) => label.startsWith('serviceId='))
+  const httpRequestsSummaryLabels = httpRequestsSummary.map(line => line.split('{')[1].split('}')[0].split(','))
+  const services = httpRequestsSummaryLabels
+    .flat()
+    .filter(label => label.startsWith('serviceId='))
     .reduce((acc, label) => {
       const service = label.split('"')[1]
       if (service) {
@@ -189,18 +191,22 @@ test('should get runtime metrics in a text format', async (t) => {
 })
 
 function getMetricsLines (metrics) {
-  return metrics.split('\n').filter((line) => line && !line.startsWith('#'))
+  return metrics.split('\n').filter(line => line && !line.startsWith('#'))
 }
 
 function parseLabels (line) {
-  return line.split('{')[1].split('}')[0].split(',').reduce((acc, label) => {
-    const [key, value] = label.split('=')
-    acc[key] = value.replace(/^"(.*)"$/, '$1')
-    return acc
-  }, {})
+  return line
+    .split('{')[1]
+    .split('}')[0]
+    .split(',')
+    .reduce((acc, label) => {
+      const [key, value] = label.split('=')
+      acc[key] = value.replace(/^"(.*)"$/, '$1')
+      return acc
+    }, {})
 }
 
-test('should get runtime metrics in a text format with custom labels', async (t) => {
+test('should get runtime metrics in a text format with custom labels', async t => {
   const projectDir = join(fixturesDir, 'management-api-custom-labels')
   const configFile = join(projectDir, 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
@@ -221,7 +227,7 @@ test('should get runtime metrics in a text format with custom labels', async (t)
   }
 })
 
-test('should get json runtime metrics with custom labels', async (t) => {
+test('should get json runtime metrics with custom labels', async t => {
   const projectDir = join(fixturesDir, 'management-api-custom-labels')
   const configFile = join(projectDir, 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
@@ -242,7 +248,7 @@ test('should get json runtime metrics with custom labels', async (t) => {
   }
 })
 
-test('should get formatted runtime metrics', async (t) => {
+test('should get formatted runtime metrics', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
@@ -267,7 +273,7 @@ test('should get formatted runtime metrics', async (t) => {
     'rss',
     'totalHeapSize',
     'usedHeapSize',
-    'version',
+    'version'
   ])
 
   const entrypointMetrics = metrics.entrypoint
@@ -279,7 +285,7 @@ test('should get formatted runtime metrics', async (t) => {
   assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
 })
 
-test('should get cached formatted runtime metrics', async (t) => {
+test('should get cached formatted runtime metrics', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
@@ -308,7 +314,7 @@ test('should get cached formatted runtime metrics', async (t) => {
       'rss',
       'totalHeapSize',
       'usedHeapSize',
-      'version',
+      'version'
     ])
 
     const entrypointMetrics = metric.entrypoint
@@ -321,7 +327,7 @@ test('should get cached formatted runtime metrics', async (t) => {
   }
 })
 
-test('should get metrics after reloading one of the services', async (t) => {
+test('should get metrics after reloading one of the services', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
@@ -333,7 +339,7 @@ test('should get metrics after reloading one of the services', async (t) => {
     await app.close()
   })
 
-  await app._stopService('service-2')
+  await app.stopService('service-2')
   await app.startService('service-2')
 
   await sleep(5000)
@@ -352,7 +358,7 @@ test('should get metrics after reloading one of the services', async (t) => {
       'rss',
       'totalHeapSize',
       'usedHeapSize',
-      'version',
+      'version'
     ])
 
     const entrypointMetrics = metric.entrypoint

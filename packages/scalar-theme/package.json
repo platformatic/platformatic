@@ -5,7 +5,9 @@
   "main": "theme.js",
   "type": "module",
   "homepage": "https://docs.platformatic.dev/",
-  "scripts": {},
+  "scripts": {
+    "test": "exit 0"
+  },
   "author": "Marc Laventure <marc@scalar.com>",
   "repository": {
     "type": "git",

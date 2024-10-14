@@ -4,6 +4,7 @@
   "description": "",
   "main": "generate.js",
   "scripts": {
+    "test": "npm run lint",
     "lint": "eslint",
     "generate-doc": "node generate.js"
   },

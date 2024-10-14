@@ -9,7 +9,6 @@ const kITC = Symbol.for('plt.runtime.itc')
 async function resolveServiceProxyParameters (service) {
   // Get meta information from the service, if any, to eventually hook up to a TCP port
   const meta = (await globalThis[kITC]?.send('getServiceMeta', service.id))?.composer ?? { prefix: service.id }
-  const origin = meta.tcp ? meta.url : service.origin
 
   // If no prefix could be found, assume the service id
   const prefix = (service.proxy?.prefix ?? meta.prefix ?? service.id).replace(/(\/$)/g, '')
@@ -25,7 +24,8 @@ async function resolveServiceProxyParameters (service) {
   }
 
   return {
-    origin,
+    origin: service.origin,
+    url: meta.url,
     prefix,
     rewritePrefix,
     internalRewriteLocationHeader,
@@ -50,6 +50,7 @@ module.exports = fp(async function (app, opts) {
     const {
       prefix,
       origin,
+      url,
       rewritePrefix,
       internalRewriteLocationHeader,
       needsRootRedirect,
@@ -134,10 +135,11 @@ module.exports = fp(async function (app, opts) {
     }
 
     await app.register(httpProxy, {
+      websocket: true,
       prefix,
       rewritePrefix,
       upstream: origin,
-      websocket: true,
+      wsUpstream: url ?? origin,
       undici: dispatcher,
       destroyAgent: false,
       internalRewriteLocationHeader,
