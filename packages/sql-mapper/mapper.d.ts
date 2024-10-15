@@ -160,6 +160,11 @@ interface Find<EntityFields> {
      * If present, the entity participates in transaction
      */
     tx?: Database
+    /**
+     * Passing this to all sql-mapper functions allow to apply
+     * authorization rules to the database queries (amongst other things).
+     */
+    ctx?: PlatformaticContext
   }): Promise<Partial<EntityFields>[]>
 }
 
@@ -172,7 +177,12 @@ interface Count {
     /**
      * If present, the entity participates in transaction
      */
-    tx?: Database
+    tx?: Database,
+    /**
+     * Passing this to all sql-mapper functions allow to apply
+     * authorization rules to the database queries (amongst other things).
+     */
+    ctx?: PlatformaticContext
   }): Promise<number>
 }
 
@@ -189,7 +199,12 @@ interface Insert<EntityFields> {
     /**
      * If present, the entity participates in transaction
      */
-    tx?: Database
+    tx?: Database,
+    /**
+     * Passing this to all sql-mapper functions allow to apply
+     * authorization rules to the database queries (amongst other things).
+     */
+    ctx?: PlatformaticContext
   }): Promise<Partial<EntityFields>[]>
 }
 
@@ -206,7 +221,12 @@ interface Save<EntityFields> {
     /**
      * If present, the entity participates in transaction
      */
-    tx?: Database
+    tx?: Database,
+    /**
+     * Passing this to all sql-mapper functions allow to apply
+     * authorization rules to the database queries (amongst other things).
+     */
+    ctx?: PlatformaticContext
   }): Promise<Partial<EntityFields>>
 }
 
@@ -223,7 +243,12 @@ interface Delete<EntityFields> {
     /**
      * If present, the entity participates in transaction
      */
-    tx?: Database
+    tx?: Database,
+    /**
+     * Passing this to all sql-mapper functions allow to apply
+     * authorization rules to the database queries (amongst other things).
+     */
+    ctx?: PlatformaticContext
   }): Promise<Partial<EntityFields>[]>,
 }
 
@@ -244,7 +269,12 @@ interface UpdateMany<EntityFields> {
     /**
      * If present, the entity participates in transaction
      */
-    tx?: Database
+    tx?: Database,
+    /**
+     * Passing this to all sql-mapper functions allow to apply
+     * authorization rules to the database queries (amongst other things).
+     */
+    ctx?: PlatformaticContext
   }): Promise<Partial<EntityFields>[]>
 }
 

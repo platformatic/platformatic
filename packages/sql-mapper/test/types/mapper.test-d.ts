@@ -15,6 +15,7 @@ import {
   Entities,
   errors,
   WhereCondition,
+  PlatformaticContext,
 } from '../../mapper'
 
 const log = {
@@ -67,6 +68,8 @@ interface EntityFields {
   name: string,
 }
 
+const ctx: PlatformaticContext = { app: fastify(), reply: {} as FastifyReply }
+
 const entity: Entity<EntityFields> = pluginOptions.entities.entityName
 expectType<string>(entity.name)
 expectType<string>(entity.singularName)
@@ -84,11 +87,16 @@ expectType<Partial<EntityFields>>(await entity.save({ input: { id: 1, name: 'tes
 expectType<Partial<EntityFields>[]>(await entity.delete())
 expectType<number>(await entity.count())
 expectType<Partial<EntityFields>[]>(await entity.find({ tx: pluginOptions.db }))
+expectType<Partial<EntityFields>[]>(await entity.find({ ctx }))
 expectType<Partial<EntityFields>[]>(await entity.insert({ inputs: [{ id: 1, name: 'test' }], tx: pluginOptions.db }))
 expectType<Partial<EntityFields>>(await entity.save({ input: { id: 1, name: 'test' }, tx: pluginOptions.db }))
+expectType<Partial<EntityFields>>(await entity.save({ input: { id: 1, name: 'test' }, ctx }))
 expectType<Partial<EntityFields>[]>(await entity.delete({ tx: pluginOptions.db }))
+expectType<Partial<EntityFields>[]>(await entity.delete({ ctx }))
 expectType<number>(await entity.count({ tx: pluginOptions.db }))
+expectType<number>(await entity.count({ ctx }))
 expectType<Partial<EntityFields>[]>(await entity.updateMany({ where: { id: { eq: '1' } }, input: { id: 1, name: 'test' } }))
+expectType<Partial<EntityFields>[]>(await entity.updateMany({ where: { id: { eq: '1' } }, input: { id: 1, name: 'test' }, ctx }))
 expectType<Partial<EntityFields>[]>(await entity.updateMany({ where: { id: { eq: '1' } }, input: { name: 'test' } }))
 expectType<Partial<EntityFields>[]>(await entity.find({ where: { id: { eq: null } } }))
 expectType<Partial<EntityFields>[]>(await entity.find({ where: { id: { neq: null } } }))
