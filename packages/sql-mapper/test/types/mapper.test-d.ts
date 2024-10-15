@@ -89,6 +89,7 @@ expectType<Partial<EntityFields>>(await entity.save({ input: { id: 1, name: 'tes
 expectType<Partial<EntityFields>[]>(await entity.delete({ tx: pluginOptions.db }))
 expectType<number>(await entity.count({ tx: pluginOptions.db }))
 expectType<Partial<EntityFields>[]>(await entity.updateMany({ where: { id: { eq: '1' } }, input: { id: 1, name: 'test' } }))
+expectType<Partial<EntityFields>[]>(await entity.updateMany({ where: { id: { eq: '1' } }, input: { name: 'test' } }))
 expectType<Partial<EntityFields>[]>(await entity.find({ where: { id: { eq: null } } }))
 expectType<Partial<EntityFields>[]>(await entity.find({ where: { id: { neq: null } } }))
 
