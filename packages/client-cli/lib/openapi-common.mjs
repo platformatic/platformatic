@@ -102,7 +102,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
 
     interfacesWriter.blankLine()
     const allResponsesName = responsesWriter(capitalizedCamelCaseOperationId, responses, currentFullResponse, interfacesWriter, schema)
-    mainWriter.writeLine(`${camelCaseOperationId}(req?: ${operationRequestName}${isRequestArray ? '[]' : ''}): Promise<${allResponsesName}>;`)
+    mainWriter.writeLine(`${camelCaseOperationId}(req: ${operationRequestName}${isRequestArray ? '[]' : ''}): Promise<${allResponsesName}>;`)
     currentFullResponse = originalFullResponse
     currentFullRequest = originalFullRequest
   }
