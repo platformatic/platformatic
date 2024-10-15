@@ -107,7 +107,7 @@ app.register(movies, {
 });
 
 app.get('/', async (req) => {
-  const res = await req.movies.getMovies()
+  const res = await req.movies.getMovies({})
   return res
 })
 
