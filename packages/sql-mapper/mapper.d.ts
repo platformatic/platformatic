@@ -261,7 +261,7 @@ interface UpdateMany<EntityFields> {
     /**
      * Entity fields to update.
      */
-    input: EntityFields,
+    input: Partial<EntityFields>,
     /**
      * List of fields to be returned for each object
      */

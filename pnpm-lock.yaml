@@ -47,7 +47,7 @@ importers:
     devDependencies:
       '@astrojs/node':
         specifier: ^8.3.3
-        version: 8.3.4(astro@4.16.2(@types/node@22.7.5)(rollup@4.24.0)(typescript@5.6.3))
+        version: 8.3.4(astro@4.16.3(@types/node@22.7.5)(rollup@4.24.0)(typescript@5.6.3))
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
@@ -56,7 +56,7 @@ importers:
         version: link:../service
       astro:
         specifier: ^4.14.4
-        version: 4.16.2(@types/node@22.7.5)(rollup@4.24.0)(typescript@5.6.3)
+        version: 4.16.3(@types/node@22.7.5)(rollup@4.24.0)(typescript@5.6.3)
       borp:
         specifier: ^0.18.0
         version: 0.18.0
@@ -492,7 +492,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.36
+        version: 1.25.37
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -534,7 +534,7 @@ importers:
         version: 1.0.0
       mercurius:
         specifier: ^15.0.0
-        version: 15.0.0(graphql@16.9.0)
+        version: 15.1.0(graphql@16.9.0)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -1025,7 +1025,7 @@ importers:
         version: 15.0.2
       mercurius:
         specifier: ^15.0.0
-        version: 15.0.0(graphql@16.9.0)
+        version: 15.1.0(graphql@16.9.0)
       neostandard:
         specifier: ^0.11.1
         version: 0.11.6(eslint@9.12.0)(typescript@5.6.3)
@@ -1696,7 +1696,7 @@ importers:
         version: 3.2.0
       debounce:
         specifier: ^2.0.0
-        version: 2.1.1
+        version: 2.2.0
       desm:
         specifier: ^1.3.1
         version: 1.3.1
@@ -1885,7 +1885,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.36
+        version: 1.25.37
       '@types/ws':
         specifier: ^8.5.10
         version: 8.5.12
@@ -1939,7 +1939,7 @@ importers:
         version: 5.0.0
       mercurius:
         specifier: ^15.0.0
-        version: 15.0.0(graphql@16.9.0)
+        version: 15.1.0(graphql@16.9.0)
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -2097,7 +2097,7 @@ importers:
         version: 2.1.0
       mercurius:
         specifier: ^15.0.0
-        version: 15.0.0(graphql@16.9.0)
+        version: 15.1.0(graphql@16.9.0)
     devDependencies:
       '@matteo.collina/snap':
         specifier: ^0.3.0
@@ -2265,7 +2265,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.36
+        version: 1.25.37
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -4355,16 +4355,16 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@scalar/fastify-api-reference@1.25.36':
-    resolution: {integrity: sha512-1jVhT3ljjy0tS+7KdixmbLrCQnM1E5IOimV1uF+UC9HuB5s3UTvb1fce7Uv7T/MKzYk+jJ9vf0aeBCMwO3JPtQ==}
+  '@scalar/fastify-api-reference@1.25.37':
+    resolution: {integrity: sha512-fH1WsY+kwxsOtxyz3yOG70pM4uyWqSiFMjGbbDyNq1/ASPPq2VsdnQbJxuu6L/1yiB8JXdYoZfB41ui78allYw==}
     engines: {node: '>=18'}
 
-  '@scalar/openapi-types@0.1.2':
-    resolution: {integrity: sha512-TxiAbs9Rw5qnMs/vvg+4Zx1Xf/5RhJXf8w6JOYSgvp4d2IKkOKc9eSOhid8ySvz7bWCjF2yWd8eHNc/BFs8cXg==}
+  '@scalar/openapi-types@0.1.3':
+    resolution: {integrity: sha512-UPUquC/ZSAdeSDbpdqMzeBVcgeytqJTj9P3QR4X9IRti5I1jXoCOUBY84CGGLXfcWquB7wfwHxn3DqQEnQmBVw==}
     engines: {node: '>=18'}
 
-  '@scalar/types@0.0.14':
-    resolution: {integrity: sha512-4yzW5d9nWtRE3eVNfLnuVUScSMf325PYJ9qCJ8CpaVP7hnWrTv9xGw/2n7csEKzu3QJkdff0myibHfxXJ6ICig==}
+  '@scalar/types@0.0.15':
+    resolution: {integrity: sha512-9fSBoAuJTsmnt2FTkm/F6LRq+TIeeRI0H8wz+7J3pHfcw0YGFEZrRZOo1WZ8fpovD0fQgg+r4BPrtN8+qJ12wQ==}
     engines: {node: '>=18'}
 
   '@sec-ant/readable-stream@0.4.1':
@@ -4614,8 +4614,8 @@ packages:
   '@ungap/structured-clone@1.2.0':
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
 
-  '@unhead/schema@1.11.8':
-    resolution: {integrity: sha512-p3n0iQwILqUZGzCxhJD09Hehy2Jz+CZtMEhFL64VMNG/ZVh0MqAZnNnZRQ40ZPKuq3rbasvedwDtgcRg4qeEJw==}
+  '@unhead/schema@1.11.9':
+    resolution: {integrity: sha512-0V37bxG4sQuiLw3M5DMD+b99ndOOngecMlekQ122TDvBb24W8rWwkHhXvAu5eFg6bQXPdQF1A0U0PuRMcCj/ZA==}
 
   '@vanilla-extract/babel-plugin-debug-ids@1.1.0':
     resolution: {integrity: sha512-Zy9bKjaL2P5zsrFYQJ8IjWGlFODmZrpvFmjFE0Zv8om55Pz1JtpJtL6DvlxlWUxbVaP1HKCqsmEfFOZN8fX/ZQ==}
@@ -4940,8 +4940,8 @@ packages:
     resolution: {integrity: sha512-LElXdjswlqjWrPpJFg1Fx4wpkOCxj1TDHlSV4PlaRxHGWko024xICaa97ZkMfs6DRKlCguiAI+rbXv5GWwXIkg==}
     hasBin: true
 
-  astro@4.16.2:
-    resolution: {integrity: sha512-Dfkpyt6sA+nv6LnOJr+7bt+gQF5Qh02yqVgyes4c4SvcPScteq1bLX22/z/XW+VU0vlciJOMiM8GWtcDiF6gUQ==}
+  astro@4.16.3:
+    resolution: {integrity: sha512-0IrnbCUprAyfeZ8Au/d/d0ssrYGMAZOZ1K3fX7GxI0OwUhkA9bSex0+ywiyVNiVZE5uRlTKRSkvLNKYQWdtHqw==}
     engines: {node: ^18.17.1 || ^20.3.0 || >=21.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0'}
     hasBin: true
 
@@ -5447,8 +5447,8 @@ packages:
   dayjs@1.11.13:
     resolution: {integrity: sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg==}
 
-  debounce@2.1.1:
-    resolution: {integrity: sha512-+xRWxgel9LgTC4PwKlm7TJUK6B6qsEK77NaiNvXmeQ7Y3e6OVVsBC4a9BSptS/mAYceyAz37Oa8JTTuPRft7uQ==}
+  debounce@2.2.0:
+    resolution: {integrity: sha512-Xks6RUDLZFdz8LIdR6q0MTH44k7FikOmnh5xkSjMig6ch45afc8sjTjRQf3P6ax8dMgcQrYO/AR2RGWURrruqw==}
     engines: {node: '>=18'}
 
   debug@2.6.9:
@@ -5658,8 +5658,8 @@ packages:
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
-  electron-to-chromium@1.5.36:
-    resolution: {integrity: sha512-HYTX8tKge/VNp6FGO+f/uVDmUkq+cEfcxYhKf15Akc4M5yxt5YmorwlAitKWjWhWQnKcDRBAQKXkhqqXMqcrjw==}
+  electron-to-chromium@1.5.37:
+    resolution: {integrity: sha512-u7000ZB/X0K78TaQqXZ5ktoR7J79B9US7IkE4zyvcILYwOGY2Tx9GRPYstn7HmuPcMxZ+BDGqIsyLpZQi9ufPw==}
 
   elliptic@6.5.7:
     resolution: {integrity: sha512-ESVCtTwiA+XhY3wyh24QqRGBoP3rEdDUl3EDUUo9tft074fi19IrdpH7hLCMMP3CIj7jb3W96rn8lt/BqIlt5Q==}
@@ -7335,8 +7335,8 @@ packages:
     resolution: {integrity: sha512-+obSblOQmRhcyBt62furQqRAQpNyWXo8BuQ5bN7dG8wmwQ+vwHKp/rCFD4CrTP8CsDQD1sjoZ94K417XEUk8IQ==}
     engines: {node: '>=10'}
 
-  mercurius@15.0.0:
-    resolution: {integrity: sha512-Kb/EznlDZEJ4lztD1QfDp/01SiC8doO1cvlM6FfjiljL3LMCa40RIZxWVUZAl8KOnSEKBc940gmAxEFmgWBLvA==}
+  mercurius@15.1.0:
+    resolution: {integrity: sha512-/hmhLpT3Yuk+dQe5Rv+PMRZtEnLDheRVwHzffM+FWY/m+KAEqh2lh89ZdEAkCa7UsYQh2cHcT7Uzm6xyvZxbSw==}
     engines: {node: ^20.9.0 || >=22.0.0}
     peerDependencies:
       graphql: ^16.0.0
@@ -9651,10 +9651,10 @@ packages:
       terser:
         optional: true
 
-  vitefu@1.0.2:
-    resolution: {integrity: sha512-0/iAvbXyM3RiPPJ4lyD4w6Mjgtf4ejTK6TPvTNG3H32PLwuT0N/ZjJLiXug7ETE/LWtTeHw9WRv7uX/tIKYyKg==}
+  vitefu@1.0.3:
+    resolution: {integrity: sha512-iKKfOMBHob2WxEJbqbJjHAkmYgvFDPhuqrO82om83S8RLk+17FtyMBfcyeH8GqD0ihShtkMW/zzJgiA51hCNCQ==}
     peerDependencies:
-      vite: ^3.0.0 || ^4.0.0 || ^5.0.0
+      vite: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0-beta.0
     peerDependenciesMeta:
       vite:
         optional: true
@@ -9932,9 +9932,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@astrojs/node@8.3.4(astro@4.16.2(@types/node@22.7.5)(rollup@4.24.0)(typescript@5.6.3))':
+  '@astrojs/node@8.3.4(astro@4.16.3(@types/node@22.7.5)(rollup@4.24.0)(typescript@5.6.3))':
     dependencies:
-      astro: 4.16.2(@types/node@22.7.5)(rollup@4.24.0)(typescript@5.6.3)
+      astro: 4.16.3(@types/node@22.7.5)(rollup@4.24.0)(typescript@5.6.3)
       send: 0.19.1
       server-destroy: 1.0.1
     transitivePeerDependencies:
@@ -10938,7 +10938,7 @@ snapshots:
     dependencies:
       '@fastify/error': 4.0.0
       graphql: 16.9.0
-      mercurius: 15.0.0(graphql@16.9.0)
+      mercurius: 15.1.0(graphql@16.9.0)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -10950,7 +10950,7 @@ snapshots:
       fastify-plugin: 5.0.1
       graphql: 16.9.0
       graphql-ws: 5.16.0(graphql@16.9.0)
-      mercurius: 15.0.0(graphql@16.9.0)
+      mercurius: 15.1.0(graphql@16.9.0)
       p-map: 4.0.0
       single-user-cache: 1.0.1
       tiny-lru: 11.2.11
@@ -11693,7 +11693,7 @@ snapshots:
       abstract-logger: 0.2.5
       fastify: 5.0.0
       graphql: 16.9.0
-      mercurius: 15.0.0(graphql@16.9.0)
+      mercurius: 15.1.0(graphql@16.9.0)
       metaline: 1.1.0
       pino: 9.4.0
       undici: 6.20.1
@@ -11941,17 +11941,17 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.24.0':
     optional: true
 
-  '@scalar/fastify-api-reference@1.25.36':
+  '@scalar/fastify-api-reference@1.25.37':
     dependencies:
-      '@scalar/types': 0.0.14
+      '@scalar/types': 0.0.15
       fastify-plugin: 4.5.1
 
-  '@scalar/openapi-types@0.1.2': {}
+  '@scalar/openapi-types@0.1.3': {}
 
-  '@scalar/types@0.0.14':
+  '@scalar/types@0.0.15':
     dependencies:
-      '@scalar/openapi-types': 0.1.2
-      '@unhead/schema': 1.11.8
+      '@scalar/openapi-types': 0.1.3
+      '@unhead/schema': 1.11.9
 
   '@sec-ant/readable-stream@0.4.1': {}
 
@@ -12258,7 +12258,7 @@ snapshots:
 
   '@ungap/structured-clone@1.2.0': {}
 
-  '@unhead/schema@1.11.8':
+  '@unhead/schema@1.11.9':
     dependencies:
       hookable: 5.5.3
       zhead: 2.2.4
@@ -12701,7 +12701,7 @@ snapshots:
 
   astring@1.9.0: {}
 
-  astro@4.16.2(@types/node@22.7.5)(rollup@4.24.0)(typescript@5.6.3):
+  astro@4.16.3(@types/node@22.7.5)(rollup@4.24.0)(typescript@5.6.3):
     dependencies:
       '@astrojs/compiler': 2.10.3
       '@astrojs/internal-helpers': 0.4.1
@@ -12758,7 +12758,7 @@ snapshots:
       unist-util-visit: 5.0.0
       vfile: 6.0.3
       vite: 5.4.9(@types/node@22.7.5)
-      vitefu: 1.0.2(vite@5.4.9(@types/node@22.7.5))
+      vitefu: 1.0.3(vite@5.4.9(@types/node@22.7.5))
       which-pm: 3.0.0
       xxhash-wasm: 1.0.2
       yargs-parser: 21.1.1
@@ -12922,7 +12922,7 @@ snapshots:
   browserslist@4.24.0:
     dependencies:
       caniuse-lite: 1.0.30001668
-      electron-to-chromium: 1.5.36
+      electron-to-chromium: 1.5.37
       node-releases: 2.0.18
       update-browserslist-db: 1.1.1(browserslist@4.24.0)
 
@@ -13284,7 +13284,7 @@ snapshots:
 
   dayjs@1.11.13: {}
 
-  debounce@2.1.1: {}
+  debounce@2.2.0: {}
 
   debug@2.6.9:
     dependencies:
@@ -13457,7 +13457,7 @@ snapshots:
 
   ee-first@1.1.1: {}
 
-  electron-to-chromium@1.5.36: {}
+  electron-to-chromium@1.5.37: {}
 
   elliptic@6.5.7:
     dependencies:
@@ -15699,7 +15699,7 @@ snapshots:
       type-fest: 0.18.1
       yargs-parser: 20.2.9
 
-  mercurius@15.0.0(graphql@16.9.0):
+  mercurius@15.1.0(graphql@16.9.0):
     dependencies:
       '@fastify/error': 4.0.0
       '@fastify/static': 8.0.1
@@ -18627,7 +18627,7 @@ snapshots:
       '@types/node': 22.7.5
       fsevents: 2.3.3
 
-  vitefu@1.0.2(vite@5.4.9(@types/node@22.7.5)):
+  vitefu@1.0.3(vite@5.4.9(@types/node@22.7.5)):
     optionalDependencies:
       vite: 5.4.9(@types/node@22.7.5)
 
