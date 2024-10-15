@@ -160,6 +160,11 @@ interface Find<EntityFields> {
      * If present, the entity participates in transaction
      */
     tx?: Database
+    /**
+     * Passing this to all sql-mapper functions allow to apply
+     * authorization rules to the database queries (amongst other things).
+     */
+    ctx?: PlatformaticContext
   }): Promise<Partial<EntityFields>[]>
 }
 
