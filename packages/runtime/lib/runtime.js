@@ -16,6 +16,7 @@ const errors = require('./errors')
 const { createLogger } = require('./logger')
 const { startManagementApi } = require('./management-api')
 const { startPrometheusServer } = require('./prom-server')
+const { SharedCacheStore } = require('./shared-http-cache')
 const { getRuntimeTmpDir } = require('./utils')
 const { sendViaITC, waitEventFromITC } = require('./worker/itc')
 const { kId, kITC, kConfig } = require('./worker/symbols')
@@ -53,6 +54,7 @@ class Runtime extends EventEmitter {
   #bootstrapAttempts
   #inspectors
   #inspectorServer
+  #sharedHttpCache
 
   constructor (configManager, runtimeLogsDir, env) {
     super()
@@ -72,6 +74,7 @@ class Runtime extends EventEmitter {
     this.#restartPromises = new Map()
     this.#bootstrapAttempts = new Map()
     this.#inspectors = []
+    this.#sharedHttpCache = new SharedCacheStore()
   }
 
   async init () {
@@ -861,7 +864,17 @@ class Runtime extends EventEmitter {
       port: service,
       handlers: {
         getServiceMeta: this.getServiceMeta.bind(this),
-        getServices: this.getServices.bind(this)
+        getServices: this.getServices.bind(this),
+        isHttpCacheFull: () => this.#sharedHttpCache.isFull(),
+        getHttpCacheValue: opts => this.#sharedHttpCache.getValue(opts.req),
+        setHttpCacheValue: opts => this.#sharedHttpCache.setValue(
+          opts.req,
+          opts.opts,
+          opts.data
+        ),
+        deleteHttpCacheValue: opts => this.#sharedHttpCache.deleteValue(
+          opts.origin
+        ),
       }
     })
     service[kITC].listen()

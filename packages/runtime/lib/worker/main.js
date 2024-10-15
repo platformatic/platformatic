@@ -9,8 +9,9 @@ const inspector = require('node:inspector')
 const pino = require('pino')
 const { fetch, setGlobalDispatcher, getGlobalDispatcher, Agent } = require('undici')
 const { wire } = require('undici-thread-interceptor')
-const cacheInterceptor = require('undici-cache-interceptor')
+const cacheInterceptor = require('@platformatic/undici-cache-interceptor')
 
+const RuntimeServiceCacheStore = require('./http-cache')
 const { PlatformaticApp } = require('./app')
 const { setupITC } = require('./itc')
 const loadInterceptors = require('./interceptors')
@@ -93,7 +94,9 @@ async function main () {
 
   if (config.httpCache) {
     setGlobalDispatcher(
-      getGlobalDispatcher().compose(cacheInterceptor.interceptors.cache())
+      getGlobalDispatcher().compose(cacheInterceptor.interceptors.cache({
+        store: new RuntimeServiceCacheStore()
+      }))
     )
   }
 
