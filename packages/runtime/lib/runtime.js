@@ -74,7 +74,7 @@ class Runtime extends EventEmitter {
     this.#restartPromises = new Map()
     this.#bootstrapAttempts = new Map()
     this.#inspectors = []
-    this.#sharedHttpCache = new SharedCacheStore()
+    this.#sharedHttpCache = null
   }
 
   async init () {
@@ -118,6 +118,8 @@ class Runtime extends EventEmitter {
       await this.close()
       throw e
     }
+
+    this.#sharedHttpCache = new SharedCacheStore(config.httpCache)
 
     this.#updateStatus('init')
   }

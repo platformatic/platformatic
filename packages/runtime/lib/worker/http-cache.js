@@ -46,7 +46,8 @@ class RemoteCacheStore {
       },
       final (callback) {
         itc.send('setHttpCacheValue', { request, response, payload })
-        callback()
+          .then(() => callback())
+          .catch((err) => callback(err))
       }
     })
   }

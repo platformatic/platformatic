@@ -3,18 +3,24 @@
 const cacheInterceptor = require('@platformatic/undici-cache-interceptor')
 
 class SharedCacheStore {
-  #memoryStore
+  #cacheStore
 
-  constructor (...args) {
-    this.#memoryStore = new cacheInterceptor.cacheStores.MemoryCacheStore(...args)
+  constructor (httpCacheConfig) {
+    const { store, ...storeConfig } = httpCacheConfig
+
+    const CacheStore = store
+      ? require(store)
+      : cacheInterceptor.cacheStores.MemoryCacheStore
+
+    this.#cacheStore = new CacheStore(storeConfig)
   }
 
   isFull () {
-    return this.#memoryStore.isFull
+    return this.#cacheStore.isFull
   }
 
   async getValue (req) {
-    const readStream = this.#memoryStore.createReadStream(req)
+    const readStream = await this.#cacheStore.createReadStream(req)
     if (!readStream) return null
 
     let payload = ''
@@ -27,14 +33,14 @@ class SharedCacheStore {
   }
 
   setValue (req, opts, data) {
-    const writeStream = this.#memoryStore.createWriteStream(req, opts)
+    const writeStream = this.#cacheStore.createWriteStream(req, opts)
     writeStream.write(data)
     writeStream.end()
     return null
   }
 
   deleteByOrigin (origin) {
-    return this.#memoryStore.deleteByOrigin(origin)
+    return this.#cacheStore.deleteByOrigin(origin)
   }
 }
 
