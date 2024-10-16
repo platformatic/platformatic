@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "platformatic": "^2.0.0",
-    "@fastify/oauth2": "8.0.1"
+    "@fastify/oauth2": "8.1.0"
   },
   "engines": {
     "node": ">=20.16.0"
