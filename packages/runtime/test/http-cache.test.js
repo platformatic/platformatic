@@ -48,3 +48,68 @@ test('should cache http requests', async (t) => {
   const { counter } = await res.body.json()
   assert.strictEqual(counter, 2)
 })
+
+test('should get response cached by another service', async (t) => {
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  const cacheTimeoutSec = 5
+
+  {
+    // Making a request to the service-3 through the service-1
+    // It should increase the counter and put the response in the cache
+    const res = await request(entryUrl + '/service-1/service-3/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+
+    const cacheControl = res.headers['cache-control']
+    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+
+    const { counter, service } = await res.body.json()
+    assert.strictEqual(counter, 1)
+    assert.strictEqual(service, 'service-3')
+  }
+
+  {
+    // Making a request to the service-3 through the service-2
+    // It should get the response from the cache
+    const res = await request(entryUrl + '/service-2/service-3/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+
+    const cacheControl = res.headers['cache-control']
+    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+
+    const { counter, service } = await res.body.json()
+    assert.strictEqual(counter, 1)
+    assert.strictEqual(service, 'service-3')
+  }
+
+  // Wait for the cache to expire
+  await sleep(cacheTimeoutSec * 1000)
+
+  {
+    // Making a request to the service-3 through the service-2
+    // It should increase the counter and put the response in the cache
+    const res = await request(entryUrl + '/service-2/service-3/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+
+    const cacheControl = res.headers['cache-control']
+    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+
+    const { counter, service } = await res.body.json()
+    assert.strictEqual(counter, 2)
+    assert.strictEqual(service, 'service-3')
+  }
+})

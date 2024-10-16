@@ -8,7 +8,7 @@ module.exports = async function (fastify) {
   fastify.get('/cached-req-counter', async (req, reply) => {
     const { maxAge } = req.query
     reply.header('Cache-Control', `public, s-maxage=${maxAge}`)
-    return { service: 'service-1', counter: ++counter }
+    return { service: 'service-2', counter: ++counter }
   })
 
   fastify.get('/service-3/cached-req-counter', async (req, reply) => {
