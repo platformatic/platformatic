@@ -146,6 +146,23 @@ const platformaticRuntimeSchema = {
       oneOf: [
         {
           type: 'boolean'
+        },
+        {
+          type: 'object',
+          properties: {
+            store: {
+              type: 'string'
+            },
+            methods: {
+              type: 'array',
+              items: {
+                type: 'string'
+              },
+              default: ['GET', 'HEAD'],
+              minItems: 1
+            }
+          },
+          additionalProperties: false
         }
       ]
     },

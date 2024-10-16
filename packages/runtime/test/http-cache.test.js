@@ -113,3 +113,42 @@ test('should get response cached by another service', async (t) => {
     assert.strictEqual(service, 'service-3')
   }
 })
+
+test('should use a custom cache storage', async (t) => {
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+
+  config.configManager.current.httpCache = {
+    store: join(fixturesDir, 'http-cache', 'custom-cache-store.js')
+  }
+
+  const app = await buildServer(config.configManager.current)
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  const cacheTimeoutSec = 10
+
+  for (let i = 0; i < 5; i++) {
+    const res = await request(entryUrl + '/service-1/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+
+    const response = await res.body.text()
+    assert.strictEqual(response, 'Custom cache store response')
+  }
+
+  const res = await request(entryUrl + '/service-1/cached-req-counter', {
+    query: { maxAge: cacheTimeoutSec }
+  })
+
+  assert.strictEqual(res.statusCode, 200)
+
+  const cacheControl = res.headers['cache-control']
+  assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+
+  const { counter } = await res.body.json()
+  assert.strictEqual(counter, 1)
+})

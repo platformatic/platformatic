@@ -93,9 +93,14 @@ async function main () {
   const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp, timeout: 5 * 60 * 1000 })
 
   if (config.httpCache) {
+    const CacheStore = config.httpCache.store
+      ? require(config.httpCache.store)
+      : RuntimeServiceCacheStore
+
     setGlobalDispatcher(
       getGlobalDispatcher().compose(cacheInterceptor.interceptors.cache({
-        store: new RuntimeServiceCacheStore()
+        store: new CacheStore(),
+        methods: config.httpCache.methods ?? ['GET', 'HEAD']
       }))
     )
   }
