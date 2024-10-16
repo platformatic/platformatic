@@ -104,7 +104,7 @@ importers:
         version: 9.4.0
       pino:
         specifier: ^9.3.2
-        version: 9.4.0
+        version: 9.5.0
       pino-abstract-transport:
         specifier: ^2.0.0
         version: 2.0.0
@@ -219,7 +219,7 @@ importers:
         version: 1.2.8
       pino:
         specifier: ^9.4.0
-        version: 9.4.0
+        version: 9.5.0
       pino-pretty:
         specifier: ^11.2.2
         version: 11.2.2
@@ -389,7 +389,7 @@ importers:
         version: 1.2.8
       pino:
         specifier: ^9.0.0
-        version: 9.4.0
+        version: 9.5.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -546,7 +546,7 @@ importers:
         version: 6.3.1
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.5.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -668,7 +668,7 @@ importers:
         version: 0.11.6(eslint@9.12.0)(typescript@5.6.3)
       pino:
         specifier: ^9.0.0
-        version: 9.4.0
+        version: 9.5.0
       pino-test:
         specifier: ^1.0.1
         version: 1.0.1
@@ -695,7 +695,7 @@ importers:
         version: 5.0.0
       pino:
         specifier: ^9.0.0
-        version: 9.4.0
+        version: 9.5.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -789,7 +789,7 @@ importers:
         version: 6.3.1
       pino:
         specifier: ^9.0.0
-        version: 9.4.0
+        version: 9.5.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -976,7 +976,7 @@ importers:
         version: 6.3.1
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.5.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -1316,7 +1316,7 @@ importers:
         version: 5.0.0
       pino:
         specifier: ^9.0.0
-        version: 9.4.0
+        version: 9.5.0
       undici:
         specifier: ^6.9.0
         version: 6.20.1
@@ -1723,7 +1723,7 @@ importers:
         version: 1.2.8
       pino:
         specifier: ^8.19.0
-        version: 8.21.0
+        version: 9.5.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -1951,7 +1951,7 @@ importers:
         version: 6.3.1
       pino:
         specifier: ^9.0.0
-        version: 9.4.0
+        version: 9.5.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -2378,7 +2378,7 @@ importers:
         version: 8.0.1
       pino:
         specifier: ^9.2.0
-        version: 9.4.0
+        version: 9.5.0
       pino-pretty:
         specifier: ^11.0.0
         version: 11.2.2
@@ -2543,7 +2543,7 @@ importers:
         version: 1.2.8
       pino:
         specifier: ^9.4.0
-        version: 9.4.0
+        version: 9.5.0
       pino-pretty:
         specifier: ^11.2.2
         version: 11.2.2
@@ -8193,12 +8193,12 @@ packages:
     resolution: {integrity: sha512-LA6qKgeDMLr2ux2y/YiUt47EfgQ+S9LznBWOJdN3q1dx2sv0ziDLUBeVpyVv17TEcGCBuWf0zNtg3M5m1NhhWQ==}
     hasBin: true
 
-  pino@8.21.0:
-    resolution: {integrity: sha512-ip4qdzjkAyDDZklUaZkcRFb2iA118H9SgRh8yzTkSQK8HilsOJF7rSY8HoW5+I0M46AZgX/pxbprf2vvzQCE0Q==}
-    hasBin: true
-
   pino@9.4.0:
     resolution: {integrity: sha512-nbkQb5+9YPhQRz/BeQmrWpEknAaqjpAqRK8NwJpmrX/JHu7JuZC5G1CeAwJDJfGes4h+YihC6in3Q2nGb+Y09w==}
+    hasBin: true
+
+  pino@9.5.0:
+    resolution: {integrity: sha512-xSEmD4pLnV54t0NOUN16yCl7RIB1c5UUOse5HSyEXtBp+FgFQyPeDutc+Q2ZO7/22vImV7VfEjH/1zV2QuqvYw==}
     hasBin: true
 
   pkg-dir@4.2.0:
@@ -8905,6 +8905,9 @@ packages:
 
   sonic-boom@4.1.0:
     resolution: {integrity: sha512-NGipjjRicyJJ03rPiZCJYjwlsuP2d1/5QUviozRXC7S3WdVWNK5e3Ojieb9CCyfhq2UC+3+SRd9nG3I2lPRvUw==}
+
+  sonic-boom@4.2.0:
+    resolution: {integrity: sha512-INb7TM37/mAcsGmc9hyyI6+QR3rR1zVRu36B0NeGXKnOOLiZOfER5SA+N7X7k3yUYRzLWafduTDvJAfDswwEww==}
 
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
@@ -11673,7 +11676,7 @@ snapshots:
       graphql: 16.9.0
       mercurius: 15.1.0(graphql@16.9.0)
       metaline: 1.1.0
-      pino: 9.4.0
+      pino: 9.5.0
       undici: 6.20.1
     transitivePeerDependencies:
       - bufferutil
@@ -16769,7 +16772,7 @@ snapshots:
   pino-http@10.3.0:
     dependencies:
       get-caller-file: 2.0.5
-      pino: 9.4.0
+      pino: 9.5.0
       pino-std-serializers: 7.0.0
       process-warning: 4.0.0
 
@@ -16817,20 +16820,6 @@ snapshots:
       sonic-boom: 3.8.1
       thread-stream: 2.7.0
 
-  pino@8.21.0:
-    dependencies:
-      atomic-sleep: 1.0.0
-      fast-redact: 3.5.0
-      on-exit-leak-free: 2.1.2
-      pino-abstract-transport: 1.2.0
-      pino-std-serializers: 6.2.2
-      process-warning: 3.0.0
-      quick-format-unescaped: 4.0.4
-      real-require: 0.2.0
-      safe-stable-stringify: 2.5.0
-      sonic-boom: 3.8.1
-      thread-stream: 2.7.0
-
   pino@9.4.0:
     dependencies:
       atomic-sleep: 1.0.0
@@ -16843,6 +16832,20 @@ snapshots:
       real-require: 0.2.0
       safe-stable-stringify: 2.5.0
       sonic-boom: 4.1.0
+      thread-stream: 3.1.0
+
+  pino@9.5.0:
+    dependencies:
+      atomic-sleep: 1.0.0
+      fast-redact: 3.5.0
+      on-exit-leak-free: 2.1.2
+      pino-abstract-transport: 2.0.0
+      pino-std-serializers: 7.0.0
+      process-warning: 4.0.0
+      quick-format-unescaped: 4.0.4
+      real-require: 0.2.0
+      safe-stable-stringify: 2.5.0
+      sonic-boom: 4.2.0
       thread-stream: 3.1.0
 
   pkg-dir@4.2.0:
@@ -17532,7 +17535,7 @@ snapshots:
       abstract-logging: 2.0.1
       edtf: 4.6.0
       node-forge: 1.3.1
-      pino: 9.4.0
+      pino: 9.5.0
       sade: 1.8.1
 
   semgrator@0.3.0:
@@ -17720,6 +17723,10 @@ snapshots:
       atomic-sleep: 1.0.0
 
   sonic-boom@4.1.0:
+    dependencies:
+      atomic-sleep: 1.0.0
+
+  sonic-boom@4.2.0:
     dependencies:
       atomic-sleep: 1.0.0
 
