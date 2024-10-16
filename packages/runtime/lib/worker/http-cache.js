@@ -5,18 +5,17 @@ const { kITC } = require('./symbols')
 
 class RemoteCacheStore {
   get isFull () {
-    // const itc = globalThis[kITC]
-    // if (!itc) return undefined
-    // return await itc.send('isHttpCacheFull')
+    // TODO: make an itc call to the shared cache when interceptor supports
+    // an async isFull method
     return false
   }
 
-  async createReadStream (req) {
+  async createReadStream (request) {
     const itc = globalThis[kITC]
-    if (!itc) return undefined
+    if (!itc) return
 
-    const cachedValue = await itc.send('getHttpCacheValue', { req })
-    if (!cachedValue) return undefined
+    const cachedValue = await itc.send('getHttpCacheValue', { request })
+    if (!cachedValue) return
 
     const readable = new Readable({
       read () {}
@@ -32,21 +31,21 @@ class RemoteCacheStore {
     return readable
   }
 
-  createWriteStream (req, response) {
+  createWriteStream (request, response) {
     const itc = globalThis[kITC]
-    if (!itc) return undefined
+    if (!itc) throw new Error('Cannot write to cache without an ITC instance')
 
-    let data = ''
+    let payload = ''
 
     response.rawHeaders = response.rawHeaders.map(header => header.toString())
 
     return new Writable({
       write (chunk, encoding, callback) {
-        data += chunk
+        payload += chunk
         callback()
       },
       final (callback) {
-        itc.send('setHttpCacheValue', { req, opts: response, data })
+        itc.send('setHttpCacheValue', { request, response, payload })
         callback()
       }
     })
@@ -54,7 +53,7 @@ class RemoteCacheStore {
 
   deleteByOrigin (origin) {
     const itc = globalThis[kITC]
-    if (!itc) return
+    if (!itc) throw new Error('Cannot delete from cache without an ITC instance')
 
     itc.send('deleteHttpCacheValue', { origin })
   }

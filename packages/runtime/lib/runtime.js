@@ -866,11 +866,11 @@ class Runtime extends EventEmitter {
         getServiceMeta: this.getServiceMeta.bind(this),
         getServices: this.getServices.bind(this),
         isHttpCacheFull: () => this.#sharedHttpCache.isFull(),
-        getHttpCacheValue: opts => this.#sharedHttpCache.getValue(opts.req),
+        getHttpCacheValue: opts => this.#sharedHttpCache.getValue(opts.request),
         setHttpCacheValue: opts => this.#sharedHttpCache.setValue(
-          opts.req,
-          opts.opts,
-          opts.data
+          opts.request,
+          opts.response,
+          opts.payload
         ),
         deleteHttpCacheValue: opts => this.#sharedHttpCache.deleteValue(
           opts.origin
