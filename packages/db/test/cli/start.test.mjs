@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import { join } from 'desm'
 import { request } from 'undici'
 import { getConnectionInfo } from '../helper.js'
-import { connectDB, start } from './helper.js'
+import { connectDB, start, safeKill } from './helper.js'
 
 test('autostart', async (t) => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
@@ -128,7 +128,7 @@ test('autostart', async (t) => {
     }, 'pages response')
   }
 
-  child.kill('SIGINT')
+  await safeKill(child)
 })
 
 test('start command', async (t) => {
@@ -254,5 +254,5 @@ test('start command', async (t) => {
     }, 'pages response')
   }
 
-  child.kill('SIGINT')
+  await safeKill(child)
 })

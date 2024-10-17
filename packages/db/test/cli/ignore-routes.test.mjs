@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import { join } from 'desm'
 import { request } from 'undici'
 import { getConnectionInfo } from '../helper.js'
-import { connectDB, start } from './helper.js'
+import { connectDB, start, safeKill } from './helper.js'
 
 test('ignores openapi routes', async (t) => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
@@ -55,5 +55,5 @@ test('ignores openapi routes', async (t) => {
     assert.equal(statusCode, 404)
   }
 
-  child.kill('SIGINT')
+  await safeKill(child)
 })

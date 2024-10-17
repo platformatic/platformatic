@@ -1,4 +1,3 @@
-import os from 'node:os'
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { join } from 'node:path'
@@ -8,7 +7,7 @@ import stripAnsi from 'strip-ansi'
 import split from 'split2'
 import { urlDirname } from '../../lib/utils.js'
 import { getConnectionInfo } from '../helper.js'
-import { cliPath } from './helper.js'
+import { cliPath, safeKill } from './helper.js'
 
 test('should compile typescript plugin', async (t) => {
   const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin')
@@ -60,15 +59,7 @@ test('should compile typescript plugin with start command', async (t) => {
   })
 
   t.after(async () => {
-    if (os.platform() === 'win32') {
-      try {
-        await execa('taskkill', ['/pid', child.pid, '/f', '/t'])
-      } catch (err) {
-        console.error(`Failed to kill process ${child.pid})`)
-      }
-    } else {
-      child.kill('SIGINT')
-    }
+    await safeKill(child)
     await dropTestDB()
   })
 

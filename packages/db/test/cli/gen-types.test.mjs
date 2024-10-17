@@ -9,7 +9,7 @@ import { setTimeout } from 'node:timers/promises'
 import split from 'split2'
 import stripAnsi from 'strip-ansi'
 import { urlDirname } from '../../lib/utils.js'
-import { cliPath } from './helper.js'
+import { cliPath, safeKill } from './helper.js'
 
 let counter = 0
 
@@ -197,7 +197,7 @@ test('generate types on start', async t => {
 
   const child = execa('node', [cliPath, 'start'], { cwd })
   t.after(async () => {
-    child.kill('SIGINT')
+    await safeKill(child)
     await safeRemove(cwd)
   })
 
@@ -239,7 +239,7 @@ test('generate types on start in a different cwd', async t => {
   const pathToConfig = join(cwd, 'platformatic.db.json')
   const child = execa('node', [cliPath, 'start', '-c', pathToConfig])
   t.after(async () => {
-    child.kill('SIGINT')
+    await safeKill(child)
     await safeRemove(cwd)
   })
 
@@ -326,7 +326,7 @@ test('generate types on start while considering types directory', async t => {
 
   const child = execa('node', [cliPath, 'start'], { cwd })
   t.after(async () => {
-    child.kill('SIGINT')
+    await safeKill(child)
     await safeRemove(cwd)
   })
 

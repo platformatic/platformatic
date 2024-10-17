@@ -22,7 +22,7 @@ test('url-auth-headers with wrong values', async (t) => {
     errMessage = message
   }
 
-  equal(errName, 'Error')
+  equal(errName, 'ExecaError')
   ok(errMessage.includes('Command failed'))
 
   t.after(async () => { await app.close() })
@@ -52,6 +52,7 @@ app.listen({ port: 0 })
 `
   await fs.writeFile(join(dir, 'index.js'), toWrite)
   const app2 = execa('node', ['index.js'])
+  app2.catch(() => {})
   t.after(() => app2.kill())
   t.after(async () => { await app.close() })
 

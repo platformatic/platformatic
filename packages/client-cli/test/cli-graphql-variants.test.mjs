@@ -10,6 +10,7 @@ import { promises as fs, existsSync } from 'fs'
 import split from 'split2'
 import graphql from 'graphql'
 import { copy } from 'fs-extra'
+import { safeKill } from './helper.js'
 
 const env = { ...process.env, NODE_V8_COVERAGE: undefined }
 
@@ -64,7 +65,7 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const server2 = execa('node', ['index.js'], { env })
-  t.after(() => server2.kill())
+  t.after(() => safeKill(server2))
   t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
@@ -146,7 +147,7 @@ app.listen({ port: 0 });
   await copy(join(dir, 'uncanny-movies'), join(dir, 'build', 'uncanny-movies'))
 
   const server2 = execa('node', ['build/index.js'], { env })
-  t.after(() => server2.kill())
+  t.after(() => safeKill(server2))
   t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
@@ -211,7 +212,7 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const server2 = execa('node', ['index.js'], { env })
-  t.after(() => server2.kill())
+  t.after(() => safeKill(server2))
   t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
@@ -279,7 +280,7 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
 
   const server2 = execa('node', ['index.js'])
-  t.after(() => server2.kill())
+  t.after(() => safeKill(server2))
   t.after(async () => { await app.close() })
 
   const stream = server2.stdout.pipe(split(JSON.parse))

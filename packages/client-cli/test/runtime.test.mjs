@@ -10,6 +10,7 @@ import { execa } from 'execa'
 import { cp, writeFile, readFile } from 'node:fs/promises'
 import split from 'split2'
 import { once } from 'node:events'
+import { safeKill } from './helper.js'
 
 test('openapi client generation (javascript) via the runtime', async (t) => {
   const dir = await moveToTmpdir(after)
@@ -69,7 +70,7 @@ module.exports = async function (app, opts) {
   process.chdir(dir)
 
   const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'cli', 'cli.js'), 'start'])
-  t.after(() => app2.kill())
+  t.after(() => safeKill(app2))
 
   const stream = app2.stdout.pipe(split(JSON.parse))
   app2.stderr.pipe(process.stderr)
@@ -186,7 +187,8 @@ module.exports = async function (app, opts) {
   process.chdir(dir)
 
   const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'cli', 'cli.js'), 'start'])
-  t.after(() => app2.kill())
+  app2.catch(() => {})
+  t.after(() => safeKill(app2))
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -305,7 +307,8 @@ test('no platformatic.runtime.json', async (t) => {
   process.chdir(dir)
 
   const app = execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
-
+  app.catch(() => {})
+  t.after(() => safeKill(app))
   const onExit = once(app, 'exit')
 
   const stream = app.stdout.pipe(split())
@@ -377,7 +380,7 @@ module.exports = async function (app, opts) {
   process.chdir(dir)
 
   const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'cli', 'cli.js'), 'start'])
-  t.after(() => app2.kill())
+  t.after(() => safeKill(app2))
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -488,7 +491,7 @@ module.exports = async function (app, opts) {
   process.chdir(dir)
 
   const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'cli', 'cli.js'), 'start'])
-  t.after(() => app2.kill())
+  t.after(() => safeKill(app2))
 
   const stream = app2.stdout.pipe(split(JSON.parse))
   app2.stderr.pipe(process.stderr)

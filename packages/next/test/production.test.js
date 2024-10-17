@@ -22,7 +22,6 @@ const nextSSRFiles = ['services/frontend/.next/server/app/direct/route.js']
 const configurations = [
   { id: 'standalone', name: 'Next.js (standalone)', files: [...nextFiles], checks: [verifyFrontendOnRoot] },
   {
-    only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Next.js (in composer with prefix)',
     files: [...nextFiles, ...internalServicesFiles],
@@ -31,7 +30,7 @@ const configurations = [
   {
     only: isCIOnWindows,
     id: 'composer-with-external-proxy',
-    name: 'Next.js (in composer with external procy)',
+    name: 'Next.js (in composer with external proxy)',
     files: [...nextFiles, ...internalServicesFiles],
     checks: [verifyFrontendOnPrefixWithProxy, verifyPlatformaticComposerWithProxy, verifyPlatformaticServiceWithProxy]
   },
