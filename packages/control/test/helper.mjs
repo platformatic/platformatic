@@ -5,6 +5,7 @@ import { createRequire } from 'node:module'
 import { execa } from 'execa'
 import { Agent, setGlobalDispatcher } from 'undici'
 import split from 'split2'
+import os from 'node:os'
 
 setGlobalDispatcher(new Agent({
   keepAliveTimeout: 10,
@@ -60,6 +61,22 @@ export async function kill (runtime, signal = 'SIGKILL') {
   if (typeof runtime.exitCode === 'number') {
     return
   }
-  runtime.kill(signal)
+  safeKill(runtime, signal)
   await once(runtime, 'exit')
+}
+
+export async function safeKill (child, signal = 'SIGINT') {
+  child.catch(() => {})
+  child.kill('SIGINT')
+  if (os.platform() === 'win32') {
+    try {
+      await execa('wmic', ['process', 'where', `ParentProcessId=${child.pid}`, 'delete'])
+      await execa('wmic', ['process', 'where', `ProcessId=${child.pid}`, 'delete'])
+    } catch (err) {
+      if (err.stderr.indexOf('not found') === 0) {
+        console.error(`Failed to kill process ${child.pid}`)
+        console.error(err)
+      }
+    }
+  }
 }
