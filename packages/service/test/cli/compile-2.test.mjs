@@ -27,6 +27,7 @@ async function getCWD (t) {
 }
 
 function exitOnTeardown (child) {
+  child.catch(() => {})
   return async () => {
     await safeKill(child)
   }
@@ -40,6 +41,7 @@ test('start command should not compile typescript if `typescript` is false', asy
 
   const child = execa('node', [cliPath, 'start'], { cwd })
   t.after(exitOnTeardown(child))
+  await assert.rejects(child)
 
   const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
   try {

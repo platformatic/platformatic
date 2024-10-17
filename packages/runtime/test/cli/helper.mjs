@@ -18,6 +18,7 @@ export const cliPath = join(import.meta.url, '..', '..', 'runtime.mjs')
 
 export async function start (...args) {
   const child = execa(process.execPath, [cliPath, 'start', ...args])
+  child.catch(() => {})
   child.stderr.pipe(process.stdout)
 
   const { promise, resolve, reject } = withResolvers()

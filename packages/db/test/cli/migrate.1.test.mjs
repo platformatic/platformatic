@@ -24,6 +24,7 @@ test('migrate on start', async (t) => {
   )
 
   t.after(async () => {
+    child.catch(() => {})
     child.kill('SIGTERM')
     await db.dispose()
     await dropTestDB()
@@ -79,6 +80,9 @@ test('validate migration checksums', async (t) => {
   )
 
   t.after(async () => {
+    secondChild.catch(() => {})
+    firstChild.catch(() => {})
+
     secondChild.kill('SIGTERM')
     firstChild.kill('SIGTERM')
     await db.dispose()
@@ -126,6 +130,8 @@ test('do not validate migration checksums if not configured', async (t) => {
   secondChild.stderr.pipe(process.stderr)
 
   t.after(async () => {
+    secondChild.catch(() => {})
+    firstChild.catch(() => {})
     secondChild.kill('SIGTERM')
     firstChild.kill('SIGTERM')
     await db.dispose()
@@ -175,6 +181,7 @@ test('do not run migrations by default', async (t) => {
   )
 
   t.after(async () => {
+    firstChild.catch(() => {})
     firstChild.kill('SIGTERM')
     await db.dispose()
     await dropTestDB()

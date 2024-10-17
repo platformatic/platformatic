@@ -77,5 +77,5 @@ test('not load', async (t) => {
 test('no server', async (t) => {
   const { child, url } = await start(['-c', join(import.meta.url, '..', '..', 'fixtures', 'no-server', 'platformatic.service.json')])
   assert.match(url, /http:\/\/127.0.0.1:[0-9]+/)
-  child.kill('SIGINT')
+  safeKill(child)
 })

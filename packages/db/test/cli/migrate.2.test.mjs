@@ -72,6 +72,7 @@ test('start creates schema.lock if it is missing', { skip: true }, async (t) => 
   )
 
   t.after(async () => {
+    child.catch(() => {})
     child.kill('SIGTERM')
     await db.dispose()
     await dropTestDB()
@@ -114,6 +115,7 @@ test('start updates schema.lock with migrations autoApply', async (t) => {
   )
 
   t.after(async () => {
+    child.catch(() => {})
     child.kill('SIGTERM')
     await db.dispose()
     await dropTestDB()

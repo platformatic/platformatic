@@ -46,6 +46,7 @@ export async function start (commandOpts, exacaOpts = {}) {
 }
 
 export async function safeKill (child) {
+  child.catch(() => {})
   child.kill('SIGINT')
   if (os.platform() === 'win32') {
     try {
