@@ -12,6 +12,8 @@ import { NonZeroExitCode } from './errors.js'
 import { cleanBasePath } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
 
+const kITC = Symbol.for('plt.runtime.itc')
+
 export class BaseStackable {
   childManager
   #subprocess
@@ -49,7 +51,8 @@ export class BaseStackable {
     this.registerGlobals({
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
-      setBasePath: this.setBasePath.bind(this)
+      setBasePath: this.setBasePath.bind(this),
+      invalidateHttpCache: this.#invalidateHttpCache.bind(this)
     })
   }
 
@@ -311,5 +314,9 @@ export class BaseStackable {
     return format === 'json'
       ? await this.metricsRegistry.getMetricsAsJSON()
       : await this.metricsRegistry.metrics()
+  }
+
+  async #invalidateHttpCache (opts = {}) {
+    await globalThis[kITC].send('invalidateHttpCache', opts)
   }
 }

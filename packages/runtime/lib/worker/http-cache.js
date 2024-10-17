@@ -14,7 +14,9 @@ class RemoteCacheStore {
     const itc = globalThis[kITC]
     if (!itc) return
 
-    const cachedValue = await itc.send('getHttpCacheValue', { request })
+    const cachedValue = await itc.send('getHttpCacheValue', {
+      request: this.#sanitizeRequest(request)
+    })
     if (!cachedValue) return
 
     const readable = new Readable({
@@ -37,7 +39,8 @@ class RemoteCacheStore {
 
     let payload = ''
 
-    response.rawHeaders = response.rawHeaders.map(header => header.toString())
+    request = this.#sanitizeRequest(request)
+    response = this.#sanitizeResponse(response)
 
     return new Writable({
       write (chunk, encoding, callback) {
@@ -57,6 +60,23 @@ class RemoteCacheStore {
     if (!itc) throw new Error('Cannot delete from cache without an ITC instance')
 
     itc.send('deleteHttpCacheValue', { origin })
+    // TODO: return a Promise
+  }
+
+  #sanitizeRequest (request) {
+    return {
+      origin: request.origin,
+      method: request.method,
+      path: request.path,
+      headers: request.headers
+    }
+  }
+
+  #sanitizeResponse (response) {
+    return {
+      ...response,
+      rawHeaders: response.rawHeaders.map(header => header.toString())
+    }
   }
 }
 

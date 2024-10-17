@@ -891,6 +891,7 @@ class Runtime extends EventEmitter {
         deleteHttpCacheValue: opts => this.#sharedHttpCache.deleteValue(
           opts.origin
         ),
+        invalidateHttpCache: opts => this.invalidateHttpCache(opts),
       }
     })
     service[kITC].listen()

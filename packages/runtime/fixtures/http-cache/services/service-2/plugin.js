@@ -23,4 +23,9 @@ module.exports = async function (fastify) {
     const body = await res.body.text()
     return body
   })
+
+  fastify.post('/invalidate-cache', async (req) => {
+    const opts = req.body
+    await globalThis.platformatic.invalidateHttpCache(opts)
+  })
 }

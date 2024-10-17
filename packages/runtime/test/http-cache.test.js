@@ -211,3 +211,72 @@ test('should remove a url from an http cache', async (t) => {
     assert.strictEqual(counter, 2)
   }
 })
+
+test('should invalidate cache from another service', async (t) => {
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  const cacheTimeoutSec = 100
+
+  {
+    // Caching the response
+    const res = await request(entryUrl + '/service-1/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+
+    const cacheControl = res.headers['cache-control']
+    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+
+    const { counter } = await res.body.json()
+    assert.strictEqual(counter, 1)
+  }
+
+  {
+    // Checking if the response is cached
+    const res = await request(entryUrl + '/service-1/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+
+    const cacheControl = res.headers['cache-control']
+    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+
+    const { counter } = await res.body.json()
+    assert.strictEqual(counter, 1)
+  }
+
+  {
+    // Invalidating the cache from the service-2
+    const res = await request(entryUrl + '/service-2/invalidate-cache', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        urls: ['http://service-1.plt.local/cached-req-counter']
+      })
+    })
+    assert.strictEqual(res.statusCode, 200)
+  }
+
+  {
+    const res = await request(entryUrl + '/service-1/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+
+    const cacheControl = res.headers['cache-control']
+    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+
+    const { counter } = await res.body.json()
+    assert.strictEqual(counter, 2)
+  }
+})
