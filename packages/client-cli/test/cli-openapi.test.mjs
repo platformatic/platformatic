@@ -107,7 +107,7 @@ app.register(movies, {
 });
 
 app.get('/', async (req) => {
-  const res = await req.movies.getMovies()
+  const res = await req.movies.getMovies({})
   return res
 })
 
@@ -817,7 +817,7 @@ test('openapi client generation from YAML file', async (t) => {
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const typeData = await readFile(typeFile, 'utf-8')
 
-  equal(match(typeData, 'getMovies(req?: GetMoviesRequest): Promise<GetMoviesResponses>;'), true)
+  equal(match(typeData, 'getMovies(req: GetMoviesRequest): Promise<GetMoviesResponses>;'), true)
 })
 
 test('nested optional parameters are correctly identified', async (t) => {
@@ -889,7 +889,7 @@ test('openapi client generation (javascript) from file with fullRequest, fullRes
 `), true)
     equal(data.includes(`
   export type Full = {
-    postHello(req?: PostHelloRequest): Promise<PostHelloResponses>;
+    postHello(req: PostHelloRequest): Promise<PostHelloResponses>;
   }`), true)
     const implementationFile = join(dir, 'full', 'full.cjs')
     const implementationData = await readFile(implementationFile, 'utf-8')
@@ -956,7 +956,7 @@ test('do not generate implementation file if in platformatic service', async (t)
 `), true)
     equal(data.includes(`
   export type Full = {
-    postHello(req?: PostHelloRequest): Promise<PostHelloResponses>;
+    postHello(req: PostHelloRequest): Promise<PostHelloResponses>;
   }`), true)
   }
 })
@@ -1089,7 +1089,7 @@ test('requestbody as array', async (t) => {
 
   equal(data.includes(`
   export type Movies = {
-    postFoobar(req?: PostFoobarRequest[]): Promise<PostFoobarResponses>;
+    postFoobar(req: PostFoobarRequest[]): Promise<PostFoobarResponses>;
   }
 `), true)
   equal(data.includes('export type PostFoobarRequest = Array<{ \'id\'?: string; \'title\'?: string }>'), true)
