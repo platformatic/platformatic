@@ -103,7 +103,7 @@ test('no cwd', async (t) => {
   })
 
   t.after(async () => {
-    child.kill('SIGINT')
+    await safeKill(child)
     await dropTestDB()
   })
 
@@ -201,7 +201,7 @@ test('do not restart on save', async (t) => {
   // We need this timer to allow the debounce logic to run its course
   await setTimeout(1000)
 
-  child.kill('SIGINT')
+  await safeKill(child)
 
   for await (const data of splitter) {
     const parsed = JSON.parse(data)
