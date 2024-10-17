@@ -8,6 +8,7 @@ import split from 'split2'
 import { once } from 'events'
 import { getConnectionInfo } from '../helper.js'
 import { cliPath, connectDB, getFixturesConfigFileLocation } from './helper.js'
+import { safeKill } from './helper.js'
 
 test('migrate on start', async (t) => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
@@ -24,8 +25,7 @@ test('migrate on start', async (t) => {
   )
 
   t.after(async () => {
-    child.catch(() => {})
-    child.kill('SIGTERM')
+    await safeKill(child)
     await db.dispose()
     await dropTestDB()
   })
@@ -80,11 +80,8 @@ test('validate migration checksums', async (t) => {
   )
 
   t.after(async () => {
-    secondChild.catch(() => {})
-    firstChild.catch(() => {})
-
-    secondChild.kill('SIGTERM')
-    firstChild.kill('SIGTERM')
+    await safeKill(secondChild, 'SIGTERM')
+    await safeKill(firstChild, 'SIGTERM')
     await db.dispose()
     await dropTestDB()
   })
@@ -130,10 +127,8 @@ test('do not validate migration checksums if not configured', async (t) => {
   secondChild.stderr.pipe(process.stderr)
 
   t.after(async () => {
-    secondChild.catch(() => {})
-    firstChild.catch(() => {})
-    secondChild.kill('SIGTERM')
-    firstChild.kill('SIGTERM')
+    await safeKill(secondChild, 'SIGTERM')
+    await safeKill(firstChild, 'SIGTERM')
     await db.dispose()
     await dropTestDB()
   })
@@ -156,6 +151,7 @@ test('throws if migrations directory does not exist', async (t) => {
       },
     }
   )
+  child.catch(() => {})
 
   const output = child.stderr.pipe(split())
   const [data] = await once(output, 'data')
@@ -181,8 +177,7 @@ test('do not run migrations by default', async (t) => {
   )
 
   t.after(async () => {
-    firstChild.catch(() => {})
-    firstChild.kill('SIGTERM')
+    await safeKill(firstChild, 'SIGTERM')
     await db.dispose()
     await dropTestDB()
   })
@@ -249,7 +244,7 @@ test('migrate creates a schema.lock file', async (t) => {
   )
 
   t.after(async () => {
-    child.kill('SIGTERM')
+    safeKill(child, 'SIGTERM')
     await db.dispose()
     await dropTestDB()
 
