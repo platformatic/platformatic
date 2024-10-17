@@ -42,6 +42,10 @@ class SharedCacheStore {
   deleteByOrigin (origin) {
     return this.#cacheStore.deleteByOrigin(origin)
   }
+
+  deleteByOriginAndPath (origin, path) {
+    return this.#cacheStore.deleteByOriginAndPath(origin, path)
+  }
 }
 
 module.exports = { SharedCacheStore }

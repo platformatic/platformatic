@@ -756,6 +756,20 @@ class Runtime extends EventEmitter {
     return createReadStream(filePath)
   }
 
+  async invalidateHttpCache (options = {}) {
+    if (!this.#sharedHttpCache) return
+
+    const urls = options.urls ?? []
+
+    const promises = []
+    for (const url of urls) {
+      const { origin, pathname } = new URL(url)
+      promises.push(this.#sharedHttpCache.deleteByOriginAndPath(origin, pathname))
+    }
+
+    await Promise.all(promises)
+  }
+
   #updateStatus (status) {
     this.#status = status
     this.emit(status)

@@ -152,3 +152,62 @@ test('should use a custom cache storage', async (t) => {
   const { counter } = await res.body.json()
   assert.strictEqual(counter, 1)
 })
+
+test('should remove a url from an http cache', async (t) => {
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  const cacheTimeoutSec = 100
+
+  {
+    // Caching the response
+    const res = await request(entryUrl + '/service-1/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+
+    const cacheControl = res.headers['cache-control']
+    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+
+    const { counter } = await res.body.json()
+    assert.strictEqual(counter, 1)
+  }
+
+  {
+    // Checking if the response is cached
+    const res = await request(entryUrl + '/service-1/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+
+    const cacheControl = res.headers['cache-control']
+    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+
+    const { counter } = await res.body.json()
+    assert.strictEqual(counter, 1)
+  }
+
+  await app.invalidateHttpCache({
+    urls: ['http://service-1.plt.local/cached-req-counter']
+  })
+
+  {
+    const res = await request(entryUrl + '/service-1/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+
+    const cacheControl = res.headers['cache-control']
+    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+
+    const { counter } = await res.body.json()
+    assert.strictEqual(counter, 2)
+  }
+})
