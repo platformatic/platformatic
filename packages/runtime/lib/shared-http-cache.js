@@ -5,7 +5,7 @@ const cacheInterceptor = require('@platformatic/undici-cache-interceptor')
 class SharedCacheStore {
   #cacheStore
 
-  constructor (httpCacheConfig) {
+  constructor (httpCacheConfig = {}) {
     const { store, ...storeConfig } = httpCacheConfig
 
     const CacheStore = store
