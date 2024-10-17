@@ -4,7 +4,7 @@ import { join } from 'desm'
 import { request } from 'undici'
 import { execa } from 'execa'
 import { getConnectionInfo } from '../helper.js'
-import { start, cliPath, connectDB } from './helper.js'
+import { start, cliPath, connectDB, safeKill } from './helper.js'
 
 test('env white list', async (t) => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
@@ -51,7 +51,7 @@ test('env white list', async (t) => {
     assert.equal(body.data.savePage.title, 'Hello')
   }
 
-  child.kill('SIGINT')
+  await safeKill(child)
 })
 
 test('env white list default values', async (t) => {
@@ -100,7 +100,7 @@ test('env white list default values', async (t) => {
     assert.equal(body.data.savePage.title, 'Hello')
   }
 
-  child.kill('SIGINT')
+  await safeKill(child)
 })
 
 test('env white list schema', async (t) => {

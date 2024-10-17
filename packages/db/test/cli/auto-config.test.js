@@ -6,6 +6,7 @@ const { join } = require('node:path')
 const { request } = require('undici')
 const { getConnectionInfo } = require('../helper')
 const { start, connectDB } = require('./helper.js')
+const { safeKill } = require('./helper.js')
 
 const fileTypes = ['yaml', 'yml', 'toml', 'tml', 'json', 'json5']
 for (const fileType of fileTypes) {
@@ -129,6 +130,6 @@ for (const fileType of fileTypes) {
       }, 'pages response')
     }
 
-    child.kill('SIGINT')
+    await safeKill(child)
   })
 }

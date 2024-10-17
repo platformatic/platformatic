@@ -10,7 +10,7 @@ import stripAnsi from 'strip-ansi'
 import { request } from 'undici'
 import { urlDirname } from '../../lib/utils.js'
 import { getConnectionInfo } from '../helper.js'
-import { cliPath, start } from './helper.js'
+import { cliPath, start, safeKill } from './helper.js'
 
 test('seed and start', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
@@ -46,7 +46,7 @@ test('seed and start', async t => {
   })
 
   t.after(async () => {
-    child.kill('SIGINT')
+    await safeKill(child)
     await dropTestDB()
   })
 
@@ -213,7 +213,7 @@ test('seed and start from cwd', async t => {
   })
 
   t.after(async () => {
-    child.kill('SIGINT')
+    await safeKill(child)
     await dropTestDB()
   })
 
