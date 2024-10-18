@@ -503,25 +503,16 @@ test('do not set bodies for methods that should not have them', async t => {
 
 test('multipart/form-data', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'sample-service')
-  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
-  await cp(fixtureDirPath, tmpDir, { recursive: true })
-
-  try {
-    await unlink(join(fixtureDirPath, 'db.sqlite'))
-  } catch {
-    // noop
-  }
-  const app = await buildService(join(tmpDir, 'platformatic.json'))
+  const app = await buildService(join(fixtureDirPath, 'platformatic.json'))
 
   t.after(async () => {
     await app.close()
-    await safeRemove(tmpDir)
   })
   await app.start()
 
   const client = await buildOpenAPIClient({
     url: `${app.url}/`,
-    path: join(tmpDir, 'openapi.json')
+    path: join(fixtureDirPath, 'openapi.json')
   })
   const bodyPayload = {
     title: 'The Matrix',

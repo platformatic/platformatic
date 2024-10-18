@@ -251,7 +251,6 @@ test('req decorator with OpenAPI', async (t) => {
   })
 
   const response = res.json()
-  console.log(response)
 
   assert.equal(res.statusCode, 200)
   assert.deepEqual(res.json(), {

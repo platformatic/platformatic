@@ -233,14 +233,16 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       }
       if (canHaveBody) {
         const bodyType = getRequestBodyContentType(methodMeta)
-        requestOptions.headers['content-type'] = bodyType
         if (bodyType === 'multipart/form-data') {
+          // do not attach the header, undici will make it with
+          // the form data boundary value
           const fd = new FormData()
           Object.keys(body).forEach((k) => {
             fd.append(k, JSON.stringify(body[k]))
           })
           requestOptions.body = fd
         } else {
+          requestOptions.headers['content-type'] = bodyType
           requestOptions.body = JSON.stringify(body)
         }
       }
