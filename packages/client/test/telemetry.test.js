@@ -51,19 +51,19 @@ test('telemetry correctly propagates from a service client to a server for an Op
   app.register(telemetry, {
     serviceName: 'test-client',
     exporter: {
-      type: 'memory',
-    },
+      type: 'memory'
+    }
   })
 
   await app.register(client, {
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
-    name: 'movies',
+    name: 'movies'
   })
 
   app.post('/', async req => {
     const movie = await req.movies.createMovie({
-      title: 'The Matrix',
+      title: 'The Matrix'
     })
 
     return movie
@@ -71,7 +71,7 @@ test('telemetry correctly propagates from a service client to a server for an Op
 
   await app.inject({
     method: 'POST',
-    url: '/',
+    url: '/'
   })
 
   const { exporters } = app.openTelemetry
@@ -127,19 +127,19 @@ test('telemetry correctly propagates from a generic client through a service cli
   app.register(telemetry, {
     serviceName: 'test-client',
     exporter: {
-      type: 'memory',
-    },
+      type: 'memory'
+    }
   })
 
   await app.register(client, {
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
-    name: 'movies',
+    name: 'movies'
   })
 
   app.post('/', async req => {
     const movie = await req.movies.createMovie({
-      title: 'The Matrix',
+      title: 'The Matrix'
     })
     return movie
   })
@@ -152,8 +152,8 @@ test('telemetry correctly propagates from a generic client through a service cli
     method: 'POST',
     url: '/',
     headers: {
-      traceparent,
-    },
+      traceparent
+    }
   })
 
   const { exporters } = app.openTelemetry
@@ -212,13 +212,13 @@ test('telemetry correctly propagates from a service client to a server for a Gra
   app.register(telemetry, {
     serviceName: 'test-client',
     exporter: {
-      type: 'memory',
-    },
+      type: 'memory'
+    }
   })
 
   await app.register(client, {
     type: 'graphql',
-    url: `${targetApp.url}/graphql`,
+    url: `${targetApp.url}/graphql`
   })
 
   app.post('/', async req => {
@@ -232,15 +232,15 @@ test('telemetry correctly propagates from a service client to a server for a Gra
         }
       `,
       variables: {
-        title: 'The Matrix',
-      },
+        title: 'The Matrix'
+      }
     })
     return movie
   })
 
   await app.inject({
     method: 'POST',
-    url: '/',
+    url: '/'
   })
 
   const { exporters } = app.openTelemetry

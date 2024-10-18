@@ -6,7 +6,7 @@ export function processGraphQL ({ schema, name, folder, url }) {
   schema = schema.__schema
   return {
     types: generateTypesFromGraphQL({ schema, name }),
-    implementation: generateImplementationFromGraqhQL({ schema, name, url }),
+    implementation: generateImplementationFromGraqhQL({ schema, name, url })
   }
 }
 
@@ -15,7 +15,7 @@ const skip = new Set([
   'Mutation',
   'Subscription',
   'Boolean',
-  'String',
+  'String'
 ])
 
 function generateTypesFromGraphQL ({ schema, name }) {
@@ -25,7 +25,7 @@ function generateTypesFromGraphQL ({ schema, name }) {
   const writer = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
     useTabs: false,
-    useSingleQuote: true,
+    useSingleQuote: true
   })
 
   writer.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
@@ -103,7 +103,7 @@ function generateImplementationFromGraqhQL ({ name, url }) {
   const writer = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
     useTabs: false,
-    useSingleQuote: true,
+    useSingleQuote: true
   })
 
   // TODO support esm
