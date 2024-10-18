@@ -1111,7 +1111,7 @@ test('requestBody and params should generate a full request', async (t) => {
 `), true)
 })
 
-test.only('support formdata', async (t) => {
+test('support formdata', async (t) => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'multipart-formdata-openapi.json')

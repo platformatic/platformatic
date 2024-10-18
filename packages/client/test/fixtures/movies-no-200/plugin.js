@@ -9,7 +9,7 @@ module.exports = async function (app) {
   app.get('/non-standard', async (request, reply) => {
     return reply.status(470).send({
       foo: 'foobar',
-      bar: 'bazbaz',
+      bar: 'bazbaz'
     })
   })
 }

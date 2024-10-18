@@ -225,15 +225,24 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
         method,
         headers: {
           ...headers,
-          ...telemetryHeaders,
+          ...telemetryHeaders
         },
         throwOnError,
         bodyTimeout,
-        headersTimeout,
+        headersTimeout
       }
       if (canHaveBody) {
-        requestOptions.headers['content-type'] = 'application/json; charset=utf-8'
-        requestOptions.body = JSON.stringify(body)
+        const bodyType = getRequestBodyContentType(methodMeta)
+        requestOptions.headers['content-type'] = bodyType
+        if (bodyType === 'multipart/form-data') {
+          const fd = new FormData()
+          Object.keys(body).forEach((k) => {
+            fd.append(k, JSON.stringify(body[k]))
+          })
+          requestOptions.body = fd
+        } else {
+          requestOptions.body = JSON.stringify(body)
+        }
       }
       res = await request(urlToCall, requestOptions)
       let responseBody
@@ -276,7 +285,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
         return {
           statusCode: res.statusCode,
           headers: res.headers,
-          body: responseBody,
+          body: responseBody
         }
       }
       return responseBody
@@ -288,10 +297,19 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
     }
   }
 }
+function getRequestBodyContentType (methodMetadata) {
+  let output = 'application/json; charset=utf-8'
+  if (methodMetadata.requestBody && methodMetadata.requestBody.content) {
+    if (methodMetadata.requestBody.content['multipart/form-data']) {
+      output = 'multipart/form-data'
+    }
+  }
+  return output
+}
 function createErrorResponse (message) {
   return {
     statusCode: 500,
-    message,
+    message
   }
 }
 function sanitizeContentType (contentType) {
@@ -327,7 +345,7 @@ async function graphql (url, log, headers, query, variables, openTelemetry, tele
   headers = {
     ...headers,
     ...telemetryHeaders,
-    'content-type': 'application/json; charset=utf-8',
+    'content-type': 'application/json; charset=utf-8'
   }
 
   let res
@@ -337,8 +355,8 @@ async function graphql (url, log, headers, query, variables, openTelemetry, tele
       headers,
       body: JSON.stringify({
         query,
-        variables,
-      }),
+        variables
+      })
     })
 
     const json = await res.body.json()
@@ -390,7 +408,7 @@ async function buildGraphQLClient (options, openTelemetry, logger = abstractLogg
 
   return {
     graphql: wrapGraphQLClient(options.url, openTelemetry, logger),
-    [kHeaders]: options.headers || {},
+    [kHeaders]: options.headers || {}
   }
 }
 
@@ -445,7 +463,7 @@ async function plugin (app, opts) {
 
 plugin[Symbol.for('skip-override')] = true
 plugin[Symbol.for('plugin-meta')] = {
-  name: '@platformatic/client',
+  name: '@platformatic/client'
 }
 
 module.exports = plugin
