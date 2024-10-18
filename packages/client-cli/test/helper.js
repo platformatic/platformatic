@@ -7,7 +7,7 @@ const { createDirectory, safeRemove } = require('@platformatic/utils')
 setGlobalDispatcher(
   new Agent({
     keepAliveMaxTimeout: 1,
-    keepAliveTimeout: 1,
+    keepAliveTimeout: 1
   })
 )
 

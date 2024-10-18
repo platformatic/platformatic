@@ -5,7 +5,7 @@ module.exports = async function (app) {
   app.get('/custom-swagger', async (req, res) => {
     const docs = await app.inject({
       url: '/documentation/json',
-      method: 'GET',
+      method: 'GET'
     })
     return await docs.json()
   })
@@ -19,14 +19,14 @@ module.exports = async function (app) {
           dateTimeReq: { type: 'string', format: 'date-time' },
           otherDateReq: { type: 'string', format: 'date' },
           nullableDateReq: { type: 'string', format: 'date', nullable: true },
-          normalStringReq: { type: 'string' },
+          normalStringReq: { type: 'string' }
         },
-        required: ['id', 'title'],
+        required: ['id', 'title']
       },
       response: {
         302: {
           type: 'object',
-          properties: {},
+          properties: {}
         },
         400: {
           type: 'object',
@@ -35,11 +35,11 @@ module.exports = async function (app) {
             dateTimeRes: { type: 'string', format: 'date-time' },
             otherDateRes: { type: 'string', format: 'date' },
             nullableDateRes: { type: 'string', format: 'date', nullable: true },
-            normalStringRes: { type: 'string' },
-          },
-        },
-      },
-    },
+            normalStringRes: { type: 'string' }
+          }
+        }
+      }
+    }
   }, async (request, reply) => {
     return reply.code(302).redirect('https://google.com')
   })
