@@ -1,9 +1,8 @@
 # Deploy Platformatic Applications to Fly.io
 
-## Deploying a Platformatic Runtime Application 
+## Deploying a Platformatic Watt Application 
 
 This guide provides instructions on deploying a Platformatic Watt application to Fly.io. With a Watt application, you are deploying your entire application, including all services in the `web` folder.
-
 
 ### Dockerfile for JavaScript Watt Application
 
@@ -108,7 +107,7 @@ Start with your local environment. Create a `.env` file and put the following:
 PORT=3042
 PLT_SERVER_HOSTNAME=127.0.0.1
 PLT_SERVER_LOGGER_LEVEL=debug
-DATABASE_URL=sqlite://.platformatic/data/movie-quotes.runtime
+DATABASE_URL=sqlite://.platformatic/data/movie-quotes
 ```
 
 Avoid accidental leaks by ignoring your `.env` file:
@@ -124,7 +123,7 @@ This same configuration needs to be added to `fly.toml`:
   PORT = 8080
   PLT_SERVER_HOSTNAME = "0.0.0.0"
   PLT_SERVER_LOGGER_LEVEL = "info"
-  DATABASE_URL = "sqlite:///app/.platformatic/data/movie-quotes.runtime"
+  DATABASE_URL = "sqlite:///app/.platformatic/data/movie-quotes"
 ```
 
 ### Deploy Application 
