@@ -36,13 +36,13 @@ CMD npm run start
 ```
 
 ### Explanation
-**WORKDIR /app**: Sets the working directory inside the container to /app, where all commands will be executed.
-**RUN --mount=type=bind,source=./package.json,target=./package.json**: Installs dependencies for the main application using a [bind mount](https://docs.docker.com/engine/storage/bind-mounts/) for the `package.json` file.
-**--mount=type=cache,target=/root/.npm**: Caches the node_modules in the specified directory to speed up subsequent builds.
-**COPY . .**: Copies all remaining files and folders into the /app directory in the container.
-**RUN npm run build**: Executes the build script defined in the `package.json`, which typically compiles assets and prepares the application for production.
-**EXPOSE 3042**: Exposes port 3042, allowing external access to the application running in the container.
-**CMD npm run start**: Specifies the command to start the application, using the start script defined in the `package.json`.
+- **WORKDIR /app**: Sets the working directory inside the container to /app, where all commands will be executed.
+- **RUN --mount=type=bind,source=./package.json,target=./package.json**: Installs dependencies for the main application using a [bind mount](https://docs.docker.com/engine/storage/bind-mounts/) for the `package.json` file.
+- **--mount=type=cache,target=/root/.npm**: Caches the node_modules in the specified directory to speed up subsequent builds.
+- **COPY . .**: Copies all remaining files and folders into the /app directory in the container.
+- **RUN npm run build**: Executes the build script defined in the `package.json`, which typically compiles assets and prepares the application for production.
+- **EXPOSE 3042**: Exposes port 3042, allowing external access to the application running in the container.
+- **CMD npm run start**: Specifies the command to start the application, using the start script defined in the `package.json`.
 
 It's important to create a `.dockerignore` file in your project's root directory. This file should exclude unnecessary files and directories, such as `node_modules`, `dist`, `.env`, and any other files that are not required in the Docker image. By doing so, you can avoid copying large and redundant files into the Docker image, which can significantly reduce the image size and build time.
 
