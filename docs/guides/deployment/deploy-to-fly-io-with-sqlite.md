@@ -2,53 +2,48 @@
 
 ## Deploying a Platformatic Runtime Application 
 
-This guide provides instructions on deploying a Platformatic Runtime application to Fly.io. With a runtime application, you are deploying your entire application, including all services in the `services` folder.
+This guide provides instructions on deploying a Platformatic Watt application to Fly.io. With a Watt application, you are deploying your entire application, including all services in the `web` folder.
 
 
-### Dockerfile for Runtime Application
+### Dockerfile for JavaScript Watt Application
 
-Here is an example Dockerfile for a Platformatic Runtime application:
+Here is an example Dockerfile for a Platformatic JavaScript Watt application:
 
 ```dockerfile
-FROM node:20-alpine AS builder
-
-ENV APP_HOME=/home/app/node/
-WORKDIR $APP_HOME
-
-COPY package.json package-lock.json ./
-COPY services/devotion/package.json services/devotion/package.json
-
-RUN npm ci 
-
-COPY . .
-
-RUN npx platformatic compile
-
-FROM node:20-alpine
-
-ENV APP_HOME=/home/app/node/
-WORKDIR $APP_HOME
-
-COPY package.json package-lock.json ./
-RUN npm ci --only=production
-
-COPY --from=builder $APP_HOME/dist ./dist
-
+ARG NODE_VERSION=20
+FROM node:${NODE_VERSION}-alpine 
+WORKDIR /app
+COPY package.json .
+COPY ./web/composer/package.json ./web/composer/package.json  
+COPY ./web/db/package.json ./web/db/package.json 
+COPY ./web/frontend/package.json ./web/frontend/package.json 
+RUN --mount=type=bind,source=./package.json,target=./package.json \
+    # --mount=type=bind,source=./package-lock.json,target=./package-lock.json \
+    --mount=type=cache,target=/root/.npm \
+    npm install
+RUN --mount=type=bind,source=./web/composer/package.json,target=./web/composer/package.json \
+    --mount=type=cache,target=/root/.npm \
+    npm install
+RUN --mount=type=bind,source=./web/db/package.json,target=./web/db/package.json \
+    --mount=type=cache,target=/root/.npm \
+    npm install
+RUN --mount=type=bind,source=./web/frontend/package.json,target=./web/frontend/package.json \
+    --mount=type=cache,target=/root/.npm \
+    npm install
+COPY . . 
+RUN npm run build
 EXPOSE 3042
-
-CMD ["node", "node_modules/.bin/platformatic", "start"]
+CMD npm run start 
 ```
 
 ### Explanation
-- **ARG VITE_AI_URL and ENV VITE_AI_URL**: Sets up environment variables for your application.
-- **WORKDIR $APP_HOM**E: Sets the working directory inside the container.
-- **COPY commands**: Copies the necessary files and folders into the container.
-- **RUN npm install**: Installs the dependencies for all services.
-- **RUN cd services/...**: Installs dependencies and builds each service in the services folder.
-- **EXPOSE 3042**: Exposes the application port.
-- **CMD ["npm", "start"]**: Specifies the command to run all services in the application.
-- **FROM node:20-alpine**: Specifies the base image for the runtime image.
-- **RUN npm ci**: Installs all dependencies including development dependencies 
+**WORKDIR /app**: Sets the working directory inside the container to /app, where all commands will be executed.
+**RUN --mount=type=bind,source=./package.json,target=./package.json**: Installs dependencies for the main application using a [bind mount](https://docs.docker.com/engine/storage/bind-mounts/) for the `package.json` file.
+**--mount=type=cache,target=/root/.npm**: Caches the node_modules in the specified directory to speed up subsequent builds.
+**COPY . .**: Copies all remaining files and folders into the /app directory in the container.
+**RUN npm run build**: Executes the build script defined in the `package.json`, which typically compiles assets and prepares the application for production.
+**EXPOSE 3042**: Exposes port 3042, allowing external access to the application running in the container.
+**CMD npm run start**: Specifies the command to start the application, using the start script defined in the `package.json`.
 
 It's important to create a `.dockerignore` file in your project's root directory. This file should exclude unnecessary files and directories, such as `node_modules`, `dist`, `.env`, and any other files that are not required in the Docker image. By doing so, you can avoid copying large and redundant files into the Docker image, which can significantly reduce the image size and build time.
 
@@ -66,19 +61,31 @@ dist
 
 ### TypeScript Compilation for Deployment
 
-To compile your TypeScript files before deployment, update your platformatic.runtime.json to include TypeScript settings
+To compile your TypeScript files before deployment, create a `tsconfig.json` file with the following TypeScript settings:
 
 ```json
 {
-  "plugins": {
-    "paths": [{
-      "path": "plugins",
-      "encapsulate": false
-    }, "routes"],
-    "typescript": {
-      "enabled": "{PLT_TYPESCRIPT}",
-      "outDir": "dist"
-    }
+  "compilerOptions": {
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "target": "es2020",
+    "sourceMap": true,
+    "pretty": true,
+    "noEmitOnError": true,
+    "incremental": true,
+    "strict": true,
+    "outDir": "dist",
+    "skipLibCheck": true
+  },
+  "watchOptions": {
+    "watchFile": "fixedPollingInterval",
+    "watchDirectory": "fixedPollingInterval",
+    "fallbackPolling": "dynamicPriority",
+    "synchronousWatchDirectory": true,
+    "excludeDirectories": [
+      "**/node_modules",
+      "dist"
+    ]
   }
 }
 ```
@@ -88,7 +95,7 @@ Ensure `PLT_TYPESCRIPT=true` in your `.env` file for local development. For depl
 Compile your TypeScript source files with:
 
 ```sh
-plt runtime compile
+npx platformatic compile
 ```
 
 This compiles your TypeScript files and outputs them to the specified `outDir`.
@@ -250,19 +257,31 @@ This same configuration needs to added to `fly.toml`:
 
 ### TypeScript Compilation for Deployment 
 
-To compile your TypeScript files before deployment, update your `platformatic.json` to include TypeScript settings:
+To compile your TypeScript files before deployment, create a `tsconfig.json` file with the following TypeScript settings:
 
 ```json
 {
-  "plugins": {
-    "paths": [{
-      "path": "plugins",
-      "encapsulate": false
-    }, "routes"],
-    "typescript": {
-      "enabled": "{PLT_TYPESCRIPT}",
-      "outDir": "dist"
-    }
+  "compilerOptions": {
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "target": "es2020",
+    "sourceMap": true,
+    "pretty": true,
+    "noEmitOnError": true,
+    "incremental": true,
+    "strict": true,
+    "outDir": "dist",
+    "skipLibCheck": true
+  },
+  "watchOptions": {
+    "watchFile": "fixedPollingInterval",
+    "watchDirectory": "fixedPollingInterval",
+    "fallbackPolling": "dynamicPriority",
+    "synchronousWatchDirectory": true,
+    "excludeDirectories": [
+      "**/node_modules",
+      "dist"
+    ]
   }
 }
 ```
