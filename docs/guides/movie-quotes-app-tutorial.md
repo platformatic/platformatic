@@ -666,7 +666,7 @@ Now we can add a `cors` configuration object in our API's configuration file,
 // highlight-start
     "cors": {
       "origin": "{PLT_SERVER_CORS_ORIGIN}"
-    }=
+    }
 // highlight-end
   },
   ...
