@@ -202,6 +202,10 @@ class Runtime extends EventEmitter {
     return this.#url
   }
 
+  getRuntimeStatus () {
+    return this.#status
+  }
+
   async close (fromManagementApi = false, silent = false) {
     this.#updateStatus('closing')
 
