@@ -84,11 +84,6 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
       const writeContentOutput = writeContent(bodyWriter, requestBody.content, schema, addedProps, 'req', currentFullRequest ? 'body' : null)
       isRequestArray = writeContentOutput.isArray
       isStructuredType = writeContentOutput.isStructuredType
-    } else {
-      if (bodyWriter.getLength() === 0) {
-        // no body has been written, let's put a fallback 'unknown' value
-        bodyWriter.write('unknown')
-      }
     }
 
     if (isStructuredType || currentFullRequest || !isRequestArray) {
