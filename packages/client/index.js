@@ -13,7 +13,7 @@ const { createHash } = require('node:crypto')
 const validateFunctionCache = {}
 const errors = require('./errors')
 const camelCase = require('camelcase')
-
+const { FormData } = require('undici')
 function generateOperationId (path, method, methodMeta, all) {
   let operationId = null
   // use methodMeta.operationId only if it's present AND it is a valid string that can be
@@ -181,7 +181,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
         }
       }
     } else {
-      body = { ...args } || '' // shallow copy
+      body = args instanceof FormData ? args : { ...args } || '' // shallow copy
       for (const param of pathParams) {
         if (body[param.name] === undefined) {
           throw new Error('missing required parameter ' + param.name)
@@ -234,13 +234,11 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       if (canHaveBody) {
         const bodyType = getRequestBodyContentType(methodMeta)
         if (bodyType === 'multipart/form-data') {
-          // do not attach the header, undici will make it with
-          // the form data boundary value
-          const fd = new FormData()
-          Object.keys(body).forEach((k) => {
-            fd.append(k, JSON.stringify(body[k]))
-          })
-          requestOptions.body = fd
+          if (body instanceof FormData) {
+            requestOptions.body = body
+          } else {
+            throw new errors.FormDataRequiredError(`${method} ${path}`)
+          }
         } else {
           requestOptions.headers['content-type'] = bodyType
           requestOptions.body = JSON.stringify(body)
@@ -299,11 +297,25 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
     }
   }
 }
+
+// function getFileParametersInRequestBody(methodMetadata) {
+//   const bodyType = getRequestBodyContentType(methodMetadata)
+//   if (bodyType === 'multipart/form-data') {
+//     const schema = methodMetadata[bodyType].content.schema
+//   }
+// }
 function getRequestBodyContentType (methodMetadata) {
-  let output = 'application/json; charset=utf-8'
+  let output = null
+  if (!methodMetadata.requestBody) {
+    return 'application/json'
+  }
   if (methodMetadata.requestBody && methodMetadata.requestBody.content) {
     if (methodMetadata.requestBody.content['multipart/form-data']) {
       output = 'multipart/form-data'
+    }
+
+    if (methodMetadata.requestBody.content['application/json']) {
+      output = 'application/json'
     }
   }
   return output

@@ -15,4 +15,12 @@ module.exports = async function (fastify, opts) {
       contentType: req.headers['content-type']
     }
   })
+  fastify.post('/files', async (req, res) => {
+    const uploadedFile = req.body.file
+    const buffer = await uploadedFile.toBuffer()
+    return {
+      message: 'ok',
+      file: buffer.toString('utf-8')
+    }
+  })
 }
