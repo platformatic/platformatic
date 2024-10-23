@@ -34,7 +34,7 @@ test('app decorator with GraphQL', async t => {
   await app.register(client, {
     type: 'graphql',
     url: `${targetApp.url}/graphql`,
-    name: 'client',
+    name: 'client'
   })
 
   app.post('/movies', async (req, res) => {
@@ -48,8 +48,8 @@ test('app decorator with GraphQL', async t => {
         }
       `,
       variables: {
-        title: 'The Matrix',
-      },
+        title: 'The Matrix'
+      }
     })
   })
 
@@ -66,35 +66,35 @@ test('app decorator with GraphQL', async t => {
           title
         }
       }
-      `,
+      `
     })
   })
 
   const movie = await app.inject({
     method: 'POST',
-    path: '/movies',
+    path: '/movies'
   })
 
   assert.deepEqual(movie.json(), {
     id: '1',
-    title: 'The Matrix',
+    title: 'The Matrix'
   })
 
   const movies = await app.inject({
     method: 'GET',
-    path: 'movies',
+    path: 'movies'
   })
 
   assert.deepEqual(movies.json(), {
     movies: [
       {
         id: '1',
-        title: 'The Matrix',
-      },
+        title: 'The Matrix'
+      }
     ],
     getMovieById: {
       id: '1',
-      title: 'The Matrix',
-    },
+      title: 'The Matrix'
+    }
   })
 })

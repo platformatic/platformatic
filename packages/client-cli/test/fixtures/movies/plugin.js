@@ -9,24 +9,24 @@ module.exports = async function (app) {
         type: 'object',
         properties: {
           id: { type: 'string' },
-          title: { type: 'string' },
+          title: { type: 'string' }
         },
-        required: ['id', 'title'],
+        required: ['id', 'title']
       },
       response: {
         204: {
           type: 'null',
-          description: 'No Content',
-        },
-      },
-    },
+          description: 'No Content'
+        }
+      }
+    }
   }, async (request, reply) => {
     await app.platformatic.entities.movie.save({
       fields: ['id', 'title'],
       input: {
         id: request.params.id,
-        title: request.params.title,
-      },
+        title: request.params.title
+      }
     })
     reply.status(204)
   })
@@ -35,16 +35,16 @@ module.exports = async function (app) {
     schema: {
       operationId: 'createMovie201',
       body: {
-        $ref: 'Movie',
+        $ref: 'Movie'
       },
       response: {
         201: {
           description: 'Movie created successfully',
           content: {
             'application/json': {
-              schema: {},
-            },
-          },
+              schema: {}
+            }
+          }
         },
         400: {
           description: 'Validation error',
@@ -53,17 +53,17 @@ module.exports = async function (app) {
               schema: {
                 statusCode: { type: 'number', const: 400 },
                 error: { type: 'string' },
-                message: { type: 'string' },
-              },
-            },
-          },
-        },
-      },
-    },
+                message: { type: 'string' }
+              }
+            }
+          }
+        }
+      }
+    }
   },
   async (request, reply) => {
     await app.platformatic.entities.movie.save({
-      input: request.body,
+      input: request.body
     })
     reply.status(201)
     return {}
@@ -78,11 +78,11 @@ module.exports = async function (app) {
       params: {
         type: 'object',
         properties: {
-          name: { type: 'string' },
+          name: { type: 'string' }
         },
-        required: ['name'],
-      },
-    },
+        required: ['name']
+      }
+    }
   }, async (request, reply) => {
     return { hello: request.params.name }
   })
@@ -92,17 +92,17 @@ module.exports = async function (app) {
       params: {
         type: 'object',
         properties: {
-          name: { type: 'string' },
+          name: { type: 'string' }
         },
-        required: ['name'],
+        required: ['name']
       },
       body: {
         type: 'object',
         properties: {
-          name: { type: 'string' },
-        },
-      },
-    },
+          name: { type: 'string' }
+        }
+      }
+    }
   }, async (request, reply) => {
     return { hello: request.params.name }
   })
@@ -111,10 +111,10 @@ module.exports = async function (app) {
       response: {
         302: {
           type: 'object',
-          properties: {},
-        },
-      },
-    },
+          properties: {}
+        }
+      }
+    }
   }, async (request, reply) => {
     return reply.status(302).redirect('https://google.com')
   })
@@ -128,7 +128,7 @@ module.exports = async function (app) {
     Query: {
       hello: async (root, args, context, info) => {
         throw new Error('hello error')
-      },
-    },
+      }
+    }
   })
 }

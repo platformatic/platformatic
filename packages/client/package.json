@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
+    "@fastify/multipart": "^9.0.1",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "borp": "^0.18.0",

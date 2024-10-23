@@ -12,7 +12,7 @@ module.exports = async function (fastify) {
       info: {
         title: 'Platformatic DB',
         description: 'Exposing a SQL database as REST',
-        version: '1.0.0',
+        version: '1.0.0'
       },
       paths: {
         '/hello': {
@@ -25,16 +25,16 @@ module.exports = async function (fastify) {
                     schema: {
                       type: 'object',
                       properties: {
-                        foo: { type: 'string' },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+                        foo: { type: 'string' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   })
 
