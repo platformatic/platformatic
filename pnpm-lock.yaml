@@ -1213,8 +1213,8 @@ importers:
         specifier: ^18.2.22
         version: 18.3.1
       '@vitejs/plugin-react':
-        specifier: ^3.1.0
-        version: 3.1.0(vite@5.4.9(@types/node@22.7.5))
+        specifier: ^4.0.0
+        version: 4.3.2(vite@5.4.9(@types/node@22.7.5))
       eslint:
         specifier: '9'
         version: 9.12.0
@@ -4708,11 +4708,11 @@ packages:
     resolution: {integrity: sha512-TR9S+RYpmOERqiqoXwtBFmWqyyByTUFSkZgfDqKbsBaDbYYUls738NKFQHpg/s6i2E3r46mHcWI+jue/EnOoSg==}
     engines: {node: '>=12'}
 
-  '@vitejs/plugin-react@3.1.0':
-    resolution: {integrity: sha512-AfgcRL8ZBhAlc3BFdigClmTUMISmmzHn7sB2h9U1odvc5U/MjWXsAaz18b/WoppUTDBzxOJwo2VdClfUcItu9g==}
+  '@vitejs/plugin-react@4.3.2':
+    resolution: {integrity: sha512-hieu+o05v4glEBucTcKMK3dlES0OeJlD9YVOAPraVMOInBCwzumaIFiUjr4bHK7NPgnAHgiskUoceKercrN8vg==}
     engines: {node: ^14.18.0 || >=16.0.0}
     peerDependencies:
-      vite: ^4.1.0-beta.0
+      vite: ^4.2.0 || ^5.0.0
 
   '@vscode/l10n@0.0.18':
     resolution: {integrity: sha512-KYSIHVmslkaCDyw013pphY+d7x1qV8IZupYfeIfzNA+nsaWHbn5uPuQRvdRFsa9zFzGeudPuoGoZ1Op4jrJXIQ==}
@@ -7178,10 +7178,6 @@ packages:
 
   lru-cache@7.18.3:
     resolution: {integrity: sha512-jumlc0BIUrS3qJGgIkWZsyfAM7NCWiBcCDhnd+3NNM5KbBmLTgHVfWBcg6W+rLUsIpzpERPsvwUP7CckAQSOoA==}
-    engines: {node: '>=12'}
-
-  magic-string@0.27.0:
-    resolution: {integrity: sha512-8UnnX2PeRAPZuN12svgR9j7M1uWMovg/CEnIwIG0LFkXSJJe4PdfUGiTGl8V9bsBHFUtfVINcSyYxd7q+kx9fA==}
     engines: {node: '>=12'}
 
   magic-string@0.30.12:
@@ -12436,12 +12432,12 @@ snapshots:
       minimatch: 7.4.6
       semver: 7.6.3
 
-  '@vitejs/plugin-react@3.1.0(vite@5.4.9(@types/node@22.7.5))':
+  '@vitejs/plugin-react@4.3.2(vite@5.4.9(@types/node@22.7.5))':
     dependencies:
       '@babel/core': 7.25.8
       '@babel/plugin-transform-react-jsx-self': 7.25.7(@babel/core@7.25.8)
       '@babel/plugin-transform-react-jsx-source': 7.25.7(@babel/core@7.25.8)
-      magic-string: 0.27.0
+      '@types/babel__core': 7.20.5
       react-refresh: 0.14.2
       vite: 5.4.9(@types/node@22.7.5)
     transitivePeerDependencies:
@@ -15358,10 +15354,6 @@ snapshots:
       yallist: 4.0.0
 
   lru-cache@7.18.3: {}
-
-  magic-string@0.27.0:
-    dependencies:
-      '@jridgewell/sourcemap-codec': 1.5.0
 
   magic-string@0.30.12:
     dependencies:
