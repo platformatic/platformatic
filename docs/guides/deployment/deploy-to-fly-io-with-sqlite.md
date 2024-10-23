@@ -1,58 +1,73 @@
-# Deploy Platformatic Applications to Fly.io
+# Dockerizing and Deploying Watt Applications to Fly.io
 
-## Deploying a Platformatic Runtime Application 
+This guide will walk you through three key parts:
 
-This guide provides instructions on deploying a Platformatic Runtime application to Fly.io. With a runtime application, you are deploying your entire application, including all services in the `services` folder.
+1. Dockerizing a JavaScript Platformatic Watt Application.
+2. Dockerizing a TypeScript Platformatic Watt Application.
+3. Deploying a Multi-Service Platformatic Watt Application to Fly.io.
 
+## Dockerfile for JavaScript Watt Application
 
-### Dockerfile for Runtime Application
-
-Here is an example Dockerfile for a Platformatic Runtime application:
+Below is an example of a multi-build Dockerfile for a Platformatic JavaScript Watt application with a frontend, composer and DB service:
 
 ```dockerfile
-FROM node:20-alpine AS builder
+# Stage 1: Build
+ARG NODE_VERSION=20
+FROM node:${NODE_VERSION}-alpine AS build
 
-ENV APP_HOME=/home/app/node/
-WORKDIR $APP_HOME
+WORKDIR /app
 
-COPY package.json package-lock.json ./
-COPY services/devotion/package.json services/devotion/package.json
+# Copy all package.json files
+COPY package.json ./
+COPY ./web/composer/package.json ./web/composer/package.json  
+COPY ./web/db/package.json ./web/db/package.json 
+COPY ./web/frontend/package.json ./web/frontend/package.json 
 
-RUN npm ci 
+# Install all dependencies (including dev dependencies)
+RUN --mount=type=cache,target=/root/.npm npm install
 
+# Copy the rest of the project files and run the build
 COPY . .
+RUN npm run build
 
-RUN npx platformatic compile
+# Stage 2: Production
+FROM node:${NODE_VERSION}-alpine AS production
 
-FROM node:20-alpine
+WORKDIR /app
 
-ENV APP_HOME=/home/app/node/
-WORKDIR $APP_HOME
+# Copy only production dependencies
+COPY package.json ./
+COPY ./web/composer/package.json ./web/composer/package.json  
+COPY ./web/db/package.json ./web/db/package.json 
+COPY ./web/frontend/package.json ./web/frontend/package.json 
 
-COPY package.json package-lock.json ./
-RUN npm ci --only=production
+# Install only production dependencies
+RUN --mount=type=cache,target=/root/.npm npm install --production
 
-COPY --from=builder $APP_HOME/dist ./dist
+# Copy the built files from the build stage
+COPY --from=build /app ./
 
+# Expose the port
 EXPOSE 3042
 
-CMD ["node", "node_modules/.bin/platformatic", "start"]
+# Start the application
+CMD npm run start
+
 ```
 
 ### Explanation
-- **ARG VITE_AI_URL and ENV VITE_AI_URL**: Sets up environment variables for your application.
-- **WORKDIR $APP_HOM**E: Sets the working directory inside the container.
-- **COPY commands**: Copies the necessary files and folders into the container.
-- **RUN npm install**: Installs the dependencies for all services.
-- **RUN cd services/...**: Installs dependencies and builds each service in the services folder.
-- **EXPOSE 3042**: Exposes the application port.
-- **CMD ["npm", "start"]**: Specifies the command to run all services in the application.
-- **FROM node:20-alpine**: Specifies the base image for the runtime image.
-- **RUN npm ci**: Installs all dependencies including development dependencies 
+- **WORKDIR /app**: Sets the working directory inside the container to /app, where all commands will be executed.
+- **COPY package.json .**: Copies the `package.json` file from the local directory to the `/app` directory in the container. It's important to do this for all files in each service. 
+- **RUN --mount=type=bind,source=./package.json,target=./package.json**: Installs dependencies for the main application using a [bind mount](https://docs.docker.com/engine/storage/bind-mounts/) for the `package.json` file.
+- **--mount=type=cache,target=/root/.npm**: Caches the node_modules in the specified directory to speed up subsequent builds.
+- **COPY . .**: Copies all remaining files and folders into the /app directory in the container.
+- **RUN npm run build**: Executes the build script defined in the `package.json`, which typically compiles assets and prepares the application for production.
+- **EXPOSE 3042**: Exposes port 3042, allowing external access to the application running in the container.
+- **CMD npm run start**: Specifies the command to start the application, using the start script defined in the `package.json`.\
 
-It's important to create a `.dockerignore` file in your project's root directory. This file should exclude unnecessary files and directories, such as `node_modules`, `dist`, `.env`, and any other files that are not required in the Docker image. By doing so, you can avoid copying large and redundant files into the Docker image, which can significantly reduce the image size and build time.
+## Dockerfile for TypeScript Watt Application
 
-Here is an example of a sample `.dockerignore` file:
+Ensure you have a `.dockerignore` file in your project root to avoid unnecessary files such as `node_modules`, `dist`, `.env`, and any other files that are not required being copied into your Docker image. Here is an example of a sample `.dockerignore` file:
 
 ```sh 
 node_modules
@@ -64,240 +79,129 @@ Dockerfile
 dist
 ```
 
-### TypeScript Compilation for Deployment
+This reduces the image size and speeds up the build process.
 
-To compile your TypeScript files before deployment, update your platformatic.runtime.json to include TypeScript settings
+## Dockerizing a TypeScript Watt Application
+
+For a TypeScript-based application, Dockerizing requires TypeScript compilation before deployment. Here’s how to set it up.
+
+### TypeScript Compilation
+
+Create a `tsconfig.json` to configure your TypeScript build process with the following settings: 
 
 ```json
 {
-  "plugins": {
-    "paths": [{
-      "path": "plugins",
-      "encapsulate": false
-    }, "routes"],
-    "typescript": {
-      "enabled": "{PLT_TYPESCRIPT}",
-      "outDir": "dist"
-    }
+  "compilerOptions": {
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "target": "es2020",
+    "sourceMap": true,
+    "pretty": true,
+    "noEmitOnError": true,
+    "incremental": true,
+    "strict": true,
+    "outDir": "dist",
+    "skipLibCheck": true
+  },
+  "watchOptions": {
+    "watchFile": "fixedPollingInterval",
+    "watchDirectory": "fixedPollingInterval",
+    "fallbackPolling": "dynamicPriority",
+    "synchronousWatchDirectory": true,
+    "excludeDirectories": [
+      "**/node_modules",
+      "dist"
+    ]
   }
 }
 ```
 
-Ensure `PLT_TYPESCRIPT=true` in your `.env` file for local development. For deployment, set `PLT_TYPESCRIPT=false` to avoid compiling TypeScript at runtime.
-
-Compile your TypeScript source files with:
+Ensure `PLT_TYPESCRIPT=true` in your `.env` file for local development. For production, set `PLT_TYPESCRIPT=false` and compile TypeScript using:
 
 ```sh
-plt runtime compile
+npx platformatic compile
 ```
 
-This compiles your TypeScript files and outputs them to the specified `outDir`.
+This step compiles your TypeScript files and outputs them to the specified `outDir`.
 
-### Configure Environment
+### Environment Setup
 
-Start with your local environment. Create a `.env` file and put the following:
+Create a `.env `file with environment variables for local development:
 
 ```sh
 PORT=3042
 PLT_SERVER_HOSTNAME=127.0.0.1
 PLT_SERVER_LOGGER_LEVEL=debug
-DATABASE_URL=sqlite://.platformatic/data/movie-quotes.runtime
+DATABASE_URL=sqlite://.platformatic/data/movie-quotes
 ```
 
-Avoid accidental leaks by ignoring your `.env` file:
+Add `.env` to `.gitignore` to avoid accidentally committing sensitive information:
 
 ```sh 
 echo ".env" >> .gitignore
 ```
 
-This same configuration needs to be added to `fly.toml`:
+## Deploying a Multi-Service Watt Application to Fly.io
 
-```toml
-[env]
-  PORT = 8080
-  PLT_SERVER_HOSTNAME = "0.0.0.0"
-  PLT_SERVER_LOGGER_LEVEL = "info"
-  DATABASE_URL = "sqlite:///app/.platformatic/data/movie-quotes.runtime"
-```
+In this section, you will deploy a Platformatic Watt application with multiple services to Fly.io.
 
-### Deploy Application 
+### Fly.io Configuration
 
-Before deploying, make sure a `.dockerignore` file is created:
+Before starting, install the Fly CLI and sign up for an account by following [Fly.io’s official guide](https://fly.io/docs/getting-started/launch-demo/).
 
-```sh
-cp .gitignore .dockerignore
-```
+#### Setting Up Fly.io 
 
-Finally, deploy the application to Fly.io by running:
+1. **Initialize your Fly.io application**: Run the following command from your project root:
 
-```sh
-fly deploy
-```
+  ```sh 
+    fly launch --no-deploy --generate-name --region lhr --org personal --path .
+  ```
 
-## Deploy a Platformatic DB Application to Fly.io
+2. **Fly Configuration (fly.toml)**: The Fly CLI will generate a fly.toml configuration file for your application.
 
-To follow this how-to guide, you'll first need to install the Fly CLI and create
-an account by [following this official guide](https://fly.io/docs/hands-on/).
-You will also need an existing [Platformatic DB](../../db/overview.md) project, please check out our
-[getting started guide](../../getting-started/quick-start-guide.md) if needed.
-
-Navigate to your Platformatic DB project in the terminal on your local machine.
-Run `fly launch` and follow the prompts. When it asks if you want to deploy
-now, say "no" as there are a few things that you'll need to configure first.
-
-You can also create the fly application with one line. This will create your
-application in London (`lhr`):
-
-```sh
-fly launch --no-deploy --generate-name --region lhr --org personal --path .
-```
-
-The `fly` CLI should have created a `fly.toml` file in your project
-directory.
-
-### Explicit Builder
-
-The `fly.toml` file may be missing an explicit builder setting. To have consistent builds, it is best to add a `build` section:
+Ensure your fly.toml has the following settings for database volumes and builds:
 
 ```toml
 [build]
   builder = "heroku/buildpacks:20"
-```
 
-### Database Storage
-
-Create a volume for database storage, naming it `data`:
-
-```bash
-fly volumes create data
-```
-
-This will create storage in the same region as the application. The volume defaults to 3GB size, use  `-s` to change the size. For example, `-s 10` is 10GB.
-
-Add a `mounts` section in `fly.toml`:
-
-```toml
 [mounts]
   source = "data"
   destination = "/app/.platformatic/data"
 ```
 
-Create a directory in your project where your SQLite database will be created:
-
-```bash
-mkdir -p .platformatic/data
-
-touch .platformatic/data/.gitkeep
-```
-
-The `.gitkeep` file ensures that this directory will always be created when your application is deployed.
-
-You should also ensure that your SQLite database is ignored by Git. This helps avoid inconsistencies when your application is deployed:
-
-```bash
-echo "*.db" >> .gitignore
-```
-
-The command above assumes that your SQLite database file ends with the extension `.db` — if the extension is different then you must change the command to match.
-
-Update your  `platformatic.json` configuration file to use environment variables for the database connection and server settings:
-
-```json
-{
-  "db": {
-    "connectionString": "{DATABASE_URL}"
-  },
-  "migrations": {
-    "dir": "./migrations",
-    "autoApply": true
-  },
-  "server": {
-    "logger": {
-      "level": "{PLT_SERVER_LOGGER_LEVEL}"
-    },
-    "hostname": "{PLT_SERVER_HOSTNAME}",
-    "port": "{PORT}"
-  }
-}
-```
-
-### Configure Environment
-
-Start with your local environment, create a `.env` file and put the following:
-
+3. **Database Volume**: Create a persistent volume for your database storage:
+   
 ```sh
-PORT=3042
-PLT_SERVER_HOSTNAME=127.0.0.1
-PLT_SERVER_LOGGER_LEVEL=debug
-DATABASE_URL=sqlite://.platformatic/data/movie-quotes.db
+fly volumes create data --size 3 --region lhr
 ```
 
-Avoid accidental leaks by ignoring your `.env` file:
-
-```bash
-echo ".env" >> .gitignore
-```
-
-This same configuration needs to added to `fly.toml`:
+4. **Fly Environment Variables**: Ensure your environment variables from your .env file are also present in fly.toml:
 
 ```toml
 [env]
   PORT = 8080
   PLT_SERVER_HOSTNAME = "0.0.0.0"
   PLT_SERVER_LOGGER_LEVEL = "info"
-  DATABASE_URL = "sqlite:///app/.platformatic/data/movie-quotes.db"
+  DATABASE_URL = "sqlite:///app/.platformatic/data/db.sqlite"
 ```
-
-### TypeScript Compilation for Deployment 
-
-To compile your TypeScript files before deployment, update your `platformatic.json` to include TypeScript settings:
+It's important to note that your `env` PORT must match the `PORT` in your `fly.toml` file. Navigate to your `watt.json` file and update the hostname and port to match the following:
 
 ```json
-{
-  "plugins": {
-    "paths": [{
-      "path": "plugins",
-      "encapsulate": false
-    }, "routes"],
-    "typescript": {
-      "enabled": "{PLT_TYPESCRIPT}",
-      "outDir": "dist"
-    }
-  }
-}
-```
-Ensure `PLT_TYPESCRIPT=true` in your `.env` file for local development. For deployment, set `PLT_TYPESCRIPT=false` to avoid compiling TypeScript at runtime.
-
-Compile your TypeScript source files with:
-
-```sh
-plt service compile 
+"server": {
+    "hostname": "0.0.0.0",
+    "port": "{PORT}"
+  },
 ```
 
-This compiles your TypeScript files and outputs them to the specified `outDir`.
+### Deploying to Fly.io
 
-### Deploy application
-
-A valid `package.json` will be needed so if you do not have one, generate one by running `npm init`.
-
-In your `package.json`, make sure there is a `start` script to run your application:
-
-```json
-{
-  "scripts": {
-    "start": "platformatic start"
-  }
-}
-```
-
-Before deploying, make sure a `.dockerignore` file is created:
-
-```sh
-cp .gitignore .dockerignore
-```
-
-Finally, deploy the application to Fly by running:
+Now that the configuration is complete, deploy your Platformatic application to Fly.io:
 
 ```sh
 fly deploy
 ```
+
+Fly.io will build the image, start the app, and ensure all services are running.
+
+
