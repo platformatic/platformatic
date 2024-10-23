@@ -57,7 +57,7 @@ function generateImplementationFromOpenAPI ({ name, fullResponse, fullRequest, v
 function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders, typesComment, propsOptional }) {
   const camelcasedName = toJavaScriptName(name)
   const capitalizedName = capitalize(camelcasedName)
-  const { paths } = schema
+  const { paths, info } = schema
   const generatedOperationIds = []
 
   const operations = Object.entries(paths).flatMap(([path, methods]) => {
@@ -149,6 +149,23 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
     writer.blankLine()
 
     writer.write('interface FastifyRequest').block(() => {
+      if (info) {
+        writer.writeLine('/**')
+        writer.conditionalWriteLine(info.title, ` * ${info.title}`)
+        writer.conditionalWriteLine(info.title, ' *')
+        if (info.summary) {
+          for (const line of info.summary.split('\n')) {
+            writer.writeLine(` * ${line}`)
+          }
+          writer.writeLine(' *')
+        }
+        if (info.description) {
+          for (const line of info.description.split('\n')) {
+            writer.writeLine(` * ${line}`)
+          }
+        }
+        writer.writeLine(' */')
+      }
       writer.quote(camelcasedName)
       writer.write(`: ${camelcasedName}.${capitalizedName};`)
       writer.newLine()

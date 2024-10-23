@@ -889,6 +889,10 @@ test('openapi client generation (javascript) from file with fullRequest, fullRes
 `), true)
     equal(data.includes(`
   export type Full = {
+    /**
+     * @param req - request parameters object
+     * @returns the API response
+     */
     postHello(req: PostHelloRequest): Promise<PostHelloResponses>;
   }`), true)
     const implementationFile = join(dir, 'full', 'full.cjs')
@@ -956,6 +960,10 @@ test('do not generate implementation file if in platformatic service', async (t)
 `), true)
     equal(data.includes(`
   export type Full = {
+    /**
+     * @param req - request parameters object
+     * @returns the API response
+     */
     postHello(req: PostHelloRequest): Promise<PostHelloResponses>;
   }`), true)
   }
@@ -987,9 +995,15 @@ test('common parameters in paths', async (t) => {
   equal(data.includes(`
   export type GetPathWithFieldIdRequest = {
     path: {
+      /**
+       * A field ID
+       */
       'fieldId': string;
     }
     query: {
+      /**
+       * Movie id
+       */
       'movieId': string;
     }
   }
@@ -997,6 +1011,9 @@ test('common parameters in paths', async (t) => {
   equal(data.includes(`
   export type GetSampleRequest = {
     query: {
+      /**
+       * Movie id
+       */
       'movieId': string;
     }
   }
@@ -1004,6 +1021,9 @@ test('common parameters in paths', async (t) => {
   equal(data.includes(`
   export type PostPathWithFieldIdRequest = {
     path: {
+      /**
+       * A field ID
+       */
       'fieldId': string;
     }
   }
@@ -1089,6 +1109,10 @@ test('requestbody as array', async (t) => {
 
   equal(data.includes(`
   export type Movies = {
+    /**
+     * @param req - request parameters object
+     * @returns the API response body
+     */
     postFoobar(req: PostFoobarRequest[]): Promise<PostFoobarResponses>;
   }
 `), true)
@@ -1120,6 +1144,10 @@ test('support formdata', async (t) => {
   const data = await readFile(typeFile, 'utf-8')
   equal(data.includes(`
   export type Movies = {
+    /**
+     * @param req - request parameters object
+     * @returns the API response body
+     */
     postSample(req: PostSampleRequest): Promise<PostSampleResponses>;
   }
 `), true)
@@ -1160,4 +1188,143 @@ test('client with watt.json and skipConfigUpdate', async (t) => {
   const wattConfig = JSON.parse(await readFile(desm.join(import.meta.url, 'fixtures', 'client-with-config', 'watt.json'), 'utf-8'))
   ok('$schema' in wattConfig)
   ok(!('clients' in wattConfig), 'watt.json config has no clients')
+})
+
+test('tsdoc client description', async (t) => {
+  const dir = await moveToTmpdir(after)
+
+  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'tsdoc-openapi.json')
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc'])
+
+  const data = await readFile(join(dir, 'tsdoc', 'tsdoc.d.ts'), 'utf-8')
+
+  // Title and description on request client
+  ok(data.includes(`
+  interface FastifyRequest {
+    /**
+     * Movies API
+     *
+     * An API with movies in it
+     */
+    'tsdoc': tsdoc.Tsdoc;
+  }`))
+})
+
+test('tsdoc client operation descriptions', async (t) => {
+  const dir = await moveToTmpdir(after)
+
+  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'tsdoc-openapi.json')
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc'])
+
+  const data = await readFile(join(dir, 'tsdoc', 'tsdoc.d.ts'), 'utf-8')
+
+  // Description and summary on method
+  ok(data.includes(`
+    /**
+     * Create a movie
+     *
+     * Add a new movie to the movies database
+     * @param req - request parameters object
+     * @returns the API response body
+     */
+    createMovie(req: CreateMovieRequest): Promise<CreateMovieResponses>;`))
+
+  // Summary only on method
+  ok(data.includes(`
+    /**
+     * Get a movie
+     * @param req - request parameters object
+     * @returns the API response body
+     */
+    getMovieById(req: GetMovieByIdRequest): Promise<GetMovieByIdResponses>;`))
+
+  // Description only on method
+  ok(data.includes(`
+    /**
+     * Update the details of a movie
+     * @param req - request parameters object
+     * @returns the API response body
+     */
+    updateMovie(req: UpdateMovieRequest): Promise<UpdateMovieResponses>;`))
+})
+
+test('tsdoc client request option descriptions', async (t) => {
+  const dir = await moveToTmpdir(after)
+
+  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'tsdoc-openapi.json')
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc'])
+
+  const data = await readFile(join(dir, 'tsdoc', 'tsdoc.d.ts'), 'utf-8')
+
+  // Description on title, not on id, built from requestBody scheme #ref
+  ok(data.includes(`
+  export type CreateMovieRequest = {
+    'id'?: number;
+    /**
+     * The title of the movie
+     */
+    'title': string;
+  }`))
+
+  // Description on title, not on id, built from requestBody schema #ref
+  ok(data.includes(`
+  export type CreateMovieRequest = {
+    'id'?: number;
+    /**
+     * The title of the movie
+     */
+    'title': string;
+  }`))
+
+  // Description on ID, from parameters
+  ok(data.includes(`
+  export type GetMovieByIdRequest = {
+    /**
+     * The ID of the movie
+     */
+    'id': number;
+  }`))
+
+  // Descriptions from mixed parameters and requestBody schema #ref
+  ok(data.includes(`
+  export type UpdateMovieRequest = {
+    'fields'?: Array<'id' | 'title'>;
+    /**
+     * The ID of the movie
+     */
+    'id': number;
+    /**
+     * The title of the movie
+     */
+    'title': string;
+  }`))
+})
+
+test('tsdoc client request option descriptions (full-request)', async (t) => {
+  const dir = await moveToTmpdir(after)
+
+  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'tsdoc-openapi.json')
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc', '--full-request'])
+
+  const data = await readFile(join(dir, 'tsdoc', 'tsdoc.d.ts'), 'utf-8')
+
+  // Descriptions from mixed parameters and requestBody schema #ref
+  ok(data.includes(`
+  export type UpdateMovieRequest = {
+    path: {
+      /**
+       * The ID of the movie
+       */
+      'id': number;
+    }
+    query?: {
+      'fields'?: Array<'id' | 'title'>;
+    }
+    body: {
+      /**
+       * The title of the movie
+       */
+      'title': string;
+    }
+  }`))
 })

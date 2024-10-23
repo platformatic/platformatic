@@ -15,7 +15,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
   let currentFullResponse = originalFullResponse
   let currentFullRequest = originalFullRequest
   for (const operation of operations) {
-    const operationId = operation.operation.operationId
+    const { operationId, description, summary } = operation.operation
     const camelCaseOperationId = camelcase(operationId)
     const { parameters, responses, requestBody } = operation.operation
     currentFullRequest = fullRequest || hasDuplicatedParameters(operation.operation)
@@ -101,6 +101,24 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
 
     interfacesWriter.blankLine()
     const allResponsesName = responsesWriter(capitalizedCamelCaseOperationId, responses, currentFullResponse, interfacesWriter, schema)
+    mainWriter.writeLine('/**')
+    if (summary) {
+      for (const line of summary.split('\n')) {
+        mainWriter.writeLine(` * ${line}`)
+      }
+      // Separate summary and description by blank line
+      if (description) {
+        mainWriter.writeLine(' *')
+      }
+    }
+    if (description) {
+      for (const line of description.split('\n')) {
+        mainWriter.writeLine(` * ${line}`)
+      }
+    }
+    mainWriter.writeLine(' * @param req - request parameters object')
+    mainWriter.writeLine(` * @returns the API response${fullResponse ? '' : ' body'}`)
+    mainWriter.writeLine(' */')
     mainWriter.writeLine(`${camelCaseOperationId}(req: ${operationRequestName}${isRequestArray ? '[]' : ''}): Promise<${allResponsesName}>;`)
     currentFullResponse = originalFullResponse
     currentFullRequest = originalFullRequest
@@ -129,12 +147,22 @@ export function writeProperties (writer, blockName, parameters, addedProps, meth
 
 export function writeProperty (writer, key, value, addedProps, required = true, methodType, spec) {
   addedProps.add(key)
+
+  if (value.description) {
+    writer.writeLine('/**')
+    for (const line of value.description.split('\n')) {
+      writer.writeLine(` * ${line}`)
+    }
+    writer.writeLine(' */')
+  }
+
   if (required) {
     writer.quote(key)
   } else {
     writer.quote(key)
     writer.write('?')
   }
+
   writer.write(`: ${getType(value, methodType, spec)};`)
   writer.newLine()
 }

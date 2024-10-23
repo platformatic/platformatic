@@ -1,10 +1,5 @@
 {
   "openapi": "3.0.3",
-  "info": {
-    "title": "FAN TOZZI",
-    "description": "Tozzi Fan!",
-    "version": "1.0.0"
-  },
   "components": {
     "schemas": {
       "Movie": {
