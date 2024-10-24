@@ -16,6 +16,7 @@ const errors = require('./errors')
 const { createLogger } = require('./logger')
 const { startManagementApi } = require('./management-api')
 const { startPrometheusServer } = require('./prom-server')
+const { createSharedStore } = require('./shared-http-cache')
 const { getRuntimeTmpDir } = require('./utils')
 const { sendViaITC, waitEventFromITC } = require('./worker/itc')
 const { kId, kITC, kConfig } = require('./worker/symbols')
@@ -53,6 +54,7 @@ class Runtime extends EventEmitter {
   #bootstrapAttempts
   #inspectors
   #inspectorServer
+  #sharedHttpCache
 
   constructor (configManager, runtimeLogsDir, env) {
     super()
@@ -72,6 +74,7 @@ class Runtime extends EventEmitter {
     this.#restartPromises = new Map()
     this.#bootstrapAttempts = new Map()
     this.#inspectors = []
+    this.#sharedHttpCache = null
   }
 
   async init () {
@@ -115,6 +118,11 @@ class Runtime extends EventEmitter {
       await this.close()
       throw e
     }
+
+    this.#sharedHttpCache = createSharedStore(
+      this.#configManager.dirname,
+      config.httpCache
+    )
 
     this.#updateStatus('init')
   }
@@ -755,6 +763,24 @@ class Runtime extends EventEmitter {
     return createReadStream(filePath)
   }
 
+  async getCachedHttpRequests () {
+    return this.#sharedHttpCache.getRoutes()
+  }
+
+  async invalidateHttpCache (options = {}) {
+    const { origin, routes, tags } = options
+
+    if (!this.#sharedHttpCache) return
+
+    if (routes && routes.length > 0) {
+      await this.#sharedHttpCache.deleteRoutes(routes)
+    }
+
+    if (tags && tags.length > 0) {
+      await this.#sharedHttpCache.deleteByCacheTags(origin, tags)
+    }
+  }
+
   #updateStatus (status) {
     this.#status = status
     this.emit(status)
@@ -865,7 +891,18 @@ class Runtime extends EventEmitter {
       port: service,
       handlers: {
         getServiceMeta: this.getServiceMeta.bind(this),
-        getServices: this.getServices.bind(this)
+        getServices: this.getServices.bind(this),
+        isHttpCacheFull: () => this.#sharedHttpCache.isFull(),
+        getHttpCacheValue: opts => this.#sharedHttpCache.getValue(opts.request),
+        setHttpCacheValue: opts => this.#sharedHttpCache.setValue(
+          opts.request,
+          opts.response,
+          opts.payload
+        ),
+        deleteHttpCacheValue: opts => this.#sharedHttpCache.deleteByOrigin(
+          opts.origin
+        ),
+        invalidateHttpCache: opts => this.invalidateHttpCache(opts),
       }
     })
     service[kITC].listen()

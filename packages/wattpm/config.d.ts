@@ -110,6 +110,17 @@ export type HttpsSchemasPlatformaticDevWattpm270Json = {
         };
     [k: string]: unknown;
   };
+  httpCache?:
+    | boolean
+    | {
+        store?: string;
+        /**
+         * @minItems 1
+         */
+        methods?: [string, ...string[]];
+        cacheTagsHeader?: string;
+        [k: string]: unknown;
+      };
   watch?: boolean | string;
   managementApi?:
     | boolean
