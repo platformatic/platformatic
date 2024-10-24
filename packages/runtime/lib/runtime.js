@@ -16,6 +16,7 @@ const errors = require('./errors')
 const { createLogger } = require('./logger')
 const { startManagementApi } = require('./management-api')
 const { startPrometheusServer } = require('./prom-server')
+const { createSharedStore } = require('./shared-http-cache')
 const { getRuntimeTmpDir } = require('./utils')
 const { sendViaITC, waitEventFromITC } = require('./worker/itc')
 const { kId, kITC, kConfig } = require('./worker/symbols')
@@ -53,6 +54,7 @@ class Runtime extends EventEmitter {
   #bootstrapAttempts
   #inspectors
   #inspectorServer
+  #sharedHttpCache
 
   constructor (configManager, runtimeLogsDir, env) {
     super()
@@ -72,6 +74,7 @@ class Runtime extends EventEmitter {
     this.#restartPromises = new Map()
     this.#bootstrapAttempts = new Map()
     this.#inspectors = []
+    this.#sharedHttpCache = null
   }
 
   async init () {
@@ -115,6 +118,8 @@ class Runtime extends EventEmitter {
       await this.close()
       throw e
     }
+
+    this.#sharedHttpCache = createSharedStore(config.httpCache)
 
     this.#updateStatus('init')
   }
@@ -755,6 +760,48 @@ class Runtime extends EventEmitter {
     return createReadStream(filePath)
   }
 
+  async getCachedRequests () {
+    const origins = await this.#sharedHttpCache.getOrigins()
+
+    const promises = []
+    for (const origin of origins) {
+      promises.push(this.#sharedHttpCache.getRoutesByOrigin(origin))
+    }
+
+    const routesByOrigin = await Promise.all(promises)
+
+    const requests = []
+    for (let i = 0; i < origins.length; i++) {
+      const origin = origins[i]
+      const routes = routesByOrigin[i]
+
+      for (const route of routes) {
+        const url = new URL(route.path, origin)
+        requests.push({ method: route.method, url: url.toString() })
+      }
+    }
+
+    return requests
+  }
+
+  async invalidateHttpCache (options = {}) {
+    const { origin, routes, tags } = options
+
+    if (!origin) {
+      throw new Error('The origin is required to invalidate the cache.')
+    }
+
+    if (!this.#sharedHttpCache) return
+
+    if (routes && routes.length > 0) {
+      await this.#sharedHttpCache.deleteRoutes(origin, routes)
+    }
+
+    if (tags && tags.length > 0) {
+      await this.#sharedHttpCache.deleteByCacheTags(origin, tags)
+    }
+  }
+
   #updateStatus (status) {
     this.#status = status
     this.emit(status)
@@ -865,7 +912,18 @@ class Runtime extends EventEmitter {
       port: service,
       handlers: {
         getServiceMeta: this.getServiceMeta.bind(this),
-        getServices: this.getServices.bind(this)
+        getServices: this.getServices.bind(this),
+        isHttpCacheFull: () => this.#sharedHttpCache.isFull(),
+        getHttpCacheValue: opts => this.#sharedHttpCache.getValue(opts.request),
+        setHttpCacheValue: opts => this.#sharedHttpCache.setValue(
+          opts.request,
+          opts.response,
+          opts.payload
+        ),
+        deleteHttpCacheValue: opts => this.#sharedHttpCache.deleteByOrigin(
+          opts.origin
+        ),
+        invalidateHttpCache: opts => this.invalidateHttpCache(opts),
       }
     })
     service[kITC].listen()

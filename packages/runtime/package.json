@@ -61,6 +61,7 @@
     "@platformatic/itc": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/ts-compiler": "workspace:*",
+    "@platformatic/undici-cache-memory": "^0.1.0",
     "@platformatic/utils": "workspace:*",
     "@watchable/unpromise": "^1.0.2",
     "boring-name-generator": "^1.0.3",
@@ -83,7 +84,7 @@
     "semgrator": "^0.3.0",
     "tail-file-stream": "^0.2.0",
     "thread-cpu-usage": "^0.2.0",
-    "undici": "^6.9.0",
+    "undici": "7.0.0-alpha.3",
     "undici-thread-interceptor": "^0.7.0",
     "ws": "^8.16.0"
   }

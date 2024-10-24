@@ -7,9 +7,11 @@ const { pathToFileURL } = require('node:url')
 const inspector = require('node:inspector')
 
 const pino = require('pino')
-const { fetch, setGlobalDispatcher, Agent } = require('undici')
+const { fetch, setGlobalDispatcher, getGlobalDispatcher, Agent } = require('undici')
 const { wire } = require('undici-thread-interceptor')
+const undici = require('undici')
 
+const RemoteCacheStore = require('./http-cache')
 const { PlatformaticApp } = require('./app')
 const { setupITC } = require('./itc')
 const loadInterceptors = require('./interceptors')
@@ -89,6 +91,15 @@ async function main () {
   // The timeout is set to 5 minutes to avoid long term memory leaks
   // TODO: make this configurable
   const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp, timeout: 5 * 60 * 1000 })
+
+  if (config.httpCache) {
+    setGlobalDispatcher(
+      getGlobalDispatcher().compose(undici.interceptors.cache({
+        store: new RemoteCacheStore(),
+        methods: config.httpCache.methods ?? ['GET', 'HEAD']
+      }))
+    )
+  }
 
   // If the service is an entrypoint and runtime server config is defined, use it.
   let serverConfig = null
