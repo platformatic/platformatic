@@ -10,9 +10,11 @@ const diagnosticChannel = require('node:diagnostics_channel')
 const { ServerResponse } = require('node:http')
 
 const pino = require('pino')
-const { fetch, setGlobalDispatcher, Agent } = require('undici')
+const { fetch, setGlobalDispatcher, getGlobalDispatcher, Agent } = require('undici')
 const { wire } = require('undici-thread-interceptor')
+const undici = require('undici')
 
+const RemoteCacheStore = require('./http-cache')
 const { PlatformaticApp } = require('./app')
 const { setupITC } = require('./itc')
 const loadInterceptors = require('./interceptors')
@@ -90,10 +92,34 @@ async function main () {
     }
   }
 
-  const globalDispatcher = new Agent({
-    ...config.undici,
-    interceptors
-  }).compose(composedInterceptors)
+  const dispatcherOpts = { ...config.undici }
+
+  if (Object.keys(interceptors).length > 0) {
+    const clientInterceptors = []
+    const poolInterceptors = []
+
+    if (interceptors.Agent) {
+      clientInterceptors.push(...interceptors.Agent)
+      poolInterceptors.push(...interceptors.Agent)
+    }
+
+    if (interceptors.Pool) {
+      poolInterceptors.push(...interceptors.Pool)
+    }
+
+    if (interceptors.Client) {
+      clientInterceptors.push(...interceptors.Client)
+    }
+
+    dispatcherOpts.factory = (origin, opts) => {
+      return opts && opts.connections === 1
+        ? new undici.Client(origin, opts).compose(clientInterceptors)
+        : new undici.Pool(origin, opts).compose(poolInterceptors)
+    }
+  }
+
+  const globalDispatcher = new Agent(dispatcherOpts)
+    .compose(composedInterceptors)
 
   setGlobalDispatcher(globalDispatcher)
 
@@ -101,6 +127,15 @@ async function main () {
   // The timeout is set to 5 minutes to avoid long term memory leaks
   // TODO: make this configurable
   const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp, timeout: 5 * 60 * 1000 })
+
+  if (config.httpCache) {
+    setGlobalDispatcher(
+      getGlobalDispatcher().compose(undici.interceptors.cache({
+        store: new RemoteCacheStore(),
+        methods: config.httpCache.methods ?? ['GET', 'HEAD']
+      }))
+    )
+  }
 
   // If the service is an entrypoint and runtime server config is defined, use it.
   let serverConfig = null
