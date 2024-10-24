@@ -1677,8 +1677,8 @@ importers:
         specifier: workspace:*
         version: link:../ts-compiler
       '@platformatic/undici-cache-memory':
-        specifier: ^0.2.0
-        version: 0.2.0
+        specifier: ^0.3.0
+        version: 0.3.0
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -4148,8 +4148,8 @@ packages:
   '@platformatic/http-metrics@0.2.1':
     resolution: {integrity: sha512-Gy3NHUQT250MrJMlwzcSniVc+71DmCN1BpsuJcBlxyDpNacsH9axNonNWSNJqcWg8WOrv7tS6miBql2cugVuAg==}
 
-  '@platformatic/undici-cache-memory@0.2.0':
-    resolution: {integrity: sha512-lYhfkkm1+8mxXe4KAeKEUHSWtWoaR/7uF7AaBNSzko3sLDmpkBqmUGFo2rtp43SBgV2L29zpyxZAhh/pxFs+ZQ==}
+  '@platformatic/undici-cache-memory@0.3.0':
+    resolution: {integrity: sha512-S9W9iAuqXjTy7xWi5A5xQ6qbRTW2imXGl0s85uPAEkKE4Lnn8+cetYjasRywuBOFdbEIiUQ22TYMXeDJ+wOGQg==}
 
   '@playwright/test@1.48.1':
     resolution: {integrity: sha512-s9RtWoxkOLmRJdw3oFvhFbs9OJS0BzrLUc8Hf6l2UdCNd1rqeEyD4BhCJkvzeEoD1FsK4mirsWwGerhVmYKtZg==}
@@ -11690,7 +11690,7 @@ snapshots:
     dependencies:
       prom-client: 15.1.3
 
-  '@platformatic/undici-cache-memory@0.2.0': {}
+  '@platformatic/undici-cache-memory@0.3.0': {}
 
   '@playwright/test@1.48.1':
     dependencies:

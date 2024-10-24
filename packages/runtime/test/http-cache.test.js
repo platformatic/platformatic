@@ -207,9 +207,8 @@ test('should remove a url from an http cache', async (t) => {
   }
 
   await app.invalidateHttpCache({
-    origin: 'http://service-1.plt.local',
     routes: [
-      { method: 'GET', path: '/cached-req-counter?maxAge=100' }
+      { method: 'GET', url: 'http://service-1.plt.local/cached-req-counter?maxAge=100' }
     ]
   })
 
@@ -282,9 +281,8 @@ test('should invalidate cache from another service', async (t) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        origin: 'http://service-1.plt.local',
         routes: [
-          { method: 'GET', path: '/cached-req-counter?maxAge=100' }
+          { method: 'GET', url: 'http://service-1.plt.local/cached-req-counter?maxAge=100' }
         ]
       })
     })

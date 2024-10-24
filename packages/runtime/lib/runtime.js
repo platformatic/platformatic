@@ -770,14 +770,10 @@ class Runtime extends EventEmitter {
   async invalidateHttpCache (options = {}) {
     const { origin, routes, tags } = options
 
-    if (!origin) {
-      throw new Error('The origin is required to invalidate the cache.')
-    }
-
     if (!this.#sharedHttpCache) return
 
     if (routes && routes.length > 0) {
-      await this.#sharedHttpCache.deleteRoutes(origin, routes)
+      await this.#sharedHttpCache.deleteRoutes(routes)
     }
 
     if (tags && tags.length > 0) {

@@ -400,6 +400,9 @@
                 "HEAD"
               ],
               "minItems": 1
+            },
+            "cacheTagsHeader": {
+              "type": "string"
             }
           },
           "additionalProperties": false

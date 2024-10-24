@@ -195,7 +195,7 @@ async function managementApiPlugin (app, opts) {
   })
 
   app.get('/http-cache/requests', async () => {
-    await runtime.getCachedHttpRequests()
+    return runtime.getCachedHttpRequests()
   })
 
   app.post('/http-cache/invalidate', async (req) => {

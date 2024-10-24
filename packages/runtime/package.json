@@ -61,7 +61,7 @@
     "@platformatic/itc": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/ts-compiler": "workspace:*",
-    "@platformatic/undici-cache-memory": "^0.2.0",
+    "@platformatic/undici-cache-memory": "^0.3.0",
     "@platformatic/utils": "workspace:*",
     "@watchable/unpromise": "^1.0.2",
     "boring-name-generator": "^1.0.3",
