@@ -1,10 +1,14 @@
 'use strict'
 
+const { join } = require('node:path')
+const { createRequire } = require('node:module')
 const MemoryCacheStore = require('@platformatic/undici-cache-memory')
 
-function createSharedStore (httpCacheConfig = {}) {
+function createSharedStore (projectDir, httpCacheConfig = {}) {
+  const runtimeRequire = createRequire(join(projectDir, 'file'))
+
   const { store, ...storeConfig } = httpCacheConfig
-  const CacheStore = store ? require(store) : MemoryCacheStore
+  const CacheStore = store ? runtimeRequire(store) : MemoryCacheStore
 
   class SharedCacheStore extends CacheStore {
     async getValue (req) {
@@ -16,7 +20,7 @@ function createSharedStore (httpCacheConfig = {}) {
         payload += chunk
       }
 
-      const response = readStream.value
+      const response = this.#sanitizeResponse(readStream.value)
       return { response, payload }
     }
 
@@ -25,6 +29,13 @@ function createSharedStore (httpCacheConfig = {}) {
       writeStream.write(data)
       writeStream.end()
       return null
+    }
+
+    #sanitizeResponse (response) {
+      return {
+        ...response,
+        rawHeaders: response.rawHeaders.map(header => header.toString())
+      }
     }
   }
 

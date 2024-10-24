@@ -194,6 +194,10 @@ async function managementApiPlugin (app, opts) {
     return logFileStream
   })
 
+  app.get('/http-cache/requests', async () => {
+    await runtime.getCachedHttpRequests()
+  })
+
   app.post('/http-cache/invalidate', async (req) => {
     const { origin, routes, tags } = req.body
     await runtime.invalidateHttpCache({ origin, routes, tags })

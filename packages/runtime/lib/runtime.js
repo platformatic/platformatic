@@ -119,7 +119,10 @@ class Runtime extends EventEmitter {
       throw e
     }
 
-    this.#sharedHttpCache = createSharedStore(config.httpCache)
+    this.#sharedHttpCache = createSharedStore(
+      this.#configManager.dirname,
+      config.httpCache
+    )
 
     this.#updateStatus('init')
   }
@@ -760,28 +763,8 @@ class Runtime extends EventEmitter {
     return createReadStream(filePath)
   }
 
-  async getCachedRequests () {
-    const origins = await this.#sharedHttpCache.getOrigins()
-
-    const promises = []
-    for (const origin of origins) {
-      promises.push(this.#sharedHttpCache.getRoutesByOrigin(origin))
-    }
-
-    const routesByOrigin = await Promise.all(promises)
-
-    const requests = []
-    for (let i = 0; i < origins.length; i++) {
-      const origin = origins[i]
-      const routes = routesByOrigin[i]
-
-      for (const route of routes) {
-        const url = new URL(route.path, origin)
-        requests.push({ method: route.method, url: url.toString() })
-      }
-    }
-
-    return requests
+  async getCachedHttpRequests () {
+    return this.#sharedHttpCache.getRoutes()
   }
 
   async invalidateHttpCache (options = {}) {

@@ -48,7 +48,7 @@ test('should cache http requests', async (t) => {
   const { counter } = await res.body.json()
   assert.strictEqual(counter, 2)
 
-  const cachedRequests = await app.getCachedRequests()
+  const cachedRequests = await app.getCachedHttpRequests()
   assert.deepStrictEqual(cachedRequests, [
     { method: 'GET', url: 'http://service-1.plt.local/cached-req-counter?maxAge=5' }
   ])
@@ -200,7 +200,7 @@ test('should remove a url from an http cache', async (t) => {
 
   {
     // Checking if the response is cached
-    const cachedRequests = await app.getCachedRequests()
+    const cachedRequests = await app.getCachedHttpRequests()
     assert.deepStrictEqual(cachedRequests, [
       { method: 'GET', url: 'http://service-1.plt.local/cached-req-counter?maxAge=100' }
     ])
@@ -215,7 +215,7 @@ test('should remove a url from an http cache', async (t) => {
 
   {
     // Checking if the response is removed from the cache
-    const cachedRequests = await app.getCachedRequests()
+    const cachedRequests = await app.getCachedHttpRequests()
     assert.deepStrictEqual(cachedRequests, [])
   }
 
