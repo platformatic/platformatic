@@ -671,7 +671,7 @@ importers:
         version: 9.5.0
       pino-test:
         specifier: ^1.0.1
-        version: 1.0.1
+        version: 1.1.0
       typescript:
         specifier: ^5.5.4
         version: 5.6.3
@@ -2400,7 +2400,7 @@ importers:
         version: 0.11.6(eslint@9.12.0)(typescript@5.6.3)
       pino-test:
         specifier: ^1.0.1
-        version: 1.0.1
+        version: 1.1.0
       typescript:
         specifier: ^5.5.4
         version: 5.6.3
@@ -8195,8 +8195,8 @@ packages:
   pino-std-serializers@7.0.0:
     resolution: {integrity: sha512-e906FRY0+tV27iq4juKzSYPbUj2do2X2JX4EzSca1631EB2QJQUqGbDuERal7LCtOpxl6x3+nvo9NPZcmjkiFA==}
 
-  pino-test@1.0.1:
-    resolution: {integrity: sha512-ISdyVW8D6xJez8tEC2D0JBXeaKVU40GjMjxd/YgKP/6Am1c+yHb7F4ysY6ZyKVblQSREetW0f1irKXeku6tJGw==}
+  pino-test@1.1.0:
+    resolution: {integrity: sha512-eAD3qqt23jiJrwAWHSEdKyBRUjflodcTW14u9i/k4sdDsIT0r3v1cv+JyLJERFYfWgVkqAjgfOCkHVFiPNvpmg==}
 
   pino@8.21.0:
     resolution: {integrity: sha512-ip4qdzjkAyDDZklUaZkcRFb2iA118H9SgRh8yzTkSQK8HilsOJF7rSY8HoW5+I0M46AZgX/pxbprf2vvzQCE0Q==}
@@ -16836,7 +16836,7 @@ snapshots:
 
   pino-std-serializers@7.0.0: {}
 
-  pino-test@1.0.1:
+  pino-test@1.1.0:
     dependencies:
       split2: 4.2.0
 
