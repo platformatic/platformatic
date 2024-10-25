@@ -528,7 +528,7 @@ test('multipart/form-data', async t => {
   })
 })
 
-test.only('multipart/form-data with files', async t => {
+test('multipart/form-data with files', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'sample-service')
   const app = await buildService(join(fixtureDirPath, 'platformatic.json'))
 
@@ -550,7 +550,7 @@ test.only('multipart/form-data with files', async t => {
   assert.equal(resp.file, (await readFile(sampleFilePath)).toString('utf-8'))
 })
 
-test.only('multipart/form-data without FormData', async t => {
+test('multipart/form-data without FormData', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'sample-service')
   const app = await buildService(join(fixtureDirPath, 'platformatic.json'))
 
@@ -569,4 +569,28 @@ test.only('multipart/form-data without FormData', async t => {
   } catch (err) {
     assert.equal(err.message, 'Operation POST /files should be called with a undici.FormData as payload')
   }
+})
+
+test('multipart/form-data with files AND fields', async t => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'sample-service')
+  const app = await buildService(join(fixtureDirPath, 'platformatic.json'))
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    url: `${app.url}/`,
+    path: join(fixtureDirPath, 'openapi.json')
+  })
+
+  const formData = new FormData()
+  const sampleFilePath = join(__dirname, 'helper.js')
+  const fileAsBlob = await openAsBlob(sampleFilePath)
+  formData.append('file', fileAsBlob, 'helper.js')
+  formData.append('username', 'johndoe')
+  const resp = await client.postFilesAndFields(formData)
+  assert.equal(resp.file, (await readFile(sampleFilePath)).toString('utf-8'))
+  assert.equal(resp.username, 'johndoe')
 })

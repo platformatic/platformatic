@@ -23,4 +23,15 @@ module.exports = async function (fastify, opts) {
       file: buffer.toString('utf-8')
     }
   })
+
+  fastify.post('/filesAndFields', async (req, res) => {
+    const uploadedFile = req.body.file
+    const buffer = await uploadedFile.toBuffer()
+    const { username } = req.body
+    return {
+      message: 'ok',
+      file: buffer.toString('utf-8'),
+      username: username.value
+    }
+  })
 }
