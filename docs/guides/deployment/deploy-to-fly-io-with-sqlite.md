@@ -1,6 +1,6 @@
 # Deploy a Multi-Service Watt Application to Fly.io
 
-In this section, you will deploy a Platformatic Watt application with multiple services to Fly.io.
+In this section, you will deploy a Platformatic Watt application with multiple services to Fly.io. It's important to note that you need to [dockerize your Platformatic application](./dockerize-a-watt-app.md) before deploying it to Fly.io.
 
 ### Fly.io Configuration
 
