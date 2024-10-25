@@ -3,7 +3,8 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 
-# Movie Quotes App Tutorial 
+# Movie Quotes App Tutorial
+
 
 This tutorial will help you learn how to build a full stack application on top
 of Platformatic DB. We're going to build an application that allows us to
