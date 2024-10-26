@@ -218,9 +218,10 @@ const sidebars = {
           collapsed: true,
           items: [
             'guides/deployment/overview',
-            'guides/deployment/dockerize-a-watt-app.md',
+            'guides/deployment/dockerize-a-watt-app',
             'guides/deployment/deploy-to-fly-io-with-sqlite',
             'guides/deployment/advanced-fly-io-deployment',
+            'guides/deployment/deploying-on-lambda'
           ],
         },
         'guides/seed-a-database',
@@ -245,7 +246,6 @@ const sidebars = {
         'guides/migrating-fastify-app-to-platformatic-service',
         "guides/migrating-express-app-to-platformatic-service",
         'guides/telemetry',
-        'guides/dockerize-platformatic-app',
         'guides/build-modular-monolith',
         'guides/logging-to-elasticsearch',
         "guides/jwt-keycloak",
