@@ -1,9 +1,3 @@
----
-title: Dockerize a Watt Application
-label: Dockerize a Watt Application
----
-
-
 # Dockerizing Watt Applications
 
 This guide will walk you through dockerizing a JavaScript Platformatic Watt Application.
@@ -130,7 +124,7 @@ Ensure `PLT_TYPESCRIPT=true` in your `.env` file for local development. For prod
 npx platformatic compile
 ```
 
-This step compiles your TypeScript files and outputs them to the specified `outDir`.
+This step automatically compiles your TypeScript files and outputs them to the specified `outDir` during the `npm build` step in the Dockerfile.
 
 ### Environment Setup
 
