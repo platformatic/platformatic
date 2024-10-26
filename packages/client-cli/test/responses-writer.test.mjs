@@ -9,7 +9,7 @@ function getWriter () {
   return new CodeBlockWriter({
     indentNumberOfSpaces: 2,
     useTabs: false,
-    useSingleQuote: true,
+    useSingleQuote: true
   })
 }
 
@@ -23,12 +23,12 @@ test('support multiple responses', async (t) => {
             type: 'object',
             properties: {
               id: { type: 'number' },
-              'unfriendly-key': { type: 'string' },
+              'unfriendly-key': { type: 'string' }
             },
-            required: ['id'],
-          },
-        },
-      },
+            required: ['id']
+          }
+        }
+      }
     },
     403: {
       content: {
@@ -36,13 +36,13 @@ test('support multiple responses', async (t) => {
           schema: {
             type: 'object',
             properties: {
-              message: { type: 'string' },
+              message: { type: 'string' }
             },
-            required: ['message'],
-          },
-        },
-      },
-    },
+            required: ['message']
+          }
+        }
+      }
+    }
 
   }
 
@@ -75,14 +75,14 @@ test('support array of objects', async (t) => {
               type: 'object',
               properties: {
                 id: { type: 'number' },
-                'unfriendly-key': { type: 'string' },
+                'unfriendly-key': { type: 'string' }
               },
-              required: ['id'],
-            },
-          },
-        },
-      },
-    },
+              required: ['id']
+            }
+          }
+        }
+      }
+    }
 
   }
 
@@ -102,13 +102,13 @@ test('support object', async (t) => {
             type: 'object',
             properties: {
               id: { type: 'number' },
-              name: { type: 'string' },
+              name: { type: 'string' }
             },
-            required: ['id'],
-          },
-        },
-      },
-    },
+            required: ['id']
+          }
+        }
+      }
+    }
 
   }
   responsesWriter('TheOperationId', responses, false, writer)
@@ -134,11 +134,11 @@ test('support array of allOf structure', async (t) => {
                 {
                   properties: {
                     id: {
-                      type: 'string',
-                    },
+                      type: 'string'
+                    }
                   },
                   required: ['id'],
-                  type: 'object',
+                  type: 'object'
                 },
                 {
                   anyOf: [
@@ -146,31 +146,31 @@ test('support array of allOf structure', async (t) => {
                       additionalProperties: false,
                       properties: {
                         age: {
-                          type: 'number',
-                        },
+                          type: 'number'
+                        }
                       },
                       required: ['age'],
-                      type: 'object',
+                      type: 'object'
                     },
                     {
                       additionalProperties: false,
                       properties: {
                         valid: {
-                          type: 'boolean',
-                        },
+                          type: 'boolean'
+                        }
                       },
                       required: ['valid'],
-                      type: 'object',
-                    },
-                  ],
-                },
-              ],
+                      type: 'object'
+                    }
+                  ]
+                }
+              ]
             },
-            type: 'array',
-          },
-        },
-      },
-    },
+            type: 'array'
+          }
+        }
+      }
+    }
   }
   responsesWriter('MyOperation', responses, false, writer)
   assert.equal(writer.toString().trim(), `
@@ -191,11 +191,11 @@ test('support allOf structure', async (t) => {
               {
                 properties: {
                   id: {
-                    type: 'string',
-                  },
+                    type: 'string'
+                  }
                 },
                 required: ['id'],
-                type: 'object',
+                type: 'object'
               },
               {
                 anyOf: [
@@ -203,29 +203,29 @@ test('support allOf structure', async (t) => {
                     additionalProperties: false,
                     properties: {
                       age: {
-                        type: 'number',
-                      },
+                        type: 'number'
+                      }
                     },
                     required: ['age'],
-                    type: 'object',
+                    type: 'object'
                   },
                   {
                     additionalProperties: false,
                     properties: {
                       valid: {
-                        type: 'boolean',
-                      },
+                        type: 'boolean'
+                      }
                     },
                     required: ['valid'],
-                    type: 'object',
-                  },
-                ],
-              },
-            ],
-          },
-        },
-      },
-    },
+                    type: 'object'
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
   }
   responsesWriter('MyOperation', responses, false, writer)
   assert.equal(writer.toString().trim(), `
@@ -242,11 +242,11 @@ test('convert to unknown', async (t) => {
       content: {
         'application/json': {
           schema: {
-            type: 'foobar',
-          },
-        },
-      },
-    },
+            type: 'foobar'
+          }
+        }
+      }
+    }
 
   }
   responsesWriter('MyOperation', responses, false, writer)
@@ -267,11 +267,11 @@ test('support anyOf structure', async (t) => {
               {
                 properties: {
                   id: {
-                    type: 'string',
-                  },
+                    type: 'string'
+                  }
                 },
                 required: ['id'],
-                type: 'object',
+                type: 'object'
               },
               {
                 allOf: [
@@ -279,29 +279,29 @@ test('support anyOf structure', async (t) => {
                     additionalProperties: false,
                     properties: {
                       age: {
-                        type: 'number',
-                      },
+                        type: 'number'
+                      }
                     },
                     required: ['age'],
-                    type: 'object',
+                    type: 'object'
                   },
                   {
                     additionalProperties: false,
                     properties: {
                       valid: {
-                        type: 'boolean',
-                      },
+                        type: 'boolean'
+                      }
                     },
                     required: ['valid'],
-                    type: 'object',
-                  },
-                ],
-              },
-            ],
-          },
-        },
-      },
-    },
+                    type: 'object'
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
 
   }
   responsesWriter('MyOperation', responses, false, writer)
@@ -325,11 +325,11 @@ test('support array of anyOf structure', async (t) => {
                 {
                   properties: {
                     id: {
-                      type: 'string',
-                    },
+                      type: 'string'
+                    }
                   },
                   required: ['id'],
-                  type: 'object',
+                  type: 'object'
                 },
                 {
                   allOf: [
@@ -337,31 +337,31 @@ test('support array of anyOf structure', async (t) => {
                       additionalProperties: false,
                       properties: {
                         age: {
-                          type: 'number',
-                        },
+                          type: 'number'
+                        }
                       },
                       required: ['age'],
-                      type: 'object',
+                      type: 'object'
                     },
                     {
                       additionalProperties: false,
                       properties: {
                         valid: {
-                          type: 'boolean',
-                        },
+                          type: 'boolean'
+                        }
                       },
                       required: ['valid'],
-                      type: 'object',
-                    },
-                  ],
-                },
-              ],
-            },
+                      type: 'object'
+                    }
+                  ]
+                }
+              ]
+            }
 
-          },
-        },
-      },
-    },
+          }
+        }
+      }
+    }
 
   }
   responsesWriter('MyOperation', responses, false, writer)
@@ -383,18 +383,18 @@ test('support array of $ref', async (t) => {
           type: 'object',
           properties: {
             id: {
-              type: 'integer',
+              type: 'integer'
             },
             title: {
-              type: 'string',
-            },
+              type: 'string'
+            }
           },
           required: [
-            'title',
-          ],
-        },
-      },
-    },
+            'title'
+          ]
+        }
+      }
+    }
   }
   const responses = {
     200: {
@@ -403,12 +403,12 @@ test('support array of $ref', async (t) => {
           schema: {
             type: 'array',
             items: {
-              $ref: '#/components/schemas/Movie',
-            },
-          },
-        },
-      },
-    },
+              $ref: '#/components/schemas/Movie'
+            }
+          }
+        }
+      }
+    }
   }
   responsesWriter('MyOperation', responses, false, writer, spec)
   const expected = `
@@ -429,29 +429,29 @@ test('support $ref', async (t) => {
           type: 'object',
           properties: {
             id: {
-              type: 'integer',
+              type: 'integer'
             },
             title: {
-              type: 'string',
-            },
+              type: 'string'
+            }
           },
           required: [
-            'title',
-          ],
-        },
-      },
-    },
+            'title'
+          ]
+        }
+      }
+    }
   }
   const responses = {
     200: {
       content: {
         'application/json': {
           schema: {
-            $ref: '#/components/schemas/Movie',
-          },
-        },
-      },
-    },
+            $ref: '#/components/schemas/Movie'
+          }
+        }
+      }
+    }
   }
   responsesWriter('MyOperation', responses, false, writer, spec)
   const expected = `
@@ -471,19 +471,19 @@ test('support discriminator object', async (t) => {
           properties: {
             cuddle: { type: 'boolean' },
             petType: { type: 'string' },
-            breed: { type: 'string' },
+            breed: { type: 'string' }
           },
-          required: ['petType'],
+          required: ['petType']
         },
         Dog: {
           type: 'object',
           properties: {
             bark: { type: 'boolean' },
-            petType: { type: 'string' },
-          },
-        },
-      },
-    },
+            petType: { type: 'string' }
+          }
+        }
+      }
+    }
   }
   const responses = {
     200: {
@@ -492,15 +492,15 @@ test('support discriminator object', async (t) => {
           schema: {
             oneOf: [
               { $ref: '#/components/schemas/Dog' },
-              { $ref: '#/components/schemas/Cat' },
+              { $ref: '#/components/schemas/Cat' }
             ],
             discriminator: {
-              propertyName: 'petType',
-            },
-          },
-        },
-      },
-    },
+              propertyName: 'petType'
+            }
+          }
+        }
+      }
+    }
   }
   responsesWriter('MyOperation', responses, false, writer, spec)
   const expected = `

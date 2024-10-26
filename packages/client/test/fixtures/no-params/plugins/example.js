@@ -6,13 +6,13 @@ module.exports = async function (fastify, opts) {
     return {
       headers: req.headers,
       body: req.body,
-      query: req.query,
+      query: req.query
     }
   })
 
   fastify.get('/hello', async (req, res) => {
     return {
-      message: 'GET /hello works',
+      message: 'GET /hello works'
     }
   })
 }

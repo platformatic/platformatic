@@ -6,7 +6,7 @@ module.exports = async function (fastify, opts) {
     return {
       headers: req.headers,
       body: req.body,
-      query: req.query,
+      query: req.query
     }
   })
 }

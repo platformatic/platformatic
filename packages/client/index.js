@@ -13,7 +13,7 @@ const { createHash } = require('node:crypto')
 const validateFunctionCache = {}
 const errors = require('./errors')
 const camelCase = require('camelcase')
-
+const { FormData } = require('undici')
 function generateOperationId (path, method, methodMeta, all) {
   let operationId = null
   // use methodMeta.operationId only if it's present AND it is a valid string that can be
@@ -181,7 +181,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
         }
       }
     } else {
-      body = { ...args } || '' // shallow copy
+      body = args instanceof FormData ? args : { ...args } || '' // shallow copy
       for (const param of pathParams) {
         if (body[param.name] === undefined) {
           throw new Error('missing required parameter ' + param.name)
@@ -225,15 +225,24 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
         method,
         headers: {
           ...headers,
-          ...telemetryHeaders,
+          ...telemetryHeaders
         },
         throwOnError,
         bodyTimeout,
-        headersTimeout,
+        headersTimeout
       }
       if (canHaveBody) {
-        requestOptions.headers['content-type'] = 'application/json; charset=utf-8'
-        requestOptions.body = JSON.stringify(body)
+        const bodyType = getRequestBodyContentType(methodMeta)
+        if (bodyType === 'multipart/form-data') {
+          if (body instanceof FormData) {
+            requestOptions.body = body
+          } else {
+            throw new errors.FormDataRequiredError(`${method} ${path}`)
+          }
+        } else {
+          requestOptions.headers['content-type'] = bodyType
+          requestOptions.body = JSON.stringify(body)
+        }
       }
       res = await request(urlToCall, requestOptions)
       let responseBody
@@ -276,7 +285,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
         return {
           statusCode: res.statusCode,
           headers: res.headers,
-          body: responseBody,
+          body: responseBody
         }
       }
       return responseBody
@@ -288,10 +297,33 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
     }
   }
 }
+
+// function getFileParametersInRequestBody(methodMetadata) {
+//   const bodyType = getRequestBodyContentType(methodMetadata)
+//   if (bodyType === 'multipart/form-data') {
+//     const schema = methodMetadata[bodyType].content.schema
+//   }
+// }
+function getRequestBodyContentType (methodMetadata) {
+  let output = null
+  if (!methodMetadata.requestBody) {
+    return 'application/json'
+  }
+  if (methodMetadata.requestBody && methodMetadata.requestBody.content) {
+    if (methodMetadata.requestBody.content['multipart/form-data']) {
+      output = 'multipart/form-data'
+    }
+
+    if (methodMetadata.requestBody.content['application/json']) {
+      output = 'application/json'
+    }
+  }
+  return output
+}
 function createErrorResponse (message) {
   return {
     statusCode: 500,
-    message,
+    message
   }
 }
 function sanitizeContentType (contentType) {
@@ -327,7 +359,7 @@ async function graphql (url, log, headers, query, variables, openTelemetry, tele
   headers = {
     ...headers,
     ...telemetryHeaders,
-    'content-type': 'application/json; charset=utf-8',
+    'content-type': 'application/json; charset=utf-8'
   }
 
   let res
@@ -337,8 +369,8 @@ async function graphql (url, log, headers, query, variables, openTelemetry, tele
       headers,
       body: JSON.stringify({
         query,
-        variables,
-      }),
+        variables
+      })
     })
 
     const json = await res.body.json()
@@ -390,7 +422,7 @@ async function buildGraphQLClient (options, openTelemetry, logger = abstractLogg
 
   return {
     graphql: wrapGraphQLClient(options.url, openTelemetry, logger),
-    [kHeaders]: options.headers || {},
+    [kHeaders]: options.headers || {}
   }
 }
 
@@ -445,7 +477,7 @@ async function plugin (app, opts) {
 
 plugin[Symbol.for('skip-override')] = true
 plugin[Symbol.for('plugin-meta')] = {
-  name: '@platformatic/client',
+  name: '@platformatic/client'
 }
 
 module.exports = plugin
