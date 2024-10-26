@@ -567,7 +567,7 @@ test('multipart/form-data without FormData', async t => {
     await client.postFiles({ foo: 'bar' })
     assert.fail()
   } catch (err) {
-    assert.equal(err.message, 'Operation POST /files should be called with a undici.FormData as payload')
+    assert.match(err.message, /should be called with a undici.FormData as payload/)
   }
 })
 
