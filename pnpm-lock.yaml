@@ -10,7 +10,7 @@ importers:
     devDependencies:
       '@fastify/pre-commit':
         specifier: ^2.1.0
-        version: 2.1.0
+        version: 2.2.0
       desm:
         specifier: ^1.3.1
         version: 1.3.1
@@ -3368,8 +3368,8 @@ packages:
   '@fastify/multipart@9.0.1':
     resolution: {integrity: sha512-vt2gOCw/O4EwpN4KlLVJxth4iQlDf7T5ggw2Db2C+UbO2WJBG7y0jEBvu/HT6JIW/lBYaqrrUy9MmTpCKgXEpw==}
 
-  '@fastify/pre-commit@2.1.0':
-    resolution: {integrity: sha512-UM1Fv4NJ+SErNJzCaR6LBk+4GE4wYtv+/R4ePY7Utx+0PktLVxHsLYnnJWgOfyHqtKCjSchZrn3H8tOPuhCfYA==}
+  '@fastify/pre-commit@2.2.0':
+    resolution: {integrity: sha512-P/01iODIvntjCGKNGhCttCuW81Fi6RmU+n3uk0m1w5gr2t6gU/t9gyNJ1WalUmQgJBsJnK+CVAxoY4ugqQo03g==}
 
   '@fastify/reply-from@11.0.1':
     resolution: {integrity: sha512-F2Qk88gcqIIiug9V+4I6WeeV1faj1Wu798JyOnwbJcjQhm4LYrHdkpFSVwJE0g1cVjYCFFmH3OVh1HHaninttQ==}
@@ -9848,9 +9848,9 @@ packages:
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     hasBin: true
 
-  which@4.0.0:
-    resolution: {integrity: sha512-GlaYyEb07DPxYCKhKzplCWBJtvxZcZMrL+4UkrTSJHHPyZU4mYYTv3qaOe77H7EODLSSopAUFAc6W8U4yqvscg==}
-    engines: {node: ^16.13.0 || >=18.0.0}
+  which@5.0.0:
+    resolution: {integrity: sha512-JEdGzHwwkrbWoGOlIHqQ5gtprKGOenpDHpxE9zVR1bWbOtYRyPPHMe9FaP6x61CmNaTThSkb0DAJte5jD+DmzQ==}
+    engines: {node: ^18.17.0 || >=20.5.0}
     hasBin: true
 
   why-is-node-running@2.3.0:
@@ -10775,10 +10775,10 @@ snapshots:
       fastify-plugin: 5.0.1
       secure-json-parse: 3.0.0
 
-  '@fastify/pre-commit@2.1.0':
+  '@fastify/pre-commit@2.2.0':
     dependencies:
       cross-spawn: 7.0.3
-      which: 4.0.0
+      which: 5.0.0
 
   '@fastify/reply-from@11.0.1':
     dependencies:
@@ -19016,7 +19016,7 @@ snapshots:
     dependencies:
       isexe: 2.0.0
 
-  which@4.0.0:
+  which@5.0.0:
     dependencies:
       isexe: 3.1.1
 
