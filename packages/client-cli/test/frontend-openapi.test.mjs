@@ -131,10 +131,10 @@ export const getCustomSwagger = async (request) => {
 export interface Sample {
   setBaseUrl(newUrl: string) : void;
   setDefaultHeaders(headers: Object) : void;
-  getCustomSwagger(req?: GetCustomSwaggerRequest): Promise<GetCustomSwaggerResponses>;
-  getRedirect(req?: GetRedirectRequest): Promise<GetRedirectResponses>;
-  getReturnUrl(req?: GetReturnUrlRequest): Promise<GetReturnUrlResponses>;
-  postFoobar(req?: PostFoobarRequest): Promise<PostFoobarResponses>;
+  getCustomSwagger(req: GetCustomSwaggerRequest): Promise<GetCustomSwaggerResponses>;
+  getRedirect(req: GetRedirectRequest): Promise<GetRedirectResponses>;
+  getReturnUrl(req: GetReturnUrlRequest): Promise<GetReturnUrlResponses>;
+  postFoobar(req: PostFoobarRequest): Promise<PostFoobarResponses>;
 }`
 
     const unionTypesTemplate = `export type GetRedirectResponses =
@@ -259,7 +259,7 @@ export const getHello: Api['getHello'] = async (request: Types.GetHelloRequest):
 export interface Api {
   setBaseUrl(newUrl: string) : void;
   setDefaultHeaders(headers: Object) : void;
-  getHello(req?: GetHelloRequest): Promise<GetHelloResponses>;
+  getHello(req: GetHelloRequest): Promise<GetHelloResponses>;
 }`
 
   ok(implementation)
@@ -288,7 +288,7 @@ export const getHello: ACustomName['getHello'] = async (request: Types.GetHelloR
 export interface ACustomName {
   setBaseUrl(newUrl: string) : void;
   setDefaultHeaders(headers: Object) : void;
-  getHello(req?: GetHelloRequest): Promise<GetHelloResponses>;
+  getHello(req: GetHelloRequest): Promise<GetHelloResponses>;
 }`
 
   ok(implementation)

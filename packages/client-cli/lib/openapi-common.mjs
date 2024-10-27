@@ -19,10 +19,14 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
     const camelCaseOperationId = camelcase(operationId)
     const { parameters, responses, requestBody } = operation.operation
     currentFullRequest = fullRequest || hasDuplicatedParameters(operation.operation)
+    if (!responses) {
+      throw new Error(`Cannot find any resposne definition in operation ${operationId}.`)
+    }
     const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
     if (successResponses.length !== 1) {
       currentFullResponse = true
     }
+
     const capitalizedCamelCaseOperationId = capitalize(camelCaseOperationId)
     const operationRequestName = `${capitalizedCamelCaseOperationId}Request`
 
@@ -31,7 +35,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
     const bodyWriter = new CodeBlockWriter({
       indentNumberOfSpaces: 2,
       useTabs: false,
-      useSingleQuote: true,
+      useSingleQuote: true
     })
 
     const addedProps = new Set()
@@ -84,11 +88,6 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
       const writeContentOutput = writeContent(bodyWriter, requestBody.content, schema, addedProps, 'req', currentFullRequest ? 'body' : null)
       isRequestArray = writeContentOutput.isArray
       isStructuredType = writeContentOutput.isStructuredType
-    } else {
-      if (bodyWriter.getLength() === 0) {
-        // no body has been written, let's put a fallback 'unknown' value
-        bodyWriter.write('unknown')
-      }
     }
 
     if (isStructuredType || currentFullRequest || !isRequestArray) {
@@ -102,7 +101,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
 
     interfacesWriter.blankLine()
     const allResponsesName = responsesWriter(capitalizedCamelCaseOperationId, responses, currentFullResponse, interfacesWriter, schema)
-    mainWriter.writeLine(`${camelCaseOperationId}(req?: ${operationRequestName}${isRequestArray ? '[]' : ''}): Promise<${allResponsesName}>;`)
+    mainWriter.writeLine(`${camelCaseOperationId}(req: ${operationRequestName}${isRequestArray ? '[]' : ''}): Promise<${allResponsesName}>;`)
     currentFullResponse = originalFullResponse
     currentFullRequest = originalFullRequest
   }
@@ -148,10 +147,9 @@ export function writeContent (writer, content, spec, addedProps, methodType, wra
       // We ignore all non-JSON endpoints for now
       // TODO: support other content types
       /* c8 ignore next 3 */
-      if (contentType.indexOf('application/json') !== 0) {
+      if (contentType.indexOf('application/json') !== 0 && contentType.indexOf('multipart/form-data') !== 0) {
         continue
       }
-
       // Response body has no schema that can be processed
       // Should not be possible with well formed OpenAPI
       /* c8 ignore next 3 */

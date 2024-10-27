@@ -27,11 +27,11 @@ test('graphql client generation (javascript)', async (t) => {
     $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
-      port: 0,
+      port: 0
     },
     plugins: {
-      paths: ['./plugin.js'],
-    },
+      paths: ['./plugin.js']
+    }
   }
 
   const plugin = `
@@ -66,24 +66,24 @@ module.exports = async function (app) {
   t.after(async () => { await app.close() })
 
   const res = await request(app2.url, {
-    method: 'POST',
+    method: 'POST'
   })
   const body = await res.body.json()
   equal(match(body, {
-    title: 'foo',
+    title: 'foo'
   }), true)
 
   {
     const envs = dotenv.parse(await fs.readFile(join(dir, '.env'), 'utf-8'))
     same(envs, {
-      PLT_MOVIES_URL: app.url + '/graphql',
+      PLT_MOVIES_URL: app.url + '/graphql'
     })
   }
 
   {
     const envs = dotenv.parse(await fs.readFile(join(dir, '.env.sample'), 'utf-8'))
     same(envs, {
-      PLT_MOVIES_URL: app.url + '/graphql',
+      PLT_MOVIES_URL: app.url + '/graphql'
     })
   }
 })
@@ -104,12 +104,12 @@ test('graphql client generation (typescript)', async (t) => {
     $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
-      port: 0,
+      port: 0
     },
     plugins: {
       paths: ['./plugin.ts'],
-      typescript: true,
-    },
+      typescript: true
+    }
   }
 
   const plugin = `
@@ -137,8 +137,8 @@ export default myPlugin
       outDir: 'build',
       target: 'es2018',
       moduleResolution: 'NodeNext',
-      lib: ['es2018'],
-    },
+      lib: ['es2018']
+    }
   }, null, 2)
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
@@ -152,10 +152,10 @@ export default myPlugin
   t.after(async () => { await app.close() })
 
   const res = await request(app2.url, {
-    method: 'POST',
+    method: 'POST'
   })
   const body = await res.body.json()
   equal(match(body, {
-    title: 'foo',
+    title: 'foo'
   }), true)
 })

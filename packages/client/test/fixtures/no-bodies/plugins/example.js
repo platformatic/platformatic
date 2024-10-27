@@ -27,8 +27,8 @@ module.exports = async function (fastify, opts) {
       'DELETE',
       'HEAD',
       'OPTIONS',
-      'TRACE',
+      'TRACE'
     ],
-    handler: returnRequestBody,
+    handler: returnRequestBody
   })
 }

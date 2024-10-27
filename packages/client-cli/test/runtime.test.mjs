@@ -51,8 +51,8 @@ PLT_SERVER_LOGGER_LEVEL=info
     clients: [{
       serviceId: 'somber-chariot',
       type: 'openapi',
-      schema: posix.join('movies', 'movies.openapi.json'),
-    }],
+      schema: posix.join('movies', 'movies.openapi.json')
+    }]
   })
 
   const toWrite = `
@@ -87,12 +87,12 @@ module.exports = async function (app, opts) {
     break
   }
   const res = await request(url, {
-    method: 'POST',
+    method: 'POST'
   })
   const body = await res.body.json()
   same(body, {
     id: 1,
-    title: 'foo',
+    title: 'foo'
   })
 })
 
@@ -157,8 +157,8 @@ PLT_SERVER_LOGGER_LEVEL=info
     clients: [{
       serviceId: 'somber-chariot',
       type: 'graphql',
-      schema: posix.join('movies', 'movies.schema.graphql'),
-    }],
+      schema: posix.join('movies', 'movies.schema.graphql')
+    }]
   })
 
   const toWrite = `
@@ -204,12 +204,12 @@ module.exports = async function (app, opts) {
     break
   }
   const res = await request(url, {
-    method: 'POST',
+    method: 'POST'
   })
   const body = await res.body.json()
   same(body, {
     id: 1,
-    title: 'The Matrix',
+    title: 'The Matrix'
   })
 })
 
@@ -253,8 +253,8 @@ PLT_SERVER_LOGGER_LEVEL=info
       schema: 'movies/movies.openapi.json',
       name: 'movies',
       type: 'openapi',
-      serviceId: 'somber-chariot',
-    }],
+      serviceId: 'somber-chariot'
+    }]
   }), true)
 })
 
@@ -361,8 +361,8 @@ PLT_SERVER_LOGGER_LEVEL=info
       serviceId: 'somber-chariot',
       type: 'openapi',
       name: 'somberMovies',
-      schema: posix.join('movies', 'movies.openapi.json'),
-    }],
+      schema: posix.join('movies', 'movies.openapi.json')
+    }]
   })
 
   const toWrite = `
@@ -396,12 +396,12 @@ module.exports = async function (app, opts) {
     break
   }
   const res = await request(url, {
-    method: 'POST',
+    method: 'POST'
   })
   const body = await res.body.json()
   same(body, {
     id: 1,
-    title: 'foo',
+    title: 'foo'
   })
 })
 
@@ -447,8 +447,8 @@ PLT_SERVER_LOGGER_LEVEL=info
       schema: posix.join('movies', 'movies.openapi.json'),
       fullRequest: true,
       fullResponse: true,
-      validateResponse: true,
-    }],
+      validateResponse: true
+    }]
   })
 
   const toWrite = `
@@ -508,13 +508,13 @@ module.exports = async function (app, opts) {
     break
   }
   const res = await request(url, {
-    method: 'POST',
+    method: 'POST'
   })
   const body = await res.body.json()
   ok(typeof body.headers, 'object')
   same(body.body, {
     id: 1,
-    title: 'foo',
+    title: 'foo'
   })
   same(body.statusCode, 200)
 })

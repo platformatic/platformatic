@@ -22,6 +22,11 @@ async function managementApiPlugin (app, opts) {
 
   const runtime = opts.runtime
 
+  app.get('/status', async () => {
+    const status = runtime.getRuntimeStatus()
+    return { status }
+  })
+
   app.get('/metadata', async () => {
     return runtime.getRuntimeMetadata()
   })

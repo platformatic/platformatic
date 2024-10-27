@@ -184,7 +184,7 @@ test('ChildProcess - should intercept fetch calls', async t => {
   await manager.send(Array.from(manager.getClients())[0], 'start', server.address().port)
 
   await promise
-  server.close()
+  await server.close()
 
   deepStrictEqual(messages[0], ['DEBUG', `Executing "node ${executablePath}" ...`])
   deepStrictEqual(
