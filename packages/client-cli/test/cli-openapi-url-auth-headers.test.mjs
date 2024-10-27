@@ -21,6 +21,8 @@ test('url-auth-headers with wrong values', async (t) => {
     errMessage = message
   }
 
+  ok(errMessage.includes('Command failed'))
+
   t.after(async () => { await app.close() })
 })
 
