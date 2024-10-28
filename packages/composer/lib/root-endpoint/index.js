@@ -5,23 +5,72 @@ const fastifyStatic = require('@fastify/static')
 const userAgentParser = require('my-ua-parser')
 
 module.exports = async (app, opts) => {
+  const fastifyHtml = await import('fastify-html')
+  app.register(fastifyHtml)
   app.register(fastifyStatic, {
     root: join(__dirname, 'public'),
   })
-
+  app.register(require('@fastify/view'), {
+    engine: {
+      nunjucks: require('nunjucks')
+    },
+    root: join(__dirname, 'public')
+  })
   // root endpoint
   app.route({
     method: 'GET',
     path: '/',
     schema: { hide: true },
-    handler: (req, reply) => {
+    handler: async (req, reply) => {
       const uaString = req.headers['user-agent']
       if (uaString) {
         const parsed = userAgentParser(uaString)
         if (parsed.browser.name !== undefined) {
-          return reply.sendFile('./index.html')
+          const serviceTypes = {
+            proxy: {
+              title: 'Reverse Proxy',
+              icon: './images/reverse-proxy.svg',
+              services: []
+            },
+            openapi: {
+              title: 'OpenAPI',
+              icon: './images/openapi.svg',
+              services: []
+            },
+            graphql: {
+              title: 'GraphQL',
+              icon: './images/graphql.svg',
+              services: []
+            }
+          }
+          console.log(app.platformatic.config.composer.services, '@@@@@@@@@@@@@@@@@@@@')
+          app.platformatic.config.composer.services.forEach((s) => {
+            if (s.openapi) {
+              serviceTypes.openapi.services.push({
+                ...s,
+                externalLink: `/${s.id}`
+              })
+            }
+            if (s.graphql) {
+              serviceTypes.graphql.services.push({
+                ...s,
+                externalLink: `/${s.id}`
+              })
+            }
+            if (s.proxy) {
+              serviceTypes.proxy.services.push({
+                ...s,
+                externalLink: `/${s.proxy.prefix}`
+              })
+            }
+          })
+
+          return reply.view('index.njk', {
+            services: serviceTypes
+          })
         }
       }
+      // Load services
       return { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' }
     },
   })

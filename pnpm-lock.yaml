@@ -472,6 +472,9 @@ importers:
       '@fastify/swagger':
         specifier: ^9.0.0
         version: 9.2.0
+      '@fastify/view':
+        specifier: ^10.0.1
+        version: 10.0.1
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
@@ -544,6 +547,9 @@ importers:
       my-ua-parser:
         specifier: ^2.0.2
         version: 2.0.3
+      nunjucks:
+        specifier: ^3.2.4
+        version: 3.2.4(chokidar@3.6.0)
       ora:
         specifier: ^6.3.1
         version: 6.3.1
@@ -3389,6 +3395,9 @@ packages:
   '@fastify/under-pressure@9.0.1':
     resolution: {integrity: sha512-aafxmJYJBgbYad4eoKwaWXtyBwoLoUCpVDahjzsvRcCjR8esm0F6s3jACWWtZqgcE498gV7fG1X4vzGt9lWw9A==}
 
+  '@fastify/view@10.0.1':
+    resolution: {integrity: sha512-rXtBN0oVDmoRZAS7lelrCIahf+qFtlMOOas8VPdA7JvrJ9ChcF7e36pIUPU0Vbs3KmHxESUb7XatavUZEe/k5Q==}
+
   '@fastify/vite@7.0.1':
     resolution: {integrity: sha512-kFmuJa7ltQIcuuii3rmtBqbTORxNwcGSsWOXuLdK0D35Swqbmmdz4o+ir34NNLxKDpb4nU35zfO52iYI9toDkQ==}
 
@@ -4865,6 +4874,9 @@ packages:
     resolution: {integrity: sha512-E+iruNOY8VV9s4JEbe1aNEm6MiszPRr/UfcHMz0TQh1BXSxHK+ASV1R6W4HpjBhSeS+54PIsAMCBmwD06LLsqQ==}
     hasBin: true
 
+  a-sync-waterfall@1.0.1:
+    resolution: {integrity: sha512-RYTOHHdWipFUliRFMCS4X2Yn2X8M87V/OpSqWzKKOGhzqyUxzyVmhHDH9sAvG+ZuQf/TAOFsLCpMw09I1ufUnA==}
+
   abbrev@1.1.1:
     resolution: {integrity: sha512-nne9/IiQ/hzIhY6pdDnbBtz7DjPTKrY00P/zvPSm5pOFkl6xuGrGnXn/VtTNNfNtAfZ9/1RtehkszU9qcTii0Q==}
 
@@ -5439,6 +5451,10 @@ packages:
 
   commander@2.20.3:
     resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
+
+  commander@5.1.0:
+    resolution: {integrity: sha512-P0CysNDQ7rtVw4QIQtm+MRxV66vKFSvlsQvGYXZWR3qFU0jlMKHZZZgw8e+8DSah4UDKMqnknRDQz+xuQXQ/Zg==}
+    engines: {node: '>= 6'}
 
   commander@6.2.1:
     resolution: {integrity: sha512-U7VdrJFnJgo4xjrHpTzu0yrHPGImdsmD95ZlgYSEajAn2JKzDhDTPG9kBTefmObL2w/ngeZnilk+OV9CG3d7UA==}
@@ -7990,6 +8006,16 @@ packages:
   npm-run-path@6.0.0:
     resolution: {integrity: sha512-9qny7Z9DsQU8Ou39ERsPU4OZQlSTP47ShQzuKZ6PRXpYLtIFgl/DEBYEXKlvcEa+9tHVcK8CF81Y2V72qaZhWA==}
     engines: {node: '>=18'}
+
+  nunjucks@3.2.4:
+    resolution: {integrity: sha512-26XRV6BhkgK0VOxfbU5cQI+ICFUtMLixv1noZn1tGU38kQH5A5nmmbk/O45xdyBhD1esk47nKrY0mvQpZIhRjQ==}
+    engines: {node: '>= 6.9.0'}
+    hasBin: true
+    peerDependencies:
+      chokidar: ^3.3.0
+    peerDependenciesMeta:
+      chokidar:
+        optional: true
 
   object-assign@4.1.1:
     resolution: {integrity: sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg==}
@@ -10823,6 +10849,11 @@ snapshots:
       '@fastify/error': 4.0.0
       fastify-plugin: 5.0.1
 
+  '@fastify/view@10.0.1':
+    dependencies:
+      fastify-plugin: 5.0.1
+      toad-cache: 3.7.0
+
   '@fastify/vite@7.0.1(@types/node@22.8.1)':
     dependencies:
       '@fastify/middie': 9.0.2
@@ -12797,6 +12828,8 @@ snapshots:
       jsonparse: 1.3.1
       through: 2.3.8
 
+  a-sync-waterfall@1.0.1: {}
+
   abbrev@1.1.1: {}
 
   abort-controller@3.0.0:
@@ -13461,6 +13494,8 @@ snapshots:
   commander@12.1.0: {}
 
   commander@2.20.3: {}
+
+  commander@5.1.0: {}
 
   commander@6.2.1: {}
 
@@ -16757,6 +16792,14 @@ snapshots:
     dependencies:
       path-key: 4.0.0
       unicorn-magic: 0.3.0
+
+  nunjucks@3.2.4(chokidar@3.6.0):
+    dependencies:
+      a-sync-waterfall: 1.0.1
+      asap: 2.0.6
+      commander: 5.1.0
+    optionalDependencies:
+      chokidar: 3.6.0
 
   object-assign@4.1.1: {}
 

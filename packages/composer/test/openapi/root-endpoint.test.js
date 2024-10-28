@@ -1,6 +1,7 @@
 'use strict'
 
 const assert = require('node:assert/strict')
+const { request } = require('undici')
 const { readFile } = require('node:fs/promises')
 const { test } = require('node:test')
 const {
@@ -40,6 +41,7 @@ test('should respond 200 on root endpoint', async (t) => {
     })
     assert.equal(statusCode, 200)
     assert.equal(headers['content-type'], 'text/html; charset=UTF-8')
+    console.log(body)
     // has links to OpenAPI/GraphQL docs
     assert.ok(body.includes('<a id="openapi-link" target="_blank" class="button-link">OpenAPI Documentation</a>'))
   }
@@ -86,4 +88,59 @@ test('should not expose a default root endpoint if there is a plugin exposing @f
   const expected = await readFile(require.resolve('./fixtures/hello/index.html'), 'utf8')
   assert.equal(statusCode, 200)
   assert.deepEqual(body, expected)
+})
+
+test.skip('should have links to composed services', async (t) => {
+  const service1 = await createOpenApiService(t, ['users'], { addHeadersSchema: true })
+  const service2 = await createOpenApiService(t, ['posts'])
+  const service3 = await createOpenApiService(t, ['comments'])
+
+  const origin1 = await service1.listen({ port: 0 })
+  const origin2 = await service2.listen({ port: 0 })
+  const origin3 = await service3.listen({ port: 0 })
+
+  const config = {
+    composer: {
+      services: [
+        {
+          id: 'service1',
+          origin: origin1,
+          openapi: {
+            url: '/documentation/json'
+          },
+          proxy: {
+            prefix: '/internal/service1'
+          }
+        },
+        {
+          id: 'service2',
+          origin: origin2,
+          openapi: {
+            url: '/documentation/json'
+          },
+          proxy: {
+            prefix: '/internal/service2'
+          }
+        },
+        {
+          id: 'service3',
+          origin: origin3,
+          openapi: {
+            url: '/documentation/json'
+          },
+          proxy: {
+            prefix: '/internal/service3'
+          }
+        }
+      ],
+      refreshTimeout: 1000
+    }
+  }
+
+  const composer = await createComposer(t, config)
+  const composerOrigin = await composer.start()
+  const url = `${composerOrigin}/internal/service1/users`
+  const { statusCode, body } = await request(url)
+
+  console.log(statusCode, await body.json())
 })
