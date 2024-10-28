@@ -5,8 +5,6 @@ const fastifyStatic = require('@fastify/static')
 const userAgentParser = require('my-ua-parser')
 
 module.exports = async (app, opts) => {
-  const fastifyHtml = await import('fastify-html')
-  app.register(fastifyHtml)
   app.register(fastifyStatic, {
     root: join(__dirname, 'public'),
   })
