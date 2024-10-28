@@ -164,8 +164,7 @@ const platformaticRuntimeSchema = {
             cacheTagsHeader: {
               type: 'string'
             }
-          },
-          additionalProperties: false
+          }
         }
       ]
     },

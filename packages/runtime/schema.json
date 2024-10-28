@@ -404,8 +404,7 @@
             "cacheTagsHeader": {
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         }
       ]
     },
