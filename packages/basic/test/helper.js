@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs'
 import { cp, readFile, realpath, symlink, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
-import { basename, dirname, resolve, sep } from 'node:path'
+import { basename, dirname, resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
 import { Client, request } from 'undici'
@@ -149,7 +149,7 @@ export async function ensureDependencies (config) {
       }
 
       // Create the subfolder if needed
-      if (dep.includes(sep)) {
+      if (dep.includes('/')) {
         await createDirectory(resolve(path, 'node_modules', dirname(dep)))
       }
 
