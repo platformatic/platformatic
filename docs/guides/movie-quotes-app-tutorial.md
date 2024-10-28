@@ -2,7 +2,6 @@ import NewApiProjectInstructions from '../getting-started/new-api-project-instru
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-
 # Movie Quotes App Tutorial
 
 This tutorial will help you learn how to build a full stack application on top
