@@ -1476,7 +1476,7 @@ importers:
         version: link:../utils
       light-my-request:
         specifier: ^6.0.0
-        version: 6.2.0
+        version: 6.3.0
     devDependencies:
       '@platformatic/composer':
         specifier: workspace:*
@@ -1534,7 +1534,7 @@ importers:
         version: 4.21.1
       light-my-request:
         specifier: ^6.0.0
-        version: 6.2.0
+        version: 6.3.0
       pino-http:
         specifier: ^10.2.0
         version: 10.3.0
@@ -7193,6 +7193,9 @@ packages:
 
   light-my-request@6.2.0:
     resolution: {integrity: sha512-8b6or3xBeDv8p7OHNVXjFmlrLHdK/+Anor0AYLg6P/zgF8DkNDGGwP5BNbOF0SYdkfPFKYH88ARvXfNakOeQqA==}
+
+  light-my-request@6.3.0:
+    resolution: {integrity: sha512-bWTAPJmeWQH5suJNYwG0f5cs0p6ho9e6f1Ppoxv5qMosY+s9Ir2+ZLvvHcgA7VTDop4zl/NCHhOVVqU+kd++Ow==}
 
   lilconfig@3.1.2:
     resolution: {integrity: sha512-eop+wDAvpItUys0FWkHIKeC9ybYrTGbU41U5K7+bttZZeohvnY7M9dZ5kB21GNWiFT2q1OoPTvncPCgSOVO5ow==}
@@ -15577,6 +15580,12 @@ snapshots:
       process-warning: 4.0.0
       set-cookie-parser: 2.7.1
 
+  light-my-request@6.3.0:
+    dependencies:
+      cookie: 1.0.1
+      process-warning: 4.0.0
+      set-cookie-parser: 2.7.1
+
   lilconfig@3.1.2: {}
 
   lines-and-columns@1.2.4: {}
@@ -18589,7 +18598,7 @@ snapshots:
     dependencies:
       eslint: 9.13.0
       hyperid: 3.3.0
-      light-my-request: 6.2.0
+      light-my-request: 6.3.0
       undici: 6.20.1
     transitivePeerDependencies:
       - jiti
