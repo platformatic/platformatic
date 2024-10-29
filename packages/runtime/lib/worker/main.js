@@ -80,10 +80,21 @@ async function main () {
     }
   }
 
-  const globalDispatcher = new Agent({
-    ...config.undici,
-    interceptors
-  }).compose(composedInterceptors)
+  const dispatcherOpts = { ...config.undici }
+
+  if (Object.keys(interceptors).length > 0) {
+    const clientInterceptors = [...interceptors.Agent, interceptors.Client]
+    const poolInterceptors = [...interceptors.Agent, interceptors.Pool]
+
+    dispatcherOpts.factory = (origin, opts) => {
+      return opts && opts.connections === 1
+        ? new undici.Client(origin, opts).compose(clientInterceptors)
+        : new undici.Pool(origin, opts).compose(poolInterceptors)
+    }
+  }
+
+  const globalDispatcher = new Agent(dispatcherOpts)
+    .compose(composedInterceptors)
 
   setGlobalDispatcher(globalDispatcher)
 
