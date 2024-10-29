@@ -47,17 +47,11 @@ module.exports = async (app, opts) => {
           app.platformatic.config.composer.services.forEach((s) => {
             if (s.openapi) {
               hasOpenAPIServices = true
-              serviceTypes.openapi.services.push({
-                ...s,
-                externalLink: `/${s.id}`
-              })
+              serviceTypes.openapi.services.push(s)
             }
             if (s.graphql) {
               hasGraphQLServices = true
-              serviceTypes.graphql.services.push({
-                ...s,
-                externalLink: `/${s.id}`
-              })
+              serviceTypes.graphql.services.push(s)
             }
             if (s.proxy) {
               serviceTypes.proxy.services.push({
