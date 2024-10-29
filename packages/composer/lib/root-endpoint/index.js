@@ -21,6 +21,8 @@ module.exports = async (app, opts) => {
     schema: { hide: true },
     handler: async (req, reply) => {
       const uaString = req.headers['user-agent']
+      let hasOpenAPIServices = false
+      let hasGraphQLServices = false
       if (uaString) {
         const parsed = userAgentParser(uaString)
         if (parsed.browser.name !== undefined) {
@@ -41,15 +43,17 @@ module.exports = async (app, opts) => {
               services: []
             }
           }
-          console.log(app.platformatic.config.composer.services, '@@@@@@@@@@@@@@@@@@@@')
+
           app.platformatic.config.composer.services.forEach((s) => {
             if (s.openapi) {
+              hasOpenAPIServices = true
               serviceTypes.openapi.services.push({
                 ...s,
                 externalLink: `/${s.id}`
               })
             }
             if (s.graphql) {
+              hasGraphQLServices = true
               serviceTypes.graphql.services.push({
                 ...s,
                 externalLink: `/${s.id}`
@@ -58,12 +62,14 @@ module.exports = async (app, opts) => {
             if (s.proxy) {
               serviceTypes.proxy.services.push({
                 ...s,
-                externalLink: `/${s.proxy.prefix}`
+                externalLink: `${s.proxy.prefix}`
               })
             }
           })
 
           return reply.view('index.njk', {
+            hasGraphQLServices,
+            hasOpenAPIServices,
             services: serviceTypes
           })
         }

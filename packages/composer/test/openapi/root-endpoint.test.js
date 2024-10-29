@@ -7,6 +7,7 @@ const { test } = require('node:test')
 const {
   createComposer,
   createOpenApiService,
+  createGraphqlService,
 } = require('../helper')
 
 test('should respond 200 on root endpoint', async (t) => {
@@ -40,10 +41,9 @@ test('should respond 200 on root endpoint', async (t) => {
       },
     })
     assert.equal(statusCode, 200)
-    assert.equal(headers['content-type'], 'text/html; charset=UTF-8')
-    console.log(body)
-    // has links to OpenAPI/GraphQL docs
-    assert.ok(body.includes('<a id="openapi-link" target="_blank" class="button-link">OpenAPI Documentation</a>'))
+    assert.equal(headers['content-type']?.toLowerCase(), 'text/html; charset=UTF-8'.toLowerCase())
+    // Does not have links to OpenAPI/GraphQL docs as it has no services
+    assert.ok(!body.includes('<a id="openapi-link" target="_blank" class="button-link">OpenAPI Documentation</a>'))
   }
 })
 
@@ -90,14 +90,28 @@ test('should not expose a default root endpoint if there is a plugin exposing @f
   assert.deepEqual(body, expected)
 })
 
-test.skip('should have links to composed services', async (t) => {
+test.only('should have links to composed services', async (t) => {
   const service1 = await createOpenApiService(t, ['users'], { addHeadersSchema: true })
   const service2 = await createOpenApiService(t, ['posts'])
   const service3 = await createOpenApiService(t, ['comments'])
+  const service4 = await createGraphqlService(t, {
+    schema: `
+    type Query {
+      mul(x: Int, y: Int): Int
+    }`,
+    resolvers: {
+      Query: {
+        async mul (_, { x, y }) {
+          return x * y
+        },
+      },
+    },
+  })
 
   const origin1 = await service1.listen({ port: 0 })
   const origin2 = await service2.listen({ port: 0 })
   const origin3 = await service3.listen({ port: 0 })
+  const origin4 = await service4.listen({ port: 0 })
 
   const config = {
     composer: {
@@ -131,6 +145,11 @@ test.skip('should have links to composed services', async (t) => {
           proxy: {
             prefix: '/internal/service3'
           }
+        },
+        {
+          id: 'service4',
+          origin: origin4,
+          graphql: true
         }
       ],
       refreshTimeout: 1000
@@ -139,8 +158,20 @@ test.skip('should have links to composed services', async (t) => {
 
   const composer = await createComposer(t, config)
   const composerOrigin = await composer.start()
-  const url = `${composerOrigin}/internal/service1/users`
-  const { statusCode, body } = await request(url)
+  const url = `${composerOrigin}`
+  const { body } = await request(url, {
+    headers: {
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36',
+    },
+  })
 
-  console.log(statusCode, await body.json())
+  const content = await body.text()
+
+  // Has links to OpenAPI/GraphQL docs
+  assert.ok(content.includes('<a id="openapi-link" target="_blank" class="button-link" href="documentation">'))
+  assert.ok(content.includes('<a id="graphql-link" target="_blank" class="button-link" href="graphiql">'))
+
+  assert.ok(content.includes, "document.getElementById('proxy-service1-external-link').href = origin + '/internal/service1'")
+  assert.ok(content.includes, "document.getElementById('proxy-service2-external-link').href = origin + '/internal/service2'")
+  assert.ok(content.includes, "document.getElementById('proxy-service3-external-link').href = origin + '/internal/service3'")
 })

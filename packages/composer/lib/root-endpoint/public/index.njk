@@ -18,14 +18,18 @@
         <img id="logo" height="256" />
         <p class="text-desktop-display"><span>Welcome to</span><br/><span class="text-main-green">Platformatic Composer</span></p>
         <div class="button-container">
-          <a id="openapi-link" target="_blank" class="button-link" href="{{ prefix }}/documentation">
+          {% if hasOpenAPIServices %}
+          <a id="openapi-link" target="_blank" class="button-link" href="documentation">
             <img src="./images/openapi.svg" />
             OpenAPI Documentation
           </a>
-          <a id="graphql-link" target="_blank" class="button-link" href="{{ prefix }}/graphiql">
+          {% endif %}
+          {% if hasGraphQLServices %}
+          <a id="graphql-link" target="_blank" class="button-link" href="graphiql">
             <img src="./images/graphiql.svg" />
             GraphiQL
           </a>
+          {% endif %}
         </div>
         <a href="https://docs.platformatic.dev" target="_blank" class="plt-doc-link">Explore our documentation</a>
 
@@ -43,13 +47,15 @@
                   <div class="service-title">{{ svc.id }}</div>
                   {% if key === 'proxy' %} 
                     <div class="service-path">/{{ svc.proxy.prefix }}</div>
-                  {% else %} 
+                  {% elif key === 'openapi' %} 
                     <div class="service-path">/{{ svc.id }}</div>
                   {% endif %} 
                 </div>
+                {% if key === 'proxy' %} 
                 <a id="{{ key }}-{{ svc.id }}-external-link" target="_blank">
                   <img src="./images/external-link.svg" alt="External Link">
                 </a>
+                {% endif %} 
               </div>
               {% endfor %}
               
@@ -63,14 +69,15 @@
 
     <script>
       let currentPath = window.location.pathname
-      const origin = window.location.origin
+      const origin = window.location.origin.replace(/\/$/, '')
       {% for key, value in services %}
-        {% if value.services.length %}
-          {% for svc in value.services %}
-      document.getElementById('{{ key }}-{{ svc.id}}-external-link').href = origin + '{{ svc.externalLink }}'
-          {% endfor %}
+        {% if key === 'proxy' %}
+          {% if value.services.length %}
+            {% for svc in value.services %}
+        document.getElementById('{{ key }}-{{ svc.id}}-external-link').href = origin + '{{ svc.externalLink }}'
+            {% endfor %}
+          {% endif %}
         {% endif %}
-              
       {% endfor %}
       const prefersLightScheme = window.matchMedia('(prefers-color-scheme: light)');
       if (prefersLightScheme.matches) {
