@@ -59,7 +59,7 @@
         text-align: center;
         padding: 4px 0px;
       }
-      a:hover {
+      .button-container a:hover {
         background-color: rgba(var(--secondary-color-rgb), 0.3);
       }
 
@@ -87,13 +87,19 @@
       }
 
       .button-link {
-        width: 246px;
+        width: 233px;
         border: 1px solid var(--secondary-color);
         border-radius: 4px;
         padding: 8px 16px;
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
       }
 
+      .button-link > img {
+        margin-right: 0.5rem;
+      }
       button {
         border-radius: 8px;
         border: 1px solid transparent;
@@ -173,6 +179,7 @@
         font-weight: 600;
         line-height: 5rem;
         text-align: center;
+        margin: 0;
       }
 
       .text-desktop-body-large {
@@ -182,7 +189,11 @@
         line-height: 1.688rem;
         text-align: center;
       }
-
+      
+      a.external-link {
+        color: #2588E4;
+        font-weight: 400;
+      }
     </style>
   </head>
   <body>
@@ -193,12 +204,17 @@
       <div id="content">
         <img id="logo" height="256" />
         <p class="text-desktop-display"><span>Welcome to</span><br/><span class="text-main-green">Platformatic Composer</span></p>
-        <p class="text-desktop-body-large">Explore our flexible toolkit for building robust APIs.</p>
         <div class="button-container">
-          <a href="https://docs.platformatic.dev" target="_blank" class="button-link">Documentation</a>
-          <a id="openapi-link" target="_blank" class="button-link">OpenAPI Documentation</a>
-          <a id="graphql-link" target="_blank" class="button-link">GraphiQL</a>
+          <a id="openapi-link" target="_blank" class="button-link">
+            <img src="./images/openapi.svg" />
+            OpenAPI Documentation
+          </a>
+          <a id="graphql-link" target="_blank" class="button-link">
+            <img src="./images/graphiql.svg" />
+            GraphiQL
+          </a>
         </div>
+        <a href="https://docs.platformatic.dev" target="_blank" class="external-link">Explore our documentation</a>
       </div>
     </div>
 
