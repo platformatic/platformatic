@@ -46,7 +46,7 @@
                 <div>
                   <div class="service-title">{{ svc.id }}</div>
                   {% if key === 'proxy' %} 
-                    <div class="service-path">/{{ svc.proxy.prefix }}</div>
+                    <div class="service-path">{{ svc.proxy.prefix }}</div>
                   {% elif key === 'openapi' %} 
                     <div class="service-path">/{{ svc.id }}</div>
                   {% endif %} 

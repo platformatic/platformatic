@@ -171,6 +171,10 @@ test('should have links to composed services', async (t) => {
   assert.ok(content.includes('<a id="openapi-link" target="_blank" class="button-link" href="documentation">'))
   assert.ok(content.includes('<a id="graphql-link" target="_blank" class="button-link" href="graphiql">'))
 
+  assert.ok(content.includes('<div class="service-path">/internal/service1</div>'))
+  assert.ok(content.includes('<div class="service-path">/internal/service2</div>'))
+  assert.ok(content.includes('<div class="service-path">/internal/service3</div>'))
+
   assert.ok(content.includes, "document.getElementById('proxy-service1-external-link').href = origin + '/internal/service1'")
   assert.ok(content.includes, "document.getElementById('proxy-service2-external-link').href = origin + '/internal/service2'")
   assert.ok(content.includes, "document.getElementById('proxy-service3-external-link').href = origin + '/internal/service3'")
