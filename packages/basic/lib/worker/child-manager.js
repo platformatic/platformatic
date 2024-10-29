@@ -160,6 +160,7 @@ export class ChildManager extends ITC {
     )
 
     process.env.PLT_MANAGER_ID = this.#id
+    // TODO: add open telemetry config here
     process.env.NODE_OPTIONS =
       `--import="${new URL('./child-process.js', import.meta.url)}" ${process.env.NODE_OPTIONS ?? ''}`.trim()
   }

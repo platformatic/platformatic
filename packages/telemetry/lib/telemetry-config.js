@@ -25,7 +25,7 @@ const setupTelemetry = (opts, logger) => {
   const exporters = Array.isArray(exporter) ? exporter : [exporter]
 
   logger.debug(
-    `Setting up telemetry for service: ${serviceName}${version ? ' version: ' + version : ''} with exporter of type ${exporter.type}`
+    `Setting up platforamtic telemetry for service: ${serviceName}${version ? ' version: ' + version : ''} with exporter of type ${exporter.type}`
   )
 
   const provider = new PlatformaticTracerProvider({

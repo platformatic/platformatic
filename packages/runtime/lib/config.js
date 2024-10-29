@@ -89,10 +89,20 @@ async function _transformConfig (configManager, args) {
     if (configManager._fixPaths && service.config) {
       service.config = pathResolve(service.path, service.config)
     }
+
+    if (service.config) {
+      const manager = new ConfigManager({ source: pathResolve(service.config) })
+      await manager.parse()
+      const serviceConfig = manager.current
+      const type = serviceConfig.$schema ? ConfigManager.matchKnownSchema(serviceConfig.$schema) : undefined
+      service.type = type
+    }
+
     service.entrypoint = service.id === config.entrypoint
     service.dependencies = []
     service.localServiceEnvVars = new Map()
     service.localUrl = `http://${service.id}.plt.local`
+    service.isPLTService = service.type === 'service' || service.type === 'db' || service.type === 'composer'
 
     if (typeof service.watch === 'undefined') {
       service.watch = config.watch
@@ -121,12 +131,7 @@ async function _transformConfig (configManager, args) {
           continue
         }
 
-        const manager = new ConfigManager({ source: pathResolve(service.path, service.config) })
-        await manager.parse()
-        const config = manager.current
-        const type = config.$schema ? ConfigManager.matchKnownSchema(config.$schema) : undefined
-
-        if (type === 'composer') {
+        if (service.type === 'composer') {
           composers.push(service.id)
         }
       }

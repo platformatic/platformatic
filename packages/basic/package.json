@@ -27,7 +27,6 @@
     "@fastify/error": "^4.0.0",
     "@platformatic/config": "workspace:*",
     "@platformatic/itc": "workspace:*",
-    "@platformatic/telemetry": "workspace:*",
     "@platformatic/metrics": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "execa": "^9.3.1",

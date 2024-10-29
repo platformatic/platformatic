@@ -90,9 +90,6 @@ importers:
       '@platformatic/metrics':
         specifier: workspace:*
         version: link:../metrics
-      '@platformatic/telemetry':
-        specifier: workspace:*
-        version: link:../telemetry
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -1471,9 +1468,6 @@ importers:
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
-      '@platformatic/telemetry':
-        specifier: workspace:*
-        version: link:../telemetry
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils

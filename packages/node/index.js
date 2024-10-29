@@ -10,7 +10,6 @@ import {
   transformConfig
 } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
-import { setupNodeHTTPTelemetry } from '@platformatic/telemetry'
 import inject from 'light-my-request'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
@@ -94,11 +93,6 @@ export class NodeStackable extends BaseStackable {
       (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
       (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true
     )
-    // If telemetry is set, configure it
-    const telemetryConfig = this.telemetryConfig
-    if (telemetryConfig) {
-      setupNodeHTTPTelemetry(telemetryConfig, this.logger)
-    }
     this.#module = await importFile(finalEntrypoint)
     this.#module = this.#module.default || this.#module
 
