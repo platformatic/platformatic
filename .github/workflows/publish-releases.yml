@@ -19,7 +19,8 @@ env:
 jobs:
   release-npm:
     runs-on: ubuntu-latest
-    environment: main
+    # TODO: uncomment before merging
+    # environment: main
     permissions:
       contents: write
     steps:
