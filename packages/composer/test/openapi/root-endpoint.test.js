@@ -90,7 +90,7 @@ test('should not expose a default root endpoint if there is a plugin exposing @f
   assert.deepEqual(body, expected)
 })
 
-test.only('should have links to composed services', async (t) => {
+test('should have links to composed services', async (t) => {
   const service1 = await createOpenApiService(t, ['users'], { addHeadersSchema: true })
   const service2 = await createOpenApiService(t, ['posts'])
   const service3 = await createOpenApiService(t, ['comments'])
