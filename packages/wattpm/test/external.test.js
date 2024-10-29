@@ -285,6 +285,7 @@ test('resolve - should clone a URL', async t => {
   t.after(() => writeFile(configurationFile, originalFileContents))
   t.after(() => safeRemove(resolve(rootDir, 'web/resolved')))
 
+  process.chdir(rootDir)
   await wattpm('import', rootDir, '-h', '-i', 'resolved', '-p', 'web/resolved', 'mcollina/undici-thread-interceptor')
   const resolveProcess = await wattpm('resolve', rootDir)
 
@@ -305,6 +306,7 @@ test('resolve - should attempt to clone with username and password', async t => 
   t.after(() => writeFile(configurationFile, originalFileContents))
   t.after(() => safeRemove(resolve(rootDir, 'web/resolved')))
 
+  process.chdir(rootDir)
   await wattpm(
     'import',
     rootDir,

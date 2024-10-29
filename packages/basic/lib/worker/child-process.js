@@ -111,8 +111,15 @@ export class ChildProcess extends ITC {
     this.#setupServer()
     this.#setupInterceptors()
 
-    this.on('close', signal => {
-      process.kill(process.pid, signal)
+    /*
+      Paolo: This was used to give chance to the process to do a graceful shutdown.
+      Unfortunately, there is a bug on NPM on Windows which caused in the process exiting
+      with error code 1.
+
+      Therefore we're only using to close the socket and free our added resources
+    */
+    this.on('close', () => {
+      return this.close()
     })
   }
 

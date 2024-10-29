@@ -1,10 +1,6 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
   "entrypoint": "frontend",
-  "server": {
-    "hostname": "0.0.0.0",
-    "port": 9942
-  },
   "services": [
     {
       "id": "frontend",
