@@ -184,10 +184,7 @@ export class ChildProcess extends ITC {
     // The rest will be intercepted by the BaseStackable.
     const pinoOptions = {
       level: 'info',
-      name: globalThis.platformatic.serviceId,
-      transport: {
-        target: new URL('./child-transport.js', import.meta.url).toString()
-      }
+      name: globalThis.platformatic.serviceId
     }
 
     if (typeof globalThis.platformatic.workerId !== 'undefined') {
@@ -306,6 +303,6 @@ async function main () {
 }
 
 /* c8 ignore next 3 */
-if (!isWindows || basename(process.argv.at(-1)) !== 'npm-prefix.js') {
+if (!isWindows || !['npm-prefix.js', 'npm-cli.js'].includes(basename(process.argv[1] ?? ''))) {
   await main()
 }

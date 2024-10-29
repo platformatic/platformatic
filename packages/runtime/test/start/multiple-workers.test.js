@@ -812,7 +812,8 @@ test('logging properly works in production mode when using separate processes', 
   )
 
   await app.start()
-  await sleep(500)
+  // Wait for all logs to be delivered
+  await sleep(3000)
   await app.stop()
 
   const messages = await waitPromise

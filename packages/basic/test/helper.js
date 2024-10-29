@@ -12,6 +12,7 @@ import WebSocket from 'ws'
 import { loadConfig } from '../../config/index.js'
 import { buildServer, platformaticRuntime } from '../../runtime/index.js'
 import { BaseStackable } from '../lib/base.js'
+import { isWindows } from '../lib/worker/child-manager.js'
 export { setTimeout as sleep } from 'node:timers/promises'
 
 const HMR_TIMEOUT = process.env.CI ? 20000 : 10000
@@ -161,6 +162,12 @@ export async function ensureDependencies (config) {
 
       for (const [name, destination] of Object.entries(bin ?? {})) {
         await symlink(resolve(moduleRoot, destination), resolve(binFolder, name), 'file')
+
+        // Fix for NPM on Windows
+        if (isWindows) {
+          await symlink(resolve(pltRoot, 'node_modules/.bin', `${name}.ps1`), resolve(binFolder, `${name}.ps1`), 'file')
+          await symlink(resolve(pltRoot, 'node_modules/.bin', `${name}.cmd`), resolve(binFolder, `${name}.cmd`), 'file')
+        }
       }
     }
   }

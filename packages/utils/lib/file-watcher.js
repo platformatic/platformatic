@@ -39,7 +39,7 @@ class FileWatcher extends EventEmitter {
     // See: https://github.com/nodejs/node/issues/48437
     const fsWatcher = watch(this.path, {
       signal,
-      recursive: true,
+      recursive: true
     })
 
     let updateTimeout = null
@@ -79,13 +79,24 @@ class FileWatcher extends EventEmitter {
   }
 
   isFileAllowed (fileName) {
-    if (this.allowToWatch === null) return true
-    return this.allowToWatch.some((allowedFile) => minimatch(fileName, allowedFile))
+    if (this.allowToWatch === null) {
+      return true
+    }
+
+    return this.allowToWatch.some(allowedFile => minimatch(fileName, allowedFile))
   }
 
   isFileIgnored (fileName) {
-    if (this.watchIgnore === null) return false
-    return this.watchIgnore.some((ignoredFile) => minimatch(fileName, ignoredFile))
+    // Always ignore the node_modules folder - This can be overriden by the allow list
+    if (minimatch(fileName, 'node_modules/**/*', { dot: true })) {
+      return true
+    }
+
+    if (this.watchIgnore === null) {
+      return false
+    }
+
+    return this.watchIgnore.some(ignoredFile => minimatch(fileName, ignoredFile))
   }
 }
 

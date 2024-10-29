@@ -1,5 +1,5 @@
 import { collectMetrics } from '@platformatic/metrics'
-import { deepmerge } from '@platformatic/utils'
+import { deepmerge, executeWithTimeout } from '@platformatic/utils'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
@@ -270,8 +270,23 @@ export class BaseStackable {
     this.#subprocessStarted = false
     const exitPromise = once(this.subprocess, 'exit')
 
-    this.childManager.close(this.subprocessTerminationSignal ?? 'SIGINT')
+    /*
+      Paolo: This was used to give chance to the process to do a graceful shutdown.
+      Unfortunately, there is a bug on NPM on Windows which caused in the process exiting
+      with error code 1. Therefore we're disabling it.
+    */
+    // this.childManager.close(this.subprocessTerminationSignal ?? 'SIGINT')
+
+    // Try to kill the process politely
     this.subprocess.kill(this.subprocessTerminationSignal ?? 'SIGINT')
+
+    // If the process hasn't exited in 10 seconds, kill it the hard way
+    /* c8 ignore next 5 */
+    const res = await executeWithTimeout(exitPromise, 10000)
+    if (res === 'timeout') {
+      this.subprocess.kill('SIGKILL')
+    }
+
     await exitPromise
   }
 
