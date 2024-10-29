@@ -83,8 +83,8 @@ async function main () {
   const dispatcherOpts = { ...config.undici }
 
   if (Object.keys(interceptors).length > 0) {
-    const clientInterceptors = [...interceptors.Agent, interceptors.Client]
-    const poolInterceptors = [...interceptors.Agent, interceptors.Pool]
+    const clientInterceptors = [...interceptors.Agent, ...interceptors.Client]
+    const poolInterceptors = [...interceptors.Agent, ...interceptors.Pool]
 
     dispatcherOpts.factory = (origin, opts) => {
       return opts && opts.connections === 1
