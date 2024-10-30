@@ -9,12 +9,5 @@
   "entrypoint": "main",
   "autoload": {
     "path": "web"
-  },
-  "web": [
-    {
-      "id": "resolved",
-      "path": "web/resolved",
-      "url": "https://github.com/mcollina/undici-thread-interceptor.git"
-    }
-  ]
+  }
 }
