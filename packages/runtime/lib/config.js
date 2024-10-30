@@ -92,7 +92,7 @@ async function _transformConfig (configManager, args) {
     }
 
     if (service.config) {
-      const store = new Store()
+      const store = new Store({ cwd: service.path })
       const serviceConfig = await store.loadConfig(service)
       service.isPLTService = !!serviceConfig.app.isPLTService
       service.type = serviceConfig.app.configType

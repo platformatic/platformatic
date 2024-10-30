@@ -278,7 +278,7 @@ test('loads with the store', async t => {
   const { configManager } = await store.loadConfig({
     config: configFile,
     overrides: {
-      fixPaths: false,
+      fixPaths: true, // Paths in configs are realtive, need to be resolved.
       onMissingEnv (key) {
         return '{' + key + '}'
       }
@@ -302,7 +302,7 @@ test('set isPLTService on plt services', async t => {
   const { configManager } = await store.loadConfig({
     config: configFile,
     overrides: {
-      fixPaths: false,
+      fixPaths: true,
       onMissingEnv (key) {
         return '{' + key + '}'
       }
@@ -335,7 +335,7 @@ test('set type on services', async t => {
   const { configManager } = await store.loadConfig({
     config: configFile,
     overrides: {
-      fixPaths: false,
+      fixPaths: true,
       onMissingEnv (key) {
         return '{' + key + '}'
       }

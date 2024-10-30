@@ -1809,6 +1809,9 @@ importers:
       json-schema-to-typescript:
         specifier: ^15.0.0
         version: 15.0.2
+      mkdirp:
+        specifier: ^2.1.6
+        version: 2.1.6
       neostandard:
         specifier: ^0.11.1
         version: 0.11.7(eslint@9.13.0)(typescript@5.6.3)

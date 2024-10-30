@@ -2,6 +2,8 @@ const { join } = require('node:path')
 const { MockAgent, setGlobalDispatcher } = require('undici')
 const { createDirectory } = require('@platformatic/utils')
 const { safeRemove } = require('@platformatic/utils')
+const { mkdir, link } = require('fs/promises')
+const { mkdirp } = require('mkdirp')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -42,9 +44,33 @@ function mockNpmJsRequestForPkgs (pkgs) {
       })
   }
 }
+
+async function linkNodeModules (dir, pkgs) {
+  await mkdirp(join(dir, 'node_modules'))
+  for (const pkg of pkgs) {
+    if (pkg.startsWith('@')) {
+      const [scope, name] = pkg.split('/')
+      await mkdir(join(dir, 'node_modules', scope))
+      await link(join(__dirname, '..', 'node_modules', scope, name), join(dir, 'node_modules', scope, name))
+    } else {
+      await link(join(__dirname, '..', 'node_modules', pkg), join(dir, 'node_modules', pkg))
+    }
+  }
+
+  // await mkdir(join(targetDirectory, 'node_modules', '@platformatic'))
+  // await link(join(__dirname, '..', 'node_modules', '@platformatic', 'service'),
+  //   join(targetDirectory, 'node_modules', '@platformatic', 'service'))
+  // const nodeModules = join(dir, 'node_modules')
+  // createDirectory(nodeModules)
+  // for (const pkg of pkgs) {
+  //   createDirectory(join(nodeModules, pkg))
+  // }
+}
+
 module.exports = {
   getTempDir,
   moveToTmpdir,
   mockNpmJsRequestForPkgs,
+  linkNodeModules,
   mockAgent,
 }
