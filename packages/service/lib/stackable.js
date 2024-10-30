@@ -117,8 +117,8 @@ class ServiceStackable {
         prefix: config.basePath ?? this.basePath ?? this.context?.serviceId,
         wantsAbsoluteUrls: false,
         needsRootRedirect: false,
-        tcp: !!this.app.url,
-        url: this.app.url
+        tcp: !!this.app?.url,
+        url: this.app?.url
       }
     }
   }

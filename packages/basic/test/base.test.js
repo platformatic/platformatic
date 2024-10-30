@@ -176,7 +176,10 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
       logLevel: 'trace',
       port: 0,
       root: pathToFileURL(temporaryFolder).toString(),
-      telemetry: {}
+      telemetry: {},
+      isEntrypoint: true,
+      runtimeBasePath: null,
+      wantsAbsoluteUrls: false
     })
   }
 

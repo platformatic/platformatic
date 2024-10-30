@@ -1,6 +1,7 @@
 import { deepStrictEqual, rejects } from 'node:assert'
 import { once } from 'node:events'
 import { createServer } from 'node:http'
+import { setTimeout } from 'node:timers/promises'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import pino from 'pino'
@@ -54,7 +55,12 @@ test('ChildProcess - the process will close upon request', async t => {
   const executablePath = fileURLToPath(new URL('../fixtures/wait-for-close.js', import.meta.url))
   const promise = stackable.buildWithCommand(['node', executablePath])
 
-  const childManager = stackable.getChildManager()
+  let childManager = null
+  while (!childManager) {
+    childManager = stackable.getChildManager()
+    await setTimeout(1)
+  }
+
   await once(childManager, 'ready')
   childManager.close('SIGKILL')
   await rejects(() => promise, /Process exited with non zero exit code/)
@@ -68,7 +74,12 @@ test('ChildProcess - the process exits in case of invalid messages', async t => 
   const executablePath = fileURLToPath(new URL('../fixtures/wait-for-close.js', import.meta.url))
   const promise = stackable.buildWithCommand(['node', executablePath])
 
-  const childManager = stackable.getChildManager()
+  let childManager = null
+  while (!childManager) {
+    childManager = stackable.getChildManager()
+    await setTimeout(1)
+  }
+
   await once(childManager, 'ready')
 
   childManager._send('INVALID', false)
@@ -93,7 +104,13 @@ test('ChildProcess - should not modify HTTP options for UNIX sockets', async t =
   const executablePath = fileURLToPath(new URL('../fixtures/unix-socket-server.js', import.meta.url))
   const promise = stackable.buildWithCommand(['node', executablePath])
 
-  const [path] = await once(stackable.getChildManager(), 'path')
+  let childManager = null
+  while (!childManager) {
+    childManager = stackable.getChildManager()
+    await setTimeout(1)
+  }
+
+  const [path] = await once(childManager, 'path')
 
   {
     const client = new Client(
@@ -132,7 +149,13 @@ test('ChildProcess - should notify listen error', async t => {
   const executablePath = fileURLToPath(new URL('../fixtures/server.js', import.meta.url))
   const promise = stackable.buildWithCommand(['node', executablePath])
 
-  const [error] = await once(stackable.getChildManager(), 'error')
+  let childManager = null
+  while (!childManager) {
+    childManager = stackable.getChildManager()
+    await setTimeout(1)
+  }
+
+  const [error] = await once(childManager, 'error')
 
   deepStrictEqual(error.code, 'EADDRNOTAVAIL')
   await rejects(() => promise)
@@ -155,7 +178,12 @@ test('ChildProcess - should intercept fetch calls', async t => {
   const executablePath = fileURLToPath(new URL('../fixtures/fetch.js', import.meta.url))
   const promise = stackable.buildWithCommand(['node', executablePath])
 
-  const manager = stackable.getChildManager()
+  let manager = null
+  while (!manager) {
+    manager = stackable.getChildManager()
+    await setTimeout(1)
+  }
+
   manager._forwardLogs = forwardLogs.bind(null, logger)
 
   await once(manager, 'ready')
