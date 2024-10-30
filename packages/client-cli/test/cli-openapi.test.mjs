@@ -1129,3 +1129,17 @@ test('support formdata', async (t) => {
     'data': { 'description'?: string; 'endDate': string | Date; 'startDate': string | Date };
   }`), true)
 })
+
+test('export formdata on full request object', async (t) => {
+  const dir = await moveToTmpdir(after)
+
+  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'multipart-formdata-openapi.json')
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--full-request'])
+  const typeFile = join(dir, 'movies', 'movies.d.ts')
+  const data = await readFile(typeFile, 'utf-8')
+  equal(data.includes("import { type FormData } from 'undici"), true)
+  equal(data.includes(`
+  export type PostSampleRequest = {
+    body: FormData;
+  }`), true)
+})

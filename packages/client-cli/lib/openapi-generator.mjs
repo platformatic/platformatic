@@ -103,6 +103,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
 
   writer.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
   writer.writeLine('import { type GetHeadersOptions } from \'@platformatic/client\'')
+  writer.writeLine('import { type FormData } from \'undici\'')
   writer.blankLine()
 
   const pluginName = `${capitalizedName}Plugin`
