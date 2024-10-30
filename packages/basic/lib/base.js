@@ -35,7 +35,7 @@ export class BaseStackable {
     this.startHttpTimer = null
     this.endHttpTimer = null
     this.clientWs = null
-    this.runtimeConfig = workerData.config
+    this.runtimeConfig = workerData?.config ?? null
 
     // Setup the logger
     const pinoOptions = {
@@ -299,6 +299,14 @@ export class BaseStackable {
       : await this.metricsRegistry.metrics()
   }
 
+  getMeta () {
+    return {
+      composer: {
+        wantsAbsoluteUrls: false
+      }
+    }
+  }
+
   async #getChildManagerContext (basePath) {
     const meta = await this.getMeta()
 
@@ -309,8 +317,8 @@ export class BaseStackable {
       basePath,
       logLevel: this.logger.level,
       isEntrypoint: this.isEntrypoint,
-      runtimeBasePath: this.runtimeConfig.basePath,
-      wantsAbsoluteUrls: meta.composer.wantsAbsoluteUrls,
+      runtimeBasePath: this.runtimeConfig?.basePath ?? null,
+      wantsAbsoluteUrls: meta.composer?.wantsAbsoluteUrls ?? false,
       /* c8 ignore next 2 */
       port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
