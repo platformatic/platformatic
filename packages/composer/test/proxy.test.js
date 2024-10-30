@@ -267,7 +267,7 @@ test('should proxy a @platformatic/service to its prefix by default', async t =>
   )
 
   t.after(() => {
-    runtime.close()
+    return runtime.close()
   })
 
   const address = await runtime.start()
@@ -324,7 +324,7 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
   )
 
   t.after(() => {
-    runtime.close()
+    return runtime.close()
   })
 
   const address = await runtime.start()
@@ -540,5 +540,49 @@ test('should fix the path using the referer only if asked to', async t => {
 
     const body = await rawBody.json()
     assert.deepStrictEqual(body, { ok: true })
+  }
+})
+
+test('should rewrite Location headers for proxied services', async t => {
+  const runtime = await createComposerInRuntime(
+    t,
+    'composer-prefix-in-conf',
+    {
+      composer: {
+        services: [
+          {
+            id: 'main',
+            proxy: {
+              prefix: '/whatever'
+            }
+          }
+        ],
+        refreshTimeout: REFRESH_TIMEOUT
+      }
+    },
+    [
+      {
+        id: 'main',
+        path: resolve(__dirname, './proxy/fixtures/service'),
+        config: 'platformatic.json'
+      }
+    ]
+  )
+
+  t.after(() => {
+    return runtime.close()
+  })
+
+  const address = await runtime.start()
+
+  {
+    const { statusCode, body: rawBody, headers } = await request(address, {
+      method: 'GET',
+      path: '/whatever/redirect'
+    })
+    assert.equal(statusCode, 302)
+    assert.equal(headers.location, '/whatever/hello')
+
+    rawBody.dump()
   }
 })
