@@ -16,6 +16,8 @@ import { WebSocket } from 'ws'
 import { exitCodes } from '../errors.js'
 import { importFile } from '../utils.js'
 import { getSocketPath, isWindows } from './child-manager.js'
+import diagnosticChannel from 'node:diagnostics_channel'
+import { ServerResponse } from 'node:http'
 
 function createInterceptor (itc) {
   return function (dispatch) {
@@ -248,6 +250,7 @@ export class ChildProcess extends ITC {
     }
 
     tracingChannel('net.server.listen').subscribe(subscribers)
+    tmp()
   }
 
   #setupInterceptors () {
@@ -267,6 +270,66 @@ export class ChildProcess extends ITC {
 
     process.on('uncaughtException', handleUnhandled.bind(this, 'uncaught exception'))
     process.on('unhandledRejection', handleUnhandled.bind(this, 'unhandled rejection'))
+  }
+}
+
+async function tmp () {
+  const { isEntrypoint, runtimeBasePath, wantsAbsoluteUrls } = globalThis.platformatic
+  if (isEntrypoint && runtimeBasePath && !wantsAbsoluteUrls) {
+    stripBasePath(runtimeBasePath)
+  }
+}
+
+function stripBasePath () {
+  const { isEntrypoint, runtimeBasePath, wantsAbsoluteUrls } = globalThis.platformatic
+  if (!isEntrypoint || !runtimeBasePath || wantsAbsoluteUrls) return
+
+  const kBasePath = Symbol('kBasePath')
+
+  diagnosticChannel.subscribe('http.server.request.start', ({ request, response }) => {
+    if (request.url.startsWith(runtimeBasePath)) {
+      request.url = request.url.slice(runtimeBasePath.length)
+
+      if (request.url.charAt(0) !== '/') {
+        request.url = '/' + request.url
+      }
+
+      response[kBasePath] = runtimeBasePath
+    }
+  })
+
+  const originWriteHead = ServerResponse.prototype.writeHead
+  const originSetHeader = ServerResponse.prototype.setHeader
+
+  ServerResponse.prototype.writeHead = function (statusCode, statusMessage, headers) {
+    if (this[kBasePath] !== undefined) {
+      if (headers === undefined && typeof statusMessage === 'object') {
+        headers = statusMessage
+        statusMessage = undefined
+      }
+
+      if (headers) {
+        for (const key in headers) {
+          if (
+            key.toLowerCase() === 'location' &&
+            !headers[key].startsWith(runtimeBasePath)
+          ) {
+            headers[key] = runtimeBasePath + headers[key]
+          }
+        }
+      }
+    }
+
+    return originWriteHead.call(this, statusCode, statusMessage, headers)
+  }
+
+  ServerResponse.prototype.setHeader = function (name, value) {
+    if (this[kBasePath]) {
+      if (name.toLowerCase() === 'location' && !value.startsWith(runtimeBasePath)) {
+        value = runtimeBasePath + value
+      }
+    }
+    originSetHeader.call(this, name, value)
   }
 }
 

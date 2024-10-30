@@ -5,6 +5,8 @@ const { join } = require('node:path')
 const { parentPort, workerData, threadId } = require('node:worker_threads')
 const { pathToFileURL } = require('node:url')
 const inspector = require('node:inspector')
+const diagnosticChannel = require('node:diagnostics_channel')
+const { ServerResponse } = require('node:http')
 
 const pino = require('pino')
 const { fetch, setGlobalDispatcher, Agent } = require('undici')
@@ -141,6 +143,13 @@ async function main () {
 
   await app.init()
 
+  if (service.entrypoint && config.basePath) {
+    const meta = await app.stackable.getMeta()
+    if (!meta.wantsAbsoluteUrls) {
+      stripBasePath(config.basePath)
+    }
+  }
+
   // Setup interaction with parent port
   const itc = setupITC(app, service, threadDispatcher)
 
@@ -150,6 +159,56 @@ async function main () {
   itc.listen()
 
   globalThis[kITC] = itc
+}
+
+function stripBasePath (basePath) {
+  const kBasePath = Symbol('kBasePath')
+
+  diagnosticChannel.subscribe('http.server.request.start', ({ request, response }) => {
+    if (request.url.startsWith(basePath)) {
+      request.url = request.url.slice(basePath.length)
+
+      if (request.url.charAt(0) !== '/') {
+        request.url = '/' + request.url
+      }
+
+      response[kBasePath] = basePath
+    }
+  })
+
+  const originWriteHead = ServerResponse.prototype.writeHead
+  const originSetHeader = ServerResponse.prototype.setHeader
+
+  ServerResponse.prototype.writeHead = function (statusCode, statusMessage, headers) {
+    if (this[kBasePath] !== undefined) {
+      if (headers === undefined && typeof statusMessage === 'object') {
+        headers = statusMessage
+        statusMessage = undefined
+      }
+
+      if (headers) {
+        for (const key in headers) {
+          if (
+            key.toLowerCase() === 'location' &&
+            !headers[key].startsWith(basePath)
+          ) {
+            headers[key] = basePath + headers[key]
+          }
+        }
+      }
+    }
+
+    return originWriteHead.call(this, statusCode, statusMessage, headers)
+  }
+
+  ServerResponse.prototype.setHeader = function (name, value) {
+    if (this[kBasePath]) {
+      if (name.toLowerCase() === 'location' && !value.startsWith(basePath)) {
+        value = basePath + value
+      }
+    }
+    originSetHeader.call(this, name, value)
+  }
 }
 
 // No need to catch this because there is the unhadledRejection handler on top.

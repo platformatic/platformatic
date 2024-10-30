@@ -1773,6 +1773,9 @@ importers:
       '@platformatic/db':
         specifier: workspace:*
         version: link:../db
+      '@platformatic/node':
+        specifier: workspace:*
+        version: link:../node
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service

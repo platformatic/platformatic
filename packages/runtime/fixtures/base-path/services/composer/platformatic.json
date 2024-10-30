@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.5.4.json",
+  "composer": {
+    "services": [
+      {
+        "id": "service",
+        "proxy": {
+          "prefix": "/service"
+        }
+      }
+    ],
+    "refreshTimeout": 0
+  }
+}

@@ -31,6 +31,7 @@
     "@platformatic/composer": "workspace:*",
     "@platformatic/db": "workspace:*",
     "@platformatic/service": "workspace:*",
+    "@platformatic/node": "workspace:*",
     "@platformatic/sql-graphql": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "borp": "^0.18.0",
