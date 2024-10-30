@@ -182,5 +182,4 @@ test('should have links to composed services', async (t) => {
   assert.ok(content.includes('<div class="service-path">/service1</div>'))
   assert.ok(content.includes('<div class="service-path">/service2</div>'))
   assert.ok(content.includes('<div class="service-path">/service3</div>'))
-
 })
