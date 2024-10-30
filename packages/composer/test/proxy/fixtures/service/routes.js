@@ -6,4 +6,8 @@ module.exports = async function (app) {
   app.post('/echo', async (req) => {
     return req.body
   })
+
+  app.get('/redirect', (req, reply) => {
+    reply.redirect('/hello')
+  })
 }
