@@ -250,7 +250,11 @@ export class ChildProcess extends ITC {
     }
 
     tracingChannel('net.server.listen').subscribe(subscribers)
-    stripBasePath()
+
+    const { isEntrypoint, runtimeBasePath, wantsAbsoluteUrls } = globalThis.platformatic
+    if (isEntrypoint && runtimeBasePath && !wantsAbsoluteUrls) {
+      stripBasePath(runtimeBasePath)
+    }
   }
 
   #setupInterceptors () {
@@ -273,21 +277,18 @@ export class ChildProcess extends ITC {
   }
 }
 
-function stripBasePath () {
-  const { isEntrypoint, runtimeBasePath, wantsAbsoluteUrls } = globalThis.platformatic
-  if (!isEntrypoint || !runtimeBasePath || wantsAbsoluteUrls) return
-
+function stripBasePath (basePath) {
   const kBasePath = Symbol('kBasePath')
 
   diagnosticChannel.subscribe('http.server.request.start', ({ request, response }) => {
-    if (request.url.startsWith(runtimeBasePath)) {
-      request.url = request.url.slice(runtimeBasePath.length)
+    if (request.url.startsWith(basePath)) {
+      request.url = request.url.slice(basePath.length)
 
       if (request.url.charAt(0) !== '/') {
         request.url = '/' + request.url
       }
 
-      response[kBasePath] = runtimeBasePath
+      response[kBasePath] = basePath
     }
   })
 
@@ -305,9 +306,9 @@ function stripBasePath () {
         for (const key in headers) {
           if (
             key.toLowerCase() === 'location' &&
-            !headers[key].startsWith(runtimeBasePath)
+            !headers[key].startsWith(basePath)
           ) {
-            headers[key] = runtimeBasePath + headers[key]
+            headers[key] = basePath + headers[key]
           }
         }
       }
@@ -318,8 +319,8 @@ function stripBasePath () {
 
   ServerResponse.prototype.setHeader = function (name, value) {
     if (this[kBasePath]) {
-      if (name.toLowerCase() === 'location' && !value.startsWith(runtimeBasePath)) {
-        value = runtimeBasePath + value
+      if (name.toLowerCase() === 'location' && !value.startsWith(basePath)) {
+        value = basePath + value
       }
     }
     originSetHeader.call(this, name, value)

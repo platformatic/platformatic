@@ -119,6 +119,11 @@ If not specified or set to `true`, the default value is `5000`, set to `0` or `f
     - **`url`** (`string`) — The URL to send the telemetry to. Required for `otlp` exporter. This has no effect on `console` and `memory` exporters.
     - **`headers`** (`object`) — Optional headers to send with the telemetry. This has no effect on `console` and `memory` exporters.
 
+### `basePath`
+
+The base path for the Platformatic Runtime. Set it when your application is deployed under a subpath, for example, `/api`.
+The runtime will automatically strip the base path from the incoming requests.
+
 :::important  
 OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). See the full list [here](https://opentelemetry.io/ecosystem/vendors/).
 :::
