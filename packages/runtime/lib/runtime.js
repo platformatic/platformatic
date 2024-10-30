@@ -756,6 +756,13 @@ class Runtime extends EventEmitter {
       inspectorOptions.port = inspectorOptions.port + this.#workers.size + 1
     }
 
+    if (config.telemetry) {
+      serviceConfig.telemetry = {
+        ...config.telemetry,
+        serviceName: `${config.telemetry.serviceName}-${serviceConfig.id}`
+      }
+    }
+
     const worker = new Worker(kWorkerFile, {
       workerData: {
         config,

@@ -9,7 +9,7 @@ const { pino } = require('pino')
 const { workerData } = require('node:worker_threads')
 const { resolve } = require('node:path')
 const { tmpdir } = require('node:os')
-const { statSync, readFileSync } = require('node:fs') // We want to have ll this synch
+const { statSync, readFileSync } = require('node:fs') // We want to have all this synch
 
 const logger = pino()
 
@@ -36,28 +36,29 @@ const setupNodeHTTPTelemetry = (opts) => {
 }
 
 let data = null
-if (workerData) {
+const useWorkerData = !!workerData
+
+if (useWorkerData) {
   data = workerData
 } else if (process.env.PLT_MANAGER_ID) {
   try {
     const dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${process.env.PLT_MANAGER_ID}.json`)
     statSync(dataPath)
-    const { data: dataFromFile } = JSON.parse(readFileSync(dataPath))
-    data = dataFromFile
-  } catch (e) {}
+    const jsonData = JSON.parse(readFileSync(dataPath, 'utf8'))
+    data = jsonData.data
+    logger.info(`Loaded data from ${dataPath}`)
+  } catch (e) {
+    logger.error('Error reading data from file', e)
+  }
 }
 
-// We have a service config, so we can setup telemetry if we have configuration
 if (data) {
-  const { id: serviceId } = workerData.serviceConfig
-  let telemetryConfig = workerData.config.telemetry
+  const telemetryConfig = useWorkerData ? data.serviceConfig.telemetry : data.telemetryConfig
+  const serviceId = useWorkerData ? data.serviceConfig.id : data.id
+  logger.info(`telemetryConfig ${JSON.stringify(telemetryConfig, null, 2)}`)
   if (telemetryConfig) {
-    telemetryConfig = {
-      ...telemetryConfig,
-      serviceName: `${telemetryConfig.serviceName}-${serviceId}`
-    }
     setupNodeHTTPTelemetry(telemetryConfig)
   } else {
-    logger.info(`No telemetry configuration found for service ${serviceId}`)
+    logger.info({ serviceId }, 'No telemetry configuration found')
   }
 }

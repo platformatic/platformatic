@@ -90,6 +90,12 @@ importers:
       '@platformatic/metrics':
         specifier: workspace:*
         version: link:../metrics
+      '@platformatic/node':
+        specifier: workspace:*
+        version: link:../node
+      '@platformatic/telemetry':
+        specifier: workspace:*
+        version: link:../telemetry
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils

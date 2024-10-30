@@ -114,14 +114,6 @@ async function main () {
     }
   }
 
-  let telemetryConfig = config.telemetry
-  if (telemetryConfig) {
-    telemetryConfig = {
-      ...telemetryConfig,
-      serviceName: `${telemetryConfig.serviceName}-${service.id}`
-    }
-  }
-
   const inspectorOptions = workerData.inspectorOptions
 
   if (inspectorOptions) {
@@ -144,7 +136,7 @@ async function main () {
   app = new PlatformaticApp(
     service,
     workerData.worker.count > 1 ? workerData.worker.index : undefined,
-    telemetryConfig,
+    service.telemetry,
     config.logger,
     serverConfig,
     config.metrics,

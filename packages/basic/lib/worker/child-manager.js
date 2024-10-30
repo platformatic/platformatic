@@ -5,12 +5,14 @@ import { rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { register } from 'node:module'
 import { platform, tmpdir } from 'node:os'
-import { dirname, resolve } from 'node:path'
+import { dirname, resolve, join } from 'node:path'
 import { workerData } from 'node:worker_threads'
 import { request } from 'undici'
 import { WebSocketServer } from 'ws'
 import { exitCodes } from '../errors.js'
 import { ensureFileUrl } from '../utils.js'
+import { createRequire } from 'node:module'
+
 export const isWindows = platform() === 'win32'
 
 // In theory we could use the context.id to namespace even more, but due to
@@ -160,7 +162,14 @@ export class ChildManager extends ITC {
     )
 
     process.env.PLT_MANAGER_ID = this.#id
-    // TODO: add open telemetry config here
+
+    if (this.#context.telemetryConfig) {
+      const require = createRequire(import.meta.url)
+      const telemetryPath = require.resolve('@platformatic/telemetry')
+      const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-http-telemetry.js')
+      process.env.NODE_OPTIONS =
+      `--require="${openTelemetrySetupPath}" ${process.env.NODE_OPTIONS ?? ''}`.trim()
+    }
     process.env.NODE_OPTIONS =
       `--import="${new URL('./child-process.js', import.meta.url)}" ${process.env.NODE_OPTIONS ?? ''}`.trim()
   }

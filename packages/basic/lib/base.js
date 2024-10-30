@@ -356,7 +356,7 @@ export class BaseStackable {
       /* c8 ignore next 2 */
       port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
-      telemetry: this.telemetryConfig
+      telemetryConfig: this.telemetryConfig
     }
   }
 }
