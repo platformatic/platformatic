@@ -41,8 +41,7 @@ test('ChildProcess - can load a script with additional loader and scripts', asyn
   deepStrictEqual(messages, [
     ['DEBUG', `Executing "node ${executablePath}" ...`],
     ['INFO', 'IMPORTED'],
-    ['INFO', 'LOADED true'],
-    ['INFO', 'IMPORTED']
+    ['INFO', 'LOADED true']
   ])
 })
 

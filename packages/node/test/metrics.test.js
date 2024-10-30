@@ -9,10 +9,10 @@ process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('should configure metrics correctly with both node and http metrics', async t => {
-  await createRuntime(t, 'express-api-metrics')
+  const { url } = await createRuntime(t, 'express-api-metrics')
 
   // Test request to add http metrics
-  await request('http://127.0.0.1:3042', {
+  await request(url, {
     method: 'GET',
     path: '/internal'
   })

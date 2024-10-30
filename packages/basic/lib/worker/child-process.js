@@ -3,7 +3,7 @@ import { collectMetrics } from '@platformatic/metrics'
 import { setupNodeHTTPTelemetry } from '@platformatic/telemetry'
 import { createPinoWritable, ensureLoggableError } from '@platformatic/utils'
 import { tracingChannel } from 'node:diagnostics_channel'
-import { once } from 'node:events'
+import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
 import { register } from 'node:module'
 import { hostname, platform, tmpdir } from 'node:os'
@@ -15,7 +15,9 @@ import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
 import { exitCodes } from '../errors.js'
 import { importFile } from '../utils.js'
-import { getSocketPath, isWindows } from './child-manager.js'
+import { getSocketPath } from './child-manager.js'
+
+const windowsNpmExecutables = ['npm-prefix.js', 'npm-cli.js']
 
 function createInterceptor (itc) {
   return function (dispatch) {
@@ -111,15 +113,11 @@ export class ChildProcess extends ITC {
     this.#setupServer()
     this.#setupInterceptors()
 
-    /*
-      Paolo: This was used to give chance to the process to do a graceful shutdown.
-      Unfortunately, there is a bug on NPM on Windows which caused in the process exiting
-      with error code 1.
-
-      Therefore we're only using to close the socket and free our added resources
-    */
     this.on('close', () => {
-      return this.close()
+      if (!globalThis.platformatic.events.emit('close')) {
+        // No user event, just exit without errors
+        process.exit(0)
+      }
     })
   }
 
@@ -289,10 +287,16 @@ export class ChildProcess extends ITC {
 }
 
 async function main () {
+  const executable = basename(process.argv[1] ?? '')
+  if (!isMainThread || windowsNpmExecutables.includes(executable)) {
+    return
+  }
+
   const dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${process.env.PLT_MANAGER_ID}.json`)
   const { data, loader, scripts } = JSON.parse(await readFile(dataPath))
 
   globalThis.platformatic = data
+  globalThis.platformatic.events = new EventEmitter()
 
   if (data.root && isMainThread) {
     process.chdir(fileURLToPath(data.root))
@@ -309,7 +313,4 @@ async function main () {
   globalThis[Symbol.for('plt.children.itc')] = new ChildProcess()
 }
 
-/* c8 ignore next 3 */
-if (!isWindows || !['npm-prefix.js', 'npm-cli.js'].includes(basename(process.argv[1] ?? ''))) {
-  await main()
-}
+await main()

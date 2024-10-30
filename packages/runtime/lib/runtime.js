@@ -78,10 +78,6 @@ class Runtime extends EventEmitter {
     this.#interceptor = createThreadInterceptor({ domain: '.plt.local', timeout: true })
     this.#status = undefined
     this.#restartingWorkers = new Map()
-
-    /* c8 ignore next 3 */
-    this.restartSignalListener = this.#restartOnSignal.bind(this)
-    process.on('SIGUSR2', this.restartSignalListener)
   }
 
   async init () {
@@ -205,7 +201,9 @@ class Runtime extends EventEmitter {
       await this.#inspectorServer.close()
     }
 
-    await Promise.all(this.#servicesIds.map(service => this.stopService(service, silent)))
+    for (const service of this.#servicesIds) {
+      await this.stopService(service, silent)
+    }
 
     this.#updateStatus('stopped')
   }
@@ -229,7 +227,6 @@ class Runtime extends EventEmitter {
     this.#updateStatus('closing')
 
     clearInterval(this.#metricsTimeout)
-    process.removeListener('SIGUSR2', this.restartSignalListener)
 
     await this.stop(silent)
 
@@ -717,16 +714,6 @@ class Runtime extends EventEmitter {
     return createReadStream(filePath)
   }
 
-  async #restartOnSignal () {
-    this.logger.info('Received SIGUSR2, restarting all services ...')
-
-    try {
-      await this.restart()
-    } catch (err) {
-      this.logger.error({ err: ensureLoggableError(err) }, 'Failed to restart services.')
-    }
-  }
-
   #updateStatus (status) {
     this.#status = status
     this.emit(status)
@@ -992,6 +979,8 @@ class Runtime extends EventEmitter {
       this.logger?.info(`Stopping the ${label}...`)
     }
 
+    const exitPromise = once(worker, 'exit')
+
     // Always send the stop message, it will shut down workers that only had ITC and interceptors setup
     try {
       await executeWithTimeout(sendViaITC(worker, 'stop'), 10000)
@@ -1006,7 +995,7 @@ class Runtime extends EventEmitter {
     }
 
     // Wait for the worker thread to finish, we're going to create a new one if the service is ever restarted
-    const res = await executeWithTimeout(once(worker, 'exit'), 10000)
+    const res = await executeWithTimeout(exitPromise, 10000)
 
     // If the worker didn't exit in time, kill it
     if (res === 'timeout') {

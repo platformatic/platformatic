@@ -12,14 +12,14 @@ setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 test('should configure metrics correctly with both node and http metrics', async t => {
   const configuration = 'standalone-with-metrics'
 
-  await createRuntime(t, configuration)
+  const { url } = await createRuntime(t, configuration)
 
   // This is needed for the diagnostics channel to start intercepting requests
   await sleep(100)
 
   {
     // Test request to add http metrics
-    const { statusCode } = await request('http://127.0.0.1:3042', {
+    const { statusCode } = await request(url, {
       method: 'GET',
       path: '/'
     })

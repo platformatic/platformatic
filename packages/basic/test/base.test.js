@@ -170,13 +170,15 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
     deepStrictEqual(statusCode, 200)
 
     const body = await rawBody.json()
+    body.events = undefined
     deepStrictEqual(body, {
       basePath: '/whatever',
       host: '127.0.0.1',
       logLevel: 'trace',
       port: 0,
       root: pathToFileURL(temporaryFolder).toString(),
-      telemetry: {}
+      telemetry: {},
+      events: undefined
     })
   }
 

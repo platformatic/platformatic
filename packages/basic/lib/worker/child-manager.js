@@ -1,4 +1,4 @@
-import { ITC, generateNotification } from '@platformatic/itc'
+import { ITC } from '@platformatic/itc'
 import { createDirectory, ensureLoggableError } from '@platformatic/utils'
 import { once } from 'node:events'
 import { rm, writeFile } from 'node:fs/promises'
@@ -128,14 +128,9 @@ export class ChildManager extends ITC {
     })
   }
 
-  async close (signal) {
+  async close () {
     if (this.#dataPath) {
       await rm(this.#dataPath, { force: true })
-    }
-
-    for (const client of this.#clients) {
-      this.#currentClient = client
-      this._send(generateNotification('close', signal))
     }
 
     this.#server?.close()
@@ -193,6 +188,11 @@ export class ChildManager extends ITC {
   send (client, name, message) {
     this.#currentClient = client
     return super.send(name, message)
+  }
+
+  notify (client, name, message) {
+    this.#currentClient = client
+    return super.notify(name, message)
   }
 
   _send (message, stringify = true) {

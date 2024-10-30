@@ -270,18 +270,26 @@ export class BaseStackable {
     this.#subprocessStarted = false
     const exitPromise = once(this.subprocess, 'exit')
 
-    // Try to kill the process politely
-    this.childManager.close(this.subprocessTerminationSignal ?? 'SIGINT')
-    this.subprocess.kill(this.subprocessTerminationSignal ?? 'SIGINT')
+    // Attempt graceful close on the process
+    this.childManager.notify(this.clientWs, 'close')
 
-    // If the process hasn't exited in 10 seconds, kill it the hard way
-    /* c8 ignore next 5 */
+    // If the process hasn't exited in 10 seconds, kill it in the polite way
+    /* c8 ignore next 10 */
     const res = await executeWithTimeout(exitPromise, 10000)
     if (res === 'timeout') {
-      this.subprocess.kill('SIGKILL')
+      this.subprocess.kill(this.subprocessTerminationSignal ?? 'SIGINT')
+
+      // If the process hasn't exited in 10 seconds, kill it the hard way
+      const res = await executeWithTimeout(exitPromise, 10000)
+      if (res === 'timeout') {
+        this.subprocess.kill('SIGKILL')
+      }
     }
 
     await exitPromise
+
+    // Close the manager
+    this.childManager.close()
   }
 
   getChildManager () {

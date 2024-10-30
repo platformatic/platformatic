@@ -1,3 +1,5 @@
+'use strict'
+
 class RoundRobinMap extends Map {
   #instances
 

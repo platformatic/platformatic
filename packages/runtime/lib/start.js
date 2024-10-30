@@ -5,6 +5,9 @@ const { writeFile } = require('node:fs/promises')
 const { join, resolve, dirname } = require('node:path')
 
 const { printConfigValidationErrors } = require('@platformatic/config')
+const {
+  errors: { ensureLoggableError }
+} = require('@platformatic/utils')
 const closeWithGrace = require('close-with-grace')
 const pino = require('pino')
 const pretty = require('pino-pretty')
@@ -14,6 +17,16 @@ const { parseInspectorOptions, wrapConfigInRuntimeConfig } = require('./config')
 const { Runtime } = require('./runtime')
 const errors = require('./errors')
 const { getRuntimeLogsDir, loadConfig } = require('./utils')
+
+async function restartRuntime (runtime) {
+  runtime.logger.info('Received SIGUSR2, restarting all services ...')
+
+  try {
+    await runtime.restart()
+  } catch (err) {
+    runtime.logger.error({ err: ensureLoggableError(err) }, 'Failed to restart services.')
+  }
+}
 
 async function buildRuntime (configManager, env) {
   env = env || process.env
@@ -30,6 +43,13 @@ async function buildRuntime (configManager, env) {
   const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
 
   const runtime = new Runtime(configManager, runtimeLogsDir, env)
+
+  /* c8 ignore next 3 */
+  const restartListener = restartRuntime.bind(null, runtime)
+  process.on('SIGUSR2', restartListener)
+  runtime.on('closed', () => {
+    process.removeListener('SIGUSR2', restartListener)
+  })
 
   try {
     await runtime.init()
