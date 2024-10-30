@@ -163,15 +163,18 @@ export class ChildManager extends ITC {
 
     process.env.PLT_MANAGER_ID = this.#id
 
+    const nodeOptions = process.env.NODE_OPTIONS ?? ''
+    const childProcessInclude = `--import="${new URL('./child-process.js', import.meta.url)}"`
+    let telemetryInclude = ''
+
     if (this.#context.telemetryConfig) {
       const require = createRequire(import.meta.url)
       const telemetryPath = require.resolve('@platformatic/telemetry')
       const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-http-telemetry.js')
-      process.env.NODE_OPTIONS =
-      `--require="${openTelemetrySetupPath}" ${process.env.NODE_OPTIONS ?? ''}`.trim()
+      telemetryInclude = `--require="${openTelemetrySetupPath}"`
     }
-    process.env.NODE_OPTIONS =
-      `--import="${new URL('./child-process.js', import.meta.url)}" ${process.env.NODE_OPTIONS ?? ''}`.trim()
+
+    process.env.NODE_OPTIONS = `${telemetryInclude} ${childProcessInclude} ${nodeOptions}`.trim()
   }
 
   async eject () {
