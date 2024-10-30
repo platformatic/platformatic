@@ -46,7 +46,7 @@ if (useWorkerData) {
     statSync(dataPath)
     const jsonData = JSON.parse(readFileSync(dataPath, 'utf8'))
     data = jsonData.data
-    logger.info(`Loaded data from ${dataPath}`)
+    logger.debug(`Loaded data from ${dataPath}`)
   } catch (e) {
     logger.error('Error reading data from file', e)
   }
@@ -55,10 +55,10 @@ if (useWorkerData) {
 if (data) {
   const telemetryConfig = useWorkerData ? data.serviceConfig.telemetry : data.telemetryConfig
   const serviceId = useWorkerData ? data.serviceConfig.id : data.id
-  logger.info(`telemetryConfig ${JSON.stringify(telemetryConfig, null, 2)}`)
+  logger.debug({ telemetryConfig }, 'telemetryConfig')
   if (telemetryConfig) {
     setupNodeHTTPTelemetry(telemetryConfig)
   } else {
-    logger.info({ serviceId }, 'No telemetry configuration found')
+    logger.debug({ serviceId }, 'No telemetry configuration found')
   }
 }
