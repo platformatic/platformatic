@@ -250,7 +250,7 @@ export class ChildProcess extends ITC {
     }
 
     tracingChannel('net.server.listen').subscribe(subscribers)
-    tmp()
+    stripBasePath()
   }
 
   #setupInterceptors () {
@@ -270,13 +270,6 @@ export class ChildProcess extends ITC {
 
     process.on('uncaughtException', handleUnhandled.bind(this, 'uncaught exception'))
     process.on('unhandledRejection', handleUnhandled.bind(this, 'unhandled rejection'))
-  }
-}
-
-async function tmp () {
-  const { isEntrypoint, runtimeBasePath, wantsAbsoluteUrls } = globalThis.platformatic
-  if (isEntrypoint && runtimeBasePath && !wantsAbsoluteUrls) {
-    stripBasePath(runtimeBasePath)
   }
 }
 
