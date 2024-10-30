@@ -22,8 +22,16 @@ export let fixturesDir
 let currentWorkingDirectory
 let hmrTriggerFileRelative
 
-export const temporaryFolder = await realpath(tmpdir())
 export const pltRoot = fileURLToPath(new URL('../../..', import.meta.url))
+
+/*
+  This is to bypass a problem on GitHub actions where the tmpdir()
+  is on a different drive and thus symlinking wouldn't work.
+  We ensure the temporary base is on the same drive letter by pointing in this repo.
+*/
+export const temporaryFolder = process.env.CI
+  ? fileURLToPath(new URL('../../../tmp', import.meta.url))
+  : await realpath(tmpdir())
 
 // These come from @platformatic/service, where they are not listed explicitly inside services
 export const defaultDependencies = ['fastify', 'typescript']
