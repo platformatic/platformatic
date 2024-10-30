@@ -184,6 +184,7 @@ async function buildStackable (options, app = platformaticService, Stackable = S
 }
 
 module.exports.configType = 'service'
+module.exports.isPLTService = true
 module.exports.app = platformaticService
 module.exports.schema = schema
 module.exports.buildServer = _buildServer

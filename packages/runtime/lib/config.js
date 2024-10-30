@@ -4,6 +4,7 @@ const { readdir } = require('node:fs/promises')
 const { join, resolve: pathResolve } = require('node:path')
 
 const ConfigManager = require('@platformatic/config')
+const { Store } = require('@platformatic/config')
 
 const errors = require('./errors')
 const { schema } = require('./schema')
@@ -91,18 +92,16 @@ async function _transformConfig (configManager, args) {
     }
 
     if (service.config) {
-      const manager = new ConfigManager({ source: pathResolve(service.config) })
-      await manager.parse()
-      const serviceConfig = manager.current
-      const type = serviceConfig.$schema ? ConfigManager.matchKnownSchema(serviceConfig.$schema) : undefined
-      service.type = type
+      const store = new Store()
+      const serviceConfig = await store.loadConfig(service)
+      service.isPLTService = !!serviceConfig.app.isPLTService
+      service.type = serviceConfig.app.configType
     }
 
     service.entrypoint = service.id === config.entrypoint
     service.dependencies = []
     service.localServiceEnvVars = new Map()
     service.localUrl = `http://${service.id}.plt.local`
-    service.isPLTService = service.type === 'service' || service.type === 'db' || service.type === 'composer'
 
     if (typeof service.watch === 'undefined') {
       service.watch = config.watch
