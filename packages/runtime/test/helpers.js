@@ -56,15 +56,6 @@ async function linkNodeModules (dir, pkgs) {
       await link(join(__dirname, '..', 'node_modules', pkg), join(dir, 'node_modules', pkg))
     }
   }
-
-  // await mkdir(join(targetDirectory, 'node_modules', '@platformatic'))
-  // await link(join(__dirname, '..', 'node_modules', '@platformatic', 'service'),
-  //   join(targetDirectory, 'node_modules', '@platformatic', 'service'))
-  // const nodeModules = join(dir, 'node_modules')
-  // createDirectory(nodeModules)
-  // for (const pkg of pkgs) {
-  //   createDirectory(join(nodeModules, pkg))
-  // }
 }
 
 module.exports = {

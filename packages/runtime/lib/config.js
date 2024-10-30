@@ -1,7 +1,7 @@
 'use strict'
 
 const { readdir } = require('node:fs/promises')
-const { join, resolve: pathResolve } = require('node:path')
+const { join, resolve: pathResolve, isAbsolute } = require('node:path')
 
 const ConfigManager = require('@platformatic/config')
 const { Store } = require('@platformatic/config')
@@ -86,6 +86,11 @@ async function _transformConfig (configManager, args) {
 
   for (let i = 0; i < services.length; ++i) {
     const service = services[i]
+
+    // We need to have absolut paths here, ot the `loadConfig` will fail
+    if (!isAbsolute(service.path)) {
+      service.path = pathResolve(configManager.dirname, service.path)
+    }
 
     if (configManager._fixPaths && service.config) {
       service.config = pathResolve(service.path, service.config)
