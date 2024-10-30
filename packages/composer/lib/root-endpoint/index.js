@@ -56,7 +56,7 @@ module.exports = async (app, opts) => {
             if (s.proxy) {
               serviceTypes.proxy.services.push({
                 ...s,
-                externalLink: `${s.proxy.prefix}`
+                externalLink: `${s.proxy.prefix}/`
               })
             }
           })
