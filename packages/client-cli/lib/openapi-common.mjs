@@ -144,12 +144,20 @@ export function writeContent (writer, content, spec, addedProps, methodType, wra
   let isStructuredType = false
   if (content) {
     for (const [contentType, body] of Object.entries(content)) {
+      const isFormDataContent = contentType.indexOf('multipart/form-data') === 0
+
       // We ignore all non-JSON endpoints for now
       // TODO: support other content types
       /* c8 ignore next 3 */
-      if (contentType.indexOf('application/json') !== 0 && contentType.indexOf('multipart/form-data') !== 0) {
+      if (contentType.indexOf('application/json') !== 0 && !isFormDataContent) {
         continue
       }
+
+      if (isFormDataContent && wrapper) {
+        writer.write(`${wrapper}: FormData;`)
+        break
+      }
+
       // Response body has no schema that can be processed
       // Should not be possible with well formed OpenAPI
       /* c8 ignore next 3 */

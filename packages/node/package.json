@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/node",
-  "version": "2.5.5",
+  "version": "2.6.1",
   "description": "Platformatic Node.js Stackable",
   "main": "index.js",
   "type": "module",
