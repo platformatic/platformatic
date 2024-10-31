@@ -20,7 +20,7 @@ import { getSocketPath } from './child-manager.js'
 
 const windowsNpmExecutables = ['npm-prefix.js', 'npm-cli.js']
 
-function createInterceptor(itc) {
+function createInterceptor (itc) {
   return function (dispatch) {
     return async (opts, handler) => {
       let url = opts.origin
@@ -88,7 +88,7 @@ export class ChildProcess extends ITC {
   #metricsRegistry
   #pendingMessages
 
-  constructor() {
+  constructor () {
     super({
       throwOnMissingHandler: false,
       name: `${process.env.PLT_MANAGER_ID}-child-process`,
@@ -122,7 +122,7 @@ export class ChildProcess extends ITC {
     })
   }
 
-  _setupListener(listener) {
+  _setupListener (listener) {
     this.#listener = listener
 
     this.#socket.on('open', () => {
@@ -152,7 +152,7 @@ export class ChildProcess extends ITC {
     })
   }
 
-  _send(message) {
+  _send (message) {
     /* c8 ignore next 4 */
     if (this.#socket.readyState === WebSocket.CONNECTING) {
       this.#pendingMessages.push(JSON.stringify(message))
@@ -162,21 +162,21 @@ export class ChildProcess extends ITC {
     this.#socket.send(JSON.stringify(message))
   }
 
-  _createClosePromise() {
+  _createClosePromise () {
     return once(this.#socket, 'close')
   }
 
   /* c8 ignore next 3 */
-  _close() {
+  _close () {
     this.#socket.close()
   }
 
-  async #collectMetrics({ serviceId, workerId, metricsConfig }) {
+  async #collectMetrics ({ serviceId, workerId, metricsConfig }) {
     const { registry } = await collectMetrics(serviceId, workerId, metricsConfig)
     this.#metricsRegistry = registry
   }
 
-  async #getMetrics({ format } = {}) {
+  async #getMetrics ({ format } = {}) {
     if (!this.#metricsRegistry) return null
 
     const res =
@@ -185,7 +185,7 @@ export class ChildProcess extends ITC {
     return res
   }
 
-  #setupLogger() {
+  #setupLogger () {
     // Since this is executed by user code, make sure we only override this in the main thread
     // The rest will be intercepted by the BaseStackable.
     const pinoOptions = {
@@ -216,15 +216,15 @@ export class ChildProcess extends ITC {
   }
 
   /* c8 ignore next 5 */
-  #setupTelemetry() {
+  #setupTelemetry () {
     if (globalThis.platformatic.telemetry) {
       setupNodeHTTPTelemetry(globalThis.platformatic.telemetry, this.#logger)
     }
   }
 
-  #setupServer() {
+  #setupServer () {
     const subscribers = {
-      asyncStart({ options }) {
+      asyncStart ({ options }) {
         // Unix socket, do nothing
         if (options.path) {
           return
@@ -270,17 +270,17 @@ export class ChildProcess extends ITC {
     }
   }
 
-  #setupInterceptors() {
+  #setupInterceptors () {
     setGlobalDispatcher(getGlobalDispatcher().compose(createInterceptor(this)))
   }
 
-  #setupHandlers() {
+  #setupHandlers () {
     const errorLabel =
       typeof globalThis.platformatic.workerId !== 'undefined'
         ? `worker ${globalThis.platformatic.workerId} of the service "${globalThis.platformatic.serviceId}"`
         : `service "${globalThis.platformatic.serviceId}"`
 
-    function handleUnhandled(type, err) {
+    function handleUnhandled (type, err) {
       this.#logger.error({ err: ensureLoggableError(err) }, `Child process for the ${errorLabel} threw an ${type}.`)
 
       // Give some time to the logger and ITC notifications to land before shutting down
@@ -292,7 +292,7 @@ export class ChildProcess extends ITC {
   }
 }
 
-function stripBasePath(basePath) {
+function stripBasePath (basePath) {
   const kBasePath = Symbol('kBasePath')
 
   diagnosticChannel.subscribe('http.server.request.start', ({ request, response }) => {
@@ -339,7 +339,7 @@ function stripBasePath(basePath) {
   }
 }
 
-async function main() {
+async function main () {
   const executable = basename(process.argv[1] ?? '')
   if (!isMainThread || windowsNpmExecutables.includes(executable)) {
     return

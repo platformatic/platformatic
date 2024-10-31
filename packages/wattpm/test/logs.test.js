@@ -33,7 +33,7 @@ async function matchLogs (stream) {
 }
 
 test('inject - should stream runtime logs', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
     logsProcess.kill('SIGINT')
@@ -61,7 +61,7 @@ test('inject - should stream runtime logs', async t => {
 })
 
 test('inject - should stream runtime logs filtering by service', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
     logsProcess.kill('SIGINT')
@@ -89,7 +89,7 @@ test('inject - should stream runtime logs filtering by service', async t => {
 })
 
 test('inject - should stream runtime logs filtering by level', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
     logsProcess.kill('SIGINT')

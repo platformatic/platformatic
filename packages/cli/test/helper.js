@@ -110,30 +110,24 @@ export function filterConfigurations (configurations) {
 export function verifyBuildAndProductionMode (fixturesDirectory, configurations, pauseTimeout) {
   configurations = filterConfigurations(configurations)
 
-  // Do not move destructuring up here since build step will modify the object
   for (const configuration of configurations) {
-    test(`configuration "${configuration.name}" - should build and create all required files`, async t => {
-      configuration.runtime = await prepareRuntime(resolve(fixturesDirectory, configuration.id), true)
+    test(`should build and start in production mode - configuration "${configuration.name}"`, async t => {
+      const { root, config } = await prepareRuntime(t, resolve(fixturesDirectory, configuration.id), true)
+      const { hostname: runtimeHost, port: runtimePort } = config.configManager.current.server ?? {}
 
-      const { root, config } = configuration.runtime
-      configuration.serverConfig = config.configManager.current.server ?? {}
-
+      // Build
       await execa('node', [cliPath, 'build'], {
         cwd: root,
         stdio: configuration.serverConfig.logger?.level !== 'error' ? 'inherit' : undefined
       })
 
+      // Make sure all file exists
       for (const file of configuration.files) {
         await ensureExists(resolve(root, file))
       }
-    })
 
-    test(`configuration "${configuration.name}" - should start in production mode`, async t => {
-      const { root, config } = configuration.runtime
+      // Start the runtime
       const { url } = await startRuntime(t, root, config, pauseTimeout)
-
-      const runtimeHost = configuration.serverConfig?.hostname ?? null
-      const runtimePort = configuration.serverConfig?.port ?? null
 
       if (runtimeHost) {
         const actualHost = new URL(url).hostname
@@ -145,6 +139,7 @@ export function verifyBuildAndProductionMode (fixturesDirectory, configurations,
         strictEqual(actualPort.toString(), runtimePort.toString(), `port should be ${runtimePort}`)
       }
 
+      // Make sure all checks work properly
       for (const check of configuration.checks) {
         await check(t, url, check)
       }

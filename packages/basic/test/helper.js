@@ -1,9 +1,8 @@
 import { createDirectory, safeRemove, withResolvers } from '@platformatic/utils'
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { existsSync } from 'node:fs'
-import { cp, readFile, realpath, symlink, writeFile } from 'node:fs/promises'
+import { cp, readFile, symlink, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import { tmpdir } from 'node:os'
 import { basename, dirname, resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
@@ -24,14 +23,7 @@ let hmrTriggerFileRelative
 
 export const pltRoot = fileURLToPath(new URL('../../..', import.meta.url))
 
-/*
-  This is to bypass a problem on GitHub actions where the tmpdir()
-  is on a different drive and thus symlinking wouldn't work.
-  We ensure the temporary base is on the same drive letter by pointing in this repo.
-*/
-export const temporaryFolder = process.env.CI
-  ? fileURLToPath(new URL('../../../tmp', import.meta.url))
-  : await realpath(tmpdir())
+export const temporaryFolder = fileURLToPath(new URL('../../../tmp', import.meta.url))
 
 // These come from @platformatic/service, where they are not listed explicitly inside services
 export const defaultDependencies = ['fastify', 'typescript']
@@ -181,10 +173,12 @@ export async function ensureDependencies (config) {
   }
 }
 
-export async function prepareRuntime (fixturePath, production = false, configFile = 'platformatic.runtime.json') {
+export async function prepareRuntime (t, fixturePath, production = false, configFile = 'platformatic.runtime.json') {
   const root = resolve(temporaryFolder, basename(fixturePath) + '-' + Date.now())
   currentWorkingDirectory = root
+
   await createDirectory(root)
+  t.after(() => safeRemove(root))
 
   // Copy the fixtures
   await cp(resolve(fixturesDir, fixturePath), root, { recursive: true })
@@ -227,7 +221,7 @@ export async function createRuntime (
   production = false,
   configFile = 'platformatic.runtime.json'
 ) {
-  const { root, config } = await prepareRuntime(fixturePath, production, configFile)
+  const { root, config } = await prepareRuntime(t, fixturePath, production, configFile)
 
   return startRuntime(t, root, config, pauseAfterCreation)
 }

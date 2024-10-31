@@ -7,7 +7,7 @@ import { prepareRuntime } from '../../basic/test/helper.js'
 import { createTemporaryDirectory, waitForStart, wattpm } from './helper.js'
 
 test('inject - should send a request to an application', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const directory = await createTemporaryDirectory(t, 'inject')
   await createDirectory(directory)
@@ -77,7 +77,7 @@ test('inject - should complain when a runtime is not found', async t => {
 })
 
 test('inject - should complain when a service is not found', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)

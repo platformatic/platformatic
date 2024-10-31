@@ -16,9 +16,12 @@ const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
 const tmpDir = resolve(__dirname, '../../tmp')
 
-async function prepareRuntime (name, dependencies) {
+async function prepareRuntime (t, name, dependencies) {
   const root = resolve(tmpDir, `plt-multiple-workers-${Date.now()}`)
+
   await createDirectory(root)
+  t.after(() => safeRemove(root))
+
   await cp(resolve(fixturesDir, name), root, { recursive: true })
 
   for (const [service, deps] of Object.entries(dependencies)) {
@@ -111,7 +114,7 @@ async function waitForLogs (socket, ...exprs) {
 }
 
 test('services are started with multiple workers according to the configuration', async t => {
-  const root = await prepareRuntime('multiple-workers', { node: ['node'] })
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
   const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
   const app = await buildServer(config.configManager.current, config.args)
@@ -119,7 +122,6 @@ test('services are started with multiple workers according to the configuration'
 
   t.after(async () => {
     await app.close()
-    await safeRemove(root)
     managementApiWebsocket.terminate()
   })
 
@@ -165,7 +167,7 @@ test('services are started with multiple workers according to the configuration'
 })
 
 test('services are started with a single workers in development', async t => {
-  const root = await prepareRuntime('multiple-workers', { node: ['node'] })
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current, config.args)
@@ -173,7 +175,6 @@ test('services are started with a single workers in development', async t => {
 
   t.after(async () => {
     await app.close()
-    await safeRemove(root)
     managementApiWebsocket.terminate()
   })
 
@@ -197,7 +198,7 @@ test('services are started with a single workers in development', async t => {
 })
 
 test('the mesh network works with the internal dispatcher', async t => {
-  const root = await prepareRuntime('multiple-workers', { node: ['node'] })
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
   const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
   const app = await buildServer(config.configManager.current, config.args)
@@ -205,7 +206,6 @@ test('the mesh network works with the internal dispatcher', async t => {
 
   t.after(async () => {
     await app.close()
-    await safeRemove(root)
   })
 
   await verifyResponse(entryUrl, 'service', 0, 'MockSocket')
@@ -228,7 +228,7 @@ test('the mesh network works with the internal dispatcher', async t => {
 })
 
 test('the mesh network works with the HTTP services', async t => {
-  const root = await prepareRuntime('multiple-workers', { node: ['node'] })
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
 
   await updateConfigFile(configFile, contents => {
@@ -254,7 +254,6 @@ test('the mesh network works with the HTTP services', async t => {
 
   t.after(async () => {
     await app.close()
-    await safeRemove(root)
   })
 
   function verifySource (port, res) {
@@ -282,7 +281,7 @@ test('the mesh network works with the HTTP services', async t => {
 
 // Note: this cannot be tested in production mode as watching is always disabled
 test('can detect changes and restart all workers for a service', async t => {
-  const root = await prepareRuntime('multiple-workers', { node: ['node'] })
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
 
   await updateConfigFile(configFile, contents => {
@@ -300,7 +299,6 @@ test('can detect changes and restart all workers for a service', async t => {
 
   t.after(async () => {
     await app.close()
-    await safeRemove(root)
     managementApiWebsocket.terminate()
   })
 
@@ -330,7 +328,7 @@ test('can detect changes and restart all workers for a service', async t => {
 })
 
 test('can restart only crashed workers when they throw an exception during start', async t => {
-  const root = await prepareRuntime('multiple-workers', { node: ['node'] })
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
   const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
   const app = await buildServer(config.configManager.current, config.args)
@@ -338,7 +336,6 @@ test('can restart only crashed workers when they throw an exception during start
 
   t.after(async () => {
     await app.close()
-    await safeRemove(root)
     managementApiWebsocket.terminate()
   })
 
@@ -391,7 +388,7 @@ test('can restart only crashed workers when they throw an exception during start
 })
 
 test('can restart only crashed workers when they exit during start', async t => {
-  const root = await prepareRuntime('multiple-workers', { node: ['node'] })
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
   const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
   const app = await buildServer(config.configManager.current, config.args)
@@ -399,7 +396,6 @@ test('can restart only crashed workers when they exit during start', async t => 
 
   t.after(async () => {
     await app.close()
-    await safeRemove(root)
     managementApiWebsocket.terminate()
   })
 
@@ -455,7 +451,7 @@ test('can restart only crashed workers when they exit during start', async t => 
 })
 
 test('can restart only crashed workers when they crash', async t => {
-  const root = await prepareRuntime('multiple-workers', { node: ['node'] })
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
   const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
   const app = await buildServer(config.configManager.current, config.args)
@@ -463,7 +459,6 @@ test('can restart only crashed workers when they crash', async t => {
 
   t.after(async () => {
     await app.close()
-    await safeRemove(root)
     managementApiWebsocket.terminate()
   })
 
@@ -532,7 +527,7 @@ test('can restart only crashed workers when they crash', async t => {
 })
 
 test('can restart only crashed workers when they exit', async t => {
-  const root = await prepareRuntime('multiple-workers', { node: ['node'] })
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
   const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
   const app = await buildServer(config.configManager.current, config.args)
@@ -540,7 +535,6 @@ test('can restart only crashed workers when they exit', async t => {
 
   t.after(async () => {
     await app.close()
-    await safeRemove(root)
     managementApiWebsocket.terminate()
   })
 
@@ -589,7 +583,7 @@ test('can restart only crashed workers when they exit', async t => {
 })
 
 test('can inject on a worker', async t => {
-  const root = await prepareRuntime('multiple-workers', { node: ['node'] })
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
   const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
   const app = await buildServer(config.configManager.current, config.args)
@@ -597,7 +591,6 @@ test('can inject on a worker', async t => {
 
   t.after(async () => {
     await app.close()
-    await safeRemove(root)
     managementApiWebsocket.terminate()
   })
 
@@ -632,7 +625,7 @@ test('can inject on a worker', async t => {
 })
 
 test('can collect metrics with worker label', async t => {
-  const root = await prepareRuntime('multiple-workers', { node: ['node'] })
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
   const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
 
@@ -640,7 +633,6 @@ test('can collect metrics with worker label', async t => {
 
   t.after(async () => {
     await app.close()
-    await safeRemove(root)
   })
 
   await app.start()
@@ -693,14 +685,13 @@ test('can collect metrics with worker label', async t => {
 })
 
 test('return workers information in the management API when starting in production mode', async t => {
-  const root = await prepareRuntime('multiple-workers', { node: ['node'] })
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
   const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
   const app = await buildServer(config.configManager.current, config.args)
 
   t.after(async () => {
     await app.close()
-    await safeRemove(root)
   })
 
   await app.start()
@@ -729,14 +720,13 @@ test('return workers information in the management API when starting in producti
 })
 
 test('return no workers information in the management API when starting in development mode', async t => {
-  const root = await prepareRuntime('multiple-workers', { node: ['node'] })
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current, config.args)
 
   t.after(async () => {
     await app.close()
-    await safeRemove(root)
   })
 
   await app.start()
@@ -765,7 +755,7 @@ test('return no workers information in the management API when starting in devel
 })
 
 test('logging properly works in production mode when using separate processes', async t => {
-  const root = await prepareRuntime('multiple-workers', { node: ['node'] })
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
   const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
 
@@ -784,7 +774,6 @@ test('logging properly works in production mode when using separate processes', 
 
   t.after(async () => {
     await app.close()
-    await safeRemove(root)
     managementApiWebsocket.terminate()
   })
 
@@ -826,7 +815,7 @@ test('logging properly works in production mode when using separate processes', 
 })
 
 test('logging properly works in development mode using separate processes', async t => {
-  const root = await prepareRuntime('multiple-workers', { node: ['node'] })
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
 
@@ -845,7 +834,6 @@ test('logging properly works in development mode using separate processes', asyn
 
   t.after(async () => {
     await app.close()
-    await safeRemove(root)
     managementApiWebsocket.terminate()
   })
 

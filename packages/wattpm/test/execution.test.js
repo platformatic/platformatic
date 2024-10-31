@@ -10,7 +10,7 @@ import { prepareRuntime } from '../../basic/test/helper.js'
 import { waitForStart, wattpm } from './helper.js'
 
 test('dev - should start in development mode', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -38,7 +38,7 @@ test('dev - should complain if no configuration file is found', async t => {
 })
 
 test('dev - should restart an application if files are changed', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   const serviceDir = resolve(rootDir, 'web/main')
 
   t.after(() => {
@@ -65,9 +65,6 @@ test('dev - should restart an application if files are changed', async t => {
   const originalContents = await readFile(indexFile, 'utf-8')
 
   await writeFile(indexFile, originalContents.replace('123', '456'), 'utf-8')
-
-  // Restore original file after the test
-  t.after(() => writeFile(indexFile, originalContents, 'utf-8'))
 
   // Wait for the server to restart
   let reloaded = false
@@ -96,7 +93,7 @@ test('dev - should restart an application if files are changed', async t => {
 })
 
 test('dev - should restart an application if the runtime configuration file is changed', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -118,9 +115,6 @@ test('dev - should restart an application if the runtime configuration file is c
   const config = JSON.parse(originalContents)
   config.logger.level = 'trace'
   await writeFile(configFile, JSON.stringify(config), 'utf-8')
-
-  // Restore original file after the test
-  t.after(() => writeFile(configFile, originalContents, 'utf-8'))
 
   // Wait for the server to restart
   let reloaded = false
@@ -149,7 +143,7 @@ test('dev - should restart an application if the runtime configuration file is c
 })
 
 test('dev - should restart an application if the service configuration file is changed', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   const serviceDir = resolve(rootDir, 'web/main')
 
   t.after(() => {
@@ -172,9 +166,6 @@ test('dev - should restart an application if the service configuration file is c
   const config = JSON.parse(originalContents)
   config.application = {}
   await writeFile(configFile, JSON.stringify(config), 'utf-8')
-
-  // Restore original file after the test
-  t.after(() => writeFile(configFile, originalContents, 'utf-8'))
 
   // Wait for the server to restart
   let reloaded = false
@@ -203,7 +194,7 @@ test('dev - should restart an application if the service configuration file is c
 })
 
 test('start - should start in production mode', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -226,7 +217,7 @@ test('start - should start in production mode', async t => {
 })
 
 test('start - should start in production mode with the inspector', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -259,7 +250,7 @@ test('start - should start in production mode with the inspector', async t => {
 })
 
 test('stop - should stop an application', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
     return startProcess.catch(() => {})
@@ -283,7 +274,7 @@ test('stop - should complain when a runtime is not found', async t => {
 })
 
 test('restart - should restart an application', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -306,7 +297,7 @@ test('restart - should complain when a runtime is not found', async t => {
 })
 
 test('reload - should reload an application', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)

@@ -6,7 +6,7 @@ import { prepareRuntime } from '../../basic/test/helper.js'
 import { waitForStart, wattpm } from './helper.js'
 
 test('ps - should show running applications', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   const url = await waitForStart(startProcess.stdout)
@@ -40,7 +40,7 @@ test('ps - should warn when no runtimes are available', async t => {
 })
 
 test('services - should list services for an application with no workers information in development mode', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('dev', rootDir)
   await waitForStart(startProcess.stdout)
@@ -63,7 +63,7 @@ test('services - should list services for an application with no workers informa
 })
 
 test('services - should list services for an application with workers information in production mode', async t => {
-  const { root: rootDir } = await prepareRuntime('main', true, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', true, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)
@@ -93,7 +93,7 @@ test('services - should complain when a runtime is not found', async t => {
 })
 
 test('env - should list environment variable for an application', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)
@@ -108,7 +108,7 @@ test('env - should list environment variable for an application', async t => {
 })
 
 test('env - should list environment variable for an application in tabular way', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)
@@ -123,7 +123,7 @@ test('env - should list environment variable for an application in tabular way',
 })
 
 test('env - should list environment variable for an service', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)
@@ -145,7 +145,7 @@ test('env - should complain when a runtime is not found', async t => {
 })
 
 test('env - should complain when a service is not found', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)
@@ -162,7 +162,7 @@ test('env - should complain when a service is not found', async t => {
 })
 
 test('config - should list configuration for an application', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   const serviceDir = resolve(rootDir, 'web/main')
 
   const startProcess = wattpm('start', rootDir)
@@ -210,7 +210,7 @@ test('config - should list configuration for an application', async t => {
 })
 
 test('config - should list configuration for an service', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)
@@ -249,7 +249,7 @@ test('config - should complain when a runtime is not found', async t => {
 })
 
 test('config - should complain when a service is not found', async t => {
-  const { root: rootDir } = await prepareRuntime('main', false, 'watt.json')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)

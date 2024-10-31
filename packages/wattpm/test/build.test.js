@@ -7,7 +7,7 @@ import { prepareRuntime } from '../../basic/test/helper.js'
 import { wattpm } from './helper.js'
 
 test('build - should build the application', async t => {
-  const { root: buildDir } = await prepareRuntime('build', false, 'watt.json')
+  const { root: buildDir } = await prepareRuntime(t, 'build', false, 'watt.json')
   const serviceDir = resolve(buildDir, 'web/main')
 
   t.after(async () => {
@@ -20,7 +20,7 @@ test('build - should build the application', async t => {
 })
 
 test('build - should handle build errors', async t => {
-  const { root: buildDir } = await prepareRuntime('build-error', false, 'watt.json')
+  const { root: buildDir } = await prepareRuntime(t, 'build-error', false, 'watt.json')
   const serviceDir = resolve(buildDir, 'web/main')
 
   t.after(async () => {
