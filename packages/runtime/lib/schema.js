@@ -6,6 +6,16 @@ const {
   schemaComponents: { server, logger }
 } = require('@platformatic/utils')
 
+const workers = {
+  anyOf: [
+    {
+      type: 'number',
+      minimum: 1
+    },
+    { type: 'string' }
+  ]
+}
+
 const services = {
   type: 'array',
   items: {
@@ -28,10 +38,7 @@ const services = {
       useHttp: {
         type: 'boolean'
       },
-      workers: {
-        type: 'number',
-        minimum: 1
-      }
+      workers
     }
   }
 }
@@ -94,11 +101,7 @@ const platformaticRuntimeSchema = {
       }
     },
     services,
-    workers: {
-      type: 'number',
-      minimum: 1,
-      default: 1
-    },
+    workers: { ...workers, default: 1 },
     web: services,
     logger,
     server,

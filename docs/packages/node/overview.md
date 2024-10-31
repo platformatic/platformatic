@@ -88,6 +88,9 @@ See the [configuration](./configuration.md) page.
 - **`platformatic.root`**: The root directory of the service.
 - **`platformatic.basePath`**: The base path of the service in the composer.
 - **`platformatic.logLevel`**: The log level configured for the service.
+- **`platformatic.events.on('close')`**: This event is emitted when the process is being closed. A listener should be installed to perform a graceful close, which must finish in 10 seconds. If there is no listener, the process will be terminated by invoking `process.exit(0)`.
+  <Issues />
 
-<Issues />
-````
+```
+
+```
