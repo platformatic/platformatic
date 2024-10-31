@@ -546,7 +546,7 @@ importers:
         version: 1.2.8
       my-ua-parser:
         specifier: ^2.0.2
-        version: 2.0.3
+        version: 2.0.4
       nunjucks:
         specifier: ^3.2.4
         version: 3.2.4(chokidar@3.6.0)
@@ -979,7 +979,7 @@ importers:
         version: 1.2.8
       my-ua-parser:
         specifier: ^2.0.2
-        version: 2.0.3
+        version: 2.0.4
       ora:
         specifier: ^6.3.1
         version: 6.3.1
@@ -1957,7 +1957,7 @@ importers:
         version: 1.2.8
       my-ua-parser:
         specifier: ^2.0.2
-        version: 2.0.3
+        version: 2.0.4
       ora:
         specifier: ^6.3.1
         version: 6.3.1
@@ -7876,8 +7876,8 @@ packages:
     resolution: {integrity: sha512-avsJQhyd+680gKXyG/sQc0nXaC6rBkPOfyHYcFb9+hdkqQkR9bdnkJ0AMZhke0oesPqIO+mFFJ+IdBc7mst4IA==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
 
-  my-ua-parser@2.0.3:
-    resolution: {integrity: sha512-HVPbLat89+BXilFXb7+HFzUdU15ZZQVa+MBpmoAc1lthHYmFPwj/DfTY9sFw6eHKI+CNlwfh6/ksI6nH6Po9Xw==}
+  my-ua-parser@2.0.4:
+    resolution: {integrity: sha512-lhPyjoce3SRNXqgozoVti8XWC6oWY/rMcXljvov9IAgHKj2ZTU3dR5iQ7jLrIj02xD4Ggn6doTi7K2pnSbjzeg==}
 
   mysql2@2.3.3:
     resolution: {integrity: sha512-wxJUev6LgMSgACDkb/InIFxDprRa6T95+VEoR+xPvtngtccNH2dGjEB/fVZ8yg1gWv1510c9CvXuJHi5zUm0ZA==}
@@ -16667,7 +16667,7 @@ snapshots:
 
   mute-stream@1.0.0: {}
 
-  my-ua-parser@2.0.3: {}
+  my-ua-parser@2.0.4: {}
 
   mysql2@2.3.3:
     dependencies:
