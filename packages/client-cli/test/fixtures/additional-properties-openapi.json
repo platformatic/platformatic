@@ -1,0 +1,139 @@
+{
+  "openapi": "3.1.0",
+  "paths": {
+    "/sample": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "entities": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "foo": {
+                          "additionalProperties": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["id", "name"],
+                            "type": "object"
+                          },
+                          "type": "object"
+                        },
+                        "bar": {
+                          "additionalProperties": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "type": {
+                                "enum": ["boolean", "list"],
+                                "type": "string"
+                              },
+                              "values": {
+                                "items": {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "isArchived": {
+                                      "type": "boolean"
+                                    },
+                                    "isDefault": {
+                                      "type": "boolean"
+                                    },
+                                    "value": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": ["id", "value", "isDefault"],
+                                  "type": "object"
+                                },
+                                "type": "array"
+                              }
+                            },
+                            "required": ["type", "values"],
+                            "type": "object"
+                          },
+                          "type": "object"
+                        },
+                        "baz": {
+                          "additionalProperties": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["id", "name"],
+                            "type": "object"
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "errors": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "types": {
+                          "additionalProperties": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "cause": {},
+                              "type": {
+                                "enum": ["notFound", "other"],
+                                "type": "string"
+                              }
+                            },
+                            "required": ["type"],
+                            "type": "object"
+                          },
+                          "type": "object"
+                        },
+                        "group": {
+                          "additionalProperties": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "cause": {},
+                              "type": {
+                                "enum": ["notFound", "other"],
+                                "type": "string"
+                              }
+                            },
+                            "required": ["type"],
+                            "type": "object"
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "required": ["group"],
+                      "type": "object"
+                    },
+                    "xyz": {
+                      "type": "object",
+                      "additionalProperties": { "type": "number" }
+                    }
+                  },
+                  "required": ["entities", "errors"],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
