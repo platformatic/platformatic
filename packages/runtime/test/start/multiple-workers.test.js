@@ -820,7 +820,6 @@ test('logging properly works in production mode when using separate processes', 
 
   ok(messages.find(m => m.name === 'composer'))
 
-  process._rawDebug(messages)
   for (let i = 0; i < 5; i++) {
     ok(messages.find(m => m.name === `node:${i}` && m.msg.startsWith('Server listening')))
   }
