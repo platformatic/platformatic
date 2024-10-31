@@ -17,6 +17,6 @@ test('export formdata on full request object', async (t) => {
   export type GetSampleResponseOK = {
     'entities': { 'foo'?: Record<string, { 'id'?: string; 'name'?: string }>; 'bar'?: Record<string, { 'type'?: 'boolean' | 'list'; 'values'?: Array<{ 'id': string; 'isArchived'?: boolean; 'isDefault': boolean; 'value': string }> }>; 'baz'?: Record<string, { 'id'?: string; 'name'?: string }> };
     'errors': { 'types'?: Record<string, { 'cause'?: unknown; 'type'?: 'notFound' | 'other' }>; 'group': Record<string, { 'cause'?: unknown; 'type'?: 'notFound' | 'other' }> };
-    'xyz'?: number;
+    'xyz'?: Record<string, number>;
   }`), true)
 })
