@@ -113,12 +113,12 @@ export function verifyBuildAndProductionMode (fixturesDirectory, configurations,
   for (const configuration of configurations) {
     test(`should build and start in production mode - configuration "${configuration.name}"`, async t => {
       const { root, config } = await prepareRuntime(t, resolve(fixturesDirectory, configuration.id), true)
-      const { hostname: runtimeHost, port: runtimePort } = config.configManager.current.server ?? {}
+      const { hostname: runtimeHost, port: runtimePort, logger } = config.configManager.current.server ?? {}
 
       // Build
       await execa('node', [cliPath, 'build'], {
         cwd: root,
-        stdio: configuration.serverConfig.logger?.level !== 'error' ? 'inherit' : undefined
+        stdio: logger?.level !== 'error' ? 'inherit' : undefined
       })
 
       // Make sure all file exists

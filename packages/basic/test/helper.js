@@ -29,13 +29,17 @@ export const temporaryFolder = fileURLToPath(new URL('../../../tmp', import.meta
 export const defaultDependencies = ['fastify', 'typescript']
 let additionalDependencies
 
-export function createStackable (
+export async function createStackable (
+  t,
   context = {},
   config = { current: {} },
   name = 'base',
   version = '1.0.0',
   base = temporaryFolder
 ) {
+  await createDirectory(base)
+  t.after(() => safeRemove(base))
+
   return new BaseStackable(name, version, { context }, base, config)
 }
 
