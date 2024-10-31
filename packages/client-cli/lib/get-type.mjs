@@ -71,12 +71,14 @@ export function getType (typeDef, methodType, spec) {
   }
   if (typeDef.type === 'object') {
     const additionalPropsObj = typeDef?.additionalProperties?.properties
+    const additionalPropsType = typeDef?.additionalProperties?.type
     const objProperties = typeDef.properties || additionalPropsObj
     if (!objProperties || Object.keys(objProperties).length === 0) {
       // Object without properties
-      return 'object'
+      return additionalPropsType ? JSONSchemaToTsType({ type: additionalPropsType }) : 'object'
     }
-    let output = additionalPropsObj ? 'Record<string, { ' : '{ '
+
+    let output = additionalPropsObj && additionalPropsType === 'object' ? 'Record<string, { ' : '{ '
     // TODO: add a test for objects without properties
     /* c8 ignore next 1 */
     const props = Object.keys(objProperties || {}).map((prop) => {

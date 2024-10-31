@@ -120,6 +120,10 @@
                       },
                       "required": ["group"],
                       "type": "object"
+                    },
+                    "xyz": {
+                      "type": "object",
+                      "additionalProperties": { "type": "number" }
                     }
                   },
                   "required": ["entities", "errors"],
