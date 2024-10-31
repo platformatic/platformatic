@@ -70,19 +70,20 @@ export function getType (typeDef, methodType, spec) {
     }).join(' | ')
   }
   if (typeDef.type === 'object') {
-    if (!typeDef.properties || Object.keys(typeDef.properties).length === 0) {
+    const objProperties = typeDef.properties || typeDef?.additionalProperties?.properties
+    if (!objProperties || Object.keys(objProperties).length === 0) {
       // Object without properties
       return 'object'
     }
     let output = '{ '
     // TODO: add a test for objects without properties
     /* c8 ignore next 1 */
-    const props = Object.keys(typeDef.properties || {}).map((prop) => {
+    const props = Object.keys(objProperties || {}).map((prop) => {
       let required = false
       if (typeDef.required) {
         required = !!typeDef.required.includes(prop)
       }
-      return `'${prop}'${required ? '' : '?'}: ${getType(typeDef.properties[prop], methodType, spec)}`
+      return `'${prop}'${required ? '' : '?'}: ${getType(objProperties[prop], methodType, spec)}`
     })
     output += props.join('; ')
     output += ' }'
