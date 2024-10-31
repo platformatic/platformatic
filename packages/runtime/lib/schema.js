@@ -53,6 +53,9 @@ const platformaticRuntimeSchema = {
     entrypoint: {
       type: 'string'
     },
+    basePath: {
+      type: 'string'
+    },
     autoload: {
       type: 'object',
       additionalProperties: false,

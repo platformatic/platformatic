@@ -137,7 +137,10 @@ export class NextStackable extends BaseStackable {
         root: pathToFileURL(this.root).toString(),
         basePath: this.#basePath,
         logLevel: this.logger.level,
-        port: false
+        port: false,
+        isEntrypoint: this.isEntrypoint,
+        runtimeBasePath: this.runtimeConfig.basePath,
+        wantsAbsoluteUrls: true
       }
     })
 
@@ -184,7 +187,10 @@ export class NextStackable extends BaseStackable {
         // Always use URL to avoid serialization problem in Windows
         root: pathToFileURL(this.root).toString(),
         basePath: this.#basePath,
-        logLevel: this.logger.level
+        logLevel: this.logger.level,
+        isEntrypoint: this.isEntrypoint,
+        runtimeBasePath: this.runtimeConfig.basePath,
+        wantsAbsoluteUrls: true,
       }
     })
 
