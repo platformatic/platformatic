@@ -76,7 +76,7 @@ export function getType (typeDef, methodType, spec) {
       // Object without properties
       return 'object'
     }
-    let output = additionalPropsObj ? '{ [key: string]: { ' : '{ '
+    let output = additionalPropsObj ? 'Record<string, { ' : '{ '
     // TODO: add a test for objects without properties
     /* c8 ignore next 1 */
     const props = Object.keys(objProperties || {}).map((prop) => {
@@ -87,7 +87,7 @@ export function getType (typeDef, methodType, spec) {
       return `'${prop}'${required ? '' : '?'}: ${getType(objProperties[prop], methodType, spec)}`
     })
     output += props.join('; ')
-    output += additionalPropsObj ? ' } }' : ' }'
+    output += additionalPropsObj ? ' }>' : ' }'
     return output
   }
   return JSONSchemaToTsType(typeDef, methodType)

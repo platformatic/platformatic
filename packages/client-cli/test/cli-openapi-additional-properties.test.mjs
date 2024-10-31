@@ -15,7 +15,7 @@ test('export formdata on full request object', async (t) => {
   const data = await readFile(typeFile, 'utf-8')
   equal(data.includes(`
   export type GetSampleResponseOK = {
-    'entities': { 'foo'?: { [key: string]: { 'id'?: string; 'name'?: string } }; 'bar'?: { [key: string]: { 'type'?: 'boolean' | 'list'; 'values'?: Array<{ 'id': string; 'isArchived'?: boolean; 'isDefault': boolean; 'value': string }> } }; 'baz'?: { [key: string]: { 'id'?: string; 'name'?: string } } };
-    'errors': { 'types'?: { [key: string]: { 'cause'?: unknown; 'type'?: 'notFound' | 'other' } }; 'group': { [key: string]: { 'cause'?: unknown; 'type'?: 'notFound' | 'other' } } };
+    'entities': { 'foo'?: Record<string, { 'id'?: string; 'name'?: string }>; 'bar'?: Record<string, { 'type'?: 'boolean' | 'list'; 'values'?: Array<{ 'id': string; 'isArchived'?: boolean; 'isDefault': boolean; 'value': string }> }>; 'baz'?: Record<string, { 'id'?: string; 'name'?: string }> };
+    'errors': { 'types'?: Record<string, { 'cause'?: unknown; 'type'?: 'notFound' | 'other' }>; 'group': Record<string, { 'cause'?: unknown; 'type'?: 'notFound' | 'other' }> };
   }`), true)
 })
