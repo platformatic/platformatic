@@ -38,7 +38,7 @@ export class BaseStackable {
     this.startHttpTimer = null
     this.endHttpTimer = null
     this.clientWs = null
-    this.runtimeConfig = workerData?.config ?? null
+    this.runtimeConfig = deepmerge(options.context.runtimeConfig ?? {}, workerData?.config ?? {})
 
     // Setup the logger
     const pinoOptions = {
@@ -251,20 +251,22 @@ export class BaseStackable {
   }
 
   async stopCommand () {
+    const exitTimeout = this.runtimeConfig.gracefulShutdown.runtime
+
     this.#subprocessStarted = false
     const exitPromise = once(this.subprocess, 'exit')
 
     // Attempt graceful close on the process
     this.childManager.notify(this.clientWs, 'close')
 
-    // If the process hasn't exited in 10 seconds, kill it in the polite way
+    // If the process hasn't exited in X seconds, kill it in the polite way
     /* c8 ignore next 10 */
-    const res = await executeWithTimeout(exitPromise, 10000)
+    const res = await executeWithTimeout(exitPromise, exitTimeout)
     if (res === 'timeout') {
       this.subprocess.kill(this.subprocessTerminationSignal ?? 'SIGINT')
 
-      // If the process hasn't exited in 10 seconds, kill it the hard way
-      const res = await executeWithTimeout(exitPromise, 10000)
+      // If the process hasn't exited in X seconds, kill it the hard way
+      const res = await executeWithTimeout(exitPromise, exitTimeout)
       if (res === 'timeout') {
         this.subprocess.kill('SIGKILL')
       }

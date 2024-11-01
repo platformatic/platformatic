@@ -97,6 +97,10 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime280Alpha1Json = {
     };
   };
   restartOnError?: boolean | number;
+  gracefulShutdown?: {
+    runtime: number | string;
+    service: number | string;
+  };
   undici?: {
     agentOptions?: {
       [k: string]: unknown;

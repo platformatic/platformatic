@@ -4,5 +4,9 @@
   "watch": true,
   "autoload": {
     "path": "../monorepo-with-dependencies"
+  },
+  "gracefulShutdown": {
+    "runtime": 1000,
+    "service": 1000
   }
 }

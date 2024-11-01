@@ -8,5 +8,9 @@
       "path": "../monorepo-watch/service1",
       "config": "platformatic.service.json"
     }
-  ]
+  ],
+  "gracefulShutdown": {
+    "runtime": 1000,
+    "service": 1000
+  }
 }

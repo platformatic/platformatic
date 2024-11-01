@@ -152,7 +152,13 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
         hostname: '127.0.0.1',
         port: 0
       },
-      telemetryConfig: {}
+      telemetryConfig: {},
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          service: 1000
+        }
+      }
     },
     {
       current: {
@@ -220,4 +226,62 @@ test('BaseStackable - startCommand - should kill the process on non-zero exit co
   await stackable.startWithCommand(`node ${executablePath}`)
 
   deepStrictEqual(await promise, 123)
+})
+
+test('BaseStackable - stopCommand - should forcefully exit the process if it doesnt exit within the allowed timeout', async t => {
+  const stackable = await createStackable(
+    t,
+    {
+      isEntrypoint: true,
+      serverConfig: {
+        hostname: '127.0.0.1',
+        port: 0
+      },
+      telemetryConfig: {},
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 10,
+          service: 10
+        }
+      }
+    },
+    {
+      current: {
+        application: { basePath: '/whatever' },
+        watch: { enabled: true, allow: ['first'], ignore: ['second'] }
+      }
+    }
+  )
+
+  const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
+  await stackable.startWithCommand(`node ${executablePath}`)
+
+  ok(stackable.url.startsWith('http://127.0.0.1:'))
+  ok(!stackable.url.endsWith(':10000'))
+  deepStrictEqual(stackable.subprocessConfig, { production: false })
+
+  {
+    const { statusCode, body: rawBody } = await request(stackable.url, {
+      method: 'GET',
+      path: '/'
+    })
+    deepStrictEqual(statusCode, 200)
+
+    const body = await rawBody.json()
+    body.events = undefined
+    deepStrictEqual(body, {
+      basePath: '/whatever',
+      host: '127.0.0.1',
+      logLevel: 'trace',
+      port: 0,
+      root: pathToFileURL(temporaryFolder).toString(),
+      telemetry: {},
+      isEntrypoint: true,
+      runtimeBasePath: null,
+      wantsAbsoluteUrls: false,
+      events: undefined
+    })
+  }
+
+  await stackable.stopCommand()
 })

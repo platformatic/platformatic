@@ -5,10 +5,7 @@
   "managementApi": false,
   "autoload": {
     "path": "../monorepo",
-    "exclude": [
-      "docs",
-      "composerApp"
-    ],
+    "exclude": ["docs", "composerApp"],
     "mappings": {
       "serviceAppWithLogger": {
         "id": "with-logger",
@@ -28,5 +25,9 @@
     "labels": {
       "app": "serviceApp"
     }
+  },
+  "gracefulShutdown": {
+    "runtime": 1000,
+    "service": 1000
   }
 }

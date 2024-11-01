@@ -15,5 +15,9 @@
     "openapi": true
   },
   "metrics": false,
-  "watch": false
+  "watch": false,
+  "gracefulShutdown": {
+    "runtime": 1000,
+    "service": 1000
+  }
 }

@@ -115,6 +115,34 @@ const platformaticRuntimeSchema = {
         }
       ]
     },
+    gracefulShutdown: {
+      type: 'object',
+      properties: {
+        runtime: {
+          anyOf: [
+            {
+              type: 'number',
+              minimum: 1
+            },
+            { type: 'string' }
+          ],
+          default: 10000
+        },
+        service: {
+          anyOf: [
+            {
+              type: 'number',
+              minimum: 1
+            },
+            { type: 'string' }
+          ],
+          default: 10000
+        }
+      },
+      default: {},
+      required: ['runtime', 'service'],
+      additionalProperties: false
+    },
     undici: {
       type: 'object',
       properties: {
