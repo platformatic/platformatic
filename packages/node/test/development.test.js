@@ -1,36 +1,56 @@
 import { ok } from 'node:assert'
 import { resolve } from 'node:path'
-import { test } from 'node:test'
 import {
   createRuntime,
-  fixturesDir,
   getLogs,
+  prepareRuntimeWithServices,
   setFixturesDir,
+  updateFile,
+  verifyDevelopmentMode,
   verifyJSONViaHTTP,
   verifyJSONViaInject
 } from '../../basic/test/helper.js'
-import { safeRemove } from '../../utils/index.js'
 
 process.setMaxListeners(100)
-
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 function isTime (body) {
   ok(typeof body.time === 'number')
 }
 
-async function verifyStandalone (t, configuration) {
-  const { runtime, url } = await createRuntime(t, configuration)
+async function verifyStandalone (
+  t,
+  id,
+  _language,
+  _htmlContents,
+  _hmrUrl,
+  _hmrProtocol,
+  _websocketHMRHandler,
+  pauseTimeout,
+  additionalCheck
+) {
+  const { runtime, url } = await createRuntime(t, id, pauseTimeout)
 
   await verifyJSONViaHTTP(url, '/', 200, { production: false })
 
   await verifyJSONViaInject(runtime, 'frontend', 'GET', '/', 200, { production: false })
 
-  return { runtime, url }
+  await additionalCheck?.(runtime)
 }
 
-async function verifyComposerWithPrefix (t, configuration, absoluteUrl = true) {
-  const { runtime, url } = await createRuntime(t, configuration)
+async function verifyComposerWithPrefix (
+  t,
+  id,
+  language,
+  _htmlContents,
+  _hmrUrl,
+  _hmrProtocol,
+  _websocketHMRHandler,
+  pauseTimeout,
+  absoluteUrl = true,
+  additionalCheck = null
+) {
+  const { runtime, url } = await prepareRuntimeWithServices(t, id, false, language, '/frontend', pauseTimeout)
 
   await verifyJSONViaHTTP(url, '/frontend', 200, { production: false })
   await verifyJSONViaHTTP(url, '/frontend/', 200, { production: false })
@@ -51,11 +71,27 @@ async function verifyComposerWithPrefix (t, configuration, absoluteUrl = true) {
   await verifyJSONViaInject(runtime, 'backend', 'GET', '/example', 200, { hello: 'foobar' })
   await verifyJSONViaInject(runtime, 'backend', 'GET', '/mesh', 200, { ok: true })
 
-  return { runtime, url }
+  await additionalCheck?.(runtime)
 }
 
-async function verifyComposerWithoutPrefix (t, configuration) {
-  const { runtime, url } = await createRuntime(t, configuration)
+async function verifyComposerWithoutPrefix (
+  t,
+  id,
+  language,
+  _htmlContents,
+  _hmrUrl,
+  _hmrProtocol,
+  _websocketHMRHandler,
+  pauseTimeout,
+  additionalCheck
+) {
+  const { runtime, url } = await prepareRuntimeWithServices(t, id, false, language, '', pauseTimeout, async root => {
+    await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
+      const json = JSON.parse(contents)
+      json.composer.services[1].proxy = { prefix: '' }
+      return JSON.stringify(json, null, 2)
+    })
+  })
 
   await verifyJSONViaHTTP(url, '/', 200, { production: false })
   await verifyJSONViaHTTP(url, '/time', 200, isTime)
@@ -71,11 +107,22 @@ async function verifyComposerWithoutPrefix (t, configuration) {
   await verifyJSONViaInject(runtime, 'backend', 'GET', '/example', 200, { hello: 'foobar' })
   await verifyJSONViaInject(runtime, 'backend', 'GET', '/mesh', 200, { ok: true })
 
-  return { runtime, url }
+  await additionalCheck?.(runtime)
 }
 
-async function verifyComposerAutodetectPrefix (t, configuration, absoluteUrl = true) {
-  const { runtime, url } = await createRuntime(t, configuration)
+async function verifyComposerAutodetectPrefix (
+  t,
+  id,
+  language,
+  _htmlContents,
+  _hmrUrl,
+  _hmrProtocol,
+  _websocketHMRHandler,
+  pauseTimeout,
+  absoluteUrl = true,
+  additionalCheck = null
+) {
+  const { runtime, url } = await prepareRuntimeWithServices(t, id, false, language, '/nested/base/dir', pauseTimeout)
 
   await verifyJSONViaHTTP(url, '/nested/base/dir', 200, { production: false })
   await verifyJSONViaHTTP(url, '/nested/base/dir/', 200, { production: false })
@@ -97,203 +144,250 @@ async function verifyComposerAutodetectPrefix (t, configuration, absoluteUrl = t
   await verifyJSONViaInject(runtime, 'backend', 'GET', '/example', 200, { hello: 'foobar' })
   await verifyJSONViaInject(runtime, 'backend', 'GET', '/mesh', 200, { ok: true })
 
-  return { runtime, url }
+  await additionalCheck?.(runtime)
 }
 
-// Make sure no temporary files exist after execution
-test.afterEach(() => {
-  return Promise.all([
-    safeRemove(resolve(fixturesDir, 'node_modules')),
-    safeRemove(resolve(fixturesDir, 'services/backend/dist')),
-    safeRemove(resolve(fixturesDir, 'services/composer/dist')),
-    safeRemove(resolve(fixturesDir, 'services/frontend/node_modules'))
-  ])
-})
-
-test('should detect and start a Node.js application with no configuration files in development mode when standalone', async t => {
-  const { runtime } = await verifyStandalone(t, 'node-no-configuration-standalone')
-
+async function verifyMissingConfigurationMessage (runtime) {
   const missingConfigurationMessage =
     'The service "frontend" had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
 
   const logs = await getLogs(runtime)
   ok(logs.map(m => m.msg).includes(missingConfigurationMessage))
-})
+}
 
-test('should detect and start a Node.js application with no configuration files in development mode when exposed in a composer with a prefix', async t => {
-  const { runtime } = await verifyComposerWithPrefix(t, 'node-no-configuration-composer-with-prefix', false)
+const configurations = [
+  {
+    id: 'node-no-configuration-standalone',
+    name: 'Node.js application with (with no configuration files in development mode when standalone)',
+    async check (...args) {
+      await verifyStandalone(...args, verifyMissingConfigurationMessage)
+    },
+    language: 'js'
+  },
+  {
+    id: 'node-no-configuration-composer-with-prefix',
+    name: 'Node.js application with (with no configuration files in development mode when exposed in a composer with a prefix)',
+    async check (...args) {
+      await verifyComposerWithPrefix(...args, false, verifyMissingConfigurationMessage)
+    },
+    language: 'ts'
+  },
+  {
+    id: 'node-no-configuration-composer-without-prefix',
+    name: 'Node.js application with (with no configuration files in development mode when exposed in a composer without a prefix)',
+    async check (...args) {
+      await verifyComposerWithoutPrefix(...args, verifyMissingConfigurationMessage)
+    },
+    language: 'js'
+  },
+  {
+    id: 'node-no-configuration-composer-autodetect-prefix',
+    name: 'Node.js application with (with no configuration files in development mode when exposed in a composer by autodetecting the prefix)',
+    async check (...args) {
+      await verifyComposerAutodetectPrefix(...args, false, verifyMissingConfigurationMessage)
+    },
+    language: 'js'
+  },
+  {
+    id: 'node-no-configuration-composer-no-services',
+    name: 'Node.js application with (with no configuration files in development mode when exposed in a composer which defines no services)',
+    async check (...args) {
+      await verifyComposerWithoutPrefix(...args, verifyMissingConfigurationMessage)
+    },
+    language: 'js'
+  },
+  {
+    id: 'node-no-build-standalone',
+    name: 'Node.js application with (with no build function in development mode when standalone)',
+    check: verifyStandalone,
+    language: 'js'
+  },
+  {
+    id: 'node-no-build-composer-with-prefix',
+    name: 'Node.js application with (with no build function in development mode when exposed in a composer with a prefix)',
+    check: verifyComposerWithPrefix,
+    language: 'js'
+  },
+  {
+    id: 'node-no-build-composer-without-prefix',
+    name: 'Node.js application with (with no build function in development mode when exposed in a composer without a prefix)',
+    check: verifyComposerWithoutPrefix,
+    language: 'js'
+  },
+  {
+    id: 'node-no-build-composer-autodetect-prefix',
+    name: 'Node.js application with (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
+    check: verifyComposerAutodetectPrefix,
+    language: 'js'
+  },
+  {
+    id: 'node-with-build-standalone',
+    name: 'Node.js application with (with a build function in development mode when standalone)',
+    check: verifyStandalone,
+    language: 'js'
+  },
+  {
+    id: 'node-with-build-composer-with-prefix',
+    name: 'Node.js application with (with a build function in development mode when exposed in a composer with a prefix)',
+    check: verifyComposerWithPrefix,
+    language: 'js'
+  },
+  {
+    id: 'node-with-build-composer-without-prefix',
+    name: 'Node.js application with (with a build function in development mode when exposed in a composer without a prefix)',
+    check: verifyComposerWithoutPrefix,
+    language: 'js'
+  },
+  {
+    id: 'node-with-build-composer-autodetect-prefix',
+    name: 'Node.js application with (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
+    check: verifyComposerAutodetectPrefix,
+    language: 'js'
+  },
+  {
+    id: 'express-no-build-standalone',
+    name: 'Express with (with no build function in development mode when standalone)',
+    check: verifyStandalone,
+    language: 'js'
+  },
+  {
+    id: 'express-no-build-composer-with-prefix',
+    name: 'Express with (with no build function in development mode when exposed in a composer with a prefix)',
+    check: verifyComposerWithPrefix,
+    language: 'js'
+  },
+  {
+    id: 'express-no-build-composer-without-prefix',
+    name: 'Express with (with no build function in development mode when exposed in a composer without a prefix)',
+    check: verifyComposerWithoutPrefix,
+    language: 'js'
+  },
+  {
+    id: 'express-no-build-composer-autodetect-prefix',
+    name: 'Express with (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
+    check: verifyComposerAutodetectPrefix,
+    language: 'js'
+  },
+  {
+    id: 'express-with-build-standalone',
+    name: 'Express with (with a build function in development mode when standalone)',
+    check: verifyStandalone,
+    language: 'js'
+  },
+  {
+    id: 'express-with-build-composer-with-prefix',
+    name: 'Express with (with a build function in development mode when exposed in a composer with a prefix)',
+    check: verifyComposerWithPrefix,
+    language: 'js'
+  },
+  {
+    id: 'express-with-build-composer-without-prefix',
+    name: 'Express with (with a build function in development mode when exposed in a composer without a prefix)',
+    check: verifyComposerWithoutPrefix,
+    language: 'js'
+  },
+  {
+    id: 'express-with-build-composer-autodetect-prefix',
+    name: 'Express with (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
+    check: verifyComposerAutodetectPrefix,
+    language: 'js'
+  },
+  {
+    id: 'fastify-no-build-standalone',
+    name: 'Fastify with (with no build function in development mode when standalone)',
+    check: verifyStandalone,
+    language: 'js'
+  },
+  {
+    id: 'fastify-no-build-composer-with-prefix',
+    name: 'Fastify with (with no build function in development mode when exposed in a composer with a prefix)',
+    check: verifyComposerWithPrefix,
+    language: 'js'
+  },
+  {
+    id: 'fastify-no-build-composer-without-prefix',
+    name: 'Fastify with (with no build function in development mode when exposed in a composer without a prefix)',
+    check: verifyComposerWithoutPrefix,
+    language: 'js'
+  },
+  {
+    id: 'fastify-no-build-composer-autodetect-prefix',
+    name: 'Fastify with (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
+    check: verifyComposerAutodetectPrefix,
+    language: 'js'
+  },
+  {
+    id: 'fastify-with-build-standalone',
+    name: 'Fastify with (with a build function in development mode when standalone)',
+    check: verifyStandalone,
+    language: 'js'
+  },
+  {
+    id: 'fastify-with-build-composer-with-prefix',
+    name: 'Fastify with (with a build function in development mode when exposed in a composer with a prefix)',
+    check: verifyComposerWithPrefix,
+    language: 'js'
+  },
+  {
+    id: 'fastify-with-build-composer-without-prefix',
+    name: 'Fastify with (with a build function in development mode when exposed in a composer without a prefix)',
+    check: verifyComposerWithoutPrefix,
+    language: 'js'
+  },
+  {
+    id: 'fastify-with-build-composer-autodetect-prefix',
+    name: 'Fastify with (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
+    check: verifyComposerAutodetectPrefix,
+    language: 'js'
+  },
+  {
+    id: 'koa-no-build-standalone',
+    name: 'Koa with (with no build function in development mode when standalone)',
+    check: verifyStandalone,
+    language: 'js'
+  },
+  {
+    id: 'koa-no-build-composer-with-prefix',
+    name: 'Koa with (with no build function in development mode when exposed in a composer with a prefix)',
+    check: verifyComposerWithPrefix,
+    language: 'js'
+  },
+  {
+    id: 'koa-no-build-composer-without-prefix',
+    name: 'Koa with (with no build function in development mode when exposed in a composer without a prefix)',
+    check: verifyComposerWithoutPrefix,
+    language: 'js'
+  },
+  {
+    id: 'koa-no-build-composer-autodetect-prefix',
+    name: 'Koa with (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
+    check: verifyComposerAutodetectPrefix,
+    language: 'js'
+  },
+  {
+    id: 'koa-with-build-standalone',
+    name: 'Koa with (with a build function in development mode when standalone)',
+    check: verifyStandalone,
+    language: 'js'
+  },
+  {
+    id: 'koa-with-build-composer-with-prefix',
+    name: 'Koa with (with a build function in development mode when exposed in a composer with a prefix)',
+    check: verifyComposerWithPrefix,
+    language: 'js'
+  },
+  {
+    id: 'koa-with-build-composer-without-prefix',
+    name: 'Koa with (with a build function in development mode when exposed in a composer without a prefix)',
+    check: verifyComposerWithoutPrefix,
+    language: 'js'
+  },
+  {
+    id: 'koa-with-build-composer-autodetect-prefix',
+    name: 'Koa with (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
+    check: verifyComposerAutodetectPrefix,
+    language: 'js'
+  }
+]
 
-  const missingConfigurationMessage =
-    'The service "frontend" had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
-
-  const logs = await getLogs(runtime)
-  ok(logs.map(m => m.msg).includes(missingConfigurationMessage))
-})
-
-test('should detect and start a Node.js application with no configuration files in development mode when exposed in a composer without a prefix', async t => {
-  const { runtime } = await verifyComposerWithoutPrefix(t, 'node-no-configuration-composer-without-prefix')
-
-  const missingConfigurationMessage =
-    'The service "frontend" had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
-
-  const logs = await getLogs(runtime)
-  ok(logs.map(m => m.msg).includes(missingConfigurationMessage))
-})
-
-test('should detect and start a Node.js application with no configuration files in development mode when exposed in a composer by autodetecting the prefix', async t => {
-  const { runtime } = await verifyComposerAutodetectPrefix(t, 'node-no-configuration-composer-autodetect-prefix', false)
-
-  const missingConfigurationMessage =
-    'The service "frontend" had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
-
-  const logs = await getLogs(runtime)
-  ok(logs.map(m => m.msg).includes(missingConfigurationMessage))
-})
-
-test('should detect and start a Node.js application with no configuration files in development mode when exposed in a composer which defines no services', async t => {
-  await verifyComposerWithPrefix(t, 'node-no-configuration-composer-no-services', false)
-})
-
-// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start a Node.js application with no build function in development mode when standalone', async t => {
-  await verifyStandalone(t, 'node-no-build-standalone')
-})
-
-// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start a Node.js application with no build function in development mode when exposed in a composer with a prefix', async t => {
-  await verifyComposerWithPrefix(t, 'node-no-build-composer-with-prefix')
-})
-
-// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start a Node.js application with no build function in development mode when exposed in a composer without a prefix', async t => {
-  await verifyComposerWithoutPrefix(t, 'node-no-build-composer-without-prefix')
-})
-
-// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start a Node.js application with no build function in development mode when exposed in a composer by autodetecting the prefix', async t => {
-  await verifyComposerAutodetectPrefix(t, 'node-no-build-composer-autodetect-prefix')
-})
-
-test('should detect and start a Node.js application with a build function in development mode when standalone', async t => {
-  await verifyStandalone(t, 'node-with-build-standalone')
-})
-
-test('should detect and start a Node.js application with a build function in development mode when exposed in a composer with a prefix', async t => {
-  await verifyComposerWithPrefix(t, 'node-with-build-composer-with-prefix')
-})
-
-test('should detect and start a Node.js application with a build function in development mode when exposed in a composer without a prefix', async t => {
-  await verifyComposerWithoutPrefix(t, 'node-with-build-composer-without-prefix')
-})
-
-test('should detect and start a Node.js application with a build function in development mode when exposed in a composer by autodetecting the prefix', async t => {
-  await verifyComposerAutodetectPrefix(t, 'node-with-build-composer-autodetect-prefix')
-})
-
-// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start an Express with no build function in development mode when standalone', async t => {
-  await verifyStandalone(t, 'express-no-build-standalone')
-})
-
-// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start an Express with no build function in development mode when exposed in a composer with a prefix', async t => {
-  await verifyComposerWithPrefix(t, 'express-no-build-composer-with-prefix')
-})
-
-// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start an Express with no build function in development mode when exposed in a composer without a prefix', async t => {
-  await verifyComposerWithoutPrefix(t, 'express-no-build-composer-without-prefix')
-})
-
-// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start an Express with no build function in development mode when exposed in a composer by autodetecting the prefix', async t => {
-  await verifyComposerAutodetectPrefix(t, 'express-no-build-composer-autodetect-prefix')
-})
-
-test('should detect and start an Express with a build function in development mode when standalone', async t => {
-  await verifyStandalone(t, 'express-with-build-standalone')
-})
-
-test('should detect and start an Express with a build function in development mode when exposed in a composer with a prefix', async t => {
-  await verifyComposerWithPrefix(t, 'express-with-build-composer-with-prefix')
-})
-
-test('should detect and start an Express with a build function in development mode when exposed in a composer without a prefix', async t => {
-  await verifyComposerWithoutPrefix(t, 'express-with-build-composer-without-prefix')
-})
-
-test('should detect and start an Express with a build function in development mode when exposed in a composer by autodetecting the prefix', async t => {
-  await verifyComposerAutodetectPrefix(t, 'express-with-build-composer-autodetect-prefix')
-})
-
-// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start a Fastify with no build function in development mode when standalone', async t => {
-  await verifyStandalone(t, 'fastify-no-build-standalone')
-})
-
-// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start a Fastify with no build function in development mode when exposed in a composer with a prefix', async t => {
-  await verifyComposerWithPrefix(t, 'fastify-no-build-composer-with-prefix')
-})
-
-// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start a Fastify with no build function in development mode when exposed in a composer without a prefix', async t => {
-  await verifyComposerWithoutPrefix(t, 'fastify-no-build-composer-without-prefix')
-})
-
-// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start a Fastify with no build function in development mode when exposed in a composer by autodetecting the prefix', async t => {
-  await verifyComposerAutodetectPrefix(t, 'fastify-no-build-composer-autodetect-prefix')
-})
-
-test('should detect and start a Fastify with a build function in development mode when standalone', async t => {
-  await verifyStandalone(t, 'fastify-with-build-standalone')
-})
-
-test('should detect and start a Fastify with a build function in development mode when exposed in a composer with a prefix', async t => {
-  await verifyComposerWithPrefix(t, 'fastify-with-build-composer-with-prefix')
-})
-
-test('should detect and start a Fastify with a build function in development mode when exposed in a composer without a prefix', async t => {
-  await verifyComposerWithoutPrefix(t, 'fastify-with-build-composer-without-prefix')
-})
-
-test('should detect and start a Fastify with a build function in development mode when exposed in a composer by autodetecting the prefix', async t => {
-  await verifyComposerAutodetectPrefix(t, 'fastify-with-build-composer-autodetect-prefix')
-})
-
-// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start a Koa with no build function in development mode when standalone', async t => {
-  await verifyStandalone(t, 'koa-no-build-standalone')
-})
-
-// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start a Koa with no build function in development mode when exposed in a composer with a prefix', async t => {
-  await verifyComposerWithPrefix(t, 'koa-no-build-composer-with-prefix')
-})
-
-// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start a Koa with no build function in development mode when exposed in a composer without a prefix', async t => {
-  await verifyComposerWithoutPrefix(t, 'koa-no-build-composer-without-prefix')
-})
-
-// In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start a Koa with no build function in development mode when exposed in a composer by autodetecting the prefix', async t => {
-  await verifyComposerAutodetectPrefix(t, 'koa-no-build-composer-autodetect-prefix')
-})
-
-test('should detect and start a Koa with a build function in development mode when standalone', async t => {
-  await verifyStandalone(t, 'koa-with-build-standalone')
-})
-
-test('should detect and start a Koa with a build function in development mode when exposed in a composer with a prefix', async t => {
-  await verifyComposerWithPrefix(t, 'koa-with-build-composer-with-prefix')
-})
-
-test('should detect and start a Koa with a build function in development mode when exposed in a composer without a prefix', async t => {
-  await verifyComposerWithoutPrefix(t, 'koa-with-build-composer-without-prefix')
-})
-
-test('should detect and start a Koa with a build function in development mode when exposed in a composer by autodetecting the prefix', async t => {
-  await verifyComposerAutodetectPrefix(t, 'koa-with-build-composer-autodetect-prefix')
-})
+verifyDevelopmentMode(configurations)

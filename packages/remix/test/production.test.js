@@ -1,8 +1,9 @@
-import { fileURLToPath } from 'node:url'
-import { setAdditionalDependencies } from '../../basic/test/helper.js'
+import { resolve } from 'node:path'
 import {
   internalServicesFiles,
   isCIOnWindows,
+  setAdditionalDependencies,
+  setFixturesDir,
   verifyBuildAndProductionMode,
   verifyFrontendAPIOnAutodetectedPrefix,
   verifyFrontendAPIOnPrefix,
@@ -12,52 +13,62 @@ import {
   verifyFrontendOnRoot,
   verifyPlatformaticComposer,
   verifyPlatformaticService
-} from '../../cli/test/helper.js'
+} from '../../basic/test/helper.js'
 import { additionalDependencies } from './helper.js'
 
 process.setMaxListeners(100)
+setFixturesDir(resolve(import.meta.dirname, './fixtures'))
+setAdditionalDependencies(additionalDependencies)
 
-const remixFiles = ['services/frontend/build/client/assets/entry.client-*.js']
+const files = ['services/frontend/build/client/assets/entry.client-*.js']
 
 const configurations = [
   {
     id: 'standalone',
     name: 'Remix (standalone)',
-    files: [...remixFiles],
-    checks: [verifyFrontendOnRoot, verifyFrontendAPIOnRoot]
+    files,
+    checks: [verifyFrontendOnRoot, verifyFrontendAPIOnRoot],
+    language: 'js',
+    prefix: ''
   },
   {
     only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Remix (in composer with prefix)',
-    files: [...remixFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files: [...files, ...internalServicesFiles],
+    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'ts',
+    prefix: '/frontend'
   },
   {
     id: 'composer-without-prefix',
     name: 'Remix (in composer without prefix)',
-    files: [...remixFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnRoot, verifyFrontendAPIOnRoot, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyFrontendOnRoot, verifyFrontendAPIOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'composer-autodetect-prefix',
     name: 'Remix (in composer with autodetected prefix)',
-    files: [...remixFiles, ...internalServicesFiles],
+    files,
     checks: [
       verifyFrontendOnAutodetectedPrefix,
       verifyFrontendAPIOnAutodetectedPrefix,
       verifyPlatformaticComposer,
       verifyPlatformaticService
-    ]
+    ],
+    language: 'js',
+    prefix: '/nested/base/dir'
   },
   {
     id: 'composer-custom-commands',
     name: 'Remix (in composer with prefix using custom commands)',
-    files: [...remixFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/frontend'
   }
 ]
 
-setAdditionalDependencies(additionalDependencies)
-
-verifyBuildAndProductionMode(fileURLToPath(new URL('fixtures', import.meta.url)), configurations)
+verifyBuildAndProductionMode(configurations)

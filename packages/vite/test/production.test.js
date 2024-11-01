@@ -1,26 +1,25 @@
-import { fileURLToPath } from 'node:url'
-import { verifyHTMLViaHTTP } from '../../basic/test/helper.js'
+import { resolve } from 'node:path'
 import {
   internalServicesFiles,
   isCIOnWindows,
   isWindows,
+  setFixturesDir,
   verifyBuildAndProductionMode,
   verifyFrontendAPIOnPrefix,
   verifyFrontendAPIOnRoot,
   verifyFrontendOnAutodetectedPrefix,
   verifyFrontendOnPrefix,
   verifyFrontendOnRoot,
+  verifyHTMLViaHTTP,
   verifyPlatformaticComposer,
   verifyPlatformaticService
-} from '../../cli/test/helper.js'
+} from '../../basic/test/helper.js'
 
 process.setMaxListeners(100)
+setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-const viteFiles = ['services/frontend/dist/index.html', 'services/frontend/dist/assets/index-*.js']
-const viteSSRFiles = [
-  'services/frontend/client/dist/client/index.html',
-  'services/frontend/client/dist/server/index.js'
-]
+const files = ['services/frontend/dist/index.html', 'services/frontend/dist/assets/index-*.js']
+const filesSSR = ['services/frontend/client/dist/client/index.html', 'services/frontend/client/dist/server/index.js']
 
 function verifyFrontendWithBundleOnRoot (t, url) {
   return verifyHTMLViaHTTP(url, '/', [
@@ -50,73 +49,98 @@ async function verifyFrontendWithBundleOnAutodetectedPrefix (t, url) {
 }
 
 const configurations = [
-  { id: 'standalone', name: 'Vite (standalone)', files: [...viteFiles], checks: [verifyFrontendWithBundleOnRoot] },
+  {
+    id: 'standalone',
+    name: 'Vite (standalone)',
+    files,
+    checks: [verifyFrontendWithBundleOnRoot],
+    language: 'js',
+    prefix: ''
+  },
   {
     only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Vite (in composer with prefix)',
-    files: [...viteFiles, ...internalServicesFiles],
-    checks: [verifyFrontendWithBundleOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files: [...files, ...internalServicesFiles],
+    checks: [verifyFrontendWithBundleOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'ts',
+    prefix: '/frontend'
   },
   {
     id: 'composer-without-prefix',
     name: 'Vite (in composer without prefix)',
-    files: [...viteFiles, ...internalServicesFiles],
-    checks: [verifyFrontendWithBundleOnRoot, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyFrontendWithBundleOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'composer-autodetect-prefix',
     name: 'Vite (in composer with autodetected prefix)',
-    files: [...viteFiles, ...internalServicesFiles],
-    checks: [verifyFrontendWithBundleOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyFrontendWithBundleOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/nested/base/dir'
   },
   {
     only: isCIOnWindows,
     id: 'composer-custom-commands',
     name: 'Vite (in composer with prefix using custom commands)',
-    files: [...viteFiles, ...internalServicesFiles],
-    checks: [verifyFrontendWithBundleOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyFrontendWithBundleOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/frontend'
   },
   {
     // Disabled on Windows due to https://github.com/fastify/fastify-vite/issues/162
     skip: isWindows,
     id: 'ssr-standalone',
     name: 'Vite SSR (standalone)',
-    files: [...viteSSRFiles],
-    checks: [verifyFrontendOnRoot, verifyFrontendAPIOnRoot]
+    files: filesSSR,
+    checks: [verifyFrontendOnRoot, verifyFrontendAPIOnRoot],
+    language: 'js',
+    prefix: ''
   },
   {
     // Disabled on Windows due to https://github.com/fastify/fastify-vite/issues/162
     skip: isWindows,
     id: 'ssr-with-prefix',
     name: 'Vite SSR (in composer with prefix)',
-    files: [...viteSSRFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files: filesSSR,
+    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/frontend'
   },
   {
     // Disabled on Windows due to https://github.com/fastify/fastify-vite/issues/162
     skip: isWindows,
     id: 'ssr-without-prefix',
     name: 'Vite SSR (in composer without prefix)',
-    files: [...viteSSRFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnRoot, verifyPlatformaticComposer, verifyPlatformaticService]
+    files: filesSSR,
+    checks: [verifyFrontendOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: ''
   },
   {
     // Disabled on Windows due to https://github.com/fastify/fastify-vite/issues/162
     skip: isWindows,
     id: 'ssr-autodetect-prefix',
     name: 'Vite SSR (in composer with autodetected prefix)',
-    files: [...viteSSRFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files: filesSSR,
+    checks: [verifyFrontendOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/nested/base/dir'
   },
   {
     // Disabled on Windows due to https://github.com/fastify/fastify-vite/issues/162
     skip: isWindows,
     id: 'ssr-custom-commands',
     name: 'Vite SSR (in composer with prefix using custom commands)',
-    files: [...viteSSRFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files: filesSSR,
+    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/frontend'
   }
 ]
 
-verifyBuildAndProductionMode(fileURLToPath(new URL('fixtures', import.meta.url)), configurations)
+verifyBuildAndProductionMode(configurations)

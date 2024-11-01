@@ -1,22 +1,23 @@
 import { resolve } from 'node:path'
-import { test } from 'node:test'
 import {
-  createRuntime,
-  fixturesDir,
+  prepareRuntimeWithServices,
   setFixturesDir,
-  setHMRTriggerFile,
-  verifyHMR,
+  updateFile,
+  verifyDevelopmentFrontendStandalone,
+  verifyDevelopmentFrontendWithAutodetectPrefix,
+  verifyDevelopmentFrontendWithPrefix,
+  verifyDevelopmentFrontendWithoutPrefix,
+  verifyDevelopmentMode,
   verifyHTMLViaHTTP,
   verifyHTMLViaInject,
   verifyJSONViaHTTP,
   verifyJSONViaInject
 } from '../../basic/test/helper.js'
-import { safeRemove } from '../../utils/index.js'
 
 process.setMaxListeners(100)
-
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
-setHMRTriggerFile('services/frontend/src/app/page.js')
+
+const hmrTriggerFile = 'services/frontend/src/app/page.js'
 
 function websocketHMRHandler (message, resolveConnection, resolveReload) {
   switch (message.action) {
@@ -28,113 +29,101 @@ function websocketHMRHandler (message, resolveConnection, resolveReload) {
   }
 }
 
-// Make sure no temporary files exist after execution
-test.afterEach(() => {
-  return Promise.all([
-    safeRemove(resolve(fixturesDir, 'tmp')),
-    safeRemove(resolve(fixturesDir, 'services/backend/dist')),
-    safeRemove(resolve(fixturesDir, 'services/composer/dist')),
-    safeRemove(resolve(fixturesDir, 'services/frontend/.next'))
-  ])
-})
+export async function verifyDevelopmentFrontendWithExternalProxy (
+  t,
+  configuration,
+  language,
+  htmlContents,
+  _hmrUrl,
+  _hmrProtocol,
+  _websocketHMRHandler,
+  pauseTimeout
+) {
+  const { runtime, url } = await prepareRuntimeWithServices(
+    t,
+    configuration,
+    false,
+    language,
+    '/frontend',
+    pauseTimeout,
+    async root => {
+      await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
+        const json = JSON.parse(contents)
+        json.composer.services[1].proxy = { prefix: '/frontend' }
+        return JSON.stringify(json, null, 2)
+      })
+    }
+  )
 
-// In this test there is purposely no platformatic.application.json file to see if we work without one
-test('should detect and start a Next.js application in development mode', async t => {
-  const { url } = await createRuntime(t, 'standalone')
+  await verifyHTMLViaHTTP(url, '/external-proxy/frontend', htmlContents)
+  await verifyHTMLViaInject(runtime, 'external-proxy', '/external-proxy/frontend', htmlContents)
 
-  await verifyHTMLViaHTTP(url, '/', ['<script src="/_next/static/chunks/main-app.js'])
-  await verifyHMR(url, '/_next/webpack-hmr', undefined, websocketHMRHandler)
-})
+  await verifyJSONViaHTTP(url, '/external-proxy/example', 200, { hello: 'foobar' })
+  await verifyJSONViaHTTP(url, '/external-proxy/frontend/on-composer', 200, { ok: true })
+  await verifyJSONViaHTTP(url, '/external-proxy/backend/example', 200, { hello: 'foobar' })
 
-test('should detect and start a Next.js application in development mode when exposed in a composer with a prefix', async t => {
-  const { runtime, url } = await createRuntime(t, 'composer-with-prefix')
+  await verifyJSONViaInject(runtime, 'external-proxy', 'GET', '/external-proxy/example', 200, { hello: 'foobar' })
+  await verifyJSONViaInject(runtime, 'external-proxy', 'GET', '/external-proxy/frontend/on-composer', 200, { ok: true })
+  await verifyJSONViaInject(runtime, 'external-proxy', 'GET', '/external-proxy/example', 200, { hello: 'foobar' })
+}
 
-  const htmlContents = ['<script src="/frontend/_next/static/chunks/main-app.js']
+const configurations = [
+  {
+    id: 'standalone',
+    name: 'Next.js (standalone)',
+    check: verifyDevelopmentFrontendStandalone,
+    htmlContents: ['<script src="/_next/static/chunks/main-app.js'],
+    hmrTriggerFile,
+    language: 'js'
+  },
+  {
+    id: 'composer-with-prefix',
+    name: 'Next.js (in composer with prefix)',
+    check: verifyDevelopmentFrontendWithPrefix,
+    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
+    hmrTriggerFile,
+    language: 'ts'
+  },
+  {
+    id: 'composer-with-external-proxy',
+    name: 'Next.js (in composer with external proxy)',
+    check: verifyDevelopmentFrontendWithExternalProxy,
+    htmlContents: ['<script src="/external-proxy/frontend/_next/static/chunks/main-app.js'],
+    hmrTriggerFile,
+    language: 'js'
+  },
+  {
+    id: 'composer-without-prefix',
+    name: 'Next.js (in composer without prefix)',
+    check: verifyDevelopmentFrontendWithoutPrefix,
+    htmlContents: ['<script src="/_next/static/chunks/main-app.js'],
+    hmrTriggerFile,
+    language: 'js'
+  },
+  {
+    id: 'composer-autodetect-prefix',
+    name: 'Next.js (in composer with autodetected prefix)',
+    check: verifyDevelopmentFrontendWithAutodetectPrefix,
+    htmlContents: ['<script src="/nested/base/dir/_next/static/chunks/main-app.js'],
+    hmrTriggerFile,
+    language: 'js'
+  },
+  {
+    id: 'server-side',
+    name: 'Next.js RSC (in composer with prefix)',
+    check: verifyDevelopmentFrontendWithPrefix,
+    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
+    hmrTriggerFile,
+    language: 'js'
+  },
+  {
+    id: 'composer-custom-commands',
+    name: 'Next.js (in composer with prefix using custom commands)',
+    check: verifyDevelopmentFrontendWithPrefix,
+    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
+    hmrTriggerFile,
+    language: 'js'
+  }
+]
 
-  await verifyHTMLViaHTTP(url, '/frontend/', htmlContents)
-  await verifyHTMLViaInject(runtime, 'composer', '/frontend', htmlContents)
-  await verifyHMR(url, '/frontend/_next/webpack-hmr', undefined, websocketHMRHandler)
-
-  await verifyJSONViaHTTP(url, '/example', 200, { hello: 'foobar' })
-  await verifyJSONViaHTTP(url, '/frontend/on-composer', 200, { ok: true })
-  await verifyJSONViaHTTP(url, '/backend/example', 200, { hello: 'foobar' })
-
-  await verifyJSONViaInject(runtime, 'composer', 'GET', '/example', 200, { hello: 'foobar' })
-  await verifyJSONViaInject(runtime, 'composer', 'GET', '/frontend/on-composer', 200, { ok: true })
-  await verifyJSONViaInject(runtime, 'backend', 'GET', '/example', 200, { hello: 'foobar' })
-})
-
-test('should detect and start a Next.js application in development mode when exposed in a composer without a prefix', async t => {
-  const { runtime, url } = await createRuntime(t, 'composer-without-prefix')
-
-  const htmlContents = ['<script src="/_next/static/chunks/main-app.js']
-
-  await verifyHTMLViaHTTP(url, '/', htmlContents)
-  await verifyHTMLViaInject(runtime, 'composer', '/', htmlContents)
-  await verifyHMR(url, '/_next/webpack-hmr', undefined, websocketHMRHandler)
-
-  await verifyJSONViaHTTP(url, '/example', 200, { hello: 'foobar' })
-  await verifyJSONViaHTTP(url, '/on-composer', 200, { ok: true })
-  await verifyJSONViaHTTP(url, '/backend/example', 200, { hello: 'foobar' })
-
-  await verifyJSONViaInject(runtime, 'composer', 'GET', '/example', 200, { hello: 'foobar' })
-  await verifyJSONViaInject(runtime, 'composer', 'GET', '/on-composer', 200, { ok: true })
-  await verifyJSONViaInject(runtime, 'backend', 'GET', '/example', 200, { hello: 'foobar' })
-})
-
-// In this file the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
-test('should detect and start a Next.js application in development mode when exposed in a composer with a custom config and by autodetecting the prefix', async t => {
-  const { runtime, url } = await createRuntime(t, 'composer-autodetect-prefix')
-
-  const htmlContents = ['<script src="/nested/base/dir/_next/static/chunks/main-app.js']
-
-  await verifyHTMLViaHTTP(url, '/nested/base/dir/', htmlContents)
-  await verifyHTMLViaInject(runtime, 'composer', '/nested/base/dir', htmlContents)
-  await verifyHMR(url, '/nested/base/dir/_next/webpack-hmr', undefined, websocketHMRHandler)
-
-  await verifyJSONViaHTTP(url, '/example', 200, { hello: 'foobar' })
-  await verifyJSONViaHTTP(url, '/nested/base/dir/on-composer', 200, { ok: true })
-  await verifyJSONViaHTTP(url, '/backend/example', 200, { hello: 'foobar' })
-
-  await verifyJSONViaInject(runtime, 'composer', 'GET', '/example', 200, { hello: 'foobar' })
-  await verifyJSONViaInject(runtime, 'composer', 'GET', '/nested/base/dir/on-composer', 200, { ok: true })
-  await verifyJSONViaInject(runtime, 'backend', 'GET', '/example', 200, { hello: 'foobar' })
-})
-
-test('should detect and start a Next.js application in development mode with working React Server Components and Next.js Server API', async t => {
-  const { runtime, url } = await createRuntime(t, 'server-side')
-
-  const htmlContents = ['<script src="/frontend/_next/static/chunks/main-app.js']
-
-  await verifyHTMLViaHTTP(url, '/frontend/', htmlContents)
-  await verifyHTMLViaInject(runtime, 'composer', '/frontend', htmlContents)
-  await verifyHMR(url, '/frontend/_next/webpack-hmr', undefined, websocketHMRHandler)
-
-  await verifyJSONViaHTTP(url, '/example', 200, { hello: 'foobar' })
-  await verifyJSONViaHTTP(url, '/frontend/on-composer', 200, { ok: true })
-  await verifyJSONViaHTTP(url, '/backend/example', 200, { hello: 'foobar' })
-  await verifyJSONViaHTTP(url, '/backend/mesh', 200, { ok: true })
-
-  await verifyJSONViaInject(runtime, 'composer', 'GET', '/example', 200, { hello: 'foobar' })
-  await verifyJSONViaInject(runtime, 'composer', 'GET', '/frontend/on-composer', 200, { ok: true })
-  await verifyJSONViaInject(runtime, 'backend', 'GET', '/example', 200, { hello: 'foobar' })
-  await verifyJSONViaInject(runtime, 'backend', 'GET', '/mesh', 200, { ok: true })
-})
-
-test('should detect and start a Next.js application in development mode when using custom commands', async t => {
-  const { runtime, url } = await createRuntime(t, 'composer-custom-commands')
-
-  const htmlContents = ['<script src="/frontend/_next/static/chunks/main-app.js']
-
-  await verifyHTMLViaHTTP(url, '/frontend/', htmlContents)
-  await verifyHTMLViaInject(runtime, 'composer', '/frontend', htmlContents)
-  await verifyHMR(url, '/frontend/_next/webpack-hmr', undefined, websocketHMRHandler)
-
-  await verifyJSONViaHTTP(url, '/example', 200, { hello: 'foobar' })
-  await verifyJSONViaHTTP(url, '/frontend/on-composer', 200, { ok: true })
-  await verifyJSONViaHTTP(url, '/backend/example', 200, { hello: 'foobar' })
-
-  await verifyJSONViaInject(runtime, 'composer', 'GET', '/example', 200, { hello: 'foobar' })
-  await verifyJSONViaInject(runtime, 'composer', 'GET', '/frontend/on-composer', 200, { ok: true })
-  await verifyJSONViaInject(runtime, 'backend', 'GET', '/example', 200, { hello: 'foobar' })
-})
+verifyDevelopmentMode(configurations, '_next/webpack-hmr', undefined, websocketHMRHandler)
