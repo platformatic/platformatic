@@ -1,3 +1,3 @@
-export default async function (fastify) {
+module.export = async function (fastify) {
   fastify.decorate('example', 'foobar')
 }

@@ -1,4 +1,4 @@
-export default async function (fastify) {
+module.exports = async function (fastify) {
   fastify.get('/example', async () => {
     return { hello: fastify.example }
   })
