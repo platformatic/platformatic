@@ -91,6 +91,17 @@ The default number of workers to start per each service. It can be overriden at 
 
 This value is hardcoded to `1` if the runtime is running in development mode or when applying it to the entrypoint.
 
+### `gracefulShutdown`
+
+Configures the amount of milliseconds to wait before forcefully killing a service or the runtime.
+
+The object supports the following settings:
+
+- **`service`** (`number`) - The graceful shutdown timeout for a service.
+- **`runtime`** (`number`) - The graceful shutdown timeout for the entire runtime.
+
+For both the settings the default is `10000` (ten seconds).
+
 ### `watch`
 
 An optional boolean, set to default `false`, indicating if hot reloading should

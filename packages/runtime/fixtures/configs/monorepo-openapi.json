@@ -8,5 +8,9 @@
       "path": "../monorepo-openapi/serviceAppWithoutOpenapi",
       "config": "platformatic.service.json"
     }
-  ]
+  ],
+  "gracefulShutdown": {
+    "runtime": 1000,
+    "service": 1000
+  }
 }

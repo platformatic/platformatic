@@ -17,5 +17,9 @@
     }
   },
   "managementApi": {},
-  "metrics": false
+  "metrics": false,
+  "gracefulShutdown": {
+    "runtime": 1000,
+    "service": 1000
+  }
 }
