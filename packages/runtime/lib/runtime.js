@@ -243,6 +243,10 @@ class Runtime extends EventEmitter {
       this.#loggerDestination = null
     }
 
+    if (this.#sharedHttpCache?.close) {
+      await this.#sharedHttpCache.close()
+    }
+
     this.#updateStatus('closed')
   }
 
