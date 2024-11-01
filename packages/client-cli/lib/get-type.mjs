@@ -70,22 +70,26 @@ export function getType (typeDef, methodType, spec) {
     }).join(' | ')
   }
   if (typeDef.type === 'object') {
-    if (!typeDef.properties || Object.keys(typeDef.properties).length === 0) {
+    const additionalPropsObj = typeDef?.additionalProperties?.properties
+    const additionalPropsType = typeDef?.additionalProperties?.type
+    const objProperties = typeDef.properties || additionalPropsObj
+    if (!objProperties || Object.keys(objProperties).length === 0) {
       // Object without properties
-      return 'object'
+      return additionalPropsType ? `Record<string, ${JSONSchemaToTsType({ type: additionalPropsType })}>` : 'object'
     }
-    let output = '{ '
+
+    let output = additionalPropsObj && additionalPropsType === 'object' ? 'Record<string, { ' : '{ '
     // TODO: add a test for objects without properties
     /* c8 ignore next 1 */
-    const props = Object.keys(typeDef.properties || {}).map((prop) => {
+    const props = Object.keys(objProperties || {}).map((prop) => {
       let required = false
       if (typeDef.required) {
         required = !!typeDef.required.includes(prop)
       }
-      return `'${prop}'${required ? '' : '?'}: ${getType(typeDef.properties[prop], methodType, spec)}`
+      return `'${prop}'${required ? '' : '?'}: ${getType(objProperties[prop], methodType, spec)}`
     })
     output += props.join('; ')
-    output += ' }'
+    output += additionalPropsObj ? ' }>' : ' }'
     return output
   }
   return JSONSchemaToTsType(typeDef, methodType)
