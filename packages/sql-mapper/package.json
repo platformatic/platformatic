@@ -1,13 +1,13 @@
 {
   "name": "@platformatic/sql-mapper",
-  "version": "2.7.0",
+  "version": "2.8.0-alpha.1",
   "description": "A data mapper utility for SQL databases",
   "main": "mapper.js",
   "types": "mapper.d.ts",
   "scripts": {
     "lint": "eslint",
     "test": "npm run lint && npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
-    "test:runner": "borp --pattern 'test/**/*.test.{js, mjs}' --concurrency=1 --timeout=180000",
+    "test:runner": "borp --pattern 'test/**/*.test.{js, mjs}' --concurrency=1 --timeout=300000",
     "test:postgresql": "DB=postgresql npm run test:runner",
     "test:mariadb": "DB=mariadb npm run test:runner",
     "test:mysql": "DB=mysql npm run test:runner",

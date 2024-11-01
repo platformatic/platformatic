@@ -73,6 +73,7 @@ runtime. Each service object supports the following settings:
   the microservice.
 - **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
   on `127.0.0.1`, and exposed to the other services via that port, on default it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
+- **`workers`** (`number`) - The number of workers to start for this service. If the service is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`.
 
 If this property is present, then the services will not be reordered according to the
 `getBootstrapDependencies` function and they will be started in the order they are defined in
@@ -83,6 +84,12 @@ the configuration file.
 The Platformatic Runtime's entrypoint is a microservice that is exposed
 publicly. This value must be the `ID` of a service defined via the `autoload` or
 `services` configuration.
+
+### `workers`
+
+The default number of workers to start per each service. It can be overriden at service level.
+
+This value is hardcoded to `1` if the runtime is running in development mode or when applying it to the entrypoint.
 
 ### `watch`
 

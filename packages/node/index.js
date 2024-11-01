@@ -16,7 +16,6 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { Server } from 'node:http'
 import { resolve as pathResolve, resolve } from 'node:path'
-import { pathToFileURL } from 'url'
 import { packageJson, schema } from './lib/schema.js'
 
 const validFields = [
@@ -86,13 +85,7 @@ export class NodeStackable extends BaseStackable {
       ? ensureTrailingSlash(cleanBasePath(config.application?.basePath))
       : undefined
 
-    this.registerGlobals({
-      // Always use URL to avoid serialization problem in Windows
-      id: this.id,
-      root: pathToFileURL(this.root).toString(),
-      basePath: this.#basePath,
-      logLevel: this.logger.level
-    })
+    this.registerGlobals({ basePath: this.#basePath })
 
     // The server promise must be created before requiring the entrypoint even if it's not going to be used
     // at all. Otherwise there is chance we miss the listen event.
@@ -127,6 +120,10 @@ export class NodeStackable extends BaseStackable {
       } else if (this.#app instanceof Server) {
         this.#server = this.#app
         this.#dispatcher = this.#server.listeners('request')[0]
+      }
+
+      if (listen) {
+        await this._listen()
       }
     } else {
       // User blackbox function, we wait for it to listen on a port
@@ -279,18 +276,20 @@ export class NodeStackable extends BaseStackable {
 
     const { entrypoint, hadEntrypointField } = await getEntrypointInformation(this.root)
 
-    if (!entrypoint) {
-      this.logger.error(
-        `The service ${this.id} had no valid entrypoint defined in the package.json file and no valid entrypoint file was found.`
-      )
+    if (typeof this.workerId === 'undefined' || this.workerId === 0) {
+      if (!entrypoint) {
+        this.logger.error(
+          `The service "${this.serviceId}" had no valid entrypoint defined in the package.json file and no valid entrypoint file was found.`
+        )
 
-      process.exit(1)
-    }
+        process.exit(1)
+      }
 
-    if (!hadEntrypointField) {
-      this.logger.warn(
-        `The service ${this.id} had no valid entrypoint defined in the package.json file. Falling back to the file "${entrypoint}".`
-      )
+      if (!hadEntrypointField) {
+        this.logger.warn(
+          `The service "${this.serviceId}" had no valid entrypoint defined in the package.json file. Falling back to the file "${entrypoint}".`
+        )
+      }
     }
 
     let root = this.root

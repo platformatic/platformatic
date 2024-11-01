@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url'
+import { setAdditionalDependencies } from '../../basic/test/helper.js'
 import {
   internalServicesFiles,
   isCIOnWindows,
@@ -12,6 +13,7 @@ import {
   verifyPlatformaticComposer,
   verifyPlatformaticService
 } from '../../cli/test/helper.js'
+import { additionalDependencies } from './helper.js'
 
 process.setMaxListeners(100)
 
@@ -55,5 +57,7 @@ const configurations = [
     checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
   }
 ]
+
+setAdditionalDependencies(additionalDependencies)
 
 verifyBuildAndProductionMode(fileURLToPath(new URL('fixtures', import.meta.url)), configurations)

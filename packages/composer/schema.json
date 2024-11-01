@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/composer/2.7.0.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/composer/2.8.0-alpha.1.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Composer",
   "type": "object",
@@ -992,6 +992,7 @@
         }
       },
       "required": [],
+      "default": {},
       "additionalProperties": false
     },
     "metrics": {
@@ -1431,9 +1432,6 @@
     }
   },
   "additionalProperties": false,
-  "required": [
-    "composer"
-  ],
   "$defs": {
     "info": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#info-object",

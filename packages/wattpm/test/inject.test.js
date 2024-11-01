@@ -3,13 +3,11 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { createTemporaryDirectory, ensureDependency, fixturesDir, waitForStart, wattpm } from './helper.js'
+import { prepareRuntime } from '../../basic/test/helper.js'
+import { createTemporaryDirectory, waitForStart, wattpm } from './helper.js'
 
 test('inject - should send a request to an application', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const directory = await createTemporaryDirectory(t, 'inject')
   await createDirectory(directory)
@@ -79,10 +77,7 @@ test('inject - should complain when a runtime is not found', async t => {
 })
 
 test('inject - should complain when a service is not found', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)

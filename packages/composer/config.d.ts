@@ -148,7 +148,7 @@ export interface PlatformaticComposer {
       hideOptionsRoute?: boolean;
     };
   };
-  composer: {
+  composer?: {
     services?: {
       id: string;
       origin?: string;

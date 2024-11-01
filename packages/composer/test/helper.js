@@ -448,7 +448,7 @@ async function createComposerInRuntime (t, prefix, composerConfig, services) {
 
   t.after(async () => {
     await runtime.close()
-    await safeRemove(tmpDir)
+    await safeRemove(tmpBaseDir)
   })
 
   return runtime
@@ -638,7 +638,7 @@ async function waitForRestart (runtime, previousUrl) {
   try {
     const url = await new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error(`Service ${id} has not been restarted`))
+        reject(new Error(`Service "${id}" has not been restarted`))
       }, REFRESH_TIMEOUT * REFRESH_TIMEOUT_DELAY_FACTOR)
 
       webSocket.on('error', err => {
@@ -647,7 +647,7 @@ async function waitForRestart (runtime, previousUrl) {
       })
 
       webSocket.on('message', data => {
-        if (data.includes(`Service ${id} has been successfully reloaded`)) {
+        if (data.includes(`Service \\"${id}\\" has been successfully reloaded`)) {
           clearTimeout(timeout)
 
           setImmediate(async () => {

@@ -17,7 +17,6 @@ import fastify from 'fastify'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { satisfies } from 'semver'
 import { packageJson, schema } from './lib/schema.js'
 
@@ -154,13 +153,7 @@ export class AstroStackable extends BaseStackable {
       ? ensureTrailingSlash(cleanBasePath(config.application?.basePath))
       : undefined
 
-    this.registerGlobals({
-      id: this.id,
-      // Always use URL to avoid serialization problem in Windows
-      root: pathToFileURL(this.root).toString(),
-      basePath: this.#basePath,
-      logLevel: this.logger.level
-    })
+    this.registerGlobals({ basePath: this.#basePath })
 
     if (command) {
       return this.startWithCommand(command)
@@ -205,6 +198,8 @@ export class AstroStackable extends BaseStackable {
               config.vite.server ??= {}
               config.vite.server.hmr ??= {}
               config.vite.server.hmr.path = `/${this.#basePath}/`.replaceAll(/\/+/g, '/')
+              config.vite.server.fs ??= {}
+              config.vite.server.fs.strict = false
             }
           }
         }
@@ -224,13 +219,7 @@ export class AstroStackable extends BaseStackable {
       ? ensureTrailingSlash(cleanBasePath(config.application?.basePath))
       : undefined
 
-    this.registerGlobals({
-      id: this.id,
-      // Always use URL to avoid serialization problem in Windows
-      root: pathToFileURL(this.root).toString(),
-      basePath: this.#basePath,
-      logLevel: this.logger.level
-    })
+    this.registerGlobals({ basePath: this.#basePath })
 
     if (command) {
       return this.startWithCommand(command)

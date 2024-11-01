@@ -13,16 +13,14 @@ import { safeRemove } from '../../utils/index.js'
 
 process.setMaxListeners(100)
 
-const packageRoot = resolve(import.meta.dirname, '..')
+setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 function isTime (body) {
   ok(typeof body.time === 'number')
 }
 
 async function verifyStandalone (t, configuration) {
-  setFixturesDir(resolve(import.meta.dirname, `./fixtures/${configuration}`))
-
-  const { runtime, url } = await createRuntime(t, 'platformatic.runtime.json', packageRoot)
+  const { runtime, url } = await createRuntime(t, configuration)
 
   await verifyJSONViaHTTP(url, '/', 200, { production: false })
 
@@ -32,9 +30,7 @@ async function verifyStandalone (t, configuration) {
 }
 
 async function verifyComposerWithPrefix (t, configuration, absoluteUrl = true) {
-  setFixturesDir(resolve(import.meta.dirname, `./fixtures/${configuration}`))
-
-  const { runtime, url } = await createRuntime(t, 'platformatic.runtime.json', packageRoot)
+  const { runtime, url } = await createRuntime(t, configuration)
 
   await verifyJSONViaHTTP(url, '/frontend', 200, { production: false })
   await verifyJSONViaHTTP(url, '/frontend/', 200, { production: false })
@@ -59,9 +55,7 @@ async function verifyComposerWithPrefix (t, configuration, absoluteUrl = true) {
 }
 
 async function verifyComposerWithoutPrefix (t, configuration) {
-  setFixturesDir(resolve(import.meta.dirname, `./fixtures/${configuration}`))
-
-  const { runtime, url } = await createRuntime(t, 'platformatic.runtime.json', packageRoot)
+  const { runtime, url } = await createRuntime(t, configuration)
 
   await verifyJSONViaHTTP(url, '/', 200, { production: false })
   await verifyJSONViaHTTP(url, '/time', 200, isTime)
@@ -81,9 +75,7 @@ async function verifyComposerWithoutPrefix (t, configuration) {
 }
 
 async function verifyComposerAutodetectPrefix (t, configuration, absoluteUrl = true) {
-  setFixturesDir(resolve(import.meta.dirname, `./fixtures/${configuration}`))
-
-  const { runtime, url } = await createRuntime(t, 'platformatic.runtime.json', packageRoot)
+  const { runtime, url } = await createRuntime(t, configuration)
 
   await verifyJSONViaHTTP(url, '/nested/base/dir', 200, { production: false })
   await verifyJSONViaHTTP(url, '/nested/base/dir/', 200, { production: false })
@@ -122,7 +114,7 @@ test('should detect and start a Node.js application with no configuration files 
   const { runtime } = await verifyStandalone(t, 'node-no-configuration-standalone')
 
   const missingConfigurationMessage =
-    'The service frontend had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
+    'The service "frontend" had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
 
   const logs = await getLogs(runtime)
   ok(logs.map(m => m.msg).includes(missingConfigurationMessage))
@@ -132,7 +124,7 @@ test('should detect and start a Node.js application with no configuration files 
   const { runtime } = await verifyComposerWithPrefix(t, 'node-no-configuration-composer-with-prefix', false)
 
   const missingConfigurationMessage =
-    'The service frontend had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
+    'The service "frontend" had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
 
   const logs = await getLogs(runtime)
   ok(logs.map(m => m.msg).includes(missingConfigurationMessage))
@@ -142,7 +134,7 @@ test('should detect and start a Node.js application with no configuration files 
   const { runtime } = await verifyComposerWithoutPrefix(t, 'node-no-configuration-composer-without-prefix')
 
   const missingConfigurationMessage =
-    'The service frontend had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
+    'The service "frontend" had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
 
   const logs = await getLogs(runtime)
   ok(logs.map(m => m.msg).includes(missingConfigurationMessage))
@@ -152,7 +144,7 @@ test('should detect and start a Node.js application with no configuration files 
   const { runtime } = await verifyComposerAutodetectPrefix(t, 'node-no-configuration-composer-autodetect-prefix', false)
 
   const missingConfigurationMessage =
-    'The service frontend had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
+    'The service "frontend" had no valid entrypoint defined in the package.json file. Falling back to the file "index.mjs".'
 
   const logs = await getLogs(runtime)
   ok(logs.map(m => m.msg).includes(missingConfigurationMessage))

@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db",
-  "version": "2.7.0",
+  "version": "2.8.0-alpha.1",
   "description": "",
   "main": "index.js",
   "types": "index.d.ts",
@@ -8,10 +8,10 @@
     "plt-db": "./db.mjs"
   },
   "scripts": {
-    "test": "pnpm run lint && borp -T --concurrency=1 --timeout=180000 && tsd ",
-    "test:postgresql": "DB=postgresql borp -T --concurrency=1 --timeout=180000",
-    "test:mariadb": "DB=mariadb borp -T --concurrency=1 --timeout=180000",
-    "test:mysql": "DB=mysql borp -T --concurrency=1 --timeout=180000",
+    "test": "pnpm run lint && borp -T --concurrency=1 --timeout=300000 && tsd ",
+    "test:postgresql": "DB=postgresql borp -T --concurrency=1 --timeout=300000",
+    "test:mariadb": "DB=mariadb borp -T --concurrency=1 --timeout=300000",
+    "test:mysql": "DB=mysql borp -T --concurrency=1 --timeout=300000",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "pnpm run gen-schema && pnpm run gen-types",

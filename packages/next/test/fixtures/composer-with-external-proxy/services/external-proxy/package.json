@@ -9,7 +9,8 @@
     "fastify": "^5.0.0-alpha.4"
   },
   "dependencies": {
-    "@platformatic/service": "^2.3.1"
+    "@platformatic/service": "^2.3.1",
+    "@fastify/reply-from": "^11.0.0"
   },
   "engines": {
     "node": "^18.8.0 || >=20.6.0"

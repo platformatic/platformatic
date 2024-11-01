@@ -314,5 +314,5 @@ test('should handle errors watching services', async t => {
 
   const messages = await getRuntimeLogs(runtime)
 
-  assert.ok(messages.find(l => l.startsWith('Service "composer" unexpectedly exited with code 1')))
+  assert.ok(messages.find(l => l.startsWith('Failed to start service "composer".')))
 })

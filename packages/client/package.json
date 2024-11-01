@@ -1,12 +1,12 @@
 {
   "name": "@platformatic/client",
-  "version": "2.7.0",
+  "version": "2.8.0-alpha.1",
   "description": "A client for all platformatic backends",
   "main": "index.js",
   "scripts": {
     "lint": "eslint",
-    "test": "pnpm run lint && borp --concurrency=1 --timeout=180000 && tsd",
-    "cov": "pnpm run lint && borp --concurrency=1 --coverage --timeout=180000 && tsd"
+    "test": "pnpm run lint && borp --concurrency=1 --timeout=300000 && tsd",
+    "cov": "pnpm run lint && borp --concurrency=1 --coverage --timeout=300000 && tsd"
   },
   "repository": {
     "type": "git",

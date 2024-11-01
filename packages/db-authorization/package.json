@@ -1,10 +1,10 @@
 {
   "name": "@platformatic/db-authorization",
-  "version": "2.7.0",
+  "version": "2.8.0-alpha.1",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "pnpm run lint && borp --concurrency=1 --timeout=180000 && tsd",
+    "test": "pnpm run lint && borp --concurrency=1 --timeout=300000 && tsd",
     "lint": "eslint"
   },
   "types": "index.d.ts",

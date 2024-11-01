@@ -2,7 +2,6 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import {
   createRuntime,
-  fixturesDir,
   setFixturesDir,
   setHMRTriggerFile,
   verifyHMR,
@@ -11,11 +10,10 @@ import {
   verifyJSONViaHTTP,
   verifyJSONViaInject
 } from '../../basic/test/helper.js'
-import { safeRemove } from '../../utils/index.js'
 
 process.setMaxListeners(100)
 
-const packageRoot = resolve(import.meta.dirname, '..')
+setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 function websocketHMRHandler (message, resolveConnection, resolveReload) {
   switch (message.type) {
@@ -27,21 +25,11 @@ function websocketHMRHandler (message, resolveConnection, resolveReload) {
   }
 }
 
-// Make sure no temporary files exist after execution
-test.afterEach(() => {
-  return Promise.all([
-    safeRemove(resolve(fixturesDir, 'tmp')),
-    safeRemove(resolve(fixturesDir, 'services/backend/dist')),
-    safeRemove(resolve(fixturesDir, 'services/composer/dist'))
-  ])
-})
-
 // In this test there is purposely no platformatic.application.json file to see if we work without one
 test('should detect and start a Vite application in development mode', async t => {
-  setFixturesDir(resolve(import.meta.dirname, './fixtures/standalone'))
   setHMRTriggerFile('services/frontend/main.js')
 
-  const { url } = await createRuntime(t, 'platformatic.runtime.json', packageRoot)
+  const { url } = await createRuntime(t, 'standalone')
 
   const htmlContents = ['<title>Vite App</title>', '<script type="module" src="/main.js"></script>']
 
@@ -50,10 +38,9 @@ test('should detect and start a Vite application in development mode', async t =
 })
 
 test('should detect and start a Vite application in development mode when exposed in a composer with a prefix', async t => {
-  setFixturesDir(resolve(import.meta.dirname, './fixtures/composer-with-prefix'))
   setHMRTriggerFile('services/frontend/main.js')
 
-  const { runtime, url } = await createRuntime(t, 'platformatic.runtime.json', packageRoot)
+  const { runtime, url } = await createRuntime(t, 'composer-with-prefix')
 
   const htmlContents = ['<title>Vite App</title>', '<script type="module" src="/frontend/main.js"></script>']
 
@@ -71,10 +58,9 @@ test('should detect and start a Vite application in development mode when expose
 })
 
 test('should detect and start a Vite application in development mode when exposed in a composer without a prefix', async t => {
-  setFixturesDir(resolve(import.meta.dirname, './fixtures/composer-without-prefix'))
   setHMRTriggerFile('services/frontend/main.js')
 
-  const { runtime, url } = await createRuntime(t, 'platformatic.runtime.json', packageRoot)
+  const { runtime, url } = await createRuntime(t, 'composer-without-prefix')
 
   const htmlContents = ['<title>Vite App</title>', '<script type="module" src="/main.js"></script>']
 
@@ -93,10 +79,9 @@ test('should detect and start a Vite application in development mode when expose
 
 // In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
 test('should detect and start a Vite application in development mode when exposed in a composer with a custom config and by autodetecting the prefix', async t => {
-  setFixturesDir(resolve(import.meta.dirname, './fixtures/composer-autodetect-prefix'))
   setHMRTriggerFile('services/frontend/main.js')
 
-  const { runtime, url } = await createRuntime(t, 'platformatic.runtime.json', packageRoot)
+  const { runtime, url } = await createRuntime(t, 'composer-autodetect-prefix')
 
   const htmlContents = ['<title>Vite App</title>', '<script type="module" src="/nested/base/dir/main.js"></script>']
 
@@ -114,10 +99,9 @@ test('should detect and start a Vite application in development mode when expose
 })
 
 test('should detect and start a Vite application in development mode when exposed in a composer with a prefix using custom commands', async t => {
-  setFixturesDir(resolve(import.meta.dirname, './fixtures/composer-custom-commands'))
   setHMRTriggerFile('services/frontend/main.js')
 
-  const { runtime, url } = await createRuntime(t, 'platformatic.runtime.json', packageRoot)
+  const { runtime, url } = await createRuntime(t, 'composer-custom-commands')
 
   const htmlContents = ['<title>Vite App</title>', '<script type="module" src="/frontend/main.js"></script>']
 
@@ -135,10 +119,9 @@ test('should detect and start a Vite application in development mode when expose
 })
 
 test('should detect and start a Vite SSR application in development mode', async t => {
-  setFixturesDir(resolve(import.meta.dirname, './fixtures/ssr-standalone'))
   setHMRTriggerFile('services/frontend/client/index.js')
 
-  const { url } = await createRuntime(t, 'platformatic.runtime.json', packageRoot)
+  const { url } = await createRuntime(t, 'ssr-standalone')
 
   const htmlContents = ['<title>Vite App</title>']
 
@@ -147,10 +130,9 @@ test('should detect and start a Vite SSR application in development mode', async
 })
 
 test('should detect and start a Vite SSR application in development mode when exposed in a composer with a prefix', async t => {
-  setFixturesDir(resolve(import.meta.dirname, './fixtures/ssr-with-prefix'))
   setHMRTriggerFile('services/frontend/client/index.js')
 
-  const { runtime, url } = await createRuntime(t, 'platformatic.runtime.json', packageRoot)
+  const { runtime, url } = await createRuntime(t, 'ssr-with-prefix')
 
   const htmlContents = ['<title>Vite App</title>', /Hello from v\d+ t\d+/]
 
@@ -170,10 +152,9 @@ test('should detect and start a Vite SSR application in development mode when ex
 })
 
 test('should detect and start a Vite SSR application in development mode when exposed in a composer without a prefix', async t => {
-  setFixturesDir(resolve(import.meta.dirname, './fixtures/ssr-without-prefix'))
   setHMRTriggerFile('services/frontend/client/index.js')
 
-  const { runtime, url } = await createRuntime(t, 'platformatic.runtime.json', packageRoot)
+  const { runtime, url } = await createRuntime(t, 'ssr-without-prefix')
 
   const htmlContents = ['<title>Vite App</title>', /Hello from v\d+ t\d+/]
 
@@ -194,10 +175,9 @@ test('should detect and start a Vite SSR application in development mode when ex
 
 // In this test the platformatic.runtime.json purposely does not specify a platformatic.application.json to see if we automatically detect one
 test('should detect and start a Vite SSR application in development mode when exposed in a composer with a custom config and by autodetecting the prefix', async t => {
-  setFixturesDir(resolve(import.meta.dirname, './fixtures/ssr-autodetect-prefix'))
   setHMRTriggerFile('services/frontend/client/index.js')
 
-  const { runtime, url } = await createRuntime(t, 'platformatic.runtime.json', packageRoot)
+  const { runtime, url } = await createRuntime(t, 'ssr-autodetect-prefix')
 
   const htmlContents = ['<title>Vite App</title>', /Hello from v\d+ t\d+/]
 
@@ -217,10 +197,9 @@ test('should detect and start a Vite SSR application in development mode when ex
 })
 
 test('should detect and start a Vite SSR application in development mode when exposed in a composer with a prefix using custom commands', async t => {
-  setFixturesDir(resolve(import.meta.dirname, './fixtures/ssr-custom-commands'))
   setHMRTriggerFile('services/frontend/client/index.js')
 
-  const { runtime, url } = await createRuntime(t, 'platformatic.runtime.json', packageRoot)
+  const { runtime, url } = await createRuntime(t, 'ssr-custom-commands')
 
   const htmlContents = ['<title>Vite App</title>', /Hello from v\d+ t\d+/]
 

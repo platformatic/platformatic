@@ -1,11 +1,13 @@
 {
   "name": "@platformatic/scalar-theme",
-  "version": "2.7.0",
+  "version": "2.8.0-alpha.1",
   "description": "Platformatic's Scalar theme for @scalar/fastify-api-reference",
   "main": "theme.js",
   "type": "module",
   "homepage": "https://docs.platformatic.dev/",
-  "scripts": {},
+  "scripts": {
+    "test": "exit 0"
+  },
   "author": "Marc Laventure <marc@scalar.com>",
   "repository": {
     "type": "git",

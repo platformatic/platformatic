@@ -66,6 +66,14 @@ test('logs stdio from the service thread', async t => {
         level: 30,
         pid,
         hostname,
+        name: undefined,
+        msg: 'Starting the service "stdio"...',
+        payload: undefined
+      },
+      {
+        level: 30,
+        pid,
+        hostname,
         name: 'stdio',
         msg: 'This is an info',
         payload: undefined
@@ -92,6 +100,14 @@ test('logs stdio from the service thread', async t => {
         hostname,
         name: 'stdio',
         msg: `Server listening at ${url}`,
+        payload: undefined
+      },
+      {
+        level: 30,
+        pid,
+        hostname,
+        name: undefined,
+        msg: 'Started the service "stdio"...',
         payload: undefined
       },
       {

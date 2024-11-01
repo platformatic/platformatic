@@ -4,5 +4,5 @@ const neostandard = require('neostandard')
 
 module.exports = neostandard({
   ts: true,
-  ignores: [...neostandard.resolveIgnoresFromGitignore(), 'test/tmp/**/*', 'dist/**/*'],
+  ignores: [...neostandard.resolveIgnoresFromGitignore(), 'test/tmp/**/*', 'dist/**/*']
 })

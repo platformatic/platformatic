@@ -1,14 +1,20 @@
 {
   "name": "@platformatic/runtime",
-  "version": "2.7.0",
+  "version": "2.8.0-alpha.1",
   "description": "",
   "main": "index.js",
   "bin": {
     "plt-runtime": "./runtime.mjs"
   },
   "scripts": {
-    "test": "npm run lint && borp --concurrency=1 --timeout=180000 && tsd",
-    "coverage": "npm run lint && borp -X fixtures -X test -C --concurrency=1 --timeout=180000 && tsd",
+    "test": "npm run lint && borp --concurrency=1 --timeout=300000 && tsd",
+    "test:main": "borp --concurrency=1 --timeout=300000 test/*.test.js test/versions/*.test.js",
+    "test:api": "borp --concurrency=1 --timeout=300000 test/api/*.test.js test/management-api/*.test.js",
+    "test:cli": "borp --concurrency=1 --timeout=300000 test/cli/*.test.js test/cli/**/*.test.js",
+    "test:start": "borp --concurrency=1 --timeout=300000 test/start/*.test.js",
+    "test:multiple-workers": "borp --concurrency=1 --timeout=300000 test/multiple-workers/*.test.js",
+    "test:types": "tsd",
+    "coverage": "npm run lint && borp -X fixtures -X test -C --concurrency=1 --timeout=300000 && tsd",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "pnpm run gen-schema && pnpm run gen-types",

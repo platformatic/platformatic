@@ -1,12 +1,8 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.3.1.json",
   "entrypoint": "api",
-  "server": {
-    "hostname": "127.0.0.1",
-    "port": 3042
-  },
   "logger": {
-    "level": "info"
+    "level": "error"
   },
   "services": [
     {

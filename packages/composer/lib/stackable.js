@@ -2,11 +2,33 @@
 
 const { ServiceStackable } = require('@platformatic/service')
 
+const kITC = Symbol.for('plt.runtime.itc')
+
+async function ensureServices (config) {
+  if (config.composer?.services?.length) {
+    return
+  }
+
+  config.composer ??= {}
+  config.composer.services ??= []
+
+  // When no services are defined, all services are exposed in the composer
+  const services = await globalThis[kITC]?.send('listServices')
+
+  if (services) {
+    config.composer.services = services
+      .filter(id => id !== globalThis.platformatic.serviceId) // Remove ourself
+      .map(id => ({ id, proxy: {} }))
+  }
+}
+
 class ComposerStackable extends ServiceStackable {
   #meta
 
   async getBootstrapDependencies () {
-    // We do not call init() on purpose, as we don't want to load the up just yet.
+    await ensureServices(this.configManager.current)
+
+    // We do not call init() on purpose, as we don't want to load the app just yet.
 
     const composedServices = this.configManager.current.composer?.services
     const dependencies = []
@@ -56,4 +78,4 @@ class ComposerStackable extends ServiceStackable {
     return `http://${id}.plt.local`
   }
 }
-module.exports = { ComposerStackable }
+module.exports = { ComposerStackable, ensureServices }

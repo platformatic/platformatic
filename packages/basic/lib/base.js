@@ -1,12 +1,12 @@
-import { deepmerge } from '@platformatic/utils'
 import { collectMetrics } from '@platformatic/metrics'
+import { deepmerge, executeWithTimeout } from '@platformatic/utils'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
-import { workerData } from 'node:worker_threads'
 import { existsSync } from 'node:fs'
-import { platform } from 'node:os'
+import { hostname, platform } from 'node:os'
 import { pathToFileURL } from 'node:url'
+import { workerData } from 'node:worker_threads'
 import pino from 'pino'
 import split2 from 'split2'
 import { NonZeroExitCode } from './errors.js'
@@ -19,9 +19,12 @@ export class BaseStackable {
   #subprocessStarted
 
   constructor (type, version, options, root, configManager) {
+    options.context.worker ??= { count: 1, index: 0 }
+
     this.type = type
     this.version = version
-    this.id = options.context.serviceId
+    this.serviceId = options.context.serviceId
+    this.workerId = options.context.worker.count > 1 ? options.context.worker.index : undefined
     this.telemetryConfig = options.context.telemetryConfig
     this.options = options
     this.root = root
@@ -39,16 +42,26 @@ export class BaseStackable {
 
     // Setup the logger
     const pinoOptions = {
-      level: this.serverConfig?.logger?.level ?? 'trace'
+      level: this.configManager.current?.logger?.level ?? this.serverConfig?.logger?.level ?? 'trace'
     }
 
-    if (this.id) {
-      pinoOptions.name = this.id
+    if (this.serviceId) {
+      pinoOptions.name = this.serviceId
     }
+
+    if (typeof options.context.worker?.index !== 'undefined') {
+      pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: this.workerId }
+    }
+
     this.logger = pino(pinoOptions)
 
     // Setup globals
     this.registerGlobals({
+      serviceId: this.serviceId,
+      workerId: this.workerId,
+      logLevel: this.logger.level,
+      // Always use URL to avoid serialization problem in Windows
+      root: pathToFileURL(this.root).toString(),
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
       setBasePath: this.setBasePath.bind(this)
@@ -241,9 +254,26 @@ export class BaseStackable {
     this.#subprocessStarted = false
     const exitPromise = once(this.subprocess, 'exit')
 
-    this.childManager.close(this.subprocessTerminationSignal ?? 'SIGINT')
-    this.subprocess.kill(this.subprocessTerminationSignal ?? 'SIGINT')
+    // Attempt graceful close on the process
+    this.childManager.notify(this.clientWs, 'close')
+
+    // If the process hasn't exited in 10 seconds, kill it in the polite way
+    /* c8 ignore next 10 */
+    const res = await executeWithTimeout(exitPromise, 10000)
+    if (res === 'timeout') {
+      this.subprocess.kill(this.subprocessTerminationSignal ?? 'SIGINT')
+
+      // If the process hasn't exited in 10 seconds, kill it the hard way
+      const res = await executeWithTimeout(exitPromise, 10000)
+      if (res === 'timeout') {
+        this.subprocess.kill('SIGKILL')
+      }
+    }
+
     await exitPromise
+
+    // Close the manager
+    this.childManager.close()
   }
 
   getChildManager () {
@@ -270,14 +300,16 @@ export class BaseStackable {
 
       if (this.childManager && this.clientWs) {
         await this.childManager.send(this.clientWs, 'collectMetrics', {
-          serviceId: this.id,
+          serviceId: this.serviceId,
+          workerId: this.workerId,
           metricsConfig
         })
         return
       }
 
       const { registry, startHttpTimer, endHttpTimer } = await collectMetrics(
-        this.id,
+        this.serviceId,
+        this.workerId,
         metricsConfig
       )
 
@@ -294,9 +326,7 @@ export class BaseStackable {
 
     if (!this.metricsRegistry) return null
 
-    return format === 'json'
-      ? await this.metricsRegistry.getMetricsAsJSON()
-      : await this.metricsRegistry.metrics()
+    return format === 'json' ? await this.metricsRegistry.getMetricsAsJSON() : await this.metricsRegistry.metrics()
   }
 
   getMeta () {
@@ -312,6 +342,8 @@ export class BaseStackable {
 
     return {
       id: this.id,
+      serviceId: this.serviceId,
+      workerId: this.workerId,
       // Always use URL to avoid serialization problem in Windows
       root: pathToFileURL(this.root).toString(),
       basePath,

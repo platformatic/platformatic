@@ -7,7 +7,7 @@ const { ITC } = require('@platformatic/itc')
 const { Unpromise } = require('@watchable/unpromise')
 
 const errors = require('../errors')
-const { kITC, kId } = require('./symbols')
+const { kITC, kId, kServiceId, kWorkerId } = require('./symbols')
 
 async function safeHandleInITC (worker, fn) {
   try {
@@ -23,7 +23,11 @@ async function safeHandleInITC (worker, fn) {
     ])
 
     if (typeof exitCode === 'number') {
-      throw new errors.ServiceExitedError(worker[kId], exitCode)
+      if (typeof worker[kWorkerId] !== 'undefined') {
+        throw new errors.WorkerExitedError(worker[kWorkerId], worker[kServiceId], exitCode)
+      } else {
+        throw new errors.ServiceExitedError(worker[kId], exitCode)
+      }
     } else {
       ac.abort()
     }
@@ -156,6 +160,7 @@ function setupITC (app, service, dispatcher) {
     itc.notify('changed')
   })
 
+  itc.listen()
   return itc
 }
 

@@ -4,16 +4,15 @@ import { existsSync } from 'node:fs'
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { basename, join, resolve, sep } from 'node:path'
 import { test } from 'node:test'
+import { prepareRuntime } from '../../basic/test/helper.js'
 import { defaultServiceJson } from '../lib/defaults.js'
 import { version } from '../lib/schema.js'
 import { createTemporaryDirectory, executeCommand, fixturesDir, wattpm } from './helper.js'
 
 test('import - should import a URL', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   const configurationFile = resolve(rootDir, 'watt.json')
   const originalFileContents = await readFile(configurationFile, 'utf-8')
-
-  t.after(() => writeFile(configurationFile, originalFileContents))
 
   process.chdir(rootDir)
   await wattpm('import', 'http://github.com/foo/bar.git')
@@ -31,12 +30,11 @@ test('import - should import a URL', async t => {
 })
 
 test('import - should import a GitHub repo via SSH', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   const configurationFile = resolve(rootDir, 'watt.json')
   const originalFileContents = await readFile(configurationFile, 'utf-8')
 
-  t.after(() => writeFile(configurationFile, originalFileContents))
-
+  process.chdir(rootDir)
   await wattpm('import', rootDir, 'foo/bar', '-i', 'id', '-p', 'path')
 
   deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), {
@@ -52,12 +50,11 @@ test('import - should import a GitHub repo via SSH', async t => {
 })
 
 test('import - should import a GitHub repo via HTTP', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   const configurationFile = resolve(rootDir, 'watt.json')
   const originalFileContents = await readFile(configurationFile, 'utf-8')
 
-  t.after(() => writeFile(configurationFile, originalFileContents))
-
+  process.chdir(rootDir)
   await wattpm('import', rootDir, 'foo/bar', '-h', '-i', 'id', '-p', 'path')
 
   deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), {
@@ -73,7 +70,7 @@ test('import - should import a GitHub repo via HTTP', async t => {
 })
 
 test('import - should import a local folder with Git and no watt.json', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   const configurationFile = resolve(rootDir, 'watt.json')
   const originalFileContents = await readFile(configurationFile, 'utf-8')
 
@@ -82,8 +79,7 @@ test('import - should import a local folder with Git and no watt.json', async t 
   await executeCommand('git', 'init', { cwd: directory })
   await executeCommand('git', 'remote', 'add', 'origin', 'git@github.com:hello/world.git', { cwd: directory })
 
-  t.after(() => writeFile(configurationFile, originalFileContents))
-
+  process.chdir(rootDir)
   await wattpm('import', rootDir, directory)
 
   deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), {
@@ -110,7 +106,7 @@ test('import - should import a local folder with Git and no watt.json', async t 
 })
 
 test('import - should import a local folder without Git and a watt.json', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   const configurationFile = resolve(rootDir, 'watt.json')
   const originalFileContents = await readFile(configurationFile, 'utf-8')
 
@@ -118,8 +114,7 @@ test('import - should import a local folder without Git and a watt.json', async 
   await cp(resolve(rootDir, 'web/main/index.js'), resolve(directory, 'index.js'))
   await writeFile(resolve(directory, 'watt.json'), JSON.stringify({ a: 1 }), 'utf-8')
 
-  t.after(() => writeFile(configurationFile, originalFileContents))
-
+  process.chdir(rootDir)
   await wattpm('import', rootDir, directory)
 
   deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), {
@@ -137,7 +132,7 @@ test('import - should import a local folder without Git and a watt.json', async 
 })
 
 test('import - should not modify the root watt.json when importing a folder which is already autoloaded', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   const configurationFile = resolve(rootDir, 'watt.json')
   const originalFileContents = await readFile(configurationFile, 'utf-8')
 
@@ -146,9 +141,9 @@ test('import - should not modify the root watt.json when importing a folder whic
   await mkdir(absoluteDirectory)
   await cp(resolve(rootDir, 'web/main/index.js'), resolve(rootDir, directory, 'index.js'))
 
-  t.after(() => writeFile(configurationFile, originalFileContents))
   t.after(() => safeRemove(absoluteDirectory))
 
+  process.chdir(rootDir)
   await wattpm('import', rootDir, directory)
 
   deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), {
@@ -176,7 +171,7 @@ const autodetect = {
 
 for (const [name, dependency] of Object.entries(autodetect)) {
   test(`import - should correctly autodetect a @platformatic/${name} stackable`, async t => {
-    const rootDir = await resolve(fixturesDir, 'main')
+    const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
     const configurationFile = resolve(rootDir, 'watt.json')
     const originalFileContents = await readFile(configurationFile, 'utf-8')
 
@@ -187,8 +182,7 @@ for (const [name, dependency] of Object.entries(autodetect)) {
       'utf-8'
     )
 
-    t.after(() => writeFile(configurationFile, originalFileContents))
-
+    process.chdir(rootDir)
     await wattpm('import', rootDir, directory)
 
     deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), {
@@ -216,7 +210,7 @@ for (const [name, dependency] of Object.entries(autodetect)) {
 }
 
 test('import - when launched without arguments, should fix the configuration of all known services', async t => {
-  const rootDir = await resolve(fixturesDir, 'no-dependencies')
+  const rootDir = resolve(fixturesDir, 'no-dependencies')
   const configurationFile = resolve(rootDir, 'watt.json')
   const originalFileContents = await readFile(configurationFile, 'utf-8')
 
@@ -250,14 +244,38 @@ test('import - when launched without arguments, should fix the configuration of 
   }
 })
 
-test('resolve - should clone a URL', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
+test('import - should find the nearest watt.json', async t => {
+  const fixture = resolve(fixturesDir, 'main')
+  const rootDir = await createTemporaryDirectory(t, 'local-no-git')
+
+  await cp(fixture, rootDir, { recursive: true })
+
   const configurationFile = resolve(rootDir, 'watt.json')
   const originalFileContents = await readFile(configurationFile, 'utf-8')
 
-  t.after(() => writeFile(configurationFile, originalFileContents))
+  const directory = join(rootDir, 'web', 'next')
+  await mkdir(directory, { recursive: true })
+
+  process.chdir(join(rootDir, 'web', 'next'))
+  await wattpm('import', '.')
+
+  deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), JSON.parse(originalFileContents))
+
+  ok(!existsSync(resolve(directory, 'web', 'next', 'package.json'), 'utf-8'))
+  deepStrictEqual(JSON.parse(await readFile(join(rootDir, 'watt.json'), 'utf-8')), {
+    ...JSON.parse(originalFileContents)
+  })
+  deepStrictEqual(JSON.parse(await readFile(join(rootDir, 'web', 'next', 'watt.json'), 'utf-8')), {
+    $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`
+  })
+})
+
+test('resolve - should clone a URL', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
   t.after(() => safeRemove(resolve(rootDir, 'web/resolved')))
 
+  process.chdir(rootDir)
   await wattpm('import', rootDir, '-h', '-i', 'resolved', '-p', 'web/resolved', 'mcollina/undici-thread-interceptor')
   const resolveProcess = await wattpm('resolve', rootDir)
 
@@ -271,13 +289,11 @@ test('resolve - should clone a URL', async t => {
 
 // Note that this test purposely uses gitlab to have a HTTP authentication error, GitHub ignores those parameters
 test('resolve - should attempt to clone with username and password', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await readFile(configurationFile, 'utf-8')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
-  t.after(() => writeFile(configurationFile, originalFileContents))
   t.after(() => safeRemove(resolve(rootDir, 'web/resolved')))
 
+  process.chdir(rootDir)
   await wattpm(
     'import',
     rootDir,
@@ -296,30 +312,4 @@ test('resolve - should attempt to clone with username and password', async t => 
     )
   )
   ok(resolveProcess.stdout.includes('HTTP Basic: Access denied'))
-})
-
-test('import - should find the nearest watt.json', async t => {
-  const fixture = await resolve(fixturesDir, 'main')
-  const rootDir = await createTemporaryDirectory(t, 'local-no-git')
-
-  await cp(fixture, rootDir, { recursive: true })
-
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await readFile(configurationFile, 'utf-8')
-
-  const directory = join(rootDir, 'web', 'next')
-  await mkdir(directory, { recursive: true })
-
-  process.chdir(join(rootDir, 'web', 'next'))
-  await wattpm('import', '.')
-
-  deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), JSON.parse(originalFileContents))
-
-  ok(!existsSync(resolve(directory, 'web', 'next', 'package.json'), 'utf-8'))
-  deepStrictEqual(JSON.parse(await readFile(join(rootDir, 'watt.json'), 'utf-8')), {
-    ...JSON.parse(originalFileContents),
-  })
-  deepStrictEqual(JSON.parse(await readFile(join(rootDir, 'web', 'next', 'watt.json'), 'utf-8')), {
-    $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`
-  })
 })

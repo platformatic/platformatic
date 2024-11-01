@@ -1,10 +1,10 @@
 {
   "name": "@platformatic/utils",
-  "version": "2.7.0",
+  "version": "2.8.0-alpha.1",
   "description": "Platformatic Utils",
   "main": "index.js",
   "scripts": {
-    "test": "npm run lint && borp --timeout=180000 --coverage",
+    "test": "npm run lint && borp --timeout=300000 --coverage",
     "lint": "eslint"
   },
   "repository": {

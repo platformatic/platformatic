@@ -3,6 +3,7 @@
 const { existsSync } = require('node:fs')
 const { EventEmitter } = require('node:events')
 const { resolve } = require('node:path')
+const { workerData } = require('node:worker_threads')
 const { ConfigManager } = require('@platformatic/config')
 const { FileWatcher } = require('@platformatic/utils')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
@@ -21,9 +22,20 @@ class PlatformaticApp extends EventEmitter {
   #debouncedRestart
   #context
 
-  constructor (appConfig, telemetryConfig, loggerConfig, serverConfig, metricsConfig, hasManagementApi, watch) {
+  constructor (
+    appConfig,
+    workerId,
+    telemetryConfig,
+    loggerConfig,
+    serverConfig,
+    metricsConfig,
+    hasManagementApi,
+    watch
+  ) {
     super()
     this.appConfig = appConfig
+    this.serviceId = this.appConfig.id
+    this.workerId = workerId
     this.#watch = watch
     this.#starting = false
     this.#started = false
@@ -32,7 +44,8 @@ class PlatformaticApp extends EventEmitter {
     this.#fileWatcher = null
 
     this.#context = {
-      serviceId: this.appConfig.id,
+      serviceId: this.serviceId,
+      workerId: this.workerId,
       directory: this.appConfig.path,
       isEntrypoint: this.appConfig.entrypoint,
       isProduction: this.appConfig.isProduction,
@@ -40,6 +53,7 @@ class PlatformaticApp extends EventEmitter {
       metricsConfig,
       loggerConfig,
       serverConfig,
+      worker: workerData?.worker,
       hasManagementApi: !!hasManagementApi,
       localServiceEnvVars: this.appConfig.localServiceEnvVars
     }

@@ -83,10 +83,14 @@ See the [configuration](./configuration.md) page.
 ## API
 
 - **`platformatic.setBasePath(path)`**: This function can be use to override the base path for the service. If not properly configure in the composer, this can make your application unaccessible.
-- **`platformatic.id`**: The id of the service.
+- **`platformatic.serviceId`**: The id of the service.
+- **`platformatic.workerId`**: The id of the service worker.
 - **`platformatic.root`**: The root directory of the service.
 - **`platformatic.basePath`**: The base path of the service in the composer.
 - **`platformatic.logLevel`**: The log level configured for the service.
+- **`platformatic.events.on('close')`**: This event is emitted when the process is being closed. A listener should be installed to perform a graceful close, which must finish in 10 seconds. If there is no listener, the process will be terminated by invoking `process.exit(0)`.
+  <Issues />
 
-<Issues />
-````
+```
+
+```

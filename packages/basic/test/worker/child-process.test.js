@@ -1,8 +1,8 @@
 import { deepStrictEqual, rejects } from 'node:assert'
 import { once } from 'node:events'
 import { createServer } from 'node:http'
-import { setTimeout } from 'node:timers/promises'
 import { test } from 'node:test'
+import { setTimeout } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
 import pino from 'pino'
 import { Client } from 'undici'
@@ -27,7 +27,7 @@ function forwardLogs (logger, logs) {
 }
 
 test('ChildProcess - can load a script with additional loader and scripts', async t => {
-  const stackable = createStackable()
+  const stackable = await createStackable(t)
   const { messages, logger } = createMockedLogger()
   stackable.logger = logger
 
@@ -42,13 +42,12 @@ test('ChildProcess - can load a script with additional loader and scripts', asyn
   deepStrictEqual(messages, [
     ['DEBUG', `Executing "node ${executablePath}" ...`],
     ['INFO', 'IMPORTED'],
-    ['INFO', 'LOADED true'],
-    ['INFO', 'IMPORTED']
+    ['INFO', 'LOADED true']
   ])
 })
 
 test('ChildProcess - the process will close upon request', async t => {
-  const stackable = createStackable()
+  const stackable = await createStackable(t)
   const { logger } = createMockedLogger()
   stackable.logger = logger
 
@@ -67,7 +66,7 @@ test('ChildProcess - the process will close upon request', async t => {
 })
 
 test('ChildProcess - the process exits in case of invalid messages', async t => {
-  const stackable = createStackable()
+  const stackable = await createStackable(t)
   const { logger } = createMockedLogger()
   stackable.logger = logger
 
@@ -87,7 +86,7 @@ test('ChildProcess - the process exits in case of invalid messages', async t => 
 })
 
 test('ChildProcess - the process exits in case of errors', async t => {
-  const stackable = createStackable()
+  const stackable = await createStackable(t)
   const { logger } = createMockedLogger()
   stackable.logger = logger
 
@@ -97,7 +96,7 @@ test('ChildProcess - the process exits in case of errors', async t => {
 })
 
 test('ChildProcess - should not modify HTTP options for UNIX sockets', async t => {
-  const stackable = createStackable()
+  const stackable = await createStackable(t)
   const { logger } = createMockedLogger()
   stackable.logger = logger
 
@@ -135,7 +134,7 @@ test('ChildProcess - should not modify HTTP options for UNIX sockets', async t =
 })
 
 test('ChildProcess - should notify listen error', async t => {
-  const stackable = createStackable({
+  const stackable = await createStackable(t, {
     isEntrypoint: true,
     serverConfig: {
       hostname: '123.123.123.123',
@@ -164,7 +163,7 @@ test('ChildProcess - should notify listen error', async t => {
 test('ChildProcess - should intercept fetch calls', async t => {
   const server = createServer(serverHandler).listen({ host: '127.0.0.1', port: 0 })
 
-  const stackable = createStackable({
+  const stackable = await createStackable(t, {
     isEntrypoint: true,
     serverConfig: {
       hostname: '123.123.123.123',
