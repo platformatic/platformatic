@@ -172,9 +172,6 @@ importers:
       '@platformatic/control':
         specifier: workspace:*
         version: link:../control
-      '@platformatic/db':
-        specifier: workspace:*
-        version: link:../db
       '@platformatic/frontend-template':
         specifier: workspace:*
         version: link:../frontend-template
@@ -236,6 +233,9 @@ importers:
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
+      '@platformatic/db':
+        specifier: workspace:*
+        version: link:../db
       '@platformatic/next':
         specifier: workspace:*
         version: link:../next
