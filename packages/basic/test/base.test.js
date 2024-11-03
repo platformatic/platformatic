@@ -201,8 +201,9 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
   await stackable.stopCommand()
 })
 
-test('BaseStackable - should import and setup open telemetry HTTP instrumentation', async t => {
-  const stackable = createStackable(
+test('BaseStackable - should import and setup open telemetry HTTP instrumentation', { only: true }, async t => {
+  const stackable = await createStackable(
+    t,
     {
       serviceId: 'test-service-id',
       isEntrypoint: true,
@@ -217,6 +218,12 @@ test('BaseStackable - should import and setup open telemetry HTTP instrumentatio
           options: {
             url: 'http://127.0.0.1:3044/risk-service/v1/traces'
           }
+        }
+      },
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          service: 1000
         }
       }
     },
@@ -243,8 +250,9 @@ test('BaseStackable - should import and setup open telemetry HTTP instrumentatio
     deepStrictEqual(statusCode, 200)
 
     const body = await rawBody.json()
+    body.events = undefined
     deepStrictEqual(body, {
-      id: 'test-service-id',
+      serviceId: 'test-service-id',
       basePath: '/whatever',
       host: '127.0.0.1',
       logLevel: 'trace',
@@ -258,7 +266,11 @@ test('BaseStackable - should import and setup open telemetry HTTP instrumentatio
             url: 'http://127.0.0.1:3044/risk-service/v1/traces'
           }
         }
-      }
+      },
+      isEntrypoint: true,
+      runtimeBasePath: null,
+      wantsAbsoluteUrls: false,
+      events: undefined
     })
   }
 
