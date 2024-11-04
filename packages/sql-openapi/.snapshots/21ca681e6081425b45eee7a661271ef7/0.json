@@ -12,20 +12,20 @@
         "description": "A Post",
         "type": "object",
         "properties": {
-          "counter": {
+          "id": {
             "type": "integer",
             "nullable": true
           },
-          "id": {
-            "type": "integer",
+          "title": {
+            "type": "string",
             "nullable": true
           },
           "longText": {
             "type": "string",
             "nullable": true
           },
-          "title": {
-            "type": "string",
+          "counter": {
+            "type": "integer",
             "nullable": true
           }
         },
@@ -36,19 +36,19 @@
         "description": "A Post",
         "type": "object",
         "properties": {
-          "counter": {
-            "type": "integer",
-            "nullable": true
-          },
           "id": {
             "type": "integer"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
           },
           "longText": {
             "type": "string",
             "nullable": true
           },
-          "title": {
-            "type": "string",
+          "counter": {
+            "type": "integer",
             "nullable": true
           }
         },
@@ -1201,5 +1201,10 @@
         }
       }
     }
-  }
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ]
 }

@@ -39,7 +39,7 @@ export class BaseStackable {
     this.endHttpTimer = null
     this.clientWs = null
     this.runtimeConfig = deepmerge(
-      options.context.runtimeConfig ?? {},
+      options.context?.runtimeConfig ?? {},
       workerData?.config ?? {}
     )
 

@@ -12,11 +12,11 @@
         "description": "A Post",
         "type": "object",
         "properties": {
-          "counter": {
+          "id": {
             "type": "integer",
             "nullable": true
           },
-          "id": {
+          "counter": {
             "type": "integer",
             "nullable": true
           },
@@ -36,10 +36,10 @@
         "description": "A Post",
         "type": "object",
         "properties": {
-          "counter": {
+          "id": {
             "type": "integer"
           },
-          "id": {
+          "counter": {
             "type": "integer"
           },
           "longText": {
@@ -1203,5 +1203,10 @@
         }
       }
     }
-  }
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ]
 }

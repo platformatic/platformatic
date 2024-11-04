@@ -12,16 +12,16 @@
         "description": "A Page",
         "type": "object",
         "properties": {
-          "counter": {
-            "type": "integer",
-            "nullable": true
-          },
           "id": {
             "type": "integer",
             "nullable": true
           },
           "title": {
             "type": "string",
+            "nullable": true
+          },
+          "counter": {
+            "type": "integer",
             "nullable": true
           }
         },
@@ -32,15 +32,15 @@
         "description": "A Page",
         "type": "object",
         "properties": {
-          "counter": {
-            "type": "integer",
-            "nullable": true
-          },
           "id": {
             "type": "integer"
           },
           "title": {
             "type": "string",
+            "nullable": true
+          },
+          "counter": {
+            "type": "integer",
             "nullable": true
           }
         },
@@ -984,5 +984,10 @@
         }
       }
     }
-  }
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ]
 }

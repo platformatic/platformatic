@@ -28,7 +28,7 @@ class ServiceStackable {
     this.workerId = this.context.worker.count > 1 ? this.context.worker.index : undefined
 
     this.runtimeConfig = deepmerge(
-      options.context.runtimeConfig ?? {},
+      this.context.runtimeConfig ?? {},
       workerData?.config ?? {}
     )
 
