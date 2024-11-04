@@ -1,4 +1,4 @@
-import { createDirectory, safeRemove } from '@platformatic/utils'
+import { createDirectory } from '@platformatic/utils'
 import { execa } from 'execa'
 import assert from 'node:assert/strict'
 import { cp, readFile, symlink } from 'node:fs/promises'
@@ -7,7 +7,6 @@ import { dirname, join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { cliPath } from './helper.js'
-import { mkdirp } from 'mkdirp'
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -82,12 +81,7 @@ test('no config file no party', async t => {
 })
 
 test('updates a runtime', async t => {
-  const dest = join(import.meta.url, '..', 'tmp', `test-cli-${process.pid}-${count++}`)
-  t.after(async () => {
-    await safeRemove(dest)
-  })
-  await mkdirp(fileURLToPath(dest))
-
+  const dest = join(tmpdir(), `test-cli-${process.pid}-${count++}`)
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime-upgrade'), dest, {
     recursive: true,
   })
