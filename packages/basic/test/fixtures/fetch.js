@@ -1,3 +1,5 @@
+import { setTimeout } from 'node:timers/promises'
+
 globalThis[Symbol.for('plt.children.itc')].handle('start', async port => {
   {
     const response = await fetch(`http://127.0.0.1:${port}`)
@@ -22,6 +24,10 @@ globalThis[Symbol.for('plt.children.itc')].handle('start', async port => {
   } catch (e) {
     console.error(e.cause.message)
   }
+
+  // GitHub CI is slow
+  await setTimeout(3000)
+  return true
 })
 
 globalThis[Symbol.for('plt.children.itc')].notify('ready')

@@ -205,7 +205,11 @@ test('config - should list configuration for an application', async t => {
       }
     ],
     workers: 1,
-    watch: false
+    watch: false,
+    gracefulShutdown: {
+      runtime: 10000,
+      service: 10000
+    }
   })
 })
 
