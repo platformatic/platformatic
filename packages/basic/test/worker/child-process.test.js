@@ -151,7 +151,7 @@ test('ChildProcess - should notify listen error', async t => {
   await rejects(() => promise)
 })
 
-test.only('ChildProcess - should intercept fetch calls', async t => {
+test('ChildProcess - should intercept fetch calls', async t => {
   const server = createServer(serverHandler).listen({ host: '127.0.0.1', port: 0 })
 
   const stackable = await createStackable(t, {
