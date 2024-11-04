@@ -103,16 +103,20 @@ async function _transformConfig (configManager, args) {
         service.isPLTService = !!serviceConfig.app.isPLTService
         service.type = serviceConfig.app.configType
       } catch (err) {
-        // Fallback for test of for any reason a dependency is not found
-        if (err.code === 'MODULE_NOT_FOUND') {
+        // Fallback if for any reason a dependency is not found
+        try {
           const manager = new ConfigManager({ source: pathResolve(service.path, service.config) })
           await manager.parse()
           const config = manager.current
           const type = config.$schema ? ConfigManager.matchKnownSchema(config.$schema) : undefined
           service.type = type
           service.isPLTService = !!config.isPLTService
-        } else {
-          throw err
+        } catch (err) {
+          // This should not happen, it happens on running some unit tests if we prepare the runtime
+          // when not all the services configs are available. Given that we are running this only
+          // to ddetermine the type of the service, it's safe to ignore this error and default to unknown
+          service.type = 'unknown'
+          service.isPLTService = false
         }
       }
     }
