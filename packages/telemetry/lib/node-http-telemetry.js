@@ -53,12 +53,10 @@ if (useWorkerData) {
 }
 
 if (data) {
-  const telemetryConfig = useWorkerData ? data.serviceConfig.telemetry : data.telemetryConfig
-  const serviceId = useWorkerData ? data.serviceConfig.id : data.id
-  logger.debug({ telemetryConfig }, 'telemetryConfig')
+  logger.info({ data }, 'Setting up telemetry')
+  const telemetryConfig = useWorkerData ? data?.serviceConfig?.telemetry : data?.telemetryConfig
   if (telemetryConfig) {
+    logger.debug({ telemetryConfig }, 'telemetryConfig')
     setupNodeHTTPTelemetry(telemetryConfig)
-  } else {
-    logger.debug({ serviceId }, 'No telemetry configuration found')
   }
 }
