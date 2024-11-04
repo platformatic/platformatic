@@ -3,6 +3,7 @@
 const { hostname } = require('node:os')
 const { dirname } = require('node:path')
 const { pathToFileURL } = require('node:url')
+const { workerData } = require('node:worker_threads')
 const { printSchema } = require('graphql')
 const pino = require('pino')
 const { collectMetrics } = require('@platformatic/metrics')
@@ -26,6 +27,11 @@ class ServiceStackable {
     this.context.worker ??= { count: 1, index: 0 }
     this.workerId = this.context.worker.count > 1 ? this.context.worker.index : undefined
 
+    this.runtimeConfig = deepmerge(
+      options.context.runtimeConfig ?? {},
+      workerData?.config ?? {}
+    )
+
     this.configManager.on('error', err => {
       /* c8 ignore next */
       this.stackable.log({
@@ -44,7 +50,8 @@ class ServiceStackable {
       root: this.context.directory ? pathToFileURL(this.context.directory).toString() : undefined,
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
-      setBasePath: this.setBasePath.bind(this)
+      setBasePath: this.setBasePath.bind(this),
+      runtimeBasePath: this.runtimeConfig?.basePath ?? null
     })
   }
 

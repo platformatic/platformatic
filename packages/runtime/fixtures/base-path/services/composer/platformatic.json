@@ -1,11 +1,15 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.5.4.json",
-  "composer": {
+  "composer": {   
     "services": [
       {
         "id": "service",
         "proxy": {
           "prefix": "/service"
+        },
+        "openapi": {
+          "url": "/documentation/json",
+          "prefix": "/service-openapi"
         }
       }
     ],
