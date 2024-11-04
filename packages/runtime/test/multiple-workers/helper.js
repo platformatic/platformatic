@@ -92,8 +92,14 @@ async function waitForLogs (socket, ...exprs) {
 
   for await (const [msg] of on(socket, 'message')) {
     for (const line of msg.toString().trim().split('\n')) {
-      const message = JSON.parse(line)
-      messages.push(message)
+      let message
+      try {
+        message = JSON.parse(line)
+        messages.push(message)
+      } catch (e) {
+        console.error('Ignoring an non JSON line coming from WebSocket: ', line)
+        continue
+      }
 
       for (const expr of toMatch) {
         const matches = typeof expr === 'string' ? message.msg.startsWith(expr) : message.msg.match(expr)
