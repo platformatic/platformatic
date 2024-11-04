@@ -2,14 +2,14 @@
 
 const { describe, test } = require('node:test')
 const assert = require('node:assert')
-const { mkdirp } = require('mkdirp')
+const { tmpdir } = require('node:os')
+const { mkdtemp } = require('node:fs/promises')
 const { RuntimeGenerator } = require('../lib/generator/runtime-generator')
 const { ServiceGenerator } = require('../../service/lib/generator/service-generator')
 const { ComposerGenerator } = require('../../composer/lib/generator/composer-generator')
 const { join } = require('node:path')
 const { MockAgent, setGlobalDispatcher } = require('undici')
 const { safeRemove } = require('@platformatic/utils')
-const { linkNodeModules } = require('./helpers')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -247,8 +247,8 @@ describe('Generator', () => {
     ])
   })
 
-  test('add services to an existing folder', async (t) => {
-    const targetDirectory = await mkdirp(join(__dirname, 'tmp', 'platformatic-runtime-generator-'))
+  test('add services to an existing folder', { only: true }, async (t) => {
+    const targetDirectory = await mkdtemp(join(tmpdir(), 'platformatic-runtime-generator-'))
 
     t.after(async () => {
       await safeRemove(targetDirectory)
@@ -278,8 +278,6 @@ describe('Generator', () => {
     }
 
     {
-      linkNodeModules(targetDirectory, ['@platformatic/service'])
-
       const rg = new RuntimeGenerator({
         targetDirectory,
       })
@@ -348,7 +346,7 @@ describe('Generator', () => {
   })
 
   test('add services to an existing folder (web/)', async (t) => {
-    const targetDirectory = await mkdirp(join(__dirname, 'tmp', 'platformatic-runtime-generator-'))
+    const targetDirectory = await mkdtemp(join(tmpdir(), 'platformatic-runtime-generator-'))
     t.after(async () => {
       await safeRemove(targetDirectory)
     })
@@ -381,7 +379,6 @@ describe('Generator', () => {
     }
 
     {
-      linkNodeModules(targetDirectory, ['@platformatic/service'])
       const rg = new RuntimeGenerator({
         targetDirectory,
       })
