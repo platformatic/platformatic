@@ -97,10 +97,24 @@ async function _transformConfig (configManager, args) {
     }
 
     if (service.config) {
-      const store = new Store({ cwd: service.path })
-      const serviceConfig = await store.loadConfig(service)
-      service.isPLTService = !!serviceConfig.app.isPLTService
-      service.type = serviceConfig.app.configType
+      try {
+        const store = new Store({ cwd: service.path })
+        const serviceConfig = await store.loadConfig(service)
+        service.isPLTService = !!serviceConfig.app.isPLTService
+        service.type = serviceConfig.app.configType
+      } catch (err) {
+        // Fallback for test of for any reason a dependency is not found
+        if (err.code === 'MODULE_NOT_FOUND') {
+          const manager = new ConfigManager({ source: pathResolve(service.path, service.config) })
+          await manager.parse()
+          const config = manager.current
+          const type = config.$schema ? ConfigManager.matchKnownSchema(config.$schema) : undefined
+          service.type = type
+          service.isPLTService = !!config.isPLTService
+        } else {
+          throw err
+        }
+      }
     }
 
     service.entrypoint = service.id === config.entrypoint
