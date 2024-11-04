@@ -184,10 +184,6 @@ test('config - should list configuration for an application', async t => {
       level: 'info'
     },
     entrypoint: 'main',
-    gracefulShutdown: {
-      runtime: 10000,
-      service: 10000
-    },
     autoload: {
       path: `${resolve(rootDir, 'web')}`,
       exclude: []
