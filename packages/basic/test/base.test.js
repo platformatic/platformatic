@@ -201,7 +201,7 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
   await stackable.stopCommand()
 })
 
-test('BaseStackable - should import and setup open telemetry HTTP instrumentation', { only: true }, async t => {
+test('BaseStackable - should import and setup open telemetry HTTP instrumentation', async t => {
   const stackable = await createStackable(
     t,
     {

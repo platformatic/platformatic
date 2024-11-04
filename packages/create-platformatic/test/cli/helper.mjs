@@ -174,7 +174,6 @@ export async function linkDependencies (projectDir, dependencies) {
     if (dep.includes('@platformatic')) {
       await createDirectory(path.resolve(projectDir, 'node_modules', '@platformatic'))
     }
-    // Create the subfolder if needed
     // Symlink the dependency
     await symlink(resolved, moduleRoot, 'dir')
   }
