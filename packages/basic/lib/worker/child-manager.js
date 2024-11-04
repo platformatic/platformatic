@@ -3,6 +3,7 @@ import { createDirectory, ensureLoggableError } from '@platformatic/utils'
 import { once } from 'node:events'
 import { rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
+import { pathToFileURL } from 'node:url'
 import { register } from 'node:module'
 import { platform, tmpdir } from 'node:os'
 import { dirname, resolve, join } from 'node:path'
@@ -165,13 +166,13 @@ export class ChildManager extends ITC {
 
     const nodeOptions = process.env.NODE_OPTIONS ?? ''
     const childProcessInclude = `--import="${new URL('./child-process.js', import.meta.url)}"`
-    let telemetryInclude = ''
 
+    let telemetryInclude = ''
     if (this.#context.telemetryConfig) {
       const require = createRequire(import.meta.url)
       const telemetryPath = require.resolve('@platformatic/telemetry')
       const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-http-telemetry.js')
-      telemetryInclude = `--require="${openTelemetrySetupPath}"`
+      telemetryInclude = `--import="${pathToFileURL(openTelemetrySetupPath)}"`
     }
 
     process.env.NODE_OPTIONS = `${telemetryInclude} ${childProcessInclude} ${nodeOptions}`.trim()

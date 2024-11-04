@@ -5,9 +5,13 @@ import stripAnsi from 'strip-ansi'
 import { promisify } from 'node:util'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
+import { createDirectory } from '@platformatic/utils'
 import fastify from 'fastify'
+import { fileURLToPath } from 'node:url'
+import { symlink } from 'node:fs/promises'
 
 process.env.MARKETPLACE_TEST = 'true'
+const pltRoot = fileURLToPath(new URL('../..', import.meta.url))
 
 const sleep = promisify(setTimeout)
 
@@ -158,4 +162,20 @@ export async function startMarketplace (t, opts = {}) {
 
   const address = marketplace.server.address()
   return `http://127.0.0.1:${address.port}`
+}
+
+export async function linkDependencies (projectDir, dependencies) {
+  for (const dep of dependencies) {
+    console.log('==> Linking dependency', dep, path.resolve(projectDir, 'node_modules', dep))
+    const moduleRoot = path.resolve(projectDir, 'node_modules', dep)
+    const resolved = path.resolve(pltRoot, 'node_modules', dep)
+
+    await createDirectory(path.resolve(projectDir, 'node_modules'))
+    if (dep.includes('@platformatic')) {
+      await createDirectory(path.resolve(projectDir, 'node_modules', '@platformatic'))
+    }
+    // Create the subfolder if needed
+    // Symlink the dependency
+    await symlink(resolved, moduleRoot, 'dir')
+  }
 }
