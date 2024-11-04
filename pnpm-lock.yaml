@@ -1753,7 +1753,7 @@ importers:
         version: 6.20.1
       undici-thread-interceptor:
         specifier: ^0.7.0
-        version: 0.7.2
+        version: 0.7.3
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -9194,8 +9194,8 @@ packages:
   undici-oidc-interceptor@0.5.0:
     resolution: {integrity: sha512-YU6ABaLFxzKZGjBmamrrRTlziIe6/jrEBUEyNEe2ZRtlXULorg6xo+/jsyEPZVizHdrTFFX3ZPEPxrNmO3pOEA==}
 
-  undici-thread-interceptor@0.7.2:
-    resolution: {integrity: sha512-J2XJyBTSyoGQGeusehK2LDkK1UWdUkHlDLTMM7jU4EMUBsn0MlxP/oVnkG/pWADqiHqKFH/pFDyk0XT94Wjw6A==}
+  undici-thread-interceptor@0.7.3:
+    resolution: {integrity: sha512-DHua6SgPNoPhLaoqjPG/1uuFuNJTE2+4YLgX+nZaclAVRm1/KdRdhE2/OfedMrjQz3S2lrJk/n+AUmYSl3+hSg==}
 
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
@@ -17750,15 +17750,11 @@ snapshots:
       fast-jwt: 4.0.5
       undici: 6.20.1
 
-  undici-thread-interceptor@0.7.2:
+  undici-thread-interceptor@0.7.3:
     dependencies:
-      eslint: 9.14.0
       hyperid: 3.3.0
       light-my-request: 6.3.0
       undici: 6.20.1
-    transitivePeerDependencies:
-      - jiti
-      - supports-color
 
   undici-types@5.26.5: {}
 
