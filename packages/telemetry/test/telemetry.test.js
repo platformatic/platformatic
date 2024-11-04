@@ -359,8 +359,9 @@ test('should configure an exporter as an array', async () => {
 
   const { exporters } = app.openTelemetry
   const exporter = exporters[0]
+  const exporterUrl = exporter._transport._transport._parameters.url
   equal(exporter.constructor.name, 'OTLPTraceExporter')
-  equal(exporter.url, 'http://localhost:4317')
+  equal(exporterUrl, 'http://localhost:4317')
 })
 
 test('do not stop closing the server if the exporter fails', async () => {
