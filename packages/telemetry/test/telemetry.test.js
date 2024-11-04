@@ -218,8 +218,9 @@ test('should configure OTLP correctly', async () => {
 
   const { exporters } = app.openTelemetry
   const exporter = exporters[0]
+  const exporterUrl = exporter._transport._transport._parameters.url
   equal(exporter.constructor.name, 'OTLPTraceExporter')
-  equal(exporter.url, 'http://localhost:4317')
+  equal(exporterUrl, 'http://localhost:4317')
 })
 
 test('should configure Zipkin correctly', async () => {
