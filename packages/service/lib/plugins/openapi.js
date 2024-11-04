@@ -10,7 +10,6 @@ const fp = require('fastify-plugin')
 // despite being covered by test/routes.test.js
 /* c8 ignore next 33 */
 async function setupOpenAPI (app, opts) {
-  process._rawDebug('--------------------', globalThis.platformatic)
   const { openapi } = opts
   const openapiConfig = deepmerge({
     exposeRoute: true,
