@@ -52,7 +52,7 @@ export interface DBAuthorizationPluginOptions<T = any> extends FastifyUserPlugin
   roleKey?: string
   isRolePath?: boolean
   anonymousRole?: string
-  rules: Array<AuthorizationRule<T>>
+  rules?: Array<AuthorizationRule<T>>
 }
 
 export interface DBAuthorizationPluginInterface {
