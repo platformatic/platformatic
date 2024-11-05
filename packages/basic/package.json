@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/basic",
-  "version": "2.8.0",
+  "version": "2.8.1",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -27,9 +27,9 @@
     "@fastify/error": "^4.0.0",
     "@platformatic/config": "workspace:*",
     "@platformatic/itc": "workspace:*",
-    "@platformatic/telemetry": "workspace:*",
     "@platformatic/metrics": "workspace:*",
     "@platformatic/utils": "workspace:*",
+    "@platformatic/telemetry": "workspace:*",
     "execa": "^9.3.1",
     "pino": "^9.3.2",
     "pino-abstract-transport": "^2.0.0",

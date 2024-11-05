@@ -43,6 +43,9 @@ const COLLECT_METRICS_TIMEOUT = 1000
 
 const MAX_BOOTSTRAP_ATTEMPTS = 5
 
+const telemetryPath = require.resolve('@platformatic/telemetry')
+const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-http-telemetry.js')
+
 class Runtime extends EventEmitter {
   #configManager
   #isProduction
@@ -753,6 +756,13 @@ class Runtime extends EventEmitter {
       inspectorOptions.port = inspectorOptions.port + this.#workers.size + 1
     }
 
+    if (config.telemetry) {
+      serviceConfig.telemetry = {
+        ...config.telemetry,
+        serviceName: `${config.telemetry.serviceName}-${serviceConfig.id}`
+      }
+    }
+
     const worker = new Worker(kWorkerFile, {
       workerData: {
         config,
@@ -770,7 +780,7 @@ class Runtime extends EventEmitter {
         runtimeLogsDir: this.#runtimeLogsDir,
         loggingPort
       },
-      execArgv: [], // Avoid side effects
+      execArgv: serviceConfig.isPLTService ? [] : ['--require', openTelemetrySetupPath],
       env: this.#env,
       transferList: [loggingPort],
       /*

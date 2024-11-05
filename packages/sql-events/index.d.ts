@@ -8,7 +8,7 @@ export interface SQLEventsPluginInterface {
 }
 
 export interface SQLEventsPluginOptions<T extends Entities> {
-  mapper: SQLMapperPluginInterface<T>
+  mapper?: SQLMapperPluginInterface<T>
 
   // TODO mqemitter has no types
   mq?: any

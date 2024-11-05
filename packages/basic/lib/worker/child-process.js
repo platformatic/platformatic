@@ -1,6 +1,5 @@
 import { ITC } from '@platformatic/itc'
 import { collectMetrics } from '@platformatic/metrics'
-import { setupNodeHTTPTelemetry } from '@platformatic/telemetry'
 import { createPinoWritable, ensureLoggableError } from '@platformatic/utils'
 import diagnosticChannel, { tracingChannel } from 'node:diagnostics_channel'
 import { EventEmitter, once } from 'node:events'
@@ -109,7 +108,6 @@ export class ChildProcess extends ITC {
 
     this.listen()
     this.#setupLogger()
-    this.#setupTelemetry()
     this.#setupHandlers()
     this.#setupServer()
     this.#setupInterceptors()
@@ -212,13 +210,6 @@ export class ChildProcess extends ITC {
       Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(this.#logger, 'error', true) })
     } else {
       this.#logger = pino(pinoOptions)
-    }
-  }
-
-  /* c8 ignore next 5 */
-  #setupTelemetry () {
-    if (globalThis.platformatic.telemetry) {
-      setupNodeHTTPTelemetry(globalThis.platformatic.telemetry, this.#logger)
     }
   }
 

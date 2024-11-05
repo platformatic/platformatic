@@ -194,6 +194,8 @@ test('config - should list configuration for an application', async t => {
     services: [
       {
         id: 'main',
+        isPLTService: false,
+        type: 'nodejs',
         path: serviceDir,
         config: resolve(serviceDir, 'watt.json'),
         useHttp: false,

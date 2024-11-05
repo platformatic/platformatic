@@ -38,7 +38,10 @@ export class BaseStackable {
     this.startHttpTimer = null
     this.endHttpTimer = null
     this.clientWs = null
-    this.runtimeConfig = deepmerge(options.context.runtimeConfig ?? {}, workerData?.config ?? {})
+    this.runtimeConfig = deepmerge(
+      options.context?.runtimeConfig ?? {},
+      workerData?.config ?? {}
+    )
 
     // Setup the logger
     const pinoOptions = {
@@ -64,7 +67,8 @@ export class BaseStackable {
       root: pathToFileURL(this.root).toString(),
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
-      setBasePath: this.setBasePath.bind(this)
+      setBasePath: this.setBasePath.bind(this),
+      runtimeBasePath: this.runtimeConfig?.basePath ?? null
     })
   }
 
@@ -356,7 +360,7 @@ export class BaseStackable {
       /* c8 ignore next 2 */
       port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
-      telemetry: this.telemetryConfig
+      telemetryConfig: this.telemetryConfig
     }
   }
 }

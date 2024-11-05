@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { isFileAccessible } from '../../src/utils.mjs'
-import { executeCreatePlatformatic, getServices, keys, startMarketplace, walk } from './helper.mjs'
+import { executeCreatePlatformatic, getServices, keys, startMarketplace, walk, linkDependencies } from './helper.mjs'
 import { timeout } from './timeout.mjs'
 
 let tmpDir
@@ -170,6 +170,8 @@ test('Add another service to an existing application', { timeout }, async t => {
     equal(await isFileAccessible(join(baseService0Dir, 'routes', 'root.js')), true)
     equal(await isFileAccessible(join(baseService0Dir, 'plugins', 'example.js')), true)
     equal(await isFileAccessible(join(baseService0Dir, 'global.d.ts')), true)
+
+    await linkDependencies(baseProjectDir, ['@platformatic/service'])
   }
 
   {

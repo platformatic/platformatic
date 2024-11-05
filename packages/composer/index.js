@@ -70,6 +70,7 @@ async function platformaticComposer (app, opts) {
 platformaticComposer[Symbol.for('skip-override')] = true
 platformaticComposer.schema = schema
 platformaticComposer.configType = 'composer'
+platformaticComposer.isPLTService = true
 platformaticComposer.configManagerConfig = {
   version: require('./package.json').version,
   schema,

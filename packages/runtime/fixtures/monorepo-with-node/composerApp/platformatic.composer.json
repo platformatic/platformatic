@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
+    "logger": {
+      "level": "info"
+    },
+    "pluginTimeout": 0
+  },
+  "composer": {
+    "services": [
+      {
+        "id": "with-logger",
+        "openapi": {
+          "url": "/documentation/json",
+          "prefix": "/with-logger"
+        }
+      },
+      {
+        "id": "multi-plugin-service",
+        "openapi": {
+          "url": "/documentation/json",
+          "prefix": "/multi-plugin-service"
+        }
+      },
+      {
+        "id": "serviceApp",
+        "openapi": {
+          "url": "/documentation/json",
+          "prefix": "/service-app"
+        }
+      },
+      {
+        "id": "external-service",
+        "origin": "https://external-service.com",
+        "openapi": {
+          "file": "./external-service.json",
+          "prefix": "/external-service"
+        }
+      }
+    ],
+    "refreshTimeout": 5000
+  },
+  "watch": false
+}

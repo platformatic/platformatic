@@ -6,6 +6,10 @@
         "id": "service",
         "proxy": {
           "prefix": "/service"
+        },
+        "openapi": {
+          "url": "/documentation/json",
+          "prefix": "/service-openapi"
         }
       }
     ],
