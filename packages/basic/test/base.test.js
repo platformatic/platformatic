@@ -190,7 +190,83 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
       logLevel: 'trace',
       port: 0,
       root: pathToFileURL(temporaryFolder).toString(),
-      telemetry: {},
+      telemetryConfig: {},
+      isEntrypoint: true,
+      runtimeBasePath: null,
+      wantsAbsoluteUrls: false,
+      events: undefined
+    })
+  }
+
+  await stackable.stopCommand()
+})
+
+test('BaseStackable - should import and setup open telemetry HTTP instrumentation', async t => {
+  const stackable = await createStackable(
+    t,
+    {
+      serviceId: 'test-service-id',
+      isEntrypoint: true,
+      serverConfig: {
+        hostname: '127.0.0.1',
+        port: 0
+      },
+      telemetryConfig: {
+        serviceName: 'test-telemetry',
+        exporter: {
+          type: 'otlp',
+          options: {
+            url: 'http://127.0.0.1:3044/risk-service/v1/traces'
+          }
+        }
+      },
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          service: 1000
+        }
+      }
+    },
+    {
+      current: {
+        application: { basePath: '/whatever' },
+        watch: { enabled: true, allow: ['first'], ignore: ['second'] }
+      }
+    }
+  )
+
+  const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
+  await stackable.startWithCommand(`node ${executablePath}`)
+
+  ok(stackable.url.startsWith('http://127.0.0.1:'))
+  ok(!stackable.url.endsWith(':10000'))
+  deepStrictEqual(stackable.subprocessConfig, { production: false })
+
+  {
+    const { statusCode, body: rawBody } = await request(stackable.url, {
+      method: 'GET',
+      path: '/'
+    })
+    deepStrictEqual(statusCode, 200)
+
+    const body = await rawBody.json()
+    body.events = undefined
+    deepStrictEqual(body, {
+      serviceId: 'test-service-id',
+      basePath: '/whatever',
+      host: '127.0.0.1',
+      logLevel: 'trace',
+      port: 0,
+      root: pathToFileURL(temporaryFolder).toString(),
+      telemetryConfig: {
+        serviceName: 'test-telemetry',
+        exporter: {
+          type: 'otlp',
+          options: {
+            url: 'http://127.0.0.1:3044/risk-service/v1/traces'
+          }
+        }
+      },
       isEntrypoint: true,
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
@@ -275,7 +351,7 @@ test('BaseStackable - stopCommand - should forcefully exit the process if it doe
       logLevel: 'trace',
       port: 0,
       root: pathToFileURL(temporaryFolder).toString(),
-      telemetry: {},
+      telemetryConfig: {},
       isEntrypoint: true,
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,

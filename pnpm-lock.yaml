@@ -1471,9 +1471,6 @@ importers:
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
-      '@platformatic/telemetry':
-        specifier: workspace:*
-        version: link:../telemetry
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -2563,6 +2560,9 @@ importers:
         specifier: ^6.8.2
         version: 6.8.2
     devDependencies:
+      '@platformatic/node':
+        specifier: workspace:*
+        version: link:../node
       borp:
         specifier: ^0.18.0
         version: 0.18.0

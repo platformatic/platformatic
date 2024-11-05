@@ -27,7 +27,6 @@
     "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/utils": "workspace:*",
-    "@platformatic/telemetry": "workspace:*",
     "light-my-request": "^6.0.0"
   },
   "devDependencies": {

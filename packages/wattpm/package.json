@@ -50,6 +50,7 @@
     "table": "^6.8.2"
   },
   "devDependencies": {
+    "@platformatic/node": "workspace:*",
     "borp": "^0.18.0",
     "eslint": "9",
     "inspector-client": "^0.1.2",
