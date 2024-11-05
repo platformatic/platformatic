@@ -123,6 +123,20 @@ test('list', async (t) => {
     }], 'GET /posts?where.title.eq=Dog response')
   }
 
+  // test ILIKE
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.title.ilike=Dog&fields=id,title,longText',
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.title.ilike=Dog status code')
+    same(res.json(), [{
+      id: 1,
+      title: 'Dog',
+      longText: 'Foo',
+    }], 'GET /posts?where.title.ilike=Dog response')
+  }
+
   {
     const res = await app.inject({
       method: 'GET',
