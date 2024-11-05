@@ -20,6 +20,7 @@ async function setupOpenAPI (app, opts) {
       description: 'Exposing a SQL database as REST',
       version: '1.0.0',
     },
+    servers: [{ url: globalThis.platformatic?.runtimeBasePath ?? '/' }],
   }, opts)
   app.log.trace({ openapi: openapiConfig })
   await app.register(Swagger, {

@@ -27,6 +27,7 @@ test('should get a service openapi schema', async (t) => {
       description: 'This is a service built on top of Platformatic',
       version: '1.0.0',
     },
+    servers: [{ url: '/' }],
     components: { schemas: {} },
     paths: {
       '/': {

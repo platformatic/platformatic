@@ -65,6 +65,17 @@ test('should strip the runtime base path for a service as an entrypoint', async 
     const location = headers.location
     assert.strictEqual(location, '/base-path/hello')
   }
+
+  {
+    // Check the openapi base path
+    const { statusCode, body } = await request(entryUrl, {
+      path: '/base-path/documentation/json'
+    })
+    assert.strictEqual(statusCode, 200)
+
+    const openapi = await body.json()
+    assert.deepStrictEqual(openapi.servers, [{ url: '/base-path' }])
+  }
 })
 
 test('should strip the runtime base path for a composer as an entrypoint', async (t) => {
@@ -121,6 +132,17 @@ test('should strip the runtime base path for a composer as an entrypoint', async
 
     const location = headers.location
     assert.strictEqual(location, '/base-path/service/hello')
+  }
+
+  {
+    // Check the composer openapi base path
+    const { statusCode, body } = await request(entryUrl, {
+      path: '/base-path/documentation/json'
+    })
+    assert.strictEqual(statusCode, 200)
+
+    const openapi = await body.json()
+    assert.deepStrictEqual(openapi.servers, [{ url: '/base-path' }])
   }
 })
 
