@@ -83,10 +83,6 @@ class Runtime extends EventEmitter {
     this.#interceptor = createThreadInterceptor({ domain: '.plt.local', timeout: true })
     this.#status = undefined
     this.#restartingWorkers = new Map()
-    this.#startedServices = new Map()
-    this.#restartPromises = new Map()
-    this.#bootstrapAttempts = new Map()
-    this.#inspectors = []
     this.#sharedHttpCache = null
   }
 
