@@ -136,7 +136,7 @@ test('request should add attribute to a span', async () => {
   deepEqual(resource.attributes['service.version'], '1.0.0')
 })
 
-test('should be able to set the W3C trace context', { only: true }, async () => {
+test('should be able to set the W3C trace context', async () => {
   const handler = async (request, reply) => {
     const context = request.openTelemetry().span.context
     const newContext = context.setValue('foo', 'bar')
