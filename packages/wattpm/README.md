@@ -1,10 +1,11 @@
 ![The Platformatic logo](https://github.com/platformatic/platformatic/raw/HEAD/assets/banner-light.png 'The Platformatic logo')
 
-<p align="center">
-  <br/>
-  <a href="https://platformatic.dev/watt">Watt</a>, Platformatic's Node.js application server, allows you to run multiple Node.js applications (services) that are centrally managed.
-  <br/>
-</p>
+# Watt, the Node.js Application Server
+
+[![npm](https://img.shields.io/npm/v/wattpm)](https://www.npmjs.com/package/wattpm)
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/platformatic/platformatic/Node.js%20CI)](https://github.com/platformatic/platformatic/actions/workflows/ci.yml)
+
+[Watt](https://platformatic.dev/watt), Platformatic's Node.js application server, allows you to run multiple Node.js applications (services) that are centrally managed.
 
 By using Watt, you gain access to a virtual mesh network, fast logging via [Pino](https://getpino.io), 
 monitoring through [Prometheus](https://prometheus.io/), and [OpenTelemetry](https://opentelemetry.io/) integrations.
