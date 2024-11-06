@@ -1,9 +1,11 @@
 ![The Platformatic logo](https://github.com/platformatic/platformatic/raw/HEAD/assets/banner-light.png 'The Platformatic logo')
 
-# Watt, the Node.js Application Server
+# Watt, the Application Server for Node.js
 
 [![npm](https://img.shields.io/npm/v/wattpm)](https://www.npmjs.com/package/wattpm)
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/platformatic/platformatic/Node.js%20CI)](https://github.com/platformatic/platformatic/actions/workflows/ci.yml)
+[![CI](https://github.com/platformatic/platformatic/actions/workflows/ci.yml/badge.svg)](https://github.com/platformatic/platformatic/actions/workflows/ci.yml)
+[![NPM version](https://img.shields.io/npm/v/platformatic.svg?style=flat)](https://www.npmjs.com/package/platformatic)
+[![Discord](https://img.shields.io/discord/1011258196905689118)](https://discord.gg/platformatic)
 
 [Watt](https://platformatic.dev/watt), Platformatic's Node.js application server, allows you to run multiple Node.js applications (services) that are centrally managed.
 
