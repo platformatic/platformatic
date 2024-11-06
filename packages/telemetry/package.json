@@ -15,8 +15,8 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "borp": "^0.18.0",
-    "fastify": "^5.0.0",
     "express": "^4.19.2",
+    "fastify": "^5.0.0",
     "neostandard": "^0.11.1",
     "typescript": "^5.5.4"
   },
@@ -31,6 +31,7 @@
     "@opentelemetry/sdk-node": "^0.54.0",
     "@opentelemetry/sdk-trace-base": "^1.22.0",
     "@opentelemetry/semantic-conventions": "^1.22.0",
+    "abstract-logging": "^2.0.1",
     "fast-uri": "^2.3.0",
     "fastify-plugin": "^5.0.0"
   }

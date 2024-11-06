@@ -2351,6 +2351,9 @@ importers:
       '@opentelemetry/semantic-conventions':
         specifier: ^1.22.0
         version: 1.27.0
+      abstract-logging:
+        specifier: ^2.0.1
+        version: 2.0.1
       fast-uri:
         specifier: ^2.3.0
         version: 2.4.0

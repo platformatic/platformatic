@@ -5,17 +5,17 @@ const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http')
 const { Resource } = require('@opentelemetry/resources')
 const setupTelemetry = require('./telemetry-config')
 const { ATTR_SERVICE_NAME } = require('@opentelemetry/semantic-conventions')
-const { pino } = require('pino')
 const { workerData } = require('node:worker_threads')
 const { resolve } = require('node:path')
 const { tmpdir } = require('node:os')
+const logger = require('abstract-logging')
 const { statSync, readFileSync } = require('node:fs') // We want to have all this synch
-
-const logger = pino()
+const util = require('node:util')
+const debuglog = util.debuglog('@platformatic/telemetry')
 
 const setupNodeHTTPTelemetry = (opts) => {
   const { serviceName } = opts
-  logger.info(`Setting up Node.js Open Telemetry instrumentation for service: ${serviceName}`)
+  debuglog(`Setting up Node.js Open Telemetry instrumentation for service: ${serviceName}`)
   const { spanProcessors } = setupTelemetry(opts, logger)
   const sdk = new opentelemetry.NodeSDK({
     spanProcessors, // https://github.com/open-telemetry/opentelemetry-js/issues/4881#issuecomment-2358059714
@@ -30,8 +30,8 @@ const setupNodeHTTPTelemetry = (opts) => {
 
   process.on('SIGTERM', () => {
     sdk.shutdown()
-      .then(() => console.log('Tracing terminated'))
-      .catch((error) => console.log('Error terminating tracing', error))
+      .then(() => debuglog('Tracing terminated'))
+      .catch((error) => debuglog('Error terminating tracing', error))
   })
 }
 
@@ -46,17 +46,17 @@ if (useWorkerData) {
     statSync(dataPath)
     const jsonData = JSON.parse(readFileSync(dataPath, 'utf8'))
     data = jsonData.data
-    logger.debug(`Loaded data from ${dataPath}`)
+    debuglog(`Loaded data from ${dataPath}`)
   } catch (e) {
-    logger.error('Error reading data from file', e)
+    debuglog('Error reading data from file %o', e)
   }
 }
 
 if (data) {
-  logger.info({ data }, 'Setting up telemetry')
+  debuglog('Setting up telemetry %o', data)
   const telemetryConfig = useWorkerData ? data?.serviceConfig?.telemetry : data?.telemetryConfig
   if (telemetryConfig) {
-    logger.debug({ telemetryConfig }, 'telemetryConfig')
+    debuglog('telemetryConfig %o', telemetryConfig)
     setupNodeHTTPTelemetry(telemetryConfig)
   }
 }
