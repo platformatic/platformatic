@@ -204,6 +204,14 @@
           },
           {
             "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.id.ilike",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -296,6 +304,14 @@
             },
             "in": "query",
             "name": "where.name.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.name.ilike",
             "required": false
           },
           {
@@ -517,6 +533,14 @@
           },
           {
             "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.id.ilike",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -609,6 +633,14 @@
             },
             "in": "query",
             "name": "where.name.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.name.ilike",
             "required": false
           },
           {
@@ -1022,6 +1054,14 @@
           },
           {
             "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.ilike",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -1114,6 +1154,14 @@
             },
             "in": "query",
             "name": "where.id.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.id.ilike",
             "required": false
           },
           {
@@ -1217,6 +1265,14 @@
               "type": "string"
             },
             "in": "query",
+            "name": "where.longText.ilike",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
             "name": "where.longText.in",
             "required": false
           },
@@ -1306,6 +1362,14 @@
             },
             "in": "query",
             "name": "where.ownerId.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.ownerId.ilike",
             "required": false
           },
           {
@@ -1402,6 +1466,14 @@
             },
             "in": "query",
             "name": "where.title.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.ilike",
             "required": false
           },
           {
@@ -1662,6 +1734,14 @@
           },
           {
             "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.ilike",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -1754,6 +1834,14 @@
             },
             "in": "query",
             "name": "where.id.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.id.ilike",
             "required": false
           },
           {
@@ -1857,6 +1945,14 @@
               "type": "string"
             },
             "in": "query",
+            "name": "where.longText.ilike",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
             "name": "where.longText.in",
             "required": false
           },
@@ -1946,6 +2042,14 @@
             },
             "in": "query",
             "name": "where.ownerId.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.ownerId.ilike",
             "required": false
           },
           {
@@ -2042,6 +2146,14 @@
             },
             "in": "query",
             "name": "where.title.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.ilike",
             "required": false
           },
           {
