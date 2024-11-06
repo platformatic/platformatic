@@ -1,0 +1,39 @@
+![The Platformatic logo](https://github.com/platformatic/platformatic/raw/HEAD/assets/banner-light.png 'The Platformatic logo')
+
+<p align="center">
+  <br/>
+  <a href="https://platformatic.dev/watt">Watt</a> provides a single interface for Node.js developers to streamline how they manage and scale their applications.
+  <br/>
+  With Watt, users can automatically manage non-functional requirements like logging and tracing, and multithread their application with a single command.
+  <br/><br/>
+</p>
+
+## Install
+
+```bash
+# Create a new application
+npx wattpm@latest init
+
+# Or install manually:
+npm install wattpm
+```
+
+Follow our [Quick Start Guide](https://platformatic.dev/docs/getting-started/quick-start-watt)
+guide to get up and running with Platformatic.
+
+## Documentation
+
+- [Getting Started](https://docs.platformatic.dev/docs/getting-started/quick-start-watt)
+- [Reference](https://platformatic.dev/docs/watt/overview)
+- [Guides](https://platformatic.dev/docs/learn/overview)
+
+Check out our full documentation at [platformatic.dev](https://platformatic.dev).
+
+## Support
+
+If you run into a bug, issues or have a suggestion for improvement, please raise an 
+[issue on GitHub](https://github.com/platformatic/platformatic/issues/new) or join our [Discord feedback](https://discord.gg/platformatic) channel.
+
+## License
+
+[Apache 2.0](LICENSE)
