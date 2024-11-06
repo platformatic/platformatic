@@ -3,6 +3,10 @@
 const { setupTelemetry } = require('./telemetry-config')
 
 const createTelemetryThreadInterceptorHooks = (telemetry, logger) => {
+  if (!telemetry) {
+    return {}
+  }
+
   const {
     startHTTPSpan,
     endHTTPSpan,

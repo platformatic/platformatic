@@ -100,11 +100,7 @@ async function main () {
   setGlobalDispatcher(globalDispatcher)
 
   const { telemetry } = service
-  let hooks = {}
-  // Create telemetry hooks, if !useHttp
-  if (telemetry && !service.useHttp) {
-    hooks = createTelemetryThreadInterceptorHooks(telemetry, globalThis.platformatic.logger)
-  }
+  const hooks = createTelemetryThreadInterceptorHooks(telemetry, globalThis.platformatic.logger)
 
   // Setup mesh networker
   const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp, timeout: config.serviceTimeout, ...hooks })
