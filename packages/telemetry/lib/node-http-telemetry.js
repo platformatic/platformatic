@@ -3,7 +3,7 @@ const process = require('node:process')
 const opentelemetry = require('@opentelemetry/sdk-node')
 const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http')
 const { Resource } = require('@opentelemetry/resources')
-const setupTelemetry = require('./telemetry-config')
+const { initTelemetry } = require('./telemetry-config')
 const { ATTR_SERVICE_NAME } = require('@opentelemetry/semantic-conventions')
 const { workerData } = require('node:worker_threads')
 const { resolve } = require('node:path')
@@ -16,7 +16,7 @@ const debuglog = util.debuglog('@platformatic/telemetry')
 const setupNodeHTTPTelemetry = (opts) => {
   const { serviceName } = opts
   debuglog(`Setting up Node.js Open Telemetry instrumentation for service: ${serviceName}`)
-  const { spanProcessors } = setupTelemetry(opts, logger)
+  const { spanProcessors } = initTelemetry(opts, logger)
   const sdk = new opentelemetry.NodeSDK({
     spanProcessors, // https://github.com/open-telemetry/opentelemetry-js/issues/4881#issuecomment-2358059714
     instrumentations: [
