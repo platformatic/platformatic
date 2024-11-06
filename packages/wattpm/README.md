@@ -4,14 +4,13 @@
   <br/>
   <a href="https://platformatic.dev/watt">Watt</a>, Platformatic's Node.js application server, allows you to run multiple Node.js applications (services) that are centrally managed.
   <br/>
-  With Watt, you can automatically manage NFRs like logging and tracing, and multithread your applications with a single command.
-  <br/>
-  By using Watt, you gain access to a virtual mesh network, fast logging via [Pino](https://getpino.io), 
-  monitoring through [Prometheus](https://prometheus.io/), and [OpenTelemetry](https://opentelemetry.io/) integrations.
-  Watt supports the stacks you love most, including [Next.js](https://nextjs.org), [Astro](https://astro.build/),
-  [Express](https://expressjs.com/), and [Fastify](https://fastify.dev).
-  <br/><br/>
 </p>
+
+By using Watt, you gain access to a virtual mesh network, fast logging via [Pino](https://getpino.io), 
+monitoring through [Prometheus](https://prometheus.io/), and [OpenTelemetry](https://opentelemetry.io/) integrations.
+
+Watt supports the stacks you love most, including [Next.js](https://nextjs.org), [Astro](https://astro.build/),
+[Express](https://expressjs.com/), and [Fastify](https://fastify.dev).
 
 ## Install
 
