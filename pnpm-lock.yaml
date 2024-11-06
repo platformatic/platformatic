@@ -44,7 +44,7 @@ importers:
     devDependencies:
       '@astrojs/node':
         specifier: ^8.3.3
-        version: 8.3.4(astro@4.16.9(@types/node@22.9.0)(rollup@4.24.4)(typescript@5.6.3))
+        version: 8.3.4(astro@4.16.10(@types/node@22.9.0)(rollup@4.24.4)(typescript@5.6.3))
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
@@ -53,7 +53,7 @@ importers:
         version: link:../service
       astro:
         specifier: ^4.14.4
-        version: 4.16.9(@types/node@22.9.0)(rollup@4.24.4)(typescript@5.6.3)
+        version: 4.16.10(@types/node@22.9.0)(rollup@4.24.4)(typescript@5.6.3)
       borp:
         specifier: ^0.18.0
         version: 0.18.0
@@ -4888,8 +4888,8 @@ packages:
     resolution: {integrity: sha512-LElXdjswlqjWrPpJFg1Fx4wpkOCxj1TDHlSV4PlaRxHGWko024xICaa97ZkMfs6DRKlCguiAI+rbXv5GWwXIkg==}
     hasBin: true
 
-  astro@4.16.9:
-    resolution: {integrity: sha512-DFYzPZooVArKSGu969BBByUV44tJMVDPGKxgqWNFBaIrkvGljdVUqQSVwD+/iPYACoSkI8BRYvDMEBDkathIUQ==}
+  astro@4.16.10:
+    resolution: {integrity: sha512-a+nB4bZE50NXHLzVXUHtx/lYct2Aa8kbqZnWNrWqkU97RuhBuWJ5H5/LQbKRnBWGvqChKfJBiMWJe53TY9ieYQ==}
     engines: {node: ^18.17.1 || ^20.3.0 || >=21.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0'}
     hasBin: true
 
@@ -5520,8 +5520,8 @@ packages:
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
-  electron-to-chromium@1.5.51:
-    resolution: {integrity: sha512-kKeWV57KSS8jH4alKt/jKnvHPmJgBxXzGUSbMd4eQF+iOsVPl7bz2KUmu6eo80eMP8wVioTfTyTzdMgM15WXNg==}
+  electron-to-chromium@1.5.52:
+    resolution: {integrity: sha512-xtoijJTZ+qeucLBDNztDOuQBE1ksqjvNjvqFoST3nGC7fSpqJ+X6BdTBaY5BHG+IhWWmpc6b/KfpeuEDupEPOQ==}
 
   elliptic@6.6.0:
     resolution: {integrity: sha512-dpwoQcLc/2WLQvJvLRHKZ+f9FgOdjnq11rurqwekGQygGPsYSK29OMMD2WalatiqQ+XGFDglTNixpPfI+lpaAA==}
@@ -9539,9 +9539,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@astrojs/node@8.3.4(astro@4.16.9(@types/node@22.9.0)(rollup@4.24.4)(typescript@5.6.3))':
+  '@astrojs/node@8.3.4(astro@4.16.10(@types/node@22.9.0)(rollup@4.24.4)(typescript@5.6.3))':
     dependencies:
-      astro: 4.16.9(@types/node@22.9.0)(rollup@4.24.4)(typescript@5.6.3)
+      astro: 4.16.10(@types/node@22.9.0)(rollup@4.24.4)(typescript@5.6.3)
       send: 0.19.1
       server-destroy: 1.0.1
     transitivePeerDependencies:
@@ -12157,7 +12157,7 @@ snapshots:
 
   astring@1.9.0: {}
 
-  astro@4.16.9(@types/node@22.9.0)(rollup@4.24.4)(typescript@5.6.3):
+  astro@4.16.10(@types/node@22.9.0)(rollup@4.24.4)(typescript@5.6.3):
     dependencies:
       '@astrojs/compiler': 2.10.3
       '@astrojs/internal-helpers': 0.4.1
@@ -12357,7 +12357,7 @@ snapshots:
   browserslist@4.24.2:
     dependencies:
       caniuse-lite: 1.0.30001677
-      electron-to-chromium: 1.5.51
+      electron-to-chromium: 1.5.52
       node-releases: 2.0.18
       update-browserslist-db: 1.1.1(browserslist@4.24.2)
 
@@ -12836,7 +12836,7 @@ snapshots:
 
   ee-first@1.1.1: {}
 
-  electron-to-chromium@1.5.51: {}
+  electron-to-chromium@1.5.52: {}
 
   elliptic@6.6.0:
     dependencies:
