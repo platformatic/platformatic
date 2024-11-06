@@ -142,6 +142,15 @@ If not specified or set to `true`, the default value is `5000`, set to `0` or `f
 The base path for the Platformatic Runtime. Set it when your application is deployed under a subpath, for example, `/api`.
 The runtime will automatically strip the base path from the incoming requests.
 
+## httpCache
+
+The `httpCache` configuration is used to enable the HTTP cache for the Platformatic Runtime.
+It can be a boolean or an object with the following settings:
+
+- **`store`** (`string`) - The store to use for the cache. Set an npm package name to use a custom store or path to a file to use a custom store from a file. By default, the `memory` store is used.
+- **`methods`** (`array`) - The HTTP methods to cache. By default, GET and HEAD methods are cached.
+- **`cacheTagsHeader`** (`string`) - The header to use for cache tags.
+
 :::important  
 OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). See the full list [here](https://opentelemetry.io/ecosystem/vendors/).
 :::
