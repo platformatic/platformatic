@@ -138,8 +138,8 @@ const logger = {
                   level: {
                     type: 'string'
                   },
-                  additionalProperties: false
-                }
+                },
+                additionalProperties: false
               }
             },
             options: {
