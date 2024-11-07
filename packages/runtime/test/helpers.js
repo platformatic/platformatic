@@ -88,6 +88,7 @@ async function openLogsWebsocket (app) {
 
     managementApiWebsocket.on('open', () => {
       clearTimeout(timeout)
+      managementApiWebsocket.off('error', reject)
       resolve()
     })
   })

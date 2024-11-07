@@ -842,7 +842,6 @@ class Runtime extends EventEmitter {
     worker[kId] = workersCount > 1 ? workerId : serviceId
     worker[kServiceId] = serviceId
     worker[kWorkerId] = workersCount > 1 ? index : undefined
-    worker[kConfig] = { ...serviceConfig, health }
     worker[kLoggerDestination] = loggerDestination
     worker[kLoggingPort] = loggingPort
 
@@ -905,7 +904,6 @@ class Runtime extends EventEmitter {
 
     // Store dependencies
     const [{ dependencies }] = await waitEventFromITC(worker, 'init')
-    worker[kWorkerStatus] = 'boot'
 
     if (autoload) {
       serviceConfig.dependencies = dependencies
@@ -915,6 +913,10 @@ class Runtime extends EventEmitter {
         }
       }
     }
+
+    // This must be done here as the dependencies are filled above
+    worker[kConfig] = { ...serviceConfig, health }
+    worker[kWorkerStatus] = 'boot'
   }
 
   #setupHealthCheck (worker, errorLabel) {
