@@ -129,8 +129,10 @@ const logger = {
                 type: 'object',
                 properties: {
                   target: {
-                    type: 'string',
-                    resolveModule: true
+                    anyOf: [
+                      { type: 'string', resolveModule: true },
+                      { type: 'string', resolvePath: true }
+                    ]
                   },
                   options: {
                     type: 'object'
@@ -138,8 +140,8 @@ const logger = {
                   level: {
                     type: 'string'
                   },
-                  additionalProperties: false
-                }
+                },
+                additionalProperties: false
               }
             },
             options: {
