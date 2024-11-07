@@ -495,7 +495,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.58
+        version: 1.25.59
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -1891,7 +1891,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.58
+        version: 1.25.59
       '@types/ws':
         specifier: ^8.5.10
         version: 8.5.13
@@ -2271,7 +2271,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.58
+        version: 1.25.59
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -4394,16 +4394,16 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@scalar/fastify-api-reference@1.25.58':
-    resolution: {integrity: sha512-6zlowSTalFLRRHx/JCbaM0ih8/IEs7wL2jeXWvtblQjgrP9QEDydfi4/N8L27rgZPKMav7icQZ7mPejsAnMvdA==}
+  '@scalar/fastify-api-reference@1.25.59':
+    resolution: {integrity: sha512-bQzAy/zEvMsqWoSAaPukkAW8z5ngAA7zab3Faw9qUyeuxCclnnEm2ByoaORdPmkNPZAFunT/ioXo2V9gRc1jsg==}
     engines: {node: '>=18'}
 
-  '@scalar/openapi-types@0.1.4':
-    resolution: {integrity: sha512-+wRXgmqzgDnj8Dxqf4OOPMPo4or/LRd1Bsy4pnrIW0yBt8rKSdtBb+jH/aRnhgDDmKVjWxJ+KFk7WlSKvZwNTw==}
+  '@scalar/openapi-types@0.1.5':
+    resolution: {integrity: sha512-6geH9ehvQ/sG/xUyy3e0lyOw3BaY5s6nn22wHjEJhcobdmWyFER0O6m7AU0ZN4QTjle/gYvFJOjj552l/rsNSw==}
     engines: {node: '>=18'}
 
-  '@scalar/types@0.0.18':
-    resolution: {integrity: sha512-gfJB/e9Rq/vjsiWlNwBkaIAZVb9v5guHQB5uVoVFcU0gdAuXni0KVxFxl3gGTu2zhBdB+DkixjyPcNzpqwksmA==}
+  '@scalar/types@0.0.19':
+    resolution: {integrity: sha512-wOxtXd35BS0DaVhBopQUB8c8hfLQ+/PKEr99GbOZW+4DWCrEB8JfWJgvpJyxHU6by7LHNVY4fvpFQR7Ezh1IIw==}
     engines: {node: '>=18'}
 
   '@sec-ant/readable-stream@0.4.1':
@@ -11562,16 +11562,16 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.24.4':
     optional: true
 
-  '@scalar/fastify-api-reference@1.25.58':
+  '@scalar/fastify-api-reference@1.25.59':
     dependencies:
-      '@scalar/types': 0.0.18
+      '@scalar/types': 0.0.19
       fastify-plugin: 4.5.1
 
-  '@scalar/openapi-types@0.1.4': {}
+  '@scalar/openapi-types@0.1.5': {}
 
-  '@scalar/types@0.0.18':
+  '@scalar/types@0.0.19':
     dependencies:
-      '@scalar/openapi-types': 0.1.4
+      '@scalar/openapi-types': 0.1.5
       '@unhead/schema': 1.11.11
 
   '@sec-ant/readable-stream@0.4.1': {}
