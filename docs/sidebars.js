@@ -100,6 +100,15 @@ const sidebars = {
       items: [
         {
           type: 'category',
+          label: 'Node',
+          collapsed: true,
+          items: [
+            'packages/node/overview',
+            'packages/node/configuration',
+          ],
+        },
+        {
+          type: 'category',
           label: 'Astro',
           collapsed: true,
           items: [
