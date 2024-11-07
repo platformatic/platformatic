@@ -39,7 +39,7 @@ const services = {
         type: 'boolean'
       },
       workers,
-      health
+      health: { ...health, default: undefined }
     }
   }
 }
@@ -97,7 +97,7 @@ const platformaticRuntimeSchema = {
                 type: 'boolean'
               },
               workers,
-              health
+              health: { ...health, default: undefined }
             }
           }
         }

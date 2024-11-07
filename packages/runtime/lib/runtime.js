@@ -984,10 +984,9 @@ class Runtime extends EventEmitter {
 
       const { enabled, gracePeriod } = worker[kConfig].health
       if (enabled && config.restartOnError > 0) {
-        // unref-ing as we don't want to keep the process alive just because of it
-        setTimeout(() => {
+        worker[kHealthCheckTimer] = setTimeout(() => {
           this.#setupHealthCheck(worker, label)
-        }, gracePeriod > 0 ? gracePeriod : 1).unref()
+        }, gracePeriod > 0 ? gracePeriod : 1)
       }
     } catch (error) {
       // TODO: handle port allocation error here

@@ -1,15 +1,14 @@
 'use strict'
 
-const { ok, strictEqual } = require('node:assert')
+const { ok } = require('node:assert')
 const { once } = require('node:events')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { Client } = require('undici')
 const { buildServer, loadConfig } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
+const { openLogsWebsocket, waitForLogs } = require('./helpers')
 
-test.only('should continously monitor workers health', async t => {
+test('should continously monitor workers health', async t => {
   const configFile = join(fixturesDir, 'configs', 'health-healthy.json')
   const config = await loadConfig({}, ['-c', configFile])
 
@@ -25,7 +24,7 @@ test.only('should continously monitor workers health', async t => {
   })
 
   for (let i = 0; i < 3; i++) {
-    process._rawDebug(await once(server, 'health'))
+    await once(server, 'health')
   }
 })
 
@@ -38,46 +37,31 @@ test('should restart the process if it exceeded maximum threshold', async t => {
     ...config.configManager.current
   })
 
-  t.after(() => {
-    return server.close()
+  const managementApiWebsocket = await openLogsWebsocket(server)
+
+  t.after(async () => {
+    await server.close()
+    managementApiWebsocket.terminate()
   })
 
+  const waitPromise = waitForLogs(
+    managementApiWebsocket,
+    'Platformatic is now listening',
+    'The service "db-app" is unhealthy. Forcefully terminating it ...',
+    'The service "serviceApp" is unhealthy. Forcefully terminating it ...',
+    'The service "with-logger" is unhealthy. Forcefully terminating it ...',
+    'The service "multi-plugin-service" is unhealthy. Forcefully terminating it ...',
+    'The service "db-app" unexpectedly exited with code 1.',
+    'The service "serviceApp" unexpectedly exited with code 1.',
+    'The service "with-logger" unexpectedly exited with code 1.',
+    'The service "multi-plugin-service" unexpectedly exited with code 1.'
+  )
   await server.start()
 
-  await sleep(3000)
-
-  const client = new Client(
-    {
-      hostname: 'localhost',
-      protocol: 'http:'
-    },
-    {
-      socketPath: server.getManagementApiUrl(),
-      keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10
-    }
-  )
-
-  await sleep(3000)
-
-  const { statusCode, body } = await client.request({
-    method: 'GET',
-    path: '/api/v1/logs/all'
-  })
-
-  strictEqual(statusCode, 200)
-
-  const messages = (await body.text())
-    .trim()
-    .split('\n')
-    .map(l => {
-      return JSON.parse(l).msg
-    })
+  const messages = (await waitPromise).map(m => m.msg)
 
   for (const service of ['db-app', 'serviceApp', 'with-logger', 'multi-plugin-service']) {
     ok(messages.includes(`The service "${service}" is unhealthy. Forcefully terminating it ...`))
     ok(messages.includes(`The service "${service}" unexpectedly exited with code 1.`))
   }
-
-  process._rawDebug('ALL GOOD')
 })
