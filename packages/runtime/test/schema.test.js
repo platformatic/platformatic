@@ -18,5 +18,7 @@ test('root schema file', async (t) => {
   const schemaFile = await readFile(schemaPath, 'utf8')
   const rootSchema = JSON.parse(schemaFile)
 
-  assert.deepEqual(rootSchema, schema)
+  // We need the JSON cycle to remove some undefined values used to override
+  // some services defaults over runtime defaults.
+  assert.deepEqual(rootSchema, JSON.parse(JSON.stringify(schema, null, 2)))
 })

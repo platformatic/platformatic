@@ -51,6 +51,108 @@
               },
               "useHttp": {
                 "type": "boolean"
+              },
+              "workers": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "health": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "default": true,
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "interval": {
+                    "default": 30000,
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "gracePeriod": {
+                    "default": 30000,
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxUnhealthyChecks": {
+                    "default": 3,
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 1
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxELU": {
+                    "default": 0.95,
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxHeapUsed": {
+                    "default": 0.95,
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxHeapTotal": {
+                    "default": 4294967296,
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
               }
             }
           }
@@ -102,6 +204,97 @@
                 "type": "string"
               }
             ]
+          },
+          "health": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "default": true,
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "interval": {
+                "default": 30000,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "gracePeriod": {
+                "default": 30000,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "maxUnhealthyChecks": {
+                "default": 3,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "maxELU": {
+                "default": 0.95,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "maxHeapUsed": {
+                "default": 0.95,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "maxHeapTotal": {
+                "default": 4294967296,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
           }
         }
       }
@@ -163,6 +356,97 @@
                 "type": "string"
               }
             ]
+          },
+          "health": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "default": true,
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "interval": {
+                "default": 30000,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "gracePeriod": {
+                "default": 30000,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "maxUnhealthyChecks": {
+                "default": 3,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "maxELU": {
+                "default": 0.95,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "maxHeapUsed": {
+                "default": 0.95,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "maxHeapTotal": {
+                "default": 4294967296,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
           }
         }
       }
@@ -415,6 +699,98 @@
         "runtime",
         "service"
       ],
+      "additionalProperties": false
+    },
+    "health": {
+      "type": "object",
+      "default": {},
+      "properties": {
+        "enabled": {
+          "default": true,
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "interval": {
+          "default": 30000,
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "gracePeriod": {
+          "default": 30000,
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "maxUnhealthyChecks": {
+          "default": 3,
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 1
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "maxELU": {
+          "default": 0.95,
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "maxHeapUsed": {
+          "default": 0.95,
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "maxHeapTotal": {
+          "default": 4294967296,
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
       "additionalProperties": false
     },
     "undici": {

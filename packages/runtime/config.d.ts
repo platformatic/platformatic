@@ -20,6 +20,16 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime291Json = {
         id: string;
         config?: string;
         useHttp?: boolean;
+        workers?: number | string;
+        health?: {
+          enabled?: boolean | string;
+          interval?: number | string;
+          gracePeriod?: number | string;
+          maxUnhealthyChecks?: number | string;
+          maxELU?: number | string;
+          maxHeapUsed?: number | string;
+          maxHeapTotal?: number | string;
+        };
       };
     };
   };
@@ -100,6 +110,15 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime291Json = {
   gracefulShutdown?: {
     runtime: number | string;
     service: number | string;
+  };
+  health?: {
+    enabled?: boolean | string;
+    interval?: number | string;
+    gracePeriod?: number | string;
+    maxUnhealthyChecks?: number | string;
+    maxELU?: number | string;
+    maxHeapUsed?: number | string;
+    maxHeapTotal?: number | string;
   };
   undici?: {
     agentOptions?: {

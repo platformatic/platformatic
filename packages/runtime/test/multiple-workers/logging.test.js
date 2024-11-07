@@ -5,7 +5,8 @@ const { resolve } = require('node:path')
 const { test } = require('node:test')
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
-const { prepareRuntime, updateFile, updateConfigFile, openLogsWebsocket, waitForLogs } = require('./helper')
+const { updateFile, updateConfigFile, openLogsWebsocket, waitForLogs } = require('../helpers')
+const { prepareRuntime } = require('./helper')
 
 test('logging properly works in production mode when using separate processes', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })

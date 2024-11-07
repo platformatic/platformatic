@@ -43,11 +43,13 @@ The `autoload` configuration is intended to be used with monorepo applications.
   these default values.
   - **`id`** (**required**, `string`) - The overridden ID. This becomes the new
     microservice ID.
-  - \*\*`config` (`string`) - The overridden configuration file
+  - \*\*`config` (`string`) - The overridden configuration file.
     name. This is the file that will be used when starting the microservice.
   - **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
     on `127.0.0.1`, and exposed to the other services via that port and on default,
     it is set to `false`.
+  - **`workers`** (`number`) - The number of workers to start for this service. If the service is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`.
+  - **`health`** (object): Configures the health check for each worker of the service. It supports all the properties also supported in the runtime [health](#health) property. The values specified here overrides the values specified in the runtime.
 
 ### `preload`
 
@@ -74,6 +76,7 @@ runtime. Each service object supports the following settings:
 - **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
   on `127.0.0.1`, and exposed to the other services via that port, on default it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
 - **`workers`** (`number`) - The number of workers to start for this service. If the service is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`.
+- **`health`** (object): Configures the health check for each worker of the service. It supports all the properties also supported in the runtime [health](#health) property. The values specified here overrides the values specified in the runtime.
 
 If this property is present, then the services will not be reordered according to the
 `getBootstrapDependencies` function and they will be started in the order they are defined in
@@ -121,6 +124,20 @@ While hot reloading is useful for development, it is not recommended for use in 
 The number of milliseconds to wait before attempting to restart a service that unexpectedly exit.
 
 If not specified or set to `true`, the default value is `5000`, set to `0` or `false` to disable.
+
+### `health`
+
+Configures the health check for each worker. This is enabled only if `restartOnError` is greater than zero. 
+
+The object supports the following settings:
+
+* `enabled` (`boolean`): If to enable the health check. Default: `true`.
+* `interval` (`number`): The interval between checks in milliseconds. Default: `30000`.
+* `gracePeriod`: How long after the service started before starting to perform health checks. Default: `30000`.
+* `maxUnhealthyChecks`: The number of consecutive failed checks before killing the worker. Default: `1`.
+* `maxELU`: The maximum allowed Event Loop Utilization. The value must be a percentage between `0` and `1`. Default: `0.95`.
+* `maxHeapUsed`: The maximum allowed memory utilization. The value must be a percentage between `0` and `1`. Default: `0.95`.
+* `maxHeapTotal`: The maximum allowed memory allocatable by the process. The value must be an amount in bytes. Default: `4G`.
 
 ### `telemetry`
 

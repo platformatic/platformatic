@@ -211,7 +211,16 @@ test('config - should list configuration for an application', async t => {
     gracefulShutdown: {
       runtime: 10000,
       service: 10000
-    }
+    },
+    health: {
+      enabled: true,
+      gracePeriod: 30000,
+      interval: 30000,
+      maxELU: 0.95,
+      maxHeapTotal: 4294967296,
+      maxHeapUsed: 0.95,
+      maxUnhealthyChecks: 3
+    },
   })
 })
 

@@ -3,6 +3,7 @@
 const { existsSync } = require('node:fs')
 const { EventEmitter } = require('node:events')
 const { resolve } = require('node:path')
+const { performance: { eventLoopUtilization } } = require('node:perf_hooks')
 const { workerData } = require('node:worker_threads')
 const { ConfigManager } = require('@platformatic/config')
 const { FileWatcher } = require('@platformatic/utils')
@@ -21,6 +22,7 @@ class PlatformaticApp extends EventEmitter {
   #fileWatcher
   #debouncedRestart
   #context
+  #lastELU
 
   constructor (
     appConfig,
@@ -42,6 +44,7 @@ class PlatformaticApp extends EventEmitter {
     this.#listening = false
     this.stackable = null
     this.#fileWatcher = null
+    this.#lastELU = eventLoopUtilization()
 
     this.#context = {
       serviceId: this.serviceId,
@@ -207,6 +210,20 @@ class PlatformaticApp extends EventEmitter {
 
   async getMetrics ({ format }) {
     return this.stackable.getMetrics({ format })
+  }
+
+  async getHealth () {
+    const currentELU = eventLoopUtilization()
+    const elu = eventLoopUtilization(currentELU, this.#lastELU).utilization
+    this.#lastELU = currentELU
+
+    const { heapUsed, heapTotal } = process.memoryUsage()
+
+    return {
+      elu,
+      heapUsed,
+      heapTotal
+    }
   }
 
   #fetchServiceUrl (key, { parent, context: service }) {

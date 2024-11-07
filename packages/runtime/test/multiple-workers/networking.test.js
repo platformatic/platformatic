@@ -6,7 +6,11 @@ const { test } = require('node:test')
 const { Client } = require('undici')
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
-const { prepareRuntime, updateConfigFile, verifyResponse, verifyInject, openLogsWebsocket } = require('./helper')
+const { updateConfigFile } = require('../helpers')
+const { prepareRuntime, verifyResponse, verifyInject } = require('./helper')
+const { openLogsWebsocket, mockAgent } = require('../helpers')
+
+mockAgent.enableNetConnect()
 
 test('the mesh network works with the internal dispatcher', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })

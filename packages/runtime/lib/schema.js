@@ -3,7 +3,7 @@
 
 const telemetry = require('@platformatic/telemetry').schema
 const {
-  schemaComponents: { server, logger }
+  schemaComponents: { server, logger, health }
 } = require('@platformatic/utils')
 
 const workers = {
@@ -38,7 +38,8 @@ const services = {
       useHttp: {
         type: 'boolean'
       },
-      workers
+      workers,
+      health: { ...health, default: undefined }
     }
   }
 }
@@ -94,7 +95,9 @@ const platformaticRuntimeSchema = {
               },
               useHttp: {
                 type: 'boolean'
-              }
+              },
+              workers,
+              health: { ...health, default: undefined }
             }
           }
         }
@@ -143,6 +146,7 @@ const platformaticRuntimeSchema = {
       required: ['runtime', 'service'],
       additionalProperties: false
     },
+    health,
     undici: {
       type: 'object',
       properties: {
