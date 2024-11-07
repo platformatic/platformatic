@@ -150,6 +150,14 @@ function setupITC (app, service, dispatcher) {
         }
       },
 
+      async getHealth () {
+        try {
+          return await app.getHealth()
+        } catch (err) {
+          throw new errors.FailedToRetrieveHealthError(service.id, err.message)
+        }
+      },
+
       inject (injectParams) {
         return app.stackable.inject(injectParams)
       }
