@@ -65,7 +65,6 @@
               },
               "health": {
                 "type": "object",
-                "default": {},
                 "properties": {
                   "enabled": {
                     "default": true,
@@ -208,7 +207,6 @@
           },
           "health": {
             "type": "object",
-            "default": {},
             "properties": {
               "enabled": {
                 "default": true,
@@ -361,7 +359,6 @@
           },
           "health": {
             "type": "object",
-            "default": {},
             "properties": {
               "enabled": {
                 "default": true,
