@@ -5,7 +5,7 @@ const ExporterSchema = {
   properties: {
     type: {
       type: 'string',
-      enum: ['console', 'otlp', 'zipkin', 'memory'],
+      enum: ['console', 'otlp', 'zipkin', 'memory', 'file'],
       default: 'console',
     },
     options: {
@@ -20,6 +20,10 @@ const ExporterSchema = {
           type: 'object',
           description: 'Headers to send to the exporter. Not used for console or memory exporters.',
         },
+        path: {
+          type: 'string',
+          description: 'The file exporter path. Only used for the file exporter.',
+        }
       },
     },
     additionalProperties: false,

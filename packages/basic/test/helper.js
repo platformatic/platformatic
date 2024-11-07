@@ -244,7 +244,7 @@ export async function startRuntime (t, root, config, pauseAfterCreation = false)
     await pause(t, url, pauseAfterCreation)
   }
 
-  return { runtime, url }
+  return { runtime, url, root }
 }
 
 export async function createRuntime (

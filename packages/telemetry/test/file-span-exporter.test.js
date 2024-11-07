@@ -6,12 +6,11 @@ const fastify = require('fastify')
 const { tmpdir } = require('node:os')
 const { join, dirname } = require('node:path')
 const { mkdir, unlink, rmdir } = require('node:fs/promises')
-const { createInterface } = require('readline')
-const { createReadStream } = require('node:fs')
 const pid = process.pid
 const telemetryPlugin = require('../lib/telemetry')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
+const { parseNDJson } = require('./helper')
 
 async function setupApp (pluginOpts, routeHandler, teardown) {
   const app = fastify()
@@ -40,31 +39,6 @@ const injectArgs = {
   },
 }
 
-function parseNdJson (filePath) {
-  const ret = []
-  const ndjsonStream = createReadStream(filePath, {
-    encoding: 'utf-8'
-  })
-
-  const readLine = createInterface({
-    input: ndjsonStream,
-    crlfDelay: Infinity
-  })
-
-  return new Promise(resolve => {
-    readLine.on('line', (line) => {
-      console.log('NDJson line', line)
-      const parsed = JSON.parse(line)
-      ret.push(parsed)
-    })
-
-    readLine.on('close', () => {
-      console.log('NDJson parsing is complete')
-      resolve(ret)
-    })
-  })
-}
-
 test('should trace a request with file exporter', async () => {
   const tmpDir = join(tmpdir(), `plt-file-exporter-${pid}`)
   await mkdir(tmpDir, { recursive: true })
@@ -87,7 +61,7 @@ test('should trace a request with file exporter', async () => {
 
   app.inject(injectArgs, async () => {
     await sleep(500)
-    const finishedSpans = await parseNdJson(filePath)
+    const finishedSpans = await parseNDJson(filePath)
     equal(finishedSpans.length, 1)
     const span = finishedSpans[0]
     equal(span.kind, SpanKind.SERVER)

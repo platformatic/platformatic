@@ -136,7 +136,8 @@ const initTelemetry = (opts, logger) => {
     }
 
     // We use a SimpleSpanProcessor for the console/memory exporters and a BatchSpanProcessor for the others.
-    const spanProcessor = ['memory', 'console'].includes(exporter.type)
+    // (these are the ones used by tests)
+    const spanProcessor = ['memory', 'console', 'file'].includes(exporter.type)
       ? new SimpleSpanProcessor(exporterObj)
       : new BatchSpanProcessor(exporterObj)
     spanProcessors.push(spanProcessor)

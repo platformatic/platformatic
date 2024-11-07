@@ -2,19 +2,18 @@ const {
   ExportResultCode,
   hrTimeToMicroseconds,
 } = require('@opentelemetry/core')
-const { accessSync, constants, appendFileSync } = require('node:fs')
-const { dirname } = require('node:path')
+const path = require('node:path')
+const { appendFileSync } = require('node:fs')
 
 // Export spans to a file, mostly for testing purposes.
-// It just check that the path is writable and then appends the spans to the file as ndjson.
 class FileSpanExporter {
   #path
   constructor (opts) {
     if (!opts.path) {
-      throw new Error('FileSpanExporter requires a path')
+      this.#path = path.resolve('spans.log')
+    } else {
+      this.#path = opts.path
     }
-    accessSync(dirname(opts.path), constants.R_OK | constants.W_OK)
-    this.#path = opts.path
   }
 
   export (spans, resultCallback) {
