@@ -15,6 +15,9 @@ const {
   SimpleSpanProcessor,
   InMemorySpanExporter,
 } = require('@opentelemetry/sdk-trace-base')
+
+const FileSpanExporter = require('./file-span-exporter')
+
 const { Resource } = require('@opentelemetry/resources')
 const { PlatformaticTracerProvider } = require('./platformatic-trace-provider')
 
@@ -123,6 +126,8 @@ const initTelemetry = (opts, logger) => {
       exporterObj = new ZipkinExporter(exporterOptions)
     } else if (exporter.type === 'memory') {
       exporterObj = new InMemorySpanExporter()
+    } else if (exporter.type === 'file') {
+      exporterObj = new FileSpanExporter(exporterOptions)
     } else {
       logger.warn(
         `Unknown exporter type: ${exporter.type}, defaulting to console.`
