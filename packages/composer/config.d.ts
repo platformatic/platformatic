@@ -53,8 +53,6 @@ export interface PlatformaticComposer {
                     [k: string]: unknown;
                   };
                   level?: string;
-                  additionalProperties?: never;
-                  [k: string]: unknown;
                 }[];
                 options?: {
                   [k: string]: unknown;
