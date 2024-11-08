@@ -987,7 +987,9 @@ class Runtime extends EventEmitter {
         workerUrl = await sendViaITC(worker, 'start')
       }
 
-      this.#url = workerUrl
+      if (workerUrl) {
+        this.#url = workerUrl
+      }
 
       worker[kWorkerStatus] = 'started'
 

@@ -111,7 +111,7 @@ While hot reloading is useful for development, it is not recommended for use in 
 
 ### `startTimeout`
 
-The number of milliseconds to wait before considering a service as failed to start.
+The number of milliseconds to wait before considering a service as failed to start. Default: `30000`.
 
 ### `restartOnError`
 
