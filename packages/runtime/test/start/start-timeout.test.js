@@ -8,8 +8,6 @@ const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { openLogsWebsocket, waitForLogs } = require('../helpers')
 
 test('can start timeout when applications dont start', async (t) => {
-  process.env.PLT_RUNTIME_LOGGER_STDOUT = '/dev/null'
-
   const configFile = join(fixturesDir, 'start-timeout/platformatic.json')
   const app = await buildServer(configFile)
 
