@@ -88,7 +88,7 @@ test('configure telemtry correctly with a express app', async t => {
   deepEqual(resource._attributes['service.name'], 'test-service-api')
 })
 
-test('configure telemtry correctly with a composer + node app', { only: true }, async t => {
+test('configure telemetry correctly with a composer + node app', async t => {
   const app = await createRuntime(t,
     'composer-node',
     false,
@@ -138,4 +138,57 @@ test('configure telemtry correctly with a composer + node app', { only: true }, 
   // The parent-child relationships are correct
   equal(spanComposerServer.id, spanComposerClient.parentId)
   equal(spanComposerClient.id, spanNodeServer.parentId)
+})
+
+test('configure telemetry correctly with a composer + next', async t => {
+  const app = await createRuntime(t,
+    'composer-next-node-fastify',
+    false,
+    false,
+    'platformatic.json'
+  )
+  const { url, root } = app
+  const spansPath = join(root, 'spans.log')
+
+  // Test request to add http metrics
+  const { statusCode } = await request(`${url}/next`, {
+    method: 'GET',
+  })
+  equal(statusCode, 200)
+  await sleep(5000)
+  const spans = await getSpans(spansPath)
+
+  // We can have spurious span (like the one from the composr to services) so we need to filter
+  // the one for the actual call
+  const spanComposerServer = spans.find(span => {
+    if (span.kind === SpanKind.SERVER) {
+      return span.resource._attributes['service.name'] === 'test-runtime-composer'
+    }
+    return false
+  })
+
+  const spanComposerClient = spans.find(span => {
+    if (span.kind === SpanKind.CLIENT) {
+      return span.resource._attributes['service.name'] === 'test-runtime-composer' &&
+        span.attributes['url.full'] === 'http://next.plt.local/next'
+    }
+    return false
+  })
+
+  const spanNextServer = spans.find(span => {
+    if (span.kind === SpanKind.SERVER) {
+      return span.resource._attributes['service.name'] === 'test-runtime-node'
+    }
+    return false
+  })
+
+  // They have to share the same traceId
+  const traceId = spanComposerServer.traceId
+  equal(spanComposerClient.traceId, traceId)
+  // This fails. The trace is not propagated
+  equal(spanNextServer.traceId, traceId)
+
+  // The parent-child relationships are correct
+  equal(spanComposerServer.id, spanComposerClient.parentId)
+  equal(spanComposerClient.id, spanNextServer.parentId)
 })

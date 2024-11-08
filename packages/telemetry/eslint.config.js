@@ -1,3 +1,9 @@
 'use strict'
 
-module.exports = require('neostandard')({})
+const neostandard = require('neostandard')
+
+module.exports = neostandard(
+  {
+    ignores: ['**/.next', '**/dist', '**/tmp', 'test/fixtures/**'],
+  }
+)
