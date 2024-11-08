@@ -980,8 +980,7 @@ class Runtime extends EventEmitter {
         if (workerUrl === 'timeout') {
           this.logger.info(`The ${label} failed to start in ${config.startTimeout}ms. Forcefully killing the thread.`)
           worker.terminate()
-          silent = true
-          throw new Error('The worker failed to start in time.')
+          throw new errors.ServiceStartTimeoutError(id, config.startTimeout)
         }
       } else {
         workerUrl = await sendViaITC(worker, 'start')
@@ -1018,7 +1017,9 @@ class Runtime extends EventEmitter {
         await worker.terminate()
       }
 
-      this.logger.error({ err: ensureLoggableError(error) }, `Failed to start ${label}.`)
+      if (error.code !== 'PLT_RUNTIME_SERVICE_START_TIMEOUT') {
+        this.logger.error({ err: ensureLoggableError(error) }, `Failed to start ${label}.`)
+      }
 
       const restartOnError = config.restartOnError
 
