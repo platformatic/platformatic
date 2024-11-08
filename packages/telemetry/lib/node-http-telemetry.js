@@ -13,6 +13,11 @@ const { statSync, readFileSync } = require('node:fs') // We want to have all thi
 const util = require('node:util')
 const debuglog = util.debuglog('@platformatic/telemetry')
 
+// See: https://www.npmjs.com/package/@opentelemetry/instrumentation-http
+// When this is fixed we should set this to 'http' and fixe the tests
+// https://github.com/open-telemetry/opentelemetry-js/issues/5103
+process.env.OTEL_SEMCONV_STABILITY_OPT_IN = 'http/dup'
+
 const setupNodeHTTPTelemetry = (opts) => {
   const { serviceName } = opts
   debuglog(`Setting up Node.js Open Telemetry instrumentation for service: ${serviceName}`)

@@ -24,7 +24,6 @@ class FileSpanExporter {
   }
 
   shutdown () {
-    this._sendSpans([])
     return this.forceFlush()
   }
 
@@ -46,6 +45,7 @@ class FileSpanExporter {
       status: span.status,
       events: span.events,
       links: span.links,
+      resource: span.resource,
     }
   }
 }
