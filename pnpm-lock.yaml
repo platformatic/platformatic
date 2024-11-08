@@ -62,7 +62,7 @@ importers:
         version: 9.14.0
       json-schema-to-typescript:
         specifier: ^15.0.1
-        version: 15.0.2
+        version: 15.0.3
       neostandard:
         specifier: ^0.11.1
         version: 0.11.7(eslint@9.14.0)(typescript@5.6.3)
@@ -132,7 +132,7 @@ importers:
         version: 5.1.0
       json-schema-to-typescript:
         specifier: ^15.0.0
-        version: 15.0.2
+        version: 15.0.3
       neostandard:
         specifier: ^0.11.1
         version: 0.11.7(eslint@9.14.0)(typescript@5.6.3)
@@ -586,7 +586,7 @@ importers:
         version: 9.14.0
       json-schema-to-typescript:
         specifier: ^15.0.0
-        version: 15.0.2
+        version: 15.0.3
       neostandard:
         specifier: ^0.11.1
         version: 0.11.7(eslint@9.14.0)(typescript@5.6.3)
@@ -1028,7 +1028,7 @@ importers:
         version: 9.14.0
       json-schema-to-typescript:
         specifier: ^15.0.0
-        version: 15.0.2
+        version: 15.0.3
       mercurius:
         specifier: ^15.0.0
         version: 15.1.0(graphql@16.9.0)
@@ -1443,7 +1443,7 @@ importers:
         version: 5.1.0
       json-schema-to-typescript:
         specifier: ^15.0.1
-        version: 15.0.2
+        version: 15.0.3
       neostandard:
         specifier: ^0.11.1
         version: 0.11.7(eslint@9.14.0)(typescript@5.6.3)
@@ -1498,7 +1498,7 @@ importers:
         version: 5.1.0
       json-schema-to-typescript:
         specifier: ^15.0.1
-        version: 15.0.2
+        version: 15.0.3
       koa:
         specifier: ^2.15.3
         version: 2.15.3
@@ -1571,7 +1571,7 @@ importers:
         version: 5.1.17
       json-schema-to-typescript:
         specifier: ^15.0.1
-        version: 15.0.2
+        version: 15.0.3
       neostandard:
         specifier: ^0.11.1
         version: 0.11.7(eslint@9.14.0)(typescript@5.6.3)
@@ -1805,7 +1805,7 @@ importers:
         version: 0.1.2
       json-schema-to-typescript:
         specifier: ^15.0.0
-        version: 15.0.2
+        version: 15.0.3
       neostandard:
         specifier: ^0.11.1
         version: 0.11.7(eslint@9.14.0)(typescript@5.6.3)
@@ -1991,7 +1991,7 @@ importers:
         version: 9.14.0
       json-schema-to-typescript:
         specifier: ^15.0.0
-        version: 15.0.2
+        version: 15.0.3
       neostandard:
         specifier: ^0.11.1
         version: 0.11.7(eslint@9.14.0)(typescript@5.6.3)
@@ -2498,7 +2498,7 @@ importers:
         version: 9.14.0
       json-schema-to-typescript:
         specifier: ^15.0.1
-        version: 15.0.2
+        version: 15.0.3
       neostandard:
         specifier: ^0.11.1
         version: 0.11.7(eslint@9.14.0)(typescript@5.6.3)
@@ -2577,7 +2577,7 @@ importers:
         version: 0.1.2
       json-schema-to-typescript:
         specifier: ^15.0.0
-        version: 15.0.2
+        version: 15.0.3
       neostandard:
         specifier: ^0.11.1
         version: 0.11.7(eslint@9.14.0)(typescript@5.6.3)
@@ -5915,6 +5915,14 @@ packages:
   fault@2.0.1:
     resolution: {integrity: sha512-WtySTkS4OKev5JtpHXnib4Gxiurzh5NCGvWrFaZ34m6JehfTUhKZvn9njTfw48t6JumVQOmrKqpmGcdwxnhqBQ==}
 
+  fdir@6.4.2:
+    resolution: {integrity: sha512-KnhMXsKSPZlAhp7+IjUkRZKPb4fUyccpDrdFXbi4QL1qkmFh9kVY09Yox+n4MaOb3lHZ1Tv829C3oaaXoMYPDQ==}
+    peerDependencies:
+      picomatch: ^3 || ^4
+    peerDependenciesMeta:
+      picomatch:
+        optional: true
+
   figures@6.1.0:
     resolution: {integrity: sha512-d+l3qxjSesT4V7v2fh+QnmFnUWv9lSpjarhShNTgBOfA0ttejbQUAlHLitbjkoRiDulW0OPoQPYIGhIC8ohejg==}
     engines: {node: '>=18'}
@@ -6722,8 +6730,8 @@ packages:
     resolution: {integrity: sha512-pJ4XLQP4Q9HTxl6RVDLJ8Cyh1uitSs0CzDBAz1uoJ4sRD/Bk7cFSXL1FUXDW3zJ7YnfliJx6eu8Jn283bpZ4Yg==}
     engines: {node: '>=10'}
 
-  json-schema-to-typescript@15.0.2:
-    resolution: {integrity: sha512-+cRBw+bBJ3k783mZroDIgz1pLNPB4hvj6nnbHTWwEVl0dkW8qdZ+M9jWhBb+Y0FAdHvNsXACga3lewGO8lktrw==}
+  json-schema-to-typescript@15.0.3:
+    resolution: {integrity: sha512-iOKdzTUWEVM4nlxpFudFsWyUiu/Jakkga4OZPEt7CGoSEsAsUgdOZqR6pcgx2STBek9Gm4hcarJpXSzIvZ/hKA==}
     engines: {node: '>=16.0.0'}
     hasBin: true
 
@@ -8852,6 +8860,10 @@ packages:
 
   tinyexec@0.3.1:
     resolution: {integrity: sha512-WiCJLEECkO18gwqIp6+hJg0//p23HXp4S+gGtAKu3mI2F2/sXC4FvHvXvB0zJVVaTPhx1/tOwdbRsa1sOBIKqQ==}
+
+  tinyglobby@0.2.10:
+    resolution: {integrity: sha512-Zc+8eJlFMvgatPZTl6A9L/yht8QqdmUNtURHaKZLmKBE12hNPSrqNkUp2cs3M/UKmNVVAMFQYSjYIVHDjW5zew==}
+    engines: {node: '>=12.0.0'}
 
   title-case@3.0.3:
     resolution: {integrity: sha512-e1zGYRvbffpcHIrnuqT0Dh+gEJtDaxDSoG4JAIpq4oDFyooziLBIiYQv0GBT4FUAnUop5uZ1hiIAj7oAF6sOCA==}
@@ -13456,6 +13468,10 @@ snapshots:
     dependencies:
       format: 0.2.2
 
+  fdir@6.4.2(picomatch@4.0.2):
+    optionalDependencies:
+      picomatch: 4.0.2
+
   figures@6.1.0:
     dependencies:
       is-unicode-supported: 2.1.0
@@ -14341,17 +14357,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  json-schema-to-typescript@15.0.2:
+  json-schema-to-typescript@15.0.3:
     dependencies:
       '@apidevtools/json-schema-ref-parser': 11.7.2
       '@types/json-schema': 7.0.15
       '@types/lodash': 4.17.13
-      glob: 10.4.5
       is-glob: 4.0.3
       js-yaml: 4.1.0
       lodash: 4.17.21
       minimist: 1.2.8
       prettier: 3.3.3
+      tinyglobby: 0.2.10
 
   json-schema-traverse@0.4.1: {}
 
@@ -17162,6 +17178,11 @@ snapshots:
   tiny-lru@11.2.11: {}
 
   tinyexec@0.3.1: {}
+
+  tinyglobby@0.2.10:
+    dependencies:
+      fdir: 6.4.2(picomatch@4.0.2)
+      picomatch: 4.0.2
 
   title-case@3.0.3:
     dependencies:
