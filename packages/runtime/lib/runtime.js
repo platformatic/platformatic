@@ -973,7 +973,19 @@ class Runtime extends EventEmitter {
     worker[kWorkerStatus] = 'starting'
 
     try {
-      const workerUrl = await sendViaITC(worker, 'start')
+      let workerUrl
+      if (config.startTimeout > 0) {
+        workerUrl = await executeWithTimeout(sendViaITC(worker, 'start'), config.startTimeout)
+
+        if (workerUrl === 'timeout') {
+          this.logger.info(`The ${label} failed to start in ${config.startTimeout}ms. Forcefully killing the thread.`)
+          worker.terminate()
+          throw new errors.ServiceStartTimeoutError(id, config.startTimeout)
+        }
+      } else {
+        workerUrl = await sendViaITC(worker, 'start')
+      }
+
       if (workerUrl) {
         this.#url = workerUrl
       }
@@ -986,9 +998,12 @@ class Runtime extends EventEmitter {
 
       const { enabled, gracePeriod } = worker[kConfig].health
       if (enabled && config.restartOnError > 0) {
-        worker[kHealthCheckTimer] = setTimeout(() => {
-          this.#setupHealthCheck(worker, label)
-        }, gracePeriod > 0 ? gracePeriod : 1)
+        worker[kHealthCheckTimer] = setTimeout(
+          () => {
+            this.#setupHealthCheck(worker, label)
+          },
+          gracePeriod > 0 ? gracePeriod : 1
+        )
       }
     } catch (error) {
       // TODO: handle port allocation error here
@@ -1002,7 +1017,9 @@ class Runtime extends EventEmitter {
         await worker.terminate()
       }
 
-      this.logger.error({ err: ensureLoggableError(error) }, `Failed to start ${label}.`)
+      if (error.code !== 'PLT_RUNTIME_SERVICE_START_TIMEOUT') {
+        this.logger.error({ err: ensureLoggableError(error) }, `Failed to start ${label}.`)
+      }
 
       const restartOnError = config.restartOnError
 

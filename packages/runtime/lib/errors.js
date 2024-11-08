@@ -13,6 +13,7 @@ module.exports = {
   UnknownRuntimeAPICommandError: createError(`${ERROR_PREFIX}_UNKNOWN_RUNTIME_API_COMMAND`, 'Unknown Runtime API command "%s"'),
   ServiceNotFoundError: createError(`${ERROR_PREFIX}_SERVICE_NOT_FOUND`, 'Service %s not found. Available services are: %s'),
   ServiceNotStartedError: createError(`${ERROR_PREFIX}_SERVICE_NOT_STARTED`, "Service with id '%s' is not started"),
+  ServiceStartTimeoutError: createError(`${ERROR_PREFIX}_SERVICE_START_TIMEOUT`, "Service with id '%s' failed to start in %dms."),
   FailedToRetrieveOpenAPISchemaError: createError(`${ERROR_PREFIX}_FAILED_TO_RETRIEVE_OPENAPI_SCHEMA`, 'Failed to retrieve OpenAPI schema for service with id "%s": %s'),
   FailedToRetrieveGraphQLSchemaError: createError(`${ERROR_PREFIX}_FAILED_TO_RETRIEVE_GRAPHQL_SCHEMA`, 'Failed to retrieve GraphQL schema for service with id "%s": %s'),
   FailedToRetrieveMetaError: createError(`${ERROR_PREFIX}_FAILED_TO_RETRIEVE_META`, 'Failed to retrieve metadata for service with id "%s": %s'),

@@ -108,6 +108,11 @@ const platformaticRuntimeSchema = {
     web: services,
     logger,
     server,
+    startTimeout: {
+      default: 30000,
+      type: 'number',
+      minimum: 0
+    },
     restartOnError: {
       default: true,
       anyOf: [

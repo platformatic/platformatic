@@ -109,6 +109,10 @@ Note that `watch` should be enabled for each individual service in the runtime.
 While hot reloading is useful for development, it is not recommended for use in production.
 :::
 
+### `startTimeout`
+
+The number of milliseconds to wait before considering a service as failed to start. Default: `30000`.
+
 ### `restartOnError`
 
 The number of milliseconds to wait before attempting to restart a service that unexpectedly exit.
@@ -117,7 +121,7 @@ If not specified or set to `true`, the default value is `5000`, set to `0` or `f
 
 ### `health`
 
-Configures the health check for each worker. This is enabled only if `restartOnError` is greater than zero. 
+Configures the health check for each worker. This is enabled only if `restartOnError` is greater than zero.
 
 The object supports the following settings:
 
@@ -149,7 +153,7 @@ The object supports the following settings:
 The base path for the Platformatic Runtime. Set it when your application is deployed under a subpath, for example, `/api`.
 The runtime will automatically strip the base path from the incoming requests.
 
-:::important  
+:::important
 OTLP traces can be consumed by different solutions, like [Jaeger](https://www.jaegertracing.io/). See the full list [here](https://opentelemetry.io/ecosystem/vendors/).
 :::
 

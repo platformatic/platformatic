@@ -104,6 +104,7 @@ export type HttpsSchemasPlatformaticDevWattpm2100Json = {
           )[];
     };
   };
+  startTimeout?: number;
   restartOnError?: boolean | number;
   gracefulShutdown?: {
     runtime: number | string;
