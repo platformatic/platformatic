@@ -1745,9 +1745,6 @@ importers:
       tail-file-stream:
         specifier: ^0.2.0
         version: 0.2.0
-      thread-cpu-usage:
-        specifier: ^0.2.0
-        version: 0.2.0
       undici:
         specifier: ^6.9.0
         version: 6.20.1
