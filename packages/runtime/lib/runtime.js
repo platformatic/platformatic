@@ -973,10 +973,21 @@ class Runtime extends EventEmitter {
     worker[kWorkerStatus] = 'starting'
 
     try {
-      const workerUrl = await sendViaITC(worker, 'start')
-      if (workerUrl) {
-        this.#url = workerUrl
+      let workerUrl
+      if (config.startTimeout > 0) {
+        workerUrl = await executeWithTimeout(sendViaITC(worker, 'start'), config.startTimeout)
+
+        if (workerUrl === 'timeout') {
+          this.logger.info(`The ${label} failed to start in ${config.startTimeout}ms. Forcefully killing the thread.`)
+          worker.terminate()
+          silent = true
+          throw new Error('The worker failed to start in time.')
+        }
+      } else {
+        workerUrl = await sendViaITC(worker, 'start')
       }
+
+      this.#url = workerUrl
 
       worker[kWorkerStatus] = 'started'
 
@@ -986,9 +997,12 @@ class Runtime extends EventEmitter {
 
       const { enabled, gracePeriod } = worker[kConfig].health
       if (enabled && config.restartOnError > 0) {
-        worker[kHealthCheckTimer] = setTimeout(() => {
-          this.#setupHealthCheck(worker, label)
-        }, gracePeriod > 0 ? gracePeriod : 1)
+        worker[kHealthCheckTimer] = setTimeout(
+          () => {
+            this.#setupHealthCheck(worker, label)
+          },
+          gracePeriod > 0 ? gracePeriod : 1
+        )
       }
     } catch (error) {
       // TODO: handle port allocation error here
