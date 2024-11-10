@@ -160,15 +160,12 @@ function setupTelemetry (opts, logger) {
       return `${method}${path}`
     }) || []
 
-  function noop () {}
-
-  const startHTTPSpan = (request, reply, done = noop) => {
+  const startHTTPSpan = async (request, reply) => {
     if (skipOperations.includes(`${request.method}${request.url}`)) {
       request.log.debug(
         { operation: `${request.method}${request.url}` },
         'Skipping telemetry'
       )
-      done()
       return
     }
 
@@ -189,16 +186,14 @@ function setupTelemetry (opts, logger) {
     // Inject the propagation headers
     propagator.inject(context, reply, fastifyTextMapSetter)
     request.span = span
-    done()
   }
 
-  const setErrorInSpan = (request, _reply, error, done = noop) => {
+  const setErrorInSpan = async (request, _reply, error) => {
     const span = request.span
     span.setAttributes(formatSpanAttributes.error(error))
-    done()
   }
 
-  const endHTTPSpan = (request, reply, done = noop) => {
+  const endHTTPSpan = async (request, reply) => {
     const span = request.span
     if (span) {
       propagator.inject(span.context, reply, fastifyTextMapSetter)
@@ -210,7 +205,6 @@ function setupTelemetry (opts, logger) {
       span.setStatus(spanStatus)
       span.end()
     }
-    done()
   }
 
   //* Client APIs
@@ -357,6 +351,8 @@ function setupTelemetry (opts, logger) {
 }
 
 module.exports = {
-  initTelemetry,
-  setupTelemetry
+  setupTelemetry,
+  formatSpanName,
+  formatSpanAttributes,
+  extractPath
 }

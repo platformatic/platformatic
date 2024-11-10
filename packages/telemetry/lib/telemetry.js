@@ -4,6 +4,7 @@ const fp = require('fastify-plugin')
 const { SpanKind } = require('@opentelemetry/api')
 const { setupTelemetry } = require('./telemetry-config')
 
+// Telemetry fastify plugin
 async function telemetry (app, opts) {
   const {
     startHTTPSpan,

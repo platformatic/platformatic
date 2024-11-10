@@ -11,5 +11,10 @@ export async function build () {
     return { content: `from Fastify: ${count++}!` }
   })
 
+  server.get('/node', async (req, res) => {
+    const resp = await fetch("http://node.plt.local/")
+    return { content: `from Fastify: ${count++}!` }
+  })
+
   return server
 }
