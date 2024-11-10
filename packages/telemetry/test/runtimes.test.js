@@ -140,7 +140,7 @@ test('configure telemetry correctly with a composer + node app', async t => {
   equal(spanComposerClient.id, spanNodeServer.parentId)
 })
 
-test('configure telemetry correctly with a composer + node + fastify', { only: true }, async t => {
+test('configure telemetry correctly with a composer + node + fastify', async t => {
   const app = await createRuntime(t,
     'composer-next-node-fastify',
     false,

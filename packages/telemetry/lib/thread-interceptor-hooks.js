@@ -24,7 +24,11 @@ const createTelemetryThreadInterceptorHooks = () => {
 
     // We need to bind the function to the correct context to set a context as "active" :(
     // https://open-telemetry.github.io/opentelemetry-js/classes/_opentelemetry_api.ContextAPI.html#bind
-    // Using a `with` is not a not an option becasue the hooks are triggered by the interceptor.
+    // Using a `with` is not a not an option because the hooks are triggered by the interceptor.
+    // However this does a `with` under the hood:
+    // https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-context-async-hooks/src/AbstractAsyncHooksContextManager.ts#L75
+    // ...which mats to a `run` on the async local storage on the context:
+    // https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-context-async-hooks/src/AsyncLocalStorageContextManager.ts#L40
     _getCurrentRequestContext = api.context.bind(ctx, () => {
       return api.context.active()
     })
