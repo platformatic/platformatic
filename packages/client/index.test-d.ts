@@ -17,7 +17,7 @@ import pltClient, {
   type StatusCode5xx,
 } from ".";
 import { FastifyError } from "@fastify/error";
-import { Dispatcher } from 'undici';
+import { Agent } from 'undici';
 
 const server = await fastify()
 
@@ -65,7 +65,7 @@ type MyType = {
   getFoo: Function
 } & Record<typeof key, { path: string, method: HTTPMethods }>
 
-const dispatcher = new Dispatcher()
+const dispatcher = new Agent({ allowH2: true, connections: 10 })
 const openTelemetry = {}
 const client = await buildOpenAPIClient<MyType>({
   url: 'http://foo.bar',
