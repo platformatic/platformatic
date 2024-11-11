@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint",
-    "test": "pnpm run lint && borp --concurrency=1 --pattern=test/openapi.test.js --timeout=300000 && tsd",
+    "test": "pnpm run lint && borp --concurrency=1 --timeout=300000 && tsd",
     "cov": "pnpm run lint && borp --concurrency=1 --coverage --timeout=300000 && tsd"
   },
   "repository": {
