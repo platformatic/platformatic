@@ -207,6 +207,7 @@ test('config - should list configuration for an application', async t => {
         localUrl: 'http://main.plt.local'
       }
     ],
+    serviceTimeout: 300000,
     workers: 1,
     watch: false,
     gracefulShutdown: {

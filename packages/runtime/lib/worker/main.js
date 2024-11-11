@@ -98,9 +98,7 @@ async function main () {
   setGlobalDispatcher(globalDispatcher)
 
   // Setup mesh networker
-  // The timeout is set to 5 minutes to avoid long term memory leaks
-  // TODO: make this configurable
-  const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp, timeout: 5 * 60 * 1000 })
+  const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp, timeout: config.serviceTimeout })
 
   // If the service is an entrypoint and runtime server config is defined, use it.
   let serverConfig = null

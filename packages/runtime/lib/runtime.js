@@ -79,7 +79,10 @@ class Runtime extends EventEmitter {
     this.#servicesIds = []
     this.#url = undefined
     // Note: nothing hits the main thread so there is no reason to set the globalDispatcher here
-    this.#interceptor = createThreadInterceptor({ domain: '.plt.local', timeout: true })
+    this.#interceptor = createThreadInterceptor({
+      domain: '.plt.local',
+      timeout: this.#configManager.current.serviceTimeout
+    })
     this.#status = undefined
     this.#restartingWorkers = new Map()
   }

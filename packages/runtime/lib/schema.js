@@ -274,6 +274,16 @@ const platformaticRuntimeSchema = {
           type: 'boolean'
         }
       }
+    },
+    serviceTimeout: {
+      anyOf: [
+        {
+          type: 'number',
+          minimum: 1
+        },
+        { type: 'string' }
+      ],
+      default: 300000 // 5 minutes
     }
   },
   anyOf: [{ required: ['autoload'] }, { required: ['services'] }, { required: ['web'] }],
