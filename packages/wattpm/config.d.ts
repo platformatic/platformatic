@@ -164,6 +164,7 @@ export type HttpsSchemasPlatformaticDevWattpm2110Json = {
     watchDisabled?: boolean;
     [k: string]: unknown;
   };
+  serviceTimeout?: number;
 };
 
 export interface UndiciInterceptor {

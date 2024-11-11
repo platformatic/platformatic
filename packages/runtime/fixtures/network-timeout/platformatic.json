@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.6.0.json",
+  "watch": false,
+  "managementApi": true,
+  "metrics": false,
+  "restartOnError": 500,
+  "entrypoint": "service-1",
+  "autoload": {
+    "path": "."
+  },
+  "logger": {
+    "level": "info"
+  },
+  "serviceTimeout": 100
+}

@@ -221,6 +221,10 @@ Allowing to configure the options in the agent as well as [interceptors](https:/
 
 It's important to note that `IDP` stands for Identity Provider, and its token `url` is the URL that will be called to generate a new token.
 
+### `serviceTimeout`
+
+The number of milliseconds to wait when invoking another service using the its `plt.local` before considering the request timed out. Default: `300000` (5 minutes).
+
 ### `metrics`
 
 This configures the Platformatic Runtime Prometheus server. The Prometheus server exposes aggregated metrics from the Platformatic Runtime services.

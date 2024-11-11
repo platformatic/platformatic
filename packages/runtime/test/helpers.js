@@ -4,15 +4,10 @@ const { on } = require('node:events')
 const { readFile, writeFile } = require('node:fs/promises')
 const { platform } = require('node:os')
 const { join } = require('node:path')
-const { MockAgent, setGlobalDispatcher } = require('undici')
 const { createDirectory } = require('@platformatic/utils')
 const { safeRemove } = require('@platformatic/utils')
 const { link } = require('fs/promises')
 const WebSocket = require('ws')
-
-const mockAgent = new MockAgent()
-setGlobalDispatcher(mockAgent)
-mockAgent.disableNetConnect()
 
 let counter = 0
 async function getTempDir (baseDir) {
@@ -33,22 +28,6 @@ async function moveToTmpdir (teardown) {
     teardown(() => safeRemove(dir))
   }
   return dir
-}
-
-function mockNpmJsRequestForPkgs (pkgs) {
-  for (const pkg of pkgs) {
-    mockAgent
-      .get('https://registry.npmjs.org')
-      .intercept({
-        method: 'GET',
-        path: `/${pkg}`,
-      })
-      .reply(200, {
-        'dist-tags': {
-          latest: '1.42.0',
-        },
-      })
-  }
 }
 
 async function linkNodeModules (dir, pkgs) {
@@ -129,9 +108,7 @@ async function waitForLogs (socket, ...exprs) {
 module.exports = {
   getTempDir,
   moveToTmpdir,
-  mockNpmJsRequestForPkgs,
   linkNodeModules,
-  mockAgent,
   updateFile,
   updateConfigFile,
   openLogsWebsocket,

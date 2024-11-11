@@ -1056,6 +1056,10 @@
           "type": "boolean"
         }
       }
+    },
+    "serviceTimeout": {
+      "type": "number",
+      "minimum": 0
     }
   },
   "anyOf": [
