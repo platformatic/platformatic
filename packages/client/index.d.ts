@@ -1,5 +1,6 @@
 import { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyError } from '@fastify/error'
+import { Dispatcher } from 'undici';
 
 type CodeClasses = 1 | 2 | 3 | 4 | 5;
 type Digit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
@@ -33,7 +34,8 @@ interface PlatformaticClientOptions {
   bodyTimeout?: number;
   headersTimeout?: number;
   validateResponse?: boolean;
-  queryParser?: (query: URLSearchParams) => string
+  queryParser?: (query: URLSearchParams) => string;
+  dispatcher?: Dispatcher;
 }
 
 type BuildOpenAPIClientOptions  = PlatformaticClientOptions & {
