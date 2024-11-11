@@ -381,6 +381,7 @@ test('properly call undici dispatcher', async t => {
   }
 
   assert.notEqual(error, undefined, 'should throw when passing a wrong dispatcher')
+  assert.ok(error.toString().includes('this.dispatch is not a function'))
 })
 
 test('throw on error level response', async t => {
