@@ -31,10 +31,13 @@ test('empty-req-res', async () => {
 
   const typeFile = join(dir, 'full', 'full.d.ts')
   const data = await readFile(typeFile, 'utf-8')
+  console.log('data', data)
   equal(data.includes(`
   export type GetHelloRequest = {
     
   }
 
-  export type GetHelloResponseOK = unknown`), true)
+  export type GetHelloResponseOK = unknown
+  export type GetHelloResponses =
+    FullResponse<GetHelloResponseOK, 200>`), true)
 })
