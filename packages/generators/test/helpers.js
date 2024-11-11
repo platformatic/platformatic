@@ -45,6 +45,7 @@ function mockNpmJsRequestForPkgs (pkgs) {
       })
   }
 }
+
 module.exports = {
   fakeLogger: {
     info: () => {},
