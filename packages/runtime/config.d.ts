@@ -164,7 +164,7 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime2110Json = {
     watchDisabled?: boolean;
     [k: string]: unknown;
   };
-  serviceTimeout?: number;
+  serviceTimeout?: number | string;
 };
 
 export interface UndiciInterceptor {

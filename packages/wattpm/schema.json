@@ -1058,8 +1058,16 @@
       }
     },
     "serviceTimeout": {
-      "type": "number",
-      "minimum": 0
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 1
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "default": 300000
     }
   },
   "anyOf": [
