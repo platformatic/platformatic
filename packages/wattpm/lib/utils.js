@@ -3,7 +3,7 @@ import { platformaticRuntime, buildRuntime as pltBuildRuntime } from '@platforma
 import { bgGreen, black, bold } from 'colorette'
 import { existsSync } from 'node:fs'
 import { readdir, stat } from 'node:fs/promises'
-import { resolve, dirname } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import { parseArgs as nodeParseArgs } from 'node:util'
 import pino from 'pino'
 import pinoPretty from 'pino-pretty'
@@ -124,7 +124,7 @@ export async function checkEmptyDirectory (logger, path, relativePath) {
 
     const entries = await readdir(path)
 
-    if (entries.length) {
+    if (entries.filter(e => !e.startsWith('.')).length) {
       logger.fatal(`Directory ${bold(relativePath)} is not empty.`)
     }
   }

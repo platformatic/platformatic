@@ -1,11 +1,11 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
-import { readFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { test } from 'node:test'
 import { defaultConfiguration, defaultPackageJson } from '../lib/defaults.js'
+import { gitignore } from '../lib/gitignore.js'
 import { schema, version } from '../lib/schema.js'
 import { createTemporaryDirectory, isDirectory, wattpm } from './helper.js'
-import { gitignore } from '../lib/gitignore.js'
 
 test('init - should create a new application for NPM', async t => {
   const directory = await createTemporaryDirectory(t, 'init')
@@ -61,4 +61,14 @@ test('init - should fail if the destination is not empty', async t => {
 
   deepStrictEqual(result.exitCode, 1)
   ok(result.stdout.includes(`Directory ${import.meta.dirname} is not empty.`))
+})
+
+test('init - should not fail if the destination only contains hidden files', async t => {
+  const directory = await createTemporaryDirectory(t, 'init')
+  await writeFile(resolve(directory, '.hidden'), 'hidden file')
+
+  const result = await wattpm('init', directory)
+
+  deepStrictEqual(result.exitCode, 0)
+  ok(!result.stdout.includes(`Directory ${import.meta.dirname} is not empty.`))
 })
