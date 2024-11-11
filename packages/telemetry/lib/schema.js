@@ -22,7 +22,7 @@ const ExporterSchema = {
         },
         path: {
           type: 'string',
-          description: 'The file exporter path. Only used for the file exporter.',
+          description: 'The path to write the traces to. Only for file exporter.'
         }
       },
     },
