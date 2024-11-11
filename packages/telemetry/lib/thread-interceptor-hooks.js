@@ -8,11 +8,7 @@ const fastUri = require('fast-uri')
 const tracer = api.trace.getTracer('thread-interceptor-hooks', '0.1.0')
 
 const createTelemetryThreadInterceptorHooks = () => {
-  let _getCurrentRequestContext = () => {
-    return api.context.active()
-  }
-
-  const onServerRequest = (req) => {
+  const onServerRequest = (req, cb) => {
     const activeContext = api.propagation.extract(api.context.active(), req.headers)
 
     const path = extractPath(req)
@@ -22,76 +18,61 @@ const createTelemetryThreadInterceptorHooks = () => {
     }, activeContext)
     const ctx = api.trace.setSpan(activeContext, span)
 
-    // We need to bind the function to the correct context to set a context as "active" :(
-    // https://open-telemetry.github.io/opentelemetry-js/classes/_opentelemetry_api.ContextAPI.html#bind
-    // Using a `with` is not a not an option because the hooks are triggered by the interceptor.
-    // However this does a `with` under the hood:
-    // https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-context-async-hooks/src/AbstractAsyncHooksContextManager.ts#L75
-    // ...which mats to a `run` on the async local storage on the context:
-    // https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-context-async-hooks/src/AsyncLocalStorageContextManager.ts#L40
-    _getCurrentRequestContext = api.context.bind(ctx, () => {
-      return api.context.active()
-    })
-    // We pass it directly to the next server hooks
+    api.context.with(ctx, cb)
     req.span = span
   }
 
-  const onServerResponse = (req, res) => {
+  const onServerResponse = (req, _res) => {
     const span = req.span
     span.end()
   }
 
-  const onServerError = (req, res, error) => {
+  const onServerError = (_req, res, error) => {
     const span = res.span
     span.setAttributes(formatSpanAttributes.error(error))
   }
 
   const onClientRequest = (req, ctx) => {
-    // use the request context if set
-    api.context.with(_getCurrentRequestContext(), () => {
-      // If there is already a span in the context the subsequent span is
-      // a child of the current span. Otherwise, we propagate the headers if present
-      const activeContext = api.context.active()
+    const activeContext = api.context.active()
 
-      const { origin, method = '', path } = req
-      const targetUrl = `${origin}${path}`
-      const urlObj = fastUri.parse(targetUrl)
+    const { origin, method = '', path } = req
+    const targetUrl = `${origin}${path}`
+    const urlObj = fastUri.parse(targetUrl)
 
-      let name
-      if (urlObj.port) {
-        name = `${method} ${urlObj.scheme}://${urlObj.host}:${urlObj.port}${urlObj.path}`
-      } else {
-        name = `${method} ${urlObj.scheme}://${urlObj.host}${urlObj.path}`
-      }
-      const span = tracer.startSpan(name, {
-        attributes: {
-          'server.address': urlObj.host,
-          'server.port': urlObj.port,
-          'http.request.method': method,
-          'url.full': targetUrl,
-          'url.path': urlObj.path,
-          'url.scheme': urlObj.scheme,
-        },
-        kind: SpanKind.CLIENT
-      }, activeContext)
+    let name
+    if (urlObj.port) {
+      name = `${method} ${urlObj.scheme}://${urlObj.host}:${urlObj.port}${urlObj.path}`
+    } else {
+      name = `${method} ${urlObj.scheme}://${urlObj.host}${urlObj.path}`
+    }
+    const span = tracer.startSpan(name, {
+      attributes: {
+        marco: 'polo',
+        'server.address': urlObj.host,
+        'server.port': urlObj.port,
+        'http.request.method': method,
+        'url.full': targetUrl,
+        'url.path': urlObj.path,
+        'url.scheme': urlObj.scheme,
+      },
+      kind: SpanKind.CLIENT
+    }, activeContext)
 
-      // Headers propagation
-      const headers = {}
-      // This line is important, otherwise it will use the old context
-      const newCtx = api.trace.setSpan(activeContext, span)
-      api.propagation.inject(newCtx, headers, {
-        set (_carrier, key, value) {
-          headers[key] = value
-        },
-      })
-      req.headers = {
-        ...req.headers,
-        ...headers
-      }
-
-      // We pass the span directly to the next client hooks
-      ctx.span = span
+    // Headers propagation
+    const headers = {}
+    // This line is important, otherwise it will use the old context
+    const newCtx = api.trace.setSpan(activeContext, span)
+    api.propagation.inject(newCtx, headers, {
+      set (_carrier, key, value) {
+        headers[key] = value
+      },
     })
+    req.headers = {
+      ...req.headers,
+      ...headers
+    }
+
+    ctx.span = span
   }
 
   const onClientResponse = (_req, res, ctx) => {

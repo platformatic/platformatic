@@ -7,6 +7,7 @@ const { request } = require('undici')
 const { parseNDJson } = require('./helper.js')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { SpanKind } = require('@opentelemetry/api')
+const { findParentSpan, findSpanWithParentWithId } = require('./helper')
 
 process.setMaxListeners(100)
 
@@ -17,14 +18,14 @@ const getSpans = async (spanPaths) => {
   return spans
 }
 
-test.before(async () => {
+test.beforeEach(async () => {
   const { createRuntime: create, setFixturesDir } = await import('../../basic/test/helper.js')
   const fixturesDir = resolve(__dirname, './fixtures')
   createRuntime = create
   setFixturesDir(fixturesDir)
 })
 
-test('configure telemtry correctly with a node app', async t => {
+test('configure telemetry correctly with a node app', async t => {
   const app = await createRuntime(t,
     'node-api-with-telemetry',
     false,
@@ -56,7 +57,7 @@ test('configure telemtry correctly with a node app', async t => {
   deepEqual(resource._attributes['service.name'], 'test-service-api')
 })
 
-test('configure telemtry correctly with a express app', async t => {
+test('configure telemetry correctly with a express app', async t => {
   const app = await createRuntime(t,
     'express-api-with-telemetry',
     false,
@@ -141,8 +142,9 @@ test('configure telemetry correctly with a composer + node app', async t => {
 })
 
 test('configure telemetry correctly with a composer + node + fastify', async t => {
+  // composer -> fastify -> node
   const app = await createRuntime(t,
-    'composer-next-node-fastify',
+    'composer-node-fastify',
     false,
     true,
     'platformatic.json'
@@ -215,99 +217,65 @@ test('configure telemetry correctly with a composer + node + fastify', async t =
   equal(spanNodeServer.parentId, spanFastifyClient.id)
 })
 
-// test('configure telemetry correctly with a composer + next', async t => {
-//   const app = await createRuntime(t,
-//     'composer-next-node-fastify',
-//     false,
-//     true,
-//     'platformatic.json'
-//   )
-//   const { url, root } = app
-//   const spansPath = join(root, 'spans.log')
-//
-//   // Test request to add http metrics
-//   const { statusCode } = await request(`${url}/next`, {
-//     method: 'GET',
-//   })
-//   equal(statusCode, 200)
-//   await sleep(1000)
-//   const spans = await getSpans(spansPath)
-//
-//   // We can have spurious span (like the one from the composr to services) so we need to filter
-//   // the one for the actual call
-//   const spanComposerServer = spans.find(span => {
-//     if (span.kind === SpanKind.SERVER) {
-//       return span.resource._attributes['service.name'] === 'test-runtime-composer'
-//     }
-//     return false
-//   })
-//
-//   const traceId = spanComposerServer.traceId
-//
-//   const spansInTrace = spans.filter(span => span.traceId === traceId)
-//
-//   // console.log("@@@@@@@@@@@@@@@@@", JSON.stringify(spans, null, 2))
-//
-//   // console.log("@@@@@@@@@@@@@@@@@", JSON.stringify(spansInTrace, null, 2))
-//
-//   const spanComposerClient = spans.find(span => {
-//     if (span.kind === SpanKind.CLIENT) {
-//       return span.resource._attributes['service.name'] === 'test-runtime-composer' &&
-//         span.attributes['url.full'] === 'http://next.plt.local/next' &&
-//         span.traceId === traceId
-//     }
-//     return false
-//   })
-//
-//   const spanNextServer = spans.find(span => {
-//     if (span.kind === SpanKind.SERVER) {
-//       return span.resource._attributes['service.name'] === 'test-runtime-next' &&
-//       span.traceId === traceId
-//     }
-//     return false
-//   })
-//
-//   const spanNextClientNode = spans.find(span => {
-//     if (span.kind === SpanKind.CLIENT) {
-//       return span.resource._attributes['service.name'] === 'test-runtime-next' &&
-//         span.attributes['http.url'] === 'http://node.plt.local/' &&
-//         span.traceId === traceId
-//     }
-//     return false
-//   })
-//
-//   const spanNextClientFastify = spans.find(span => {
-//     if (span.kind === SpanKind.CLIENT) {
-//       return span.resource._attributes['service.name'] === 'test-runtime-next' &&
-//         span.attributes['http.url'] === 'http://fastify.plt.local/' &&
-//         span.traceId === traceId
-//     }
-//     return false
-//   })
-//
-//   const spanNodeServer = spans.find(span => {
-//     if (span.kind === SpanKind.SERVER) {
-//       return span.resource._attributes['service.name'] === 'test-runtime-node' &&
-//       span.traceId === traceId
-//     }
-//     return false
-//   })
-//
-//   const spanFastifyServer = spans.find(span => {
-//     if (span.kind === SpanKind.SERVER) {
-//       return span.resource._attributes['service.name'] === 'test-runtime-fastify' &&
-//       span.traceId === traceId
-//     }
-//     return false
-//   })
-//
-//   // console.log(spanComposerServer)
-//   // console.log(spanComposerClient)
-//   console.log(spanNextServer)
-//   console.log(spanNextClientNode)
-//   // console.log(spanNodeServer)
-//   // console.log(spanNextClientFastify)
-//   // console.log(spanFastifyServer)
-//
-//   ok(spanFastifyServer)
-// })
+test('configure telemetry correctly with a composer + next', async t => {
+  // composer -> next -> fastify
+  //                  -> node
+  const app = await createRuntime(t,
+    'composer-next-node-fastify',
+    false,
+    true,
+    'platformatic.json'
+  )
+  const { url, root } = app
+  const spansPath = join(root, 'spans.log')
+
+  const { statusCode } = await request(`${url}/next`, {
+    method: 'GET',
+  })
+  equal(statusCode, 200)
+
+  await sleep(500)
+  const spans = await getSpans(spansPath)
+
+  // Check that all the spans are part of the same trace
+  const traceId = spans[0].traceId
+  for (const span of spans) {
+    equal(span.traceId, traceId)
+  }
+
+  const spanComposerServer = spans.find(span => {
+    if (span.kind === SpanKind.SERVER) {
+      return span.resource._attributes['service.name'] === 'test-runtime-composer'
+    }
+    return false
+  })
+
+  const spanComposerClient = spans.find(span => {
+    if (span.kind === SpanKind.CLIENT) {
+      return span.resource._attributes['service.name'] === 'test-runtime-composer' &&
+        span.attributes['url.full'] === 'http://next.plt.local/next' &&
+        span.traceId === traceId
+    }
+    return false
+  })
+
+  // Next also produces some "type 0" internal spans, that are not relevant for this test
+  // so we start from the last ones (node and fastify server span) and go backward
+  // back to the composer one
+  const spanNodeServer = spans.find(span => {
+    if (span.kind === SpanKind.SERVER) {
+      return span.resource._attributes['service.name'] === 'test-runtime-node' &&
+      span.traceId === traceId
+    }
+    return false
+  })
+  const spanNextClientNode = findParentSpan(spans, spanNodeServer, SpanKind.CLIENT, 'GET http://node.plt.local/')
+  const spanNextServer = findSpanWithParentWithId(spans, spanNextClientNode, spanComposerClient.id)
+  equal(spanNextClientNode.traceId, traceId)
+  equal(spanNextServer.traceId, traceId)
+
+  // check the spans chain back from next to composer call
+  equal(spanNextServer.parentId, spanComposerClient.id)
+  equal(spanComposerClient.parentId, spanComposerServer.id)
+  equal(spanComposerClient.traceId, traceId)
+})
