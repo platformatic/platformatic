@@ -748,7 +748,8 @@
                       "console",
                       "otlp",
                       "zipkin",
-                      "memory"
+                      "memory",
+                      "file"
                     ],
                     "default": "console"
                   },
