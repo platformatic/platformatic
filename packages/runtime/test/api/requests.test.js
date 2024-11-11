@@ -27,7 +27,7 @@ test('should handle a lot of runtime api requests', async (t) => {
   await Promise.all(promises)
 })
 
-test.only('should handle service mesh timeouts', async (t) => {
+test('should handle service mesh timeouts', async (t) => {
   const configFile = join(fixturesDir, 'network-timeout', 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
