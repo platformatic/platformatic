@@ -47,7 +47,6 @@ const createTelemetryThreadInterceptorHooks = () => {
     }
     const span = tracer.startSpan(name, {
       attributes: {
-        marco: 'polo',
         'server.address': urlObj.host,
         'server.port': urlObj.port,
         'http.request.method': method,
