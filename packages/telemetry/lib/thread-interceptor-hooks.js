@@ -19,17 +19,22 @@ const createTelemetryThreadInterceptorHooks = () => {
     const ctx = api.trace.setSpan(activeContext, span)
 
     api.context.with(ctx, cb)
-    req.span = span
   }
 
   const onServerResponse = (req, _res) => {
-    const span = req.span
-    span.end()
+    const activeContext = api.context.active()
+    const span = api.trace.getSpan(activeContext)
+    if (span) {
+      span.end()
+    }
   }
 
   const onServerError = (_req, res, error) => {
-    const span = res.span
-    span.setAttributes(formatSpanAttributes.error(error))
+    const activeContext = api.context.active()
+    const span = api.trace.getSpan(activeContext)
+    if (span) {
+      span.setAttributes(formatSpanAttributes.error(error))
+    }
   }
 
   const onClientRequest = (req, ctx) => {
