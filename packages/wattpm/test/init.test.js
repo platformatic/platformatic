@@ -56,19 +56,25 @@ test('init - should fail if the destination is a file', async t => {
   ok(result.stdout.includes(`Path ${import.meta.filename} exists but it is not a directory.`))
 })
 
-test('init - should fail if the destination is not empty', async t => {
-  const result = await wattpm('init', import.meta.dirname, { reject: false })
+test('init - should fail if the destination web folder is a file', async t => {
+  const directory = await createTemporaryDirectory(t, 'init')
+  await writeFile(resolve(directory, 'web'), 'content')
+
+  const result = await wattpm('init', directory, { reject: false })
 
   deepStrictEqual(result.exitCode, 1)
-  ok(result.stdout.includes(`Directory ${import.meta.dirname} is not empty.`))
+  ok(result.stdout.includes(`Path ${resolve(directory, 'web')} exists but it is not a directory.`))
 })
 
-test('init - should not fail if the destination only contains hidden files', async t => {
-  const directory = await createTemporaryDirectory(t, 'init')
-  await writeFile(resolve(directory, '.hidden'), 'hidden file')
+for(const file of ['watt.json', 'package.json', '.gitignore']) {
+  test(`init - should fail if the destination ${file} file exists`, async t => {
+    const directory = await createTemporaryDirectory(t, 'init')
+    await writeFile(resolve(directory, file), 'content')
+    
+    const result = await wattpm('init', directory, { reject: false })
 
-  const result = await wattpm('init', directory)
+    deepStrictEqual(result.exitCode, 1)
+    ok(result.stdout.includes(`Path ${resolve(directory, file)} already exists.`))
+  })
+}
 
-  deepStrictEqual(result.exitCode, 0)
-  ok(!result.stdout.includes(`Directory ${import.meta.dirname} is not empty.`))
-})

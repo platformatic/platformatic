@@ -1,12 +1,13 @@
 import { ConfigManager } from '@platformatic/config'
 import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { existsSync, } from 'node:fs'
+import { mkdir, stat, writeFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { defaultConfiguration, defaultPackageJson } from '../defaults.js'
 import { gitignore } from '../gitignore.js'
 import { schema, version } from '../schema.js'
-import { checkEmptyDirectory, parseArgs, verbose } from '../utils.js'
+import { parseArgs, verbose } from '../utils.js'
 
 export async function initCommand (logger, args) {
   const {
@@ -29,12 +30,34 @@ export async function initCommand (logger, args) {
   const web = resolve(root, 'web')
   const configurationFile = resolve(root, 'watt.json')
 
-  // Check that the target directory is empty, otherwise cloning will likely fail
-  await checkEmptyDirectory(logger, root, root)
+  // Check that the none of the files to be created already exist
+  if (existsSync(root)) {
+    const statObject = await stat(root)
+
+    if (!statObject.isDirectory()) {
+      logger.fatal(`Path ${bold(root)} exists but it is not a directory.`)
+    }
+
+    const webFolder = resolve(root, 'web')
+
+    if (existsSync(webFolder)) {
+      const statObject = await stat(webFolder)
+
+      if (!statObject.isDirectory()) {
+        logger.fatal(`Path ${bold(webFolder)} exists but it is not a directory.`)
+      }
+    }
+
+    for (const file of ['watt.json', 'package.json', '.gitignore']) {
+      if (existsSync(resolve(root, file))) {
+        logger.fatal(`Path ${bold(resolve(root, file))} already exists.`)
+      }
+    }
+  }
 
   // Create the web folder, will implicitly create the root
   try {
-    await mkdir(web, { recursive: true, maxRetries: 10, retryDelay: 1000 })
+    await mkdir(web, { recursive: true, })
     /* c8 ignore next 6 */
   } catch (error) {
     logger.fatal(

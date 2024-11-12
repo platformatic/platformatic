@@ -4,14 +4,30 @@ import { platformaticRuntime } from '@platformatic/runtime'
 import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { execa } from 'execa'
-import { existsSync } from 'node:fs'
-import { readdir, readFile, writeFile } from 'node:fs/promises'
-import { basename, isAbsolute, join, relative, resolve, sep, dirname } from 'node:path'
+import { existsSync, } from 'node:fs'
+import { readdir, readFile, stat, writeFile } from 'node:fs/promises'
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { defaultServiceJson } from '../defaults.js'
 import { version } from '../schema.js'
-import { checkEmptyDirectory, findConfigurationFile, overrideFatal, parseArgs } from '../utils.js'
+import { findConfigurationFile, overrideFatal, parseArgs } from '../utils.js'
 
 const originCandidates = ['origin', 'upstream']
+
+export async function checkEmptyDirectory (logger, path, relativePath) {
+  if (existsSync(path)) {
+    const statObject = await stat(path)
+
+    if (!statObject.isDirectory()) {
+      logger.fatal(`Path ${bold(relativePath)} exists but it is not a directory.`)
+    }
+
+    const entries = await readdir(path)
+
+    if (entries.filter(e => !e.startsWith('.')).length) {
+      logger.fatal(`Directory ${bold(relativePath)} is not empty.`)
+    }
+  }
+}
 
 async function parseConfiguration (logger, configurationFile) {
   const store = new Store({
