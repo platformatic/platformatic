@@ -130,7 +130,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
       // check if is empty response
       if (getResponseContentType(successResponses[0][1]) === null) {
         if (!currentFullResponse) {
-          logger.warn('Full response has been forced due to a schema with empty response')
+          logger.warn(`Full response has been forced due to a schema with empty response for ${operationResponseName}`)
         }
         currentFullResponse = true
       }
