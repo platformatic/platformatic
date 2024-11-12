@@ -66,15 +66,14 @@ test('init - should fail if the destination web folder is a file', async t => {
   ok(result.stdout.includes(`Path ${resolve(directory, 'web')} exists but it is not a directory.`))
 })
 
-for(const file of ['watt.json', 'package.json', '.gitignore']) {
+for (const file of ['watt.json', 'package.json', '.gitignore']) {
   test(`init - should fail if the destination ${file} file exists`, async t => {
     const directory = await createTemporaryDirectory(t, 'init')
     await writeFile(resolve(directory, file), 'content')
-    
+
     const result = await wattpm('init', directory, { reject: false })
 
     deepStrictEqual(result.exitCode, 1)
     ok(result.stdout.includes(`Path ${resolve(directory, file)} already exists.`))
   })
 }
-
