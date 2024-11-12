@@ -1,6 +1,6 @@
 'use strict'
 
-import { test, after } from 'node:test'
+import { test, after, mock } from 'node:test'
 import { equal, ok, match } from 'node:assert'
 import { buildServer } from '@platformatic/db'
 import { join } from 'path'
@@ -27,7 +27,12 @@ test('build basic client from url', async (t) => {
   await app.start()
   const res = await request(`${app.url}/documentation/json`)
   const schema = await res.body.json()
-  const { types, implementation } = processFrontendOpenAPI({ schema, name: 'sample', language: 'js', fullResponse: false })
+  const warn = mock.fn()
+  const logger = { warn }
+  const { types, implementation } = processFrontendOpenAPI({ schema, name: 'sample', language: 'js', fullResponse: false, logger })
+
+  // Warning log has been triggered
+  ok(warn.mock.callCount() > 0)
 
   // The types interfaces are being created
   match(types, /interface FullResponse<T, U extends number>/)

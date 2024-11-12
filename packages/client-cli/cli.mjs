@@ -56,7 +56,8 @@ async function writeOpenAPIClient (
   validateResponse,
   isFrontend,
   language,
-  typesComment
+  typesComment,
+  logger
 ) {
   await createDirectory(folder)
 
@@ -70,7 +71,7 @@ async function writeOpenAPIClient (
   }
 
   if (isFrontend) {
-    const { types, implementation } = processFrontendOpenAPI({ schema, name, fullResponse, language })
+    const { types, implementation } = processFrontendOpenAPI({ schema, name, fullResponse, language, logger })
     await writeFile(join(folder, `${name}-types.d.ts`), types)
     if (generateImplementation) {
       const extension = language === 'js' ? 'mjs' : 'ts'
@@ -153,7 +154,8 @@ async function downloadAndWriteOpenAPI (
         validateResponse,
         isFrontend,
         language,
-        typesComment
+        typesComment,
+        logger
       )
       /* c8 ignore next 3 */
     } catch (err) {
@@ -222,7 +224,8 @@ async function readFromFileAndWrite (
       validateResponse,
       isFrontend,
       language,
-      typesComment
+      typesComment,
+      logger
     )
     return 'openapi'
   } catch (err) {
