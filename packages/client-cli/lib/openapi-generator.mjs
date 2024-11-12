@@ -102,7 +102,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
   }
 
   writer.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
-  writer.writeLine('import { type GetHeadersOptions } from \'@platformatic/client\'')
+  writer.writeLine('import { type GetHeadersOptions, type StatusCode1xx, type StatusCode2xx, type StatusCode3xx, type StatusCode4xx, type StatusCode5xx } from \'@platformatic/client\'')
   writer.writeLine('import { type FormData } from \'undici\'')
   writer.blankLine()
 
