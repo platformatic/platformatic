@@ -11,7 +11,7 @@ const { findParentSpan, findSpanWithParentWithId } = require('./helper')
 
 process.setMaxListeners(100)
 
-let createRuntime
+let basicHelper
 
 const getSpans = async (spanPaths) => {
   const spans = await parseNDJson(spanPaths)
@@ -19,14 +19,13 @@ const getSpans = async (spanPaths) => {
 }
 
 test.beforeEach(async () => {
-  const { createRuntime: create, setFixturesDir } = await import('../../basic/test/helper.js')
+  basicHelper = await import('../../basic/test/helper.js')
   const fixturesDir = resolve(__dirname, './fixtures')
-  createRuntime = create
-  setFixturesDir(fixturesDir)
+  basicHelper.setFixturesDir(fixturesDir)
 })
 
 test('configure telemetry correctly with a node app', async t => {
-  const app = await createRuntime(t,
+  const app = await basicHelper.createRuntime(t,
     'node-api-with-telemetry',
     false,
     false,
@@ -58,7 +57,7 @@ test('configure telemetry correctly with a node app', async t => {
 })
 
 test('configure telemetry correctly with a express app', async t => {
-  const app = await createRuntime(t,
+  const app = await basicHelper.createRuntime(t,
     'express-api-with-telemetry',
     false,
     false,
@@ -90,7 +89,7 @@ test('configure telemetry correctly with a express app', async t => {
 })
 
 test('configure telemetry correctly with a composer + node app', async t => {
-  const app = await createRuntime(t,
+  const app = await basicHelper.createRuntime(t,
     'composer-node',
     false,
     false,
@@ -143,7 +142,7 @@ test('configure telemetry correctly with a composer + node app', async t => {
 
 test('configure telemetry correctly with a composer + node + fastify', async t => {
   // composer -> fastify -> node
-  const app = await createRuntime(t,
+  const app = await basicHelper.createRuntime(t,
     'composer-node-fastify',
     false,
     true,
@@ -220,13 +219,23 @@ test('configure telemetry correctly with a composer + node + fastify', async t =
 test('configure telemetry correctly with a composer + next', async t => {
   // composer -> next -> fastify
   //                  -> node
-  const app = await createRuntime(t,
+  //
+  // We need to be in production mode to be in the same runtime
+  const { root, config } = await basicHelper.prepareRuntime(t,
     'composer-next-node-fastify',
-    false,
     true,
     'platformatic.json'
   )
-  const { url, root } = app
+
+  // build next
+  const cliPath = join(__dirname, '../../cli', 'cli.js')
+  const { execa } = await import('execa')
+  await execa('node', [cliPath, 'build'], {
+    cwd: root
+  })
+
+  const { url } = await basicHelper.startRuntime(t, root, config, false)
+
   const spansPath = join(root, 'spans.log')
 
   const { statusCode } = await request(`${url}/next`, {
