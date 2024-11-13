@@ -475,6 +475,9 @@ importers:
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
+      '@platformatic/fastify-openapi-glue':
+        specifier: ^5.0.0
+        version: 5.0.0
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
@@ -520,9 +523,6 @@ importers:
       fastify:
         specifier: ^5.0.0
         version: 5.1.0
-      fastify-openapi-glue:
-        specifier: ^4.6.0
-        version: 4.7.1
       fastify-plugin:
         specifier: ^5.0.0
         version: 5.0.1
@@ -4150,11 +4150,17 @@ packages:
   '@platformatic/fastify-http-metrics@0.1.0':
     resolution: {integrity: sha512-NrAesrQTXgjznjV1wwHa6glWxpKtB2bPSPF/jG8bTdtonqWkjrMgwIb3KNQF2oYwsQIOHIbhlHxxKUDCagt9AQ==}
 
+  '@platformatic/fastify-openapi-glue@5.0.0':
+    resolution: {integrity: sha512-VvmOmKbgqVXxOd0QQf5jzkLQpINJwJVlAgtd64FIuYXjkLmHIZphpS2cElrhoMZawgen3SJmcKP5FTzG5OHYtg==}
+
   '@platformatic/graphql-composer@0.9.0':
     resolution: {integrity: sha512-+4yld45dV/f+BXJZSkgLq+KnvtHz1BRVsFg9nWeJzpV6mQlR28RWBTgwp1pslEjHNp5+RDIHEPBoQrCgpmOk9A==}
 
   '@platformatic/http-metrics@0.2.1':
     resolution: {integrity: sha512-Gy3NHUQT250MrJMlwzcSniVc+71DmCN1BpsuJcBlxyDpNacsH9axNonNWSNJqcWg8WOrv7tS6miBql2cugVuAg==}
+
+  '@platformatic/openapi-schema-validator@3.0.0':
+    resolution: {integrity: sha512-SHEY5v1Q5EliMaIpXdPCye0QkhFVOoHkEqA8v9qkrO1PqvVOcpii1WqEHYrZZB430sEmrHqEWZInt15EUsR7mw==}
 
   '@playwright/test@1.48.2':
     resolution: {integrity: sha512-54w1xCWfXuax7dz4W2M9uw0gDyh+ti/0K/MxcCUxChFh37kkdxPdfZDw5QBbuPUJHr1CiHJ1hXgSs+GgeQc5Zw==}
@@ -4386,10 +4392,6 @@ packages:
 
   '@sec-ant/readable-stream@0.4.1':
     resolution: {integrity: sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg==}
-
-  '@seriousme/openapi-schema-validator@2.2.3':
-    resolution: {integrity: sha512-tIb0lRK5khbs2yuWfUIN/5dmlx04wYcUMQ6OxPK2H4k/ml5j5Fra9zZjhYVP5nO/bx20BgZbsjrCVEAWb+xBIQ==}
-    hasBin: true
 
   '@shikijs/core@1.22.2':
     resolution: {integrity: sha512-bvIQcd8BEeR1yFvOYv6HDiyta2FFVePbzeowf5pPS1avczrPK+cjmaxxh0nx5QzbON7+Sv0sQfQVciO7bN72sg==}
@@ -5881,11 +5883,6 @@ packages:
     resolution: {integrity: sha512-EpbT+W1jm8kMbkCPvfW4j23y3BZlXGOcO6+75EFTKDxbJIyXbldrFIoVoP0oD4CsqrKeIARvrOjbZNqK5MdRwQ==}
     peerDependencies:
       fastify: '>=5'
-
-  fastify-openapi-glue@4.7.1:
-    resolution: {integrity: sha512-vP9rVJYohzrnj60qD7feB6aaDdpE1BQgVOaVYuTHXT6ce7MHyf/oj9Wo0o6RhST7BtP7J3SET+7k+mh/ShECag==}
-    engines: {node: '>=14.0.0'}
-    hasBin: true
 
   fastify-plugin@4.5.1:
     resolution: {integrity: sha512-stRHYGeuqpEZTL1Ef0Ovr2ltazUT9g844X5z/zEBFLG8RYlpDiOCIG+ATvYEp+/zmc7sN29mcIMp8gvYplYPIQ==}
@@ -11278,6 +11275,12 @@ snapshots:
       fastify-plugin: 4.5.1
       prom-client: 15.1.3
 
+  '@platformatic/fastify-openapi-glue@5.0.0':
+    dependencies:
+      '@platformatic/openapi-schema-validator': 3.0.0
+      fastify-plugin: 5.0.1
+      js-yaml: 4.1.0
+
   '@platformatic/graphql-composer@0.9.0':
     dependencies:
       abstract-logger: 0.2.5
@@ -11294,6 +11297,13 @@ snapshots:
   '@platformatic/http-metrics@0.2.1':
     dependencies:
       prom-client: 15.1.3
+
+  '@platformatic/openapi-schema-validator@3.0.0':
+    dependencies:
+      ajv: 8.17.1
+      ajv-draft-04: 1.0.0(ajv@8.17.1)
+      ajv-formats: 3.0.1(ajv@8.17.1)
+      js-yaml: 4.1.0
 
   '@playwright/test@1.48.2':
     dependencies:
@@ -11552,14 +11562,6 @@ snapshots:
       '@unhead/schema': 1.11.11
 
   '@sec-ant/readable-stream@0.4.1': {}
-
-  '@seriousme/openapi-schema-validator@2.2.3':
-    dependencies:
-      ajv: 8.17.1
-      ajv-draft-04: 1.0.0(ajv@8.17.1)
-      ajv-formats: 3.0.1(ajv@8.17.1)
-      js-yaml: 4.1.0
-      minimist: 1.2.8
 
   '@shikijs/core@1.22.2':
     dependencies:
@@ -13416,13 +13418,6 @@ snapshots:
       fastify: 5.1.0
       fastify-plugin: 5.0.1
       prom-client: 15.1.3
-
-  fastify-openapi-glue@4.7.1:
-    dependencies:
-      '@seriousme/openapi-schema-validator': 2.2.3
-      fastify-plugin: 4.5.1
-      js-yaml: 4.1.0
-      minimist: 1.2.8
 
   fastify-plugin@4.5.1: {}
 
