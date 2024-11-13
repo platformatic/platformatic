@@ -59,7 +59,7 @@ function formatSpanName (request, path) {
 
 const formatSpanAttributes = {
   request (request, path) {
-    const { hostname, method, url, protocol } = request
+    const { hostname, method, url, protocol = 'http' } = request
     // Inspired by: https://github.com/fastify/fastify-url-data/blob/master/plugin.js#L11
     const urlData = fastUri.parse(`${protocol}://${hostname}${url}`)
     return {

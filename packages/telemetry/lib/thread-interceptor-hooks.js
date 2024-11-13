@@ -4,8 +4,9 @@ const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
 const { formatSpanName, formatSpanAttributes, extractPath } = require('./telemetry-config')
 const api = require('@opentelemetry/api')
 const fastUri = require('fast-uri')
+const packageJson = require('../package.json')
 
-const tracer = api.trace.getTracer('thread-interceptor-hooks', '0.1.0')
+const tracer = api.trace.getTracer(packageJson.name, packageJson.version)
 
 const createTelemetryThreadInterceptorHooks = () => {
   const onServerRequest = (req, cb) => {
@@ -21,7 +22,7 @@ const createTelemetryThreadInterceptorHooks = () => {
     api.context.with(ctx, cb)
   }
 
-  const onServerResponse = (req, _res) => {
+  const onServerResponse = (_req, _res) => {
     const activeContext = api.context.active()
     const span = api.trace.getSpan(activeContext)
     if (span) {
@@ -29,7 +30,7 @@ const createTelemetryThreadInterceptorHooks = () => {
     }
   }
 
-  const onServerError = (_req, res, error) => {
+  const onServerError = (_req, _res, error) => {
     const activeContext = api.context.active()
     const span = api.trace.getSpan(activeContext)
     if (span) {

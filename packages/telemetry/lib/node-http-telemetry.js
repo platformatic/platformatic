@@ -1,7 +1,6 @@
 'use strict'
 const process = require('node:process')
 const opentelemetry = require('@opentelemetry/sdk-node')
-const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http')
 const { Resource } = require('@opentelemetry/resources')
 const FileSpanExporter = require('./file-span-exporter')
 const { ATTR_SERVICE_NAME } = require('@opentelemetry/semantic-conventions')
@@ -18,6 +17,7 @@ const {
   SimpleSpanProcessor,
   InMemorySpanExporter,
 } = require('@opentelemetry/sdk-trace-base')
+const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http')
 
 // See: https://www.npmjs.com/package/@opentelemetry/instrumentation-http
 // When this is fixed we should set this to 'http' and fixe the tests
@@ -61,8 +61,8 @@ const setupNodeHTTPTelemetry = (opts) => {
       exporterObj = new ConsoleSpanExporter(exporterOptions)
     }
 
-    // // We use a SimpleSpanProcessor for the console/memory exporters and a BatchSpanProcessor for the others.
-    // // (these are the ones used by tests)
+    // We use a SimpleSpanProcessor for the console/memory exporters and a BatchSpanProcessor for the others.
+    // (these are the ones used by tests)
     const spanProcessor = ['memory', 'console', 'file'].includes(exporter.type)
       ? new SimpleSpanProcessor(exporterObj)
       : new BatchSpanProcessor(exporterObj)
