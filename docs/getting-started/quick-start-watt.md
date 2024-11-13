@@ -346,13 +346,13 @@ Open `chrome://inspect` in Chrome, and you will see the services listed there.
 
 Then, you can click on `inspect` to open the DevTools for that service.
 
-## Debug individual services with VS Code DevTools
+## Debug individual services with VS Code
 
 You can debug the code of individual Watt services directly in VS Code.
 
-To run the debugger:
-* add a breakpoint to a Watt service in your code
-* open the `Command Palette` of VS Code (`Ctrl+Shift+P` on Windows, `CMD+Shift+P` on Mac)
+To run the debugger in VS Code:
+* add a breakpoint in your Watt service code
+* open the `Command Palette` (`Ctrl+Shift+P` on Windows, `CMD+Shift+P` on Mac)
 * search `Debug: Toggle Auto Attach`, then select `Always` from the list of options
 * run watt with `npm run start`
 * you should now see in your shell a log that confirms that the debugger is listening
@@ -361,6 +361,6 @@ Debugger listening on ws://127.0.0.1:62807/6132054c-766e-4d86-a716-f634118275ed
 For help, see: https://nodejs.org/en/docs/inspector
 Debugger attached.
 ```
-* do a request to your service, so that it triggers the breakpoint code, and use VS Code to debug it
+* do a request to your service, to trigger the breakpoint code, and use VS Code to debug it as by the following screenshot
 
 ![VS Code Debug Watt service](./images/vs-code-debug.png)
