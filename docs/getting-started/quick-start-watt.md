@@ -354,7 +354,7 @@ To run the debugger in VS Code:
 * add a breakpoint in your Watt service code
 * open the `Command Palette` (`Ctrl+Shift+P` on Windows, `CMD+Shift+P` on Mac)
 * search `Debug: Toggle Auto Attach`, then select `Always` from the list of options
-* run watt with `npm run start`
+* run watt with `npm run dev`
 * you should now see in your shell a log that confirms that the debugger is listening
 ```shell
 Debugger listening on ws://127.0.0.1:62807/6132054c-766e-4d86-a716-f634118275ed
