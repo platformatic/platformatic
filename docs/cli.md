@@ -300,7 +300,7 @@ Options:
 * `-t, --typescript` - Generate the client plugin in TypeScript.
 * `-R, --runtime <serviceId>` - Generate the client for the `serviceId` running in the current runtime
 * `--frontend` - Generated a browser-compatible client that uses `fetch`
-* `--full-response` - Client will return full response object rather than just the body.
+* `--full-response` - Client will return full response object rather than just the body. Bear in mind that in some cases the full response will be forced (f.e. generating the frontend with an OpenAPI schema that contains an empty response).
 * `--full-request` - Client will be called with all parameters wrapped in `body`, `headers` and `query` properties. Ignored if `--frontend`
 * `--full` - Enables both `--full-request` and `--full-response` overriding them.
 * `--optional-headers <headers>` - Comma separated string of headers that will be marked as optional in the type file. Ignored if `--frontend`

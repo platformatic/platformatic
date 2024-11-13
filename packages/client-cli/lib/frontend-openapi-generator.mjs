@@ -4,14 +4,14 @@ import { capitalize, getAllResponseCodes, getResponseContentType, getResponseTyp
 import camelcase from 'camelcase'
 import { writeOperations } from '../../client-cli/lib/openapi-common.mjs'
 
-export function processFrontendOpenAPI ({ schema, name, language, fullResponse }) {
+export function processFrontendOpenAPI ({ schema, name, language, fullResponse, logger }) {
   return {
     types: generateTypesFromOpenAPI({ schema, name, fullResponse }),
-    implementation: generateFrontendImplementationFromOpenAPI({ schema, name, language, fullResponse })
+    implementation: generateFrontendImplementationFromOpenAPI({ schema, name, language, fullResponse, logger })
   }
 }
 
-function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fullResponse }) {
+function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fullResponse, logger }) {
   const camelCaseName = capitalize(camelcase(name))
   const { paths } = schema
   const generatedOperationIds = []
@@ -129,6 +129,9 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
     } else {
       // check if is empty response
       if (getResponseContentType(successResponses[0][1]) === null) {
+        if (!currentFullResponse) {
+          logger.warn(`Full response has been forced due to a schema with empty response for ${operationResponseName}`)
+        }
         currentFullResponse = true
       }
     }
