@@ -6,7 +6,7 @@
   "logger": {
     "level": "info"
   },
-  "entrypoint": "main",
+  "entrypoint": "first",
   "autoload": {
     "path": "web-1"
   },

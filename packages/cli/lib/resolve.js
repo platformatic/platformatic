@@ -1,35 +1,37 @@
-import { join, relative, resolve as resolvePath } from 'node:path'
-import { access, writeFile, readFile, mkdir, readdir } from 'node:fs/promises'
-import { Store, getParser, getStringifier } from '@platformatic/config'
+import { Store } from '@platformatic/config'
 import { platformaticRuntime } from '@platformatic/runtime'
+import { execa } from 'execa'
 import parseArgs from 'minimist'
+import { existsSync } from 'node:fs'
+import { join, relative, resolve as resolvePath } from 'node:path'
 import pino from 'pino'
 import pretty from 'pino-pretty'
-import { execa } from 'execa'
 
-const RESOLVED_SERVICES_DIRNAME = 'external'
+export const RESOLVED_SERVICES_DIRNAME = 'external'
 
 export async function resolve (argv) {
   const args = parseArgs(argv, {
     alias: {
       config: 'c',
       username: 'u',
-      password: 'p',
+      password: 'p'
     },
     boolean: ['test'],
     string: ['config', 'username', 'password'],
-    default: { test: false },
+    default: { test: false }
   })
 
-  const logger = pino(pretty({
-    translateTime: 'SYS:HH:MM:ss',
-    ignore: 'hostname,pid',
-  }))
+  const logger = pino(
+    pretty({
+      translateTime: 'SYS:HH:MM:ss',
+      ignore: 'hostname,pid'
+    })
+  )
   try {
     await resolveServices(args.config, logger, {
       test: args.test,
       username: args.username,
-      password: args.password,
+      password: args.password
     })
   } catch (err) {
     console.log(err)
@@ -40,7 +42,7 @@ export async function resolve (argv) {
 async function resolveServices (configPath, logger, options = {}) {
   const store = new Store({
     cwd: process.cwd(),
-    logger,
+    logger
   })
   store.add(platformaticRuntime)
 
@@ -48,53 +50,67 @@ async function resolveServices (configPath, logger, options = {}) {
     config: configPath,
     overrides: {
       onMissingEnv (key) {
-        return '{' + key + '}'
-      },
-    },
+        return ''
+      }
+    }
   })
 
   configPath = configManager.fullPath
+  await configManager.parse(true, [], { validation: true })
+  const config = configManager.current
+  const root = configManager.dirname
 
-  const parseConfig = getParser(configPath)
-  const configFile = await readFile(configPath, 'utf8')
-  const config = await parseConfig(configFile)
+  // The services which might be to be resolved are the one that have a URL and either
+  // no path defined (which means no environment variable set) or a non-existing path (which means not resolved yet)
+  const resolvableServices = config.services.filter(service => {
+    if (!service.url) {
+      return false
+    }
 
-  if (!config.services || config.services.length === 0) {
+    if (service.path && existsSync(service.path)) {
+      logger.info(`Skipping service ${service.id} as the path already exists`)
+      return false
+    }
+
+    return true
+  })
+
+  // Iterate the services a first time to verify the environment files configuration and which services must be resolved
+  const toResolve = []
+
+  // Simply use service.path here
+  for (const service of resolvableServices) {
+    if (!service.path) {
+      service.path = resolvePath(root, `${RESOLVED_SERVICES_DIRNAME}/${service.id}`)
+    }
+
+    const directory = resolvePath(root, service.path)
+
+    // If the directory already exists, it's either external or already resolved, nothing to do in both cases
+    if (!existsSync(directory)) {
+      if (!directory.startsWith(root)) {
+        logger.info(
+          `Skipping service ${service.id} as the non existent directory ${service.path} is outside the project directory`
+        )
+      } else {
+        // This repository must be resolved
+        toResolve.push(service)
+      }
+    } else {
+      logger.info(
+        `Skipping service ${service.id} as the generated path ${join(RESOLVED_SERVICES_DIRNAME, service.id)} already exists`
+      )
+    }
+  }
+
+  if (toResolve.length === 0) {
     logger.info('No external services to resolve')
     return
   }
 
-  const projectDir = configManager.dirname
-  const externalDir = join(projectDir, RESOLVED_SERVICES_DIRNAME)
-
-  const services = config.services || []
-  for (const service of services) {
+  for (const service of toResolve) {
     if (service.url) {
-      let path = service.path
-      if (path && path.startsWith('{') && path.endsWith('}')) {
-        path = await configManager.replaceEnv(path)
-
-        // Failed to resolve the path
-        if (path.startsWith('{') && path.endsWith('}')) {
-          path = null
-        }
-      }
-
-      if (!path) {
-        await mkdir(externalDir, { recursive: true })
-        path = join(externalDir, service.id)
-        service.path = relative(projectDir, path)
-      } else {
-        path = resolvePath(projectDir, path)
-      }
-
-      const isNotEmpty = await isDirectoryNotEmpty(path)
-      if (isNotEmpty) {
-        logger.info(`Skipping ${service.id} as it is not empty`)
-        continue
-      }
-
-      const relativePath = relative(projectDir, path)
+      const relativePath = relative(root, service.path)
 
       logger.info(`Cloning ${service.url} into ${relativePath}`)
       if (!options.test) {
@@ -107,35 +123,16 @@ async function resolveServices (configPath, logger, options = {}) {
           }
           url = urlObj.href
         }
-        await execa('git', ['clone', url, path])
+        await execa('git', ['clone', url, service.path])
       }
 
       // TODO: replace it with a proper runtime build step
       logger.info(`Resolving dependencies for service "${service.id}"`)
       if (!options.test) {
-        await execa('npm', ['i'], { cwd: path })
-      }
-
-      if (!service.path) {
-        service.path = relativePath
+        await execa('npm', ['i'], { cwd: service.path })
       }
     }
   }
 
-  const stringifyConfig = getStringifier(configPath)
-  const newConfig = stringifyConfig(config)
-
-  await writeFile(configManager.fullPath, newConfig, 'utf8')
-
   logger.info('✅ All external services have been resolved')
-}
-
-async function isDirectoryNotEmpty (directoryPath) {
-  try {
-    await access(directoryPath)
-    const files = await readdir(directoryPath)
-    return files.length > 0
-  } catch (err) {
-    return false
-  }
 }

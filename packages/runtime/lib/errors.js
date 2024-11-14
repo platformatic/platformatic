@@ -7,6 +7,7 @@ const ERROR_PREFIX = 'PLT_RUNTIME'
 module.exports = {
   AddressInUseError: createError(`${ERROR_PREFIX}_EADDR_IN_USE`, 'The current port is in use by another application'),
   RuntimeExitedError: createError(`${ERROR_PREFIX}_RUNTIME_EXIT`, 'The runtime exited before the operation completed'),
+  RuntimeAbortedError: createError(`${ERROR_PREFIX}_RUNTIME_ABORT`, 'The runtime aborted the operation'),
   // The following two use the same code as we only need to differentiate the label
   ServiceExitedError: createError(`${ERROR_PREFIX}_SERVICE_EXIT`, 'The service "%s" exited prematurely with error code %d'),
   WorkerExitedError: createError(`${ERROR_PREFIX}_SERVICE_EXIT`, 'The worker %s of the service "%s" exited prematurely with error code %d'),

@@ -1,7 +1,7 @@
 'use strict'
 
 const { once, EventEmitter } = require('node:events')
-const { createReadStream, watch } = require('node:fs')
+const { createReadStream, watch, existsSync } = require('node:fs')
 const { readdir, readFile, stat, access } = require('node:fs/promises')
 const { join } = require('node:path')
 const { setTimeout: sleep } = require('node:timers/promises')
@@ -124,6 +124,31 @@ class Runtime extends EventEmitter {
 
     // Create all services, each in is own worker thread
     for (const serviceConfig of config.services) {
+      if (!serviceConfig.path) {
+        if (serviceConfig.url && globalThis.platformatic) {
+          const { executable, resolvedServicesFolder } = globalThis.platformatic
+
+          // Try to backfill the path for external services
+          serviceConfig.path = join(this.#configManager.dirname, resolvedServicesFolder, serviceConfig.id)
+
+          if (!existsSync(serviceConfig.path)) {
+            this.logger.error(
+              `The path for service "%s" does not exist. Please run "${executable} resolve" and try again.`,
+              serviceConfig.id
+            )
+
+            throw new errors.RuntimeAbortedError()
+          }
+        } else {
+          this.logger.error(
+            'The service "%s" has no path defined. Please check your configuration and try again.',
+            serviceConfig.id
+          )
+
+          throw new errors.RuntimeAbortedError()
+        }
+      }
+
       await this.#setupService(serviceConfig)
     }
 
@@ -282,7 +307,7 @@ class Runtime extends EventEmitter {
     this.#updateStatus('closed')
   }
 
-  async startService (id, silent) {
+  async startService (id, silent = false) {
     // Since when a service is stopped the worker is deleted, we consider a service start if its first service
     // is no longer in the init phase
     const firstWorker = this.#workers.get(`${id}:0`)
@@ -304,7 +329,7 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async stopService (id, silent) {
+  async stopService (id, silent = false) {
     const config = this.#configManager.current
     const serviceConfig = config.services.find(s => s.id === id)
 

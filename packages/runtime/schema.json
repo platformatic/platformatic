@@ -183,6 +183,7 @@
           },
           "path": {
             "type": "string",
+            "allowEmptyPaths": true,
             "resolvePath": true
           },
           "config": {
@@ -335,6 +336,7 @@
           },
           "path": {
             "type": "string",
+            "allowEmptyPaths": true,
             "resolvePath": true
           },
           "config": {

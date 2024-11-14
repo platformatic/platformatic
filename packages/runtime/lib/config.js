@@ -87,8 +87,9 @@ async function _transformConfig (configManager, args) {
   for (let i = 0; i < services.length; ++i) {
     const service = services[i]
 
-    // We need to have absolut paths here, ot the `loadConfig` will fail
-    if (!isAbsolute(service.path)) {
+    // We need to have absolute paths here, ot the `loadConfig` will fail
+    // Make sure we don't resolve if env var was not replaced
+    if (service.path && !isAbsolute(service.path) && !service.path.match(/^\{.*\}$/)) {
       service.path = pathResolve(configManager.dirname, service.path)
     }
 

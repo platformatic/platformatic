@@ -1,20 +1,16 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "esnext",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "jsx": "preserve",
-    "declaration": true,
     "allowJs": true,
+    "checkJs": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "strict": true,
+    "strict": false,
     "skipLibCheck": true,
-    "noImplicitAny": false,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "strictNullChecks": false,
-    "useUnknownInCatchVariables": false
+    "resolveJsonModule": true,
+
   },
   "exclude": ["node_modules"]
 }

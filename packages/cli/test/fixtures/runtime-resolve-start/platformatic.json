@@ -1,0 +1,13 @@
+{
+  "entrypoint": "resolved",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.5.1.json",
+  "watch": true,
+  "managementApi": true,
+  "services": [
+    {
+      "id": "resolved",
+      "path": "{PLT_SERVICE_RESOLVED_PATH}",
+      "url": "https://github.com/platformatic/wattpm-fixtures.git"
+    }
+  ]
+}

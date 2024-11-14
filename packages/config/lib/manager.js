@@ -242,7 +242,7 @@ class ConfigManager extends EventEmitter {
       // option in Ajv
       validate: (schema, path, parentSchema, data) => {
         if (typeof path !== 'string' || path.trim() === '') {
-          return false
+          return !!parentSchema.allowEmptyPaths
         }
 
         if (this._fixPaths) {
@@ -251,6 +251,11 @@ class ConfigManager extends EventEmitter {
         }
         return true
       }
+    })
+    ajv.addKeyword({
+      keyword: 'allowEmptyPaths',
+      type: 'string',
+      schemaType: 'boolean'
     })
     ajv.addKeyword({
       keyword: 'resolveModule',
@@ -340,24 +345,30 @@ class ConfigManager extends EventEmitter {
     if (type) {
       // A config type (service, db, etc.) was explicitly provided.
       return [
-        `platformatic.${type}.json`,
-        `platformatic.${type}.json5`,
-        `platformatic.${type}.yaml`,
-        `platformatic.${type}.yml`,
-        `platformatic.${type}.toml`,
-        `platformatic.${type}.tml`,
-        'platformatic.json',
-        'platformatic.json5',
-        'platformatic.yaml',
-        'platformatic.yml',
-        'platformatic.toml',
-        'platformatic.tml',
-        'watt.json',
-        'watt.json5',
-        'watt.yaml',
-        'watt.yml',
-        'watt.toml',
-        'watt.tml'
+        ...(typeof type === 'string'
+          ? new Set([
+              `platformatic.${type}.json`,
+              `platformatic.${type}.json5`,
+              `platformatic.${type}.yaml`,
+              `platformatic.${type}.yml`,
+              `platformatic.${type}.toml`,
+              `platformatic.${type}.tml`
+          ])
+          : []),
+        ...new Set([
+          'platformatic.json',
+          'platformatic.json5',
+          'platformatic.yaml',
+          'platformatic.yml',
+          'platformatic.toml',
+          'platformatic.tml',
+          'watt.json',
+          'watt.json5',
+          'watt.yaml',
+          'watt.yml',
+          'watt.toml',
+          'watt.tml'
+        ])
       ]
     } else {
       // A config type was not provided. Search for all known types and
