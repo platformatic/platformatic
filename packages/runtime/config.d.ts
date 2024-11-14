@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type HttpsSchemasPlatformaticDevPlatformaticRuntime2120Json = {
+export type HttpsSchemasPlatformaticDevPlatformaticRuntime2130Json = {
   [k: string]: unknown;
 } & {
   $schema?: string;
@@ -199,7 +199,7 @@ export interface OpenTelemetry {
   }[];
   exporter?:
     | {
-        type?: "console" | "otlp" | "zipkin" | "memory";
+        type?: "console" | "otlp" | "zipkin" | "memory" | "file";
         /**
          * Options for the exporter. These are passed directly to the exporter.
          */
@@ -214,13 +214,17 @@ export interface OpenTelemetry {
           headers?: {
             [k: string]: unknown;
           };
+          /**
+           * The path to write the traces to. Only for file exporter.
+           */
+          path?: string;
           [k: string]: unknown;
         };
         additionalProperties?: never;
         [k: string]: unknown;
       }[]
     | {
-        type?: "console" | "otlp" | "zipkin" | "memory";
+        type?: "console" | "otlp" | "zipkin" | "memory" | "file";
         /**
          * Options for the exporter. These are passed directly to the exporter.
          */
@@ -235,6 +239,10 @@ export interface OpenTelemetry {
           headers?: {
             [k: string]: unknown;
           };
+          /**
+           * The path to write the traces to. Only for file exporter.
+           */
+          path?: string;
           [k: string]: unknown;
         };
         additionalProperties?: never;
