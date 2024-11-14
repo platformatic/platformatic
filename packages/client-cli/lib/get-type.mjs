@@ -72,6 +72,7 @@ export function getType (typeDef, methodType, spec) {
   if (typeDef.type === 'object') {
     const additionalPropsObj = typeDef?.additionalProperties?.properties
     const additionalPropsType = typeDef?.additionalProperties?.type
+    const additionalPropsRequired = typeDef?.additionalProperties?.required
     const objProperties = typeDef.properties || additionalPropsObj
     if (!objProperties || Object.keys(objProperties).length === 0) {
       // Object without properties
@@ -85,6 +86,9 @@ export function getType (typeDef, methodType, spec) {
       let required = false
       if (typeDef.required) {
         required = !!typeDef.required.includes(prop)
+      }
+      if (additionalPropsRequired) {
+        required = required || !!additionalPropsRequired.includes(prop)
       }
       return `'${prop}'${required ? '' : '?'}: ${getType(objProperties[prop], methodType, spec)}`
     })
