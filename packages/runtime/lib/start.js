@@ -121,6 +121,10 @@ async function setupAndStartRuntime (config) {
 }
 
 async function startCommand (args, throwAllErrors = false, returnRuntime = false) {
+  if (!globalThis.platformatic) {
+    globalThis.platformatic = { executable: 'platformatic', resolvedServicesFolder: 'external' }
+  }
+
   try {
     const config = await loadConfig(
       {
@@ -146,7 +150,7 @@ async function startCommand (args, throwAllErrors = false, returnRuntime = false
 
     return returnRuntime ? runtime : res
   } catch (err) {
-    if (throwAllErrors) {
+    if (throwAllErrors && err.code !== 'PLT_RUNTIME_RUNTIME_ABORT') {
       throw err
     }
 
@@ -187,7 +191,9 @@ async function startCommand (args, throwAllErrors = false, returnRuntime = false
       process.exit(1)
     }
 
-    console.error(err)
+    if (err.code !== 'PLT_RUNTIME_RUNTIME_ABORT') {
+      console.error(err)
+    }
 
     process.exit(1)
   }

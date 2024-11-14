@@ -27,6 +27,7 @@ const services = {
       },
       path: {
         type: 'string',
+        allowEmptyPaths: true,
         resolvePath: true
       },
       config: {

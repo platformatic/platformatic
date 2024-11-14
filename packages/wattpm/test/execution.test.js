@@ -30,9 +30,10 @@ test('dev - should complain if no configuration file is found', async t => {
   const devstartProcess = await wattpm('dev', nonExistentDirectory, { reject: false })
 
   deepStrictEqual(devstartProcess.exitCode, 1)
+
   ok(
     devstartProcess.stdout.includes(
-      `Cannot find a watt.json, a wattpm.json or a platformatic.json file in ${nonExistentDirectory}.`
+      `Cannot find a supported Watt configuration file (like watt.json, a wattpm.json or a platformatic.json) in ${nonExistentDirectory}.`
     )
   )
 })
@@ -247,6 +248,82 @@ test('start - should start in production mode with the inspector', async t => {
   strictEqual(res.result.value, 2)
 
   await client.close()
+})
+
+test('start - should use default folders for resolved services', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  process.chdir(rootDir)
+  await wattpm('import', rootDir, '-h', '-i', 'resolved', 'platformatic/wattpm-fixtures')
+  await wattpm('resolve', rootDir)
+
+  const startProcess = wattpm('start', rootDir)
+
+  let started = false
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const parsed = JSON.parse(log.toString())
+
+    if (parsed.msg.startsWith('Started the service "resolved"')) {
+      started = true
+      break
+    }
+  }
+
+  await waitForStart(startProcess.stdout)
+  ok(started)
+})
+
+test('start - should throw an error when a service has not been resolved', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  process.chdir(rootDir)
+  await wattpm('import', rootDir, '-h', '-i', 'resolved', 'platformatic/wattpm-fixtures')
+
+  const startProcess = await wattpm('start', rootDir, { reject: false })
+
+  deepStrictEqual(startProcess.exitCode, 1)
+  ok(
+    startProcess.stdout
+      .trim()
+      .split('\n')
+      .find(l => {
+        return (
+          JSON.parse(l).msg ===
+          'The path for service "resolved" does not exist. Please run "watt resolve" and try again.'
+        )
+      }),
+    startProcess.stdout
+  )
+})
+
+test('start - should throw an error when a service has no path and it is not resolvable', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  const config = JSON.parse(await readFile(resolve(rootDir, 'watt.json'), 'utf-8'))
+  config.web = [{ id: 'resolved', path: '' }]
+  await writeFile(resolve(rootDir, 'watt.json'), JSON.stringify(config, null, 2), 'utf-8')
+
+  process.chdir(rootDir)
+  const startProcess = await wattpm('start', rootDir, { reject: false })
+
+  deepStrictEqual(startProcess.exitCode, 1)
+  ok(
+    startProcess.stdout
+      .trim()
+      .split('\n')
+      .find(l => {
+        return (
+          JSON.parse(l).msg ===
+          'The service "resolved" has no path defined. Please check your configuration and try again.'
+        )
+      }),
+    startProcess.stdout
+  )
 })
 
 test('stop - should stop an application', async t => {

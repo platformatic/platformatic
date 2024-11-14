@@ -1,208 +1,385 @@
-import { safeRemove } from '@platformatic/utils'
+import { createDirectory, safeRemove } from '@platformatic/utils'
 import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
-import { cp, mkdir, readFile, writeFile } from 'node:fs/promises'
-import { basename, join, resolve, sep } from 'node:path'
+import { appendFile, cp, readFile, writeFile } from 'node:fs/promises'
+import { basename, relative, resolve, sep } from 'node:path'
 import { test } from 'node:test'
-import { prepareRuntime } from '../../basic/test/helper.js'
+import { pino } from 'pino'
+import { prepareRuntime, temporaryFolder } from '../../basic/test/helper.js'
+import { appendEnvVariable } from '../lib/commands/external.js'
 import { defaultServiceJson } from '../lib/defaults.js'
 import { version } from '../lib/schema.js'
-import { createTemporaryDirectory, executeCommand, fixturesDir, wattpm } from './helper.js'
+import { loadRawConfigurationFile, saveConfigurationFile, serviceToEnvVariable } from '../lib/utils.js'
+import { createTemporaryDirectory, executeCommand, wattpm } from './helper.js'
 
-test('import - should import a URL', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await readFile(configurationFile, 'utf-8')
-
-  process.chdir(rootDir)
-  await wattpm('import', 'http://github.com/foo/bar.git')
-
-  deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), {
-    ...JSON.parse(originalFileContents),
-    web: [
-      {
-        id: 'bar',
-        path: 'web/bar',
-        url: 'http://github.com/foo/bar.git'
-      }
-    ]
-  })
-})
-
-test('import - should import a GitHub repo via SSH', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await readFile(configurationFile, 'utf-8')
-
-  process.chdir(rootDir)
-  await wattpm('import', rootDir, 'foo/bar', '-i', 'id', '-p', 'path')
-
-  deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), {
-    ...JSON.parse(originalFileContents),
-    web: [
-      {
-        id: 'id',
-        path: 'path',
-        url: 'git@github.com:foo/bar.git'
-      }
-    ]
-  })
-})
-
-test('import - should import a GitHub repo via HTTP', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await readFile(configurationFile, 'utf-8')
-
-  process.chdir(rootDir)
-  await wattpm('import', rootDir, 'foo/bar', '-h', '-i', 'id', '-p', 'path')
-
-  deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), {
-    ...JSON.parse(originalFileContents),
-    web: [
-      {
-        id: 'id',
-        path: 'path',
-        url: 'https://github.com/foo/bar.git'
-      }
-    ]
-  })
-})
-
-test('import - should import a local folder with Git and no watt.json', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await readFile(configurationFile, 'utf-8')
-
-  const directory = await createTemporaryDirectory(t, 'local-with-git')
-  await cp(resolve(rootDir, 'web/main/index.js'), resolve(directory, 'index.js'))
-  await executeCommand('git', 'init', { cwd: directory })
-  await executeCommand('git', 'remote', 'add', 'origin', 'git@github.com:hello/world.git', { cwd: directory })
-
-  process.chdir(rootDir)
-  await wattpm('import', rootDir, directory)
-
-  deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), {
-    ...JSON.parse(originalFileContents),
-    web: [
-      {
-        id: basename(directory),
-        path: directory,
-        url: 'git@github.com:hello/world.git'
-      }
-    ]
-  })
-
-  deepStrictEqual(JSON.parse(await readFile(resolve(directory, 'package.json'), 'utf-8')), {
-    dependencies: {
-      '@platformatic/node': `^${version}`
-    }
-  })
-
-  deepStrictEqual(JSON.parse(await readFile(resolve(directory, 'watt.json'), 'utf-8')), {
-    ...defaultServiceJson,
-    $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`
-  })
-})
-
-test('import - should import a local folder without Git and a watt.json', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await readFile(configurationFile, 'utf-8')
-
-  const directory = await createTemporaryDirectory(t, 'local-no-git')
-  await cp(resolve(rootDir, 'web/main/index.js'), resolve(directory, 'index.js'))
-  await writeFile(resolve(directory, 'watt.json'), JSON.stringify({ a: 1 }), 'utf-8')
-
-  process.chdir(rootDir)
-  await wattpm('import', rootDir, directory)
-
-  deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), {
-    ...JSON.parse(originalFileContents),
-    web: [
-      {
-        id: basename(directory),
-        path: directory
-      }
-    ]
-  })
-
-  ok(!existsSync(resolve(directory, 'package.json'), 'utf-8'))
-  deepStrictEqual(JSON.parse(await readFile(resolve(directory, 'watt.json'), 'utf-8')), { a: 1 })
-})
-
-test('import - should not modify the root watt.json when importing a folder which is already autoloaded', async t => {
-  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await readFile(configurationFile, 'utf-8')
-
-  const directory = join('web', basename(await createTemporaryDirectory(t, 'local-with-git')))
-  const absoluteDirectory = resolve(rootDir, directory)
-  await mkdir(absoluteDirectory)
-  await cp(resolve(rootDir, 'web/main/index.js'), resolve(rootDir, directory, 'index.js'))
-
-  t.after(() => safeRemove(absoluteDirectory))
-
-  process.chdir(rootDir)
-  await wattpm('import', rootDir, directory)
-
-  deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), {
-    ...JSON.parse(originalFileContents)
-  })
-
-  deepStrictEqual(JSON.parse(await readFile(resolve(rootDir, directory, 'package.json'), 'utf-8')), {
-    dependencies: {
-      '@platformatic/node': `^${version}`
-    }
-  })
-
-  deepStrictEqual(JSON.parse(await readFile(resolve(rootDir, directory, 'watt.json'), 'utf-8')), {
-    ...defaultServiceJson,
-    $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`
-  })
-})
-
+const logger = pino()
 const autodetect = {
   astro: 'astro',
+  node: null,
   next: 'next',
   remix: '@remix-run/dev',
   vite: 'vite'
 }
 
-for (const [name, dependency] of Object.entries(autodetect)) {
-  test(`import - should correctly autodetect a @platformatic/${name} stackable`, async t => {
-    const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-    const configurationFile = resolve(rootDir, 'watt.json')
-    const originalFileContents = await readFile(configurationFile, 'utf-8')
+test('import - should import a URL', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
 
-    const directory = await createTemporaryDirectory(t, `local-${name}`)
-    await writeFile(
-      resolve(directory, 'package.json'),
-      JSON.stringify({ dependencies: { [dependency]: '*' } }),
-      'utf-8'
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+
+  process.chdir(rootDir)
+  await wattpm('import', 'http://github.com/foo/bar.git')
+
+  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), {
+    ...originalFileContents,
+    web: [
+      {
+        id: 'bar',
+        path: '{PLT_SERVICE_BAR_PATH}',
+        url: 'http://github.com/foo/bar.git'
+      }
+    ]
+  })
+
+  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), 'RUNTIME_ENV=foo\nPLT_SERVICE_BAR_PATH=\n')
+  deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), 'PLT_SERVICE_BAR_PATH=\n')
+})
+
+test('import - should import a GitHub repo via SSH', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+
+  process.chdir(rootDir)
+  await wattpm('import', rootDir, 'foo/bar', '-i', 'id')
+
+  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), {
+    ...originalFileContents,
+    web: [
+      {
+        id: 'id',
+        path: '{PLT_SERVICE_ID_PATH}',
+        url: 'git@github.com:foo/bar.git'
+      }
+    ]
+  })
+
+  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), 'RUNTIME_ENV=foo\nPLT_SERVICE_ID_PATH=\n')
+  deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), 'PLT_SERVICE_ID_PATH=\n')
+})
+
+test('import - should import a GitHub repo via HTTP', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+
+  process.chdir(rootDir)
+  await wattpm('import', rootDir, 'foo/bar', '-h', '-i', 'id')
+
+  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), {
+    ...originalFileContents,
+    web: [
+      {
+        id: 'id',
+        path: '{PLT_SERVICE_ID_PATH}',
+        url: 'https://github.com/foo/bar.git'
+      }
+    ]
+  })
+
+  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), 'RUNTIME_ENV=foo\nPLT_SERVICE_ID_PATH=\n')
+  deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), 'PLT_SERVICE_ID_PATH=\n')
+})
+
+test('import - should import a local folder with a Git remote', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+
+  const directory = await createTemporaryDirectory(t, 'local-with-git')
+  await executeCommand('git', 'init', { cwd: directory })
+  await executeCommand('git', 'remote', 'add', 'origin', 'git@github.com:hello/world.git', { cwd: directory })
+  const id = basename(directory)
+  const envVariable = serviceToEnvVariable(id)
+
+  process.chdir(rootDir)
+  await wattpm('import', directory)
+
+  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), {
+    ...originalFileContents,
+    web: [
+      {
+        id,
+        path: `{${envVariable}}`,
+        url: 'git@github.com:hello/world.git'
+      }
+    ]
+  })
+
+  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), `RUNTIME_ENV=foo\n${envVariable}=${directory}\n`)
+  deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), `${envVariable}=\n`)
+})
+
+test('import - should import a local folder without a Git remote', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+
+  const directory = await createTemporaryDirectory(t, 'local-with-git')
+  const id = basename(directory)
+  const envVariable = serviceToEnvVariable(id)
+
+  process.chdir(rootDir)
+  const importProcess = await wattpm('import', directory)
+
+  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), {
+    ...originalFileContents,
+    web: [
+      {
+        id,
+        path: `{${envVariable}}`
+      }
+    ]
+  })
+
+  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), `RUNTIME_ENV=foo\n${envVariable}=${directory}\n`)
+  deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), `${envVariable}=\n`)
+
+  ok(importProcess.stdout.includes(`The service ${id} does not define a Git repository.`))
+})
+
+test('import - should import a local folder within the repository without using environment variables or URLs', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+
+  const id = 'in-a-repo'
+  const path = 'this/is/in-a-repo'
+  const absolute = resolve(rootDir, path)
+  await createDirectory(absolute)
+  await executeCommand('git', 'init', { cwd: absolute })
+  await executeCommand('git', 'remote', 'add', 'origin', 'git@github.com:hello/world.git', { cwd: absolute })
+
+  process.chdir(rootDir)
+  await wattpm('import', resolve(rootDir, path))
+
+  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), {
+    ...originalFileContents,
+    web: [
+      {
+        id,
+        path
+      }
+    ]
+  })
+
+  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), 'RUNTIME_ENV=foo')
+  ok(!existsSync(resolve(rootDir, '.env.sample')))
+})
+
+test('import - should not do anything when the local folder is already an autoloaded service', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+
+  const originalFileContents = await readFile(configurationFile, 'utf-8')
+
+  process.chdir(rootDir)
+  const importProcess = await wattpm('import', resolve(rootDir, 'web/main'))
+
+  deepStrictEqual(await readFile(configurationFile, 'utf-8'), originalFileContents)
+  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), 'RUNTIME_ENV=foo')
+  ok(!existsSync(resolve(rootDir, '.env.sample')))
+
+  deepStrictEqual(importProcess.exitCode, 0)
+  ok(importProcess.stdout.includes('The path is already autoloaded as a service.'))
+})
+
+test('import - should not do anything when the local folder is already a defined service', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+
+  const contents = await loadRawConfigurationFile(logger, configurationFile)
+  contents.web = [{ id: 'main', path: 'main' }]
+  await saveConfigurationFile(logger, configurationFile, contents)
+  await createDirectory(resolve(rootDir, 'main'))
+  await cp(resolve(rootDir, 'web/main/watt.json'), resolve(rootDir, 'main/watt.json'))
+
+  const originalFileContents = await readFile(configurationFile, 'utf-8')
+
+  process.chdir(rootDir)
+  const importProcess = await wattpm('import', 'main')
+
+  deepStrictEqual(await readFile(configurationFile, 'utf-8'), originalFileContents)
+  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), 'RUNTIME_ENV=foo')
+  ok(!existsSync(resolve(rootDir, '.env.sample')))
+
+  deepStrictEqual(importProcess.exitCode, 0)
+  ok(importProcess.stdout.includes('The path is already defined as a service.'))
+})
+
+test('import - should raise an error when importing if the service id is already taken', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await readFile(configurationFile, 'utf-8')
+
+  process.chdir(rootDir)
+  const importProcess = await wattpm('import', rootDir, 'foo/bar', '-i', 'main', { reject: false })
+
+  deepStrictEqual(await readFile(configurationFile, 'utf-8'), originalFileContents)
+  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), 'RUNTIME_ENV=foo')
+  ok(!existsSync(resolve(rootDir, '.env.sample')))
+
+  deepStrictEqual(importProcess.exitCode, 1)
+  ok(importProcess.stdout.includes('There is already a service main defined, please choose a different service ID.'))
+})
+
+test('import - should raise an error when importing if the environment variable is already defined', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await readFile(configurationFile, 'utf-8')
+
+  await appendFile(resolve(rootDir, '.env'), '\nPLT_SERVICE_BAR_PATH=foo\n')
+  const originalEnv = await readFile(resolve(rootDir, '.env'), 'utf-8')
+
+  process.chdir(rootDir)
+  const importProcess = await wattpm('import', rootDir, 'foo/bar', { reject: false })
+
+  deepStrictEqual(await readFile(configurationFile, 'utf-8'), originalFileContents)
+  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), originalEnv)
+  ok(!existsSync(resolve(rootDir, '.env.sample')))
+
+  deepStrictEqual(importProcess.exitCode, 1)
+  ok(
+    importProcess.stdout.includes(
+      'There is already an environment variable PLT_SERVICE_BAR_PATH defined, please choose a different service ID.'
     )
+  )
+})
+
+test('import - should properly manage environment files', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+
+  await cp(resolve(rootDir, '.env'), resolve(rootDir, '.env.sample'))
+  await safeRemove(resolve(rootDir, '.env'))
+
+  process.chdir(rootDir)
+  await wattpm('import', 'http://github.com/foo/bar.git')
+
+  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), {
+    ...originalFileContents,
+    web: [
+      {
+        id: 'bar',
+        path: '{PLT_SERVICE_BAR_PATH}',
+        url: 'http://github.com/foo/bar.git'
+      }
+    ]
+  })
+
+  // The .env has been created
+  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), 'PLT_SERVICE_BAR_PATH=\n')
+
+  // The .env.sample has been updated
+  deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), 'RUNTIME_ENV=foo\nPLT_SERVICE_BAR_PATH=\n')
+})
+
+test('import - should not modify existing watt.json files when exporting local folders', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+
+  const directory = await createTemporaryDirectory(t, 'local-with-git')
+  await writeFile(resolve(directory, 'watt.json'), JSON.stringify({ foo: 'bar' }), 'utf-8')
+  const id = basename(directory)
+  const envVariable = serviceToEnvVariable(id)
+
+  process.chdir(rootDir)
+  await wattpm('import', directory)
+
+  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), {
+    ...originalFileContents,
+    web: [
+      {
+        id,
+        path: `{${envVariable}}`
+      }
+    ]
+  })
+
+  deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), `RUNTIME_ENV=foo\n${envVariable}=${directory}\n`)
+  deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), `${envVariable}=\n`)
+  deepStrictEqual(await loadRawConfigurationFile(logger, resolve(directory, 'watt.json')), { foo: 'bar' })
+})
+
+for (const [name, dependency] of Object.entries(autodetect)) {
+  test(`import - should correctly autodetect a @platformatic/${name} stackable when importing local folders`, async t => {
+    const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+    t.after(() => safeRemove(rootDir))
+
+    const configurationFile = resolve(rootDir, 'watt.json')
+    const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+
+    const directory = await createTemporaryDirectory(t, 'local-with-git')
+    if (dependency) {
+      await writeFile(
+        resolve(directory, 'package.json'),
+        JSON.stringify({ dependencies: { [dependency]: '*' } }),
+        'utf-8'
+      )
+    }
+
+    const id = basename(directory)
+    const envVariable = serviceToEnvVariable(id)
 
     process.chdir(rootDir)
-    await wattpm('import', rootDir, directory)
+    await wattpm('import', directory)
 
-    deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), {
-      ...JSON.parse(originalFileContents),
+    deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), {
+      ...originalFileContents,
       web: [
         {
-          id: basename(directory),
-          path: directory
+          id,
+          path: `{${envVariable}}`
         }
       ]
     })
 
-    deepStrictEqual(JSON.parse(await readFile(resolve(directory, 'package.json'), 'utf-8')), {
+    deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), `RUNTIME_ENV=foo\n${envVariable}=${directory}\n`)
+    deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), `${envVariable}=\n`)
+
+    deepStrictEqual(await loadRawConfigurationFile(logger, resolve(directory, 'package.json')), {
       dependencies: {
-        [dependency]: '*',
+        ...(dependency ? { [dependency]: '*' } : {}),
         [`@platformatic/${name}`]: `^${version}`
       }
     })
 
-    deepStrictEqual(JSON.parse(await readFile(resolve(directory, 'watt.json'), 'utf-8')), {
+    deepStrictEqual(await loadRawConfigurationFile(logger, resolve(directory, 'watt.json')), {
       ...defaultServiceJson,
       $schema: `https://schemas.platformatic.dev/@platformatic/${name}/${version}.json`
     })
@@ -210,106 +387,165 @@ for (const [name, dependency] of Object.entries(autodetect)) {
 }
 
 test('import - when launched without arguments, should fix the configuration of all known services', async t => {
-  const rootDir = resolve(fixturesDir, 'no-dependencies')
-  const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await readFile(configurationFile, 'utf-8')
+  const { root: rootDir } = await prepareRuntime(t, 'no-dependencies', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
 
-  t.after(() => {
-    return Promise.all([
-      safeRemove(resolve(rootDir, 'web-1/first/watt.json')),
-      safeRemove(resolve(rootDir, 'web-1/first/package.json')),
-      safeRemove(resolve(rootDir, 'web-1/second/watt.json')),
-      safeRemove(resolve(rootDir, 'web-1/second/package.json')),
-      safeRemove(resolve(rootDir, 'web-2/third/watt.json')),
-      safeRemove(resolve(rootDir, 'web-2/third/package.json'))
-    ])
-  })
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
 
   process.chdir(rootDir)
   await wattpm('import')
 
-  deepStrictEqual(await readFile(configurationFile, 'utf-8'), originalFileContents)
+  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), originalFileContents)
 
-  for (const servicePath of ['web-1/first', 'web-1/second', 'web-2/third']) {
-    deepStrictEqual(JSON.parse(await readFile(resolve(rootDir, servicePath, 'package.json'), 'utf-8')), {
+  for (const servicePath of ['web-1/first', 'web-1/second']) {
+    deepStrictEqual(await loadRawConfigurationFile(logger, resolve(rootDir, servicePath, 'package.json')), {
       dependencies: {
         '@platformatic/node': `^${version}`
       }
     })
 
-    deepStrictEqual(JSON.parse(await readFile(resolve(rootDir, servicePath, 'watt.json'), 'utf-8')), {
+    deepStrictEqual(await loadRawConfigurationFile(logger, resolve(rootDir, servicePath, 'watt.json')), {
       ...defaultServiceJson,
       $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`
     })
   }
+
+  deepStrictEqual(await loadRawConfigurationFile(logger, resolve(rootDir, 'web-2/third/watt.json')), { foo: 'bar' })
 })
 
 test('import - should find the nearest watt.json', async t => {
-  const fixture = resolve(fixturesDir, 'main')
-  const rootDir = await createTemporaryDirectory(t, 'local-no-git')
-
-  await cp(fixture, rootDir, { recursive: true })
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
 
   const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await readFile(configurationFile, 'utf-8')
+  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
 
-  const directory = join(rootDir, 'web', 'next')
-  await mkdir(directory, { recursive: true })
+  const directory = resolve(rootDir, 'web/next')
+  await createDirectory(directory)
 
-  process.chdir(join(rootDir, 'web', 'next'))
+  process.chdir(resolve(rootDir, 'web/next'))
   await wattpm('import', '.')
 
-  deepStrictEqual(JSON.parse(await readFile(configurationFile, 'utf-8')), JSON.parse(originalFileContents))
+  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), originalFileContents)
 
-  ok(!existsSync(resolve(directory, 'web', 'next', 'package.json'), 'utf-8'))
-  deepStrictEqual(JSON.parse(await readFile(join(rootDir, 'watt.json'), 'utf-8')), {
-    ...JSON.parse(originalFileContents)
-  })
-  deepStrictEqual(JSON.parse(await readFile(join(rootDir, 'web', 'next', 'watt.json'), 'utf-8')), {
-    $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`
-  })
+  ok(!existsSync(resolve(directory, 'web/next/package.json')))
+  ok(!existsSync(resolve(directory, 'web/next/watt.json')))
 })
 
-test('resolve - should clone a URL', async t => {
+test('resolve - should clone a URL when the environment variable is set to a folder inside the repo', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-
-  t.after(() => safeRemove(resolve(rootDir, 'web/resolved')))
+  t.after(() => safeRemove(rootDir))
 
   process.chdir(rootDir)
-  await wattpm('import', rootDir, '-h', '-i', 'resolved', '-p', 'web/resolved', 'mcollina/undici-thread-interceptor')
+  await wattpm('import', rootDir, '-h', '-i', 'resolved', 'platformatic/wattpm-fixtures')
+  appendEnvVariable(resolve(rootDir, '.env'), 'PLT_SERVICE_RESOLVED_PATH', 'web/resolved')
+
+  const resolveProcess = await wattpm('resolve', rootDir)
+
+  ok(
+    resolveProcess.stdout.includes(`Cloning https://github.com/platformatic/wattpm-fixtures.git into web${sep}resolved`)
+  )
+  ok(resolveProcess.stdout.includes('Installing dependencies ...'))
+})
+
+test('resolve - should clone a URL when the environment variable is not set', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  process.chdir(rootDir)
+  await wattpm('import', rootDir, '-h', '-i', 'resolved', 'platformatic/wattpm-fixtures')
+
   const resolveProcess = await wattpm('resolve', rootDir)
 
   ok(
     resolveProcess.stdout.includes(
-      `Cloning https://github.com/mcollina/undici-thread-interceptor.git into web${sep}resolved`
+      `Cloning https://github.com/platformatic/wattpm-fixtures.git into ${relative(rootDir, 'web.resolved/resolved')}`
     )
   )
   ok(resolveProcess.stdout.includes('Installing dependencies ...'))
 })
 
+test('resolve - should do nothing when the directory already exists inside the repo', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  process.chdir(rootDir)
+  await wattpm('import', rootDir, '-h', '-i', 'resolved', 'platformatic/wattpm-fixtures')
+
+  const envValue = resolve(rootDir, 'whatever')
+  await createDirectory(envValue)
+  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_SERVICE_RESOLVED_PATH', 'whatever')
+
+  const resolveProcess = await wattpm('resolve', rootDir)
+  ok(!resolveProcess.stdout.includes('Cloning https://github.com/platformatic/wattpm-fixtures.git'))
+  ok(!resolveProcess.stdout.includes('Installing dependencies ...'))
+})
+
+test('resolve - should do nothing when the directory already exists outside the repo', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  process.chdir(rootDir)
+  await wattpm('import', rootDir, '-h', '-i', 'resolved', 'platformatic/wattpm-fixtures')
+
+  const envValue = resolve(temporaryFolder, 'outside-' + Date.now())
+  await createDirectory(envValue)
+  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_SERVICE_RESOLVED_PATH', envValue)
+
+  const resolveProcess = await wattpm('resolve', rootDir)
+  ok(!resolveProcess.stdout.includes('Cloning https://github.com/platformatic/wattpm-fixtures.git'))
+  ok(!resolveProcess.stdout.includes('Installing dependencies ...'))
+})
+
+test('resolve - should do nothing when the autogenerated directory already exists inside the repo', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  process.chdir(rootDir)
+  await wattpm('import', rootDir, '-h', '-i', 'resolved', 'platformatic/wattpm-fixtures')
+  await createDirectory(resolve(rootDir, 'web.resolved/resolved'))
+
+  const resolveProcess = await wattpm('resolve', rootDir)
+  ok(!resolveProcess.stdout.includes('Cloning https://github.com/platformatic/wattpm-fixtures.git'))
+  ok(!resolveProcess.stdout.includes('Installing dependencies ...'))
+  ok(
+    resolveProcess.stdout.includes(
+      'Skipping service resolved as the generated path web.resolved/resolved already exists.'
+    ),
+    resolveProcess.stdout
+  )
+})
+
+test('resolve - should throw an error when the directory outside the repo do not exist', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  process.chdir(rootDir)
+  await wattpm('import', rootDir, '-h', '-i', 'resolved', 'platformatic/wattpm-fixtures')
+
+  const envValue = resolve(temporaryFolder, 'outside-' + Date.now())
+  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_SERVICE_RESOLVED_PATH', envValue)
+
+  const resolveProcess = await wattpm('resolve', rootDir, { reject: false })
+  ok(!resolveProcess.stdout.includes('Cloning https://github.com/platformatic/wattpm-fixtures.git'))
+  ok(!resolveProcess.stdout.includes('Installing dependencies ...'))
+  ok(
+    resolveProcess.stdout.includes(
+      `Skipping service resolved as the non existent directory ${envValue} is outside the project directory.`
+    )
+  )
+})
+
 // Note that this test purposely uses gitlab to have a HTTP authentication error, GitHub ignores those parameters
 test('resolve - should attempt to clone with username and password', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-
-  t.after(() => safeRemove(resolve(rootDir, 'web/resolved')))
+  t.after(() => safeRemove(rootDir))
 
   process.chdir(rootDir)
-  await wattpm(
-    'import',
-    rootDir,
-    '-i',
-    'resolved',
-    '-p',
-    'web/resolved',
-    'https://gitlab.com/mcollina/undici-thread-interceptor.git'
-  )
+  await wattpm('import', rootDir, '-i', 'resolved', 'https://gitlab.com/platformatic/wattpm-fixtures.git')
   const resolveProcess = await wattpm('resolve', '-u', 'foo', '-p', 'bar', rootDir, { reject: false })
 
-  deepStrictEqual(resolveProcess.exitCode, 1)
-  ok(
-    resolveProcess.stdout.includes(
-      `Cloning https://gitlab.com/mcollina/undici-thread-interceptor.git as user foo into web${sep}resolved`
-    )
-  )
+  ok(resolveProcess.stdout.includes('Cloning https://gitlab.com/platformatic/wattpm-fixtures.git'))
+  ok(resolveProcess.stdout.includes(`Cloning into '${resolve(rootDir, 'web.resolved/resolved')}'`))
   ok(resolveProcess.stdout.includes('HTTP Basic: Access denied'))
 })

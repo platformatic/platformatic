@@ -11,6 +11,10 @@ Arguments:
 - `root`: The directory where to create the application (the default is the current directory)
 - `entrypoint`: The name of the entrypoint service
 
+Options:
+
+- `-p, --package-manager`: Use an alternative package manager (the default is `npm`)
+
 ## `build`
 
 Builds all services of an application.
@@ -160,11 +164,9 @@ Options:
 
 ## `resolve`
 
-Resolves all external services. The command operates on all services which have the `url` fields defined.
+Resolves all external services. The command operates on all services which have the `url` fields defined and the path specified as environment variable.
 
-To change the directory where a service is cloned, you can set the `path` property in the service configuration.
-
-After cloning the service, the resolve command will set the relative path to the service in the wattpm configuration file.
+After cloning the service, the resolve command will set the relative path to the service in the `.env` file.
 
 Arguments:
 
@@ -175,6 +177,7 @@ Options:
 - `-u, --username <value>`: The username to use for HTTP URLs
 - `-p, --password <value>`: The password to use for HTTP URLs
 - `-s, --skip-dependencies`: Do not install services dependencies
+- `-P, --package-manager`: Use an alternative package manager (the default is `npm`)
 
 ## `help`
 
