@@ -140,7 +140,8 @@ export class NextStackable extends BaseStackable {
         port: false,
         isEntrypoint: this.isEntrypoint,
         runtimeBasePath: this.runtimeConfig.basePath,
-        wantsAbsoluteUrls: true
+        wantsAbsoluteUrls: true,
+        telemetryConfig: this.telemetryConfig
       }
     })
 
@@ -191,6 +192,7 @@ export class NextStackable extends BaseStackable {
         isEntrypoint: this.isEntrypoint,
         runtimeBasePath: this.runtimeConfig.basePath,
         wantsAbsoluteUrls: true,
+        telemetryConfig: this.telemetryConfig
       }
     })
 

@@ -748,7 +748,8 @@
                       "console",
                       "otlp",
                       "zipkin",
-                      "memory"
+                      "memory",
+                      "file"
                     ],
                     "default": "console"
                   },
@@ -763,6 +764,10 @@
                       "headers": {
                         "type": "object",
                         "description": "Headers to send to the exporter. Not used for console or memory exporters."
+                      },
+                      "path": {
+                        "type": "string",
+                        "description": "The path to write the traces to. Only for file exporter."
                       }
                     }
                   },
@@ -779,7 +784,8 @@
                     "console",
                     "otlp",
                     "zipkin",
-                    "memory"
+                    "memory",
+                    "file"
                   ],
                   "default": "console"
                 },
@@ -794,6 +800,10 @@
                     "headers": {
                       "type": "object",
                       "description": "Headers to send to the exporter. Not used for console or memory exporters."
+                    },
+                    "path": {
+                      "type": "string",
+                      "description": "The path to write the traces to. Only for file exporter."
                     }
                   }
                 },

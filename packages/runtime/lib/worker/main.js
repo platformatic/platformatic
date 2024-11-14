@@ -16,6 +16,8 @@ const { wire } = require('undici-thread-interceptor')
 const { PlatformaticApp } = require('./app')
 const { setupITC } = require('./itc')
 const loadInterceptors = require('./interceptors')
+const { createTelemetryThreadInterceptorHooks } = require('@platformatic/telemetry')
+
 const {
   MessagePortWritable,
   createPinoWritable,
@@ -97,8 +99,10 @@ async function main () {
 
   setGlobalDispatcher(globalDispatcher)
 
+  const { telemetry } = service
+  const hooks = telemetry ? createTelemetryThreadInterceptorHooks() : {}
   // Setup mesh networker
-  const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp, timeout: config.serviceTimeout })
+  const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp, timeout: config.serviceTimeout, ...hooks })
 
   // If the service is an entrypoint and runtime server config is defined, use it.
   let serverConfig = null
