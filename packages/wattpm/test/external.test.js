@@ -2,7 +2,7 @@ import { createDirectory, safeRemove } from '@platformatic/utils'
 import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
 import { appendFile, cp, readFile, writeFile } from 'node:fs/promises'
-import { basename, relative, resolve, sep } from 'node:path'
+import { basename, join, relative, resolve, sep } from 'node:path'
 import { test } from 'node:test'
 import { pino } from 'pino'
 import { prepareRuntime, temporaryFolder } from '../../basic/test/helper.js'
@@ -165,7 +165,7 @@ test('import - should import a local folder within the repository without using 
   const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
 
   const id = 'in-a-repo'
-  const path = 'this/is/in-a-repo'
+  const path = join('this', 'is', 'in-a-repo') // This is for Windows compatibility
   const absolute = resolve(rootDir, path)
   await createDirectory(absolute)
   await executeCommand('git', 'init', { cwd: absolute })

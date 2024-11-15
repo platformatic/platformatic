@@ -7,7 +7,7 @@
     {
       "id": "resolved",
       "path": "{PLT_SERVICE_RESOLVED_PATH}",
-      "url": "git@github.com:platformatic/wattpm-fixtures.git"
+      "url": "https://github.com/platformatic/wattpm-fixtures.git"
     }
   ]
 }
