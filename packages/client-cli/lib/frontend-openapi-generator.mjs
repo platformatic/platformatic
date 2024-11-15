@@ -4,14 +4,14 @@ import { capitalize, getAllResponseCodes, getResponseContentType, getResponseTyp
 import camelcase from 'camelcase'
 import { writeOperations } from '../../client-cli/lib/openapi-common.mjs'
 
-export function processFrontendOpenAPI ({ schema, name, language, fullResponse, logger }) {
+export function processFrontendOpenAPI ({ schema, name, language, fullResponse, logger, withCredentials }) {
   return {
     types: generateTypesFromOpenAPI({ schema, name, fullResponse }),
-    implementation: generateFrontendImplementationFromOpenAPI({ schema, name, language, fullResponse, logger })
+    implementation: generateFrontendImplementationFromOpenAPI({ schema, name, language, fullResponse, logger, withCredentials })
   }
 }
 
-function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fullResponse, logger }) {
+function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fullResponse, logger, withCredentials }) {
   const camelCaseName = capitalize(camelcase(name))
   const { paths } = schema
   const generatedOperationIds = []
@@ -215,12 +215,18 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
           .inlineBlock(() => {
             writer.write('method: ').quote().write(method.toUpperCase()).quote().write(',')
             writer.writeLine('body: JSON.stringify(request),')
-            writer.write('headers')
+            if (withCredentials) {
+              writer.writeLine('credentials: \'include\',')
+            }
+            writer.writeLine('headers')
           })
           .write(')')
       } else {
         writer.write(`const response = await fetch(\`\${url}${stringLiteralPath}${searchString}\`, `)
           .inlineBlock(() => {
+            if (withCredentials) {
+              writer.writeLine('credentials: \'include\',')
+            }
             writer.write('headers')
           })
           .write(')')
