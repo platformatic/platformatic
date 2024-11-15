@@ -94,7 +94,7 @@ export function getType (typeDef, methodType, spec) {
       return `'${prop}'${required ? '' : '?'}: ${getType(objProperties[prop], methodType, spec)}`
     })
     if (additionalProps === true) {
-      props.push('Record<string, unknown>')
+      props.push('[key: string]: unknown')
     }
     output += props.join('; ')
     output += additionalPropsObj ? ' }>' : ' }'
