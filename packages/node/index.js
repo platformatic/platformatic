@@ -54,8 +54,6 @@ export class NodeStackable extends BaseStackable {
 
   constructor (options, root, configManager) {
     super('nodejs', packageJson.version, options, root, configManager)
-
-    this.#useHttpForDispatch = this.configManager.current.node?.dispatchViaHttp === true
   }
 
   async start ({ listen }) {
@@ -126,6 +124,7 @@ export class NodeStackable extends BaseStackable {
       // User blackbox function, we wait for it to listen on a port
       this.#server = await serverPromise
       this.#dispatcher = this.#server.listeners('request')[0]
+
       this.url = getServerUrl(this.#server)
     }
 
@@ -181,7 +180,7 @@ export class NodeStackable extends BaseStackable {
   async inject (injectParams, onInject) {
     let res
 
-    if (this.url && this.#useHttpForDispatch) {
+    if (this.#useHttpForDispatch) {
       this.logger.trace({ injectParams, url: this.url }, 'injecting via request')
       res = await injectViaRequest(this.url, injectParams, onInject)
     } else {
@@ -239,7 +238,10 @@ export class NodeStackable extends BaseStackable {
   }
 
   async getDispatchTarget () {
-    if (this.url && this.#useHttpForDispatch) {
+    this.#useHttpForDispatch =
+      this.childManager || (this.url && this.configManager.current.node?.dispatchViaHttp === true)
+
+    if (this.#useHttpForDispatch) {
       return this.getUrl()
     }
 
