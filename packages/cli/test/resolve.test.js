@@ -14,7 +14,7 @@ test('resolve runtime external services', async t => {
     recursive: true
   })
 
-  const child = await execa('node', [cliPath, 'resolve'], { cwd: dest })
+  const child = await execa('node', [cliPath, 'resolve'], { cwd: dest, env: { NO_COLOR: 'true' } })
 
   assert.ok(!child.stdout.includes('piquant-combat'), child.stdout)
   assert.ok(child.stdout.includes('Skipping service piquant-existing as the path already exists'), child.stdout)

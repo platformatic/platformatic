@@ -115,7 +115,7 @@ class Runtime extends EventEmitter {
     for (const serviceConfig of config.services) {
       // If there is no service path, check if the service was resolved
       if (!serviceConfig.path) {
-        if (serviceConfig.url && globalThis.platformatic) {
+        if (serviceConfig.url) {
           // Try to backfill the path for external services
           serviceConfig.path = join(this.#configManager.dirname, config.resolvedServicesBasePath, serviceConfig.id)
 
