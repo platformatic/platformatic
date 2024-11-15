@@ -373,6 +373,11 @@ export async function buildStackable (opts) {
     dirname: root
   })
   await configManager.parseAndValidate()
+  const config = configManager.current
+  // We need to update the config with the telemetry so the service name
+  // used in telemetry can be retreived using the management API
+  config.telemetry = opts.context.telemetryConfig
+  configManager.update(config)
 
   return new NodeStackable(opts, root, configManager)
 }
