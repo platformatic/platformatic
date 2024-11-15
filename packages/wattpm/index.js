@@ -1,7 +1,7 @@
 import { bold } from 'colorette'
 import { buildCommand } from './lib/commands/build.js'
 import { devCommand, reloadCommand, restartCommand, startCommand, stopCommand } from './lib/commands/execution.js'
-import { importCommand, resolveCommand, resolvedFolder } from './lib/commands/external.js'
+import { importCommand, resolveCommand } from './lib/commands/external.js'
 import { helpCommand } from './lib/commands/help.js'
 import { initCommand } from './lib/commands/init.js'
 import { injectCommand } from './lib/commands/inject.js'
@@ -11,7 +11,7 @@ import { version } from './lib/schema.js'
 import { createLogger, overrideFatal, parseArgs, setVerbose } from './lib/utils.js'
 
 export async function main () {
-  globalThis.platformatic = { executable: 'watt', resolvedServicesFolder: resolvedFolder }
+  globalThis.platformatic = { executable: 'watt' }
 
   const logger = createLogger('info')
 
@@ -108,3 +108,5 @@ export async function main () {
 }
 
 export * from './lib/schema.js'
+
+export { resolveServices } from './lib/commands/external.js'

@@ -20,43 +20,43 @@
     {
       "id": "without-path",
       "config": "services/piquant-combat/platformatic.json",
-      "url": "http://github.com/test-owner/test-app-1.git"
+      "url": "https://github.com/platformatic/wattpm-fixtures.git"
     },
     {
       "id": "piquant-existing",
       "path": "services/piquant-combat",
       "config": "services/piquant-combat/platformatic.json",
-      "url": "http://github.com/test-owner/test-app-1.git"
+      "url": "https://github.com/platformatic/wattpm-fixtures.git"
     },
     {
       "id": "piquant-resolved",
       "path": "{MISSING_ENV_VAR}",
       "config": "services/piquant-combat/platformatic.json",
-      "url": "http://github.com/test-owner/test-app-1.git"
+      "url": "https://github.com/platformatic/wattpm-fixtures.git"
     },
     {
       "id": "external-service-1",
       "config": "platformatic.json",
       "path": "services/external-service-1",
-      "url": "http://github.com/test-owner/test-app-1.git"
+      "url": "https://github.com/platformatic/wattpm-fixtures.git"
     },
     {
       "id": "external-service-2",
       "config": "platformatic.json",
       "path": "{SOME_ENV_VAR}",
-      "url": "http://github.com/test-owner/test-app-2.git"
+      "url": "https://github.com/platformatic/wattpm-fixtures.git"
     },
     {
       "id": "external-service-3",
       "config": "platformatic.json",
       "path": "{MISSING_ENV_VAR}",
-      "url": "http://github.com/test-owner/test-app-3.git"
+      "url": "https://github.com/platformatic/wattpm-fixtures.git"
     },
     {
       "id": "external-service-4",
       "config": "platformatic.json",
       "path": "../non-existent",
-      "url": "http://github.com/test-owner/test-app-4.git"
+      "url": "https://github.com/platformatic/wattpm-fixtures.git"
     }
   ]
 }

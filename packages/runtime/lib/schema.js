@@ -27,6 +27,7 @@ const services = {
       },
       path: {
         type: 'string',
+        // This is required for the resolve command to allow empty paths after environment variable replacement
         allowEmptyPaths: true,
         resolvePath: true
       },
@@ -311,6 +312,10 @@ const platformaticRuntimeSchema = {
         { type: 'string' }
       ],
       default: 300000 // 5 minutes
+    },
+    resolvedServicesBasePath: {
+      type: 'string',
+      default: 'external'
     }
   },
   anyOf: [{ required: ['autoload'] }, { required: ['services'] }, { required: ['web'] }],

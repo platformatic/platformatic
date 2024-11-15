@@ -124,14 +124,14 @@ class Runtime extends EventEmitter {
 
     // Create all services, each in is own worker thread
     for (const serviceConfig of config.services) {
+      // If there is no service path, check if the service was resolved
       if (!serviceConfig.path) {
         if (serviceConfig.url && globalThis.platformatic) {
-          const { executable, resolvedServicesFolder } = globalThis.platformatic
-
           // Try to backfill the path for external services
-          serviceConfig.path = join(this.#configManager.dirname, resolvedServicesFolder, serviceConfig.id)
+          serviceConfig.path = join(this.#configManager.dirname, config.resolvedServicesBasePath, serviceConfig.id)
 
           if (!existsSync(serviceConfig.path)) {
+            const executable = globalThis.platformatic?.executable ?? 'platformatic'
             this.logger.error(
               `The path for service "%s" does not exist. Please run "${executable} resolve" and try again.`,
               serviceConfig.id

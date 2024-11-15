@@ -131,5 +131,5 @@ dist
 .pnp.*
 
 # Watt resolved folder
-web.resolved/
+external/
 `

@@ -71,6 +71,7 @@
     "pino": "^9.4.0",
     "pino-pretty": "^13.0.0",
     "split2": "^4.2.0",
+    "wattpm": "workspace:*",
     "undici": "^7.0.0"
   }
 }

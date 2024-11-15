@@ -14,7 +14,7 @@ test('resolve runtime external services', async t => {
     recursive: true
   })
 
-  const child = await execa('node', [cliPath, 'resolve', '--test'], { cwd: dest })
+  const child = await execa('node', [cliPath, 'resolve'], { cwd: dest })
 
   assert.ok(!child.stdout.includes('piquant-combat'), child.stdout)
   assert.ok(child.stdout.includes('Skipping service piquant-existing as the path already exists'), child.stdout)
@@ -33,34 +33,36 @@ test('resolve runtime external services', async t => {
   )
 
   assert.ok(
-    child.stdout.includes('Cloning http://github.com/test-owner/test-app-1.git into services/external-service-1'),
-    child.stdout
-  )
-
-  assert.ok(
     child.stdout.includes(
-      `Cloning http://github.com/test-owner/test-app-1.git into ${join('external', 'without-path')}`
+      'Cloning https://github.com/platformatic/wattpm-fixtures.git into services/external-service-1'
     ),
     child.stdout
   )
 
   assert.ok(
     child.stdout.includes(
-      `Cloning http://github.com/test-owner/test-app-2.git into ${join('custom-external', 'external-service-2')}`
+      `Cloning https://github.com/platformatic/wattpm-fixtures.git into ${join('external', 'without-path')}`
     ),
     child.stdout
   )
 
   assert.ok(
     child.stdout.includes(
-      `Cloning http://github.com/test-owner/test-app-3.git into ${join('external', 'external-service-3')}`
+      `Cloning https://github.com/platformatic/wattpm-fixtures.git into ${join('custom-external', 'external-service-2')}`
     ),
     child.stdout
   )
 
-  assert.ok(child.stdout.includes('Resolving dependencies for service "external-service-1"'), child.stdout)
-  assert.ok(child.stdout.includes('Resolving dependencies for service "external-service-2"'), child.stdout)
-  assert.ok(child.stdout.includes('Resolving dependencies for service "external-service-3"'), child.stdout)
+  assert.ok(
+    child.stdout.includes(
+      `Cloning https://github.com/platformatic/wattpm-fixtures.git into ${join('external', 'external-service-3')}`
+    ),
+    child.stdout
+  )
+
+  assert.ok(child.stdout.includes('Installing dependencies for service external-service-1'), child.stdout)
+  assert.ok(child.stdout.includes('Installing dependencies for service external-service-2'), child.stdout)
+  assert.ok(child.stdout.includes('Installing dependencies for service external-service-3'), child.stdout)
 
   assert.ok(child.stdout.includes('All external services have been resolved'), child.stdout)
 })
