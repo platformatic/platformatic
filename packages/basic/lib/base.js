@@ -38,10 +38,7 @@ export class BaseStackable {
     this.startHttpTimer = null
     this.endHttpTimer = null
     this.clientWs = null
-    this.runtimeConfig = deepmerge(
-      options.context?.runtimeConfig ?? {},
-      workerData?.config ?? {}
-    )
+    this.runtimeConfig = deepmerge(options.context?.runtimeConfig ?? {}, workerData?.config ?? {})
 
     // Setup the logger
     const pinoOptions = {
@@ -107,6 +104,10 @@ export class BaseStackable {
 
   getDispatchFunc () {
     return this
+  }
+
+  async getDispatchTarget () {
+    return this.getUrl() ?? this.getDispatchFunc()
   }
 
   async getOpenapiSchema () {

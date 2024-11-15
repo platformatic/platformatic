@@ -8,7 +8,7 @@ const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
 const { updateConfigFile } = require('../helpers')
 const { prepareRuntime, verifyResponse, verifyInject } = require('./helper')
-const { openLogsWebsocket, } = require('../helpers')
+const { openLogsWebsocket } = require('../helpers')
 
 test('the mesh network works with the internal dispatcher', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
@@ -40,7 +40,7 @@ test('the mesh network works with the internal dispatcher', async t => {
   await verifyResponse(entryUrl, 'node', 0, 'MockSocket')
 })
 
-test('the mesh network works with the HTTP services', async t => {
+test('the mesh network works with the HTTP services when using ITC', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
 
@@ -53,6 +53,62 @@ test('the mesh network works with the HTTP services', async t => {
       useHttp: true,
       workers: 3
     })
+  })
+
+  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
+  const app = await buildServer(config.configManager.current, config.args)
+  const entryUrl = await app.start()
+  const ports = await Promise.all(
+    [0, 1, 2].map(async worker => {
+      const meta = await app.getServiceMeta(`service:${worker}`)
+      return new URL(meta.composer.url).port
+    })
+  )
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  function verifySource (port, res) {
+    deepStrictEqual(res.headers['x-plt-port'], port)
+  }
+
+  await verifyResponse(entryUrl, 'service', 0, 'Socket', verifySource.bind(null, ports[0]))
+  await verifyResponse(entryUrl, 'node', 0, 'MockSocket')
+
+  await verifyResponse(entryUrl, 'service', 1, 'Socket', verifySource.bind(null, ports[1]))
+  await verifyResponse(entryUrl, 'node', 1, 'MockSocket')
+
+  await verifyResponse(entryUrl, 'service', 2, 'Socket', verifySource.bind(null, ports[2]))
+  await verifyResponse(entryUrl, 'node', 2, 'MockSocket')
+
+  await verifyResponse(entryUrl, 'service', 0, 'Socket', verifySource.bind(null, ports[0]))
+  await verifyResponse(entryUrl, 'node', 3, 'MockSocket')
+
+  await verifyResponse(entryUrl, 'service', 1, 'Socket', verifySource.bind(null, ports[1]))
+  await verifyResponse(entryUrl, 'node', 4, 'MockSocket')
+
+  await verifyResponse(entryUrl, 'service', 2, 'Socket', verifySource.bind(null, ports[2]))
+  await verifyResponse(entryUrl, 'node', 0, 'MockSocket')
+})
+
+test('the mesh network works with the HTTP services when using HTTP', async t => {
+  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
+  const configFile = resolve(root, './platformatic.json')
+
+  await updateConfigFile(configFile, contents => {
+    contents.services[0].useHttp = true
+    contents.services.push({
+      id: 'service',
+      path: './service',
+      config: 'platformatic.json',
+      useHttp: true,
+      workers: 3
+    })
+  })
+
+  await updateConfigFile(resolve(root, './node/platformatic.json'), contents => {
+    contents.node = { dispatchViaHttp: true }
   })
 
   const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)

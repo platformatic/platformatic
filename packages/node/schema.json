@@ -307,6 +307,10 @@
           "description": "This Node.js application requires the Absolute URL from the Composer",
           "type": "boolean",
           "default": false
+        },
+        "dispatchViaHttp": {
+          "type": "boolean",
+          "default": false
         }
       },
       "default": {},

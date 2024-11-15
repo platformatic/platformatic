@@ -23,6 +23,13 @@ const server = createServer((req, res) => {
         })
         res.end(JSON.stringify(json))
       })
+  } else if (req.url === '/inject') {
+    res.writeHead(200, {
+      'content-type': 'application/json',
+      connection: 'close'
+    })
+
+    res.end(JSON.stringify({ socket: req.socket.constructor.name === 'Socket' }))
   } else {
     res.writeHead(404, {
       'content-type': 'application/json',
@@ -30,6 +37,19 @@ const server = createServer((req, res) => {
     })
     res.end(JSON.stringify({ ok: false }))
   }
+})
+
+globalThis[Symbol.for('plt.runtime.itc')].handle('closeServer', () => {
+  return new Promise((resolve, reject) => {
+    server.close(err => {
+      if (err) {
+        reject(err)
+        return
+      }
+
+      resolve()
+    })
+  })
 })
 
 // This would likely fail if our code doesn't work
