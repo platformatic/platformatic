@@ -1080,6 +1080,10 @@
         }
       ],
       "default": 300000
+    },
+    "resolvedServicesBasePath": {
+      "type": "string",
+      "default": "external"
     }
   },
   "anyOf": [

@@ -165,6 +165,7 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime2140Json = {
     [k: string]: unknown;
   };
   serviceTimeout?: number | string;
+  resolvedServicesBasePath?: string;
 };
 
 export interface UndiciInterceptor {

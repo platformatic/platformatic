@@ -121,10 +121,6 @@ async function setupAndStartRuntime (config) {
 }
 
 async function startCommand (args, throwAllErrors = false, returnRuntime = false) {
-  if (!globalThis.platformatic) {
-    globalThis.platformatic = { executable: 'platformatic', resolvedServicesFolder: 'external' }
-  }
-
   try {
     const config = await loadConfig(
       {

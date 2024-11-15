@@ -20,7 +20,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { logo } from './lib/ascii.js'
 import { build } from './lib/build.js'
-import { resolve, RESOLVED_SERVICES_DIRNAME } from './lib/resolve.js'
+import { resolve } from './lib/resolve.js'
 import { upgrade } from './lib/upgrade.js'
 
 checkNodeVersionForServices()
@@ -39,8 +39,6 @@ async function load (moduleName) {
 }
 
 const ensureCommand = async ({ output, help }) => {
-  globalThis.platformatic = { executable: 'platformatic', resolvedServicesFolder: RESOLVED_SERVICES_DIRNAME }
-
   if (!output) {
     return
   }

@@ -22,7 +22,7 @@ test('init - should create a new application for NPM', async t => {
     name: basename(directory),
     ...defaultPackageJson,
     dependencies: { wattpm: `^${version}` },
-    workspaces: ['web/*', 'web.resolved/*']
+    workspaces: ['web/*', 'external/*']
   })
 
   strictEqual(await readFile(resolve(directory, '.gitignore'), 'utf-8'), gitignore)
@@ -46,7 +46,7 @@ test('init - should create a new application for PNPM', async t => {
     dependencies: { wattpm: `^${version}` }
   })
 
-  deepStrictEqual(await readFile(resolve(directory, 'pnpm-workspace.yaml'), 'utf-8'), 'packages:\n  - web/*\n  - web.resolved/*\n')
+  deepStrictEqual(await readFile(resolve(directory, 'pnpm-workspace.yaml'), 'utf-8'), 'packages:\n  - web/*\n  - external/*\n')
 })
 
 test('init - should fail if the destination is a file', async t => {

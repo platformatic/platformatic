@@ -177,7 +177,7 @@ Options:
 - `-u, --username <value>`: The username to use for HTTP URLs
 - `-p, --password <value>`: The password to use for HTTP URLs
 - `-s, --skip-dependencies`: Do not install services dependencies
-- `-P, --package-manager`: Use an alternative package manager (the default is `npm`)
+- `-P, --package-manager`: Use an alternative package manager (the default is to autodetect it)
 
 ## `help`
 

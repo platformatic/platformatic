@@ -18,8 +18,6 @@ import {
   serviceToEnvVariable
 } from '../utils.js'
 
-export const resolvedFolder = 'web.resolved'
-
 const originCandidates = ['origin', 'upstream']
 
 async function parseLocalFolder (path) {
@@ -236,6 +234,111 @@ async function importLocal (logger, root, configurationFile, path, overridenId) 
   await saveConfigurationFile(logger, resolve(path, 'watt.json'), wattJson)
 }
 
+export async function resolveServices (
+  logger,
+  root,
+  configurationFile,
+  username,
+  password,
+  skipDependencies,
+  packageManager
+) {
+  const config = await loadConfigurationFile(logger, configurationFile)
+
+  /* c8 ignore next 8 */
+  if (!packageManager) {
+    if (existsSync(resolve(root, 'pnpm-lock.yaml'))) {
+      packageManager = 'pnpm'
+    } else {
+      packageManager = 'npm'
+    }
+  }
+
+  // The services which might be to be resolved are the one that have a URL and either
+  // no path defined (which means no environment variable set) or a non-existing path (which means not resolved yet)
+  const resolvableServices = config.services.filter(service => {
+    if (!service.url) {
+      return false
+    }
+
+    if (service.path && existsSync(service.path)) {
+      logger.warn(`Skipping service ${bold(service.id)} as the path already exists.`)
+      return false
+    }
+
+    return true
+  })
+
+  // Iterate the services a first time to verify the environment files configuration and which services must be resolved
+  const toResolve = []
+
+  // Simply use service.path here
+  for (const service of resolvableServices) {
+    if (!service.path) {
+      service.path = resolve(root, `${config.resolvedServicesBasePath}/${service.id}`)
+    }
+
+    const directory = resolve(root, service.path)
+
+    // If the directory already exists, it's either external or already resolved, nothing to do in both cases
+    if (!existsSync(directory)) {
+      if (!directory.startsWith(root)) {
+        logger.warn(
+          `Skipping service ${bold(service.id)} as the non existent directory ${bold(service.path)} is outside the project directory.`
+        )
+      } else {
+        // This repository must be resolved
+        toResolve.push(service)
+      }
+    } else {
+      logger.warn(
+        `Skipping service ${bold(service.id)} as the generated path ${bold(join(config.resolvedServicesBasePath, service.id))} already exists.`
+      )
+    }
+  }
+
+  // Resolve the services
+  for (const service of toResolve) {
+    let operation
+    const childLogger = logger.child({ name: service.id })
+    overrideFatal(childLogger)
+
+    try {
+      const absolutePath = service.path
+      const relativePath = relative(root, absolutePath)
+
+      // Clone and install dependencies
+      operation = 'clone repository'
+      childLogger.info(`Resolving service ${bold(service.id)} ...`)
+
+      let url = service.url
+      process._rawDebug(url, username, password)
+      if (url.startsWith('http') && username && password) {
+        const parsed = new URL(url)
+        parsed.username ||= username
+        parsed.password ||= password
+        url = parsed.toString()
+      }
+
+      if (username) {
+        childLogger.info(`Cloning ${bold(service.url)} as user ${bold(username)} into ${bold(relativePath)} ...`)
+      } else {
+        childLogger.info(`Cloning ${bold(service.url)} into ${bold(relativePath)} ...`)
+      }
+
+      await execa('git', ['clone', url, absolutePath])
+
+      if (!skipDependencies) {
+        operation = 'installing dependencies'
+        childLogger.info(`Installing dependencies for service ${bold(service.id)} ...`)
+        await execa(packageManager, ['install'], { cwd: absolutePath })
+      }
+    } catch (error) {
+      childLogger.fatal({ error: ensureLoggableError(error) }, `Unable to ${operation} of service ${bold(service.id)}`)
+    }
+  }
+}
+
 export async function importCommand (logger, args) {
   const {
     values: { id, http },
@@ -316,8 +419,7 @@ export async function resolveCommand (logger, args) {
       },
       'package-manager': {
         type: 'string',
-        short: 'p',
-        default: 'npm'
+        short: 'p'
       }
     },
     false
@@ -326,91 +428,8 @@ export async function resolveCommand (logger, args) {
   /* c8 ignore next */
   const root = resolve(process.cwd(), positionals[0] ?? '')
   const configurationFile = await findConfigurationFile(logger, root)
-  const config = await loadConfigurationFile(logger, configurationFile)
 
-  // The services which might be to be resolved are the one that have a URL and either
-  // no path defined (which means no environment variable set) or a non-existing path (which means not resolved yet)
-  const resolvableServices = config.services.filter(service => {
-    if (!service.url) {
-      return false
-    }
-
-    if (service.path && existsSync(service.path)) {
-      logger.warn(`Skipping service ${bold(service.id)} as the path already exists.`)
-      return false
-    }
-
-    return true
-  })
-
-  // Iterate the services a first time to verify the environment files configuration and which services must be resolved
-  const toResolve = []
-
-  // Simply use service.path here
-  for (const service of resolvableServices) {
-    if (!service.path) {
-      service.path = resolve(root, `${resolvedFolder}/${service.id}`)
-    }
-
-    const directory = resolve(root, service.path)
-
-    // If the directory already exists, it's either external or already resolved, nothing to do in both cases
-    if (!existsSync(directory)) {
-      if (!directory.startsWith(root)) {
-        logger.warn(
-          `Skipping service ${bold(service.id)} as the non existent directory ${bold(service.path)} is outside the project directory.`
-        )
-      } else {
-        // This repository must be resolved
-        toResolve.push(service)
-      }
-    } else {
-      logger.warn(
-        `Skipping service ${bold(service.id)} as the generated path ${bold(join(resolvedFolder, service.id))} already exists.`
-      )
-    }
-  }
-
-  // Resolve the services
-  for (const service of toResolve) {
-    let operation
-    const childLogger = logger.child({ name: service.id })
-    overrideFatal(childLogger)
-
-    try {
-      const absolutePath = service.path
-      const relativePath = relative(root, absolutePath)
-
-      // Clone and install dependencies
-      operation = 'clone repository'
-      childLogger.info(`Resolving service ${bold(service.id)} ...`)
-
-      let url = service.url
-      if (url.startsWith('http') && username && password) {
-        const parsed = new URL(url)
-        parsed.username ||= username
-        parsed.password ||= password
-        url = parsed.toString()
-      }
-
-      if (username) {
-        childLogger.info(`Cloning ${bold(service.url)} as user ${bold(username)} into ${bold(relativePath)} ...`)
-      } else {
-        childLogger.info(`Cloning ${bold(service.url)} into ${bold(relativePath)} ...`)
-      }
-
-      await execa('git', ['clone', url, absolutePath])
-
-      if (!skipDependencies) {
-        operation = 'installing dependencies'
-        childLogger.info('Installing dependencies ...')
-        await execa(packageManager, ['install'], { cwd: absolutePath })
-      }
-    } catch (error) {
-      childLogger.fatal({ error: ensureLoggableError(error) }, `Unable to ${operation} of service ${bold(service.id)}`)
-    }
-  }
-
+  await resolveServices(logger, root, configurationFile, username, password, skipDependencies, packageManager)
   logger.done('All services have been resolved.')
 }
 
@@ -463,7 +482,7 @@ export const help = {
       },
       {
         usage: 'P, --package-manager',
-        description: 'Use an alternative package manager (the default is npm)'
+        description: 'Use an alternative package manager (the default is to autodetect it)'
       }
     ],
     footer: `

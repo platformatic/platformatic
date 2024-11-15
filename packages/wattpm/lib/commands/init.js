@@ -89,9 +89,9 @@ export async function initCommand (logger, args) {
   }
 
   if (packageManager === 'npm') {
-    packageJson.workspaces = ['web/*', 'web.resolved/*']
+    packageJson.workspaces = ['web/*', 'external/*']
   } else if (packageManager === 'pnpm') {
-    await saveConfigurationFile(logger, resolve(root, 'pnpm-workspace.yaml'), { packages: ['web/*', 'web.resolved/*'] })
+    await saveConfigurationFile(logger, resolve(root, 'pnpm-workspace.yaml'), { packages: ['web/*', 'external/*'] })
   }
 
   // Write the package.json file

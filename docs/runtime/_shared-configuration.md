@@ -72,6 +72,10 @@ If this property is present, then the services will not be reordered according t
 `getBootstrapDependencies` function and they will be started in the order they are defined in
 the configuration file.
 
+### `resolvedServicesBasePath`
+
+The base path, relative to the configuration file to store resolved services. Each service will be saved in `{resolvedServicesBasePath}/{id}`. Default: `external`.
+
 ### `entrypoint`
 
 The Platformatic Runtime's entrypoint is a microservice that is exposed
@@ -125,13 +129,13 @@ Configures the health check for each worker. This is enabled only if `restartOnE
 
 The object supports the following settings:
 
-* `enabled` (`boolean`): If to enable the health check. Default: `true`.
-* `interval` (`number`): The interval between checks in milliseconds. Default: `30000`.
-* `gracePeriod`: How long after the service started before starting to perform health checks. Default: `30000`.
-* `maxUnhealthyChecks`: The number of consecutive failed checks before killing the worker. Default: `1`.
-* `maxELU`: The maximum allowed Event Loop Utilization. The value must be a percentage between `0` and `1`. Default: `0.95`.
-* `maxHeapUsed`: The maximum allowed memory utilization. The value must be a percentage between `0` and `1`. Default: `0.95`.
-* `maxHeapTotal`: The maximum allowed memory allocatable by the process. The value must be an amount in bytes. Default: `4G`.
+- `enabled` (`boolean`): If to enable the health check. Default: `true`.
+- `interval` (`number`): The interval between checks in milliseconds. Default: `30000`.
+- `gracePeriod`: How long after the service started before starting to perform health checks. Default: `30000`.
+- `maxUnhealthyChecks`: The number of consecutive failed checks before killing the worker. Default: `1`.
+- `maxELU`: The maximum allowed Event Loop Utilization. The value must be a percentage between `0` and `1`. Default: `0.95`.
+- `maxHeapUsed`: The maximum allowed memory utilization. The value must be a percentage between `0` and `1`. Default: `0.95`.
+- `maxHeapTotal`: The maximum allowed memory allocatable by the process. The value must be an amount in bytes. Default: `4G`.
 
 ### `telemetry`
 
