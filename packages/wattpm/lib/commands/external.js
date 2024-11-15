@@ -312,7 +312,6 @@ export async function resolveServices (
       childLogger.info(`Resolving service ${bold(service.id)} ...`)
 
       let url = service.url
-      process._rawDebug(url, username, password)
       if (url.startsWith('http') && username && password) {
         const parsed = new URL(url)
         parsed.username ||= username

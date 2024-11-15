@@ -6,8 +6,8 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { request } from 'undici'
-import { prepareRuntime } from '../../basic/test/helper.js'
-import { waitForStart, wattpm } from './helper.js'
+import { ensureDependencies, prepareRuntime, updateFile } from '../../basic/test/helper.js'
+import { prepareGitRepository, waitForStart, wattpm } from './helper.js'
 
 test('dev - should start in development mode', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
@@ -264,6 +264,7 @@ test('start - should start in production mode with the inspector', async t => {
 
 test('start - should use default folders for resolved services', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  await prepareGitRepository(t, rootDir)
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -271,8 +272,15 @@ test('start - should use default folders for resolved services', async t => {
   })
 
   process.chdir(rootDir)
-  await wattpm('import', rootDir, '-h', '-i', 'resolved', 'platformatic/wattpm-fixtures')
+  await wattpm('import', rootDir, '-h', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
   await wattpm('resolve', rootDir)
+  await updateFile(resolve(rootDir, 'external/resolved/package.json'), content => {
+    const config = JSON.parse(content)
+    config.dependencies = { '@platformatic/node': '^2.8.0' }
+    return JSON.stringify(config, null, 2)
+  })
+
+  await ensureDependencies([resolve(rootDir, 'external/resolved')])
 
   const startProcess = wattpm('start', rootDir)
 
@@ -292,9 +300,10 @@ test('start - should use default folders for resolved services', async t => {
 
 test('start - should throw an error when a service has not been resolved', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  await prepareGitRepository(t, rootDir)
 
   process.chdir(rootDir)
-  await wattpm('import', rootDir, '-h', '-i', 'resolved', 'platformatic/wattpm-fixtures')
+  await wattpm('import', rootDir, '-h', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
 
   const startProcess = await wattpm('start', rootDir, { reject: false })
 
@@ -315,6 +324,7 @@ test('start - should throw an error when a service has not been resolved', async
 
 test('start - should throw an error when a service has no path and it is not resolvable', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  await prepareGitRepository(t, rootDir)
 
   const config = JSON.parse(await readFile(resolve(rootDir, 'watt.json'), 'utf-8'))
   config.web = [{ id: 'resolved', path: '' }]
