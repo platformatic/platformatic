@@ -13,13 +13,6 @@ const { getRuntimeLogsDir } = require('./utils')
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 
 async function managementApiPlugin (app, opts) {
-  app.log.warn(
-    'Runtime Management API is in the experimental stage. ' +
-      'The feature is not subject to semantic versioning rules. ' +
-      'Non-backward compatible changes or removal may occur in any future release. ' +
-      'Use of the feature is not recommended in production environments.'
-  )
-
   const runtime = opts.runtime
 
   app.get('/status', async () => {
