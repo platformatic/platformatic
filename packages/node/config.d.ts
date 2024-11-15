@@ -99,5 +99,6 @@ export interface PlatformaticNodeJsStackable {
      * This Node.js application requires the Absolute URL from the Composer
      */
     absoluteUrl?: boolean;
+    dispatchViaHttp?: boolean;
   };
 }
