@@ -18,6 +18,9 @@ const {
   InMemorySpanExporter,
 } = require('@opentelemetry/sdk-trace-base')
 const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http')
+const {
+  UndiciInstrumentation,
+} = require('@opentelemetry/instrumentation-undici')
 
 // See: https://www.npmjs.com/package/@opentelemetry/instrumentation-http
 // When this is fixed we should set this to 'http' and fixe the tests
@@ -72,6 +75,7 @@ const setupNodeHTTPTelemetry = (opts) => {
   const sdk = new opentelemetry.NodeSDK({
     spanProcessors, // https://github.com/open-telemetry/opentelemetry-js/issues/4881#issuecomment-2358059714
     instrumentations: [
+      new UndiciInstrumentation(),
       new HttpInstrumentation(),
     ],
     resource: new Resource({
