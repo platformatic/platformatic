@@ -27,10 +27,7 @@ class ServiceStackable {
     this.context.worker ??= { count: 1, index: 0 }
     this.workerId = this.context.worker.count > 1 ? this.context.worker.index : undefined
 
-    this.runtimeConfig = deepmerge(
-      this.context.runtimeConfig ?? {},
-      workerData?.config ?? {}
-    )
+    this.runtimeConfig = deepmerge(this.context.runtimeConfig ?? {}, workerData?.config ?? {})
 
     this.configManager.on('error', err => {
       /* c8 ignore next */
@@ -156,6 +153,10 @@ class ServiceStackable {
   async getDispatchFunc () {
     await this.init()
     return this.app
+  }
+
+  async getDispatchTarget () {
+    return this.getUrl() ?? (await this.getDispatchFunc())
   }
 
   async getOpenapiSchema () {

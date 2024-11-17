@@ -79,19 +79,22 @@ same version of the Platformatic CLI.
 
 Welcome to Platformatic. Available commands are:
 
+* `db` - start Platformatic DB; type `platformatic db help` to know more.
+* `runtime` - start Platformatic Runtime; type `platformatic runtime help` to know more.
+* `service` - start Platformatic Service; type `platformatic service help` to know more.
+* `composer` - start Platformatic Composer; type `platformatic composer help` to know more.
+* `start` - start a Platformatic application.
+* `ctl` - Platformatic Control commands; `platformatic ctl help` to know more.
+* `ps` - list all Platformatic runtime applications.
+* `inject` - inject a request into a Platformatic runtime application.
+* `logs` - stream logs for a Platformatic runtime application.
+* `upgrade` - upgrade the Platformatic configuration to the latest version.
+* `resolve` - resolve Platformatic Runtime external services
+* `client` - generate a Platformatic client.
+* `build` - builds all services.
+* `compile` - compile all typescript plugins.
 * `help` - display this message.
 * `help <command>` - show more information about a command.
-* `db` - start Platformatic DB; type `platformatic db help` to know more.
-* `service` - start Platformatic Service; type `platformatic service help` to know more.
-* `upgrade` - upgrade the Platformatic configuration to the latest version.
-* `gh` - create a new gh action for Platformatic deployments.
-* `runtime` - start Platformatic Runtime; type `platformatic runtime help` to know more.
-* `start` - start a Platformatic application.
-* `client` - generate a Platformatic client.
-* `ps` - list all Platformatic runtime applications.
-* `logs` - stream logs for a Platformatic runtime application.
-* `inject` - inject a request into a Platformatic runtime application.
-* `ctl` - Platformatic Control commands; `platformatic ctl help` to know more.
 
 
 #### compile
@@ -138,6 +141,7 @@ set the `managementApi` option to `true` in the runtime configuration file.
 To get the list of runtimes with enabled management API use the
 `platformatic ctl ps` command.
 
+
 #### logs
 
 Streams logs from the platformatic runtime application.
@@ -175,6 +179,67 @@ To see the list of all available control commands, run `platformatic ctl help`.
 
 The `ps` command uses the Platformatic Runtime Management API. To enable it
 set the `managementApi` option to `true` in the runtime configuration file.
+
+
+#### resolve
+
+Resolve Platformatic Runtime external services
+
+``` bash
+ $ platformatic resolve
+```
+
+Options:
+
+* `-c, --config FILE` - Path to the runtime configuration file.
+* `-u, --username string` - Username for the service repository.
+* `-p, --password string` - Password for the service repository.
+
+Platformatic resolve command resolves runtime services that have the `url` in their configuration.
+By default services are cloned with `git` to the `external` directory inside the runtime directory.
+To change the directory where a service is cloned, you can set the `path` property in the service configuration.
+
+After cloning the service, the resolve command will set the relative path to the service in the runtime configuration file.
+
+Example of the runtime platformatic.json configuration file:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
+  "entrypoint": "service-1",
+  "services": [
+    {
+      "id": "service-1",
+      "path": "./services/service-1",
+      "config": "platformatic.json"
+    },
+    {
+      "id": "service-2",
+      "config": "platformatic.json",
+      "url": "https://github.com/test-owner/test-service.git"
+    },
+    {
+      "id": "service-3",
+      "config": "platformatic.json",
+      "path": "./custom-external/service-3",
+      "url": "https://github.com/test-owner/test-service.git"
+    }
+  ],
+}
+```
+
+If not specified, the configuration will be loaded from any of the following, in the current directory.
+
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`, or 
+* `platformatic.json`, or
+* `platformatic.yml`, or 
+* `platformatic.tml`
+
+You can find more details about the configuration format here:
+* [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
+* [Platformatic Service Configuration](https://docs.platformatic.dev/docs/service/configuration)
 
 
 #### start
@@ -241,7 +306,7 @@ To create a client for a remote Graphql API, you can use the following command:
 $ platformatic client http://example.com/graphql -n myclient
 ```
 
-Instead of a URL, you can also use a local file:
+Instead of an URL, you can also use a local file:
 
 ```bash
 $ platformatic client path/to/schema -n myclient
@@ -300,7 +365,7 @@ Options:
 * `-t, --typescript` - Generate the client plugin in TypeScript.
 * `-R, --runtime <serviceId>` - Generate the client for the `serviceId` running in the current runtime
 * `--frontend` - Generated a browser-compatible client that uses `fetch`
-* `--full-response` - Client will return full response object rather than just the body. Bear in mind that in some cases the full response will be forced (f.e. generating the frontend with an OpenAPI schema that contains an empty response).
+* `--full-response` - Client will return full response object rather than just the body.
 * `--full-request` - Client will be called with all parameters wrapped in `body`, `headers` and `query` properties. Ignored if `--frontend`
 * `--full` - Enables both `--full-request` and `--full-response` overriding them.
 * `--optional-headers <headers>` - Comma separated string of headers that will be marked as optional in the type file. Ignored if `--frontend`
@@ -308,6 +373,9 @@ Options:
 * `--language js|ts` - Generate a Javascript or Typescript frontend client. Only works if `--frontend`
 * `--url-auth-headers <stringify-headers>` - When the Open API schema is passed as URL (instead of static file) this property allow to pass authorization headers. Headers should be passed as `string` (e.g. `'{"authorization":"42"}'`).
 * `--types-only` - Generate only the type file.
+* `--types-comment` - Add a comment at the beginning of the auto generated `.d.ts` type definition.
+* `--with-credentials` - Adds "credentials: 'include'" to all fetch requests (only for frontend clients).
+
 
 ### composer
 
@@ -496,7 +564,7 @@ Here is an example migration:
   );
 ```
 
-You can always roll back to a specific migration with:
+You can always rollback to a specific migration with:
 
 ``` bash
   $ platformatic db migrations apply --to VERSION
@@ -818,6 +886,7 @@ save the following as `platformatic.json`:
 }
 ```
 
+
 ### frontend
 
 ```bash
@@ -876,7 +945,7 @@ Compile all typescript plugins for all services.
 ```
 
 This command will compile the TypeScript
-plugins for each service registered in the runtime.
+plugins for each services registered in the runtime.
 
 
 #### help

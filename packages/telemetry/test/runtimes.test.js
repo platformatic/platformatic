@@ -218,7 +218,7 @@ test('configure telemetry correctly with a composer + node + fastify', async t =
 
 test('configure telemetry correctly with a composer + next', async t => {
   // composer -> next -> fastify
-  //                  -> node
+  //                  -> node (via http)
   //
   // We need to be in production mode to be in the same runtime
   const { root, config } = await basicHelper.prepareRuntime(t,
@@ -280,6 +280,19 @@ test('configure telemetry correctly with a composer + next', async t => {
   })
   const spanNextClientNode = findParentSpan(spans, spanNodeServer, SpanKind.CLIENT, 'GET http://node.plt.local/')
   const spanNextServer = findSpanWithParentWithId(spans, spanNextClientNode, spanComposerClient.id)
+  equal(spanNextClientNode.traceId, traceId)
+  equal(spanNextServer.traceId, traceId)
+
+  const spanFastifyServer = spans.find(span => {
+    if (span.kind === SpanKind.SERVER) {
+      return span.resource._attributes['service.name'] === 'test-runtime-fastify' &&
+      span.traceId === traceId
+    }
+    return false
+  })
+  const spanNextClientFastify = findParentSpan(spans, spanFastifyServer, SpanKind.CLIENT, 'GET http://fastify.plt.local/')
+  const spanNextServer2 = findSpanWithParentWithId(spans, spanNextClientFastify, spanComposerClient.id)
+  equal(spanNextServer.id, spanNextServer2.id) // Must be the same span
   equal(spanNextClientNode.traceId, traceId)
   equal(spanNextServer.traceId, traceId)
 

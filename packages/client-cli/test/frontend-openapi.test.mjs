@@ -667,3 +667,62 @@ console.log(await client.getReturnHeaders())
   const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
   equal(lines[0], '{ message: \'ok\', data: { authorization: \'Bearer foobar\' } }')
 })
+
+test('add credentials: include in client implementation from file', async (t) => {
+  const dir = await moveToTmpdir(after)
+  {
+    const openAPIfile = join(__dirname, 'fixtures', 'movies', 'openapi.json')
+    await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend', '--with-credentials'])
+
+    const implementationFile = join(dir, 'movies', 'movies.ts')
+    const implementation = await readFile(implementationFile, 'utf-8')
+    const expectedGetMethod = `
+  const response = await fetch(\`\${url}/hello/\${request['name']}\`, {
+    credentials: 'include',
+    headers
+  })`
+    const expectedPostMethod = `
+  const response = await fetch(\`\${url}/movies/\${request['id']}?\${searchParams.toString()}\`, {
+    method: 'POST',
+    body: JSON.stringify(request),
+    credentials: 'include',
+    headers
+  })`
+    equal(implementation.includes(expectedGetMethod), true)
+    equal(implementation.includes(expectedPostMethod), true)
+  }
+})
+
+test('add credentials: include in client implementation from url', async (t) => {
+  const dir = await moveToTmpdir(after)
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+  await execa('node', [join(__dirname, '..', 'cli.mjs'), app.url, '--name', 'movies', '--language', 'ts', '--frontend', '--with-credentials'])
+
+  const implementationFile = join(dir, 'movies', 'movies.ts')
+  const implementation = await readFile(implementationFile, 'utf-8')
+
+  const expectedGetMethod = `
+  const response = await fetch(\`\${url}/returnUrl\`, {
+    credentials: 'include',
+    headers
+  })`
+  const expectedPostMethod = `
+  const response = await fetch(\`\${url}/foobar\`, {
+    method: 'POST',
+    body: JSON.stringify(request),
+    credentials: 'include',
+    headers
+  })`
+  equal(implementation.includes(expectedGetMethod), true)
+  equal(implementation.includes(expectedPostMethod), true)
+})

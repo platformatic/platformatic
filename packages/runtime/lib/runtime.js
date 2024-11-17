@@ -721,6 +721,21 @@ class Runtime extends EventEmitter {
     return createReadStream(filePath)
   }
 
+  async sendCommandToService (id, name, message) {
+    const service = await this.#getServiceById(id)
+
+    try {
+      return await sendViaITC(service, name, message)
+    } catch (e) {
+      // The service exports no meta, return an empty object
+      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
+        return {}
+      }
+
+      throw e
+    }
+  }
+
   #updateStatus (status) {
     this.#status = status
     this.emit(status)

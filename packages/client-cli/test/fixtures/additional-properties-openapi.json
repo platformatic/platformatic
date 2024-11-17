@@ -124,6 +124,14 @@
                     "xyz": {
                       "type": "object",
                       "additionalProperties": { "type": "number" }
+                    },
+                    "fantozzi": {
+                      "type": "object",
+                      "properties": {
+                        "carlo": { "type": "string" },
+                        "martello": { "type": "number" }
+                      },
+                      "additionalProperties": true
                     }
                   },
                   "required": ["entities", "errors"],

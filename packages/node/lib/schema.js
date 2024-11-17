@@ -8,12 +8,16 @@ const node = {
   type: 'object',
   properties: {
     main: {
-      type: 'string',
+      type: 'string'
     },
     absoluteUrl: {
       description: 'This Node.js application requires the Absolute URL from the Composer',
       type: 'boolean',
-      default: false,
+      default: false
+    },
+    dispatchViaHttp: {
+      type: 'boolean',
+      default: false
     }
   },
   default: {},
