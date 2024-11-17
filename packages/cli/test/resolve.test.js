@@ -18,6 +18,12 @@ test('resolve runtime external services', async t => {
 
   await execa('git', ['init'], { cwd: repo })
   await execa('git', ['add', '-A'], { cwd: repo })
+
+  if (process.env.CI) {
+    await execa('git', ['config', 'user.name', 'CI'], { cwd: repo })
+    await execa('git', ['config', 'user.email', 'ci@platformatic.dev'], { cwd: repo })
+  }
+
   await execa('git', ['commit', '-n', '-m', 'Initial commit.'], { cwd: repo })
 
   t.after(async () => {
