@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "dependencies": {
+    "@platformatic/node": "^2.8.0"
+  }
+}

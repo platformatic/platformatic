@@ -1,12 +1,13 @@
-import { safeRemove } from '@platformatic/utils'
+import { createDirectory, safeRemove } from '@platformatic/utils'
 import { execa } from 'execa'
 import { on } from 'node:events'
-import { mkdir, stat } from 'node:fs/promises'
+import { cp, mkdir, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { join, resolve } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import split2 from 'split2'
-import { setFixturesDir } from '../../basic/test/helper.js'
+import { setFixturesDir, temporaryFolder } from '../../basic/test/helper.js'
+import { appendEnvVariable } from '../lib/commands/external.js'
 
 let tmpCount = 0
 export const cliPath = fileURLToPath(new URL('../bin/wattpm.js', import.meta.url))
@@ -22,6 +23,24 @@ export async function createTemporaryDirectory (t, prefix) {
 
   await mkdir(directory)
   return directory
+}
+
+export async function prepareGitRepository (t, root) {
+  const repo = resolve(temporaryFolder, 'repo-' + Date.now())
+  await createDirectory(repo)
+
+  await cp(resolve(fixturesDir, 'external-repo'), repo, { recursive: true })
+
+  await execa('git', ['init'], { cwd: repo })
+  await execa('git', ['add', '-A'], { cwd: repo })
+  await execa('git', ['commit', '-n', '-m', 'Initial commit.'], { cwd: repo })
+
+  t.after(() => safeRemove(repo))
+
+  const url = pathToFileURL(repo)
+  await appendEnvVariable(resolve(root, '.env'), 'PLT_GIT_REPO_URL', url)
+
+  return url
 }
 
 export async function isDirectory (path) {
