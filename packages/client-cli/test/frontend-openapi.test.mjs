@@ -73,7 +73,7 @@ async function _getRedirect (url, request) {
       body: await response.json()
     }
   }
-  if (response.headers.get('content-type') === 'application/json') {
+  if (response.headers.get('content-type').startsWith('application/json')) {
     return {
       statusCode: response.status,
       headers: headersToJSON(response.headers),
@@ -445,7 +445,7 @@ test('do not add headers to fetch if a get request', async (t) => {
       body: await response.text()
     }
   }
-  if (response.headers.get('content-type') === 'application/json') {
+  if (response.headers.get('content-type').startsWith('application/json')) {
     return {
       statusCode: response.status as 200,
       headers: headersToJSON(response.headers),
@@ -482,7 +482,7 @@ test('support empty response', async (t) => {
       body: await response.text()
     }
   }
-  if (response.headers.get('content-type') === 'application/json') {
+  if (response.headers.get('content-type').startsWith('application/json')) {
     return {
       statusCode: response.status as 200,
       headers: headersToJSON(response.headers),
@@ -525,7 +525,7 @@ test('call response.json only for json responses', async (t) => {
       body: await response.text()
     }
   }
-  if (response.headers.get('content-type') === 'application/json') {
+  if (response.headers.get('content-type').startsWith('application/json')) {
     return {
       statusCode: response.status as 200,
       headers: headersToJSON(response.headers),

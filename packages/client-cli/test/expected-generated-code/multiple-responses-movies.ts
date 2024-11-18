@@ -58,7 +58,7 @@ const _getPkgScopeNameVersion = async (url: string, request: Types.GetPkgScopeNa
       body: await response.json()
     }
   }
-  if (response.headers.get('content-type') === 'application/json') {
+  if (response.headers.get('content-type').startsWith('application/json')) {
     return {
       statusCode: response.status as 200 | 202 | 302 | 400 | 404,
       headers: headersToJSON(response.headers),

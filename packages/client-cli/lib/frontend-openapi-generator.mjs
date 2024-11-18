@@ -255,7 +255,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         })
 
         // write default response as fallback
-        writer.write('if (response.headers.get(\'content-type\') === \'application/json\') ').block(() => {
+        writer.write('if (response.headers.get(\'content-type\').startsWith(\'application/json\')) ').block(() => {
           writer.write('return ').block(() => {
             writer.write('statusCode: response.status')
             if (language === 'ts') {
