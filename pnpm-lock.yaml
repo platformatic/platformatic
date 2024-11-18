@@ -1860,8 +1860,8 @@ importers:
         specifier: workspace:*
         version: link:../config
       '@platformatic/fastify-http-metrics':
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.2.0
+        version: 0.2.0
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
@@ -3867,8 +3867,8 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
-  '@platformatic/fastify-http-metrics@0.1.0':
-    resolution: {integrity: sha512-NrAesrQTXgjznjV1wwHa6glWxpKtB2bPSPF/jG8bTdtonqWkjrMgwIb3KNQF2oYwsQIOHIbhlHxxKUDCagt9AQ==}
+  '@platformatic/fastify-http-metrics@0.2.0':
+    resolution: {integrity: sha512-EGAPJO5Zqu+IzYiEhfx2wQUZhjuLjbscELrOnDw8sHrBN22OlwwZ5+ePJvtzvYkkShgSKZaElNkaIP8hnxLhIQ==}
 
   '@platformatic/fastify-openapi-glue@5.0.0':
     resolution: {integrity: sha512-VvmOmKbgqVXxOd0QQf5jzkLQpINJwJVlAgtd64FIuYXjkLmHIZphpS2cElrhoMZawgen3SJmcKP5FTzG5OHYtg==}
@@ -10534,7 +10534,7 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
-  '@platformatic/fastify-http-metrics@0.1.0':
+  '@platformatic/fastify-http-metrics@0.2.0':
     dependencies:
       fastify-plugin: 4.5.1
       prom-client: 15.1.3
