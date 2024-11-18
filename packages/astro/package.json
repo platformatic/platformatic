@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/astro",
-  "version": "2.14.0",
+  "version": "2.15.0",
   "description": "Platformatic Astro Stackable",
   "main": "index.js",
   "type": "module",
