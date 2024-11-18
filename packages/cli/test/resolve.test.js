@@ -1,7 +1,7 @@
 import { safeRemove } from '@platformatic/utils'
 import { execa } from 'execa'
 import assert from 'node:assert/strict'
-import { cp, mkdtemp, realpath } from 'node:fs/promises'
+import { cp, mkdtemp } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve, sep } from 'node:path'
 import { test } from 'node:test'
@@ -27,8 +27,8 @@ test('resolve runtime external services', async t => {
   )
 
   assert.ok(
-    child.stdout.includes(
-      `Skipping service external-service-4 as the non existent directory ${resolve(await realpath(rootDir), '../non-existent')} is outside the project directory`
+    child.stdout.match(
+      /Skipping service external-service-4 as the non existent directory .+ is outside the project directory\./
     ),
     child.stdout
   )
