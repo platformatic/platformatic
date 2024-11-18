@@ -85,7 +85,9 @@ export class NodeStackable extends BaseStackable {
       ? ensureTrailingSlash(cleanBasePath(config.application?.basePath))
       : undefined
 
-    this.registerGlobals({ basePath: this.#basePath })
+    this.registerGlobals({
+      basePath: this.#basePath,
+    })
 
     // The server promise must be created before requiring the entrypoint even if it's not going to be used
     // at all. Otherwise there is chance we miss the listen event.
@@ -233,7 +235,10 @@ export class NodeStackable extends BaseStackable {
         prefix: this.basePath ?? this.#basePath,
         wantsAbsoluteUrls: this._getWantsAbsoluteUrls(),
         needsRootRedirect: true
-      }
+      },
+      connectionStrings: [
+        [this.connectionString]
+      ]
     }
   }
 

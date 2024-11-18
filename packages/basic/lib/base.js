@@ -32,12 +32,14 @@ export class BaseStackable {
     this.serverConfig = deepmerge(options.context.serverConfig ?? {}, configManager.current.server ?? {})
     this.openapiSchema = null
     this.graphqlSchema = null
+    this.connectionString = null
     this.isEntrypoint = options.context.isEntrypoint
     this.isProduction = options.context.isProduction
     this.metricsRegistry = null
     this.startHttpTimer = null
     this.endHttpTimer = null
     this.clientWs = null
+    this.connectionString = null
     this.runtimeConfig = deepmerge(options.context?.runtimeConfig ?? {}, workerData?.config ?? {})
 
     // Setup the logger
@@ -64,6 +66,7 @@ export class BaseStackable {
       root: pathToFileURL(this.root).toString(),
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
+      setConnectionString: this.setConnectionString.bind(this),
       setBasePath: this.setBasePath.bind(this),
       runtimeBasePath: this.runtimeConfig?.basePath ?? null
     })
@@ -124,6 +127,10 @@ export class BaseStackable {
 
   setGraphqlSchema (schema) {
     this.graphqlSchema = schema
+  }
+
+  setConnectionString (connectionString) {
+    this.connectionString = connectionString
   }
 
   setBasePath (basePath) {

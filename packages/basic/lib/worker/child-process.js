@@ -118,6 +118,17 @@ export class ChildProcess extends ITC {
         process.exit(0)
       }
     })
+    // Setup globals setters.  We need them so we have the same setters we have in `BastStackable`
+    this.openapiSchema = null
+    this.graphqlSchema = null
+    this.connectionString = null
+
+    this.registerGlobals({
+      setOpenapiSchema: this.setOpenapiSchema.bind(this),
+      setGraphqlSchema: this.setGraphqlSchema.bind(this),
+      setConnectionString: this.setConnectionString.bind(this),
+      setBasePath: this.setBasePath.bind(this),
+    })
   }
 
   _setupListener (listener) {
@@ -280,6 +291,26 @@ export class ChildProcess extends ITC {
 
     process.on('uncaughtException', handleUnhandled.bind(this, 'uncaught exception'))
     process.on('unhandledRejection', handleUnhandled.bind(this, 'unhandled rejection'))
+  }
+
+  registerGlobals (globals) {
+    globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, globals)
+  }
+
+  setOpenapiSchema (schema) {
+    this.openapiSchema = schema
+  }
+
+  setGraphqlSchema (schema) {
+    this.graphqlSchema = schema
+  }
+
+  setConnectionString (connectionString) {
+    this.connectionString = connectionString
+  }
+
+  setBasePath (basePath) {
+    this.basePath = basePath
   }
 }
 
