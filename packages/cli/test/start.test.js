@@ -1,14 +1,16 @@
-import { createDirectory } from '@platformatic/utils'
+import { createDirectory, safeRemove } from '@platformatic/utils'
 import { execa } from 'execa'
 import { deepStrictEqual, ok } from 'node:assert'
 import { spawn } from 'node:child_process'
 import { on } from 'node:events'
-import { cp, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises'
+import { appendFile, cp, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import split2 from 'split2'
+import { ensureDependencies } from '../../basic/test/helper.js'
+import { prepareGitRepository } from '../../wattpm/test/helper.js'
 import { cliPath } from './helper.js'
 
 let count = 0
@@ -89,16 +91,21 @@ test('starts a runtime application', async t => {
 })
 
 test('start should use default folders for resolved services', async t => {
-  const destDir = await mkdtemp(join(tmpdir(), `test-cli-${process.pid}-`))
-  await createDirectory(destDir)
-
-  await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime-resolve-start'), destDir, {
+  const rootDir = await mkdtemp(join(tmpdir(), `test-cli-${process.pid}-`))
+  await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime-resolve-start'), rootDir, {
     recursive: true
   })
+  await prepareGitRepository(t, rootDir)
+  t.after(() => safeRemove(rootDir))
 
-  await execa('node', [cliPath, 'resolve'], { cwd: destDir })
-
-  const child = spawn(process.execPath, [cliPath, 'start'], { cwd: destDir, timeout: 10_000 })
+  await execa('node', [cliPath, 'resolve'], { cwd: rootDir, env: { NO_COLOR: 'true' } })
+  await writeFile(
+    resolve(rootDir, 'external/resolved/package.json'),
+    JSON.stringify({ private: true, dependencies: { '@platformatic/node': '^2.8.0' } }, null, 2),
+    'utf-8'
+  )
+  const child = spawn(process.execPath, [cliPath, 'start'], { cwd: rootDir, timeout: 10_000 })
+  await ensureDependencies([resolve(rootDir, 'external/resolved')])
 
   t.after(async () => {
     try {
@@ -120,14 +127,13 @@ test('start should use default folders for resolved services', async t => {
 })
 
 test('start should throw an error when a service has not been resolved', async t => {
-  const destDir = await mkdtemp(join(tmpdir(), `test-cli-${process.pid}-`))
-  await createDirectory(destDir)
-
-  await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime-resolve-start'), destDir, {
+  const rootDir = await mkdtemp(join(tmpdir(), `test-cli-${process.pid}-`))
+  await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime-resolve-start'), rootDir, {
     recursive: true
   })
 
-  const startProcess = await execa('node', [cliPath, 'start'], { cwd: destDir, reject: false })
+  await appendFile(resolve(rootDir, '.env'), `PLT_GIT_REPO_URL=file://${rootDir}`)
+  const startProcess = await execa('node', [cliPath, 'start'], { cwd: rootDir, reject: false })
 
   deepStrictEqual(startProcess.exitCode, 1)
   ok(

@@ -46,7 +46,7 @@ export async function prepareGitRepository (t, root) {
   const url = pathToFileURL(repo)
   await appendEnvVariable(resolve(root, '.env'), 'PLT_GIT_REPO_URL', url)
 
-  return url
+  return url.toString()
 }
 
 export async function isDirectory (path) {

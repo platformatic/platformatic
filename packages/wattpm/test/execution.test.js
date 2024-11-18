@@ -6,7 +6,7 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { request } from 'undici'
-import { ensureDependencies, prepareRuntime } from '../../basic/test/helper.js'
+import { ensureDependencies, prepareRuntime, updateFile } from '../../basic/test/helper.js'
 import { prepareGitRepository, waitForStart, wattpm } from './helper.js'
 
 test('dev - should start in development mode', async t => {
@@ -262,6 +262,12 @@ test('start - should use default folders for resolved services', async t => {
   process.chdir(rootDir)
   await wattpm('import', rootDir, '-h', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
   await wattpm('resolve', rootDir)
+  await updateFile(resolve(rootDir, 'external/resolved/package.json'), content => {
+    const config = JSON.parse(content)
+    config.dependencies = { '@platformatic/node': '^2.8.0' }
+    return JSON.stringify(config, null, 2)
+  })
+
   await ensureDependencies([resolve(rootDir, 'external/resolved')])
 
   const startProcess = wattpm('start', rootDir)
