@@ -196,7 +196,6 @@ const sidebars = {
       label: "Advanced Guides",
       collapsed: true,
       items: [
-        "guides/movie-quotes-app-tutorial",
         {
           type: "category",
           label: "Deployment",
