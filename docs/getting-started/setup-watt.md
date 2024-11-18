@@ -11,7 +11,7 @@ Need to install the following packages:
 wattpm@2.0.0
 Ok to proceed? (y) y
 
-[15:48:14.722] DONE (40803): Created a wattpm application in /Users/matteo/tmp/my-app.
+[15:48:14.722] DONE (40803): Created a wattpm application in /Users/tmp/my-app.
 ```
 
 Then, run `npm install` to install all the dependencies.
