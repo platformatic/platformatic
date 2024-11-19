@@ -1,5 +1,6 @@
 'use strict'
 
+const { getGlobalDispatcher } = require('undici')
 const assert = require('node:assert/strict')
 const { tmpdir } = require('node:os')
 const { test, mock } = require('node:test')
@@ -329,6 +330,58 @@ test('properly call query parser', async t => {
   const { statusCode } = await clientWithQueryParser.getMovies()
   assert.equal(statusCode, 200)
   assert.strictEqual(mockQueryParser.mock.callCount(), 1)
+})
+
+test('properly call undici dispatcher', async t => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
+  try {
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
+
+  t.after(async () => {
+    await app.close()
+    await safeRemove(tmpDir)
+  })
+  await app.start()
+
+  const clientWithoutDispatcher = await buildOpenAPIClient({
+    url: `${app.url}/documentation/json`,
+    fullResponse: true
+  })
+
+  const resultWithoutDispatcher = await clientWithoutDispatcher.getMovies()
+  assert.equal(resultWithoutDispatcher.statusCode, 200, 'no dispatcher passed')
+
+  const dispatcher = getGlobalDispatcher()
+  const clientWithDispatcher = await buildOpenAPIClient({
+    url: `${app.url}/documentation/json`,
+    fullResponse: true,
+    dispatcher
+  })
+
+  const { statusCode } = await clientWithDispatcher.getMovies()
+  assert.equal(statusCode, 200, 'valid dispatcher is passed')
+
+  let error
+  try {
+    const client = await buildOpenAPIClient({
+      url: `${app.url}/documentation/json`,
+      fullResponse: true,
+      dispatcher: 'CARLO MARTELLO!'
+    })
+    await client.getMovies()
+  } catch (err) {
+    error = err
+  }
+
+  assert.notEqual(error, undefined, 'should throw when passing a wrong dispatcher')
+  assert.ok(error.toString().includes('this.dispatch is not a function'))
 })
 
 test('throw on error level response', async t => {

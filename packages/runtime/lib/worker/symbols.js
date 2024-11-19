@@ -5,8 +5,19 @@ const kId = Symbol.for('plt.runtime.id') // This is also used to detect if we ar
 const kServiceId = Symbol.for('plt.runtime.service.id')
 const kWorkerId = Symbol.for('plt.runtime.worker.id')
 const kITC = Symbol.for('plt.runtime.itc')
+const kHealthCheckTimer = Symbol.for('plt.runtime.worker.healthCheckTimer')
 const kLoggerDestination = Symbol.for('plt.runtime.loggerDestination')
 const kLoggingPort = Symbol.for('plt.runtime.logginPort')
 const kWorkerStatus = Symbol('plt.runtime.worker.status')
 
-module.exports = { kConfig, kId, kServiceId, kWorkerId, kITC, kLoggerDestination, kLoggingPort, kWorkerStatus }
+module.exports = {
+  kConfig,
+  kId,
+  kServiceId,
+  kWorkerId,
+  kITC,
+  kHealthCheckTimer,
+  kLoggerDestination,
+  kLoggingPort,
+  kWorkerStatus
+}

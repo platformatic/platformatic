@@ -5,7 +5,8 @@ const { resolve } = require('node:path')
 const { test } = require('node:test')
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
-const { prepareRuntime, updateFile, updateConfigFile, openLogsWebsocket, waitForLogs } = require('./helper')
+const { updateFile, updateConfigFile, openLogsWebsocket, waitForLogs } = require('../helpers')
+const { prepareRuntime } = require('./helper')
 
 test('services are started with multiple workers according to the configuration', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })

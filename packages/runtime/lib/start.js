@@ -31,7 +31,7 @@ async function restartRuntime (runtime) {
 async function buildRuntime (configManager, env) {
   env = env || process.env
 
-  if (inspector.url()) {
+  if (inspector.url() && !env.VSCODE_INSPECTOR_OPTIONS) {
     throw new errors.NodeInspectorFlagsNotSupportedError()
   }
 

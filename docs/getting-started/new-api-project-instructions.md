@@ -30,8 +30,8 @@ pnpm create platformatic@latest
 This interactive command-line tool will guide you through setting up a new Platformatic project. For this guide, please choose the following options:
 
 ```
-- Where would you like to create your project?  => quick-start
-- Which kind of project do you want to create?  => @platformatic/db
+- Where would you like to create your project?  => .
+- Which kind of project do you want to create?  => @platformatic/db 
 - What is the name of the service?              => (generated-randomly), e.g. legal-soup
 - What is the connection string?                => sqlite://./db.sqlite
 - Do you want to create default migrations?     => Yes
@@ -41,7 +41,7 @@ This interactive command-line tool will guide you through setting up a new Platf
 - Do you want to init the git repository?       => No
 ```
 
-After completing the wizard, your Platformatic application will be ready in the `quick-start` folder. This includes example migration files, plugin scripts, routes, and tests within your service directory.
+After completing the wizard, your Platformatic application will be ready in the specified folder. This includes example migration files, plugin scripts, routes, and tests within your service directory.
 
 :::note
 

@@ -7,7 +7,7 @@ const { join } = require('node:path')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { Worker } = require('node:worker_threads')
 const { ITC } = require('@platformatic/itc')
-const { ensureLoggableError, executeWithTimeout } = require('@platformatic/utils')
+const { ensureLoggableError, executeWithTimeout, deepmerge } = require('@platformatic/utils')
 const ts = require('tail-file-stream')
 const { createThreadInterceptor } = require('undici-thread-interceptor')
 
@@ -25,6 +25,7 @@ const {
   kServiceId,
   kWorkerId,
   kITC,
+  kHealthCheckTimer,
   kConfig,
   kLoggerDestination,
   kLoggingPort,
@@ -80,7 +81,10 @@ class Runtime extends EventEmitter {
     this.#servicesIds = []
     this.#url = undefined
     // Note: nothing hits the main thread so there is no reason to set the globalDispatcher here
-    this.#interceptor = createThreadInterceptor({ domain: '.plt.local', timeout: true })
+    this.#interceptor = createThreadInterceptor({
+      domain: '.plt.local',
+      timeout: this.#configManager.current.serviceTimeout
+    })
     this.#status = undefined
     this.#restartingWorkers = new Map()
     this.#sharedHttpCache = null
@@ -752,6 +756,21 @@ class Runtime extends EventEmitter {
     }
   }
 
+  async sendCommandToService (id, name, message) {
+    const service = await this.#getServiceById(id)
+
+    try {
+      return await sendViaITC(service, name, message)
+    } catch (e) {
+      // The service exports no meta, return an empty object
+      if (e.code === 'PLT_ITC_HANDLER_NOT_FOUND') {
+        return {}
+      }
+
+      throw e
+    }
+  }
+
   #updateStatus (status) {
     this.#status = status
     this.emit(status)
@@ -798,6 +817,9 @@ class Runtime extends EventEmitter {
       }
     }
 
+    const errorLabel = this.#workerExtendedLabel(serviceId, index, workersCount)
+    const health = deepmerge(config.health ?? {}, serviceConfig.health ?? {})
+
     const worker = new Worker(kWorkerFile, {
       workerData: {
         config,
@@ -818,6 +840,9 @@ class Runtime extends EventEmitter {
       execArgv: serviceConfig.isPLTService ? [] : ['--require', openTelemetrySetupPath],
       env: this.#env,
       transferList: [loggingPort],
+      resourceLimits: {
+        maxOldGenerationSizeMb: health.maxHeapTotal
+      },
       /*
         Important: always set stdout and stderr to true, so that worker's output is not automatically
         piped to the parent thread. We actually never output the thread output since we replace it
@@ -849,8 +874,6 @@ class Runtime extends EventEmitter {
 
       // Wait for the next tick so that crashed from the thread are logged first
       setImmediate(() => {
-        const errorLabel = workersCount > 1 ? `worker ${index} of the service "${serviceId}"` : `service "${serviceId}"`
-
         if (started && (!config.watch || code !== 0)) {
           this.logger.warn(`The ${errorLabel} unexpectedly exited with code ${code}.`)
         }
@@ -872,7 +895,6 @@ class Runtime extends EventEmitter {
     worker[kId] = workersCount > 1 ? workerId : serviceId
     worker[kServiceId] = serviceId
     worker[kWorkerId] = workersCount > 1 ? index : undefined
-    worker[kConfig] = serviceConfig
     worker[kLoggerDestination] = loggerDestination
     worker[kLoggingPort] = loggingPort
 
@@ -945,7 +967,6 @@ class Runtime extends EventEmitter {
 
     // Store dependencies
     const [{ dependencies }] = await waitEventFromITC(worker, 'init')
-    worker[kWorkerStatus] = 'boot'
 
     if (autoload) {
       serviceConfig.dependencies = dependencies
@@ -955,11 +976,50 @@ class Runtime extends EventEmitter {
         }
       }
     }
+
+    // This must be done here as the dependencies are filled above
+    worker[kConfig] = { ...serviceConfig, health }
+    worker[kWorkerStatus] = 'boot'
+  }
+
+  #setupHealthCheck (worker, errorLabel) {
+    // Clear the timeout when exiting
+    worker.on('exit', () => clearTimeout(worker[kHealthCheckTimer]))
+
+    const { maxELU, maxHeapUsed, maxHeapTotal, maxUnhealthyChecks, interval } = worker[kConfig].health
+    let unhealthyChecks = 0
+
+    worker[kHealthCheckTimer] = setTimeout(async () => {
+      const health = await worker[kITC].send('getHealth')
+      this.emit('health', {
+        id: worker[kId],
+        service: worker[kServiceId],
+        worker: worker[kWorkerId],
+        currentHealth: health,
+        healthConfig: worker[kConfig].health
+      })
+
+      const { elu, heapUsed } = health
+      const memoryUsage = heapUsed / maxHeapTotal
+      if (elu > maxELU || memoryUsage > maxHeapUsed) {
+        unhealthyChecks++
+      } else {
+        unhealthyChecks = 0
+      }
+
+      if (unhealthyChecks >= maxUnhealthyChecks) {
+        this.logger.error(`The ${errorLabel} is unhealthy. Forcefully terminating it ...`)
+        worker.terminate()
+        return
+      }
+
+      worker[kHealthCheckTimer].refresh()
+    }, interval)
   }
 
   async #startWorker (config, serviceConfig, workersCount, id, index, silent, bootstrapAttempt = 0) {
     const workerId = `${id}:${index}`
-    const label = workersCount > 1 ? `worker ${index} of the service "${id}"` : `service "${id}"`
+    const label = this.#workerExtendedLabel(id, index, workersCount)
 
     if (!silent) {
       this.logger?.info(`Starting the ${label}...`)
@@ -976,7 +1036,19 @@ class Runtime extends EventEmitter {
     worker[kWorkerStatus] = 'starting'
 
     try {
-      const workerUrl = await sendViaITC(worker, 'start')
+      let workerUrl
+      if (config.startTimeout > 0) {
+        workerUrl = await executeWithTimeout(sendViaITC(worker, 'start'), config.startTimeout)
+
+        if (workerUrl === 'timeout') {
+          this.logger.info(`The ${label} failed to start in ${config.startTimeout}ms. Forcefully killing the thread.`)
+          worker.terminate()
+          throw new errors.ServiceStartTimeoutError(id, config.startTimeout)
+        }
+      } else {
+        workerUrl = await sendViaITC(worker, 'start')
+      }
+
       if (workerUrl) {
         this.#url = workerUrl
       }
@@ -985,6 +1057,16 @@ class Runtime extends EventEmitter {
 
       if (!silent) {
         this.logger?.info(`Started the ${label}...`)
+      }
+
+      const { enabled, gracePeriod } = worker[kConfig].health
+      if (enabled && config.restartOnError > 0) {
+        worker[kHealthCheckTimer] = setTimeout(
+          () => {
+            this.#setupHealthCheck(worker, label)
+          },
+          gracePeriod > 0 ? gracePeriod : 1
+        )
       }
     } catch (error) {
       // TODO: handle port allocation error here
@@ -998,7 +1080,9 @@ class Runtime extends EventEmitter {
         await worker.terminate()
       }
 
-      this.logger.error({ err: ensureLoggableError(error) }, `Failed to start ${label}.`)
+      if (error.code !== 'PLT_RUNTIME_SERVICE_START_TIMEOUT') {
+        this.logger.error({ err: ensureLoggableError(error) }, `Failed to start ${label}.`)
+      }
 
       const restartOnError = config.restartOnError
 
@@ -1028,7 +1112,7 @@ class Runtime extends EventEmitter {
 
     worker[kWorkerStatus] = 'stopping'
 
-    const label = workersCount > 1 ? `worker ${index} of the service "${id}"` : `service "${id}"`
+    const label = this.#workerExtendedLabel(id, index, workersCount)
 
     if (!silent) {
       this.logger?.info(`Stopping the ${label}...`)
@@ -1067,6 +1151,11 @@ class Runtime extends EventEmitter {
     worker[kITC].close()
     worker[kLoggerDestination].close()
     worker[kLoggingPort].close()
+    clearTimeout(worker[kHealthCheckTimer])
+  }
+
+  #workerExtendedLabel (serviceId, workerId, workersCount) {
+    return workersCount > 1 ? `worker ${workerId} of the service "${serviceId}"` : `service "${serviceId}"`
   }
 
   async #restartCrashedWorker (config, serviceConfig, workersCount, id, index, silent, bootstrapAttempt) {
@@ -1081,6 +1170,12 @@ class Runtime extends EventEmitter {
     restartPromise = new Promise((resolve, reject) => {
       setTimeout(async () => {
         this.#restartingWorkers.delete(workerId)
+
+        // If some processes were scheduled to restart
+        // but the runtime is stopped, ignore it
+        if (!this.#status.startsWith('start')) {
+          return
+        }
 
         try {
           await this.#setupWorker(config, serviceConfig, workersCount, id, index)

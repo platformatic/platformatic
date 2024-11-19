@@ -76,6 +76,31 @@ app.get(`${prefix}/env`, (req, res) => {
 app.listen(3000)
 ```
 
+### Typescript
+
+The Platformatic Node allows to run Typescript application with the use of custom commands via the `commands` property.
+
+To make Typescript work in development mode, setup a `commands.development` value which will start Node.js with a TypeScript loader.
+
+When configuring production mode instead, you have to configure both the `commands.build` and `commands.production` values. The former will be used to compile your service, while the latter will be used to start it.
+
+A complete typical setup for the service `watt.json` file will be something like this:
+
+```
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.9.1.json",
+  "application": {
+    "commands": {
+      "development": "node --import tsx server.ts",
+      "build": "tsc",
+      "production": "node dist/server.js"
+    }
+  }
+}
+```
+
+Watt supports setting up `npm run ...` commands so you can reuse your existing npm scripts flow.
+
 ## Configuration
 
 See the [configuration](./configuration.md) page.
@@ -89,8 +114,5 @@ See the [configuration](./configuration.md) page.
 - **`platformatic.basePath`**: The base path of the service in the composer.
 - **`platformatic.logLevel`**: The log level configured for the service.
 - **`platformatic.events.on('close')`**: This event is emitted when the process is being closed. A listener should be installed to perform a graceful close, which must finish in 10 seconds. If there is no listener, the process will be terminated by invoking `process.exit(0)`.
-  <Issues />
 
-```
-
-```
+<Issues />

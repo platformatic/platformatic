@@ -189,6 +189,7 @@ test('config - should list configuration for an application', async t => {
       exclude: []
     },
     restartOnError: 5000,
+    startTimeout: 30000,
     managementApi: true,
     serviceMap: {},
     services: [
@@ -206,11 +207,21 @@ test('config - should list configuration for an application', async t => {
         localUrl: 'http://main.plt.local'
       }
     ],
+    serviceTimeout: 300000,
     workers: 1,
     watch: false,
     gracefulShutdown: {
       runtime: 10000,
       service: 10000
+    },
+    health: {
+      enabled: true,
+      gracePeriod: 30000,
+      interval: 30000,
+      maxELU: 0.95,
+      maxHeapTotal: 4294967296,
+      maxHeapUsed: 0.95,
+      maxUnhealthyChecks: 3
     }
   })
 })
@@ -242,7 +253,8 @@ test('config - should list configuration for an service', async t => {
     },
     node: {
       absoluteUrl: false,
-      main: 'index.js'
+      main: 'index.js',
+      dispatchViaHttp: false
     }
   })
 })

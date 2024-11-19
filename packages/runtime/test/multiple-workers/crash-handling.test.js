@@ -6,7 +6,8 @@ const { test } = require('node:test')
 const { Client } = require('undici')
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
-const { prepareRuntime, updateFile, openLogsWebsocket, waitForLogs } = require('./helper')
+const { updateFile, openLogsWebsocket, waitForLogs } = require('../helpers')
+const { prepareRuntime } = require('./helper')
 
 test('can restart only crashed workers when they throw an exception during start', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })

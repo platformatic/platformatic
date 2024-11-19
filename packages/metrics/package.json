@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/metrics",
-  "version": "2.8.1",
+  "version": "2.15.0",
   "description": "Platformatic Stackable Metrics",
   "main": "index.js",
   "type": "commonjs",
@@ -20,7 +20,8 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
     "@platformatic/http-metrics": "^0.2.1",
-    "prom-client": "^15.1.2"
+    "prom-client": "^15.1.2",
+    "thread-cpu-usage": "^0.2.0"
   },
   "devDependencies": {
     "borp": "^0.18.0",

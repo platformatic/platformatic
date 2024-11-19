@@ -18,6 +18,8 @@ const RemoteCacheStore = require('./http-cache')
 const { PlatformaticApp } = require('./app')
 const { setupITC } = require('./itc')
 const loadInterceptors = require('./interceptors')
+const { createTelemetryThreadInterceptorHooks } = require('@platformatic/telemetry')
+
 const {
   MessagePortWritable,
   createPinoWritable,
@@ -123,10 +125,10 @@ async function main () {
 
   setGlobalDispatcher(globalDispatcher)
 
+  const { telemetry } = service
+  const hooks = telemetry ? createTelemetryThreadInterceptorHooks() : {}
   // Setup mesh networker
-  // The timeout is set to 5 minutes to avoid long term memory leaks
-  // TODO: make this configurable
-  const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp, timeout: 5 * 60 * 1000 })
+  const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp, timeout: config.serviceTimeout, ...hooks })
 
   if (config.httpCache) {
     setGlobalDispatcher(

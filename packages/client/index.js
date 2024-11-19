@@ -69,7 +69,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
     options.getHeaders = undefined
   }
 
-  const { validateResponse, queryParser } = options
+  const { validateResponse, queryParser, dispatcher } = options
   // this is tested, not sure why c8 is not picking it up
   if (!options.url) {
     throw new errors.OptionsUrlRequiredError()
@@ -114,7 +114,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
       }
 
       client[kOperationIdMap][operationId] = { path, method }
-      client[operationId] = await buildCallFunction(spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout)
+      client[operationId] = await buildCallFunction(spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout, dispatcher)
     }
   }
   return client
@@ -137,7 +137,7 @@ function hasDuplicatedParameters (methodMeta) {
   return s.size !== methodMeta.parameters.length
 }
 
-async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout) {
+async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout, dispatcher) {
   await $RefParser.dereference(spec)
   const ajv = new Ajv()
   const url = new URL(baseUrl)
@@ -229,7 +229,8 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
         },
         throwOnError,
         bodyTimeout,
-        headersTimeout
+        headersTimeout,
+        dispatcher
       }
       if (canHaveBody) {
         const bodyType = getRequestBodyContentType(methodMeta)

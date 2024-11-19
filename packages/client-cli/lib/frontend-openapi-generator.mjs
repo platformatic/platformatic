@@ -4,14 +4,14 @@ import { capitalize, getAllResponseCodes, getResponseContentType, getResponseTyp
 import camelcase from 'camelcase'
 import { writeOperations } from '../../client-cli/lib/openapi-common.mjs'
 
-export function processFrontendOpenAPI ({ schema, name, language, fullResponse }) {
+export function processFrontendOpenAPI ({ schema, name, language, fullResponse, logger, withCredentials }) {
   return {
     types: generateTypesFromOpenAPI({ schema, name, fullResponse }),
-    implementation: generateFrontendImplementationFromOpenAPI({ schema, name, language, fullResponse })
+    implementation: generateFrontendImplementationFromOpenAPI({ schema, name, language, fullResponse, logger, withCredentials })
   }
 }
 
-function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fullResponse }) {
+function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fullResponse, logger, withCredentials }) {
   const camelCaseName = capitalize(camelcase(name))
   const { paths } = schema
   const generatedOperationIds = []
@@ -129,6 +129,9 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
     } else {
       // check if is empty response
       if (getResponseContentType(successResponses[0][1]) === null) {
+        if (!currentFullResponse) {
+          logger.warn(`Full response has been forced due to a schema with empty response for ${operationResponseName}`)
+        }
         currentFullResponse = true
       }
     }
@@ -212,12 +215,18 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
           .inlineBlock(() => {
             writer.write('method: ').quote().write(method.toUpperCase()).quote().write(',')
             writer.writeLine('body: JSON.stringify(request),')
-            writer.write('headers')
+            if (withCredentials) {
+              writer.writeLine('credentials: \'include\',')
+            }
+            writer.writeLine('headers')
           })
           .write(')')
       } else {
         writer.write(`const response = await fetch(\`\${url}${stringLiteralPath}${searchString}\`, `)
           .inlineBlock(() => {
+            if (withCredentials) {
+              writer.writeLine('credentials: \'include\',')
+            }
             writer.write('headers')
           })
           .write(')')
@@ -246,7 +255,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         })
 
         // write default response as fallback
-        writer.write('if (response.headers.get(\'content-type\') === \'application/json\') ').block(() => {
+        writer.write('if (response.headers.get(\'content-type\').startsWith(\'application/json\')) ').block(() => {
           writer.write('return ').block(() => {
             writer.write('statusCode: response.status')
             if (language === 'ts') {

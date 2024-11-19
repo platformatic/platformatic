@@ -4,12 +4,13 @@ label: Building a Todo API with Platformatic DB
 ---
 
 import NewApiProjectInstructions from '../../getting-started/new-api-project-instructions.md';
+import SetupWatt from '../../getting-started/setup-watt.md';
 
-# Building a Todo API with Platformatic DB 
+# Build a Todo API with Platformatic Watt and DB
 
-In this tutorial, we will build a simple ToDo application using [Platformatic DB](../../db/overview.md). Platformatic DB makes it easy to create endpoints that return data from a database application. It automatically generates REST/GraphQL endpoints by mapping your database and then exposes these endpoints to your API consumers.
+ In this tutorial, you will build a simple ToDo application using the [Platformatic Watt](../../watt/overview.md) and [DB](../../db/overview.md). Platformatic DB makes it easier to create endpoints that return data from a database application. It automatically generates REST/GraphQL endpoints by mapping your database and then exposes these endpoints to your API consumers.
 
-This guide will walk you through the steps to build Todo CRUD API with Platformatic, highlighting the differences compared to building traditional APIs.
+This guide will walk you through the steps to build Todo CRUD API with Platformatic services, highlighting the differences compared to building traditional APIs.
 
 ## Prerequisites
 Before we begin, make sure you have the following installed:
@@ -26,8 +27,13 @@ Let's get started!
 
 ## Setting Up the Project
 
-To create and run your Platformatic Todo application, run the following commands:
+Before you create the database for the Todo application, first setup [Platformatic Watt](../../watt/overview.md), the Node.js application server. Run the command to setup Watt:
 
+<SetupWatt />
+
+### Add Platformatic DB service 
+
+Run the command wizard below in the `web` directory of your Watt application to add a DB service.
 
 <NewApiProjectInstructions />
 
@@ -46,7 +52,7 @@ For the Todo API, we need two tables, Users and Todos, let's edit the migrations
 
 ### Creating a Users table
 
-To create the users table, navigate to the `db/migrations` directory and edit `001.do.sql` file, and add the schema below:
+To create the users table, navigate to the `web/db/migrations` directory and edit `001.do.sql` file, and add the schema below:
 
 ```sql
 CREATE TABLE IF NOT EXISTS Users (
@@ -57,7 +63,7 @@ CREATE TABLE IF NOT EXISTS Users (
 );
 ```
 
-And let's edit the `migrations/001.undo.sql` file to look like this:
+And edit the `db/migrations/001.undo.sql` file to look like this:
 
 ```sql
 DROP TABLE Users;
@@ -101,7 +107,7 @@ Notice that after running migrations, you get a `global.d.ts` and a types folder
 Now, start your Platformatic DB application by running:
 
 ```bash
-npm start
+npm run dev
 ```
 
 Now you'll see this screen when you open `http://0.0.0.0:3042/` in your browser:

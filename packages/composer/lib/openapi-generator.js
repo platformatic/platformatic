@@ -83,7 +83,7 @@ async function composeOpenAPI (app, opts) {
     destroyAgent: false,
   })
 
-  await app.register(await import('fastify-openapi-glue'), {
+  await app.register(await import('@platformatic/fastify-openapi-glue'), {
     specification: composedOpenApiSchema,
     addEmptySchema: opts.addEmptySchema,
     operationResolver: (operationId, method, openApiPath) => {

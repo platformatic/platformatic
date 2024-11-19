@@ -72,12 +72,8 @@ function setupITC (app, service, dispatcher) {
           await app.listen()
         }
 
-        const url = app.stackable.getUrl()
-
-        const dispatchFunc = await app.stackable.getDispatchFunc()
-        dispatcher.replaceServer(url ?? dispatchFunc)
-
-        return service.entrypoint ? url : null
+        dispatcher.replaceServer(await app.stackable.getDispatchTarget())
+        return service.entrypoint ? app.stackable.getUrl() : null
       },
 
       async stop () {
@@ -147,6 +143,14 @@ function setupITC (app, service, dispatcher) {
           return await app.getMetrics({ format })
         } catch (err) {
           throw new errors.FailedToRetrieveMetricsError(service.id, err.message)
+        }
+      },
+
+      async getHealth () {
+        try {
+          return await app.getHealth()
+        } catch (err) {
+          throw new errors.FailedToRetrieveHealthError(service.id, err.message)
         }
       },
 

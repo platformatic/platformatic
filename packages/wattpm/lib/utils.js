@@ -1,9 +1,7 @@
 import { ConfigManager, loadConfig as pltConfigLoadConfig, Store } from '@platformatic/config'
 import { platformaticRuntime, buildRuntime as pltBuildRuntime } from '@platformatic/runtime'
 import { bgGreen, black, bold } from 'colorette'
-import { existsSync } from 'node:fs'
-import { readdir, stat } from 'node:fs/promises'
-import { resolve, dirname } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import { parseArgs as nodeParseArgs } from 'node:util'
 import pino from 'pino'
 import pinoPretty from 'pino-pretty'
@@ -112,22 +110,6 @@ export async function findConfigurationFile (logger, root) {
 
   const resolved = resolve(current, configurationFile)
   return resolved
-}
-
-export async function checkEmptyDirectory (logger, path, relativePath) {
-  if (existsSync(path)) {
-    const statObject = await stat(path)
-
-    if (!statObject.isDirectory()) {
-      logger.fatal(`Path ${bold(relativePath)} exists but it is not a directory.`)
-    }
-
-    const entries = await readdir(path)
-
-    if (entries.length) {
-      logger.fatal(`Directory ${bold(relativePath)} is not empty.`)
-    }
-  }
 }
 
 export async function buildRuntime (logger, configurationFile) {

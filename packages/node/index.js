@@ -50,6 +50,7 @@ export class NodeStackable extends BaseStackable {
   #dispatcher
   #isFastify
   #isKoa
+  #useHttpForDispatch
 
   constructor (options, root, configManager) {
     super('nodejs', packageJson.version, options, root, configManager)
@@ -122,6 +123,8 @@ export class NodeStackable extends BaseStackable {
     } else {
       // User blackbox function, we wait for it to listen on a port
       this.#server = await serverPromise
+      this.#dispatcher = this.#server.listeners('request')[0]
+
       this.url = getServerUrl(this.#server)
     }
 
@@ -177,7 +180,7 @@ export class NodeStackable extends BaseStackable {
   async inject (injectParams, onInject) {
     let res
 
-    if (this.url) {
+    if (this.#useHttpForDispatch) {
       this.logger.trace({ injectParams, url: this.url }, 'injecting via request')
       res = await injectViaRequest(this.url, injectParams, onInject)
     } else {
@@ -232,6 +235,17 @@ export class NodeStackable extends BaseStackable {
         needsRootRedirect: true
       }
     }
+  }
+
+  async getDispatchTarget () {
+    this.#useHttpForDispatch =
+      this.childManager || (this.url && this.configManager.current.node?.dispatchViaHttp === true)
+
+    if (this.#useHttpForDispatch) {
+      return this.getUrl()
+    }
+
+    return this.getDispatchFunc()
   }
 
   async _listen () {
@@ -373,6 +387,11 @@ export async function buildStackable (opts) {
     dirname: root
   })
   await configManager.parseAndValidate()
+  const config = configManager.current
+  // We need to update the config with the telemetry so the service name
+  // used in telemetry can be retreived using the management API
+  config.telemetry = opts.context.telemetryConfig
+  configManager.update(config)
 
   return new NodeStackable(opts, root, configManager)
 }

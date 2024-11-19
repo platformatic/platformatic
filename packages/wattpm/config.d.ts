@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type HttpsSchemasPlatformaticDevWattpm281Json = {
+export type HttpsSchemasPlatformaticDevWattpm2150Json = {
   [k: string]: unknown;
 } & {
   $schema?: string;
@@ -20,6 +20,16 @@ export type HttpsSchemasPlatformaticDevWattpm281Json = {
         id: string;
         config?: string;
         useHttp?: boolean;
+        workers?: number | string;
+        health?: {
+          enabled?: boolean | string;
+          interval?: number | string;
+          gracePeriod?: number | string;
+          maxUnhealthyChecks?: number | string;
+          maxELU?: number | string;
+          maxHeapUsed?: number | string;
+          maxHeapTotal?: number | string;
+        };
       };
     };
   };
@@ -52,8 +62,6 @@ export type HttpsSchemasPlatformaticDevWattpm281Json = {
               [k: string]: unknown;
             };
             level?: string;
-            additionalProperties?: never;
-            [k: string]: unknown;
           }[];
           options?: {
             [k: string]: unknown;
@@ -96,10 +104,20 @@ export type HttpsSchemasPlatformaticDevWattpm281Json = {
           )[];
     };
   };
+  startTimeout?: number;
   restartOnError?: boolean | number;
   gracefulShutdown?: {
     runtime: number | string;
     service: number | string;
+  };
+  health?: {
+    enabled?: boolean | string;
+    interval?: number | string;
+    gracePeriod?: number | string;
+    maxUnhealthyChecks?: number | string;
+    maxELU?: number | string;
+    maxHeapUsed?: number | string;
+    maxHeapTotal?: number | string;
   };
   undici?: {
     agentOptions?: {
@@ -157,6 +175,7 @@ export type HttpsSchemasPlatformaticDevWattpm281Json = {
     watchDisabled?: boolean;
     [k: string]: unknown;
   };
+  serviceTimeout?: number | string;
 };
 
 export interface UndiciInterceptor {
@@ -191,7 +210,7 @@ export interface OpenTelemetry {
   }[];
   exporter?:
     | {
-        type?: "console" | "otlp" | "zipkin" | "memory";
+        type?: "console" | "otlp" | "zipkin" | "memory" | "file";
         /**
          * Options for the exporter. These are passed directly to the exporter.
          */
@@ -206,13 +225,17 @@ export interface OpenTelemetry {
           headers?: {
             [k: string]: unknown;
           };
+          /**
+           * The path to write the traces to. Only for file exporter.
+           */
+          path?: string;
           [k: string]: unknown;
         };
         additionalProperties?: never;
         [k: string]: unknown;
       }[]
     | {
-        type?: "console" | "otlp" | "zipkin" | "memory";
+        type?: "console" | "otlp" | "zipkin" | "memory" | "file";
         /**
          * Options for the exporter. These are passed directly to the exporter.
          */
@@ -227,6 +250,10 @@ export interface OpenTelemetry {
           headers?: {
             [k: string]: unknown;
           };
+          /**
+           * The path to write the traces to. Only for file exporter.
+           */
+          path?: string;
           [k: string]: unknown;
         };
         additionalProperties?: never;

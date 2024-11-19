@@ -75,6 +75,7 @@ console.log(res)
 ## Optional properties
 You can also pass the following properties to `buildOpenAPIClient`:
 ```ts
+import { Agent } from 'undici'
 import { buildOpenAPIClient } from '@platformatic/client'
 
 const client = await buildOpenAPIClient({
@@ -87,7 +88,8 @@ const client = await buildOpenAPIClient({
   bodyTimeout: 900000, // body timeout passed to the undici request method
   headersTimeout: 900000, // headers timeout passed to the undici request method
   validateResponse: true, // validate or not the response received against the expected schema
-  queryParser: (query) => `${query.toString()}[]` // override the default query parser logic
+  queryParser: (query) => `${query.toString()}[]`, // override the default query parser logic
+  dispatcher: new Agent(), // optional property that allows passing a custom undici Agent
 })
 ```
 
