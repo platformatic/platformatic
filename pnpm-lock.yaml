@@ -389,7 +389,7 @@ importers:
         version: 6.21.0
       yaml:
         specifier: ^2.4.1
-        version: 2.6.0
+        version: 2.6.1
     devDependencies:
       '@matteo.collina/tspl':
         specifier: ^0.1.1
@@ -674,7 +674,7 @@ importers:
         version: 5.6.3
       yaml:
         specifier: ^2.4.1
-        version: 2.6.0
+        version: 2.6.1
 
   packages/control:
     dependencies:
@@ -853,7 +853,7 @@ importers:
         version: 5.6.3
       yaml:
         specifier: ^2.4.1
-        version: 2.6.0
+        version: 2.6.1
 
   packages/db:
     dependencies:
@@ -1052,7 +1052,7 @@ importers:
         version: 2.3.0
       yaml:
         specifier: ^2.4.1
-        version: 2.6.0
+        version: 2.6.1
 
   packages/db-authorization:
     dependencies:
@@ -2015,7 +2015,7 @@ importers:
         version: 2.3.0
       yaml:
         specifier: ^2.4.1
-        version: 2.6.0
+        version: 2.6.1
 
   packages/sql-events:
     dependencies:
@@ -2308,7 +2308,7 @@ importers:
         version: 2.3.0
       yaml:
         specifier: ^2.4.1
-        version: 2.6.0
+        version: 2.6.1
 
   packages/telemetry:
     dependencies:
@@ -9111,6 +9111,11 @@ packages:
     engines: {node: '>= 14'}
     hasBin: true
 
+  yaml@2.6.1:
+    resolution: {integrity: sha512-7r0XPzioN/Q9kXBro/XPnA6kznR73DHq+GXh5ON7ZozRO6aMjbmiBuKste2wslTFkC5d1dw0GooOCepZXJ2SAg==}
+    engines: {node: '>= 14'}
+    hasBin: true
+
   yargs-parser@20.2.9:
     resolution: {integrity: sha512-y11nGElTIV+CT3Zv9t7VKl+Q3hTQoT9a1Qzezhhl6Rp21gJ/IVTW7Z3y9EWXhuUBC2Shnf+DX0antecpAwSP8w==}
     engines: {node: '>=10'}
@@ -9973,7 +9978,7 @@ snapshots:
       json-schema-resolver: 2.0.0
       openapi-types: 12.1.3
       rfdc: 1.4.1
-      yaml: 2.6.0
+      yaml: 2.6.1
     transitivePeerDependencies:
       - supports-color
 
@@ -15285,7 +15290,7 @@ snapshots:
   postcss-load-config@4.0.2(postcss@8.4.49)(ts-node@10.9.2(@types/node@22.9.0)(typescript@5.6.3)):
     dependencies:
       lilconfig: 3.1.2
-      yaml: 2.6.0
+      yaml: 2.6.1
     optionalDependencies:
       postcss: 8.4.49
       ts-node: 10.9.2(@types/node@22.9.0)(typescript@5.6.3)
@@ -17011,6 +17016,8 @@ snapshots:
   yallist@4.0.0: {}
 
   yaml@2.6.0: {}
+
+  yaml@2.6.1: {}
 
   yargs-parser@20.2.9: {}
 
