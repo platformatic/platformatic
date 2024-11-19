@@ -1,12 +1,13 @@
 'use strict'
 
 const { getGlobalDispatcher } = require('undici')
+const errors = require('../errors')
 const assert = require('node:assert/strict')
 const { tmpdir } = require('node:os')
 const { test, mock } = require('node:test')
 const { join } = require('node:path')
 const { unlink, mkdtemp, cp } = require('node:fs/promises')
-const { ResponseStatusCodeError } = require('undici').errors
+const { FastifyError } = require('fastify')
 const { buildServer } = require('../../db')
 const { buildOpenAPIClient } = require('..')
 const { safeRemove } = require('@platformatic/utils')
@@ -109,7 +110,13 @@ test('build basic client from url', async t => {
     title: 'The Matrix Revolutions'
   })
 
-  await assert.rejects(client.getMovieById())
+  let error
+  try {
+    await client.getMovieById()
+  } catch (err) {
+    error = err
+  }
+  assert.ok(error instanceof errors.MissingParamsRequiredError, 'when no param is passed')
 
   const notFound = await client.getMovieById({ id: 100 })
   assert.deepEqual(notFound, {
@@ -381,6 +388,7 @@ test('properly call undici dispatcher', async t => {
   }
 
   assert.notEqual(error, undefined, 'should throw when passing a wrong dispatcher')
+  assert.ok(error instanceof errors.UnexpectedCallFailureError)
   assert.ok(error.toString().includes('this.dispatch is not a function'))
 })
 
@@ -412,7 +420,7 @@ test('throw on error level response', async t => {
     client.getMovieById({
       id: 100
     }),
-    ResponseStatusCodeError
+    FastifyError
   )
 })
 

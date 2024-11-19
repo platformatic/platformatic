@@ -1,6 +1,7 @@
 'use strict'
 
 const assert = require('node:assert/strict')
+const errors = require('../errors')
 const { tmpdir } = require('node:os')
 const { test } = require('node:test')
 const { join } = require('node:path')
@@ -21,7 +22,7 @@ test('wrong type', async (t) => {
       url: 'http://localhost:3042/documentation/json',
       name: 'client'
     })
-  }, new Error('opts.type must be either "openapi" or "graphql"'))
+  }, new errors.WrongOptsTypeError())
 })
 
 test('default decorator', async (t) => {
