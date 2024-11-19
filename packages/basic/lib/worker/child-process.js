@@ -118,10 +118,6 @@ export class ChildProcess extends ITC {
         process.exit(0)
       }
     })
-    // Setup globals setters.  We need them so we have the same setters we have in `BastStackable`
-    this.openapiSchema = null
-    this.graphqlSchema = null
-    this.connectionString = null
 
     this.registerGlobals({
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
@@ -298,15 +294,15 @@ export class ChildProcess extends ITC {
   }
 
   setOpenapiSchema (schema) {
-    this.openapiSchema = schema
+    this.notify('openapiSchema', schema)
   }
 
   setGraphqlSchema (schema) {
-    this.graphqlSchema = schema
+    this.notify('graphqlSchema', schema)
   }
 
   setConnectionString (connectionString) {
-    this.connectionString = connectionString
+    this.notify('connectionString', connectionString)
   }
 
   setBasePath (basePath) {

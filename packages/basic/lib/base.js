@@ -219,6 +219,18 @@ export class BaseStackable {
       this.subprocessConfig = config
     })
 
+    this.childManager.on('connectionString', connectionString => {
+      this.connectionString = connectionString
+    })
+
+    this.childManager.on('openapiSchema', schema => {
+      this.openapiSchema = schema
+    })
+
+    this.childManager.on('graphqlSchema', schema => {
+      this.graphqlSchema = schema
+    })
+
     try {
       await this.childManager.inject()
 

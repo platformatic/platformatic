@@ -237,7 +237,7 @@ export class NodeStackable extends BaseStackable {
         needsRootRedirect: true
       },
       connectionStrings: [
-        [this.connectionString]
+        this.connectionString
       ]
     }
   }
