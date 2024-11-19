@@ -96,5 +96,12 @@ export default plugin
  */
 export module errors {
   export const OptionsUrlRequiredError: () => FastifyError
+  export const FormDataRequiredError: (value: string) => FastifyError
+  export const MissingParamsRequiredError: (value: string) => FastifyError
+  export const WrongOptsTypeError: () => FastifyError
+  export const InvalidResponseSchemaError: (value: string) => FastifyError
+  export const InvalidContentTypeError: (value: string) => FastifyError
+  export const InvalidResponseFormatError: () => FastifyError
+  export const UnexpectedCallFailureError: (value: string) => FastifyError
 }
 

@@ -1,6 +1,7 @@
 'use strict'
 
 const assert = require('node:assert/strict')
+const errors = require('../errors')
 const { tmpdir } = require('node:os')
 const { test } = require('node:test')
 const { join } = require('node:path')
@@ -204,7 +205,7 @@ test('build basic client from file (path parameter)', async t => {
     } catch (err) {
       error = err
     }
-    assert.equal(error instanceof Error, true, 'when no path param is passed')
+    assert.equal(error instanceof errors.MissingParamsRequiredError, true, 'when no path param is passed')
   }
   {
     // without fullRequest
@@ -567,6 +568,7 @@ test('multipart/form-data without FormData', async t => {
     await client.postFiles({ foo: 'bar' })
     assert.fail()
   } catch (err) {
+    assert.ok(err instanceof errors.UnexpectedCallFailureError)
     assert.match(err.message, /should be called with a undici.FormData as payload/)
   }
 })
