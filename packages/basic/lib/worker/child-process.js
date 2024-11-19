@@ -306,7 +306,7 @@ export class ChildProcess extends ITC {
   }
 
   setBasePath (basePath) {
-    this.basePath = basePath
+    this.notify('basePath', basePath)
   }
 }
 

@@ -33,6 +33,7 @@ export class BaseStackable {
     this.openapiSchema = null
     this.graphqlSchema = null
     this.connectionString = null
+    this.basePath = null
     this.isEntrypoint = options.context.isEntrypoint
     this.isProduction = options.context.isProduction
     this.metricsRegistry = null
@@ -228,6 +229,10 @@ export class BaseStackable {
 
     this.childManager.on('graphqlSchema', schema => {
       this.graphqlSchema = schema
+    })
+
+    this.childManager.on('basePath', path => {
+      this.basePath = path
     })
 
     try {
