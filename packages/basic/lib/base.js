@@ -39,7 +39,6 @@ export class BaseStackable {
     this.startHttpTimer = null
     this.endHttpTimer = null
     this.clientWs = null
-    this.connectionString = null
     this.runtimeConfig = deepmerge(options.context?.runtimeConfig ?? {}, workerData?.config ?? {})
 
     // Setup the logger
