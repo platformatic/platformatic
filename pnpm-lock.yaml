@@ -489,7 +489,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.66
+        version: 1.25.68
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -1882,7 +1882,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.66
+        version: 1.25.68
       '@types/ws':
         specifier: ^8.5.10
         version: 8.5.13
@@ -2262,7 +2262,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.66
+        version: 1.25.68
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -4098,16 +4098,16 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@scalar/fastify-api-reference@1.25.66':
-    resolution: {integrity: sha512-iI1LxVWoka8yBzSncmkgtHVVUG4eStOPtxjk6NFADYVhrHy+21HwRc42CNWqswq7CDXB0ocSad6+YIrsPy23ew==}
+  '@scalar/fastify-api-reference@1.25.68':
+    resolution: {integrity: sha512-F2p0zUsC+N7KkRepCp1H9nNGF5oRZ64stsNg9evK3zoZOC6J4LLrGtBBpHZhVgeMRkIf4w3/K/WC+TimS+RrPw==}
     engines: {node: '>=18'}
 
   '@scalar/openapi-types@0.1.5':
     resolution: {integrity: sha512-6geH9ehvQ/sG/xUyy3e0lyOw3BaY5s6nn22wHjEJhcobdmWyFER0O6m7AU0ZN4QTjle/gYvFJOjj552l/rsNSw==}
     engines: {node: '>=18'}
 
-  '@scalar/types@0.0.19':
-    resolution: {integrity: sha512-wOxtXd35BS0DaVhBopQUB8c8hfLQ+/PKEr99GbOZW+4DWCrEB8JfWJgvpJyxHU6by7LHNVY4fvpFQR7Ezh1IIw==}
+  '@scalar/types@0.0.20':
+    resolution: {integrity: sha512-Sx7tqiuV9ZNp2XpIXKD/srzTjjb4I6aof0Y7+U5MgEuKPwrRnYS/BaocdNgWLnpCZisBIg5qp4YSqozxibabVg==}
     engines: {node: '>=18'}
 
   '@sec-ant/readable-stream@0.4.1':
@@ -10818,14 +10818,14 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.27.2':
     optional: true
 
-  '@scalar/fastify-api-reference@1.25.66':
+  '@scalar/fastify-api-reference@1.25.68':
     dependencies:
-      '@scalar/types': 0.0.19
+      '@scalar/types': 0.0.20
       fastify-plugin: 4.5.1
 
   '@scalar/openapi-types@0.1.5': {}
 
-  '@scalar/types@0.0.19':
+  '@scalar/types@0.0.20':
     dependencies:
       '@scalar/openapi-types': 0.1.5
       '@unhead/schema': 1.11.11
