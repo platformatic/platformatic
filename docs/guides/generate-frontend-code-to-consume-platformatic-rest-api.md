@@ -1,83 +1,56 @@
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import NewApiProjectInstructions from '../getting-started/new-api-project-instructions.md';
+import SetupWatt from '../getting-started/setup-watt.md';
 
-# Generate Front-end Code to Consume Platformatic REST API
+# Build Front-end for Platformatic REST API
 
-By default, a Platformatic app exposes REST API that provide CRUD (Create, Read,
+Platformatic apps expose REST APIs that provide provide CRUD (Create, Read,
 Update, Delete) functionality for each entity (see the
 [Introduction to the REST API](https://docs.platformatic.dev/docs/reference/sql-openapi/introduction)
-documentation for more information on the REST API).
+documentation for more information on the REST API) by default.
 
-Platformatic CLI allows to auto-generate the front-end code to import in your
-front-end application to consume the Platformatic REST API.
+In this guide, you will learn how to create a new Platformatic guide with Watt, Frontend Client, add a frontend to consume your Platformatic REST API.
 
-This guide
-* Explains how to create a new Platformatic app.
-* Explains how to configure the new Platformatic app.
-* Explains how to create a new React or Vue.js front-end application.
-* Explains how to generate the front-end TypeScript code to consume the Platformatic app REST API.
-* Provide some React and Vue.js components (either of them written in TypeScript) that read, create, and update an entity.
-* Explains how to import the new component in your front-end application.
+## Create a Watt Application
+
+<SetupWatt />
 
 
-## Create a new Platformatic app
+### Add a Platformatic DB service
 
 
 <NewApiProjectInstructions/>
 
 
-## Configure the new Platformatic app
+### Add a new Platformatic service
 
-Every Platformatic app uses the "Movie" demo entity and includes
-the corresponding table, migrations, and REST API to create, read, update, and delete movies.
+Every Platformatic service uses the "Movie" demo entity and includes the corresponding table, migrations, and REST API to create, read, update, and delete movies.
 
-Once the new Platformatic app is ready:
+Launch your application with the command below:
 
-* Define a `PLT_SERVER_CORS_ORIGIN` env variable as a valid regexp (f.e. `"^http://localhost.*"` or `"^https://your.awesome.service/*"`)
-* Pass it to `platformatic.db.json`
-
-```diff
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/db/1.52.0.json",
-  "server": {
-    "hostname": "{PLT_SERVER_HOSTNAME}",
-    "port": "{PORT}",
-    "logger": {
-      "level": "{PLT_SERVER_LOGGER_LEVEL}"
-    },
-+   "cors": {
-+     "origin": {
-+       "regexp": "{PLT_SERVER_CORS_ORIGIN}"
-+     }
-+   }
-  },
-  ...
-}
+```sh
+npm run dev
 ```
 
-  You can find more details about the cors configuration [here](https://docs.platformatic.dev/docs/guides/generate-frontend-code-to-consume-platformatic-rest-api).
+Your Platformatic app should be at the `http://127.0.0.1:3042/` URL.
 
-* launch Platformatic through `npm start`.
-Then, the Platformatic app should be available at the `http://127.0.0.1:3042/` URL.
+## Create a Front-end Application
 
-## Create a new Front-end Application
-
-Refer to the [Scaffolding Your First Vite Project](https://vitejs.dev/guide/#scaffolding-your-first-vite-project)
-documentation to create a new front-end application, and call it "rest-api-frontend".
+Refer to the [Scaffolding Your First Vite Project](https://vitejs.dev/guide/#scaffolding-your-first-vite-project) documentation to create a new front-end application, and call it "rest-api-frontend".
 
 :::info
-Please note Vite is suggested only for practical reasons, but the bundler of choice does not make any difference.
+Please note Vite is suggested only for practical reasons, Platformatic Watt supports Astro, Remix, Next.js and Vite frameworks.
 :::
 
-If you are using npm 7+ you should run
+In the `web` directory of your application, run the command:
 
 
 <Tabs groupId="import-new-component">
 <TabItem value="react" label="React">
 
 ```bash
-npm create vite@latest rest-api-frontend -- --template react-ts
+npm create vite@latest rest-api-frontend -- --template react
 ```
 
 </TabItem>
@@ -102,325 +75,242 @@ Done. Now run:
   npm run dev
 ```
 
-Once done, the front-end application is available at `http://localhost:5174/`.
+Once done, run the command below to add `watt.json` file to your frontend application:
 
-## Generate the front-end code to consume the Platformatic app REST API
+```sh
+npx wattpm import web/frontend
+```
 
-Now that either the Platformatic app and the front-end app are running, go to the front-end codebase and run the Platformatic CLI
+Add your frontend `id` and DB service to your `platformatic.json` file in your `web/composer` application:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.15.0.json",
+  "composer": {
+    "services": [
+      {
+        "id": "db",
+        "openapi": {
+          "url": "/documentation/json",
+          "prefix": "/db"
+        }
+      },
+      {
+        "id":"frontend" // Frontend ID for Vite applications
+      }
+    ],
+    "refreshTimeout": 1000
+  },
+  "watch": true
+}
+```
+
+
+### Add a Frontend Client for REST API 
+
+To consume REST APIs in your Platformatic application. run the command to use Platformatic [frontend client](https://docs.platformatic.dev/docs/client/frontend) for exposing a client for your remote OpenAPI server, the client uses fetch and runs on the browser. 
 
 ```bash
 cd rest-api-frontend/src
-npx platformatic client http://127.0.0.1:3042 --frontend --language ts
+npx platformatic client http://127.0.0.1:3042 --frontend --name frontend-client
 ```
 
-Refer to the [Platformatic CLI frontend command](https://docs.platformatic.dev/docs/reference/cli#frontend)
-documentation to know about the available options.
+Refer to the [Platformatic CLI frontend command](https://docs.platformatic.dev/docs/reference/cli#frontend) documentation to know about the available options.
 
-The Platformatic CLI generates
-
-  * `api.d.ts`: A TypeScript module that includes all the OpenAPI-related types.
-Here is part of the generated code
-
-```ts
-interface GetMoviesRequest {
-  'limit'?: number;
-  'offset'?: number;
-  // ... etc.
-}
-
-interface GetMoviesResponseOK {
-  'id'?: number;
-  'title': string;
-}
+The Platformatic CLI will generate `frontend-client.mjs`, `frontend-client-types.d.ts`, `frontend-client.openapi.json`. Refer to the [frontend client documentation](https://docs.platformatic.dev/docs/client/frontend) to learn more about the [Client](https://docs.platformatic.dev/docs/client/frontend) and [CLI](https://docs.platformatic.dev/docs/cli).  
 
 
-// ... etc.
+### React component for CRUD operations 
 
-export interface Api {
-  setBaseUrl(baseUrl: string): void;
-  setDefaultHeaders(headers: Object): void;
-  getMovies(req: GetMoviesRequest): Promise<Array<GetMoviesResponseOK>>;
-  createMovie(req: CreateMovieRequest): Promise<CreateMovieResponseOK>;
-  // ... etc.
-}
-```
-
-  * `api.ts`: A TypeScript module that includes a typed function for every single OpenAPI endpoint.
-Here is part of the generated code
-
-```ts
-import type { Api } from './api-types'
-
-let baseUrl = ''
-let defaultHeaders = {}
-
-export const setBaseUrl = (newUrl: string) { baseUrl = newUrl };
-
-export const setDefaultHeaders = (headers: Object): void => { defaultHeaders = headers }
-
-export const createMovie: Api['createMovie'] = async (request) => {
-  const response = await fetch(`${baseUrl}/movies/`, {
-    method:'post',
-    body: JSON.stringify(request),
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  })
-
-  if (!response.ok) {
-    throw new Error(await response.text())
-  }
-
-  return await response.json()
-}
-
-// etc.
-
-```
-
-You can add a `--name` option to the command line to provide a custom name for the generated files.
-
-```bash
-cd rest-api-frontend/src
-npx platformatic client http://127.0.0.1:3042 --frontend --name foobar --language ts
-```
-
-This will generate `foobar.ts` and `foobar-types.d.ts`
+In this section, you’ll build a React component for CRUD operations using the autogenerated client code provided by Platformatic. The code showcases a `MovieManager.jsx` file that manages movies in a database. You will implement features to create, read, update, and delete movies.
 
 
-## React and Vue.js components that read, create, and update an entity
+```js
+import { useState, useEffect } from 'react';
+import { setBaseUrl, dbGetMovies, dbCreateMovie, dbUpdateMovie, dbDeleteMovies } from './frontend-client/frontend-client.mjs';
 
-You can copy/paste the following React or Vue.js components that import the code
-the Platformatic CLI generated.
+// Set the base URL for the API client
+setBaseUrl(window.location.origin); // Or your specific API base URL
 
-<Tabs groupId="import-new-component">
-<TabItem value="react" label="React">
-
-Create a new file `src/PlatformaticPlayground.tsx` and copy/paste the following code.
-
-```tsx
-import { useEffect, useState } from 'react'
-
-// getMovies, createMovie, and updateMovie are all functions automatically generated by Platformatic
-// in the `api.ts` module.
-import {
-  getMovies,
-  createMovie,
-  updateMovie,
-  setBaseUrl,
-  type GetMoviesResponseOK,
-  type CreateMovieResponseOK
-} from './api'
-
-setBaseUrl('http://127.0.0.1:3042') // configure this according to your needs
-
-export function PlatformaticPlayground() {
-  const [movies, setMovies] = useState<GetMoviesResponseOK>([])
-  const [newMovie, setNewMovie] = useState<CreateMovieResponseOK>()
-
-  async function onCreateMovie() {
-    const newMovie = await createMovie({ title: 'Harry Potter' })
-    setNewMovie(newMovie)
-  }
-
-  async function onUpdateMovie() {
-    if (!newMovie || !newMovie.id) return
-
-    const updatedMovie = await updateMovie({ id: newMovie.id, title: 'The Lord of the Rings' })
-    setNewMovie(updatedMovie)
-  }
+export default function MovieManager() {
+  const [movies, setMovies] = useState([]);
+  const [newMovie, setNewMovie] = useState({ title: '' });
+  const [editMovie, setEditMovie] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
-    async function fetchMovies() {
-      const movies = await getMovies({})
-      setMovies(movies)
-    }
+    fetchMovies();
+  }, []);
 
-    fetchMovies()
-  }, [])
+  const fetchMovies = async () => {
+    try {
+      const response = await dbGetMovies({});
+      setMovies(response);
+    } catch (error) {
+      console.error('Error fetching movies:', error);
+    }
+  };
+
+  const handleCreateMovie = async (e) => {
+    e.preventDefault();
+    try {
+      await dbCreateMovie(newMovie);
+      setNewMovie({ title: '' });
+      fetchMovies();
+    } catch (error) {
+      console.error('Error creating movie:', error);
+    }
+  };
+
+  const handleEditMovie = async (e) => {
+    e.preventDefault();
+    try {
+      await dbUpdateMovie(editMovie);
+      setShowEditModal(false);
+      setEditMovie(null);
+      fetchMovies();
+    } catch (error) {
+      console.error('Error updating movie:', error);
+    }
+  };
+
+  const handleDeleteMovie = async (id) => {
+    try {
+      await dbDeleteMovies({ id });
+      fetchMovies();
+    } catch (error) {
+      console.error('Error deleting movie:', error);
+    }
+  };
 
   return (
-    <>
-      <h2>Movies</h2>
+    <div className="p-6 max-w-4xl mx-auto">
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <h1 className="text-2xl font-bold mb-6">Movie Management</h1>
+        
+        {/* Create Movie Form */}
+        <form onSubmit={handleCreateMovie} className="mb-8 flex gap-4">
+          <input
+            type="text"
+            placeholder="Enter movie title"
+            value={newMovie.title}
+            onChange={(e) => setNewMovie({ title: e.target.value })}
+            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Add Movie
+          </button>
+        </form>
 
-      {movies.length === 0 ? (
-        <div>No movies yet</div>
-      ) : (
-        <ul>
-          {movies.map((movie) => (
-            <li key={movie.id}>{movie.title}</li>
-          ))}
-        </ul>
-      )}
+        {/* Movies Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {movies.map((movie) => (
+                <tr key={movie.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{movie.id}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{movie.title}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => {
+                        setEditMovie(movie);
+                        setShowEditModal(true);
+                      }}
+                      className="text-blue-600 hover:text-blue-900 mr-4"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteMovie(movie.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-      <button onClick={onCreateMovie}>Create movie</button>
-      <button onClick={onUpdateMovie}>Update movie</button>
-
-      {newMovie && <div>Title: {newMovie.title}</div>}
-    </>
-  )
+        {/* Edit Modal */}
+        {showEditModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h2 className="text-xl font-bold mb-4">Edit Movie</h2>
+              <form onSubmit={handleEditMovie}>
+                <input
+                  type="text"
+                  value={editMovie?.title || ''}
+                  onChange={(e) => setEditMovie({ ...editMovie, title: e.target.value })}
+                  className="w-full px-4 py-2 mb-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <div className="flex justify-end gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 ```
 
-</TabItem>
-<TabItem value="vue" label="Vue.js">
+This component handles all the CRUD operations for managing movies by interacting with the autogenerated client functions (`dbGetMovies`, `dbCreateMovie`, etc.) from your Platformatic API.
 
-Create a new file `src/PlatformaticPlayground.vue` and copy/paste the following code.
+#### Rendering in App.jsx
 
-```vue
-<script lang="ts" setup>
-import { ref, onMounted } from 'vue';
+To include this component in your app, import it into your `App.jsx` file:
 
-// getMovies, createMovie, and updateMovie are all functions automatically generated by Platformatic
-// in the `api.ts` module.
-import { getMovies, createMovie, updateMovie } from './api'
-
-const movies = ref<Awaited<ReturnType<typeof getMovies>>>([])
-const newMovie = ref<Awaited<ReturnType<typeof createMovie>> | undefined>()
-
-async function onCreateMovie() {
-  const newMovie = await createMovie({ title: 'Harry Potter' })
-  newMovie.value = newMovie
-}
-
-async function onUpdateMovie() {
-  if (!newMovie.value || !newMovie.value.id) return
-
-  const updatedMovie = await updateMovie({ id: newMovie.value.id, title: 'The Lord of the Rings' })
-  newMovie.value = updatedMovie
-}
-
-onMounted(async () => {
-  const movies = await getMovies({})
-  movies.value = movies
-})
-</script>
-
-<template>
-  <h2>Movies</h2>
-
-  <div v-if="movies.length === 0">No movies yet</div>
-  <ul v-else>
-    <li v-for="movie in movies" :key="movie.id">
-      {{ movie.title }}
-    </li>
-  </ul>
-
-  <button @click="onCreateMovie">Create movie</button>
-  <button @click="onUpdateMovie">Update movie</button>
-
-  <div v-if="newMovie">{{ newMovie.title }}</div>
-</template>
-```
-
-</TabItem>
-</Tabs>
-
-## Import the new component in your front-end application
-
-You need to import and render the new component in the front-end application.
-
-<Tabs groupId="import-new-component">
-<TabItem value="react" label="React">
-
-Change the App.tsx as follows
-
-```diff
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+```js 
+import MovieManager from './MovieManager';
 import './App.css'
 
-+import { PlatformaticPlayground } from './PlatformaticPlayground'
-
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-+     <PlatformaticPlayground />
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>count is {count}</button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
-    </>
-  )
+    <div>
+      <MovieManager />
+    </div>
+  );
 }
 
-export default App
+export default App;
 ```
 
-</TabItem>
-<TabItem value="vue" label="Vue.js">
+The styling for the `MovieManager.jsx` file uses Tailwind CSS.  See the [tailwind documentation](https://tailwindcss.com/docs/installation) on how to install and set it up. 
 
-Change the App.vue as follows
+### Start your Server 
 
-```diff
-<script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
+In the root of your project directory, run the command:
 
-+import PlatformaticPlayground from './PlatformaticPlayground.vue'
-</script>
-
-<template>
-+ <PlatformaticPlayground />
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
-  </div>
-  <HelloWorld msg="Vite + Vue" />
-</template>
-
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
-</style>
+```sh
+npm run dev
 ```
 
-</TabItem>
-</Tabs>
+Your application is now up and running on `http://127.0.0.1:3042/frontend`
 
-## Have fun
-
-Art the top of the front-end application the new component requests the movies to the Platformatic app and list them.
-
-![Platformatic frontend guide: listing the movies](./images/frontend-screenshot-1.jpg)
-
-Click on "Create movie" to create a new movie called "Harry Potter".
-
-![Platformatic frontend guide: creating a movie](./images/frontend-screenshot-2.jpg)
-
-Click on "Update movie" to rename "Harry Potter" into "Lord of the Rings".
-
-![Platformatic frontend guide: editing a movie](./images/frontend-screenshot-3.jpg)
-
-Reload the front-end application to see the new "Lord of the Rings" movie listed.
-
-![Platformatic frontend guide: listing the movies](./images/frontend-screenshot-4.jpg)
-.
+![Platformatic CRUD movie application](./images/movie-app.png)

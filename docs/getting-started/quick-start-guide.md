@@ -234,7 +234,7 @@ Done. Now run:
 
 ### Setting Up the Platformatic Frontend Client
 
-To kickstart the project, you'll first need to create a [Platformatic frontend client](https://docs.platformatic.dev/docs/client/frontend) for your remote server. Run the following command:
+To kickstart the project, in your `web/frontend/src` directory, run the command to create a [Platformatic frontend client](https://docs.platformatic.dev/docs/client/frontend) for your remote server:
 
 ```sh
 npx platformatic client --frontend http://0.0.0.0:3042 --name next-client web/frontend/src
@@ -440,6 +440,33 @@ function App() {
 }
 
 export default App;
+```
+
+#### Add frontend to Composer
+
+In your `web/composer` directory, add the frontend `id` to your composer `platformatic.json` file, update it as shown below:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.5.5.json",
+  "composer": {
+    "services": [
+      {
+        "id": "db",
+        "openapi": {
+          "url": "/documentation/json"
+        }
+      },
+      {
+        "id": "frontend"
+      }
+    ],
+    "refreshTimeout": 1000
+  },
+  
+
+  "watch": true
+}
 ```
 
 ### Start Your API Server
