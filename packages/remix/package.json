@@ -40,7 +40,7 @@
     "@remix-run/dev": "^2.11.2",
     "@remix-run/node": "^2.11.2",
     "@remix-run/react": "^2.11.2",
-    "borp": "^0.18.0",
+    "borp": "^0.19.0",
     "eslint": "9",
     "fastify": "^5.0.0",
     "isbot": "^5.1.17",
