@@ -186,15 +186,6 @@ async function managementApiPlugin (app, opts) {
     const logFileStream = await runtime.getLogFileStream(logId, runtimePID)
     return logFileStream
   })
-
-  app.get('/http-cache/requests', async () => {
-    return runtime.getCachedHttpRequests()
-  })
-
-  app.post('/http-cache/invalidate', async (req) => {
-    const { origin, routes, tags } = req.body
-    await runtime.invalidateHttpCache({ origin, routes, tags })
-  })
 }
 
 async function startManagementApi (runtime, configManager) {

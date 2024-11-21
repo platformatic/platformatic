@@ -28,7 +28,7 @@ class CustomCacheStore {
     })
   }
 
-  deleteByOrigin () {}
+  delete () {}
 }
 
 module.exports = CustomCacheStore

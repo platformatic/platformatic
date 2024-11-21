@@ -733,10 +733,6 @@ class Runtime extends EventEmitter {
     return createReadStream(filePath)
   }
 
-  async getCachedHttpRequests () {
-    return this.#sharedHttpCache.getRoutes()
-  }
-
   async invalidateHttpCache (options = {}) {
     const { origin, routes, tags } = options
 
