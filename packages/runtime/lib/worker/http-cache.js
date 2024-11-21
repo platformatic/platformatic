@@ -4,13 +4,7 @@ const { Readable, Writable } = require('node:stream')
 const { kITC } = require('./symbols')
 
 class RemoteCacheStore {
-  get isFull () {
-    // TODO: make an itc call to the shared cache when interceptor supports
-    // an async isFull method
-    return false
-  }
-
-  async createReadStream (request) {
+  async get (request) {
     const itc = globalThis[kITC]
     if (!itc) return
 
@@ -30,7 +24,10 @@ class RemoteCacheStore {
     readable.push(cachedValue.payload)
     readable.push(null)
 
-    return readable
+    return {
+      ...cachedValue.response,
+      body: readable
+    }
   }
 
   createWriteStream (request, response) {
@@ -55,11 +52,12 @@ class RemoteCacheStore {
     })
   }
 
-  deleteByOrigin (origin) {
+  delete (request) {
     const itc = globalThis[kITC]
     if (!itc) throw new Error('Cannot delete from cache without an ITC instance')
 
-    itc.send('deleteHttpCacheValue', { origin })
+    request = this.#sanitizeRequest(request)
+    itc.send('deleteHttpCacheValue', { request })
     // TODO: return a Promise
   }
 

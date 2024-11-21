@@ -136,12 +136,7 @@ class Runtime extends EventEmitter {
 
     this.#sharedHttpCache = createSharedStore(
       this.#configManager.dirname,
-      {
-        ...config.httpCache,
-        errorCallback: (err) => {
-          this.logger.error(err, 'Error in shared HTTP cache store')
-        }
-      }
+      config.httpCache
     )
 
     this.#updateStatus('init')
@@ -914,15 +909,14 @@ class Runtime extends EventEmitter {
         getServiceMeta: this.getServiceMeta.bind(this),
         listServices: () => this.#servicesIds,
         getServices: this.getServices.bind(this),
-        isHttpCacheFull: () => this.#sharedHttpCache.isFull(),
         getHttpCacheValue: opts => this.#sharedHttpCache.getValue(opts.request),
         setHttpCacheValue: opts => this.#sharedHttpCache.setValue(
           opts.request,
           opts.response,
           opts.payload
         ),
-        deleteHttpCacheValue: opts => this.#sharedHttpCache.deleteByOrigin(
-          opts.origin
+        deleteHttpCacheValue: opts => this.#sharedHttpCache.delete(
+          opts.request
         ),
         invalidateHttpCache: opts => this.invalidateHttpCache(opts),
       }

@@ -12,16 +12,18 @@ function createSharedStore (projectDir, httpCacheConfig = {}) {
 
   class SharedCacheStore extends CacheStore {
     async getValue (req) {
-      const readStream = await this.createReadStream(req)
-      if (!readStream) return null
+      const cachedValue = await this.get(req)
+      if (!cachedValue) return null
+
+      const { body, ...response } = cachedValue
 
       let payload = ''
-      for await (const chunk of readStream) {
+      for await (const chunk of body) {
         payload += chunk
       }
 
-      const response = this.#sanitizeResponse(readStream.value)
-      return { response, payload }
+      const sanitizedResponse = this.#sanitizeResponse(response)
+      return { response: sanitizedResponse, payload }
     }
 
     setValue (req, opts, data) {

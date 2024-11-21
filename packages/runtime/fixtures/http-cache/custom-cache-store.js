@@ -1,39 +1,24 @@
 'use strict'
 
-const { Readable, Writable } = require('node:stream')
+const { Writable } = require('node:stream')
 
 class CustomCacheStore {
   constructor () {
     this.counter = 0
   }
 
-  get isFull () {
-    return false
-  }
-
-  async createReadStream () {
+  async get () {
     if (++this.counter > 5) return
 
-    const readable = new Readable({
-      read () {}
-    })
-
-    Object.defineProperty(readable, 'value', {
-      get value () {
-        return {
-          statusCode: 200,
-          rawHeaders: ['content-type', 'application/json'],
-          cachedAt: Date.now(),
-          staleAt: Date.now() + 5000,
-          deleteAt: Date.now() + 5000
-        }
-      }
-    })
-
-    readable.push('Custom cache store response')
-    readable.push(null)
-
-    return readable
+    return {
+      statusCode: 200,
+      rawHeaders: ['content-type', 'application/json'],
+      body: 'Custom cache store response',
+      cacheTags: [],
+      cachedAt: Date.now(),
+      staleAt: Date.now() + 5000,
+      deleteAt: Date.now() + 5000
+    }
   }
 
   createWriteStream () {

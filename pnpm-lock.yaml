@@ -1674,8 +1674,8 @@ importers:
         specifier: workspace:*
         version: link:../ts-compiler
       '@platformatic/undici-cache-memory':
-        specifier: ^0.3.0
-        version: 0.3.0
+        specifier: ^0.4.0
+        version: 0.4.0
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -1743,8 +1743,8 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0
       undici:
-        specifier: 7.0.0-alpha.3
-        version: 7.0.0-alpha.3
+        specifier: 7.0.0-alpha.6
+        version: 7.0.0-alpha.6
       undici-thread-interceptor:
         specifier: ^0.9.0
         version: 0.9.0
@@ -3888,8 +3888,8 @@ packages:
   '@platformatic/openapi-schema-validator@3.0.0':
     resolution: {integrity: sha512-SHEY5v1Q5EliMaIpXdPCye0QkhFVOoHkEqA8v9qkrO1PqvVOcpii1WqEHYrZZB430sEmrHqEWZInt15EUsR7mw==}
 
-  '@platformatic/undici-cache-memory@0.3.0':
-    resolution: {integrity: sha512-S9W9iAuqXjTy7xWi5A5xQ6qbRTW2imXGl0s85uPAEkKE4Lnn8+cetYjasRywuBOFdbEIiUQ22TYMXeDJ+wOGQg==}
+  '@platformatic/undici-cache-memory@0.4.0':
+    resolution: {integrity: sha512-0jdw71msNTIR3t0T6knuaqS+b/LD+IGKgxKLyszW/cDt9d/YAq6a/gC2mq5Ng2szShqrfzGj7MTHauwGV+eeNw==}
 
   '@playwright/test@1.48.2':
     resolution: {integrity: sha512-54w1xCWfXuax7dz4W2M9uw0gDyh+ti/0K/MxcCUxChFh37kkdxPdfZDw5QBbuPUJHr1CiHJ1hXgSs+GgeQc5Zw==}
@@ -8767,8 +8767,8 @@ packages:
     resolution: {integrity: sha512-BUgJXc752Kou3oOIuU1i+yZZypyZRqNPW0vqoMPl8VaoalSfeR0D8/t4iAS3yirs79SSMTxTag+ZC86uswv+Cw==}
     engines: {node: '>=18.17'}
 
-  undici@7.0.0-alpha.3:
-    resolution: {integrity: sha512-VccnrEkFeiQjILjljH2GazArfC3Ujds04YcF3azoSte/fqsMsLb2x/Nh2Z4P/RGQao6AcNw+wwvNiJlcg3dQfg==}
+  undici@7.0.0-alpha.6:
+    resolution: {integrity: sha512-NNAU7KiklOoq5AvlHskrreJzoG8RUMK6lRwNGzGSVAQ1r7sbmAXoFrQuu/UfQUyscIz+BzLhKazfAB2cgwCjVw==}
     engines: {node: '>=18.17'}
 
   unicorn-magic@0.1.0:
@@ -10587,7 +10587,7 @@ snapshots:
       ajv-formats: 3.0.1(ajv@8.17.1)
       js-yaml: 4.1.0
 
-  '@platformatic/undici-cache-memory@0.3.0': {}
+  '@platformatic/undici-cache-memory@0.4.0': {}
 
   '@playwright/test@1.48.2':
     dependencies:
@@ -16655,7 +16655,7 @@ snapshots:
 
   undici@6.21.0: {}
 
-  undici@7.0.0-alpha.3: {}
+  undici@7.0.0-alpha.6: {}
 
   unicorn-magic@0.1.0: {}
 
