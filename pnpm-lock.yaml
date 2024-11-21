@@ -1067,7 +1067,7 @@ importers:
         version: 5.0.1
       fastify-user:
         specifier: ^1.0.2
-        version: 1.1.0
+        version: 1.2.0
       leven:
         specifier: ~3.1.0
         version: 3.1.0
@@ -5602,8 +5602,8 @@ packages:
     resolution: {integrity: sha512-pvYwdtbZUJr/aTD7ZE0rGlvtYpx7IThHKVLBoqCKmT3FJpwm23XA2+PDmq8ZzfqqG4ajpyrHd5bkIixcIFjPhQ==}
     engines: {node: '>=18.0.0'}
 
-  fastify-user@1.1.0:
-    resolution: {integrity: sha512-Yb1VC4Wiwp7mwU1PMoVF3Pc74xr3dcNDT8bOMaFZZXujN8UzexUI6CaZ8n0U1qAPT1YYQ5lUyH3UY3DB3RY/5g==}
+  fastify-user@1.2.0:
+    resolution: {integrity: sha512-zUp1VaV5fHfQx017NrK0XQlP1VcpX90M2PNqm3SWE8NpLfEXxQl2nGXg0Byv3UHPmsfavpjiq8xRYiHlQqOwrQ==}
 
   fastify@5.1.0:
     resolution: {integrity: sha512-0SdUC5AoiSgMSc2Vxwv3WyKzyGMDJRAW/PgNsK1kZrnkO6MeqUIW9ovVg9F2UGIqtIcclYMyeJa4rK6OZc7Jxg==}
@@ -12681,7 +12681,7 @@ snapshots:
 
   fastify-tsconfig@2.0.0: {}
 
-  fastify-user@1.1.0:
+  fastify-user@1.2.0:
     dependencies:
       '@fastify/error': 4.0.0
       '@fastify/jwt': 9.0.1
