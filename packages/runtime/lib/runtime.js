@@ -112,10 +112,10 @@ class Runtime extends EventEmitter {
     this.#workers.configure(config.services, this.#configManager.current.workers, this.#isProduction)
 
     if (this.#isProduction) {
-      this.#env['PLT_DEV'] = false
+      this.#env['PLT_DEV'] = 'false'
       this.#env['PLT_ENVIRONMENT'] = 'production'
     } else {
-      this.#env['PLT_DEV'] = true
+      this.#env['PLT_DEV'] = 'true'
       this.#env['PLT_ENVIRONMENT'] = 'development'
     }
 
