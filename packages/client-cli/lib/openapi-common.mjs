@@ -184,9 +184,11 @@ export function writeContent (writer, content, spec, addedProps, methodType, wra
       }
 
       if (wrapper) {
-        writer.write(`${wrapper}: `).block(() =>
-          writeObjectProperties(writer, schema, spec, addedProps, methodType)
-        )
+        if (isStructuredType) {
+          writer.write(`${wrapper}: `).block(() => writeObjectProperties(writer, schema, spec, addedProps, methodType))
+        } else {
+          writer.write(`${wrapper}: ${getType(body.schema, methodType, spec)}`)
+        }
       } else {
         writeObjectProperties(writer, schema, spec, addedProps, methodType)
       }
