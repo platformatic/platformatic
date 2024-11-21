@@ -166,7 +166,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       body = args?.body || ''
       for (const param of pathParams) {
         if (args?.path[param.name] === undefined) {
-          throw new Error('missing required parameter ' + param.name)
+          throw new errors.MissingParamsRequiredError(param.name)
         }
         pathToCall = pathToCall.replace(`{${param.name}}`, args.path[param.name])
       }
@@ -184,7 +184,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       body = args instanceof FormData ? args : { ...args } || '' // shallow copy
       for (const param of pathParams) {
         if (body[param.name] === undefined) {
-          throw new Error('missing required parameter ' + param.name)
+          throw new errors.MissingParamsRequiredError(param.name)
         }
         pathToCall = pathToCall.replace(`{${param.name}}`, body[param.name])
         body[param.name] = undefined
@@ -266,17 +266,17 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
           const matchingResponse = responses[res.statusCode]
 
           if (matchingResponse === undefined) {
-            throw new Error(`No matching response schema found for status code ${res.statusCode}`)
+            throw new errors.InvalidResponseSchemaError(res.statusCode)
           }
           const matchingContentSchema = matchingResponse.content[contentType]
 
           if (matchingContentSchema === undefined) {
-            throw new Error(`No matching content type schema found for ${contentType}`)
+            throw new errors.InvalidContentTypeError(contentType)
           }
           const bodyIsValid = checkResponseAgainstSchema(responseBody, matchingContentSchema.schema, ajv)
 
           if (!bodyIsValid) {
-            throw new Error('Invalid response format')
+            throw new errors.InvalidResponseFormatError()
           }
         } catch (err) {
           responseBody = createErrorResponse(err.message)
@@ -292,19 +292,13 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       return responseBody
     } catch (err) {
       openTelemetry?.setErrorInSpanClient(span, err)
-      throw err
+      throw new errors.UnexpectedCallFailureError(err.toString())
     } finally {
       openTelemetry?.endHTTPSpanClient(span, res)
     }
   }
 }
 
-// function getFileParametersInRequestBody(methodMetadata) {
-//   const bodyType = getRequestBodyContentType(methodMetadata)
-//   if (bodyType === 'multipart/form-data') {
-//     const schema = methodMetadata[bodyType].content.schema
-//   }
-// }
 function getRequestBodyContentType (methodMetadata) {
   let output = null
   if (!methodMetadata.requestBody) {
@@ -449,7 +443,7 @@ async function plugin (app, opts) {
     }
     client = await buildGraphQLClient(opts, app.openTelemetry, app.log)
   } else {
-    throw new Error('opts.type must be either "openapi" or "graphql"')
+    throw new errors.WrongOptsTypeError()
   }
 
   let name = opts.name

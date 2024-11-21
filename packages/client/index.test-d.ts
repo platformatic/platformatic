@@ -4,7 +4,7 @@ import {
   expectNotAssignable,
   expectType
 } from 'tsd'
-import fastify, { HTTPMethods } from 'fastify'
+import fastify from 'fastify'
 import pltClient, {
   errors,
   buildOpenAPIClient,
@@ -63,7 +63,7 @@ server.register(pltClient, {
 const key = Symbol.for('plt.operationIdMap')
 type MyType = {
   getFoo: Function
-} & Record<typeof key, { path: string, method: HTTPMethods }>
+} & Record<typeof key, { path: string, method: string }>
 
 const dispatcher = new Agent({ allowH2: true, connections: 10 })
 const openTelemetry = {}
@@ -135,7 +135,7 @@ expectNotAssignable<StatusCode5xx>(600)
 // All params and generic passed
 expectType<MyType>(client)
 expectType<Function>(client.getFoo)
-expectType<{ path: string, method: HTTPMethods }>(client[key])
+expectType<{ path: string, method: string }>(client[key])
 
 // Only required params and no generics
 expectType<Promise<unknown>>(buildOpenAPIClient({
@@ -146,3 +146,10 @@ expectType<Promise<unknown>>(buildOpenAPIClient({
 }))
 
 expectType<() => FastifyError>(errors.OptionsUrlRequiredError)
+expectType<(_: string) => FastifyError>(errors.FormDataRequiredError)
+expectType<(_: string) => FastifyError>(errors.MissingParamsRequiredError)
+expectType<() => FastifyError>(errors.WrongOptsTypeError)
+expectType<(_: string) => FastifyError>(errors.InvalidResponseSchemaError)
+expectType<(_: string) => FastifyError>(errors.InvalidContentTypeError)
+expectType<() => FastifyError>(errors.InvalidResponseFormatError)
+expectType<(_: string) => FastifyError>(errors.UnexpectedCallFailureError)

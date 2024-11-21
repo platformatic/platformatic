@@ -351,3 +351,15 @@ fastify.post('/', async (request, reply) => {
   return res
 })
 ```
+
+## Errors in Platformatic Client
+
+Platformatic Client throws the following errors when an unexpected situation occurs:
+* `PLT_CLIENT_OPTIONS_URL_REQUIRED` => in your client options, you should provide a valid `url`
+* `PLT_CLIENT_FORM_DATA_REQUIRED` => you should pass a `FormData` object (from `undici` request) since you're doing a `multipart/form-data` request
+* `PLT_CLIENT_MISSING_PARAMS_REQUIRED` => a url path params is missing (and should be added) when doing the client request 
+* `PLT_CLIENT_WRONG_OPTS_TYPE` => a wrong client option type has been passed (and should be properly updated)
+* `PLT_CLIENT_INVALID_RESPONSE_SCHEMA` => response can't be properly validated due to missing status code
+* `PLT_CLIENT_INVALID_CONTENT_TYPE` => response contains an invalid content type 
+* `PLT_CLIENT_INVALID_RESPONSE_FORMAT` => body response doesn't match with the provided schema
+* `PLT_CLIENT_UNEXPECTED_CALL_FAILURE` => there has been an unexpected failure when doing the client request
