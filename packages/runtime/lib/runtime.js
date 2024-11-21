@@ -111,6 +111,14 @@ class Runtime extends EventEmitter {
     this.#servicesIds = config.services.map(service => service.id)
     this.#workers.configure(config.services, this.#configManager.current.workers, this.#isProduction)
 
+    if (this.#isProduction) {
+      this.#env['PLT_DEV'] = false
+      this.#env['PLT_ENVIRONMENT'] = 'production'
+    } else {
+      this.#env['PLT_DEV'] = true
+      this.#env['PLT_ENVIRONMENT'] = 'development'
+    }
+
     // Create all services, each in is own worker thread
     for (const serviceConfig of config.services) {
       await this.#setupService(serviceConfig)
