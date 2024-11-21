@@ -22,7 +22,11 @@ test('dev - should start in development mode', async t => {
 
   const { statusCode, body } = await request(url)
   deepStrictEqual(statusCode, 200)
-  deepStrictEqual(await body.json(), { production: false })
+  deepStrictEqual(await body.json(), {
+    production: false,
+    plt_dev: true,
+    plt_environment: 'development'
+  })
 })
 
 test('dev - should complain if no configuration file is found', async t => {
@@ -206,7 +210,11 @@ test('start - should start in production mode', async t => {
 
   const { statusCode, body } = await request(url)
   deepStrictEqual(statusCode, 200)
-  deepStrictEqual(await body.json(), { production: true })
+  deepStrictEqual(await body.json(), {
+    production: true,
+    plt_dev: false,
+    plt_environment: 'production'
+  })
 
   const configProcess = await wattpm('config', startProcess.pid)
   const config = JSON.parse(configProcess.stdout)
@@ -229,7 +237,11 @@ test('start - should start in production mode with the inspector', async t => {
 
   const { statusCode, body } = await request(url)
   deepStrictEqual(statusCode, 200)
-  deepStrictEqual(await body.json(), { production: true })
+  deepStrictEqual(await body.json(), {
+    production: true,
+    plt_dev: false,
+    plt_environment: 'production'
+  })
 
   const [data] = await (await fetch('http://127.0.0.1:9230/json/list')).json()
   const { webSocketDebuggerUrl } = data
