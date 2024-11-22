@@ -41,7 +41,7 @@
     "@platformatic/service": "workspace:*",
     "@platformatic/vite": "workspace:*",
     "add": "^2.0.6",
-    "borp": "^0.18.0",
+    "borp": "^0.19.0",
     "c8": "^10.0.0",
     "eslint": "9",
     "fastify": "^5.0.0",
