@@ -1,14 +1,17 @@
 'use strict'
 
 const assert = require('node:assert/strict')
+const errors = require('../errors')
 const { tmpdir } = require('node:os')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { unlink, mkdtemp, cp } = require('node:fs/promises')
+const { unlink, mkdtemp, cp, readFile } = require('node:fs/promises')
 const { buildServer: buildService } = require('../../service')
 const { buildOpenAPIClient } = require('..')
 const Fastify = require('fastify')
 const { safeRemove } = require('@platformatic/utils')
+const { openAsBlob } = require('node:fs')
+const { FormData } = require('undici')
 require('./helper')
 
 test('build basic client from file with (endpoint with duplicated parameters)', async t => {
@@ -31,19 +34,19 @@ test('build basic client from file with (endpoint with duplicated parameters)', 
 
   const client = await buildOpenAPIClient({
     url: `${app.url}`,
-    path: join(tmpDir, 'openapi.json'),
+    path: join(tmpDir, 'openapi.json')
   })
 
   const result = await client.postHello({
     body: {
-      id: 'bodyId',
+      id: 'bodyId'
     },
     query: {
-      id: 'queryId',
+      id: 'queryId'
     },
     headers: {
-      id: 'headersId',
-    },
+      id: 'headersId'
+    }
   })
 
   assert.deepEqual(result.headers.id, 'headersId')
@@ -71,19 +74,19 @@ test('build basic client from file (enpoint with no parameters)', async t => {
 
   const client = await buildOpenAPIClient({
     url: `${app.url}`,
-    path: join(tmpDir, 'openapi.json'),
+    path: join(tmpDir, 'openapi.json')
   })
 
   const bodyPayload = {
     body: {
-      id: 'bodyId',
+      id: 'bodyId'
     },
     query: {
-      id: 'queryId',
+      id: 'queryId'
     },
     headers: {
-      id: 'headersId',
-    },
+      id: 'headersId'
+    }
   }
   const postResult = await client.postHello(bodyPayload)
 
@@ -119,14 +122,14 @@ test('build basic client from file (query array parameter)', async t => {
     const client = await buildOpenAPIClient({
       fullRequest: true,
       url: `${app.url}`,
-      path: join(tmpDir, 'openapi.json'),
+      path: join(tmpDir, 'openapi.json')
     })
 
     const result = await client.getQuery({
       query: {
         ids: ['id1', 'id2'],
-        stringArrayUnion: ['foo', 'bar', 'baz'],
-      },
+        stringArrayUnion: ['foo', 'bar', 'baz']
+      }
     })
     assert.deepEqual(result.isArray, true)
     assert.deepEqual(result.ids, ['id1', 'id2'])
@@ -137,12 +140,12 @@ test('build basic client from file (query array parameter)', async t => {
     const client = await buildOpenAPIClient({
       fullRequest: false,
       url: `${app.url}`,
-      path: join(__dirname, 'fixtures', 'array-query-params', 'openapi.json'),
+      path: join(__dirname, 'fixtures', 'array-query-params', 'openapi.json')
     })
 
     const result = await client.getQuery({
       ids: ['id1', 'id2'],
-      stringArrayUnion: ['foo', 'bar', 'baz'],
+      stringArrayUnion: ['foo', 'bar', 'baz']
     })
     assert.deepEqual(result.isArray, true)
     assert.deepEqual(result.ids, ['id1', 'id2'])
@@ -173,12 +176,12 @@ test('build basic client from file (path parameter)', async t => {
     const client = await buildOpenAPIClient({
       fullRequest: true,
       url: `${app.url}`,
-      path: join(__dirname, 'fixtures', 'path-params', 'openapi.json'),
+      path: join(__dirname, 'fixtures', 'path-params', 'openapi.json')
     })
 
     const params = {
       path: { id: 'baz' },
-      query: { name: 'bar' },
+      query: { name: 'bar' }
     }
     const result = await client.getPath(params)
     assert.equal(result.id, 'baz')
@@ -187,7 +190,7 @@ test('build basic client from file (path parameter)', async t => {
       params,
       {
         path: { id: 'baz' },
-        query: { name: 'bar' },
+        query: { name: 'bar' }
       },
       'calling the client should NOT override the sent params'
     )
@@ -202,19 +205,19 @@ test('build basic client from file (path parameter)', async t => {
     } catch (err) {
       error = err
     }
-    assert.equal(error instanceof Error, true, 'when no path param is passed')
+    assert.equal(error instanceof errors.MissingParamsRequiredError, true, 'when no path param is passed')
   }
   {
     // without fullRequest
     const client = await buildOpenAPIClient({
       fullRequest: false,
       url: `${app.url}`,
-      path: join(__dirname, 'fixtures', 'path-params', 'openapi.json'),
+      path: join(__dirname, 'fixtures', 'path-params', 'openapi.json')
     })
 
     const result = await client.getPath({
       id: 'baz',
-      name: 'foo',
+      name: 'foo'
     })
     assert.equal(result.id, 'baz')
     assert.equal(result.name, 'foo')
@@ -226,11 +229,11 @@ test('build basic client from file (path parameter)', async t => {
       url: `${app.url}`,
       path: join(__dirname, 'fixtures', 'path-params', 'openapi.json'),
       bodyTimeout: 900000,
-      headersTimeout: 900000,
+      headersTimeout: 900000
     })
     const result = await client.getPath({
       id: 'fracchia',
-      name: 'fantozzi',
+      name: 'fantozzi'
     })
     assert.equal(result.id, 'fracchia')
     assert.equal(result.name, 'fantozzi')
@@ -258,33 +261,33 @@ test('validate response', async t => {
   const client = await buildOpenAPIClient({
     url: `${app.url}`,
     path: join(tmpDir, 'openapi.json'),
-    validateResponse: true,
+    validateResponse: true
   })
 
   // invalid response format
   const invalidResult = await client.getInvalid()
   assert.deepEqual(invalidResult, {
     statusCode: 500,
-    message: 'Invalid response format',
+    message: 'Invalid response format'
   })
 
   // no matching route
   const noMatchingResult = await client.getNoMatching()
   assert.deepEqual(noMatchingResult, {
     statusCode: 500,
-    message: 'No matching response schema found for status code 404',
+    message: 'No matching response schema found for status code 404'
   })
 
   // no matching content type
   const noMatchingContentTypeResult = await client.getNoContentType()
   assert.deepEqual(noMatchingContentTypeResult, {
     statusCode: 500,
-    message: 'No matching content type schema found for application/json',
+    message: 'No matching content type schema found for application/json'
   })
 
   // another content type
   const htmlResult = await client.getNoContentType({
-    returnType: 'html',
+    returnType: 'html'
   })
   assert.deepEqual(htmlResult, '<h1>Hello World</h1>')
 
@@ -296,13 +299,13 @@ test('validate response', async t => {
   const refsResult = await client.getWithRefs()
   assert.deepEqual(refsResult, {
     id: 123,
-    title: 'Harry Potter',
+    title: 'Harry Potter'
   })
 
   // second call to make coverage happy about caching functions
   assert.deepEqual(await client.getWithRefs(), {
     id: 123,
-    title: 'Harry Potter',
+    title: 'Harry Potter'
   })
 
   // Validate bodies when getting full response
@@ -310,14 +313,14 @@ test('validate response', async t => {
     url: `${app.url}`,
     path: join(tmpDir, 'openapi.json'),
     validateResponse: true,
-    fullResponse: true,
+    fullResponse: true
   })
 
   // invalid response format
   const invalidFullResult = await fullResponseClient.getInvalid()
   assert.deepEqual(invalidFullResult.body, {
     statusCode: 500,
-    message: 'Invalid response format',
+    message: 'Invalid response format'
   })
 
   // valid response
@@ -331,12 +334,12 @@ test('build client with common parameters', async t => {
   app.get('/path/with/:fieldId', async (req, res) => {
     return {
       pathParam: req.params.fieldId,
-      queryParam: req.query.movieId,
+      queryParam: req.query.movieId
     }
   })
 
   const clientUrl = await app.listen({
-    port: 0,
+    port: 0
   })
   t.after(() => {
     app.close()
@@ -344,18 +347,18 @@ test('build client with common parameters', async t => {
   const specPath = join(__dirname, 'fixtures', 'common-parameters-openapi.json')
   const client = await buildOpenAPIClient({
     url: clientUrl,
-    path: specPath,
+    path: specPath
   })
 
   const output = await client.getPathWithFieldId({
     fieldId: 'foo',
-    movieId: '123',
+    movieId: '123'
   })
 
   assert.deepEqual(
     {
       pathParam: 'foo',
-      queryParam: '123',
+      queryParam: '123'
     },
     output
   )
@@ -367,12 +370,12 @@ test('build client with header injection options (getHeaders)', async t => {
   app.get('/path/with/:fieldId', async (req, res) => {
     return {
       pathParam: req.params.fieldId,
-      queryParam: req.query.movieId,
+      queryParam: req.query.movieId
     }
   })
 
   const clientUrl = await app.listen({
-    port: 0,
+    port: 0
   })
   t.after(() => {
     app.close()
@@ -391,18 +394,18 @@ test('build client with header injection options (getHeaders)', async t => {
   const client = await buildOpenAPIClient({
     url: clientUrl,
     path: specPath,
-    getHeaders,
+    getHeaders
   })
 
   const output = await client.getPathWithFieldId({
     fieldId,
-    movieId,
+    movieId
   })
 
   assert.deepEqual(
     {
       pathParam: 'foo',
-      queryParam: '123',
+      queryParam: '123'
     },
     output
   )
@@ -412,7 +415,7 @@ test('edge cases', async t => {
   const specPath = join(__dirname, 'fixtures', 'misc', 'openapi.json')
   const client = await buildOpenAPIClient({
     url: 'http://127.0.0.1:3000',
-    path: specPath,
+    path: specPath
   })
   assert.equal(typeof client.getTestWithWeirdCharacters, 'function')
 })
@@ -438,7 +441,7 @@ test('should not throw when params are not passed', async t => {
   const client = await buildOpenAPIClient({
     fullRequest: true,
     url: `${app.url}`,
-    path: join(tmpDir, 'openapi.json'),
+    path: join(tmpDir, 'openapi.json')
   })
   const result1 = await client.getTestWithWeirdCharacters({ id: 'foo' })
   assert.strictEqual(typeof result1, 'object', 'call with params')
@@ -467,7 +470,7 @@ test('do not set bodies for methods that should not have them', async t => {
 
   const client = await buildOpenAPIClient({
     url: `${app.url}`,
-    path: join(tmpDir, 'openapi.json'),
+    path: join(tmpDir, 'openapi.json')
   })
 
   const requestBody = { test: 'data' }
@@ -499,4 +502,97 @@ test('do not set bodies for methods that should not have them', async t => {
 
   const headResult = await client.headHello(requestBody)
   assert.deepEqual(headResult, '')
+})
+
+test('multipart/form-data', async t => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'sample-service')
+  const app = await buildService(join(fixtureDirPath, 'platformatic.json'))
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    url: `${app.url}/`,
+    path: join(fixtureDirPath, 'openapi.json')
+  })
+  const formData = new FormData()
+  formData.append('title', 'The Matrix')
+  formData.append('foobar', 'foobar')
+  const resp = await client.postFormdataMovies(formData)
+  assert.ok(resp.id)
+  assert.match(resp.contentType, /multipart\/form-data/)
+  assert.deepEqual(resp.body, {
+    title: 'The Matrix',
+    foobar: 'foobar'
+  })
+})
+
+test('multipart/form-data with files', async t => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'sample-service')
+  const app = await buildService(join(fixtureDirPath, 'platformatic.json'))
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    url: `${app.url}/`,
+    path: join(fixtureDirPath, 'openapi.json')
+  })
+
+  const formData = new FormData()
+  const sampleFilePath = join(__dirname, 'helper.js')
+  const fileAsBlob = await openAsBlob(sampleFilePath)
+  formData.append('file', fileAsBlob, 'helper.js')
+  const resp = await client.postFiles(formData)
+  assert.equal(resp.file, (await readFile(sampleFilePath)).toString('utf-8'))
+})
+
+test('multipart/form-data without FormData', async t => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'sample-service')
+  const app = await buildService(join(fixtureDirPath, 'platformatic.json'))
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    url: `${app.url}/`,
+    path: join(fixtureDirPath, 'openapi.json')
+  })
+  try {
+    await client.postFiles({ foo: 'bar' })
+    assert.fail()
+  } catch (err) {
+    assert.ok(err instanceof errors.UnexpectedCallFailureError)
+    assert.match(err.message, /should be called with a undici.FormData as payload/)
+  }
+})
+
+test('multipart/form-data with files AND fields', async t => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'sample-service')
+  const app = await buildService(join(fixtureDirPath, 'platformatic.json'))
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+
+  const client = await buildOpenAPIClient({
+    url: `${app.url}/`,
+    path: join(fixtureDirPath, 'openapi.json')
+  })
+
+  const formData = new FormData()
+  const sampleFilePath = join(__dirname, 'helper.js')
+  const fileAsBlob = await openAsBlob(sampleFilePath)
+  formData.append('file', fileAsBlob, 'helper.js')
+  formData.append('username', 'johndoe')
+  const resp = await client.postFilesAndFields(formData)
+  assert.equal(resp.file, (await readFile(sampleFilePath)).toString('utf-8'))
+  assert.equal(resp.username, 'johndoe')
 })

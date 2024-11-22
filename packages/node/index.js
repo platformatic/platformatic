@@ -10,13 +10,11 @@ import {
   transformConfig
 } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
-import { setupNodeHTTPTelemetry } from '@platformatic/telemetry'
 import inject from 'light-my-request'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { Server } from 'node:http'
 import { resolve as pathResolve, resolve } from 'node:path'
-import { pathToFileURL } from 'url'
 import { packageJson, schema } from './lib/schema.js'
 
 const validFields = [
@@ -52,6 +50,7 @@ export class NodeStackable extends BaseStackable {
   #dispatcher
   #isFastify
   #isKoa
+  #useHttpForDispatch
 
   constructor (options, root, configManager) {
     super('nodejs', packageJson.version, options, root, configManager)
@@ -86,13 +85,7 @@ export class NodeStackable extends BaseStackable {
       ? ensureTrailingSlash(cleanBasePath(config.application?.basePath))
       : undefined
 
-    this.registerGlobals({
-      // Always use URL to avoid serialization problem in Windows
-      id: this.id,
-      root: pathToFileURL(this.root).toString(),
-      basePath: this.#basePath,
-      logLevel: this.logger.level
-    })
+    this.registerGlobals({ basePath: this.#basePath })
 
     // The server promise must be created before requiring the entrypoint even if it's not going to be used
     // at all. Otherwise there is chance we miss the listen event.
@@ -101,11 +94,6 @@ export class NodeStackable extends BaseStackable {
       (this.isEntrypoint ? serverOptions?.port : undefined) ?? true,
       (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true
     )
-    // If telemetry is set, configure it
-    const telemetryConfig = this.telemetryConfig
-    if (telemetryConfig) {
-      setupNodeHTTPTelemetry(telemetryConfig, this.logger)
-    }
     this.#module = await importFile(finalEntrypoint)
     this.#module = this.#module.default || this.#module
 
@@ -128,9 +116,15 @@ export class NodeStackable extends BaseStackable {
         this.#server = this.#app
         this.#dispatcher = this.#server.listeners('request')[0]
       }
+
+      if (listen) {
+        await this._listen()
+      }
     } else {
       // User blackbox function, we wait for it to listen on a port
       this.#server = await serverPromise
+      this.#dispatcher = this.#server.listeners('request')[0]
+
       this.url = getServerUrl(this.#server)
     }
 
@@ -186,7 +180,7 @@ export class NodeStackable extends BaseStackable {
   async inject (injectParams, onInject) {
     let res
 
-    if (this.url) {
+    if (this.#useHttpForDispatch) {
       this.logger.trace({ injectParams, url: this.url }, 'injecting via request')
       res = await injectViaRequest(this.url, injectParams, onInject)
     } else {
@@ -243,6 +237,17 @@ export class NodeStackable extends BaseStackable {
     }
   }
 
+  async getDispatchTarget () {
+    this.#useHttpForDispatch =
+      this.childManager || (this.url && this.configManager.current.node?.dispatchViaHttp === true)
+
+    if (this.#useHttpForDispatch) {
+      return this.getUrl()
+    }
+
+    return this.getDispatchFunc()
+  }
+
   async _listen () {
     const serverOptions = this.serverConfig
 
@@ -279,18 +284,20 @@ export class NodeStackable extends BaseStackable {
 
     const { entrypoint, hadEntrypointField } = await getEntrypointInformation(this.root)
 
-    if (!entrypoint) {
-      this.logger.error(
-        `The service ${this.id} had no valid entrypoint defined in the package.json file and no valid entrypoint file was found.`
-      )
+    if (typeof this.workerId === 'undefined' || this.workerId === 0) {
+      if (!entrypoint) {
+        this.logger.error(
+          `The service "${this.serviceId}" had no valid entrypoint defined in the package.json file and no valid entrypoint file was found.`
+        )
 
-      process.exit(1)
-    }
+        process.exit(1)
+      }
 
-    if (!hadEntrypointField) {
-      this.logger.warn(
-        `The service ${this.id} had no valid entrypoint defined in the package.json file. Falling back to the file "${entrypoint}".`
-      )
+      if (!hadEntrypointField) {
+        this.logger.warn(
+          `The service "${this.serviceId}" had no valid entrypoint defined in the package.json file. Falling back to the file "${entrypoint}".`
+        )
+      }
     }
 
     let root = this.root
@@ -380,6 +387,11 @@ export async function buildStackable (opts) {
     dirname: root
   })
   await configManager.parseAndValidate()
+  const config = configManager.current
+  // We need to update the config with the telemetry so the service name
+  // used in telemetry can be retreived using the management API
+  config.telemetry = opts.context.telemetryConfig
+  configManager.update(config)
 
   return new NodeStackable(opts, root, configManager)
 }

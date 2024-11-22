@@ -99,7 +99,7 @@ test('Uses the server config if passed', async t => {
       level: 'info',
     },
   }
-  const app = new PlatformaticApp(config, null, null, serverConfig)
+  const app = new PlatformaticApp(config, 0, null, null, serverConfig)
 
   t.after(async function () {
     try {

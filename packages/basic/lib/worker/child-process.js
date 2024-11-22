@@ -1,12 +1,12 @@
 import { ITC } from '@platformatic/itc'
-import { setupNodeHTTPTelemetry } from '@platformatic/telemetry'
-import { createPinoWritable, ensureLoggableError } from '@platformatic/utils'
 import { collectMetrics } from '@platformatic/metrics'
-import { tracingChannel } from 'node:diagnostics_channel'
-import { once } from 'node:events'
+import { createPinoWritable, ensureLoggableError } from '@platformatic/utils'
+import diagnosticChannel, { tracingChannel } from 'node:diagnostics_channel'
+import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
+import { ServerResponse } from 'node:http'
 import { register } from 'node:module'
-import { platform, tmpdir } from 'node:os'
+import { hostname, platform, tmpdir } from 'node:os'
 import { basename, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { isMainThread } from 'node:worker_threads'
@@ -15,7 +15,9 @@ import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
 import { exitCodes } from '../errors.js'
 import { importFile } from '../utils.js'
-import { getSocketPath, isWindows } from './child-manager.js'
+import { getSocketPath } from './child-manager.js'
+
+const windowsNpmExecutables = ['npm-prefix.js', 'npm-cli.js']
 
 function createInterceptor (itc) {
   return function (dispatch) {
@@ -95,7 +97,7 @@ export class ChildProcess extends ITC {
         },
         getMetrics: (...args) => {
           return this.#getMetrics(...args)
-        },
+        }
       }
     })
 
@@ -106,13 +108,15 @@ export class ChildProcess extends ITC {
 
     this.listen()
     this.#setupLogger()
-    this.#setupTelemetry()
     this.#setupHandlers()
     this.#setupServer()
     this.#setupInterceptors()
 
-    this.on('close', signal => {
-      process.kill(process.pid, signal)
+    this.on('close', () => {
+      if (!globalThis.platformatic.events.emit('close')) {
+        // No user event, just exit without errors
+        process.exit(0)
+      }
     })
   }
 
@@ -165,17 +169,16 @@ export class ChildProcess extends ITC {
     this.#socket.close()
   }
 
-  async #collectMetrics ({ serviceId, metricsConfig }) {
-    const { registry } = await collectMetrics(serviceId, metricsConfig)
+  async #collectMetrics ({ serviceId, workerId, metricsConfig }) {
+    const { registry } = await collectMetrics(serviceId, workerId, metricsConfig)
     this.#metricsRegistry = registry
   }
 
   async #getMetrics ({ format } = {}) {
     if (!this.#metricsRegistry) return null
 
-    const res = format === 'json'
-      ? await this.#metricsRegistry.getMetricsAsJSON()
-      : await this.#metricsRegistry.metrics()
+    const res =
+      format === 'json' ? await this.#metricsRegistry.getMetricsAsJSON() : await this.#metricsRegistry.metrics()
 
     return res
   }
@@ -183,27 +186,30 @@ export class ChildProcess extends ITC {
   #setupLogger () {
     // Since this is executed by user code, make sure we only override this in the main thread
     // The rest will be intercepted by the BaseStackable.
+    const pinoOptions = {
+      level: 'info',
+      name: globalThis.platformatic.serviceId
+    }
+
+    if (typeof globalThis.platformatic.workerId !== 'undefined') {
+      pinoOptions.base = {
+        pid: process.pid,
+        hostname: hostname(),
+        worker: parseInt(globalThis.platformatic.workerId)
+      }
+    }
+
     if (isMainThread) {
-      this.#logger = pino({
-        level: 'info',
-        name: globalThis.platformatic.id,
-        transport: {
-          target: new URL('./child-transport.js', import.meta.url).toString(),
-          options: { id: globalThis.platformatic.id }
-        }
-      })
+      pinoOptions.transport = {
+        target: new URL('./child-transport.js', import.meta.url).toString()
+      }
+
+      this.#logger = pino(pinoOptions)
 
       Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(this.#logger, 'info') })
       Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(this.#logger, 'error', true) })
     } else {
-      this.#logger = pino({ level: 'info', name: globalThis.platformatic.id })
-    }
-  }
-
-  /* c8 ignore next 5 */
-  #setupTelemetry () {
-    if (globalThis.platformatic.telemetry) {
-      setupNodeHTTPTelemetry(globalThis.platformatic.telemetry, this.#logger)
+      this.#logger = pino(pinoOptions)
     }
   }
 
@@ -248,6 +254,11 @@ export class ChildProcess extends ITC {
     }
 
     tracingChannel('net.server.listen').subscribe(subscribers)
+
+    const { isEntrypoint, runtimeBasePath, wantsAbsoluteUrls } = globalThis.platformatic
+    if (isEntrypoint && runtimeBasePath && !wantsAbsoluteUrls) {
+      stripBasePath(runtimeBasePath)
+    }
   }
 
   #setupInterceptors () {
@@ -255,11 +266,13 @@ export class ChildProcess extends ITC {
   }
 
   #setupHandlers () {
+    const errorLabel =
+      typeof globalThis.platformatic.workerId !== 'undefined'
+        ? `worker ${globalThis.platformatic.workerId} of the service "${globalThis.platformatic.serviceId}"`
+        : `service "${globalThis.platformatic.serviceId}"`
+
     function handleUnhandled (type, err) {
-      this.#logger.error(
-        { err: ensureLoggableError(err) },
-        `Child process for service ${globalThis.platformatic.id} threw an ${type}.`
-      )
+      this.#logger.error({ err: ensureLoggableError(err) }, `Child process for the ${errorLabel} threw an ${type}.`)
 
       // Give some time to the logger and ITC notifications to land before shutting down
       setTimeout(() => process.exit(exitCodes.PROCESS_UNHANDLED_ERROR), 100)
@@ -270,11 +283,64 @@ export class ChildProcess extends ITC {
   }
 }
 
+function stripBasePath (basePath) {
+  const kBasePath = Symbol('kBasePath')
+
+  diagnosticChannel.subscribe('http.server.request.start', ({ request, response }) => {
+    if (request.url.startsWith(basePath)) {
+      request.url = request.url.slice(basePath.length)
+
+      if (request.url.charAt(0) !== '/') {
+        request.url = '/' + request.url
+      }
+
+      response[kBasePath] = basePath
+    }
+  })
+
+  const originWriteHead = ServerResponse.prototype.writeHead
+  const originSetHeader = ServerResponse.prototype.setHeader
+
+  ServerResponse.prototype.writeHead = function (statusCode, statusMessage, headers) {
+    if (this[kBasePath] !== undefined) {
+      if (headers === undefined && typeof statusMessage === 'object') {
+        headers = statusMessage
+        statusMessage = undefined
+      }
+
+      if (headers) {
+        for (const key in headers) {
+          if (key.toLowerCase() === 'location' && !headers[key].startsWith(basePath)) {
+            headers[key] = basePath + headers[key]
+          }
+        }
+      }
+    }
+
+    return originWriteHead.call(this, statusCode, statusMessage, headers)
+  }
+
+  ServerResponse.prototype.setHeader = function (name, value) {
+    if (this[kBasePath]) {
+      if (name.toLowerCase() === 'location' && !value.startsWith(basePath)) {
+        value = basePath + value
+      }
+    }
+    originSetHeader.call(this, name, value)
+  }
+}
+
 async function main () {
+  const executable = basename(process.argv[1] ?? '')
+  if (!isMainThread || windowsNpmExecutables.includes(executable)) {
+    return
+  }
+
   const dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${process.env.PLT_MANAGER_ID}.json`)
   const { data, loader, scripts } = JSON.parse(await readFile(dataPath))
 
   globalThis.platformatic = data
+  globalThis.platformatic.events = new EventEmitter()
 
   if (data.root && isMainThread) {
     process.chdir(fileURLToPath(data.root))
@@ -291,7 +357,4 @@ async function main () {
   globalThis[Symbol.for('plt.children.itc')] = new ChildProcess()
 }
 
-/* c8 ignore next 3 */
-if (!isWindows || basename(process.argv.at(-1)) !== 'npm-prefix.js') {
-  await main()
-}
+await main()

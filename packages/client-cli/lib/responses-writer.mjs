@@ -35,8 +35,11 @@ function responsesWriter (operationId, responsesObject, isFullResponse, writer, 
         writer.writeLine(`export type ${typeName} = string`)
       }
 
+      const lowerStatusCode = statusCode.toLowerCase()
+      const isStatusCodeRange = lowerStatusCode === '1xx' || lowerStatusCode === '2xx' || lowerStatusCode === '3xx' || lowerStatusCode === '4xx' || lowerStatusCode === '5xx'
+
       if (isResponseArray) typeName = `Array<${typeName}>`
-      if (isFullResponse) typeName = `FullResponse<${typeName}, ${statusCode}>`
+      if (isFullResponse) typeName = `FullResponse<${typeName}, ${isStatusCodeRange ? `StatusCode${lowerStatusCode}` : statusCode}>`
       return typeName
     })
   // write response unions

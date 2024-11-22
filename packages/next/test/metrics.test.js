@@ -1,57 +1,40 @@
+import assert from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
-import assert from 'node:assert'
-
-import {
-  createRuntime,
-  fixturesDir,
-  setFixturesDir,
-} from '../../basic/test/helper.js'
-
-import { safeRemove } from '../../utils/index.js'
+import { createRuntime, setFixturesDir } from '../../basic/test/helper.js'
 
 process.setMaxListeners(100)
 
-const packageRoot = resolve(import.meta.dirname, '..')
-
-// Make sure no temporary files exist after execution
-test.afterEach(() => {
-  if (fixturesDir) {
-    return Promise.all([
-      safeRemove(resolve(fixturesDir, 'node_modules')),
-    ])
-  }
-})
+setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('should configure metrics correctly with both node and http metrics', async t => {
   const configuration = 'standalone-with-metrics'
 
-  setFixturesDir(resolve(import.meta.dirname, `./fixtures/${configuration}`))
-  await createRuntime(t, 'platformatic.runtime.json', packageRoot)
+  const { url } = await createRuntime(t, configuration)
 
   // This is needed for the diagnostics channel to start intercepting requests
   await sleep(100)
 
   {
     // Test request to add http metrics
-    const { statusCode } = await request('http://127.0.0.1:3042', {
+    const { statusCode } = await request(url, {
       method: 'GET',
-      path: '/',
+      path: '/'
     })
     assert.strictEqual(statusCode, 200)
   }
 
   const { body } = await request('http://127.0.0.1:9090', {
     method: 'GET',
-    path: '/metrics',
+    path: '/metrics'
   })
 
   const metrics = await body.text()
-  process._rawDebug(metrics)
 
-  const metricsNames = metrics.split('\n')
+  const metricsNames = metrics
+    .split('\n')
     .filter(line => line && line.startsWith('# TYPE'))
     .map(line => line.split(' ')[2])
 
@@ -88,17 +71,15 @@ test('should configure metrics correctly with both node and http metrics', async
     'http_request_all_summary_seconds',
     'http_request_all_duration_seconds',
     'http_request_duration_seconds',
-    'http_request_summary_seconds',
+    'http_request_summary_seconds'
   ]
   for (const metricName of expectedMetricNames) {
     assert.ok(metricsNames.includes(metricName))
   }
 
-  const entrypointRequestCountMetric = metrics.split('\n').find(
-    line =>
-      line.includes('http_request_summary_seconds_count') &&
-      line.includes('serviceId="frontend"')
-  )
+  const entrypointRequestCountMetric = metrics
+    .split('\n')
+    .find(line => line.includes('http_request_summary_seconds_count') && line.includes('serviceId="frontend"'))
   if (!entrypointRequestCountMetric) {
     assert.fail('Expected entrypoint request count metric not found')
   }

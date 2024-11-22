@@ -9,12 +9,13 @@ import { request } from 'undici'
 import { createMockedLogger, createStackable, temporaryFolder } from './helper.js'
 
 test('BaseStackable - should properly initialize', async t => {
-  const stackable = createStackable({ serviceId: 'service' })
+  const stackable = await createStackable(t, { serviceId: 'service' })
   deepStrictEqual(stackable.logger.level, 'trace')
 })
 
 test('BaseStackable - should properly setup globals', async t => {
-  const stackable = createStackable(
+  const stackable = await createStackable(
+    t,
     { serverConfig: {} },
     {
       current: {
@@ -38,7 +39,8 @@ test('BaseStackable - should properly setup globals', async t => {
 })
 
 test('BaseStackable - other getters', async t => {
-  const stackable = createStackable(
+  const stackable = await createStackable(
+    t,
     {},
     {
       current: { key1: 'value1' },
@@ -57,13 +59,17 @@ test('BaseStackable - other getters', async t => {
 })
 
 test('BaseStackable - getWatchConfig - disabled', async t => {
-  const stackable = createStackable({}, { current: { watch: { enabled: false } } })
+  const stackable = await createStackable(t, {}, { current: { watch: { enabled: false } } })
 
   deepStrictEqual(await stackable.getWatchConfig(), { enabled: false, path: temporaryFolder })
 })
 
 test('BaseStackable - getWatchConfig - disabled', async t => {
-  const stackable = createStackable({}, { current: { watch: { enabled: true, allow: ['first'], ignore: ['second'] } } })
+  const stackable = await createStackable(
+    t,
+    {},
+    { current: { watch: { enabled: true, allow: ['first'], ignore: ['second'] } } }
+  )
 
   deepStrictEqual(await stackable.getWatchConfig(), {
     allow: ['first'],
@@ -74,7 +80,7 @@ test('BaseStackable - getWatchConfig - disabled', async t => {
 })
 
 test('BaseStackable - log - should properly log', async t => {
-  const stackable = createStackable()
+  const stackable = await createStackable(t)
 
   const { messages, logger } = createMockedLogger()
   stackable.logger = logger
@@ -88,8 +94,8 @@ test('BaseStackable - log - should properly log', async t => {
   ])
 })
 
-test('BaseStackable - verifyOutputDirectory - throw an error', t => {
-  const stackable = createStackable({ isProduction: true })
+test('BaseStackable - verifyOutputDirectory - throw an error', async t => {
+  const stackable = await createStackable(t, { isProduction: true })
 
   throws(
     () => stackable.verifyOutputDirectory('/non/existent'),
@@ -98,19 +104,19 @@ test('BaseStackable - verifyOutputDirectory - throw an error', t => {
 })
 
 test('BaseStackable - verifyOutputDirectory - do not throw an error in development', async t => {
-  const stackable = createStackable()
+  const stackable = await createStackable(t)
 
   stackable.verifyOutputDirectory('/non/existent')
 })
 
 test('BaseStackable - verifyOutputDirectory - do not throw on existing directories', async t => {
-  const stackable = createStackable({ isProduction: true })
+  const stackable = await createStackable(t, { isProduction: true })
 
   stackable.verifyOutputDirectory(import.meta.dirname)
 })
 
 test('BaseStackable - buildWithCommand - should execute the requested command', async t => {
-  const stackable = createStackable({ isProduction: true })
+  const stackable = await createStackable(t, { isProduction: true })
   const { messages, logger } = createMockedLogger()
   stackable.logger = logger
 
@@ -124,7 +130,7 @@ test('BaseStackable - buildWithCommand - should execute the requested command', 
 })
 
 test('BaseStackable - buildWithCommand - should handle exceptions', async t => {
-  const stackable = createStackable({})
+  const stackable = await createStackable(t, {})
   const { messages, logger } = createMockedLogger()
   stackable.logger = logger
 
@@ -138,14 +144,21 @@ test('BaseStackable - buildWithCommand - should handle exceptions', async t => {
 })
 
 test('BaseStackable - startCommand and stopCommand - should execute the requested command', async t => {
-  const stackable = createStackable(
+  const stackable = await createStackable(
+    t,
     {
       isEntrypoint: true,
       serverConfig: {
         hostname: '127.0.0.1',
         port: 0
       },
-      telemetryConfig: {}
+      telemetryConfig: {},
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          service: 1000
+        }
+      }
     },
     {
       current: {
@@ -170,13 +183,94 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
     deepStrictEqual(statusCode, 200)
 
     const body = await rawBody.json()
+    body.events = undefined
     deepStrictEqual(body, {
       basePath: '/whatever',
       host: '127.0.0.1',
       logLevel: 'trace',
       port: 0,
       root: pathToFileURL(temporaryFolder).toString(),
-      telemetry: {}
+      telemetryConfig: {},
+      isEntrypoint: true,
+      runtimeBasePath: null,
+      wantsAbsoluteUrls: false,
+      events: undefined
+    })
+  }
+
+  await stackable.stopCommand()
+})
+
+test('BaseStackable - should import and setup open telemetry HTTP instrumentation', async t => {
+  const stackable = await createStackable(
+    t,
+    {
+      serviceId: 'test-service-id',
+      isEntrypoint: true,
+      serverConfig: {
+        hostname: '127.0.0.1',
+        port: 0
+      },
+      telemetryConfig: {
+        serviceName: 'test-telemetry',
+        exporter: {
+          type: 'otlp',
+          options: {
+            url: 'http://127.0.0.1:3044/risk-service/v1/traces'
+          }
+        }
+      },
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 1000,
+          service: 1000
+        }
+      }
+    },
+    {
+      current: {
+        application: { basePath: '/whatever' },
+        watch: { enabled: true, allow: ['first'], ignore: ['second'] }
+      }
+    }
+  )
+
+  const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
+  await stackable.startWithCommand(`node ${executablePath}`)
+
+  ok(stackable.url.startsWith('http://127.0.0.1:'))
+  ok(!stackable.url.endsWith(':10000'))
+  deepStrictEqual(stackable.subprocessConfig, { production: false })
+
+  {
+    const { statusCode, body: rawBody } = await request(stackable.url, {
+      method: 'GET',
+      path: '/'
+    })
+    deepStrictEqual(statusCode, 200)
+
+    const body = await rawBody.json()
+    body.events = undefined
+    deepStrictEqual(body, {
+      serviceId: 'test-service-id',
+      basePath: '/whatever',
+      host: '127.0.0.1',
+      logLevel: 'trace',
+      port: 0,
+      root: pathToFileURL(temporaryFolder).toString(),
+      telemetryConfig: {
+        serviceName: 'test-telemetry',
+        exporter: {
+          type: 'otlp',
+          options: {
+            url: 'http://127.0.0.1:3044/risk-service/v1/traces'
+          }
+        }
+      },
+      isEntrypoint: true,
+      runtimeBasePath: null,
+      wantsAbsoluteUrls: false,
+      events: undefined
     })
   }
 
@@ -187,7 +281,7 @@ test(
   'BaseStackable - startCommand - should reject for non existing commands',
   { skip: platform() === 'win32' },
   async t => {
-    const stackable = createStackable()
+    const stackable = await createStackable(t)
 
     await rejects(
       () => stackable.startWithCommand('non-existing-command'),
@@ -197,7 +291,7 @@ test(
 )
 
 test('BaseStackable - startCommand - should kill the process on non-zero exit code', async t => {
-  const stackable = createStackable()
+  const stackable = await createStackable(t)
 
   const { promise, resolve } = withResolvers()
   t.mock.method(process, 'exit', code => {
@@ -208,4 +302,62 @@ test('BaseStackable - startCommand - should kill the process on non-zero exit co
   await stackable.startWithCommand(`node ${executablePath}`)
 
   deepStrictEqual(await promise, 123)
+})
+
+test('BaseStackable - stopCommand - should forcefully exit the process if it doesnt exit within the allowed timeout', async t => {
+  const stackable = await createStackable(
+    t,
+    {
+      isEntrypoint: true,
+      serverConfig: {
+        hostname: '127.0.0.1',
+        port: 0
+      },
+      telemetryConfig: {},
+      runtimeConfig: {
+        gracefulShutdown: {
+          runtime: 10,
+          service: 10
+        }
+      }
+    },
+    {
+      current: {
+        application: { basePath: '/whatever' },
+        watch: { enabled: true, allow: ['first'], ignore: ['second'] }
+      }
+    }
+  )
+
+  const executablePath = fileURLToPath(new URL('./fixtures/server.js', import.meta.url))
+  await stackable.startWithCommand(`node ${executablePath}`)
+
+  ok(stackable.url.startsWith('http://127.0.0.1:'))
+  ok(!stackable.url.endsWith(':10000'))
+  deepStrictEqual(stackable.subprocessConfig, { production: false })
+
+  {
+    const { statusCode, body: rawBody } = await request(stackable.url, {
+      method: 'GET',
+      path: '/'
+    })
+    deepStrictEqual(statusCode, 200)
+
+    const body = await rawBody.json()
+    body.events = undefined
+    deepStrictEqual(body, {
+      basePath: '/whatever',
+      host: '127.0.0.1',
+      logLevel: 'trace',
+      port: 0,
+      root: pathToFileURL(temporaryFolder).toString(),
+      telemetryConfig: {},
+      isEntrypoint: true,
+      runtimeBasePath: null,
+      wantsAbsoluteUrls: false,
+      events: undefined
+    })
+  }
+
+  await stackable.stopCommand()
 })

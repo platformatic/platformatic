@@ -1,65 +1,41 @@
-import { ok } from 'node:assert'
+import assert from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { dirname, join } from 'node:path'
-import { tmpdir } from 'node:os'
-import { fileURLToPath } from 'node:url'
-import {
-  createRuntime,
-  fixturesDir,
-  getLogs,
-  setFixturesDir,
-  verifyJSONViaHTTP,
-} from '../../basic/test/helper.js'
-
-import {
-  createProductionRuntime,
-  prepareWorkingDirectorySingleRuntime
-} from '../../cli/test/helper.js'
-
-import { mkdtempSync } from 'node:fs'
-
-import { safeRemove } from '../../utils/index.js'
+import { createRuntime, setFixturesDir } from '../../basic/test/helper.js'
+import { Client } from 'undici'
 
 process.setMaxListeners(100)
 
-const packageRoot = resolve(import.meta.dirname, '..')
+setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-// Make sure no temporary files exist after execution
-test.afterEach(() => {
-  if (fixturesDir) {
-    return Promise.all([
-      safeRemove(resolve(fixturesDir, 'node_modules')),
-    ])
-  }
-})
+test('should set telemtry in config on all the node services', async t => {
+  const { runtime } = await createRuntime(t, 'express-api-with-telemetry')
 
-test('should start telemetry using main', async t => {
-  const configuration = 'express-api-with-telemetry'
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:',
+    },
+    {
+      socketPath: runtime.getManagementApiUrl(),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10,
+    }
+  )
 
-  const settingUpNodeJSTelemetryMessage =
-    'Setting up Node.js HTTP telemetry for service: test-service-api'
+  const { statusCode, body } = await client.request({
+    method: 'GET',
+    path: '/api/v1/services/api/config',
+  })
 
-  setFixturesDir(resolve(import.meta.dirname, `./fixtures/${configuration}`))
-  const { runtime, url } = await createRuntime(t, 'platformatic.runtime.json', packageRoot)
-  await verifyJSONViaHTTP(url, '/test', 200, { foo: 'bar' })
-  const logs = await getLogs(runtime)
-  ok(logs.map(m => m.msg).includes(settingUpNodeJSTelemetryMessage))
-})
+  assert.strictEqual(statusCode, 200)
 
-test('should start telemetry using script', async (t) => {
-  const configuration = 'express-api-with-telemetry-script'
-  const dest = mkdtempSync(join(tmpdir(), `test-node-telemetry-${process.pid}`))
-  t.after(() => safeRemove(dest))
-
-  const source = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', configuration)
-  await prepareWorkingDirectorySingleRuntime(t, source, dest)
-  const configFile = resolve(dest, 'platformatic.runtime.json')
-
-  const { runtime, url } = await createProductionRuntime(t, configFile)
-  await verifyJSONViaHTTP(url, '/test', 200, { foo: 'bar' })
-  const logs = await getLogs(runtime)
-  const settingUpNodeJSTelemetryMessage =
-    'Setting up Node.js HTTP telemetry for service: test-service-api'
-  ok(logs.map(m => m.msg).includes(settingUpNodeJSTelemetryMessage))
+  const serviceConfig = await body.json()
+  assert.deepEqual(serviceConfig.telemetry, {
+    serviceName: 'test-service-api',
+    version: '1.0.0',
+    exporter: {
+      type: 'memory'
+    }
+  })
 })

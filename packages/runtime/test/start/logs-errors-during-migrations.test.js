@@ -24,7 +24,7 @@ test('logs errors during db migrations', async t => {
 
   const startPromise = assert.rejects(async () => {
     await runtime.start()
-  }, /The service mysimplename exited prematurely with error code 1/)
+  }, /The service "mysimplename" exited prematurely with error code 1/)
 
   const client = new Client({ hostname: 'localhost', protocol: 'http:' }, { socketPath: runtime.getManagementApiUrl() })
 

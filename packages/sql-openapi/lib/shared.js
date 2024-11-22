@@ -18,7 +18,7 @@ function generateArgs (entity, ignore) {
         acc[key] = { type: mapSQLTypeToOpenAPIType(field.sqlType) }
       }
     } else {
-      for (const modifier of ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like']) {
+      for (const modifier of ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'ilike']) {
         const key = baseKey + modifier
         acc[key] = { type: mapSQLTypeToOpenAPIType(field.sqlType), enum: field.enum }
       }

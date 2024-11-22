@@ -1,12 +1,12 @@
 {
   "name": "@platformatic/client",
-  "version": "2.5.5",
+  "version": "2.16.0",
   "description": "A client for all platformatic backends",
   "main": "index.js",
   "scripts": {
     "lint": "eslint",
-    "test": "pnpm run lint && borp --concurrency=1 --timeout=180000 && tsd",
-    "cov": "pnpm run lint && borp --concurrency=1 --coverage --timeout=180000 && tsd"
+    "test": "pnpm run lint && borp --concurrency=1 --timeout=300000 && tsd",
+    "cov": "pnpm run lint && borp --concurrency=1 --coverage --timeout=300000 && tsd"
   },
   "repository": {
     "type": "git",
@@ -19,9 +19,10 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
+    "@fastify/multipart": "^9.0.1",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:*",
-    "borp": "^0.18.0",
+    "borp": "^0.19.0",
     "c8": "^10.0.0",
     "eslint": "9",
     "execa": "^8.0.1",

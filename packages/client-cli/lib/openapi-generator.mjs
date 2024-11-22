@@ -6,7 +6,7 @@ import { writeOperations } from './openapi-common.mjs'
 export function processOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders, validateResponse, typesComment }) {
   return {
     types: generateTypesFromOpenAPI({ schema, name, fullResponse, fullRequest, optionalHeaders, typesComment }),
-    implementation: generateImplementationFromOpenAPI({ name, fullResponse, fullRequest, validateResponse }),
+    implementation: generateImplementationFromOpenAPI({ name, fullResponse, fullRequest, validateResponse })
   }
 }
 
@@ -16,7 +16,7 @@ function generateImplementationFromOpenAPI ({ name, fullResponse, fullRequest, v
   const writer = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
     useTabs: false,
-    useSingleQuote: true,
+    useSingleQuote: true
   })
 
   // TODO support esm
@@ -59,6 +59,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
   const capitalizedName = capitalize(camelcasedName)
   const { paths } = schema
   const generatedOperationIds = []
+
   const operations = Object.entries(paths).flatMap(([path, methods]) => {
     let commonParameters = []
     if (methods.parameters) {
@@ -78,8 +79,8 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
         method,
         operation: {
           ...operation,
-          operationId: opId,
-        },
+          operationId: opId
+        }
       }
     })
   })
@@ -87,13 +88,13 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
   const writer = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
     useTabs: false,
-    useSingleQuote: true,
+    useSingleQuote: true
   })
 
   const interfaces = new CodeBlockWriter({
     indentNumberOfSpaces: 2,
     useTabs: false,
-    useSingleQuote: true,
+    useSingleQuote: true
   })
 
   if (typesComment) {
@@ -101,7 +102,8 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
   }
 
   writer.writeLine('import { type FastifyReply, type FastifyPluginAsync } from \'fastify\'')
-  writer.writeLine('import { type GetHeadersOptions } from \'@platformatic/client\'')
+  writer.writeLine('import { type GetHeadersOptions, type StatusCode1xx, type StatusCode2xx, type StatusCode3xx, type StatusCode4xx, type StatusCode5xx } from \'@platformatic/client\'')
+  writer.writeLine('import { type FormData } from \'undici\'')
   writer.blankLine()
 
   const pluginName = `${capitalizedName}Plugin`
@@ -118,7 +120,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
     interfaces.blankLine()
     writer.write(`export type ${capitalizedName} =`).block(() => {
       writeOperations(interfaces, writer, operations, {
-        fullRequest, fullResponse, optionalHeaders, schema,
+        fullRequest, fullResponse, optionalHeaders, schema
       })
     })
 

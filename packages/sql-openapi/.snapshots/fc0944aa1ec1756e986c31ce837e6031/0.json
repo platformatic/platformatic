@@ -166,6 +166,14 @@
           },
           {
             "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.id.ilike",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -274,6 +282,14 @@
             },
             "in": "query",
             "name": "where.title.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.ilike",
             "required": false
           },
           {
@@ -489,6 +505,14 @@
           },
           {
             "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.id.ilike",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -597,6 +621,14 @@
             },
             "in": "query",
             "name": "where.title.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.ilike",
             "required": false
           },
           {
@@ -820,5 +852,10 @@
         }
       }
     }
-  }
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ]
 }

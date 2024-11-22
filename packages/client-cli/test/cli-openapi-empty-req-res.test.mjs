@@ -36,5 +36,7 @@ test('empty-req-res', async () => {
     
   }
 
-  export type GetHelloResponseOK = unknown`), true)
+  export type GetHelloResponseOK = unknown
+  export type GetHelloResponses =
+    FullResponse<GetHelloResponseOK, 200>`), true)
 })

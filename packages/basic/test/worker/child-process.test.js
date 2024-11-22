@@ -1,7 +1,8 @@
-import { deepStrictEqual, rejects } from 'node:assert'
+import { deepStrictEqual, ok, rejects } from 'node:assert'
 import { once } from 'node:events'
 import { createServer } from 'node:http'
 import { test } from 'node:test'
+import { setTimeout } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
 import pino from 'pino'
 import { Client } from 'undici'
@@ -25,8 +26,19 @@ function forwardLogs (logger, logs) {
   }
 }
 
+async function getChildManager (stackable) {
+  let manager = null
+
+  while (!manager) {
+    manager = stackable.getChildManager()
+    await setTimeout(10)
+  }
+
+  return manager
+}
+
 test('ChildProcess - can load a script with additional loader and scripts', async t => {
-  const stackable = createStackable()
+  const stackable = await createStackable(t)
   const { messages, logger } = createMockedLogger()
   stackable.logger = logger
 
@@ -41,34 +53,33 @@ test('ChildProcess - can load a script with additional loader and scripts', asyn
   deepStrictEqual(messages, [
     ['DEBUG', `Executing "node ${executablePath}" ...`],
     ['INFO', 'IMPORTED'],
-    ['INFO', 'LOADED true'],
-    ['INFO', 'IMPORTED']
+    ['INFO', 'LOADED true']
   ])
 })
 
 test('ChildProcess - the process will close upon request', async t => {
-  const stackable = createStackable()
+  const stackable = await createStackable(t)
   const { logger } = createMockedLogger()
   stackable.logger = logger
 
   const executablePath = fileURLToPath(new URL('../fixtures/wait-for-close.js', import.meta.url))
   const promise = stackable.buildWithCommand(['node', executablePath])
+  const childManager = await getChildManager(stackable)
 
-  const childManager = stackable.getChildManager()
   await once(childManager, 'ready')
   childManager.close('SIGKILL')
   await rejects(() => promise, /Process exited with non zero exit code/)
 })
 
 test('ChildProcess - the process exits in case of invalid messages', async t => {
-  const stackable = createStackable()
+  const stackable = await createStackable(t)
   const { logger } = createMockedLogger()
   stackable.logger = logger
 
   const executablePath = fileURLToPath(new URL('../fixtures/wait-for-close.js', import.meta.url))
   const promise = stackable.buildWithCommand(['node', executablePath])
+  const childManager = await getChildManager(stackable)
 
-  const childManager = stackable.getChildManager()
   await once(childManager, 'ready')
 
   childManager._send('INVALID', false)
@@ -76,7 +87,7 @@ test('ChildProcess - the process exits in case of invalid messages', async t => 
 })
 
 test('ChildProcess - the process exits in case of errors', async t => {
-  const stackable = createStackable()
+  const stackable = await createStackable(t)
   const { logger } = createMockedLogger()
   stackable.logger = logger
 
@@ -86,14 +97,15 @@ test('ChildProcess - the process exits in case of errors', async t => {
 })
 
 test('ChildProcess - should not modify HTTP options for UNIX sockets', async t => {
-  const stackable = createStackable()
+  const stackable = await createStackable(t)
   const { logger } = createMockedLogger()
   stackable.logger = logger
 
   const executablePath = fileURLToPath(new URL('../fixtures/unix-socket-server.js', import.meta.url))
   const promise = stackable.buildWithCommand(['node', executablePath])
+  const childManager = await getChildManager(stackable)
 
-  const [path] = await once(stackable.getChildManager(), 'path')
+  const [path] = await once(childManager, 'path')
 
   {
     const client = new Client(
@@ -118,7 +130,7 @@ test('ChildProcess - should not modify HTTP options for UNIX sockets', async t =
 })
 
 test('ChildProcess - should notify listen error', async t => {
-  const stackable = createStackable({
+  const stackable = await createStackable(t, {
     isEntrypoint: true,
     serverConfig: {
       hostname: '123.123.123.123',
@@ -131,8 +143,9 @@ test('ChildProcess - should notify listen error', async t => {
 
   const executablePath = fileURLToPath(new URL('../fixtures/server.js', import.meta.url))
   const promise = stackable.buildWithCommand(['node', executablePath])
+  const childManager = await getChildManager(stackable)
 
-  const [error] = await once(stackable.getChildManager(), 'error')
+  const [error] = await once(childManager, 'error')
 
   deepStrictEqual(error.code, 'EADDRNOTAVAIL')
   await rejects(() => promise)
@@ -141,7 +154,7 @@ test('ChildProcess - should notify listen error', async t => {
 test('ChildProcess - should intercept fetch calls', async t => {
   const server = createServer(serverHandler).listen({ host: '127.0.0.1', port: 0 })
 
-  const stackable = createStackable({
+  const stackable = await createStackable(t, {
     isEntrypoint: true,
     serverConfig: {
       hostname: '123.123.123.123',
@@ -154,8 +167,7 @@ test('ChildProcess - should intercept fetch calls', async t => {
 
   const executablePath = fileURLToPath(new URL('../fixtures/fetch.js', import.meta.url))
   const promise = stackable.buildWithCommand(['node', executablePath])
-
-  const manager = stackable.getChildManager()
+  const manager = await getChildManager(stackable)
   manager._forwardLogs = forwardLogs.bind(null, logger)
 
   await once(manager, 'ready')
@@ -181,7 +193,7 @@ test('ChildProcess - should intercept fetch calls', async t => {
     }
   })
 
-  await manager.send(Array.from(manager.getClients())[0], 'start', server.address().port)
+  ok(await manager.send(Array.from(manager.getClients())[0], 'start', server.address().port))
 
   await promise
   await server.close()

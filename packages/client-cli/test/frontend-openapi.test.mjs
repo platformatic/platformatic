@@ -1,6 +1,6 @@
 'use strict'
 
-import { test, after } from 'node:test'
+import { test, after, mock } from 'node:test'
 import { equal, ok, match } from 'node:assert'
 import { buildServer } from '@platformatic/db'
 import { join } from 'path'
@@ -27,7 +27,12 @@ test('build basic client from url', async (t) => {
   await app.start()
   const res = await request(`${app.url}/documentation/json`)
   const schema = await res.body.json()
-  const { types, implementation } = processFrontendOpenAPI({ schema, name: 'sample', language: 'js', fullResponse: false })
+  const warn = mock.fn()
+  const logger = { warn }
+  const { types, implementation } = processFrontendOpenAPI({ schema, name: 'sample', language: 'js', fullResponse: false, logger })
+
+  // Warning log has been triggered
+  ok(warn.mock.callCount() > 0)
 
   // The types interfaces are being created
   match(types, /interface FullResponse<T, U extends number>/)
@@ -68,7 +73,7 @@ async function _getRedirect (url, request) {
       body: await response.json()
     }
   }
-  if (response.headers.get('content-type') === 'application/json') {
+  if (response.headers.get('content-type').startsWith('application/json')) {
     return {
       statusCode: response.status,
       headers: headersToJSON(response.headers),
@@ -440,7 +445,7 @@ test('do not add headers to fetch if a get request', async (t) => {
       body: await response.text()
     }
   }
-  if (response.headers.get('content-type') === 'application/json') {
+  if (response.headers.get('content-type').startsWith('application/json')) {
     return {
       statusCode: response.status as 200,
       headers: headersToJSON(response.headers),
@@ -477,7 +482,7 @@ test('support empty response', async (t) => {
       body: await response.text()
     }
   }
-  if (response.headers.get('content-type') === 'application/json') {
+  if (response.headers.get('content-type').startsWith('application/json')) {
     return {
       statusCode: response.status as 200,
       headers: headersToJSON(response.headers),
@@ -520,7 +525,7 @@ test('call response.json only for json responses', async (t) => {
       body: await response.text()
     }
   }
-  if (response.headers.get('content-type') === 'application/json') {
+  if (response.headers.get('content-type').startsWith('application/json')) {
     return {
       statusCode: response.status as 200,
       headers: headersToJSON(response.headers),
@@ -661,4 +666,63 @@ console.log(await client.getReturnHeaders())
   /* eslint-disable no-control-regex */
   const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
   equal(lines[0], '{ message: \'ok\', data: { authorization: \'Bearer foobar\' } }')
+})
+
+test('add credentials: include in client implementation from file', async (t) => {
+  const dir = await moveToTmpdir(after)
+  {
+    const openAPIfile = join(__dirname, 'fixtures', 'movies', 'openapi.json')
+    await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--language', 'ts', '--frontend', '--with-credentials'])
+
+    const implementationFile = join(dir, 'movies', 'movies.ts')
+    const implementation = await readFile(implementationFile, 'utf-8')
+    const expectedGetMethod = `
+  const response = await fetch(\`\${url}/hello/\${request['name']}\`, {
+    credentials: 'include',
+    headers
+  })`
+    const expectedPostMethod = `
+  const response = await fetch(\`\${url}/movies/\${request['id']}?\${searchParams.toString()}\`, {
+    method: 'POST',
+    body: JSON.stringify(request),
+    credentials: 'include',
+    headers
+  })`
+    equal(implementation.includes(expectedGetMethod), true)
+    equal(implementation.includes(expectedPostMethod), true)
+  }
+})
+
+test('add credentials: include in client implementation from url', async (t) => {
+  const dir = await moveToTmpdir(after)
+  try {
+    await fs.unlink(join(__dirname, 'fixtures', 'sample', 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(join(__dirname, 'fixtures', 'sample', 'platformatic.db.json'))
+
+  t.after(async () => {
+    await app.close()
+  })
+  await app.start()
+  await execa('node', [join(__dirname, '..', 'cli.mjs'), app.url, '--name', 'movies', '--language', 'ts', '--frontend', '--with-credentials'])
+
+  const implementationFile = join(dir, 'movies', 'movies.ts')
+  const implementation = await readFile(implementationFile, 'utf-8')
+
+  const expectedGetMethod = `
+  const response = await fetch(\`\${url}/returnUrl\`, {
+    credentials: 'include',
+    headers
+  })`
+  const expectedPostMethod = `
+  const response = await fetch(\`\${url}/foobar\`, {
+    method: 'POST',
+    body: JSON.stringify(request),
+    credentials: 'include',
+    headers
+  })`
+  equal(implementation.includes(expectedGetMethod), true)
+  equal(implementation.includes(expectedPostMethod), true)
 })

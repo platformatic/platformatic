@@ -12,16 +12,16 @@
         "description": "A Page",
         "type": "object",
         "properties": {
-          "counter": {
-            "type": "integer",
-            "nullable": true
-          },
           "id": {
             "type": "integer",
             "nullable": true
           },
           "title": {
             "type": "string",
+            "nullable": true
+          },
+          "counter": {
+            "type": "integer",
             "nullable": true
           }
         },
@@ -32,15 +32,15 @@
         "description": "A Page",
         "type": "object",
         "properties": {
-          "counter": {
-            "type": "integer",
-            "nullable": true
-          },
           "id": {
             "type": "integer"
           },
           "title": {
             "type": "string",
+            "nullable": true
+          },
+          "counter": {
+            "type": "integer",
             "nullable": true
           }
         },
@@ -158,6 +158,14 @@
           },
           {
             "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.ilike",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -254,6 +262,14 @@
           },
           {
             "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.id.ilike",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -346,6 +362,14 @@
             },
             "in": "query",
             "name": "where.title.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.ilike",
             "required": false
           },
           {
@@ -573,6 +597,14 @@
           },
           {
             "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.ilike",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -669,6 +701,14 @@
           },
           {
             "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.id.ilike",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -761,6 +801,14 @@
             },
             "in": "query",
             "name": "where.title.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.ilike",
             "required": false
           },
           {
@@ -984,5 +1032,10 @@
         }
       }
     }
-  }
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ]
 }

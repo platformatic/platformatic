@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/astro",
-  "version": "2.5.5",
+  "version": "2.16.0",
   "description": "Platformatic Astro Stackable",
   "main": "index.js",
   "type": "module",
@@ -37,7 +37,7 @@
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
     "astro": "^4.14.4",
-    "borp": "^0.18.0",
+    "borp": "^0.19.0",
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.11.1",

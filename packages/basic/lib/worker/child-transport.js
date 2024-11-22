@@ -23,7 +23,7 @@ function handleUnhandled (type, error) {
 process.on('uncaughtException', handleUnhandled.bind(null, 'uncaught exception'))
 process.on('unhandledRejection', handleUnhandled.bind(null, 'unhandled rejection'))
 
-export default async function (opts) {
+export default async function () {
   try {
     /* c8 ignore next */
     const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'

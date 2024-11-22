@@ -53,8 +53,6 @@ export interface PlatformaticComposer {
                     [k: string]: unknown;
                   };
                   level?: string;
-                  additionalProperties?: never;
-                  [k: string]: unknown;
                 }[];
                 options?: {
                   [k: string]: unknown;
@@ -148,7 +146,7 @@ export interface PlatformaticComposer {
       hideOptionsRoute?: boolean;
     };
   };
-  composer: {
+  composer?: {
     services?: {
       id: string;
       origin?: string;
@@ -462,13 +460,13 @@ export interface PathItem {
   servers?: Server[];
   parameters?: ParameterOrReference[];
   get?: Operation;
-  put?: Operation;
-  post?: Operation;
-  delete?: Operation;
-  options?: Operation;
-  head?: Operation;
-  patch?: Operation;
-  trace?: Operation;
+  put?: Operation1;
+  post?: Operation1;
+  delete?: Operation1;
+  options?: Operation1;
+  head?: Operation1;
+  patch?: Operation1;
+  trace?: Operation1;
   /**
    * This interface was referenced by `PathItem`'s JSON-Schema definition
    * via the `patternProperty` "^x-".
@@ -521,6 +519,26 @@ export interface CallbacksOrReference {
 }
 export interface SecurityRequirement {
   [k: string]: string[];
+}
+export interface Operation1 {
+  tags?: string[];
+  summary?: string;
+  description?: string;
+  externalDocs?: ExternalDocumentation;
+  operationId?: string;
+  parameters?: ParameterOrReference[];
+  requestBody?: RequestBodyOrReference;
+  responses?: Responses;
+  callbacks?: {
+    [k: string]: CallbacksOrReference;
+  };
+  security?: SecurityRequirement[];
+  servers?: Server[];
+  /**
+   * This interface was referenced by `Operation1`'s JSON-Schema definition
+   * via the `patternProperty` "^x-".
+   */
+  [k: string]: unknown;
 }
 export interface PathItemOrReference {
   [k: string]: unknown;
@@ -609,7 +627,7 @@ export interface OpenTelemetry {
   }[];
   exporter?:
     | {
-        type?: "console" | "otlp" | "zipkin" | "memory";
+        type?: "console" | "otlp" | "zipkin" | "memory" | "file";
         /**
          * Options for the exporter. These are passed directly to the exporter.
          */
@@ -624,13 +642,17 @@ export interface OpenTelemetry {
           headers?: {
             [k: string]: unknown;
           };
+          /**
+           * The path to write the traces to. Only for file exporter.
+           */
+          path?: string;
           [k: string]: unknown;
         };
         additionalProperties?: never;
         [k: string]: unknown;
       }[]
     | {
-        type?: "console" | "otlp" | "zipkin" | "memory";
+        type?: "console" | "otlp" | "zipkin" | "memory" | "file";
         /**
          * Options for the exporter. These are passed directly to the exporter.
          */
@@ -645,6 +667,10 @@ export interface OpenTelemetry {
           headers?: {
             [k: string]: unknown;
           };
+          /**
+           * The path to write the traces to. Only for file exporter.
+           */
+          path?: string;
           [k: string]: unknown;
         };
         additionalProperties?: never;

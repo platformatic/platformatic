@@ -1,17 +1,17 @@
 {
   "name": "@platformatic/sql-graphql",
-  "version": "2.5.5",
+  "version": "2.16.0",
   "description": "Map SQL dbs to GraphQL",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
     "lint": "eslint",
     "test": "npm run lint && npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
-    "test:postgresql": "DB=postgresql borp --timeout=180000 --concurrency=1 test/*.test.js",
-    "test:mariadb": "DB=mariadb borp --timeout=180000 --concurrency=1 test/*.test.js",
-    "test:mysql": "DB=mysql borp --timeout=180000 --concurrency=1 test/*.test.js",
-    "test:mysql8": "DB=mysql8 borp --timeout=180000 --concurrency=1 test/*.test.js",
-    "test:sqlite": "DB=sqlite borp --timeout=180000 --concurrency=1 test/*.test.js",
+    "test:postgresql": "DB=postgresql borp --timeout=300000 --concurrency=1 test/*.test.js",
+    "test:mariadb": "DB=mariadb borp --timeout=300000 --concurrency=1 test/*.test.js",
+    "test:mysql": "DB=mysql borp --timeout=300000 --concurrency=1 test/*.test.js",
+    "test:mysql8": "DB=mysql8 borp --timeout=300000 --concurrency=1 test/*.test.js",
+    "test:sqlite": "DB=sqlite borp --timeout=300000 --concurrency=1 test/*.test.js",
     "test:typescript": "tsd"
   },
   "repository": {
@@ -31,7 +31,7 @@
     "@platformatic/sql-events": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
-    "borp": "^0.18.0",
+    "borp": "^0.19.0",
     "eslint": "9",
     "fastify": "^5.0.0",
     "fastify-tsconfig": "^2.0.0",

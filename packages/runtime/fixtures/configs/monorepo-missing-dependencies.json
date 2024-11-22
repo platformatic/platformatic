@@ -5,5 +5,9 @@
   "managementApi": false,
   "autoload": {
     "path": "../monorepo-missing-dependencies"
+  },
+  "gracefulShutdown": {
+    "runtime": 1000,
+    "service": 1000
   }
 }

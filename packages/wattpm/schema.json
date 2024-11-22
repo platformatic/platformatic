@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/wattpm/2.5.5.json",
+  "$id": "https://schemas.platformatic.dev/wattpm/2.16.0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
@@ -11,6 +11,9 @@
       "resolvePath": true
     },
     "entrypoint": {
+      "type": "string"
+    },
+    "basePath": {
       "type": "string"
     },
     "autoload": {
@@ -48,6 +51,108 @@
               },
               "useHttp": {
                 "type": "boolean"
+              },
+              "workers": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "health": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "default": true,
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "interval": {
+                    "default": 30000,
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "gracePeriod": {
+                    "default": 30000,
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxUnhealthyChecks": {
+                    "default": 3,
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 1
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxELU": {
+                    "default": 0.95,
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxHeapUsed": {
+                    "default": 0.95,
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "maxHeapTotal": {
+                    "default": 4294967296,
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
               }
             }
           }
@@ -88,9 +193,123 @@
           },
           "useHttp": {
             "type": "boolean"
+          },
+          "workers": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 1
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "health": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "default": true,
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "interval": {
+                "default": 30000,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "gracePeriod": {
+                "default": 30000,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "maxUnhealthyChecks": {
+                "default": 3,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "maxELU": {
+                "default": 0.95,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "maxHeapUsed": {
+                "default": 0.95,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "maxHeapTotal": {
+                "default": 4294967296,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
           }
         }
       }
+    },
+    "workers": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 1
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "default": 1
     },
     "web": {
       "type": "array",
@@ -126,6 +345,108 @@
           },
           "useHttp": {
             "type": "boolean"
+          },
+          "workers": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 1
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "health": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "default": true,
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "interval": {
+                "default": 30000,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "gracePeriod": {
+                "default": 30000,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "maxUnhealthyChecks": {
+                "default": 3,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "maxELU": {
+                "default": 0.95,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "maxHeapUsed": {
+                "default": 0.95,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "maxHeapTotal": {
+                "default": 4294967296,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
           }
         }
       }
@@ -177,17 +498,25 @@
                     "type": "object",
                     "properties": {
                       "target": {
-                        "type": "string",
-                        "resolveModule": true
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "resolveModule": true
+                          },
+                          {
+                            "type": "string",
+                            "resolvePath": true
+                          }
+                        ]
                       },
                       "options": {
                         "type": "object"
                       },
                       "level": {
                         "type": "string"
-                      },
-                      "additionalProperties": false
-                    }
+                      }
+                    },
+                    "additionalProperties": false
                   }
                 },
                 "options": {
@@ -325,6 +654,11 @@
       },
       "additionalProperties": false
     },
+    "startTimeout": {
+      "default": 30000,
+      "type": "number",
+      "minimum": 0
+    },
     "restartOnError": {
       "default": true,
       "anyOf": [
@@ -336,6 +670,133 @@
           "minimum": 100
         }
       ]
+    },
+    "gracefulShutdown": {
+      "type": "object",
+      "properties": {
+        "runtime": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 1
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 10000
+        },
+        "service": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 1
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 10000
+        }
+      },
+      "default": {},
+      "required": [
+        "runtime",
+        "service"
+      ],
+      "additionalProperties": false
+    },
+    "health": {
+      "type": "object",
+      "default": {},
+      "properties": {
+        "enabled": {
+          "default": true,
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "interval": {
+          "default": 30000,
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "gracePeriod": {
+          "default": 30000,
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "maxUnhealthyChecks": {
+          "default": 3,
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 1
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "maxELU": {
+          "default": 0.95,
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "maxHeapUsed": {
+          "default": 0.95,
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "maxHeapTotal": {
+          "default": 4294967296,
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
     },
     "undici": {
       "type": "object",
@@ -519,7 +980,8 @@
                       "console",
                       "otlp",
                       "zipkin",
-                      "memory"
+                      "memory",
+                      "file"
                     ],
                     "default": "console"
                   },
@@ -534,6 +996,10 @@
                       "headers": {
                         "type": "object",
                         "description": "Headers to send to the exporter. Not used for console or memory exporters."
+                      },
+                      "path": {
+                        "type": "string",
+                        "description": "The path to write the traces to. Only for file exporter."
                       }
                     }
                   },
@@ -550,7 +1016,8 @@
                     "console",
                     "otlp",
                     "zipkin",
-                    "memory"
+                    "memory",
+                    "file"
                   ],
                   "default": "console"
                 },
@@ -565,6 +1032,10 @@
                     "headers": {
                       "type": "object",
                       "description": "Headers to send to the exporter. Not used for console or memory exporters."
+                    },
+                    "path": {
+                      "type": "string",
+                      "description": "The path to write the traces to. Only for file exporter."
                     }
                   }
                 },
@@ -595,6 +1066,18 @@
           "type": "boolean"
         }
       }
+    },
+    "serviceTimeout": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 1
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "default": 300000
     }
   },
   "anyOf": [

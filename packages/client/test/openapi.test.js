@@ -1,11 +1,13 @@
 'use strict'
 
+const { getGlobalDispatcher } = require('undici')
+const errors = require('../errors')
 const assert = require('node:assert/strict')
 const { tmpdir } = require('node:os')
 const { test, mock } = require('node:test')
 const { join } = require('node:path')
 const { unlink, mkdtemp, cp } = require('node:fs/promises')
-const { ResponseStatusCodeError } = require('undici').errors
+const { FastifyError } = require('fastify')
 const { buildServer } = require('../../db')
 const { buildOpenAPIClient } = require('..')
 const { safeRemove } = require('@platformatic/utils')
@@ -16,7 +18,7 @@ test('rejects with no url', async t => {
   await assert.rejects(buildOpenAPIClient({}))
   await assert.rejects(
     buildOpenAPIClient({
-      path: join(__dirname, 'fixtures', 'movies', 'openapi.json'),
+      path: join(__dirname, 'fixtures', 'movies', 'openapi.json')
     })
   )
 })
@@ -41,7 +43,7 @@ test('build basic client from url', async t => {
   await app.start()
 
   const client = await buildOpenAPIClient({
-    url: `${app.url}/documentation/json`,
+    url: `${app.url}/documentation/json`
   })
 
   assert.deepEqual(client[Symbol.for('plt.operationIdMap')], {
@@ -55,16 +57,16 @@ test('build basic client from url', async t => {
     getHelloWorld: { path: '/hello-world', method: 'get' },
     getHelloName: { path: '/hello/{name}', method: 'get' },
     getHelloHeaderName: { path: '/hello/header/name', method: 'get' },
-    postWeirdName: { path: '/weird/{name}', method: 'post' },
+    postWeirdName: { path: '/weird/{name}', method: 'post' }
   })
 
   const movie = await client.createMovie({
-    title: 'The Matrix',
+    title: 'The Matrix'
   })
 
   assert.deepEqual(movie, {
     id: 1,
-    title: 'The Matrix',
+    title: 'The Matrix'
   })
 
   const movies = await client.getMovies()
@@ -72,27 +74,27 @@ test('build basic client from url', async t => {
   assert.deepEqual(movies, [
     {
       id: 1,
-      title: 'The Matrix',
-    },
+      title: 'The Matrix'
+    }
   ])
 
   const updatedMovie = await client.updateMovie({
     id: 1,
-    title: 'The Matrix Reloaded',
+    title: 'The Matrix Reloaded'
   })
 
   assert.deepEqual(updatedMovie, {
     id: 1,
-    title: 'The Matrix Reloaded',
+    title: 'The Matrix Reloaded'
   })
 
   const movie2 = await client.getMovieById({
-    id: 1,
+    id: 1
   })
 
   assert.deepEqual(movie2, {
     id: 1,
-    title: 'The Matrix Reloaded',
+    title: 'The Matrix Reloaded'
   })
 
   const updatedTitle = await client.updateMovieTitle({ id: 1, title: 'The Matrix Revolutions' })
@@ -100,21 +102,27 @@ test('build basic client from url', async t => {
   assert.deepEqual(updatedTitle, undefined)
 
   const movie3 = await client.getMovieById({
-    id: 1,
+    id: 1
   })
 
   assert.deepEqual(movie3, {
     id: 1,
-    title: 'The Matrix Revolutions',
+    title: 'The Matrix Revolutions'
   })
 
-  await assert.rejects(client.getMovieById())
+  let error
+  try {
+    await client.getMovieById()
+  } catch (err) {
+    error = err
+  }
+  assert.ok(error instanceof errors.MissingParamsRequiredError, 'when no param is passed')
 
   const notFound = await client.getMovieById({ id: 100 })
   assert.deepEqual(notFound, {
     message: 'Route GET:/movies/100 not found',
     error: 'Not Found',
-    statusCode: 404,
+    statusCode: 404
   })
 
   {
@@ -158,14 +166,14 @@ test('build full response client from url', async t => {
 
   const client = await buildOpenAPIClient({
     url: `${app.url}/documentation/json`,
-    fullResponse: true,
+    fullResponse: true
   })
 
   const matchDate = /[a-z]{3}, \d{2} [a-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT/i
   const matchKeepAlive = /timeout=\d+/
 
   const movie = await client.createMovie({
-    title: 'The Matrix',
+    title: 'The Matrix'
   })
   assert.equal(movie.statusCode, 200)
   assert.equal(movie.headers.location, '/movies/1')
@@ -187,7 +195,7 @@ test('build full response client from url', async t => {
 
   const updatedMovie = await client.updateMovie({
     id: 1,
-    title: 'The Matrix Reloaded',
+    title: 'The Matrix Reloaded'
   })
   assert.equal(updatedMovie.statusCode, 200)
   assert.equal(updatedMovie.headers.location, '/movies/1')
@@ -198,7 +206,7 @@ test('build full response client from url', async t => {
   assert.match(updatedMovie.headers['keep-alive'], matchKeepAlive)
   assert.deepEqual(updatedMovie.body, {
     id: 1,
-    title: 'The Matrix Reloaded',
+    title: 'The Matrix Reloaded'
   })
 
   const movie2 = await client.getMovieById({ id: 1 })
@@ -210,7 +218,7 @@ test('build full response client from url', async t => {
   assert.match(movie2.headers['keep-alive'], matchKeepAlive)
   assert.deepEqual(movie2.body, {
     id: 1,
-    title: 'The Matrix Reloaded',
+    title: 'The Matrix Reloaded'
   })
 
   const updatedTitle = await client.updateMovieTitle({ id: 1, title: 'The Matrix Revolutions' })
@@ -229,7 +237,7 @@ test('build full response client from url', async t => {
   assert.match(movie3.headers['keep-alive'], matchKeepAlive)
   assert.deepEqual(movie3.body, {
     id: 1,
-    title: 'The Matrix Revolutions',
+    title: 'The Matrix Revolutions'
   })
 
   await assert.rejects(client.getMovieById())
@@ -244,7 +252,7 @@ test('build full response client from url', async t => {
   assert.deepEqual(notFound.body, {
     message: 'Route GET:/movies/100 not found',
     error: 'Not Found',
-    statusCode: 404,
+    statusCode: 404
   })
 
   {
@@ -313,7 +321,7 @@ test('properly call query parser', async t => {
   const mockQueryParser = mock.fn()
   const clientWithoutQueryParser = await buildOpenAPIClient({
     url: `${app.url}/documentation/json`,
-    fullResponse: true,
+    fullResponse: true
   })
 
   const resultWithoutQueryParser = await clientWithoutQueryParser.getMovies()
@@ -323,12 +331,65 @@ test('properly call query parser', async t => {
   const clientWithQueryParser = await buildOpenAPIClient({
     url: `${app.url}/documentation/json`,
     fullResponse: true,
-    queryParser: mockQueryParser,
+    queryParser: mockQueryParser
   })
 
   const { statusCode } = await clientWithQueryParser.getMovies()
   assert.equal(statusCode, 200)
   assert.strictEqual(mockQueryParser.mock.callCount(), 1)
+})
+
+test('properly call undici dispatcher', async t => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
+  try {
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
+
+  t.after(async () => {
+    await app.close()
+    await safeRemove(tmpDir)
+  })
+  await app.start()
+
+  const clientWithoutDispatcher = await buildOpenAPIClient({
+    url: `${app.url}/documentation/json`,
+    fullResponse: true
+  })
+
+  const resultWithoutDispatcher = await clientWithoutDispatcher.getMovies()
+  assert.equal(resultWithoutDispatcher.statusCode, 200, 'no dispatcher passed')
+
+  const dispatcher = getGlobalDispatcher()
+  const clientWithDispatcher = await buildOpenAPIClient({
+    url: `${app.url}/documentation/json`,
+    fullResponse: true,
+    dispatcher
+  })
+
+  const { statusCode } = await clientWithDispatcher.getMovies()
+  assert.equal(statusCode, 200, 'valid dispatcher is passed')
+
+  let error
+  try {
+    const client = await buildOpenAPIClient({
+      url: `${app.url}/documentation/json`,
+      fullResponse: true,
+      dispatcher: 'CARLO MARTELLO!'
+    })
+    await client.getMovies()
+  } catch (err) {
+    error = err
+  }
+
+  assert.notEqual(error, undefined, 'should throw when passing a wrong dispatcher')
+  assert.ok(error instanceof errors.UnexpectedCallFailureError)
+  assert.ok(error.toString().includes('this.dispatch is not a function'))
 })
 
 test('throw on error level response', async t => {
@@ -352,14 +413,14 @@ test('throw on error level response', async t => {
   const client = await buildOpenAPIClient({
     url: `${app.url}/movies-api/`,
     path: join(__dirname, 'fixtures', 'movies', 'openapi.json'),
-    throwOnError: true,
+    throwOnError: true
   })
 
   await assert.rejects(
     client.getMovieById({
-      id: 100,
+      id: 100
     }),
-    ResponseStatusCodeError
+    FastifyError
   )
 })
 
@@ -383,16 +444,16 @@ test('build basic client from file', async t => {
 
   const client = await buildOpenAPIClient({
     url: `${app.url}/movies-api/`,
-    path: join(__dirname, 'fixtures', 'movies', 'openapi.json'),
+    path: join(__dirname, 'fixtures', 'movies', 'openapi.json')
   })
 
   const movie = await client.createMovie({
-    title: 'The Matrix',
+    title: 'The Matrix'
   })
 
   assert.deepEqual(movie, {
     id: 1,
-    title: 'The Matrix',
+    title: 'The Matrix'
   })
 
   const movies = await client.getMovies()
@@ -400,27 +461,27 @@ test('build basic client from file', async t => {
   assert.deepEqual(movies, [
     {
       id: 1,
-      title: 'The Matrix',
-    },
+      title: 'The Matrix'
+    }
   ])
 
   const updatedMovie = await client.putUpdateMovie({
     id: 1,
-    title: 'The Matrix Reloaded',
+    title: 'The Matrix Reloaded'
   })
 
   assert.deepEqual(updatedMovie, {
     id: 1,
-    title: 'The Matrix Reloaded',
+    title: 'The Matrix Reloaded'
   })
 
   const movie2 = await client.getMovieById({
-    id: 1,
+    id: 1
   })
 
   assert.deepEqual(movie2, {
     id: 1,
-    title: 'The Matrix Reloaded',
+    title: 'The Matrix Reloaded'
   })
 
   await assert.rejects(client.getMovieById())
@@ -429,7 +490,7 @@ test('build basic client from file', async t => {
   assert.deepEqual(notFound, {
     message: 'Route GET:/movies-api/movies/100 not found',
     error: 'Not Found',
-    statusCode: 404,
+    statusCode: 404
   })
 
   {
@@ -474,17 +535,17 @@ test('build basic client from url with custom headers', async t => {
   const client = await buildOpenAPIClient({
     url: `${app.url}/documentation/json`,
     headers: {
-      'x-platformatic-admin-secret': 'changeme',
-    },
+      'x-platformatic-admin-secret': 'changeme'
+    }
   })
 
   const movie = await client.createMovie({
-    title: 'The Matrix',
+    title: 'The Matrix'
   })
 
   assert.deepEqual(movie, {
     id: 1,
-    title: 'The Matrix',
+    title: 'The Matrix'
   })
 
   const movies = await client.getMovies()
@@ -492,27 +553,27 @@ test('build basic client from url with custom headers', async t => {
   assert.deepEqual(movies, [
     {
       id: 1,
-      title: 'The Matrix',
-    },
+      title: 'The Matrix'
+    }
   ])
 
   const updatedMovie = await client.updateMovie({
     id: 1,
-    title: 'The Matrix Reloaded',
+    title: 'The Matrix Reloaded'
   })
 
   assert.deepEqual(updatedMovie, {
     id: 1,
-    title: 'The Matrix Reloaded',
+    title: 'The Matrix Reloaded'
   })
 
   const movie2 = await client.getMovieById({
-    id: 1,
+    id: 1
   })
 
   assert.deepEqual(movie2, {
     id: 1,
-    title: 'The Matrix Reloaded',
+    title: 'The Matrix Reloaded'
   })
 
   await assert.rejects(client.getMovieById())
@@ -521,7 +582,7 @@ test('build basic client from url with custom headers', async t => {
   assert.deepEqual(notFound, {
     message: 'Route GET:/movies/100 not found',
     error: 'Not Found',
-    statusCode: 404,
+    statusCode: 404
   })
 
   {
@@ -565,7 +626,7 @@ test('302', async t => {
 
   const client = await buildOpenAPIClient({
     url: `${app.url}/`,
-    path: join(tmpDir, 'openapi.json'),
+    path: join(tmpDir, 'openapi.json')
   })
   {
     const resp = await client.redirectMe()

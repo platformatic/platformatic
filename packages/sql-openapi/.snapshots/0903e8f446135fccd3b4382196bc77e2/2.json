@@ -12,20 +12,20 @@
         "description": "A Post",
         "type": "object",
         "properties": {
-          "counter": {
+          "id": {
             "type": "integer",
             "nullable": true
           },
-          "id": {
-            "type": "integer",
+          "title": {
+            "type": "string",
             "nullable": true
           },
           "longText": {
             "type": "string",
             "nullable": true
           },
-          "title": {
-            "type": "string",
+          "counter": {
+            "type": "integer",
             "nullable": true
           }
         },
@@ -36,17 +36,17 @@
         "description": "A Post",
         "type": "object",
         "properties": {
-          "counter": {
-            "type": "integer"
-          },
           "id": {
             "type": "integer"
+          },
+          "title": {
+            "type": "string"
           },
           "longText": {
             "type": "string"
           },
-          "title": {
-            "type": "string"
+          "counter": {
+            "type": "integer"
           }
         },
         "additionalProperties": false,
@@ -169,6 +169,14 @@
           },
           {
             "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.ilike",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -261,6 +269,14 @@
             },
             "in": "query",
             "name": "where.id.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.id.ilike",
             "required": false
           },
           {
@@ -364,6 +380,14 @@
               "type": "string"
             },
             "in": "query",
+            "name": "where.longText.ilike",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
             "name": "where.longText.in",
             "required": false
           },
@@ -453,6 +477,14 @@
             },
             "in": "query",
             "name": "where.title.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.ilike",
             "required": false
           },
           {
@@ -693,6 +725,14 @@
           },
           {
             "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.counter.ilike",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -785,6 +825,14 @@
             },
             "in": "query",
             "name": "where.id.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.id.ilike",
             "required": false
           },
           {
@@ -888,6 +936,14 @@
               "type": "string"
             },
             "in": "query",
+            "name": "where.longText.ilike",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
             "name": "where.longText.in",
             "required": false
           },
@@ -977,6 +1033,14 @@
             },
             "in": "query",
             "name": "where.title.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.title.ilike",
             "required": false
           },
           {
@@ -1203,5 +1267,10 @@
         }
       }
     }
-  }
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ]
 }

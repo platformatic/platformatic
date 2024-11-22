@@ -18,6 +18,7 @@ async function setupOpenAPI (app, opts) {
       description: 'This is a service built on top of Platformatic',
       version: '1.0.0',
     },
+    servers: [{ url: globalThis.platformatic?.runtimeBasePath ?? '/' }],
   }, typeof openapi === 'object' ? openapi : {})
   app.log.trace({ openapi: openapiConfig })
   const swaggerOptions = {

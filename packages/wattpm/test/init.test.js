@@ -1,11 +1,11 @@
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
-import { readFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { test } from 'node:test'
 import { defaultConfiguration, defaultPackageJson } from '../lib/defaults.js'
+import { gitignore } from '../lib/gitignore.js'
 import { schema, version } from '../lib/schema.js'
 import { createTemporaryDirectory, isDirectory, wattpm } from './helper.js'
-import { gitignore } from '../lib/gitignore.js'
 
 test('init - should create a new application for NPM', async t => {
   const directory = await createTemporaryDirectory(t, 'init')
@@ -56,9 +56,24 @@ test('init - should fail if the destination is a file', async t => {
   ok(result.stdout.includes(`Path ${import.meta.filename} exists but it is not a directory.`))
 })
 
-test('init - should fail if the destination is not empty', async t => {
-  const result = await wattpm('init', import.meta.dirname, { reject: false })
+test('init - should fail if the destination web folder is a file', async t => {
+  const directory = await createTemporaryDirectory(t, 'init')
+  await writeFile(resolve(directory, 'web'), 'content')
+
+  const result = await wattpm('init', directory, { reject: false })
 
   deepStrictEqual(result.exitCode, 1)
-  ok(result.stdout.includes(`Directory ${import.meta.dirname} is not empty.`))
+  ok(result.stdout.includes(`Path ${resolve(directory, 'web')} exists but it is not a directory.`))
 })
+
+for (const file of ['watt.json', 'package.json', '.gitignore']) {
+  test(`init - should fail if the destination ${file} file exists`, async t => {
+    const directory = await createTemporaryDirectory(t, 'init')
+    await writeFile(resolve(directory, file), 'content')
+
+    const result = await wattpm('init', directory, { reject: false })
+
+    deepStrictEqual(result.exitCode, 1)
+    ok(result.stdout.includes(`Path ${resolve(directory, file)} already exists.`))
+  })
+}

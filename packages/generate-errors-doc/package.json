@@ -1,9 +1,10 @@
 {
   "name": "@platformatic/generate-errors-doc",
-  "version": "2.5.5",
+  "version": "2.16.0",
   "description": "",
   "main": "generate.js",
   "scripts": {
+    "test": "npm run lint",
     "lint": "eslint",
     "generate-doc": "node generate.js"
   },

@@ -9,7 +9,8 @@ async function composeOpenAPI (app, opts) {
       info: {
         title: opts.openapi?.title || 'Platformatic Composer',
         version: opts.openapi?.version || '1.0.0'
-      }
+      },
+      servers: [{ url: globalThis.platformatic?.runtimeBasePath ?? '/' }],
     },
     transform: ({ schema, url }) => {
       for (const service of opts.services) {

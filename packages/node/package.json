@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/node",
-  "version": "2.5.5",
+  "version": "2.16.0",
   "description": "Platformatic Node.js Stackable",
   "main": "index.js",
   "type": "module",
@@ -27,13 +27,12 @@
     "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/utils": "workspace:*",
-    "@platformatic/telemetry": "workspace:*",
     "light-my-request": "^6.0.0"
   },
   "devDependencies": {
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "borp": "^0.18.0",
+    "borp": "^0.19.0",
     "express": "^4.19.2",
     "eslint": "9",
     "fastify": "^5.0.0",

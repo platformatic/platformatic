@@ -1,7 +1,9 @@
-import { fileURLToPath } from 'node:url'
+import { resolve } from 'node:path'
 import {
   internalServicesFiles,
   isCIOnWindows,
+  setFixturesDir,
+  updateFile,
   verifyBuildAndProductionMode,
   verifyFrontendAPIOnPrefix,
   verifyFrontendOnAutodetectedPrefix,
@@ -12,52 +14,72 @@ import {
   verifyPlatformaticComposerWithProxy,
   verifyPlatformaticService,
   verifyPlatformaticServiceWithProxy
-} from '../../cli/test/helper.js'
+} from '../../basic/test/helper.js'
 
 process.setMaxListeners(100)
+setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-const nextFiles = ['services/frontend/.next//server/app/index.html']
-const nextSSRFiles = ['services/frontend/.next/server/app/direct/route.js']
+const files = ['services/frontend/.next//server/app/index.html']
+const filesSSR = ['services/frontend/.next/server/app/direct/route.js']
 
 const configurations = [
-  { id: 'standalone', name: 'Next.js (standalone)', files: [...nextFiles], checks: [verifyFrontendOnRoot] },
-  {
-    id: 'composer-with-prefix',
-    name: 'Next.js (in composer with prefix)',
-    files: [...nextFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
-  },
+  { id: 'standalone', name: 'Next.js (standalone)', files, checks: [verifyFrontendOnRoot], language: 'js', prefix: '' },
   {
     only: isCIOnWindows,
+    id: 'composer-with-prefix',
+    name: 'Next.js (in composer with prefix)',
+    files: [...files, ...internalServicesFiles],
+    checks: [verifyFrontendOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'ts',
+    prefix: ''
+  },
+  {
     id: 'composer-with-external-proxy',
     name: 'Next.js (in composer with external proxy)',
-    files: [...nextFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnPrefixWithProxy, verifyPlatformaticComposerWithProxy, verifyPlatformaticServiceWithProxy]
+    files,
+    checks: [verifyFrontendOnPrefixWithProxy, verifyPlatformaticComposerWithProxy, verifyPlatformaticServiceWithProxy],
+    language: 'ts',
+    prefix: '/frontend',
+    async additionalSetup (root) {
+      await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
+        const json = JSON.parse(contents)
+        json.composer.services[1].proxy = { prefix: '/frontend' }
+        return JSON.stringify(json, null, 2)
+      })
+    }
   },
   {
     id: 'composer-without-prefix',
     name: 'Next.js (in composer without prefix)',
-    files: [...nextFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnRoot, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyFrontendOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'composer-autodetect-prefix',
     name: 'Next.js (in composer with autodetected prefix)',
-    files: [...internalServicesFiles],
-    checks: [verifyFrontendOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyFrontendOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/nested/base/dir'
   },
   {
     id: 'server-side',
     name: 'Next.js RSC (in composer with prefix)',
-    files: [...nextFiles, ...nextSSRFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files: [...files, ...filesSSR],
+    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/frontend'
   },
   {
     id: 'composer-custom-commands',
     name: 'Next.js (in composer with prefix using custom commands)',
-    files: [...nextFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyFrontendOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/frontend'
   }
 ]
 
-verifyBuildAndProductionMode(fileURLToPath(new URL('fixtures', import.meta.url)), configurations)
+verifyBuildAndProductionMode(configurations)

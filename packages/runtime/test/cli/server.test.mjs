@@ -1,10 +1,10 @@
 import { join } from 'desm'
+import { connect } from 'inspector-client'
 import assert from 'node:assert'
 import { on } from 'node:events'
 import { test } from 'node:test'
 import { request } from 'undici'
 import { cliPath, start } from './helper.mjs'
-import { connect } from 'inspector-client'
 
 test('autostart', async () => {
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
@@ -26,7 +26,7 @@ test('start command', async () => {
   child.kill('SIGKILL')
 })
 
-test('handles startup errors', async (t) => {
+test('handles startup errors', async t => {
   const { execa } = await import('execa')
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'service-throws-on-start.json')
   const child = execa(process.execPath, [cliPath, 'start', '-c', config], { encoding: 'utf8' })
@@ -35,7 +35,8 @@ test('handles startup errors', async (t) => {
 
   for await (const messages of on(child.stdout, 'data')) {
     for (const message of messages) {
-      console.log('message', message.toString())
+      // Uncomment the following line if you need to debug issues on this test case
+      // console.log('message', message.toString())
       stdout += message
 
       if (/boom/.test(stdout)) {
@@ -58,12 +59,12 @@ test('handles startup errors', async (t) => {
   await child.catch(() => {})
 })
 
-test('does not start if node inspector flags are provided', async (t) => {
+test('does not start if node inspector flags are provided', async t => {
   const { execa } = await import('execa')
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
   const child = execa(process.execPath, [cliPath, 'start', '-c', config], {
     env: { NODE_OPTIONS: '--inspect' },
-    encoding: 'utf8',
+    encoding: 'utf8'
   })
   let stderr = ''
   let found = false
@@ -92,11 +93,46 @@ test('does not start if node inspector flags are provided', async (t) => {
   await child.catch(() => {})
 })
 
-test('starts the inspector', async (t) => {
+test('does start if node inspector flag is provided by VS Code', async t => {
+  const { execa } = await import('execa')
+  const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
+  const child = execa(process.execPath, [cliPath, 'start', '-c', config], {
+    env: { NODE_OPTIONS: '--inspect', VSCODE_INSPECTOR_OPTIONS: '{ port: 3042 }' },
+    encoding: 'utf8'
+  })
+  let stdout = ''
+  let found = false
+
+  for await (const messages of on(child.stdout, 'data')) {
+    for (const message of messages) {
+      // Uncomment the following line if you need to debug issues on this test case
+      // console.log('message', message.toString())
+      stdout += message
+
+      if (/Started the service/.test(stdout)) {
+        found = true
+      }
+    }
+
+    if (found) {
+      break
+    }
+  }
+
+  assert(found)
+
+  child.kill('SIGKILL')
+
+  // if we do not await this, the test will crash because the event loop has nothing to do
+  // but there is still a promise waiting
+  await child.catch(() => {})
+})
+
+test('starts the inspector', async t => {
   const { execa } = await import('execa')
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
   const child = execa(process.execPath, [cliPath, 'start', '-c', config, '--inspect'], {
-    encoding: 'utf8',
+    encoding: 'utf8'
   })
   let stderr = ''
   let port = 0
@@ -104,7 +140,8 @@ test('starts the inspector', async (t) => {
 
   for await (const messages of on(child.stderr, 'data')) {
     for (const message of messages) {
-      console.log(message.toString())
+      // Uncomment the following line if you need to debug issues on this test case
+      // console.log(message.toString())
       stderr += message
 
       if (new RegExp(`Debugger listening on ws://127\\.0\\.0\\.1:${9230 + port}`).test(stderr)) {
@@ -130,11 +167,11 @@ test('starts the inspector', async (t) => {
     const client = await connect(webSocketDebuggerUrl)
 
     const res = await client.post('Runtime.evaluate', {
-      expression: 'require(\'worker_threads\').threadId',
+      expression: "require('worker_threads').threadId",
       includeCommandLineAPI: true,
       generatePreview: true,
       returnByValue: true,
-      awaitPromise: true,
+      awaitPromise: true
     })
 
     assert.strictEqual(res.result.value, i + 1)

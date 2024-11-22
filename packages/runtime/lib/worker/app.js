@@ -3,6 +3,8 @@
 const { existsSync } = require('node:fs')
 const { EventEmitter } = require('node:events')
 const { resolve } = require('node:path')
+const { performance: { eventLoopUtilization } } = require('node:perf_hooks')
+const { workerData } = require('node:worker_threads')
 const { ConfigManager } = require('@platformatic/config')
 const { FileWatcher } = require('@platformatic/utils')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
@@ -20,19 +22,33 @@ class PlatformaticApp extends EventEmitter {
   #fileWatcher
   #debouncedRestart
   #context
+  #lastELU
 
-  constructor (appConfig, telemetryConfig, loggerConfig, serverConfig, metricsConfig, hasManagementApi, watch) {
+  constructor (
+    appConfig,
+    workerId,
+    telemetryConfig,
+    loggerConfig,
+    serverConfig,
+    metricsConfig,
+    hasManagementApi,
+    watch
+  ) {
     super()
     this.appConfig = appConfig
+    this.serviceId = this.appConfig.id
+    this.workerId = workerId
     this.#watch = watch
     this.#starting = false
     this.#started = false
     this.#listening = false
     this.stackable = null
     this.#fileWatcher = null
+    this.#lastELU = eventLoopUtilization()
 
     this.#context = {
-      serviceId: this.appConfig.id,
+      serviceId: this.serviceId,
+      workerId: this.workerId,
       directory: this.appConfig.path,
       isEntrypoint: this.appConfig.entrypoint,
       isProduction: this.appConfig.isProduction,
@@ -40,6 +56,7 @@ class PlatformaticApp extends EventEmitter {
       metricsConfig,
       loggerConfig,
       serverConfig,
+      worker: workerData?.worker,
       hasManagementApi: !!hasManagementApi,
       localServiceEnvVars: this.appConfig.localServiceEnvVars
     }
@@ -193,6 +210,20 @@ class PlatformaticApp extends EventEmitter {
 
   async getMetrics ({ format }) {
     return this.stackable.getMetrics({ format })
+  }
+
+  async getHealth () {
+    const currentELU = eventLoopUtilization()
+    const elu = eventLoopUtilization(currentELU, this.#lastELU).utilization
+    this.#lastELU = currentELU
+
+    const { heapUsed, heapTotal } = process.memoryUsage()
+
+    return {
+      elu,
+      heapUsed,
+      heapTotal
+    }
   }
 
   #fetchServiceUrl (key, { parent, context: service }) {

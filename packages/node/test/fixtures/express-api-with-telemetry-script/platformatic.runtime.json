@@ -6,7 +6,7 @@
     "port": 3042
   },
   "logger": {
-    "level": "info"
+    "level": "error"
   },
   "services": [
     {

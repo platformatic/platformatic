@@ -287,3 +287,69 @@ test('loads with the store', async t => {
 
   await configManager.parseAndValidate(false)
 })
+
+test('set isPLTService on plt services', async t => {
+  const cwd = process.cwd()
+  process.chdir(join(fixturesDir, 'configs'))
+  t.after(() => {
+    process.chdir(cwd)
+  })
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
+
+  const store = new Store()
+  store.add(platformaticRuntime)
+
+  const { configManager } = await store.loadConfig({
+    config: configFile,
+    overrides: {
+      fixPaths: false,
+      onMissingEnv (key) {
+        return '{' + key + '}'
+      }
+    }
+  })
+
+  await configManager.parseAndValidate(false)
+  const config = configManager.current
+
+  const dbApp = config.serviceMap.get('db-app')
+  const serviceApp = config.serviceMap.get('serviceApp')
+  const nodeApp = config.serviceMap.get('node')
+
+  assert.strictEqual(dbApp.isPLTService, true)
+  assert.strictEqual(serviceApp.isPLTService, true)
+  assert.strictEqual(nodeApp.isPLTService, false)
+})
+
+test('set type on services', async t => {
+  const cwd = process.cwd()
+  process.chdir(join(fixturesDir, 'configs'))
+  t.after(() => {
+    process.chdir(cwd)
+  })
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
+
+  const store = new Store()
+  store.add(platformaticRuntime)
+
+  const { configManager } = await store.loadConfig({
+    config: configFile,
+    overrides: {
+      fixPaths: false,
+      onMissingEnv (key) {
+        return '{' + key + '}'
+      }
+    }
+  })
+
+  await configManager.parseAndValidate(false)
+  const config = configManager.current
+
+  const dbApp = config.serviceMap.get('db-app')
+  const serviceApp = config.serviceMap.get('serviceApp')
+  const nodeApp = config.serviceMap.get('node')
+
+  assert.strictEqual(dbApp.type, 'db')
+  assert.strictEqual(serviceApp.type, 'service')
+  assert.strictEqual(nodeApp.type, 'nodejs')
+})

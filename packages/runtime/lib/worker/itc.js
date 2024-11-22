@@ -7,7 +7,7 @@ const { ITC } = require('@platformatic/itc')
 const { Unpromise } = require('@watchable/unpromise')
 
 const errors = require('../errors')
-const { kITC, kId } = require('./symbols')
+const { kITC, kId, kServiceId, kWorkerId } = require('./symbols')
 
 async function safeHandleInITC (worker, fn) {
   try {
@@ -23,7 +23,11 @@ async function safeHandleInITC (worker, fn) {
     ])
 
     if (typeof exitCode === 'number') {
-      throw new errors.ServiceExitedError(worker[kId], exitCode)
+      if (typeof worker[kWorkerId] !== 'undefined') {
+        throw new errors.WorkerExitedError(worker[kWorkerId], worker[kServiceId], exitCode)
+      } else {
+        throw new errors.ServiceExitedError(worker[kId], exitCode)
+      }
     } else {
       ac.abort()
     }
@@ -68,12 +72,8 @@ function setupITC (app, service, dispatcher) {
           await app.listen()
         }
 
-        const url = app.stackable.getUrl()
-
-        const dispatchFunc = await app.stackable.getDispatchFunc()
-        dispatcher.replaceServer(url ?? dispatchFunc)
-
-        return service.entrypoint ? url : null
+        dispatcher.replaceServer(await app.stackable.getDispatchTarget())
+        return service.entrypoint ? app.stackable.getUrl() : null
       },
 
       async stop () {
@@ -146,6 +146,14 @@ function setupITC (app, service, dispatcher) {
         }
       },
 
+      async getHealth () {
+        try {
+          return await app.getHealth()
+        } catch (err) {
+          throw new errors.FailedToRetrieveHealthError(service.id, err.message)
+        }
+      },
+
       inject (injectParams) {
         return app.stackable.inject(injectParams)
       }
@@ -156,6 +164,7 @@ function setupITC (app, service, dispatcher) {
     itc.notify('changed')
   })
 
+  itc.listen()
   return itc
 }
 

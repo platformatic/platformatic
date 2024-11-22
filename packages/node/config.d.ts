@@ -29,8 +29,6 @@ export interface PlatformaticNodeJsStackable {
               [k: string]: unknown;
             };
             level?: string;
-            additionalProperties?: never;
-            [k: string]: unknown;
           }[];
           options?: {
             [k: string]: unknown;
@@ -101,5 +99,6 @@ export interface PlatformaticNodeJsStackable {
      * This Node.js application requires the Absolute URL from the Composer
      */
     absoluteUrl?: boolean;
+    dispatchViaHttp?: boolean;
   };
 }

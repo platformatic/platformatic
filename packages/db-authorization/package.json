@@ -1,10 +1,10 @@
 {
   "name": "@platformatic/db-authorization",
-  "version": "2.5.5",
+  "version": "2.16.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "pnpm run lint && borp --concurrency=1 --timeout=180000 && tsd",
+    "test": "pnpm run lint && borp --concurrency=1 --timeout=300000 && tsd",
     "lint": "eslint"
   },
   "types": "index.d.ts",
@@ -20,9 +20,9 @@
     "@matteo.collina/tspl": "^0.1.1",
     "@platformatic/db-core": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
-    "borp": "^0.18.0",
+    "borp": "^0.19.0",
     "eslint": "9",
-    "fast-jwt": "^4.0.0",
+    "fast-jwt": "^5.0.0",
     "fastify": "^5.0.0",
     "neostandard": "^0.11.1",
     "tsd": "^0.31.0",

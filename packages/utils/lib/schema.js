@@ -1,5 +1,12 @@
 'use strict'
 
+function overridableValue (spec, defaultValue) {
+  return {
+    default: defaultValue,
+    anyOf: [spec, { type: 'string' }]
+  }
+}
+
 const cors = {
   type: 'object',
   $comment: 'See https://github.com/fastify/fastify-cors',
@@ -129,8 +136,10 @@ const logger = {
                 type: 'object',
                 properties: {
                   target: {
-                    type: 'string',
-                    resolveModule: true
+                    anyOf: [
+                      { type: 'string', resolveModule: true },
+                      { type: 'string', resolvePath: true }
+                    ]
                   },
                   options: {
                     type: 'object'
@@ -138,8 +147,8 @@ const logger = {
                   level: {
                     type: 'string'
                   },
-                  additionalProperties: false
-                }
+                },
+                additionalProperties: false
               }
             },
             options: {
@@ -200,6 +209,21 @@ const watch = {
       nullable: true,
       default: null
     }
+  },
+  additionalProperties: false
+}
+
+const health = {
+  type: 'object',
+  default: {},
+  properties: {
+    enabled: overridableValue({ type: 'boolean' }, true),
+    interval: overridableValue({ type: 'number', minimum: 0 }, 30000),
+    gracePeriod: overridableValue({ type: 'number', minimum: 0 }, 30000),
+    maxUnhealthyChecks: overridableValue({ type: 'number', minimum: 1 }, 3),
+    maxELU: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.95),
+    maxHeapUsed: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.95),
+    maxHeapTotal: overridableValue({ type: 'number', minimum: 0 }, 4 * Math.pow(1024, 3))
   },
   additionalProperties: false
 }
@@ -528,3 +552,4 @@ module.exports.fastifyServer = fastifyServer
 module.exports.cors = cors
 module.exports.logger = logger
 module.exports.watch = watch
+module.exports.health = health

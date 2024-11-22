@@ -8,7 +8,7 @@ const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should kill the thread even if stop fails', async (t) => {
+test('should kill the thread even if stop fails', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
@@ -17,10 +17,15 @@ test('should kill the thread even if stop fails', async (t) => {
 
   const { statusCode } = await app.inject('with-logger', {
     method: 'GET',
-    url: '/crash-on-close',
+    url: '/crash-on-close'
   })
   assert.strictEqual(statusCode, 200)
 
   // Should not fail and hang
+  const start = process.hrtime.bigint()
   await app.close()
+  const elapsed = Number(process.hrtime.bigint() - start) / 1e6
+
+  // We are satisfied if killing took less that twice of the allowed timeout
+  assert.ok(elapsed < config.configManager.current.gracefulShutdown.runtime * 2)
 })

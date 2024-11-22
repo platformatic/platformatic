@@ -160,6 +160,14 @@
           },
           {
             "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.id.ilike",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -259,6 +267,14 @@
               "type": "string"
             },
             "in": "query",
+            "name": "where.name.ilike",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
             "name": "where.name.in",
             "required": false
           },
@@ -348,6 +364,14 @@
             },
             "in": "query",
             "name": "where.parentId.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.parentId.ilike",
             "required": false
           },
           {
@@ -588,6 +612,14 @@
           },
           {
             "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.id.ilike",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -687,6 +719,14 @@
               "type": "string"
             },
             "in": "query",
+            "name": "where.name.ilike",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
             "name": "where.name.in",
             "required": false
           },
@@ -776,6 +816,14 @@
             },
             "in": "query",
             "name": "where.parentId.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.parentId.ilike",
             "required": false
           },
           {
@@ -1165,5 +1213,10 @@
         }
       }
     }
-  }
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ]
 }

@@ -1,32 +1,32 @@
 {
-    "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
-    "entrypoint": "serviceApp",
-    "watch": false,
-    "managementApi": false,
-    "autoload": {
-      "path": "../monorepo",
-      "exclude": [
-        "docs",
-        "composerApp"
-      ],
-      "mappings": {
-        "serviceAppWithLogger": {
-          "id": "with-logger",
-          "config": "platformatic.service.json"
-        },
-        "serviceAppWithMultiplePlugins": {
-          "id": "multi-plugin-service",
-          "config": "platformatic.service.json"
-        },
-        "dbApp": {
-          "id": "db-app",
-          "config": "platformatic.db.json"
-        }
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
+  "entrypoint": "serviceApp",
+  "watch": false,
+  "managementApi": false,
+  "autoload": {
+    "path": "../monorepo",
+    "exclude": ["docs", "composerApp"],
+    "mappings": {
+      "serviceAppWithLogger": {
+        "id": "with-logger",
+        "config": "platformatic.service.json"
+      },
+      "serviceAppWithMultiplePlugins": {
+        "id": "multi-plugin-service",
+        "config": "platformatic.service.json"
+      },
+      "dbApp": {
+        "id": "db-app",
+        "config": "platformatic.db.json"
       }
-    },
-    "server":{
-        "hostname":"127.0.0.1",
-        "port":"{PORT}"
     }
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "{PORT}"
+  },
+  "gracefulShutdown": {
+    "runtime": 1000,
+    "service": 1000
   }
-  
+}

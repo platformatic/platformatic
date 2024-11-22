@@ -1,9 +1,9 @@
 import { deepStrictEqual, ok } from 'node:assert'
 import { on } from 'node:events'
-import { resolve } from 'node:path'
 import { test } from 'node:test'
 import split2 from 'split2'
-import { ensureDependency, fixturesDir, wattpm } from './helper.js'
+import { prepareRuntime } from '../../basic/test/helper.js'
+import { wattpm } from './helper.js'
 
 async function matchLogs (stream) {
   let mainLogFound
@@ -33,10 +33,7 @@ async function matchLogs (stream) {
 }
 
 test('inject - should stream runtime logs', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
     logsProcess.kill('SIGINT')
@@ -64,10 +61,7 @@ test('inject - should stream runtime logs', async t => {
 })
 
 test('inject - should stream runtime logs filtering by service', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
     logsProcess.kill('SIGINT')
@@ -95,10 +89,7 @@ test('inject - should stream runtime logs filtering by service', async t => {
 })
 
 test('inject - should stream runtime logs filtering by level', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
     logsProcess.kill('SIGINT')

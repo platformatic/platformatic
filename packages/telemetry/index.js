@@ -1,11 +1,11 @@
 'use strict'
 
 const telemetry = require('./lib/telemetry')
+const { createTelemetryThreadInterceptorHooks } = require('./lib/thread-interceptor-hooks')
 const schema = require('./lib/schema')
-const setupNodeHTTPTelemetry = require('./lib/node-http-telemetry')
 
 module.exports = {
   telemetry,
+  createTelemetryThreadInterceptorHooks,
   schema,
-  setupNodeHTTPTelemetry
 }

@@ -1,7 +1,8 @@
-import { fileURLToPath } from 'node:url'
+import { resolve } from 'node:path'
 import {
   internalServicesFiles,
   isCIOnWindows,
+  setFixturesDir,
   verifyBuildAndProductionMode,
   verifyFrontendAPIOnPrefix,
   verifyFrontendAPIOnRoot,
@@ -10,76 +11,97 @@ import {
   verifyFrontendOnRoot,
   verifyPlatformaticComposer,
   verifyPlatformaticService
-} from '../../cli/test/helper.js'
+} from '../../basic/test/helper.js'
 
 process.setMaxListeners(100)
+setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-const astroFiles = ['services/frontend/dist/index.html']
-const astroSSRFiles = ['services/frontend/dist/server/entry.mjs']
+const files = ['services/frontend/dist/index.html']
+const filesSSR = ['services/frontend/dist/server/entry.mjs']
 
 const configurations = [
   {
     id: 'standalone',
     name: 'Astro (standalone)',
-    files: [...astroFiles],
-    checks: [verifyFrontendOnRoot]
+    files,
+    checks: [verifyFrontendOnRoot],
+    language: 'js',
+    prefix: ''
   },
   {
     only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'Astro (in composer with prefix)',
-    files: [...astroFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files: [...files, ...internalServicesFiles],
+    checks: [verifyFrontendOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'ts',
+    prefix: '/frontend'
   },
   {
     id: 'composer-without-prefix',
     name: 'Astro (in composer without prefix)',
-    files: [...astroFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnRoot, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyFrontendOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'composer-autodetect-prefix',
     name: 'Astro (in composer with autodetected prefix)',
-    files: [...astroFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyFrontendOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/nested/base/dir'
   },
   {
     id: 'composer-custom-commands',
     name: 'Astro (in composer with prefix using custom commands)',
-    files: [...astroFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyFrontendOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/frontend'
   },
   {
     id: 'ssr-standalone',
     name: 'Astro SSR (standalone)',
-    files: [...astroSSRFiles],
-    checks: [verifyFrontendOnRoot, verifyFrontendAPIOnRoot]
+    files: filesSSR,
+    checks: [verifyFrontendOnRoot, verifyFrontendAPIOnRoot],
+    language: 'js',
+    prefix: ''
   },
   {
     only: isCIOnWindows,
     id: 'ssr-with-prefix',
     name: 'Astro SSR (in composer with prefix)',
-    files: [...astroSSRFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files: filesSSR,
+    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/frontend'
   },
   {
     id: 'ssr-without-prefix',
     name: 'Astro SSR (in composer without prefix)',
-    files: [...astroSSRFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnRoot, verifyPlatformaticComposer, verifyPlatformaticService]
+    files: filesSSR,
+    checks: [verifyFrontendOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'ssr-autodetect-prefix',
     name: 'Astro SSR (in composer with autodetected prefix)',
-    files: [...astroSSRFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files: filesSSR,
+    checks: [verifyFrontendOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/nested/base/dir'
   },
   {
     id: 'ssr-custom-commands',
-    name: 'Astro SSR (in composer with autodetected prefix using custom commands)',
-    files: [...astroSSRFiles, ...internalServicesFiles],
-    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    name: 'Astro SSR (in composer with prefix using custom commands)',
+    files: filesSSR,
+    checks: [verifyFrontendOnPrefix, verifyFrontendAPIOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/frontend'
   }
 ]
 
-verifyBuildAndProductionMode(fileURLToPath(new URL('fixtures', import.meta.url)), configurations)
+verifyBuildAndProductionMode(configurations)

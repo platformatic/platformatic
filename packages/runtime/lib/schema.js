@@ -3,8 +3,18 @@
 
 const telemetry = require('@platformatic/telemetry').schema
 const {
-  schemaComponents: { server, logger }
+  schemaComponents: { server, logger, health }
 } = require('@platformatic/utils')
+
+const workers = {
+  anyOf: [
+    {
+      type: 'number',
+      minimum: 1
+    },
+    { type: 'string' }
+  ]
+}
 
 const services = {
   type: 'array',
@@ -27,7 +37,9 @@ const services = {
       },
       useHttp: {
         type: 'boolean'
-      }
+      },
+      workers,
+      health: { ...health, default: undefined }
     }
   }
 }
@@ -47,6 +59,9 @@ const platformaticRuntimeSchema = {
       resolvePath: true
     },
     entrypoint: {
+      type: 'string'
+    },
+    basePath: {
       type: 'string'
     },
     autoload: {
@@ -80,16 +95,24 @@ const platformaticRuntimeSchema = {
               },
               useHttp: {
                 type: 'boolean'
-              }
+              },
+              workers,
+              health: { ...health, default: undefined }
             }
           }
         }
       }
     },
     services,
+    workers: { ...workers, default: 1 },
     web: services,
     logger,
     server,
+    startTimeout: {
+      default: 30000,
+      type: 'number',
+      minimum: 0
+    },
     restartOnError: {
       default: true,
       anyOf: [
@@ -100,6 +123,35 @@ const platformaticRuntimeSchema = {
         }
       ]
     },
+    gracefulShutdown: {
+      type: 'object',
+      properties: {
+        runtime: {
+          anyOf: [
+            {
+              type: 'number',
+              minimum: 1
+            },
+            { type: 'string' }
+          ],
+          default: 10000
+        },
+        service: {
+          anyOf: [
+            {
+              type: 'number',
+              minimum: 1
+            },
+            { type: 'string' }
+          ],
+          default: 10000
+        }
+      },
+      default: {},
+      required: ['runtime', 'service'],
+      additionalProperties: false
+    },
+    health,
     undici: {
       type: 'object',
       properties: {
@@ -222,6 +274,16 @@ const platformaticRuntimeSchema = {
           type: 'boolean'
         }
       }
+    },
+    serviceTimeout: {
+      anyOf: [
+        {
+          type: 'number',
+          minimum: 1
+        },
+        { type: 'string' }
+      ],
+      default: 300000 // 5 minutes
     }
   },
   anyOf: [{ required: ['autoload'] }, { required: ['services'] }, { required: ['web'] }],

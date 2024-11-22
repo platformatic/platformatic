@@ -1,19 +1,21 @@
 import { ok } from 'node:assert'
-import { fileURLToPath } from 'node:url'
-import { verifyJSONViaHTTP } from '../../basic/test/helper.js'
+import { resolve } from 'node:path'
 import {
   internalServicesFiles,
   isCIOnWindows,
+  setFixturesDir,
   verifyBuildAndProductionMode,
+  verifyJSONViaHTTP,
   verifyPlatformaticComposer,
   verifyPlatformaticService
-} from '../../cli/test/helper.js'
+} from '../../basic/test/helper.js'
 
 process.setMaxListeners(100)
+setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-const nodeCJSFiles = ['services/frontend/index.js']
-const nodeESMFiles = ['services/frontend/index.mjs']
-const nodeCustomBuildFiles = ['services/frontend/dist/pre/timestamp', 'services/frontend/dist/index.js']
+const files = ['services/frontend/index.js']
+const filesESM = ['services/frontend/index.mjs']
+const filesCustomBuild = ['services/frontend/dist/pre/timestamp', 'services/frontend/dist/index.js']
 
 function isTime (body) {
   ok(typeof body.time === 'number')
@@ -44,229 +46,303 @@ const configurations = [
   {
     id: 'node-no-configuration-standalone',
     name: 'Node.js application with (with no configuration files in development mode when standalone)',
-    files: nodeESMFiles,
-    checks: [verifyStandalone]
+    files: filesESM,
+    checks: [verifyStandalone],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'node-no-configuration-composer-with-prefix',
     name: 'Node.js application with (with no configuration files in development mode when exposed in a composer with a prefix)',
-    files: [...nodeESMFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files: [...filesESM, ...internalServicesFiles],
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'ts',
+    prefix: '/frontend'
   },
   {
     id: 'node-no-configuration-composer-without-prefix',
     name: 'Node.js application with (with no configuration files in development mode when exposed in a composer without a prefix)',
-    files: [...nodeESMFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService]
+    files: filesESM,
+    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'node-no-configuration-composer-autodetect-prefix',
     name: 'Node.js application with (with no configuration files in development mode when exposed in a composer by autodetecting the prefix)',
-    files: [...nodeESMFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files: filesESM,
+    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/nested/base/dir'
   },
   {
     id: 'node-no-configuration-composer-no-services',
     name: 'Node.js application with (with no configuration files in development mode when exposed in a composer which defines no services)',
-    files: [...nodeESMFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files: filesESM,
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/frontend'
   },
   {
     id: 'node-no-build-standalone',
     name: 'Node.js application with (with no build function in development mode when standalone)',
-    files: nodeCustomBuildFiles,
-    checks: [verifyStandalone]
+    files: filesCustomBuild,
+    checks: [verifyStandalone],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'node-no-build-composer-with-prefix',
     name: 'Node.js application with (with no build function in development mode when exposed in a composer with a prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/frontend'
   },
   {
     id: 'node-no-build-composer-without-prefix',
     name: 'Node.js application with (with no build function in development mode when exposed in a composer without a prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'node-no-build-composer-autodetect-prefix',
     name: 'Node.js application with (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/nested/base/dir'
   },
   {
     id: 'node-with-build-standalone',
     name: 'Node.js application with (with a build function in development mode when standalone)',
     files: ['services/frontend/unusual.js'],
-    checks: [verifyStandalone]
+    checks: [verifyStandalone],
+    language: 'js',
+    prefix: ''
   },
   {
     only: isCIOnWindows,
     id: 'node-with-build-composer-with-prefix',
     name: 'Node.js application with (with a build function in development mode when exposed in a composer with a prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/frontend'
   },
   {
     id: 'node-with-build-composer-without-prefix',
     name: 'Node.js application with (with a build function in development mode when exposed in a composer without a prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'node-with-build-composer-autodetect-prefix',
     name: 'Node.js application with (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/nested/base/dir'
   },
   {
     id: 'express-no-build-standalone',
     name: 'Express with (with no build function in development mode when standalone)',
-    files: nodeCJSFiles,
-    checks: [verifyStandalone]
+    files,
+    checks: [verifyStandalone],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'express-no-build-composer-with-prefix',
     name: 'Express with (with no build function in development mode when exposed in a composer with a prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/frontend'
   },
   {
     id: 'express-no-build-composer-without-prefix',
     name: 'Express with (with no build function in development mode when exposed in a composer without a prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'express-no-build-composer-autodetect-prefix',
     name: 'Express with (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/nested/base/dir'
   },
   {
     id: 'express-with-build-standalone',
     name: 'Express with (with a build function in development mode when standalone)',
-    files: nodeCJSFiles,
-    checks: [verifyStandalone]
+    files,
+    checks: [verifyStandalone],
+    language: 'js',
+    prefix: ''
   },
   {
     only: isCIOnWindows,
     id: 'express-with-build-composer-with-prefix',
     name: 'Express with (with a build function in development mode when exposed in a composer with a prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/frontend'
   },
   {
     id: 'express-with-build-composer-without-prefix',
     name: 'Express with (with a build function in development mode when exposed in a composer without a prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'express-with-build-composer-autodetect-prefix',
     name: 'Express with (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/nested/base/dir'
   },
   {
     id: 'fastify-no-build-standalone',
     name: 'Fastify with (with no build function in development mode when standalone)',
-    files: nodeCJSFiles,
-    checks: [verifyStandalone]
+    files,
+    checks: [verifyStandalone],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'fastify-no-build-composer-with-prefix',
     name: 'Fastify with (with no build function in development mode when exposed in a composer with a prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/frontend'
   },
   {
     id: 'fastify-no-build-composer-without-prefix',
     name: 'Fastify with (with no build function in development mode when exposed in a composer without a prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'fastify-no-build-composer-autodetect-prefix',
     name: 'Fastify with (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/nested/base/dir'
   },
   {
     id: 'fastify-with-build-standalone',
     name: 'Fastify with (with a build function in development mode when standalone)',
-    files: nodeCJSFiles,
-    checks: [verifyStandalone]
+    files,
+    checks: [verifyStandalone],
+    language: 'js',
+    prefix: ''
   },
   {
     only: isCIOnWindows,
     id: 'fastify-with-build-composer-with-prefix',
     name: 'Fastify with (with a build function in development mode when exposed in a composer with a prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/frontend'
   },
   {
     id: 'fastify-with-build-composer-without-prefix',
     name: 'Fastify with (with a build function in development mode when exposed in a composer without a prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'fastify-with-build-composer-autodetect-prefix',
     name: 'Fastify with (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/nested/base/dir'
   },
   {
     id: 'koa-no-build-standalone',
     name: 'Koa with (with no build function in development mode when standalone)',
-    files: nodeCJSFiles,
-    checks: [verifyStandalone]
+    files,
+    checks: [verifyStandalone],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'koa-no-build-composer-with-prefix',
     name: 'Koa with (with no build function in development mode when exposed in a composer with a prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/frontend'
   },
   {
     id: 'koa-no-build-composer-without-prefix',
     name: 'Koa with (with no build function in development mode when exposed in a composer without a prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'koa-no-build-composer-autodetect-prefix',
     name: 'Koa with (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/nested/base/dir'
   },
   {
     id: 'koa-with-build-standalone',
     name: 'Koa with (with a build function in development mode when standalone)',
-    files: nodeCJSFiles,
-    checks: [verifyStandalone]
+    files,
+    checks: [verifyStandalone],
+    language: 'js',
+    prefix: ''
   },
   {
     only: isCIOnWindows,
     id: 'koa-with-build-composer-with-prefix',
     name: 'Koa with (with a build function in development mode when exposed in a composer with a prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/frontend'
   },
   {
     id: 'koa-with-build-composer-without-prefix',
     name: 'Koa with (with a build function in development mode when exposed in a composer without a prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnRoot, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: ''
   },
   {
     id: 'koa-with-build-composer-autodetect-prefix',
     name: 'Koa with (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
-    files: [...nodeCJSFiles, ...internalServicesFiles],
-    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService]
+    files,
+    checks: [verifyApplicationOnAutodetectedPrefix, verifyPlatformaticComposer, verifyPlatformaticService],
+    language: 'js',
+    prefix: '/nested/base/dir'
   }
 ]
 
-verifyBuildAndProductionMode(fileURLToPath(new URL('fixtures', import.meta.url)), configurations)
+verifyBuildAndProductionMode(configurations)

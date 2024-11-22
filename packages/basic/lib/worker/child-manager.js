@@ -1,16 +1,19 @@
-import { ITC, generateNotification } from '@platformatic/itc'
+import { ITC } from '@platformatic/itc'
 import { createDirectory, ensureLoggableError } from '@platformatic/utils'
 import { once } from 'node:events'
 import { rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
+import { pathToFileURL } from 'node:url'
 import { register } from 'node:module'
 import { platform, tmpdir } from 'node:os'
-import { dirname, resolve } from 'node:path'
+import { dirname, resolve, join } from 'node:path'
 import { workerData } from 'node:worker_threads'
 import { request } from 'undici'
 import { WebSocketServer } from 'ws'
 import { exitCodes } from '../errors.js'
 import { ensureFileUrl } from '../utils.js'
+import { createRequire } from 'node:module'
+
 export const isWindows = platform() === 'win32'
 
 // In theory we could use the context.id to namespace even more, but due to
@@ -128,14 +131,9 @@ export class ChildManager extends ITC {
     })
   }
 
-  async close (signal) {
+  async close () {
     if (this.#dataPath) {
       await rm(this.#dataPath, { force: true })
-    }
-
-    for (const client of this.#clients) {
-      this.#currentClient = client
-      this._send(generateNotification('close', signal))
     }
 
     this.#server?.close()
@@ -165,8 +163,19 @@ export class ChildManager extends ITC {
     )
 
     process.env.PLT_MANAGER_ID = this.#id
-    process.env.NODE_OPTIONS =
-      `--import="${new URL('./child-process.js', import.meta.url)}" ${process.env.NODE_OPTIONS ?? ''}`.trim()
+
+    const nodeOptions = process.env.NODE_OPTIONS ?? ''
+    const childProcessInclude = `--import="${new URL('./child-process.js', import.meta.url)}"`
+
+    let telemetryInclude = ''
+    if (this.#context.telemetryConfig) {
+      const require = createRequire(import.meta.url)
+      const telemetryPath = require.resolve('@platformatic/telemetry')
+      const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-http-telemetry.js')
+      telemetryInclude = `--import="${pathToFileURL(openTelemetrySetupPath)}"`
+    }
+
+    process.env.NODE_OPTIONS = `${telemetryInclude} ${childProcessInclude} ${nodeOptions}`.trim()
   }
 
   async eject () {
@@ -193,6 +202,11 @@ export class ChildManager extends ITC {
   send (client, name, message) {
     this.#currentClient = client
     return super.send(name, message)
+  }
+
+  notify (client, name, message) {
+    this.#currentClient = client
+    return super.notify(name, message)
   }
 
   _send (message, stringify = true) {

@@ -1,5 +1,6 @@
 'use strict'
 
+const { existsSync } = require('node:fs')
 const { rm, mkdir } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
 
@@ -14,6 +15,10 @@ async function createDirectory (path, empty = false) {
 async function safeRemove (path) {
   let i = 0
   while (i++ < 10) {
+    if (!existsSync(path)) {
+      return
+    }
+
     try {
       await rm(path, { force: true, recursive: true })
       break
@@ -27,5 +32,5 @@ async function safeRemove (path) {
 
 module.exports = {
   createDirectory,
-  safeRemove,
+  safeRemove
 }

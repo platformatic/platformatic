@@ -2,11 +2,32 @@
 const { test, after } = require('node:test')
 const assert = require('node:assert')
 const { join } = require('node:path')
-const { moveToTmpdir, mockNpmJsRequestForPkgs } = require('./helpers')
+const { moveToTmpdir } = require('./helpers')
 const { cp, readFile, writeFile, stat } = require('node:fs/promises')
 const RuntimeGenerator = require('../lib/generator/runtime-generator')
 const ServiceGenerator = require('@platformatic/service/lib/generator/service-generator')
 const { DotEnvTool } = require('dotenv-tool')
+const { MockAgent, setGlobalDispatcher } = require('undici')
+
+const mockAgent = new MockAgent()
+setGlobalDispatcher(mockAgent)
+mockAgent.disableNetConnect()
+
+function mockNpmJsRequestForPkgs (pkgs) {
+  for (const pkg of pkgs) {
+    mockAgent
+      .get('https://registry.npmjs.org')
+      .intercept({
+        method: 'GET',
+        path: `/${pkg}`,
+      })
+      .reply(200, {
+        'dist-tags': {
+          latest: '1.42.0',
+        },
+      })
+  }
+}
 
 test('should remove a service', async (t) => {
   const dir = await moveToTmpdir(after)

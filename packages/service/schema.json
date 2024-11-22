@@ -1,6 +1,6 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/service/2.5.5.json",
-  "version": "2.5.5",
+  "$id": "https://schemas.platformatic.dev/@platformatic/service/2.16.0.json",
+  "version": "2.16.0",
   "title": "Platformatic Service",
   "type": "object",
   "properties": {
@@ -139,17 +139,25 @@
                             "type": "object",
                             "properties": {
                               "target": {
-                                "type": "string",
-                                "resolveModule": true
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "resolveModule": true
+                                  },
+                                  {
+                                    "type": "string",
+                                    "resolvePath": true
+                                  }
+                                ]
                               },
                               "options": {
                                 "type": "object"
                               },
                               "level": {
                                 "type": "string"
-                              },
-                              "additionalProperties": false
-                            }
+                              }
+                            },
+                            "additionalProperties": false
                           }
                         },
                         "options": {
@@ -740,7 +748,8 @@
                       "console",
                       "otlp",
                       "zipkin",
-                      "memory"
+                      "memory",
+                      "file"
                     ],
                     "default": "console"
                   },
@@ -755,6 +764,10 @@
                       "headers": {
                         "type": "object",
                         "description": "Headers to send to the exporter. Not used for console or memory exporters."
+                      },
+                      "path": {
+                        "type": "string",
+                        "description": "The path to write the traces to. Only for file exporter."
                       }
                     }
                   },
@@ -771,7 +784,8 @@
                     "console",
                     "otlp",
                     "zipkin",
-                    "memory"
+                    "memory",
+                    "file"
                   ],
                   "default": "console"
                 },
@@ -786,6 +800,10 @@
                     "headers": {
                       "type": "object",
                       "description": "Headers to send to the exporter. Not used for console or memory exporters."
+                    },
+                    "path": {
+                      "type": "string",
+                      "description": "The path to write the traces to. Only for file exporter."
                     }
                   }
                 },

@@ -1,0 +1,17 @@
+{
+  "name": "composer-service",
+  "scripts": {
+    "start": "platformatic start",
+    "test": "borp"
+  },
+  "devDependencies": {
+    "fastify": "^5.0.0",
+    "borp": "^0.17.0"
+  },
+  "dependencies": {
+    "@platformatic/composer": "^2.5.5"
+  },
+  "engines": {
+    "node": "^18.8.0 || >=20.6.0"
+  }
+}

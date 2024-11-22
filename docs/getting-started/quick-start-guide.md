@@ -2,10 +2,13 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 import NewApiProjectInstructions from './new-api-project-instructions.md';
+import SetupWatt from './setup-watt.md';
 
-# Quick Start Guide
+# Fullstack Guide
 
-Welcome to your first steps with [Platformatic DB](/docs/db/overview.md). This guide will help you set up and run your first API using Platformatic DB with [SQLite](https://www.sqlite.org/). By the end of this guide, you'll have a fully functional API ready to use.
+Welcome to your next steps with Platformatic services such as [Platformatic Watt](/docs/watt/overview.md), [Platformatic DB](/docs/db/overview.md) with [SQLite](https://www.sqlite.org/), [Platformatic Client](/docs/client/overview.md) and the [Platformatic Composer](/docs/composer/overview.md). 
+
+In this tutorial, you will build a movie quotes application, where users can add, like and delete quotes from popular movies. This guide will help you setup and run your first full-stack Platformatic application.
 
 :::note
 
@@ -20,9 +23,13 @@ Before starting, ensure you have the following installed:
 - [npm](https://docs.npmjs.com/cli/) (v7 or higher)
 - A code editor, (e.g., [Visual Studio Code](https://code.visualstudio.com/))
 
-## Automatic Setup with Platformatic CLI
+## Create a Platformatic Watt Application 
 
-<NewApiProjectInstructions/>
+<SetupWatt />
+
+## Add Platformatic DB service 
+
+<NewApiProjectInstructions />
 
 ### Start Your API Server
 
@@ -32,14 +39,14 @@ Run the following command in your project directory to start your API server:
 <TabItem value="npm" label="npm">
 
 ```bash
-npm start
+npm run dev
 ```
 
 </TabItem>
 <TabItem value="yarn" label="yarn">
 
 ```bash
-yarn run start
+yarn run dev
 ```
 
 </TabItem>
@@ -47,7 +54,7 @@ yarn run start
 <TabItem value="pnpm" label="pnpm">
 
 ```bash
-pnpm start
+pnpm run dev
 ```
 
 </TabItem>
@@ -56,221 +63,425 @@ pnpm start
 
 Your API server is now live! 🌟 It will automatically serve REST and GraphQL interfaces for your SQL database.
 
-### Check The Database Schema
+### Create a Database Schema
 
 Navigate to the `migrations` directory within the `services` folder of your project directory. This folder contains your database migration files: 
 
 - `001.do.sql`: contains the SQL statements for creating database objects.
 - `001.undo.sql`: contains the SQL statements to remove database objects. 
 
-### Check Your API configuration
+For the movie quote application, you will need a schema configuration for the movie table and likes. Add the schema configuration below in the `001.do.sql` file to do this:
 
-Examine the `platformatic.json` file in the services folder and the `.env` file in the root of your project directory to confirm the API configuration:
-
-This generated configuration tells Platformatic to:
-
-- Run an API server on `http://0.0.0.0:3042/`
-- Connect to an SQLite database stored in a file named `db.sqlite`
-- Look for database migration files in the `migrations` directory
-- Auto-apply the migrations
-- Load the plugin file named `plugin.js` and automatically generate types
-
-:::tip
-
-You can learn more about configuration options in the [Configuration reference](../db/configuration.md). 
-
-:::
-
-## Manual setup
-
-Follow the steps below if you prefer setting up manually or need custom configurations:
-
-### Initialize Your Project
-
-Create and navigate into your project directory:
-
-```bash
-mkdir quick-start
-cd quick-start
-```
-
-Initialize your project and install [Platformatic](https://www.npmjs.com/package/platformatic) as a dependency using your preferred package manager:
-
-<Tabs groupId="package-manager">
-<TabItem value="npm" label="npm">
-
-```bash
-npm init --yes
-
-npm install platformatic
-```
-
-</TabItem>
-<TabItem value="yarn" label="yarn">
-
-```bash
-yarn init --yes
-
-yarn add platformatic
-```
-
-</TabItem>
-<TabItem value="pnpm" label="pnpm">
-
-```bash
-pnpm init
-
-pnpm add platformatic
-```
-
-</TabItem>
-</Tabs>
-
-### Configuration Your Database
-
-In your project directory (`quick-start`), create a file for your sqlite database and also, a `migrations` directory to
-store your database migration files:
-
-```bash
-touch db.sqlite
-mkdir migrations
-```
-
-Create a new migration file named **`001.do.sql`** in the **`migrations`**
-directory. Copy and paste the SQL query below into the migration file to create a new database table
-named `movies`:
-
-```sql title="migrations/001.do.sql"
-CREATE TABLE movies (
+```sql
+CREATE TABLE quotes (
   id INTEGER PRIMARY KEY,
-  title VARCHAR(255) NOT NULL
+  quote TEXT NOT NULL,
+  said_by VARCHAR(255) NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
-:::tip
+This SQL query creates a database table called "quotes" that stores: a unique ID number, the quote's text, who said it, and when it was added to the database.
 
-You can check syntax for SQL queries on the [Database Guide SQL Reference](https://database.guide/sql-reference-for-beginners/).
+Create a new file `002.do.sql` in the same folder directory and add a schema below:
 
-:::
+```sql
+CREATE TABLE movies (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE
+);
 
-### Configure Your API
+ALTER TABLE quotes ADD COLUMN movie_id INTEGER DEFAULT 0 REFERENCES movies(id);
+```
 
-Create a new Platformatic configuration file named **`platformatic.json`** in your project directory with the following configuration to set up your server and database:
+This schema stores the movie `IDs` and the movie `names`, adds a new column that links each movie quote to a specific `movie` in the movies table. 
 
-```json title="platformatic.json"
-{
-  "server": {
-    "hostname": "127.0.0.1",
-    "port": "3042"
-  },
-  "db": {
-    "connectionString": "sqlite://./db.sqlite"
-  },
-  "migrations": {
-    "dir": "./migrations",
-    "autoApply": "true"
+Now create a `003.do.sql` and add the schema configuration below:
+
+```sql
+ALTER TABLE quotes ADD COLUMN likes INTEGER default 0;
+```
+
+### Create a Like Quotes Plugin 
+
+You will add a Fastify plugin for adding likes to a quote. Create a new file `like-quote.js` in the plugins directory of your DB service. 
+
+```js
+/// <reference path="../global.d.ts" />
+'use strict'
+
+const S = require("fluent-json-schema");
+
+/** @param {import('fastify').FastifyInstance} app */
+module.exports = async function plugin(app) {
+  async function incrementQuoteLikes(id) {
+    const { db, sql } = app.platformatic;
+    const result = await db.query(sql`
+      UPDATE quotes SET likes = likes + 1 WHERE id=${id} RETURNING *
+    `);
+    return result;
   }
+
+  const schema = {
+    params: S.object().prop("id", app.getSchema("Quote").properties.id),
+  };
+
+  // Check if the route already exists
+  if (!app.hasRoute({ method: 'POST', url: '/quotes/:id/like' })) {
+    app.post("/quotes/:id/like", { schema }, async function (request, reply) {
+      return { likes: await incrementQuoteLikes(request.params.id) };
+    });
+  }
+};
+```
+
+Here, you've created a API endpoint that lets users like a quote in the database. `incrementQuoteLikes` function updates the database by adding 1 to the `quote`'s `likes` count. The `fluent-json-schema` checks that the quote `ID` is valid. 
+
+### Apply Schema Migrations 
+
+In your `web/db` directory, run the command below for database migrations
+
+```sh
+npx $ platformatic db migrations apply
+```
+
+## Add a Composer service 
+
+[Platformatic Composer](/docs/composer/overview.md) integrates different microservices into a single API for more efficient management. For the movie quotes application, you will use the Platformatic composer to aggregate the DB service, and your frontend application. 
+
+Inside `web` folder, let's create a new Platformatic Composer
+
+```bash
+npx create-platformatic
+```
+
+This will output:
+
+```
+Need to install the following packages:
+create-platformatic@2.14.0
+Ok to proceed? (y) y
+
+ Hello Fortune Ikechi, welcome to Platformatic 2.14.0
+? Where would you like to create your project? .
+✔ Installing @platformatic/runtime@2.14.0...
+ Using existing configuration
+? Which kind of project do you want to create? @platformatic/composer
+✔ Installing @platformatic/composer@2.14.0...
+? What is the name of the service? composer
+? Do you want to create another service? no
+? Do you want to use TypeScript? no
+[16:06:50] INFO: /Users/tmp/my-app/.env written!
+[16:06:50] INFO: /Users/tmp/my-app/.env.sample written!
+[16:06:50] INFO: /Users/tmp/my-app/web/composer/package.json written!
+[16:06:50] INFO: /Users/tmp/my-app/web/composer/platformatic.json written!
+[16:06:50] INFO: /Users/tmp/my-app/web/composer/.gitignore written!
+[16:06:50] INFO: /Users/tmp/my-app/web/composer/global.d.ts written!
+[16:06:50] INFO: /Users/tmp/my-app/web/composer/README.md written!
+? Do you want to init the git repository? no
+✔ Installing dependencies...
+[16:06:52] INFO: Project created successfully, executing post-install actions...
+[16:06:52] INFO: You are all set! Run `npm start` to start your project.
+```
+
+### Add services to composer 
+
+In your `web/composer` directory, select the `platformatic.json` file and add the DB service to your composer:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.5.5.json",
+  "composer": {
+    "services": [
+      {
+        "id": "db",
+        "openapi": {
+          "url": "/documentation/json"
+        }
+      }
+    ],
+    "refreshTimeout": 1000
+  },
+  
+
+  "watch": true
 }
 ```
 
-This configuration tells Platformatic to:
+## Add a React frontend for Movie Quotes App
 
-- Run an API server on `http://127.0.0.1:3042/`
-- Connect to an SQLite database stored in a file named `db.sqlite`
-- Look for, and apply the database migrations specified in the `migrations` directory
+Next steps is to add a React (vite) frontend for the movie quotes app. Run the command to create a React.js application:
 
+```sh
+npm create vite@latest frontend -- --template react
+```
+
+which will output:
+
+```sh
+> npx
+> create-vite frontend --template react
+
+
+Scaffolding project in /Users/fortuneikechi/Desktop/frontend...
+
+Done. Now run:
+
+  cd frontend
+  npm install
+  npm run dev
+```
+
+### Setting Up the Platformatic Frontend Client
+
+To kickstart the project, in your `web/frontend/src` directory, run the command to create a [Platformatic frontend client](https://docs.platformatic.dev/docs/client/frontend) for your remote server:
+
+```sh
+npx platformatic client --frontend http://0.0.0.0:3042 --name next-client web/frontend/src
+```
+
+This command will generate a [Platformatic frontend client](https://docs.platformatic.dev/docs/client/frontend) in the specified web/frontend/src folder, which allows a more efficient communication between your frontend and Platformatic DB and composer service.
+
+### Installed Required Packages 
+
+To style the application, install the following CSS packages:
+
+```sh
+npm install tailwindcss postcss autoprefixer
+```
+
+Set up **Tailwind CSS** by creating the necessary configuration files:
+
+```sh
+npx tailwindcss init -p
+```
+
+Ensure your `tailwind.config.js` points to the correct paths for your components:
+
+```js
+module.exports = {
+  content: ['./src/**/*.{js,jsx,ts,tsx}', './public/index.html'],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+```
+
+### Building the `QuoteList` Component
+
+The core of your frontend lies in the `src/components/QuoteList.jsx` file. Here's how it works:
+
+- **Data Management**:
+  - Fetches quotes from the API.
+  - Handles creating new quotes, liking existing ones, and deleting quotes.
+- **State Handling**:
+  - Manages loading, error states, and real-time updates for user interactions.
+
+Here’s the complete `QuoteList` component:
+
+```js
+import { useState, useEffect } from 'react';
+import { setBaseUrl, dbGetQuotes, dbCreateQuote, dbDeleteQuotes, postQuotesIdLike } from '../frontend-client/frontend-client.mjs';
+
+// Set the base URL for the API client
+setBaseUrl(window.location.origin); // Or your specific API base URL
+
+const QuoteList = () => {
+  const [quotes, setQuotes] = useState([]);
+  const [error, setError] = useState(null);
+  const [newQuote, setNewQuote] = useState({ quote: '', saidBy: '' });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    getQuotes();
+  }, []);
+
+  const getQuotes = async () => {
+    try {
+      setIsLoading(true);
+      const fetchedQuotes = await dbGetQuotes({});
+      setQuotes(fetchedQuotes);
+      setError(null);
+    } catch (error) {
+      console.error('Error fetching quotes:', error);
+      setError('Failed to fetch quotes');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLike = async (id) => {
+    try {
+      await postQuotesIdLike({ id });
+      getQuotes();
+    } catch (error) {
+      console.error('Error liking quote:', error);
+      setError('Failed to like quote');
+    }
+  };
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    if (!newQuote.quote || !newQuote.saidBy) {
+      setError('Please fill in both quote and author');
+      return;
+    }
+    try {
+      await dbCreateQuote(newQuote);
+      setNewQuote({ quote: '', saidBy: '' });
+      setError(null);
+      getQuotes();
+    } catch (error) {
+      console.error('Error creating quote:', error);
+      setError('Failed to create quote');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await dbDeleteQuotes({ id });
+      getQuotes();
+    } catch (error) {
+      console.error('Error deleting quote:', error);
+      setError('Failed to delete quote');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 py-8">
+      <div className="bg-white shadow-md rounded-lg p-8 max-w-lg w-full">
+        <h1 className="text-3xl font-bold mb-8 text-center text-gray-800">Movie Quotes</h1>
+        
+        {error && (
+          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleCreate} className="mb-8">
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <input
+              type="text"
+              placeholder="Enter Quote"
+              value={newQuote.quote}
+              onChange={(e) => setNewQuote({ ...newQuote, quote: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <input
+              type="text"
+              placeholder="Said By"
+              value={newQuote.saidBy}
+              onChange={(e) => setNewQuote({ ...newQuote, saidBy: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition duration-200 shadow-md"
+          >
+            Add Quote
+          </button>
+        </form>
+
+        {isLoading ? (
+          <p className="text-center text-gray-500 text-lg">Loading quotes...</p>
+        ) : quotes.length === 0 ? (
+          <p className="text-center text-gray-500 text-lg">No quotes available</p>
+        ) : (
+          <div className="space-y-4">
+            {quotes.map((quote) => (
+              <div
+                key={quote.id}
+                className="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200"
+              >
+                <p className="text-xl font-semibold text-gray-800 mb-1">"{quote.quote}"</p>
+                <p className="text-md text-gray-600 mb-3">- {quote.saidBy}</p>
+                <div className="flex justify-between items-center">
+                  <button
+                    onClick={() => handleLike(quote.id)}
+                    className="flex items-center space-x-2 text-blue-500 hover:text-blue-600"
+                  >
+                    <span className="text-2xl">❤️</span> 
+                    <span className="text-xl">{quote.likes || 0}</span>
+                  </button>
+                  <button
+                    onClick={() => handleDelete(quote.id)}
+                    className="text-red-500 hover:text-red-600 px-3 py-1 border border-red-500 rounded-lg hover:bg-red-50 transition duration-200"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default QuoteList;
+```
+
+###  Integrating the `QuoteList` Component
+
+Update your main app file `src/App.jsx` to include the QuoteList component:
+
+```js 
+import QuoteList from './components/QuoteList';
+
+function App() {
+  return (
+    <div className="App">
+      <QuoteList />
+    </div>
+  );
+}
+
+export default App;
+```
+
+#### Add frontend to Composer
+
+In your `web/composer` directory, add the frontend `id` to your composer `platformatic.json` file, update it as shown below:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.5.5.json",
+  "composer": {
+    "services": [
+      {
+        "id": "db",
+        "openapi": {
+          "url": "/documentation/json"
+        }
+      },
+      {
+        "id": "frontend"
+      }
+    ],
+    "refreshTimeout": 1000
+  },
+  
+
+  "watch": true
+}
+```
 
 ### Start Your API Server
 
 In your project directory, use the Platformatic CLI to start your API server:
 
 ```bash
-npx platformatic db start
+npm run dev 
 ```
+
 
 This will:
-- Automatically map your SQL database to REST and GraphQL API interfaces.
-- Start the Platformatic API server.
+- Automatically map your SQL database and React frontend to REST using the composer 
+- Start the Platformatic Watt server.
 
-Your Platformatic API is now up and running! 🌟
+Your Platformatic application is now up and running! 🌟
 
-## Next Steps
-
-Now that your API is up and running, it's time to interact with it using the REST and GraphQL interfaces. Below, you'll find simple examples of how to use these interfaces effectively.
-
-### Interacting with the REST API Interface
-
-The REST API allows you to perform standard HTTP requests. Below are examples of how you can create a new movie and retrieve all movies from your database using `cURL`.
-
-#### Create a new movie
-
-To add a new movie to your database, use this `cURL` command:
-
-```bash
-curl -X POST -H "Content-Type: application/json" \
-  -d "{ \"title\": \"Hello Platformatic DB\" }" \
-	http://localhost:3042/movies
-```
-
-You should receive a response similar to this:
-
-```json
-{"id":1,"title":"Hello Platformatic DB"}
-```
-This means that the movie was successfully added to your database
-
-:::tip
-
-Learn more about your APIs GraphQL interface in the
-[GraphQL API reference](../packages/sql-graphql/overview.md).
-
-:::
-
-#### Get All Movies
-
-To fetch all movies stored in your database, use the following command
-
-```bash
-curl http://localhost:3042/movies
-```
-
-The response will be an array containing all the movies:
-
-```json
-[{"id":1,"title":"Hello Platformatic DB"}]
-```
-
-:::tip
-
-For a comprehensive list of available routes and operations, refer to the [REST API reference](/docs/reference/sql-openapi/introduction.md)
-
-:::
-
-#### Exploring API Documentation with Swagger
-
-You can access the Swagger UI to explore detailed documentation for your REST API at:
-
-[http://localhost:3042/documentation](http://localhost:3042/documentation)
-
-### Interacting with the GraphQL Interface
-
-Open [http://localhost:3042/graphiql](http://localhost:3042/graphiql) in your
-web browser to explore the GraphQL interface of your API.
-
-Run the query below to retrieve all movies:
-
-```graphql
-query {
-  movies {
-    id
-    title
-  }
-}
-```
-
-
-:::tip
-
-For more advanced guides, refer to the [Platformatic learning hub](../learn/overview.md).
-
-:::
+![Movie quotes application](./images/movie_quote_app.png)

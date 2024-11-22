@@ -13,7 +13,7 @@ const { createHash } = require('node:crypto')
 const validateFunctionCache = {}
 const errors = require('./errors')
 const camelCase = require('camelcase')
-
+const { FormData } = require('undici')
 function generateOperationId (path, method, methodMeta, all) {
   let operationId = null
   // use methodMeta.operationId only if it's present AND it is a valid string that can be
@@ -69,7 +69,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
     options.getHeaders = undefined
   }
 
-  const { validateResponse, queryParser } = options
+  const { validateResponse, queryParser, dispatcher } = options
   // this is tested, not sure why c8 is not picking it up
   if (!options.url) {
     throw new errors.OptionsUrlRequiredError()
@@ -114,7 +114,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
       }
 
       client[kOperationIdMap][operationId] = { path, method }
-      client[operationId] = await buildCallFunction(spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout)
+      client[operationId] = await buildCallFunction(spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout, dispatcher)
     }
   }
   return client
@@ -137,7 +137,7 @@ function hasDuplicatedParameters (methodMeta) {
   return s.size !== methodMeta.parameters.length
 }
 
-async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout) {
+async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout, dispatcher) {
   await $RefParser.dereference(spec)
   const ajv = new Ajv()
   const url = new URL(baseUrl)
@@ -166,7 +166,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       body = args?.body || ''
       for (const param of pathParams) {
         if (args?.path[param.name] === undefined) {
-          throw new Error('missing required parameter ' + param.name)
+          throw new errors.MissingParamsRequiredError(param.name)
         }
         pathToCall = pathToCall.replace(`{${param.name}}`, args.path[param.name])
       }
@@ -181,10 +181,10 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
         }
       }
     } else {
-      body = { ...args } || '' // shallow copy
+      body = args instanceof FormData ? args : { ...args } || '' // shallow copy
       for (const param of pathParams) {
         if (body[param.name] === undefined) {
-          throw new Error('missing required parameter ' + param.name)
+          throw new errors.MissingParamsRequiredError(param.name)
         }
         pathToCall = pathToCall.replace(`{${param.name}}`, body[param.name])
         body[param.name] = undefined
@@ -225,15 +225,25 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
         method,
         headers: {
           ...headers,
-          ...telemetryHeaders,
+          ...telemetryHeaders
         },
         throwOnError,
         bodyTimeout,
         headersTimeout,
+        dispatcher
       }
       if (canHaveBody) {
-        requestOptions.headers['content-type'] = 'application/json; charset=utf-8'
-        requestOptions.body = JSON.stringify(body)
+        const bodyType = getRequestBodyContentType(methodMeta)
+        if (bodyType === 'multipart/form-data') {
+          if (body instanceof FormData) {
+            requestOptions.body = body
+          } else {
+            throw new errors.FormDataRequiredError(`${method} ${path}`)
+          }
+        } else {
+          requestOptions.headers['content-type'] = bodyType
+          requestOptions.body = JSON.stringify(body)
+        }
       }
       res = await request(urlToCall, requestOptions)
       let responseBody
@@ -256,17 +266,17 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
           const matchingResponse = responses[res.statusCode]
 
           if (matchingResponse === undefined) {
-            throw new Error(`No matching response schema found for status code ${res.statusCode}`)
+            throw new errors.InvalidResponseSchemaError(res.statusCode)
           }
           const matchingContentSchema = matchingResponse.content[contentType]
 
           if (matchingContentSchema === undefined) {
-            throw new Error(`No matching content type schema found for ${contentType}`)
+            throw new errors.InvalidContentTypeError(contentType)
           }
           const bodyIsValid = checkResponseAgainstSchema(responseBody, matchingContentSchema.schema, ajv)
 
           if (!bodyIsValid) {
-            throw new Error('Invalid response format')
+            throw new errors.InvalidResponseFormatError()
           }
         } catch (err) {
           responseBody = createErrorResponse(err.message)
@@ -276,22 +286,39 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
         return {
           statusCode: res.statusCode,
           headers: res.headers,
-          body: responseBody,
+          body: responseBody
         }
       }
       return responseBody
     } catch (err) {
       openTelemetry?.setErrorInSpanClient(span, err)
-      throw err
+      throw new errors.UnexpectedCallFailureError(err.toString())
     } finally {
       openTelemetry?.endHTTPSpanClient(span, res)
     }
   }
 }
+
+function getRequestBodyContentType (methodMetadata) {
+  let output = null
+  if (!methodMetadata.requestBody) {
+    return 'application/json'
+  }
+  if (methodMetadata.requestBody && methodMetadata.requestBody.content) {
+    if (methodMetadata.requestBody.content['multipart/form-data']) {
+      output = 'multipart/form-data'
+    }
+
+    if (methodMetadata.requestBody.content['application/json']) {
+      output = 'application/json'
+    }
+  }
+  return output
+}
 function createErrorResponse (message) {
   return {
     statusCode: 500,
-    message,
+    message
   }
 }
 function sanitizeContentType (contentType) {
@@ -327,7 +354,7 @@ async function graphql (url, log, headers, query, variables, openTelemetry, tele
   headers = {
     ...headers,
     ...telemetryHeaders,
-    'content-type': 'application/json; charset=utf-8',
+    'content-type': 'application/json; charset=utf-8'
   }
 
   let res
@@ -337,8 +364,8 @@ async function graphql (url, log, headers, query, variables, openTelemetry, tele
       headers,
       body: JSON.stringify({
         query,
-        variables,
-      }),
+        variables
+      })
     })
 
     const json = await res.body.json()
@@ -390,7 +417,7 @@ async function buildGraphQLClient (options, openTelemetry, logger = abstractLogg
 
   return {
     graphql: wrapGraphQLClient(options.url, openTelemetry, logger),
-    [kHeaders]: options.headers || {},
+    [kHeaders]: options.headers || {}
   }
 }
 
@@ -416,7 +443,7 @@ async function plugin (app, opts) {
     }
     client = await buildGraphQLClient(opts, app.openTelemetry, app.log)
   } else {
-    throw new Error('opts.type must be either "openapi" or "graphql"')
+    throw new errors.WrongOptsTypeError()
   }
 
   let name = opts.name
@@ -445,7 +472,7 @@ async function plugin (app, opts) {
 
 plugin[Symbol.for('skip-override')] = true
 plugin[Symbol.for('plugin-meta')] = {
-  name: '@platformatic/client',
+  name: '@platformatic/client'
 }
 
 module.exports = plugin

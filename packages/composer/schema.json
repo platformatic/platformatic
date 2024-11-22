@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/composer/2.5.5.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/composer/2.16.0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Composer",
   "type": "object",
@@ -139,17 +139,25 @@
                             "type": "object",
                             "properties": {
                               "target": {
-                                "type": "string",
-                                "resolveModule": true
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "resolveModule": true
+                                  },
+                                  {
+                                    "type": "string",
+                                    "resolvePath": true
+                                  }
+                                ]
                               },
                               "options": {
                                 "type": "object"
                               },
                               "level": {
                                 "type": "string"
-                              },
-                              "additionalProperties": false
-                            }
+                              }
+                            },
+                            "additionalProperties": false
                           }
                         },
                         "options": {
@@ -992,6 +1000,7 @@
         }
       },
       "required": [],
+      "default": {},
       "additionalProperties": false
     },
     "metrics": {
@@ -1319,7 +1328,8 @@
                       "console",
                       "otlp",
                       "zipkin",
-                      "memory"
+                      "memory",
+                      "file"
                     ],
                     "default": "console"
                   },
@@ -1334,6 +1344,10 @@
                       "headers": {
                         "type": "object",
                         "description": "Headers to send to the exporter. Not used for console or memory exporters."
+                      },
+                      "path": {
+                        "type": "string",
+                        "description": "The path to write the traces to. Only for file exporter."
                       }
                     }
                   },
@@ -1350,7 +1364,8 @@
                     "console",
                     "otlp",
                     "zipkin",
-                    "memory"
+                    "memory",
+                    "file"
                   ],
                   "default": "console"
                 },
@@ -1365,6 +1380,10 @@
                     "headers": {
                       "type": "object",
                       "description": "Headers to send to the exporter. Not used for console or memory exporters."
+                    },
+                    "path": {
+                      "type": "string",
+                      "description": "The path to write the traces to. Only for file exporter."
                     }
                   }
                 },
@@ -1431,9 +1450,6 @@
     }
   },
   "additionalProperties": false,
-  "required": [
-    "composer"
-  ],
   "$defs": {
     "info": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#info-object",

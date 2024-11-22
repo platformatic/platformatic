@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/next",
-  "version": "2.5.5",
+  "version": "2.16.0",
   "description": "Platformatic Next.js Stackable",
   "main": "index.js",
   "type": "module",
@@ -37,7 +37,7 @@
     "@fastify/reply-from": "^11.0.0",
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
-    "borp": "^0.18.0",
+    "borp": "^0.19.0",
     "eslint": "9",
     "fastify": "^5.0.0",
     "json-schema-to-typescript": "^15.0.1",

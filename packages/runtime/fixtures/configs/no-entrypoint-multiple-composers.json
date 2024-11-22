@@ -19,5 +19,9 @@
   ],
   "logger": {
     "level": "error"
+  },
+  "gracefulShutdown": {
+    "runtime": 1000,
+    "service": 1000
   }
 }

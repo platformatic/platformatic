@@ -18,10 +18,20 @@ const { Runtime } = require('./runtime')
 const errors = require('./errors')
 const { getRuntimeLogsDir, loadConfig } = require('./utils')
 
+async function restartRuntime (runtime) {
+  runtime.logger.info('Received SIGUSR2, restarting all services ...')
+
+  try {
+    await runtime.restart()
+  } catch (err) {
+    runtime.logger.error({ err: ensureLoggableError(err) }, 'Failed to restart services.')
+  }
+}
+
 async function buildRuntime (configManager, env) {
   env = env || process.env
 
-  if (inspector.url()) {
+  if (inspector.url() && !env.VSCODE_INSPECTOR_OPTIONS) {
     throw new errors.NodeInspectorFlagsNotSupportedError()
   }
 
@@ -35,14 +45,10 @@ async function buildRuntime (configManager, env) {
   const runtime = new Runtime(configManager, runtimeLogsDir, env)
 
   /* c8 ignore next 3 */
-  process.on('SIGUSR2', async () => {
-    runtime.logger.info('Received SIGUSR2, restarting all services ...')
-
-    try {
-      await runtime.restart()
-    } catch (err) {
-      runtime.logger.error({ err: ensureLoggableError(err) }, 'Failed to restart services.')
-    }
+  const restartListener = restartRuntime.bind(null, runtime)
+  process.on('SIGUSR2', restartListener)
+  runtime.on('closed', () => {
+    process.removeListener('SIGUSR2', restartListener)
   })
 
   try {
@@ -109,7 +115,7 @@ async function setupAndStartRuntime (config) {
       })
     )
     logger.warn(`Port: ${originalPort} is already in use!`)
-    logger.warn(`Starting service on port: ${runtimeConfig.current.server.port}`)
+    logger.warn(`Changing the port to ${runtimeConfig.current.server.port}`)
   }
   return { address, runtime }
 }

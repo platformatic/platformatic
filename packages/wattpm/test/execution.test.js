@@ -1,3 +1,4 @@
+import { connect } from 'inspector-client'
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { on } from 'node:events'
 import { readFile, writeFile } from 'node:fs/promises'
@@ -5,14 +6,11 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { request } from 'undici'
-import { ensureDependency, fixturesDir, waitForStart, wattpm } from './helper.js'
-import { connect } from 'inspector-client'
+import { prepareRuntime } from '../../basic/test/helper.js'
+import { waitForStart, wattpm } from './helper.js'
 
 test('dev - should start in development mode', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -24,7 +22,11 @@ test('dev - should start in development mode', async t => {
 
   const { statusCode, body } = await request(url)
   deepStrictEqual(statusCode, 200)
-  deepStrictEqual(await body.json(), { production: false })
+  deepStrictEqual(await body.json(), {
+    production: false,
+    plt_dev: true,
+    plt_environment: 'development'
+  })
 })
 
 test('dev - should complain if no configuration file is found', async t => {
@@ -40,10 +42,8 @@ test('dev - should complain if no configuration file is found', async t => {
 })
 
 test('dev - should restart an application if files are changed', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const serviceDir = resolve(rootDir, 'web/main')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -70,15 +70,12 @@ test('dev - should restart an application if files are changed', async t => {
 
   await writeFile(indexFile, originalContents.replace('123', '456'), 'utf-8')
 
-  // Restore original file after the test
-  t.after(() => writeFile(indexFile, originalContents, 'utf-8'))
-
   // Wait for the server to restart
   let reloaded = false
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     const parsed = JSON.parse(log.toString())
 
-    if (parsed.msg.startsWith('Service main has been successfully reloaded')) {
+    if (parsed.msg.startsWith('Service "main" has been successfully reloaded')) {
       reloaded = true
       continue
     }
@@ -100,10 +97,7 @@ test('dev - should restart an application if files are changed', async t => {
 })
 
 test('dev - should restart an application if the runtime configuration file is changed', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -125,9 +119,6 @@ test('dev - should restart an application if the runtime configuration file is c
   const config = JSON.parse(originalContents)
   config.logger.level = 'trace'
   await writeFile(configFile, JSON.stringify(config), 'utf-8')
-
-  // Restore original file after the test
-  t.after(() => writeFile(configFile, originalContents, 'utf-8'))
 
   // Wait for the server to restart
   let reloaded = false
@@ -156,10 +147,8 @@ test('dev - should restart an application if the runtime configuration file is c
 })
 
 test('dev - should restart an application if the service configuration file is changed', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const serviceDir = resolve(rootDir, 'web/main')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -182,15 +171,12 @@ test('dev - should restart an application if the service configuration file is c
   config.application = {}
   await writeFile(configFile, JSON.stringify(config), 'utf-8')
 
-  // Restore original file after the test
-  t.after(() => writeFile(configFile, originalContents, 'utf-8'))
-
   // Wait for the server to restart
   let reloaded = false
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     const parsed = JSON.parse(log.toString())
 
-    if (parsed.msg.startsWith('Service main has been successfully reloaded')) {
+    if (parsed.msg.startsWith('Service "main" has been successfully reloaded')) {
       reloaded = true
       continue
     }
@@ -212,10 +198,7 @@ test('dev - should restart an application if the service configuration file is c
 })
 
 test('start - should start in production mode', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -227,7 +210,11 @@ test('start - should start in production mode', async t => {
 
   const { statusCode, body } = await request(url)
   deepStrictEqual(statusCode, 200)
-  deepStrictEqual(await body.json(), { production: true })
+  deepStrictEqual(await body.json(), {
+    production: true,
+    plt_dev: false,
+    plt_environment: 'production'
+  })
 
   const configProcess = await wattpm('config', startProcess.pid)
   const config = JSON.parse(configProcess.stdout)
@@ -238,10 +225,7 @@ test('start - should start in production mode', async t => {
 })
 
 test('start - should start in production mode with the inspector', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -253,7 +237,11 @@ test('start - should start in production mode with the inspector', async t => {
 
   const { statusCode, body } = await request(url)
   deepStrictEqual(statusCode, 200)
-  deepStrictEqual(await body.json(), { production: true })
+  deepStrictEqual(await body.json(), {
+    production: true,
+    plt_dev: false,
+    plt_environment: 'production'
+  })
 
   const [data] = await (await fetch('http://127.0.0.1:9230/json/list')).json()
   const { webSocketDebuggerUrl } = data
@@ -261,11 +249,11 @@ test('start - should start in production mode with the inspector', async t => {
   const client = await connect(webSocketDebuggerUrl)
 
   const res = await client.post('Runtime.evaluate', {
-    expression: 'require(\'worker_threads\').threadId',
+    expression: "require('worker_threads').threadId",
     includeCommandLineAPI: true,
     generatePreview: true,
     returnByValue: true,
-    awaitPromise: true,
+    awaitPromise: true
   })
 
   strictEqual(res.result.value, 2)
@@ -274,10 +262,7 @@ test('start - should start in production mode with the inspector', async t => {
 })
 
 test('stop - should stop an application', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
     return startProcess.catch(() => {})
@@ -301,10 +286,7 @@ test('stop - should complain when a runtime is not found', async t => {
 })
 
 test('restart - should restart an application', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -316,7 +298,7 @@ test('restart - should restart an application', async t => {
 
   const restart = await wattpm('restart', 'main')
 
-  ok(restart.stdout.includes('Runtime main have been restarted.'))
+  ok(restart.stdout.includes('Runtime main has been restarted.'))
 })
 
 test('restart - should complain when a runtime is not found', async t => {
@@ -327,10 +309,7 @@ test('restart - should complain when a runtime is not found', async t => {
 })
 
 test('reload - should reload an application', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)

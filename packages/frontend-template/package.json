@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/frontend-template",
-  "version": "2.5.5",
+  "version": "2.16.0",
   "main": "index.js",
   "type": "module",
   "description": "Platformatic Frontend Template",
@@ -44,7 +44,7 @@
     "@playwright/test": "^1.42.1",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
-    "@vitejs/plugin-react": "^3.1.0",
+    "@vitejs/plugin-react": "^4.0.0",
     "eslint": "9",
     "neostandard": "^0.11.1",
     "react": "^18.2.0",

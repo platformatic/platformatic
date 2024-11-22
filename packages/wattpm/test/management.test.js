@@ -2,14 +2,11 @@ import { version } from '@platformatic/runtime'
 import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-
-import { ensureDependency, fixturesDir, waitForStart, wattpm } from './helper.js'
+import { prepareRuntime } from '../../basic/test/helper.js'
+import { waitForStart, wattpm } from './helper.js'
 
 test('ps - should show running applications', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   const url = await waitForStart(startProcess.stdout)
@@ -42,13 +39,10 @@ test('ps - should warn when no runtimes are available', async t => {
   ok(logsProcess.stdout.includes('No runtimes found.'))
 })
 
-test('services - should list services for an application', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+test('services - should list services for an application with no workers information in development mode', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
-  const startProcess = wattpm('start', rootDir)
+  const startProcess = wattpm('dev', rootDir)
   await waitForStart(startProcess.stdout)
 
   t.after(() => {
@@ -68,6 +62,29 @@ test('services - should list services for an application', async t => {
   deepStrictEqual(lines[4], ['main', 'nodejs', 'Yes'])
 })
 
+test('services - should list services for an application with workers information in production mode', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', true, 'watt.json')
+
+  const startProcess = wattpm('start', rootDir)
+  await waitForStart(startProcess.stdout)
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  const servicesProcess = await wattpm('services', 'main')
+  const lines = servicesProcess.stdout.split('\n').map(l =>
+    l
+      .split('|')
+      .map(t => t.trim())
+      .filter(t => t)
+  )
+
+  deepStrictEqual(lines[2], ['Name', 'Workers', 'Type', 'Entrypoint'])
+  deepStrictEqual(lines[4], ['main', '1', 'nodejs', 'Yes'])
+})
+
 test('services - should complain when a runtime is not found', async t => {
   const servicesProcess = await wattpm('services', 'p-' + Date.now.toString(), { reject: false })
 
@@ -76,10 +93,7 @@ test('services - should complain when a runtime is not found', async t => {
 })
 
 test('env - should list environment variable for an application', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)
@@ -94,10 +108,7 @@ test('env - should list environment variable for an application', async t => {
 })
 
 test('env - should list environment variable for an application in tabular way', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)
@@ -112,10 +123,7 @@ test('env - should list environment variable for an application in tabular way',
 })
 
 test('env - should list environment variable for an service', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)
@@ -137,10 +145,7 @@ test('env - should complain when a runtime is not found', async t => {
 })
 
 test('env - should complain when a service is not found', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)
@@ -157,10 +162,8 @@ test('env - should complain when a service is not found', async t => {
 })
 
 test('config - should list configuration for an application', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const serviceDir = resolve(rootDir, 'web/main')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)
@@ -186,11 +189,14 @@ test('config - should list configuration for an application', async t => {
       exclude: []
     },
     restartOnError: 5000,
+    startTimeout: 30000,
     managementApi: true,
     serviceMap: {},
     services: [
       {
         id: 'main',
+        isPLTService: false,
+        type: 'nodejs',
         path: serviceDir,
         config: resolve(serviceDir, 'watt.json'),
         useHttp: false,
@@ -201,15 +207,27 @@ test('config - should list configuration for an application', async t => {
         localUrl: 'http://main.plt.local'
       }
     ],
-    watch: false
+    serviceTimeout: 300000,
+    workers: 1,
+    watch: false,
+    gracefulShutdown: {
+      runtime: 10000,
+      service: 10000
+    },
+    health: {
+      enabled: true,
+      gracePeriod: 30000,
+      interval: 30000,
+      maxELU: 0.95,
+      maxHeapTotal: 4294967296,
+      maxHeapUsed: 0.95,
+      maxUnhealthyChecks: 3
+    }
   })
 })
 
 test('config - should list configuration for an service', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)
@@ -235,7 +253,8 @@ test('config - should list configuration for an service', async t => {
     },
     node: {
       absoluteUrl: false,
-      main: 'index.js'
+      main: 'index.js',
+      dispatchViaHttp: false
     }
   })
 })
@@ -248,10 +267,7 @@ test('config - should complain when a runtime is not found', async t => {
 })
 
 test('config - should complain when a service is not found', async t => {
-  const rootDir = await resolve(fixturesDir, 'main')
-  const serviceDir = await resolve(rootDir, 'web/main')
-  await ensureDependency(t, serviceDir, '@platformatic/node')
-  await ensureDependency(t, serviceDir, 'fastify')
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)

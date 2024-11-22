@@ -96,17 +96,21 @@ export async function servicesCommand (logger, args) {
   try {
     const client = new RuntimeApiClient()
     const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(logger, positionals))
-    const services = await client.getRuntimeServices(runtime.pid)
+    const { production, services } = await client.getRuntimeServices(runtime.pid)
     await client.close()
 
-    const rows = services.services.map(runtime => {
-      const { id, type, entrypoint } = runtime
+    const headers = production
+      ? [bold('Name'), bold('Workers'), bold('Type'), bold('Entrypoint')]
+      : [bold('Name'), bold('Type'), bold('Entrypoint')]
+
+    const rows = services.map(runtime => {
+      const { id, workers, type, entrypoint } = runtime
 
       /* c8 ignore next */
-      return [id, type, entrypoint ? 'Yes' : 'No']
+      return [id, workers, type, entrypoint ? 'Yes' : 'No'].filter(t => t)
     })
 
-    console.log('\n' + table([[bold('Name'), bold('Type'), bold('Entrypoint')], ...rows], tableConfig))
+    console.log('\n' + table([headers, ...rows], tableConfig))
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       logger.fatal('Cannot find a matching runtime.')
