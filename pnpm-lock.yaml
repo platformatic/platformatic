@@ -1097,8 +1097,8 @@ importers:
         specifier: '9'
         version: 9.15.0
       fast-jwt:
-        specifier: ^4.0.0
-        version: 4.0.6
+        specifier: ^5.0.0
+        version: 5.0.0
       fastify:
         specifier: ^5.0.0
         version: 5.1.0
@@ -1786,8 +1786,8 @@ importers:
         specifier: ^4.18.3
         version: 4.21.1
       fast-jwt:
-        specifier: ^4.0.0
-        version: 4.0.6
+        specifier: ^5.0.0
+        version: 5.0.0
       get-port:
         specifier: ^7.1.0
         version: 7.1.0
@@ -5555,6 +5555,10 @@ packages:
     resolution: {integrity: sha512-kyNxaoy/m8pDQdyn+gl4FOTNEOrLK/1iAU4MP8cTz3mErOyh+BtvoCNFxKsyY4zlEKWO5HMY526zRXdoiPc6Rg==}
     engines: {node: '>=20'}
     deprecated: this package version has been deprecated
+
+  fast-jwt@5.0.0:
+    resolution: {integrity: sha512-BJ6qXIgOjqDa2UeFJlpmuT9DnGR3hbMypL/w53lT2aLQAQh4IzX22QtQQEgoadN4AQ8K0849s2iY0KmEoBQTbg==}
+    engines: {node: '>=20'}
 
   fast-levenshtein@2.0.6:
     resolution: {integrity: sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==}
@@ -12630,6 +12634,13 @@ snapshots:
       rfdc: 1.4.1
 
   fast-jwt@4.0.6:
+    dependencies:
+      '@lukeed/ms': 2.0.2
+      asn1.js: 5.4.1
+      ecdsa-sig-formatter: 1.0.11
+      mnemonist: 0.39.8
+
+  fast-jwt@5.0.0:
     dependencies:
       '@lukeed/ms': 2.0.2
       asn1.js: 5.4.1
