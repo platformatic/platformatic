@@ -292,7 +292,11 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       return responseBody
     } catch (err) {
       openTelemetry?.setErrorInSpanClient(span, err)
-      throw new errors.UnexpectedCallFailureError(err.toString())
+      const requestError = new errors.UnexpectedCallFailureError(err.toString())
+      if (err.statusCode) {
+        requestError.statusCode = err.statusCode
+      }
+      throw requestError
     } finally {
       openTelemetry?.endHTTPSpanClient(span, res)
     }

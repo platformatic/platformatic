@@ -7,7 +7,6 @@ const { tmpdir } = require('node:os')
 const { test, mock } = require('node:test')
 const { join } = require('node:path')
 const { unlink, mkdtemp, cp } = require('node:fs/promises')
-const { FastifyError } = require('fastify')
 const { buildServer } = require('../../db')
 const { buildOpenAPIClient } = require('..')
 const { safeRemove } = require('@platformatic/utils')
@@ -420,7 +419,12 @@ test('throw on error level response', async t => {
     client.getMovieById({
       id: 100
     }),
-    FastifyError
+    (err) => {
+      assert.ok(err instanceof errors.UnexpectedCallFailureError)
+      // Persists status code from error response
+      assert.equal(err.statusCode, 404)
+      return true
+    }
   )
 })
 
