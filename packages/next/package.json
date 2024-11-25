@@ -31,6 +31,8 @@
     "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/utils": "workspace:*",
+    "iovalkey": "^0.2.1",
+    "msgpackr": "^1.11.2",
     "semver": "^7.6.3"
   },
   "devDependencies": {

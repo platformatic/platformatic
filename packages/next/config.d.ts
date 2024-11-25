@@ -93,4 +93,10 @@ export interface PlatformaticNextJsStackable {
       production?: string;
     };
   };
+  cache?: {
+    adapter: "redis" | "valkey";
+    url: string;
+    prefix?: string;
+    maxTTL?: number | string;
+  };
 }

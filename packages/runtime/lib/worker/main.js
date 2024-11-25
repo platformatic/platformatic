@@ -1,5 +1,6 @@
 'use strict'
 
+const { EventEmitter } = require('node:events')
 const { createRequire } = require('node:module')
 const { hostname } = require('node:os')
 const { join } = require('node:path')
@@ -35,7 +36,10 @@ globalThis[kId] = threadId
 let app
 
 const config = workerData.config
-globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, { logger: createLogger() })
+globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, {
+  logger: createLogger(),
+  events: new EventEmitter()
+})
 
 function handleUnhandled (type, err) {
   const label =
@@ -102,7 +106,12 @@ async function main () {
   const { telemetry } = service
   const hooks = telemetry ? createTelemetryThreadInterceptorHooks() : {}
   // Setup mesh networker
-  const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp, timeout: config.serviceTimeout, ...hooks })
+  const threadDispatcher = wire({
+    port: parentPort,
+    useNetwork: service.useHttp,
+    timeout: config.serviceTimeout,
+    ...hooks
+  })
 
   // If the service is an entrypoint and runtime server config is defined, use it.
   let serverConfig = null
@@ -191,10 +200,7 @@ function stripBasePath (basePath) {
 
       if (headers) {
         for (const key in headers) {
-          if (
-            key.toLowerCase() === 'location' &&
-            !headers[key].startsWith(basePath)
-          ) {
+          if (key.toLowerCase() === 'location' && !headers[key].startsWith(basePath)) {
             headers[key] = basePath + headers[key]
           }
         }

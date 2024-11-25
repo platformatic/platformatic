@@ -296,6 +296,41 @@
       },
       "additionalProperties": false,
       "default": {}
+    },
+    "cache": {
+      "type": "object",
+      "properties": {
+        "adapter": {
+          "type": "string",
+          "enum": [
+            "redis",
+            "valkey"
+          ]
+        },
+        "url": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "maxTTL": {
+          "default": 604800,
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "required": [
+        "adapter",
+        "url"
+      ],
+      "additionalProperties": false
     }
   },
   "additionalProperties": false
