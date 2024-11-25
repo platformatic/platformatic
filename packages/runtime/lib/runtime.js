@@ -45,7 +45,7 @@ const COLLECT_METRICS_TIMEOUT = 1000
 const MAX_BOOTSTRAP_ATTEMPTS = 5
 
 const telemetryPath = require.resolve('@platformatic/telemetry')
-const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-http-telemetry.js')
+const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
 
 class Runtime extends EventEmitter {
   #configManager

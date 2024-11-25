@@ -171,7 +171,7 @@ export class ChildManager extends ITC {
     if (this.#context.telemetryConfig) {
       const require = createRequire(import.meta.url)
       const telemetryPath = require.resolve('@platformatic/telemetry')
-      const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-http-telemetry.js')
+      const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
       telemetryInclude = `--import="${pathToFileURL(openTelemetrySetupPath)}"`
     }
 
