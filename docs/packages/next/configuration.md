@@ -32,7 +32,7 @@ Manages watching of the service, see the [service](../../service/configuration.m
 
 ## `caching`
 
-Configures an [Incremental Server Rendering cache]() handler.
+Configures an [Incremental Server Rendering cache](https://nextjs.org/docs/app/api-reference/next-config-js/incrementalCacheHandlerPath) handler.
 
 Supported object properties:
 
