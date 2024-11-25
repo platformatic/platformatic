@@ -118,6 +118,13 @@ export class ChildProcess extends ITC {
         process.exit(0)
       }
     })
+
+    this.registerGlobals({
+      setOpenapiSchema: this.setOpenapiSchema.bind(this),
+      setGraphqlSchema: this.setGraphqlSchema.bind(this),
+      setConnectionString: this.setConnectionString.bind(this),
+      setBasePath: this.setBasePath.bind(this),
+    })
   }
 
   _setupListener (listener) {
@@ -280,6 +287,26 @@ export class ChildProcess extends ITC {
 
     process.on('uncaughtException', handleUnhandled.bind(this, 'uncaught exception'))
     process.on('unhandledRejection', handleUnhandled.bind(this, 'unhandled rejection'))
+  }
+
+  registerGlobals (globals) {
+    globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, globals)
+  }
+
+  setOpenapiSchema (schema) {
+    this.notify('openapiSchema', schema)
+  }
+
+  setGraphqlSchema (schema) {
+    this.notify('graphqlSchema', schema)
+  }
+
+  setConnectionString (connectionString) {
+    this.notify('connectionString', connectionString)
+  }
+
+  setBasePath (basePath) {
+    this.notify('basePath', basePath)
   }
 }
 
