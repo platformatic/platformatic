@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/next/2.16.0.json",
+  "server": {
+    "port": 3000
+  },
+  "logger": {
+    "level": "error"
+  },
+  "cache": {
+    "adapter": "valkey",
+    "url": "valkey://{VALKEY_URL}",
+    "prefix": "plt:test:caching-valkey"
+  }
+}

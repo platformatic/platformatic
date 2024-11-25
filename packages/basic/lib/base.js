@@ -17,7 +17,7 @@ const kITC = Symbol.for('plt.runtime.itc')
 
 export class BaseStackable {
   childManager
-  #subprocess
+  subprocess
   #subprocessStarted
 
   constructor (type, version, options, root, configManager) {
@@ -380,6 +380,7 @@ export class BaseStackable {
 
     return {
       id: this.id,
+      config: this.configManager.current,
       serviceId: this.serviceId,
       workerId: this.workerId,
       // Always use URL to avoid serialization problem in Windows

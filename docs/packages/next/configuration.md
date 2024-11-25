@@ -30,4 +30,16 @@ Configures the HTTP server, see the [runtime](../../runtime/configuration.md#ser
 
 Manages watching of the service, see the [service](../../service/configuration.md#watch) documentation.
 
+## `caching`
+
+Configures an [Incremental Server Rendering cache](https://nextjs.org/docs/app/api-reference/next-config-js/incrementalCacheHandlerPath) handler.
+
+Supported object properties:
+
+- **`adapter`**: The adapter to use. The only supported value is `valkey` (of which `redis` is a synonym).
+- **`url`**: The URL of the Valkey/Redis server.
+- **`prefix`**: The prefix to use for all cache keys.
+- **`maxTTL`**: The maximum life of a server key, in seconds. If the Next.js `revalidate` value is greater than this value, then
+  the adapter will refresh the key expire time as long as it is accessed every `maxTTL` seconds. The default value is `604800` (one week).
+
 <Issues />

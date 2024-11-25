@@ -323,7 +323,7 @@ postgres://user:password@my-database:5432/db-name
 
 - **`events`** (`boolean` or `object`, default: `true`) — Controls the support for events published by the SQL mapping layer.
   - `enabled`: Set to `true` to activate event publishing, which  support for GraphQL Subscription over WebSocket using an in-process message broker.
-  - Custom Broker: To use an external message broker, such as Redis, provide the connection string as shown in the example below.
+  - Custom Broker: To use an external message broker, such as Valkey, provide the connection string as shown in the example below.
 
   ```json title="Example Object"
   {
@@ -332,7 +332,7 @@ postgres://user:password@my-database:5432/db-name
       "events": {
         ...
         "enabled": true,
-         "connectionString": "redis://:password@redishost.com:6380/"
+         "connectionString": "valkey://:password@valkeyhost.com:6380/"
       }
     }
   }

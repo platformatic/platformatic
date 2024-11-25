@@ -92,12 +92,14 @@ export function setAdditionalDependencies (dependencies) {
 }
 
 // This is used to debug tests
-export function pause (t, url, timeout) {
+export function pause (t, url, root, timeout) {
   if (timeout && typeof timeout !== 'number') {
     timeout = DEFAULT_PAUSE_TIMEOUT
   }
 
-  console.log(`--- Pausing on test "${t.name}" - Server is listening at ${url}. Press any key to resume ...`)
+  console.log(
+    `--- Pausing on test "${t.name}" - Server is listening at ${url.replace('[::]', '127.0.0.1')} (located at ${root}). Press any key to resume ...`
+  )
 
   return new Promise(resolve => {
     let handler = null
@@ -228,11 +230,18 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   return { root, config, args }
 }
 
-export async function startRuntime (t, root, config, pauseAfterCreation = false) {
+export async function startRuntime (t, root, config, pauseAfterCreation = false, servicesToBuild = false) {
   const originalCwd = process.cwd()
 
   process.chdir(root)
   const runtime = await buildServer(config.configManager.current, config.args)
+
+  if (Array.isArray(servicesToBuild)) {
+    for (const service of servicesToBuild) {
+      await runtime.buildService(service)
+    }
+  }
+
   const url = await runtime.start()
 
   t.after(async () => {
@@ -242,7 +251,7 @@ export async function startRuntime (t, root, config, pauseAfterCreation = false)
   })
 
   if (pauseAfterCreation) {
-    await pause(t, url, pauseAfterCreation)
+    await pause(t, url, root, pauseAfterCreation)
   }
 
   return { runtime, url, root }
