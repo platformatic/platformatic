@@ -421,8 +421,17 @@ test('throw on error level response', async t => {
     }),
     (err) => {
       assert.ok(err instanceof errors.UnexpectedCallFailureError)
-      // Persists status code from error response
+
+      // Persists response properties from Undici error
+      assert.equal(err.status, 404)
       assert.equal(err.statusCode, 404)
+      assert.equal(typeof err.headers, 'object')
+      assert.equal(err.headers['content-type'], 'application/json; charset=utf-8')
+      assert.deepEqual(err.body, {
+        error: 'Not Found',
+        message: 'Route GET:/movies-api/movies/100 not found',
+        statusCode: 404
+      })
       return true
     }
   )
