@@ -81,19 +81,19 @@ npm run start
 Let's test the `/cached-counter` route using `curl`.
 
 ```bash
-curl http://localhost:3042/cached-counter
+curl http://localhost:3042/internal/cached-counter
 {"counter":0}
 ```
 
 ```bash
-curl http://localhost:3042/cached-counter
+curl http://localhost:3042/internal/cached-counter
 {"counter":0}
 ```
 
 ...and after 10 seconds...
 
 ```bash
-curl http://localhost:3042/cached-counter
+curl http://localhost:3042/internal/cached-counter
 {"counter":1}
 ```
 
@@ -137,20 +137,20 @@ npm run start
 Let's test the `/cached-counter` route using `curl`.
 
 ```bash
-curl http://localhost:3042/cached-counter
+curl http://localhost:3042/internal/cached-counter
 {"counter":0}
 ```
 
 Now, let's invalidate the cache for the `/cached-counter` route.
 
 ```bash
-curl -X DELETE http://localhost:3042/invalidate-cached-counter
+curl -X DELETE http://localhost:3042/internal/invalidate-cached-counter
 ```
 
 And test the `/cached-counter` route again.
 
 ```bash
-curl http://localhost:3042/cached-counter
+curl http://localhost:3042/internal/cached-counter
 {"counter":1}
 ```
 
@@ -163,7 +163,7 @@ Let's set the `X-Cache-Tags` header in the root `platformatic.json` file.
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.8.2-alpha.1.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.9.0.json",
   "entrypoint": "main",
   "watch": true,
   "autoload": {
@@ -222,24 +222,24 @@ npm run start
 Let's test the `/cached-counter` route using `curl`.
 
 ```bash
-curl http://localhost:3042/cached-counter
+curl http://localhost:3042/internal/cached-counter
 {"counter":0}
 ```
 
 ```bash
-curl http://localhost:3042/cached-counter
+curl http://localhost:3042/internal/cached-counter
 {"counter":0}
 ```
 
 Now, let's invalidate the cache for the `/cached-counter` route by the cache tag.
 
 ```bash
-curl -X POST http://localhost:3042/invalidate-cached-counter
+curl -X POST http://localhost:3042/internal/invalidate-cached-counter
 ```
 
 And test the `/cached-counter` route again.
 
 ```bash
-curl http://localhost:3042/cached-counter
+curl http://localhost:3042/internal/cached-counter
 {"counter":1}
 ```
