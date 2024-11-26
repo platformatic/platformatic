@@ -54,7 +54,7 @@ async function getValkeyUrl (runtime) {
 
 test(
   'should properly use the Valkey cache handler in development to cache fetch calls but not pages',
-  { only: true, skip: isCIOnWindows },
+  { skip: isCIOnWindows },
   async t => {
     const configuration = 'caching-valkey'
     const valkeyPrefix = 'plt:test:caching-valkey'
