@@ -11,6 +11,7 @@ import {
   variableDeclarator
 } from '@babel/types'
 import { readFile, realpath } from 'node:fs/promises'
+import { sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const originalId = '__pltOriginalNextConfig'
@@ -52,7 +53,7 @@ function parseSingleExpression (expr) {
 */
 function createEvaluatorWrapperFunction (original) {
   const cacheHandler = config?.cache
-    ? fileURLToPath(new URL(`./caching/${config.cache.adapter ?? 'foo'}.js`, import.meta.url))
+    ? fileURLToPath(new URL(`./caching/${config.cache.adapter ?? 'foo'}.js`, import.meta.url)).replaceAll(sep, '/')
     : undefined
 
   return functionDeclaration(
