@@ -1,0 +1,14 @@
+{
+  "name": "test",
+  "private": true,
+  "workspaces": [
+    "services/*"
+  ],
+  "scripts": {
+    "start": "platformatic start"
+  },
+  "dependencies": {
+    "@platformatic/runtime": "^2.14.0",
+    "platformatic": "^2.14.0"
+  }
+}

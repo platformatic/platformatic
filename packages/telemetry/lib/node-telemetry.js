@@ -17,6 +17,8 @@ const {
   SimpleSpanProcessor,
   InMemorySpanExporter,
 } = require('@opentelemetry/sdk-trace-base')
+
+const { PgInstrumentation } = require('@opentelemetry/instrumentation-pg')
 const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http')
 const {
   UndiciInstrumentation,
@@ -77,6 +79,7 @@ const setupNodeHTTPTelemetry = (opts) => {
     instrumentations: [
       new UndiciInstrumentation(),
       new HttpInstrumentation(),
+      new PgInstrumentation(),
     ],
     resource: new Resource({
       [ATTR_SERVICE_NAME]: serviceName

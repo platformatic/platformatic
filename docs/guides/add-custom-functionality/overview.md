@@ -4,7 +4,6 @@ label: Welcome to Platformatic
 ---
 
 
-
 # Add Custom Functionality
 
 If you want to extend Platformatic DB features, it is possible to register a plugin, which will be in the form of a standard [Fastify](https://fastify.io) plugin.

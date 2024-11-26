@@ -13,7 +13,7 @@ const { createHash } = require('node:crypto')
 const validateFunctionCache = {}
 const errors = require('./errors')
 const camelCase = require('camelcase')
-const { FormData } = require('undici')
+const { FormData, errors: { UndiciError } } = require('undici')
 function generateOperationId (path, method, methodMeta, all) {
   let operationId = null
   // use methodMeta.operationId only if it's present AND it is a valid string that can be
@@ -292,7 +292,16 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       return responseBody
     } catch (err) {
       openTelemetry?.setErrorInSpanClient(span, err)
-      throw new errors.UnexpectedCallFailureError(err.toString())
+      const requestError = new errors.UnexpectedCallFailureError(err.toString())
+      if (err instanceof UndiciError) {
+        requestError.status = err.status
+        requestError.statusCode = err.statusCode
+        requestError.headers = err.headers
+        requestError.body = err.body
+        requestError.data = err.data
+        requestError.socket = err.socket
+      }
+      throw requestError
     } finally {
       openTelemetry?.endHTTPSpanClient(span, res)
     }

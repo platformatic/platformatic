@@ -5,7 +5,11 @@ const app = fastify({
 })
 
 app.get('/', async () => {
-  return { production: process.env.NODE_ENV === 'production' }
+  return {
+    production: process.env.NODE_ENV === 'production',
+    plt_dev: process.env.PLT_DEV === 'true',
+    plt_environment: process.env.PLT_ENVIRONMENT
+  }
 })
 
 app.get('/version', async () => {
@@ -15,7 +19,6 @@ app.get('/version', async () => {
 app.post('/', async request => {
   return { body: request.body }
 })
-
 app.log.trace('This is a trace')
 
 app.listen({ port: 1 }).then(() => {

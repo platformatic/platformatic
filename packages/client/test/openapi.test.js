@@ -7,7 +7,6 @@ const { tmpdir } = require('node:os')
 const { test, mock } = require('node:test')
 const { join } = require('node:path')
 const { unlink, mkdtemp, cp } = require('node:fs/promises')
-const { FastifyError } = require('fastify')
 const { buildServer } = require('../../db')
 const { buildOpenAPIClient } = require('..')
 const { safeRemove } = require('@platformatic/utils')
@@ -420,7 +419,21 @@ test('throw on error level response', async t => {
     client.getMovieById({
       id: 100
     }),
-    FastifyError
+    (err) => {
+      assert.ok(err instanceof errors.UnexpectedCallFailureError)
+
+      // Persists response properties from Undici error
+      assert.equal(err.status, 404)
+      assert.equal(err.statusCode, 404)
+      assert.equal(typeof err.headers, 'object')
+      assert.equal(err.headers['content-type'], 'application/json; charset=utf-8')
+      assert.deepEqual(err.body, {
+        error: 'Not Found',
+        message: 'Route GET:/movies-api/movies/100 not found',
+        statusCode: 404
+      })
+      return true
+    }
   )
 })
 

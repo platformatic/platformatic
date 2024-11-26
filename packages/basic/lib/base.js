@@ -34,6 +34,8 @@ export class BaseStackable {
     this.serverConfig = deepmerge(options.context.serverConfig ?? {}, configManager.current.server ?? {})
     this.openapiSchema = null
     this.graphqlSchema = null
+    this.connectionString = null
+    this.basePath = null
     this.isEntrypoint = options.context.isEntrypoint
     this.isProduction = options.context.isProduction
     this.metricsRegistry = null
@@ -66,6 +68,7 @@ export class BaseStackable {
       root: pathToFileURL(this.root).toString(),
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
+      setConnectionString: this.setConnectionString.bind(this),
       setBasePath: this.setBasePath.bind(this),
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       invalidateHttpCache: this.#invalidateHttpCache.bind(this)
@@ -127,6 +130,10 @@ export class BaseStackable {
 
   setGraphqlSchema (schema) {
     this.graphqlSchema = schema
+  }
+
+  setConnectionString (connectionString) {
+    this.connectionString = connectionString
   }
 
   setBasePath (basePath) {
@@ -213,6 +220,22 @@ export class BaseStackable {
 
     this.childManager.on('config', config => {
       this.subprocessConfig = config
+    })
+
+    this.childManager.on('connectionString', connectionString => {
+      this.connectionString = connectionString
+    })
+
+    this.childManager.on('openapiSchema', schema => {
+      this.openapiSchema = schema
+    })
+
+    this.childManager.on('graphqlSchema', schema => {
+      this.graphqlSchema = schema
+    })
+
+    this.childManager.on('basePath', path => {
+      this.basePath = path
     })
 
     try {

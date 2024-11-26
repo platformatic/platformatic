@@ -22,6 +22,10 @@ test('can start with a custom environment', async (t) => {
   const res = await request(entryUrl + '/env')
 
   assert.strictEqual(res.statusCode, 200)
-  assert.deepStrictEqual(await res.body.json(), { A_CUSTOM_ENV_VAR: 'foobar' })
+  assert.deepStrictEqual(await res.body.json(), {
+    A_CUSTOM_ENV_VAR: 'foobar',
+    PLT_ENVIRONMENT: 'development',
+    PLT_DEV: 'true'
+  })
   process.exitCode = 0
 })
