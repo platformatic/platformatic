@@ -685,19 +685,8 @@ jobs:
       matrix:
         node-version: [20, 22]
         os: [ubuntu-latest, windows-latest]
-    services:
-      # Label used to access the service container
-      valkey:
-        # Docker Hub image
-        image: valkey:8
-        # Set health checks to wait until Valkey has started
-        options: >-
-          --health-cmd "valkey-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     env:
-      VALKEY_HOST: valkey
+      VALKEY_HOST: localhost
       VALKEY_PORT: 6379
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -713,6 +702,8 @@ jobs:
           timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
+      - name: Start Valkey for testing
+        run: docker compose up -d valkey
       - name: Run next package test suite
         run: cd packages/next && pnpm test
 
