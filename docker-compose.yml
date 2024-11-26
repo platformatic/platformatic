@@ -30,4 +30,5 @@ services:
   valkey:
     ports:
       - '6379:6379'
-    image: 'valkey/valkey:8'
+    # Important: do not remove the very specific version here. It is used by the test suite in Windows runner.
+    image: 'valkey/valkey:8.0.1-alpine3.20'

@@ -704,8 +704,6 @@ jobs:
           command: pnpm install --frozen-lockfile
       - name: Start Valkey for testing
         run: docker compose up -d valkey
-        env:
-          DOCKER_DEFAULT_PLATFORM: linux/amd64
       - name: Run next package test suite
         run: cd packages/next && pnpm test
 
