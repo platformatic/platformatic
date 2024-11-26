@@ -7,6 +7,7 @@ import { test } from 'node:test'
 import {
   commonFixturesRoot,
   getLogs,
+  isCIOnWindows,
   prepareRuntime,
   setFixturesDir,
   startRuntime
@@ -46,159 +47,71 @@ async function cleanupCache (valkey) {
   return valkey.del(...keys)
 }
 
-test('should properly use the Valkey cache handler in development to cache fetch calls but not pages', async t => {
-  const configuration = 'caching-valkey'
-  const valkeyPrefix = 'plt:test:caching-valkey'
-  const { url } = await prepareRuntimeWithBackend(t, configuration)
+test(
+  'should properly use the Valkey cache handler in development to cache fetch calls but not pages',
+  { skip: isCIOnWindows },
+  async t => {
+    const configuration = 'caching-valkey'
+    const valkeyPrefix = 'plt:test:caching-valkey'
+    const { url } = await prepareRuntimeWithBackend(t, configuration)
 
-  const valkey = new Redis('valkey://localhost:6379')
-  await cleanupCache(valkey, valkeyPrefix)
-  const monitor = await valkey.monitor()
-  const valkeyCalls = []
+    const valkey = new Redis('valkey://localhost:6379')
+    await cleanupCache(valkey, valkeyPrefix)
+    const monitor = await valkey.monitor()
+    const valkeyCalls = []
 
-  monitor.on('monitor', (_, args) => {
-    valkeyCalls.push(args)
-  })
+    monitor.on('monitor', (_, args) => {
+      valkeyCalls.push(args)
+    })
 
-  t.after(async () => {
-    await monitor.disconnect()
-    await valkey.disconnect()
-  })
+    t.after(async () => {
+      await monitor.disconnect()
+      await valkey.disconnect()
+    })
 
-  let version
-  let time
-  {
-    const response = await fetch(url)
-    const data = await response.text()
+    let version
+    let time
+    {
+      const response = await fetch(url)
+      const data = await response.text()
 
-    const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
-    ok(mo)
+      const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
+      ok(mo)
 
-    version = mo[1]
-    time = mo[2]
-  }
+      version = mo[1]
+      time = mo[2]
+    }
 
-  {
-    const response = await fetch(url)
-    const data = await response.text()
+    {
+      const response = await fetch(url)
+      const data = await response.text()
 
-    const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
-    notDeepStrictEqual(mo[1], version)
-    deepStrictEqual(mo[2], time)
-  }
+      const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
+      notDeepStrictEqual(mo[1], version)
+      deepStrictEqual(mo[2], time)
+    }
 
-  const key = keyFor(
-    valkeyPrefix,
-    'development',
-    'values',
-    // This might change in different versions of Next.js, keep in sync
-    '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
-  )
-  deepStrictEqual(valkeyCalls, [
-    ['info'],
-    ['get', key],
-    ['set', key, valkeyCalls[2][2], 'EX', '120'],
-    ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
-    ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '120'],
-    ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'third'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '120'],
-    ['info'],
-    ['get', key]
-  ])
+    const key = keyFor(
+      valkeyPrefix,
+      'development',
+      'values',
+      // This might change in different versions of Next.js, keep in sync
+      '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
+    )
+    deepStrictEqual(valkeyCalls, [
+      ['info'],
+      ['get', key],
+      ['set', key, valkeyCalls[2][2], 'EX', '120'],
+      ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
+      ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
+      ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
+      ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '120'],
+      ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'third'), key],
+      ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '120'],
+      ['info'],
+      ['get', key]
+    ])
 
-  const {
-    value: {
-      kind,
-      data: { body, status, url: cachedUrl },
-      revalidate: revalidateNext
-    },
-    tags,
-    revalidate: revalidatePlt,
-    maxTTL
-  } = unpack(Buffer.from(valkeyCalls[2][2], 'base64url'))
-
-  deepStrictEqual(kind, 'FETCH')
-  deepStrictEqual(body, Buffer.from(JSON.stringify({ time: parseInt(time) })).toString('base64'))
-  deepStrictEqual(status, 200)
-  deepStrictEqual(cachedUrl, 'http://backend.plt.local/time')
-  deepStrictEqual(tags, ['first', 'second', 'third'])
-  deepStrictEqual(revalidateNext, 120)
-  deepStrictEqual(revalidatePlt, 120)
-  deepStrictEqual(maxTTL, 86400 * 7)
-})
-
-test('should properly use the Valkey cache handler in production to cache fetch calls and pages', async t => {
-  const configuration = 'caching-valkey'
-  const valkeyPrefix = 'plt:test:caching-valkey'
-  const { root, url } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
-
-  const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
-  const valkey = new Redis('valkey://localhost:6379')
-  await cleanupCache(valkey, valkeyPrefix)
-  const monitor = await valkey.monitor()
-  const valkeyCalls = []
-
-  monitor.on('monitor', (_, args) => {
-    valkeyCalls.push(args)
-  })
-
-  t.after(async () => {
-    await monitor.disconnect()
-    await valkey.disconnect()
-  })
-
-  let version
-  let time
-  {
-    const response = await fetch(url)
-    const data = await response.text()
-
-    const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
-    ok(mo)
-
-    version = mo[1]
-    time = mo[2]
-  }
-
-  {
-    const response = await fetch(url)
-    const data = await response.text()
-
-    const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
-    deepStrictEqual(mo[1], version)
-    deepStrictEqual(mo[2], time)
-  }
-
-  const pageKey = keyFor(valkeyPrefix, prefix, 'values', '/index')
-
-  const fetchKey = keyFor(
-    valkeyPrefix,
-    prefix,
-    'values',
-    // This might change in different versions of Next.js, keep in sync
-    '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
-  )
-
-  deepStrictEqual(valkeyCalls, [
-    ['info'],
-    ['get', pageKey],
-    ['get', fetchKey],
-    ['set', fetchKey, valkeyCalls[3][2], 'EX', '120'],
-    ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), fetchKey],
-    ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
-    ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), fetchKey],
-    ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '120'],
-    ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), fetchKey],
-    ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
-    ['get', fetchKey],
-    ['set', pageKey, valkeyCalls[11][2], 'EX', '120'],
-    ['info'],
-    ['get', pageKey]
-  ])
-
-  {
     const {
       value: {
         kind,
@@ -208,7 +121,7 @@ test('should properly use the Valkey cache handler in production to cache fetch 
       tags,
       revalidate: revalidatePlt,
       maxTTL
-    } = unpack(Buffer.from(valkeyCalls[3][2], 'base64url'))
+    } = unpack(Buffer.from(valkeyCalls[2][2], 'base64url'))
 
     deepStrictEqual(kind, 'FETCH')
     deepStrictEqual(body, Buffer.from(JSON.stringify({ time: parseInt(time) })).toString('base64'))
@@ -219,171 +132,182 @@ test('should properly use the Valkey cache handler in production to cache fetch 
     deepStrictEqual(revalidatePlt, 120)
     deepStrictEqual(maxTTL, 86400 * 7)
   }
+)
 
-  {
-    const {
-      value: { kind, html, headers, status },
-      revalidate,
-      maxTTL
-    } = unpack(Buffer.from(valkeyCalls[11][2], 'base64url'))
+test(
+  'should properly use the Valkey cache handler in production to cache fetch calls and pages',
+  { skip: isCIOnWindows },
+  async t => {
+    const configuration = 'caching-valkey'
+    const valkeyPrefix = 'plt:test:caching-valkey'
+    const { root, url } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
 
-    deepStrictEqual(kind, 'PAGE')
-    ok(html.includes(`<div>Hello from v<!-- -->${version}<!-- --> t<!-- -->${time}</div>`))
-    deepStrictEqual(headers['x-next-cache-tags'], 'first,second,third,_N_T_/layout,_N_T_/page,_N_T_/')
-    deepStrictEqual(status, 200)
-    deepStrictEqual(revalidate, 120)
-    deepStrictEqual(maxTTL, 86400 * 7)
+    const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
+    const valkey = new Redis('valkey://localhost:6379')
+    await cleanupCache(valkey, valkeyPrefix)
+    const monitor = await valkey.monitor()
+    const valkeyCalls = []
+
+    monitor.on('monitor', (_, args) => {
+      valkeyCalls.push(args)
+    })
+
+    t.after(async () => {
+      await monitor.disconnect()
+      await valkey.disconnect()
+    })
+
+    let version
+    let time
+    {
+      const response = await fetch(url)
+      const data = await response.text()
+
+      const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
+      ok(mo)
+
+      version = mo[1]
+      time = mo[2]
+    }
+
+    {
+      const response = await fetch(url)
+      const data = await response.text()
+
+      const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
+      deepStrictEqual(mo[1], version)
+      deepStrictEqual(mo[2], time)
+    }
+
+    const pageKey = keyFor(valkeyPrefix, prefix, 'values', '/index')
+
+    const fetchKey = keyFor(
+      valkeyPrefix,
+      prefix,
+      'values',
+      // This might change in different versions of Next.js, keep in sync
+      '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
+    )
+
+    deepStrictEqual(valkeyCalls, [
+      ['info'],
+      ['get', pageKey],
+      ['get', fetchKey],
+      ['set', fetchKey, valkeyCalls[3][2], 'EX', '120'],
+      ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), fetchKey],
+      ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
+      ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), fetchKey],
+      ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '120'],
+      ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), fetchKey],
+      ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
+      ['get', fetchKey],
+      ['set', pageKey, valkeyCalls[11][2], 'EX', '120'],
+      ['info'],
+      ['get', pageKey]
+    ])
+
+    {
+      const {
+        value: {
+          kind,
+          data: { body, status, url: cachedUrl },
+          revalidate: revalidateNext
+        },
+        tags,
+        revalidate: revalidatePlt,
+        maxTTL
+      } = unpack(Buffer.from(valkeyCalls[3][2], 'base64url'))
+
+      deepStrictEqual(kind, 'FETCH')
+      deepStrictEqual(body, Buffer.from(JSON.stringify({ time: parseInt(time) })).toString('base64'))
+      deepStrictEqual(status, 200)
+      deepStrictEqual(cachedUrl, 'http://backend.plt.local/time')
+      deepStrictEqual(tags, ['first', 'second', 'third'])
+      deepStrictEqual(revalidateNext, 120)
+      deepStrictEqual(revalidatePlt, 120)
+      deepStrictEqual(maxTTL, 86400 * 7)
+    }
+
+    {
+      const {
+        value: { kind, html, headers, status },
+        revalidate,
+        maxTTL
+      } = unpack(Buffer.from(valkeyCalls[11][2], 'base64url'))
+
+      deepStrictEqual(kind, 'PAGE')
+      ok(html.includes(`<div>Hello from v<!-- -->${version}<!-- --> t<!-- -->${time}</div>`))
+      deepStrictEqual(headers['x-next-cache-tags'], 'first,second,third,_N_T_/layout,_N_T_/page,_N_T_/')
+      deepStrictEqual(status, 200)
+      deepStrictEqual(revalidate, 120)
+      deepStrictEqual(maxTTL, 86400 * 7)
+    }
   }
-})
+)
 
-test('should properly use the Valkey cache handler in development to cache fetch calls but not route handler', async t => {
-  const configuration = 'caching-valkey'
-  const valkeyPrefix = 'plt:test:caching-valkey'
-  const { url } = await prepareRuntimeWithBackend(t, configuration, false)
+test(
+  'should properly use the Valkey cache handler in development to cache fetch calls but not route handler',
+  { skip: isCIOnWindows },
+  async t => {
+    const configuration = 'caching-valkey'
+    const valkeyPrefix = 'plt:test:caching-valkey'
+    const { url } = await prepareRuntimeWithBackend(t, configuration, false)
 
-  const valkey = new Redis('valkey://localhost:6379')
-  await cleanupCache(valkey, valkeyPrefix)
-  const monitor = await valkey.monitor()
-  const valkeyCalls = []
+    const valkey = new Redis('valkey://localhost:6379')
+    await cleanupCache(valkey, valkeyPrefix)
+    const monitor = await valkey.monitor()
+    const valkeyCalls = []
 
-  monitor.on('monitor', (_, args) => {
-    valkeyCalls.push(args)
-  })
+    monitor.on('monitor', (_, args) => {
+      valkeyCalls.push(args)
+    })
 
-  t.after(async () => {
-    await monitor.disconnect()
-    await valkey.disconnect()
-  })
+    t.after(async () => {
+      await monitor.disconnect()
+      await valkey.disconnect()
+    })
 
-  let version
-  let time
-  {
-    const response = await fetch(url + '/route')
-    const data = await response.json()
+    let version
+    let time
+    {
+      const response = await fetch(url + '/route')
+      const data = await response.json()
 
-    version = data.version
-    time = data.time
-    ok(typeof version === 'number')
-    ok(typeof time === 'number')
-  }
+      version = data.version
+      time = data.time
+      ok(typeof version === 'number')
+      ok(typeof time === 'number')
+    }
 
-  {
-    const response = await fetch(url + '/route')
-    const data = await response.json()
+    {
+      const response = await fetch(url + '/route')
+      const data = await response.json()
 
-    notDeepStrictEqual(data.version, version)
-    deepStrictEqual(data.time, time)
-  }
+      notDeepStrictEqual(data.version, version)
+      deepStrictEqual(data.time, time)
+    }
 
-  const key = keyFor(
-    valkeyPrefix,
-    'development',
-    'values',
-    // This might change in different versions of Next.js, keep in sync
-    '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
-  )
-  deepStrictEqual(valkeyCalls, [
-    ['info'],
-    ['get', key],
-    ['set', key, valkeyCalls[2][2], 'EX', '120'],
-    ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
-    ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '120'],
-    ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'third'), key],
-    ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '120'],
-    ['info'],
-    ['get', key]
-  ])
+    const key = keyFor(
+      valkeyPrefix,
+      'development',
+      'values',
+      // This might change in different versions of Next.js, keep in sync
+      '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
+    )
+    deepStrictEqual(valkeyCalls, [
+      ['info'],
+      ['get', key],
+      ['set', key, valkeyCalls[2][2], 'EX', '120'],
+      ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
+      ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
+      ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
+      ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '120'],
+      ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'third'), key],
+      ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '120'],
+      ['info'],
+      ['get', key]
+    ])
 
-  const {
-    value: {
-      kind,
-      data: { body, status, url: cachedUrl },
-      revalidate: revalidateNext
-    },
-    tags,
-    revalidate: revalidatePlt,
-    maxTTL
-  } = unpack(Buffer.from(valkeyCalls[2][2], 'base64url'))
-
-  deepStrictEqual(kind, 'FETCH')
-  deepStrictEqual(body, Buffer.from(JSON.stringify({ time: parseInt(time) })).toString('base64'))
-  deepStrictEqual(status, 200)
-  deepStrictEqual(cachedUrl, 'http://backend.plt.local/time')
-  deepStrictEqual(tags, ['first', 'second', 'third'])
-  deepStrictEqual(revalidateNext, 120)
-  deepStrictEqual(revalidatePlt, 120)
-  deepStrictEqual(maxTTL, 86400 * 7)
-})
-
-test('should properly use the Valkey cache handler in production to cache fetch calls and route handler', async t => {
-  const configuration = 'caching-valkey'
-  const valkeyPrefix = 'plt:test:caching-valkey'
-  const { root, url } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
-
-  const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
-  const valkey = new Redis('valkey://localhost:6379')
-  await cleanupCache(valkey, valkeyPrefix)
-  const monitor = await valkey.monitor()
-  const valkeyCalls = []
-
-  monitor.on('monitor', (_, args) => {
-    valkeyCalls.push(args)
-  })
-
-  t.after(async () => {
-    await monitor.disconnect()
-    await valkey.disconnect()
-  })
-
-  let version
-  let time
-  {
-    const response = await fetch(url + '/route')
-    const data = await response.json()
-
-    version = data.version
-    time = data.time
-    ok(typeof version === 'number')
-    ok(typeof time === 'number')
-  }
-
-  {
-    const response = await fetch(url + '/route')
-    const data = await response.json()
-
-    deepStrictEqual(data.version, version)
-    deepStrictEqual(data.time, time)
-  }
-
-  const routeKey = keyFor(valkeyPrefix, prefix, 'values', '/route')
-
-  const fetchKey = keyFor(
-    valkeyPrefix,
-    prefix,
-    'values',
-    // This might change in different versions of Next.js, keep in sync
-    '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
-  )
-
-  deepStrictEqual(valkeyCalls, [
-    ['info'],
-    ['get', routeKey],
-    ['get', fetchKey],
-    ['set', fetchKey, valkeyCalls[3][2], 'EX', '120'],
-    ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), fetchKey],
-    ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
-    ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), fetchKey],
-    ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '120'],
-    ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), fetchKey],
-    ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
-    ['set', routeKey, valkeyCalls[10][2], 'EX', '120'],
-    ['info'],
-    ['get', routeKey]
-  ])
-
-  {
     const {
       value: {
         kind,
@@ -393,7 +317,7 @@ test('should properly use the Valkey cache handler in production to cache fetch 
       tags,
       revalidate: revalidatePlt,
       maxTTL
-    } = unpack(Buffer.from(valkeyCalls[3][2], 'base64url'))
+    } = unpack(Buffer.from(valkeyCalls[2][2], 'base64url'))
 
     deepStrictEqual(kind, 'FETCH')
     deepStrictEqual(body, Buffer.from(JSON.stringify({ time: parseInt(time) })).toString('base64'))
@@ -404,24 +328,117 @@ test('should properly use the Valkey cache handler in production to cache fetch 
     deepStrictEqual(revalidatePlt, 120)
     deepStrictEqual(maxTTL, 86400 * 7)
   }
+)
 
-  {
-    const {
-      value: { kind, body, headers, status },
-      revalidate,
-      maxTTL
-    } = unpack(Buffer.from(valkeyCalls[10][2], 'base64url'))
+test(
+  'should properly use the Valkey cache handler in production to cache fetch calls and route handler',
+  { skip: isCIOnWindows },
+  async t => {
+    const configuration = 'caching-valkey'
+    const valkeyPrefix = 'plt:test:caching-valkey'
+    const { root, url } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
 
-    deepStrictEqual(kind, 'ROUTE')
-    deepStrictEqual({ ...JSON.parse(body), delay: 0 }, { delay: 0, version, time })
-    deepStrictEqual(headers['x-next-cache-tags'], 'first,second,third,_N_T_/layout,_N_T_/route,_N_T_/route/route')
-    deepStrictEqual(status, 200)
-    deepStrictEqual(revalidate, 120)
-    deepStrictEqual(maxTTL, 86400 * 7)
+    const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
+    const valkey = new Redis('valkey://localhost:6379')
+    await cleanupCache(valkey, valkeyPrefix)
+    const monitor = await valkey.monitor()
+    const valkeyCalls = []
+
+    monitor.on('monitor', (_, args) => {
+      valkeyCalls.push(args)
+    })
+
+    t.after(async () => {
+      await monitor.disconnect()
+      await valkey.disconnect()
+    })
+
+    let version
+    let time
+    {
+      const response = await fetch(url + '/route')
+      const data = await response.json()
+
+      version = data.version
+      time = data.time
+      ok(typeof version === 'number')
+      ok(typeof time === 'number')
+    }
+
+    {
+      const response = await fetch(url + '/route')
+      const data = await response.json()
+
+      deepStrictEqual(data.version, version)
+      deepStrictEqual(data.time, time)
+    }
+
+    const routeKey = keyFor(valkeyPrefix, prefix, 'values', '/route')
+
+    const fetchKey = keyFor(
+      valkeyPrefix,
+      prefix,
+      'values',
+      // This might change in different versions of Next.js, keep in sync
+      '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
+    )
+
+    deepStrictEqual(valkeyCalls, [
+      ['info'],
+      ['get', routeKey],
+      ['get', fetchKey],
+      ['set', fetchKey, valkeyCalls[3][2], 'EX', '120'],
+      ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), fetchKey],
+      ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
+      ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), fetchKey],
+      ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '120'],
+      ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), fetchKey],
+      ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
+      ['set', routeKey, valkeyCalls[10][2], 'EX', '120'],
+      ['info'],
+      ['get', routeKey]
+    ])
+
+    {
+      const {
+        value: {
+          kind,
+          data: { body, status, url: cachedUrl },
+          revalidate: revalidateNext
+        },
+        tags,
+        revalidate: revalidatePlt,
+        maxTTL
+      } = unpack(Buffer.from(valkeyCalls[3][2], 'base64url'))
+
+      deepStrictEqual(kind, 'FETCH')
+      deepStrictEqual(body, Buffer.from(JSON.stringify({ time: parseInt(time) })).toString('base64'))
+      deepStrictEqual(status, 200)
+      deepStrictEqual(cachedUrl, 'http://backend.plt.local/time')
+      deepStrictEqual(tags, ['first', 'second', 'third'])
+      deepStrictEqual(revalidateNext, 120)
+      deepStrictEqual(revalidatePlt, 120)
+      deepStrictEqual(maxTTL, 86400 * 7)
+    }
+
+    {
+      const {
+        value: { kind, body, headers, status },
+        revalidate,
+        maxTTL
+      } = unpack(Buffer.from(valkeyCalls[10][2], 'base64url'))
+
+      deepStrictEqual(kind, 'ROUTE')
+      deepStrictEqual({ ...JSON.parse(body), delay: 0 }, { delay: 0, version, time })
+      deepStrictEqual(headers['x-next-cache-tags'], 'first,second,third,_N_T_/layout,_N_T_/route,_N_T_/route/route')
+      deepStrictEqual(status, 200)
+      deepStrictEqual(revalidate, 120)
+      deepStrictEqual(maxTTL, 86400 * 7)
+    }
   }
-})
+)
 
-test('should properly revalidate tags in Valkey', async t => {
+test('should properly revalidate tags in Valkey', { skip: isCIOnWindows }, async t => {
   const configuration = 'caching-valkey'
   const valkeyPrefix = 'plt:test:caching-valkey'
   const { url } = await prepareRuntimeWithBackend(t, configuration)
@@ -506,7 +523,7 @@ test('should properly revalidate tags in Valkey', async t => {
   ])
 })
 
-test('should extend TTL when our limit is smaller than the user one', async t => {
+test('should extend TTL when our limit is smaller than the user one', { skip: isCIOnWindows }, async t => {
   const configuration = 'caching-valkey'
   const valkeyPrefix = 'plt:test:caching-valkey'
   const { url } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
@@ -577,7 +594,7 @@ test('should extend TTL when our limit is smaller than the user one', async t =>
   ])
 })
 
-test('should not extend the TTL over the original intended one', async t => {
+test('should not extend the TTL over the original intended one', { skip: isCIOnWindows }, async t => {
   const configuration = 'caching-valkey'
   const valkeyPrefix = 'plt:test:caching-valkey'
   const { url } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
@@ -669,7 +686,7 @@ test('should not extend the TTL over the original intended one', async t => {
   ])
 })
 
-test('should handle read error', async t => {
+test('should handle read error', { skip: isCIOnWindows }, async t => {
   const configuration = 'caching-valkey'
   const valkeyPrefix = 'plt:test:caching-valkey'
   const { runtime, url } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
@@ -703,7 +720,7 @@ test('should handle read error', async t => {
   )
 })
 
-test('should handle deserialization error', async t => {
+test('should handle deserialization error', { skip: isCIOnWindows }, async t => {
   const configuration = 'caching-valkey'
   const valkeyPrefix = 'plt:test:caching-valkey'
   const { runtime, url } = await prepareRuntimeWithBackend(t, configuration)
@@ -740,7 +757,7 @@ test('should handle deserialization error', async t => {
   )
 })
 
-test('should handle refresh error', async t => {
+test('should handle refresh error', { skip: isCIOnWindows }, async t => {
   const configuration = 'caching-valkey'
   const valkeyPrefix = 'plt:test:caching-valkey'
   const { runtime, url } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
@@ -787,7 +804,7 @@ test('should handle refresh error', async t => {
   )
 })
 
-test('should handle write error', async t => {
+test('should handle write error', { skip: isCIOnWindows }, async t => {
   const configuration = 'caching-valkey'
   const valkeyPrefix = 'plt:test:caching-valkey'
   const { runtime, url } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
@@ -821,7 +838,7 @@ test('should handle write error', async t => {
   )
 })
 
-test('should handle refresh error', async t => {
+test('should handle refresh error', { skip: isCIOnWindows }, async t => {
   const configuration = 'caching-valkey'
   const valkeyPrefix = 'plt:test:caching-valkey'
   const { runtime, url } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
