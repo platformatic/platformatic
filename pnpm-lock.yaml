@@ -2438,8 +2438,8 @@ importers:
         specifier: ^7.6.3
         version: 7.6.3
       undici:
-        specifier: ^6.9.0
-        version: 6.21.0
+        specifier: 7.0.0-alpha.7
+        version: 7.0.0-alpha.7
     devDependencies:
       '@matteo.collina/tspl':
         specifier: ^0.1.1
