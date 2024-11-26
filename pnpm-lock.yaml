@@ -112,8 +112,8 @@ importers:
         specifier: ^4.2.0
         version: 4.2.0
       undici:
-        specifier: ^6.19.5
-        version: 6.21.0
+        specifier: 7.0.0-alpha.7
+        version: 7.0.0-alpha.7
       ws:
         specifier: ^8.18.0
         version: 8.18.0
@@ -212,8 +212,8 @@ importers:
         specifier: ^4.2.0
         version: 4.2.0
       undici:
-        specifier: ^6.9.0
-        version: 6.21.0
+        specifier: 7.0.0-alpha.7
+        version: 7.0.0-alpha.7
     devDependencies:
       '@platformatic/astro':
         specifier: workspace:*
@@ -294,8 +294,8 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1
       undici:
-        specifier: ^6.9.0
-        version: 6.21.0
+        specifier: 7.0.0-alpha.7
+        version: 7.0.0-alpha.7
     devDependencies:
       '@fastify/multipart':
         specifier: ^9.0.1
@@ -385,8 +385,8 @@ importers:
         specifier: ^13.0.0
         version: 13.0.0
       undici:
-        specifier: ^6.9.0
-        version: 6.21.0
+        specifier: 7.0.0-alpha.7
+        version: 7.0.0-alpha.7
       yaml:
         specifier: ^2.4.1
         version: 2.6.1
@@ -554,8 +554,8 @@ importers:
         specifier: ^0.3.0
         version: 0.3.0
       undici:
-        specifier: ^6.9.0
-        version: 6.21.0
+        specifier: 7.0.0-alpha.7
+        version: 7.0.0-alpha.7
     devDependencies:
       '@platformatic/client':
         specifier: workspace:*
@@ -636,8 +636,8 @@ importers:
         specifier: ^7.6.0
         version: 7.6.3
       undici:
-        specifier: ^6.9.0
-        version: 6.21.0
+        specifier: 7.0.0-alpha.7
+        version: 7.0.0-alpha.7
     devDependencies:
       '@iarna/toml':
         specifier: ^2.2.5
@@ -700,8 +700,8 @@ importers:
         specifier: ^6.8.1
         version: 6.8.2
       undici:
-        specifier: ^6.9.0
-        version: 6.21.0
+        specifier: 7.0.0-alpha.7
+        version: 7.0.0-alpha.7
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -800,8 +800,8 @@ importers:
         specifier: ^7.1.0
         version: 7.1.0
       undici:
-        specifier: ^6.9.0
-        version: 6.21.0
+        specifier: 7.0.0-alpha.7
+        version: 7.0.0-alpha.7
       which:
         specifier: ^3.0.1
         version: 3.0.1
@@ -1042,8 +1042,8 @@ importers:
         specifier: ^5.5.4
         version: 5.7.2
       undici:
-        specifier: ^6.9.0
-        version: 6.21.0
+        specifier: 7.0.0-alpha.7
+        version: 7.0.0-alpha.7
       vscode-json-languageservice:
         specifier: ^5.3.9
         version: 5.4.1
@@ -1072,8 +1072,8 @@ importers:
         specifier: ~3.1.0
         version: 3.1.0
       undici:
-        specifier: ^6.9.0
-        version: 6.21.0
+        specifier: 7.0.0-alpha.7
+        version: 7.0.0-alpha.7
     devDependencies:
       '@fastify/cookie':
         specifier: ^11.0.0
@@ -1194,8 +1194,8 @@ importers:
         specifier: ^0.23.2
         version: 0.23.2
       undici:
-        specifier: ^6.9.0
-        version: 6.21.0
+        specifier: 7.0.0-alpha.7
+        version: 7.0.0-alpha.7
     devDependencies:
       '@platformatic/utils':
         specifier: workspace:*
@@ -1315,8 +1315,8 @@ importers:
         specifier: ^9.0.0
         version: 9.5.0
       undici:
-        specifier: ^6.9.0
-        version: 6.21.0
+        specifier: 7.0.0-alpha.7
+        version: 7.0.0-alpha.7
     devDependencies:
       '@types/inquirer':
         specifier: ^9.0.7
@@ -1968,8 +1968,8 @@ importers:
         specifier: ^0.3.0
         version: 0.3.0
       undici:
-        specifier: ^6.9.0
-        version: 6.21.0
+        specifier: 7.0.0-alpha.7
+        version: 7.0.0-alpha.7
     devDependencies:
       '@fastify/aws-lambda':
         specifier: ^5.0.0
@@ -2588,8 +2588,8 @@ importers:
         specifier: ^5.5.4
         version: 5.7.2
       undici:
-        specifier: ^6.19.8
-        version: 6.21.0
+        specifier: 7.0.0-alpha.7
+        version: 7.0.0-alpha.7
 
 packages:
 
