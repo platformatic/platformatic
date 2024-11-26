@@ -7,8 +7,8 @@
     "level": "error"
   },
   "cache": {
-    "adapter": "redis",
-    "url": "valkey://localhost:6379",
+    "adapter": "valkey",
+    "url": "valkey://{VALKEY_HOST}:{VALKEY_PORT}",
     "prefix": "plt:test:caching-valkey"
   }
 }

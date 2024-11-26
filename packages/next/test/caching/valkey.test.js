@@ -36,7 +36,7 @@ async function prepareRuntimeWithBackend (
   return startRuntime(t, root, config, pauseAfterCreation, servicesToBuild)
 }
 
-async function cleanupCache (valkey, prefix) {
+async function cleanupCache (valkey) {
   const keys = await valkey.keys(keyFor('plt:test:caching-valkey', '*'))
 
   if (keys.length === 0) {
@@ -46,7 +46,7 @@ async function cleanupCache (valkey, prefix) {
   return valkey.del(...keys)
 }
 
-test('should properly use the Redis cache handler in development to cache fetch calls but not pages', async t => {
+test('should properly use the Valkey cache handler in development to cache fetch calls but not pages', async t => {
   const configuration = 'caching-valkey'
   const valkeyPrefix = 'plt:test:caching-valkey'
   const { url } = await prepareRuntimeWithBackend(t, configuration)
@@ -129,7 +129,7 @@ test('should properly use the Redis cache handler in development to cache fetch 
   deepStrictEqual(maxTTL, 86400 * 7)
 })
 
-test('should properly use the Redis cache handler in production to cache fetch calls and pages', async t => {
+test('should properly use the Valkey cache handler in production to cache fetch calls and pages', async t => {
   const configuration = 'caching-valkey'
   const valkeyPrefix = 'plt:test:caching-valkey'
   const { root, url } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
@@ -236,7 +236,7 @@ test('should properly use the Redis cache handler in production to cache fetch c
   }
 })
 
-test('should properly use the Redis cache handler in development to cache fetch calls but not route handler', async t => {
+test('should properly use the Valkey cache handler in development to cache fetch calls but not route handler', async t => {
   const configuration = 'caching-valkey'
   const valkeyPrefix = 'plt:test:caching-valkey'
   const { url } = await prepareRuntimeWithBackend(t, configuration, false)
@@ -317,7 +317,7 @@ test('should properly use the Redis cache handler in development to cache fetch 
   deepStrictEqual(maxTTL, 86400 * 7)
 })
 
-test('should properly use the Redis cache handler in production to cache fetch calls and route handler', async t => {
+test('should properly use the Valkey cache handler in production to cache fetch calls and route handler', async t => {
   const configuration = 'caching-valkey'
   const valkeyPrefix = 'plt:test:caching-valkey'
   const { root, url } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])

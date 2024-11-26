@@ -40,14 +40,14 @@ export class CacheHandler {
     })
   }
 
-  async get (key) {
-    this.#logger.trace({ key }, 'get')
+  async get (cacheKey) {
+    this.#logger.trace({ key: cacheKey }, 'get')
 
-    const valueRedisKey = this.#keyFor(key, sections.values)
+    const key = this.#keyFor(cacheKey, sections.values)
 
     let rawValue
     try {
-      rawValue = await this.#store.get(valueRedisKey)
+      rawValue = await this.#store.get(key)
 
       if (!rawValue) {
         return
@@ -66,14 +66,14 @@ export class CacheHandler {
       // Avoid useless reads the next time
       // Note that since the value was unserializable, we don't know its tags and thus
       // we cannot remove it from the tags sets. TTL will take care of them.
-      await this.#store.del(valueRedisKey)
+      await this.#store.del(key)
 
       throw new Error('Cannot deserialize cache value from Valkey', { cause: e })
     }
 
     if (this.#maxTTL < value.revalidate) {
       try {
-        await this.#refreshKey(valueRedisKey, value)
+        await this.#refreshKey(key, value)
       } catch (e) {
         this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot refresh cache key expiration in Valkey')
 
@@ -84,25 +84,25 @@ export class CacheHandler {
     return value
   }
 
-  async set (key, value, { tags, revalidate }) {
-    this.#logger.trace({ key, value, tags, revalidate }, 'set')
+  async set (cacheKey, value, { tags, revalidate }) {
+    this.#logger.trace({ key: cacheKey, value, tags, revalidate }, 'set')
 
     try {
       // Compute the parameters to save
-      const valueRedisKey = this.#keyFor(key, sections.values)
+      const key = this.#keyFor(cacheKey, sections.values)
       const data = this.#serialize({ value, tags, lastModified: Date.now(), revalidate, maxTTL: this.#maxTTL })
       const expire = Math.min(revalidate, this.#maxTTL)
 
       // Enqueue all the operations to perform in Valkey
       const promises = []
-      promises.push(this.#store.set(valueRedisKey, data, 'EX', expire))
+      promises.push(this.#store.set(key, data, 'EX', expire))
 
       // As Next.js limits tags to 64, we don't need to manage batches here
       if (Array.isArray(tags)) {
         for (const tag of tags) {
-          const tagsSetRedisKey = this.#keyFor(tag, sections.tags)
-          promises.push(this.#store.sadd(tagsSetRedisKey, valueRedisKey))
-          promises.push(this.#store.expire(tagsSetRedisKey, expire))
+          const tagsKey = this.#keyFor(tag, sections.tags)
+          promises.push(this.#store.sadd(tagsKey, key))
+          promises.push(this.#store.expire(tagsKey, expire))
         }
       }
 
@@ -125,10 +125,10 @@ export class CacheHandler {
       let promises = []
 
       for (const tag of tags) {
-        const tagsSetRedisKey = this.#keyFor(tag, sections.tags)
+        const tagsKey = this.#keyFor(tag, sections.tags)
 
         // For each key in the tag set, expire the key
-        for await (const keys of this.#store.sscanStream(tagsSetRedisKey)) {
+        for await (const keys of this.#store.sscanStream(tagsKey)) {
           for (const key of keys) {
             promises.push(this.#store.del(key))
 
@@ -141,7 +141,7 @@ export class CacheHandler {
         }
 
         // Delete the set, this will also take care of executing pending operation for a non full batch
-        promises.push(this.#store.del(tagsSetRedisKey))
+        promises.push(this.#store.del(tagsKey))
         await Promise.all(promises)
         promises = []
       }
@@ -161,8 +161,8 @@ export class CacheHandler {
 
       if (Array.isArray(value.tags)) {
         for (const tag of value.tags) {
-          const tagsSetRedisKey = this.#keyFor(tag, sections.tags)
-          promises.push(this.#store.expire(tagsSetRedisKey, expire, 'gt'))
+          const tagsKey = this.#keyFor(tag, sections.tags)
+          promises.push(this.#store.expire(tagsKey, expire, 'gt'))
         }
       }
 

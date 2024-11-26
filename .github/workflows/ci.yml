@@ -312,8 +312,8 @@ jobs:
       - name: Start docker containers for testing
         run: docker compose up -d ${{ matrix.db }}
         if: ${{ matrix.db != 'sqlite' }}
-      - name: Start redis containers for testing
-        run: docker compose up -d redis
+      - name: Start Valkey containers for testing
+        run: docker compose up -d valkey
       - name: pnpm install
         uses: nick-fields/retry@v3.0.0
         with:
@@ -685,6 +685,20 @@ jobs:
       matrix:
         node-version: [20, 22]
         os: [ubuntu-latest, windows-latest]
+    services:
+      # Label used to access the service container
+      valkey:
+        # Docker Hub image
+        image: valkey:8
+        # Set health checks to wait until Valkey has started
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      VALKEY_HOST: valkey
+      VALKEY_PORT: 6379
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.0.0
@@ -699,8 +713,6 @@ jobs:
           timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
-      - name: Start Redis for testing
-        run: docker compose up -d redis
       - name: Run next package test suite
         run: cd packages/next && pnpm test
 
