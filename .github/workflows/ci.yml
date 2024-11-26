@@ -689,6 +689,11 @@ jobs:
       VALKEY_HOST: localhost
       VALKEY_PORT: 6379
     steps:
+      - name: Start Valkey container for testing
+        uses: addnab/docker-run-action@v3
+        with:
+          image: valkey:8
+          options: -p 6379:6379
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.0.0
       - uses: actions/setup-node@v4
@@ -702,8 +707,6 @@ jobs:
           timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
-      - name: Start Valkey for testing
-        run: docker compose up -d valkey
       - name: Run next package test suite
         run: cd packages/next && pnpm test
 
