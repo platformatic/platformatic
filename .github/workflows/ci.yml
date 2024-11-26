@@ -692,7 +692,7 @@ jobs:
       - name: Start Valkey container for testing
         uses: addnab/docker-run-action@v3
         with:
-          image: valkey:8
+          image: valkey/valkey:8
           options: -p 6379:6379
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.0.0
