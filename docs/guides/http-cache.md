@@ -121,7 +121,7 @@ module.exports = async function (fastify, opts) {
   fastify.delete('/invalidate-cached-counter', async () => {
     await globalThis.platformatic.invalidateHttpCache({
       routes: [
-        { method: 'GET', url: 'http://service-1.plt.local/cached-counter' }
+        { method: 'GET', url: 'http://internal.plt.local/cached-counter' }
       ]
     })
   })
@@ -206,7 +206,7 @@ module.exports = async function (fastify, opts) {
 
   fastify.post('/invalidate-cached-counter', async () => {
     await globalThis.platformatic.invalidateHttpCache({
-      origin: 'http://service-1.plt.local',
+      origin: 'http://internal.plt.local',
       tags: ['cached-counter-tag']
     })
   })

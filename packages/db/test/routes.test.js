@@ -51,7 +51,7 @@ test('should respond 200 on root endpoint', async (t) => {
     }))
     const html = await res.body.text()
     assert.equal(res.statusCode, 200)
-    assert.equal(res.headers['content-type'], 'text/html; charset=UTF-8')
+    assert.equal(res.headers['content-type'], 'text/html; charset=utf-8')
     // has links to OpenAPI/GraphQL docs
     assert.ok(html.includes('<a id="openapi-link" target="_blank" class="button-link">OpenAPI Documentation</a>'))
     assert.ok(html.includes('<a id="graphql-link" target="_blank" class="button-link">GraphiQL</a>'))
