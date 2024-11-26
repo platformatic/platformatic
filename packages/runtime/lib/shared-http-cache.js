@@ -22,8 +22,7 @@ function createSharedStore (projectDir, httpCacheConfig = {}) {
         payload += chunk
       }
 
-      const sanitizedResponse = this.#sanitizeResponse(response)
-      return { response: sanitizedResponse, payload }
+      return { response, payload }
     }
 
     setValue (req, opts, data) {
@@ -31,13 +30,6 @@ function createSharedStore (projectDir, httpCacheConfig = {}) {
       writeStream.write(data)
       writeStream.end()
       return null
-    }
-
-    #sanitizeResponse (response) {
-      return {
-        ...response,
-        rawHeaders: response.rawHeaders.map(header => header.toString())
-      }
     }
   }
 

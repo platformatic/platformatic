@@ -12,7 +12,9 @@ class CustomCacheStore {
 
     return {
       statusCode: 200,
-      rawHeaders: ['content-type', 'application/json'],
+      headers: {
+        'content-type': 'application/json'
+      },
       body: 'Custom cache store response',
       cacheTags: [],
       cachedAt: Date.now(),

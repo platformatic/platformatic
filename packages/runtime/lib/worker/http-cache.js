@@ -37,7 +37,6 @@ class RemoteCacheStore {
     let payload = ''
 
     request = this.#sanitizeRequest(request)
-    response = this.#sanitizeResponse(response)
 
     return new Writable({
       write (chunk, encoding, callback) {
@@ -67,13 +66,6 @@ class RemoteCacheStore {
       method: request.method,
       path: request.path,
       headers: request.headers
-    }
-  }
-
-  #sanitizeResponse (response) {
-    return {
-      ...response,
-      rawHeaders: response.rawHeaders.map(header => header.toString())
     }
   }
 }
