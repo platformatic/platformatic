@@ -1743,8 +1743,8 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0
       undici:
-        specifier: 7.0.0-alpha.6
-        version: 7.0.0-alpha.6
+        specifier: 7.0.0-alpha.7
+        version: 7.0.0-alpha.7
       undici-thread-interceptor:
         specifier: ^0.9.0
         version: 0.9.1
@@ -8772,8 +8772,8 @@ packages:
     resolution: {integrity: sha512-BUgJXc752Kou3oOIuU1i+yZZypyZRqNPW0vqoMPl8VaoalSfeR0D8/t4iAS3yirs79SSMTxTag+ZC86uswv+Cw==}
     engines: {node: '>=18.17'}
 
-  undici@7.0.0-alpha.6:
-    resolution: {integrity: sha512-NNAU7KiklOoq5AvlHskrreJzoG8RUMK6lRwNGzGSVAQ1r7sbmAXoFrQuu/UfQUyscIz+BzLhKazfAB2cgwCjVw==}
+  undici@7.0.0-alpha.7:
+    resolution: {integrity: sha512-hpdWJGzjwfEHI1vEZk2yk1yvlrk+nzN/EebhV7I2uZPtz1PPJ1kEVSN1eZd/FQNw1SNPrfMVa8hAtaYhkHxkfw==}
     engines: {node: '>=18.17'}
 
   unicorn-magic@0.1.0:
@@ -16662,7 +16662,7 @@ snapshots:
 
   undici@6.21.0: {}
 
-  undici@7.0.0-alpha.6: {}
+  undici@7.0.0-alpha.7: {}
 
   unicorn-magic@0.1.0: {}
 
