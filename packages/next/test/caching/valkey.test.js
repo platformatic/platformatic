@@ -78,6 +78,24 @@ async function getValkeyUrl (root) {
   return (await getCacheSettings(root)).url
 }
 
+function verifyValkeySequence (actual, expected) {
+  actual = actual.filter(c => c[0] !== 'info')
+
+  // Get stored values
+  const storedValues = actual.filter(c => c[0] === 'set').map(c => c[2])
+  let current = 0
+
+  // Replace in the expected set
+  for (const command of expected) {
+    if (command[0] === 'set') {
+      command[2] = storedValues[current++]
+    }
+  }
+  deepStrictEqual(actual, expected)
+
+  return storedValues
+}
+
 test(
   'should properly use the Valkey cache handler in development to cache fetch calls but not pages',
   { skip: isCIOnWindows },
@@ -129,17 +147,16 @@ test(
       // This might change in different versions of Next.js, keep in sync
       '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
     )
-    deepStrictEqual(valkeyCalls, [
-      ['info'],
+
+    const storedValues = verifyValkeySequence(valkeyCalls, [
       ['get', key],
-      ['set', key, valkeyCalls[2][2], 'EX', '120'],
+      ['set', key, null, 'EX', '120'],
       ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
       ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
       ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
       ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '120'],
       ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'third'), key],
       ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '120'],
-      ['info'],
       ['get', key]
     ])
 
@@ -152,7 +169,7 @@ test(
       tags,
       revalidate: revalidatePlt,
       maxTTL
-    } = unpack(Buffer.from(valkeyCalls[2][2], 'base64url'))
+    } = unpack(Buffer.from(storedValues[0], 'base64url'))
 
     deepStrictEqual(kind, 'FETCH')
     deepStrictEqual(body, Buffer.from(JSON.stringify({ time: parseInt(time) })).toString('base64'))
@@ -220,11 +237,10 @@ test(
       '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
     )
 
-    deepStrictEqual(valkeyCalls, [
-      ['info'],
+    const storedValues = verifyValkeySequence(valkeyCalls, [
       ['get', pageKey],
       ['get', fetchKey],
-      ['set', fetchKey, valkeyCalls[3][2], 'EX', '120'],
+      ['set', fetchKey, null, 'EX', '120'],
       ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), fetchKey],
       ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
       ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), fetchKey],
@@ -232,8 +248,7 @@ test(
       ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), fetchKey],
       ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
       ['get', fetchKey],
-      ['set', pageKey, valkeyCalls[11][2], 'EX', '120'],
-      ['info'],
+      ['set', pageKey, null, 'EX', '120'],
       ['get', pageKey]
     ])
 
@@ -247,7 +262,7 @@ test(
         tags,
         revalidate: revalidatePlt,
         maxTTL
-      } = unpack(Buffer.from(valkeyCalls[3][2], 'base64url'))
+      } = unpack(Buffer.from(storedValues[0], 'base64url'))
 
       deepStrictEqual(kind, 'FETCH')
       deepStrictEqual(body, Buffer.from(JSON.stringify({ time: parseInt(time) })).toString('base64'))
@@ -264,7 +279,7 @@ test(
         value: { kind, html, headers, status },
         revalidate,
         maxTTL
-      } = unpack(Buffer.from(valkeyCalls[11][2], 'base64url'))
+      } = unpack(Buffer.from(storedValues[1], 'base64url'))
 
       deepStrictEqual(kind, 'PAGE')
       ok(html.includes(`<div>Hello from v<!-- -->${version}<!-- --> t<!-- -->${time}</div>`))
@@ -325,17 +340,15 @@ test(
       // This might change in different versions of Next.js, keep in sync
       '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
     )
-    deepStrictEqual(valkeyCalls, [
-      ['info'],
+    const storedValues = verifyValkeySequence(valkeyCalls, [
       ['get', key],
-      ['set', key, valkeyCalls[2][2], 'EX', '120'],
+      ['set', key, null, 'EX', '120'],
       ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
       ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
       ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
       ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '120'],
       ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'third'), key],
       ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '120'],
-      ['info'],
       ['get', key]
     ])
 
@@ -348,7 +361,7 @@ test(
       tags,
       revalidate: revalidatePlt,
       maxTTL
-    } = unpack(Buffer.from(valkeyCalls[2][2], 'base64url'))
+    } = unpack(Buffer.from(storedValues[0], 'base64url'))
 
     deepStrictEqual(kind, 'FETCH')
     deepStrictEqual(body, Buffer.from(JSON.stringify({ time: parseInt(time) })).toString('base64'))
@@ -414,19 +427,17 @@ test(
       '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
     )
 
-    deepStrictEqual(valkeyCalls, [
-      ['info'],
+    const storedValues = verifyValkeySequence(valkeyCalls, [
       ['get', routeKey],
       ['get', fetchKey],
-      ['set', fetchKey, valkeyCalls[3][2], 'EX', '120'],
+      ['set', fetchKey, null, 'EX', '120'],
       ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'first'), fetchKey],
       ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'first'), '120'],
       ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'second'), fetchKey],
       ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'second'), '120'],
       ['sadd', keyFor(valkeyPrefix, prefix, 'tags', 'third'), fetchKey],
       ['expire', keyFor(valkeyPrefix, prefix, 'tags', 'third'), '120'],
-      ['set', routeKey, valkeyCalls[10][2], 'EX', '120'],
-      ['info'],
+      ['set', routeKey, null, 'EX', '120'],
       ['get', routeKey]
     ])
 
@@ -440,7 +451,7 @@ test(
         tags,
         revalidate: revalidatePlt,
         maxTTL
-      } = unpack(Buffer.from(valkeyCalls[3][2], 'base64url'))
+      } = unpack(Buffer.from(storedValues[0], 'base64url'))
 
       deepStrictEqual(kind, 'FETCH')
       deepStrictEqual(body, Buffer.from(JSON.stringify({ time: parseInt(time) })).toString('base64'))
@@ -457,7 +468,7 @@ test(
         value: { kind, body, headers, status },
         revalidate,
         maxTTL
-      } = unpack(Buffer.from(valkeyCalls[10][2], 'base64url'))
+      } = unpack(Buffer.from(storedValues[1], 'base64url'))
 
       deepStrictEqual(kind, 'ROUTE')
       deepStrictEqual({ ...JSON.parse(body), delay: 0 }, { delay: 0, version, time })
@@ -523,17 +534,15 @@ test('should properly revalidate tags in Valkey', { skip: isCIOnWindows }, async
     '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
   )
 
-  deepStrictEqual(valkeyCalls, [
-    ['info'],
+  verifyValkeySequence(valkeyCalls, [
     ['get', key],
-    ['set', key, valkeyCalls[2][2], 'EX', '120'],
+    ['set', key, null, 'EX', '120'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
     ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
     ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '120'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'third'), key],
     ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '120'],
-    ['info'],
     ['sscan', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '0'],
     ['del', key],
     ['del', keyFor(valkeyPrefix, 'development', 'tags', 'first')],
@@ -543,9 +552,8 @@ test('should properly revalidate tags in Valkey', { skip: isCIOnWindows }, async
     ['sscan', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '0'],
     ['del', key],
     ['del', keyFor(valkeyPrefix, 'development', 'tags', 'third')],
-    ['info'],
     ['get', key],
-    ['set', key, valkeyCalls[21][2], 'EX', '120'],
+    ['set', key, null, 'EX', '120'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
     ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '120'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
@@ -607,17 +615,15 @@ test('should extend TTL when our limit is smaller than the user one', { skip: is
     // This might change in different versions of Next.js, keep in sync
     '148b162ff22d9254deb767bd4e98ff4b55486dcdb575630bd42a59c86a2cb01d'
   )
-  deepStrictEqual(valkeyCalls, [
-    ['info'],
+  verifyValkeySequence(valkeyCalls, [
     ['get', key],
-    ['set', key, valkeyCalls[2][2], 'EX', '20'],
+    ['set', key, null, 'EX', '20'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
     ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '20'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
     ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '20'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'third'), key],
     ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '20'],
-    ['info'],
     ['get', key],
     ['expire', key, '20', 'gt'],
     ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '20', 'gt'],
@@ -699,17 +705,15 @@ test('should not extend the TTL over the original intended one', { skip: isCIOnW
     }
   }
 
-  deepStrictEqual(valkeyCalls, [
-    ['info'],
+  verifyValkeySequence(valkeyCalls, [
     ['get', key],
-    ['set', key, valkeyCalls[2][2], 'EX', '10'],
+    ['set', key, null, 'EX', '10'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'first'), key],
     ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), '10'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'second'), key],
     ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'second'), '10'],
     ['sadd', keyFor(valkeyPrefix, 'development', 'tags', 'third'), key],
     ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'third'), '10'],
-    ['info'],
     ['get', key],
     ['expire', key, ttl, 'gt'],
     ['expire', keyFor(valkeyPrefix, 'development', 'tags', 'first'), ttl, 'gt'],
