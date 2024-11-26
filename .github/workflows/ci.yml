@@ -689,9 +689,6 @@ jobs:
       VALKEY_HOST: localhost
       VALKEY_PORT: 6379
     steps:
-      - name: Start docker containers for testing
-        run: docker compose up -d valkey
-        if: ${{ matrix.os == 'ubuntu-latest' }}
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.0.0
       - uses: actions/setup-node@v4
@@ -705,6 +702,9 @@ jobs:
           timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
+      - name: Start docker containers for testing
+        run: docker compose up -d valkey
+        if: ${{ matrix.os == 'ubuntu-latest' }}
       - name: Run next package test suite
         run: cd packages/next && pnpm test
 
