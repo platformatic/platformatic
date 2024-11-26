@@ -219,6 +219,10 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       headers = { ...headers, ...(await this[kGetHeaders](options)) }
     }
 
+    if (throwOnError) {
+      // TODO: add a responseError interceptor
+    }
+
     let res
     try {
       const requestOptions = {
@@ -227,7 +231,6 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
           ...headers,
           ...telemetryHeaders
         },
-        throwOnError,
         bodyTimeout,
         headersTimeout,
         dispatcher
