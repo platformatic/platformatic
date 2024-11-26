@@ -1,33 +1,33 @@
-version: "3.3"
+version: '3.3'
 services:
   postgresql:
     ports:
-      - "127.0.0.1:5432:5432"
-    image: "postgres:17-alpine"
+      - '127.0.0.1:5432:5432'
+    image: 'postgres:17-alpine'
     environment:
       - POSTGRES_PASSWORD=postgres
   mariadb:
     ports:
-      - "127.0.0.1:3307:3306"
-    image: "mariadb:11.6"
+      - '127.0.0.1:3307:3306'
+    image: 'mariadb:11.6'
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
       - MYSQL_DATABASE=graph
   mysql:
     ports:
-      - "127.0.0.1:3306:3306"
-    image: "mysql:5.7"
+      - '127.0.0.1:3306:3306'
+    image: 'mysql:5.7'
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
       - MYSQL_DATABASE=graph
   mysql8:
     ports:
-      - "127.0.0.1:3308:3306"
-    image: "mysql:8"
+      - '127.0.0.1:3308:3306'
+    image: 'mysql:8'
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
       - MYSQL_DATABASE=graph
   redis:
     ports:
-      - "6379:6379"
-    image: "redis:7"
+      - '6379:6379'
+    image: 'redis:7'

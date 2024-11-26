@@ -699,6 +699,8 @@ jobs:
           timeout_minutes: 15
           retry_on: error
           command: pnpm install --frozen-lockfile
+      - name: Start Redis for testing
+        run: docker compose up -d redis
       - name: Run next package test suite
         run: cd packages/next && pnpm test
 
