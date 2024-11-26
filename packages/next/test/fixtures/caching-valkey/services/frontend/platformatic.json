@@ -8,7 +8,7 @@
   },
   "cache": {
     "adapter": "valkey",
-    "url": "valkey://{VALKEY_HOST}:{VALKEY_PORT}",
+    "url": "valkey://{VALKEY_URL}",
     "prefix": "plt:test:caching-valkey"
   }
 }

@@ -47,15 +47,20 @@ async function cleanupCache (valkey) {
   return valkey.del(...keys)
 }
 
+async function getValkeyUrl (runtime) {
+  const config = await runtime.getServiceConfig('frontend')
+  return config.cache.url
+}
+
 test(
   'should properly use the Valkey cache handler in development to cache fetch calls but not pages',
-  { skip: isCIOnWindows },
+  { only: true, skip: isCIOnWindows },
   async t => {
     const configuration = 'caching-valkey'
     const valkeyPrefix = 'plt:test:caching-valkey'
-    const { url } = await prepareRuntimeWithBackend(t, configuration)
+    const { runtime, url } = await prepareRuntimeWithBackend(t, configuration)
 
-    const valkey = new Redis('valkey://localhost:6379')
+    const valkey = new Redis(await getValkeyUrl(runtime))
     await cleanupCache(valkey, valkeyPrefix)
     const monitor = await valkey.monitor()
     const valkeyCalls = []
@@ -140,10 +145,10 @@ test(
   async t => {
     const configuration = 'caching-valkey'
     const valkeyPrefix = 'plt:test:caching-valkey'
-    const { root, url } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
+    const { runtime, url, root } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
 
     const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
-    const valkey = new Redis('valkey://localhost:6379')
+    const valkey = new Redis(await getValkeyUrl(runtime))
     await cleanupCache(valkey, valkeyPrefix)
     const monitor = await valkey.monitor()
     const valkeyCalls = []
@@ -251,9 +256,9 @@ test(
   async t => {
     const configuration = 'caching-valkey'
     const valkeyPrefix = 'plt:test:caching-valkey'
-    const { url } = await prepareRuntimeWithBackend(t, configuration, false)
+    const { runtime, url } = await prepareRuntimeWithBackend(t, configuration, false)
 
-    const valkey = new Redis('valkey://localhost:6379')
+    const valkey = new Redis(await getValkeyUrl(runtime))
     await cleanupCache(valkey, valkeyPrefix)
     const monitor = await valkey.monitor()
     const valkeyCalls = []
@@ -336,10 +341,10 @@ test(
   async t => {
     const configuration = 'caching-valkey'
     const valkeyPrefix = 'plt:test:caching-valkey'
-    const { root, url } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
+    const { runtime, url, root } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
 
     const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
-    const valkey = new Redis('valkey://localhost:6379')
+    const valkey = new Redis(await getValkeyUrl(runtime))
     await cleanupCache(valkey, valkeyPrefix)
     const monitor = await valkey.monitor()
     const valkeyCalls = []
@@ -441,9 +446,9 @@ test(
 test('should properly revalidate tags in Valkey', { skip: isCIOnWindows }, async t => {
   const configuration = 'caching-valkey'
   const valkeyPrefix = 'plt:test:caching-valkey'
-  const { url } = await prepareRuntimeWithBackend(t, configuration)
+  const { runtime, url } = await prepareRuntimeWithBackend(t, configuration)
 
-  const valkey = new Redis('valkey://localhost:6379')
+  const valkey = new Redis(await getValkeyUrl(runtime))
   await cleanupCache(valkey, valkeyPrefix)
   const monitor = await valkey.monitor()
   const valkeyCalls = []
@@ -526,13 +531,13 @@ test('should properly revalidate tags in Valkey', { skip: isCIOnWindows }, async
 test('should extend TTL when our limit is smaller than the user one', { skip: isCIOnWindows }, async t => {
   const configuration = 'caching-valkey'
   const valkeyPrefix = 'plt:test:caching-valkey'
-  const { url } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
+  const { runtime, url } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     const configFile = JSON.parse(await readFile(resolve(root, 'services/frontend/platformatic.json')))
     configFile.cache.maxTTL = 20
     await writeFile(resolve(root, 'services/frontend/platformatic.json'), JSON.stringify(configFile))
   })
 
-  const valkey = new Redis('valkey://localhost:6379')
+  const valkey = new Redis(await getValkeyUrl(runtime))
   await cleanupCache(valkey, valkeyPrefix)
   const monitor = await valkey.monitor()
   const valkeyCalls = []
@@ -597,7 +602,7 @@ test('should extend TTL when our limit is smaller than the user one', { skip: is
 test('should not extend the TTL over the original intended one', { skip: isCIOnWindows }, async t => {
   const configuration = 'caching-valkey'
   const valkeyPrefix = 'plt:test:caching-valkey'
-  const { url } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
+  const { runtime, url } = await prepareRuntimeWithBackend(t, configuration, false, false, false, async root => {
     const configFile = JSON.parse(await readFile(resolve(root, 'services/frontend/platformatic.json'), 'utf-8'))
     configFile.cache.maxTTL = 10
     await writeFile(resolve(root, 'services/frontend/platformatic.json'), JSON.stringify(configFile), 'utf-8')
@@ -610,7 +615,7 @@ test('should not extend the TTL over the original intended one', { skip: isCIOnW
     )
   })
 
-  const valkey = new Redis('valkey://localhost:6379')
+  const valkey = new Redis(await getValkeyUrl(runtime))
   await cleanupCache(valkey, valkeyPrefix)
   const monitor = await valkey.monitor()
   const valkeyCalls = []
@@ -696,7 +701,7 @@ test('should handle read error', { skip: isCIOnWindows }, async t => {
   })
 
   const valkeyUser = 'plt-caching-test'
-  const valkey = new Redis('valkey://localhost:6379')
+  const valkey = new Redis(await getValkeyUrl(runtime))
   await cleanupCache(valkey, valkeyPrefix)
   await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO')
 
@@ -725,7 +730,7 @@ test('should handle deserialization error', { skip: isCIOnWindows }, async t => 
   const valkeyPrefix = 'plt:test:caching-valkey'
   const { runtime, url } = await prepareRuntimeWithBackend(t, configuration)
 
-  const valkey = new Redis('valkey://localhost:6379')
+  const valkey = new Redis(await getValkeyUrl(runtime))
 
   const fetchKey = keyFor(
     valkeyPrefix,
@@ -768,7 +773,7 @@ test('should handle refresh error', { skip: isCIOnWindows }, async t => {
   })
 
   const valkeyUser = 'plt-caching-test'
-  const valkey = new Redis('valkey://localhost:6379')
+  const valkey = new Redis(await getValkeyUrl(runtime))
   await cleanupCache(valkey, valkeyPrefix)
 
   // Set the key
@@ -814,7 +819,7 @@ test('should handle write error', { skip: isCIOnWindows }, async t => {
   })
 
   const valkeyUser = 'plt-caching-test'
-  const valkey = new Redis('valkey://localhost:6379')
+  const valkey = new Redis(await getValkeyUrl(runtime))
   await cleanupCache(valkey, valkeyPrefix)
   await valkey.acl('setuser', valkeyUser, 'on', 'nopass', 'allkeys', '+INFO', '+GET', '-SET')
 
@@ -849,7 +854,7 @@ test('should handle refresh error', { skip: isCIOnWindows }, async t => {
   })
 
   const valkeyUser = 'plt-caching-test'
-  const valkey = new Redis('valkey://localhost:6379')
+  const valkey = new Redis(await getValkeyUrl(runtime))
   await cleanupCache(valkey, valkeyPrefix)
 
   // Set the key
