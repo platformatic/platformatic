@@ -14,10 +14,41 @@ const sections = {
   tags: 'tags'
 }
 
+const kReferences = Symbol('references')
+const clients = new Map()
+
 export function keyFor (prefix, subprefix, section, key) {
   return [prefix, 'cache:next', subprefix, section, key ? Buffer.from(key).toString('base64url') : undefined]
     .filter(c => c)
     .join(':')
+}
+
+export function getConnection (url) {
+  let client = clients.get(url)
+
+  if (!client) {
+    client = new Redis(url, { enableAutoPipelining: true })
+    client[kReferences] = 0
+    clients.set(url, client)
+  }
+
+  client[kReferences]++
+  return client
+}
+
+export function releaseConnection (url) {
+  const client = clients.get(url)
+
+  if (!client) {
+    return
+  }
+
+  client[kReferences]--
+
+  if (client[kReferences] < 1) {
+    client.disconnect(false)
+    clients.remove(url)
+  }
 }
 
 export class CacheHandler {
@@ -30,13 +61,13 @@ export class CacheHandler {
   constructor () {
     this.#logger = this.#createLogger()
     this.#config = globalThis.platformatic.config.cache
-    this.#store = new Redis(this.#config.url, { enableAutoPipelining: true })
+    this.#store = getConnection(this.#config.url)
     this.#maxTTL = this.#config.maxTTL
     this.#subprefix = this.#getSubprefix()
 
     // Handle disconnection not to hang the process on exit
     globalThis.platformatic.events.on('plt:next:close', () => {
-      this.#store.disconnect(false)
+      releaseConnection(this.#config.url)
     })
   }
 
