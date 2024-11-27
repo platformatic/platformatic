@@ -353,12 +353,7 @@ test('should invalidate cache by cache tags', async (t) => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        keys: [{
-          origin: 'http://service-1.plt.local',
-          tags: ['tag1']
-        }]
-      })
+      body: JSON.stringify({ tags: ['tag1'] })
     })
     assert.strictEqual(res.statusCode, 200)
   }

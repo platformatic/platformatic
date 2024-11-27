@@ -742,13 +742,20 @@ class Runtime extends EventEmitter {
   }
 
   async invalidateHttpCache (options = {}) {
-    const { keys } = options
+    const { keys, tags } = options
 
     if (!this.#sharedHttpCache) return
 
+    const promises = []
     if (keys && keys.length > 0) {
-      await this.#sharedHttpCache.deleteMany(keys)
+      promises.push(this.#sharedHttpCache.deleteKeys(keys))
     }
+
+    if (tags && tags.length > 0) {
+      promises.push(this.#sharedHttpCache.deleteTags(tags))
+    }
+
+    await Promise.all(promises)
   }
 
   async sendCommandToService (id, name, message) {

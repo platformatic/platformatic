@@ -161,7 +161,7 @@ curl http://localhost:3042/internal/cached-counter
 ## Invalidating cache by cache tags
 
 Platformatic Runtime supports cache tags to invalidate related cache entries. Cache tags 
-should be set in one of the response headers.
+should be set in one of the response headers. Cache tags should be globally unique.
 
 Let's set the `X-Cache-Tags` header in the root `platformatic.json` file.
 
@@ -210,12 +210,7 @@ module.exports = async function (fastify, opts) {
 
   fastify.post('/invalidate-cached-counter', async () => {
     await globalThis.platformatic.invalidateHttpCache({
-      keys: [
-        {
-          origin: 'http://internal.plt.local',
-          tags: ['cached-counter-tag']
-        }
-      ]
+      tags: ['cached-counter-tag']
     })
   })
 }
