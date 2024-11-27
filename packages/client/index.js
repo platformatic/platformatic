@@ -223,9 +223,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       if (!dispatcher) {
         dispatcher = new Agent()
       }
-      dispatcher = dispatcher.compose(
-        interceptors.responseError()
-      )
+      dispatcher = dispatcher.compose(interceptors.responseError())
     }
 
     let res
@@ -236,8 +234,6 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
           ...headers,
           ...telemetryHeaders
         },
-        // TODO: uncomment when undici is fixed
-        // throwOnError: true,
         bodyTimeout,
         headersTimeout,
         dispatcher

@@ -391,7 +391,7 @@ test('properly call undici dispatcher', async t => {
   assert.ok(error.toString().includes('this.dispatch is not a function'))
 })
 
-test('throw on error level response', { skip: true }, async t => {
+test('throw on error level response', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })

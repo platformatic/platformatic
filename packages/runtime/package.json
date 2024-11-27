@@ -91,7 +91,7 @@
     "semgrator": "^0.3.0",
     "tail-file-stream": "^0.2.0",
     "thread-cpu-usage": "^0.2.0",
-    "undici": "7.0.0-alpha.7",
+    "undici": "7.0.0-alpha.10",
     "undici-thread-interceptor": "0.10.0-alpha.1",
     "ws": "^8.16.0"
   }
