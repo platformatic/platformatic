@@ -68,7 +68,7 @@
     "@platformatic/itc": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/ts-compiler": "workspace:*",
-    "@platformatic/undici-cache-memory": "platformatic/undici-cache-memory#use-unique-cache-tags",
+    "@platformatic/undici-cache-memory": "^0.8.0",
     "@platformatic/utils": "workspace:*",
     "@watchable/unpromise": "^1.0.2",
     "boring-name-generator": "^1.0.3",
@@ -92,7 +92,7 @@
     "tail-file-stream": "^0.2.0",
     "thread-cpu-usage": "^0.2.0",
     "undici": "7.0.0",
-    "undici-thread-interceptor": "platformatic/undici-thread-interceptor#move-to-undici-v7",
+    "undici-thread-interceptor": "^0.10.0",
     "ws": "^8.16.0"
   }
 }
