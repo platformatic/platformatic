@@ -105,7 +105,12 @@ export class CacheHandler {
       const data = this.#serialize({ value, tags, lastModified: Date.now(), revalidate, maxTTL: this.#maxTTL })
       const expire = Math.min(revalidate, this.#maxTTL)
 
+      if (expire < 1) {
+        return
+      }
+
       // Enqueue all the operations to perform in Valkey
+
       const promises = []
       promises.push(this.#store.set(key, data, 'EX', expire))
 
@@ -167,19 +172,21 @@ export class CacheHandler {
     const life = Math.round((Date.now() - value.lastModified) / 1000)
     const expire = Math.min(value.revalidate - life, this.#maxTTL)
 
-    if (expire > 0) {
-      const promises = []
-      promises.push(this.#store.expire(key, expire, 'gt'))
-
-      if (Array.isArray(value.tags)) {
-        for (const tag of value.tags) {
-          const tagsKey = this.#keyFor(tag, sections.tags)
-          promises.push(this.#store.expire(tagsKey, expire, 'gt'))
-        }
-      }
-
-      await Promise.all(promises)
+    if (expire < 1) {
+      return
     }
+
+    const promises = []
+    promises.push(this.#store.expire(key, expire, 'gt'))
+
+    if (Array.isArray(value.tags)) {
+      for (const tag of value.tags) {
+        const tagsKey = this.#keyFor(tag, sections.tags)
+        promises.push(this.#store.expire(tagsKey, expire, 'gt'))
+      }
+    }
+
+    await Promise.all(promises)
   }
 
   #createLogger () {
