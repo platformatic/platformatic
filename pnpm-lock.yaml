@@ -44,7 +44,7 @@ importers:
     devDependencies:
       '@astrojs/node':
         specifier: ^8.3.3
-        version: 8.3.4(astro@4.16.15(@types/node@22.10.0)(rollup@4.27.4)(typescript@5.7.2))
+        version: 8.3.4(astro@4.16.16(@types/node@22.10.0)(rollup@4.27.4)(typescript@5.7.2))
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
@@ -53,7 +53,7 @@ importers:
         version: link:../service
       astro:
         specifier: ^4.14.4
-        version: 4.16.15(@types/node@22.10.0)(rollup@4.27.4)(typescript@5.7.2)
+        version: 4.16.16(@types/node@22.10.0)(rollup@4.27.4)(typescript@5.7.2)
       borp:
         specifier: ^0.19.0
         version: 0.19.0
@@ -489,7 +489,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.71
+        version: 1.25.72
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -1888,7 +1888,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.71
+        version: 1.25.72
       '@types/ws':
         specifier: ^8.5.10
         version: 8.5.13
@@ -2268,7 +2268,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.71
+        version: 1.25.72
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -4126,16 +4126,16 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@scalar/fastify-api-reference@1.25.71':
-    resolution: {integrity: sha512-6mHA56Ei3UxtqJCktJvIDOCZ6zmvvIYxKBigeybldA5o70GKaktPOBVghZLQUcuTWCVoxJEBFMBEt3/26Yv8dA==}
+  '@scalar/fastify-api-reference@1.25.72':
+    resolution: {integrity: sha512-gbHvUx8QQEj9vy7nhDCCOaZF8Pwrb6vFSY/tsayqPE3+mNB/rKzMM+sikqqpxKMPl+oJD/qhh1DTIHWyCtWajw==}
     engines: {node: '>=18'}
 
   '@scalar/openapi-types@0.1.5':
     resolution: {integrity: sha512-6geH9ehvQ/sG/xUyy3e0lyOw3BaY5s6nn22wHjEJhcobdmWyFER0O6m7AU0ZN4QTjle/gYvFJOjj552l/rsNSw==}
     engines: {node: '>=18'}
 
-  '@scalar/types@0.0.21':
-    resolution: {integrity: sha512-HR8KeV5zjdVDQdfs7ONhpIRbAzrMS1KIu2sbNgVXtFSaj+1/6WN5gM/yY1DKoaC3oyvpqwd/HyL9rLTqrOkrRw==}
+  '@scalar/types@0.0.22':
+    resolution: {integrity: sha512-+S1flivP58p2uiHM4dU5ZaAb20wbVcP0nV39KWoVjijvHDx1HWtAGg+PaDXRCRj2zM4QzBeg4olaso20Tm26fQ==}
     engines: {node: '>=18'}
 
   '@sec-ant/readable-stream@0.4.1':
@@ -4603,8 +4603,8 @@ packages:
     resolution: {integrity: sha512-LElXdjswlqjWrPpJFg1Fx4wpkOCxj1TDHlSV4PlaRxHGWko024xICaa97ZkMfs6DRKlCguiAI+rbXv5GWwXIkg==}
     hasBin: true
 
-  astro@4.16.15:
-    resolution: {integrity: sha512-usybZ7nEUiwYKT7r47l4VbkqjKfaE+BgWV/ed4PT3mE3vFRTBWFsXLnkzrN7awfN6+/ekZTAcE+MAkdA551Umw==}
+  astro@4.16.16:
+    resolution: {integrity: sha512-H1CttrV6+JFrDBQx0Mcbq5i5AeLhCbztB786+9wEu3svWL/QPNeCGqF0dgNORAYmP+rODGCPu/y9qKSh87iLuA==}
     engines: {node: ^18.17.1 || ^20.3.0 || >=21.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0'}
     hasBin: true
 
@@ -8002,8 +8002,8 @@ packages:
   regenerator-runtime@0.14.1:
     resolution: {integrity: sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw==}
 
-  regex-recursion@4.2.1:
-    resolution: {integrity: sha512-QHNZyZAeKdndD1G3bKAbBEKOSSK4KOHQrAJ01N1LJeb0SoH4DJIeFhp0uUpETgONifS4+P3sOgoA1dhzgrQvhA==}
+  regex-recursion@4.3.0:
+    resolution: {integrity: sha512-5LcLnizwjcQ2ALfOj95MjcatxyqF5RPySx9yT+PaXu3Gox2vyAtLDjHB8NTJLtMGkvyau6nI3CfpwFCjPUIs/A==}
 
   regex-utilities@2.3.0:
     resolution: {integrity: sha512-8VhliFJAWRaUiVvREIiW2NXXTmHs4vMNnSzuJVhscgmGav3g9VDxLrQndI3dZZVVdp0ZO/5v0xmX516/7M9cng==}
@@ -8723,8 +8723,8 @@ packages:
     resolution: {integrity: sha512-4dbzIzqvjtgiM5rw1k5rEHtBANKmdudhGyBEajN01fEyhaAIhsoKNy6y7+IN93IfpFtwY9iqi7kD+xwKhQsNJA==}
     engines: {node: '>=8'}
 
-  type-fest@4.28.1:
-    resolution: {integrity: sha512-LO/+yb3mf46YqfUC7QkkoAlpa7CTYh//V1Xy9+NQ+pKqDqXIq0NTfPfQRwFfCt+if4Qkwb9gzZfsl6E5TkXZGw==}
+  type-fest@4.29.0:
+    resolution: {integrity: sha512-RPYt6dKyemXJe7I6oNstcH24myUGSReicxcHTvCLgzm4e0n8y05dGvcGB15/SoPRBmhlMthWQ9pvKyL81ko8nQ==}
     engines: {node: '>=16'}
 
   type-is@1.6.18:
@@ -9272,9 +9272,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@astrojs/node@8.3.4(astro@4.16.15(@types/node@22.10.0)(rollup@4.27.4)(typescript@5.7.2))':
+  '@astrojs/node@8.3.4(astro@4.16.16(@types/node@22.10.0)(rollup@4.27.4)(typescript@5.7.2))':
     dependencies:
-      astro: 4.16.15(@types/node@22.10.0)(rollup@4.27.4)(typescript@5.7.2)
+      astro: 4.16.16(@types/node@22.10.0)(rollup@4.27.4)(typescript@5.7.2)
       send: 0.19.1
       server-destroy: 1.0.1
     transitivePeerDependencies:
@@ -10883,14 +10883,14 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.27.4':
     optional: true
 
-  '@scalar/fastify-api-reference@1.25.71':
+  '@scalar/fastify-api-reference@1.25.72':
     dependencies:
-      '@scalar/types': 0.0.21
+      '@scalar/types': 0.0.22
       fastify-plugin: 4.5.1
 
   '@scalar/openapi-types@0.1.5': {}
 
-  '@scalar/types@0.0.21':
+  '@scalar/types@0.0.22':
     dependencies:
       '@scalar/openapi-types': 0.1.5
       '@unhead/schema': 1.11.13
@@ -11449,7 +11449,7 @@ snapshots:
 
   astring@1.9.0: {}
 
-  astro@4.16.15(@types/node@22.10.0)(rollup@4.27.4)(typescript@5.7.2):
+  astro@4.16.16(@types/node@22.10.0)(rollup@4.27.4)(typescript@5.7.2):
     dependencies:
       '@astrojs/compiler': 2.10.3
       '@astrojs/internal-helpers': 0.4.1
@@ -11623,7 +11623,7 @@ snapshots:
       chalk: 5.3.0
       cli-boxes: 3.0.0
       string-width: 7.2.0
-      type-fest: 4.28.1
+      type-fest: 4.29.0
       widest-line: 5.0.0
       wrap-ansi: 9.0.0
 
@@ -15009,7 +15009,7 @@ snapshots:
     dependencies:
       emoji-regex-xs: 1.0.0
       regex: 5.0.2
-      regex-recursion: 4.2.1
+      regex-recursion: 4.3.0
 
   only@0.0.2: {}
 
@@ -15737,7 +15737,7 @@ snapshots:
 
   regenerator-runtime@0.14.1: {}
 
-  regex-recursion@4.2.1:
+  regex-recursion@4.3.0:
     dependencies:
       regex-utilities: 2.3.0
 
@@ -16624,7 +16624,7 @@ snapshots:
 
   type-fest@0.8.1: {}
 
-  type-fest@4.28.1: {}
+  type-fest@4.29.0: {}
 
   type-is@1.6.18:
     dependencies:
