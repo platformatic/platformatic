@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/next",
-  "version": "2.17.0",
+  "version": "2.19.0-alpha.3",
   "description": "Platformatic Next.js Stackable",
   "main": "index.js",
   "type": "module",
