@@ -490,7 +490,8 @@ export async function prepareRuntimeWithServices (
   pauseTimeout,
   additionalSetup
 ) {
-  const { root, config } = await prepareRuntime(t, configuration, production, null, async (root, config, args) => {
+  let args
+  const { root, config } = await prepareRuntime(t, configuration, production, null, async (root, config, _args) => {
     for (const type of ['backend', 'composer']) {
       await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
         recursive: true
@@ -501,8 +502,16 @@ export async function prepareRuntimeWithServices (
       return contents.replace('$PREFIX', prefix)
     })
 
-    await additionalSetup?.(root, config, args)
+    if (additionalSetup && !additionalSetup.runAfterPrepare) {
+      await additionalSetup?.(root, config, _args)
+    }
+
+    args = _args
   })
+
+  if (additionalSetup && additionalSetup.runAfterPrepare) {
+    await additionalSetup?.(root, config, args)
+  }
 
   return await startRuntime(t, root, config, pauseTimeout)
 }
@@ -531,7 +540,8 @@ export async function verifyDevelopmentFrontendWithPrefix (
   hmrUrl,
   hmrProtocol,
   websocketHMRHandler,
-  pauseTimeout
+  pauseTimeout,
+  additionalSetup
 ) {
   const { runtime, url } = await prepareRuntimeWithServices(
     t,
@@ -539,7 +549,8 @@ export async function verifyDevelopmentFrontendWithPrefix (
     false,
     language,
     '/frontend',
-    pauseTimeout
+    pauseTimeout,
+    additionalSetup
   )
 
   await verifyHTMLViaHTTP(url, '/frontend/', htmlContents)
@@ -563,9 +574,18 @@ export async function verifyDevelopmentFrontendWithoutPrefix (
   hmrUrl,
   hmrProtocol,
   websocketHMRHandler,
-  pauseTimeout
+  pauseTimeout,
+  additionalSetup
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(t, configuration, false, language, '', pauseTimeout)
+  const { runtime, url } = await prepareRuntimeWithServices(
+    t,
+    configuration,
+    false,
+    language,
+    '',
+    pauseTimeout,
+    additionalSetup
+  )
 
   await verifyHTMLViaHTTP(url, '/', htmlContents)
   await verifyHTMLViaInject(runtime, 'composer', '/', htmlContents)
@@ -588,7 +608,8 @@ export async function verifyDevelopmentFrontendWithAutodetectPrefix (
   hmrUrl,
   hmrProtocol,
   websocketHMRHandler,
-  pauseTimeout
+  pauseTimeout,
+  additionalSetup
 ) {
   const { runtime, url } = await prepareRuntimeWithServices(
     t,
@@ -596,7 +617,8 @@ export async function verifyDevelopmentFrontendWithAutodetectPrefix (
     false,
     language,
     '/nested/base/dir',
-    pauseTimeout
+    pauseTimeout,
+    additionalSetup
   )
 
   await verifyHTMLViaHTTP(url, '/nested/base/dir/', htmlContents)
@@ -616,10 +638,20 @@ export function verifyDevelopmentMode (configurations, hmrUrl, hmrProtocol, webs
   configurations = filterConfigurations(configurations)
 
   for (const configuration of configurations) {
-    const { id, check, htmlContents, language, hmrTriggerFile } = configuration
-    test(`should start in development mode - configuration "${id}"`, async t => {
+    const { id, tag, check, htmlContents, language, hmrTriggerFile, additionalSetup } = configuration
+    test(`should start in development mode - configuration "${id}"${tag ? ` (${tag})` : ''}`, async t => {
       setHMRTriggerFile(hmrTriggerFile)
-      await check(t, id, language, htmlContents, hmrUrl, hmrProtocol, websocketHMRHandler, pauseTimeout)
+      await check(
+        t,
+        id,
+        language,
+        htmlContents,
+        hmrUrl,
+        hmrProtocol,
+        websocketHMRHandler,
+        pauseTimeout,
+        additionalSetup
+      )
     })
   }
 }
@@ -627,9 +659,10 @@ export function verifyDevelopmentMode (configurations, hmrUrl, hmrProtocol, webs
 export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
   configurations = filterConfigurations(configurations)
 
-  for (const { id, language, prefix, files, checks, additionalSetup } of configurations) {
-    test(`should build and start in production mode - configuration "${id}"`, async t => {
-      const { root, config } = await prepareRuntime(t, id, true, null, async (root, config, args) => {
+  for (const { id, tag, language, prefix, files, checks, additionalSetup } of configurations) {
+    test(`should build and start in production mode - configuration "${id}${tag ? ` (${tag})` : ''}"`, async t => {
+      let args
+      const { root, config } = await prepareRuntime(t, id, true, null, async (root, config, _args) => {
         for (const type of ['backend', 'composer']) {
           await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
             recursive: true
@@ -648,8 +681,16 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
           })
         }
 
-        await additionalSetup?.(root, config, args)
+        if (additionalSetup && !additionalSetup.runAfterPrepare) {
+          await additionalSetup?.(root, config, _args)
+        }
+
+        args = _args
       })
+
+      if (additionalSetup && additionalSetup.runAfterPrepare) {
+        await additionalSetup?.(root, config, args)
+      }
 
       const { hostname: runtimeHost, port: runtimePort, logger } = config.configManager.current.server ?? {}
 

@@ -1432,6 +1432,9 @@ importers:
       eslint:
         specifier: '9'
         version: 9.15.0
+      execa:
+        specifier: ^9.5.1
+        version: 9.5.1
       fastify:
         specifier: ^5.0.0
         version: 5.1.0

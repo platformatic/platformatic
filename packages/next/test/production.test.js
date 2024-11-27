@@ -19,7 +19,7 @@ import {
 process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-const files = ['services/frontend/.next//server/app/index.html']
+const files = ['services/frontend/.next/server/app/index.html']
 const filesSSR = ['services/frontend/.next/server/app/direct/route.js']
 
 const configurations = [

@@ -16,7 +16,7 @@ import { once } from 'node:events'
 import { readFile } from 'node:fs/promises'
 import { dirname, resolve as pathResolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { satisfies } from 'semver'
+import { parse, satisfies } from 'semver'
 import { packageJson, schema } from './lib/schema.js'
 
 const supportedVersions = '^14.0.0'
@@ -24,6 +24,7 @@ const supportedVersions = '^14.0.0'
 export class NextStackable extends BaseStackable {
   #basePath
   #next
+  #nextVersion
   #child
   #server
 
@@ -34,6 +35,7 @@ export class NextStackable extends BaseStackable {
   async init () {
     this.#next = pathResolve(dirname(resolvePackage(this.root, 'next')), '../..')
     const nextPackage = JSON.parse(await readFile(pathResolve(this.#next, 'package.json'), 'utf-8'))
+    this.#nextVersion = parse(nextPackage.version)
 
     /* c8 ignore next 3 */
     if (!satisfies(nextPackage.version, supportedVersions)) {
@@ -162,7 +164,17 @@ export class NextStackable extends BaseStackable {
     try {
       await this.childManager.inject()
       const childPromise = createChildProcessListener()
-      await nextDev(serverOptions, 'default', this.root)
+
+      if (this.#nextVersion.major === 14 && this.#nextVersion.minor < 2) {
+        await nextDev({
+          '--hostname': serverOptions.host,
+          '--port': serverOptions.port,
+          _: [this.root]
+        })
+      } else {
+        await nextDev(serverOptions, 'default', this.root)
+      }
+
       this.#child = await childPromise
     } finally {
       await this.childManager.eject()
@@ -222,7 +234,15 @@ export class NextStackable extends BaseStackable {
         (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true
       )
 
-      await nextStart(serverOptions, this.root)
+      if (this.#nextVersion.major === 14 && this.#nextVersion.minor < 2) {
+        await nextStart({
+          '--hostname': serverOptions.host,
+          '--port': serverOptions.port,
+          _: [this.root]
+        })
+      } else {
+        await nextStart(serverOptions, this.root)
+      }
 
       this.#server = await serverPromise
       this.url = getServerUrl(this.#server)
