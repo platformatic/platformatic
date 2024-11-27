@@ -1674,8 +1674,8 @@ importers:
         specifier: workspace:*
         version: link:../ts-compiler
       '@platformatic/undici-cache-memory':
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.7.0
+        version: 0.7.0
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -1746,8 +1746,8 @@ importers:
         specifier: 7.0.0-alpha.7
         version: 7.0.0-alpha.7
       undici-thread-interceptor:
-        specifier: platformatic/undici-thread-interceptor#move-to-undici-v7
-        version: https://codeload.github.com/platformatic/undici-thread-interceptor/tar.gz/53c934657ec8331b0a3e47c6b06f6cbe07781119
+        specifier: 0.10.0-alpha.1
+        version: 0.10.0-alpha.1
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -3907,8 +3907,8 @@ packages:
   '@platformatic/openapi-schema-validator@3.0.0':
     resolution: {integrity: sha512-SHEY5v1Q5EliMaIpXdPCye0QkhFVOoHkEqA8v9qkrO1PqvVOcpii1WqEHYrZZB430sEmrHqEWZInt15EUsR7mw==}
 
-  '@platformatic/undici-cache-memory@0.5.0':
-    resolution: {integrity: sha512-LtDEgZcWK7695mfCde8obFCpAvDKCD94nnYwXtFt91AeabtaLvTfMoPYOuF+sAZl4OLmWiZcMEeQv7qJcVgwnA==}
+  '@platformatic/undici-cache-memory@0.7.0':
+    resolution: {integrity: sha512-JJgQ+tESr1OmShIYjJBDq9mZzYqG8ZJqDCGxF5LXy/+xv7T8UaoHuOVToiG6xcrnihcADogu9ByvmYZPUTUjcw==}
 
   '@playwright/test@1.49.0':
     resolution: {integrity: sha512-DMulbwQURa8rNIQrf94+jPJQ4FmOVdpE5ZppRNvWVjvhC+6sOeo28r8MgIpQRYouXRtt/FCCXU7zn20jnHR4Qw==}
@@ -8786,9 +8786,8 @@ packages:
   undici-oidc-interceptor@0.5.0:
     resolution: {integrity: sha512-YU6ABaLFxzKZGjBmamrrRTlziIe6/jrEBUEyNEe2ZRtlXULorg6xo+/jsyEPZVizHdrTFFX3ZPEPxrNmO3pOEA==}
 
-  undici-thread-interceptor@https://codeload.github.com/platformatic/undici-thread-interceptor/tar.gz/53c934657ec8331b0a3e47c6b06f6cbe07781119:
-    resolution: {tarball: https://codeload.github.com/platformatic/undici-thread-interceptor/tar.gz/53c934657ec8331b0a3e47c6b06f6cbe07781119}
-    version: 0.9.2
+  undici-thread-interceptor@0.10.0-alpha.1:
+    resolution: {integrity: sha512-o1Uvo59/lV7VeEZboN/U1pqsONZWY7KGKdQWkx22ZdwkynHOT2Hu8vU1CftQpu8zYHHwwZVQVsejGegsPaSLZg==}
 
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
@@ -10638,7 +10637,7 @@ snapshots:
       ajv-formats: 3.0.1(ajv@8.17.1)
       js-yaml: 4.1.0
 
-  '@platformatic/undici-cache-memory@0.5.0': {}
+  '@platformatic/undici-cache-memory@0.7.0': {}
 
   '@playwright/test@1.49.0':
     dependencies:
@@ -16712,7 +16711,7 @@ snapshots:
       fast-jwt: 4.0.5
       undici: 6.21.0
 
-  undici-thread-interceptor@https://codeload.github.com/platformatic/undici-thread-interceptor/tar.gz/53c934657ec8331b0a3e47c6b06f6cbe07781119:
+  undici-thread-interceptor@0.10.0-alpha.1:
     dependencies:
       hyperid: 3.3.0
       light-my-request: 6.3.0

@@ -742,16 +742,12 @@ class Runtime extends EventEmitter {
   }
 
   async invalidateHttpCache (options = {}) {
-    const { origin, routes, tags } = options
+    const { keys } = options
 
     if (!this.#sharedHttpCache) return
 
-    if (routes && routes.length > 0) {
-      await this.#sharedHttpCache.deleteRoutes(routes)
-    }
-
-    if (tags && tags.length > 0) {
-      await this.#sharedHttpCache.deleteByCacheTags(origin, tags)
+    if (keys && keys.length > 0) {
+      await this.#sharedHttpCache.deleteMany(keys)
     }
   }
 
