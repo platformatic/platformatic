@@ -41,7 +41,7 @@
     "resolve": "^1.22.8",
     "semver": "^7.6.0",
     "strip-ansi": "^7.1.0",
-    "undici": "7.0.0-alpha.10",
+    "undici": "7.0.0",
     "which": "^3.0.1"
   },
   "devDependencies": {

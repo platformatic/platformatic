@@ -37,7 +37,7 @@
     "fastify-plugin": "^5.0.0",
     "fastify-user": "^1.0.2",
     "leven": "~3.1.0",
-    "undici": "7.0.0-alpha.10"
+    "undici": "7.0.0"
   },
   "tsd": {
     "directory": "test/types"
