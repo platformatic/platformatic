@@ -301,6 +301,7 @@ Beyond Fastify’s functionality, Platformatic Service offers:
 - [Documentation](../service/overview.md): Explore Platformatic Service in-depth.
 - [Discord](https://discord.gg/platformatic): Get help from the Platformatic community. 
 - Platformatic [Youtube series](https://www.youtube.com/playlist?list=PL_x4nRdxj60LEXoK5mO-ixOETQTfhqmA7): can help get you up and running building apps with Platformatic open-source tools.
+- PLatformatic [Watt](https://docs.platformatic.dev/docs/watt/overview) documentation.
 
 > See the [Platformatic Service Configuration](../service/configuration.md) documentation for all the features which can be configured.
 
