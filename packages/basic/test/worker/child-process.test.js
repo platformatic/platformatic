@@ -1,4 +1,4 @@
-import { deepStrictEqual, ok, rejects } from 'node:assert'
+import { deepStrictEqual, ok, rejects, equal } from 'node:assert'
 import { once } from 'node:events'
 import { createServer } from 'node:http'
 import { test } from 'node:test'
@@ -209,4 +209,25 @@ test('ChildProcess - should intercept fetch calls', async t => {
       ['ERROR', 50, 'Handler failed with error: FETCH ERROR']
     ]
   )
+})
+
+test('ChildProcess - should properly setup globals', async t => {
+  const stackable = await createStackable(t)
+  const { logger } = createMockedLogger()
+  stackable.logger = logger
+
+  const executablePath = fileURLToPath(new URL('../fixtures/import-non-existing.js', import.meta.url))
+  await stackable.buildWithCommand(
+    ['node', executablePath],
+    import.meta.dirname,
+    new URL('../fixtures/loader.js', import.meta.url).toString(),
+    [new URL('../fixtures/imported.js', import.meta.url)]
+  )
+  stackable.setOpenapiSchema('TEST_OPENAPI_SCHEMA')
+  stackable.setGraphqlSchema('TEST_GRAPHQL_SCHEMA')
+  stackable.setConnectionString('TEST_CONNECTION_STRING')
+
+  equal(stackable.openapiSchema, 'TEST_OPENAPI_SCHEMA')
+  equal(stackable.graphqlSchema, 'TEST_GRAPHQL_SCHEMA')
+  equal(stackable.connectionString, 'TEST_CONNECTION_STRING')
 })
