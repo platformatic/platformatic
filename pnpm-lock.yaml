@@ -1426,6 +1426,9 @@ importers:
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
+      '@types/node':
+        specifier: ^22.5.0
+        version: 22.10.1
       borp:
         specifier: ^0.19.0
         version: 0.19.0
