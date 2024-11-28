@@ -11,7 +11,7 @@ import { basename, dirname, resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
-import { Client, getGlobalDispatcher, request } from 'undici'
+import { Client, Agent, request } from 'undici'
 import WebSocket from 'ws'
 import { loadConfig } from '../../config/index.js'
 import { buildServer, platformaticRuntime } from '../../runtime/index.js'
@@ -302,7 +302,7 @@ export async function getLogs (app) {
 }
 
 export async function verifyJSONViaHTTP (baseUrl, path, expectedCode, expectedContent) {
-  const dispatcher = getGlobalDispatcher().compose(interceptors.redirect({ maxRedirections: 1 }))
+  const dispatcher = new Agent().compose(interceptors.redirect({ maxRedirections: 1 }))
   const { statusCode, body } = await request(baseUrl + path, { dispatcher })
   strictEqual(statusCode, expectedCode)
 
@@ -325,7 +325,7 @@ export async function verifyJSONViaInject (app, serviceId, method, url, expected
 }
 
 export async function verifyHTMLViaHTTP (baseUrl, path, contents) {
-  const dispatcher = getGlobalDispatcher().compose(interceptors.redirect({ maxRedirections: 1 }))
+  const dispatcher = new Agent().compose(interceptors.redirect({ maxRedirections: 1 }))
   const { statusCode, headers, body } = await request(baseUrl + path, { dispatcher })
   const html = await body.text()
 
