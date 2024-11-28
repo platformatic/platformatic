@@ -449,11 +449,11 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       '@fastify/http-proxy':
-        specifier: ^10.0.0
-        version: 10.0.2
-      '@fastify/reply-from':
         specifier: ^11.0.0
-        version: 11.0.2
+        version: 11.0.0
+      '@fastify/reply-from':
+        specifier: ^12.0.0
+        version: 12.0.0
       '@fastify/static':
         specifier: ^8.0.0
         version: 8.0.3
@@ -3364,8 +3364,8 @@ packages:
   '@fastify/formbody@8.0.1':
     resolution: {integrity: sha512-LPrcadSIK8TrQk510Zdj56fnw7cyHq0/PW0YHGGM8ycGL4X7XAex+FKcwpzB4i5lF9eykc71a4EtcO9AEoByqw==}
 
-  '@fastify/http-proxy@10.0.2':
-    resolution: {integrity: sha512-3IlTjOu9xtX5UPd/ZxY3ebYb6caINuBlr7iyVxYmh3zZLV0K5ted8yfU9UCNXVNs33RwbXD2RhDucc3z5BNgEA==}
+  '@fastify/http-proxy@11.0.0':
+    resolution: {integrity: sha512-XdYOFTQ8lA8JW8oyyEDTc3CQubsQuiIyPJEMl5WZhVmGkkwWIwXozrXX+Ub/8Pjc89R+gRX2pGuevKH95D2LQA==}
 
   '@fastify/jwt@9.0.1':
     resolution: {integrity: sha512-+vnlUi7Rwi5lihuPxCIqOzla7C+wk7rIzLf09xlxpwqRKXpun7kgIM6LLc+J1Iv0IidlxdOQmCiXmB52Q74MVA==}
@@ -3384,6 +3384,9 @@ packages:
 
   '@fastify/reply-from@11.0.2':
     resolution: {integrity: sha512-VcHhe01PsHuVX2eVrkoskCs+pwNPgVfOOpwQJnSo3AwIKtISm0VCFB7bycQjHfxAuPYgkrI6ZvYoovdHx4sVMA==}
+
+  '@fastify/reply-from@12.0.0':
+    resolution: {integrity: sha512-Ob61xujZ5rRIqYR3Uj4kOXeYTn3QZU3l9LlBnUDs3cZBDjHocep1TZ9HjfAEwQSFJnJO/TkClrPXS0wZMqbL4w==}
 
   '@fastify/send@3.2.0':
     resolution: {integrity: sha512-qF4TIEMjqk92jrOXjcqBrkk+HOXE70AwDKas9/AweFslbvSq0o1JEAHzC7YlggBaj4bN9pU70XIPyseEJ6vlXg==}
@@ -9945,9 +9948,9 @@ snapshots:
       fast-querystring: 1.1.2
       fastify-plugin: 5.0.1
 
-  '@fastify/http-proxy@10.0.2':
+  '@fastify/http-proxy@11.0.0':
     dependencies:
-      '@fastify/reply-from': 11.0.2
+      '@fastify/reply-from': 12.0.0
       fast-querystring: 1.1.2
       fastify-plugin: 5.0.1
       ws: 8.18.0
@@ -9996,6 +9999,16 @@ snapshots:
       fastify-plugin: 5.0.1
       toad-cache: 3.7.0
       undici: 6.21.0
+
+  '@fastify/reply-from@12.0.0':
+    dependencies:
+      '@fastify/error': 4.0.0
+      end-of-stream: 1.4.4
+      fast-content-type-parse: 2.0.0
+      fast-querystring: 1.1.2
+      fastify-plugin: 5.0.1
+      toad-cache: 3.7.0
+      undici: 7.0.0
 
   '@fastify/send@3.2.0':
     dependencies:
