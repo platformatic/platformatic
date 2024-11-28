@@ -1,7 +1,7 @@
 'use strict'
 
 const { Writable } = require('node:stream')
-const inspect = require('node:util')
+const { inspect } = require('node:util')
 
 class PinoWritable extends Writable {
   #write

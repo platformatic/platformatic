@@ -19,7 +19,7 @@ import { pathToFileURL } from 'node:url'
 import { parse, satisfies } from 'semver'
 import { packageJson, schema } from './lib/schema.js'
 
-const supportedVersions = '^14.0.0'
+const supportedVersions = ['^14.0.0', '^15.0.0']
 
 export class NextStackable extends BaseStackable {
   #basePath
@@ -38,7 +38,7 @@ export class NextStackable extends BaseStackable {
     this.#nextVersion = parse(nextPackage.version)
 
     /* c8 ignore next 3 */
-    if (!satisfies(nextPackage.version, supportedVersions)) {
+    if (!supportedVersions.some(v => satisfies(nextPackage.version, v))) {
       throw new errors.UnsupportedVersion('next', nextPackage.version, supportedVersions)
     }
   }
@@ -81,6 +81,10 @@ export class NextStackable extends BaseStackable {
   }
 
   async build () {
+    if (!this.#nextVersion) {
+      await this.init()
+    }
+
     const config = this.configManager.current
     const loader = new URL('./lib/loader.js', import.meta.url)
     this.#basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
@@ -92,7 +96,7 @@ export class NextStackable extends BaseStackable {
       command = ['node', pathResolve(this.#next, './dist/bin/next'), 'build', this.root]
     }
 
-    return this.buildWithCommand(command, this.#basePath, loader)
+    return this.buildWithCommand(command, this.#basePath, loader, this.#getChildManagerScripts())
   }
 
   /* c8 ignore next 5 */
@@ -121,7 +125,7 @@ export class NextStackable extends BaseStackable {
     this.#basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
 
     if (command) {
-      return this.startWithCommand(command, loaderUrl)
+      return this.startWithCommand(command, loaderUrl, this.#getChildManagerScripts())
     }
 
     const { hostname, port } = this.serverConfig ?? {}
@@ -144,7 +148,8 @@ export class NextStackable extends BaseStackable {
         runtimeBasePath: this.runtimeConfig.basePath,
         wantsAbsoluteUrls: true,
         telemetryConfig: this.telemetryConfig
-      }
+      },
+      scripts: this.#getChildManagerScripts()
     })
 
     const promise = once(this.childManager, 'url')
@@ -189,7 +194,7 @@ export class NextStackable extends BaseStackable {
     this.#basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
 
     if (command) {
-      return this.startWithCommand(command, loaderUrl)
+      return this.startWithCommand(command, loaderUrl, this.#getChildManagerScripts())
     }
 
     this.childManager = new ChildManager({
@@ -205,7 +210,8 @@ export class NextStackable extends BaseStackable {
         runtimeBasePath: this.runtimeConfig.basePath,
         wantsAbsoluteUrls: true,
         telemetryConfig: this.telemetryConfig
-      }
+      },
+      scripts: this.#getChildManagerScripts()
     })
 
     this.verifyOutputDirectory(pathResolve(this.root, '.next'))
@@ -249,6 +255,16 @@ export class NextStackable extends BaseStackable {
     } finally {
       await this.childManager.eject()
     }
+  }
+
+  #getChildManagerScripts () {
+    const scripts = []
+
+    if (this.#nextVersion.major === 15) {
+      scripts.push(new URL('./lib/loader-next-15.cjs', import.meta.url))
+    }
+
+    return scripts
   }
 }
 

@@ -21,7 +21,8 @@ const files = ['services/frontend/.next/server/app/index.html']
 const versions = {
   '14.0': '14.0.0',
   14.1: '14.1.4',
-  14.2: '14.2.18'
+  14.2: '14.2.18',
+  15.0: '15.0.3'
 }
 
 function websocketHMRHandler (message, resolveConnection, resolveReload) {
@@ -79,6 +80,16 @@ const developmentConfigurations = [
     hmrTriggerFile,
     language: 'js',
     additionalSetup: boundLinkNext('14.2')
+  },
+  {
+    id: 'compatibility',
+    tag: '15.0.x',
+    name: 'Next.js 15.0.x',
+    check: verifyDevelopmentFrontendWithPrefix,
+    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
+    hmrTriggerFile,
+    language: 'js',
+    additionalSetup: boundLinkNext('15.0')
   }
 ]
 
@@ -115,6 +126,17 @@ const productionConfigurations = [
     htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
     language: 'js',
     additionalSetup: boundLinkNext('14.2')
+  },
+  {
+    id: 'compatibility',
+    tag: '15.0.x',
+    name: 'Next.js 15.0.x',
+    prefix: '/frontend',
+    files,
+    checks: [verifyFrontendOnPrefix],
+    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
+    language: 'js',
+    additionalSetup: boundLinkNext('15.0')
   }
 ]
 

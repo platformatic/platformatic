@@ -204,7 +204,7 @@ export class BaseStackable {
     }
   }
 
-  async startWithCommand (command, loader) {
+  async startWithCommand (command, loader, scripts) {
     const config = this.configManager.current
     const basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
 
@@ -212,7 +212,8 @@ export class BaseStackable {
     this.childManager = new ChildManager({
       logger: this.logger,
       loader,
-      context
+      context,
+      scripts
     })
 
     this.childManager.on('config', config => {
