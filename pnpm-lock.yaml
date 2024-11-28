@@ -2085,7 +2085,7 @@ importers:
         version: 16.9.0
       graphql-scalars:
         specifier: ^1.22.5
-        version: 1.23.0(graphql@16.9.0)
+        version: 1.24.0(graphql@16.9.0)
       graphql-type-json:
         specifier: ^0.3.2
         version: 0.3.2(graphql@16.9.0)
@@ -5904,8 +5904,8 @@ packages:
     peerDependencies:
       graphql: '>=15'
 
-  graphql-scalars@1.23.0:
-    resolution: {integrity: sha512-YTRNcwitkn8CqYcleKOx9IvedA8JIERn8BRq21nlKgOr4NEcTaWEG0sT+H92eF3ALTFbPgsqfft4cw+MGgv0Gg==}
+  graphql-scalars@1.24.0:
+    resolution: {integrity: sha512-olbFN39m0XsHHESACUdd7jWU/lGxMMS1B7NZ8XqpqhKZrjBxzeGYAnQ4Ax//huYds771wb7gCznA+65QDuUa+g==}
     engines: {node: '>=10'}
     peerDependencies:
       graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
@@ -13074,7 +13074,7 @@ snapshots:
       lodash.merge: 4.6.2
       lodash.mergewith: 4.6.2
 
-  graphql-scalars@1.23.0(graphql@16.9.0):
+  graphql-scalars@1.24.0(graphql@16.9.0):
     dependencies:
       graphql: 16.9.0
       tslib: 2.8.1
