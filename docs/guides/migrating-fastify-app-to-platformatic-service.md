@@ -102,14 +102,14 @@ await app.listen({ port: 3042, host: '127.0.0.1' });
 
 ## Migrating to Platformatic Service
 
-### 1. Setup a Platformatic Watt Application 
+### Setup a Platformatic Watt Application 
 
 Run the command below and create a Watt application:
 
 <SetupWatt />
 
 
-### 2. Add a Platformatic Service 
+### Add a Platformatic Service 
 
 To start the Platformatic creator wizard, run the appropriate command for your package manager in your terminal:
 
