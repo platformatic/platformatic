@@ -452,8 +452,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.2
       '@fastify/reply-from':
-        specifier: ^11.0.0
-        version: 11.0.2
+        specifier: ^12.0.0
+        version: 12.0.0
       '@fastify/static':
         specifier: ^8.0.0
         version: 8.0.2
@@ -1418,8 +1418,8 @@ importers:
         version: 7.6.3
     devDependencies:
       '@fastify/reply-from':
-        specifier: ^11.0.0
-        version: 11.0.2
+        specifier: ^12.0.0
+        version: 12.0.0
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
@@ -3375,6 +3375,9 @@ packages:
 
   '@fastify/reply-from@11.0.2':
     resolution: {integrity: sha512-VcHhe01PsHuVX2eVrkoskCs+pwNPgVfOOpwQJnSo3AwIKtISm0VCFB7bycQjHfxAuPYgkrI6ZvYoovdHx4sVMA==}
+
+  '@fastify/reply-from@12.0.0':
+    resolution: {integrity: sha512-Ob61xujZ5rRIqYR3Uj4kOXeYTn3QZU3l9LlBnUDs3cZBDjHocep1TZ9HjfAEwQSFJnJO/TkClrPXS0wZMqbL4w==}
 
   '@fastify/send@3.1.1':
     resolution: {integrity: sha512-LdiV2mle/2tH8vh6GwGl0ubfUAgvY+9yF9oGI1iiwVyNUVOQamvw5n+OFu6iCNNoyuCY80FFURBn4TZCbTe8LA==}
@@ -8802,6 +8805,10 @@ packages:
     resolution: {integrity: sha512-BUgJXc752Kou3oOIuU1i+yZZypyZRqNPW0vqoMPl8VaoalSfeR0D8/t4iAS3yirs79SSMTxTag+ZC86uswv+Cw==}
     engines: {node: '>=18.17'}
 
+  undici@7.0.0:
+    resolution: {integrity: sha512-c4xi3kWnQJrb7h2q8aJYKvUzmz7boCgz1cUCC6OwdeM5Tr2P0hDuthr2iut4ggqsz+Cnh20U/LoTzbKIdDS/Nw==}
+    engines: {node: '>=20.18.1'}
+
   unicorn-magic@0.1.0:
     resolution: {integrity: sha512-lRfVq8fE8gz6QMBuDM6a+LO3IAzTi05H6gCVaUpir2E1Rwpo4ZUog45KpNXKC/Mn3Yb9UDuHumeFTo9iV/D9FQ==}
     engines: {node: '>=18'}
@@ -9988,6 +9995,16 @@ snapshots:
       fastify-plugin: 5.0.1
       toad-cache: 3.7.0
       undici: 6.21.0
+
+  '@fastify/reply-from@12.0.0':
+    dependencies:
+      '@fastify/error': 4.0.0
+      end-of-stream: 1.4.4
+      fast-content-type-parse: 2.0.0
+      fast-querystring: 1.1.2
+      fastify-plugin: 5.0.1
+      toad-cache: 3.7.0
+      undici: 7.0.0
 
   '@fastify/send@3.1.1':
     dependencies:
@@ -16727,6 +16744,8 @@ snapshots:
       '@fastify/busboy': 2.1.1
 
   undici@6.21.0: {}
+
+  undici@7.0.0: {}
 
   unicorn-magic@0.1.0: {}
 
