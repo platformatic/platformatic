@@ -47,10 +47,19 @@ async function verifyComposerWithPrefix (
   _hmrProtocol,
   _websocketHMRHandler,
   pauseTimeout,
+  additionalSetup,
   absoluteUrl = true,
   additionalCheck = null
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(t, id, false, language, '/frontend', pauseTimeout)
+  const { runtime, url } = await prepareRuntimeWithServices(
+    t,
+    id,
+    false,
+    language,
+    '/frontend',
+    pauseTimeout,
+    additionalSetup
+  )
 
   await verifyJSONViaHTTP(url, '/frontend', 200, { production: false })
   await verifyJSONViaHTTP(url, '/frontend/', 200, { production: false })
@@ -119,10 +128,19 @@ async function verifyComposerAutodetectPrefix (
   _hmrProtocol,
   _websocketHMRHandler,
   pauseTimeout,
+  additionalSetup,
   absoluteUrl = true,
   additionalCheck = null
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(t, id, false, language, '/nested/base/dir', pauseTimeout)
+  const { runtime, url } = await prepareRuntimeWithServices(
+    t,
+    id,
+    false,
+    language,
+    '/nested/base/dir',
+    pauseTimeout,
+    additionalSetup
+  )
 
   await verifyJSONViaHTTP(url, '/nested/base/dir', 200, { production: false })
   await verifyJSONViaHTTP(url, '/nested/base/dir/', 200, { production: false })
