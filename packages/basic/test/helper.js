@@ -638,8 +638,8 @@ export function verifyDevelopmentMode (configurations, hmrUrl, hmrProtocol, webs
   configurations = filterConfigurations(configurations)
 
   for (const configuration of configurations) {
-    const { id, tag, check, htmlContents, language, hmrTriggerFile, additionalSetup } = configuration
-    test(`should start in development mode - configuration "${id}"${tag ? ` (${tag})` : ''}`, async t => {
+    const { id, todo, tag, check, htmlContents, language, hmrTriggerFile, additionalSetup } = configuration
+    test(`should start in development mode - configuration "${id}"${tag ? ` (${tag})` : ''}`, { todo }, async t => {
       setHMRTriggerFile(hmrTriggerFile)
       await check(
         t,
@@ -659,69 +659,73 @@ export function verifyDevelopmentMode (configurations, hmrUrl, hmrProtocol, webs
 export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
   configurations = filterConfigurations(configurations)
 
-  for (const { id, tag, language, prefix, files, checks, additionalSetup } of configurations) {
-    test(`should build and start in production mode - configuration "${id}${tag ? ` (${tag})` : ''}"`, async t => {
-      let args
-      const { root, config } = await prepareRuntime(t, id, true, null, async (root, config, _args) => {
-        for (const type of ['backend', 'composer']) {
-          await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
-            recursive: true
-          })
-        }
+  for (const { id, todo, tag, language, prefix, files, checks, additionalSetup } of configurations) {
+    test(
+      `should build and start in production mode - configuration "${id}${tag ? ` (${tag})` : ''}"`,
+      { todo },
+      async t => {
+        let args
+        const { root, config } = await prepareRuntime(t, id, true, null, async (root, config, _args) => {
+          for (const type of ['backend', 'composer']) {
+            await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
+              recursive: true
+            })
+          }
 
-        await updateFile(resolve(root, `services/composer/routes/root.${language}`), contents => {
-          return contents.replace('$PREFIX', prefix)
+          await updateFile(resolve(root, `services/composer/routes/root.${language}`), contents => {
+            return contents.replace('$PREFIX', prefix)
+          })
+
+          if (id.endsWith('without-prefix')) {
+            await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
+              const json = JSON.parse(contents)
+              json.composer.services[1].proxy = { prefix: '' }
+              return JSON.stringify(json, null, 2)
+            })
+          }
+
+          if (additionalSetup && !additionalSetup.runAfterPrepare) {
+            await additionalSetup?.(root, config, _args)
+          }
+
+          args = _args
         })
 
-        if (id.endsWith('without-prefix')) {
-          await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
-            const json = JSON.parse(contents)
-            json.composer.services[1].proxy = { prefix: '' }
-            return JSON.stringify(json, null, 2)
-          })
+        if (additionalSetup && additionalSetup.runAfterPrepare) {
+          await additionalSetup?.(root, config, args)
         }
 
-        if (additionalSetup && !additionalSetup.runAfterPrepare) {
-          await additionalSetup?.(root, config, _args)
+        const { hostname: runtimeHost, port: runtimePort, logger } = config.configManager.current.server ?? {}
+
+        // Build
+        await execa('node', [cliPath, 'build'], {
+          cwd: root,
+          stdio: logger?.level !== 'error' ? 'inherit' : undefined
+        })
+
+        // Make sure all file exists
+        for (const file of files) {
+          await ensureExists(resolve(root, file))
         }
 
-        args = _args
-      })
+        // Start the runtime
+        const { url } = await startRuntime(t, root, config, pauseTimeout)
 
-      if (additionalSetup && additionalSetup.runAfterPrepare) {
-        await additionalSetup?.(root, config, args)
+        if (runtimeHost) {
+          const actualHost = new URL(url).hostname
+          strictEqual(actualHost, runtimeHost, `hostname should be ${runtimeHost}`)
+        }
+
+        if (runtimePort) {
+          const actualPort = new URL(url).port
+          strictEqual(actualPort.toString(), runtimePort.toString(), `port should be ${runtimePort}`)
+        }
+
+        // Make sure all checks work properly
+        for (const check of checks) {
+          await check(t, url, check)
+        }
       }
-
-      const { hostname: runtimeHost, port: runtimePort, logger } = config.configManager.current.server ?? {}
-
-      // Build
-      await execa('node', [cliPath, 'build'], {
-        cwd: root,
-        stdio: logger?.level !== 'error' ? 'inherit' : undefined
-      })
-
-      // Make sure all file exists
-      for (const file of files) {
-        await ensureExists(resolve(root, file))
-      }
-
-      // Start the runtime
-      const { url } = await startRuntime(t, root, config, pauseTimeout)
-
-      if (runtimeHost) {
-        const actualHost = new URL(url).hostname
-        strictEqual(actualHost, runtimeHost, `hostname should be ${runtimeHost}`)
-      }
-
-      if (runtimePort) {
-        const actualPort = new URL(url).port
-        strictEqual(actualPort.toString(), runtimePort.toString(), `port should be ${runtimePort}`)
-      }
-
-      // Make sure all checks work properly
-      for (const check of checks) {
-        await check(t, url, check)
-      }
-    })
+    )
   }
 }
