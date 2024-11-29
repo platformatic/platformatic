@@ -98,6 +98,9 @@ export interface StackableInterface {
   getDispatchTarget?: () => Promise<Function | string>
   getOpenapiSchema?: () => Promise<object>
   getGraphqlSchema?: () => Promise<string>
+  setConnectionStatus?: (status: string) => Promise<void>
+  setOpenapiSchema?: (schema: object) => Promise<void>
+  setGraphqlSchema?: (schema: string) => Promise<void>
   collectMetrics?: () => Promise<any>
   getMetrics: ({ format: string }) => Promise<string | Array<object>>
   getMeta?(): () => Promise<object>

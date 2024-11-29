@@ -47,6 +47,7 @@ class ServiceStackable {
       root: this.context.directory ? pathToFileURL(this.context.directory).toString() : undefined,
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
+      setConnectionString: this.setConnectionString.bind(this),
       setBasePath: this.setBasePath.bind(this),
       runtimeBasePath: this.runtimeConfig?.basePath ?? null
     })
@@ -133,7 +134,8 @@ class ServiceStackable {
         needsRootRedirect: false,
         tcp: !!this.app?.url,
         url: this.app?.url
-      }
+      },
+      connectionStrings: [this.connectionString],
     }
   }
 
@@ -222,6 +224,10 @@ class ServiceStackable {
 
   setGraphqlSchema (schema) {
     this.graphqlSchema = schema
+  }
+
+  setConnectionString (connectionString) {
+    this.connectionString = connectionString
   }
 
   setBasePath (basePath) {
