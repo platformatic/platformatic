@@ -64,7 +64,7 @@ before(async () => {
 const developmentConfigurations = [
   {
     id: 'compatibility',
-    todo: isCIOnWindows,
+    skip: isCIOnWindows,
     tag: '14.0.x',
     name: 'Next.js 14.0.x',
     check: verifyDevelopmentFrontendWithPrefix,
@@ -75,7 +75,7 @@ const developmentConfigurations = [
   },
   {
     id: 'compatibility',
-    todo: isCIOnWindows,
+    skip: isCIOnWindows,
     tag: '14.1.x',
     name: 'Next.js 14.1.x',
     check: verifyDevelopmentFrontendWithPrefix,
@@ -86,7 +86,7 @@ const developmentConfigurations = [
   },
   {
     id: 'compatibility',
-    todo: isCIOnWindows,
+    skip: isCIOnWindows,
     tag: '14.2.x',
     name: 'Next.js 14.2.x',
     check: verifyDevelopmentFrontendWithPrefix,
@@ -97,7 +97,7 @@ const developmentConfigurations = [
   },
   {
     only: isCIOnWindows,
-    todo: isCIOnWindows,
+    skip: isCIOnWindows,
     id: 'compatibility',
     tag: '15.0.x',
     name: 'Next.js 15.0.x',
@@ -112,7 +112,7 @@ const developmentConfigurations = [
 const productionConfigurations = [
   {
     id: 'compatibility',
-    todo: isCIOnWindows,
+    skip: isCIOnWindows,
     tag: '14.0.x',
     name: 'Next.js 14.0.x',
     prefix: '/frontend',
@@ -124,7 +124,7 @@ const productionConfigurations = [
   },
   {
     id: 'compatibility',
-    todo: isCIOnWindows,
+    skip: isCIOnWindows,
     tag: '14.1.x',
     name: 'Next.js 14.1.x',
     prefix: '/frontend',
@@ -136,7 +136,7 @@ const productionConfigurations = [
   },
   {
     id: 'compatibility',
-    todo: isCIOnWindows,
+    skip: isCIOnWindows,
     tag: '14.2.x',
     name: 'Next.js 14.2.x',
     prefix: '/frontend',
@@ -148,7 +148,7 @@ const productionConfigurations = [
   },
   {
     id: 'compatibility',
-    todo: isCIOnWindows,
+    skip: isCIOnWindows,
     tag: '15.0.x',
     name: 'Next.js 15.0.x',
     prefix: '/frontend',
