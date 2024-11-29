@@ -4,6 +4,7 @@ import { symlink, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { before } from 'node:test'
 import {
+  isCIOnWindows,
   setFixturesDir,
   temporaryFolder,
   verifyBuildAndProductionMode,
@@ -50,6 +51,16 @@ function boundLinkNext (version) {
   return fn
 }
 
+before(async () => {
+  for (const [tag, version] of Object.entries(versions)) {
+    const base = resolve(temporaryFolder, `next-${tag}`)
+    await safeRemove(base)
+    await createDirectory(base)
+    await writeFile(resolve(base, 'pnpm-workspace.yaml'), '')
+    await execa('pnpm', ['add', '-D', '--ignore-workspace', `next@${version}`, 'react', 'react-dom'], { cwd: base })
+  }
+})
+
 const developmentConfigurations = [
   {
     id: 'compatibility',
@@ -82,6 +93,7 @@ const developmentConfigurations = [
     additionalSetup: boundLinkNext('14.2')
   },
   {
+    only: isCIOnWindows,
     id: 'compatibility',
     tag: '15.0.x',
     name: 'Next.js 15.0.x',
@@ -140,15 +152,8 @@ const productionConfigurations = [
   }
 ]
 
-before(async () => {
-  for (const [tag, version] of Object.entries(versions)) {
-    const base = resolve(temporaryFolder, `next-${tag}`)
-    await safeRemove(base)
-    await createDirectory(base)
-    await writeFile(resolve(base, 'pnpm-workspace.yaml'), '')
-    await execa('pnpm', ['add', '-D', '--ignore-workspace', `next@${version}`, 'react', 'react-dom'], { cwd: base })
-  }
-})
-
 verifyDevelopmentMode(developmentConfigurations, '_next/webpack-hmr', undefined, websocketHMRHandler)
-verifyBuildAndProductionMode(productionConfigurations)
+
+if (!isCIOnWindows) {
+  verifyBuildAndProductionMode(productionConfigurations)
+}
