@@ -1746,8 +1746,8 @@ importers:
         specifier: ^6.9.0
         version: 6.21.0
       undici-thread-interceptor:
-        specifier: ^0.9.0
-        version: 0.9.2
+        specifier: ^0.10.0
+        version: 0.10.0
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -8789,8 +8789,8 @@ packages:
   undici-oidc-interceptor@0.5.0:
     resolution: {integrity: sha512-YU6ABaLFxzKZGjBmamrrRTlziIe6/jrEBUEyNEe2ZRtlXULorg6xo+/jsyEPZVizHdrTFFX3ZPEPxrNmO3pOEA==}
 
-  undici-thread-interceptor@0.9.2:
-    resolution: {integrity: sha512-YUdWEkvXL1K6XuWAKObFyZtFXKJyTGZHtWT37WBBMcnoz3vDU/19qlb4yORXRJ1PafU3xbvvSW1bBEitV0g2Aw==}
+  undici-thread-interceptor@0.10.0:
+    resolution: {integrity: sha512-+dxtQP/ElVKCTD9JoVB763sF6yGCZ7RK4HDMIRC2tEd5XMZpkYSQLwKSwKvjINmVparYs2seYdPGp39mQVJFYg==}
 
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
@@ -8805,6 +8805,10 @@ packages:
   undici@6.21.0:
     resolution: {integrity: sha512-BUgJXc752Kou3oOIuU1i+yZZypyZRqNPW0vqoMPl8VaoalSfeR0D8/t4iAS3yirs79SSMTxTag+ZC86uswv+Cw==}
     engines: {node: '>=18.17'}
+
+  undici@7.0.0:
+    resolution: {integrity: sha512-c4xi3kWnQJrb7h2q8aJYKvUzmz7boCgz1cUCC6OwdeM5Tr2P0hDuthr2iut4ggqsz+Cnh20U/LoTzbKIdDS/Nw==}
+    engines: {node: '>=20.18.1'}
 
   unicorn-magic@0.1.0:
     resolution: {integrity: sha512-lRfVq8fE8gz6QMBuDM6a+LO3IAzTi05H6gCVaUpir2E1Rwpo4ZUog45KpNXKC/Mn3Yb9UDuHumeFTo9iV/D9FQ==}
@@ -16712,11 +16716,11 @@ snapshots:
       fast-jwt: 4.0.6
       undici: 6.21.0
 
-  undici-thread-interceptor@0.9.2:
+  undici-thread-interceptor@0.10.0:
     dependencies:
       hyperid: 3.3.0
       light-my-request: 6.3.0
-      undici: 6.21.0
+      undici: 7.0.0
 
   undici-types@5.26.5: {}
 
@@ -16727,6 +16731,8 @@ snapshots:
       '@fastify/busboy': 2.1.1
 
   undici@6.21.0: {}
+
+  undici@7.0.0: {}
 
   unicorn-magic@0.1.0: {}
 
