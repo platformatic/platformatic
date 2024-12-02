@@ -128,7 +128,12 @@ async function main () {
   const { telemetry } = service
   const hooks = telemetry ? createTelemetryThreadInterceptorHooks() : {}
   // Setup mesh networker
-  const threadDispatcher = wire({ port: parentPort, useNetwork: service.useHttp, timeout: config.serviceTimeout, ...hooks })
+  const threadDispatcher = wire({
+    port: parentPort,
+    useNetwork: service.useHttp,
+    timeout: config.serviceTimeout,
+    ...hooks
+  })
 
   if (config.httpCache) {
     setGlobalDispatcher(
@@ -185,7 +190,7 @@ async function main () {
 
   if (service.entrypoint && config.basePath) {
     const meta = await app.stackable.getMeta()
-    if (!meta.wantsAbsoluteUrls) {
+    if (!meta.composer.wantsAbsoluteUrls) {
       stripBasePath(config.basePath)
     }
   }
@@ -226,10 +231,7 @@ function stripBasePath (basePath) {
 
       if (headers) {
         for (const key in headers) {
-          if (
-            key.toLowerCase() === 'location' &&
-            !headers[key].startsWith(basePath)
-          ) {
+          if (key.toLowerCase() === 'location' && !headers[key].startsWith(basePath)) {
             headers[key] = basePath + headers[key]
           }
         }

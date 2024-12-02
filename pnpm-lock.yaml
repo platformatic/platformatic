@@ -59,13 +59,13 @@ importers:
         version: 0.19.0
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       json-schema-to-typescript:
         specifier: ^15.0.1
         version: 15.0.3
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       typescript:
         specifier: ^5.5.4
         version: 5.7.2
@@ -123,7 +123,7 @@ importers:
         version: 0.19.0
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       express:
         specifier: ^4.19.2
         version: 4.21.1
@@ -135,10 +135,10 @@ importers:
         version: 15.0.3
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       next:
-        specifier: ^14.2.5
-        version: 14.2.18(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^15.0.0
+        version: 15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -250,7 +250,7 @@ importers:
         version: 10.1.2
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       fastify:
         specifier: ^5.0.0
         version: 5.1.0
@@ -265,7 +265,7 @@ importers:
         version: 2.1.6
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       typescript:
         specifier: ^5.5.3
         version: 5.7.2
@@ -314,7 +314,7 @@ importers:
         version: 10.1.2
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       execa:
         specifier: ^8.0.1
         version: 8.0.1
@@ -323,7 +323,7 @@ importers:
         version: 5.1.0
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       split2:
         specifier: ^4.2.0
         version: 4.2.0
@@ -414,7 +414,7 @@ importers:
         version: 16.4.5
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       execa:
         specifier: ^8.0.1
         version: 8.0.1
@@ -429,7 +429,7 @@ importers:
         version: 11.2.0
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       split2:
         specifier: ^4.2.0
         version: 4.2.0
@@ -574,13 +574,13 @@ importers:
         version: 1.5.3
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       json-schema-to-typescript:
         specifier: ^15.0.0
         version: 15.0.3
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       openapi-schema-validator:
         specifier: ^12.1.3
         version: 12.1.3
@@ -653,7 +653,7 @@ importers:
         version: 10.1.2
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       fastify:
         specifier: ^5.0.0
         version: 5.1.0
@@ -662,7 +662,7 @@ importers:
         version: 2.2.3
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       pino:
         specifier: ^9.0.0
         version: 9.5.0
@@ -720,13 +720,13 @@ importers:
         version: 1.3.1
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       execa:
         specifier: ^8.0.1
         version: 8.0.1
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       split2:
         specifier: ^4.2.0
         version: 4.2.0
@@ -838,7 +838,7 @@ importers:
         version: 16.4.5
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       esmock:
         specifier: ^2.6.4
         version: 2.6.9
@@ -847,7 +847,7 @@ importers:
         version: 5.1.0
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       typescript:
         specifier: ~5.7.0
         version: 5.7.2
@@ -1016,7 +1016,7 @@ importers:
         version: 10.1.2
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       json-schema-to-typescript:
         specifier: ^15.0.0
         version: 15.0.3
@@ -1025,7 +1025,7 @@ importers:
         version: 15.1.0(graphql@16.9.0)
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       openapi-types:
         specifier: ^12.1.3
         version: 12.1.3
@@ -1095,7 +1095,7 @@ importers:
         version: 0.19.0
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       fast-jwt:
         specifier: ^5.0.0
         version: 5.0.0
@@ -1107,7 +1107,7 @@ importers:
         version: 9.0.2
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       tsd:
         specifier: ^0.31.0
         version: 0.31.2
@@ -1144,13 +1144,13 @@ importers:
         version: 0.19.0
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       fastify:
         specifier: ^5.0.0
         version: 5.1.0
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       typescript:
         specifier: ^5.5.4
         version: 5.7.2
@@ -1214,10 +1214,10 @@ importers:
         version: 4.3.4(vite@5.4.11(@types/node@22.10.1))
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -1283,10 +1283,10 @@ importers:
         version: link:../utils
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       platformatic:
         specifier: workspace:*
         version: link:../cli
@@ -1329,10 +1329,10 @@ importers:
         version: 10.1.2
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       tsd:
         specifier: ^0.31.0
         version: 0.31.2
@@ -1357,10 +1357,10 @@ importers:
         version: 0.19.0
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       tsd:
         specifier: ^0.31.0
         version: 0.31.2
@@ -1385,10 +1385,10 @@ importers:
         version: 0.19.0
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
 
   packages/next:
     dependencies:
@@ -1413,6 +1413,9 @@ importers:
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
+      amaro:
+        specifier: ^0.2.0
+        version: 0.2.0
       semver:
         specifier: ^7.6.3
         version: 7.6.3
@@ -1434,7 +1437,10 @@ importers:
         version: 0.19.0
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
+      execa:
+        specifier: ^9.5.1
+        version: 9.5.1
       fastify:
         specifier: ^5.0.0
         version: 5.1.0
@@ -1443,10 +1449,10 @@ importers:
         version: 15.0.3
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       next:
-        specifier: ^14.2.5
-        version: 14.2.18(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^15.0.0
+        version: 15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -1486,7 +1492,7 @@ importers:
         version: 0.19.0
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       express:
         specifier: ^4.19.2
         version: 4.21.1
@@ -1501,7 +1507,7 @@ importers:
         version: 2.15.3
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       tsx:
         specifier: ^4.19.0
         version: 4.19.2
@@ -1559,7 +1565,7 @@ importers:
         version: 0.19.0
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       fastify:
         specifier: ^5.0.0
         version: 5.1.0
@@ -1571,7 +1577,7 @@ importers:
         version: 15.0.3
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -1599,13 +1605,13 @@ importers:
         version: 0.19.0
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       fastify:
         specifier: ^5.0.0
         version: 5.1.0
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
 
   packages/rpc-cli:
     dependencies:
@@ -1633,7 +1639,7 @@ importers:
         version: 0.19.0
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       execa:
         specifier: ^8.0.1
         version: 8.0.1
@@ -1642,7 +1648,7 @@ importers:
         version: 5.1.0
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
 
   packages/runtime:
     dependencies:
@@ -1787,7 +1793,7 @@ importers:
         version: 10.1.2
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       execa:
         specifier: ^8.0.1
         version: 8.0.1
@@ -1808,7 +1814,7 @@ importers:
         version: 15.0.3
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       pino-abstract-transport:
         specifier: ^2.0.0
         version: 2.0.0
@@ -1988,13 +1994,13 @@ importers:
         version: 0.19.0
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       json-schema-to-typescript:
         specifier: ^15.0.0
         version: 15.0.3
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       openapi-types:
         specifier: ^12.1.3
         version: 12.1.3
@@ -2055,7 +2061,7 @@ importers:
         version: 0.19.0
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       fastify:
         specifier: ^5.0.0
         version: 5.1.0
@@ -2064,7 +2070,7 @@ importers:
         version: 5.4.1
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       tsd:
         specifier: ^0.31.0
         version: 0.31.2
@@ -2094,7 +2100,7 @@ importers:
         version: 16.9.0
       graphql-scalars:
         specifier: ^1.22.5
-        version: 1.23.0(graphql@16.9.0)
+        version: 1.24.0(graphql@16.9.0)
       graphql-type-json:
         specifier: ^0.3.2
         version: 0.3.2(graphql@16.9.0)
@@ -2128,7 +2134,7 @@ importers:
         version: 0.19.0
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       fastify:
         specifier: ^5.0.0
         version: 5.1.0
@@ -2137,7 +2143,7 @@ importers:
         version: 2.0.0
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       tsd:
         specifier: ^0.31.0
         version: 0.31.2
@@ -2171,13 +2177,13 @@ importers:
         version: 3.19.2
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       fastify:
         specifier: ^5.0.0
         version: 5.1.0
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       typescript:
         specifier: ^5.5.4
         version: 5.7.2
@@ -2235,13 +2241,13 @@ importers:
         version: 0.19.0
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       fastify:
         specifier: ^5.0.0
         version: 5.1.0
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       tsd:
         specifier: ^0.31.0
         version: 0.31.2
@@ -2296,13 +2302,13 @@ importers:
         version: 0.19.0
       eslint:
         specifier: ^9.4.0
-        version: 9.15.0
+        version: 9.16.0
       fastify:
         specifier: ^5.0.0
         version: 5.1.0
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       openapi-types:
         specifier: ^12.1.3
         version: 12.1.3
@@ -2378,7 +2384,7 @@ importers:
         version: 5.1.0
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       typescript:
         specifier: ^5.5.4
         version: 5.7.2
@@ -2406,13 +2412,13 @@ importers:
         version: 10.1.2
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       fastify:
         specifier: ^5.0.0
         version: 5.1.0
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       pino-test:
         specifier: ^1.0.1
         version: 1.1.0
@@ -2452,13 +2458,13 @@ importers:
         version: 0.19.0
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       fastify:
         specifier: ^5.0.0
         version: 5.1.0
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       typescript:
         specifier: ^5.5.4
         version: 5.7.2
@@ -2501,13 +2507,13 @@ importers:
         version: 0.19.0
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       json-schema-to-typescript:
         specifier: ^15.0.1
         version: 15.0.3
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -2577,7 +2583,7 @@ importers:
         version: 0.19.0
       eslint:
         specifier: '9'
-        version: 9.15.0
+        version: 9.16.0
       inspector-client:
         specifier: ^0.1.2
         version: 0.1.2
@@ -2586,7 +2592,7 @@ importers:
         version: 15.0.3
       neostandard:
         specifier: ^0.11.1
-        version: 0.11.9(eslint@9.15.0)(typescript@5.7.2)
+        version: 0.11.9(eslint@9.16.0)(typescript@5.7.2)
       typescript:
         specifier: ^5.5.4
         version: 5.7.2
@@ -3297,8 +3303,8 @@ packages:
     resolution: {integrity: sha512-grOjVNN8P3hjJn/eIETF1wwd12DdnwFDoyceUJLYYdkpbwq3nLi+4fqrTAONx7XDALqlL220wC/RHSC/QTI/0w==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@eslint/js@9.15.0':
-    resolution: {integrity: sha512-tMTqrY+EzbXmKJR5ToI8lxu7jaN5EdmrBFJpQk5JmSlyLsx6o4t27r883K5xsLuCYCpfKBCGswMSWXsM+jB7lg==}
+  '@eslint/js@9.16.0':
+    resolution: {integrity: sha512-tw2HxzQkrbeuvyj1tG2Yqq+0H9wGoI2IMk4EOsQeX+vmd75FtJAzf+gTA69WF+baUKRYQ3x2kbLE08js5OsTVg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   '@eslint/object-schema@2.1.4':
@@ -3640,59 +3646,53 @@ packages:
     peerDependencies:
       graphql: ^16.0.0
 
-  '@next/env@14.2.18':
-    resolution: {integrity: sha512-2vWLOUwIPgoqMJKG6dt35fVXVhgM09tw4tK3/Q34GFXDrfiHlG7iS33VA4ggnjWxjiz9KV5xzfsQzJX6vGAekA==}
+  '@next/env@15.0.3':
+    resolution: {integrity: sha512-t9Xy32pjNOvVn2AS+Utt6VmyrshbpfUMhIjFO60gI58deSo/KgLOp31XZ4O+kY/Is8WAGYwA5gR7kOb1eORDBA==}
 
-  '@next/swc-darwin-arm64@14.2.18':
-    resolution: {integrity: sha512-tOBlDHCjGdyLf0ube/rDUs6VtwNOajaWV+5FV/ajPgrvHeisllEdymY/oDgv2cx561+gJksfMUtqf8crug7sbA==}
+  '@next/swc-darwin-arm64@15.0.3':
+    resolution: {integrity: sha512-s3Q/NOorCsLYdCKvQlWU+a+GeAd3C8Rb3L1YnetsgwXzhc3UTWrtQpB/3eCjFOdGUj5QmXfRak12uocd1ZiiQw==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
 
-  '@next/swc-darwin-x64@14.2.18':
-    resolution: {integrity: sha512-uJCEjutt5VeJ30jjrHV1VIHCsbMYnEqytQgvREx+DjURd/fmKy15NaVK4aR/u98S1LGTnjq35lRTnRyygglxoA==}
+  '@next/swc-darwin-x64@15.0.3':
+    resolution: {integrity: sha512-Zxl/TwyXVZPCFSf0u2BNj5sE0F2uR6iSKxWpq4Wlk/Sv9Ob6YCKByQTkV2y6BCic+fkabp9190hyrDdPA/dNrw==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [darwin]
 
-  '@next/swc-linux-arm64-gnu@14.2.18':
-    resolution: {integrity: sha512-IL6rU8vnBB+BAm6YSWZewc+qvdL1EaA+VhLQ6tlUc0xp+kkdxQrVqAnh8Zek1ccKHlTDFRyAft0e60gteYmQ4A==}
+  '@next/swc-linux-arm64-gnu@15.0.3':
+    resolution: {integrity: sha512-T5+gg2EwpsY3OoaLxUIofmMb7ohAUlcNZW0fPQ6YAutaWJaxt1Z1h+8zdl4FRIOr5ABAAhXtBcpkZNwUcKI2fw==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@next/swc-linux-arm64-musl@14.2.18':
-    resolution: {integrity: sha512-RCaENbIZqKKqTlL8KNd+AZV/yAdCsovblOpYFp0OJ7ZxgLNbV5w23CUU1G5On+0fgafrsGcW+GdMKdFjaRwyYA==}
+  '@next/swc-linux-arm64-musl@15.0.3':
+    resolution: {integrity: sha512-WkAk6R60mwDjH4lG/JBpb2xHl2/0Vj0ZRu1TIzWuOYfQ9tt9NFsIinI1Epma77JVgy81F32X/AeD+B2cBu/YQA==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@next/swc-linux-x64-gnu@14.2.18':
-    resolution: {integrity: sha512-3kmv8DlyhPRCEBM1Vavn8NjyXtMeQ49ID0Olr/Sut7pgzaQTo4h01S7Z8YNE0VtbowyuAL26ibcz0ka6xCTH5g==}
+  '@next/swc-linux-x64-gnu@15.0.3':
+    resolution: {integrity: sha512-gWL/Cta1aPVqIGgDb6nxkqy06DkwJ9gAnKORdHWX1QBbSZZB+biFYPFti8aKIQL7otCE1pjyPaXpFzGeG2OS2w==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
 
-  '@next/swc-linux-x64-musl@14.2.18':
-    resolution: {integrity: sha512-mliTfa8seVSpTbVEcKEXGjC18+TDII8ykW4a36au97spm9XMPqQTpdGPNBJ9RySSFw9/hLuaCMByluQIAnkzlw==}
+  '@next/swc-linux-x64-musl@15.0.3':
+    resolution: {integrity: sha512-QQEMwFd8r7C0GxQS62Zcdy6GKx999I/rTO2ubdXEe+MlZk9ZiinsrjwoiBL5/57tfyjikgh6GOU2WRQVUej3UA==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
 
-  '@next/swc-win32-arm64-msvc@14.2.18':
-    resolution: {integrity: sha512-J5g0UFPbAjKYmqS3Cy7l2fetFmWMY9Oao32eUsBPYohts26BdrMUyfCJnZFQkX9npYaHNDOWqZ6uV9hSDPw9NA==}
+  '@next/swc-win32-arm64-msvc@15.0.3':
+    resolution: {integrity: sha512-9TEp47AAd/ms9fPNgtgnT7F3M1Hf7koIYYWCMQ9neOwjbVWJsHZxrFbI3iEDJ8rf1TDGpmHbKxXf2IFpAvheIQ==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [win32]
 
-  '@next/swc-win32-ia32-msvc@14.2.18':
-    resolution: {integrity: sha512-Ynxuk4ZgIpdcN7d16ivJdjsDG1+3hTvK24Pp8DiDmIa2+A4CfhJSEHHVndCHok6rnLUzAZD+/UOKESQgTsAZGg==}
-    engines: {node: '>= 10'}
-    cpu: [ia32]
-    os: [win32]
-
-  '@next/swc-win32-x64-msvc@14.2.18':
-    resolution: {integrity: sha512-dtRGMhiU9TN5nyhwzce+7c/4CCeykYS+ipY/4mIrGzJ71+7zNo55ZxCB7cAVuNqdwtYniFNR2c9OFQ6UdFIMcg==}
+  '@next/swc-win32-x64-msvc@15.0.3':
+    resolution: {integrity: sha512-VNAz+HN4OGgvZs6MOoVfnn41kBzT+M+tB+OK4cww6DNyWS6wKaDpaAm/qLeOUbnMh0oVx1+mg0uoYARF69dJyA==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
@@ -4182,8 +4182,8 @@ packages:
   '@swc/counter@0.1.3':
     resolution: {integrity: sha512-e2BR4lsJkkRlKZ/qCHPw9ZaSxc0MVUd7gtbtaB7aMvHeJVYe8sOB8DBZkP2DtISHGSku9sCK6T6cnY0CtXrOCQ==}
 
-  '@swc/helpers@0.5.5':
-    resolution: {integrity: sha512-KGYxvIOXcceOAbEk4bi/dVLEK9z8sZ0uBB3Il5b1rhfClSpcX0yfRO0KmTkqR2cnQDymwLB+25ZyMzICg/cm/A==}
+  '@swc/helpers@0.5.13':
+    resolution: {integrity: sha512-UoKGxQ3r5kYI9dALKJapMmuK+1zWM/H17Z1+iwnNmzcJRnfFuevZs375TA5rW31pu4BS4NoSy1fRsexDXfWn5w==}
 
   '@tsconfig/node10@1.0.11':
     resolution: {integrity: sha512-DcRjDCujK/kCk/cUe8Xz8ZSpm8mS3mNNpta+jGCA6USEDfktlNvm1+IuZ9eTcDbNk41BHwpHHeW+N1lKCz4zOw==}
@@ -4490,6 +4490,10 @@ packages:
 
   ajv@8.17.1:
     resolution: {integrity: sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g==}
+
+  amaro@0.2.0:
+    resolution: {integrity: sha512-MMF2dM9+koYMz/je5nLKCrGXQi+WBD0GwfcUFSe3EHwX3O6h26szfUIuE9VibDDoTMswZ6TKSjYhrgb8je3yAQ==}
+    engines: {node: '>=22'}
 
   ansi-align@3.0.1:
     resolution: {integrity: sha512-IOfwwBF5iczOjp/WeY4YxyjqAFMQoZufdQWDd19SEExbVLNXqvpzSJ/M7Za4/sCPmQ0+GRquoA7bGcINcxew6w==}
@@ -5431,8 +5435,8 @@ packages:
     resolution: {integrity: sha512-UyLnSehNt62FFhSwjZlHmeokpRK59rcz29j+F1/aDgbkbRTk7wIc9XzdoasMUbRNKDM0qQt/+BJ4BrpFeABemw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  eslint@9.15.0:
-    resolution: {integrity: sha512-7CrWySmIibCgT1Os28lUU6upBshZ+GxybLOrmRzi08kS8MBuO8QA7pXEgYgY5W8vK3e74xv0lpjo9DbaGU9Rkw==}
+  eslint@9.16.0:
+    resolution: {integrity: sha512-whp8mSQI4C8VXd+fLgSM0lh3UlmcFtVwUQjyKCFfsp+2ItAIYhlq/hqGahGqHE6cv9unM41VlqKk2VtKYR2TaA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     hasBin: true
     peerDependencies:
@@ -5911,8 +5915,8 @@ packages:
     peerDependencies:
       graphql: '>=15'
 
-  graphql-scalars@1.23.0:
-    resolution: {integrity: sha512-YTRNcwitkn8CqYcleKOx9IvedA8JIERn8BRq21nlKgOr4NEcTaWEG0sT+H92eF3ALTFbPgsqfft4cw+MGgv0Gg==}
+  graphql-scalars@1.24.0:
+    resolution: {integrity: sha512-olbFN39m0XsHHESACUdd7jWU/lGxMMS1B7NZ8XqpqhKZrjBxzeGYAnQ4Ax//huYds771wb7gCznA+65QDuUa+g==}
     engines: {node: '>=10'}
     peerDependencies:
       graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
@@ -7209,20 +7213,23 @@ packages:
     resolution: {integrity: sha512-Z4SmBUweYa09+o6pG+eASabEpP6QkQ70yHj351pQoEXIs8uHbaU2DWVmzBANKgflPa47A50PtB2+NgRpQvr7vA==}
     engines: {node: '>= 10'}
 
-  next@14.2.18:
-    resolution: {integrity: sha512-H9qbjDuGivUDEnK6wa+p2XKO+iMzgVgyr9Zp/4Iv29lKa+DYaxJGjOeEA+5VOvJh/M7HLiskehInSa0cWxVXUw==}
-    engines: {node: '>=18.17.0'}
+  next@15.0.3:
+    resolution: {integrity: sha512-ontCbCRKJUIoivAdGB34yCaOcPgYXr9AAkV/IwqFfWWTXEPUgLYkSkqBhIk9KK7gGmgjc64B+RdoeIDM13Irnw==}
+    engines: {node: ^18.18.0 || ^19.8.0 || >= 20.0.0}
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.1.0
       '@playwright/test': ^1.41.2
-      react: ^18.2.0
-      react-dom: ^18.2.0
+      babel-plugin-react-compiler: '*'
+      react: ^18.2.0 || 19.0.0-rc-66855b96-20241106
+      react-dom: ^18.2.0 || 19.0.0-rc-66855b96-20241106
       sass: ^1.3.0
     peerDependenciesMeta:
       '@opentelemetry/api':
         optional: true
       '@playwright/test':
+        optional: true
+      babel-plugin-react-compiler:
         optional: true
       sass:
         optional: true
@@ -8521,13 +8528,13 @@ packages:
   style-to-object@0.4.4:
     resolution: {integrity: sha512-HYNoHZa2GorYNyqiCaBgsxvcJIn7OHq6inEga+E6Ke3m5JkoqpQbnFssk4jwe+K7AhGa2fcha4wSOf1Kn01dMg==}
 
-  styled-jsx@5.1.1:
-    resolution: {integrity: sha512-pW7uC1l4mBZ8ugbiZrcIsiIvVx1UmTfw7UkC3Um2tmfUq9Bhk8IiyEIPl6F8agHgjzku6j0xQEZbfA5uSgSaCw==}
+  styled-jsx@5.1.6:
+    resolution: {integrity: sha512-qSVyDTeMotdvQYoHWLNGwRFJHC+i+ZvdBRYosOFgC+Wg1vx4frN2/RG/NA7SYqqvKNLf39P2LSRA2pu6n0XYZA==}
     engines: {node: '>= 12.0.0'}
     peerDependencies:
       '@babel/core': '*'
       babel-plugin-macros: '*'
-      react: '>= 16.8.0 || 17.x.x || ^18.0.0-0'
+      react: '>= 16.8.0 || 17.x.x || ^18.0.0-0 || ^19.0.0-0'
     peerDependenciesMeta:
       '@babel/core':
         optional: true
@@ -9838,9 +9845,9 @@ snapshots:
   '@esbuild/win32-x64@0.23.1':
     optional: true
 
-  '@eslint-community/eslint-utils@4.4.1(eslint@9.15.0)':
+  '@eslint-community/eslint-utils@4.4.1(eslint@9.16.0)':
     dependencies:
-      eslint: 9.15.0
+      eslint: 9.16.0
       eslint-visitor-keys: 3.4.3
 
   '@eslint-community/regexpp@4.12.1': {}
@@ -9869,7 +9876,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@eslint/js@9.15.0': {}
+  '@eslint/js@9.16.0': {}
 
   '@eslint/object-schema@2.1.4': {}
 
@@ -10314,33 +10321,30 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@next/env@14.2.18': {}
+  '@next/env@15.0.3': {}
 
-  '@next/swc-darwin-arm64@14.2.18':
+  '@next/swc-darwin-arm64@15.0.3':
     optional: true
 
-  '@next/swc-darwin-x64@14.2.18':
+  '@next/swc-darwin-x64@15.0.3':
     optional: true
 
-  '@next/swc-linux-arm64-gnu@14.2.18':
+  '@next/swc-linux-arm64-gnu@15.0.3':
     optional: true
 
-  '@next/swc-linux-arm64-musl@14.2.18':
+  '@next/swc-linux-arm64-musl@15.0.3':
     optional: true
 
-  '@next/swc-linux-x64-gnu@14.2.18':
+  '@next/swc-linux-x64-gnu@15.0.3':
     optional: true
 
-  '@next/swc-linux-x64-musl@14.2.18':
+  '@next/swc-linux-x64-musl@15.0.3':
     optional: true
 
-  '@next/swc-win32-arm64-msvc@14.2.18':
+  '@next/swc-win32-arm64-msvc@15.0.3':
     optional: true
 
-  '@next/swc-win32-ia32-msvc@14.2.18':
-    optional: true
-
-  '@next/swc-win32-x64-msvc@14.2.18':
+  '@next/swc-win32-x64-msvc@15.0.3':
     optional: true
 
   '@nodelib/fs.scandir@2.1.5':
@@ -10946,10 +10950,10 @@ snapshots:
 
   '@sindresorhus/merge-streams@4.0.0': {}
 
-  '@stylistic/eslint-plugin@2.11.0(eslint@9.15.0)(typescript@5.7.2)':
+  '@stylistic/eslint-plugin@2.11.0(eslint@9.16.0)(typescript@5.7.2)':
     dependencies:
-      '@typescript-eslint/utils': 8.16.0(eslint@9.15.0)(typescript@5.7.2)
-      eslint: 9.15.0
+      '@typescript-eslint/utils': 8.16.0(eslint@9.16.0)(typescript@5.7.2)
+      eslint: 9.16.0
       eslint-visitor-keys: 4.2.0
       espree: 10.3.0
       estraverse: 5.3.0
@@ -10960,9 +10964,8 @@ snapshots:
 
   '@swc/counter@0.1.3': {}
 
-  '@swc/helpers@0.5.5':
+  '@swc/helpers@0.5.13':
     dependencies:
-      '@swc/counter': 0.1.3
       tslib: 2.8.1
 
   '@tsconfig/node10@1.0.11': {}
@@ -11103,15 +11106,15 @@ snapshots:
     dependencies:
       '@types/node': 22.10.1
 
-  '@typescript-eslint/eslint-plugin@8.16.0(@typescript-eslint/parser@8.16.0(eslint@9.15.0)(typescript@5.7.2))(eslint@9.15.0)(typescript@5.7.2)':
+  '@typescript-eslint/eslint-plugin@8.16.0(@typescript-eslint/parser@8.16.0(eslint@9.16.0)(typescript@5.7.2))(eslint@9.16.0)(typescript@5.7.2)':
     dependencies:
       '@eslint-community/regexpp': 4.12.1
-      '@typescript-eslint/parser': 8.16.0(eslint@9.15.0)(typescript@5.7.2)
+      '@typescript-eslint/parser': 8.16.0(eslint@9.16.0)(typescript@5.7.2)
       '@typescript-eslint/scope-manager': 8.16.0
-      '@typescript-eslint/type-utils': 8.16.0(eslint@9.15.0)(typescript@5.7.2)
-      '@typescript-eslint/utils': 8.16.0(eslint@9.15.0)(typescript@5.7.2)
+      '@typescript-eslint/type-utils': 8.16.0(eslint@9.16.0)(typescript@5.7.2)
+      '@typescript-eslint/utils': 8.16.0(eslint@9.16.0)(typescript@5.7.2)
       '@typescript-eslint/visitor-keys': 8.16.0
-      eslint: 9.15.0
+      eslint: 9.16.0
       graphemer: 1.4.0
       ignore: 5.3.2
       natural-compare: 1.4.0
@@ -11121,14 +11124,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/parser@8.16.0(eslint@9.15.0)(typescript@5.7.2)':
+  '@typescript-eslint/parser@8.16.0(eslint@9.16.0)(typescript@5.7.2)':
     dependencies:
       '@typescript-eslint/scope-manager': 8.16.0
       '@typescript-eslint/types': 8.16.0
       '@typescript-eslint/typescript-estree': 8.16.0(typescript@5.7.2)
       '@typescript-eslint/visitor-keys': 8.16.0
       debug: 4.3.7
-      eslint: 9.15.0
+      eslint: 9.16.0
     optionalDependencies:
       typescript: 5.7.2
     transitivePeerDependencies:
@@ -11139,12 +11142,12 @@ snapshots:
       '@typescript-eslint/types': 8.16.0
       '@typescript-eslint/visitor-keys': 8.16.0
 
-  '@typescript-eslint/type-utils@8.16.0(eslint@9.15.0)(typescript@5.7.2)':
+  '@typescript-eslint/type-utils@8.16.0(eslint@9.16.0)(typescript@5.7.2)':
     dependencies:
       '@typescript-eslint/typescript-estree': 8.16.0(typescript@5.7.2)
-      '@typescript-eslint/utils': 8.16.0(eslint@9.15.0)(typescript@5.7.2)
+      '@typescript-eslint/utils': 8.16.0(eslint@9.16.0)(typescript@5.7.2)
       debug: 4.3.7
-      eslint: 9.15.0
+      eslint: 9.16.0
       ts-api-utils: 1.4.2(typescript@5.7.2)
     optionalDependencies:
       typescript: 5.7.2
@@ -11168,13 +11171,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/utils@8.16.0(eslint@9.15.0)(typescript@5.7.2)':
+  '@typescript-eslint/utils@8.16.0(eslint@9.16.0)(typescript@5.7.2)':
     dependencies:
-      '@eslint-community/eslint-utils': 4.4.1(eslint@9.15.0)
+      '@eslint-community/eslint-utils': 4.4.1(eslint@9.16.0)
       '@typescript-eslint/scope-manager': 8.16.0
       '@typescript-eslint/types': 8.16.0
       '@typescript-eslint/typescript-estree': 8.16.0(typescript@5.7.2)
-      eslint: 9.15.0
+      eslint: 9.16.0
     optionalDependencies:
       typescript: 5.7.2
     transitivePeerDependencies:
@@ -11338,6 +11341,8 @@ snapshots:
       fast-uri: 3.0.3
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
+
+  amaro@0.2.0: {}
 
   ansi-align@3.0.1:
     dependencies:
@@ -12398,9 +12403,9 @@ snapshots:
     optionalDependencies:
       source-map: 0.6.1
 
-  eslint-compat-utils@0.5.1(eslint@9.15.0):
+  eslint-compat-utils@0.5.1(eslint@9.16.0):
     dependencies:
-      eslint: 9.15.0
+      eslint: 9.16.0
       semver: 7.6.3
 
   eslint-formatter-pretty@4.1.0:
@@ -12414,31 +12419,31 @@ snapshots:
       string-width: 4.2.3
       supports-hyperlinks: 2.3.0
 
-  eslint-plugin-es-x@7.8.0(eslint@9.15.0):
+  eslint-plugin-es-x@7.8.0(eslint@9.16.0):
     dependencies:
-      '@eslint-community/eslint-utils': 4.4.1(eslint@9.15.0)
+      '@eslint-community/eslint-utils': 4.4.1(eslint@9.16.0)
       '@eslint-community/regexpp': 4.12.1
-      eslint: 9.15.0
-      eslint-compat-utils: 0.5.1(eslint@9.15.0)
+      eslint: 9.16.0
+      eslint-compat-utils: 0.5.1(eslint@9.16.0)
 
-  eslint-plugin-n@17.14.0(eslint@9.15.0):
+  eslint-plugin-n@17.14.0(eslint@9.16.0):
     dependencies:
-      '@eslint-community/eslint-utils': 4.4.1(eslint@9.15.0)
+      '@eslint-community/eslint-utils': 4.4.1(eslint@9.16.0)
       enhanced-resolve: 5.17.1
-      eslint: 9.15.0
-      eslint-plugin-es-x: 7.8.0(eslint@9.15.0)
+      eslint: 9.16.0
+      eslint-plugin-es-x: 7.8.0(eslint@9.16.0)
       get-tsconfig: 4.8.1
       globals: 15.12.0
       ignore: 5.3.2
       minimatch: 9.0.5
       semver: 7.6.3
 
-  eslint-plugin-promise@7.2.0(eslint@9.15.0):
+  eslint-plugin-promise@7.2.0(eslint@9.16.0):
     dependencies:
-      '@eslint-community/eslint-utils': 4.4.1(eslint@9.15.0)
-      eslint: 9.15.0
+      '@eslint-community/eslint-utils': 4.4.1(eslint@9.16.0)
+      eslint: 9.16.0
 
-  eslint-plugin-react@7.37.2(eslint@9.15.0):
+  eslint-plugin-react@7.37.2(eslint@9.16.0):
     dependencies:
       array-includes: 3.1.8
       array.prototype.findlast: 1.2.5
@@ -12446,7 +12451,7 @@ snapshots:
       array.prototype.tosorted: 1.1.4
       doctrine: 2.1.0
       es-iterator-helpers: 1.2.0
-      eslint: 9.15.0
+      eslint: 9.16.0
       estraverse: 5.3.0
       hasown: 2.0.2
       jsx-ast-utils: 3.3.5
@@ -12471,14 +12476,14 @@ snapshots:
 
   eslint-visitor-keys@4.2.0: {}
 
-  eslint@9.15.0:
+  eslint@9.16.0:
     dependencies:
-      '@eslint-community/eslint-utils': 4.4.1(eslint@9.15.0)
+      '@eslint-community/eslint-utils': 4.4.1(eslint@9.16.0)
       '@eslint-community/regexpp': 4.12.1
       '@eslint/config-array': 0.19.0
       '@eslint/core': 0.9.0
       '@eslint/eslintrc': 3.2.0
-      '@eslint/js': 9.15.0
+      '@eslint/js': 9.16.0
       '@eslint/plugin-kit': 0.2.3
       '@humanfs/node': 0.16.6
       '@humanwhocodes/module-importer': 1.0.1
@@ -13089,7 +13094,7 @@ snapshots:
       lodash.merge: 4.6.2
       lodash.mergewith: 4.6.2
 
-  graphql-scalars@1.23.0(graphql@16.9.0):
+  graphql-scalars@1.24.0(graphql@16.9.0):
     dependencies:
       graphql: 16.9.0
       tslib: 2.8.1
@@ -14831,47 +14836,47 @@ snapshots:
 
   negotiator@0.6.3: {}
 
-  neostandard@0.11.9(eslint@9.15.0)(typescript@5.7.2):
+  neostandard@0.11.9(eslint@9.16.0)(typescript@5.7.2):
     dependencies:
       '@humanwhocodes/gitignore-to-minimatch': 1.0.2
-      '@stylistic/eslint-plugin': 2.11.0(eslint@9.15.0)(typescript@5.7.2)
-      eslint: 9.15.0
-      eslint-plugin-n: 17.14.0(eslint@9.15.0)
-      eslint-plugin-promise: 7.2.0(eslint@9.15.0)
-      eslint-plugin-react: 7.37.2(eslint@9.15.0)
+      '@stylistic/eslint-plugin': 2.11.0(eslint@9.16.0)(typescript@5.7.2)
+      eslint: 9.16.0
+      eslint-plugin-n: 17.14.0(eslint@9.16.0)
+      eslint-plugin-promise: 7.2.0(eslint@9.16.0)
+      eslint-plugin-react: 7.37.2(eslint@9.16.0)
       find-up: 5.0.0
       globals: 15.12.0
       peowly: 1.3.2
-      typescript-eslint: 8.16.0(eslint@9.15.0)(typescript@5.7.2)
+      typescript-eslint: 8.16.0(eslint@9.16.0)(typescript@5.7.2)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
   neotraverse@0.6.18: {}
 
-  next@14.2.18(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
-      '@next/env': 14.2.18
-      '@swc/helpers': 0.5.5
+      '@next/env': 15.0.3
+      '@swc/counter': 0.1.3
+      '@swc/helpers': 0.5.13
       busboy: 1.6.0
       caniuse-lite: 1.0.30001684
-      graceful-fs: 4.2.11
       postcss: 8.4.31
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-      styled-jsx: 5.1.1(react@18.3.1)
+      styled-jsx: 5.1.6(react@18.3.1)
     optionalDependencies:
-      '@next/swc-darwin-arm64': 14.2.18
-      '@next/swc-darwin-x64': 14.2.18
-      '@next/swc-linux-arm64-gnu': 14.2.18
-      '@next/swc-linux-arm64-musl': 14.2.18
-      '@next/swc-linux-x64-gnu': 14.2.18
-      '@next/swc-linux-x64-musl': 14.2.18
-      '@next/swc-win32-arm64-msvc': 14.2.18
-      '@next/swc-win32-ia32-msvc': 14.2.18
-      '@next/swc-win32-x64-msvc': 14.2.18
+      '@next/swc-darwin-arm64': 15.0.3
+      '@next/swc-darwin-x64': 15.0.3
+      '@next/swc-linux-arm64-gnu': 15.0.3
+      '@next/swc-linux-arm64-musl': 15.0.3
+      '@next/swc-linux-x64-gnu': 15.0.3
+      '@next/swc-linux-x64-musl': 15.0.3
+      '@next/swc-win32-arm64-msvc': 15.0.3
+      '@next/swc-win32-x64-msvc': 15.0.3
       '@opentelemetry/api': 1.9.0
       '@playwright/test': 1.49.0
+      sharp: 0.33.5
     transitivePeerDependencies:
       - '@babel/core'
       - babel-plugin-macros
@@ -16422,7 +16427,7 @@ snapshots:
     dependencies:
       inline-style-parser: 0.1.1
 
-  styled-jsx@5.1.1(react@18.3.1):
+  styled-jsx@5.1.6(react@18.3.1):
     dependencies:
       client-only: 0.0.1
       react: 18.3.1
@@ -16680,12 +16685,12 @@ snapshots:
       possible-typed-array-names: 1.0.0
       reflect.getprototypeof: 1.0.7
 
-  typescript-eslint@8.16.0(eslint@9.15.0)(typescript@5.7.2):
+  typescript-eslint@8.16.0(eslint@9.16.0)(typescript@5.7.2):
     dependencies:
-      '@typescript-eslint/eslint-plugin': 8.16.0(@typescript-eslint/parser@8.16.0(eslint@9.15.0)(typescript@5.7.2))(eslint@9.15.0)(typescript@5.7.2)
-      '@typescript-eslint/parser': 8.16.0(eslint@9.15.0)(typescript@5.7.2)
-      '@typescript-eslint/utils': 8.16.0(eslint@9.15.0)(typescript@5.7.2)
-      eslint: 9.15.0
+      '@typescript-eslint/eslint-plugin': 8.16.0(@typescript-eslint/parser@8.16.0(eslint@9.16.0)(typescript@5.7.2))(eslint@9.16.0)(typescript@5.7.2)
+      '@typescript-eslint/parser': 8.16.0(eslint@9.16.0)(typescript@5.7.2)
+      '@typescript-eslint/utils': 8.16.0(eslint@9.16.0)(typescript@5.7.2)
+      eslint: 9.16.0
     optionalDependencies:
       typescript: 5.7.2
     transitivePeerDependencies:
