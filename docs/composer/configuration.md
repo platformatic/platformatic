@@ -45,7 +45,7 @@ Configure `@platformatic/composer` specific settings such as `services` or `refr
     - `prefix` (`string`) - Service proxy prefix. All service routes will be prefixed with this value.
 
     :::note
-    If the prefix is not explictly set, the composer and the service will try to find the best prefix for the service.
+    If the prefix is not explicitly set, the composer and the service will try to find the best prefix for the service.
 
     First of all, if the application code used the `platformatic.setBasePath` (which is always available in each service),
     then the value will become the service prefix.
@@ -68,7 +68,7 @@ Configure `@platformatic/composer` specific settings such as `services` or `refr
   }
   ```
 
-  or with the [metaline](https://github.com/platformatic/metaline) syntax, especially in the case of using the [json configuration](/docs/reference/cli.md#start).
+  or with the [metaline](https://github.com/platformatic/metaline) syntax, especially in the case of using the [json configuration](/docs/cli.md#start).
 
   ```json
   "defaultArgsAdapter": "where.id.in.$>#id"
