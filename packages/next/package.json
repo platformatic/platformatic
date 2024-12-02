@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/next",
-  "version": "2.17.0",
+  "version": "2.18.0",
   "description": "Platformatic Next.js Stackable",
   "main": "index.js",
   "type": "module",
@@ -31,6 +31,7 @@
     "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/utils": "workspace:*",
+    "amaro": "^0.2.0",
     "semver": "^7.6.3"
   },
   "devDependencies": {
@@ -39,10 +40,11 @@
     "@platformatic/service": "workspace:*",
     "borp": "^0.19.0",
     "eslint": "9",
+    "execa": "^9.5.1",
     "fastify": "^5.0.0",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.11.1",
-    "next": "^14.2.5",
+    "next": "^15.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "typescript": "^5.5.4",
