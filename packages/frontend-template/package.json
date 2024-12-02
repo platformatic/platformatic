@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/frontend-template",
-  "version": "2.18.0",
+  "version": "2.19.0-alpha.8",
   "main": "index.js",
   "type": "module",
   "description": "Platformatic Frontend Template",
@@ -37,7 +37,7 @@
     "jsonpointer": "^5.0.1",
     "minimist": "^1.2.8",
     "scheduler": "^0.23.2",
-    "undici": "^6.9.0"
+    "undici": "^7.0.0"
   },
   "devDependencies": {
     "@platformatic/utils": "workspace:*",

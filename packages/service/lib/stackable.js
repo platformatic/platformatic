@@ -12,6 +12,8 @@ const { extractTypeScriptCompileOptionsFromConfig } = require('./compile')
 const { compile } = require('@platformatic/ts-compiler')
 const { deepmerge } = require('@platformatic/utils')
 
+const kITC = Symbol.for('plt.runtime.itc')
+
 class ServiceStackable {
   constructor (options) {
     this.app = null
@@ -48,7 +50,8 @@ class ServiceStackable {
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
       setBasePath: this.setBasePath.bind(this),
-      runtimeBasePath: this.runtimeConfig?.basePath ?? null
+      runtimeBasePath: this.runtimeConfig?.basePath ?? null,
+      invalidateHttpCache: this.#invalidateHttpCache.bind(this)
     })
   }
 
@@ -230,6 +233,10 @@ class ServiceStackable {
 
   registerGlobals (globals) {
     globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, globals)
+  }
+
+  async #invalidateHttpCache (opts = {}) {
+    await globalThis[kITC].send('invalidateHttpCache', opts)
   }
 
   #setHttpMetrics () {

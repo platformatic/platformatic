@@ -13,7 +13,7 @@ import parseArgs from 'minimist'
 import { dirname, join, posix, relative, resolve } from 'path'
 import pino from 'pino'
 import pinoPretty from 'pino-pretty'
-import { getGlobalDispatcher, request, setGlobalDispatcher } from 'undici'
+import { Agent, request, setGlobalDispatcher } from 'undici'
 import YAML from 'yaml'
 import errors from './lib/errors.mjs'
 import { processFrontendOpenAPI } from './lib/frontend-openapi-generator.mjs'
@@ -558,7 +558,8 @@ export async function command (argv) {
     await runtime.start()
 
     // Set interceptors
-    setGlobalDispatcher(getGlobalDispatcher().compose(runtime.getInterceptor()))
+    const globalDispatcher = new Agent().compose(runtime.getInterceptor())
+    setGlobalDispatcher(globalDispatcher)
 
     url = `http://${options.runtime}.plt.local`
   }

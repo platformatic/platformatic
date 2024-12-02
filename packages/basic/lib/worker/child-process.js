@@ -11,7 +11,7 @@ import { basename, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { isMainThread } from 'node:worker_threads'
 import pino from 'pino'
-import { getGlobalDispatcher, setGlobalDispatcher } from 'undici'
+import { Agent, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
 import { exitCodes } from '../errors.js'
 import { importFile } from '../utils.js'
@@ -269,7 +269,8 @@ export class ChildProcess extends ITC {
   }
 
   #setupInterceptors () {
-    setGlobalDispatcher(getGlobalDispatcher().compose(createInterceptor(this)))
+    const globalDispatcher = new Agent().compose(createInterceptor(this))
+    setGlobalDispatcher(globalDispatcher)
   }
 
   #setupHandlers () {

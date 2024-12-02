@@ -11,11 +11,12 @@ import { basename, dirname, resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
-import { Client, request } from 'undici'
+import { Client, Agent, request } from 'undici'
 import WebSocket from 'ws'
 import { loadConfig } from '../../config/index.js'
 import { buildServer, platformaticRuntime } from '../../runtime/index.js'
 import { BaseStackable } from '../lib/base.js'
+import { interceptors } from 'undici'
 
 export { setTimeout as sleep } from 'node:timers/promises'
 
@@ -301,7 +302,8 @@ export async function getLogs (app) {
 }
 
 export async function verifyJSONViaHTTP (baseUrl, path, expectedCode, expectedContent) {
-  const { statusCode, body } = await request(baseUrl + path, { maxRedirections: 1 })
+  const dispatcher = new Agent().compose(interceptors.redirect({ maxRedirections: 1 }))
+  const { statusCode, body } = await request(baseUrl + path, { dispatcher })
   strictEqual(statusCode, expectedCode)
 
   if (typeof expectedContent === 'function') {
@@ -323,7 +325,8 @@ export async function verifyJSONViaInject (app, serviceId, method, url, expected
 }
 
 export async function verifyHTMLViaHTTP (baseUrl, path, contents) {
-  const { statusCode, headers, body } = await request(baseUrl + path, { maxRedirections: 1 })
+  const dispatcher = new Agent().compose(interceptors.redirect({ maxRedirections: 1 }))
+  const { statusCode, headers, body } = await request(baseUrl + path, { dispatcher })
   const html = await body.text()
 
   deepStrictEqual(statusCode, 200)

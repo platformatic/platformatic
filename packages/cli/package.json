@@ -1,6 +1,6 @@
 {
   "name": "platformatic",
-  "version": "2.18.0",
+  "version": "2.19.0-alpha.8",
   "description": "Platformatic CLI",
   "main": "cli.js",
   "type": "module",
@@ -71,6 +71,6 @@
     "pino": "^9.4.0",
     "pino-pretty": "^13.0.0",
     "split2": "^4.2.0",
-    "undici": "^6.9.0"
+    "undici": "^7.0.0"
   }
 }

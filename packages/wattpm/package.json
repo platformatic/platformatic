@@ -1,6 +1,6 @@
 {
   "name": "wattpm",
-  "version": "2.18.0",
+  "version": "2.19.0-alpha.8",
   "description": "The Node.js Application Server",
   "main": "index.js",
   "type": "module",
@@ -57,6 +57,6 @@
     "json-schema-to-typescript": "^15.0.0",
     "neostandard": "^0.11.1",
     "typescript": "^5.5.4",
-    "undici": "^6.19.8"
+    "undici": "^7.0.0"
   }
 }
