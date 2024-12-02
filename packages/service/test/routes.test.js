@@ -41,7 +41,7 @@ test('should respond 200 on root endpoint', async (t) => {
     }))
 
     assert.strictEqual(res.statusCode, 200)
-    assert.strictEqual(res.headers['content-type'], 'text/html; charset=UTF-8')
+    assert.strictEqual(res.headers['content-type'], 'text/html; charset=utf-8')
   }
 })
 
