@@ -37,9 +37,7 @@ class DbStackable extends ServiceStackable {
     if (connectionString) {
       return {
         ...serviceMeta,
-        db: {
-          connectionStrings: [connectionString]
-        }
+        connectionStrings: [connectionString]
       }
     }
 
