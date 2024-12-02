@@ -165,7 +165,7 @@ async function main () {
   globalThis[kITC] = itc
 
   // Get the dependencies
-  const dependencies = config.autoload ? await app.getBootstrapDependencies() : []
+  const dependencies = await app.getBootstrapDependencies()
   itc.notify('init', { dependencies })
 }
 
