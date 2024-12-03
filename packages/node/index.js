@@ -1,8 +1,10 @@
+import { AsyncResource } from 'node:async_hooks'
 import {
   BaseStackable,
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
+  getAsyncLocalStorageSnapshot,
   getServerUrl,
   importFile,
   injectViaRequest,
@@ -180,6 +182,19 @@ export class NodeStackable extends BaseStackable {
   }
 
   async inject (injectParams, onInject) {
+    const snapshot = this.#server && getAsyncLocalStorageSnapshot(this.#server)
+    if (!snapshot) {
+      return this.#inject(injectParams, onInject)
+    }
+
+    return snapshot(() => {
+      // Need to new resource so each inject has separate context
+      const resource = new AsyncResource('PLTNodeStackable')
+      return resource.runInAsyncScope(this.#inject, this, injectParams, onInject)
+    })
+  }
+
+  async #inject (injectParams, onInject) {
     let res
 
     if (this.#useHttpForDispatch) {
