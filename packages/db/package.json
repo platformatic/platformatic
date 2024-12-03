@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db",
-  "version": "2.18.0",
+  "version": "2.19.0-alpha.9",
   "description": "",
   "main": "index.js",
   "types": "index.d.ts",
@@ -47,7 +47,7 @@
     "strip-ansi": "^7.1.0",
     "tsd": "^0.31.0",
     "typescript": "^5.5.4",
-    "undici": "^6.9.0",
+    "undici": "^7.0.0",
     "vscode-json-languageservice": "^5.3.9",
     "why-is-node-running": "^2.2.2",
     "yaml": "^2.4.1"

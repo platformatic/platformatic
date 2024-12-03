@@ -66,7 +66,7 @@ test('should respond 200 on root endpoint', async (t) => {
     // No browser (i.e. curl)
     assert.strictEqual(ret.isBase64Encoded, false)
     assert.ok(ret.headers)
-    assert.strictEqual(ret.headers['content-type'], 'text/html; charset=UTF-8')
+    assert.strictEqual(ret.headers['content-type'], 'text/html; charset=utf-8')
     assert.ok(ret.headers.date)
     assert.strictEqual(ret.headers.connection, 'keep-alive')
   }

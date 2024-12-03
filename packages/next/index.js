@@ -16,14 +16,15 @@ import { once } from 'node:events'
 import { readFile } from 'node:fs/promises'
 import { dirname, resolve as pathResolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { satisfies } from 'semver'
+import { parse, satisfies } from 'semver'
 import { packageJson, schema } from './lib/schema.js'
 
-const supportedVersions = '^14.0.0'
+const supportedVersions = ['^14.0.0', '^15.0.0']
 
 export class NextStackable extends BaseStackable {
   #basePath
   #next
+  #nextVersion
   #child
   #server
 
@@ -34,9 +35,10 @@ export class NextStackable extends BaseStackable {
   async init () {
     this.#next = pathResolve(dirname(resolvePackage(this.root, 'next')), '../..')
     const nextPackage = JSON.parse(await readFile(pathResolve(this.#next, 'package.json'), 'utf-8'))
+    this.#nextVersion = parse(nextPackage.version)
 
     /* c8 ignore next 3 */
-    if (!satisfies(nextPackage.version, supportedVersions)) {
+    if (!supportedVersions.some(v => satisfies(nextPackage.version, v))) {
       throw new errors.UnsupportedVersion('next', nextPackage.version, supportedVersions)
     }
   }
@@ -83,6 +85,10 @@ export class NextStackable extends BaseStackable {
   }
 
   async build () {
+    if (!this.#nextVersion) {
+      await this.init()
+    }
+
     const config = this.configManager.current
     const loader = new URL('./lib/loader.js', import.meta.url)
     this.#basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
@@ -94,7 +100,7 @@ export class NextStackable extends BaseStackable {
       command = ['node', pathResolve(this.#next, './dist/bin/next'), 'build', this.root]
     }
 
-    return this.buildWithCommand(command, this.#basePath, loader)
+    return this.buildWithCommand(command, this.#basePath, loader, this.#getChildManagerScripts())
   }
 
   /* c8 ignore next 5 */
@@ -124,7 +130,7 @@ export class NextStackable extends BaseStackable {
     this.#basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
 
     if (command) {
-      return this.startWithCommand(command, loaderUrl)
+      return this.startWithCommand(command, loaderUrl, this.#getChildManagerScripts())
     }
 
     const { hostname, port } = this.serverConfig ?? {}
@@ -148,7 +154,8 @@ export class NextStackable extends BaseStackable {
         runtimeBasePath: this.runtimeConfig.basePath,
         wantsAbsoluteUrls: true,
         telemetryConfig: this.telemetryConfig
-      }
+      },
+      scripts: this.#getChildManagerScripts()
     })
 
     const promise = once(this.childManager, 'url')
@@ -168,7 +175,17 @@ export class NextStackable extends BaseStackable {
     try {
       await this.childManager.inject()
       const childPromise = createChildProcessListener()
-      await nextDev(serverOptions, 'default', this.root)
+
+      if (this.#nextVersion.major === 14 && this.#nextVersion.minor < 2) {
+        await nextDev({
+          '--hostname': serverOptions.host,
+          '--port': serverOptions.port,
+          _: [this.root]
+        })
+      } else {
+        await nextDev(serverOptions, 'default', this.root)
+      }
+
       this.#child = await childPromise
     } finally {
       await this.childManager.eject()
@@ -183,7 +200,7 @@ export class NextStackable extends BaseStackable {
     this.#basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
 
     if (command) {
-      return this.startWithCommand(command, loaderUrl)
+      return this.startWithCommand(command, loaderUrl, this.#getChildManagerScripts())
     }
 
     this.childManager = new ChildManager({
@@ -200,7 +217,8 @@ export class NextStackable extends BaseStackable {
         runtimeBasePath: this.runtimeConfig.basePath,
         wantsAbsoluteUrls: true,
         telemetryConfig: this.telemetryConfig
-      }
+      },
+      scripts: this.#getChildManagerScripts()
     })
 
     this.verifyOutputDirectory(pathResolve(this.root, '.next'))
@@ -230,13 +248,31 @@ export class NextStackable extends BaseStackable {
         (this.isEntrypoint ? serverOptions?.hostname : undefined) ?? true
       )
 
-      await nextStart(serverOptions, this.root)
+      if (this.#nextVersion.major === 14 && this.#nextVersion.minor < 2) {
+        await nextStart({
+          '--hostname': serverOptions.host,
+          '--port': serverOptions.port,
+          _: [this.root]
+        })
+      } else {
+        await nextStart(serverOptions, this.root)
+      }
 
       this.#server = await serverPromise
       this.url = getServerUrl(this.#server)
     } finally {
       await this.childManager.eject()
     }
+  }
+
+  #getChildManagerScripts () {
+    const scripts = []
+
+    if (this.#nextVersion.major === 15) {
+      scripts.push(new URL('./lib/loader-next-15.cjs', import.meta.url))
+    }
+
+    return scripts
   }
 }
 

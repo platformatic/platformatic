@@ -18,7 +18,7 @@ const originalId = '__pltOriginalNextConfig'
 
 let config
 let candidates
-let basePath
+let basePath = ''
 
 function parseSingleExpression (expr) {
   return parse(expr, { allowAwaitOutsideFunction: true }).program.body[0]
@@ -86,7 +86,7 @@ function createEvaluatorWrapperFunction (original) {
   )
 }
 
-function transformCJS (source) {
+export function transformCJS (source) {
   const ast = parse(source.toString(), { sourceType: 'module' })
 
   // Manipulate the AST
@@ -105,7 +105,7 @@ function transformCJS (source) {
   return generate.default(ast).code
 }
 
-function transformESM (source) {
+export function transformESM (source) {
   const ast = parse(source.toString(), { sourceType: 'module' })
 
   // Manipulate the AST

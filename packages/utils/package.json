@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/utils",
-  "version": "2.18.0",
+  "version": "2.19.0-alpha.9",
   "description": "Platformatic Utils",
   "main": "index.js",
   "scripts": {
@@ -32,6 +32,6 @@
     "leven": "~3.1.0",
     "minimatch": "^8.0.4",
     "semver": "^7.6.3",
-    "undici": "^6.9.0"
+    "undici": "7.0.0"
   }
 }

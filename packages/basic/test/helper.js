@@ -11,11 +11,12 @@ import { basename, dirname, resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
-import { Client, request } from 'undici'
+import { Client, Agent, request } from 'undici'
 import WebSocket from 'ws'
 import { loadConfig } from '../../config/index.js'
 import { buildServer, platformaticRuntime } from '../../runtime/index.js'
 import { BaseStackable } from '../lib/base.js'
+import { interceptors } from 'undici'
 
 export { setTimeout as sleep } from 'node:timers/promises'
 
@@ -310,7 +311,8 @@ export async function getLogs (app) {
 }
 
 export async function verifyJSONViaHTTP (baseUrl, path, expectedCode, expectedContent) {
-  const { statusCode, body } = await request(baseUrl + path, { maxRedirections: 1 })
+  const dispatcher = new Agent().compose(interceptors.redirect({ maxRedirections: 1 }))
+  const { statusCode, body } = await request(baseUrl + path, { dispatcher })
   strictEqual(statusCode, expectedCode)
 
   if (typeof expectedContent === 'function') {
@@ -332,7 +334,8 @@ export async function verifyJSONViaInject (app, serviceId, method, url, expected
 }
 
 export async function verifyHTMLViaHTTP (baseUrl, path, contents) {
-  const { statusCode, headers, body } = await request(baseUrl + path, { maxRedirections: 1 })
+  const dispatcher = new Agent().compose(interceptors.redirect({ maxRedirections: 1 }))
+  const { statusCode, headers, body } = await request(baseUrl + path, { dispatcher })
   const html = await body.text()
 
   deepStrictEqual(statusCode, 200)
@@ -499,7 +502,8 @@ export async function prepareRuntimeWithServices (
   pauseTimeout,
   additionalSetup
 ) {
-  const { root, config } = await prepareRuntime(t, configuration, production, null, async (root, config, args) => {
+  let args
+  const { root, config } = await prepareRuntime(t, configuration, production, null, async (root, config, _args) => {
     for (const type of ['backend', 'composer']) {
       await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
         recursive: true
@@ -510,8 +514,16 @@ export async function prepareRuntimeWithServices (
       return contents.replace('$PREFIX', prefix)
     })
 
-    await additionalSetup?.(root, config, args)
+    if (additionalSetup && !additionalSetup.runAfterPrepare) {
+      await additionalSetup?.(root, config, _args)
+    }
+
+    args = _args
   })
+
+  if (additionalSetup && additionalSetup.runAfterPrepare) {
+    await additionalSetup?.(root, config, args)
+  }
 
   return await startRuntime(t, root, config, pauseTimeout)
 }
@@ -540,7 +552,8 @@ export async function verifyDevelopmentFrontendWithPrefix (
   hmrUrl,
   hmrProtocol,
   websocketHMRHandler,
-  pauseTimeout
+  pauseTimeout,
+  additionalSetup
 ) {
   const { runtime, url } = await prepareRuntimeWithServices(
     t,
@@ -548,7 +561,8 @@ export async function verifyDevelopmentFrontendWithPrefix (
     false,
     language,
     '/frontend',
-    pauseTimeout
+    pauseTimeout,
+    additionalSetup
   )
 
   await verifyHTMLViaHTTP(url, '/frontend/', htmlContents)
@@ -572,9 +586,18 @@ export async function verifyDevelopmentFrontendWithoutPrefix (
   hmrUrl,
   hmrProtocol,
   websocketHMRHandler,
-  pauseTimeout
+  pauseTimeout,
+  additionalSetup
 ) {
-  const { runtime, url } = await prepareRuntimeWithServices(t, configuration, false, language, '', pauseTimeout)
+  const { runtime, url } = await prepareRuntimeWithServices(
+    t,
+    configuration,
+    false,
+    language,
+    '',
+    pauseTimeout,
+    additionalSetup
+  )
 
   await verifyHTMLViaHTTP(url, '/', htmlContents)
   await verifyHTMLViaInject(runtime, 'composer', '/', htmlContents)
@@ -597,7 +620,8 @@ export async function verifyDevelopmentFrontendWithAutodetectPrefix (
   hmrUrl,
   hmrProtocol,
   websocketHMRHandler,
-  pauseTimeout
+  pauseTimeout,
+  additionalSetup
 ) {
   const { runtime, url } = await prepareRuntimeWithServices(
     t,
@@ -605,7 +629,8 @@ export async function verifyDevelopmentFrontendWithAutodetectPrefix (
     false,
     language,
     '/nested/base/dir',
-    pauseTimeout
+    pauseTimeout,
+    additionalSetup
   )
 
   await verifyHTMLViaHTTP(url, '/nested/base/dir/', htmlContents)
@@ -625,10 +650,20 @@ export function verifyDevelopmentMode (configurations, hmrUrl, hmrProtocol, webs
   configurations = filterConfigurations(configurations)
 
   for (const configuration of configurations) {
-    const { id, check, htmlContents, language, hmrTriggerFile } = configuration
-    test(`should start in development mode - configuration "${id}"`, async t => {
+    const { id, todo, tag, check, htmlContents, language, hmrTriggerFile, additionalSetup } = configuration
+    test(`should start in development mode - configuration "${id}"${tag ? ` (${tag})` : ''}`, { todo }, async t => {
       setHMRTriggerFile(hmrTriggerFile)
-      await check(t, id, language, htmlContents, hmrUrl, hmrProtocol, websocketHMRHandler, pauseTimeout)
+      await check(
+        t,
+        id,
+        language,
+        htmlContents,
+        hmrUrl,
+        hmrProtocol,
+        websocketHMRHandler,
+        pauseTimeout,
+        additionalSetup
+      )
     })
   }
 }
@@ -636,60 +671,73 @@ export function verifyDevelopmentMode (configurations, hmrUrl, hmrProtocol, webs
 export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
   configurations = filterConfigurations(configurations)
 
-  for (const { id, language, prefix, files, checks, additionalSetup } of configurations) {
-    test(`should build and start in production mode - configuration "${id}"`, async t => {
-      const { root, config } = await prepareRuntime(t, id, true, null, async (root, config, args) => {
-        for (const type of ['backend', 'composer']) {
-          await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
-            recursive: true
-          })
-        }
+  for (const { id, todo, tag, language, prefix, files, checks, additionalSetup } of configurations) {
+    test(
+      `should build and start in production mode - configuration "${id}${tag ? ` (${tag})` : ''}"`,
+      { todo },
+      async t => {
+        let args
+        const { root, config } = await prepareRuntime(t, id, true, null, async (root, config, _args) => {
+          for (const type of ['backend', 'composer']) {
+            await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
+              recursive: true
+            })
+          }
 
-        await updateFile(resolve(root, `services/composer/routes/root.${language}`), contents => {
-          return contents.replace('$PREFIX', prefix)
+          await updateFile(resolve(root, `services/composer/routes/root.${language}`), contents => {
+            return contents.replace('$PREFIX', prefix)
+          })
+
+          if (id.endsWith('without-prefix')) {
+            await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
+              const json = JSON.parse(contents)
+              json.composer.services[1].proxy = { prefix: '' }
+              return JSON.stringify(json, null, 2)
+            })
+          }
+
+          if (additionalSetup && !additionalSetup.runAfterPrepare) {
+            await additionalSetup?.(root, config, _args)
+          }
+
+          args = _args
         })
 
-        if (id.endsWith('without-prefix')) {
-          await updateFile(resolve(root, 'services/composer/platformatic.json'), contents => {
-            const json = JSON.parse(contents)
-            json.composer.services[1].proxy = { prefix: '' }
-            return JSON.stringify(json, null, 2)
-          })
+        if (additionalSetup && additionalSetup.runAfterPrepare) {
+          await additionalSetup?.(root, config, args)
         }
 
-        await additionalSetup?.(root, config, args)
-      })
+        const { hostname: runtimeHost, port: runtimePort, logger } = config.configManager.current.server ?? {}
 
-      const { hostname: runtimeHost, port: runtimePort, logger } = config.configManager.current.server ?? {}
+        // Build
+        await execa('node', [cliPath, 'build'], {
+          cwd: root,
+          stdio: logger?.level !== 'error' ? 'inherit' : undefined
+        })
 
-      // Build
-      await execa('node', [cliPath, 'build'], {
-        cwd: root,
-        stdio: logger?.level !== 'error' ? 'inherit' : undefined
-      })
+        // Make sure all file exists
+        for (const file of files) {
+          await ensureExists(resolve(root, file))
+        }
 
-      // Make sure all file exists
-      for (const file of files) {
-        await ensureExists(resolve(root, file))
+        // Start the runtime
+        const { url } = await startRuntime(t, root, config, pauseTimeout)
+
+        if (runtimeHost) {
+          const actualHost = new URL(url).hostname
+          strictEqual(actualHost, runtimeHost, `hostname should be ${runtimeHost}`)
+        }
+
+        if (runtimePort) {
+          const actualPort = new URL(url).port
+          strictEqual(actualPort.toString(), runtimePort.toString(), `port should be ${runtimePort}`)
+        }
+
+        // Make sure all checks work properly
+        for (const check of checks) {
+          await check(t, url, check)
+        }
       }
-
-      // Start the runtime
-      const { url } = await startRuntime(t, root, config, pauseTimeout)
-
-      if (runtimeHost) {
-        const actualHost = new URL(url).hostname
-        strictEqual(actualHost, runtimeHost, `hostname should be ${runtimeHost}`)
-      }
-
-      if (runtimePort) {
-        const actualPort = new URL(url).port
-        strictEqual(actualPort.toString(), runtimePort.toString(), `port should be ${runtimePort}`)
-      }
-
-      // Make sure all checks work properly
-      for (const check of checks) {
-        await check(t, url, check)
-      }
-    })
+    )
   }
 }

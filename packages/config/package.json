@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/config",
-  "version": "2.18.0",
+  "version": "2.19.0-alpha.9",
   "description": "Platformatic DB Config Manager",
   "main": "index.js",
   "scripts": {
@@ -42,6 +42,6 @@
     "minimist": "^1.2.8",
     "pupa": "^3.1.0",
     "semver": "^7.6.0",
-    "undici": "^6.9.0"
+    "undici": "^7.0.0"
   }
 }

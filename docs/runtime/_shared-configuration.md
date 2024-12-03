@@ -171,6 +171,15 @@ OTLP traces can be consumed by different solutions, like [Jaeger](https://www.ja
 }
 ```
 
+## httpCache
+
+The `httpCache` configuration is used to enable the HTTP cache for the Platformatic Runtime.
+It can be a boolean or an object with the following settings:
+
+- **`store`** (`string`) - The store to use for the cache. Set an npm package name to use a custom store or path to a file to use a custom store from a file. By default, the `memory` store is used.
+- **`methods`** (`array`) - The HTTP methods to cache. By default, GET and HEAD methods are cached.
+- **`cacheTagsHeader`** (`string`) - The header to use for cache tags.
+
 ### `server`
 
 This configures the Platformatic Runtime entrypoint `server`.

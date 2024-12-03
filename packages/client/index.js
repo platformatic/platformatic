@@ -1,6 +1,6 @@
 'use strict'
 
-const { request } = require('undici')
+const { Agent, request, interceptors } = require('undici')
 const { join } = require('path')
 const fs = require('fs/promises')
 const kHeaders = Symbol('headers')
@@ -219,6 +219,13 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       headers = { ...headers, ...(await this[kGetHeaders](options)) }
     }
 
+    if (throwOnError) {
+      if (!dispatcher) {
+        dispatcher = new Agent()
+      }
+      dispatcher = dispatcher.compose(interceptors.responseError())
+    }
+
     let res
     try {
       const requestOptions = {
@@ -227,7 +234,6 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
           ...headers,
           ...telemetryHeaders
         },
-        throwOnError,
         bodyTimeout,
         headersTimeout,
         dispatcher
@@ -294,7 +300,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       openTelemetry?.setErrorInSpanClient(span, err)
       const requestError = new errors.UnexpectedCallFailureError(err.toString())
       if (err instanceof UndiciError) {
-        requestError.status = err.status
+        requestError.status = err.statusCode
         requestError.statusCode = err.statusCode
         requestError.headers = err.headers
         requestError.body = err.body

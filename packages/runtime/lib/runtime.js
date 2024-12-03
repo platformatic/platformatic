@@ -16,6 +16,7 @@ const errors = require('./errors')
 const { createLogger } = require('./logger')
 const { startManagementApi } = require('./management-api')
 const { startPrometheusServer } = require('./prom-server')
+const { createSharedStore } = require('./shared-http-cache')
 const { getRuntimeTmpDir } = require('./utils')
 const { sendViaITC, waitEventFromITC } = require('./worker/itc')
 const { RoundRobinMap } = require('./worker/round-robin-map.js')
@@ -66,6 +67,7 @@ class Runtime extends EventEmitter {
   #inspectorServer
   #workers
   #restartingWorkers
+  #sharedHttpCache
 
   constructor (configManager, runtimeLogsDir, env) {
     super()
@@ -85,6 +87,7 @@ class Runtime extends EventEmitter {
     })
     this.#status = undefined
     this.#restartingWorkers = new Map()
+    this.#sharedHttpCache = null
   }
 
   async init () {
@@ -138,6 +141,11 @@ class Runtime extends EventEmitter {
       await this.close()
       throw e
     }
+
+    this.#sharedHttpCache = createSharedStore(
+      this.#configManager.dirname,
+      config.httpCache
+    )
 
     this.#updateStatus('init')
   }
@@ -265,6 +273,10 @@ class Runtime extends EventEmitter {
 
       this.logger = null
       this.#loggerDestination = null
+    }
+
+    if (this.#sharedHttpCache?.close) {
+      await this.#sharedHttpCache.close()
     }
 
     this.#updateStatus('closed')
@@ -729,6 +741,23 @@ class Runtime extends EventEmitter {
     return createReadStream(filePath)
   }
 
+  async invalidateHttpCache (options = {}) {
+    const { keys, tags } = options
+
+    if (!this.#sharedHttpCache) return
+
+    const promises = []
+    if (keys && keys.length > 0) {
+      promises.push(this.#sharedHttpCache.deleteKeys(keys))
+    }
+
+    if (tags && tags.length > 0) {
+      promises.push(this.#sharedHttpCache.deleteTags(tags))
+    }
+
+    await Promise.all(promises)
+  }
+
   async sendCommandToService (id, name, message) {
     const service = await this.#getServiceById(id)
 
@@ -885,9 +914,18 @@ class Runtime extends EventEmitter {
       port: worker,
       handlers: {
         getServiceMeta: this.getServiceMeta.bind(this),
-        listServices: () => {
-          return this.#servicesIds
-        }
+        listServices: () => this.#servicesIds,
+        getServices: this.getServices.bind(this),
+        getHttpCacheValue: opts => this.#sharedHttpCache.getValue(opts.request),
+        setHttpCacheValue: opts => this.#sharedHttpCache.setValue(
+          opts.request,
+          opts.response,
+          opts.payload
+        ),
+        deleteHttpCacheValue: opts => this.#sharedHttpCache.delete(
+          opts.request
+        ),
+        invalidateHttpCache: opts => this.invalidateHttpCache(opts),
       }
     })
     worker[kITC].listen()
