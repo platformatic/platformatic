@@ -189,7 +189,7 @@ importers:
         version: 1.3.1
       dotenv:
         specifier: ^16.4.5
-        version: 16.4.6
+        version: 16.4.7
       execa:
         specifier: ^9.3.1
         version: 9.5.1
@@ -411,7 +411,7 @@ importers:
         version: 0.19.0
       dotenv:
         specifier: ^16.4.5
-        version: 16.4.6
+        version: 16.4.7
       eslint:
         specifier: '9'
         version: 9.16.0
@@ -622,7 +622,7 @@ importers:
         version: 8.17.1
       dotenv:
         specifier: ^16.4.5
-        version: 16.4.6
+        version: 16.4.7
       jsonpath:
         specifier: ^1.1.1
         version: 1.1.1
@@ -835,7 +835,7 @@ importers:
         version: 7.0.3
       dotenv:
         specifier: ^16.4.5
-        version: 16.4.6
+        version: 16.4.7
       eslint:
         specifier: '9'
         version: 9.16.0
@@ -5211,8 +5211,8 @@ packages:
   dotenv-tool@0.1.1:
     resolution: {integrity: sha512-72oQ+k8fWjKPCu/WfP+aiCPLtcsyqYLSa2s8ezFmI77jzgtF21bep6yvSj4q2d69o6b24W9BDU857zGuD7bh6w==}
 
-  dotenv@16.4.6:
-    resolution: {integrity: sha512-JhcR/+KIjkkjiU8yEpaB/USlzVi3i5whwOjpIRNGi9svKEXZSe+Qp6IWAjFjv+2GViAoDRCUv/QLNziQxsLqDg==}
+  dotenv@16.4.7:
+    resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
     engines: {node: '>=12'}
 
   drange@1.1.1:
@@ -10709,7 +10709,7 @@ snapshots:
       chalk: 4.1.2
       chokidar: 3.6.0
       cross-spawn: 7.0.6
-      dotenv: 16.4.6
+      dotenv: 16.4.7
       es-module-lexer: 1.5.4
       esbuild: 0.17.6
       esbuild-plugins-node-modules-polyfill: 1.6.8(esbuild@0.17.6)
@@ -12099,7 +12099,7 @@ snapshots:
 
   dotenv-tool@0.1.1: {}
 
-  dotenv@16.4.6: {}
+  dotenv@16.4.7: {}
 
   drange@1.1.1:
     optional: true
@@ -12187,7 +12187,7 @@ snapshots:
   env-schema@5.2.1:
     dependencies:
       ajv: 8.17.1
-      dotenv: 16.4.6
+      dotenv: 16.4.7
       dotenv-expand: 10.0.0
 
   environment@1.1.0: {}
