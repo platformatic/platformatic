@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/vite/2.19.0-alpha.9.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/vite/2.19.0-alpha.10.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Vite Stackable",
   "type": "object",
