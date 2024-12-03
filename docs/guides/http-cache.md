@@ -30,7 +30,7 @@ To enable HTTP caching, let's set the `httpCache` property to `true` in the root
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.9.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.19.0.json",
   "entrypoint": "main",
   "watch": true,
   "autoload": {
@@ -167,7 +167,7 @@ Let's set the `X-Cache-Tags` header in the root `platformatic.json` file.
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.9.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.19.0.json",
   "entrypoint": "main",
   "watch": true,
   "autoload": {
