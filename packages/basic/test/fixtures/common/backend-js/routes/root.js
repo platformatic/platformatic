@@ -17,4 +17,8 @@ module.exports = async function (fastify) {
   fastify.get('/time', async () => {
     return { time: Date.now() }
   })
+
+  fastify.get('/time-alternative', async () => {
+    return { time: Date.now() }
+  })
 }

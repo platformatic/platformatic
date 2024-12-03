@@ -15,7 +15,7 @@ export async function GET(request) {
   const delay = Math.ceil((Date.now() - version) / 1000)
 
   try {
-    const data = await fetch('http://backend.plt.local/time', {
+    const data = await fetch('http://backend.plt.local/time-alternative', {
       next: { revalidate, tags: ['first', 'second', 'third'] },
       signal: AbortSignal.timeout(1000)
     })
