@@ -77,6 +77,10 @@ export class NodeStackable extends BaseStackable {
       return this.startWithCommand(command)
     }
 
+    return this.#asyncResource.runInAsyncScope(this.#start, this, listen, config)
+  }
+
+  async #start (listen, config) {
     // Resolve the entrypoint
     // The priority is platformatic.application.json, then package.json and finally autodetect.
     // Only when autodetecting we eventually search in the dist folder when in production mode
@@ -104,35 +108,33 @@ export class NodeStackable extends BaseStackable {
     // Deal with application
     const factory = ['build', 'create'].find(f => typeof this.#module[f] === 'function')
 
-    await this.#asyncResource.runInAsyncScope(async () => {
-      if (factory) {
-        // We have build function, this Stackable will not use HTTP unless it is the entrypoint
-        serverPromise.cancel()
+    if (factory) {
+      // We have build function, this Stackable will not use HTTP unless it is the entrypoint
+      serverPromise.cancel()
 
-        this.#app = await this.#module[factory]()
-        this.#isFastify = isFastify(this.#app)
-        this.#isKoa = isKoa(this.#app)
+      this.#app = await this.#module[factory]()
+      this.#isFastify = isFastify(this.#app)
+      this.#isKoa = isKoa(this.#app)
 
-        if (this.#isFastify) {
-          await this.#app.ready()
-        } else if (this.#isKoa) {
-          this.#dispatcher = this.#app.callback()
-        } else if (this.#app instanceof Server) {
-          this.#server = this.#app
-          this.#dispatcher = this.#server.listeners('request')[0]
-        }
-
-        if (listen) {
-          await this._listen()
-        }
-      } else {
-        // User blackbox function, we wait for it to listen on a port
-        this.#server = await serverPromise
+      if (this.#isFastify) {
+        await this.#app.ready()
+      } else if (this.#isKoa) {
+        this.#dispatcher = this.#app.callback()
+      } else if (this.#app instanceof Server) {
+        this.#server = this.#app
         this.#dispatcher = this.#server.listeners('request')[0]
-
-        this.url = getServerUrl(this.#server)
       }
-    })
+
+      if (listen) {
+        await this._listen()
+      }
+    } else {
+      // User blackbox function, we wait for it to listen on a port
+      this.#server = await serverPromise
+      this.#dispatcher = this.#server.listeners('request')[0]
+
+      this.url = getServerUrl(this.#server)
+    }
 
     return this.url
   }
@@ -202,13 +204,13 @@ export class NodeStackable extends BaseStackable {
         }
       }
 
-      await this.#asyncResource.runInAsyncScope(async () => {
+      res = await this.#asyncResource.runInAsyncScope(() => {
         if (this.#isFastify) {
           this.logger.trace({ injectParams }, 'injecting via fastify')
-          res = await this.#app.inject(injectParams, onInject)
+          return this.#app.inject(injectParams, onInject)
         } else {
           this.logger.trace({ injectParams }, 'injecting via light-my-request')
-          res = await inject(this.#dispatcher ?? this.#app, injectParams, onInject)
+          return inject(this.#dispatcher ?? this.#app, injectParams, onInject)
         }
       })
 
