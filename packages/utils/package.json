@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/utils",
-  "version": "2.19.0-alpha.9",
+  "version": "2.19.0",
   "description": "Platformatic Utils",
   "main": "index.js",
   "scripts": {
