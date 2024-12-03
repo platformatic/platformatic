@@ -1,5 +1,5 @@
 import { bold } from 'colorette'
-import { buildCommand } from './lib/commands/build.js'
+import { buildCommand, installCommand } from './lib/commands/build.js'
 import { devCommand, reloadCommand, restartCommand, startCommand, stopCommand } from './lib/commands/execution.js'
 import { importCommand, resolveCommand } from './lib/commands/external.js'
 import { helpCommand } from './lib/commands/help.js'
@@ -93,6 +93,9 @@ export async function main () {
       break
     case 'resolve':
       command = resolveCommand
+      break
+    case 'install':
+      command = installCommand
       break
     case 'help':
       command = helpCommand

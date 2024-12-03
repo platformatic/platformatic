@@ -20,6 +20,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { logo } from './lib/ascii.js'
 import { build } from './lib/build.js'
+import { install } from './lib/install.js'
 import { resolve } from './lib/resolve.js'
 import { upgrade } from './lib/upgrade.js'
 
@@ -73,6 +74,7 @@ program.register('upgrade', upgrade)
 program.register('resolve', resolve)
 program.register('client', client)
 program.register('build', build)
+program.register('install', install)
 program.register('compile', async args => ((await compile(args)) ? null : process.exit(1)))
 program.register('help', help.toStdout)
 program.register('help db', async args => {

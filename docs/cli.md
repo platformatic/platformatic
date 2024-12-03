@@ -92,6 +92,7 @@ Welcome to Platformatic. Available commands are:
 * `resolve` - resolve Platformatic Runtime external services
 * `client` - generate a Platformatic client.
 * `build` - builds all services.
+* `install` - install all dependencies of an application and its services.
 * `compile` - compile all typescript plugins.
 * `help` - display this message.
 * `help <command>` - show more information about a command.
@@ -194,6 +195,7 @@ Options:
 * `-c, --config FILE` - Path to the runtime configuration file.
 * `-u, --username string` - Username for the service repository.
 * `-p, --password string` - Password for the service repository.
+* `-P, --package-manager EXECUTABLE`: Use an alternative package manager to install dependencies (the default is to autodetect it).
 
 Platformatic resolve command resolves runtime services that have the `url` in their configuration.
 By default services are cloned with `git` to the `external` directory inside the runtime directory.
@@ -289,6 +291,19 @@ You can find more details about the configuration format here:
 platformatic client <command>
 ```
 
+
+### install
+
+Install all dependencies of an application and its services.
+
+```bash
+platformatic install
+```
+
+Options:
+
+* `-p, --production`: Only install production dependencies.
+* `-P, --package-manager EXECUTABLE`: Use an alternative package manager (the default is to autodetect it).
 
 #### help
 

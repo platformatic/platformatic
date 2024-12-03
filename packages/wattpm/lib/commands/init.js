@@ -119,7 +119,7 @@ export const help = {
     ],
     options: [
       {
-        usage: 'p, --package-manager',
+        usage: 'p, --package-manager <executable>',
         description: 'Use an alternative package manager'
       }
     ]

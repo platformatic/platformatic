@@ -13,6 +13,7 @@ Welcome to Platformatic. Available commands are:
 * `resolve` - resolve Platformatic Runtime external services
 * `client` - generate a Platformatic client.
 * `build` - builds all services.
+* `install` - install all dependencies of an application and its services.
 * `compile` - compile all typescript plugins.
 * `help` - display this message.
 * `help <command>` - show more information about a command.

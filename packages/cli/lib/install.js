@@ -3,17 +3,16 @@ import { platformaticRuntime } from '@platformatic/runtime'
 import parseArgs from 'minimist'
 import pino from 'pino'
 import pretty from 'pino-pretty'
-import { resolveServices } from 'wattpm'
+import { installDependencies } from 'wattpm/lib/commands/build.js'
 
-export async function resolve (argv) {
+export async function install (argv) {
   const args = parseArgs(argv, {
     alias: {
-      config: 'c',
-      username: 'u',
-      password: 'p',
+      production: 'p',
       'package-manager': 'P'
     },
-    string: ['config', 'username', 'password', 'package-manager']
+    boolean: ['production'],
+    string: ['package-manager']
   })
 
   const logger = pino(
@@ -22,6 +21,7 @@ export async function resolve (argv) {
       ignore: 'hostname,pid'
     })
   )
+
   try {
     const store = new Store({
       cwd: process.cwd(),
@@ -38,17 +38,15 @@ export async function resolve (argv) {
       }
     })
 
-    await resolveServices(
+    await installDependencies(
       logger,
       configManager.dirname,
       configManager.fullPath,
-      args.username,
-      args.password,
-      false,
-      args.packageManager
+      args.production,
+      args['package-manager']
     )
 
-    logger.info('✅ All external services have been resolved')
+    logger.info('✅ All dependencies have been installed')
   } catch (err) {
     console.log(err)
     process.exit(1)

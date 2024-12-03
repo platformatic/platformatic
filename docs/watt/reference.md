@@ -23,6 +23,19 @@ Arguments:
 
 - `root`: The directory containing the application (the default is the current directory)
 
+## `install`
+
+Install all dependencies of an application and its services.
+
+Arguments:
+
+- `root`: The directory containing the application (the default is the current directory)
+
+Options:
+
+- `-p, --production`: Only install production dependencies
+- `-P, --package-manager`: Use an alternative package manager (the default is to autodetect it)
+
 ## `dev`
 
 Starts an application in development mode.

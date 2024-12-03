@@ -17,6 +17,7 @@ import {
   saveConfigurationFile,
   serviceToEnvVariable
 } from '../utils.js'
+import { installDependencies } from './build.js'
 
 const originCandidates = ['origin', 'upstream']
 
@@ -299,7 +300,6 @@ export async function resolveServices (
 
   // Resolve the services
   for (const service of toResolve) {
-    let operation
     const childLogger = logger.child({ name: service.id })
     overrideFatal(childLogger)
 
@@ -308,7 +308,6 @@ export async function resolveServices (
       const relativePath = relative(root, absolutePath)
 
       // Clone and install dependencies
-      operation = 'clone repository'
       childLogger.info(`Resolving service ${bold(service.id)} ...`)
 
       let url = service.url
@@ -326,15 +325,17 @@ export async function resolveServices (
       }
 
       await execa('git', ['clone', url, absolutePath])
-
-      if (!skipDependencies) {
-        operation = 'installing dependencies'
-        childLogger.info(`Installing dependencies for service ${bold(service.id)} ...`)
-        await execa(packageManager, ['install'], { cwd: absolutePath })
-      }
     } catch (error) {
-      childLogger.fatal({ error: ensureLoggableError(error) }, `Unable to ${operation} of service ${bold(service.id)}`)
+      childLogger.fatal(
+        { error: ensureLoggableError(error) },
+        `Unable to clone repository of the service ${bold(service.id)}`
+      )
     }
+  }
+
+  // Install dependencies
+  if (!skipDependencies) {
+    await installDependencies(logger, root, toResolve, false, packageManager)
   }
 }
 
@@ -480,7 +481,7 @@ export const help = {
         description: 'Do not install services dependencies'
       },
       {
-        usage: 'P, --package-manager',
+        usage: 'P, --package-manager <executable>',
         description: 'Use an alternative package manager (the default is to autodetect it)'
       }
     ],

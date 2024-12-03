@@ -44,9 +44,9 @@ test('resolve runtime external services', async t => {
 
   assert.ok(child.stdout.includes(`Cloning ${repoUrl} into ${join('external', 'external-service-3')}`), child.stdout)
 
-  assert.ok(child.stdout.includes('Installing dependencies for service external-service-1'), child.stdout)
-  assert.ok(child.stdout.includes('Installing dependencies for service external-service-2'), child.stdout)
-  assert.ok(child.stdout.includes('Installing dependencies for service external-service-3'), child.stdout)
+  assert.ok(child.stdout.includes('Installing dependencies for the service external-service-1 using npm'), child.stdout)
+  assert.ok(child.stdout.includes('Installing dependencies for the service external-service-2 using npm'), child.stdout)
+  assert.ok(child.stdout.includes('Installing dependencies for the service external-service-3 using npm'), child.stdout)
 
   assert.ok(child.stdout.includes('All external services have been resolved'), child.stdout)
 })
