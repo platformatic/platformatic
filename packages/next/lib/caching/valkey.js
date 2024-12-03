@@ -9,7 +9,7 @@ import { pino } from 'pino'
 
 export const MAX_BATCH_SIZE = 100
 
-const sections = {
+export const sections = {
   values: 'values',
   tags: 'tags'
 }

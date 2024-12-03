@@ -21,6 +21,8 @@ import { packageJson, schema } from './lib/schema.js'
 
 const supportedVersions = ['^14.0.0', '^15.0.0']
 
+export * as cachingValkey from './lib/caching/valkey.js'
+
 export class NextStackable extends BaseStackable {
   #basePath
   #next
