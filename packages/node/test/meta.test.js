@@ -25,3 +25,9 @@ test('should allow to setup connection string', async t => {
   assert.strictEqual(graphqlSchema, 'TEST_GRAPHQL_SCHEMA')
   assert.strictEqual(meta.composer.prefix, 'TEST_BASE_PATH')
 })
+
+test('should not have any connections string set', async t => {
+  const { runtime } = await createRuntime(t, 'express-api-metrics')
+  const meta = await runtime.getServiceMeta('api')
+  assert.deepEqual(meta.connectionStrings, [])
+})
