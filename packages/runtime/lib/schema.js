@@ -6,6 +6,13 @@ const {
   schemaComponents: { server, logger, health }
 } = require('@platformatic/utils')
 
+const env = {
+  type: 'object',
+  additionalProperties: {
+    type: 'string'
+  }
+}
+
 const workers = {
   anyOf: [
     {
@@ -41,7 +48,11 @@ const services = {
         type: 'boolean'
       },
       workers,
-      health: { ...health, default: undefined }
+      health: { ...health, default: undefined },
+      env,
+      envfile: {
+        type: 'string'
+      }
     }
   }
 }
@@ -316,7 +327,8 @@ const platformaticRuntimeSchema = {
     resolvedServicesBasePath: {
       type: 'string',
       default: 'external'
-    }
+    },
+    env
   },
   anyOf: [{ required: ['autoload'] }, { required: ['services'] }, { required: ['web'] }],
   additionalProperties: false,

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
+  "entrypoint": "hello",
+  "services": [
+    {
+      "id": "hello",
+      "path": "services/hello",
+      "envfile": "services/hello/.env",
+      "env": {
+        "FROM_SERVICE_CONFIG_FILE": "true"
+      },
+      "logger": {
+        "level": "trace"
+      }
+    }
+  ],
+  "env": {
+    "FROM_MAIN_CONFIG_FILE": "true"
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 3000,
+    "logger": {
+      "level": "trace"
+    }
+  }
+}
