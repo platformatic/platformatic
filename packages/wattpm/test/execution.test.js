@@ -6,8 +6,8 @@ import { resolve } from 'node:path'
 import { test } from 'node:test'
 import split2 from 'split2'
 import { request } from 'undici'
-import { prepareRuntime } from '../../basic/test/helper.js'
-import { waitForStart, wattpm } from './helper.js'
+import { ensureDependencies, prepareRuntime, updateFile } from '../../basic/test/helper.js'
+import { prepareGitRepository, waitForStart, wattpm } from './helper.js'
 
 test('dev - should start in development mode', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
@@ -34,9 +34,10 @@ test('dev - should complain if no configuration file is found', async t => {
   const devstartProcess = await wattpm('dev', nonExistentDirectory, { reject: false })
 
   deepStrictEqual(devstartProcess.exitCode, 1)
+
   ok(
     devstartProcess.stdout.includes(
-      `Cannot find a watt.json, a wattpm.json or a platformatic.json file in ${nonExistentDirectory}.`
+      `Cannot find a supported Watt configuration file (like watt.json, a wattpm.json or a platformatic.json) in ${nonExistentDirectory}.`
     )
   )
 })
@@ -259,6 +260,92 @@ test('start - should start in production mode with the inspector', async t => {
   strictEqual(res.result.value, 2)
 
   await client.close()
+})
+
+test('start - should use default folders for resolved services', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  await prepareGitRepository(t, rootDir)
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  process.chdir(rootDir)
+  await wattpm('import', rootDir, '-h', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
+  await wattpm('resolve', rootDir)
+  await updateFile(resolve(rootDir, 'external/resolved/package.json'), content => {
+    const config = JSON.parse(content)
+    config.dependencies = { '@platformatic/node': '^2.8.0' }
+    return JSON.stringify(config, null, 2)
+  })
+
+  await ensureDependencies([resolve(rootDir, 'external/resolved')])
+
+  const startProcess = wattpm('start', rootDir)
+
+  let started = false
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    const parsed = JSON.parse(log.toString())
+
+    if (parsed.msg.startsWith('Started the service "resolved"')) {
+      started = true
+      break
+    }
+  }
+
+  await waitForStart(startProcess.stdout)
+  ok(started)
+})
+
+test('start - should throw an error when a service has not been resolved', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  await prepareGitRepository(t, rootDir)
+
+  process.chdir(rootDir)
+  await wattpm('import', rootDir, '-h', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
+
+  const startProcess = await wattpm('start', rootDir, { reject: false })
+
+  deepStrictEqual(startProcess.exitCode, 1)
+  ok(
+    startProcess.stdout
+      .trim()
+      .split('\n')
+      .find(l => {
+        return (
+          JSON.parse(l).msg ===
+          'The path for service "resolved" does not exist. Please run "watt resolve" and try again.'
+        )
+      }),
+    startProcess.stdout
+  )
+})
+
+test('start - should throw an error when a service has no path and it is not resolvable', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  await prepareGitRepository(t, rootDir)
+
+  const config = JSON.parse(await readFile(resolve(rootDir, 'watt.json'), 'utf-8'))
+  config.web = [{ id: 'resolved', path: '' }]
+  await writeFile(resolve(rootDir, 'watt.json'), JSON.stringify(config, null, 2), 'utf-8')
+
+  process.chdir(rootDir)
+  const startProcess = await wattpm('start', rootDir, { reject: false })
+
+  deepStrictEqual(startProcess.exitCode, 1)
+  ok(
+    startProcess.stdout
+      .trim()
+      .split('\n')
+      .find(l => {
+        return (
+          JSON.parse(l).msg ===
+          'The service "resolved" has no path defined. Please check your configuration and try again.'
+        )
+      }),
+    startProcess.stdout
+  )
 })
 
 test('stop - should stop an application', async t => {

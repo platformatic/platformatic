@@ -1,5 +1,5 @@
 import { bold } from 'colorette'
-import { buildCommand } from './lib/commands/build.js'
+import { buildCommand, installCommand } from './lib/commands/build.js'
 import { devCommand, reloadCommand, restartCommand, startCommand, stopCommand } from './lib/commands/execution.js'
 import { importCommand, resolveCommand } from './lib/commands/external.js'
 import { helpCommand } from './lib/commands/help.js'
@@ -11,6 +11,8 @@ import { version } from './lib/schema.js'
 import { createLogger, overrideFatal, parseArgs, setVerbose } from './lib/utils.js'
 
 export async function main () {
+  globalThis.platformatic = { executable: 'watt' }
+
   const logger = createLogger('info')
 
   overrideFatal(logger)
@@ -92,6 +94,9 @@ export async function main () {
     case 'resolve':
       command = resolveCommand
       break
+    case 'install':
+      command = installCommand
+      break
     case 'help':
       command = helpCommand
       break
@@ -106,3 +111,5 @@ export async function main () {
 }
 
 export * from './lib/schema.js'
+
+export { resolveServices } from './lib/commands/external.js'

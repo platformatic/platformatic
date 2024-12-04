@@ -1,9 +1,16 @@
-import { ConfigManager, loadConfig as pltConfigLoadConfig, Store } from '@platformatic/config'
+import {
+  ConfigManager,
+  getParser,
+  getStringifier,
+  loadConfig as pltConfigLoadConfig,
+  Store
+} from '@platformatic/config'
 import { platformaticRuntime, buildRuntime as pltBuildRuntime } from '@platformatic/runtime'
 import { bgGreen, black, bold } from 'colorette'
+import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { parseArgs as nodeParseArgs } from 'node:util'
-import pino from 'pino'
+import { pino } from 'pino'
 import pinoPretty from 'pino-pretty'
 
 export let verbose = false
@@ -70,7 +77,12 @@ export function parseArgs (args, options, stopAtFirstPositional = true) {
     tokens: true
   })
 
-  return { values, positionals, unparsed, tokens }
+  return {
+    values,
+    positionals,
+    unparsed,
+    tokens
+  }
 }
 
 export function getMatchingRuntimeArgs (logger, positional) {
@@ -85,12 +97,16 @@ export function getMatchingRuntimeArgs (logger, positional) {
   return args
 }
 
+export function serviceToEnvVariable (service) {
+  return `PLT_SERVICE_${service.toUpperCase().replaceAll(/[^A-Z0-9_]/g, '_')}_PATH`
+}
+
 export async function findConfigurationFile (logger, root) {
   let current = root
   let configurationFile
   while (configurationFile === undefined) {
     // Find a wattpm.json or watt.json file
-    configurationFile = await ConfigManager.findConfigFile(current, ['watt.json', 'wattpm.json', 'platformatic.json'])
+    configurationFile = await ConfigManager.findConfigFile(current, true)
     if (!configurationFile) {
       const newCurrent = dirname(current)
 
@@ -104,7 +120,9 @@ export async function findConfigurationFile (logger, root) {
 
   if (typeof configurationFile !== 'string') {
     logger.fatal(
-      `Cannot find a ${bold('watt.json')}, a ${bold('wattpm.json')} or a ${bold('platformatic.json')} file in ${bold(root)}.`
+      `Cannot find a supported Watt configuration file (like ${bold(
+        'watt.json'
+      )}, a ${bold('wattpm.json')} or a ${bold('platformatic.json')}) in ${bold(root)}.`
     )
   }
 
@@ -112,11 +130,44 @@ export async function findConfigurationFile (logger, root) {
   return resolved
 }
 
+export async function loadConfigurationFile (logger, configurationFile) {
+  const store = new Store({
+    cwd: process.cwd(),
+    logger
+  })
+  store.add(platformaticRuntime)
+
+  const { configManager } = await store.loadConfig({
+    config: configurationFile,
+    overrides: {
+      /* c8 ignore next 3 */
+      onMissingEnv (key) {
+        return ''
+      }
+    }
+  })
+
+  await configManager.parse(true, [])
+  return configManager.current
+}
+
+export async function loadRawConfigurationFile (_, configurationFile) {
+  const parseConfig = getParser(configurationFile)
+
+  return parseConfig(await readFile(configurationFile, 'utf-8'))
+}
+
+export function saveConfigurationFile (logger, configurationFile, config) {
+  const stringifyConfig = getStringifier(configurationFile)
+
+  return writeFile(configurationFile, stringifyConfig(config), 'utf-8')
+}
+
 export async function buildRuntime (logger, configurationFile) {
   const store = new Store()
   store.add(platformaticRuntime)
 
-  const config = await pltConfigLoadConfig({}, ['-c', configurationFile], store, {}, true)
+  const config = await pltConfigLoadConfig({}, ['-c', configurationFile], store, {}, true, logger)
   config.configManager.args = config.args
 
   const runtimeConfig = config.configManager

@@ -121,8 +121,10 @@ export async function updateFile (path, update) {
   await writeFile(path, await update(contents), 'utf-8')
 }
 
-export async function ensureDependencies (config) {
-  const paths = [config.configManager.dirname, ...config.configManager.current.services.map(s => s.path)]
+export async function ensureDependencies (configOrPaths) {
+  const paths = Array.isArray(configOrPaths)
+    ? configOrPaths
+    : [configOrPaths.configManager.dirname, ...configOrPaths.configManager.current.services.map(s => s.path)]
   const require = createRequire(import.meta.url)
 
   // Make sure dependencies are symlinked

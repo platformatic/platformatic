@@ -9,6 +9,7 @@ Options:
 * `-c, --config FILE` - Path to the runtime configuration file.
 * `-u, --username string` - Username for the service repository.
 * `-p, --password string` - Password for the service repository.
+* `-P, --package-manager EXECUTABLE`: Use an alternative package manager to install dependencies (the default is to autodetect it).
 
 Platformatic resolve command resolves runtime services that have the `url` in their configuration.
 By default services are cloned with `git` to the `external` directory inside the runtime directory.

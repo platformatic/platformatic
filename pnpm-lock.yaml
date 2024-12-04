@@ -214,6 +214,9 @@ importers:
       undici:
         specifier: ^7.0.0
         version: 7.1.0
+      wattpm:
+        specifier: workspace:*
+        version: link:../wattpm
     devDependencies:
       '@platformatic/astro':
         specifier: workspace:*
@@ -2559,6 +2562,9 @@ importers:
       commist:
         specifier: ^3.2.0
         version: 3.2.0
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.7
       execa:
         specifier: ^9.4.0
         version: 9.5.1

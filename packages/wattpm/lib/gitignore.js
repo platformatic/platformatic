@@ -129,4 +129,7 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Watt resolved folder
+external/
 `

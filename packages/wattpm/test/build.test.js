@@ -33,3 +33,51 @@ test('build - should handle build errors', async t => {
 
   ok(!existsSync(resolve(serviceDir, 'dist/index.js')))
 })
+
+test('install - should install dependencies of application and its services using npm by default', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
+    await safeRemove(resolve(root, 'node_modules'))
+    await safeRemove(resolve(root, 'web/main/node_modules'))
+  })
+
+  const installProcess = await wattpm('install', rootDir)
+
+  ok(installProcess.stdout.includes('Installing dependencies for the application using npm ...'))
+  ok(installProcess.stdout.includes('Installing dependencies for the service main using npm ...'))
+})
+
+test('install - should install dependencies of application and its services using npm by default', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
+    await safeRemove(resolve(root, 'node_modules'))
+    await safeRemove(resolve(root, 'web/main/node_modules'))
+  })
+
+  const installProcess = await wattpm('install', rootDir, '-p')
+
+  ok(installProcess.stdout.includes('Installing production dependencies for the application using npm ...'))
+  ok(installProcess.stdout.includes('Installing production dependencies for the service main using npm ...'))
+})
+
+test('install - should install dependencies of application and its services using a specific package manager', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
+    await safeRemove(resolve(root, 'node_modules'))
+    await safeRemove(resolve(root, 'web/main/node_modules'))
+  })
+
+  const installProcess = await wattpm('install', rootDir, '-P', 'pnpm')
+
+  ok(installProcess.stdout.includes('Installing dependencies for the application using pnpm ...'))
+  ok(installProcess.stdout.includes('Installing dependencies for the service main using pnpm ...'))
+})
+
+test('install - should install production dependencies only', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
+    await safeRemove(resolve(root, 'node_modules'))
+    await safeRemove(resolve(root, 'web/main/node_modules'))
+  })
+
+  const installProcess = await wattpm('install', rootDir, '-p', '-P', 'pnpm')
+
+  ok(installProcess.stdout.includes('Installing production dependencies for the application using pnpm ...'))
+  ok(installProcess.stdout.includes('Installing production dependencies for the service main using pnpm ...'))
+})

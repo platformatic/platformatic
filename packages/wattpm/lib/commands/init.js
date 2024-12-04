@@ -1,13 +1,13 @@
 import { ConfigManager } from '@platformatic/config'
 import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
-import { existsSync, } from 'node:fs'
+import { existsSync } from 'node:fs'
 import { mkdir, stat, writeFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { defaultConfiguration, defaultPackageJson } from '../defaults.js'
 import { gitignore } from '../gitignore.js'
 import { schema, version } from '../schema.js'
-import { parseArgs, verbose } from '../utils.js'
+import { parseArgs, saveConfigurationFile, verbose } from '../utils.js'
 
 export async function initCommand (logger, args) {
   const {
@@ -57,7 +57,7 @@ export async function initCommand (logger, args) {
 
   // Create the web folder, will implicitly create the root
   try {
-    await mkdir(web, { recursive: true, })
+    await mkdir(web, { recursive: true })
     /* c8 ignore next 6 */
   } catch (error) {
     logger.fatal(
@@ -76,11 +76,11 @@ export async function initCommand (logger, args) {
 
   await configManager.parse()
 
-  await writeFile(
-    configurationFile,
-    JSON.stringify({ $schema: schema.$id, ...configManager.current, entrypoint: positionals[1] ?? undefined }, null, 2),
-    'utf-8'
-  )
+  await saveConfigurationFile(logger, configurationFile, {
+    $schema: schema.$id,
+    ...configManager.current,
+    entrypoint: positionals[1] ?? undefined
+  })
 
   const packageJson = {
     name: basename(root),
@@ -89,13 +89,13 @@ export async function initCommand (logger, args) {
   }
 
   if (packageManager === 'npm') {
-    packageJson.workspaces = ['web/*']
+    packageJson.workspaces = ['web/*', 'external/*']
   } else if (packageManager === 'pnpm') {
-    await writeFile(resolve(root, 'pnpm-workspace.yaml'), "packages:\n  - 'web/*'", 'utf-8')
+    await saveConfigurationFile(logger, resolve(root, 'pnpm-workspace.yaml'), { packages: ['web/*', 'external/*'] })
   }
 
   // Write the package.json file
-  await writeFile(resolve(root, 'package.json'), JSON.stringify(packageJson, null, 2), 'utf-8')
+  await saveConfigurationFile(logger, resolve(root, 'package.json'), packageJson)
 
   // Write the .gitignore file
   await writeFile(resolve(root, '.gitignore'), gitignore, 'utf-8')
@@ -115,6 +115,12 @@ export const help = {
       {
         name: 'entrypoint',
         description: 'The name of the entrypoint service'
+      }
+    ],
+    options: [
+      {
+        usage: 'p, --package-manager <executable>',
+        description: 'Use an alternative package manager'
       }
     ]
   }

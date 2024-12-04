@@ -222,7 +222,8 @@ test('config - should list configuration for an application', async t => {
       maxHeapTotal: 4294967296,
       maxHeapUsed: 0.95,
       maxUnhealthyChecks: 3
-    }
+    },
+    resolvedServicesBasePath: 'external'
   })
 })
 

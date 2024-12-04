@@ -1,55 +1,25 @@
 import { configCandidates } from '@platformatic/basic'
-import { Store } from '@platformatic/config'
-import { platformaticRuntime } from '@platformatic/runtime'
 import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
+import { parse } from 'dotenv'
 import { execa } from 'execa'
-import { existsSync, } from 'node:fs'
-import { readdir, readFile, stat, writeFile } from 'node:fs/promises'
-import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
+import { existsSync } from 'node:fs'
+import { readFile, writeFile } from 'node:fs/promises'
+import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { defaultServiceJson } from '../defaults.js'
 import { version } from '../schema.js'
-import { findConfigurationFile, overrideFatal, parseArgs } from '../utils.js'
+import {
+  findConfigurationFile,
+  loadConfigurationFile,
+  loadRawConfigurationFile,
+  overrideFatal,
+  parseArgs,
+  saveConfigurationFile,
+  serviceToEnvVariable
+} from '../utils.js'
+import { installDependencies } from './build.js'
 
 const originCandidates = ['origin', 'upstream']
-
-export async function checkEmptyDirectory (logger, path, relativePath) {
-  if (existsSync(path)) {
-    const statObject = await stat(path)
-
-    if (!statObject.isDirectory()) {
-      logger.fatal(`Path ${bold(relativePath)} exists but it is not a directory.`)
-    }
-
-    const entries = await readdir(path)
-
-    if (entries.filter(e => !e.startsWith('.')).length) {
-      logger.fatal(`Directory ${bold(relativePath)} is not empty.`)
-    }
-  }
-}
-
-async function parseConfiguration (logger, configurationFile) {
-  const store = new Store({
-    cwd: process.cwd(),
-    logger
-  })
-  store.add(platformaticRuntime)
-
-  const { configManager } = await store.loadConfig({
-    config: configurationFile,
-    overrides: {
-      /* c8 ignore next 3 */
-      onMissingEnv (key) {
-        return ''
-      }
-    }
-  })
-
-  await configManager.parse()
-
-  return configManager.current
-}
 
 async function parseLocalFolder (path) {
   // Read the package.json, if any
@@ -103,54 +73,36 @@ async function findExistingConfiguration (root, path) {
   }
 }
 
-async function addService (configurationFile, id, path, url) {
-  const config = JSON.parse(await readFile(configurationFile, 'utf-8'))
-  const root = dirname(configurationFile)
+export async function appendEnvVariable (envFile, key, value) {
+  let contents = ''
 
-  let autoloadPath = config.autoload?.path
+  if (existsSync(envFile)) {
+    contents = await readFile(envFile, 'utf-8')
 
-  if (autoloadPath) {
-    autoloadPath = join(root, autoloadPath)
-    if (path.startsWith(autoloadPath)) {
-      return
+    if (contents.length && !contents.endsWith('\n')) {
+      contents += '\n'
     }
   }
 
-  /* c8 ignore next */
-  config.web ??= []
-  config.web.push({ id, path, url })
+  contents += `${key}=${value}\n`
 
-  await writeFile(configurationFile, JSON.stringify(config, null, 2), 'utf-8')
+  return writeFile(envFile, contents, 'utf-8')
 }
 
 async function fixConfiguration (logger, root) {
   const configurationFile = await findConfigurationFile(logger, root)
-  const config = JSON.parse(await readFile(configurationFile, 'utf-8'))
-
-  // Load all services in the autoload and the one manually specified
-  const services = []
-  const autoLoadPath = config.autoload?.path
-  if (autoLoadPath) {
-    for (const path of await readdir(resolve(root, autoLoadPath))) {
-      services.push(join(autoLoadPath, path))
-    }
-  }
-
-  /* c8 ignore next */
-  for (const service of config.services ?? []) {
-    services.push(service.path)
-  }
+  const config = await loadConfigurationFile(logger, configurationFile)
 
   // For each service, if there is no watt.json, create one and fix package dependencies
-  for (const service of services) {
-    const wattConfiguration = await findExistingConfiguration(root, service)
+  for (const { path } of config.services) {
+    const wattConfiguration = await findExistingConfiguration(root, path)
 
     /* c8 ignore next 3 */
     if (wattConfiguration) {
       continue
     }
 
-    const { id, packageJson, stackable } = await parseLocalFolder(resolve(root, service))
+    const { id, packageJson, stackable } = await parseLocalFolder(resolve(root, path))
 
     packageJson.dependencies ??= {}
     packageJson.dependencies[stackable] = `^${version}`
@@ -161,27 +113,101 @@ async function fixConfiguration (logger, root) {
     }
 
     logger.info(`Detected stackable ${bold(stackable)} for service ${bold(id)}, adding to the service dependencies.`)
-    await writeFile(resolve(root, service, 'package.json'), JSON.stringify(packageJson, null, 2), 'utf-8')
-    await writeFile(resolve(root, service, 'watt.json'), JSON.stringify(wattJson, null, 2), 'utf-8')
+
+    await saveConfigurationFile(logger, resolve(path, 'package.json'), packageJson)
+    await saveConfigurationFile(logger, resolve(path, 'watt.json'), wattJson)
   }
 }
 
-async function importLocal (logger, root, configurationFile, path) {
+async function importService (logger, configurationFile, id, path, url) {
+  const config = await loadConfigurationFile(logger, configurationFile)
+  const rawConfig = await loadRawConfigurationFile(logger, configurationFile)
+  const root = dirname(configurationFile)
+  const envFile = resolve(root, '.env')
+  const envSampleFile = resolve(root, '.env.sample')
+  const envVariable = serviceToEnvVariable(id)
+
+  let useEnv = true
+
+  // If there is a locale path
+  if (path) {
+    let autoloadPath = config.autoload?.path
+
+    // If we already autoload this path, there is nothing to do
+    if (autoloadPath) {
+      autoloadPath = resolve(root, autoloadPath)
+      if (path.startsWith(autoloadPath)) {
+        logger.warn('The path is already autoloaded as a service.')
+        return
+      }
+    }
+
+    // If the path is within the application repository
+    if (path.startsWith(root)) {
+      // If the path is already defined as a service, there is nothing to do
+      if (config.services.some(s => s.path === path)) {
+        logger.warn('The path is already defined as a service.')
+        return
+      }
+
+      // Do not use env variables
+      useEnv = false
+    }
+
+    if (!url) {
+      logger.warn(`The service ${bold(id)} does not define a Git repository.`)
+    }
+  }
+
+  // Make sure the service is not already defined
+  if (config.serviceMap.has(id)) {
+    logger.fatal(`There is already a service ${bold(id)} defined, please choose a different service ID.`)
+  }
+
+  /* c8 ignore next */
+  rawConfig.web ??= []
+
+  if (useEnv) {
+    rawConfig.web.push({ id, path: `{${envVariable}}`, url })
+
+    // Make sure the environment variable is not already defined
+    if (existsSync(envFile)) {
+      const env = parse(await readFile(envFile, 'utf-8'))
+
+      if (env[envVariable]) {
+        logger.fatal(
+          `There is already an environment variable ${bold(envVariable)} defined, please choose a different service ID.`
+        )
+      }
+    }
+
+    // Copy the .env file to .env.sample if it does not exist
+    if (!existsSync(envSampleFile)) {
+      await writeFile(envSampleFile, '', 'utf-8')
+    }
+
+    await appendEnvVariable(envFile, envVariable, path ?? '')
+    await appendEnvVariable(envSampleFile, envVariable, '')
+  } else {
+    rawConfig.web.push({ id, path: relative(root, path) })
+  }
+
+  await saveConfigurationFile(logger, configurationFile, rawConfig)
+}
+
+async function importURL (logger, _, configurationFile, rawUrl, id, http) {
+  let url = rawUrl
+  if (rawUrl.match(/^[a-z0-9-]+\/[a-z0-9-]+$/i)) {
+    url = http ? `https://github.com/${rawUrl}.git` : `git@github.com:${rawUrl}.git`
+  }
+
+  await importService(logger, configurationFile, id ?? basename(rawUrl, '.git'), null, url)
+}
+
+async function importLocal (logger, root, configurationFile, path, overridenId) {
   const { id, url, packageJson, stackable } = await parseLocalFolder(path)
 
-  // Modify the configuration
-  const config = JSON.parse(await readFile(configurationFile, 'utf-8'))
-  let isAutoloaded = false
-  const autoLoadPath = config.autoload?.path
-  if (autoLoadPath) {
-    const relativePath = relative(root, path)
-
-    isAutoloaded = relativePath.startsWith(`${autoLoadPath}${sep}`)
-  }
-
-  if (!isAutoloaded) {
-    await addService(configurationFile, id, path, url)
-  }
+  await importService(logger, configurationFile, overridenId ?? id, path, url)
 
   // Check if there is any configuration file we recognize. If so, don't do anything
   const wattConfiguration = await findExistingConfiguration(root, path)
@@ -204,33 +230,125 @@ async function importLocal (logger, root, configurationFile, path) {
   }
 
   logger.info(`Detected stackable ${bold(stackable)} for service ${bold(id)}, adding to the service dependencies.`)
-  await writeFile(resolve(path, 'package.json'), JSON.stringify(packageJson, null, 2), 'utf-8')
-  await writeFile(resolve(path, 'watt.json'), JSON.stringify(wattJson, null, 2), 'utf-8')
+
+  await saveConfigurationFile(logger, resolve(path, 'package.json'), packageJson)
+  await saveConfigurationFile(logger, resolve(path, 'watt.json'), wattJson)
 }
 
-async function importURL (logger, root, configurationFile, values, rawUrl) {
-  let url = rawUrl
-  if (rawUrl.match(/^[a-z0-9-]+\/[a-z0-9-]+$/i)) {
-    url = values.http ? `https://github.com/${rawUrl}.git` : `git@github.com:${rawUrl}.git`
+export async function resolveServices (
+  logger,
+  root,
+  configurationFile,
+  username,
+  password,
+  skipDependencies,
+  packageManager
+) {
+  const config = await loadConfigurationFile(logger, configurationFile)
+
+  /* c8 ignore next 8 */
+  if (!packageManager) {
+    if (existsSync(resolve(root, 'pnpm-lock.yaml'))) {
+      packageManager = 'pnpm'
+    } else {
+      packageManager = 'npm'
+    }
   }
 
-  const service = values.id ?? basename(rawUrl, '.git')
-  const path = values.path ?? `web/${service}`
+  // The services which might be to be resolved are the one that have a URL and either
+  // no path defined (which means no environment variable set) or a non-existing path (which means not resolved yet)
+  const resolvableServices = config.services.filter(service => {
+    if (!service.url) {
+      return false
+    }
 
-  await addService(configurationFile, service, path, url)
+    if (service.path && existsSync(service.path)) {
+      logger.warn(`Skipping service ${bold(service.id)} as the path already exists.`)
+      return false
+    }
+
+    return true
+  })
+
+  // Iterate the services a first time to verify the environment files configuration and which services must be resolved
+  const toResolve = []
+
+  // Simply use service.path here
+  for (const service of resolvableServices) {
+    if (!service.path) {
+      service.path = resolve(root, `${config.resolvedServicesBasePath}/${service.id}`)
+    }
+
+    const directory = resolve(root, service.path)
+
+    // If the directory already exists, it's either external or already resolved, nothing to do in both cases
+    if (!existsSync(directory)) {
+      if (!directory.startsWith(root)) {
+        logger.warn(
+          `Skipping service ${bold(service.id)} as the non existent directory ${bold(service.path)} is outside the project directory.`
+        )
+      } else {
+        // This repository must be resolved
+        toResolve.push(service)
+      }
+    } else {
+      logger.warn(
+        `Skipping service ${bold(service.id)} as the generated path ${bold(join(config.resolvedServicesBasePath, service.id))} already exists.`
+      )
+    }
+  }
+
+  // Resolve the services
+  for (const service of toResolve) {
+    const childLogger = logger.child({ name: service.id })
+    overrideFatal(childLogger)
+
+    try {
+      const absolutePath = service.path
+      const relativePath = relative(root, absolutePath)
+
+      // Clone and install dependencies
+      childLogger.info(`Resolving service ${bold(service.id)} ...`)
+
+      let url = service.url
+      if (url.startsWith('http') && username && password) {
+        const parsed = new URL(url)
+        parsed.username ||= username
+        parsed.password ||= password
+        url = parsed.toString()
+      }
+
+      if (username) {
+        childLogger.info(`Cloning ${bold(service.url)} as user ${bold(username)} into ${bold(relativePath)} ...`)
+      } else {
+        childLogger.info(`Cloning ${bold(service.url)} into ${bold(relativePath)} ...`)
+      }
+
+      await execa('git', ['clone', url, absolutePath])
+    } catch (error) {
+      childLogger.fatal(
+        { error: ensureLoggableError(error) },
+        `Unable to clone repository of the service ${bold(service.id)}`
+      )
+    }
+  }
+
+  // Install dependencies
+  if (!skipDependencies) {
+    await installDependencies(logger, root, toResolve, false, packageManager)
+  }
 }
 
 export async function importCommand (logger, args) {
-  const { values, positionals } = parseArgs(
+  const {
+    values: { id, http },
+    positionals
+  } = parseArgs(
     args,
     {
       id: {
         type: 'string',
         short: 'i'
-      },
-      path: {
-        type: 'string',
-        short: 'p'
       },
       http: {
         type: 'boolean',
@@ -271,15 +389,15 @@ export async function importCommand (logger, args) {
   })
 
   if (local) {
-    return importLocal(logger, root, configurationFile, local)
+    return importLocal(logger, root, configurationFile, local, id)
   }
 
-  return importURL(logger, root, configurationFile, values, rawUrl)
+  return importURL(logger, root, configurationFile, rawUrl, id, http)
 }
 
 export async function resolveCommand (logger, args) {
   const {
-    values: { username, password, 'skip-dependencies': skipDependencies },
+    values: { username, password, 'skip-dependencies': skipDependencies, 'package-manager': packageManager },
     positionals
   } = parseArgs(
     args,
@@ -298,6 +416,10 @@ export async function resolveCommand (logger, args) {
         type: 'boolean',
         short: 's',
         default: false
+      },
+      'package-manager': {
+        type: 'string',
+        short: 'p'
       }
     },
     false
@@ -305,56 +427,9 @@ export async function resolveCommand (logger, args) {
 
   /* c8 ignore next */
   const root = resolve(process.cwd(), positionals[0] ?? '')
-
   const configurationFile = await findConfigurationFile(logger, root)
-  const config = await parseConfiguration(logger, configurationFile)
 
-  for (const service of config.services) {
-    let operation
-    const childLogger = logger.child({ name: service.id })
-    overrideFatal(childLogger)
-
-    try {
-      if (!service.url) {
-        continue
-      }
-
-      childLogger.info(`Resolving service ${bold(service.id)} ...`)
-
-      const relativePath = relative(root, service.path)
-
-      // Check that the target directory is empty, otherwise cloning will likely fail
-      await checkEmptyDirectory(childLogger, service.path, relativePath)
-
-      operation = 'clone repository'
-
-      let url = service.url
-
-      if (url.startsWith('http') && username && password) {
-        const parsed = new URL(url)
-        parsed.username ||= username
-        parsed.password ||= password
-        url = parsed.toString()
-      }
-
-      if (username) {
-        childLogger.info(`Cloning ${bold(service.url)} as user ${bold(username)} into ${bold(relativePath)} ...`)
-      } else {
-        childLogger.info(`Cloning ${bold(service.url)} into ${bold(relativePath)} ...`)
-      }
-
-      await execa('git', ['clone', url, service.path])
-
-      if (!skipDependencies) {
-        operation = 'installing dependencies'
-        childLogger.info('Installing dependencies ...')
-        await execa('npm', ['i'], { cwd: service.path })
-      }
-    } catch (error) {
-      childLogger.fatal({ error: ensureLoggableError(error) }, `Unable to ${operation} of service ${bold(service.id)}`)
-    }
-  }
-
+  await resolveServices(logger, root, configurationFile, username, password, skipDependencies, packageManager)
   logger.done('All services have been resolved.')
 }
 
@@ -376,10 +451,6 @@ export const help = {
       {
         usage: '-i, --id <value>',
         description: 'The id of the service (the default is the basename of the URL)'
-      },
-      {
-        usage: '-p, --path <value>',
-        description: 'The path where to import the service (the default is the service id)'
       },
       {
         usage: '-h, --http',
@@ -408,6 +479,10 @@ export const help = {
       {
         usage: '-s, --skip-dependencies',
         description: 'Do not install services dependencies'
+      },
+      {
+        usage: 'P, --package-manager <executable>',
+        description: 'Use an alternative package manager (the default is to autodetect it)'
       }
     ],
     footer: `
