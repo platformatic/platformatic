@@ -18,7 +18,7 @@ async function ensureServices (config) {
   if (services) {
     config.composer.services = services
       .filter(id => id !== globalThis.platformatic.serviceId) // Remove ourself
-      .map(id => ({ id, proxy: {} }))
+      .map(id => ({ id, proxy: { prefix: `/${id}` } }))
   }
 }
 

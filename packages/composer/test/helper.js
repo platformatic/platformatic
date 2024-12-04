@@ -387,7 +387,7 @@ async function createComposer (t, composerConfig, loggerInstance = undefined) {
   return app
 }
 
-async function createComposerInRuntime (t, prefix, composerConfig, services) {
+async function createComposerInRuntime (t, prefix, composerConfig, services, autoload) {
   await createDirectory(tmpBaseDir)
   const tmpDir = await mkdtemp(resolve(tmpBaseDir, prefix))
   await createDirectory(resolve(tmpDir, 'composer'))
@@ -409,6 +409,7 @@ async function createComposerInRuntime (t, prefix, composerConfig, services) {
           config: composerConfigPath
         }
       ]),
+      autoload: autoload ? { path: autoload } : undefined,
       logger: {
         level: 'error'
       }

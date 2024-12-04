@@ -21,6 +21,8 @@ import { packageJson, schema } from './lib/schema.js'
 
 const supportedVersions = ['^14.0.0', '^15.0.0']
 
+export * as cachingValkey from './lib/caching/valkey.js'
+
 export class NextStackable extends BaseStackable {
   #basePath
   #next
@@ -61,8 +63,10 @@ export class NextStackable extends BaseStackable {
       return this.stopCommand()
     }
 
+    globalThis.platformatic.events.emit('plt:next:close')
+
     if (this.isProduction) {
-      return new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         this.#server.close(error => {
           /* c8 ignore next 3 */
           if (error) {
@@ -72,6 +76,8 @@ export class NextStackable extends BaseStackable {
           resolve()
         })
       })
+
+      await this.childManager.close()
     } else {
       const exitPromise = once(this.#child, 'exit')
       await this.childManager.close()
@@ -102,7 +108,8 @@ export class NextStackable extends BaseStackable {
   /* c8 ignore next 5 */
   async getWatchConfig () {
     return {
-      enabled: false
+      enabled: false,
+      path: this.root
     }
   }
 
@@ -137,6 +144,7 @@ export class NextStackable extends BaseStackable {
     this.childManager = new ChildManager({
       loader: loaderUrl,
       context: {
+        config: this.configManager.current,
         serviceId: this.serviceId,
         workerId: this.workerId,
         // Always use URL to avoid serialization problem in Windows
@@ -200,6 +208,7 @@ export class NextStackable extends BaseStackable {
     this.childManager = new ChildManager({
       loader: loaderUrl,
       context: {
+        config: this.configManager.current,
         serviceId: this.serviceId,
         workerId: this.workerId,
         // Always use URL to avoid serialization problem in Windows
@@ -220,6 +229,7 @@ export class NextStackable extends BaseStackable {
 
   async #startProductionNext () {
     try {
+      globalThis.platformatic.config = this.configManager.current
       await this.childManager.inject()
       const { nextStart } = await importFile(pathResolve(this.#next, './dist/cli/next-start.js'))
 
@@ -276,6 +286,10 @@ function transformConfig () {
 
   if (typeof this.current.watch !== 'object') {
     this.current.watch = { enabled: this.current.watch || false }
+  }
+
+  if (this.current.cache?.adapter === 'redis') {
+    this.current.cache.adapter = 'valkey'
   }
 
   basicTransformConfig.call(this)

@@ -113,7 +113,7 @@ importers:
         version: 4.2.0
       undici:
         specifier: ^7.0.0
-        version: 7.0.0
+        version: 7.1.0
       ws:
         specifier: ^8.18.0
         version: 8.18.0
@@ -189,7 +189,7 @@ importers:
         version: 1.3.1
       dotenv:
         specifier: ^16.4.5
-        version: 16.4.6
+        version: 16.4.7
       execa:
         specifier: ^9.3.1
         version: 9.5.1
@@ -213,7 +213,7 @@ importers:
         version: 4.2.0
       undici:
         specifier: ^7.0.0
-        version: 7.0.0
+        version: 7.1.0
       wattpm:
         specifier: workspace:*
         version: link:../wattpm
@@ -298,7 +298,7 @@ importers:
         version: 5.0.1
       undici:
         specifier: ^7.0.0
-        version: 7.0.0
+        version: 7.1.0
     devDependencies:
       '@fastify/multipart':
         specifier: ^9.0.1
@@ -389,7 +389,7 @@ importers:
         version: 13.0.0
       undici:
         specifier: ^7.0.0
-        version: 7.0.0
+        version: 7.1.0
       yaml:
         specifier: ^2.4.1
         version: 2.6.1
@@ -414,7 +414,7 @@ importers:
         version: 0.19.0
       dotenv:
         specifier: ^16.4.5
-        version: 16.4.6
+        version: 16.4.7
       eslint:
         specifier: '9'
         version: 9.16.0
@@ -558,7 +558,7 @@ importers:
         version: 0.3.0
       undici:
         specifier: ^7.0.0
-        version: 7.0.0
+        version: 7.1.0
     devDependencies:
       '@platformatic/client':
         specifier: workspace:*
@@ -625,7 +625,7 @@ importers:
         version: 8.17.1
       dotenv:
         specifier: ^16.4.5
-        version: 16.4.6
+        version: 16.4.7
       jsonpath:
         specifier: ^1.1.1
         version: 1.1.1
@@ -640,7 +640,7 @@ importers:
         version: 7.6.3
       undici:
         specifier: ^7.0.0
-        version: 7.0.0
+        version: 7.1.0
     devDependencies:
       '@iarna/toml':
         specifier: ^2.2.5
@@ -704,7 +704,7 @@ importers:
         version: 6.8.2
       undici:
         specifier: ^7.0.0
-        version: 7.0.0
+        version: 7.1.0
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -804,7 +804,7 @@ importers:
         version: 7.1.0
       undici:
         specifier: ^7.0.0
-        version: 7.0.0
+        version: 7.1.0
       which:
         specifier: ^3.0.1
         version: 3.0.1
@@ -838,7 +838,7 @@ importers:
         version: 7.0.3
       dotenv:
         specifier: ^16.4.5
-        version: 16.4.6
+        version: 16.4.7
       eslint:
         specifier: '9'
         version: 9.16.0
@@ -1046,7 +1046,7 @@ importers:
         version: 5.7.2
       undici:
         specifier: ^7.0.0
-        version: 7.0.0
+        version: 7.1.0
       vscode-json-languageservice:
         specifier: ^5.3.9
         version: 5.4.2
@@ -1076,7 +1076,7 @@ importers:
         version: 3.1.0
       undici:
         specifier: ^7.0.0
-        version: 7.0.0
+        version: 7.1.0
     devDependencies:
       '@fastify/cookie':
         specifier: ^11.0.0
@@ -1198,7 +1198,7 @@ importers:
         version: 0.23.2
       undici:
         specifier: ^7.0.0
-        version: 7.0.0
+        version: 7.1.0
     devDependencies:
       '@platformatic/utils':
         specifier: workspace:*
@@ -1319,7 +1319,7 @@ importers:
         version: 9.5.0
       undici:
         specifier: ^7.0.0
-        version: 7.0.0
+        version: 7.1.0
     devDependencies:
       '@types/inquirer':
         specifier: ^9.0.7
@@ -1419,6 +1419,12 @@ importers:
       amaro:
         specifier: ^0.2.0
         version: 0.2.0
+      iovalkey:
+        specifier: ^0.2.1
+        version: 0.2.1
+      msgpackr:
+        specifier: ^1.11.2
+        version: 1.11.2
       semver:
         specifier: ^7.6.3
         version: 7.6.3
@@ -1756,7 +1762,7 @@ importers:
         version: 0.2.0
       undici:
         specifier: ^7.0.0
-        version: 7.0.0
+        version: 7.1.0
       undici-thread-interceptor:
         specifier: ^0.10.0
         version: 0.10.0
@@ -1981,7 +1987,7 @@ importers:
         version: 0.3.0
       undici:
         specifier: ^7.0.0
-        version: 7.0.0
+        version: 7.1.0
     devDependencies:
       '@fastify/aws-lambda':
         specifier: ^5.0.0
@@ -2558,7 +2564,7 @@ importers:
         version: 3.2.0
       dotenv:
         specifier: ^16.4.5
-        version: 16.4.6
+        version: 16.4.7
       execa:
         specifier: ^9.4.0
         version: 9.5.1
@@ -2604,7 +2610,7 @@ importers:
         version: 5.7.2
       undici:
         specifier: ^7.0.0
-        version: 7.0.0
+        version: 7.1.0
 
 packages:
 
@@ -3651,6 +3657,36 @@ packages:
     engines: {node: '>=20.16.0'}
     peerDependencies:
       graphql: ^16.0.0
+
+  '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.3':
+    resolution: {integrity: sha512-QZHtlVgbAdy2zAqNA9Gu1UpIuI8Xvsd1v8ic6B2pZmeFnFcMWiPLfWXh7TVw4eGEZ/C9TH281KwhVoeQUKbyjw==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@msgpackr-extract/msgpackr-extract-darwin-x64@3.0.3':
+    resolution: {integrity: sha512-mdzd3AVzYKuUmiWOQ8GNhl64/IoFGol569zNRdkLReh6LRLHOXxU4U8eq0JwaD8iFHdVGqSy4IjFL4reoWCDFw==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@msgpackr-extract/msgpackr-extract-linux-arm64@3.0.3':
+    resolution: {integrity: sha512-YxQL+ax0XqBJDZiKimS2XQaf+2wDGVa1enVRGzEvLLVFeqa5kx2bWbtcSXgsxjQB7nRqqIGFIcLteF/sHeVtQg==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@msgpackr-extract/msgpackr-extract-linux-arm@3.0.3':
+    resolution: {integrity: sha512-fg0uy/dG/nZEXfYilKoRe7yALaNmHoYeIoJuJ7KJ+YyU2bvY8vPv27f7UKhGRpY6euFYqEVhxCFZgAUNQBM3nw==}
+    cpu: [arm]
+    os: [linux]
+
+  '@msgpackr-extract/msgpackr-extract-linux-x64@3.0.3':
+    resolution: {integrity: sha512-cvwNfbP07pKUfq1uH+S6KJ7dT9K8WOE4ZiAcsrSes+UY55E/0jLYc+vq+DO7jlmqRb5zAggExKm0H7O/CBaesg==}
+    cpu: [x64]
+    os: [linux]
+
+  '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.3':
+    resolution: {integrity: sha512-x0fWaQtYp4E6sktbsdAqnehxDgEc/VwM7uLsRCYWaiGu0ykYdZPiS8zCWdnjHwyiumousxfBm4SO31eXqwEZhQ==}
+    cpu: [x64]
+    os: [win32]
 
   '@next/env@15.0.3':
     resolution: {integrity: sha512-t9Xy32pjNOvVn2AS+Utt6VmyrshbpfUMhIjFO60gI58deSo/KgLOp31XZ4O+kY/Is8WAGYwA5gR7kOb1eORDBA==}
@@ -5217,8 +5253,8 @@ packages:
   dotenv-tool@0.1.1:
     resolution: {integrity: sha512-72oQ+k8fWjKPCu/WfP+aiCPLtcsyqYLSa2s8ezFmI77jzgtF21bep6yvSj4q2d69o6b24W9BDU857zGuD7bh6w==}
 
-  dotenv@16.4.6:
-    resolution: {integrity: sha512-JhcR/+KIjkkjiU8yEpaB/USlzVi3i5whwOjpIRNGi9svKEXZSe+Qp6IWAjFjv+2GViAoDRCUv/QLNziQxsLqDg==}
+  dotenv@16.4.7:
+    resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
     engines: {node: '>=12'}
 
   drange@1.1.1:
@@ -6164,6 +6200,10 @@ packages:
 
   ioredis@5.4.1:
     resolution: {integrity: sha512-2YZsvl7jopIa1gaePkeMtd9rAcSjOOjPtpcLlOeusyO+XH2SK5ZcT+UCrElPP+WVIInh2TzeI4XW9ENaSLVVHA==}
+    engines: {node: '>=12.22.0'}
+
+  iovalkey@0.2.1:
+    resolution: {integrity: sha512-uHwgaumQRkSb6jHA5Xpo5IKzvjQjZxRMoGuYaCv77Uu3mOM5RsogO2NZaGriIpbCoeSM0lSF6XlcAKu95l+vxw==}
     engines: {node: '>=12.22.0'}
 
   ipaddr.js@1.9.1:
@@ -7174,6 +7214,13 @@ packages:
     resolution: {integrity: sha512-SZ2IxeqZ1oRFGo0xFGbvBJWMp3yLIY9rlIJyxy8CGrwZn1f0ZK4r6jV/AM1r0FZMDUkWkglOk/eeKIL9g77Nxw==}
     hasBin: true
 
+  msgpackr-extract@3.0.3:
+    resolution: {integrity: sha512-P0efT1C9jIdVRefqjzOQ9Xml57zpOXnIuS+csaB4MdZbTdmGDLo8XhzBG1N7aO11gKDDkJvBLULeFTo46wwreA==}
+    hasBin: true
+
+  msgpackr@1.11.2:
+    resolution: {integrity: sha512-F9UngXRlPyWCDEASDpTf6c9uNhGPTqnTeLVt7bN+bU1eajoR/8V9ys2BRaV5C/e5ihE6sJ9uPIKaYt6bFuO32g==}
+
   mute-stream@1.0.0:
     resolution: {integrity: sha512-avsJQhyd+680gKXyG/sQc0nXaC6rBkPOfyHYcFb9+hdkqQkR9bdnkJ0AMZhke0oesPqIO+mFFJ+IdBc7mst4IA==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
@@ -7263,6 +7310,10 @@ packages:
   node-forge@1.3.1:
     resolution: {integrity: sha512-dPEtOeMvF9VMcYV/1Wb8CPoVAXtp6MKMlcbAt4ddqmGqUJ6fQZFXkNZNkNlfevtNkGtaSoXf/vNNNSvgrdXwtA==}
     engines: {node: '>= 6.13.0'}
+
+  node-gyp-build-optional-packages@5.2.2:
+    resolution: {integrity: sha512-s+w+rBWnpTMwSFbaE0UXsRlg7hU4FjekKU4eyAih5T8nJuNZT1nNsskXpxmeqSK9UzkBl6UgRlnKc8hz8IEqOw==}
+    hasBin: true
 
   node-releases@2.0.18:
     resolution: {integrity: sha512-d9VeXT4SJ7ZeOqGX6R5EM022wpL+eWPooLI+5UpWn2jCT1aosUQEhQP214x33Wkwx3JQMvIm+tIoVOdodFS40g==}
@@ -8826,6 +8877,10 @@ packages:
     resolution: {integrity: sha512-c4xi3kWnQJrb7h2q8aJYKvUzmz7boCgz1cUCC6OwdeM5Tr2P0hDuthr2iut4ggqsz+Cnh20U/LoTzbKIdDS/Nw==}
     engines: {node: '>=20.18.1'}
 
+  undici@7.1.0:
+    resolution: {integrity: sha512-3+mdX2R31khuLCm2mKExSlMdJsfol7bJkIMH80tdXA74W34rT1jKemUTlYR7WY3TqsV4wfOgpatWmmB2Jl1+5g==}
+    engines: {node: '>=20.18.1'}
+
   unicorn-magic@0.1.0:
     resolution: {integrity: sha512-lRfVq8fE8gz6QMBuDM6a+LO3IAzTi05H6gCVaUpir2E1Rwpo4ZUog45KpNXKC/Mn3Yb9UDuHumeFTo9iV/D9FQ==}
     engines: {node: '>=18'}
@@ -10021,7 +10076,7 @@ snapshots:
       fast-querystring: 1.1.2
       fastify-plugin: 5.0.1
       toad-cache: 3.7.0
-      undici: 7.0.0
+      undici: 7.1.0
 
   '@fastify/send@3.2.0':
     dependencies:
@@ -10326,6 +10381,24 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+
+  '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.3':
+    optional: true
+
+  '@msgpackr-extract/msgpackr-extract-darwin-x64@3.0.3':
+    optional: true
+
+  '@msgpackr-extract/msgpackr-extract-linux-arm64@3.0.3':
+    optional: true
+
+  '@msgpackr-extract/msgpackr-extract-linux-arm@3.0.3':
+    optional: true
+
+  '@msgpackr-extract/msgpackr-extract-linux-x64@3.0.3':
+    optional: true
+
+  '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.3':
+    optional: true
 
   '@next/env@15.0.3': {}
 
@@ -10715,7 +10788,7 @@ snapshots:
       chalk: 4.1.2
       chokidar: 3.6.0
       cross-spawn: 7.0.6
-      dotenv: 16.4.6
+      dotenv: 16.4.7
       es-module-lexer: 1.5.4
       esbuild: 0.17.6
       esbuild-plugins-node-modules-polyfill: 1.6.8(esbuild@0.17.6)
@@ -12105,7 +12178,7 @@ snapshots:
 
   dotenv-tool@0.1.1: {}
 
-  dotenv@16.4.6: {}
+  dotenv@16.4.7: {}
 
   drange@1.1.1:
     optional: true
@@ -12193,7 +12266,7 @@ snapshots:
   env-schema@5.2.1:
     dependencies:
       ajv: 8.17.1
-      dotenv: 16.4.6
+      dotenv: 16.4.7
       dotenv-expand: 10.0.0
 
   environment@1.1.0: {}
@@ -13421,6 +13494,20 @@ snapshots:
       side-channel: 1.0.6
 
   ioredis@5.4.1:
+    dependencies:
+      '@ioredis/commands': 1.2.0
+      cluster-key-slot: 1.1.2
+      debug: 4.3.7
+      denque: 2.1.0
+      lodash.defaults: 4.2.0
+      lodash.isarguments: 3.1.0
+      redis-errors: 1.2.0
+      redis-parser: 3.0.0
+      standard-as-callback: 2.1.0
+    transitivePeerDependencies:
+      - supports-color
+
+  iovalkey@0.2.1:
     dependencies:
       '@ioredis/commands': 1.2.0
       cluster-key-slot: 1.1.2
@@ -14807,6 +14894,22 @@ snapshots:
       int64-buffer: 0.1.10
       isarray: 1.0.0
 
+  msgpackr-extract@3.0.3:
+    dependencies:
+      node-gyp-build-optional-packages: 5.2.2
+    optionalDependencies:
+      '@msgpackr-extract/msgpackr-extract-darwin-arm64': 3.0.3
+      '@msgpackr-extract/msgpackr-extract-darwin-x64': 3.0.3
+      '@msgpackr-extract/msgpackr-extract-linux-arm': 3.0.3
+      '@msgpackr-extract/msgpackr-extract-linux-arm64': 3.0.3
+      '@msgpackr-extract/msgpackr-extract-linux-x64': 3.0.3
+      '@msgpackr-extract/msgpackr-extract-win32-x64': 3.0.3
+    optional: true
+
+  msgpackr@1.11.2:
+    optionalDependencies:
+      msgpackr-extract: 3.0.3
+
   mute-stream@1.0.0: {}
 
   my-ua-parser@2.0.4: {}
@@ -14902,6 +15005,11 @@ snapshots:
       whatwg-url: 5.0.0
 
   node-forge@1.3.1: {}
+
+  node-gyp-build-optional-packages@5.2.2:
+    dependencies:
+      detect-libc: 2.0.3
+    optional: true
 
   node-releases@2.0.18: {}
 
@@ -16742,7 +16850,7 @@ snapshots:
     dependencies:
       hyperid: 3.3.0
       light-my-request: 6.3.0
-      undici: 7.0.0
+      undici: 7.1.0
 
   undici-types@5.26.5: {}
 
@@ -16755,6 +16863,8 @@ snapshots:
   undici@6.21.0: {}
 
   undici@7.0.0: {}
+
+  undici@7.1.0: {}
 
   unicorn-magic@0.1.0: {}
 

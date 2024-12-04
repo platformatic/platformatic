@@ -3,7 +3,11 @@ module.exports = async function (app) {
     return { ok: true }
   })
 
-  app.post('/echo', async (req) => {
+  app.get('/id', async () => {
+    return { from: 'service' }
+  })
+
+  app.post('/echo', async req => {
     return req.body
   })
 

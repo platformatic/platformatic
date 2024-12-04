@@ -465,13 +465,19 @@ test('should fix the path using the referer only if asked to', async t => {
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
   await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
 
-  // Make sure there is @platformatic/node available in the astro service.
+  // Make sure there is @platformatic/astro available in the astro service.
   // We can't simply specify it in the package.json due to circular dependencies.
   const astroModulesRoot = resolve(__dirname, './proxy/fixtures/astro/node_modules')
   await createDirectory(resolve(astroModulesRoot, '@platformatic'))
   await symlink(resolve(__dirname, '../../astro'), resolve(astroModulesRoot, '@platformatic/astro'), 'dir')
 
-  t.after(() => Promise.all([safeRemove(nodeModulesRoot), safeRemove(astroModulesRoot)]))
+  t.after(() =>
+    Promise.all([
+      safeRemove(nodeModulesRoot),
+      safeRemove(astroModulesRoot),
+      safeRemove(resolve(__dirname, './proxy/fixtures/astro/.astro'))
+    ])
+  )
 
   const runtime = await createComposerInRuntime(
     t,
@@ -576,7 +582,11 @@ test('should rewrite Location headers for proxied services', async t => {
   const address = await runtime.start()
 
   {
-    const { statusCode, body: rawBody, headers } = await request(address, {
+    const {
+      statusCode,
+      body: rawBody,
+      headers
+    } = await request(address, {
       method: 'GET',
       path: '/whatever/redirect'
     })
@@ -584,5 +594,100 @@ test('should rewrite Location headers for proxied services', async t => {
     assert.equal(headers.location, '/whatever/hello')
 
     rawBody.dump()
+  }
+})
+
+test('should properly configure the frontends on their paths if no composer configuration is present', async t => {
+  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
+  const astroModulesRoot = resolve(__dirname, './proxy/fixtures/astro/node_modules')
+  const nextModulesRoot = resolve(__dirname, './proxy/fixtures/next/node_modules')
+
+  function cleanup () {
+    return Promise.all([
+      safeRemove(nodeModulesRoot),
+      safeRemove(astroModulesRoot),
+      safeRemove(nextModulesRoot),
+      safeRemove(resolve(__dirname, './proxy/fixtures/astro/.astro')),
+      safeRemove(resolve(__dirname, './proxy/fixtures/next/.next'))
+    ])
+  }
+  await cleanup()
+  t.after(cleanup)
+
+  // Make sure there is @platformatic/node available in the node service.
+  // We can't simply specify it in the package.json due to circular dependencies.
+  await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
+  await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
+
+  // Make sure there is @platformatic/astro available in the astro service.
+  // We can't simply specify it in the package.json due to circular dependencies.
+  await createDirectory(resolve(astroModulesRoot, '@platformatic'))
+  await symlink(resolve(__dirname, '../../astro'), resolve(astroModulesRoot, '@platformatic/astro'), 'dir')
+
+  // Make sure there is @platformatic/next available in the next service.
+  // We can't simply specify it in the package.json due to circular dependencies.
+  await createDirectory(resolve(nextModulesRoot, '@platformatic'))
+  await symlink(resolve(__dirname, '../../next'), resolve(nextModulesRoot, '@platformatic/next'), 'dir')
+
+  const runtime = await createComposerInRuntime(
+    t,
+    'base-path-no-configuration',
+    {
+      composer: {
+        refreshTimeout: REFRESH_TIMEOUT
+      }
+    },
+    [],
+    resolve(__dirname, './proxy/fixtures/')
+  )
+
+  t.after(() => {
+    runtime.close()
+  })
+
+  const address = await runtime.start()
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'GET',
+      path: '/astro'
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.text()
+    assert.ok(body.includes('Hello from Astro'))
+  }
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'GET',
+      path: '/next'
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.text()
+    assert.ok(body.includes('Hello from Next'))
+  }
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'GET',
+      path: '/node/id'
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { from: 'node' })
+  }
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'GET',
+      path: '/service/id'
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { from: 'service' })
   }
 })
