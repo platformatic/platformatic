@@ -22,6 +22,14 @@ const node = {
     disablePlatformaticInBuild: {
       type: 'boolean',
       default: false
+    },
+    otelInstrumentations: {
+      type: 'array',
+      description: 'An array of instumentations loaded if telemetry is enabled',
+      items: {
+        type: 'string',
+        enum: ['pg']
+      }
     }
   },
   default: {},

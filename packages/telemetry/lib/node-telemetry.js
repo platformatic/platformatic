@@ -10,6 +10,7 @@ const { workerData } = require('node:worker_threads')
 const { resolve } = require('node:path')
 const { tmpdir } = require('node:os')
 const logger = require('abstract-logging')
+const { fileURLToPath } = require('node:url')
 const { statSync, readFileSync } = require('node:fs') // We want to have all this synch
 const util = require('node:util')
 const debuglog = util.debuglog('@platformatic/telemetry')
@@ -20,19 +21,26 @@ const {
   InMemorySpanExporter,
 } = require('@opentelemetry/sdk-trace-base')
 
-const { PgInstrumentation } = require('@opentelemetry/instrumentation-pg')
 const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http')
-const {
-  UndiciInstrumentation,
-} = require('@opentelemetry/instrumentation-undici')
+const { UndiciInstrumentation } = require('@opentelemetry/instrumentation-undici')
 
 // See: https://www.npmjs.com/package/@opentelemetry/instrumentation-http
 // When this is fixed we should set this to 'http' and fixe the tests
 // https://github.com/open-telemetry/opentelemetry-js/issues/5103
 process.env.OTEL_SEMCONV_STABILITY_OPT_IN = 'http/dup'
 
-const setupNodeHTTPTelemetry = (opts) => {
+const resolveInstrumentation = (instrumentation) => {
+  if (instrumentation === 'pg') {
+    const { PgInstrumentation } = require('@opentelemetry/instrumentation-pg')
+    return new PgInstrumentation()
+  }
+  return null
+}
+
+const setupNodeHTTPTelemetry = (opts, otelInstrumentations) => {
   const { serviceName } = opts
+
+  const additionalInstrumentations = otelInstrumentations.map(resolveInstrumentation)
 
   let exporter = opts.exporter
   if (!exporter) {
@@ -95,7 +103,7 @@ const setupNodeHTTPTelemetry = (opts) => {
         }
       }),
       new HttpInstrumentation(),
-      new PgInstrumentation(),
+      ...additionalInstrumentations
     ],
     resource: new Resource({
       [ATTR_SERVICE_NAME]: serviceName
@@ -130,8 +138,19 @@ if (useWorkerData) {
 if (data) {
   debuglog('Setting up telemetry %o', data)
   const telemetryConfig = useWorkerData ? data?.serviceConfig?.telemetry : data?.telemetryConfig
+  let servicePath = data?.serviceConfig?.path
+  if (!servicePath) {
+    // when running commands, we don't have path :(
+    try {
+      servicePath = fileURLToPath(data?.root)
+    } catch (e) {
+      process._rawDebug('Error getting servicePath from loader', e)
+    }
+  }
+  // TODO:: load instrumentations from the serviceConfig
+  const otelInstrumentations = data?.node?.otelInstrumentations || []
   if (telemetryConfig) {
     debuglog('telemetryConfig %o', telemetryConfig)
-    setupNodeHTTPTelemetry(telemetryConfig)
+    setupNodeHTTPTelemetry(telemetryConfig, otelInstrumentations)
   }
 }

@@ -212,7 +212,7 @@ test('configure telemetry correctly with a composer + node + fastify', async t =
   equal(spanNodeServer.parentId, spanFastifyClient.id)
 })
 
-test('configure telemetry correctly with a composer + next', async t => {
+test('configure telemetry correctly with a composer + next',  async t => {
   // composer -> next -> fastify
   //                  -> node (via http)
   //

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.16.0-alpha.1.json",
+  "node": {
+    "main": "server.js",
+    "otelInstrumentations": [
+      "pg"
+    ]
+  }
+}
