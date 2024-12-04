@@ -50,7 +50,7 @@ export async function installDependencies (logger, root, services, production, p
         args.push('--prod')
         break
       case 'npm':
-        args.push('--production')
+        args.push('--omit=dev')
         break
     }
   }
