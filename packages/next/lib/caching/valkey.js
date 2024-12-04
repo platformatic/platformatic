@@ -44,18 +44,25 @@ export class CacheHandler {
   #subprefix
   #maxTTL
 
-  constructor () {
-    this.#logger = this.#createLogger()
-    this.#config = globalThis.platformatic.config.cache
-    this.#store = getConnection(this.#config.url)
-    this.#maxTTL = this.#config.maxTTL
-    this.#subprefix = this.#getSubprefix()
+  constructor (options) {
+    options ??= {}
+
+    this.#config = options.config ?? globalThis.platformatic?.config?.cache
+
+    if (!this.#config) {
+      throw new Error('Please provide a valid configuration.')
+    }
+
+    this.#logger = options.logger ?? this.#createLogger()
+    this.#store = options.store ?? getConnection(this.#config.url)
+    this.#maxTTL = options.maxTTL ?? this.#config.maxTTL ?? 86_400
+    this.#subprefix = options.subprefix ?? this.#getSubprefix()
   }
 
-  async get (cacheKey) {
+  async get (cacheKey, isRedisKey) {
     this.#logger.trace({ key: cacheKey }, 'get')
 
-    const key = this.#keyFor(cacheKey, sections.values)
+    const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
 
     let rawValue
     try {
@@ -96,12 +103,13 @@ export class CacheHandler {
     return value
   }
 
-  async set (cacheKey, value, { tags, revalidate }) {
+  async set (cacheKey, value, { tags, revalidate }, isRedisKey) {
     this.#logger.trace({ key: cacheKey, value, tags, revalidate }, 'set')
+
+    const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
 
     try {
       // Compute the parameters to save
-      const key = this.#keyFor(cacheKey, sections.values)
       const data = this.#serialize({ value, tags, lastModified: Date.now(), revalidate, maxTTL: this.#maxTTL })
       const expire = Math.min(revalidate, this.#maxTTL)
 
@@ -128,6 +136,56 @@ export class CacheHandler {
     } catch (e) {
       this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot write cache value in Valkey')
       throw new Error('Cannot write cache value in Valkey', { cause: e })
+    }
+  }
+
+  async remove (cacheKey, isRedisKey) {
+    this.#logger.trace({ key: cacheKey }, 'remove')
+
+    const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
+
+    let rawValue
+    try {
+      rawValue = await this.#store.get(key)
+
+      if (!rawValue) {
+        return
+      }
+    } catch (e) {
+      this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot read cache value from Valkey')
+      throw new Error('Cannot read cache value from Valkey', { cause: e })
+    }
+
+    let value
+    try {
+      value = this.#deserialize(rawValue)
+    } catch (e) {
+      this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot deserialize cache value from Valkey')
+
+      // Avoid useless reads the next time
+      // Note that since the value was unserializable, we don't know its tags and thus
+      // we cannot remove it from the tags sets. TTL will take care of them.
+      await this.#store.del(key)
+
+      throw new Error('Cannot deserialize cache value from Valkey', { cause: e })
+    }
+
+    try {
+      const promises = []
+      promises.push(this.#store.del(key))
+
+      if (Array.isArray(value.tags)) {
+        for (const tag of value.tags) {
+          const tagsKey = this.#keyFor(tag, sections.tags)
+          this.#store.srem(tagsKey, key, 'gt')
+        }
+      }
+
+      // Execute all the operations
+      await Promise.all(promises)
+    } catch (e) {
+      this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot remove cache value from Valkey')
+      throw new Error('Cannot remove cache value from Valkey', { cause: e })
     }
   }
 
