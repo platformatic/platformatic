@@ -236,9 +236,7 @@ export class NodeStackable extends BaseStackable {
         wantsAbsoluteUrls: this._getWantsAbsoluteUrls(),
         needsRootRedirect: true
       },
-      connectionStrings: [
-        this.connectionString
-      ]
+      connectionStrings: this.connectionString ? [this.connectionString] : []
     }
   }
 
