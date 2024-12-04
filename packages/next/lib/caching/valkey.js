@@ -42,24 +42,47 @@ export class CacheHandler {
   #logger
   #store
   #subprefix
+  #meta
   #maxTTL
 
   constructor (options) {
     options ??= {}
 
-    this.#config = options.config ?? globalThis.platformatic?.config?.cache
+    this.#config = options.config
+    this.#logger = options.logger
+    this.#store = options.store
+    this.#maxTTL = options.maxTTL
+    this.#subprefix = options.subprefix
+    this.#meta = options.meta
 
-    if (!this.#config) {
-      throw new Error('Please provide a valid configuration.')
+    if (globalThis.platformatic) {
+      this.#config ??= globalThis.platformatic.config.cache
+      this.#logger ??= this.#createPlatformaticLogger()
+      this.#store ??= getConnection(this.#config.url)
+      this.#maxTTL ??= this.#config.maxTTL
+      this.#subprefix ??= this.#getPlatformaticSubprefix()
+      this.#meta ??= this.#getPlatformaticMeta()
+    } else {
+      this.#config ??= {}
+      this.#maxTTL ??= 86_400
+      this.#subprefix ??= ''
+      this.#meta ??= {}
     }
 
-    this.#logger = options.logger ?? this.#createLogger()
-    this.#store = options.store ?? getConnection(this.#config.url)
-    this.#maxTTL = options.maxTTL ?? this.#config.maxTTL ?? 86_400
-    this.#subprefix = options.subprefix ?? this.#getSubprefix()
+    if (!this.#config) {
+      throw new Error('Please provide a the "config" option.')
+    }
+
+    if (!this.#logger) {
+      throw new Error('Please provide a the "logger" option.')
+    }
+
+    if (!this.#store) {
+      throw new Error('Please provide a the "store" option.')
+    }
   }
 
-  async get (cacheKey, isRedisKey) {
+  async get (cacheKey, _, isRedisKey) {
     this.#logger.trace({ key: cacheKey }, 'get')
 
     const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
@@ -110,7 +133,14 @@ export class CacheHandler {
 
     try {
       // Compute the parameters to save
-      const data = this.#serialize({ value, tags, lastModified: Date.now(), revalidate, maxTTL: this.#maxTTL })
+      const data = this.#serialize({
+        value,
+        tags,
+        lastModified: Date.now(),
+        revalidate,
+        maxTTL: this.#maxTTL,
+        ...this.#meta
+      })
       const expire = Math.min(revalidate, this.#maxTTL)
 
       if (expire < 1) {
@@ -247,7 +277,7 @@ export class CacheHandler {
     await Promise.all(promises)
   }
 
-  #createLogger () {
+  #createPlatformaticLogger () {
     const pinoOptions = {
       level: globalThis.platformatic?.logLevel ?? 'info'
     }
@@ -263,12 +293,19 @@ export class CacheHandler {
     return pino(pinoOptions)
   }
 
-  #getSubprefix () {
+  #getPlatformaticSubprefix () {
     const root = fileURLToPath(globalThis.platformatic.root)
 
     return existsSync(resolve(root, '.next/BUILD_ID'))
       ? (this.#subprefix = readFileSync(resolve(root, '.next/BUILD_ID'), 'utf-8').trim())
       : 'development'
+  }
+
+  #getPlatformaticMeta () {
+    return {
+      serviceId: globalThis.platformatic.serviceId,
+      workerId: globalThis.platformatic.workerId
+    }
   }
 
   #keyFor (key, section) {

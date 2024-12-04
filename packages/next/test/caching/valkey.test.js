@@ -169,7 +169,8 @@ test(
       },
       tags,
       revalidate: revalidatePlt,
-      maxTTL
+      maxTTL,
+      serviceId
     } = unpack(Buffer.from(storedValues[0], 'base64url'))
 
     deepStrictEqual(kind, 'FETCH')
@@ -180,6 +181,7 @@ test(
     deepStrictEqual(revalidateNext, 120)
     deepStrictEqual(revalidatePlt, 120)
     deepStrictEqual(maxTTL, 86400 * 7)
+    deepStrictEqual(serviceId, 'frontend')
   }
 )
 
@@ -288,7 +290,8 @@ test(
         },
         tags,
         revalidate: revalidatePlt,
-        maxTTL
+        maxTTL,
+        serviceId
       } = unpack(Buffer.from(storedValues[0], 'base64url'))
 
       deepStrictEqual(kind, 'FETCH')
@@ -299,13 +302,15 @@ test(
       deepStrictEqual(revalidateNext, 120)
       deepStrictEqual(revalidatePlt, 120)
       deepStrictEqual(maxTTL, 86400 * 7)
+      deepStrictEqual(serviceId, 'frontend')
     }
 
     {
       const {
         value: { kind, html, headers, status },
         revalidate,
-        maxTTL
+        maxTTL,
+        serviceId
       } = unpack(Buffer.from(storedValues[1], 'base64url'))
 
       switch (nextMajor) {
@@ -324,6 +329,7 @@ test(
       deepStrictEqual(status, 200)
       deepStrictEqual(revalidate, 120)
       deepStrictEqual(maxTTL, 86400 * 7)
+      deepStrictEqual(serviceId, 'frontend')
     }
   }
 )
@@ -397,7 +403,8 @@ test(
       },
       tags,
       revalidate: revalidatePlt,
-      maxTTL
+      maxTTL,
+      serviceId
     } = unpack(Buffer.from(storedValues[0], 'base64url'))
 
     deepStrictEqual(kind, 'FETCH')
@@ -408,6 +415,7 @@ test(
     deepStrictEqual(revalidateNext, 120)
     deepStrictEqual(revalidatePlt, 120)
     deepStrictEqual(maxTTL, 86400 * 7)
+    deepStrictEqual(serviceId, 'frontend')
   }
 )
 
@@ -492,7 +500,8 @@ test(
         },
         tags,
         revalidate: revalidatePlt,
-        maxTTL
+        maxTTL,
+        serviceId
       } = unpack(Buffer.from(storedValues[0], 'base64url'))
 
       deepStrictEqual(kind, 'FETCH')
@@ -503,13 +512,15 @@ test(
       deepStrictEqual(revalidateNext, 120)
       deepStrictEqual(revalidatePlt, 120)
       deepStrictEqual(maxTTL, 86400 * 7)
+      deepStrictEqual(serviceId, 'frontend')
     }
 
     {
       const {
         value: { kind, body, headers, status },
         revalidate,
-        maxTTL
+        maxTTL,
+        serviceId
       } = unpack(Buffer.from(storedValues[1], 'base64url'))
 
       switch (nextMajor) {
@@ -530,6 +541,7 @@ test(
       deepStrictEqual(status, 200)
       deepStrictEqual(revalidate, 120)
       deepStrictEqual(maxTTL, 86400 * 7)
+      deepStrictEqual(serviceId, 'frontend')
     }
   }
 )
