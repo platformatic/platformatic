@@ -52,8 +52,8 @@ function parseSingleExpression (expr) {
   }
 */
 function createEvaluatorWrapperFunction (original) {
-  const cacheHandler = config?.cache
-    ? fileURLToPath(new URL(`./caching/${config.cache.adapter ?? 'foo'}.js`, import.meta.url)).replaceAll(sep, '/')
+  const cacheHandler = config?.cache?.adapter
+    ? fileURLToPath(new URL(`./caching/${config.cache.adapter}.js`, import.meta.url)).replaceAll(sep, '/')
     : undefined
 
   return functionDeclaration(
