@@ -2453,8 +2453,8 @@ importers:
         specifier: ^7.6.3
         version: 7.6.3
       undici:
-        specifier: 7.0.0
-        version: 7.0.0
+        specifier: 7.1.0
+        version: 7.1.0
     devDependencies:
       '@matteo.collina/tspl':
         specifier: ^0.1.1
@@ -8866,10 +8866,6 @@ packages:
   undici@6.21.0:
     resolution: {integrity: sha512-BUgJXc752Kou3oOIuU1i+yZZypyZRqNPW0vqoMPl8VaoalSfeR0D8/t4iAS3yirs79SSMTxTag+ZC86uswv+Cw==}
     engines: {node: '>=18.17'}
-
-  undici@7.0.0:
-    resolution: {integrity: sha512-c4xi3kWnQJrb7h2q8aJYKvUzmz7boCgz1cUCC6OwdeM5Tr2P0hDuthr2iut4ggqsz+Cnh20U/LoTzbKIdDS/Nw==}
-    engines: {node: '>=20.18.1'}
 
   undici@7.1.0:
     resolution: {integrity: sha512-3+mdX2R31khuLCm2mKExSlMdJsfol7bJkIMH80tdXA74W34rT1jKemUTlYR7WY3TqsV4wfOgpatWmmB2Jl1+5g==}
@@ -16855,8 +16851,6 @@ snapshots:
       '@fastify/busboy': 2.1.1
 
   undici@6.21.0: {}
-
-  undici@7.0.0: {}
 
   undici@7.1.0: {}
 
