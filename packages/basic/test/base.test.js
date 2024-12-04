@@ -185,6 +185,16 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
     const body = await rawBody.json()
     body.events = undefined
     deepStrictEqual(body, {
+      config: {
+        application: {
+          basePath: '/whatever'
+        },
+        watch: {
+          allow: ['first'],
+          enabled: true,
+          ignore: ['second']
+        }
+      },
       basePath: '/whatever',
       host: '127.0.0.1',
       logLevel: 'trace',
@@ -252,6 +262,16 @@ test('BaseStackable - should import and setup open telemetry HTTP instrumentatio
     const body = await rawBody.json()
     body.events = undefined
     deepStrictEqual(body, {
+      config: {
+        application: {
+          basePath: '/whatever'
+        },
+        watch: {
+          allow: ['first'],
+          enabled: true,
+          ignore: ['second']
+        }
+      },
       serviceId: 'test-service-id',
       basePath: '/whatever',
       host: '127.0.0.1',
@@ -346,6 +366,16 @@ test('BaseStackable - stopCommand - should forcefully exit the process if it doe
     const body = await rawBody.json()
     body.events = undefined
     deepStrictEqual(body, {
+      config: {
+        application: {
+          basePath: '/whatever'
+        },
+        watch: {
+          allow: ['first'],
+          enabled: true,
+          ignore: ['second']
+        }
+      },
       basePath: '/whatever',
       host: '127.0.0.1',
       logLevel: 'trace',

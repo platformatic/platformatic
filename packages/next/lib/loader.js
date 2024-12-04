@@ -11,10 +11,12 @@ import {
   variableDeclarator
 } from '@babel/types'
 import { readFile, realpath } from 'node:fs/promises'
+import { sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const originalId = '__pltOriginalNextConfig'
 
+let config
 let candidates
 let basePath = ''
 
@@ -35,6 +37,11 @@ function parseSingleExpression (expr) {
       __pltOriginalNextConfig.basePath = basePath
     }
 
+    if(typeof __pltOriginalNextConfig.cacheHandler === 'undefined') {
+      __pltOriginalNextConfig.cacheHandler = $PATH
+      __pltOriginalNextConfig.cacheMaxMemorySize = 0
+    }
+
     // This is to send the configuraion when Next is executed in a child process (development)
     globalThis[Symbol.for('plt.children.itc')]?.notify('config', __pltOriginalNextConfig)
 
@@ -45,21 +52,35 @@ function parseSingleExpression (expr) {
   }
 */
 function createEvaluatorWrapperFunction (original) {
+  const cacheHandler = config?.cache?.adapter
+    ? fileURLToPath(new URL(`./caching/${config.cache.adapter}.js`, import.meta.url)).replaceAll(sep, '/')
+    : undefined
+
   return functionDeclaration(
     null,
     [restElement(identifier('args'))],
-    blockStatement([
-      variableDeclaration('let', [variableDeclarator(identifier(originalId), original)]),
-      parseSingleExpression(
-        `if (typeof ${originalId} === 'function') { ${originalId} = await ${originalId}(...args) }`
-      ),
-      parseSingleExpression(
-        `if (typeof ${originalId}.basePath === 'undefined') { ${originalId}.basePath = "${basePath}" }`
-      ),
-      parseSingleExpression(`globalThis[Symbol.for('plt.children.itc')]?.notify('config', ${originalId})`),
-      parseSingleExpression(`process.emit('plt:next:config', ${originalId})`),
-      returnStatement(identifier(originalId))
-    ]),
+    blockStatement(
+      [
+        variableDeclaration('let', [variableDeclarator(identifier(originalId), original)]),
+        parseSingleExpression(
+          `if (typeof ${originalId} === 'function') { ${originalId} = await ${originalId}(...args) }`
+        ),
+        parseSingleExpression(
+          `if (typeof ${originalId}.basePath === 'undefined') { ${originalId}.basePath = "${basePath}" }`
+        ),
+        cacheHandler
+          ? parseSingleExpression(`
+              if (typeof ${originalId}.cacheHandler === 'undefined') {
+                ${originalId}.cacheHandler = '${cacheHandler}'
+                ${originalId}.cacheMaxMemorySize = 0
+              }  
+            `)
+          : undefined,
+        parseSingleExpression(`globalThis[Symbol.for('plt.children.itc')]?.notify('config', ${originalId})`),
+        parseSingleExpression(`process.emit('plt:next:config', ${originalId})`),
+        returnStatement(identifier(originalId))
+      ].filter(e => e)
+    ),
     false,
     true
   )
@@ -125,6 +146,7 @@ export async function initialize (data) {
   // Keep in sync with https://github.com/vercel/next.js/blob/main/packages/next/src/shared/lib/constants.ts
   candidates = ['next.config.js', 'next.config.mjs'].map(c => new URL(c, realRoot).toString())
   basePath = data.basePath ?? ''
+  config = data.config
 }
 
 export async function load (url, context, nextLoad) {

@@ -1,5 +1,6 @@
 'use strict'
 
+const { EventEmitter } = require('node:events')
 const { createRequire } = require('node:module')
 const { hostname } = require('node:os')
 const { join } = require('node:path')
@@ -37,7 +38,10 @@ globalThis[kId] = threadId
 let app
 
 const config = workerData.config
-globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, { logger: createLogger() })
+globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, {
+  logger: createLogger(),
+  events: new EventEmitter()
+})
 
 function handleUnhandled (type, err) {
   const label =

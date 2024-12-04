@@ -4,6 +4,36 @@ import { readFileSync } from 'node:fs'
 
 export const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'))
 
+export const cache = {
+  type: 'object',
+  properties: {
+    adapter: {
+      type: 'string',
+      enum: ['redis', 'valkey']
+    },
+    url: {
+      type: 'string'
+    },
+    prefix: {
+      type: 'string'
+    },
+    maxTTL: {
+      default: 86400 * 7, // One week
+      anyOf: [
+        {
+          type: 'number',
+          minimum: 0
+        },
+        {
+          type: 'string'
+        }
+      ]
+    }
+  },
+  required: ['adapter', 'url'],
+  additionalProperties: false
+}
+
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/next/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
@@ -16,7 +46,8 @@ export const schema = {
     logger: utilsSchemaComponents.logger,
     server: utilsSchemaComponents.server,
     watch: schemaComponents.watch,
-    application: schemaComponents.application
+    application: schemaComponents.application,
+    cache
   },
   additionalProperties: false
 }
