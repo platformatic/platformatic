@@ -137,6 +137,21 @@ class Runtime extends EventEmitter {
 
       // Recompute the list of services after sorting
       this.#servicesIds = config.services.map(service => service.id)
+
+      // When autoloading is disabled, add a warning if a service is defined before its dependencies
+      if (!autoloadEnabled) {
+        for (let i = 0; i < config.services.length; i++) {
+          const current = config.services[i]
+
+          for (const dep of current.dependencies ?? []) {
+            if (config.services.findIndex(s => s.id === dep.id) > i) {
+              this.logger.warn(
+                `Service "${current.id}" depends on service "${dep.id}", but it is defined and it will be started before it. Please check your configuration file.`
+              )
+            }
+          }
+        }
+      }
     } catch (e) {
       await this.close()
       throw e
@@ -795,7 +810,7 @@ class Runtime extends EventEmitter {
   }
 
   async #setupWorker (config, serviceConfig, workersCount, serviceId, index) {
-    const { autoload, restartOnError } = config
+    const { restartOnError } = config
     const workerId = `${serviceId}:${index}`
 
     const { port1: loggerDestination, port2: loggingPort } = new MessageChannel()
@@ -969,12 +984,10 @@ class Runtime extends EventEmitter {
     // Store dependencies
     const [{ dependencies }] = await waitEventFromITC(worker, 'init')
 
-    if (autoload) {
-      serviceConfig.dependencies = dependencies
-      for (const { envVar, url } of dependencies) {
-        if (envVar) {
-          serviceConfig.localServiceEnvVars.set(envVar, url)
-        }
+    serviceConfig.dependencies = dependencies
+    for (const { envVar, url } of dependencies) {
+      if (envVar) {
+        serviceConfig.localServiceEnvVars.set(envVar, url)
       }
     }
 

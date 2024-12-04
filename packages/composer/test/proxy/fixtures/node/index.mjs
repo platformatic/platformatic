@@ -7,6 +7,12 @@ const server = createServer((req, res) => {
       connection: 'close'
     })
     res.end(JSON.stringify({ ok: true }))
+  } else if (req.url === '/id') {
+    res.writeHead(200, {
+      'content-type': 'application/json',
+      connection: 'close'
+    })
+    res.end(JSON.stringify({ from: 'node' }))
   } else {
     res.writeHead(404, {
       'content-type': 'application/json',
