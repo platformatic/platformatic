@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/wattpm/2.21.1.json",
+  "$id": "https://schemas.platformatic.dev/wattpm/2.22.0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
@@ -296,6 +296,15 @@
               }
             },
             "additionalProperties": false
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "envfile": {
+            "type": "string"
           }
         }
       }
@@ -449,6 +458,15 @@
               }
             },
             "additionalProperties": false
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "envfile": {
+            "type": "string"
           }
         }
       }
@@ -1113,6 +1131,12 @@
     "resolvedServicesBasePath": {
       "type": "string",
       "default": "external"
+    },
+    "env": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
     }
   },
   "anyOf": [
