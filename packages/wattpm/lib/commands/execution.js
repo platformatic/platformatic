@@ -4,13 +4,12 @@ import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
 import { watch } from 'node:fs/promises'
-import { resolve } from 'node:path'
-import { findConfigurationFile, getMatchingRuntimeArgs, parseArgs } from '../utils.js'
+import { findConfigurationFile, getMatchingRuntime, getRoot, parseArgs } from '../utils.js'
 
 export async function devCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
   /* c8 ignore next */
-  const root = resolve(process.cwd(), positionals[0] ?? '')
+  const root = getRoot(positionals)
 
   const configurationFile = await findConfigurationFile(logger, root)
   let runtime = await pltStartCommand(['-c', configurationFile], true, true)
@@ -27,14 +26,18 @@ export async function devCommand (logger, args) {
 }
 
 export async function startCommand (logger, args) {
-  const { positionals, values } = parseArgs(args, {
-    inspect: {
-      type: 'boolean',
-      short: 'i',
-    }
-  }, false)
+  const { positionals, values } = parseArgs(
+    args,
+    {
+      inspect: {
+        type: 'boolean',
+        short: 'i'
+      }
+    },
+    false
+  )
   /* c8 ignore next */
-  const root = resolve(process.cwd(), positionals[0] ?? '')
+  const root = getRoot(positionals)
 
   const configurationFile = await findConfigurationFile(logger, root)
   const cmd = ['--production', '-c', configurationFile]
@@ -49,7 +52,7 @@ export async function stopCommand (logger, args) {
 
   try {
     const client = new RuntimeApiClient()
-    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(logger, positionals))
+    const [runtime] = await getMatchingRuntime(client, positionals)
 
     await client.stopRuntime(runtime.pid)
     await client.close()
@@ -70,7 +73,7 @@ export async function restartCommand (logger, args) {
 
   try {
     const client = new RuntimeApiClient()
-    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(logger, positionals))
+    const [runtime] = await getMatchingRuntime(client, positionals)
 
     await client.restartRuntime(runtime.pid)
     await client.close()
@@ -91,7 +94,7 @@ export async function reloadCommand (logger, args) {
 
   try {
     const client = new RuntimeApiClient()
-    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(logger, positionals))
+    const [runtime] = await getMatchingRuntime(client, positionals)
 
     // Stop the previous runtime
     await client.stopRuntime(runtime.pid)
@@ -140,10 +143,12 @@ export const help = {
         description: 'The directory containing the application (the default is the current directory)'
       }
     ],
-    options: [{
-      usage: '-i --inspect',
-      description: 'Enables the inspector for each service'
-    }]
+    options: [
+      {
+        usage: '-i --inspect',
+        description: 'Enables the inspector for each service'
+      }
+    ]
   },
   stop: {
     usage: 'stop [id]',
