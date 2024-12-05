@@ -5,7 +5,7 @@
     {
       "id": "hello",
       "path": "services/hello",
-      "envfile": "services/hello/.env",
+      "envfile": "services/hello/test.env",
       "env": {
         "FROM_SERVICE_CONFIG_FILE": "true"
       },
