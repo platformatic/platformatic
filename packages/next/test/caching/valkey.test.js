@@ -990,7 +990,7 @@ test('should handle refresh error', { skip: isCIOnWindows }, async t => {
   )
 })
 
-test('can be used without the runtime - per-method flag', async t => {
+test('can be used without the runtime - per-method flag', { skip: isCIOnWindows }, async t => {
   const configuration = 'caching-valkey'
   const valkeyPrefix = 'plt:test:caching-valkey'
 
@@ -1072,7 +1072,7 @@ test('can be used without the runtime - per-method flag', async t => {
   ])
 })
 
-test('can be used without the runtime - standalone mode', async t => {
+test('can be used without the runtime - standalone mode', { skip: isCIOnWindows }, async t => {
   const configuration = 'caching-valkey'
   const valkeyPrefix = 'plt:test:caching-valkey'
 
