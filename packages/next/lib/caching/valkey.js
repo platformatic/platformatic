@@ -59,7 +59,7 @@ export class CacheHandler {
     this.#subprefix = options.subprefix
     this.#meta = options.meta
 
-    if (globalThis.platformatic) {
+    if (!this.#standalone && globalThis.platformatic) {
       this.#config ??= globalThis.platformatic.config.cache
       this.#logger ??= this.#createPlatformaticLogger()
       this.#store ??= getConnection(this.#config.url)
