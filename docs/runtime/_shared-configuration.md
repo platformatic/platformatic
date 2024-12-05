@@ -67,10 +67,19 @@ runtime. Each service object supports the following settings:
   on `127.0.0.1`, and exposed to the other services via that port, on default it is set to `false`. Set it to `true` if you are using [@fastify/express](https://github.com/fastify/fastify-express).
 - **`workers`** (`number`) - The number of workers to start for this service. If the service is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`.
 - **`health`** (object): Configures the health check for each worker of the service. It supports all the properties also supported in the runtime [health](#health) property. The values specified here overrides the values specified in the runtime.
+- **`envfile`** (`string`) - The path to an `.env` file to load for the service.
+- **`env`** (`object`) - An object containing environment variables to set for the service. Values set here takes precedence over values set in the `envfile`.
 
 If this property is present, then the services will not be reordered according to the
 `getBootstrapDependencies` function and they will be started in the order they are defined in
 the configuration file.
+
+### `env`
+
+An object containing environment variables to set for all services in the
+runtime. Any environment variables set in the `env` object will be merged with
+the environment variables set in the `envfile` and `env` properties of each
+service, with service-level environment variables taking precedence.
 
 ### `resolvedServicesBasePath`
 

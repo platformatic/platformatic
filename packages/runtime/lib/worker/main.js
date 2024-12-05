@@ -3,13 +3,14 @@
 const { EventEmitter } = require('node:events')
 const { createRequire } = require('node:module')
 const { hostname } = require('node:os')
-const { join } = require('node:path')
+const { join, resolve } = require('node:path')
 const { parentPort, workerData, threadId } = require('node:worker_threads')
 const { pathToFileURL } = require('node:url')
 const inspector = require('node:inspector')
 const diagnosticChannel = require('node:diagnostics_channel')
 const { ServerResponse } = require('node:http')
 
+const dotenv = require('dotenv')
 const pino = require('pino')
 const { fetch, setGlobalDispatcher, getGlobalDispatcher, Agent } = require('undici')
 const { wire } = require('undici-thread-interceptor')
@@ -80,6 +81,22 @@ async function main () {
   }
 
   const service = workerData.serviceConfig
+
+  // Load env file and mixin env vars from service config
+  if (service.envfile) {
+    const envfile = resolve(workerData.dirname, service.envfile)
+    globalThis.platformatic.logger.info({ envfile }, 'Loading envfile...')
+
+    dotenv.config({
+      path: envfile
+    })
+  }
+  if (config.env) {
+    Object.assign(process.env, config.env)
+  }
+  if (service.env) {
+    Object.assign(process.env, service.env)
+  }
 
   // Setup undici
   const interceptors = {}
