@@ -378,6 +378,7 @@ test('supports configurable envfile location', async t => {
   assert.deepStrictEqual(data, {
     FROM_ENV_FILE: 'true',
     FROM_MAIN_CONFIG_FILE: 'true',
-    FROM_SERVICE_CONFIG_FILE: 'true'
+    FROM_SERVICE_CONFIG_FILE: 'true',
+    OVERRIDE_TEST: 'service-override'
   })
 })

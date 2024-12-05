@@ -7,7 +7,8 @@
       "path": "services/hello",
       "envfile": "services/hello/test.env",
       "env": {
-        "FROM_SERVICE_CONFIG_FILE": "true"
+        "FROM_SERVICE_CONFIG_FILE": "true",
+        "OVERRIDE_TEST": "service-override"
       },
       "logger": {
         "level": "trace"
@@ -15,7 +16,8 @@
     }
   ],
   "env": {
-    "FROM_MAIN_CONFIG_FILE": "true"
+    "FROM_MAIN_CONFIG_FILE": "true",
+    "OVERRIDE_TEST": "top-level"
   },
   "server": {
     "hostname": "127.0.0.1",
