@@ -13,6 +13,8 @@ const logger = require('abstract-logging')
 const { fileURLToPath } = require('node:url')
 const { statSync, readFileSync } = require('node:fs') // We want to have all this synch
 const util = require('node:util')
+
+const ConfigManager = require('@platformatic/config')
 const debuglog = util.debuglog('@platformatic/telemetry')
 const {
   ConsoleSpanExporter,
@@ -37,7 +39,7 @@ const resolveInstrumentation = (instrumentation) => {
   return null
 }
 
-const setupNodeHTTPTelemetry = (opts, otelInstrumentations) => {
+const setupNodeHTTPTelemetry = (opts, otelInstrumentations = []) => {
   const { serviceName } = opts
 
   const additionalInstrumentations = otelInstrumentations.map(resolveInstrumentation)
@@ -118,39 +120,55 @@ const setupNodeHTTPTelemetry = (opts, otelInstrumentations) => {
   })
 }
 
-let data = null
-const useWorkerData = !!workerData
-
-if (useWorkerData) {
-  data = workerData
-} else if (process.env.PLT_MANAGER_ID) {
-  try {
-    const dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${process.env.PLT_MANAGER_ID}.json`)
-    statSync(dataPath)
-    const jsonData = JSON.parse(readFileSync(dataPath, 'utf8'))
-    data = jsonData.data
-    debuglog(`Loaded data from ${dataPath}`)
-  } catch (e) {
-    debuglog('Error reading data from file %o', e)
+const parseNodeConfigOTELIntrumentations = async (servicePath) => {
+  if (!servicePath) {
+    return []
   }
+
+  const configFilename = await ConfigManager.findConfigFile(servicePath)
+  const manager = new ConfigManager({ source: resolve(servicePath, configFilename) })
+  await manager.parse()
+  const config = manager.current
+
+  if (config?.node?.otelInstrumentations) {
+    return config.node.otelInstrumentations
+  }
+  return []
 }
 
-if (data) {
-  debuglog('Setting up telemetry %o', data)
-  const telemetryConfig = useWorkerData ? data?.serviceConfig?.telemetry : data?.telemetryConfig
-  let servicePath = data?.serviceConfig?.path
-  if (!servicePath) {
-    // when running commands, we don't have path :(
+const main = async () => {
+  let data = null
+  const useWorkerData = !!workerData
+
+  if (useWorkerData) {
+    data = workerData
+  } else if (process.env.PLT_MANAGER_ID) {
     try {
-      servicePath = fileURLToPath(data?.root)
+      const dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${process.env.PLT_MANAGER_ID}.json`)
+      statSync(dataPath)
+      const jsonData = JSON.parse(readFileSync(dataPath, 'utf8'))
+      data = jsonData.data
+      debuglog(`Loaded data from ${dataPath}`)
     } catch (e) {
-      process._rawDebug('Error getting servicePath from loader', e)
+      debuglog('Error reading data from file %o', e)
     }
   }
-  // TODO:: load instrumentations from the serviceConfig
-  const otelInstrumentations = data?.node?.otelInstrumentations || []
-  if (telemetryConfig) {
-    debuglog('telemetryConfig %o', telemetryConfig)
-    setupNodeHTTPTelemetry(telemetryConfig, otelInstrumentations)
+
+  if (data) {
+    debuglog('Setting up telemetry %o', data)
+    const telemetryConfig = useWorkerData ? data?.serviceConfig?.telemetry : data?.telemetryConfig
+    let servicePath = data?.serviceConfig?.path
+    if (!servicePath) {
+      // when running commands, we don't have path :(
+      servicePath = fileURLToPath(data?.root)
+    }
+
+    const otelInstrumentations = await parseNodeConfigOTELIntrumentations(servicePath)
+    if (telemetryConfig) {
+      debuglog('telemetryConfig %o', telemetryConfig)
+      setupNodeHTTPTelemetry(telemetryConfig, otelInstrumentations)
+    }
   }
 }
+
+main()

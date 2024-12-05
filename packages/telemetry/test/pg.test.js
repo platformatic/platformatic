@@ -5,8 +5,6 @@ const { resolve, join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
 const { parseNDJson, createPGDataBase } = require('./helper.js')
-const { setTimeout: sleep } = require('node:timers/promises')
-// const { SpanKind } = require('@opentelemetry/api')
 
 process.setMaxListeners(100)
 
@@ -42,22 +40,9 @@ test('configure telemetry correctly with a express app', async t => {
   const { statusCode } = await request(`${url}/express/users`, {
     method: 'GET',
   })
-  console.log('statusCode', statusCode)
   equal(statusCode, 200)
-  await sleep(500)
   const spans = await getSpans(spansPath)
-  console.log('spans', spans)
-  //
-  // equal(spans.length, 1)
-  //
-  // const [span] = spans
-  // equal(span.kind, SpanKind.SERVER)
-  // // these asserts will fail when this will be fixed
-  // // https://github.com/open-telemetry/opentelemetry-js/issues/5103
-  // equal(span.attributes['http.method'], 'GET')
-  // equal(span.attributes['http.scheme'], 'http')
-  // equal(span.attributes['http.target'], '/test')
-  //
-  // const resource = span.resource
-  // deepEqual(resource._attributes['service.name'], 'test-service-api')
+  const dbSpan = spans.find(span => span.name === 'pg.query:SELECT test-telemetry-pg')
+  const statement = dbSpan.attributes['db.statement']
+  equal(statement, 'SELECT * FROM users')
 })
