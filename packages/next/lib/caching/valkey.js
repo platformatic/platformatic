@@ -38,24 +38,60 @@ export function getConnection (url) {
 }
 
 export class CacheHandler {
+  #standalone
   #config
   #logger
   #store
+  #prefix
   #subprefix
+  #meta
   #maxTTL
 
-  constructor () {
-    this.#logger = this.#createLogger()
-    this.#config = globalThis.platformatic.config.cache
-    this.#store = getConnection(this.#config.url)
-    this.#maxTTL = this.#config.maxTTL
-    this.#subprefix = this.#getSubprefix()
+  constructor (options) {
+    options ??= {}
+
+    this.#standalone = options.standalone
+    this.#config = options.config
+    this.#logger = options.logger
+    this.#store = options.store
+    this.#maxTTL = options.maxTTL
+    this.#prefix = options.prefix
+    this.#subprefix = options.subprefix
+    this.#meta = options.meta
+
+    if (globalThis.platformatic) {
+      this.#config ??= globalThis.platformatic.config.cache
+      this.#logger ??= this.#createPlatformaticLogger()
+      this.#store ??= getConnection(this.#config.url)
+      this.#maxTTL ??= this.#config.maxTTL
+      this.#prefix ??= this.#config.prefix
+      this.#subprefix ??= this.#getPlatformaticSubprefix()
+      this.#meta ??= this.#getPlatformaticMeta()
+    } else {
+      this.#config ??= {}
+      this.#maxTTL ??= 86_400
+      this.#prefix ??= ''
+      this.#subprefix ??= ''
+      this.#meta ??= {}
+    }
+
+    if (!this.#config) {
+      throw new Error('Please provide a the "config" option.')
+    }
+
+    if (!this.#logger) {
+      throw new Error('Please provide a the "logger" option.')
+    }
+
+    if (!this.#store) {
+      throw new Error('Please provide a the "store" option.')
+    }
   }
 
-  async get (cacheKey) {
+  async get (cacheKey, _, isRedisKey) {
     this.#logger.trace({ key: cacheKey }, 'get')
 
-    const key = this.#keyFor(cacheKey, sections.values)
+    const key = this.#standalone || isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
 
     let rawValue
     try {
@@ -96,13 +132,21 @@ export class CacheHandler {
     return value
   }
 
-  async set (cacheKey, value, { tags, revalidate }) {
+  async set (cacheKey, value, { tags, revalidate }, isRedisKey) {
     this.#logger.trace({ key: cacheKey, value, tags, revalidate }, 'set')
+
+    const key = this.#standalone || isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
 
     try {
       // Compute the parameters to save
-      const key = this.#keyFor(cacheKey, sections.values)
-      const data = this.#serialize({ value, tags, lastModified: Date.now(), revalidate, maxTTL: this.#maxTTL })
+      const data = this.#serialize({
+        value,
+        tags,
+        lastModified: Date.now(),
+        revalidate,
+        maxTTL: this.#maxTTL,
+        ...this.#meta
+      })
       const expire = Math.min(revalidate, this.#maxTTL)
 
       if (expire < 1) {
@@ -128,6 +172,56 @@ export class CacheHandler {
     } catch (e) {
       this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot write cache value in Valkey')
       throw new Error('Cannot write cache value in Valkey', { cause: e })
+    }
+  }
+
+  async remove (cacheKey, isRedisKey) {
+    this.#logger.trace({ key: cacheKey }, 'remove')
+
+    const key = this.#standalone || isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
+
+    let rawValue
+    try {
+      rawValue = await this.#store.get(key)
+
+      if (!rawValue) {
+        return
+      }
+    } catch (e) {
+      this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot read cache value from Valkey')
+      throw new Error('Cannot read cache value from Valkey', { cause: e })
+    }
+
+    let value
+    try {
+      value = this.#deserialize(rawValue)
+    } catch (e) {
+      this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot deserialize cache value from Valkey')
+
+      // Avoid useless reads the next time
+      // Note that since the value was unserializable, we don't know its tags and thus
+      // we cannot remove it from the tags sets. TTL will take care of them.
+      await this.#store.del(key)
+
+      throw new Error('Cannot deserialize cache value from Valkey', { cause: e })
+    }
+
+    try {
+      const promises = []
+      promises.push(this.#store.del(key))
+
+      if (Array.isArray(value.tags)) {
+        for (const tag of value.tags) {
+          const tagsKey = this.#keyFor(tag, sections.tags)
+          promises.push(this.#store.srem(tagsKey, key))
+        }
+      }
+
+      // Execute all the operations
+      await Promise.all(promises)
+    } catch (e) {
+      this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot remove cache value from Valkey')
+      throw new Error('Cannot remove cache value from Valkey', { cause: e })
     }
   }
 
@@ -189,7 +283,7 @@ export class CacheHandler {
     await Promise.all(promises)
   }
 
-  #createLogger () {
+  #createPlatformaticLogger () {
     const pinoOptions = {
       level: globalThis.platformatic?.logLevel ?? 'info'
     }
@@ -205,7 +299,7 @@ export class CacheHandler {
     return pino(pinoOptions)
   }
 
-  #getSubprefix () {
+  #getPlatformaticSubprefix () {
     const root = fileURLToPath(globalThis.platformatic.root)
 
     return existsSync(resolve(root, '.next/BUILD_ID'))
@@ -213,8 +307,15 @@ export class CacheHandler {
       : 'development'
   }
 
+  #getPlatformaticMeta () {
+    return {
+      serviceId: globalThis.platformatic.serviceId,
+      workerId: globalThis.platformatic.workerId
+    }
+  }
+
   #keyFor (key, section) {
-    return keyFor(this.#config.prefix, this.#subprefix, section, key)
+    return keyFor(this.#prefix, this.#subprefix, section, key)
   }
 
   #serialize (data) {
