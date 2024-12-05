@@ -1,10 +1,12 @@
 import { ConfigManager } from '@platformatic/config'
+import { safeRemove } from '@platformatic/utils'
 import Redis from 'iovalkey'
 import { unpack } from 'msgpackr'
 import { deepStrictEqual, notDeepStrictEqual, ok } from 'node:assert'
 import { cp, readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
+import { pino } from 'pino'
 import { parse } from 'semver'
 import {
   commonFixturesRoot,
@@ -13,9 +15,11 @@ import {
   isCIOnWindows,
   prepareRuntime,
   setFixturesDir,
-  startRuntime
+  sleep,
+  startRuntime,
+  temporaryFolder
 } from '../../../basic/test/helper.js'
-import { keyFor } from '../../lib/caching/valkey.js'
+import CacheHandler, { keyFor } from '../../lib/caching/valkey.js'
 
 process.setMaxListeners(100)
 
@@ -30,6 +34,8 @@ async function prepareRuntimeWithBackend (
   additionalSetup = null
 ) {
   const { root, config } = await prepareRuntime(t, configuration, production, null, async (root, config, args) => {
+    process.env.PLT_RUNTIME_LOGGER_STDOUT = resolve(root, 'test.log')
+
     await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), {
       recursive: true
     })
@@ -982,4 +988,169 @@ test('should handle refresh error', { skip: isCIOnWindows }, async t => {
       )
     })
   )
+})
+
+test('can be used without the runtime - per-method flag', async t => {
+  const configuration = 'caching-valkey'
+  const valkeyPrefix = 'plt:test:caching-valkey'
+
+  const logsPath = resolve(temporaryFolder, `logs-valkey-next-${Date.now()}.log`)
+
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  const monitorCollection = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+
+  await cleanupCache(valkey, valkeyPrefix)
+  const monitor = await monitorCollection.monitor()
+  const valkeyCalls = []
+
+  monitor.on('monitor', (_, args) => {
+    valkeyCalls.push(args)
+  })
+
+  t.after(async () => {
+    await cleanupCache(valkey, valkeyPrefix)
+    await monitor.disconnect()
+    await valkey.disconnect()
+    await monitorCollection.disconnect()
+    await safeRemove(logsPath)
+  })
+
+  const handler = new CacheHandler({
+    store: valkey,
+    prefix: valkeyPrefix,
+    logger: pino({
+      level: 'trace',
+      transport: {
+        target: 'pino/file',
+        options: { destination: logsPath }
+      }
+    })
+  })
+
+  const key = `${valkeyPrefix}:key`
+  await handler.set(key, 'value', { revalidate: 120, tags: ['first'] }, true)
+  const cached = await handler.get(key, null, true)
+  await handler.remove(key, true)
+
+  // Wait for logs to be written
+  await sleep(3000)
+
+  const logs = (await readFile(logsPath, 'utf-8'))
+    .trim()
+    .split('\n')
+    .map(l => {
+      const parsed = JSON.parse(l)
+
+      return { msg: parsed.msg, key: parsed.key, value: parsed.value }
+    })
+
+  verifyValkeySequence(valkeyCalls, [
+    ['set', key, null, 'EX', '120'],
+    ['sadd', keyFor(valkeyPrefix, '', 'tags', 'first'), key],
+    ['expire', keyFor(valkeyPrefix, '', 'tags', 'first'), '120'],
+    ['get', key],
+    ['get', key],
+    ['del', key],
+    ['srem', keyFor(valkeyPrefix, '', 'tags', 'first'), key]
+  ])
+
+  deepStrictEqual(
+    { ...cached, lastModified: 0 },
+    {
+      value: 'value',
+      lastModified: 0,
+      revalidate: 120,
+      tags: ['first'],
+      maxTTL: 86400
+    }
+  )
+
+  deepStrictEqual(logs, [
+    { msg: 'set', key, value: 'value' },
+    { msg: 'get', key, value: undefined },
+    { msg: 'remove', key, value: undefined }
+  ])
+})
+
+test('can be used without the runtime - standalone mode', async t => {
+  const configuration = 'caching-valkey'
+  const valkeyPrefix = 'plt:test:caching-valkey'
+
+  const logsPath = resolve(temporaryFolder, `logs-valkey-next-${Date.now()}.log`)
+
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  const monitorCollection = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+
+  await cleanupCache(valkey, valkeyPrefix)
+  const monitor = await monitorCollection.monitor()
+  const valkeyCalls = []
+
+  monitor.on('monitor', (_, args) => {
+    valkeyCalls.push(args)
+  })
+
+  t.after(async () => {
+    await cleanupCache(valkey, valkeyPrefix)
+    await monitor.disconnect()
+    await valkey.disconnect()
+    await monitorCollection.disconnect()
+    await safeRemove(logsPath)
+  })
+
+  const handler = new CacheHandler({
+    standalone: true,
+    store: valkey,
+    prefix: valkeyPrefix,
+    logger: pino({
+      level: 'trace',
+      transport: {
+        target: 'pino/file',
+        options: { destination: logsPath }
+      }
+    })
+  })
+
+  const key = `${valkeyPrefix}:key`
+  await handler.set(key, 'value', { revalidate: 120, tags: ['first'] })
+  const cached = await handler.get(key)
+  await handler.remove(key)
+
+  // Wait for logs to be written
+  await sleep(3000)
+
+  const logs = (await readFile(logsPath, 'utf-8'))
+    .trim()
+    .split('\n')
+    .map(l => {
+      const parsed = JSON.parse(l)
+
+      return { msg: parsed.msg, key: parsed.key, value: parsed.value }
+    })
+
+  verifyValkeySequence(valkeyCalls, [
+    ['set', key, null, 'EX', '120'],
+    ['sadd', keyFor(valkeyPrefix, '', 'tags', 'first'), key],
+    ['expire', keyFor(valkeyPrefix, '', 'tags', 'first'), '120'],
+    ['get', key],
+    ['get', key],
+    ['del', key],
+    ['srem', keyFor(valkeyPrefix, '', 'tags', 'first'), key]
+  ])
+
+  deepStrictEqual(
+    { ...cached, lastModified: 0 },
+    {
+      value: 'value',
+      lastModified: 0,
+      revalidate: 120,
+      tags: ['first'],
+      maxTTL: 86400
+    }
+  )
+
+  deepStrictEqual(logs, [
+    { msg: 'set', key, value: 'value' },
+    { msg: 'get', key, value: undefined },
+    { msg: 'remove', key, value: undefined }
+  ])
 })

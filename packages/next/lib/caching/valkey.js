@@ -38,9 +38,11 @@ export function getConnection (url) {
 }
 
 export class CacheHandler {
+  #standalone
   #config
   #logger
   #store
+  #prefix
   #subprefix
   #meta
   #maxTTL
@@ -48,10 +50,12 @@ export class CacheHandler {
   constructor (options) {
     options ??= {}
 
+    this.#standalone = options.standalone
     this.#config = options.config
     this.#logger = options.logger
     this.#store = options.store
     this.#maxTTL = options.maxTTL
+    this.#prefix = options.prefix
     this.#subprefix = options.subprefix
     this.#meta = options.meta
 
@@ -60,11 +64,13 @@ export class CacheHandler {
       this.#logger ??= this.#createPlatformaticLogger()
       this.#store ??= getConnection(this.#config.url)
       this.#maxTTL ??= this.#config.maxTTL
+      this.#prefix ??= this.#config.prefix
       this.#subprefix ??= this.#getPlatformaticSubprefix()
       this.#meta ??= this.#getPlatformaticMeta()
     } else {
       this.#config ??= {}
       this.#maxTTL ??= 86_400
+      this.#prefix ??= ''
       this.#subprefix ??= ''
       this.#meta ??= {}
     }
@@ -85,7 +91,7 @@ export class CacheHandler {
   async get (cacheKey, _, isRedisKey) {
     this.#logger.trace({ key: cacheKey }, 'get')
 
-    const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
+    const key = this.#standalone || isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
 
     let rawValue
     try {
@@ -129,7 +135,7 @@ export class CacheHandler {
   async set (cacheKey, value, { tags, revalidate }, isRedisKey) {
     this.#logger.trace({ key: cacheKey, value, tags, revalidate }, 'set')
 
-    const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
+    const key = this.#standalone || isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
 
     try {
       // Compute the parameters to save
@@ -172,7 +178,7 @@ export class CacheHandler {
   async remove (cacheKey, isRedisKey) {
     this.#logger.trace({ key: cacheKey }, 'remove')
 
-    const key = isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
+    const key = this.#standalone || isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
 
     let rawValue
     try {
@@ -207,7 +213,7 @@ export class CacheHandler {
       if (Array.isArray(value.tags)) {
         for (const tag of value.tags) {
           const tagsKey = this.#keyFor(tag, sections.tags)
-          this.#store.srem(tagsKey, key, 'gt')
+          promises.push(this.#store.srem(tagsKey, key))
         }
       }
 
@@ -309,7 +315,7 @@ export class CacheHandler {
   }
 
   #keyFor (key, section) {
-    return keyFor(this.#config.prefix, this.#subprefix, section, key)
+    return keyFor(this.#prefix, this.#subprefix, section, key)
   }
 
   #serialize (data) {
