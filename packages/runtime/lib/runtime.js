@@ -862,49 +862,6 @@ class Runtime extends EventEmitter {
     const errorLabel = this.#workerExtendedLabel(serviceId, index, workersCount)
     const health = deepmerge(config.health ?? {}, serviceConfig.health ?? {})
 
-    const execArgv = []
-    if (!serviceConfig.isPLTService) {
-      execArgv.push('--require', openTelemetrySetupPath)
-    }
-
-    if (serviceConfig.sourceMaps === true || config.sourceMaps === true) {
-      execArgv.push('--enable-source-maps')
-    }
-
-    // console.log('worker spawned', {
-    //   workerData: {
-    //     config,
-    //     serviceConfig: {
-    //       ...serviceConfig,
-    //       isProduction: this.#isProduction
-    //     },
-    //     worker: {
-    //       id: workerId,
-    //       index,
-    //       count: workersCount
-    //     },
-    //     inspectorOptions,
-    //     dirname: this.#configManager.dirname,
-    //     runtimeLogsDir: this.#runtimeLogsDir,
-    //     loggingPort
-    //   },
-    //   execArgv,
-    //   env: this.#env,
-    //   transferList: [loggingPort],
-    //   resourceLimits: {
-    //     maxOldGenerationSizeMb: health.maxHeapTotal
-    //   },
-    //   /*
-    //     Important: always set stdout and stderr to true, so that worker's output is not automatically
-    //     piped to the parent thread. We actually never output the thread output since we replace it
-    //     with PinoWritable, and disabling the piping avoids us to redeclare some internal Node.js methods.
-
-    //     The author of this (Paolo and Matteo) are not proud of the solution. Forgive us.
-    //   */
-    //   stdout: true,
-    //   stderr: true
-    // })
-
     const worker = new Worker(kWorkerFile, {
       workerData: {
         config,
@@ -922,7 +879,7 @@ class Runtime extends EventEmitter {
         runtimeLogsDir: this.#runtimeLogsDir,
         loggingPort
       },
-      execArgv,
+      execArgv: serviceConfig.isPLTService ? [] : ['--require', openTelemetrySetupPath],
       env: this.#env,
       transferList: [loggingPort],
       resourceLimits: {
