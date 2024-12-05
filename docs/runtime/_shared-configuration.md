@@ -70,6 +70,7 @@ runtime. Each service object supports the following settings:
 - **`health`** (object): Configures the health check for each worker of the service. It supports all the properties also supported in the runtime [health](#health) property. The values specified here overrides the values specified in the runtime.
 - **`envfile`** (`string`) - The path to an `.env` file to load for the service.
 - **`env`** (`object`) - An object containing environment variables to set for the service. Values set here takes precedence over values set in the `envfile`.
+- **`sourceMaps`** (`boolean`) - If `true`, source maps are enabled for the service. Default: `false`.
 
 If this property is present, then the services will not be reordered according to the
 `getBootstrapDependencies` function and they will be started in the order they are defined in
@@ -85,6 +86,10 @@ An object containing environment variables to set for all services in the
 runtime. Any environment variables set in the `env` object will be merged with
 the environment variables set in the `envfile` and `env` properties of each
 service, with service-level environment variables taking precedence.
+
+### `sourceMaps`
+
+If `true`, source maps are enabled for all services. Default: `false`. This setting can be overridden at the service level.
 
 ### `resolvedServicesBasePath`
 

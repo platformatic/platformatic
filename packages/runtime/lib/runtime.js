@@ -862,6 +862,16 @@ class Runtime extends EventEmitter {
     const errorLabel = this.#workerExtendedLabel(serviceId, index, workersCount)
     const health = deepmerge(config.health ?? {}, serviceConfig.health ?? {})
 
+    const execArgv = []
+
+    if (!serviceConfig.isPLTService) {
+      execArgv.push('--require', openTelemetrySetupPath)
+    }
+
+    if ((serviceConfig.sourceMaps ?? config.sourceMaps) === true) {
+      execArgv.push('--enable-source-maps')
+    }
+
     const worker = new Worker(kWorkerFile, {
       workerData: {
         config,
@@ -879,7 +889,7 @@ class Runtime extends EventEmitter {
         runtimeLogsDir: this.#runtimeLogsDir,
         loggingPort
       },
-      execArgv: serviceConfig.isPLTService ? [] : ['--require', openTelemetrySetupPath],
+      execArgv,
       env: this.#env,
       transferList: [loggingPort],
       resourceLimits: {

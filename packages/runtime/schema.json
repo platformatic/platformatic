@@ -309,6 +309,10 @@
           },
           "envfile": {
             "type": "string"
+          },
+          "sourceMaps": {
+            "type": "boolean",
+            "default": false
           }
         }
       }
@@ -475,6 +479,10 @@
           },
           "envfile": {
             "type": "string"
+          },
+          "sourceMaps": {
+            "type": "boolean",
+            "default": false
           }
         }
       }
@@ -1145,6 +1153,10 @@
       "additionalProperties": {
         "type": "string"
       }
+    },
+    "sourceMaps": {
+      "type": "boolean",
+      "default": false
     }
   },
   "anyOf": [

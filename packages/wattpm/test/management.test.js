@@ -191,6 +191,7 @@ test('config - should list configuration for an application', async t => {
       path: `${resolve(rootDir, 'web')}`,
       exclude: []
     },
+    sourceMaps: false,
     restartOnError: 5000,
     startTimeout: 30000,
     managementApi: true,
