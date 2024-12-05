@@ -79,25 +79,31 @@ export class ViteStackable extends BaseStackable {
     await this.init()
     const { build } = await importFile(resolve(this.#vite, 'dist/node/index.js'))
 
-    await build({
-      root: this.root,
-      base: basePath,
-      mode: 'production',
-      configFile,
-      logLevel: this.logger.level,
-      build: {
-        outDir: config.application.outputDirectory
-      },
-      plugins: [
-        {
-          name: 'platformatic-build',
-          configResolved: config => {
-            basePath = ensureTrailingSlash(cleanBasePath(config.base))
-            outDir = resolve(this.root, config.build.outDir)
+    try {
+      globalThis.platformatic.isBuilding = true
+
+      await build({
+        root: this.root,
+        base: basePath,
+        mode: 'production',
+        configFile,
+        logLevel: this.logger.level,
+        build: {
+          outDir: config.application.outputDirectory
+        },
+        plugins: [
+          {
+            name: 'platformatic-build',
+            configResolved: config => {
+              basePath = ensureTrailingSlash(cleanBasePath(config.base))
+              outDir = resolve(this.root, config.build.outDir)
+            }
           }
-        }
-      ]
-    })
+        ]
+      })
+    } finally {
+      globalThis.platformatic.isBuilding = false
+    }
 
     await writeFile(resolve(outDir, '.platformatic-build.json'), JSON.stringify({ basePath }), 'utf-8')
   }
@@ -322,26 +328,32 @@ export class ViteSSRStackable extends NodeStackable {
     const { build } = await importFile(resolve(vite, 'dist/node/index.js'))
 
     // Build the client
-    await build({
-      root: resolve(this.root, clientDirectory),
-      base: basePath,
-      mode: 'production',
-      configFile,
-      logLevel: this.logger.level,
-      build: {
-        outDir: clientOutDir,
-        ssrManifest: true
-      },
-      plugins: [
-        {
-          name: 'platformatic-build',
-          configResolved: config => {
-            basePath = ensureTrailingSlash(cleanBasePath(config.base))
-            clientOutDir = resolve(this.root, clientDirectory, config.build.outDir)
+    try {
+      globalThis.platformatic.isBuilding = true
+
+      await build({
+        root: resolve(this.root, clientDirectory),
+        base: basePath,
+        mode: 'production',
+        configFile,
+        logLevel: this.logger.level,
+        build: {
+          outDir: clientOutDir,
+          ssrManifest: true
+        },
+        plugins: [
+          {
+            name: 'platformatic-build',
+            configResolved: config => {
+              basePath = ensureTrailingSlash(cleanBasePath(config.base))
+              clientOutDir = resolve(this.root, clientDirectory, config.build.outDir)
+            }
           }
-        }
-      ]
-    })
+        ]
+      })
+    } finally {
+      globalThis.platformatic.isBuilding = false
+    }
 
     await writeFile(resolve(clientOutDir, '.platformatic-build.json'), JSON.stringify({ basePath }), 'utf-8')
 

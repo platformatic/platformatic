@@ -169,7 +169,7 @@ export class BaseStackable {
       logger: this.logger,
       loader,
       scripts,
-      context
+      context: { ...context, isBuilding: true }
     })
 
     try {

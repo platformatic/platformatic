@@ -78,24 +78,30 @@ export class AstroStackable extends BaseStackable {
     await this.init()
     const { build } = await importFile(resolve(this.#astro, 'dist/core/index.js'))
 
-    await build({
-      root: this.root,
-      base: basePath,
-      outDir: config.application.outputDirectory,
-      mode: 'production',
-      configFile,
-      logLevel: this.logger.level,
-      integrations: [
-        {
-          name: 'platformatic',
-          hooks: {
-            'astro:config:done': ({ config }) => {
-              basePath = ensureTrailingSlash(cleanBasePath(config.base))
+    try {
+      globalThis.platformatic.isBuilding = true
+
+      await build({
+        root: this.root,
+        base: basePath,
+        outDir: config.application.outputDirectory,
+        mode: 'production',
+        configFile,
+        logLevel: this.logger.level,
+        integrations: [
+          {
+            name: 'platformatic',
+            hooks: {
+              'astro:config:done': ({ config }) => {
+                basePath = ensureTrailingSlash(cleanBasePath(config.base))
+              }
             }
           }
-        }
-      ]
-    })
+        ]
+      })
+    } finally {
+      globalThis.platformatic.isBuilding = false
+    }
 
     await writeFile(
       resolve(this.root, config.application.outputDirectory, '.platformatic-build.json'),

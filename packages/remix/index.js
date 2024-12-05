@@ -108,12 +108,18 @@ export class RemixStackable extends ViteStackable {
     await this.init()
     const { viteBuild } = await importFile(resolve(this.#remix, 'dist/cli/commands.js'))
 
-    await viteBuild(this.root, {
-      emptyOutDir: true,
-      logLevel: this.logger.level,
-      mode: 'production',
-      profile: false
-    })
+    try {
+      globalThis.platformatic.isBuilding = true
+
+      await viteBuild(this.root, {
+        emptyOutDir: true,
+        logLevel: this.logger.level,
+        mode: 'production',
+        profile: false
+      })
+    } finally {
+      globalThis.platformatic.isBuilding = false
+    }
   }
 
   async inject (injectParams, onInject) {
