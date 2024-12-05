@@ -296,6 +296,15 @@
               }
             },
             "additionalProperties": false
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "envfile": {
+            "type": "string"
           }
         }
       }
@@ -449,6 +458,15 @@
               }
             },
             "additionalProperties": false
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "envfile": {
+            "type": "string"
           }
         }
       }
@@ -1113,6 +1131,12 @@
     "resolvedServicesBasePath": {
       "type": "string",
       "default": "external"
+    },
+    "env": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
     }
   },
   "anyOf": [
