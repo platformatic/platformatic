@@ -1693,7 +1693,7 @@ importers:
         version: link:../ts-compiler
       '@platformatic/undici-cache-memory':
         specifier: ^0.8.1
-        version: 0.8.1
+        version: 0.8.2
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -3959,8 +3959,8 @@ packages:
   '@platformatic/openapi-schema-validator@3.0.0':
     resolution: {integrity: sha512-SHEY5v1Q5EliMaIpXdPCye0QkhFVOoHkEqA8v9qkrO1PqvVOcpii1WqEHYrZZB430sEmrHqEWZInt15EUsR7mw==}
 
-  '@platformatic/undici-cache-memory@0.8.1':
-    resolution: {integrity: sha512-ABfQW5elQBC/M4HnxjaoLc1zjFVO4agXhviu3PP69/Yzu6tJYtgEanxvN5MEsyz3S5zVxxz1pPrtB+3GJafzTw==}
+  '@platformatic/undici-cache-memory@0.8.2':
+    resolution: {integrity: sha512-qvwOMpINPRSK1mUOXCwo1fJOQ267YPZW39dZXPAFhZKvO7XYaPuG2UyFmvOyVthi3JJv9w62v3UlJdLHfWzNvw==}
 
   '@playwright/test@1.49.0':
     resolution: {integrity: sha512-DMulbwQURa8rNIQrf94+jPJQ4FmOVdpE5ZppRNvWVjvhC+6sOeo28r8MgIpQRYouXRtt/FCCXU7zn20jnHR4Qw==}
@@ -10741,7 +10741,7 @@ snapshots:
       ajv-formats: 3.0.1(ajv@8.17.1)
       js-yaml: 4.1.0
 
-  '@platformatic/undici-cache-memory@0.8.1': {}
+  '@platformatic/undici-cache-memory@0.8.2': {}
 
   '@playwright/test@1.49.0':
     dependencies:
