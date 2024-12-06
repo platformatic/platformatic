@@ -31,6 +31,8 @@ const { UndiciInstrumentation } = require('@opentelemetry/instrumentation-undici
 // https://github.com/open-telemetry/opentelemetry-js/issues/5103
 process.env.OTEL_SEMCONV_STABILITY_OPT_IN = 'http/dup'
 
+// We need to specify the supported instrumentations.
+// Currently, only `pg` is supported.
 const resolveInstrumentation = (instrumentation) => {
   if (instrumentation === 'pg') {
     const { PgInstrumentation } = require('@opentelemetry/instrumentation-pg')
@@ -158,7 +160,7 @@ const main = async () => {
     debuglog('Setting up telemetry %o', data)
     const telemetryConfig = useWorkerData ? data?.serviceConfig?.telemetry : data?.telemetryConfig
     let servicePath = data?.serviceConfig?.path
-    if (!servicePath) {
+    if (!servicePath && data?.root) {
       // when running commands, we don't have path :(
       servicePath = fileURLToPath(data?.root)
     }
@@ -171,4 +173,8 @@ const main = async () => {
   }
 }
 
-main()
+try {
+  main()
+} catch (e) {
+  debuglog('Error in telemetry setup %o', e)
+}

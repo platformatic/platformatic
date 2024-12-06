@@ -1,6 +1,6 @@
 'use strict'
 
-const { equal, deepEqual } = require('node:assert')
+const { equal, deepEqual, ok } = require('node:assert')
 const { resolve, join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
@@ -212,7 +212,7 @@ test('configure telemetry correctly with a composer + node + fastify', async t =
   equal(spanNodeServer.parentId, spanFastifyClient.id)
 })
 
-test('configure telemetry correctly with a composer + next', async t => {
+test('configure telemetry correctly with a composer + next', { only: true }, async t => {
   // composer -> next -> fastify
   //                  -> node (via http)
   //
@@ -275,6 +275,7 @@ test('configure telemetry correctly with a composer + next', async t => {
     return false
   })
   const spanNextClientNode = findParentSpan(spans, spanNodeServer, SpanKind.CLIENT, 'GET http://node.plt.local/')
+  ok(!!spanNextClientNode)
   const spanNextServer = findSpanWithParentWithId(spans, spanNextClientNode, spanComposerClient.id)
   equal(spanNextClientNode.traceId, traceId)
   equal(spanNextServer.traceId, traceId)
