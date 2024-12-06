@@ -21,7 +21,7 @@ test.beforeEach(async () => {
   basicHelper.setFixturesDir(fixturesDir)
 })
 
-test('configure telemetry correctly with a express app', async t => {
+test('configure telemetry correctly with a express app using pg', async t => {
   const { dropTestDB } = await createPGDataBase()
 
   t.after(async () => {
