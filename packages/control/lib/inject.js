@@ -2,8 +2,9 @@
 
 const { parseArgs } = require('node:util')
 const { writeFile } = require('node:fs/promises')
-const RuntimeApiClient = require('./runtime-api-client')
+const { createCacheInterceptor } = require('./caching')
 const errors = require('./errors')
+const RuntimeApiClient = require('./runtime-api-client')
 
 async function injectRuntimeCommand (argv) {
   const { values: args, positionals } = parseArgs({
@@ -17,9 +18,9 @@ async function injectRuntimeCommand (argv) {
       data: { type: 'string', short: 'd' },
       include: { type: 'boolean', short: 'i', default: false },
       verbose: { type: 'boolean', short: 'v', default: false },
-      output: { type: 'string', short: 'o' },
+      output: { type: 'string', short: 'o' }
     },
-    strict: false,
+    strict: false
   })
 
   const client = new RuntimeApiClient()
@@ -61,7 +62,14 @@ async function injectRuntimeCommand (argv) {
     result += '> \n'
   }
 
-  const injectOptions = { url: injectPath, method, headers, body }
+  const config = await client.getRuntimeConfig(runtime.pid)
+  const injectOptions = {
+    url: injectPath,
+    method,
+    headers,
+    body,
+    interceptors: [config.httpCache ? await createCacheInterceptor(config.httpCache, runtime.projectDir) : undefined]
+  }
 
   const response = await client.injectRuntime(runtime.pid, serviceId, injectOptions)
 

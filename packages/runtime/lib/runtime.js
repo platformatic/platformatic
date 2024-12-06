@@ -182,10 +182,7 @@ class Runtime extends EventEmitter {
       throw e
     }
 
-    this.#sharedHttpCache = createSharedStore(
-      this.#configManager.dirname,
-      config.httpCache
-    )
+    this.#sharedHttpCache = await createSharedStore(this.#configManager.dirname, config.httpCache)
 
     this.#updateStatus('init')
   }
@@ -957,15 +954,9 @@ class Runtime extends EventEmitter {
         listServices: () => this.#servicesIds,
         getServices: this.getServices.bind(this),
         getHttpCacheValue: opts => this.#sharedHttpCache.getValue(opts.request),
-        setHttpCacheValue: opts => this.#sharedHttpCache.setValue(
-          opts.request,
-          opts.response,
-          opts.payload
-        ),
-        deleteHttpCacheValue: opts => this.#sharedHttpCache.delete(
-          opts.request
-        ),
-        invalidateHttpCache: opts => this.invalidateHttpCache(opts),
+        setHttpCacheValue: opts => this.#sharedHttpCache.setValue(opts.request, opts.response, opts.payload),
+        deleteHttpCacheValue: opts => this.#sharedHttpCache.delete(opts.request),
+        invalidateHttpCache: opts => this.invalidateHttpCache(opts)
       }
     })
     worker[kITC].listen()
