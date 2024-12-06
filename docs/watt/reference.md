@@ -174,6 +174,7 @@ Options:
 - `-i, --id <value>`: The id of the service (the default is the basename of the URL)
 - `-p, --path <value>`: The path where to import the service (the default is the service id)
 - `-h, --http`: Use HTTP URL when expanding GitHub repositories
+- `-b, --branch <branch>`: The branch to clone (the default is `main`)
 
 ## `resolve`
 

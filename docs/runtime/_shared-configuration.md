@@ -60,7 +60,8 @@ runtime. Each service object supports the following settings:
   `serviceId` is not explicitly provided.
 - **`path`** (**required**, `string`) - The path to the directory containing
   the microservice. It can be omitted if `url` is provided.
-- **`url`** (**required**, `string`) - The URL of the service, if it is a remote service. It can be omitted if `path` is provided.
+- **`url`** (**required**, `string`) - The URL of the service remote GIT repository, if it is a remote service. It can be omitted if `path` is provided.
+- **`gitBranch`** (string) - The branch of the service to resolve.
 - **`config`** (`string`) - The configuration file used to start
   the microservice.
 - **`useHttp`** (`boolean`) - The service will be started on a random HTTP port
@@ -73,6 +74,10 @@ runtime. Each service object supports the following settings:
 If this property is present, then the services will not be reordered according to the
 `getBootstrapDependencies` function and they will be started in the order they are defined in
 the configuration file.
+
+### `web`
+
+An alias for `services`. If both are present, their content will be merged.
 
 ### `env`
 

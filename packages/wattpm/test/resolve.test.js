@@ -1,5 +1,6 @@
 import { createDirectory, safeRemove } from '@platformatic/utils'
-import { ok } from 'node:assert'
+import { deepStrictEqual, ok } from 'node:assert'
+import { readFile } from 'node:fs/promises'
 import { relative, resolve, sep } from 'node:path'
 import { test } from 'node:test'
 import { prepareRuntime, temporaryFolder } from '../../basic/test/helper.js'
@@ -19,6 +20,8 @@ test('resolve - should clone a URL when the environment variable is set to a fol
 
   ok(resolveProcess.stdout.includes(`Cloning ${repo} into web${sep}resolved`))
   ok(resolveProcess.stdout.includes('Installing dependencies for the service resolved using npm ...'))
+
+  deepStrictEqual(await readFile(resolve(rootDir, 'web/resolved/branch'), 'utf8'), 'main')
 })
 
 test('resolve - should clone a URL when the environment variable is not set', async t => {
@@ -122,4 +125,21 @@ test('resolve - should attempt to clone with username and password', async t => 
   ok(resolveProcess.stdout.includes(`Cloning ${url} as user foo`))
   ok(resolveProcess.stdout.includes(`Cloning into '${resolve(rootDir, 'external/resolved')}'`))
   ok(resolveProcess.stdout.includes('Unable to clone repository of the service resolved'))
+})
+
+test('resolve - should clone a different branch', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const repo = await prepareGitRepository(t, rootDir)
+  t.after(() => safeRemove(rootDir))
+
+  process.chdir(rootDir)
+  await wattpm('import', rootDir, '-h', '-i', 'resolved', '-b', 'another', '{PLT_GIT_REPO_URL}')
+  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_SERVICE_RESOLVED_PATH', 'web/resolved')
+
+  const resolveProcess = await wattpm('resolve', rootDir)
+
+  ok(resolveProcess.stdout.includes(`Cloning ${repo} (branch another) into web${sep}resolved`))
+  ok(resolveProcess.stdout.includes('Installing dependencies for the service resolved using npm ...'))
+
+  deepStrictEqual(await readFile(resolve(rootDir, 'web/resolved/branch'), 'utf8'), 'another')
 })
