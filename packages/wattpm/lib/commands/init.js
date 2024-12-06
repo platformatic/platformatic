@@ -7,7 +7,7 @@ import { basename, resolve } from 'node:path'
 import { defaultConfiguration, defaultPackageJson } from '../defaults.js'
 import { gitignore } from '../gitignore.js'
 import { schema, version } from '../schema.js'
-import { parseArgs, saveConfigurationFile, verbose } from '../utils.js'
+import { getRoot, parseArgs, saveConfigurationFile, verbose } from '../utils.js'
 
 export async function initCommand (logger, args) {
   const {
@@ -26,7 +26,7 @@ export async function initCommand (logger, args) {
   )
 
   /* c8 ignore next */
-  const root = resolve(process.cwd(), positionals[0] ?? '')
+  const root = getRoot(positionals)
   const web = resolve(root, 'web')
   const configurationFile = resolve(root, 'watt.json')
 

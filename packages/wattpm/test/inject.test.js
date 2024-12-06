@@ -92,3 +92,66 @@ test('inject - should complain when a service is not found', async t => {
   deepStrictEqual(envProcess.exitCode, 1)
   ok(envProcess.stdout.includes('Cannot find a matching service.'))
 })
+
+test('inject - should properly autodetect the runtime and use the first argument as a service', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  const directory = await createTemporaryDirectory(t, 'inject')
+  await createDirectory(directory)
+
+  const startProcess = wattpm('start', rootDir)
+  await waitForStart(startProcess.stdout)
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  const entrypointProcess = await wattpm('inject', 'main')
+
+  const serviceProcess = await wattpm(
+    '-v',
+    'inject',
+    'alternative',
+    '-m',
+    'POST',
+    '-p',
+    '/',
+    '-h',
+    'Content-Type: text/plain',
+    '-d',
+    'AAAA'
+  )
+
+  await writeFile(resolve(directory, 'input.txt'), 'BBBB', 'utf-8')
+  await wattpm(
+    'inject',
+    'alternative',
+    '-f',
+    '-o',
+    resolve(directory, 'output.txt'),
+    '-m',
+    'POST',
+    '-p',
+    '/',
+    '-h',
+    'Content-Type: text/plain',
+    '-D',
+    resolve(directory, 'input.txt')
+  )
+
+  ok(entrypointProcess.stdout, '{"production":true}')
+
+  ok(serviceProcess.stdout.includes('> POST / HTTP/1.1'))
+  ok(serviceProcess.stdout.includes('> Content-Type: text/plain'))
+  ok(serviceProcess.stdout.includes('< HTTP/1.1 200'))
+  ok(serviceProcess.stdout.includes('< content-type: application/json; charset=utf-8'))
+  ok(serviceProcess.stdout.includes('{"body":"AAAA"}'))
+
+  const outputFile = await readFile(resolve(directory, 'output.txt'), 'utf-8')
+  ok(outputFile.includes('> POST / HTTP/1.1'))
+  ok(outputFile.includes('> Content-Type: text/plain'))
+  ok(outputFile.includes('< HTTP/1.1 200'))
+  ok(outputFile.includes('< content-type: application/json; charset=utf-8'))
+  ok(outputFile.includes('{"body":"BBBB"}'))
+})

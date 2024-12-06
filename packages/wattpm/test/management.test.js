@@ -59,7 +59,8 @@ test('services - should list services for an application with no workers informa
   )
 
   deepStrictEqual(lines[2], ['Name', 'Type', 'Entrypoint'])
-  deepStrictEqual(lines[4], ['main', 'nodejs', 'Yes'])
+  deepStrictEqual(lines[4], ['alternative', 'nodejs', 'No'])
+  deepStrictEqual(lines[5], ['main', 'nodejs', 'Yes'])
 })
 
 test('services - should list services for an application with workers information in production mode', async t => {
@@ -82,7 +83,8 @@ test('services - should list services for an application with workers informatio
   )
 
   deepStrictEqual(lines[2], ['Name', 'Workers', 'Type', 'Entrypoint'])
-  deepStrictEqual(lines[4], ['main', '1', 'nodejs', 'Yes'])
+  deepStrictEqual(lines[4], ['alternative', '1', 'nodejs', 'No'])
+  deepStrictEqual(lines[5], ['main', '1', 'nodejs', 'Yes'])
 })
 
 test('services - should complain when a runtime is not found', async t => {
@@ -163,7 +165,8 @@ test('env - should complain when a service is not found', async t => {
 
 test('config - should list configuration for an application', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
-  const serviceDir = resolve(rootDir, 'web/main')
+  const alternativeServiceDir = resolve(rootDir, 'web/alternative')
+  const mainServiceDir = resolve(rootDir, 'web/main')
 
   const startProcess = wattpm('start', rootDir)
   await waitForStart(startProcess.stdout)
@@ -194,11 +197,24 @@ test('config - should list configuration for an application', async t => {
     serviceMap: {},
     services: [
       {
+        id: 'alternative',
+        isPLTService: false,
+        type: 'nodejs',
+        path: alternativeServiceDir,
+        config: resolve(alternativeServiceDir, 'watt.json'),
+        useHttp: false,
+        entrypoint: false,
+        watch: false,
+        dependencies: [],
+        localServiceEnvVars: {},
+        localUrl: 'http://alternative.plt.local'
+      },
+      {
         id: 'main',
         isPLTService: false,
         type: 'nodejs',
-        path: serviceDir,
-        config: resolve(serviceDir, 'watt.json'),
+        path: mainServiceDir,
+        config: resolve(mainServiceDir, 'watt.json'),
         useHttp: false,
         entrypoint: true,
         watch: false,

@@ -5,7 +5,14 @@ import { execa } from 'execa'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { buildRuntime, findConfigurationFile, loadConfigurationFile, overrideFatal, parseArgs } from '../utils.js'
+import {
+  buildRuntime,
+  findConfigurationFile,
+  getRoot,
+  loadConfigurationFile,
+  overrideFatal,
+  parseArgs
+} from '../utils.js'
 
 // This function will not perform the command if the .npmrc file contains the 'dry-run' flag - This is useful in tests
 async function executeCommand (root, ...args) {
@@ -87,7 +94,7 @@ export async function installDependencies (logger, root, services, production, p
 export async function buildCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
   /* c8 ignore next */
-  const root = resolve(process.cwd(), positionals[0] ?? '')
+  const root = getRoot(positionals)
 
   const configurationFile = await findConfigurationFile(logger, root)
 
@@ -142,7 +149,7 @@ export async function installCommand (logger, args) {
   )
 
   /* c8 ignore next */
-  const root = resolve(process.cwd(), positionals[0] ?? '')
+  const root = getRoot(positionals)
   const configurationFile = await findConfigurationFile(logger, root)
 
   await installDependencies(logger, root, configurationFile, production, packageManager)
