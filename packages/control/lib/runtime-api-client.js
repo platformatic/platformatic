@@ -307,9 +307,14 @@ class RuntimeApiClient {
   }
 
   async injectRuntime (pid, serviceId, options) {
-    const client = this.#getUndiciClient(pid)
+    let client = this.#getUndiciClient(pid)
+
+    if (options.interceptors) {
+      client = client.compose(options.interceptors)
+    }
 
     const response = await client.request({
+      origin: 'http://localhost',
       path: `/api/v1/services/${serviceId}/proxy` + options.url,
       method: options.method,
       headers: options.headers,

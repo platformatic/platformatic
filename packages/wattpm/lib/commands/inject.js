@@ -1,4 +1,4 @@
-import { RuntimeApiClient } from '@platformatic/control'
+import { createCacheInterceptor, RuntimeApiClient } from '@platformatic/control'
 import { ensureLoggableError } from '@platformatic/utils'
 import { createWriteStream } from 'node:fs'
 import { readFile } from 'node:fs/promises'
@@ -98,7 +98,14 @@ export async function injectCommand (logger, args) {
     appendOutput(logger, outputStream, fullOutput, '>')
 
     // Perform the request
-    const response = await client.injectRuntime(runtime.pid, service, { url, method, headers, body })
+    const config = await client.getRuntimeConfig(runtime.pid)
+    const response = await client.injectRuntime(runtime.pid, service, {
+      url,
+      method,
+      headers,
+      body,
+      interceptors: [config.httpCache ? await createCacheInterceptor(config.httpCache, runtime.projectDir) : undefined]
+    })
 
     // Track response
     appendOutput(logger, outputStream, fullOutput, `< HTTP/1.1 ${response.statusCode}`)

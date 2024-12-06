@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@fastify/error": "^4.0.0",
+    "@platformatic/undici-cache-memory": "^0.8.1",
     "@platformatic/utils": "workspace:*",
     "commist": "^3.2.0",
     "help-me": "^5.0.0",
