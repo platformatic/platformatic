@@ -47,9 +47,7 @@ test('get meta info via stackable api', async t => {
       tcp: true,
       url: 'http://127.0.0.1:3245',
     },
-    db: {
-      connectionStrings: [`postgres://postgres:postgres@127.0.0.1/${dbname}`]
-    }
+    connectionStrings: [`postgres://postgres:postgres@127.0.0.1/${dbname}`]
   }
 
   assert.deepStrictEqual(meta, expected)

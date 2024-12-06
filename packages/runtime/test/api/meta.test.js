@@ -27,8 +27,6 @@ test('should get meta for db services in runtime schema', async t => {
       tcp: false,
       url: undefined
     },
-    db: {
-      connectionStrings: [`sqlite://${database}`]
-    }
+    connectionStrings: [`sqlite://${database}`]
   })
 })
