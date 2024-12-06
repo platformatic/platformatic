@@ -42,7 +42,7 @@ export async function prepareGitRepository (t, root) {
   await execa('git', ['add', '-A'], { cwd: repo })
   await execa('git', ['commit', '-n', '-m', 'Initial commit.'], { cwd: repo })
 
-  await execa('git', ['checkout', '-b', 'another', 'main'], { cwd: repo })
+  await execa('git', ['checkout', '-b', 'another'], { cwd: repo })
 
   await writeFile(resolve(repo, 'branch'), 'another', 'utf8')
   await execa('git', ['add', '-A'], { cwd: repo })
