@@ -1070,7 +1070,7 @@ importers:
         version: 5.0.1
       fastify-user:
         specifier: ^1.0.2
-        version: 1.2.0
+        version: 1.3.0
       leven:
         specifier: ~3.1.0
         version: 3.1.0
@@ -5717,8 +5717,8 @@ packages:
     resolution: {integrity: sha512-pvYwdtbZUJr/aTD7ZE0rGlvtYpx7IThHKVLBoqCKmT3FJpwm23XA2+PDmq8ZzfqqG4ajpyrHd5bkIixcIFjPhQ==}
     engines: {node: '>=18.0.0'}
 
-  fastify-user@1.2.0:
-    resolution: {integrity: sha512-zUp1VaV5fHfQx017NrK0XQlP1VcpX90M2PNqm3SWE8NpLfEXxQl2nGXg0Byv3UHPmsfavpjiq8xRYiHlQqOwrQ==}
+  fastify-user@1.3.0:
+    resolution: {integrity: sha512-pNgjYtxBCOIhcIIK2IBb9aBc7leTotw1VzoB2OT48EJ2CKX90dcyu6KpA1oNSTFYMq8rVYupESkWEzBVysOtHQ==}
 
   fastify@5.1.0:
     resolution: {integrity: sha512-0SdUC5AoiSgMSc2Vxwv3WyKzyGMDJRAW/PgNsK1kZrnkO6MeqUIW9ovVg9F2UGIqtIcclYMyeJa4rK6OZc7Jxg==}
@@ -5888,10 +5888,6 @@ packages:
   get-jwks@10.0.0:
     resolution: {integrity: sha512-CRwr+1rbY+nSnBLUmzlo+4jAmNhcAp3aWLGhZAx2+wWS+CM2HXNoDthdKZdFkpLiFK9lOenfD9FDSCOCN2iBRg==}
     engines: {node: '>=20'}
-
-  get-jwks@9.0.2:
-    resolution: {integrity: sha512-zn2OvElozYtckpYJvgRWMOMhEkW8KgFp+lN0B7Q6SXPZg/CFfeiPoh73Wbhacj4fYXDJxkxbcwI9j+/cubpzSQ==}
-    engines: {node: '>=14'}
 
   get-port@5.1.1:
     resolution: {integrity: sha512-g/Q1aTSDOxFpchXC4i8ZWvxA1lnPqx/JHqcpIw0/LX9T8x/GBbi6YnlN5nhaKIFkT8oFsscUKgDJYxfwfS6QsQ==}
@@ -12915,15 +12911,13 @@ snapshots:
 
   fastify-tsconfig@2.0.0: {}
 
-  fastify-user@1.2.0:
+  fastify-user@1.3.0:
     dependencies:
       '@fastify/error': 4.0.0
       '@fastify/jwt': 9.0.1
       fastify: 5.1.0
       fastify-plugin: 5.0.1
-      get-jwks: 9.0.2
-    transitivePeerDependencies:
-      - encoding
+      get-jwks: 10.0.0
 
   fastify@5.1.0:
     dependencies:
@@ -13115,14 +13109,6 @@ snapshots:
     dependencies:
       jwk-to-pem: 2.0.7
       lru-cache: 11.0.2
-
-  get-jwks@9.0.2:
-    dependencies:
-      jwk-to-pem: 2.0.7
-      lru-cache: 10.4.3
-      node-fetch: 2.7.0
-    transitivePeerDependencies:
-      - encoding
 
   get-port@5.1.1: {}
 
