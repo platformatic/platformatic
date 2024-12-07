@@ -2060,7 +2060,7 @@ importers:
         version: 6.0.2
       mqemitter-redis:
         specifier: ^6.0.0
-        version: 6.0.0
+        version: 6.1.0
     devDependencies:
       '@matteo.collina/tspl':
         specifier: ^0.1.1
@@ -7209,8 +7209,8 @@ packages:
   moo@0.5.2:
     resolution: {integrity: sha512-iSAJLHYKnX41mKcJKjqvnAN9sf0LMDTXDEvFv+ffuRR9a1MIuXLjMNL6EsnDHSkKLTWNqQQ5uo61P4EbU4NU+Q==}
 
-  mqemitter-redis@6.0.0:
-    resolution: {integrity: sha512-FxhEZXDUqSpe2DmZrbgJ0XKxW0nx/ox6qD7JhCFNRgsodxW1jMjjCxoJt3Kw/vwN/996SziqOkXJRk1zqi35WA==}
+  mqemitter-redis@6.1.0:
+    resolution: {integrity: sha512-wZWs8I5VIzXIK2P/eFCKAcbX+iBgU/ka3HsS/KZtfe8VYyYwyyzhygJqrEf82TgH5HEBxbUjiJK33eDKh0ETEA==}
 
   mqemitter@6.0.2:
     resolution: {integrity: sha512-8RGlznQx/Nb1xC3xKUFXHWov7pn7JdH++YVwlr6SLT6k3ft1h+ImGqZdVudbdKruFckIq9wheq9s4hgCivJDow==}
@@ -14901,7 +14901,7 @@ snapshots:
 
   moo@0.5.2: {}
 
-  mqemitter-redis@6.0.0:
+  mqemitter-redis@6.1.0:
     dependencies:
       hyperid: 3.3.0
       inherits: 2.0.4
