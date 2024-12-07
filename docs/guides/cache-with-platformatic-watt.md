@@ -1,6 +1,6 @@
-# How to setup caching with Platformatic Watt
+# How to setup HTTP caching with Platformatic Watt
 
-This guide will help you set up caching in your Node.js application using Platformatic Watt, the Node.js Application Server.
+This guide will help you set up HTTP caching in your Node.js application using Platformatic Watt, the Node.js Application Server.
 
 ## Prerequisites 
 
@@ -18,9 +18,9 @@ This guide demonstrates how to set up and run an application using the following
 > [!NOTE]
 > Learn how to setup a Platformatic Watt application [here](https://docs.platformatic.dev/docs/getting-started/quick-start-watt). 
 
-## Enable Cache in Watt 
+## Enable HTTP Cache in Watt 
 
-To enable caching, add the following configuration to the `root.json` file: 
+To enable HTTP caching, add the following configuration to the `root.json` file: 
 
 ```js
 {
