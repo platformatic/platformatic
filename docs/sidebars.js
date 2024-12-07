@@ -223,6 +223,7 @@ const sidebars = {
         'guides/securing-platformatic-db',
         'guides/jwt-auth0',
         'guides/http-cache',
+        'guides/cache-with-platformatic-watt',
         'guides/monitoring',
         'guides/debug-platformatic-db',
         'guides/environment-variables',
