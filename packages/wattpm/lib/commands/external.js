@@ -120,7 +120,7 @@ async function fixConfiguration (logger, root) {
   }
 }
 
-async function importService (logger, configurationFile, id, path, url) {
+async function importService (logger, configurationFile, id, path, url, branch) {
   const config = await loadConfigurationFile(logger, configurationFile)
   const rawConfig = await loadRawConfigurationFile(logger, configurationFile)
   const root = dirname(configurationFile)
@@ -169,7 +169,13 @@ async function importService (logger, configurationFile, id, path, url) {
   rawConfig.web ??= []
 
   if (useEnv) {
-    rawConfig.web.push({ id, path: `{${envVariable}}`, url })
+    const resolveConfig = { id, path: `{${envVariable}}`, url }
+
+    if (resolveConfig.url && branch) {
+      resolveConfig.gitBranch = branch
+    }
+
+    rawConfig.web.push(resolveConfig)
 
     // Make sure the environment variable is not already defined
     if (existsSync(envFile)) {
@@ -196,13 +202,13 @@ async function importService (logger, configurationFile, id, path, url) {
   await saveConfigurationFile(logger, configurationFile, rawConfig)
 }
 
-async function importURL (logger, _, configurationFile, rawUrl, id, http) {
+async function importURL (logger, _, configurationFile, rawUrl, id, http, branch) {
   let url = rawUrl
   if (rawUrl.match(/^[a-z0-9-]+\/[a-z0-9-]+$/i)) {
     url = http ? `https://github.com/${rawUrl}.git` : `git@github.com:${rawUrl}.git`
   }
 
-  await importService(logger, configurationFile, id ?? basename(rawUrl, '.git'), null, url)
+  await importService(logger, configurationFile, id ?? basename(rawUrl, '.git'), null, url, branch)
 }
 
 async function importLocal (logger, root, configurationFile, path, overridenId) {
@@ -319,13 +325,23 @@ export async function resolveServices (
         url = parsed.toString()
       }
 
-      if (username) {
-        childLogger.info(`Cloning ${bold(service.url)} as user ${bold(username)} into ${bold(relativePath)} ...`)
-      } else {
-        childLogger.info(`Cloning ${bold(service.url)} into ${bold(relativePath)} ...`)
+      const cloneArgs = ['clone', url, absolutePath]
+
+      let branchLabel = ''
+      if (service.gitBranch && service.gitBranch !== 'main') {
+        cloneArgs.push('--branch', service.gitBranch)
+        branchLabel = ` (branch ${bold(service.gitBranch)})`
       }
 
-      await execa('git', ['clone', url, absolutePath])
+      if (username) {
+        childLogger.info(
+          `Cloning ${bold(service.url)}${branchLabel} as user ${bold(username)} into ${bold(relativePath)} ...`
+        )
+      } else {
+        childLogger.info(`Cloning ${bold(service.url)}${branchLabel} into ${bold(relativePath)} ...`)
+      }
+
+      await execa('git', cloneArgs)
     } catch (error) {
       childLogger.fatal(
         { error: ensureLoggableError(error) },
@@ -342,7 +358,7 @@ export async function resolveServices (
 
 export async function importCommand (logger, args) {
   const {
-    values: { id, http },
+    values: { id, http, branch },
     positionals
   } = parseArgs(
     args,
@@ -354,6 +370,10 @@ export async function importCommand (logger, args) {
       http: {
         type: 'boolean',
         short: 'h'
+      },
+      branch: {
+        type: 'string',
+        short: 'b'
       }
     },
     false
@@ -390,7 +410,7 @@ export async function importCommand (logger, args) {
     return importLocal(logger, root, configurationFile, local, id)
   }
 
-  return importURL(logger, root, configurationFile, rawUrl, id, http)
+  return importURL(logger, root, configurationFile, rawUrl, id, http, branch)
 }
 
 export async function resolveCommand (logger, args) {
@@ -453,6 +473,10 @@ export const help = {
       {
         usage: '-h, --http',
         description: 'Use HTTP URL when expanding GitHub repositories'
+      },
+      {
+        usage: '-b, --branch <branch>',
+        description: 'The branch to clone (the default is main)'
       }
     ]
   },

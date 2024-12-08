@@ -44,6 +44,10 @@ const services = {
       url: {
         type: 'string'
       },
+      gitBranch: {
+        type: 'string',
+        default: 'main'
+      },
       useHttp: {
         type: 'boolean'
       },
