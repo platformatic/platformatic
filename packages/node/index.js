@@ -1,3 +1,4 @@
+import { AsyncResource } from 'node:async_hooks'
 import {
   BaseStackable,
   cleanBasePath,
@@ -51,6 +52,7 @@ export class NodeStackable extends BaseStackable {
   #isFastify
   #isKoa
   #useHttpForDispatch
+  #asyncResource = new AsyncResource('PLTNodeStackable')
 
   constructor (options, root, configManager) {
     super('nodejs', packageJson.version, options, root, configManager)
@@ -75,6 +77,10 @@ export class NodeStackable extends BaseStackable {
       return this.startWithCommand(command)
     }
 
+    return this.#asyncResource.runInAsyncScope(this.#start, this, listen, config)
+  }
+
+  async #start (listen, config) {
     // Resolve the entrypoint
     // The priority is platformatic.application.json, then package.json and finally autodetect.
     // Only when autodetecting we eventually search in the dist folder when in production mode
@@ -198,13 +204,15 @@ export class NodeStackable extends BaseStackable {
         }
       }
 
-      if (this.#isFastify) {
-        this.logger.trace({ injectParams }, 'injecting via fastify')
-        res = await this.#app.inject(injectParams, onInject)
-      } else {
-        this.logger.trace({ injectParams }, 'injecting via light-my-request')
-        res = await inject(this.#dispatcher ?? this.#app, injectParams, onInject)
-      }
+      res = await this.#asyncResource.runInAsyncScope(() => {
+        if (this.#isFastify) {
+          this.logger.trace({ injectParams }, 'injecting via fastify')
+          return this.#app.inject(injectParams, onInject)
+        } else {
+          this.logger.trace({ injectParams }, 'injecting via light-my-request')
+          return inject(this.#dispatcher ?? this.#app, injectParams, onInject)
+        }
+      })
 
       if (this.endHttpTimer && !onInject) {
         this.endHttpTimer({ request: injectParams, response: res })
