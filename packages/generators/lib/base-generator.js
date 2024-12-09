@@ -1,5 +1,6 @@
 'use strict'
 
+const { generateDashedName } = require('@platformatic/utils')
 const { readFile } = require('node:fs/promises')
 const {
   convertServiceNameToPrefix,
@@ -14,7 +15,6 @@ const { FileGenerator } = require('./file-generator')
 const { generateTests, generatePlugins } = require('./create-plugin')
 const { PrepareError, MissingEnvVariable, ModuleNeeded } = require('./errors')
 const { generateGitignore } = require('./create-gitignore')
-const generateName = require('boring-name-generator')
 const { getServiceTemplateFromSchemaUrl } = require('./utils')
 const { flattenObject } = require('./utils')
 const { envStringToObject } = require('./utils')
@@ -142,7 +142,7 @@ class BaseGenerator extends FileGenerator {
 
     if (this.config.isRuntimeContext) {
       if (!this.config.serviceName) {
-        this.config.serviceName = generateName().dashed
+        this.config.serviceName = generateDashedName()
       }
       // set envPrefix
       if (this.config.serviceName && !this.config.envPrefix) {

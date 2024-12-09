@@ -29,6 +29,7 @@
     "@fastify/deepmerge": "^2.0.0",
     "@fastify/error": "^4.0.0",
     "@watchable/unpromise": "^1.0.2",
+    "boring-name-generator": "^1.0.3",
     "leven": "~3.1.0",
     "minimatch": "^8.0.4",
     "semver": "^7.6.3",
