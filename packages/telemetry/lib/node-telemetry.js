@@ -128,6 +128,9 @@ const parseNodeConfigOTELIntrumentations = async (servicePath) => {
   }
 
   const configFilename = await ConfigManager.findConfigFile(servicePath)
+  if (!configFilename) {
+    return []
+  }
   const manager = new ConfigManager({ source: resolve(servicePath, configFilename) })
   await manager.parse()
   const config = manager.current
