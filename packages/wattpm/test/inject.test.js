@@ -3,8 +3,13 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
+import { fileURLToPath } from 'node:url'
+import { pino } from 'pino'
 import { prepareRuntime } from '../../basic/test/helper.js'
+import { loadRawConfigurationFile, saveConfigurationFile } from '../lib/utils.js'
 import { createTemporaryDirectory, waitForStart, wattpm } from './helper.js'
+
+const logger = pino()
 
 test('inject - should send a request to an application', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
@@ -154,4 +159,34 @@ test('inject - should properly autodetect the runtime and use the first argument
   ok(outputFile.includes('< HTTP/1.1 200'))
   ok(outputFile.includes('< content-type: application/json; charset=utf-8'))
   ok(outputFile.includes('{"body":"BBBB"}'))
+})
+
+test('inject - should use HTTP cache', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  const cacheDirectory = await createTemporaryDirectory(t, 'cache')
+  const directory = await createTemporaryDirectory(t, 'inject')
+  await createDirectory(directory)
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+
+  const contents = await loadRawConfigurationFile(logger, configurationFile)
+  contents.httpCache = {
+    store: fileURLToPath(new URL('./fixtures/cache-store.js', import.meta.url)),
+    root: cacheDirectory
+  }
+  await saveConfigurationFile(logger, configurationFile, contents)
+
+  const startProcess = wattpm('start', rootDir)
+  await waitForStart(startProcess.stdout)
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  const request1 = await wattpm('inject', 'main', '-p', '/time')
+  const request2 = await wattpm('inject', 'main', '-p', '/time')
+
+  deepStrictEqual(request1.stdout, request2.stdout)
 })

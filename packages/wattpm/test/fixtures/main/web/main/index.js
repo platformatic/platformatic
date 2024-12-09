@@ -16,6 +16,11 @@ app.get('/version', async () => {
   return { version: 123 }
 })
 
+app.get('/time', async (_, reply) => {
+  reply.header('Cache-Control', 'public, s-maxage=30')
+  return { time: Date.now() }
+})
+
 app.post('/', async request => {
   return { body: request.body }
 })

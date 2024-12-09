@@ -684,6 +684,9 @@ importers:
       '@fastify/error':
         specifier: ^4.0.0
         version: 4.0.0
+      '@platformatic/undici-cache-memory':
+        specifier: ^0.8.1
+        version: 0.8.2
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
