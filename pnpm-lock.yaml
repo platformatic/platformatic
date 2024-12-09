@@ -15,8 +15,8 @@ importers:
         specifier: ^1.3.1
         version: 1.3.1
       markdownlint-cli2:
-        specifier: ^0.15.0
-        version: 0.15.0
+        specifier: ^0.16.0
+        version: 0.16.0
 
   packages/astro:
     dependencies:
@@ -98,7 +98,7 @@ importers:
         version: link:../utils
       execa:
         specifier: ^9.3.1
-        version: 9.5.1
+        version: 9.5.2
       pino:
         specifier: ^9.3.2
         version: 9.5.0
@@ -192,7 +192,7 @@ importers:
         version: 16.4.7
       execa:
         specifier: ^9.3.1
-        version: 9.5.1
+        version: 9.5.2
       fast-json-stringify:
         specifier: ^5.14.1
         version: 5.16.1
@@ -492,7 +492,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.74
+        version: 1.25.76
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -1403,7 +1403,7 @@ importers:
         version: 7.26.3
       '@babel/traverse':
         specifier: ^7.25.3
-        version: 7.26.3
+        version: 7.26.4
       '@babel/types':
         specifier: ^7.25.2
         version: 7.26.3
@@ -1449,7 +1449,7 @@ importers:
         version: 9.16.0
       execa:
         specifier: ^9.5.1
-        version: 9.5.1
+        version: 9.5.2
       fastify:
         specifier: ^5.0.0
         version: 5.1.0
@@ -1909,7 +1909,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.74
+        version: 1.25.76
       '@types/ws':
         specifier: ^8.5.10
         version: 8.5.13
@@ -2060,7 +2060,7 @@ importers:
         version: 6.0.2
       mqemitter-redis:
         specifier: ^6.0.0
-        version: 6.0.0
+        version: 6.1.0
     devDependencies:
       '@matteo.collina/tspl':
         specifier: ^0.1.1
@@ -2289,7 +2289,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.74
+        version: 1.25.76
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -2570,7 +2570,7 @@ importers:
         version: 16.4.7
       execa:
         specifier: ^9.4.0
-        version: 9.5.1
+        version: 9.5.2
       help-me:
         specifier: ^5.0.0
         version: 5.0.0
@@ -2810,10 +2810,6 @@ packages:
 
   '@babel/template@7.25.9':
     resolution: {integrity: sha512-9DGttpmPvIxBb/2uwpVo3dqJ+O6RooAFOS+lB+xDqoE2PVCE8nfoHMdZLpfCQRLwvohzXISPZcgxt80xLfsuwg==}
-    engines: {node: '>=6.9.0'}
-
-  '@babel/traverse@7.26.3':
-    resolution: {integrity: sha512-yTmc8J+Sj8yLzwr4PD5Xb/WF3bOYu2C2OoSZPzbuqRm4n98XirsbzaX+GloeO376UnSYIYJ4NCanwV5/ugZkwA==}
     engines: {node: '>=6.9.0'}
 
   '@babel/traverse@7.26.4':
@@ -4185,8 +4181,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@scalar/fastify-api-reference@1.25.74':
-    resolution: {integrity: sha512-icLwb7pfeMOIJdO04qMqtrcuQLYUdYv6lSl3p3Uy7GXbecU9ACcGlCCZV/5P+Yb6DyV7fiWRopm7y7ktt6uNqw==}
+  '@scalar/fastify-api-reference@1.25.76':
+    resolution: {integrity: sha512-YCzYdGxQE9CzAfcpp2Z7Cb+aM+6uXIIpg8HvrGvcianZpdRlhlChaaKlU5Mda756xehsWYUGezx566Qih/oYQg==}
     engines: {node: '>=18'}
 
   '@scalar/openapi-types@0.1.5':
@@ -5615,6 +5611,10 @@ packages:
     resolution: {integrity: sha512-QY5PPtSonnGwhhHDNI7+3RvY285c7iuJFFB+lU+oEzMY/gEGJ808owqJsrr8Otd1E/x07po1LkUBmdAc5duPAg==}
     engines: {node: ^18.19.0 || >=20.5.0}
 
+  execa@9.5.2:
+    resolution: {integrity: sha512-EHlpxMCpHWSAh1dgS6bVeoLAXGnJNdR93aabr4QCGbzOM73o5XmRfM/e5FUqsw3aagP8S8XEWUWFAxnRBnAF0Q==}
+    engines: {node: ^18.19.0 || >=20.5.0}
+
   exit-hook@2.2.1:
     resolution: {integrity: sha512-eNTPlAD67BmP31LDINZ3U7HSF8l57TxOY2PmBJ1shpCvpnxBF93mWCE8YHBnXs8qiUZJc9WDcWIeC3a2HIAMfw==}
     engines: {node: '>=6'}
@@ -6782,8 +6782,8 @@ packages:
     peerDependencies:
       markdownlint-cli2: '>=0.0.4'
 
-  markdownlint-cli2@0.15.0:
-    resolution: {integrity: sha512-4P/lnxQxU2R5lywRJs4b2ajm8z65CW8qqR1bTIcdQ5EG+nZpC6HJlJUnmIR5ee+uecUkoMroazxWcLB7etSmrg==}
+  markdownlint-cli2@0.16.0:
+    resolution: {integrity: sha512-oy5dJdOxGMKSwrlouxdEGf6N4O2Iz8oJ4/HO2Ix67o4vTK1AQNGjZUNwTIzfa5x+XbJ++dfgR1gLfILajsW+1Q==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -7213,8 +7213,8 @@ packages:
   moo@0.5.2:
     resolution: {integrity: sha512-iSAJLHYKnX41mKcJKjqvnAN9sf0LMDTXDEvFv+ffuRR9a1MIuXLjMNL6EsnDHSkKLTWNqQQ5uo61P4EbU4NU+Q==}
 
-  mqemitter-redis@6.0.0:
-    resolution: {integrity: sha512-FxhEZXDUqSpe2DmZrbgJ0XKxW0nx/ox6qD7JhCFNRgsodxW1jMjjCxoJt3Kw/vwN/996SziqOkXJRk1zqi35WA==}
+  mqemitter-redis@6.1.0:
+    resolution: {integrity: sha512-wZWs8I5VIzXIK2P/eFCKAcbX+iBgU/ka3HsS/KZtfe8VYyYwyyzhygJqrEf82TgH5HEBxbUjiJK33eDKh0ETEA==}
 
   mqemitter@6.0.2:
     resolution: {integrity: sha512-8RGlznQx/Nb1xC3xKUFXHWov7pn7JdH++YVwlr6SLT6k3ft1h+ImGqZdVudbdKruFckIq9wheq9s4hgCivJDow==}
@@ -9459,14 +9459,14 @@ snapshots:
       '@babel/helper-optimise-call-expression': 7.25.9
       '@babel/helper-replace-supers': 7.25.9(@babel/core@7.26.0)
       '@babel/helper-skip-transparent-expression-wrappers': 7.25.9
-      '@babel/traverse': 7.26.3
+      '@babel/traverse': 7.26.4
       semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
 
   '@babel/helper-member-expression-to-functions@7.25.9':
     dependencies:
-      '@babel/traverse': 7.26.3
+      '@babel/traverse': 7.26.4
       '@babel/types': 7.26.3
     transitivePeerDependencies:
       - supports-color
@@ -9498,20 +9498,20 @@ snapshots:
       '@babel/core': 7.26.0
       '@babel/helper-member-expression-to-functions': 7.25.9
       '@babel/helper-optimise-call-expression': 7.25.9
-      '@babel/traverse': 7.26.3
+      '@babel/traverse': 7.26.4
     transitivePeerDependencies:
       - supports-color
 
   '@babel/helper-simple-access@7.25.9':
     dependencies:
-      '@babel/traverse': 7.26.3
+      '@babel/traverse': 7.26.4
       '@babel/types': 7.26.3
     transitivePeerDependencies:
       - supports-color
 
   '@babel/helper-skip-transparent-expression-wrappers@7.25.9':
     dependencies:
-      '@babel/traverse': 7.26.3
+      '@babel/traverse': 7.26.4
       '@babel/types': 7.26.3
     transitivePeerDependencies:
       - supports-color
@@ -9607,18 +9607,6 @@ snapshots:
       '@babel/code-frame': 7.26.2
       '@babel/parser': 7.26.3
       '@babel/types': 7.26.3
-
-  '@babel/traverse@7.26.3':
-    dependencies:
-      '@babel/code-frame': 7.26.2
-      '@babel/generator': 7.26.3
-      '@babel/parser': 7.26.3
-      '@babel/template': 7.25.9
-      '@babel/types': 7.26.3
-      debug: 4.3.7
-      globals: 11.12.0
-    transitivePeerDependencies:
-      - supports-color
 
   '@babel/traverse@7.26.4':
     dependencies:
@@ -10818,7 +10806,7 @@ snapshots:
       '@babel/plugin-syntax-decorators': 7.25.9(@babel/core@7.26.0)
       '@babel/plugin-syntax-jsx': 7.25.9(@babel/core@7.26.0)
       '@babel/preset-typescript': 7.26.0(@babel/core@7.26.0)
-      '@babel/traverse': 7.26.3
+      '@babel/traverse': 7.26.4
       '@babel/types': 7.26.3
       '@mdx-js/mdx': 2.3.0
       '@npmcli/package-json': 4.0.1
@@ -11027,7 +11015,7 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.27.4':
     optional: true
 
-  '@scalar/fastify-api-reference@1.25.74':
+  '@scalar/fastify-api-reference@1.25.76':
     dependencies:
       '@scalar/types': 0.0.23
       fastify-plugin: 4.5.1
@@ -12770,6 +12758,21 @@ snapshots:
       strip-final-newline: 4.0.0
       yoctocolors: 2.1.1
 
+  execa@9.5.2:
+    dependencies:
+      '@sindresorhus/merge-streams': 4.0.0
+      cross-spawn: 7.0.6
+      figures: 6.1.0
+      get-stream: 9.0.1
+      human-signals: 8.0.0
+      is-plain-obj: 4.1.0
+      is-stream: 4.0.1
+      npm-run-path: 6.0.0
+      pretty-ms: 9.2.0
+      signal-exit: 4.1.0
+      strip-final-newline: 4.0.0
+      yoctocolors: 2.1.1
+
   exit-hook@2.2.1: {}
 
   expand-template@2.0.3: {}
@@ -14100,17 +14103,17 @@ snapshots:
 
   markdown-table@3.0.4: {}
 
-  markdownlint-cli2-formatter-default@0.0.5(markdownlint-cli2@0.15.0):
+  markdownlint-cli2-formatter-default@0.0.5(markdownlint-cli2@0.16.0):
     dependencies:
-      markdownlint-cli2: 0.15.0
+      markdownlint-cli2: 0.16.0
 
-  markdownlint-cli2@0.15.0:
+  markdownlint-cli2@0.16.0:
     dependencies:
       globby: 14.0.2
       js-yaml: 4.1.0
       jsonc-parser: 3.3.1
       markdownlint: 0.36.1
-      markdownlint-cli2-formatter-default: 0.0.5(markdownlint-cli2@0.15.0)
+      markdownlint-cli2-formatter-default: 0.0.5(markdownlint-cli2@0.16.0)
       micromatch: 4.0.8
 
   markdownlint-micromark@0.1.12: {}
@@ -14917,7 +14920,7 @@ snapshots:
 
   moo@0.5.2: {}
 
-  mqemitter-redis@6.0.0:
+  mqemitter-redis@6.1.0:
     dependencies:
       hyperid: 3.3.0
       inherits: 2.0.4

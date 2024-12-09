@@ -325,7 +325,8 @@ class Store {
 
 async function loadModule (require, extendedModule) {
   try {
-    return require(extendedModule)
+    const mod = require(extendedModule)
+    return mod?.default ?? mod
   } catch (err) {
     if (err.code === 'ERR_REQUIRE_ESM') {
       const toLoad = require.resolve(extendedModule)
