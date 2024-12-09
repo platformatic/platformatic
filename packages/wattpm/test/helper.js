@@ -31,7 +31,7 @@ export async function prepareGitRepository (t, root) {
 
   await cp(resolve(fixturesDir, 'external-repo'), repo, { recursive: true })
 
-  await execa('git', ['init'], { cwd: repo })
+  await execa('git', ['init', '-b', 'main'], { cwd: repo })
 
   if (process.env.CI) {
     await execa('git', ['config', 'user.name', 'CI'], { cwd: repo })
