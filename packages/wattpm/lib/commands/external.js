@@ -10,6 +10,7 @@ import { defaultServiceJson } from '../defaults.js'
 import { version } from '../schema.js'
 import {
   findConfigurationFile,
+  getPackageManager,
   getRoot,
   loadConfigurationFile,
   loadRawConfigurationFile,
@@ -253,13 +254,8 @@ export async function resolveServices (
 ) {
   const config = await loadConfigurationFile(logger, configurationFile)
 
-  /* c8 ignore next 8 */
   if (!packageManager) {
-    if (existsSync(resolve(root, 'pnpm-lock.yaml'))) {
-      packageManager = 'pnpm'
-    } else {
-      packageManager = 'npm'
-    }
+    getPackageManager(root)
   }
 
   // The services which might be to be resolved are the one that have a URL and either
