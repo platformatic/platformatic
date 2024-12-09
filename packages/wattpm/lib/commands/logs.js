@@ -2,10 +2,10 @@ import { RuntimeApiClient } from '@platformatic/control'
 import { ensureLoggableError } from '@platformatic/utils'
 import pinoPretty from 'pino-pretty'
 import split2 from 'split2'
-import { getMatchingRuntimeArgs, parseArgs } from '../utils.js'
+import { getMatchingRuntime, parseArgs } from '../utils.js'
 
 export async function logsCommand (logger, args) {
-  const { values, positionals } = parseArgs(
+  const { values, positionals: allPositionals } = parseArgs(
     args,
     {
       level: { type: 'string', short: 'l', default: 'info' },
@@ -14,15 +14,15 @@ export async function logsCommand (logger, args) {
     false
   )
 
-  const service = positionals[1]
-
   const minimumLevel = logger.levels.values[values.level]
   /* c8 ignore next */
   const output = values.pretty ? pinoPretty({ colorize: true }) : process.stdout
 
+  let service
   try {
     const client = new RuntimeApiClient()
-    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(logger, positionals))
+    const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
+    service = positionals[0]
 
     const logsStream = client.getRuntimeLiveLogsStream(runtime.pid)
 

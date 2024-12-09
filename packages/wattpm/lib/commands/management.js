@@ -3,7 +3,7 @@ import { ensureLoggableError } from '@platformatic/utils'
 import { bold, reset } from 'colorette'
 import { sep } from 'node:path'
 import { getBorderCharacters, table } from 'table'
-import { getMatchingRuntimeArgs, parseArgs } from '../utils.js'
+import { getMatchingRuntime, parseArgs } from '../utils.js'
 
 const ONE_DAY = 3600 * 24
 const ONE_HOUR = 3600
@@ -61,7 +61,7 @@ function formatDuration (duration) {
   return result.trim()
 }
 
-export async function psCommand (logger, args) {
+export async function psCommand (logger) {
   try {
     const client = new RuntimeApiClient()
     const runtimes = await client.getRuntimes()
@@ -95,7 +95,7 @@ export async function servicesCommand (logger, args) {
 
   try {
     const client = new RuntimeApiClient()
-    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(logger, positionals))
+    const [runtime] = await getMatchingRuntime(client, positionals)
     const { production, services } = await client.getRuntimeServices(runtime.pid)
     await client.close()
 
@@ -122,13 +122,13 @@ export async function servicesCommand (logger, args) {
 }
 
 export async function envCommand (logger, args) {
-  const { values, positionals } = parseArgs(args, { table: { type: 'boolean', short: 't' } }, false)
+  const { values, positionals: allPositionals } = parseArgs(args, { table: { type: 'boolean', short: 't' } }, false)
 
-  const service = positionals[1]
-
+  let service
   try {
     const client = new RuntimeApiClient()
-    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(logger, positionals))
+    const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
+    service = positionals[0]
 
     const env = service
       ? await client.getRuntimeServiceEnv(runtime.pid, service)
@@ -166,12 +166,13 @@ export async function envCommand (logger, args) {
 }
 
 export async function configCommand (logger, args) {
-  const { positionals } = parseArgs(args, {}, false)
-  const service = positionals[1]
+  const { positionals: allPositionals } = parseArgs(args, {}, false)
 
+  let service
   try {
     const client = new RuntimeApiClient()
-    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(logger, positionals))
+    const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
+    service = positionals[0]
 
     const config = service
       ? await client.getRuntimeServiceConfig(runtime.pid, service)

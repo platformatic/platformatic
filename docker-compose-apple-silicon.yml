@@ -17,7 +17,7 @@ services:
     platform: 'linux/amd64'
     ports:
       - '3306:3306'
-    image: 'mysql:5.7'
+    image: 'biarms/mysql:5.7'
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
       - MYSQL_DATABASE=graph
@@ -31,4 +31,4 @@ services:
   valkey:
     ports:
       - '6379:6379'
-    image: 'valkey:8'
+    image: 'valkey/valkey:8'

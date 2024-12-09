@@ -10,6 +10,7 @@ import { defaultServiceJson } from '../defaults.js'
 import { version } from '../schema.js'
 import {
   findConfigurationFile,
+  getRoot,
   loadConfigurationFile,
   loadRawConfigurationFile,
   overrideFatal,
@@ -370,15 +371,12 @@ export async function importCommand (logger, args) {
     /* c8 ignore next */
     return fixConfiguration(logger, '')
   } else if (positionals.length === 1) {
-    root = ''
+    root = getRoot()
     rawUrl = positionals[0]
   } else {
-    root = positionals[0]
+    root = getRoot(positionals)
     rawUrl = positionals[1]
   }
-
-  /* c8 ignore next */
-  root = resolve(process.cwd(), root)
 
   const configurationFile = await findConfigurationFile(logger, root)
 
@@ -426,7 +424,7 @@ export async function resolveCommand (logger, args) {
   )
 
   /* c8 ignore next */
-  const root = resolve(process.cwd(), positionals[0] ?? '')
+  const root = getRoot(positionals)
   const configurationFile = await findConfigurationFile(logger, root)
 
   await resolveServices(logger, root, configurationFile, username, password, skipDependencies, packageManager)

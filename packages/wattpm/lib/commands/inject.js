@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { finished } from 'node:stream/promises'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { getMatchingRuntimeArgs, parseArgs, verbose } from '../utils.js'
+import { getMatchingRuntime, parseArgs, verbose } from '../utils.js'
 
 function appendOutput (logger, stream, fullOutput, line) {
   if (verbose) {
@@ -20,7 +20,7 @@ function appendOutput (logger, stream, fullOutput, line) {
 export async function injectCommand (logger, args) {
   const {
     values: { method, path: url, header: rawHeaders, data, 'data-file': file, output, 'full-output': fullOutput },
-    positionals
+    positionals: allPositionals
   } = parseArgs(
     args,
     {
@@ -73,8 +73,8 @@ export async function injectCommand (logger, args) {
 
   try {
     const client = new RuntimeApiClient()
-    const runtime = await client.getMatchingRuntime(getMatchingRuntimeArgs(logger, positionals))
-    let service = positionals[1]
+    const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
+    let service = positionals[0]
 
     if (!service) {
       const servicesInfo = await client.getRuntimeServices(runtime.pid)

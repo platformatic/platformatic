@@ -5,16 +5,19 @@ async function loadModule (require, path) {
     path = fileURLToPath(path)
   }
 
+  let mod
   try {
-    return require(path)
+    mod = require(path)
   } catch (err) {
     if (err.code === 'ERR_REQUIRE_ESM') {
       const toLoad = require.resolve(path)
-      return (await import('file://' + toLoad)).default
+      mod = await import('file://' + toLoad)
     } else {
       throw err
     }
   }
+
+  return mod?.default ?? mod
 }
 
 module.exports = { loadModule }

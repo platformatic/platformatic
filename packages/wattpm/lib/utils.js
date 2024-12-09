@@ -5,6 +5,7 @@ import {
   loadConfig as pltConfigLoadConfig,
   Store
 } from '@platformatic/config'
+import { errors } from '@platformatic/control'
 import { platformaticRuntime, buildRuntime as pltBuildRuntime } from '@platformatic/runtime'
 import { bgGreen, black, bold } from 'colorette'
 import { readFile, writeFile } from 'node:fs/promises'
@@ -85,16 +86,46 @@ export function parseArgs (args, options, stopAtFirstPositional = true) {
   }
 }
 
-export function getMatchingRuntimeArgs (logger, positional) {
-  const args = {}
-  const pidOrName = positional[0]
+export function getRoot (positionals) {
+  let root = process.cwd()
 
-  if (pidOrName) {
-    /* c8 ignore next */
-    args[pidOrName?.match(/^\d+$/) ? 'pid' : 'name'] = pidOrName
+  if (positionals?.[0]) {
+    root = resolve(root, positionals[0])
   }
 
-  return args
+  return root
+}
+
+export async function getMatchingRuntime (client, positionals) {
+  const runtimes = await client.getRuntimes()
+  const pidOrName = positionals[0]
+  let runtime
+
+  // We have an argument to match
+  if (pidOrName) {
+    if (pidOrName.match(/^\d+$/)) {
+      const pid = parseInt(pidOrName)
+      runtime = runtimes.find(runtime => runtime.pid === pid)
+    } else {
+      runtime = runtimes.find(runtime => runtime.packageName === pidOrName)
+    }
+
+    if (runtime) {
+      return [runtime, positionals.slice(1)]
+    }
+  }
+
+  // We found no match, find any runtime whose running directory is the current one
+  if (!runtime) {
+    runtime = runtimes.find(runtime => runtime.cwd === process.cwd())
+  }
+
+  if (!runtime) {
+    throw errors.RuntimeNotFound()
+  }
+  /* c8 ignore next 2 */
+
+  return [runtime, positionals]
 }
 
 export function serviceToEnvVariable (service) {

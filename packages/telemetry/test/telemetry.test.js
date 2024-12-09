@@ -218,7 +218,7 @@ test('should configure OTLP correctly', async () => {
 
   const { exporters } = app.openTelemetry
   const exporter = exporters[0]
-  const exporterUrl = exporter._transport._transport._parameters.url
+  const exporterUrl = (exporter._delegate ?? exporter)._transport._transport._parameters.url
   equal(exporter.constructor.name, 'OTLPTraceExporter')
   equal(exporterUrl, 'http://localhost:4317')
 })
@@ -360,7 +360,7 @@ test('should configure an exporter as an array', async () => {
 
   const { exporters } = app.openTelemetry
   const exporter = exporters[0]
-  const exporterUrl = exporter._transport._transport._parameters.url
+  const exporterUrl = (exporter._delegate ?? exporter)._transport._transport._parameters.url
   equal(exporter.constructor.name, 'OTLPTraceExporter')
   equal(exporterUrl, 'http://localhost:4317')
 })

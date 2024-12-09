@@ -544,11 +544,7 @@ jobs:
       - name: Install Playwright browsers
         run: cd packages/frontend-template && pnpm exec playwright install
       - name: Run Platformatic frontend cli and E2E tests
-        run: |
-          cd packages/frontend-template
-          pnpm run test:prepare
-          pnpm run build
-          pnpm test
+        run: cd packages/frontend-template && pnpm test
 
   ci-rpc:
     needs: setup-node_modules

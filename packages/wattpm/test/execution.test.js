@@ -63,7 +63,7 @@ test('dev - should restart an application if files are changed', async t => {
   const configProcess = await wattpm('config', startProcess.pid)
   const config = JSON.parse(configProcess.stdout)
   ok(config.watch)
-  deepStrictEqual(config.services[0].id, 'main')
+  deepStrictEqual(config.services[1].id, 'main')
   ok(config.services[0].watch)
 
   const indexFile = resolve(serviceDir, 'index.js')
@@ -221,7 +221,7 @@ test('start - should start in production mode', async t => {
   const config = JSON.parse(configProcess.stdout)
 
   ok(config.watch === false)
-  deepStrictEqual(config.services[0].id, 'main')
+  deepStrictEqual(config.services[1].id, 'main')
   ok(config.services[0].watch === false)
 })
 
