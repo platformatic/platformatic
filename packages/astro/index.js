@@ -231,6 +231,7 @@ export class AstroStackable extends BaseStackable {
       return this.startWithCommand(command)
     }
 
+    // TODO@ShogunPanda
     if (this.#app && listen) {
       const serverOptions = this.serverConfig
       await this.#app.listen({ host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 })

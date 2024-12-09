@@ -218,6 +218,7 @@ export class ViteStackable extends BaseStackable {
 
     if (this.#app && listen) {
       const serverOptions = this.serverConfig
+      // TODO@ShogunPanda
       await this.#app.listen({ host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 })
       this.url = getServerUrl(this.#app.server)
       return this.url

@@ -1,4 +1,4 @@
-import { withResolvers } from '@platformatic/utils'
+import { features, withResolvers } from '@platformatic/utils'
 import { subscribe, tracingChannel, unsubscribe } from 'node:diagnostics_channel'
 
 export function createServerListener (overridePort = true, overrideHost) {
@@ -12,8 +12,14 @@ export function createServerListener (overridePort = true, overrideHost) {
       }
 
       if (overridePort !== false) {
-        options.port = typeof overridePort === 'number' ? overridePort : 0
+        const hasFixedPort = typeof overridePort === 'number'
+        options.port = hasFixedPort ? overridePort : 0
+
+        if (hasFixedPort && features.node.reusePort) {
+          options.reusePort = true
+        }
       }
+
       if (typeof overrideHost === 'string') {
         options.host = overrideHost
       }
