@@ -2,7 +2,6 @@
 
 const { BaseGenerator } = require('@platformatic/generators')
 const { NoEntryPointError, NoServiceNamedError } = require('./errors')
-const generateName = require('boring-name-generator')
 const { join } = require('node:path')
 const { envObjectToString } = require('@platformatic/generators/lib/utils')
 const { readFile, readdir, stat } = require('node:fs/promises')
@@ -13,7 +12,7 @@ const { DotEnvTool } = require('dotenv-tool')
 const { getArrayDifference } = require('../utils')
 const { createRequire } = require('node:module')
 const { pathToFileURL } = require('node:url')
-const { safeRemove } = require('@platformatic/utils')
+const { safeRemove, generateDashedName } = require('@platformatic/utils')
 
 class RuntimeGenerator extends BaseGenerator {
   constructor (opts) {
@@ -29,7 +28,7 @@ class RuntimeGenerator extends BaseGenerator {
   async addService (service, name) {
     // ensure service config is correct
     const originalConfig = service.config
-    const serviceName = name || generateName().dashed
+    const serviceName = name || generateDashedName()
     const newConfig = {
       ...originalConfig,
       isRuntimeContext: true,

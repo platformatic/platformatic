@@ -192,6 +192,10 @@
           "url": {
             "type": "string"
           },
+          "gitBranch": {
+            "type": "string",
+            "default": "main"
+          },
           "useHttp": {
             "type": "boolean"
           },
@@ -353,6 +357,10 @@
           },
           "url": {
             "type": "string"
+          },
+          "gitBranch": {
+            "type": "string",
+            "default": "main"
           },
           "useHttp": {
             "type": "boolean"

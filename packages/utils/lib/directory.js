@@ -1,8 +1,13 @@
 'use strict'
 
+const generateName = require('boring-name-generator')
 const { existsSync } = require('node:fs')
 const { rm, mkdir } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
+
+function generateDashedName () {
+  return generateName().dashed.replace(/\s+/g, '')
+}
 
 async function createDirectory (path, empty = false) {
   if (empty) {
@@ -32,5 +37,6 @@ async function safeRemove (path) {
 
 module.exports = {
   createDirectory,
-  safeRemove
+  safeRemove,
+  generateDashedName
 }

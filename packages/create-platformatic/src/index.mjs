@@ -1,9 +1,9 @@
-import { createDirectory, getPkgManager } from '@platformatic/utils'
-import generateName from 'boring-name-generator'
+import { ConfigManager } from '@platformatic/config'
+import { createDirectory, generateDashedName, getPkgManager } from '@platformatic/utils'
 import { execa } from 'execa'
 import inquirer from 'inquirer'
 import parseArgs from 'minimist'
-import { writeFile, readFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import path, { basename, join } from 'node:path'
 import { setTimeout } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
@@ -15,7 +15,6 @@ import { request } from 'undici'
 import { createGitRepository } from './create-git-repository.mjs'
 import { say } from './say.mjs'
 import { getUsername, getVersion } from './utils.mjs'
-import { ConfigManager } from '@platformatic/config'
 
 const MARKETPLACE_HOST = 'https://marketplace.platformatic.dev'
 const defaultStackables = ['@platformatic/composer', '@platformatic/db', '@platformatic/service']
@@ -167,7 +166,7 @@ async function createApplication (args, logger, pkgManager) {
       type: 'input',
       name: 'serviceName',
       message: 'What is the name of the service?',
-      default: generateName().dashed,
+      default: generateDashedName(),
       validate: value => {
         if (value.length === 0) {
           return 'Please enter a name'

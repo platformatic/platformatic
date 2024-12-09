@@ -71,7 +71,6 @@
     "@platformatic/undici-cache-memory": "^0.8.1",
     "@platformatic/utils": "workspace:*",
     "@watchable/unpromise": "^1.0.2",
-    "boring-name-generator": "^1.0.3",
     "change-case-all": "^2.1.0",
     "close-with-grace": "^2.0.0",
     "commist": "^3.2.0",

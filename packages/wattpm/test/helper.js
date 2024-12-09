@@ -1,7 +1,7 @@
 import { createDirectory, safeRemove } from '@platformatic/utils'
 import { execa } from 'execa'
 import { on } from 'node:events'
-import { cp, mkdir, stat } from 'node:fs/promises'
+import { cp, mkdir, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -31,15 +31,24 @@ export async function prepareGitRepository (t, root) {
 
   await cp(resolve(fixturesDir, 'external-repo'), repo, { recursive: true })
 
-  await execa('git', ['init'], { cwd: repo })
-  await execa('git', ['add', '-A'], { cwd: repo })
+  await execa('git', ['init', '-b', 'main'], { cwd: repo })
 
   if (process.env.CI) {
     await execa('git', ['config', 'user.name', 'CI'], { cwd: repo })
     await execa('git', ['config', 'user.email', 'ci@platformatic.dev'], { cwd: repo })
   }
 
+  await writeFile(resolve(repo, 'branch'), 'main', 'utf8')
+  await execa('git', ['add', '-A'], { cwd: repo })
   await execa('git', ['commit', '-n', '-m', 'Initial commit.'], { cwd: repo })
+
+  await execa('git', ['checkout', '-b', 'another'], { cwd: repo })
+
+  await writeFile(resolve(repo, 'branch'), 'another', 'utf8')
+  await execa('git', ['add', '-A'], { cwd: repo })
+  await execa('git', ['commit', '-n', '-m', 'Different branch commit.'], { cwd: repo })
+
+  await execa('git', ['checkout', 'main'], { cwd: repo })
 
   t.after(() => safeRemove(repo))
 
