@@ -8,6 +8,7 @@ import { resolve } from 'node:path'
 import {
   buildRuntime,
   findConfigurationFile,
+  getPackageManager,
   getRoot,
   loadConfigurationFile,
   overrideFatal,
@@ -40,13 +41,8 @@ export async function installDependencies (logger, root, services, production, p
     services = config.services
   }
 
-  /* c8 ignore next 8 */
   if (!packageManager) {
-    if (existsSync(resolve(root, 'pnpm-lock.yaml'))) {
-      packageManager = 'pnpm'
-    } else {
-      packageManager = 'npm'
-    }
+    packageManager = getPackageManager(root)
   }
 
   const args = ['install']

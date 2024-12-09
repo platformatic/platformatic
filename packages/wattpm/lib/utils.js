@@ -10,6 +10,7 @@ import { platformaticRuntime, buildRuntime as pltBuildRuntime } from '@platforma
 import { bgGreen, black, bold } from 'colorette'
 import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
+import { existsSync } from 'node:fs'
 import { parseArgs as nodeParseArgs } from 'node:util'
 import { pino } from 'pino'
 import pinoPretty from 'pino-pretty'
@@ -84,6 +85,18 @@ export function parseArgs (args, options, stopAtFirstPositional = true) {
     unparsed,
     tokens
   }
+}
+
+export function getPackageManager (root) {
+  if (existsSync(resolve(root, 'pnpm-lock.yaml'))) {
+    return 'pnpm'
+  }
+
+  if (existsSync(resolve(root, 'yarn.lock'))) {
+    return 'yarn'
+  }
+
+  return 'npm'
 }
 
 export function getRoot (positionals) {
