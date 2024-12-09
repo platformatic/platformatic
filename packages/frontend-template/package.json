@@ -23,7 +23,8 @@
     "test:prepare": "node test/prepare.mjs",
     "test:cleanup": "rm -rf src/platformatic-generated-code test/e2e/fixtures/db.sqlite",
     "lint": "eslint",
-    "test": "npm run lint && npm run test:e2e && npm run test:types"
+    "test": "npm run lint && npm run test:e2e && npm run test:types",
+    "pretest": "npm run test:prepare && npm run build"
   },
   "dependencies": {
     "@platformatic/client": "workspace:*",
