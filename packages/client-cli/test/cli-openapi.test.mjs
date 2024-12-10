@@ -1,4 +1,4 @@
-import { request, moveToTmpdir } from './helper.js'
+import { request, moveToTmpdir, safeKill } from './helper.js'
 import { test, after } from 'node:test'
 import { equal, deepEqual as same, rejects } from 'node:assert'
 import { match } from '@platformatic/utils'
@@ -12,7 +12,6 @@ import { copy } from 'fs-extra'
 import dotenv from 'dotenv'
 import { readFile } from 'fs/promises'
 import { isFileAccessible } from '../cli.mjs'
-import { safeKill } from './helper.js'
 
 const env = { ...process.env, NODE_V8_COVERAGE: undefined }
 

@@ -1,9 +1,11 @@
 'use strict'
 
-const { Writable } = require('node:stream')
+const { Transform } = require('node:stream')
 const { inspect } = require('node:util')
 
-class PinoWritable extends Writable {
+// PinoWritable extends from Transform to appease Yarn
+// https://github.com/yarnpkg/berry/blob/8bfe2d545e986993e4450072bac8b1044e5ebed7/packages/yarnpkg-shell/sources/pipe.ts#L43-L59
+class PinoWritable extends Transform {
   #write
   #ignoreEmpty
   #hadOutput
@@ -31,6 +33,10 @@ class PinoWritable extends Writable {
 
     this.#write({ raw })
     callback()
+  }
+
+  _read () {
+    throw new Error('PinoWritable cannot be read')
   }
 
   // We don't define _writev as we have to serialize messages one by one so batching wouldn't make any sense.

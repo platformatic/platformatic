@@ -1,4 +1,4 @@
-import { request, moveToTmpdir } from './helper.js'
+import { request, moveToTmpdir, safeKill } from './helper.js'
 import { test, after } from 'node:test'
 import { equal, deepEqual as same, fail, ok } from 'node:assert'
 import { match } from '@platformatic/utils'
@@ -10,7 +10,6 @@ import { execa } from 'execa'
 import { cp, writeFile, readFile } from 'node:fs/promises'
 import split from 'split2'
 import { once } from 'node:events'
-import { safeKill } from './helper.js'
 
 test('openapi client generation (javascript) via the runtime', async (t) => {
   const dir = await moveToTmpdir(after)
