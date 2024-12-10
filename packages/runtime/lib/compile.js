@@ -1,6 +1,6 @@
 'use strict'
 
-const { createRequire } = require('node:module')
+const { createRequire } = require('@platformatic/utils')
 const { dirname, join } = require('node:path')
 const { isatty } = require('node:tty')
 const { pathToFileURL } = require('node:url')
@@ -12,9 +12,14 @@ const pretty = require('pino-pretty')
 const { loadConfig } = require('./utils')
 
 async function compile (argv, logger) {
-  const { configManager, configType, app } = await loadConfig({}, argv, {
-    watch: false,
-  }, false)
+  const { configManager, configType, app } = await loadConfig(
+    {},
+    argv,
+    {
+      watch: false
+    },
+    false
+  )
   /* c8 ignore next */
   if (!logger) {
     let stream
@@ -22,7 +27,7 @@ async function compile (argv, logger) {
     if (isatty(process.stdout.fd)) {
       stream = pretty({
         translateTime: 'SYS:HH:MM:ss',
-        ignore: 'hostname,pid',
+        ignore: 'hostname,pid'
       })
     }
 
@@ -31,19 +36,24 @@ async function compile (argv, logger) {
 
   let compiled = false
   const compileOptions = {
-    clean: argv.includes('--clean'),
+    clean: argv.includes('--clean')
   }
   if (configType === 'runtime') {
     for (const service of configManager.current.services) {
       const childLogger = logger.child({ name: service.id })
 
       const serviceConfigPath = service.config
-      const { configManager, app } = await loadConfig({}, ['-c', serviceConfigPath], {
-        onMissingEnv (key) {
-          return service.localServiceEnvVars.get(key)
+      const { configManager, app } = await loadConfig(
+        {},
+        ['-c', serviceConfigPath],
+        {
+          onMissingEnv (key) {
+            return service.localServiceEnvVars.get(key)
+          },
+          watch: false
         },
-        watch: false,
-      }, false)
+        false
+      )
 
       const tsOptions = await extract(configManager, app)
 
@@ -52,7 +62,7 @@ async function compile (argv, logger) {
           ...compileOptions,
           ...tsOptions,
           cwd: service.path,
-          logger: childLogger,
+          logger: childLogger
         })
         compiled ||= serviceWasCompiled
       }
@@ -64,7 +74,7 @@ async function compile (argv, logger) {
         ...compileOptions,
         ...tsOptions,
         cwd: dirname(configManager.fullPath),
-        logger,
+        logger
       })
     }
   }
@@ -81,9 +91,9 @@ async function extract (configManager, app) {
     const _require = createRequire(join(configManager.dirname, 'package.json'))
     const toLoad = _require.resolve('@platformatic/service')
     try {
-      extractTypeScriptCompileOptionsFromConfig = (await import(pathToFileURL(toLoad))).extractTypeScriptCompileOptionsFromConfig
-    } catch {
-    }
+      extractTypeScriptCompileOptionsFromConfig = (await import(pathToFileURL(toLoad)))
+        .extractTypeScriptCompileOptionsFromConfig
+    } catch {}
     // If we can't load `@platformatic/service` we just return null
     // and we won't be compiling typescript
   }

@@ -18,7 +18,7 @@ test('dev - should start in development mode', async t => {
   })
 
   const startProcess = wattpm('dev', rootDir)
-  const url = await waitForStart(startProcess.stdout)
+  const url = await waitForStart(startProcess)
 
   const { statusCode, body } = await request(url)
   deepStrictEqual(statusCode, 200)
@@ -52,7 +52,7 @@ test('dev - should restart an application if files are changed', async t => {
   })
 
   const startProcess = wattpm('dev', rootDir)
-  let url = await waitForStart(startProcess.stdout)
+  let url = await waitForStart(startProcess)
 
   {
     const { statusCode, body } = await request(new URL('/version', url))
@@ -106,7 +106,7 @@ test('dev - should restart an application if the runtime configuration file is c
   })
 
   const startProcess = wattpm('dev', rootDir)
-  let url = await waitForStart(startProcess.stdout)
+  let url = await waitForStart(startProcess)
 
   {
     const { statusCode, body } = await request(new URL('/version', url))
@@ -157,7 +157,7 @@ test('dev - should restart an application if the service configuration file is c
   })
 
   const startProcess = wattpm('dev', rootDir)
-  let url = await waitForStart(startProcess.stdout)
+  let url = await waitForStart(startProcess)
 
   {
     const { statusCode, body } = await request(new URL('/version', url))
@@ -207,7 +207,7 @@ test('start - should start in production mode', async t => {
   })
 
   const startProcess = wattpm('start', rootDir)
-  const url = await waitForStart(startProcess.stdout)
+  const url = await waitForStart(startProcess)
 
   const { statusCode, body } = await request(url)
   deepStrictEqual(statusCode, 200)
@@ -234,7 +234,7 @@ test('start - should start in production mode with the inspector', async t => {
   })
 
   const startProcess = wattpm('start', rootDir, '--inspect')
-  const url = await waitForStart(startProcess.stdout)
+  const url = await waitForStart(startProcess)
 
   const { statusCode, body } = await request(url)
   deepStrictEqual(statusCode, 200)
@@ -294,7 +294,7 @@ test('start - should use default folders for resolved services', async t => {
     }
   }
 
-  await waitForStart(startProcess.stdout)
+  await waitForStart(startProcess)
   ok(started)
 })
 
@@ -356,7 +356,7 @@ test('stop - should stop an application', async t => {
   })
 
   const startProcess = wattpm('start', rootDir)
-  await waitForStart(startProcess.stdout)
+  await waitForStart(startProcess)
 
   const stop = await wattpm('stop', 'main')
   const { exitCode } = await startProcess
@@ -381,7 +381,7 @@ test('restart - should restart an application', async t => {
   })
 
   const startProcess = wattpm('start', rootDir)
-  await waitForStart(startProcess.stdout)
+  await waitForStart(startProcess)
 
   const restart = await wattpm('restart', 'main')
 
@@ -399,7 +399,7 @@ test('reload - should reload an application', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
-  await waitForStart(startProcess.stdout)
+  await waitForStart(startProcess)
 
   const reload = await wattpm('reload', 'main')
   const { exitCode } = await startProcess

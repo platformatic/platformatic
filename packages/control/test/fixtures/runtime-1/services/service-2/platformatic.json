@@ -8,7 +8,7 @@
   },
   "server": {
     "logger": {
-      "level": "trace"
+      "level": "silent"
     }
   }
 }

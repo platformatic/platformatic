@@ -7,6 +7,7 @@ const { join } = require('node:path')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { Worker } = require('node:worker_threads')
 const { ITC } = require('@platformatic/itc')
+const { setGlobalDispatcher, Agent, interceptors: undiciInterceptors } = require('undici')
 const { ensureLoggableError, executeWithTimeout, deepmerge } = require('@platformatic/utils')
 const ts = require('tail-file-stream')
 const { createThreadInterceptor } = require('undici-thread-interceptor')
@@ -61,7 +62,8 @@ class Runtime extends EventEmitter {
   #metrics
   #metricsTimeout
   #status
-  #interceptor
+  #meshInterceptor
+  #dispatcher
   #managementApi
   #prometheusServer
   #inspectorServer
@@ -80,8 +82,7 @@ class Runtime extends EventEmitter {
     this.#workers = new RoundRobinMap()
     this.#servicesIds = []
     this.#url = undefined
-    // Note: nothing hits the main thread so there is no reason to set the globalDispatcher here
-    this.#interceptor = createThreadInterceptor({
+    this.#meshInterceptor = createThreadInterceptor({
       domain: '.plt.local',
       timeout: this.#configManager.current.serviceTimeout
     })
@@ -182,10 +183,18 @@ class Runtime extends EventEmitter {
       throw e
     }
 
-    this.#sharedHttpCache = createSharedStore(
-      this.#configManager.dirname,
-      config.httpCache
-    )
+    const dispatcherOpts = { ...config.undici }
+    const interceptors = [this.#meshInterceptor]
+
+    if (config.httpCache) {
+      this.#sharedHttpCache = await createSharedStore(this.#configManager.dirname, config.httpCache)
+      interceptors.push(
+        undiciInterceptors.cache({ store: this.#sharedHttpCache, methods: config.httpCache.methods ?? ['GET', 'HEAD'] })
+      )
+    }
+
+    this.#dispatcher = new Agent(dispatcherOpts).compose(interceptors)
+    setGlobalDispatcher(this.#dispatcher)
 
     this.#updateStatus('init')
   }
@@ -375,8 +384,29 @@ class Runtime extends EventEmitter {
   }
 
   async inject (id, injectParams) {
-    const service = await this.#getServiceById(id, true)
-    return sendViaITC(service, 'inject', injectParams)
+    // Make sure the service exists
+    await this.#getServiceById(id, true)
+
+    let { method, headers, body } = injectParams
+    const url = new URL(injectParams.url, `http://${id}.plt.local`)
+    for (const [k, v] of Object.entries(injectParams.query)) {
+      url.searchParams.append(k, v)
+    }
+
+    // Stringify the body as JSON if needed
+    if (
+      typeof body === 'object' &&
+      Object.entries(headers).some(([k, v]) => k.toLowerCase() === 'content-type' && v.includes('application/json'))
+    ) {
+      body = JSON.stringify(body)
+    }
+
+    const response = await fetch(url.toString(), { method, headers, body })
+    const responseStatus = response.status
+    const responseHeaders = Object.fromEntries(response.headers.entries())
+    const responseBody = await response.text()
+
+    return { statusCode: responseStatus, headers: responseHeaders, body: responseBody }
   }
 
   startCollectingMetrics () {
@@ -520,7 +550,11 @@ class Runtime extends EventEmitter {
   }
 
   getInterceptor () {
-    return this.#interceptor
+    return this.#meshInterceptor
+  }
+
+  getDispatcher () {
+    return this.#dispatcher
   }
 
   getManagementApi () {
@@ -781,10 +815,36 @@ class Runtime extends EventEmitter {
     return createReadStream(filePath)
   }
 
-  async invalidateHttpCache (options = {}) {
+  #getHttpCacheValue ({ request }) {
+    if (!this.#sharedHttpCache) {
+      return
+    }
+
+    return this.#sharedHttpCache.getValue(request)
+  }
+
+  #setHttpCacheValue ({ request, response, payload }) {
+    if (!this.#sharedHttpCache) {
+      return
+    }
+
+    return this.#sharedHttpCache.setValue(request, response, payload)
+  }
+
+  #deleteHttpCacheValue ({ request }) {
+    if (!this.#sharedHttpCache) {
+      return
+    }
+
+    return this.#sharedHttpCache.delete(request)
+  }
+
+  #invalidateHttpCache (options = {}) {
     const { keys, tags } = options
 
-    if (!this.#sharedHttpCache) return
+    if (!this.#sharedHttpCache) {
+      return
+    }
 
     const promises = []
     if (keys && keys.length > 0) {
@@ -795,7 +855,7 @@ class Runtime extends EventEmitter {
       promises.push(this.#sharedHttpCache.deleteTags(tags))
     }
 
-    await Promise.all(promises)
+    return Promise.all(promises)
   }
 
   async sendCommandToService (id, name, message) {
@@ -956,16 +1016,10 @@ class Runtime extends EventEmitter {
         getServiceMeta: this.getServiceMeta.bind(this),
         listServices: () => this.#servicesIds,
         getServices: this.getServices.bind(this),
-        getHttpCacheValue: opts => this.#sharedHttpCache.getValue(opts.request),
-        setHttpCacheValue: opts => this.#sharedHttpCache.setValue(
-          opts.request,
-          opts.response,
-          opts.payload
-        ),
-        deleteHttpCacheValue: opts => this.#sharedHttpCache.delete(
-          opts.request
-        ),
-        invalidateHttpCache: opts => this.invalidateHttpCache(opts),
+        getHttpCacheValue: this.#getHttpCacheValue.bind(this),
+        setHttpCacheValue: this.#setHttpCacheValue.bind(this),
+        deleteHttpCacheValue: this.#deleteHttpCacheValue.bind(this),
+        invalidateHttpCache: this.#invalidateHttpCache.bind(this)
       }
     })
     worker[kITC].listen()
@@ -1004,7 +1058,7 @@ class Runtime extends EventEmitter {
     }
 
     // Setup the interceptor
-    this.#interceptor.route(serviceId, worker)
+    this.#meshInterceptor.route(serviceId, worker)
 
     // Store dependencies
     const [{ dependencies }] = await waitEventFromITC(worker, 'init')

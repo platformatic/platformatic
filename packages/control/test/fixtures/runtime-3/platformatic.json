@@ -9,8 +9,9 @@
     "hostname": "127.0.0.1",
     "port": 0
   },
+  "managementApi": true,
+  "httpCache": true,
   "logger": {
-    "level": "fatal"
-  },
-  "managementApi": true
+    "level": "error"
+  }
 }

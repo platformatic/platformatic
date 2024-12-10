@@ -1,7 +1,7 @@
 'use strict'
 
 const { EventEmitter } = require('node:events')
-const { createRequire } = require('node:module')
+const { createRequire } = require('@platformatic/utils')
 const { hostname } = require('node:os')
 const { join, resolve } = require('node:path')
 const { parentPort, workerData, threadId } = require('node:worker_threads')
@@ -19,7 +19,7 @@ const undici = require('undici')
 const RemoteCacheStore = require('./http-cache')
 const { PlatformaticApp } = require('./app')
 const { setupITC } = require('./itc')
-const loadInterceptors = require('./interceptors')
+const { loadInterceptors } = require('./interceptors')
 const { createTelemetryThreadInterceptorHooks } = require('@platformatic/telemetry')
 
 const {
@@ -141,8 +141,7 @@ async function main () {
     }
   }
 
-  const globalDispatcher = new Agent(dispatcherOpts)
-    .compose(composedInterceptors)
+  const globalDispatcher = new Agent(dispatcherOpts).compose(composedInterceptors)
 
   setGlobalDispatcher(globalDispatcher)
 
@@ -158,10 +157,12 @@ async function main () {
 
   if (config.httpCache) {
     setGlobalDispatcher(
-      getGlobalDispatcher().compose(undici.interceptors.cache({
-        store: new RemoteCacheStore(),
-        methods: config.httpCache.methods ?? ['GET', 'HEAD']
-      }))
+      getGlobalDispatcher().compose(
+        undici.interceptors.cache({
+          store: new RemoteCacheStore(),
+          methods: config.httpCache.methods ?? ['GET', 'HEAD']
+        })
+      )
     )
   }
 

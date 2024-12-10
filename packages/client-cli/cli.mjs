@@ -13,7 +13,7 @@ import parseArgs from 'minimist'
 import { dirname, join, posix, relative, resolve } from 'path'
 import pino from 'pino'
 import pinoPretty from 'pino-pretty'
-import { Agent, request, setGlobalDispatcher } from 'undici'
+import { request, setGlobalDispatcher } from 'undici'
 import YAML from 'yaml'
 import errors from './lib/errors.mjs'
 import { processFrontendOpenAPI } from './lib/frontend-openapi-generator.mjs'
@@ -72,7 +72,14 @@ async function writeOpenAPIClient (
   }
 
   if (isFrontend) {
-    const { types, implementation } = processFrontendOpenAPI({ schema, name, fullResponse, language, logger, withCredentials })
+    const { types, implementation } = processFrontendOpenAPI({
+      schema,
+      name,
+      fullResponse,
+      language,
+      logger,
+      withCredentials
+    })
     await writeFile(join(folder, `${name}-types.d.ts`), types)
     if (generateImplementation) {
       const extension = language === 'js' ? 'mjs' : 'ts'
@@ -558,8 +565,7 @@ export async function command (argv) {
     await runtime.start()
 
     // Set interceptors
-    const globalDispatcher = new Agent().compose(runtime.getInterceptor())
-    setGlobalDispatcher(globalDispatcher)
+    setGlobalDispatcher(runtime.getDispatcher())
 
     url = `http://${options.runtime}.plt.local`
   }

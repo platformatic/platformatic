@@ -1,4 +1,4 @@
-import { createRequire } from 'node:module'
+import { createRequire } from '@platformatic/utils'
 import { pathToFileURL } from 'node:url'
 import { request } from 'undici'
 

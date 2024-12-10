@@ -9,7 +9,7 @@ test('ps - should show running applications', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
-  const url = await waitForStart(startProcess.stdout)
+  const url = await waitForStart(startProcess)
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -43,7 +43,7 @@ test('services - should list services for an application with no workers informa
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('dev', rootDir)
-  await waitForStart(startProcess.stdout)
+  await waitForStart(startProcess)
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -67,7 +67,7 @@ test('services - should list services for an application with workers informatio
   const { root: rootDir } = await prepareRuntime(t, 'main', true, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
-  await waitForStart(startProcess.stdout)
+  await waitForStart(startProcess)
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -98,7 +98,7 @@ test('env - should list environment variable for an application', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
-  await waitForStart(startProcess.stdout)
+  await waitForStart(startProcess)
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -113,7 +113,7 @@ test('env - should list environment variable for an application in tabular way',
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
-  await waitForStart(startProcess.stdout)
+  await waitForStart(startProcess)
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -128,7 +128,7 @@ test('env - should list environment variable for an service', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
-  await waitForStart(startProcess.stdout)
+  await waitForStart(startProcess)
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -150,7 +150,7 @@ test('env - should complain when a service is not found', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
-  await waitForStart(startProcess.stdout)
+  await waitForStart(startProcess)
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -169,7 +169,7 @@ test('config - should list configuration for an application', async t => {
   const mainServiceDir = resolve(rootDir, 'web/main')
 
   const startProcess = wattpm('start', rootDir)
-  await waitForStart(startProcess.stdout)
+  await waitForStart(startProcess)
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -247,7 +247,7 @@ test('config - should list configuration for an service', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
-  await waitForStart(startProcess.stdout)
+  await waitForStart(startProcess)
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -287,7 +287,7 @@ test('config - should complain when a service is not found', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
-  await waitForStart(startProcess.stdout)
+  await waitForStart(startProcess)
 
   t.after(() => {
     startProcess.kill('SIGINT')

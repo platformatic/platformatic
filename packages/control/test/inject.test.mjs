@@ -4,10 +4,10 @@ import { buildServer } from '@platformatic/runtime'
 import { safeRemove } from '@platformatic/utils'
 import * as desm from 'desm'
 import { execa } from 'execa'
-import assert from 'node:assert'
+import assert, { deepStrictEqual } from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 
 const cliPath = desm.join(import.meta.url, '..', 'control.js')
@@ -29,7 +29,7 @@ test('should inject runtime entrypoint by pid', async t => {
   const responseBody = child.stdout
   const response = JSON.parse(responseBody)
   assert.deepStrictEqual(response, {
-    message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev',
+    message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev'
   })
 })
 
@@ -49,7 +49,7 @@ test('should inject runtime service by pid', async t => {
   const response = JSON.parse(responseBody)
   assert.deepStrictEqual(response, {
     runtime: 'runtime-1',
-    service: 'service-1',
+    service: 'service-1'
   })
 })
 
@@ -82,7 +82,7 @@ test('should inject runtime service with headers and body', async t => {
     '-d',
     '{"foo":"bar"}',
     '-i',
-    '/mirror',
+    '/mirror'
   ])
   assert.strictEqual(child.exitCode, 0)
 
@@ -139,7 +139,7 @@ test('should inject runtime service with output to the file', async t => {
     '-i',
     '-o',
     tmpFilePath,
-    '/mirror',
+    '/mirror'
   ])
   assert.strictEqual(child.exitCode, 0)
   assert.strictEqual(child.stdout, '')
@@ -195,7 +195,7 @@ test('should inject runtime service with --verbose option', async t => {
     '-d',
     '{"foo":"bar"}',
     '-v',
-    '/mirror',
+    '/mirror'
   ])
   assert.strictEqual(child.exitCode, 0)
 
@@ -223,6 +223,32 @@ test('should inject runtime service with --verbose option', async t => {
 
   const response = JSON.parse(responseBody)
   assert.deepStrictEqual(response, { foo: 'bar' })
+})
+
+test('inject - should use the same shared memory HTTP cache of the runtime', async t => {
+  const projectDir = join(fixturesDir, 'runtime-3')
+
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await safeRemove(resolve(projectDir, '.env'))
+    await app.close()
+  })
+
+  const child1 = await execa('node', [cliPath, 'inject', '-n', 'runtime-1', '-s', 'service-1', '/time'])
+  assert.strictEqual(child1.exitCode, 0)
+
+  const child2 = await execa('node', [cliPath, 'inject', '-n', 'runtime-1', '-s', 'service-1', '/time'])
+  assert.strictEqual(child2.exitCode, 0)
+
+  const child3 = await execa('node', [cliPath, 'inject', '-n', 'runtime-1', '-s', 'service-2', '/service-1-time'])
+  assert.strictEqual(child3.exitCode, 0)
+
+  deepStrictEqual(child1.stdout, child2.stdout)
+  deepStrictEqual(child1.stdout, child3.stdout)
 })
 
 test('should throw if runtime is missing', async t => {

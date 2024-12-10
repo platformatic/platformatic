@@ -1,9 +1,9 @@
 'use strict'
 
+const { createRequire } = require('@platformatic/utils')
 const { basename, join, resolve, dirname, parse, isAbsolute } = require('node:path')
 const { readFile, access } = require('node:fs/promises')
 const EventEmitter = require('node:events')
-const { createRequire } = require('node:module')
 const Ajv = require('ajv')
 const jsonPath = require('jsonpath')
 const dotenv = require('dotenv')
@@ -270,7 +270,7 @@ class ConfigManager extends EventEmitter {
         if (!this._fixPaths) {
           return true
         }
-        const toRequire = this.fullPath || join(this.dirname, 'foo')
+        const toRequire = this.fullPath || join(this.dirname, 'noop.js')
         const _require = createRequire(toRequire)
         try {
           const resolved = _require.resolve(path)

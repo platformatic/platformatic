@@ -24,3 +24,10 @@ app.log.trace('This is a trace')
 app.listen({ port: 1 }).then(() => {
   app.log.info('Service listening')
 })
+
+app.get('/main-time', async (request, reply) => {
+  const response = await fetch('http://main.plt.local/time')
+
+  reply.code(response.status)
+  return response.json()
+})
