@@ -389,13 +389,18 @@ class Runtime extends EventEmitter {
 
     let { method, headers, body } = injectParams
     const url = new URL(injectParams.url, `http://${id}.plt.local`)
-    for (const [k, v] of Object.entries(injectParams.query)) {
-      url.searchParams.append(k, v)
+
+    if (injectParams.query) {
+      for (const [k, v] of Object.entries(injectParams.query)) {
+        url.searchParams.append(k, v)
+      }
     }
 
     // Stringify the body as JSON if needed
     if (
+      body &&
       typeof body === 'object' &&
+      headers &&
       Object.entries(headers).some(([k, v]) => k.toLowerCase() === 'content-type' && v.includes('application/json'))
     ) {
       body = JSON.stringify(body)
