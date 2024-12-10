@@ -56,6 +56,10 @@ const services = {
       env,
       envfile: {
         type: 'string'
+      },
+      sourceMaps: {
+        type: 'boolean',
+        default: false
       }
     }
   }
@@ -332,7 +336,11 @@ const platformaticRuntimeSchema = {
       type: 'string',
       default: 'external'
     },
-    env
+    env,
+    sourceMaps: {
+      type: 'boolean',
+      default: false
+    }
   },
   anyOf: [{ required: ['autoload'] }, { required: ['services'] }, { required: ['web'] }],
   additionalProperties: false,

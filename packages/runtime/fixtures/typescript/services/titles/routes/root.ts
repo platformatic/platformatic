@@ -13,6 +13,11 @@ export default async function (fastify: FastifyInstance, opts: FastifyPluginOpti
     return { hello: fastify.example }
   })
 
+  fastify.get('/source-map-test', async (request, reply) => {
+    const error = new Error('source-map-test')
+    return error.stack
+  })
+
   fastify.get('/titles', async (request, reply) => {
     const movies = await fastify.client.getMovies({})
     const titles = movies.map((movie) => movie.title)
