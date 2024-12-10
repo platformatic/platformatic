@@ -7,7 +7,7 @@ const { join } = require('node:path')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { Worker } = require('node:worker_threads')
 const { ITC } = require('@platformatic/itc')
-const { setGlobalDispatcher, Agent, interceptors: undiciInterceptors } = require('undici')
+const { Agent, interceptors: undiciInterceptors, request } = require('undici')
 const { ensureLoggableError, executeWithTimeout, deepmerge } = require('@platformatic/utils')
 const ts = require('tail-file-stream')
 const { createThreadInterceptor } = require('undici-thread-interceptor')
@@ -194,7 +194,6 @@ class Runtime extends EventEmitter {
     }
 
     this.#dispatcher = new Agent(dispatcherOpts).compose(interceptors)
-    setGlobalDispatcher(this.#dispatcher)
 
     this.#updateStatus('init')
   }
@@ -406,12 +405,15 @@ class Runtime extends EventEmitter {
       body = JSON.stringify(body)
     }
 
-    const response = await fetch(url.toString(), { method, headers, body })
-    const responseStatus = response.status
-    const responseHeaders = Object.fromEntries(response.headers.entries())
-    const responseBody = await response.text()
+    const {
+      statusCode: responseStatus,
+      headers: responseHeaders,
+      body: responseRawBody
+    } = await request(url.toString(), { method, headers, body, dispatcher: this.#dispatcher })
+    const responsePayload = Buffer.from(await responseRawBody.arrayBuffer())
+    const responseBody = responsePayload.toString('utf-8')
 
-    return { statusCode: responseStatus, headers: responseHeaders, body: responseBody }
+    return { statusCode: responseStatus, headers: responseHeaders, body: responseBody, payload: responsePayload }
   }
 
   startCollectingMetrics () {
@@ -844,7 +846,7 @@ class Runtime extends EventEmitter {
     return this.#sharedHttpCache.delete(request)
   }
 
-  #invalidateHttpCache (options = {}) {
+  invalidateHttpCache (options = {}) {
     const { keys, tags } = options
 
     if (!this.#sharedHttpCache) {
@@ -1024,7 +1026,7 @@ class Runtime extends EventEmitter {
         getHttpCacheValue: this.#getHttpCacheValue.bind(this),
         setHttpCacheValue: this.#setHttpCacheValue.bind(this),
         deleteHttpCacheValue: this.#deleteHttpCacheValue.bind(this),
-        invalidateHttpCache: this.#invalidateHttpCache.bind(this)
+        invalidateHttpCache: this.invalidateHttpCache.bind(this)
       }
     })
     worker[kITC].listen()
