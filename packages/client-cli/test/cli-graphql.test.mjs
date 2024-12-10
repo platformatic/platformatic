@@ -1,4 +1,4 @@
-import { request, moveToTmpdir } from './helper.js'
+import { request, moveToTmpdir, safeKill } from './helper.js'
 import { test, after } from 'node:test'
 import { equal } from 'node:assert'
 import { match } from '@platformatic/utils'
@@ -10,7 +10,6 @@ import { promises as fs, existsSync } from 'fs'
 import split from 'split2'
 import graphql from 'graphql'
 import { copy } from 'fs-extra'
-import { safeKill } from './helper.js'
 
 const env = { ...process.env, NODE_V8_COVERAGE: undefined }
 

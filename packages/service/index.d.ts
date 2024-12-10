@@ -2,8 +2,7 @@
 /// <reference types="@fastify/swagger" />
 import { FastifyInstance, FastifyBaseLogger } from 'fastify'
 import ConfigManager from '@platformatic/config'
-import type { ConfigManagerConfig } from '@platformatic/config'
-import type { Stackable as _Stackable, StackableInterface } from '@platformatic/config'
+import type { Stackable as _Stackable, StackableInterface, ConfigManagerConfig } from '@platformatic/config'
 import { BaseGenerator } from '@platformatic/generators'
 import { PlatformaticService } from './config'
 import type { JSONSchemaType } from 'ajv'
