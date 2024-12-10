@@ -36,7 +36,7 @@
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "eslint": "9",
-    "neostandard": "^0.11.1",
+    "neostandard": "^0.12.0",
     "platformatic": "workspace:*",
     "typescript": "^5.5.4"
   }

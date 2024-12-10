@@ -47,7 +47,7 @@
     "@types/react-dom": "^18.2.22",
     "@vitejs/plugin-react": "^4.0.0",
     "eslint": "9",
-    "neostandard": "^0.11.1",
+    "neostandard": "^0.12.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "typescript": "^5.5.4",
