@@ -6,9 +6,8 @@ import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
 import split from 'split2'
 import { once } from 'events'
-import { getConnectionInfo } from '../helper.js'
+import { getConnectionInfo, safeKill } from '../helper.js'
 import { cliPath, connectDB, getFixturesConfigFileLocation } from './helper.js'
-import { safeKill } from './helper.js'
 
 test('migrate on start', async (t) => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')

@@ -1,9 +1,8 @@
 import { expectType } from 'tsd'
 import { fastify, FastifyInstance } from 'fastify'
-import plugin, { setupEmitter, errors } from '../../index'
+import plugin, { setupEmitter, errors, SQLEventsPluginInterface } from '../../index'
 import { Readable } from 'stream'
 import { SQLMapperPluginInterface, Entities } from '@platformatic/sql-mapper'
-import { SQLEventsPluginInterface } from '../../index'
 import { FastifyError } from '@fastify/error'
 
 declare module 'fastify' {

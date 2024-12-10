@@ -11,12 +11,11 @@ import { basename, dirname, resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
-import { Client, Agent, request } from 'undici'
+import { Client, Agent, request, interceptors } from 'undici'
 import WebSocket from 'ws'
 import { loadConfig } from '../../config/index.js'
 import { buildServer, platformaticRuntime } from '../../runtime/index.js'
 import { BaseStackable } from '../lib/base.js'
-import { interceptors } from 'undici'
 
 export { setTimeout as sleep } from 'node:timers/promises'
 
