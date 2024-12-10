@@ -3,11 +3,13 @@ import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import {
+  createRuntime,
   getLogs,
   prepareRuntimeWithServices,
   setFixturesDir,
   updateFile,
-  verifyJSONViaHTTP
+  verifyJSONViaHTTP,
+  verifyJSONViaInject
 } from '../../basic/test/helper.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
@@ -103,4 +105,10 @@ test('should inject request via the HTTP port if asked to', async t => {
   await verifyJSONViaHTTP(url, '/frontend/inject', 500, content => {
     ok(content.message.includes('ECONNREFUSED'))
   })
+})
+
+test('should keep AsyncLocalStorage context of entrypoint when injecting', async t => {
+  const { runtime } = await createRuntime(t, 'node-async-local-storage-inject')
+
+  await verifyJSONViaInject(runtime, 'api', 'GET', '/', 200, { value: 'Hello, World!' })
 })
