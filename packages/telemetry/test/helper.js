@@ -3,7 +3,7 @@ const telemetryPlugin = require('../lib/telemetry')
 const { createInterface } = require('readline')
 const { createReadStream } = require('node:fs')
 const { SpanKind } = require('@opentelemetry/api')
-const { createConnectionPool } = require('@platformatic/sql-mapper')
+const createConnectionPool = require('@databases/pg')
 
 async function setupApp (pluginOpts, routeHandler, teardown) {
   const app = fastify()
@@ -93,7 +93,7 @@ async function createPGDataBase () {
   const testDBName = 'test-telemetry-pg'
   const connectionString = 'postgres://postgres:postgres@127.0.0.1/'
 
-  const { db, sql } = await createConnectionPool({
+  const db = await createConnectionPool({
     log: {
       debug: () => {},
       info: () => {},
@@ -103,6 +103,7 @@ async function createPGDataBase () {
     connectionString,
     poolSize: 1,
   })
+  const { sql } = db
   try {
     await db.query(sql`DROP DATABASE IF EXISTS ${sql.ident(testDBName)};`)
   } catch (e) {
