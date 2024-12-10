@@ -4,8 +4,8 @@ const { createRequire: nodeCreateRequire } = require('node:module')
 const { basename, dirname, resolve } = require('node:path')
 const { fileURLToPath } = require('node:url')
 
-async function createRequire (path) {
-  if (path instanceof URL) {
+function createRequire (path) {
+  if (path instanceof URL || path.startsWith('file://')) {
     path = fileURLToPath(path)
   }
 
