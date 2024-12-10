@@ -89,6 +89,44 @@ fastify.delete('/invalidate-cache-tags', {
 });
 ```
 
+### Cache Tags in Action: `/cached-counter` 
+
+The `/cached-counter` endpoint demonstrates how to apply cache tags and headers to enhance caching functionality:
+
+```js 
+module.exports = async function (fastify) {
+  fastify.get('/cached-counter', {
+    schema: {
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            counter: { type: 'number' },
+            hostname: { type: 'string' },
+            foo: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (req, reply) => {
+    const res = await fetch('http://internal.plt.local/cached-counter');
+    const headers = res.headers;
+    const data = await res.json();
+
+    reply.header('Cache-Control', headers.get('Cache-Control'));
+    reply.header('X-Cache-Tags', headers.get('X-Cache-Tags'));
+    return { ...data, "foo": "bar" };
+  });
+};
+```
+
+In this example:
+
+- The `Cache-Control` header, retrieved from the backend, specifies how long the response should be cached.
+- The `X-Cache-Tags` header identifies the response with specific tags, making it easy to invalidate.
+- While caching the backend response, the endpoint appends custom data (`foo: 'bar'`) before returning it to the client.
+
+
 ### Test the cache:
 
 - Access the `GET /cached-counter` endpoint. You should receive a cached response with `X-Cache-Tags: cached-counter-tag`.
@@ -103,3 +141,10 @@ fastify.delete('/invalidate-cache-tags', {
 - Alternatively, use `DELETE /invalidate-cache-tags?tags=cached-counter-tag` to invalidate the cache by tag.
 
 ![cache invalidation](./images/image.png)
+
+### Verify Cache Invalidation
+
+- After invalidating the cache, call the `GET /cached-counter` endpoint again.
+- The counter vakue should update, reflecting the uncached response.
+
+![verify cache invalidation](./images/cache-others.png)
