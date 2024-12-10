@@ -2422,9 +2422,9 @@ importers:
         specifier: ^5.0.0
         version: 5.0.1
     devDependencies:
-      '@platformatic/sql-mapper':
-        specifier: workspace:*
-        version: link:../sql-mapper
+      '@databases/pg':
+        specifier: ^5.5.0
+        version: 5.5.0(typescript@5.7.2)
       borp:
         specifier: ^0.19.0
         version: 0.19.0
