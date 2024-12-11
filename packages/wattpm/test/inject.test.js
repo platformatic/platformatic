@@ -3,8 +3,12 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
+import { pino } from 'pino'
 import { prepareRuntime } from '../../basic/test/helper.js'
+import { loadRawConfigurationFile, saveConfigurationFile } from '../lib/utils.js'
 import { createTemporaryDirectory, waitForStart, wattpm } from './helper.js'
+
+const logger = pino()
 
 test('inject - should send a request to an application', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
@@ -13,7 +17,7 @@ test('inject - should send a request to an application', async t => {
   await createDirectory(directory)
 
   const startProcess = wattpm('start', rootDir)
-  await waitForStart(startProcess.stdout)
+  await waitForStart(startProcess)
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -80,7 +84,7 @@ test('inject - should complain when a service is not found', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
-  await waitForStart(startProcess.stdout)
+  await waitForStart(startProcess)
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -100,7 +104,7 @@ test('inject - should properly autodetect the runtime and use the first argument
   await createDirectory(directory)
 
   const startProcess = wattpm('start', rootDir)
-  await waitForStart(startProcess.stdout)
+  await waitForStart(startProcess)
 
   t.after(() => {
     startProcess.kill('SIGINT')
@@ -154,4 +158,33 @@ test('inject - should properly autodetect the runtime and use the first argument
   ok(outputFile.includes('< HTTP/1.1 200'))
   ok(outputFile.includes('< content-type: application/json; charset=utf-8'))
   ok(outputFile.includes('{"body":"BBBB"}'))
+})
+
+test('inject - should use the same shared memory HTTP cache of the runtime', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+
+  const directory = await createTemporaryDirectory(t, 'inject')
+  await createDirectory(directory)
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+
+  const contents = await loadRawConfigurationFile(logger, configurationFile)
+  contents.httpCache = true
+  await saveConfigurationFile(logger, configurationFile, contents)
+
+  const startProcess = wattpm('start', rootDir)
+  startProcess.stderr.pipe(process.stdout)
+  await waitForStart(startProcess)
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  const request1 = await wattpm('inject', 'main', '-p', '/time')
+  const request2 = await wattpm('inject', 'main', '-p', '/time')
+  const request3 = await wattpm('inject', 'alternative', '-p', '/main-time')
+
+  deepStrictEqual(request1.stdout, request2.stdout)
+  deepStrictEqual(request1.stdout, request3.stdout)
 })

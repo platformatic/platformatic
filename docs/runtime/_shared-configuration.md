@@ -194,7 +194,7 @@ OTLP traces can be consumed by different solutions, like [Jaeger](https://www.ja
 }
 ```
 
-## httpCache
+### httpCache
 
 The `httpCache` configuration is used to enable the HTTP cache for the Platformatic Runtime.
 It can be a boolean or an object with the following settings:

@@ -1,16 +1,15 @@
 #! /usr/bin/env node
 
-import { Migrator } from './migrator.mjs'
+import { loadConfig } from '@platformatic/config'
+import { checkForDependencies, createRequire } from '@platformatic/utils'
+import { utimesSync } from 'fs'
 import pino from 'pino'
 import pretty from 'pino-pretty'
-import { checkForDependencies } from '@platformatic/utils'
-import { createRequire } from 'node:module'
-import { execute as generateTypes } from './gen-types.mjs'
-import { utimesSync } from 'fs'
-import { updateSchemaLock } from './utils.js'
-import { loadConfig } from '@platformatic/config'
 import { platformaticDB } from '../index.js'
 import errors from './errors.js'
+import { execute as generateTypes } from './gen-types.mjs'
+import { Migrator } from './migrator.mjs'
+import { updateSchemaLock } from './utils.js'
 
 async function execute ({ logger, rollback, to, config }) {
   const migrationsConfig = config.migrations
@@ -32,20 +31,26 @@ async function execute ({ logger, rollback, to, config }) {
 }
 
 async function applyMigrations (_args) {
-  const logger = pino(pretty({
-    translateTime: 'SYS:HH:MM:ss',
-    ignore: 'hostname,pid',
-  }))
+  const logger = pino(
+    pretty({
+      translateTime: 'SYS:HH:MM:ss',
+      ignore: 'hostname,pid'
+    })
+  )
 
   try {
-    const { configManager, args } = await loadConfig({
-      string: ['to'],
-      boolean: ['rollback'],
-      alias: {
-        t: 'to',
-        r: 'rollback',
+    const { configManager, args } = await loadConfig(
+      {
+        string: ['to'],
+        boolean: ['rollback'],
+        alias: {
+          t: 'to',
+          r: 'rollback'
+        }
       },
-    }, _args, platformaticDB)
+      _args,
+      platformaticDB
+    )
 
     const config = configManager.current
     const appliedMigrations = await execute({ logger, ...args, config })

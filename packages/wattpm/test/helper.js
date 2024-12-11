@@ -64,11 +64,21 @@ export async function isDirectory (path) {
   return statObject.isDirectory()
 }
 
-export async function waitForStart (stream) {
+export async function waitForStart (startProcess) {
   let url
 
-  for await (const log of on(stream.pipe(split2()), 'data')) {
-    const parsed = JSON.parse(log.toString())
+  startProcess.stderr.pipe(startProcess.stdout)
+  for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
+    if (process.env.PLT_WATT_TESTS_VERBOSE === 'true') {
+      process._rawDebug(log.toString())
+    }
+
+    let parsed
+    try {
+      parsed = JSON.parse(log.toString())
+    } catch (e) {
+      continue
+    }
 
     const mo = parsed.msg?.match(/Platformatic is now listening at (.+)/)
     if (mo) {

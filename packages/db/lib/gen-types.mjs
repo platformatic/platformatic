@@ -1,9 +1,8 @@
 import { loadConfig } from '@platformatic/config'
 import { mapOpenAPItoTypes, mapSQLEntityToJSONSchema } from '@platformatic/sql-json-schema-mapper'
-import utils, { createDirectory } from '@platformatic/utils'
+import utils, { createDirectory, createRequire } from '@platformatic/utils'
 import camelcase from 'camelcase'
 import { readFile, readdir, unlink, writeFile } from 'fs/promises'
-import { createRequire } from 'node:module'
 import { basename, join, parse, posix, relative, resolve } from 'path'
 import pino from 'pino'
 import pretty from 'pino-pretty'
@@ -182,7 +181,7 @@ async function generateTypes (_args) {
   const logger = pino(
     pretty({
       translateTime: 'SYS:HH:MM:ss',
-      ignore: 'hostname,pid',
+      ignore: 'hostname,pid'
     })
   )
 

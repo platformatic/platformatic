@@ -3,7 +3,7 @@
 const fp = require('fastify-plugin')
 const autoload = require('@fastify/autoload')
 const { stat } = require('node:fs').promises
-const { createRequire } = require('node:module')
+const { createRequire } = require('@platformatic/utils')
 const { join } = require('node:path')
 const { pathToFileURL } = require('node:url')
 
@@ -36,7 +36,7 @@ module.exports = fp(async function (app, opts) {
         forceESM: plugin.forceESM,
         ignoreFilter: plugin.ignoreFilter,
         matchFilter: plugin.matchFilter,
-        ...patternOptions,
+        ...patternOptions
       })
     } else {
       let loaded = await import(pathToFileURL(plugin.path))
@@ -68,11 +68,7 @@ function patternOptionsFromPlugin (plugin) {
   const config = {}
 
   // Expected keys for autoload plugin options that expect regexp patterns
-  const patternOptionKeys = [
-    'ignorePattern',
-    'indexPattern',
-    'autoHooksPattern',
-  ]
+  const patternOptionKeys = ['ignorePattern', 'indexPattern', 'autoHooksPattern']
 
   for (const key of patternOptionKeys) {
     const pattern = plugin[key]

@@ -1,8 +1,8 @@
 'use strict'
 
-const { createRequire } = require('node:module')
 const { isFileAccessible, splitModuleFromVersion } = require('./utils')
 const { join } = require('node:path')
+const { createRequire, loadModule } = require('@platformatic/utils')
 const { ConfigManager } = require('./manager')
 const { readFile } = require('node:fs/promises')
 const { readFileSync } = require('node:fs')
@@ -320,20 +320,6 @@ class Store {
     }
 
     return this.#require
-  }
-}
-
-async function loadModule (require, extendedModule) {
-  try {
-    const mod = require(extendedModule)
-    return mod?.default ?? mod
-  } catch (err) {
-    if (err.code === 'ERR_REQUIRE_ESM') {
-      const toLoad = require.resolve(extendedModule)
-      return (await import('file://' + toLoad)).default
-    } else {
-      throw err
-    }
   }
 }
 

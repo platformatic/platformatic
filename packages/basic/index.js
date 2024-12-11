@@ -1,6 +1,6 @@
+import { createRequire } from '@platformatic/utils'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { createRequire } from 'node:module'
 import { relative, resolve } from 'node:path'
 import { workerData } from 'node:worker_threads'
 import pino from 'pino'
@@ -37,7 +37,7 @@ function isImportFailedError (error, pkg) {
   return match?.[1] === pkg || error.requireStack?.[0].endsWith(importStackablePackageMarker)
 }
 
-async function importStackablePackage (opts, pkg, autodetectDescription) {
+async function importStackablePackage (opts, pkg) {
   try {
     try {
       // Try regular import
@@ -105,7 +105,7 @@ async function buildStackable (opts) {
     toImport = '@platformatic/astro'
   }
 
-  const imported = await importStackablePackage(opts, toImport, autodetectDescription)
+  const imported = await importStackablePackage(opts, toImport)
 
   const serviceRoot = relative(process.cwd(), opts.context.directory)
   if (

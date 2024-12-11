@@ -9,9 +9,11 @@ async function loadInterceptor (_require, module, options) {
 }
 
 function loadInterceptors (_require, interceptors) {
-  return Promise.all(interceptors.map(async ({ module, options }) => {
-    return loadInterceptor(_require, module, options)
-  }))
+  return Promise.all(
+    interceptors.map(async ({ module, options }) => {
+      return loadInterceptor(_require, module, options)
+    })
+  )
 }
 
-module.exports = loadInterceptors
+module.exports = { loadInterceptors }

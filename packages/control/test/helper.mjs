@@ -1,16 +1,18 @@
-import { readFile } from 'node:fs/promises'
-import { on, once } from 'node:events'
-import { setTimeout as sleep } from 'node:timers/promises'
-import { createRequire } from 'node:module'
+import { createRequire } from '@platformatic/utils'
 import { execa } from 'execa'
-import { Agent, setGlobalDispatcher } from 'undici'
-import split from 'split2'
+import { on, once } from 'node:events'
+import { readFile } from 'node:fs/promises'
 import os from 'node:os'
+import { setTimeout as sleep } from 'node:timers/promises'
+import split from 'split2'
+import { Agent, setGlobalDispatcher } from 'undici'
 
-setGlobalDispatcher(new Agent({
-  keepAliveTimeout: 10,
-  keepAliveMaxTimeout: 10,
-}))
+setGlobalDispatcher(
+  new Agent({
+    keepAliveTimeout: 10,
+    keepAliveMaxTimeout: 10
+  })
+)
 
 const runtimeCliPath = createRequire(import.meta.url).resolve('@platformatic/runtime/runtime.mjs')
 
@@ -21,31 +23,29 @@ export async function getPlatformaticVersion () {
 }
 
 export async function startRuntime (configPath, env = {}, additionalArgs = []) {
-  const runtime = execa(
-    process.execPath, [runtimeCliPath, 'start', '-c', configPath, ...additionalArgs],
-    { env }
-  )
+  const runtime = execa(process.execPath, [runtimeCliPath, 'start', '-c', configPath, ...additionalArgs], { env })
   runtime.stdout.pipe(process.stdout)
   runtime.stderr.pipe(process.stderr)
 
-  const output = runtime.stdout.pipe(split(function (line) {
-    try {
-      const obj = JSON.parse(line)
-      return obj
-    } catch (err) {
-      console.log(line)
-    }
-  }))
+  const output = runtime.stdout.pipe(
+    split(function (line) {
+      try {
+        const obj = JSON.parse(line)
+        return obj
+      } catch (err) {
+        console.log(line)
+      }
+    })
+  )
 
   const errorTimeout = setTimeout(() => {
-    throw new Error('Couldn\'t start server')
+    throw new Error("Couldn't start server")
   }, 30000)
 
   for await (const messages of on(output, 'data')) {
     for (const message of messages) {
       if (message.msg) {
-        const url = message.url ??
-          message.msg.match(/server listening at (.+)/i)?.[1]
+        const url = message.url ?? message.msg.match(/server listening at (.+)/i)?.[1]
 
         if (url !== undefined) {
           clearTimeout(errorTimeout)
