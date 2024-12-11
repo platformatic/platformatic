@@ -781,9 +781,7 @@ export async function verifyReusePort (t, configuration, integrityCheck) {
 
       usedWorkers.add(worker)
     } else {
-      deepStrictEqual(
-        res.headers['x-plt-worker-id'] === 'only' || typeof res.headers['x-plt-worker-id'] === 'undefined'
-      )
+      ok(res.headers['x-plt-worker-id'] === 'only' || typeof res.headers['x-plt-worker-id'] === 'undefined')
     }
   })
 
