@@ -10,7 +10,7 @@
     "port": 0
   },
   "logger": {
-    "level": "fatal"
+    "level": "info"
   },
   "managementApi": true
 }

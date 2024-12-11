@@ -423,7 +423,8 @@ class Runtime extends EventEmitter {
       statusMessage: STATUS_CODES[responseStatus] || 'unknown',
       headers: responseHeaders,
       body: responseBody,
-      payload: responsePayload
+      payload: responseBody,
+      rawPayload: responsePayload
     }
   }
 
