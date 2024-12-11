@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/wattpm/2.22.0.json",
+  "$id": "https://schemas.platformatic.dev/wattpm/2.23.0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
@@ -309,6 +309,10 @@
           },
           "envfile": {
             "type": "string"
+          },
+          "sourceMaps": {
+            "type": "boolean",
+            "default": false
           }
         }
       }
@@ -475,6 +479,10 @@
           },
           "envfile": {
             "type": "string"
+          },
+          "sourceMaps": {
+            "type": "boolean",
+            "default": false
           }
         }
       }
@@ -1145,6 +1153,10 @@
       "additionalProperties": {
         "type": "string"
       }
+    },
+    "sourceMaps": {
+      "type": "boolean",
+      "default": false
     }
   },
   "anyOf": [

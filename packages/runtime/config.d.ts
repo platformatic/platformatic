@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type HttpsSchemasPlatformaticDevPlatformaticRuntime2220Json = {
+export type HttpsSchemasPlatformaticDevPlatformaticRuntime2230Json = {
   [k: string]: unknown;
 } & {
   $schema?: string;
@@ -180,6 +180,7 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime2220Json = {
   env?: {
     [k: string]: string;
   };
+  sourceMaps?: boolean;
 };
 
 export interface UndiciInterceptor {
