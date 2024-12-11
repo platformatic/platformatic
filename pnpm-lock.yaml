@@ -1101,7 +1101,7 @@ importers:
         version: 9.16.0
       fast-jwt:
         specifier: ^5.0.0
-        version: 5.0.0
+        version: 5.0.1
       fastify:
         specifier: ^5.0.0
         version: 5.1.0
@@ -1808,7 +1808,7 @@ importers:
         version: 4.21.2
       fast-jwt:
         specifier: ^5.0.0
-        version: 5.0.0
+        version: 5.0.1
       get-port:
         specifier: ^7.1.0
         version: 7.1.0
@@ -5724,8 +5724,8 @@ packages:
     resolution: {integrity: sha512-QnpNdn0955GT7SlT8iMgYfhTsityUWysrQjM+Q7bGFijLp6+TNWzlbSMPvgalbrQGRg4ZaHZgMcns5fYOm5avg==}
     engines: {node: '>=16'}
 
-  fast-jwt@5.0.0:
-    resolution: {integrity: sha512-BJ6qXIgOjqDa2UeFJlpmuT9DnGR3hbMypL/w53lT2aLQAQh4IzX22QtQQEgoadN4AQ8K0849s2iY0KmEoBQTbg==}
+  fast-jwt@5.0.1:
+    resolution: {integrity: sha512-ourv/LCcb3ij6OKnIs2fc60A0x9ITyo7m3plY0pvpDma9suH5ee52g4XCksbMQAWZpV5Lo7VuJpOgTSYKx7mBQ==}
     engines: {node: '>=20'}
 
   fast-levenshtein@2.0.6:
@@ -13013,7 +13013,7 @@ snapshots:
       ecdsa-sig-formatter: 1.0.11
       mnemonist: 0.39.8
 
-  fast-jwt@5.0.0:
+  fast-jwt@5.0.1:
     dependencies:
       '@lukeed/ms': 2.0.2
       asn1.js: 5.4.1
