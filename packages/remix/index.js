@@ -8,6 +8,7 @@ import {
   schemaOptions
 } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
+import { features } from '@platformatic/utils'
 import { ViteStackable } from '@platformatic/vite'
 import { createRequestHandler } from '@remix-run/express'
 import express from 'express'
@@ -160,10 +161,15 @@ export class RemixStackable extends ViteStackable {
     // Listen if entrypoint
     if (this.#app && listen) {
       const serverOptions = this.serverConfig
+      const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+
+      if (this.isProduction && features.node.reusePort) {
+        listenOptions.reusePort = true
+      }
 
       this.#server = await new Promise((resolve, reject) => {
         return this.#app
-          .listen({ host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }, function () {
+          .listen(listenOptions, function () {
             resolve(this)
           })
           .on('error', reject)

@@ -10,6 +10,7 @@ import {
   transformConfig
 } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
+import { features } from '@platformatic/utils'
 import inject from 'light-my-request'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
@@ -86,7 +87,7 @@ export class NodeStackable extends BaseStackable {
       : undefined
 
     this.registerGlobals({
-      basePath: this.#basePath,
+      basePath: this.#basePath
     })
 
     // The server promise must be created before requiring the entrypoint even if it's not going to be used
@@ -253,15 +254,20 @@ export class NodeStackable extends BaseStackable {
 
   async _listen () {
     const serverOptions = this.serverConfig
+    const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+
+    if (this.isProduction && features.node.reusePort) {
+      listenOptions.reusePort = true
+    }
 
     if (this.#isFastify) {
-      await this.#app.listen({ host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 })
+      await this.#app.listen(listenOptions)
       this.url = getServerUrl(this.#app.server)
     } else {
       // Express / Node / Koa
       this.#server = await new Promise((resolve, reject) => {
         return this.#app
-          .listen({ host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }, function () {
+          .listen(listenOptions, function () {
             resolve(this)
           })
           .on('error', reject)

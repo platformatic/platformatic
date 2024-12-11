@@ -1,5 +1,7 @@
 'use strict'
 
+const { features } = require('@platformatic/utils')
+
 class RoundRobinMap extends Map {
   #instances
 
@@ -19,7 +21,7 @@ class RoundRobinMap extends Map {
     for (const service of services) {
       let count = service.workers ?? defaultInstances
 
-      if (service.entrypoint || !production) {
+      if (!production || (service.entrypoint && !features.node.reusePort)) {
         count = 1
       }
 

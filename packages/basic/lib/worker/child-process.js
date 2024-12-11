@@ -1,6 +1,6 @@
 import { ITC } from '@platformatic/itc'
 import { collectMetrics } from '@platformatic/metrics'
-import { createPinoWritable, ensureLoggableError } from '@platformatic/utils'
+import { createPinoWritable, ensureLoggableError, features } from '@platformatic/utils'
 import diagnosticChannel, { tracingChannel } from 'node:diagnostics_channel'
 import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
@@ -123,7 +123,7 @@ export class ChildProcess extends ITC {
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
       setConnectionString: this.setConnectionString.bind(this),
-      setBasePath: this.setBasePath.bind(this),
+      setBasePath: this.setBasePath.bind(this)
     })
   }
 
@@ -232,8 +232,14 @@ export class ChildProcess extends ITC {
         const host = globalThis.platformatic.host
 
         if (port !== false) {
-          options.port = typeof port === 'number' ? port : 0
+          const hasFixedPort = typeof port === 'number'
+          options.port = hasFixedPort ? port : 0
+
+          if (hasFixedPort && features.node.reusePort) {
+            options.reusePort = true
+          }
         }
+
         if (typeof host === 'string') {
           options.host = host
         }
