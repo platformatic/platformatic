@@ -46,7 +46,7 @@ export const internalServicesFiles = [
   'services/backend/dist/routes/root.js'
 ]
 
-export async function createStackable(
+export async function createStackable (
   t,
   context = {},
   config = { current: {} },
@@ -60,17 +60,17 @@ export async function createStackable(
   return new BaseStackable(name, version, { context }, base, config)
 }
 
-export function createMockedLogger() {
+export function createMockedLogger () {
   const messages = []
 
   const logger = {
-    debug(message) {
+    debug (message) {
       messages.push(['DEBUG', message])
     },
-    info(message) {
+    info (message) {
       messages.push(['INFO', message])
     },
-    error(message) {
+    error (message) {
       messages.push(['ERROR', message])
     }
   }
@@ -78,20 +78,20 @@ export function createMockedLogger() {
   return { logger, messages }
 }
 
-export function setFixturesDir(directory) {
+export function setFixturesDir (directory) {
   fixturesDir = directory
 }
 
-export function setHMRTriggerFile(file) {
+export function setHMRTriggerFile (file) {
   hmrTriggerFileRelative = file
 }
 
-export function setAdditionalDependencies(dependencies) {
+export function setAdditionalDependencies (dependencies) {
   additionalDependencies = dependencies
 }
 
 // This is used to debug tests
-export function pause(t, url, root, timeout) {
+export function pause (t, url, root, timeout) {
   if (timeout && typeof timeout !== 'number') {
     timeout = DEFAULT_PAUSE_TIMEOUT
   }
@@ -103,7 +103,7 @@ export function pause(t, url, root, timeout) {
   return new Promise(resolve => {
     let handler = null
 
-    function listener() {
+    function listener () {
       console.log('--- Resuming execution ...')
       clearTimeout(handler)
       process.stdin.removeListener('data', listener)
@@ -115,12 +115,12 @@ export function pause(t, url, root, timeout) {
   })
 }
 
-export async function updateFile(path, update) {
+export async function updateFile (path, update) {
   const contents = await readFile(path, 'utf-8')
   await writeFile(path, await update(contents), 'utf-8')
 }
 
-export async function ensureDependencies(configOrPaths) {
+export async function ensureDependencies (configOrPaths) {
   const paths = Array.isArray(configOrPaths)
     ? configOrPaths
     : [configOrPaths.configManager.dirname, ...configOrPaths.configManager.current.services.map(s => s.path)]
@@ -203,7 +203,7 @@ export async function ensureDependencies(configOrPaths) {
   }
 }
 
-export async function prepareRuntime(t, fixturePath, production, configFile, additionalSetup) {
+export async function prepareRuntime (t, fixturePath, production, configFile, additionalSetup) {
   production ??= false
   configFile ??= 'platformatic.runtime.json'
 
@@ -231,7 +231,7 @@ export async function prepareRuntime(t, fixturePath, production, configFile, add
   return { root, config, args }
 }
 
-export async function startRuntime(t, root, config, pauseAfterCreation = false, servicesToBuild = false) {
+export async function startRuntime (t, root, config, pauseAfterCreation = false, servicesToBuild = false) {
   const originalCwd = process.cwd()
 
   process.chdir(root)
@@ -258,7 +258,7 @@ export async function startRuntime(t, root, config, pauseAfterCreation = false, 
   return { runtime, url, root }
 }
 
-export async function createRuntime(
+export async function createRuntime (
   t,
   fixturePath,
   pauseAfterCreation = false,
@@ -270,7 +270,7 @@ export async function createRuntime(
   return startRuntime(t, root, config, pauseAfterCreation)
 }
 
-export async function createProductionRuntime(
+export async function createProductionRuntime (
   t,
   fixturePath,
   pauseAfterCreation = false,
@@ -279,7 +279,7 @@ export async function createProductionRuntime(
   return createRuntime(t, fixturePath, pauseAfterCreation, true, configFile)
 }
 
-export async function getLogs(app) {
+export async function getLogs (app) {
   const client = new Client(
     {
       hostname: 'localhost',
@@ -311,7 +311,7 @@ export async function getLogs(app) {
     .map(m => JSON.parse(m))
 }
 
-export async function verifyJSONViaHTTP(baseUrl, path, expectedCode, expectedContent) {
+export async function verifyJSONViaHTTP (baseUrl, path, expectedCode, expectedContent) {
   const dispatcher = new Agent().compose(interceptors.redirect({ maxRedirections: 1 }))
   const { statusCode, body } = await request(baseUrl + path, { dispatcher })
   strictEqual(statusCode, expectedCode)
@@ -323,7 +323,7 @@ export async function verifyJSONViaHTTP(baseUrl, path, expectedCode, expectedCon
   deepStrictEqual(await body.json(), expectedContent)
 }
 
-export async function verifyJSONViaInject(app, serviceId, method, url, expectedCode, expectedContent) {
+export async function verifyJSONViaInject (app, serviceId, method, url, expectedCode, expectedContent) {
   const { statusCode, body } = await app.inject(serviceId, { method, url })
   strictEqual(statusCode, expectedCode)
 
@@ -334,7 +334,7 @@ export async function verifyJSONViaInject(app, serviceId, method, url, expectedC
   deepStrictEqual(JSON.parse(body), expectedContent)
 }
 
-export async function verifyHTMLViaHTTP(baseUrl, path, contents) {
+export async function verifyHTMLViaHTTP (baseUrl, path, contents) {
   const dispatcher = new Agent().compose(interceptors.redirect({ maxRedirections: 1 }))
   const { statusCode, headers, body } = await request(baseUrl + path, { dispatcher })
   const html = await body.text()
@@ -351,7 +351,7 @@ export async function verifyHTMLViaHTTP(baseUrl, path, contents) {
   }
 }
 
-export async function verifyHTMLViaInject(app, serviceId, url, contents) {
+export async function verifyHTMLViaInject (app, serviceId, url, contents) {
   const { statusCode, headers, body: html } = await app.inject(serviceId, { method: 'GET', url })
 
   if (statusCode === 308) {
@@ -370,7 +370,7 @@ export async function verifyHTMLViaInject(app, serviceId, url, contents) {
   }
 }
 
-export async function verifyHMR(baseUrl, path, protocol, handler) {
+export async function verifyHMR (baseUrl, path, protocol, handler) {
   const connection = withResolvers()
   const reload = withResolvers()
   const ac = new AbortController()
@@ -409,7 +409,7 @@ export async function verifyHMR(baseUrl, path, protocol, handler) {
   }
 }
 
-async function ensureExists(path) {
+async function ensureExists (path) {
   const directory = dirname(path)
   const pattern = basename(path)
 
@@ -431,70 +431,70 @@ async function ensureExists(path) {
   )
 }
 
-export function verifyPlatformaticComposer(t, url) {
+export function verifyPlatformaticComposer (t, url) {
   return verifyJSONViaHTTP(url, '/example', 200, { hello: 'foobar' })
 }
 
-export function verifyPlatformaticComposerWithProxy(t, url) {
+export function verifyPlatformaticComposerWithProxy (t, url) {
   return verifyJSONViaHTTP(url, '/external-proxy/example', 200, { hello: 'foobar' })
 }
 
-export async function verifyPlatformaticService(t, url) {
+export async function verifyPlatformaticService (t, url) {
   await verifyJSONViaHTTP(url, '/backend/example', 200, { hello: 'foobar' })
   await verifyJSONViaHTTP(url, '/backend/time', 200, body => {
     ok(typeof body.time === 'number')
   })
 }
 
-export async function verifyPlatformaticServiceWithProxy(t, url) {
+export async function verifyPlatformaticServiceWithProxy (t, url) {
   await verifyJSONViaHTTP(url, '/external-proxy/backend/example', 200, { hello: 'foobar' })
   await verifyJSONViaHTTP(url, '/external-proxy/backend/time', 200, body => {
     ok(typeof body.time === 'number')
   })
 }
 
-export async function verifyPlatformaticDB(t, url) {
+export async function verifyPlatformaticDB (t, url) {
   await verifyJSONViaHTTP(url, '/db/example', 200, { hello: 'foobar' })
   await verifyJSONViaHTTP(url, '/db/movies/', 200, [])
 }
 
-export async function verifyFrontendOnRoot(t, url) {
+export async function verifyFrontendOnRoot (t, url) {
   await verifyHTMLViaHTTP(url, '/', [htmlHelloMatcher])
 }
 
-export async function verifyFrontendOnPrefix(t, url) {
+export async function verifyFrontendOnPrefix (t, url) {
   await verifyHTMLViaHTTP(url, '/frontend', [htmlHelloMatcher])
   await verifyHTMLViaHTTP(url, '/frontend/', [htmlHelloMatcher])
 }
 
-export async function verifyFrontendOnPrefixWithProxy(t, url) {
+export async function verifyFrontendOnPrefixWithProxy (t, url) {
   await verifyHTMLViaHTTP(url, '/external-proxy/frontend', [htmlHelloMatcher])
   await verifyHTMLViaHTTP(url, '/external-proxy/frontend/', [htmlHelloMatcher])
 }
 
-export async function verifyFrontendOnAutodetectedPrefix(t, url) {
+export async function verifyFrontendOnAutodetectedPrefix (t, url) {
   await verifyHTMLViaHTTP(url, '/nested/base/dir', [htmlHelloMatcher])
   await verifyHTMLViaHTTP(url, '/nested/base/dir/', [htmlHelloMatcher])
 }
 
-export function verifyFrontendAPIOnRoot(t, url) {
+export function verifyFrontendAPIOnRoot (t, url) {
   return verifyJSONViaHTTP(url, '/direct', 200, { ok: true })
 }
 
-export function verifyFrontendAPIOnPrefix(t, url) {
+export function verifyFrontendAPIOnPrefix (t, url) {
   return verifyJSONViaHTTP(url, '/frontend/direct', 200, { ok: true })
 }
 
-export function verifyFrontendAPIOnAutodetectedPrefix(t, url) {
+export function verifyFrontendAPIOnAutodetectedPrefix (t, url) {
   return verifyJSONViaHTTP(url, '/nested/base/dir/direct', 200, { ok: true })
 }
 
-export function filterConfigurations(configurations) {
+export function filterConfigurations (configurations) {
   const skipped = configurations.filter(c => c.skip !== true)
   return skipped.find(c => c.only) ? skipped.filter(c => c.only) : skipped
 }
 
-export async function prepareRuntimeWithServices(
+export async function prepareRuntimeWithServices (
   t,
   configuration,
   production,
@@ -529,7 +529,7 @@ export async function prepareRuntimeWithServices(
   return await startRuntime(t, root, config, pauseTimeout)
 }
 
-export async function verifyDevelopmentFrontendStandalone(
+export async function verifyDevelopmentFrontendStandalone (
   t,
   configuration,
   _language,
@@ -545,7 +545,7 @@ export async function verifyDevelopmentFrontendStandalone(
   await verifyHMR(url, '/' + hmrUrl, hmrProtocol, websocketHMRHandler)
 }
 
-export async function verifyDevelopmentFrontendWithPrefix(
+export async function verifyDevelopmentFrontendWithPrefix (
   t,
   configuration,
   language,
@@ -579,7 +579,7 @@ export async function verifyDevelopmentFrontendWithPrefix(
   await verifyJSONViaInject(runtime, 'backend', 'GET', '/example', 200, { hello: 'foobar' })
 }
 
-export async function verifyDevelopmentFrontendWithoutPrefix(
+export async function verifyDevelopmentFrontendWithoutPrefix (
   t,
   configuration,
   language,
@@ -613,7 +613,7 @@ export async function verifyDevelopmentFrontendWithoutPrefix(
   await verifyJSONViaInject(runtime, 'backend', 'GET', '/example', 200, { hello: 'foobar' })
 }
 
-export async function verifyDevelopmentFrontendWithAutodetectPrefix(
+export async function verifyDevelopmentFrontendWithAutodetectPrefix (
   t,
   configuration,
   language,
@@ -647,7 +647,7 @@ export async function verifyDevelopmentFrontendWithAutodetectPrefix(
   await verifyJSONViaInject(runtime, 'backend', 'GET', '/example', 200, { hello: 'foobar' })
 }
 
-export function verifyDevelopmentMode(configurations, hmrUrl, hmrProtocol, websocketHMRHandler, pauseTimeout) {
+export function verifyDevelopmentMode (configurations, hmrUrl, hmrProtocol, websocketHMRHandler, pauseTimeout) {
   configurations = filterConfigurations(configurations)
 
   for (const configuration of configurations) {
@@ -669,7 +669,7 @@ export function verifyDevelopmentMode(configurations, hmrUrl, hmrProtocol, webso
   }
 }
 
-export function verifyBuildAndProductionMode(configurations, pauseTimeout) {
+export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
   configurations = filterConfigurations(configurations)
 
   for (const { id, todo, tag, language, prefix, files, checks, additionalSetup } of configurations) {
@@ -743,7 +743,7 @@ export function verifyBuildAndProductionMode(configurations, pauseTimeout) {
   }
 }
 
-export async function verifyReusePort(t, configuration, integrityCheck) {
+export async function verifyReusePort (t, configuration, integrityCheck) {
   const getPort = await import('get-port')
   const port = await getPort.default()
 
