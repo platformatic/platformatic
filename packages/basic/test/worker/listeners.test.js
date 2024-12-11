@@ -1,3 +1,4 @@
+import getPort from 'get-port'
 import { deepStrictEqual, ok, rejects } from 'node:assert'
 import { spawn } from 'node:child_process'
 import { createServer } from 'node:http'
@@ -39,23 +40,25 @@ test('createServerListener - should override the host and the port', async t => 
 })
 
 test('createServerListener - should override the port with fixed value', async t => {
+  const port = await getPort()
   const server = createHttpServer(t)
 
-  const listener = createServerListener(60000)
+  const listener = createServerListener(port)
   await listen(server, { host: '127.0.0.1', port: 100 })
 
   await listener
-  deepStrictEqual(server.address().port, 60000)
+  deepStrictEqual(server.address().port, port)
 })
 
 test('createServerListener - should not override the port', async t => {
+  const port = await getPort()
   const server = createHttpServer(t)
 
   const listener = createServerListener(false)
-  await listen(server, { host: '127.0.0.1', port: 60000 })
+  await listen(server, { host: '127.0.0.1', port })
 
   await listener
-  deepStrictEqual(server.address().port, 60000)
+  deepStrictEqual(server.address().port, port)
 })
 
 test('createServerListener - handle errors', async t => {

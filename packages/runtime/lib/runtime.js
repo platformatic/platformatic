@@ -3,6 +3,7 @@
 const { once, EventEmitter } = require('node:events')
 const { createReadStream, watch, existsSync } = require('node:fs')
 const { readdir, readFile, stat, access } = require('node:fs/promises')
+const { STATUS_CODES } = require('node:http')
 const { join } = require('node:path')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { Worker } = require('node:worker_threads')
@@ -386,6 +387,10 @@ class Runtime extends EventEmitter {
     // Make sure the service exists
     await this.#getServiceById(id, true)
 
+    if (typeof injectParams === 'string') {
+      injectParams = { url: injectParams }
+    }
+
     let { method, headers, body } = injectParams
     const url = new URL(injectParams.url, `http://${id}.plt.local`)
 
@@ -410,10 +415,16 @@ class Runtime extends EventEmitter {
       headers: responseHeaders,
       body: responseRawBody
     } = await request(url.toString(), { method, headers, body, dispatcher: this.#dispatcher })
-    const responsePayload = Buffer.from(await responseRawBody.arrayBuffer())
-    const responseBody = responsePayload.toString('utf-8')
+    const responsePayload = await responseRawBody.arrayBuffer()
+    const responseBody = Buffer.from(responsePayload).toString('utf-8')
 
-    return { statusCode: responseStatus, headers: responseHeaders, body: responseBody, payload: responsePayload }
+    return {
+      statusCode: responseStatus,
+      statusMessage: STATUS_CODES[responseStatus] || 'unknown',
+      headers: responseHeaders,
+      body: responseBody,
+      payload: responsePayload
+    }
   }
 
   startCollectingMetrics () {
