@@ -33,7 +33,7 @@
     "semver": "^7.6.3"
   },
   "devDependencies": {
-    "@astrojs/node": "^8.3.3",
+    "@astrojs/node": "^9.0.0",
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
     "astro": "^4.14.4",
