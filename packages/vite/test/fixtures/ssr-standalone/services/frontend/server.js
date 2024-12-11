@@ -2,7 +2,7 @@ import fastifyVite from '@fastify/vite'
 import { cleanBasePath, ensureTrailingSlash } from '@platformatic/basic'
 import fastify from 'fastify'
 
-export async function build () {
+export async function build() {
   const server = fastify({
     loggerInstance: globalThis.platformatic?.logger?.child({}, { level: globalThis.platformatic?.logLevel ?? 'info' })
   })
@@ -10,7 +10,7 @@ export async function build () {
   await server.register(fastifyVite, {
     root: import.meta.url,
     dev: process.env.NODE_ENV !== 'production',
-    createRenderFunction ({ generate }) {
+    createRenderFunction({ generate }) {
       return async () => {
         return {
           element: await generate()
@@ -21,7 +21,7 @@ export async function build () {
   })
 
   await server.vite.ready()
-  const prefix = (server.vite.devServer?.config ?? server.vite.config.vite).base
+  const prefix = (server.vite.devServer?.config ?? server.vite.config.vite).base ?? ''
 
   server.get(ensureTrailingSlash(cleanBasePath(prefix)), (req, reply) => {
     return reply.type('text/html').html()

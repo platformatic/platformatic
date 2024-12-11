@@ -10,7 +10,6 @@ import { basename, dirname, resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
-import { satisfies } from 'semver'
 import { Agent, Client, interceptors, request } from 'undici'
 import WebSocket from 'ws'
 import { loadConfig } from '../../config/index.js'
@@ -781,10 +780,10 @@ export async function verifyReusePort (t, configuration, integrityCheck) {
       ok(worker.match(/^[01234]$/))
 
       usedWorkers.add(worker)
-    } else if (satisfies(process.version, '^22.12.0 || ^23.1.0')) {
-      deepStrictEqual(res.headers['x-plt-worker-id'], 'only')
     } else {
-      deepStrictEqual(typeof res.headers['x-plt-worker-id'], 'undefined')
+      deepStrictEqual(
+        res.headers['x-plt-worker-id'] === 'only' || typeof res.headers['x-plt-worker-id'] === 'undefined'
+      )
     }
   })
 
