@@ -62,7 +62,8 @@ const services = {
         default: false
       },
       packageManager: {
-        type: 'string'
+        type: 'string',
+        enum: ['npm', 'pnpm', 'yarn']
       }
     }
   }
