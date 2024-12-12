@@ -2,7 +2,7 @@
 
 const { cp, symlink, writeFile } = require('node:fs/promises')
 const { deepStrictEqual } = require('node:assert')
-const { join, resolve } = require('node:path')
+const { join, resolve, dirname } = require('node:path')
 const { request } = require('undici')
 const { createDirectory, safeRemove } = require('@platformatic/utils')
 
@@ -28,6 +28,7 @@ async function prepareRuntime (t, name, dependencies) {
   }
 
   process.env.PLT_RUNTIME_LOGGER_STDOUT ??= resolve(root, 'log.txt')
+  await createDirectory(dirname(process.env.PLT_RUNTIME_LOGGER_STDOUT))
   await writeFile(process.env.PLT_RUNTIME_LOGGER_STDOUT, '', 'utf-8')
   return root
 }
