@@ -1,6 +1,6 @@
 'use strict'
 
-const { cp, symlink } = require('node:fs/promises')
+const { cp, symlink, writeFile } = require('node:fs/promises')
 const { deepStrictEqual } = require('node:assert')
 const { join, resolve } = require('node:path')
 const { request } = require('undici')
@@ -28,6 +28,7 @@ async function prepareRuntime (t, name, dependencies) {
   }
 
   process.env.PLT_RUNTIME_LOGGER_STDOUT ??= resolve(root, 'log.txt')
+  await writeFile(process.env.PLT_RUNTIME_LOGGER_STDOUT, '', 'utf-8')
   return root
 }
 
