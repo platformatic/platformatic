@@ -200,7 +200,12 @@ test('can collect metrics with worker label', async t => {
       received.add(`${serviceId}:${workerId}`)
       switch (serviceId) {
         case 'composer':
-          return workerId === 0
+          if (features.node.reusePort) {
+            return typeof workerId === 'number' && workerId >= 0 && workerId < 3
+          } else {
+            return workerId === 0
+          }
+
         case 'service':
           return typeof workerId === 'number' && workerId >= 0 && workerId < 3
         case 'node':
