@@ -315,7 +315,12 @@
             "default": false
           },
           "packageManager": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "npm",
+              "pnpm",
+              "yarn"
+            ]
           }
         }
       }
@@ -488,7 +493,12 @@
             "default": false
           },
           "packageManager": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "npm",
+              "pnpm",
+              "yarn"
+            ]
           }
         }
       }
