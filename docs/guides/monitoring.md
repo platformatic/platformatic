@@ -44,6 +44,27 @@ All the configuration settings are optional. To use the default settings, set `"
 Use [environment variable placeholders](../service/configuration.md#environment-variable-placeholders) in your Platformatic DB configuration file to avoid exposing credentials.
 :::
 
+## Custom Metrics
+
+When running an application inside Platformatic, you can register and export custom metrics by accessing the application registry.
+Do to so, access it via `globalThis.platformatic.prometheus.registry`. In order to ensure the maximum compatibility between Platformatic metrics and custom metrics, there is also a `globalThis.platformatic.prometheus.client`, which is the same version of the `prom-client` used by Platformatic internally.
+
+Putting everything together, here it is an example of how to register a custom metric:
+
+```js
+const { client, registry } = globalThis.platformatic.prometheus
+
+// Register the metric
+const customMetrics = new client.Counter({ name: 'custom', help: 'Custom Description', registers: [registry] })
+
+// Later increase the value
+customMetrics.inc(123)
+```
+
+:::note
+Remember that it is a good practice to register metrics as soon as possible during the boot phase.
+:::
+
 ## Prometheus Configuration
 This is an example of a minimal Prometheus configuration to scrape the metrics from Platformatic:
 
