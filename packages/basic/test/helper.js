@@ -1,4 +1,4 @@
-import { createDirectory, createRequire, safeRemove, withResolvers } from '@platformatic/utils'
+import { createDirectory, createRequire, features, safeRemove, withResolvers } from '@platformatic/utils'
 import { join } from 'desm'
 import { execa } from 'execa'
 import { minimatch } from 'minimatch'
@@ -739,5 +739,55 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
         }
       }
     )
+  }
+}
+
+export async function verifyReusePort (t, configuration, integrityCheck) {
+  const getPort = await import('get-port')
+  const port = await getPort.default()
+
+  // Create the runtime
+  const { root, config } = await prepareRuntime(t, configuration, true, null, (_, config) => {
+    config.configManager.current.server = { port }
+    config.configManager.current.services[0].workers = 5
+    config.configManager.current.preload = fileURLToPath(new URL('./helper-reuse-port.js', import.meta.url))
+  })
+
+  const { logger } = config.configManager.current.server ?? {}
+
+  // Build
+  await execa('node', [cliPath, 'build'], {
+    cwd: root,
+    stdio: logger?.level !== 'error' ? 'inherit' : undefined
+  })
+
+  // Start the runtime
+  const { url } = await startRuntime(t, root, config)
+
+  deepStrictEqual(url, `http://127.0.0.1:${port}`)
+
+  // Check that we get the response from different workers
+  const workers = features.node.reusePort ? 5 : 1
+
+  const usedWorkers = new Set()
+
+  const promises = Array.from(Array(workers)).map(async () => {
+    const res = await request(url + '/')
+    await integrityCheck?.(res)
+
+    if (workers > 1) {
+      const worker = res.headers['x-plt-worker-id']
+      ok(worker.match(/^[01234]$/))
+
+      usedWorkers.add(worker)
+    } else {
+      ok(res.headers['x-plt-worker-id'] === 'only' || typeof res.headers['x-plt-worker-id'] === 'undefined')
+    }
+  })
+
+  await Promise.all(promises)
+
+  if (workers > 1) {
+    ok(usedWorkers.size > 1)
   }
 }

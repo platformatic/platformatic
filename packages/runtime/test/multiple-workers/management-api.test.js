@@ -5,6 +5,7 @@ const { resolve } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
 const { loadConfig } = require('@platformatic/config')
+const { features } = require('@platformatic/utils')
 const { buildServer, platformaticRuntime } = require('../..')
 const { prepareRuntime } = require('./helper')
 
@@ -40,7 +41,7 @@ test('return workers information in the management API when starting in producti
   deepStrictEqual(json.services[1].id, 'service')
   deepStrictEqual(json.services[1].workers, 3)
   deepStrictEqual(json.services[2].id, 'composer')
-  deepStrictEqual(json.services[2].workers, 1)
+  deepStrictEqual(json.services[2].workers, features.node.reusePort ? 3 : 1)
 })
 
 test('return no workers information in the management API when starting in development mode', async t => {

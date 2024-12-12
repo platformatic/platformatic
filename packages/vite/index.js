@@ -13,6 +13,7 @@ import {
 } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
 import { NodeStackable } from '@platformatic/node'
+import { features } from '@platformatic/utils'
 import fastify from 'fastify'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
@@ -218,7 +219,13 @@ export class ViteStackable extends BaseStackable {
 
     if (this.#app && listen) {
       const serverOptions = this.serverConfig
-      await this.#app.listen({ host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 })
+      const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+
+      if (this.isProduction && features.node.reusePort) {
+        listenOptions.reusePort = true
+      }
+
+      await this.#app.listen(listenOptions)
       this.url = getServerUrl(this.#app.server)
       return this.url
     }
