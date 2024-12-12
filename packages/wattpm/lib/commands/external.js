@@ -10,7 +10,6 @@ import { defaultServiceJson } from '../defaults.js'
 import { version } from '../schema.js'
 import {
   findConfigurationFile,
-  getPackageManager,
   getRoot,
   loadConfigurationFile,
   loadRawConfigurationFile,
@@ -254,10 +253,6 @@ export async function resolveServices (
 ) {
   const config = await loadConfigurationFile(logger, configurationFile)
 
-  if (!packageManager) {
-    getPackageManager(root)
-  }
-
   // The services which might be to be resolved are the one that have a URL and either
   // no path defined (which means no environment variable set) or a non-existing path (which means not resolved yet)
   const resolvableServices = config.services.filter(service => {
@@ -433,7 +428,7 @@ export async function resolveCommand (logger, args) {
       },
       'package-manager': {
         type: 'string',
-        short: 'p'
+        short: 'P'
       }
     },
     false

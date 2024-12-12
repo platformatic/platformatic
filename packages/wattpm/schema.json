@@ -313,6 +313,14 @@
           "sourceMaps": {
             "type": "boolean",
             "default": false
+          },
+          "packageManager": {
+            "type": "string",
+            "enum": [
+              "npm",
+              "pnpm",
+              "yarn"
+            ]
           }
         }
       }
@@ -483,6 +491,14 @@
           "sourceMaps": {
             "type": "boolean",
             "default": false
+          },
+          "packageManager": {
+            "type": "string",
+            "enum": [
+              "npm",
+              "pnpm",
+              "yarn"
+            ]
           }
         }
       }

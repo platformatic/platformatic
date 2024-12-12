@@ -71,6 +71,7 @@ runtime. Each service object supports the following settings:
 - **`envfile`** (`string`) - The path to an `.env` file to load for the service.
 - **`env`** (`object`) - An object containing environment variables to set for the service. Values set here takes precedence over values set in the `envfile`.
 - **`sourceMaps`** (`boolean`) - If `true`, source maps are enabled for the service. Default: `false`.
+- **`packageManager`** (`string`) - The package manager to use when using the `install-dependencies` or the `resolve` commands of `plt` or `wattpm`. Default is to autodetect it, unless it is specified via command line.
 
 If this property is present, then the services will not be reordered according to the
 `getBootstrapDependencies` function and they will be started in the order they are defined in

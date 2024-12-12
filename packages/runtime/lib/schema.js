@@ -60,6 +60,10 @@ const services = {
       sourceMaps: {
         type: 'boolean',
         default: false
+      },
+      packageManager: {
+        type: 'string',
+        enum: ['npm', 'pnpm', 'yarn']
       }
     }
   }
