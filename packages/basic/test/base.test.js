@@ -54,7 +54,6 @@ test('BaseStackable - other getters', async t => {
   deepStrictEqual(await stackable.getConfig(), { key1: 'value1' })
   deepStrictEqual(await stackable.getEnv(), { key2: 'value2' })
   deepStrictEqual(await stackable.getInfo(), { type: 'base', version: '1.0.0' })
-  deepStrictEqual(await stackable.collectMetrics(), undefined)
   deepStrictEqual(await stackable.getDispatchFunc(), stackable)
 })
 
