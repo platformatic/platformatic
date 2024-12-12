@@ -1,4 +1,4 @@
-import { collectMetrics } from '@platformatic/metrics'
+import { client, collectMetrics } from '@platformatic/metrics'
 import { deepmerge, executeWithTimeout } from '@platformatic/utils'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
@@ -38,7 +38,7 @@ export class BaseStackable {
     this.basePath = null
     this.isEntrypoint = options.context.isEntrypoint
     this.isProduction = options.context.isProduction
-    this.metricsRegistry = null
+    this.metricsRegistry = new client.Registry()
     this.startHttpTimer = null
     this.endHttpTimer = null
     this.clientWs = null
@@ -71,7 +71,8 @@ export class BaseStackable {
       setConnectionString: this.setConnectionString.bind(this),
       setBasePath: this.setBasePath.bind(this),
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
-      invalidateHttpCache: this.#invalidateHttpCache.bind(this)
+      invalidateHttpCache: this.#invalidateHttpCache.bind(this),
+      prometheus: { client, registry: this.metricsRegistry }
     })
   }
 
@@ -341,13 +342,13 @@ export class BaseStackable {
         return
       }
 
-      const { registry, startHttpTimer, endHttpTimer } = await collectMetrics(
+      const { startHttpTimer, endHttpTimer } = await collectMetrics(
         this.serviceId,
         this.workerId,
-        metricsConfig
+        metricsConfig,
+        this.metricsRegistry
       )
 
-      this.metricsRegistry = registry
       this.startHttpTimer = startHttpTimer
       this.endHttpTimer = endHttpTimer
     }
@@ -357,8 +358,6 @@ export class BaseStackable {
     if (this.childManager && this.clientWs) {
       return this.childManager.send(this.clientWs, 'getMetrics', { format })
     }
-
-    if (!this.metricsRegistry) return null
 
     return format === 'json' ? await this.metricsRegistry.getMetricsAsJSON() : await this.metricsRegistry.metrics()
   }

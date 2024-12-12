@@ -6,7 +6,7 @@ const { pathToFileURL } = require('node:url')
 const { workerData } = require('node:worker_threads')
 const { printSchema } = require('graphql')
 const pino = require('pino')
-const { collectMetrics } = require('@platformatic/metrics')
+const { client, collectMetrics } = require('@platformatic/metrics')
 const httpMetrics = require('@platformatic/fastify-http-metrics')
 const { extractTypeScriptCompileOptionsFromConfig } = require('./compile')
 const { compile } = require('@platformatic/ts-compiler')
@@ -19,7 +19,7 @@ class ServiceStackable {
     this.app = null
     this._init = options.init
     this.stackable = options.stackable
-    this.metricsRegistry = null
+    this.metricsRegistry = new client.Registry()
 
     this.configManager = options.configManager
     this.context = options.context ?? {}
@@ -52,7 +52,8 @@ class ServiceStackable {
       setConnectionString: this.setConnectionString.bind(this),
       setBasePath: this.setBasePath.bind(this),
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
-      invalidateHttpCache: this.#invalidateHttpCache.bind(this)
+      invalidateHttpCache: this.#invalidateHttpCache.bind(this),
+      prometheus: { client, registry: this.metricsRegistry }
     })
   }
 
@@ -138,7 +139,7 @@ class ServiceStackable {
         tcp: !!this.app?.url,
         url: this.app?.url
       },
-      connectionStrings: [this.connectionString],
+      connectionStrings: [this.connectionString]
     }
   }
 
@@ -182,19 +183,22 @@ class ServiceStackable {
     const metricsConfig = this.context.metricsConfig
 
     if (metricsConfig !== false) {
-      const { registry } = await collectMetrics(this.context.serviceId, this.context.worker.index, {
-        defaultMetrics: true,
-        httpMetrics: false,
-        ...metricsConfig
-      })
-      this.metricsRegistry = registry
+      await collectMetrics(
+        this.serviceId,
+        this.workerId,
+        {
+          defaultMetrics: true,
+          httpMetrics: false,
+          ...metricsConfig
+        },
+        this.metricsRegistry
+      )
+
       this.#setHttpMetrics()
     }
   }
 
   async getMetrics ({ format }) {
-    if (!this.metricsRegistry) return null
-
     return format === 'json' ? await this.metricsRegistry.getMetricsAsJSON() : await this.metricsRegistry.metrics()
   }
 
