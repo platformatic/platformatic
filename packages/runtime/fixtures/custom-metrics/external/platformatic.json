@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.6.0.json",
+  "logger": {
+    "level": "error"
+  },
+  "application": {
+    "commands": {
+      "development": "node index.mjs"
+    }
+  }
+}

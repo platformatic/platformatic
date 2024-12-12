@@ -1,4 +1,3 @@
-import { AsyncResource } from 'node:async_hooks'
 import {
   BaseStackable,
   cleanBasePath,
@@ -13,6 +12,7 @@ import {
 } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
 import inject from 'light-my-request'
+import { AsyncResource } from 'node:async_hooks'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { Server } from 'node:http'
@@ -132,6 +132,7 @@ export class NodeStackable extends BaseStackable {
       this.url = getServerUrl(this.#server)
     }
 
+    super.start()
     return this.url
   }
 

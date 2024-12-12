@@ -1,4 +1,4 @@
-import { collectMetrics } from '@platformatic/metrics'
+import { client, collectMetrics } from '@platformatic/metrics'
 import { deepmerge, executeWithTimeout } from '@platformatic/utils'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
@@ -19,6 +19,7 @@ export class BaseStackable {
   childManager
   subprocess
   #subprocessStarted
+  #metricsCollected
 
   constructor (type, version, options, root, configManager) {
     options.context.worker ??= { count: 1, index: 0 }
@@ -38,7 +39,8 @@ export class BaseStackable {
     this.basePath = null
     this.isEntrypoint = options.context.isEntrypoint
     this.isProduction = options.context.isProduction
-    this.metricsRegistry = null
+    this.metricsRegistry = new client.Registry()
+    this.#metricsCollected = false
     this.startHttpTimer = null
     this.endHttpTimer = null
     this.clientWs = null
@@ -71,7 +73,8 @@ export class BaseStackable {
       setConnectionString: this.setConnectionString.bind(this),
       setBasePath: this.setBasePath.bind(this),
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
-      invalidateHttpCache: this.#invalidateHttpCache.bind(this)
+      invalidateHttpCache: this.#invalidateHttpCache.bind(this),
+      prometheus: { client, registry: this.metricsRegistry }
     })
   }
 
@@ -207,6 +210,15 @@ export class BaseStackable {
     }
   }
 
+  async start () {
+    if (this.#metricsCollected) {
+      return
+    }
+
+    this.#metricsCollected = true
+    await this.#collectMetrics()
+  }
+
   async startWithCommand (command, loader, scripts) {
     const config = this.configManager.current
     const basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
@@ -280,6 +292,8 @@ export class BaseStackable {
     const [url, clientWs] = await once(this.childManager, 'url')
     this.url = url
     this.clientWs = clientWs
+
+    await this.start()
   }
 
   async stopCommand () {
@@ -323,7 +337,7 @@ export class BaseStackable {
       : spawn(executable, args, { cwd: this.root })
   }
 
-  async collectMetrics () {
+  async #collectMetrics () {
     let metricsConfig = this.options.context.metricsConfig
     if (metricsConfig !== false) {
       metricsConfig = {
@@ -341,13 +355,13 @@ export class BaseStackable {
         return
       }
 
-      const { registry, startHttpTimer, endHttpTimer } = await collectMetrics(
+      const { startHttpTimer, endHttpTimer } = await collectMetrics(
         this.serviceId,
         this.workerId,
-        metricsConfig
+        metricsConfig,
+        this.metricsRegistry
       )
 
-      this.metricsRegistry = registry
       this.startHttpTimer = startHttpTimer
       this.endHttpTimer = endHttpTimer
     }
@@ -357,8 +371,6 @@ export class BaseStackable {
     if (this.childManager && this.clientWs) {
       return this.childManager.send(this.clientWs, 'getMetrics', { format })
     }
-
-    if (!this.metricsRegistry) return null
 
     return format === 'json' ? await this.metricsRegistry.getMetricsAsJSON() : await this.metricsRegistry.metrics()
   }

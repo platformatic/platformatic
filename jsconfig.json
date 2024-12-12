@@ -9,8 +9,7 @@
     "esModuleInterop": true,
     "strict": false,
     "skipLibCheck": true,
-    "resolveJsonModule": true,
-
+    "resolveJsonModule": true
   },
   "exclude": ["node_modules"]
 }
