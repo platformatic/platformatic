@@ -27,7 +27,7 @@ async function prepareRuntime (t, name, dependencies) {
     }
   }
 
-  process.env.PLT_RUNTIME_LOGGER_STDOUT = resolve(root, 'log.txt')
+  process.env.PLT_RUNTIME_LOGGER_STDOUT ??= resolve(root, 'log.txt')
   return root
 }
 
@@ -57,5 +57,5 @@ module.exports = {
   tmpDir,
   prepareRuntime,
   verifyResponse,
-  verifyInject,
+  verifyInject
 }

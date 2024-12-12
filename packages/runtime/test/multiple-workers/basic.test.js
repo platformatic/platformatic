@@ -4,6 +4,7 @@ const { ok } = require('node:assert')
 const { resolve } = require('node:path')
 const { test } = require('node:test')
 const { loadConfig } = require('@platformatic/config')
+const { features } = require('@platformatic/utils')
 const { buildServer, platformaticRuntime } = require('../..')
 const { updateFile, updateConfigFile, openLogsWebsocket, waitForLogs } = require('../helpers')
 const { prepareRuntime } = require('./helper')
@@ -20,9 +21,24 @@ test('services are started with multiple workers according to the configuration'
     managementApiWebsocket.terminate()
   })
 
+  const composerMessages = features.node.reusePort
+    ? [
+        [
+          'Starting the worker 0 of the service "composer"...',
+          'Starting the worker 1 of the service "composer"...',
+          'Starting the worker 2 of the service "composer"...'
+        ],
+        [
+          'Stopping the worker 0 of the service "composer"...',
+          'Stopping the worker 1 of the service "composer"...',
+          'Stopping the worker 2 of the service "composer"...'
+        ]
+      ]
+    : [['Starting the service "composer"...'], ['Stopping the service "composer"...']]
+
   const waitPromise = waitForLogs(
     managementApiWebsocket,
-    'Starting the service "composer"...',
+    ...composerMessages[0],
     'Starting the worker 0 of the service "service"...',
     'Starting the worker 1 of the service "service"...',
     'Starting the worker 2 of the service "service"...',
@@ -38,13 +54,18 @@ test('services are started with multiple workers according to the configuration'
 
   const startMessages = (await waitPromise).map(m => m.msg)
 
-  ok(!startMessages.includes('Starting the worker 0 of the service "composer"...'))
+  if (features.node.reusePort) {
+    ok(!startMessages.includes('Starting the service "composer"...'))
+  } else {
+    ok(!startMessages.includes('Starting the worker 0 of the service "composer"...'))
+  }
+
   ok(!startMessages.includes('Starting the worker 3 of the service "service"...'))
   ok(!startMessages.includes('Starting the worker 4 of the service "service"...'))
 
   const stopMessagesPromise = waitForLogs(
     managementApiWebsocket,
-    'Stopping the service "composer"...',
+    ...composerMessages[1],
     'Stopping the worker 0 of the service "service"...',
     'Stopping the worker 1 of the service "service"...',
     'Stopping the worker 2 of the service "service"...',
@@ -58,7 +79,11 @@ test('services are started with multiple workers according to the configuration'
   await app.stop()
   const stopMessages = (await stopMessagesPromise).map(m => m.msg)
 
-  ok(!stopMessages.includes('Stopping the worker 0 of the service "composer"...'))
+  if (features.node.reusePort) {
+    ok(!startMessages.includes('Stopping the service "composer"...'))
+  } else {
+    ok(!stopMessages.includes('Stopping the worker 0 of the service "composer"...'))
+  }
 })
 
 test('services are started with a single workers when no workers information is specified in the files', async t => {
