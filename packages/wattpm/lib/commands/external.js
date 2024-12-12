@@ -321,7 +321,7 @@ export async function resolveServices (
         url = parsed.toString()
       }
 
-      const cloneArgs = ['clone', url, absolutePath]
+      const cloneArgs = ['clone', url, absolutePath, '--single-branch', '--depth', 1]
 
       let branchLabel = ''
       if (service.gitBranch && service.gitBranch !== 'main') {
