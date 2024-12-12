@@ -19,6 +19,7 @@ export class BaseStackable {
   childManager
   subprocess
   #subprocessStarted
+  #metricsCollected
 
   constructor (type, version, options, root, configManager) {
     options.context.worker ??= { count: 1, index: 0 }
@@ -39,6 +40,7 @@ export class BaseStackable {
     this.isEntrypoint = options.context.isEntrypoint
     this.isProduction = options.context.isProduction
     this.metricsRegistry = new client.Registry()
+    this.#metricsCollected = false
     this.startHttpTimer = null
     this.endHttpTimer = null
     this.clientWs = null
@@ -208,6 +210,15 @@ export class BaseStackable {
     }
   }
 
+  async start () {
+    if (this.#metricsCollected) {
+      return
+    }
+
+    this.#metricsCollected = true
+    await this.#collectMetrics()
+  }
+
   async startWithCommand (command, loader, scripts) {
     const config = this.configManager.current
     const basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
@@ -281,6 +292,8 @@ export class BaseStackable {
     const [url, clientWs] = await once(this.childManager, 'url')
     this.url = url
     this.clientWs = clientWs
+
+    await this.start()
   }
 
   async stopCommand () {
@@ -324,7 +337,7 @@ export class BaseStackable {
       : spawn(executable, args, { cwd: this.root })
   }
 
-  async collectMetrics () {
+  async #collectMetrics () {
     let metricsConfig = this.options.context.metricsConfig
     if (metricsConfig !== false) {
       metricsConfig = {

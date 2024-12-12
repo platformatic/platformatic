@@ -80,6 +80,8 @@ export class RemixStackable extends ViteStackable {
     if (!this._getVite().config.plugins.some(p => p.name === 'remix')) {
       this.logger.warn('Could not find Remix plugin in your Vite configuration. Continuing as plain Vite application.')
     }
+
+    super.start()
   }
 
   async stop () {
@@ -185,6 +187,7 @@ export class RemixStackable extends ViteStackable {
     this.#app.use(this.#basePath, express.static(resolve(this.root, `${outputDirectory}/client`)))
     this.#app.all(`${ensureTrailingSlash(cleanBasePath(this.#basePath))}*`, createRequestHandler({ build }))
 
+    super.start()
     return this.url
   }
 
