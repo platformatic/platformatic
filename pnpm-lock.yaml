@@ -1106,8 +1106,8 @@ importers:
         specifier: ^5.0.0
         version: 5.1.0
       get-jwks:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^11.0.0
+        version: 11.0.0
       neostandard:
         specifier: ^0.12.0
         version: 0.12.0(eslint@9.16.0)(typescript@5.7.2)
@@ -5944,6 +5944,10 @@ packages:
 
   get-jwks@10.0.0:
     resolution: {integrity: sha512-CRwr+1rbY+nSnBLUmzlo+4jAmNhcAp3aWLGhZAx2+wWS+CM2HXNoDthdKZdFkpLiFK9lOenfD9FDSCOCN2iBRg==}
+    engines: {node: '>=20'}
+
+  get-jwks@11.0.0:
+    resolution: {integrity: sha512-AU/cmfzmYzP6hZbcUjIbloS5g20dt/jFORLjRSiKF/IOXtKFevRk6Yq/XUuKUFJm/7nDg7Z0pKkuX7R4+oA4tg==}
     engines: {node: '>=20'}
 
   get-port@5.1.1:
@@ -13255,6 +13259,11 @@ snapshots:
       hasown: 2.0.2
 
   get-jwks@10.0.0:
+    dependencies:
+      jwk-to-pem: 2.0.7
+      lru-cache: 11.0.2
+
+  get-jwks@11.0.0:
     dependencies:
       jwk-to-pem: 2.0.7
       lru-cache: 11.0.2
