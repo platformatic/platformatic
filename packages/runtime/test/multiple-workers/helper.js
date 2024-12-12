@@ -4,7 +4,7 @@ const { cp, symlink, writeFile } = require('node:fs/promises')
 const { deepStrictEqual } = require('node:assert')
 const { join, resolve, dirname } = require('node:path')
 const { request } = require('undici')
-const { createDirectory, safeRemove } = require('@platformatic/utils')
+const { createDirectory, safeRemove, features } = require('@platformatic/utils')
 
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
@@ -54,10 +54,36 @@ async function verifyInject (client, service, expectedWorker, additionalChecks) 
   additionalChecks?.(res, json)
 }
 
+function getExpectedMessages (entrypoint, workers) {
+  const start = []
+  const stop = []
+
+  if (!features.node.reusePort) {
+    start.push(`Starting the service "${entrypoint}"...`)
+    stop.push(`Stopping the service "${entrypoint}"...`)
+  }
+
+  for (const [service, count] of Object.entries(workers)) {
+    if (service === entrypoint && !features.node.reusePort) {
+      continue
+    }
+
+    for (let i = 0; i < count; i++) {
+      start.push(`Starting the worker ${i} of the service "${service}"...`)
+      stop.push(`Stopping the worker ${i} of the service "${service}"...`)
+    }
+  }
+
+  start.push('Platformatic is now listening')
+
+  return { start, stop }
+}
+
 module.exports = {
   fixturesDir,
   tmpDir,
   prepareRuntime,
   verifyResponse,
-  verifyInject
+  verifyInject,
+  getExpectedMessages
 }
