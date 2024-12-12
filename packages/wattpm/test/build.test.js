@@ -3,8 +3,12 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
+import { pino } from 'pino'
 import { prepareRuntime } from '../../basic/test/helper.js'
+import { loadRawConfigurationFile, saveConfigurationFile } from '../lib/utils.js'
 import { wattpm } from './helper.js'
+
+const logger = pino()
 
 test('build - should build the application', async t => {
   const { root: buildDir } = await prepareRuntime(t, 'build', false, 'watt.json')
@@ -68,6 +72,29 @@ test('install - should install dependencies of application and its services usin
 
   ok(installProcess.stdout.includes('Installing dependencies for the application using pnpm ...'))
   ok(installProcess.stdout.includes('Installing dependencies for the service main using pnpm ...'))
+})
+
+test('install - should respect the service package manager, if any', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
+    await safeRemove(resolve(root, 'node_modules'))
+    await safeRemove(resolve(root, 'web/main/node_modules'))
+  })
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+  originalFileContents.services = [
+    {
+      id: 'main',
+      path: 'web/main',
+      packageManager: 'npm'
+    }
+  ]
+  await saveConfigurationFile(logger, configurationFile, originalFileContents)
+
+  const installProcess = await wattpm('install', rootDir, '-P', 'pnpm')
+
+  ok(installProcess.stdout.includes('Installing dependencies for the application using pnpm ...'))
+  ok(installProcess.stdout.includes('Installing dependencies for the service main using npm ...'))
 })
 
 test('install - should install production dependencies only', async t => {

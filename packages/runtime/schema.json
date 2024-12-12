@@ -313,6 +313,9 @@
           "sourceMaps": {
             "type": "boolean",
             "default": false
+          },
+          "packageManager": {
+            "type": "string"
           }
         }
       }
@@ -483,6 +486,9 @@
           "sourceMaps": {
             "type": "boolean",
             "default": false
+          },
+          "packageManager": {
+            "type": "string"
           }
         }
       }

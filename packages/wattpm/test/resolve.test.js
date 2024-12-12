@@ -3,9 +3,13 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { relative, resolve, sep } from 'node:path'
 import { test } from 'node:test'
+import { pino } from 'pino'
 import { prepareRuntime, temporaryFolder } from '../../basic/test/helper.js'
 import { appendEnvVariable } from '../lib/commands/external.js'
+import { loadRawConfigurationFile, saveConfigurationFile } from '../lib/utils.js'
 import { prepareGitRepository, wattpm } from './helper.js'
+
+const logger = pino()
 
 test('resolve - should clone a URL when the environment variable is set to a folder inside the repo', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
@@ -142,4 +146,40 @@ test('resolve - should clone a different branch', async t => {
   ok(resolveProcess.stdout.includes('Installing dependencies for the service resolved using npm ...'))
 
   deepStrictEqual(await readFile(resolve(rootDir, 'web/resolved/branch'), 'utf8'), 'another')
+})
+
+test('resolve - should install dependencies using a different package manager', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const repo = await prepareGitRepository(t, rootDir)
+  t.after(() => safeRemove(rootDir))
+
+  process.chdir(rootDir)
+  await wattpm('import', rootDir, '-h', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
+  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_SERVICE_RESOLVED_PATH', 'web/resolved')
+
+  const resolveProcess = await wattpm('resolve', '-P', 'pnpm', rootDir)
+
+  ok(resolveProcess.stdout.includes(`Cloning ${repo} into web${sep}resolved`))
+  ok(resolveProcess.stdout.includes('Installing dependencies for the service resolved using pnpm ...'))
+
+  deepStrictEqual(await readFile(resolve(rootDir, 'web/resolved/branch'), 'utf8'), 'main')
+})
+
+test('install - should respect the service package manager, if any', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  await prepareGitRepository(t, rootDir)
+  t.after(() => safeRemove(rootDir))
+
+  process.chdir(rootDir)
+  await wattpm('import', rootDir, '-h', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
+  await appendEnvVariable(resolve(rootDir, '.env'), 'PLT_SERVICE_RESOLVED_PATH', 'web/resolved')
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+  originalFileContents.web[0].packageManager = 'npm'
+  await saveConfigurationFile(logger, configurationFile, originalFileContents)
+
+  const resolveProcess = await wattpm('resolve', '-P', 'pnpm', rootDir)
+
+  ok(resolveProcess.stdout.includes('Installing dependencies for the service resolved using npm ...'))
 })
