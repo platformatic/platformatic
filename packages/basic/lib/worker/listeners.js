@@ -1,5 +1,12 @@
 import { withResolvers } from '@platformatic/utils'
 import { subscribe, tracingChannel, unsubscribe } from 'node:diagnostics_channel'
+import { AsyncLocalStorage } from 'node:async_hooks'
+
+const snapshots = new WeakMap()
+
+export function getAsyncLocalStorageSnapshot (server) {
+  return snapshots.get(server)
+}
 
 export function createServerListener (overridePort = true, overrideHost) {
   const { promise, resolve, reject } = withResolvers()
@@ -20,6 +27,7 @@ export function createServerListener (overridePort = true, overrideHost) {
     },
     asyncEnd ({ server }) {
       cancel()
+      snapshots.set(server, AsyncLocalStorage.snapshot())
       resolve(server)
     },
     error ({ error }) {
