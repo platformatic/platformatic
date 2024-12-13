@@ -1154,3 +1154,46 @@ test('can be used without the runtime - standalone mode', { skip: isCIOnWindows 
     { msg: 'remove', key, value: undefined }
   ])
 })
+
+test.only('should track Next.js cache hit and miss ratio in Prometheus', { skip: isCIOnWindows }, async t => {
+  const configuration = 'caching-valkey'
+  const valkeyPrefix = 'plt:test:caching-valkey'
+  const { url, runtime } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
+
+  const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
+  await cleanupCache(valkey, valkeyPrefix)
+
+  t.after(async () => {
+    await valkey.disconnect()
+  })
+
+  let version
+  let time
+  {
+    const response = await fetch(url)
+    const data = await response.text()
+
+    const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
+    ok(mo)
+
+    version = mo[1]
+    time = mo[2]
+  }
+
+  {
+    const response = await fetch(url)
+    const data = await response.text()
+
+    const mo = data.match(/<div>Hello from v<!-- -->(.+)<!-- --> t<!-- -->(.+)<\/div>/)
+    deepStrictEqual(mo[1], version)
+    deepStrictEqual(mo[2], time)
+  }
+
+  const { metrics } = await runtime.getMetrics('json')
+
+  const cacheHit = metrics.find(m => m.name === 'next_cache_valkey_hit_count')
+  const cacheMiss = metrics.find(m => m.name === 'next_cache_valkey_miss_count')
+
+  deepStrictEqual(cacheHit.values[0].value, 1) // One for the page (second request)
+  deepStrictEqual(cacheMiss.values[0].value, 2) // One for the page (first request), one for the internal fetch
+})

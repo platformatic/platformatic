@@ -7,14 +7,17 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { pino } from 'pino'
 
+const CACHE_HIT_METRIC = { name: 'next_cache_valkey_hit_count', help: 'Next.js Cache (Valkey) Hit Count' }
+const CACHE_MISS_METRIC = { name: 'next_cache_valkey_miss_count', help: 'Next.js Cache (Valkey) Miss Count' }
+
+const clients = new Map()
+
 export const MAX_BATCH_SIZE = 100
 
 export const sections = {
   values: 'values',
   tags: 'tags'
 }
-
-const clients = new Map()
 
 export function keyFor (prefix, subprefix, section, key) {
   return [prefix, 'cache:next', subprefix, section, key ? Buffer.from(key).toString('base64url') : undefined]
@@ -46,6 +49,8 @@ export class CacheHandler {
   #subprefix
   #meta
   #maxTTL
+  #cacheHitMetric
+  #cacheMissMetric
 
   constructor (options) {
     options ??= {}
@@ -86,6 +91,10 @@ export class CacheHandler {
     if (!this.#store) {
       throw new Error('Please provide a the "store" option.')
     }
+
+    if (globalThis.platformatic) {
+      this.#registerMetrics()
+    }
   }
 
   async get (cacheKey, _, isRedisKey) {
@@ -98,9 +107,11 @@ export class CacheHandler {
       rawValue = await this.#store.get(key)
 
       if (!rawValue) {
+        this.#cacheMissMetric?.inc()
         return
       }
     } catch (e) {
+      this.#cacheMissMetric?.inc()
       this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot read cache value from Valkey')
       throw new Error('Cannot read cache value from Valkey', { cause: e })
     }
@@ -109,6 +120,7 @@ export class CacheHandler {
     try {
       value = this.#deserialize(rawValue)
     } catch (e) {
+      this.#cacheMissMetric?.inc()
       this.#logger.error({ err: ensureLoggableError(e) }, 'Cannot deserialize cache value from Valkey')
 
       // Avoid useless reads the next time
@@ -129,6 +141,7 @@ export class CacheHandler {
       }
     }
 
+    this.#cacheHitMetric?.inc()
     return value
   }
 
@@ -324,6 +337,26 @@ export class CacheHandler {
 
   #deserialize (data) {
     return unpack(Buffer.from(data, 'base64url'))
+  }
+
+  #registerMetrics () {
+    const { client, registry } = globalThis.platformatic.prometheus
+
+    this.#cacheHitMetric =
+      registry.getSingleMetric(CACHE_HIT_METRIC.name) ??
+      new client.Counter({
+        name: CACHE_HIT_METRIC.name,
+        help: CACHE_HIT_METRIC.help,
+        registers: [registry]
+      })
+
+    this.#cacheMissMetric =
+      registry.getSingleMetric(CACHE_MISS_METRIC.name) ??
+      new client.Counter({
+        name: CACHE_MISS_METRIC.name,
+        help: CACHE_MISS_METRIC.help,
+        registers: [registry]
+      })
   }
 }
 
