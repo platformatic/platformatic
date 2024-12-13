@@ -1155,7 +1155,7 @@ test('can be used without the runtime - standalone mode', { skip: isCIOnWindows 
   ])
 })
 
-test.only('should track Next.js cache hit and miss ratio in Prometheus', { skip: isCIOnWindows }, async t => {
+test('should track Next.js cache hit and miss ratio in Prometheus', { skip: isCIOnWindows }, async t => {
   const configuration = 'caching-valkey'
   const valkeyPrefix = 'plt:test:caching-valkey'
   const { url, runtime } = await prepareRuntimeWithBackend(t, configuration, true, false, ['frontend'])
