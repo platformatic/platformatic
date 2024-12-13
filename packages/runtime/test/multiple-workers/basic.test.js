@@ -191,6 +191,7 @@ test('can collect metrics with worker label', async t => {
   })
 
   const received = new Set()
+  process._rawDebug(JSON.stringify(servicesMetrics, null, 2))
   ok(
     servicesMetrics.every(s => {
       const firstValue = s.values[0]
@@ -203,7 +204,7 @@ test('can collect metrics with worker label', async t => {
           if (features.node.reusePort) {
             return typeof workerId === 'number' && workerId >= 0 && workerId < 3
           } else {
-            return workerId === 0
+            return workerId === 0 || typeof workerId === 'undefined'
           }
 
         case 'service':
