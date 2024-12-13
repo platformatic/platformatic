@@ -54,6 +54,8 @@ export class AstroStackable extends BaseStackable {
     } else {
       await this.#startDevelopment(listen)
     }
+
+    this._collectMetrics()
   }
 
   async stop () {

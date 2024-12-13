@@ -43,6 +43,7 @@ export class ChildManager extends ITC {
   #scripts
   #logger
   #server
+  #websocketServer
   #socketPath
   #clients
   #requests
@@ -93,9 +94,9 @@ export class ChildManager extends ITC {
       await createDirectory(dirname(this.#socketPath))
     }
 
-    const wssServer = new WebSocketServer({ server: this.#server })
+    this.#websocketServer = new WebSocketServer({ server: this.#server })
 
-    wssServer.on('connection', ws => {
+    this.#websocketServer.on('connection', ws => {
       this.#clients.add(ws)
 
       ws.on('message', raw => {
@@ -135,8 +136,14 @@ export class ChildManager extends ITC {
       await rm(this.#dataPath, { force: true })
     }
 
-    this.#server?.close()
-    super.close()
+    for (const client of this.#clients) {
+      client.close()
+      await once(client, 'close')
+    }
+
+    await this.#closeServer(this.#websocketServer)
+    await this.#closeServer(this.#server)
+    await super.close()
   }
 
   async inject () {
@@ -251,5 +258,23 @@ export class ChildManager extends ITC {
   #handleUnexpectedError (error, message, exitCode) {
     this.#logger.error({ err: ensureLoggableError(error) }, message)
     process.exit(exitCode)
+  }
+
+  #closeServer (server) {
+    return new Promise((resolve, reject) => {
+      if (!server || server.listening === false) {
+        resolve()
+        return
+      }
+
+      server.close(err => {
+        if (err) {
+          reject(err)
+          return
+        }
+
+        resolve()
+      })
+    })
   }
 }

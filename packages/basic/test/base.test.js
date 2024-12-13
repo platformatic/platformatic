@@ -54,7 +54,6 @@ test('BaseStackable - other getters', async t => {
   deepStrictEqual(await stackable.getConfig(), { key1: 'value1' })
   deepStrictEqual(await stackable.getEnv(), { key2: 'value2' })
   deepStrictEqual(await stackable.getInfo(), { type: 'base', version: '1.0.0' })
-  deepStrictEqual(await stackable.collectMetrics(), undefined)
   deepStrictEqual(await stackable.getDispatchFunc(), stackable)
 })
 
@@ -183,7 +182,6 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
     deepStrictEqual(statusCode, 200)
 
     const body = await rawBody.json()
-    body.events = undefined
     deepStrictEqual(body, {
       config: {
         application: {
@@ -203,8 +201,7 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
       telemetryConfig: {},
       isEntrypoint: true,
       runtimeBasePath: null,
-      wantsAbsoluteUrls: false,
-      events: undefined
+      wantsAbsoluteUrls: false
     })
   }
 
@@ -260,7 +257,6 @@ test('BaseStackable - should import and setup open telemetry HTTP instrumentatio
     deepStrictEqual(statusCode, 200)
 
     const body = await rawBody.json()
-    body.events = undefined
     deepStrictEqual(body, {
       config: {
         application: {
@@ -289,8 +285,7 @@ test('BaseStackable - should import and setup open telemetry HTTP instrumentatio
       },
       isEntrypoint: true,
       runtimeBasePath: null,
-      wantsAbsoluteUrls: false,
-      events: undefined
+      wantsAbsoluteUrls: false
     })
   }
 

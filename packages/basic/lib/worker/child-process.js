@@ -1,5 +1,5 @@
 import { ITC } from '@platformatic/itc'
-import { collectMetrics } from '@platformatic/metrics'
+import { client, collectMetrics } from '@platformatic/metrics'
 import { createPinoWritable, ensureLoggableError, features } from '@platformatic/utils'
 import diagnosticChannel, { tracingChannel } from 'node:diagnostics_channel'
 import { EventEmitter, once } from 'node:events'
@@ -105,6 +105,7 @@ export class ChildProcess extends ITC {
     const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
     this.#socket = new WebSocket(`${protocol}${getSocketPath(process.env.PLT_MANAGER_ID)}`)
     this.#pendingMessages = []
+    this.#metricsRegistry = new client.Registry()
 
     this.listen()
     this.#setupLogger()
@@ -123,7 +124,8 @@ export class ChildProcess extends ITC {
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
       setConnectionString: this.setConnectionString.bind(this),
-      setBasePath: this.setBasePath.bind(this)
+      setBasePath: this.setBasePath.bind(this),
+      prometheus: { client, registry: this.#metricsRegistry }
     })
   }
 
@@ -177,13 +179,10 @@ export class ChildProcess extends ITC {
   }
 
   async #collectMetrics ({ serviceId, workerId, metricsConfig }) {
-    const { registry } = await collectMetrics(serviceId, workerId, metricsConfig)
-    this.#metricsRegistry = registry
+    await collectMetrics(serviceId, workerId, metricsConfig, this.#metricsRegistry)
   }
 
   async #getMetrics ({ format } = {}) {
-    if (!this.#metricsRegistry) return null
-
     const res =
       format === 'json' ? await this.#metricsRegistry.getMetricsAsJSON() : await this.#metricsRegistry.metrics()
 

@@ -1,4 +1,4 @@
-import { deepStrictEqual, ok, rejects, equal } from 'node:assert'
+import { deepStrictEqual, equal, ok, rejects } from 'node:assert'
 import { once } from 'node:events'
 import { createServer } from 'node:http'
 import { test } from 'node:test'
@@ -66,8 +66,8 @@ test('ChildProcess - the process will close upon request', async t => {
   const promise = stackable.buildWithCommand(['node', executablePath])
   const childManager = await getChildManager(stackable)
 
-  await once(childManager, 'ready')
-  childManager.close('SIGKILL')
+  const [, socket] = await once(childManager, 'ready')
+  await childManager.notify(socket, 'close')
   await rejects(() => promise, /Process exited with non zero exit code/)
 })
 

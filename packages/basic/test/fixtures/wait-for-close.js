@@ -2,9 +2,9 @@ const interval = setInterval(() => {
   // No-op
 }, 1000)
 
-globalThis[Symbol.for('plt.children.itc')]?.notify('ready')
-
-globalThis[Symbol.for('plt.children.itc')].handle('failure', () => {
+globalThis.platformatic.events.on('close', () => {
   clearInterval(interval)
   throw new Error('FAILURE')
 })
+
+globalThis[Symbol.for('plt.children.itc')].notify('ready')

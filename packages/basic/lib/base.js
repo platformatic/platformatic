@@ -1,4 +1,4 @@
-import { collectMetrics } from '@platformatic/metrics'
+import { client, collectMetrics } from '@platformatic/metrics'
 import { deepmerge, executeWithTimeout } from '@platformatic/utils'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
@@ -19,6 +19,7 @@ export class BaseStackable {
   childManager
   subprocess
   #subprocessStarted
+  #metricsCollected
 
   constructor (type, version, options, root, configManager) {
     options.context.worker ??= { count: 1, index: 0 }
@@ -38,7 +39,8 @@ export class BaseStackable {
     this.basePath = null
     this.isEntrypoint = options.context.isEntrypoint
     this.isProduction = options.context.isProduction
-    this.metricsRegistry = null
+    this.metricsRegistry = new client.Registry()
+    this.#metricsCollected = false
     this.startHttpTimer = null
     this.endHttpTimer = null
     this.clientWs = null
@@ -71,7 +73,8 @@ export class BaseStackable {
       setConnectionString: this.setConnectionString.bind(this),
       setBasePath: this.setBasePath.bind(this),
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
-      invalidateHttpCache: this.#invalidateHttpCache.bind(this)
+      invalidateHttpCache: this.#invalidateHttpCache.bind(this),
+      prometheus: { client, registry: this.metricsRegistry }
     })
   }
 
@@ -263,7 +266,7 @@ export class BaseStackable {
 
       this.#subprocessStarted = true
     } catch (e) {
-      this.childManager.close('SIGKILL')
+      this.childManager.close()
       throw new Error(`Cannot execute command "${command}": executable not found`)
     } finally {
       await this.childManager.eject()
@@ -272,7 +275,7 @@ export class BaseStackable {
     // If the process exits prematurely, terminate the thread with the same code
     this.subprocess.on('exit', code => {
       if (this.#subprocessStarted && typeof code === 'number' && code !== 0) {
-        this.childManager.close('SIGKILL')
+        this.childManager.close()
         process.exit(code)
       }
     })
@@ -280,10 +283,12 @@ export class BaseStackable {
     const [url, clientWs] = await once(this.childManager, 'url')
     this.url = url
     this.clientWs = clientWs
+
+    await this._collectMetrics()
   }
 
   async stopCommand () {
-    const exitTimeout = this.runtimeConfig.gracefulShutdown.runtime
+    const exitTimeout = this.runtimeConfig.gracefulShutdown.service
 
     this.#subprocessStarted = false
     const exitPromise = once(this.subprocess, 'exit')
@@ -307,7 +312,7 @@ export class BaseStackable {
     await exitPromise
 
     // Close the manager
-    this.childManager.close()
+    await this.childManager.close()
   }
 
   getChildManager () {
@@ -323,7 +328,16 @@ export class BaseStackable {
       : spawn(executable, args, { cwd: this.root })
   }
 
-  async collectMetrics () {
+  async _collectMetrics () {
+    if (this.#metricsCollected) {
+      return
+    }
+
+    this.#metricsCollected = true
+    await this.#collectMetrics()
+  }
+
+  async #collectMetrics () {
     let metricsConfig = this.options.context.metricsConfig
     if (metricsConfig !== false) {
       metricsConfig = {
@@ -341,13 +355,13 @@ export class BaseStackable {
         return
       }
 
-      const { registry, startHttpTimer, endHttpTimer } = await collectMetrics(
+      const { startHttpTimer, endHttpTimer } = await collectMetrics(
         this.serviceId,
         this.workerId,
-        metricsConfig
+        metricsConfig,
+        this.metricsRegistry
       )
 
-      this.metricsRegistry = registry
       this.startHttpTimer = startHttpTimer
       this.endHttpTimer = endHttpTimer
     }
@@ -357,8 +371,6 @@ export class BaseStackable {
     if (this.childManager && this.clientWs) {
       return this.childManager.send(this.clientWs, 'getMetrics', { format })
     }
-
-    if (!this.metricsRegistry) return null
 
     return format === 'json' ? await this.metricsRegistry.getMetricsAsJSON() : await this.metricsRegistry.metrics()
   }

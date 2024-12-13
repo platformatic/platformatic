@@ -3,7 +3,9 @@
 const { existsSync } = require('node:fs')
 const { EventEmitter } = require('node:events')
 const { resolve } = require('node:path')
-const { performance: { eventLoopUtilization } } = require('node:perf_hooks')
+const {
+  performance: { eventLoopUtilization }
+} = require('node:perf_hooks')
 const { workerData } = require('node:worker_threads')
 const { ConfigManager } = require('@platformatic/config')
 const { FileWatcher } = require('@platformatic/utils')
@@ -127,10 +129,6 @@ class PlatformaticApp extends EventEmitter {
         context: this.#context
       })
       this.stackable = this.#wrapStackable(stackable)
-
-      this.once('start', () => {
-        this.stackable.collectMetrics()
-      })
 
       this.#updateDispatcher()
     } catch (err) {

@@ -75,9 +75,50 @@ test('should start a prometheus server on port 9090', async t => {
   ]
 
   for (const metricName of expectedMetricNames) {
-    assert.ok(
-      metricsNames.includes(metricName),
-      `Expected metric ${metricName} to be present`
-    )
+    assert.ok(metricsNames.includes(metricName), `Expected metric ${metricName} to be present`)
   }
+})
+
+test('should support custom metrics', async t => {
+  const projectDir = join(fixturesDir, 'custom-metrics')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  const { statusCode, body } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/metrics'
+  })
+  assert.strictEqual(statusCode, 200)
+
+  const metrics = await body.text()
+
+  assert.ok(metrics.includes('# HELP custom_service_1 Custom Service 1'))
+  assert.ok(metrics.includes('# TYPE custom_service_1 counter'))
+  assert.ok(metrics.includes('custom_service_1{serviceId="service",workerId="undefined"} 123'))
+  assert.ok(metrics.includes('# HELP custom_service_2 Custom Service 2'))
+  assert.ok(metrics.includes('# TYPE custom_service_2 gauge'))
+  assert.ok(metrics.includes('custom_service_2{serviceId="service",workerId="undefined"} 456'))
+
+  assert.ok(metrics.includes('# HELP custom_internal_1 Custom Internal 1'))
+  assert.ok(metrics.includes('# TYPE custom_internal_1 counter'))
+  assert.ok(metrics.includes('custom_internal_1{serviceId="internal",workerId="undefined"} 123'))
+  assert.ok(metrics.includes('# HELP custom_internal_2 Custom Internal 2'))
+  assert.ok(metrics.includes('# TYPE custom_internal_2 gauge'))
+  assert.ok(metrics.includes('custom_internal_2{serviceId="internal",workerId="undefined"} 456'))
+
+  assert.ok(metrics.includes('# HELP custom_external_1 Custom External 1'))
+  assert.ok(metrics.includes('# TYPE custom_external_1 counter'))
+  assert.ok(metrics.includes('custom_external_1{serviceId="external",workerId="undefined"} 123'))
+  assert.ok(metrics.includes('# HELP custom_external_2 Custom External 2'))
+  assert.ok(metrics.includes('# TYPE custom_external_2 gauge'))
+  assert.ok(metrics.includes('custom_external_2{serviceId="external",workerId="undefined"} 456'))
 })

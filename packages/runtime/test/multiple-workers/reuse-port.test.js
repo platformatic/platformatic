@@ -61,7 +61,7 @@ test('services are started with multiple workers even for the entrypoint when No
 
   const usedWorkers = new Set()
   // Check that we get the response from different workers
-  for (let i = 0; i < workers; i++) {
+  const promises = Array.from(Array(workers)).map(async () => {
     const res = await request(entryUrl + '/hello')
     const json = await res.body.json()
 
@@ -75,7 +75,9 @@ test('services are started with multiple workers even for the entrypoint when No
     }
 
     deepStrictEqual(json, { from: 'node' })
-  }
+  })
+
+  await Promise.all(promises)
 
   if (workers > 1) {
     ok(usedWorkers.size > 1)
