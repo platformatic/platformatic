@@ -21,7 +21,7 @@ export async function build () {
   })
 
   await server.vite.ready()
-  const prefix = (server.vite.devServer?.config ?? server.vite.config.vite).base
+  const prefix = (server.vite.devServer?.config ?? server.vite.config.vite).base ?? ''
 
   server.get(ensureTrailingSlash(cleanBasePath(prefix)), (req, reply) => {
     return reply.type('text/html').html()

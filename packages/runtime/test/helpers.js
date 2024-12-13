@@ -81,6 +81,10 @@ async function waitForLogs (socket, ...exprs) {
 
   for await (const [msg] of on(socket, 'message')) {
     for (const line of msg.toString().trim().split('\n')) {
+      if (process.env.PLT_TESTS_VERBOSE === 'true') {
+        process._rawDebug(line)
+      }
+
       let message
       try {
         message = JSON.parse(line)
@@ -112,5 +116,5 @@ module.exports = {
   updateFile,
   updateConfigFile,
   openLogsWebsocket,
-  waitForLogs,
+  waitForLogs
 }

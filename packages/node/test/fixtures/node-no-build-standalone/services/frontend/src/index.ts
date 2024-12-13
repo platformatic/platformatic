@@ -9,7 +9,9 @@ const server = createServer((req, res) => {
   if (req.url === ensureTrailingSlash(cleanBasePath(prefix))) {
     res.writeHead(200, {
       'content-type': 'application/json',
-      connection: 'close'
+      connection: 'close',
+      // @ts-expect-error
+      'x-plt-worker-id': globalThis.platformatic.workerId ?? 'only'
     })
     res.end(JSON.stringify({ production: process.env.NODE_ENV === 'production' }))
   } else {
