@@ -99,6 +99,21 @@ export function getPackageManager (root) {
   return 'npm'
 }
 
+export function getPackageArgs (packageManager, production) {
+  const args = ['install']
+  if (production) {
+    switch (packageManager) {
+      case 'pnpm':
+        args.push('--prod')
+        break
+      case 'npm':
+        args.push('--omit=dev')
+        break
+    }
+  }
+  return args
+}
+
 export function getRoot (positionals) {
   let root = process.cwd()
 

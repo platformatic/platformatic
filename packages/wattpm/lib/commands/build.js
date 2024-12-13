@@ -8,6 +8,7 @@ import { resolve } from 'node:path'
 import {
   buildRuntime,
   findConfigurationFile,
+  getPackageArgs,
   getPackageManager,
   getRoot,
   loadConfigurationFile,
@@ -45,18 +46,7 @@ export async function installDependencies (logger, root, services, production, p
     packageManager = getPackageManager(root)
   }
 
-  const args = ['install']
-
-  if (production) {
-    switch (packageManager) {
-      case 'pnpm':
-        args.push('--prod')
-        break
-      case 'npm':
-        args.push('--omit=dev')
-        break
-    }
-  }
+  const args = getPackageArgs(packageManager, production)
 
   // Install dependencies of the application
   try {
@@ -71,14 +61,15 @@ export async function installDependencies (logger, root, services, production, p
   }
 
   for (const service of services) {
-    const servicePackageManager = service.packageManager ?? packageManager
+    const servicePackageManager = service.packageManager ?? getPackageManager(service.path) ?? packageManager
+    const servicePackageArgs = getPackageArgs(servicePackageManager, production)
 
     try {
       logger.info(
         `Installing ${production ? 'production ' : ''}dependencies for the service ${bold(service.id)} using ${servicePackageManager} ...`
       )
 
-      await executeCommand(root, servicePackageManager, args, { cwd: resolve(root, service.path), stdio: 'inherit' })
+      await executeCommand(root, servicePackageManager, servicePackageArgs, { cwd: resolve(root, service.path), stdio: 'inherit' })
       /* c8 ignore next 6 */
     } catch (error) {
       logger.fatal(

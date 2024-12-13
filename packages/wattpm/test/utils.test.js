@@ -1,9 +1,16 @@
 import { test } from 'node:test'
-import { strictEqual } from 'node:assert'
-import { getPackageManager } from '../lib/utils.js'
+import { deepEqual, strictEqual } from 'node:assert'
+import { getPackageArgs, getPackageManager } from '../lib/utils.js'
 import { join } from 'node:path'
 import { mkdtemp, rmdir, unlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
+
+test('getPackageArgs - should return the right package args', () => {
+  deepEqual(getPackageArgs(), ['install'], 'no args passed')
+  deepEqual(getPackageArgs('yarn'), ['install'], 'yarn passed, no prod')
+  deepEqual(getPackageArgs('pnpm', true), ['install', '--prod'], 'pnpm passed, prod mode')
+  deepEqual(getPackageArgs('npm', true), ['install', '--omit=dev'], 'npm passed, prod mode')
+})
 
 test('getPackageManager - should return the right package manager, depending on the cases', async () => {
   const tmpDir = await mkdtemp(join(tmpdir(), 'wattpm-tests-'))
