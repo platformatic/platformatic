@@ -182,7 +182,6 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
     deepStrictEqual(statusCode, 200)
 
     const body = await rawBody.json()
-    body.events = undefined
     deepStrictEqual(body, {
       config: {
         application: {
@@ -202,8 +201,7 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
       telemetryConfig: {},
       isEntrypoint: true,
       runtimeBasePath: null,
-      wantsAbsoluteUrls: false,
-      events: undefined
+      wantsAbsoluteUrls: false
     })
   }
 
@@ -259,7 +257,6 @@ test('BaseStackable - should import and setup open telemetry HTTP instrumentatio
     deepStrictEqual(statusCode, 200)
 
     const body = await rawBody.json()
-    body.events = undefined
     deepStrictEqual(body, {
       config: {
         application: {
@@ -288,8 +285,7 @@ test('BaseStackable - should import and setup open telemetry HTTP instrumentatio
       },
       isEntrypoint: true,
       runtimeBasePath: null,
-      wantsAbsoluteUrls: false,
-      events: undefined
+      wantsAbsoluteUrls: false
     })
   }
 

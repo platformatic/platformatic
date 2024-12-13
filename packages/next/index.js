@@ -56,6 +56,8 @@ export class NextStackable extends BaseStackable {
     } else {
       await this.#startDevelopment(listen)
     }
+
+    this._collectMetrics()
   }
 
   async stop () {
