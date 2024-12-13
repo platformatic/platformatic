@@ -1070,7 +1070,7 @@ importers:
         version: 5.0.1
       fastify-user:
         specifier: ^1.0.2
-        version: 1.3.0
+        version: 1.4.0
       leven:
         specifier: ~3.1.0
         version: 3.1.0
@@ -5770,8 +5770,8 @@ packages:
     resolution: {integrity: sha512-pvYwdtbZUJr/aTD7ZE0rGlvtYpx7IThHKVLBoqCKmT3FJpwm23XA2+PDmq8ZzfqqG4ajpyrHd5bkIixcIFjPhQ==}
     engines: {node: '>=18.0.0'}
 
-  fastify-user@1.3.0:
-    resolution: {integrity: sha512-pNgjYtxBCOIhcIIK2IBb9aBc7leTotw1VzoB2OT48EJ2CKX90dcyu6KpA1oNSTFYMq8rVYupESkWEzBVysOtHQ==}
+  fastify-user@1.4.0:
+    resolution: {integrity: sha512-VqGa60xX3nFCz2gIJHfdVjDlJIsdJ9bwigDdazaKlZ/lSxsyeXOnxsyxtZ9XeMht2drc6WLUtJ0MMeo1BSvXCg==}
 
   fastify@5.1.0:
     resolution: {integrity: sha512-0SdUC5AoiSgMSc2Vxwv3WyKzyGMDJRAW/PgNsK1kZrnkO6MeqUIW9ovVg9F2UGIqtIcclYMyeJa4rK6OZc7Jxg==}
@@ -5937,10 +5937,6 @@ packages:
   get-intrinsic@1.2.4:
     resolution: {integrity: sha512-5uYhsJH8VJBTv7oslg4BznJYhDoRI6waYCxMmCdnTrcCrHA/fCFKoTFz2JKKE0HdDFUF7/oQuhzumXJK7paBRQ==}
     engines: {node: '>= 0.4'}
-
-  get-jwks@10.0.0:
-    resolution: {integrity: sha512-CRwr+1rbY+nSnBLUmzlo+4jAmNhcAp3aWLGhZAx2+wWS+CM2HXNoDthdKZdFkpLiFK9lOenfD9FDSCOCN2iBRg==}
-    engines: {node: '>=20'}
 
   get-jwks@11.0.0:
     resolution: {integrity: sha512-AU/cmfzmYzP6hZbcUjIbloS5g20dt/jFORLjRSiKF/IOXtKFevRk6Yq/XUuKUFJm/7nDg7Z0pKkuX7R4+oA4tg==}
@@ -13045,13 +13041,13 @@ snapshots:
 
   fastify-tsconfig@2.0.0: {}
 
-  fastify-user@1.3.0:
+  fastify-user@1.4.0:
     dependencies:
       '@fastify/error': 4.0.0
       '@fastify/jwt': 9.0.1
       fastify: 5.1.0
       fastify-plugin: 5.0.1
-      get-jwks: 10.0.0
+      get-jwks: 11.0.0
 
   fastify@5.1.0:
     dependencies:
@@ -13238,11 +13234,6 @@ snapshots:
       has-proto: 1.0.3
       has-symbols: 1.0.3
       hasown: 2.0.2
-
-  get-jwks@10.0.0:
-    dependencies:
-      jwk-to-pem: 2.0.7
-      lru-cache: 11.0.2
 
   get-jwks@11.0.0:
     dependencies:
