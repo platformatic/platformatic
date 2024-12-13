@@ -12,7 +12,7 @@ setTimeout(() => {
   metric1.inc(123)
 }, 200)
 
-export function create() {
+export function create () {
   const metric2 = new client.Gauge({
     name: 'custom_internal_2',
     help: 'Custom Internal 2',
