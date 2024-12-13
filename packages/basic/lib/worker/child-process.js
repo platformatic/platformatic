@@ -124,7 +124,8 @@ export class ChildProcess extends ITC {
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
       setConnectionString: this.setConnectionString.bind(this),
-      setBasePath: this.setBasePath.bind(this)
+      setBasePath: this.setBasePath.bind(this),
+      prometheus: { client, registry: this.#metricsRegistry }
     })
   }
 
