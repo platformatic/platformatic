@@ -266,7 +266,7 @@ export class BaseStackable {
 
       this.#subprocessStarted = true
     } catch (e) {
-      this.childManager.close('SIGKILL')
+      this.childManager.close()
       throw new Error(`Cannot execute command "${command}": executable not found`)
     } finally {
       await this.childManager.eject()
@@ -275,7 +275,7 @@ export class BaseStackable {
     // If the process exits prematurely, terminate the thread with the same code
     this.subprocess.on('exit', code => {
       if (this.#subprocessStarted && typeof code === 'number' && code !== 0) {
-        this.childManager.close('SIGKILL')
+        this.childManager.close()
         process.exit(code)
       }
     })
@@ -288,7 +288,7 @@ export class BaseStackable {
   }
 
   async stopCommand () {
-    const exitTimeout = this.runtimeConfig.gracefulShutdown.runtime
+    const exitTimeout = this.runtimeConfig.gracefulShutdown.service
 
     this.#subprocessStarted = false
     const exitPromise = once(this.subprocess, 'exit')
@@ -312,7 +312,7 @@ export class BaseStackable {
     await exitPromise
 
     // Close the manager
-    this.childManager.close()
+    await this.childManager.close()
   }
 
   getChildManager () {

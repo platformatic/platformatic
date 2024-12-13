@@ -74,7 +74,7 @@ test('should configure metrics correctly with both node and http metrics', async
     'http_request_summary_seconds'
   ]
   for (const metricName of expectedMetricNames) {
-    assert.ok(metricsNames.includes(metricName))
+    assert.ok(metricsNames.includes(metricName), `should include metric ${metricName}`)
   }
 
   const entrypointRequestCountMetric = metrics
