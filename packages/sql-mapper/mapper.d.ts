@@ -139,7 +139,7 @@ interface Find<EntityFields> {
     /**
      * SQL where condition.
      */
-    where?: WhereCondition,
+    where?: WhereCondition | { or: WhereCondition[] },
     /**
      * List of fields to be returned for each object
      */
@@ -173,7 +173,7 @@ interface Count {
     /**
      * SQL where condition.
      */
-    where?: WhereCondition,
+    where?: WhereCondition | { or: WhereCondition[] },
     /**
      * If present, the entity participates in transaction
      */
@@ -235,7 +235,7 @@ interface Delete<EntityFields> {
     /**
      * SQL where condition.
      */
-    where?: WhereCondition,
+    where?: WhereCondition | { or: WhereCondition[] },
     /**
      * List of fields to be returned for each object
      */
@@ -257,7 +257,7 @@ interface UpdateMany<EntityFields> {
     /**
      * SQL where condition.
      */
-    where: WhereCondition,
+    where?: WhereCondition | { or: WhereCondition[] },
     /**
      * Entity fields to update.
      */
