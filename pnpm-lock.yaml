@@ -1086,7 +1086,7 @@ importers:
         version: 11.0.1
       '@fastify/session':
         specifier: ^11.0.0
-        version: 11.0.1
+        version: 11.0.2
       '@matteo.collina/tspl':
         specifier: ^0.1.1
         version: 0.1.1
@@ -3415,8 +3415,8 @@ packages:
   '@fastify/send@3.3.0':
     resolution: {integrity: sha512-hvrgPVG3oehn4wSPmRdqZcBCsEt7Lp6WOd6vsJ3Ms4hc5r5zouT9Ls9wq6R2tHMgJGHhNtsmd0CnhP7lmF7OTg==}
 
-  '@fastify/session@11.0.1':
-    resolution: {integrity: sha512-I/CRrC6vWktZor9aF5eG9HZh/hxQQ4HY8GntIpeSjl97Q3ly0KnqD+BBGGNtRWOK369tclvL8FEQx3pWTgzSHQ==}
+  '@fastify/session@11.0.2':
+    resolution: {integrity: sha512-JQ/UlIS08Cwh2AjC3UhBAQRe0735Yr+I3GkY8hI7KwXR8N7a1/JooBSHvSmKXOGbq44suvlglUDdd01dBdoLKw==}
 
   '@fastify/static@8.0.3':
     resolution: {integrity: sha512-GHSoOVDIxEYEeVR5l044bRCuAKDErD/+9VE+Z9fnaTRr+DDz0Avrm4kKai1mHbPx6C0U7BVNthjd/gcMquZZUA==}
@@ -10052,9 +10052,9 @@ snapshots:
       http-errors: 2.0.0
       mime: 3.0.0
 
-  '@fastify/session@11.0.1':
+  '@fastify/session@11.0.2':
     dependencies:
-      fastify-plugin: 4.5.1
+      fastify-plugin: 5.0.1
       safe-stable-stringify: 2.5.0
 
   '@fastify/static@8.0.3':
