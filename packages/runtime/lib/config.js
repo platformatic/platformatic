@@ -93,7 +93,7 @@ async function _transformConfig (configManager, args) {
       service.path = pathResolve(configManager.dirname, service.path)
     }
 
-    if (configManager._fixPaths && service.config) {
+    if (configManager._fixPaths && service.path && service.config) {
       service.config = pathResolve(service.path, service.config)
     }
 
