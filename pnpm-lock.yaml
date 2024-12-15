@@ -498,7 +498,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.82
+        version: 1.25.83
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -1906,7 +1906,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.82
+        version: 1.25.83
       '@types/ws':
         specifier: ^8.5.10
         version: 8.5.13
@@ -2286,7 +2286,7 @@ importers:
         version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: ^1.19.5
-        version: 1.25.82
+        version: 1.25.83
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -4099,8 +4099,8 @@ packages:
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
     hasBin: true
 
-  '@scalar/fastify-api-reference@1.25.82':
-    resolution: {integrity: sha512-T7lwASnt+q3xoXBuktNtPQ43xFryRIAR6aYLxlRoN2dG7PRJmhTvFcIm5FMnqPhjef0WZsQN3560lfdLzl0KHQ==}
+  '@scalar/fastify-api-reference@1.25.83':
+    resolution: {integrity: sha512-Wlk3lLoB3aiv1QLj04mqRYqVKJbIS5IuCYFMGfnSawfvi8eszkMLKfglb1nKw1nOmbo6ypeym5hCqge8K3miZA==}
     engines: {node: '>=18'}
 
   '@scalar/openapi-types@0.1.5':
@@ -10900,7 +10900,7 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
-  '@scalar/fastify-api-reference@1.25.82':
+  '@scalar/fastify-api-reference@1.25.83':
     dependencies:
       '@scalar/types': 0.0.24
       fastify-plugin: 4.5.1
