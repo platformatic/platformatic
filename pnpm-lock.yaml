@@ -1873,7 +1873,7 @@ importers:
         version: 9.4.0
       '@fastify/under-pressure':
         specifier: ^9.0.0
-        version: 9.0.1
+        version: 9.0.2
       '@mercuriusjs/federation':
         specifier: ^4.0.0
         version: 4.0.0
@@ -3424,8 +3424,8 @@ packages:
   '@fastify/swagger@9.4.0':
     resolution: {integrity: sha512-3hF7asqyNfu41aeDA/ATlIG0RY4XizgaDqPR0nc1Unt3EiXWjkVMiELLaH5WZKNvB4BA/5Wovxdin7N4ii7YHw==}
 
-  '@fastify/under-pressure@9.0.1':
-    resolution: {integrity: sha512-aafxmJYJBgbYad4eoKwaWXtyBwoLoUCpVDahjzsvRcCjR8esm0F6s3jACWWtZqgcE498gV7fG1X4vzGt9lWw9A==}
+  '@fastify/under-pressure@9.0.2':
+    resolution: {integrity: sha512-zYTy8yYbU4+f//DMBFhbCmpGra3E1peEGcmmRLrwS6hnePJjXf2kNLULyh9y0qj4JldCxpdJBb7GB6jlFnN1kQ==}
 
   '@fastify/view@10.0.1':
     resolution: {integrity: sha512-rXtBN0oVDmoRZAS7lelrCIahf+qFtlMOOas8VPdA7JvrJ9ChcF7e36pIUPU0Vbs3KmHxESUb7XatavUZEe/k5Q==}
@@ -10076,7 +10076,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fastify/under-pressure@9.0.1':
+  '@fastify/under-pressure@9.0.2':
     dependencies:
       '@fastify/error': 4.0.0
       fastify-plugin: 5.0.1
