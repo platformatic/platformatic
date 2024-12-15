@@ -8,9 +8,9 @@ import {
 import { errors } from '@platformatic/control'
 import { platformaticRuntime, buildRuntime as pltBuildRuntime } from '@platformatic/runtime'
 import { bgGreen, black, bold } from 'colorette'
+import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
-import { existsSync } from 'node:fs'
 import { parseArgs as nodeParseArgs } from 'node:util'
 import { pino } from 'pino'
 import pinoPretty from 'pino-pretty'
@@ -206,7 +206,7 @@ export async function loadConfigurationFile (logger, configurationFile) {
     }
   })
 
-  await configManager.parse(true, [])
+  await configManager.parse(true, [], { transformOnValidationErrors: true })
   return configManager.current
 }
 

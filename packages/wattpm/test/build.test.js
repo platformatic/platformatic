@@ -38,6 +38,24 @@ test('build - should handle build errors', async t => {
   ok(!existsSync(resolve(serviceDir, 'dist/index.js')))
 })
 
+test('install - should install dependencies of autoloaded services', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
+    await safeRemove(resolve(root, 'node_modules'))
+    await safeRemove(resolve(root, 'web/main/node_modules'))
+  })
+
+  // Introduce a validation error. In that case with invalid configuration, the transformConfig will not be invoked.
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+  originalFileContents.logger = { level: 'invalid' }
+  await saveConfigurationFile(logger, configurationFile, originalFileContents)
+
+  const installProcess = await wattpm('install', rootDir)
+
+  ok(installProcess.stdout.includes('Installing dependencies for the application using npm ...'))
+  ok(installProcess.stdout.includes('Installing dependencies for the service main using npm ...'))
+})
+
 test('install - should install dependencies of application and its services using npm by default', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
     await safeRemove(resolve(root, 'node_modules'))
