@@ -61,6 +61,7 @@ export async function installDependencies (logger, root, services, production, p
   }
 
   for (const service of services) {
+    /* c8 ignore next */
     const servicePackageManager = service.packageManager ?? getPackageManager(service.path) ?? packageManager
     const servicePackageArgs = getPackageArgs(servicePackageManager, production)
 
@@ -69,7 +70,10 @@ export async function installDependencies (logger, root, services, production, p
         `Installing ${production ? 'production ' : ''}dependencies for the service ${bold(service.id)} using ${servicePackageManager} ...`
       )
 
-      await executeCommand(root, servicePackageManager, servicePackageArgs, { cwd: resolve(root, service.path), stdio: 'inherit' })
+      await executeCommand(root, servicePackageManager, servicePackageArgs, {
+        cwd: resolve(root, service.path),
+        stdio: 'inherit'
+      })
       /* c8 ignore next 6 */
     } catch (error) {
       logger.fatal(

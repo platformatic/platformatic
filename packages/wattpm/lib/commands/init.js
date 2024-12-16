@@ -74,7 +74,7 @@ export async function initCommand (logger, args) {
     fixPaths: false
   })
 
-  await configManager.parse()
+  await configManager.parse(true, [], { transformOnValidationErrors: true })
 
   await saveConfigurationFile(logger, configurationFile, {
     $schema: schema.$id,
