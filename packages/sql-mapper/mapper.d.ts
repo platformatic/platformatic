@@ -69,6 +69,12 @@ export interface DBEntityField {
   autoTimestamp?: boolean
 }
 
+export type WhereClause = {
+  or?: WhereCondition[];
+} | {
+  [columnName: string]: WhereCondition[string];
+}
+
 export interface WhereCondition {
   [columnName: string]: {
     /**
@@ -139,7 +145,7 @@ interface Find<EntityFields> {
     /**
      * SQL where condition.
      */
-    where?: WhereCondition | { or: WhereCondition[] },
+    where?: WhereClause,
     /**
      * List of fields to be returned for each object
      */
@@ -173,7 +179,7 @@ interface Count {
     /**
      * SQL where condition.
      */
-    where?: WhereCondition | { or: WhereCondition[] },
+    where?: WhereClause,
     /**
      * If present, the entity participates in transaction
      */
@@ -235,7 +241,7 @@ interface Delete<EntityFields> {
     /**
      * SQL where condition.
      */
-    where?: WhereCondition | { or: WhereCondition[] },
+    where?: WhereClause,
     /**
      * List of fields to be returned for each object
      */
@@ -257,7 +263,7 @@ interface UpdateMany<EntityFields> {
     /**
      * SQL where condition.
      */
-    where?: WhereCondition | { or: WhereCondition[] },
+    where?: WhereClause,
     /**
      * Entity fields to update.
      */

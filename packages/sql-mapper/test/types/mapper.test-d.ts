@@ -14,8 +14,8 @@ import {
   createConnectionPool,
   Entities,
   errors,
-  WhereCondition,
   PlatformaticContext,
+  WhereClause,
 } from '../../mapper'
 
 const log = {
@@ -101,7 +101,7 @@ expectType<Partial<EntityFields>[]>(await entity.updateMany({ where: { id: { eq:
 expectType<Partial<EntityFields>[]>(await entity.find({ where: { id: { eq: null } } }))
 expectType<Partial<EntityFields>[]>(await entity.find({ where: { id: { neq: null } } }))
 
-const whereCondition: WhereCondition = {
+const whereCondition: WhereClause = {
   eq: { eq: '' },
   eqNumber: { eq: 1 },
   eqBoolean: { eq: true },
@@ -121,7 +121,12 @@ const whereCondition: WhereCondition = {
   contains: { contains: [] },
   contained: { contained: [] },
   overlaps: { overlaps: [] },
+  or: [
+    { field: { eq: '' } },
+    { field: { eq: null } }
+  ]
 }
+
 await entity.find({ where: whereCondition })
 await entity.delete({ where: whereCondition })
 await entity.count({ where: whereCondition })
