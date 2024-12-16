@@ -3,6 +3,7 @@
 const { readdir } = require('node:fs/promises')
 const { join, resolve: pathResolve, isAbsolute } = require('node:path')
 
+const { createRequire, loadModule } = require('@platformatic/utils')
 const ConfigManager = require('@platformatic/config')
 const { Store } = require('@platformatic/config')
 
@@ -103,6 +104,15 @@ async function _transformConfig (configManager, args) {
         const serviceConfig = await store.loadConfig(service)
         service.isPLTService = !!serviceConfig.app.isPLTService
         service.type = serviceConfig.app.configType
+        const _require = createRequire(service.path)
+        // This is needed to work around Rust bug on dylibs:
+        // https://github.com/rust-lang/rust/issues/91979
+        // https://github.com/rollup/rollup/issues/5761
+        // TODO(mcollina): we should expose this inside every stackable configuration.
+        serviceConfig.app.modulesToLoad?.forEach((m) => {
+          const toLoad = _require.resolve(m)
+          loadModule(_require, toLoad).catch(() => {})
+        })
       } catch (err) {
         // Fallback if for any reason a dependency is not found
         try {

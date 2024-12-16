@@ -328,5 +328,6 @@ export default {
   },
   buildStackable,
   schema,
-  version: packageJson.version
+  version: packageJson.version,
+  modulesToLoad: ['rollup']
 }
