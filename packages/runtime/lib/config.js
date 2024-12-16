@@ -105,6 +105,9 @@ async function _transformConfig (configManager, args) {
         service.isPLTService = !!serviceConfig.app.isPLTService
         service.type = serviceConfig.app.configType
         const _require = createRequire(service.path)
+        // This is needed to work around Rust bug on dylibs:
+        // https://github.com/rust-lang/rust/issues/91979
+        // https://github.com/rollup/rollup/issues/5761
         serviceConfig.app.modulesToLoad?.forEach((m) => {
           const toLoad = _require.resolve(m)
           loadModule(_require, toLoad).catch(() => {})
