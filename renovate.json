@@ -15,5 +15,9 @@
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true
-  }
+  },
+  "timezone": "Europe/Rome",
+  "schedule": [
+    "* 0-6 * * 6,0"
+  ]
 }
