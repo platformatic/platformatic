@@ -184,13 +184,18 @@ export async function ensureDependencies (configOrPaths) {
       }
 
       // Symlink the dependency
-      await symlink(resolved, moduleRoot, 'dir')
+      if (!existsSync(moduleRoot)) {
+        await symlink(resolved, moduleRoot, 'dir')
+      }
 
       // Now link all the binaries
       const { bin } = JSON.parse(await readFile(resolve(moduleRoot, 'package.json'), 'utf-8'))
 
       for (const [name, destination] of Object.entries(bin ?? {})) {
-        await symlink(resolve(moduleRoot, destination), resolve(binFolder, name), 'file')
+        const actual = resolve(moduleRoot, destination)
+        if (!existsSync(actual)) {
+          await symlink(actual, resolve(binFolder, name), 'file')
+        }
 
         // Fix for NPM on Windows
         if (isWindows) {
@@ -220,6 +225,9 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   if (production) {
     args.push('--production')
   }
+
+  // Ensure the dependencies
+  await ensureDependencies([root])
 
   const config = await loadConfig({}, args, platformaticRuntime)
 
