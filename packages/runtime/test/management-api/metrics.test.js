@@ -3,7 +3,6 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { setTimeout: sleep } = require('node:timers/promises')
 const { Client } = require('undici')
 
 const { buildServer } = require('../..')
