@@ -184,8 +184,12 @@ export async function ensureDependencies (configOrPaths) {
       }
 
       // Symlink the dependency
-      if (!existsSync(moduleRoot)) {
+      try {
         await symlink(resolved, moduleRoot, 'dir')
+      } catch (err) {
+        if (err.code !== 'EEXIST') {
+          throw err
+        }
       }
 
       // Now link all the binaries
@@ -193,8 +197,12 @@ export async function ensureDependencies (configOrPaths) {
 
       for (const [name, destination] of Object.entries(bin ?? {})) {
         const actual = resolve(moduleRoot, destination)
-        if (!existsSync(actual)) {
+        try {
           await symlink(actual, resolve(binFolder, name), 'file')
+        } catch (err) {
+          if (err.code !== 'EEXIST') {
+            throw err
+          }
         }
 
         // Fix for NPM on Windows
