@@ -1,6 +1,6 @@
 import {
   type PlatformaticContext,
-  type WhereCondition,
+  type WhereClause,
 } from '@platformatic/sql-mapper'
 import { type FastifyPluginAsync } from 'fastify'
 import { type FastifyUserPluginOptions } from 'fastify-user'
@@ -9,11 +9,11 @@ import { FastifyError } from '@fastify/error'
 export type OperationFunction<T> = (args: {
   user: T,
   ctx: PlatformaticContext,
-  where: WhereCondition
-}) => WhereCondition
+  where: WhereClause
+}) => WhereClause
 
 export interface OperationChecks {
-  checks: Record<string, any> | WhereCondition
+  checks: Record<string, any> | WhereClause
 }
 
 export interface OperationFields {
