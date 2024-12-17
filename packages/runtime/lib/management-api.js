@@ -13,6 +13,8 @@ const { getRuntimeLogsDir } = require('./utils')
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 
 async function managementApiPlugin (app, opts) {
+  app.register(require('@fastify/accepts'))
+
   const runtime = opts.runtime
 
   app.get('/status', async () => {
@@ -111,6 +113,19 @@ async function managementApiPlugin (app, opts) {
     delete res.headers['transfer-encoding']
 
     reply.code(res.statusCode).headers(res.headers).send(res.body)
+  })
+
+  app.get('/metrics', { logLevel: 'debug' }, async (req, reply) => {
+    const accepts = req.accepts()
+
+    if (!accepts.type('text/plain') && accepts.type('application/json')) {
+      const { metrics } = await runtime.getMetrics('json')
+      return metrics
+    }
+
+    reply.type('text/plain')
+    const { metrics } = await runtime.getMetrics('text')
+    return metrics
   })
 
   app.get('/metrics/live', { websocket: true }, async socket => {

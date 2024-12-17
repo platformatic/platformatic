@@ -3,13 +3,52 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
+const { setTimeout: sleep } = require('node:timers/promises')
 const { Client } = require('undici')
 
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should not expose service metrics via runtime management api proxy', async (t) => {
-  const projectDir = join(fixturesDir, 'management-api')
+const expectedMetricNames = [
+  'nodejs_active_handles',
+  'nodejs_active_handles_total',
+  'nodejs_active_requests',
+  'nodejs_active_requests_total',
+  'nodejs_active_resources',
+  'nodejs_active_resources_total',
+  'nodejs_eventloop_lag_max_seconds',
+  'nodejs_eventloop_lag_mean_seconds',
+  'nodejs_eventloop_lag_min_seconds',
+  'nodejs_eventloop_lag_p50_seconds',
+  'nodejs_eventloop_lag_p90_seconds',
+  'nodejs_eventloop_lag_p99_seconds',
+  'nodejs_eventloop_lag_seconds',
+  'nodejs_eventloop_lag_stddev_seconds',
+  'nodejs_eventloop_utilization',
+  'nodejs_external_memory_bytes',
+  'nodejs_gc_duration_seconds',
+  'nodejs_heap_size_total_bytes',
+  'nodejs_heap_size_used_bytes',
+  'nodejs_heap_space_size_available_bytes',
+  'nodejs_heap_space_size_total_bytes',
+  'nodejs_heap_space_size_used_bytes',
+  'nodejs_version_info',
+  'process_cpu_percent_usage',
+  'process_cpu_seconds_total',
+  'process_cpu_system_seconds_total',
+  'process_cpu_user_seconds_total',
+  'process_resident_memory_bytes',
+  'process_start_time_seconds',
+  'thread_cpu_user_system_seconds_total',
+  'thread_cpu_system_seconds_total',
+  'thread_cpu_seconds_total',
+  'thread_cpu_percent_usage',
+  'http_request_duration_seconds',
+  'http_request_summary_seconds',
+]
+
+test('should get prom metrics from the management api', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
 
@@ -25,16 +64,61 @@ test('should not expose service metrics via runtime management api proxy', async
   })
 
   t.after(async () => {
-    await Promise.all([
-      client.close(),
-      app.close(),
-    ])
+    await client.close()
+    await app.close()
   })
 
-  const { statusCode } = await client.request({
+  const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/services/service-1/proxy/metrics',
+    path: '/api/v1/metrics'
+  })
+  assert.strictEqual(statusCode, 200)
+
+  const metrics = await body.text()
+  const metricsNames = metrics
+    .split('\n')
+    .filter(line => line && line.startsWith('# TYPE'))
+    .map(line => line.split(' ')[2])
+
+  for (const metricName of expectedMetricNames) {
+    assert.ok(metricsNames.includes(metricName), `Expected metric ${metricName} to be present`)
+  }
+})
+
+test('should get prom metrics from the management api in the json format', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  const client = new Client({
+    hostname: 'localhost',
+    protocol: 'http:',
+  }, {
+    socketPath: app.getManagementApiUrl(),
+    keepAliveTimeout: 10,
+    keepAliveMaxTimeout: 10,
   })
 
-  assert.strictEqual(statusCode, 404)
+  t.after(async () => {
+    await client.close()
+    await app.close()
+  })
+
+  const { statusCode, body } = await client.request({
+    method: 'GET',
+    path: '/api/v1/metrics',
+    headers: {
+      Accept: 'application/json'
+    }
+  })
+  assert.strictEqual(statusCode, 200)
+
+  const metrics = await body.json()
+  const metricsNames = metrics.map(metric => metric.name)
+
+  for (const metricName of expectedMetricNames) {
+    assert.ok(metricsNames.includes(metricName), `Expected metric ${metricName} to be present`)
+  }
 })
