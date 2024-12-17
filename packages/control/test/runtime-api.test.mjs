@@ -205,20 +205,29 @@ test('should get runtime live metrics', async t => {
       split(record => {
         if (count++ > 10) resolve()
 
-        const metric = JSON.parse(record)
-        const metricsKeys = Object.keys(metric).sort()
-        assert.deepStrictEqual(metricsKeys, [
-          'cpu',
-          'date',
-          'elu',
-          'entrypoint',
-          'newSpaceSize',
-          'oldSpaceSize',
-          'rss',
-          'totalHeapSize',
-          'usedHeapSize',
-          'version',
-        ])
+        const { services } = JSON.parse(record)
+
+        assert.deepStrictEqual(
+          Object.keys(services).sort(),
+          ['service-1', 'service-2'].sort()
+        )
+
+        for (const serviceMetrics of Object.values(services)) {
+          assert.deepStrictEqual(Object.keys(serviceMetrics).sort(), [
+            'cpu',
+            'elu',
+            'newSpaceSize',
+            'oldSpaceSize',
+            'rss',
+            'totalHeapSize',
+            'usedHeapSize',
+            'latency',
+          ].sort())
+
+          const latencyMetrics = serviceMetrics.latency
+          const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
+          assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
+        }
       })
     )
   })
