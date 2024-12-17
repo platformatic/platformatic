@@ -37,7 +37,7 @@ function isImportFailedError (error, pkg) {
   return match?.[1] === pkg || error.requireStack?.[0].endsWith(importStackablePackageMarker)
 }
 
-async function importStackablePackage (opts, pkg) {
+async function importStackablePackage (directory, pkg) {
   try {
     try {
       // Try regular import
@@ -48,7 +48,7 @@ async function importStackablePackage (opts, pkg) {
       }
 
       // Scope to the service
-      const require = createRequire(resolve(opts.context.directory, importStackablePackageMarker))
+      const require = createRequire(resolve(directory, importStackablePackageMarker))
       const imported = require.resolve(pkg)
       return await importFile(imported)
     }
@@ -57,16 +57,15 @@ async function importStackablePackage (opts, pkg) {
       throw e
     }
 
-    const serviceDirectory = relative(workerData.dirname, opts.context.directory)
+    const serviceDirectory = workerData ? relative(workerData.dirname, directory) : directory
     throw new Error(
       `Unable to import package '${pkg}'. Please add it as a dependency  in the package.json file in the folder ${serviceDirectory}.`
     )
   }
 }
 
-async function buildStackable (opts) {
-  const root = opts.context.directory
-  let toImport = '@platformatic/node'
+export async function importStackableAndConfig (root, config) {
+  let moduleName = '@platformatic/node'
   let autodetectDescription = 'is using a generic Node.js application'
 
   let rootPackageJson
@@ -76,14 +75,12 @@ async function buildStackable (opts) {
     rootPackageJson = {}
   }
 
-  const hadConfig = opts.config
-
-  if (!hadConfig) {
+  if (!config) {
     for (const candidate of configCandidates) {
       const candidatePath = resolve(root, candidate)
 
       if (existsSync(candidatePath)) {
-        opts.config = candidatePath
+        config = candidatePath
         break
       }
     }
@@ -93,19 +90,27 @@ async function buildStackable (opts) {
 
   if (dependencies?.next || devDependencies?.next) {
     autodetectDescription = 'is using Next.js'
-    toImport = '@platformatic/next'
+    moduleName = '@platformatic/next'
   } else if (dependencies?.['@remix-run/dev'] || devDependencies?.['@remix-run/dev']) {
     autodetectDescription = 'is using Remix'
-    toImport = '@platformatic/remix'
+    moduleName = '@platformatic/remix'
   } else if (dependencies?.vite || devDependencies?.vite) {
     autodetectDescription = 'is using Vite'
-    toImport = '@platformatic/vite'
+    moduleName = '@platformatic/vite'
   } else if (dependencies?.astro || devDependencies?.astro) {
     autodetectDescription = 'is using Astro'
-    toImport = '@platformatic/astro'
+    moduleName = '@platformatic/astro'
   }
 
-  const imported = await importStackablePackage(opts, toImport)
+  const stackable = await importStackablePackage(root, moduleName)
+
+  return { stackable, config, autodetectDescription, moduleName }
+}
+
+async function buildStackable (opts) {
+  const hadConfig = !!opts.config
+  const { stackable, config, autodetectDescription, moduleName } = await importStackableAndConfig(opts.context.directory, opts.config)
+  opts.config = config
 
   const serviceRoot = relative(process.cwd(), opts.context.directory)
   if (
@@ -122,12 +127,12 @@ async function buildStackable (opts) {
       [
         `Platformatic has auto-detected that service "${opts.context.serviceId}" ${autodetectDescription}.\n`,
         `We suggest you create a platformatic.json or watt.json file in the folder ${serviceRoot} with the "$schema" `,
-        `property set to "https://schemas.platformatic.dev/${toImport}/${packageJson.version}.json".`
+        `property set to "https://schemas.platformatic.dev/${moduleName}/${packageJson.version}.json".`
       ].join('')
     )
   }
 
-  return imported.buildStackable(opts)
+  return stackable.buildStackable(opts)
 }
 
 /* c8 ignore next 3 */
