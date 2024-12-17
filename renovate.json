@@ -4,11 +4,23 @@
     "config:base"
   ],
   "rangeStrategy": "update-lockfile",
-  "ignoreDeps": ["camelcase", "mysql", "swagger-ui-react", "leven", "ora", "graphiql"],
+  "ignoreDeps": [
+    "camelcase",
+    "mysql",
+    "swagger-ui-react",
+    "leven",
+    "ora",
+    "graphiql"
+  ],
   "prHourlyLimit": 1,
   "packageRules": [
     {
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
       "automerge": true
     }
   ],
@@ -19,5 +31,6 @@
   "timezone": "Europe/Rome",
   "schedule": [
     "* 0-6 * * 6,0"
-  ]
+  ],
+  "rebaseWhen": "conflicted"
 }
