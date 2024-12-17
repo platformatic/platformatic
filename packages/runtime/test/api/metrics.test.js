@@ -354,7 +354,7 @@ test('should get metrics after reloading one of the services', async t => {
   for (const { services } of metricsHistory) {
     assert.deepStrictEqual(
       Object.keys(services).sort(),
-      ['service-1', 'service-2', 'service-db'].sort()
+      ['service-1', 'service-db'].sort()
     )
 
     for (const serviceMetrics of Object.values(services)) {
