@@ -168,7 +168,8 @@ async function main () {
             },
             onCacheMiss: (opts) => {
               globalThis.platformatic?.onHttpCacheMiss?.(opts)
-            }
+            },
+            logger: globalThis.platformatic.logger
           }),
           methods: config.httpCache.methods ?? ['GET', 'HEAD']
         })

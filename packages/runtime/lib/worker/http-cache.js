@@ -9,18 +9,20 @@ class RemoteCacheStore {
   #onRequest
   #onCacheHit
   #onCacheMiss
+  #logger
 
   constructor (opts = {}) {
     this.#onRequest = opts.onRequest ?? noop
     this.#onCacheHit = opts.onCacheHit ?? noop
     this.#onCacheMiss = opts.onCacheMiss ?? noop
+    this.#logger = opts.logger
   }
 
   async get (request) {
     try {
       this.#onRequest(request)
     } catch (err) {
-      console.error('Error in onRequest http cache hook:', err)
+      this.#logger.error(err, 'Error in onRequest http cache hook')
     }
 
     const itc = globalThis[kITC]
@@ -33,7 +35,7 @@ class RemoteCacheStore {
       try {
         this.#onCacheMiss(request)
       } catch (err) {
-        console.error('Error in onCacheMiss http cache hook:', err)
+        this.#logger.error(err, 'Error in onCacheMiss http cache hook')
       }
       return
     }
@@ -45,7 +47,7 @@ class RemoteCacheStore {
     try {
       this.#onCacheHit(request, cachedValue.response)
     } catch (err) {
-      console.error('Error in onCacheMiss http cache hook:', err)
+      this.#logger.error(err, 'Error in onCacheHit http cache hook')
     }
 
     return {
