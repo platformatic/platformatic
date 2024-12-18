@@ -2456,8 +2456,8 @@ importers:
         specifier: ^7.6.3
         version: 7.6.3
       undici:
-        specifier: 7.1.0
-        version: 7.1.0
+        specifier: 7.1.1
+        version: 7.1.1
     devDependencies:
       '@matteo.collina/tspl':
         specifier: ^0.1.1
@@ -8947,6 +8947,10 @@ packages:
 
   undici@7.1.0:
     resolution: {integrity: sha512-3+mdX2R31khuLCm2mKExSlMdJsfol7bJkIMH80tdXA74W34rT1jKemUTlYR7WY3TqsV4wfOgpatWmmB2Jl1+5g==}
+    engines: {node: '>=20.18.1'}
+
+  undici@7.1.1:
+    resolution: {integrity: sha512-WZkQ6eH9f5ZT93gaIffsbUaDpBwjbpvmMbfaEhOnbdUneurTESeRxwPGwjI28mRFESH3W3e8Togijh37ptOQqA==}
     engines: {node: '>=20.18.1'}
 
   unicorn-magic@0.1.0:
@@ -17038,6 +17042,8 @@ snapshots:
   undici@6.21.0: {}
 
   undici@7.1.0: {}
+
+  undici@7.1.1: {}
 
   unicorn-magic@0.1.0: {}
 
