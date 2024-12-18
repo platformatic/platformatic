@@ -1,17 +1,20 @@
 'use strict'
 
+const fastify = require('fastify')
 const { request } = require('undici')
 
-module.exports = async function (fastify) {
+function build () {
+  const app = fastify()
+
   let counter = 0
 
-  fastify.get('/cached-req-counter', async (req, reply) => {
+  app.get('/cached-req-counter', async (req, reply) => {
     const { maxAge } = req.query
     reply.header('Cache-Control', `public, s-maxage=${maxAge}`)
     return { service: 'service-2', counter: ++counter }
   })
 
-  fastify.get('/service-3/cached-req-counter', async (req, reply) => {
+  app.get('/service-3/cached-req-counter', async (req, reply) => {
     const res = await request('http://service-3.plt.local/cached-req-counter', {
       query: req.query,
       headers: req.headers
@@ -24,8 +27,12 @@ module.exports = async function (fastify) {
     return body
   })
 
-  fastify.post('/invalidate-cache', async (req) => {
+  app.post('/invalidate-cache', async (req) => {
     const opts = req.body
     await globalThis.platformatic.invalidateHttpCache(opts)
   })
+
+  return app
 }
+
+module.exports = { build }

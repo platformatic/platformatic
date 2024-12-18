@@ -159,7 +159,18 @@ async function main () {
     setGlobalDispatcher(
       getGlobalDispatcher().compose(
         undici.interceptors.cache({
-          store: new RemoteCacheStore(),
+          store: new RemoteCacheStore({
+            onRequest: (opts) => {
+              globalThis.platformatic?.onHttpCacheRequest?.(opts)
+            },
+            onCacheHit: (opts) => {
+              globalThis.platformatic?.onHttpCacheHit?.(opts)
+            },
+            onCacheMiss: (opts) => {
+              globalThis.platformatic?.onHttpCacheMiss?.(opts)
+            },
+            logger: globalThis.platformatic.logger
+          }),
           methods: config.httpCache.methods ?? ['GET', 'HEAD']
         })
       )

@@ -335,6 +335,7 @@ export class BaseStackable {
 
     this.#metricsCollected = true
     await this.#collectMetrics()
+    this.#setHttpCacheMetrics()
   }
 
   async #collectMetrics () {
@@ -365,6 +366,25 @@ export class BaseStackable {
       this.startHttpTimer = startHttpTimer
       this.endHttpTimer = endHttpTimer
     }
+  }
+
+  #setHttpCacheMetrics () {
+    const { client, registry } = globalThis.platformatic.prometheus
+
+    const cacheHitMetric = new client.Counter({
+      name: 'http_cache_hit_count',
+      help: 'Number of http cache hits',
+      registers: [registry]
+    })
+
+    const cacheMissMetric = new client.Counter({
+      name: 'http_cache_miss_count',
+      help: 'Number of http cache misses',
+      registers: [registry]
+    })
+
+    globalThis.platformatic.onHttpCacheHit = () => { cacheHitMetric.inc() }
+    globalThis.platformatic.onHttpCacheMiss = () => { cacheMissMetric.inc() }
   }
 
   async getMetrics ({ format } = {}) {

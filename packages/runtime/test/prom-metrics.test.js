@@ -69,9 +69,10 @@ test('should start a prometheus server on port 9090', async t => {
     'thread_cpu_system_seconds_total',
     'thread_cpu_seconds_total',
     'thread_cpu_percent_usage',
-    // 'http_request_all_summary_seconds',
     'http_request_duration_seconds',
-    'http_request_summary_seconds'
+    'http_request_summary_seconds',
+    'http_cache_hit_count',
+    'http_cache_miss_count',
   ]
 
   for (const metricName of expectedMetricNames) {
@@ -121,4 +122,55 @@ test('should support custom metrics', async t => {
   assert.ok(metrics.includes('# HELP custom_external_2 Custom External 2'))
   assert.ok(metrics.includes('# TYPE custom_external_2 gauge'))
   assert.ok(metrics.includes('custom_external_2{serviceId="external",workerId="undefined"} 456'))
+})
+
+test('should track http cache hits/misses', async (t) => {
+  const projectDir = join(fixturesDir, 'http-cache')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  const cacheTimeoutSec = 5
+
+  for (let i = 0; i < 5; i++) {
+    const res = await request(entryUrl + '/service-1/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    assert.strictEqual(res.statusCode, 200)
+  }
+
+  await sleep(cacheTimeoutSec * 1000)
+
+  {
+    const res = await request(entryUrl + '/service-1/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    assert.strictEqual(res.statusCode, 200)
+  }
+
+  {
+    const res = await request(entryUrl + '/service-2/service-3/cached-req-counter', {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    assert.strictEqual(res.statusCode, 200)
+  }
+
+  const { statusCode, body } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/metrics'
+  })
+  assert.strictEqual(statusCode, 200)
+
+  const metrics = await body.text()
+
+  assert.ok(metrics.includes('http_cache_hit_count{serviceId="main",workerId="undefined"} 4'))
+  assert.ok(metrics.includes('http_cache_miss_count{serviceId="main",workerId="undefined"} 3'))
+
+  assert.ok(metrics.includes('http_cache_hit_count{serviceId="service-1",workerId="undefined"} 0'))
+  assert.ok(metrics.includes('http_cache_miss_count{serviceId="service-1",workerId="undefined"} 0'))
+
+  assert.ok(metrics.includes('http_cache_hit_count{serviceId="service-2",workerId="undefined"} 0'))
+  assert.ok(metrics.includes('http_cache_miss_count{serviceId="service-2",workerId="undefined"} 1'))
 })

@@ -180,6 +180,26 @@ export class ChildProcess extends ITC {
 
   async #collectMetrics ({ serviceId, workerId, metricsConfig }) {
     await collectMetrics(serviceId, workerId, metricsConfig, this.#metricsRegistry)
+    this.#setHttpCacheMetrics()
+  }
+
+  #setHttpCacheMetrics () {
+    const { client, registry } = globalThis.platformatic.prometheus
+
+    const cacheHitMetric = new client.Counter({
+      name: 'http_cache_hit_count',
+      help: 'Number of http cache hits',
+      registers: [registry]
+    })
+
+    const cacheMissMetric = new client.Counter({
+      name: 'http_cache_miss_count',
+      help: 'Number of http cache misses',
+      registers: [registry]
+    })
+
+    globalThis.platformatic.onHttpCacheHit = () => { cacheHitMetric.inc() }
+    globalThis.platformatic.onHttpCacheMiss = () => { cacheMissMetric.inc() }
   }
 
   async #getMetrics ({ format } = {}) {
