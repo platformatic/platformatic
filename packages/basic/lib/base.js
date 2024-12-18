@@ -160,21 +160,23 @@ export class BaseStackable {
     }
   }
 
-  async buildWithCommand (command, basePath, loader, scripts, disableChildManager) {
+  async buildWithCommand (command, basePath, opts = {}) {
+    const { loader, scripts, context, disableChildManager } = opts
+
     if (Array.isArray(command)) {
       command = command.join(' ')
     }
 
     this.logger.debug(`Executing "${command}" ...`)
 
-    const context = await this.#getChildManagerContext(basePath)
+    const baseContext = await this.getChildManagerContext(basePath)
     this.childManager = disableChildManager
       ? null
       : new ChildManager({
         logger: this.logger,
         loader,
         scripts,
-        context: { ...context, isBuilding: true }
+        context: { ...baseContext, isBuilding: true, ...context }
       })
 
     try {
@@ -218,7 +220,7 @@ export class BaseStackable {
     const config = this.configManager.current
     const basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
 
-    const context = await this.#getChildManagerContext(basePath)
+    const context = await this.getChildManagerContext(basePath)
     this.childManager = new ChildManager({
       logger: this.logger,
       loader,
@@ -391,7 +393,7 @@ export class BaseStackable {
     }
   }
 
-  async #getChildManagerContext (basePath) {
+  async getChildManagerContext (basePath) {
     const meta = await this.getMeta()
 
     return {

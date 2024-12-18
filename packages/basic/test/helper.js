@@ -208,8 +208,16 @@ export async function ensureDependencies (configOrPaths) {
         // Fix for NPM on Windows
         if (isWindows) {
           try {
-            await symlink(resolve(pltRoot, 'node_modules/.bin', `${name}.ps1`), resolve(binFolder, `${name}.ps1`), 'file')
-            await symlink(resolve(pltRoot, 'node_modules/.bin', `${name}.cmd`), resolve(binFolder, `${name}.cmd`), 'file')
+            await symlink(
+              resolve(pltRoot, 'node_modules/.bin', `${name}.ps1`),
+              resolve(binFolder, `${name}.ps1`),
+              'file'
+            )
+            await symlink(
+              resolve(pltRoot, 'node_modules/.bin', `${name}.cmd`),
+              resolve(binFolder, `${name}.cmd`),
+              'file'
+            )
           } catch (err) {
             if (err.code !== 'EEXIST') {
               throw err

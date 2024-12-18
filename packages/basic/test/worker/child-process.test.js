@@ -43,12 +43,10 @@ test('ChildProcess - can load a script with additional loader and scripts', asyn
   stackable.logger = logger
 
   const executablePath = fileURLToPath(new URL('../fixtures/import-non-existing.js', import.meta.url))
-  await stackable.buildWithCommand(
-    ['node', executablePath],
-    import.meta.dirname,
-    new URL('../fixtures/loader.js', import.meta.url).toString(),
-    [new URL('../fixtures/imported.js', import.meta.url)]
-  )
+  await stackable.buildWithCommand(['node', executablePath], import.meta.dirname, {
+    loader: new URL('../fixtures/loader.js', import.meta.url).toString(),
+    scripts: [new URL('../fixtures/imported.js', import.meta.url)]
+  })
 
   deepStrictEqual(messages, [
     ['DEBUG', `Executing "node ${executablePath}" ...`],
@@ -166,7 +164,7 @@ test('ChildProcess - should intercept fetch calls', async t => {
   stackable.logger = logger
 
   const executablePath = fileURLToPath(new URL('../fixtures/fetch.js', import.meta.url))
-  const promise = stackable.buildWithCommand(['node', executablePath])
+  const promise = stackable.buildWithCommand(['node', executablePath], null, { context: { interceptLogging: true } })
   const manager = await getChildManager(stackable)
   manager._forwardLogs = forwardLogs.bind(null, logger)
 
@@ -217,12 +215,10 @@ test('ChildProcess - should properly setup globals', async t => {
   stackable.logger = logger
 
   const executablePath = fileURLToPath(new URL('../fixtures/import-non-existing.js', import.meta.url))
-  await stackable.buildWithCommand(
-    ['node', executablePath],
-    import.meta.dirname,
-    new URL('../fixtures/loader.js', import.meta.url).toString(),
-    [new URL('../fixtures/imported.js', import.meta.url)]
-  )
+  await stackable.buildWithCommand(['node', executablePath], import.meta.dirname, {
+    loader: new URL('../fixtures/loader.js', import.meta.url).toString(),
+    scripts: [new URL('../fixtures/imported.js', import.meta.url)]
+  })
   stackable.setOpenapiSchema('TEST_OPENAPI_SCHEMA')
   stackable.setGraphqlSchema('TEST_GRAPHQL_SCHEMA')
   stackable.setConnectionString('TEST_CONNECTION_STRING')

@@ -1,1 +1,1 @@
-console.log('INJECTED', globalThis?.platformatic?.isBuilding ?? false)
+console.log(`INJECTED ${globalThis?.platformatic?.isBuilding ?? false}`)
