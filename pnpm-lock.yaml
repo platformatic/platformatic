@@ -2215,8 +2215,8 @@ importers:
         specifier: ^6.0.2
         version: 6.0.2
       '@matteo.collina/sqlite-pool':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.5.0
+        version: 0.5.0
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
@@ -3640,8 +3640,8 @@ packages:
   '@matteo.collina/snap@0.3.0':
     resolution: {integrity: sha512-CtoSZVegbLSMOoDjy+5TCZFY6juqSpc7P7slP5hx5jTu28ncvouAf1QrBqeLuPimIonU+ekbtkNNOlIl/a6GFw==}
 
-  '@matteo.collina/sqlite-pool@0.4.0':
-    resolution: {integrity: sha512-EX3D/MELtga/KIR6peYtTCrB/Qiu+1k4sWnxrzSrU1PDhPxIHw4NsWu6NylWPAGrD/+rDd88HkwqwZvXBIxDaw==}
+  '@matteo.collina/sqlite-pool@0.5.0':
+    resolution: {integrity: sha512-RzrGX7mwmy6aPJrbm6/iitEP0wiCNpyD+EwokfB/3AwKyNGSwpEG0b4tlDn+QskMURwfa7RTtNYuRTNpArY4LQ==}
 
   '@matteo.collina/tspl@0.1.1':
     resolution: {integrity: sha512-jJFj8RzdExJGmZOVbyMViYkEgpyxqj/2InjRqnmFvYss+cXQEg47dTjADvL+ZGFRsJf6w5mtI5F+cNUBq1MVvA==}
@@ -10375,7 +10375,7 @@ snapshots:
       find-up: 7.0.0
       slash: 5.1.0
 
-  '@matteo.collina/sqlite-pool@0.4.0':
+  '@matteo.collina/sqlite-pool@0.5.0':
     dependencies:
       '@databases/connection-pool': 1.1.0
       '@databases/escape-identifier': 1.0.3
