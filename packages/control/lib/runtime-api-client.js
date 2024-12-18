@@ -35,7 +35,9 @@ class RuntimeApiClient {
   }
 
   async getRuntimes () {
-    const runtimePIDs = platform() === 'win32' ? await this.#getWindowsRuntimePIDs() : await this.#getUnixRuntimePIDs()
+    const runtimePIDs = platform() === 'win32'
+      ? await this.#getWindowsRuntimePIDs()
+      : await this.#getUnixRuntimePIDs()
 
     const getMetadataRequests = await Promise.allSettled(
       runtimePIDs.map(async runtimePID => {
@@ -62,7 +64,8 @@ class RuntimeApiClient {
 
     const { statusCode, body } = await client.request({
       path: '/api/v1/metadata',
-      method: 'GET'
+      method: 'GET',
+      headersTimeout: 10 * 1000,
     })
 
     if (statusCode !== 200) {

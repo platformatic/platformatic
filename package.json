@@ -22,10 +22,5 @@
   },
   "pre-commit": [
     "lint"
-  ],
-  "pnpm": {
-    "overrides": {
-      "rollup": "npm:@rollup/wasm-node"
-    }
-  }
+  ]
 }

@@ -3,6 +3,7 @@
 const { readdir } = require('node:fs/promises')
 const { join, resolve: pathResolve, isAbsolute } = require('node:path')
 
+const { createRequire, loadModule } = require('@platformatic/utils')
 const ConfigManager = require('@platformatic/config')
 const { Store } = require('@platformatic/config')
 
@@ -103,6 +104,15 @@ async function _transformConfig (configManager, args) {
         const serviceConfig = await store.loadConfig(service)
         service.isPLTService = !!serviceConfig.app.isPLTService
         service.type = serviceConfig.app.configType
+        const _require = createRequire(service.path)
+        // This is needed to work around Rust bug on dylibs:
+        // https://github.com/rust-lang/rust/issues/91979
+        // https://github.com/rollup/rollup/issues/5761
+        // TODO(mcollina): we should expose this inside every stackable configuration.
+        serviceConfig.app.modulesToLoad?.forEach((m) => {
+          const toLoad = _require.resolve(m)
+          loadModule(_require, toLoad).catch(() => {})
+        })
       } catch (err) {
         // Fallback if for any reason a dependency is not found
         try {
@@ -119,6 +129,25 @@ async function _transformConfig (configManager, args) {
           service.type = 'unknown'
           service.isPLTService = false
         }
+      }
+    } else {
+      // We need to identify the service type
+      const basic = await import('@platformatic/basic')
+      service.isPLTService = false
+      try {
+        const imported = await basic.importStackableAndConfig(service.path)
+        service.type = imported.stackable.default.configType
+        const _require = createRequire(service.path)
+        // This is needed to work around Rust bug on dylibs:
+        // https://github.com/rust-lang/rust/issues/91979
+        // https://github.com/rollup/rollup/issues/5761
+        // TODO(mcollina): we should expose this inside every stackable configuration.
+        imported.stackable.default.modulesToLoad?.forEach((m) => {
+          const toLoad = _require.resolve(m)
+          loadModule(_require, toLoad).catch(() => {})
+        })
+      } catch {
+        // Nothing to do here
       }
     }
 
