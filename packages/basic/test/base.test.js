@@ -142,6 +142,23 @@ test('BaseStackable - buildWithCommand - should handle exceptions', async t => {
   deepStrictEqual(messages, [['DEBUG', `Executing "node ${executablePath}" ...`]])
 })
 
+test.only('BaseStackable - buildWithCommand - should not inject the Platformatic code if asked to', async t => {
+  const stackable = await createStackable(t, {})
+  const { messages, logger } = createMockedLogger()
+  stackable.logger = logger
+
+  const executablePath = fileURLToPath(new URL('./fixtures/build-context.js', import.meta.url))
+  await stackable.buildWithCommand(`node ${executablePath}`, import.meta.dirname)
+  await stackable.buildWithCommand(`node ${executablePath}`, import.meta.dirname, null, null, true)
+
+  deepStrictEqual(messages, [
+    ['DEBUG', `Executing "node ${executablePath}" ...`],
+    ['INFO', 'INJECTED true'],
+    ['DEBUG', `Executing "node ${executablePath}" ...`],
+    ['INFO', 'INJECTED false']
+  ])
+})
+
 test('BaseStackable - startCommand and stopCommand - should execute the requested command', async t => {
   const stackable = await createStackable(
     t,

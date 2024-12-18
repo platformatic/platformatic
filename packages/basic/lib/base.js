@@ -160,7 +160,7 @@ export class BaseStackable {
     }
   }
 
-  async buildWithCommand (command, basePath, loader, scripts) {
+  async buildWithCommand (command, basePath, loader, scripts, disableChildManager) {
     if (Array.isArray(command)) {
       command = command.join(' ')
     }
@@ -168,17 +168,21 @@ export class BaseStackable {
     this.logger.debug(`Executing "${command}" ...`)
 
     const context = await this.#getChildManagerContext(basePath)
-    this.childManager = new ChildManager({
-      logger: this.logger,
-      loader,
-      scripts,
-      context: { ...context, isBuilding: true }
-    })
+    this.childManager = disableChildManager
+      ? null
+      : new ChildManager({
+        logger: this.logger,
+        loader,
+        scripts,
+        context: { ...context, isBuilding: true, interceptLogging: typeof workerData?.loggingPort !== 'undefined' }
+      })
 
     try {
-      await this.childManager.inject()
+      await this.childManager?.inject()
 
       const subprocess = this.spawn(command)
+      subprocess.stdout.setEncoding('utf8')
+      subprocess.stderr.setEncoding('utf8')
 
       // Wait for the process to be started
       await new Promise((resolve, reject) => {
@@ -205,8 +209,8 @@ export class BaseStackable {
         throw error
       }
     } finally {
-      await this.childManager.eject()
-      await this.childManager.close()
+      await this.childManager?.eject()
+      await this.childManager?.close()
     }
   }
 

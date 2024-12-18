@@ -164,10 +164,11 @@ export class NodeStackable extends BaseStackable {
   }
 
   async build () {
-    const command = this.configManager.current.application.commands.build
+    const config = this.configManager.current.application
+    const command = config.commands.build
 
     if (command) {
-      return this.buildWithCommand(command, null)
+      return this.buildWithCommand(command, null, null, null, config.disablePlatformaticInBuild)
     }
 
     // If no command was specified, we try to see if there is a build script defined in package.json.
@@ -180,7 +181,7 @@ export class NodeStackable extends BaseStackable {
       return
     }
 
-    return this.buildWithCommand('npm run build', null)
+    return this.buildWithCommand('npm run build', null, null, null, config.disablePlatformaticInBuild)
   }
 
   async inject (injectParams, onInject) {

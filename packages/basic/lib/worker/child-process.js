@@ -205,7 +205,7 @@ export class ChildProcess extends ITC {
       }
     }
 
-    if (isMainThread) {
+    if (isMainThread && globalThis.platformatic.interceptLogging) {
       pinoOptions.transport = {
         target: new URL('./child-transport.js', import.meta.url).toString()
       }

@@ -24,6 +24,8 @@ Configures Node. Supported object properties:
 
 - **`main`**: The entrypoint of the application. This is only needed if the `main` property is not set in the service `package.json` file.
 - **`absoluteUrl`**: If set to `true`, then the service will receive the full URL from a Platformatic Composer. The default is `false`.
+- **`dispatchViaHttp`**: If set to `true`, then the service will serve requests coming from the mesh network via a TCP port.
+- **`disablePlatformaticInBuild`**: If set to `true`, then no Platformatic code will be started when running the `build` command.
 
 ## `logger`
 
