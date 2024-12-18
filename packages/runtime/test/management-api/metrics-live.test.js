@@ -46,26 +46,35 @@ test('should get runtime metrics via management api', async (t) => {
       const records = data.toString().split('\n')
       for (const record of records) {
         if (!record) continue
-        const metrics = JSON.parse(record)
-        const metricsKeys = Object.keys(metrics).sort()
-        assert.deepStrictEqual(metricsKeys, [
-          'cpu',
-          'date',
-          'elu',
-          'entrypoint',
-          'newSpaceSize',
-          'oldSpaceSize',
-          'rss',
-          'totalHeapSize',
-          'usedHeapSize',
-          'version',
-        ])
+        const { services } = JSON.parse(record)
+
+        assert.deepStrictEqual(
+          Object.keys(services).sort(),
+          ['service-1', 'service-2', 'service-db'].sort()
+        )
+
+        for (const serviceMetrics of Object.values(services)) {
+          assert.deepStrictEqual(Object.keys(serviceMetrics).sort(), [
+            'cpu',
+            'elu',
+            'newSpaceSize',
+            'oldSpaceSize',
+            'rss',
+            'totalHeapSize',
+            'usedHeapSize',
+            'latency',
+          ].sort())
+
+          const latencyMetrics = serviceMetrics.latency
+          const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
+          assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
+        }
       }
     })
   })
 })
 
-test('should not throw if entrypoint does not have metrics enabled', async (t) => {
+test('should not throw if metrics are not enabled', async (t) => {
   const projectDir = join(fixturesDir, 'management-api-without-metrics')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)

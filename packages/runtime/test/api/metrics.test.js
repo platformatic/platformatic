@@ -260,29 +260,29 @@ test('should get formatted runtime metrics', async t => {
     await app.close()
   })
 
-  const metrics = await app.getFormattedMetrics()
-  const metricsKeys = Object.keys(metrics).sort()
+  const { services } = await app.getFormattedMetrics()
 
-  assert.deepStrictEqual(metricsKeys, [
-    'cpu',
-    'date',
-    'elu',
-    'entrypoint',
-    'newSpaceSize',
-    'oldSpaceSize',
-    'rss',
-    'totalHeapSize',
-    'usedHeapSize',
-    'version'
-  ])
+  assert.deepStrictEqual(
+    Object.keys(services).sort(),
+    ['service-1', 'service-2', 'service-db'].sort()
+  )
 
-  const entrypointMetrics = metrics.entrypoint
-  const entrypointMetricsKeys = Object.keys(entrypointMetrics).sort()
-  assert.deepStrictEqual(entrypointMetricsKeys, ['latency'])
+  for (const serviceMetrics of Object.values(services)) {
+    assert.deepStrictEqual(Object.keys(serviceMetrics).sort(), [
+      'cpu',
+      'elu',
+      'newSpaceSize',
+      'oldSpaceSize',
+      'rss',
+      'totalHeapSize',
+      'usedHeapSize',
+      'latency',
+    ].sort())
 
-  const latencyMetrics = entrypointMetrics.latency
-  const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
-  assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
+    const latencyMetrics = serviceMetrics.latency
+    const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
+    assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
+  }
 })
 
 test('should get cached formatted runtime metrics', async t => {
@@ -291,39 +291,44 @@ test('should get cached formatted runtime metrics', async t => {
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
 
-  await app.start()
+  const appUrl = await app.start()
 
   t.after(async () => {
     await app.close()
   })
 
+  for (let i = 0; i < 10; i++) {
+    const { statusCode } = await request(appUrl + '/hello')
+    assert.strictEqual(statusCode, 200)
+  }
+
   // wait for the metrics to be cached
   await sleep(5000)
 
-  const metrics = await app.getCachedMetrics()
+  const metricsHistory = await app.getCachedMetrics()
 
-  for (const metric of metrics) {
-    const metricsKeys = Object.keys(metric).sort()
-    assert.deepStrictEqual(metricsKeys, [
-      'cpu',
-      'date',
-      'elu',
-      'entrypoint',
-      'newSpaceSize',
-      'oldSpaceSize',
-      'rss',
-      'totalHeapSize',
-      'usedHeapSize',
-      'version'
-    ])
+  for (const { services } of metricsHistory) {
+    assert.deepStrictEqual(
+      Object.keys(services).sort(),
+      ['service-1', 'service-2', 'service-db'].sort()
+    )
 
-    const entrypointMetrics = metric.entrypoint
-    const entrypointMetricsKeys = Object.keys(entrypointMetrics).sort()
-    assert.deepStrictEqual(entrypointMetricsKeys, ['latency'])
+    for (const serviceMetrics of Object.values(services)) {
+      assert.deepStrictEqual(Object.keys(serviceMetrics).sort(), [
+        'cpu',
+        'elu',
+        'newSpaceSize',
+        'oldSpaceSize',
+        'rss',
+        'totalHeapSize',
+        'usedHeapSize',
+        'latency',
+      ].sort())
 
-    const latencyMetrics = entrypointMetrics.latency
-    const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
-    assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
+      const latencyMetrics = serviceMetrics.latency
+      const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
+      assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
+    }
   }
 })
 
@@ -344,29 +349,28 @@ test('should get metrics after reloading one of the services', async t => {
 
   await sleep(5000)
 
-  const metrics = await app.getCachedMetrics()
+  const metricsHistory = await app.getCachedMetrics()
 
-  for (const metric of metrics) {
-    const metricsKeys = Object.keys(metric).sort()
-    assert.deepStrictEqual(metricsKeys, [
-      'cpu',
-      'date',
-      'elu',
-      'entrypoint',
-      'newSpaceSize',
-      'oldSpaceSize',
-      'rss',
-      'totalHeapSize',
-      'usedHeapSize',
-      'version'
-    ])
+  for (const { services } of metricsHistory) {
+    const servicesNames = Object.keys(services)
+    assert.ok(servicesNames.includes('service-1'))
+    assert.ok(servicesNames.includes('service-db'))
 
-    const entrypointMetrics = metric.entrypoint
-    const entrypointMetricsKeys = Object.keys(entrypointMetrics).sort()
-    assert.deepStrictEqual(entrypointMetricsKeys, ['latency'])
+    for (const serviceMetrics of Object.values(services)) {
+      assert.deepStrictEqual(Object.keys(serviceMetrics).sort(), [
+        'cpu',
+        'elu',
+        'newSpaceSize',
+        'oldSpaceSize',
+        'rss',
+        'totalHeapSize',
+        'usedHeapSize',
+        'latency',
+      ].sort())
 
-    const latencyMetrics = entrypointMetrics.latency
-    const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
-    assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
+      const latencyMetrics = serviceMetrics.latency
+      const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
+      assert.deepStrictEqual(latencyMetricsKeys, ['p50', 'p90', 'p95', 'p99'])
+    }
   }
 })

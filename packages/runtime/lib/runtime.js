@@ -687,7 +687,10 @@ class Runtime extends EventEmitter {
         }
       } catch (e) {
         // The service exited while we were sending the ITC, skip it
-        if (e.code === 'PLT_RUNTIME_SERVICE_NOT_STARTED' || e.code === 'PLT_RUNTIME_SERVICE_EXIT') {
+        if (
+          e.code === 'PLT_RUNTIME_SERVICE_NOT_STARTED' ||
+          e.code === 'PLT_RUNTIME_SERVICE_EXIT'
+        ) {
           continue
         }
 
@@ -706,73 +709,104 @@ class Runtime extends EventEmitter {
     try {
       const { metrics } = await this.getMetrics()
 
-      if (metrics === null) {
+      if (metrics === null || metrics.length === 0) {
         return null
       }
 
-      const cpuMetric = metrics.find(metric => metric.name === 'process_cpu_percent_usage')
-      const rssMetric = metrics.find(metric => metric.name === 'process_resident_memory_bytes')
-      const totalHeapSizeMetric = metrics.find(metric => metric.name === 'nodejs_heap_size_total_bytes')
-      const usedHeapSizeMetric = metrics.find(metric => metric.name === 'nodejs_heap_size_used_bytes')
-      const heapSpaceSizeTotalMetric = metrics.find(metric => metric.name === 'nodejs_heap_space_size_total_bytes')
-      const newSpaceSizeTotalMetric = heapSpaceSizeTotalMetric.values.find(value => value.labels.space === 'new')
-      const oldSpaceSizeTotalMetric = heapSpaceSizeTotalMetric.values.find(value => value.labels.space === 'old')
-      const eventLoopUtilizationMetric = metrics.find(metric => metric.name === 'nodejs_eventloop_utilization')
+      const metricsNames = [
+        'process_cpu_percent_usage',
+        'process_resident_memory_bytes',
+        'nodejs_heap_size_total_bytes',
+        'nodejs_heap_size_used_bytes',
+        'nodejs_heap_space_size_total_bytes',
+        'nodejs_eventloop_utilization',
+        'http_request_all_summary_seconds'
+      ]
 
-      let p50Value = 0
-      let p90Value = 0
-      let p95Value = 0
-      let p99Value = 0
+      const servicesMetrics = {}
 
-      const metricName = 'http_request_all_summary_seconds'
-      const httpLatencyMetrics = metrics.filter(metric => metric.name === metricName)
+      for (const metric of metrics) {
+        const { name, values } = metric
 
-      if (httpLatencyMetrics) {
-        const entrypointMetrics = httpLatencyMetrics.find(
-          metric => metric.values?.[0]?.labels?.serviceId === this.#entrypointId
-        )
-        if (entrypointMetrics) {
-          p50Value = entrypointMetrics.values.find(value => value.labels.quantile === 0.5)?.value || 0
-          p90Value = entrypointMetrics.values.find(value => value.labels.quantile === 0.9)?.value || 0
-          p95Value = entrypointMetrics.values.find(value => value.labels.quantile === 0.95)?.value || 0
-          p99Value = entrypointMetrics.values.find(value => value.labels.quantile === 0.99)?.value || 0
+        if (!metricsNames.includes(name)) continue
+        if (!values || values.length === 0) continue
 
-          p50Value = Math.round(p50Value * 1000)
-          p90Value = Math.round(p90Value * 1000)
-          p95Value = Math.round(p95Value * 1000)
-          p99Value = Math.round(p99Value * 1000)
+        const labels = values[0].labels
+        const serviceId = labels?.serviceId
+
+        if (!serviceId) {
+          throw new Error('Missing serviceId label in metrics')
         }
+
+        let serviceMetrics = servicesMetrics[serviceId]
+        if (!serviceMetrics) {
+          serviceMetrics = {
+            cpu: 0,
+            rss: 0,
+            totalHeapSize: 0,
+            usedHeapSize: 0,
+            newSpaceSize: 0,
+            oldSpaceSize: 0,
+            elu: 0,
+            latency: {
+              p50: 0,
+              p90: 0,
+              p95: 0,
+              p99: 0
+            }
+          }
+          servicesMetrics[serviceId] = serviceMetrics
+        }
+
+        parsePromMetric(serviceMetrics, metric)
       }
 
-      const cpu = cpuMetric.values[0].value
-      const rss = rssMetric.values[0].value
-      const elu = eventLoopUtilizationMetric.values[0].value
-      const totalHeapSize = totalHeapSizeMetric.values[0].value
-      const usedHeapSize = usedHeapSizeMetric.values[0].value
-      const newSpaceSize = newSpaceSizeTotalMetric.value
-      const oldSpaceSize = oldSpaceSizeTotalMetric.value
+      function parsePromMetric (serviceMetrics, promMetric) {
+        const { name } = promMetric
 
-      const formattedMetrics = {
-        version: 1,
-        date: new Date().toISOString(),
-        cpu,
-        elu,
-        rss,
-        totalHeapSize,
-        usedHeapSize,
-        newSpaceSize,
-        oldSpaceSize,
-        entrypoint: {
-          latency: {
-            p50: p50Value,
-            p90: p90Value,
-            p95: p95Value,
-            p99: p99Value
+        if (name === 'process_cpu_percent_usage') {
+          serviceMetrics.cpu = promMetric.values[0].value
+          return
+        }
+        if (name === 'process_resident_memory_bytes') {
+          serviceMetrics.rss = promMetric.values[0].value
+          return
+        }
+        if (name === 'nodejs_heap_size_total_bytes') {
+          serviceMetrics.totalHeapSize = promMetric.values[0].value
+          return
+        }
+        if (name === 'nodejs_heap_size_used_bytes') {
+          serviceMetrics.usedHeapSize = promMetric.values[0].value
+          return
+        }
+        if (name === 'nodejs_heap_space_size_total_bytes') {
+          const newSpaceSize = promMetric.values.find(value => value.labels.space === 'new')
+          const oldSpaceSize = promMetric.values.find(value => value.labels.space === 'old')
+
+          serviceMetrics.newSpaceSize = newSpaceSize.value
+          serviceMetrics.oldSpaceSize = oldSpaceSize.value
+          return
+        }
+        if (name === 'nodejs_eventloop_utilization') {
+          serviceMetrics.elu = promMetric.values[0].value
+          return
+        }
+        if (name === 'http_request_all_summary_seconds') {
+          serviceMetrics.latency = {
+            p50: promMetric.values.find(value => value.labels.quantile === 0.5)?.value || 0,
+            p90: promMetric.values.find(value => value.labels.quantile === 0.9)?.value || 0,
+            p95: promMetric.values.find(value => value.labels.quantile === 0.95)?.value || 0,
+            p99: promMetric.values.find(value => value.labels.quantile === 0.99)?.value || 0
           }
         }
       }
 
-      return formattedMetrics
+      return {
+        version: 1,
+        date: new Date().toISOString(),
+        services: servicesMetrics
+      }
     } catch (err) {
       // If any metric is missing, return nothing
       this.logger.warn({ err }, 'Cannot fetch metrics')
