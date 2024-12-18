@@ -104,7 +104,7 @@ export class NextStackable extends BaseStackable {
       command = ['node', pathResolve(this.#next, './dist/bin/next'), 'build', this.root]
     }
 
-    return this.buildWithCommand(command, this.#basePath, { loader, scripts: [this.#getChildManagerScripts()] })
+    return this.buildWithCommand(command, this.#basePath, { loader, scripts: this.#getChildManagerScripts() })
   }
 
   /* c8 ignore next 5 */
