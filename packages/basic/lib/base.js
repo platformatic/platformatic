@@ -174,7 +174,7 @@ export class BaseStackable {
         logger: this.logger,
         loader,
         scripts,
-        context: { ...context, isBuilding: true, interceptLogging: typeof workerData?.loggingPort !== 'undefined' }
+        context: { ...context, isBuilding: true }
       })
 
     try {
@@ -409,7 +409,8 @@ export class BaseStackable {
       /* c8 ignore next 2 */
       port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
-      telemetryConfig: this.telemetryConfig
+      telemetryConfig: this.telemetryConfig,
+      interceptLogging: typeof workerData?.loggingPort !== 'undefined'
     }
   }
 }
