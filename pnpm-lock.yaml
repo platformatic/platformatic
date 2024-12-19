@@ -1485,7 +1485,7 @@ importers:
         version: link:../utils
       light-my-request:
         specifier: ^6.0.0
-        version: 6.3.0
+        version: 6.4.0
     devDependencies:
       '@platformatic/composer':
         specifier: workspace:*
@@ -1543,7 +1543,7 @@ importers:
         version: 4.21.2
       light-my-request:
         specifier: ^6.0.0
-        version: 6.3.0
+        version: 6.4.0
       pino-http:
         specifier: ^10.2.0
         version: 10.3.0
@@ -6658,6 +6658,9 @@ packages:
 
   light-my-request@6.3.0:
     resolution: {integrity: sha512-bWTAPJmeWQH5suJNYwG0f5cs0p6ho9e6f1Ppoxv5qMosY+s9Ir2+ZLvvHcgA7VTDop4zl/NCHhOVVqU+kd++Ow==}
+
+  light-my-request@6.4.0:
+    resolution: {integrity: sha512-U0UONITz4GVQodMPoygnqJan2RYfhyLsCzFBakJHWNfiQKyHzvp38YOxxLGs8lIDPwR6ngd4gmuZJQQJtRBu/A==}
 
   lilconfig@3.1.3:
     resolution: {integrity: sha512-/vlFKAoH5Cgt3Ie+JLhRbwOsCQePABiU3tJ1egGvyQ+33R/vcwM2Zl2QR/LzjsBeItPt3oSVXapn+m4nQDvpzw==}
@@ -14048,6 +14051,12 @@ snapshots:
       process-warning: 4.0.0
       set-cookie-parser: 2.7.1
 
+  light-my-request@6.4.0:
+    dependencies:
+      cookie: 1.0.2
+      process-warning: 4.0.0
+      set-cookie-parser: 2.7.1
+
   lilconfig@3.1.3: {}
 
   lines-and-columns@1.2.4: {}
@@ -17020,7 +17029,7 @@ snapshots:
   undici-thread-interceptor@0.10.1:
     dependencies:
       hyperid: 3.3.0
-      light-my-request: 6.3.0
+      light-my-request: 6.4.0
       undici: 7.1.1
 
   undici-types@5.26.5: {}
