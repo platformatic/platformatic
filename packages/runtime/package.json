@@ -58,6 +58,7 @@
     "why-is-node-running": "^2.2.2"
   },
   "dependencies": {
+    "@fastify/accepts": "^5.0.0",
     "@fastify/error": "^4.0.0",
     "@fastify/websocket": "^11.0.0",
     "@hapi/topo": "^6.0.2",
