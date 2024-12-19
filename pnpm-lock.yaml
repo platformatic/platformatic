@@ -2218,8 +2218,8 @@ importers:
         specifier: ^6.0.2
         version: 6.0.2
       '@matteo.collina/sqlite-pool':
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.6.0
+        version: 0.6.0
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
@@ -2873,8 +2873,8 @@ packages:
   '@databases/sql@3.3.0':
     resolution: {integrity: sha512-vj9huEy4mjJ48GS1Z8yvtMm4BYAnFYACUds25ym6Gd/gsnngkJ17fo62a6mmbNNwCBS/8467PmZR01Zs/06TjA==}
 
-  '@databases/sqlite-sync@2.0.0':
-    resolution: {integrity: sha512-nJiaos1U+SbokNFzNkZS7qb7KnKHW/JfcF9gKJGJbsC57BzY/Jx5FxhsW/wW2WMKAoKTietVwmTKZ28GymfYQw==}
+  '@databases/sqlite-sync@3.0.0':
+    resolution: {integrity: sha512-E/vzK7fH8P5aWk54DR/zEA6IHx65b4R5fWgGPDaBH39QcJvZm89C6q9tl+6E3t3kbCTdzhohZdFNbOEbV1s2WQ==}
 
   '@databases/validate-unicode@1.0.0':
     resolution: {integrity: sha512-dLKqxGcymeVwEb/6c44KjOnzaAafFf0Wxa8xcfEjx/qOl3rdijsKYBAtIGhtVtOlpPf/PFKfgTuFurSPn/3B/g==}
@@ -3643,8 +3643,8 @@ packages:
   '@matteo.collina/snap@0.3.0':
     resolution: {integrity: sha512-CtoSZVegbLSMOoDjy+5TCZFY6juqSpc7P7slP5hx5jTu28ncvouAf1QrBqeLuPimIonU+ekbtkNNOlIl/a6GFw==}
 
-  '@matteo.collina/sqlite-pool@0.5.0':
-    resolution: {integrity: sha512-RzrGX7mwmy6aPJrbm6/iitEP0wiCNpyD+EwokfB/3AwKyNGSwpEG0b4tlDn+QskMURwfa7RTtNYuRTNpArY4LQ==}
+  '@matteo.collina/sqlite-pool@0.6.0':
+    resolution: {integrity: sha512-6FW+Mph48XnaXJg/7EL4tMHq9hmLvlQD43Ad+eZCMK921qTcGYLkl2PaZxBiyt5w+5ZeZOdzgN87dVsoJ/cPfg==}
 
   '@matteo.collina/tspl@0.1.1':
     resolution: {integrity: sha512-jJFj8RzdExJGmZOVbyMViYkEgpyxqj/2InjRqnmFvYss+cXQEg47dTjADvL+ZGFRsJf6w5mtI5F+cNUBq1MVvA==}
@@ -4696,8 +4696,8 @@ packages:
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
-  better-sqlite3@9.6.0:
-    resolution: {integrity: sha512-yR5HATnqeYNVnkaUTf4bOP2dJSnyhP4puJN/QPRyx4YkBEEUxib422n2XzPqDEHjQQqazoYoADdAm5vE15+dAQ==}
+  better-sqlite3@11.7.0:
+    resolution: {integrity: sha512-mXpa5jnIKKHeoGzBrUJrc65cXFKcILGZpU3FXR0pradUEm9MA7UZz02qfEejaMcm9iXrSOCenwwYMJ/tZ1y5Ig==}
 
   binary-extensions@2.3.0:
     resolution: {integrity: sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==}
@@ -9743,13 +9743,13 @@ snapshots:
 
   '@databases/sql@3.3.0': {}
 
-  '@databases/sqlite-sync@2.0.0':
+  '@databases/sqlite-sync@3.0.0':
     dependencies:
       '@databases/escape-identifier': 1.0.3
       '@databases/split-sql-query': 1.0.4(@databases/sql@3.3.0)
       '@databases/sql': 3.3.0
       '@types/better-sqlite3': 7.6.12
-      better-sqlite3: 9.6.0
+      better-sqlite3: 11.7.0
 
   '@databases/validate-unicode@1.0.0': {}
 
@@ -10378,12 +10378,12 @@ snapshots:
       find-up: 7.0.0
       slash: 5.1.0
 
-  '@matteo.collina/sqlite-pool@0.5.0':
+  '@matteo.collina/sqlite-pool@0.6.0':
     dependencies:
       '@databases/connection-pool': 1.1.0
       '@databases/escape-identifier': 1.0.3
       '@databases/sql': 3.3.0
-      '@databases/sqlite-sync': 2.0.0
+      '@databases/sqlite-sync': 3.0.0
 
   '@matteo.collina/tspl@0.1.1': {}
 
@@ -11714,7 +11714,7 @@ snapshots:
 
   base64-js@1.5.1: {}
 
-  better-sqlite3@9.6.0:
+  better-sqlite3@11.7.0:
     dependencies:
       bindings: 1.5.0
       prebuild-install: 7.1.2
