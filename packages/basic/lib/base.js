@@ -160,25 +160,31 @@ export class BaseStackable {
     }
   }
 
-  async buildWithCommand (command, basePath, loader, scripts) {
+  async buildWithCommand (command, basePath, opts = {}) {
+    const { loader, scripts, context, disableChildManager } = opts
+
     if (Array.isArray(command)) {
       command = command.join(' ')
     }
 
     this.logger.debug(`Executing "${command}" ...`)
 
-    const context = await this.#getChildManagerContext(basePath)
-    this.childManager = new ChildManager({
-      logger: this.logger,
-      loader,
-      scripts,
-      context: { ...context, isBuilding: true }
-    })
+    const baseContext = await this.getChildManagerContext(basePath)
+    this.childManager = disableChildManager
+      ? null
+      : new ChildManager({
+        logger: this.logger,
+        loader,
+        scripts,
+        context: { ...baseContext, isBuilding: true, ...context }
+      })
 
     try {
-      await this.childManager.inject()
+      await this.childManager?.inject()
 
       const subprocess = this.spawn(command)
+      subprocess.stdout.setEncoding('utf8')
+      subprocess.stderr.setEncoding('utf8')
 
       // Wait for the process to be started
       await new Promise((resolve, reject) => {
@@ -205,8 +211,8 @@ export class BaseStackable {
         throw error
       }
     } finally {
-      await this.childManager.eject()
-      await this.childManager.close()
+      await this.childManager?.eject()
+      await this.childManager?.close()
     }
   }
 
@@ -214,7 +220,7 @@ export class BaseStackable {
     const config = this.configManager.current
     const basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
 
-    const context = await this.#getChildManagerContext(basePath)
+    const context = await this.getChildManagerContext(basePath)
     this.childManager = new ChildManager({
       logger: this.logger,
       loader,
@@ -407,7 +413,7 @@ export class BaseStackable {
     }
   }
 
-  async #getChildManagerContext (basePath) {
+  async getChildManagerContext (basePath) {
     const meta = await this.getMeta()
 
     return {
@@ -425,7 +431,8 @@ export class BaseStackable {
       /* c8 ignore next 2 */
       port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
-      telemetryConfig: this.telemetryConfig
+      telemetryConfig: this.telemetryConfig,
+      interceptLogging: typeof workerData?.loggingPort !== 'undefined'
     }
   }
 }

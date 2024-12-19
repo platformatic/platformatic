@@ -104,7 +104,7 @@ export class NextStackable extends BaseStackable {
       command = ['node', pathResolve(this.#next, './dist/bin/next'), 'build', this.root]
     }
 
-    return this.buildWithCommand(command, this.#basePath, loader, this.#getChildManagerScripts())
+    return this.buildWithCommand(command, this.#basePath, { loader, scripts: this.#getChildManagerScripts() })
   }
 
   /* c8 ignore next 5 */
@@ -143,21 +143,14 @@ export class NextStackable extends BaseStackable {
       port: port || 0
     }
 
+    const context = await this.getChildManagerContext(this.#basePath)
+
     this.childManager = new ChildManager({
       loader: loaderUrl,
       context: {
-        config: this.configManager.current,
-        serviceId: this.serviceId,
-        workerId: this.workerId,
-        // Always use URL to avoid serialization problem in Windows
-        root: pathToFileURL(this.root).toString(),
-        basePath: this.#basePath,
-        logLevel: this.logger.level,
+        ...context,
         port: false,
-        isEntrypoint: this.isEntrypoint,
-        runtimeBasePath: this.runtimeConfig.basePath,
-        wantsAbsoluteUrls: true,
-        telemetryConfig: this.telemetryConfig
+        wantsAbsoluteUrls: true
       },
       scripts: this.#getChildManagerScripts()
     })

@@ -272,7 +272,8 @@ test('config - should list configuration for an service', async t => {
     node: {
       absoluteUrl: false,
       main: 'index.js',
-      dispatchViaHttp: false
+      dispatchViaHttp: false,
+      disablePlatformaticInBuild: false
     }
   })
 })

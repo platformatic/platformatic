@@ -18,6 +18,10 @@ const node = {
     dispatchViaHttp: {
       type: 'boolean',
       default: false
+    },
+    disablePlatformaticInBuild: {
+      type: 'boolean',
+      default: false
     }
   },
   default: {},

@@ -100,5 +100,6 @@ export interface PlatformaticNodeJsStackable {
      */
     absoluteUrl?: boolean;
     dispatchViaHttp?: boolean;
+    disablePlatformaticInBuild?: boolean;
   };
 }
