@@ -126,7 +126,8 @@ const composer = {
               {
                 type: 'object',
                 properties: {
-                  prefix: { type: 'string' }
+                  prefix: { type: 'string' },
+                  hostname: { type: 'string' }
                 },
                 required: [],
                 additionalProperties: false

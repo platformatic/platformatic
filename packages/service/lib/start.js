@@ -2,7 +2,12 @@
 
 const { readFile } = require('fs/promises')
 const close = require('close-with-grace')
-const { loadConfig, ConfigManager, printConfigValidationErrors, printAndExitLoadConfigError } = require('@platformatic/config')
+const {
+  loadConfig,
+  ConfigManager,
+  printConfigValidationErrors,
+  printAndExitLoadConfigError
+} = require('@platformatic/config')
 const { addLoggerToTheConfig, isDocker } = require('./utils.js')
 const { randomUUID } = require('crypto')
 const { fastify } = require('fastify')
@@ -36,10 +41,15 @@ async function createServer (serverContext) {
       config.server.hostname = '0.0.0.0'
     }
     fastifyOptions = {
-      ...config.server,
+      ...config.server
     }
   }
-  fastifyOptions.genReqId = function (req) { return randomUUID() }
+
+  Object.assign(fastifyOptions, context?.fastifyOptions ?? {})
+
+  fastifyOptions.genReqId = function (req) {
+    return randomUUID()
+  }
   const root = fastify(fastifyOptions)
   root.decorate('platformatic', { configManager, config })
   await root.register(app, { context })
@@ -50,7 +60,7 @@ async function createServer (serverContext) {
   root.decorate('url', {
     getter () {
       return serverContext.url
-    },
+    }
   })
 
   return root
@@ -106,7 +116,7 @@ async function buildServer (options, app, context) {
   handler.start = async function () {
     serverContext.url = await handler.listen({
       host: options.server?.hostname || '127.0.0.1',
-      port: options.server?.port || 0,
+      port: options.server?.port || 0
     })
     return serverContext.url
   }
@@ -154,12 +164,15 @@ async function start (appType, _args) {
   close(async ({ signal, err }) => {
     // Windows does not support trapping signals
     if (err) {
-      app.log.error({
-        err: {
-          message: err.message,
-          stack: err.stack,
+      app.log.error(
+        {
+          err: {
+            message: err.message,
+            stack: err.stack
+          }
         },
-      }, 'exiting')
+        'exiting'
+      )
     } else if (signal) {
       app.log.info({ signal }, 'received signal')
     }

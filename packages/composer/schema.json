@@ -727,6 +727,9 @@
                     "properties": {
                       "prefix": {
                         "type": "string"
+                      },
+                      "hostname": {
+                        "type": "string"
                       }
                     },
                     "required": [],
