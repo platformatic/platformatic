@@ -9,7 +9,7 @@
     "port": 0
   },
   "logger": {
-    "level": "info"
+    "level": "warn"
   },
   "httpCache": true,
   "metrics": true
