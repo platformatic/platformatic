@@ -1,7 +1,9 @@
 'use strict'
 
+const { randomUUID } = require('node:crypto')
 const { Readable, Writable } = require('node:stream')
 const { kITC } = require('./symbols')
+const opentelemetry = require('@opentelemetry/api')
 
 const noop = () => {}
 
@@ -57,6 +59,11 @@ class RemoteCacheStore {
   }
 
   createWriteStream (request, response) {
+    const cacheEntryId = randomUUID()
+    request = { ...request, id: randomUUID() }
+
+    addCacheEntryIdToSpan(cacheEntryId)
+
     const itc = globalThis[kITC]
     if (!itc) throw new Error('Cannot write to cache without an ITC instance')
 
@@ -94,6 +101,12 @@ class RemoteCacheStore {
       headers: request.headers
     }
   }
+}
+
+function addCacheEntryIdToSpan (cacheEntryId) {
+  const span = opentelemetry.trace.getActiveSpan()
+  if (!span || !span.attributes['http.request.method']) return
+  span.setAttribute('http.cache.id', cacheEntryId)
 }
 
 module.exports = RemoteCacheStore

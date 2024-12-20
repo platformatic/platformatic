@@ -1,12 +1,16 @@
 'use strict'
 
 const assert = require('node:assert')
+const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { test } = require('node:test')
+const { rm } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { request } = require('undici')
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('..')
+
+const { parseNDJson } = require('@platformatic/telemetry/test/helper.js')
 
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
@@ -374,4 +378,47 @@ test('should invalidate cache by cache tags', async (t) => {
     const { counter } = await res.body.json()
     assert.strictEqual(counter, 2)
   }
+})
+
+test('should set an opentelemetry attribute', async (t) => {
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const { configManager } = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const config = configManager.current
+
+  const telemetryFilePath = join(tmpdir(), 'telemetry.ndjson')
+  await rm(telemetryFilePath, { force: true }).catch(() => {})
+
+  config.telemetry = {
+    serviceName: 'test-service',
+    version: '1.0.0',
+    exporter: {
+      type: 'file',
+      options: { path: telemetryFilePath }
+    }
+  }
+
+  const app = await buildServer(config)
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  const cacheTimeoutSec = 5
+
+  {
+    const url = entryUrl + '/service-2/service-3/cached-req-counter'
+    const { statusCode } = await request(url, {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    assert.strictEqual(statusCode, 200)
+  }
+
+  await sleep(cacheTimeoutSec * 1000)
+
+  const traces = await parseNDJson(telemetryFilePath)
+
+  const nodejsServiceTrace = traces.find(
+    (trace) => trace.name === 'GET /service-3/cached-req-counter?maxAge=5'
+  )
+  assert.ok(nodejsServiceTrace)
+  assert.ok(nodejsServiceTrace.attributes['http.cache.id'])
 })
