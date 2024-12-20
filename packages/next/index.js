@@ -287,7 +287,7 @@ function transformConfig () {
     this.current.cache.adapter = 'valkey'
   }
 
-  basicTransformConfig.call(this)
+  return basicTransformConfig.call(this)
 }
 
 export async function buildStackable (opts) {
@@ -298,7 +298,8 @@ export async function buildStackable (opts) {
     source: opts.config ?? {},
     schemaOptions,
     transformConfig,
-    dirname: root
+    dirname: root,
+    context: opts.context
   })
   await configManager.parseAndValidate()
 

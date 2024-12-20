@@ -99,6 +99,9 @@ importers:
       execa:
         specifier: ^9.3.1
         version: 9.5.2
+      fast-json-patch:
+        specifier: ^3.1.1
+        version: 3.1.1
       pino:
         specifier: ^9.3.2
         version: 9.5.0
@@ -1943,6 +1946,9 @@ importers:
       execa:
         specifier: ^8.0.1
         version: 8.0.1
+      fast-json-patch:
+        specifier: ^3.1.1
+        version: 3.1.1
       fastify:
         specifier: ^5.0.0
         version: 5.2.0
@@ -5672,6 +5678,9 @@ packages:
   fast-glob@3.3.2:
     resolution: {integrity: sha512-oX2ruAFQwf/Orj8m737Y5adxDQO0LAB7/S5MnxCdTNDd4p6BsyIVsv9JQsATbTSq8KHRpLwIHbVlUNatxd+1Ow==}
     engines: {node: '>=8.6.0'}
+
+  fast-json-patch@3.1.1:
+    resolution: {integrity: sha512-vf6IHUX2SBcA+5/+4883dsIjpBTqmfBjmYiWK1savxQmFk4JfBMLa7ynTYOs1Rolp/T1betJxHiGD3g1Mn8lUQ==}
 
   fast-json-stable-stringify@2.1.0:
     resolution: {integrity: sha512-lhd/wF+Lk98HZoTCtlVraHtfh5XYijIjalXck7saUtuanSDyLMxnHhSXEDJqHxD7msR8D0uCmqlkwjCV8xvwHw==}
@@ -12909,6 +12918,8 @@ snapshots:
       glob-parent: 5.1.2
       merge2: 1.4.1
       micromatch: 4.0.8
+
+  fast-json-patch@3.1.1: {}
 
   fast-json-stable-stringify@2.1.0: {}
 

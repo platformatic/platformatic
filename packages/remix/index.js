@@ -1,4 +1,5 @@
 import {
+  transformConfig as basicTransformConfig,
   cleanBasePath,
   ensureTrailingSlash,
   errors,
@@ -225,6 +226,8 @@ function transformConfig () {
   if (typeof this.current.watch !== 'object') {
     this.current.watch = { enabled: this.current.watch || false }
   }
+
+  return basicTransformConfig.call(this)
 }
 
 export async function buildStackable (opts) {
@@ -235,7 +238,8 @@ export async function buildStackable (opts) {
     source: opts.config ?? {},
     schemaOptions,
     transformConfig,
-    dirname: root
+    dirname: root,
+    context: opts.context
   })
   await configManager.parseAndValidate()
 
@@ -254,5 +258,4 @@ export default {
   schema,
   version: packageJson.version,
   modulesToLoad: ['rollup']
-
 }

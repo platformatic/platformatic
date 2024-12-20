@@ -2,8 +2,10 @@
 
 const { isKeyEnabled } = require('@platformatic/utils')
 const { loadConfig, ConfigManager } = require('@platformatic/config')
-const { readFile } = require('fs/promises')
-const { join } = require('path')
+const { readFile } = require('node:fs/promises')
+const { join } = require('node:path')
+const { workerData } = require('node:worker_threads')
+const jsonPatch = require('fast-json-patch')
 
 const setupCors = require('./lib/plugins/cors')
 const setupOpenAPI = require('./lib/plugins/openapi.js')
@@ -170,11 +172,22 @@ async function buildStackable (options, app = platformaticService, Stackable = S
     }
   }
 
+  const patch = workerData?.serviceConfig?.configPatch
+
+  if (Array.isArray(patch)) {
+    configManager.current = jsonPatch.applyPatch(configManager.current, patch).newDocument
+  }
+
   const stackable = new Stackable({
-    init: () => buildServer({
-      configManager,
-      ...configManager.current,
-    }, app, options.context),
+    init: () =>
+      buildServer(
+        {
+          configManager,
+          ...configManager.current
+        },
+        app,
+        options.context
+      ),
     stackable: app,
     configManager,
     context: options.context
