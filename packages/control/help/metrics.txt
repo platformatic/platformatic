@@ -1,0 +1,7 @@
+Streams metrics from the platformatic runtime application.
+
+``` bash
+  $ platformatic ctl metrics
+```
+
+To see the list of all available control commands, run `platformatic ctl help`.
