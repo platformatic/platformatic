@@ -23,4 +23,5 @@ module.exports = {
   FailedToGetRuntimeHistoryLogs: createError(`${ERROR_PREFIX}_FAILED_TO_GET_HISTORY_LOGS`, 'Failed to get history logs %s.'),
   FailedToGetRuntimeAllLogs: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_ALL_LOGS`, 'Failed to get runtime all logs %s.'),
   FailedToGetRuntimeLogIndexes: createError(`${ERROR_PREFIX}_FAILED_TO_GET_HISTORY_LOGS_COUNT`, 'Failed to get history logs count %s.'),
+  FailedToGetRuntimeMetrics: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_METRICS`, 'Failed to get runtime metrics %s.'),
 }
