@@ -1,6 +1,6 @@
 {
   "name": "wattpm",
-  "version": "2.26.2",
+  "version": "2.27.0",
   "description": "The Node.js Application Server",
   "main": "index.js",
   "type": "module",
