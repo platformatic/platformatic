@@ -71,6 +71,7 @@ class Runtime extends EventEmitter {
   #workers
   #restartingWorkers
   #sharedHttpCache
+  servicesConfigsPatches
 
   constructor (configManager, runtimeLogsDir, env) {
     super()
@@ -90,6 +91,7 @@ class Runtime extends EventEmitter {
     this.#status = undefined
     this.#restartingWorkers = new Map()
     this.#sharedHttpCache = null
+    this.servicesConfigsPatches = new Map()
   }
 
   async init () {
@@ -687,10 +689,7 @@ class Runtime extends EventEmitter {
         }
       } catch (e) {
         // The service exited while we were sending the ITC, skip it
-        if (
-          e.code === 'PLT_RUNTIME_SERVICE_NOT_STARTED' ||
-          e.code === 'PLT_RUNTIME_SERVICE_EXIT'
-        ) {
+        if (e.code === 'PLT_RUNTIME_SERVICE_NOT_STARTED' || e.code === 'PLT_RUNTIME_SERVICE_EXIT') {
           continue
         }
 
@@ -828,6 +827,14 @@ class Runtime extends EventEmitter {
 
       throw e
     }
+  }
+
+  setServiceConfigPatch (id, patch) {
+    this.servicesConfigsPatches.set(id, patch)
+  }
+
+  removeServiceConfigPatch (id) {
+    this.servicesConfigsPatches.delete(id)
   }
 
   async getLogIds (runtimePID) {
@@ -990,7 +997,8 @@ class Runtime extends EventEmitter {
         config,
         serviceConfig: {
           ...serviceConfig,
-          isProduction: this.#isProduction
+          isProduction: this.#isProduction,
+          configPatch: this.servicesConfigsPatches.get(serviceId)
         },
         worker: {
           id: workerId,

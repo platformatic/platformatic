@@ -420,7 +420,7 @@ export function transformConfig () {
     }
   }
 
-  basicTransformConfig.call(this)
+  return basicTransformConfig.call(this)
 }
 
 export async function buildStackable (opts) {
