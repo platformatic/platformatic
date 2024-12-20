@@ -43,6 +43,7 @@ Configure `@platformatic/composer` specific settings such as `services` or `refr
   - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the service proxy is disabled.
 
     - `prefix` (`string`) - Service proxy prefix. All service routes will be prefixed with this value.
+    - `hostname` (`string`) - An additional domain name this service is reachable at. It will be matched against requests' `Host` header.
 
     :::note
     If the prefix is not explicitly set, the composer and the service will try to find the best prefix for the service.

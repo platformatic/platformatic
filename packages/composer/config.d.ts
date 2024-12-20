@@ -230,6 +230,7 @@ export interface PlatformaticComposer {
         | false
         | {
             prefix?: string;
+            hostname?: string;
           };
     }[];
     openapi?: {

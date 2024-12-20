@@ -18,6 +18,15 @@ const { safeRemove, createDirectory } = require('@platformatic/utils')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
+function ensureCleanup (t, folders) {
+  function cleanup () {
+    return Promise.all(folders.map(safeRemove))
+  }
+
+  t.after(cleanup)
+  return cleanup()
+}
+
 test('should proxy openapi requests', async t => {
   const service1 = await createOpenApiService(t, ['users'], { addHeadersSchema: true })
   const service2 = await createOpenApiService(t, ['posts'])
@@ -385,13 +394,14 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
 })
 
 test('should proxy all services if none are defined', async t => {
+  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
+
+  await ensureCleanup(t, [nodeModulesRoot])
+
   // Make sure there is @platformatic/node available in the node service.
   // We can't simply specify it in the package.json due to circular dependencies.
-  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
   await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
-
-  t.after(() => safeRemove(nodeModulesRoot))
 
   const runtime = await createComposerInRuntime(
     t,
@@ -460,25 +470,20 @@ test('should proxy all services if none are defined', async t => {
 })
 
 test('should fix the path using the referer only if asked to', async t => {
+  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
+  const astroModulesRoot = resolve(__dirname, './proxy/fixtures/astro/node_modules')
+
+  await ensureCleanup(t, [nodeModulesRoot, astroModulesRoot, resolve(__dirname, './proxy/fixtures/astro/.astro')])
+
   // Make sure there is @platformatic/node available in the node service.
   // We can't simply specify it in the package.json due to circular dependencies.
-  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
   await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
 
   // Make sure there is @platformatic/astro available in the astro service.
   // We can't simply specify it in the package.json due to circular dependencies.
-  const astroModulesRoot = resolve(__dirname, './proxy/fixtures/astro/node_modules')
   await createDirectory(resolve(astroModulesRoot, '@platformatic'))
   await symlink(resolve(__dirname, '../../astro'), resolve(astroModulesRoot, '@platformatic/astro'), 'dir')
-
-  t.after(() =>
-    Promise.all([
-      safeRemove(nodeModulesRoot),
-      safeRemove(astroModulesRoot),
-      safeRemove(resolve(__dirname, './proxy/fixtures/astro/.astro'))
-    ])
-  )
 
   const runtime = await createComposerInRuntime(
     t,
@@ -603,17 +608,13 @@ test('should properly configure the frontends on their paths if no composer conf
   const astroModulesRoot = resolve(__dirname, './proxy/fixtures/astro/node_modules')
   const nextModulesRoot = resolve(__dirname, './proxy/fixtures/next/node_modules')
 
-  function cleanup () {
-    return Promise.all([
-      safeRemove(nodeModulesRoot),
-      safeRemove(astroModulesRoot),
-      safeRemove(nextModulesRoot),
-      safeRemove(resolve(__dirname, './proxy/fixtures/astro/.astro')),
-      safeRemove(resolve(__dirname, './proxy/fixtures/next/.next'))
-    ])
-  }
-  await cleanup()
-  t.after(cleanup)
+  await ensureCleanup(t, [
+    nodeModulesRoot,
+    astroModulesRoot,
+    nextModulesRoot,
+    resolve(__dirname, './proxy/fixtures/astro/.astro'),
+    resolve(__dirname, './proxy/fixtures/next/.next')
+  ])
 
   // Make sure there is @platformatic/node available in the node service.
   // We can't simply specify it in the package.json due to circular dependencies.
@@ -690,5 +691,234 @@ test('should properly configure the frontends on their paths if no composer conf
 
     const body = await rawBody.json()
     assert.deepStrictEqual(body, { from: 'service' })
+  }
+})
+
+test('should properly match services by their hostname', async t => {
+  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
+
+  await ensureCleanup(t, [nodeModulesRoot])
+
+  // Make sure there is @platformatic/node available in the node service.
+  // We can't simply specify it in the package.json due to circular dependencies.
+  await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
+  await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
+
+  const runtime = await createComposerInRuntime(
+    t,
+    'base-path-no-configuration',
+    {
+      composer: {
+        refreshTimeout: REFRESH_TIMEOUT,
+        services: [
+          {
+            id: 'service',
+            proxy: { hostname: 'service.example.com' }
+          },
+          {
+            id: 'node',
+            proxy: { hostname: 'node.example.com' }
+          }
+        ]
+      }
+    },
+    [
+      {
+        id: 'node',
+        path: resolve(__dirname, './proxy/fixtures/node')
+      },
+      {
+        id: 'service',
+        path: resolve(__dirname, './proxy/fixtures/service')
+      }
+    ]
+  )
+
+  t.after(() => {
+    runtime.close()
+  })
+
+  const address = await runtime.start()
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'GET',
+      path: '/service/id',
+      headers: {
+        host: 'service.example.com'
+      }
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { from: 'service' })
+  }
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'POST',
+      headers: {
+        host: 'service.example.com',
+        'content-type': 'text/plain'
+      },
+      path: '/service/echo',
+      body: 'REQUEST'
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.text()
+    assert.deepStrictEqual(body, 'REQUEST')
+  }
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'GET',
+      headers: {
+        host: 'node.example.com'
+      },
+      path: '/node/id'
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { from: 'node' })
+  }
+
+  // All other hostnames are permitted
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'POST',
+      headers: {
+        host: 'whatever.example.com',
+        'content-type': 'text/plain'
+      },
+      path: '/service/echo',
+      body: 'REQUEST'
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.text()
+    assert.deepStrictEqual(body, 'REQUEST')
+  }
+
+  // The route is defined on the "service" service but not on the "node" service, we therefore forbid access
+  {
+    const { statusCode } = await request(address, {
+      method: 'POST',
+      headers: {
+        host: 'node.example.com',
+        'content-type': 'text/plain'
+      },
+      path: '/service/echo',
+      body: 'REQUEST'
+    })
+    assert.equal(statusCode, 404)
+  }
+})
+
+test('should properly allow all domains when a service is the only one with a hostname', async t => {
+  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
+
+  await ensureCleanup(t, [nodeModulesRoot])
+
+  // Make sure there is @platformatic/node available in the node service.
+  // We can't simply specify it in the package.json due to circular dependencies.
+  await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
+  await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
+
+  const runtime = await createComposerInRuntime(
+    t,
+    'base-path-no-configuration',
+    {
+      composer: {
+        refreshTimeout: REFRESH_TIMEOUT,
+        services: [
+          {
+            id: 'service',
+            proxy: { hostname: 'service.example.com' }
+          },
+          {
+            id: 'node'
+          }
+        ]
+      }
+    },
+    [
+      {
+        id: 'node',
+        path: resolve(__dirname, './proxy/fixtures/node')
+      },
+      {
+        id: 'service',
+        path: resolve(__dirname, './proxy/fixtures/service')
+      }
+    ]
+  )
+
+  t.after(() => {
+    runtime.close()
+  })
+
+  const address = await runtime.start()
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'GET',
+      path: '/service/id',
+      headers: {
+        host: 'service.example.com'
+      }
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { from: 'service' })
+  }
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'POST',
+      headers: {
+        host: 'service.example.com',
+        'content-type': 'text/plain'
+      },
+      path: '/service/echo',
+      body: 'REQUEST'
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.text()
+    assert.deepStrictEqual(body, 'REQUEST')
+  }
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'GET',
+      headers: {
+        host: 'node.example.com'
+      },
+      path: '/node/id'
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { from: 'node' })
+  }
+
+  // All other hostnames are permitted
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'POST',
+      headers: {
+        host: 'whatever.example.com',
+        'content-type': 'text/plain'
+      },
+      path: '/service/echo',
+      body: 'REQUEST'
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.text()
+    assert.deepStrictEqual(body, 'REQUEST')
   }
 })
