@@ -2,31 +2,12 @@
 
 const RuntimeApiClient = require('./runtime-api-client')
 
-async function streamRuntimeMetricsCommand () {
+async function runtimeMetricsCommand () {
   const client = new RuntimeApiClient()
   const runtime = await client.getMatchingRuntime([])
-  const metricsStream = client.getRuntimeLiveMetricsStream(runtime.pid)
-  metricsStream.on('data', (data) => {
-    const metrics = data.toString().split('\n').filter(Boolean)
-
-    for (const metric of metrics) {
-      try {
-        process.stdout.write(metric)
-      } catch (err) {
-        console.error('Failed to parse metric: ', metric, err)
-      }
-    }
-  })
-
-  process.on('SIGINT', () => {
-    metricsStream.destroy()
-    process.exit(0)
-  })
-
-  process.on('SIGTERM', () => {
-    metricsStream.destroy()
-    process.exit(0)
-  })
+  const metrics = await client.getRuntimeMetrics(runtime.pid, { format: 'json' })
+  console.log(JSON.stringify(metrics, null, 2))
+  await client.close()
 }
 
-module.exports = streamRuntimeMetricsCommand
+module.exports = runtimeMetricsCommand
