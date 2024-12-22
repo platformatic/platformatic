@@ -36,16 +36,16 @@ export const help = {
     options: [
       {
         usage: '-f, --format',
-        description: 'Define metrics format, either text or json (default)'
+        description: 'Define metrics format, it should be either text or json (default is json)'
       }
     ],
     args: [
       {
         name: 'id',
         description:
-          'The process ID or the name of the application (it can be omitted only if there is a single application running)'
+          'The process ID of the application (it can be omitted only if there is a single application running)'
       }
     ],
-    footer: 'If the process id is not specified, the command will return metrics from all main application running.'
+    footer: 'If process id is not specified, the command will return metrics from main application running.'
   }
 }
