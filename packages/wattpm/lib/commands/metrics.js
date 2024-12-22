@@ -28,3 +28,24 @@ export async function metricsCommand (logger, args) {
     }
   }
 }
+
+export const help = {
+  metrics: {
+    usage: 'metrics [id]',
+    description: 'Return metrics from a running application',
+    options: [
+      {
+        usage: '-f, --format',
+        description: 'Define metrics format, either text or json (default)'
+      }
+    ],
+    args: [
+      {
+        name: 'id',
+        description:
+          'The process ID or the name of the application (it can be omitted only if there is a single application running)'
+      }
+    ],
+    footer: 'If the process id is not specified, the command will return metrics from all main application running.'
+  }
+}

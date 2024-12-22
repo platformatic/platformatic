@@ -11,6 +11,9 @@ test('help - should show proper messages', async t => {
   ok(mainProcess.stdout.startsWith('\nUsage: wattpm [options] [command]'))
   ok(mainViaArgProcess.stdout.startsWith('\nUsage: wattpm [options] [command]'))
   ok(commandHelpProcess.stdout.startsWith('\nUsage: wattpm inject'))
+
+  const metricsHelp = await wattpm('help', 'metrics')
+  ok(metricsHelp.stdout.startsWith('\nUsage: wattpm metrics'))
 })
 
 test('help - should show the version', async t => {
