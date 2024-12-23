@@ -1,7 +1,0 @@
-{
-  "type": "module",
-  "dependencies": {
-    "@platformatic/basic": "^2.3.1",
-    "@platformatic/node": "^2.3.1"
-  }
-}
