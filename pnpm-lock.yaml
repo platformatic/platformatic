@@ -2273,8 +2273,8 @@ importers:
   packages/sql-openapi:
     dependencies:
       '@fastify/deepmerge':
-        specifier: ^1.3.0
-        version: 1.3.0
+        specifier: ^2.0.0
+        version: 2.0.0
       '@fastify/error':
         specifier: ^4.0.0
         version: 4.0.0
