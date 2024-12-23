@@ -3,9 +3,9 @@ import { generateOperationId } from '@platformatic/client'
 import { capitalize, toJavaScriptName } from './utils.mjs'
 import { writeOperations } from './openapi-common.mjs'
 
-export function processOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders, validateResponse, typesComment }) {
+export function processOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders, validateResponse, typesComment, propsOptional }) {
   return {
-    types: generateTypesFromOpenAPI({ schema, name, fullResponse, fullRequest, optionalHeaders, typesComment }),
+    types: generateTypesFromOpenAPI({ schema, name, fullResponse, fullRequest, optionalHeaders, typesComment, propsOptional }),
     implementation: generateImplementationFromOpenAPI({ name, fullResponse, fullRequest, validateResponse })
   }
 }
@@ -54,7 +54,7 @@ function generateImplementationFromOpenAPI ({ name, fullResponse, fullRequest, v
   return writer.toString()
 }
 
-function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders, typesComment }) {
+function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, optionalHeaders, typesComment, propsOptional }) {
   const camelcasedName = toJavaScriptName(name)
   const capitalizedName = capitalize(camelcasedName)
   const { paths } = schema
@@ -120,7 +120,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, fullRequest, op
     interfaces.blankLine()
     writer.write(`export type ${capitalizedName} =`).block(() => {
       writeOperations(interfaces, writer, operations, {
-        fullRequest, fullResponse, optionalHeaders, schema
+        fullRequest, fullResponse, optionalHeaders, schema, propsOptional
       })
     })
 

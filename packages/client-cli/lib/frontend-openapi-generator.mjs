@@ -4,9 +4,9 @@ import { capitalize, getAllResponseCodes, getResponseContentType, getResponseTyp
 import camelcase from 'camelcase'
 import { writeOperations } from '../../client-cli/lib/openapi-common.mjs'
 
-export function processFrontendOpenAPI ({ schema, name, language, fullResponse, logger, withCredentials }) {
+export function processFrontendOpenAPI ({ schema, name, language, fullResponse, logger, withCredentials, propsOptional }) {
   return {
-    types: generateTypesFromOpenAPI({ schema, name, fullResponse }),
+    types: generateTypesFromOpenAPI({ schema, name, fullResponse, propsOptional }),
     implementation: generateFrontendImplementationFromOpenAPI({ schema, name, language, fullResponse, logger, withCredentials })
   }
 }
@@ -349,7 +349,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
   return writer.toString()
 }
 
-function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
+function generateTypesFromOpenAPI ({ schema, name, fullResponse, propsOptional }) {
   const camelCaseName = capitalize(camelcase(name))
   const { paths } = schema
   const generatedOperationIds = []
@@ -391,7 +391,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse }) {
     writer.writeLine('setBaseUrl(newUrl: string) : void;')
     writer.writeLine('setDefaultHeaders(headers: Object) : void;')
     writeOperations(interfaces, writer, operations, {
-      fullRequest: false, fullResponse, optionalHeaders: [], schema
+      fullRequest: false, fullResponse, optionalHeaders: [], schema, propsOptional
     })
   })
 
