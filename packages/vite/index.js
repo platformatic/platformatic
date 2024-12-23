@@ -174,7 +174,6 @@ export class ViteStackable extends BaseStackable {
       strictPort: false,
       https,
       cors,
-      origin: 'http://localhost',
       hmr: true,
       fs: {
         strict: config.vite.devServer.strict
@@ -421,7 +420,7 @@ export function transformConfig () {
     }
   }
 
-  basicTransformConfig.call(this)
+  return basicTransformConfig.call(this)
 }
 
 export async function buildStackable (opts) {

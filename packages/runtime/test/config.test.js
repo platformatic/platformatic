@@ -385,6 +385,47 @@ test('supports configurable envfile location', async t => {
   })
 })
 
+test('should manage service config patch', async t => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const dirname = config.configManager.dirname
+  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
+
+  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+
+  runtime.setServiceConfigPatch('node', [{ op: 'replace', path: '/node/main', value: 'alternate.mjs' }])
+  runtime.setServiceConfigPatch('serviceApp', [{ op: 'replace', path: '/plugins', value: { paths: ['alternate.js'] } }])
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await runtime.init()
+  await runtime.start()
+
+  {
+    const { payload } = await runtime.inject('node', {
+      method: 'GET',
+      url: '/'
+    })
+
+    const data = JSON.parse(payload)
+
+    assert.deepStrictEqual(data, { alternate: true })
+  }
+
+  {
+    const { payload } = await runtime.inject('serviceApp', {
+      method: 'GET',
+      url: '/'
+    })
+
+    const data = JSON.parse(payload)
+
+    assert.deepStrictEqual(data, { alternate: true })
+  }
+})
+
 const sourceMapTests = [
   {
     title: 'service-level',
@@ -392,7 +433,7 @@ const sourceMapTests = [
       json.services = [
         {
           id: 'movies',
-          path: 'services/movies',
+          path: 'services/movies'
         },
         {
           id: 'titles',
@@ -402,7 +443,7 @@ const sourceMapTests = [
         {
           id: 'composer',
           path: 'services/composer'
-        },
+        }
       ]
       json.autoload = undefined
     }
@@ -420,7 +461,7 @@ for (const { title, transform } of sourceMapTests) {
     const base = join(__dirname, 'tmp')
     try {
       await createDirectory(base)
-    } catch { }
+    } catch {}
 
     const tmpDir = await mkdtemp(join(base, 'typescript'))
     const prev = process.cwd()

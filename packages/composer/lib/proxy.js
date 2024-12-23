@@ -36,6 +36,7 @@ async function resolveServiceProxyParameters (service) {
 
 module.exports = fp(async function (app, opts) {
   const meta = { proxies: {} }
+  const allDomains = opts.services.map(s => s.proxy?.hostname).filter(Boolean)
 
   for (const service of opts.services) {
     if (!service.proxy) {
@@ -134,7 +135,7 @@ module.exports = fp(async function (app, opts) {
       })
     }
 
-    await app.register(httpProxy, {
+    const proxyOptions = {
       websocket: true,
       prefix,
       rewritePrefix,
@@ -176,7 +177,24 @@ module.exports = fp(async function (app, opts) {
           reply.send(res.stream)
         }
       }
-    })
+    }
+
+    const host = service.proxy?.hostname
+    const notHost = allDomains.filter(d => d !== host)
+
+    if (host) {
+      await app.register(httpProxy, {
+        ...proxyOptions,
+        constraints: { host }
+      })
+
+      await app.register(httpProxy, {
+        ...proxyOptions,
+        ...(notHost.length ? { constraints: { notHost } } : {})
+      })
+    } else {
+      await app.register(httpProxy, proxyOptions)
+    }
   }
 
   opts.context?.stackable?.registerMeta(meta)

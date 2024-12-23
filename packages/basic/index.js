@@ -1,4 +1,5 @@
 import { createRequire } from '@platformatic/utils'
+import jsonPatch from 'fast-json-patch'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { relative, resolve } from 'node:path'
@@ -109,7 +110,10 @@ export async function importStackableAndConfig (root, config) {
 
 async function buildStackable (opts) {
   const hadConfig = !!opts.config
-  const { stackable, config, autodetectDescription, moduleName } = await importStackableAndConfig(opts.context.directory, opts.config)
+  const { stackable, config, autodetectDescription, moduleName } = await importStackableAndConfig(
+    opts.context.directory,
+    opts.config
+  )
   opts.config = config
 
   const serviceRoot = relative(process.cwd(), opts.context.directory)
@@ -136,8 +140,12 @@ async function buildStackable (opts) {
 }
 
 /* c8 ignore next 3 */
-export function transformConfig () {
-  // This is currently empty but it left as a placeholder for the future
+export async function transformConfig () {
+  const patch = workerData?.serviceConfig?.configPatch
+
+  if (Array.isArray(patch)) {
+    this.current = jsonPatch.applyPatch(this.current, patch).newDocument
+  }
 }
 
 export const schemaOptions = {

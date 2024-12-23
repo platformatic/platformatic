@@ -12,6 +12,7 @@ const composerHook = require('./lib/composer-hook')
 const openapiGenerator = require('./lib/openapi-generator')
 const graphqlGenerator = require('./lib/graphql-generator')
 const { isSameGraphqlSchema, fetchGraphqlSubgraphs } = require('./lib/graphql-fetch')
+const notHostConstraints = require('./lib/proxy/not-host-constraints')
 const { isFetchable } = require('./lib/utils')
 const { ComposerStackable, ensureServices } = require('./lib/stackable')
 const errors = require('./lib/errors')
@@ -184,6 +185,13 @@ async function watchServices (app, opts) {
 }
 
 async function buildComposerStackable (options) {
+  options.context ??= {}
+  options.context.fastifyOptions ??= {
+    constraints: {
+      notHost: notHostConstraints
+    }
+  }
+
   return buildStackable(options, platformaticComposer, ComposerStackable)
 }
 

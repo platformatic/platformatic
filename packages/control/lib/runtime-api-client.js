@@ -229,6 +229,36 @@ class RuntimeApiClient {
     }
   }
 
+  async getRuntimeMetrics (pid, options = {}) {
+    const client = this.#getUndiciClient(pid)
+
+    const format = options.format ?? 'text'
+    const headers = {}
+    if (format === 'json') {
+      headers['accept'] = 'application/json'
+    }
+    if (format === 'text') {
+      headers['accept'] = 'text/plain'
+    }
+
+    const { statusCode, body } = await client.request({
+      path: '/api/v1/metrics',
+      method: 'GET',
+      headers
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new errors.FailedToGetRuntimeMetrics(error)
+    }
+
+    const metrics = format === 'json'
+      ? await body.json()
+      : await body.text()
+
+    return metrics
+  }
+
   getRuntimeLiveMetricsStream (pid) {
     const socketPath = this.#getSocketPathFromPid(pid)
 

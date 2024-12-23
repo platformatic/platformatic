@@ -6,7 +6,7 @@ import { platform } from 'node:os'
 import { test } from 'node:test'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
-import { createMockedLogger, createStackable, temporaryFolder } from './helper.js'
+import { createMockedLogger, createStackable, isWindows, temporaryFolder } from './helper.js'
 
 test('BaseStackable - should properly initialize', async t => {
   const stackable = await createStackable(t, { serviceId: 'service' })
@@ -159,6 +159,43 @@ test('BaseStackable - buildWithCommand - should not inject the Platformatic code
     ['INFO', 'INJECTED false']
   ])
 })
+
+test(
+  'BaseStackable - buildWithCommand - should properly intercept output from non Node.js executables - /usr/bin/env',
+  { skip: isWindows },
+  async t => {
+    const stackable = await createStackable(t, {})
+    const { messages, logger } = createMockedLogger()
+    stackable.logger = logger
+
+    const env = Object.entries(process.env).map(([key, value]) => ['INFO', `${key}=${value}`])
+
+    await stackable.buildWithCommand('/usr/bin/env', import.meta.dirname, { disableChildManager: true })
+
+    deepStrictEqual(messages, [['DEBUG', 'Executing "/usr/bin/env" ...'], ...env])
+  }
+)
+
+test(
+  'BaseStackable - buildWithCommand - should properly intercept output from non Node.js executables - /bin/bash',
+  { skip: isWindows },
+  async t => {
+    const stackable = await createStackable(t, {})
+    const { messages, logger } = createMockedLogger()
+    stackable.logger = logger
+
+    const executablePath = fileURLToPath(new URL('./fixtures/build-context.sh', import.meta.url))
+    await stackable.buildWithCommand(executablePath, import.meta.dirname, { disableChildManager: true })
+
+    deepStrictEqual(messages, [
+      ['DEBUG', `Executing "${executablePath}" ...`],
+      ['ERROR', '++ pwd'],
+      ['ERROR', `+ OUTPUT=${temporaryFolder}`],
+      ['ERROR', `+ echo PWD=${temporaryFolder}`],
+      ['INFO', `PWD=${temporaryFolder}`]
+    ])
+  }
+)
 
 test('BaseStackable - startCommand and stopCommand - should execute the requested command', async t => {
   const stackable = await createStackable(

@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-graphql",
-  "version": "2.26.0",
+  "version": "2.29.0",
   "description": "Map SQL dbs to GraphQL",
   "main": "index.js",
   "types": "index.d.ts",
@@ -42,7 +42,7 @@
     "ws": "^8.16.0"
   },
   "dependencies": {
-    "@fastify/error": "^3.4.1",
+    "@fastify/error": "^4.0.0",
     "@mercuriusjs/federation": "^4.0.0",
     "@platformatic/utils": "workspace:*",
     "camelcase": "^6.3.0",

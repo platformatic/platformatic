@@ -58,7 +58,8 @@ async function writeOpenAPIClient (
   language,
   typesComment,
   logger,
-  withCredentials
+  withCredentials,
+  propsOptional
 ) {
   await createDirectory(folder)
 
@@ -78,7 +79,8 @@ async function writeOpenAPIClient (
       fullResponse,
       language,
       logger,
-      withCredentials
+      withCredentials,
+      propsOptional
     })
     await writeFile(join(folder, `${name}-types.d.ts`), types)
     if (generateImplementation) {
@@ -93,7 +95,8 @@ async function writeOpenAPIClient (
       fullRequest,
       optionalHeaders,
       validateResponse,
-      typesComment
+      typesComment,
+      propsOptional
     })
     await writeFile(join(folder, `${name}.d.ts`), types)
     if (generateImplementation) {
@@ -134,7 +137,8 @@ async function downloadAndWriteOpenAPI (
   language,
   urlAuthHeaders,
   typesComment,
-  withCredentials
+  withCredentials,
+  propsOptional
 ) {
   logger.debug(`Trying to download OpenAPI schema from ${url}`)
   let requestOptions
@@ -165,7 +169,8 @@ async function downloadAndWriteOpenAPI (
         language,
         typesComment,
         logger,
-        withCredentials
+        withCredentials,
+        propsOptional
       )
       /* c8 ignore next 3 */
     } catch (err) {
@@ -217,7 +222,8 @@ async function readFromFileAndWrite (
   isFrontend,
   language,
   typesComment,
-  withCredentials
+  withCredentials,
+  propsOptional
 ) {
   logger.info(`Trying to read schema from file ${file}`)
   const text = await readFile(file, 'utf8')
@@ -237,7 +243,8 @@ async function readFromFileAndWrite (
       language,
       typesComment,
       logger,
-      withCredentials
+      withCredentials,
+      propsOptional
     )
     return 'openapi'
   } catch (err) {
@@ -268,7 +275,8 @@ async function downloadAndProcess (options) {
     type,
     urlAuthHeaders,
     typesComment,
-    withCredentials
+    withCredentials,
+    propsOptional
   } = options
 
   let generateImplementation = options.generateImplementation
@@ -304,7 +312,8 @@ async function downloadAndProcess (options) {
           language,
           urlAuthHeaders,
           typesComment,
-          withCredentials
+          withCredentials,
+          propsOptional
         )
       )
       toTry.push(
@@ -324,7 +333,8 @@ async function downloadAndProcess (options) {
           language,
           urlAuthHeaders,
           typesComment,
-          withCredentials
+          withCredentials,
+          propsOptional
         )
       )
     } else if (options.type === 'graphql') {
@@ -351,7 +361,8 @@ async function downloadAndProcess (options) {
           language,
           urlAuthHeaders,
           typesComment,
-          withCredentials
+          withCredentials,
+          propsOptional
         )
       )
       toTry.push(
@@ -374,7 +385,8 @@ async function downloadAndProcess (options) {
           language,
           urlAuthHeaders,
           typesComment,
-          withCredentials
+          withCredentials,
+          propsOptional
         )
       )
       toTry.push(downloadAndWriteGraphQL.bind(null, logger, url, folder, name, generateImplementation, typesOnly))
@@ -397,7 +409,8 @@ async function downloadAndProcess (options) {
         isFrontend,
         language,
         typesComment,
-        withCredentials
+        withCredentials,
+        propsOptional
       )
     )
   }
@@ -484,7 +497,7 @@ export async function command (argv) {
     ...options
   } = parseArgs(argv, {
     string: ['name', 'folder', 'runtime', 'optional-headers', 'language', 'type', 'url-auth-headers', 'types-comment'],
-    boolean: ['typescript', 'full-response', 'types-only', 'full-request', 'full', 'frontend', 'validate-response'],
+    boolean: ['typescript', 'full-response', 'types-only', 'full-request', 'full', 'frontend', 'validate-response', 'props-optional'],
     default: {
       typescript: false,
       language: 'js'
@@ -585,6 +598,10 @@ export async function command (argv) {
 
     options.fullRequest = options['full-request']
     options.fullResponse = options['full-response']
+
+    // TODO: default value to true in the next semver-major (https://github.com/platformatic/platformatic/issues/3737)
+    options.propsOptional = options['props-optional'] ?? false
+
     options.optionalHeaders = options['optional-headers']
       ? options['optional-headers'].split(',').map(h => h.trim())
       : []

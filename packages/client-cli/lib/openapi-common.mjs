@@ -9,7 +9,7 @@ import { responsesWriter } from './responses-writer.mjs'
 import { getType } from './get-type.mjs'
 import CodeBlockWriter from 'code-block-writer'
 
-export function writeOperations (interfacesWriter, mainWriter, operations, { fullRequest, fullResponse, optionalHeaders, schema }) {
+export function writeOperations (interfacesWriter, mainWriter, operations, { fullRequest, fullResponse, optionalHeaders, schema, propsOptional }) {
   const originalFullResponse = fullResponse
   const originalFullRequest = fullRequest
   let currentFullResponse = originalFullResponse
@@ -20,7 +20,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
     const { parameters, responses, requestBody } = operation.operation
     currentFullRequest = fullRequest || hasDuplicatedParameters(operation.operation)
     if (!responses) {
-      throw new Error(`Cannot find any resposne definition in operation ${operationId}.`)
+      throw new Error(`Cannot find any response definition in operation ${operationId}.`)
     }
     const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
     if (successResponses.length !== 1) {
@@ -85,7 +85,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
       if (parameters && parameters.length && (bodyType === 'array' || bodyType === 'plain')) {
         currentFullRequest = true
       }
-      const writeContentOutput = writeContent(bodyWriter, requestBody.content, schema, addedProps, 'req', currentFullRequest ? 'body' : null)
+      const writeContentOutput = writeContent(bodyWriter, requestBody.content, schema, addedProps, 'req', currentFullRequest ? 'body' : null, propsOptional)
       isRequestArray = writeContentOutput.isArray
       isStructuredType = writeContentOutput.isStructuredType
     }
@@ -139,7 +139,7 @@ export function writeProperty (writer, key, value, addedProps, required = true, 
   writer.newLine()
 }
 
-export function writeContent (writer, content, spec, addedProps, methodType, wrapper) {
+export function writeContent (writer, content, spec, addedProps, methodType, wrapper, propsOptional) {
   let isArray = false
   let isStructuredType = false
   if (content) {
@@ -185,12 +185,12 @@ export function writeContent (writer, content, spec, addedProps, methodType, wra
 
       if (wrapper) {
         if (isStructuredType) {
-          writer.write(`${wrapper}: `).block(() => writeObjectProperties(writer, schema, spec, addedProps, methodType))
+          writer.write(`${wrapper}: `).block(() => writeObjectProperties(writer, schema, spec, addedProps, methodType, propsOptional))
         } else {
           writer.write(`${wrapper}: ${getType(body.schema, methodType, spec)}`)
         }
       } else {
-        writeObjectProperties(writer, schema, spec, addedProps, methodType)
+        writeObjectProperties(writer, schema, spec, addedProps, methodType, propsOptional)
       }
       break
     }
@@ -198,13 +198,13 @@ export function writeContent (writer, content, spec, addedProps, methodType, wra
   return { isArray, isStructuredType }
 }
 
-export function writeObjectProperties (writer, schema, spec, addedProps, methodType) {
+export function writeObjectProperties (writer, schema, spec, addedProps, methodType, propsOptional) {
   function _writeObjectProps (obj) {
     for (const [key, value] of Object.entries(obj)) {
       if (addedProps.has(key)) {
         continue
       }
-      const required = schema.required && schema.required.includes(key)
+      const required = (propsOptional ? !!schema.required : schema.required) && schema.required.includes(key)
       writeProperty(writer, key, value, addedProps, required, methodType, spec)
     }
   }

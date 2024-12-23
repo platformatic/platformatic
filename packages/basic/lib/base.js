@@ -252,6 +252,8 @@ export class BaseStackable {
       await this.childManager.inject()
 
       this.subprocess = this.spawn(command)
+      this.subprocess.stdout.setEncoding('utf8')
+      this.subprocess.stderr.setEncoding('utf8')
 
       // Route anything not catched by child process logger to the logger manually
       /* c8 ignore next 3 */
@@ -389,8 +391,12 @@ export class BaseStackable {
       registers: [registry]
     })
 
-    globalThis.platformatic.onHttpCacheHit = () => { cacheHitMetric.inc() }
-    globalThis.platformatic.onHttpCacheMiss = () => { cacheMissMetric.inc() }
+    globalThis.platformatic.onHttpCacheHit = () => {
+      cacheHitMetric.inc()
+    }
+    globalThis.platformatic.onHttpCacheMiss = () => {
+      cacheMissMetric.inc()
+    }
   }
 
   async getMetrics ({ format } = {}) {

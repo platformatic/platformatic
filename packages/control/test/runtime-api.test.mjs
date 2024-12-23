@@ -187,6 +187,82 @@ test('should get runtime all logs for prev run', async t => {
   assert.strictEqual(logsLines.at(-3) + '\n', prevTestLogs)
 })
 
+test('should get runtime metrics', async t => {
+  const projectDir = join(fixturesDir, 'runtime-1')
+  const configFile = join(projectDir, 'platformatic.json')
+
+  const runtimeTmpDir = getRuntimeTmpDir(projectDir)
+  await safeRemove(runtimeTmpDir)
+
+  const { runtime } = await startRuntime(configFile)
+  t.after(async () => {
+    await kill(runtime)
+    await safeRemove(runtimeTmpDir)
+  })
+
+  const runtimeClient = new RuntimeApiClient()
+
+  const expectedMetricNames = [
+    'nodejs_active_handles',
+    'nodejs_active_handles_total',
+    'nodejs_active_requests',
+    'nodejs_active_requests_total',
+    'nodejs_active_resources',
+    'nodejs_active_resources_total',
+    'nodejs_eventloop_lag_max_seconds',
+    'nodejs_eventloop_lag_mean_seconds',
+    'nodejs_eventloop_lag_min_seconds',
+    'nodejs_eventloop_lag_p50_seconds',
+    'nodejs_eventloop_lag_p90_seconds',
+    'nodejs_eventloop_lag_p99_seconds',
+    'nodejs_eventloop_lag_seconds',
+    'nodejs_eventloop_lag_stddev_seconds',
+    'nodejs_eventloop_utilization',
+    'nodejs_external_memory_bytes',
+    'nodejs_gc_duration_seconds',
+    'nodejs_heap_size_total_bytes',
+    'nodejs_heap_size_used_bytes',
+    'nodejs_heap_space_size_available_bytes',
+    'nodejs_heap_space_size_total_bytes',
+    'nodejs_heap_space_size_used_bytes',
+    'nodejs_version_info',
+    'process_cpu_percent_usage',
+    'process_cpu_seconds_total',
+    'process_cpu_system_seconds_total',
+    'process_cpu_user_seconds_total',
+    'process_resident_memory_bytes',
+    'process_start_time_seconds',
+    'http_request_all_summary_seconds',
+    'http_request_duration_seconds',
+    'http_request_summary_seconds'
+  ]
+
+  {
+    const runtimeTextMetrics = await runtimeClient.getRuntimeMetrics(
+      runtime.pid
+    )
+    const metricsNames = runtimeTextMetrics
+      .split('\n')
+      .filter(line => line && line.startsWith('# TYPE'))
+      .map(line => line.split(' ')[2])
+
+    for (const metricName of expectedMetricNames) {
+      assert.ok(metricsNames.includes(metricName), `Missing metric: ${metricName}`)
+    }
+  }
+
+  {
+    const runtimeJsonMetrics = await runtimeClient.getRuntimeMetrics(
+      runtime.pid, { format: 'json' }
+    )
+
+    for (const metricName of expectedMetricNames) {
+      const foundMetrics = runtimeJsonMetrics.filter(m => m.name === metricName)
+      assert.ok(foundMetrics.length > 0, `Missing metric: ${metricName}`)
+    }
+  }
+})
+
 test('should get runtime live metrics', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')

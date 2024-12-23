@@ -300,7 +300,7 @@ function transformConfig () {
     this.current.watch = { enabled: this.current.watch || false }
   }
 
-  basicTransformConfig.call(this)
+  return basicTransformConfig.call(this)
 }
 
 export async function buildStackable (opts) {
@@ -311,7 +311,8 @@ export async function buildStackable (opts) {
     source: opts.config ?? {},
     schemaOptions,
     transformConfig,
-    dirname: root
+    dirname: root,
+    context: opts.context
   })
   await configManager.parseAndValidate()
 

@@ -191,7 +191,6 @@ test('can collect metrics with worker label', async t => {
   })
 
   const received = new Set()
-  process._rawDebug(JSON.stringify(servicesMetrics, null, 2))
   ok(
     servicesMetrics.every(s => {
       const firstValue = s.values[0]
