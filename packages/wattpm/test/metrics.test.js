@@ -23,7 +23,7 @@ test('metrics - should return runtime metrics without format opt', async t => {
     }
   }
 
-  const logsProcess = await wattpm('metrics', 'main')
+  const logsProcess = await wattpm('metrics')
 
   ok(logsProcess.stdout.includes('"nodejs_version_info"'))
   ok(logsProcess.stdout.includes('"http_request_duration_seconds"'))
@@ -49,7 +49,7 @@ test('metrics - should return runtime metrics with text format', async t => {
     }
   }
 
-  const logsProcess = await wattpm('metrics', 'main', '-f', 'text')
+  const logsProcess = await wattpm('metrics', '-f', 'text')
   ok(logsProcess.stdout.includes('# TYPE nodejs_version_info gauge'))
   ok(logsProcess.stdout.includes('# TYPE http_request_all_duration_seconds histogram'))
   ok(logsProcess.stdout.includes('# TYPE http_cache_hit_count counter'))
@@ -59,7 +59,7 @@ test('metrics - should return runtime metrics with text format', async t => {
 test('metrics - should handle no matching runtime', async t => {
   let error
   try {
-    await wattpm('metrics', 'main')
+    await wattpm('metrics')
   } catch (e) {
     error = e
   }
