@@ -3,7 +3,6 @@ import {
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
-  getAsyncLocalStorageSnapshot,
   getServerUrl,
   importFile,
   injectViaRequest,
@@ -13,7 +12,6 @@ import {
 import { ConfigManager } from '@platformatic/config'
 import { features } from '@platformatic/utils'
 import inject from 'light-my-request'
-import { AsyncResource } from 'node:async_hooks'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { Server } from 'node:http'
@@ -186,19 +184,6 @@ export class NodeStackable extends BaseStackable {
   }
 
   async inject (injectParams, onInject) {
-    const snapshot = this.#server && getAsyncLocalStorageSnapshot(this.#server)
-    if (!snapshot) {
-      return this.#inject(injectParams, onInject)
-    }
-
-    return snapshot(() => {
-      // Need to new resource so each inject has separate context
-      const resource = new AsyncResource('PLTNodeStackable')
-      return resource.runInAsyncScope(this.#inject, this, injectParams, onInject)
-    })
-  }
-
-  async #inject (injectParams, onInject) {
     let res
 
     if (this.#useHttpForDispatch) {
