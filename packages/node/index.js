@@ -12,7 +12,6 @@ import {
 import { ConfigManager } from '@platformatic/config'
 import { features } from '@platformatic/utils'
 import inject from 'light-my-request'
-import { AsyncResource } from 'node:async_hooks'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { Server } from 'node:http'
