@@ -1,12 +1,16 @@
 'use strict'
 
 const assert = require('node:assert')
+const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { test } = require('node:test')
+const { rm } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { request } = require('undici')
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('..')
+
+const { parseNDJson } = require('@platformatic/telemetry/test/helper.js')
 
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
@@ -20,6 +24,7 @@ test('should cache http requests', async (t) => {
 
   const cacheTimeoutSec = 5
 
+  let firstCacheEntryId = null
   for (let i = 0; i < 5; i++) {
     const res = await request(entryUrl + '/service-1/cached-req-counter', {
       query: { maxAge: cacheTimeoutSec }
@@ -28,7 +33,15 @@ test('should cache http requests', async (t) => {
     assert.strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
+    const cacheEntryId = res.headers['x-plt-http-cache-id']
     assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    assert.ok(cacheEntryId)
+
+    if (firstCacheEntryId === null) {
+      firstCacheEntryId = cacheEntryId
+    } else {
+      assert.strictEqual(cacheEntryId, firstCacheEntryId)
+    }
 
     const { counter } = await res.body.json()
     assert.strictEqual(counter, 1)
@@ -43,7 +56,10 @@ test('should cache http requests', async (t) => {
   assert.strictEqual(res.statusCode, 200)
 
   const cacheControl = res.headers['cache-control']
+  const cacheEntryId = res.headers['x-plt-http-cache-id']
   assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+  assert.ok(cacheEntryId)
+  assert.notStrictEqual(cacheEntryId, firstCacheEntryId)
 
   const { counter } = await res.body.json()
   assert.strictEqual(counter, 2)
@@ -373,5 +389,61 @@ test('should invalidate cache by cache tags', async (t) => {
 
     const { counter } = await res.body.json()
     assert.strictEqual(counter, 2)
+  }
+})
+
+test('should set an opentelemetry attribute', async (t) => {
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const { configManager } = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const config = configManager.current
+
+  const telemetryFilePath = join(tmpdir(), 'telemetry.ndjson')
+  await rm(telemetryFilePath, { force: true }).catch(() => {})
+
+  config.telemetry = {
+    serviceName: 'test-service',
+    version: '1.0.0',
+    exporter: {
+      type: 'file',
+      options: { path: telemetryFilePath }
+    }
+  }
+
+  const app = await buildServer(config)
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  const cacheTimeoutSec = 5
+
+  {
+    const url = entryUrl + '/service-2/service-3-http/cached-req-counter'
+    const { statusCode, body } = await request(url, {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    const error = await body.text()
+    assert.strictEqual(statusCode, 200, error)
+  }
+
+  await sleep(cacheTimeoutSec * 1000)
+
+  const traces = await parseNDJson(telemetryFilePath)
+  const serverTraces = traces.filter(trace => trace.kind === 1)
+  const clientTraces = traces.filter(trace => trace.kind === 2)
+
+  assert.strictEqual(serverTraces.length, 4)
+  assert.strictEqual(clientTraces.length, 3)
+
+  for (const trace of serverTraces) {
+    const cacheIdAttribute = trace.attributes['http.cache.id']
+    assert.strictEqual(cacheIdAttribute, undefined)
+  }
+
+  let previousCacheIdAttribute = null
+  for (const trace of clientTraces) {
+    const cacheIdAttribute = trace.attributes['http.cache.id']
+    assert.ok(cacheIdAttribute)
+    assert.notStrictEqual(cacheIdAttribute, previousCacheIdAttribute)
+    previousCacheIdAttribute = cacheIdAttribute
   }
 })

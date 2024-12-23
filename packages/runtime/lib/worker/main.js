@@ -16,7 +16,7 @@ const { fetch, setGlobalDispatcher, getGlobalDispatcher, Agent } = require('undi
 const { wire } = require('undici-thread-interceptor')
 const undici = require('undici')
 
-const RemoteCacheStore = require('./http-cache')
+const { RemoteCacheStore, httpCacheInterceptor } = require('./http-cache')
 const { PlatformaticApp } = require('./app')
 const { setupITC } = require('./itc')
 const { loadInterceptors } = require('./interceptors')
@@ -158,7 +158,7 @@ async function main () {
   if (config.httpCache) {
     setGlobalDispatcher(
       getGlobalDispatcher().compose(
-        undici.interceptors.cache({
+        httpCacheInterceptor({
           store: new RemoteCacheStore({
             onRequest: (opts) => {
               globalThis.platformatic?.onHttpCacheRequest?.(opts)
@@ -171,7 +171,8 @@ async function main () {
             },
             logger: globalThis.platformatic.logger
           }),
-          methods: config.httpCache.methods ?? ['GET', 'HEAD']
+          methods: config.httpCache.methods ?? ['GET', 'HEAD'],
+          logger: globalThis.platformatic.logger
         })
       )
     )

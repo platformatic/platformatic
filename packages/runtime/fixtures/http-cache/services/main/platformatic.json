@@ -13,6 +13,12 @@
         "proxy": {
           "prefix": "/service-2"
         }
+      },
+      {
+        "id": "service-3",
+        "proxy": {
+          "prefix": "/service-3"
+        }
       }
     ]
   }

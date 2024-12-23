@@ -6,10 +6,10 @@
   },
   "server": {
     "hostname": "127.0.0.1",
-    "port": 0
+    "port": 7866
   },
   "logger": {
-    "level": "info"
+    "level": "warn"
   },
   "httpCache": true,
   "metrics": true
