@@ -3,7 +3,6 @@
 const { randomUUID } = require('node:crypto')
 const { Readable, Writable } = require('node:stream')
 const { interceptors } = require('undici')
-const opentelemetry = require('@opentelemetry/api')
 const { kITC } = require('./symbols')
 
 const kCacheIdHeader = Symbol('cacheIdHeader')

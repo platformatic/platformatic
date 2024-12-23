@@ -80,7 +80,7 @@ const createTelemetryThreadInterceptorHooks = () => {
     ctx.span = span
   }
 
-  const onServerResponseEnd = (_req, res, ctx) => {
+  const onClientResponseEnd = (_req, res, ctx) => {
     const span = ctx.span ?? null
     if (!span) {
       return
@@ -120,9 +120,9 @@ const createTelemetryThreadInterceptorHooks = () => {
   return {
     onServerRequest,
     onServerResponse,
-    onServerResponseEnd,
     onServerError,
     onClientRequest,
+    onClientResponseEnd,
     onClientError
   }
 }
