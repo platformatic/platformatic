@@ -200,8 +200,8 @@ importers:
         specifier: ^9.3.1
         version: 9.5.2
       fast-json-stringify:
-        specifier: ^5.14.1
-        version: 5.16.1
+        specifier: ^6.0.0
+        version: 6.0.0
       help-me:
         specifier: ^5.0.0
         version: 5.0.0
