@@ -24,6 +24,7 @@ test('should cache http requests', async (t) => {
 
   const cacheTimeoutSec = 5
 
+  let firstCacheEntryId = null
   for (let i = 0; i < 5; i++) {
     const res = await request(entryUrl + '/service-1/cached-req-counter', {
       query: { maxAge: cacheTimeoutSec }
@@ -32,7 +33,15 @@ test('should cache http requests', async (t) => {
     assert.strictEqual(res.statusCode, 200)
 
     const cacheControl = res.headers['cache-control']
+    const cacheEntryId = res.headers['x-plt-http-cache-id']
     assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    assert.ok(cacheEntryId)
+
+    if (firstCacheEntryId === null) {
+      firstCacheEntryId = cacheEntryId
+    } else {
+      assert.strictEqual(cacheEntryId, firstCacheEntryId)
+    }
 
     const { counter } = await res.body.json()
     assert.strictEqual(counter, 1)
@@ -47,7 +56,10 @@ test('should cache http requests', async (t) => {
   assert.strictEqual(res.statusCode, 200)
 
   const cacheControl = res.headers['cache-control']
+  const cacheEntryId = res.headers['x-plt-http-cache-id']
   assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+  assert.ok(cacheEntryId)
+  assert.notStrictEqual(cacheEntryId, firstCacheEntryId)
 
   const { counter } = await res.body.json()
   assert.strictEqual(counter, 2)
