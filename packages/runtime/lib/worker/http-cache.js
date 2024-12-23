@@ -6,7 +6,6 @@ const { interceptors } = require('undici')
 const opentelemetry = require('@opentelemetry/api')
 const { kITC } = require('./symbols')
 
-const kIsCacheHit = Symbol('isCacheMiss')
 const kCacheIdHeader = Symbol('cacheIdHeader')
 const CACHE_ID_HEADER = 'x-plt-http-cache-id'
 
@@ -70,8 +69,6 @@ class RemoteCacheStore {
       value.headers = { ...value.headers, [CACHE_ID_HEADER]: cacheEntryId }
     }
 
-    addCacheEntryIdToSpan(cacheEntryId)
-
     const itc = globalThis[kITC]
     if (!itc) throw new Error('Cannot write to cache without an ITC instance')
 
@@ -111,11 +108,15 @@ class RemoteCacheStore {
   }
 }
 
-const httpCacheInterceptor = (opts) => {
-  const originalInterceptor = interceptors.cache(opts)
+const httpCacheInterceptor = (interceptorOpts) => {
+  const originalInterceptor = interceptors.cache(interceptorOpts)
+
+  // AsyncLocalStorage that contains a client http request span
+  // Exists only when the nodejs stackable telemetry is enabled
+  const clientSpansAls = globalThis.platformatic.clientSpansAls
+
   return (originalDispatch) => {
     const dispatch = (opts, handler) => {
-      opts[kIsCacheHit] = false
       const originOnResponseStart = handler.onResponseStart.bind(handler)
       handler.onResponseStart = (ac, statusCode, headers, statusMessage) => {
         // Setting a potentially cache entry id when cache miss happens
@@ -131,30 +132,32 @@ const httpCacheInterceptor = (opts) => {
     return (opts, handler) => {
       const originOnResponseStart = handler.onResponseStart.bind(handler)
       handler.onResponseStart = (ac, statusCode, headers, statusMessage) => {
-        const cacheEntryId = headers[CACHE_ID_HEADER] ?? headers[kCacheIdHeader]
+        const cacheEntryId = headers[kCacheIdHeader] ?? headers[CACHE_ID_HEADER]
         if (cacheEntryId) {
           // Setting a cache id header on cache hit
-          headers[CACHE_ID_HEADER] ??= headers[kCacheIdHeader]
+          headers[CACHE_ID_HEADER] = cacheEntryId
           delete headers[kCacheIdHeader]
 
-          try {
-            addCacheEntryIdToSpan(cacheEntryId)
-          } catch (err) {
-            opts.logger.error(err, 'Error setting cache id on span')
+          if (clientSpansAls) {
+            try {
+              const { span } = clientSpansAls.getStore()
+              if (span) {
+                span.setAttribute('http.cache.id', cacheEntryId)
+              }
+            } catch (err) {
+              interceptorOpts.logger.error(err, 'Error setting cache id on span')
+            }
           }
         }
         return originOnResponseStart(ac, statusCode, headers, statusMessage)
       }
 
-      return dispatcher(opts, handler)
+      if (!clientSpansAls) {
+        return dispatcher(opts, handler)
+      }
+      return clientSpansAls.run({ span: null }, () => dispatcher(opts, handler))
     }
   }
-}
-
-function addCacheEntryIdToSpan (cacheEntryId) {
-  const span = opentelemetry.trace.getActiveSpan()
-  if (!span || !span.attributes['http.request.method']) return
-  span.setAttribute('http.cache.id', cacheEntryId)
 }
 
 module.exports = { RemoteCacheStore, httpCacheInterceptor }

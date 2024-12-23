@@ -27,6 +27,19 @@ function build () {
     return body
   })
 
+  app.get('/service-3-http/cached-req-counter', async (req, reply) => {
+    const res = await request('http://127.0.0.1:7866/service-3/cached-req-counter', {
+      query: req.query,
+      headers: req.headers
+    })
+
+    reply.status(res.statusCode)
+    reply.headers(res.headers)
+
+    const body = await res.body.text()
+    return body
+  })
+
   app.post('/invalidate-cache', async (req) => {
     const opts = req.body
     await globalThis.platformatic.invalidateHttpCache(opts)

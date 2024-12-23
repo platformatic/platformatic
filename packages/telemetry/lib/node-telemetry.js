@@ -1,5 +1,6 @@
 'use strict'
 const process = require('node:process')
+const { AsyncLocalStorage } = require('node:async_hooks')
 const opentelemetry = require('@opentelemetry/sdk-node')
 const { Resource } = require('@opentelemetry/resources')
 const FileSpanExporter = require('./file-span-exporter')
@@ -74,10 +75,21 @@ const setupNodeHTTPTelemetry = (opts) => {
     spanProcessors.push(spanProcessor)
   }
 
+  const clientSpansAls = new AsyncLocalStorage()
+  globalThis.platformatic = globalThis.platformatic || {}
+  globalThis.platformatic.clientSpansAls = clientSpansAls
+
   const sdk = new opentelemetry.NodeSDK({
     spanProcessors, // https://github.com/open-telemetry/opentelemetry-js/issues/4881#issuecomment-2358059714
     instrumentations: [
-      new UndiciInstrumentation(),
+      new UndiciInstrumentation({
+        responseHook: (span) => {
+          const store = clientSpansAls.getStore()
+          if (store) {
+            store.span = span
+          }
+        }
+      }),
       new HttpInstrumentation(),
       new PgInstrumentation(),
     ],

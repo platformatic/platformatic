@@ -282,6 +282,12 @@ function setupTelemetry (opts, logger) {
       span.setAttributes({
         'http.response.status_code': response.statusCode,
       })
+
+      const httpCacheId = response.headers?.['x-plt-http-cache-id']
+      if (httpCacheId) {
+        span.setAttributes({ 'http.cache.id': httpCacheId })
+      }
+
       span.setStatus(spanStatus)
     } else {
       span.setStatus({

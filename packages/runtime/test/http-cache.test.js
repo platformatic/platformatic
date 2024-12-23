@@ -417,20 +417,33 @@ test('should set an opentelemetry attribute', async (t) => {
   const cacheTimeoutSec = 5
 
   {
-    const url = entryUrl + '/service-2/service-3/cached-req-counter'
-    const { statusCode } = await request(url, {
+    const url = entryUrl + '/service-2/service-3-http/cached-req-counter'
+    const { statusCode, body } = await request(url, {
       query: { maxAge: cacheTimeoutSec }
     })
-    assert.strictEqual(statusCode, 200)
+    const error = await body.text()
+    assert.strictEqual(statusCode, 200, error)
   }
 
   await sleep(cacheTimeoutSec * 1000)
 
   const traces = await parseNDJson(telemetryFilePath)
+  const serverTraces = traces.filter(trace => trace.kind === 1)
+  const clientTraces = traces.filter(trace => trace.kind === 2)
 
-  const nodejsServiceTrace = traces.find(
-    (trace) => trace.name === 'GET /service-3/cached-req-counter?maxAge=5'
-  )
-  assert.ok(nodejsServiceTrace)
-  assert.ok(nodejsServiceTrace.attributes['http.cache.id'])
+  assert.strictEqual(serverTraces.length, 4)
+  assert.strictEqual(clientTraces.length, 3)
+
+  for (const trace of serverTraces) {
+    const cacheIdAttribute = trace.attributes['http.cache.id']
+    assert.strictEqual(cacheIdAttribute, undefined)
+  }
+
+  let previousCacheIdAttribute = null
+  for (const trace of clientTraces) {
+    const cacheIdAttribute = trace.attributes['http.cache.id']
+    assert.ok(cacheIdAttribute)
+    assert.notStrictEqual(cacheIdAttribute, previousCacheIdAttribute)
+    previousCacheIdAttribute = cacheIdAttribute
+  }
 })

@@ -169,7 +169,10 @@ module.exports = fp(async function (app, opts) {
           return headers
         },
         onResponse: (request, reply, res) => {
-          app.openTelemetry?.endHTTPSpanClient(reply.request.proxedCallSpan, { statusCode: reply.statusCode })
+          app.openTelemetry?.endHTTPSpanClient(reply.request.proxedCallSpan, {
+            statusCode: reply.statusCode,
+            headers: res.headers
+          })
           reply.send(res.stream)
         }
       }
