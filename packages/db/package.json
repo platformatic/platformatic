@@ -79,7 +79,7 @@
     "commist": "^3.2.0",
     "console-table-printer": "^2.12.0",
     "desm": "^1.3.1",
-    "env-schema": "^5.2.1",
+    "env-schema": "^6.0.0",
     "es-main": "^1.3.0",
     "execa": "^8.0.1",
     "fastify": "^5.0.0",
