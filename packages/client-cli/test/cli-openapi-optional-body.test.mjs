@@ -26,18 +26,27 @@ test(testName, async (t) => {
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
 
+  // Checking props-optional param
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', testName, '--full', '--props-optional'])
-
   equal(await isFileAccessible(join(dir, testName, `${testName}.cjs`)), false)
 
   const typeFile = join(dir, testName, `${testName}.d.ts`)
   const data = await readFile(typeFile, 'utf-8')
-
   equal(data.includes(`
   export type PostHelloRequest = {
     body: {
       'name'?: string;
       'userId'?: string;
     }
-  }`), true)
+  }`), true, 'properties are optional')
+
+  // Checking default behavior
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', 'defaulted', '--full'])
+  equal((await readFile(join(dir, 'defaulted', 'defaulted.d.ts'), 'utf-8')).includes(`
+  export type PostHelloRequest = {
+    body: {
+      'name': string;
+      'userId': string;
+    }
+  }`), true, 'properties are required')
 })

@@ -598,7 +598,10 @@ export async function command (argv) {
 
     options.fullRequest = options['full-request']
     options.fullResponse = options['full-response']
+
+    // TODO: default value to true in the next semver-major (https://github.com/platformatic/platformatic/issues/3737)
     options.propsOptional = options['props-optional'] ?? false
+
     options.optionalHeaders = options['optional-headers']
       ? options['optional-headers'].split(',').map(h => h.trim())
       : []
