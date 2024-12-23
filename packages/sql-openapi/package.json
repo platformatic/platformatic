@@ -39,7 +39,7 @@
     "yaml": "^2.4.1"
   },
   "dependencies": {
-    "@fastify/deepmerge": "^1.3.0",
+    "@fastify/deepmerge": "^2.0.0",
     "@fastify/error": "^4.0.0",
     "@fastify/swagger": "^9.0.0",
     "@platformatic/scalar-theme": "workspace:*",
