@@ -16,7 +16,7 @@ async function runtimeMetricsCommand (argv) {
 
   const client = new RuntimeApiClient()
   const runtimePid = args.pid || (await client.getMatchingRuntime([])).pid
-  const metrics = await client.getRuntimeMetrics(runtimePid, { format: args.format })
+  const metrics = await client.getRuntimeMetrics(parseInt(runtimePid), { format: args.format })
   const result = args.format === 'text' ? metrics : JSON.stringify(metrics, null, 2)
   console.log(result)
   await client.close()
