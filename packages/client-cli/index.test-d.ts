@@ -1,12 +1,12 @@
 import { expectError, expectType } from 'tsd'
 import { command, errors } from '.'
-import { FastifyError } from 'fastify'
+import { FastifyError } from '@fastify/error'
 
 // command
-expectType<void>(await command([]))
-expectType<void>(await command(['foo', 'bar']))
-expectError<void>(await command(false))
-expectError<void>(await command([4, 2]))
+expectType<Promise<void>>(command([]))
+expectType<Promise<void>>(command(['foo', 'bar']))
+expectError<Promise<void>>(command(false))
+expectError<Promise<void>>(command([4, 2]))
 
 // errors
 expectType<FastifyError>(errors.TypeNotSupportedError('someType'))

@@ -7,7 +7,7 @@
     "plt-ctl": "./control.js"
   },
   "scripts": {
-    "test": "pnpm run lint && pnpm run unit",
+    "test": "pnpm run lint && pnpm run unit && tsd",
     "unit": "borp --concurrency=1 --timeout=300000",
     "lint": "eslint"
   },
