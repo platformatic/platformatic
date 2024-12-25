@@ -1673,6 +1673,9 @@ importers:
       '@hapi/topo':
         specifier: ^6.0.2
         version: 6.0.2
+      '@opentelemetry/api':
+        specifier: ^1.8.0
+        version: 1.9.0
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
@@ -1767,8 +1770,8 @@ importers:
         specifier: ^7.0.0
         version: 7.1.1
       undici-thread-interceptor:
-        specifier: ^0.10.0
-        version: 0.10.2
+        specifier: ^0.10.3
+        version: 0.10.3
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -8918,8 +8921,8 @@ packages:
   undici-oidc-interceptor@0.5.0:
     resolution: {integrity: sha512-YU6ABaLFxzKZGjBmamrrRTlziIe6/jrEBUEyNEe2ZRtlXULorg6xo+/jsyEPZVizHdrTFFX3ZPEPxrNmO3pOEA==}
 
-  undici-thread-interceptor@0.10.2:
-    resolution: {integrity: sha512-Hq0oypdtHSDTX5jKQv+pnDuY5ACwuBFm2TthHy8p35ZyncIAXgA3Uk5oknEE82JhS08kR8na9/bA6Kp/kuBtJw==}
+  undici-thread-interceptor@0.10.3:
+    resolution: {integrity: sha512-PFWnN3/33CHzZ/qLeGkYUnCJ7xT7H9L6si6RiayGTb/0PPqB6KZHkROs4I7JkQ9/6HUo2H9rS56p+lTXMfqbmA==}
 
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
@@ -16996,7 +16999,7 @@ snapshots:
       fast-jwt: 4.0.5
       undici: 6.21.0
 
-  undici-thread-interceptor@0.10.2:
+  undici-thread-interceptor@0.10.3:
     dependencies:
       hyperid: 3.3.0
       light-my-request: 6.4.0

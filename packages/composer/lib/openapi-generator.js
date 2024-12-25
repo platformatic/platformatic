@@ -99,12 +99,15 @@ async function composeOpenAPI (app, opts) {
           const newRoutePath = mapRoutePath(routePath)
 
           const replyOptions = {}
-          const onResponse = (request, reply, { stream }) => {
-            app.openTelemetry?.endHTTPSpanClient(reply.request.proxedCallSpan, { statusCode: reply.statusCode })
+          const onResponse = (request, reply, res) => {
+            app.openTelemetry?.endHTTPSpanClient(reply.request.proxedCallSpan, {
+              statusCode: reply.statusCode,
+              headers: res.headers
+            })
             if (req.routeOptions.config?.onComposerResponse) {
-              req.routeOptions.config?.onComposerResponse(request, reply, stream)
+              req.routeOptions.config?.onComposerResponse(request, reply, res.stream)
             } else {
-              reply.send(stream)
+              reply.send(res.stream)
             }
           }
           const rewriteRequestHeaders = (request, headers) => {

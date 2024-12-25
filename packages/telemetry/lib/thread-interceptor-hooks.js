@@ -80,7 +80,7 @@ const createTelemetryThreadInterceptorHooks = () => {
     ctx.span = span
   }
 
-  const onClientResponse = (_req, res, ctx) => {
+  const onClientResponseEnd = (_req, res, ctx) => {
     const span = ctx.span ?? null
     if (!span) {
       return
@@ -93,6 +93,12 @@ const createTelemetryThreadInterceptorHooks = () => {
       span.setAttributes({
         'http.response.status_code': res.statusCode,
       })
+
+      const httpCacheId = res.headers?.['x-plt-http-cache-id']
+      if (httpCacheId) {
+        span.setAttributes({ 'http.cache.id': httpCacheId })
+      }
+
       span.setStatus(spanStatus)
     } else {
       span.setStatus({
@@ -116,7 +122,7 @@ const createTelemetryThreadInterceptorHooks = () => {
     onServerResponse,
     onServerError,
     onClientRequest,
-    onClientResponse,
+    onClientResponseEnd,
     onClientError
   }
 }

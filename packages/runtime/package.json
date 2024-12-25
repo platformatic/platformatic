@@ -62,6 +62,7 @@
     "@fastify/error": "^4.0.0",
     "@fastify/websocket": "^11.0.0",
     "@hapi/topo": "^6.0.2",
+    "@opentelemetry/api": "^1.8.0",
     "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/generators": "workspace:*",
@@ -93,7 +94,7 @@
     "tail-file-stream": "^0.2.0",
     "thread-cpu-usage": "^0.2.0",
     "undici": "^7.0.0",
-    "undici-thread-interceptor": "^0.10.0",
+    "undici-thread-interceptor": "^0.10.3",
     "ws": "^8.16.0"
   }
 }

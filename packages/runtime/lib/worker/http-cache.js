@@ -1,7 +1,12 @@
 'use strict'
 
+const { randomUUID } = require('node:crypto')
 const { Readable, Writable } = require('node:stream')
+const { interceptors } = require('undici')
 const { kITC } = require('./symbols')
+
+const kCacheIdHeader = Symbol('cacheIdHeader')
+const CACHE_ID_HEADER = 'x-plt-http-cache-id'
 
 const noop = () => {}
 
@@ -56,13 +61,19 @@ class RemoteCacheStore {
     }
   }
 
-  createWriteStream (request, response) {
+  createWriteStream (key, value) {
+    const cacheEntryId = value.headers?.[kCacheIdHeader]
+    if (cacheEntryId) {
+      key = { ...key, id: cacheEntryId }
+      value.headers = { ...value.headers, [CACHE_ID_HEADER]: cacheEntryId }
+    }
+
     const itc = globalThis[kITC]
     if (!itc) throw new Error('Cannot write to cache without an ITC instance')
 
     let payload = ''
 
-    request = this.#sanitizeRequest(request)
+    key = this.#sanitizeRequest(key)
 
     return new Writable({
       write (chunk, encoding, callback) {
@@ -70,7 +81,7 @@ class RemoteCacheStore {
         callback()
       },
       final (callback) {
-        itc.send('setHttpCacheValue', { request, response, payload })
+        itc.send('setHttpCacheValue', { request: key, response: value, payload })
           .then(() => callback())
           .catch((err) => callback(err))
       }
@@ -96,4 +107,56 @@ class RemoteCacheStore {
   }
 }
 
-module.exports = RemoteCacheStore
+const httpCacheInterceptor = (interceptorOpts) => {
+  const originalInterceptor = interceptors.cache(interceptorOpts)
+
+  // AsyncLocalStorage that contains a client http request span
+  // Exists only when the nodejs stackable telemetry is enabled
+  const clientSpansAls = globalThis.platformatic.clientSpansAls
+
+  return (originalDispatch) => {
+    const dispatch = (opts, handler) => {
+      const originOnResponseStart = handler.onResponseStart.bind(handler)
+      handler.onResponseStart = (ac, statusCode, headers, statusMessage) => {
+        // Setting a potentially cache entry id when cache miss happens
+        headers[kCacheIdHeader] = randomUUID()
+        return originOnResponseStart(ac, statusCode, headers, statusMessage)
+      }
+
+      return originalDispatch(opts, handler)
+    }
+
+    const dispatcher = originalInterceptor(dispatch)
+
+    return (opts, handler) => {
+      const originOnResponseStart = handler.onResponseStart.bind(handler)
+      handler.onResponseStart = (ac, statusCode, headers, statusMessage) => {
+        const cacheEntryId = headers[kCacheIdHeader] ?? headers[CACHE_ID_HEADER]
+        if (cacheEntryId) {
+          // Setting a cache id header on cache hit
+          headers[CACHE_ID_HEADER] = cacheEntryId
+          delete headers[kCacheIdHeader]
+
+          if (clientSpansAls) {
+            try {
+              const { span } = clientSpansAls.getStore()
+              if (span) {
+                span.setAttribute('http.cache.id', cacheEntryId)
+              }
+            } catch (err) {
+              interceptorOpts.logger.error(err, 'Error setting cache id on span')
+            }
+          }
+        }
+        return originOnResponseStart(ac, statusCode, headers, statusMessage)
+      }
+
+      if (!clientSpansAls) {
+        return dispatcher(opts, handler)
+      }
+      return clientSpansAls.run({ span: null }, () => dispatcher(opts, handler))
+    }
+  }
+}
+
+module.exports = { RemoteCacheStore, httpCacheInterceptor }
