@@ -144,7 +144,7 @@ const httpCacheInterceptor = (interceptorOpts) => {
               const { span } = clientSpansAls.getStore()
               if (span) {
                 span.setAttribute('http.cache.id', cacheEntryId)
-                span.setAttribute('http.cache.hit', isCacheHit)
+                span.setAttribute('http.cache.hit', isCacheHit.toString())
               }
             } catch (err) {
               interceptorOpts.logger.error(err, 'Error setting cache id on span')

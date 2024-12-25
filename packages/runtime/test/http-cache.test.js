@@ -448,7 +448,7 @@ test('should set an opentelemetry attribute', async (t) => {
       const cacheHitAttribute = trace.attributes['http.cache.hit']
       assert.ok(cacheIdAttribute)
       assert.notStrictEqual(cacheIdAttribute, previousCacheIdAttribute)
-      assert.strictEqual(cacheHitAttribute, false)
+      assert.strictEqual(cacheHitAttribute, 'false')
       previousCacheIdAttribute = cacheIdAttribute
     }
 
@@ -488,7 +488,7 @@ test('should set an opentelemetry attribute', async (t) => {
       const cacheHitAttribute = trace.attributes['http.cache.hit']
       assert.ok(cacheIdAttribute)
       assert.notStrictEqual(cacheIdAttribute, previousCacheIdAttribute)
-      assert.strictEqual(cacheHitAttribute, true)
+      assert.strictEqual(cacheHitAttribute, 'true')
       previousCacheIdAttribute = cacheIdAttribute
     }
 

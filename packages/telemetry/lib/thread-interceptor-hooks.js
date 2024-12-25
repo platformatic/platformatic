@@ -99,7 +99,7 @@ const createTelemetryThreadInterceptorHooks = () => {
       if (httpCacheId) {
         span.setAttributes({
           'http.cache.id': httpCacheId,
-          'http.cache.hit': isCacheHit
+          'http.cache.hit': isCacheHit.toString()
         })
       }
 
