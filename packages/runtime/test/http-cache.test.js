@@ -426,6 +426,8 @@ test('should set an opentelemetry attribute', async (t) => {
     assert.strictEqual(statusCode, 200, error)
   }
 
+  await sleep(100)
+
   let resultCacheId1 = null
   {
     const traces = await parseNDJson(telemetryFilePath)
@@ -466,6 +468,8 @@ test('should set an opentelemetry attribute', async (t) => {
     const error = await body.text()
     assert.strictEqual(statusCode, 200, error)
   }
+
+  await sleep(100)
 
   {
     const traces = await parseNDJson(telemetryFilePath)
