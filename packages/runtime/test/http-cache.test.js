@@ -417,6 +417,7 @@ test('should set an opentelemetry attribute', async (t) => {
   const cacheTimeoutSec = 5
 
   {
+    // Request should reach the origin
     const url = entryUrl + '/service-2/service-3-http/cached-req-counter'
     const { statusCode, body } = await request(url, {
       query: { maxAge: cacheTimeoutSec }
@@ -425,25 +426,65 @@ test('should set an opentelemetry attribute', async (t) => {
     assert.strictEqual(statusCode, 200, error)
   }
 
-  await sleep(cacheTimeoutSec * 1000)
+  let resultCacheId1 = null
+  {
+    const traces = await parseNDJson(telemetryFilePath)
+    const serverTraces = traces.filter(trace => trace.kind === 1)
+    const clientTraces = traces.filter(trace => trace.kind === 2)
 
-  const traces = await parseNDJson(telemetryFilePath)
-  const serverTraces = traces.filter(trace => trace.kind === 1)
-  const clientTraces = traces.filter(trace => trace.kind === 2)
+    assert.strictEqual(serverTraces.length, 4)
+    assert.strictEqual(clientTraces.length, 3)
 
-  assert.strictEqual(serverTraces.length, 4)
-  assert.strictEqual(clientTraces.length, 3)
+    for (const trace of serverTraces) {
+      const cacheIdAttribute = trace.attributes['http.cache.id']
+      assert.strictEqual(cacheIdAttribute, undefined)
+    }
 
-  for (const trace of serverTraces) {
-    const cacheIdAttribute = trace.attributes['http.cache.id']
-    assert.strictEqual(cacheIdAttribute, undefined)
+    let previousCacheIdAttribute = null
+    for (const trace of clientTraces) {
+      const cacheIdAttribute = trace.attributes['http.cache.id']
+      assert.ok(cacheIdAttribute)
+      assert.notStrictEqual(cacheIdAttribute, previousCacheIdAttribute)
+      previousCacheIdAttribute = cacheIdAttribute
+    }
+
+    resultCacheId1 = clientTraces.at(-1).attributes['http.cache.id']
   }
 
-  let previousCacheIdAttribute = null
-  for (const trace of clientTraces) {
-    const cacheIdAttribute = trace.attributes['http.cache.id']
-    assert.ok(cacheIdAttribute)
-    assert.notStrictEqual(cacheIdAttribute, previousCacheIdAttribute)
-    previousCacheIdAttribute = cacheIdAttribute
+  await rm(telemetryFilePath, { force: true }).catch(() => {})
+
+  {
+    // Request should be returned from the cache
+    const url = entryUrl + '/service-2/service-3-http/cached-req-counter'
+    const { statusCode, body } = await request(url, {
+      query: { maxAge: cacheTimeoutSec }
+    })
+    const error = await body.text()
+    assert.strictEqual(statusCode, 200, error)
+  }
+
+  {
+    const traces = await parseNDJson(telemetryFilePath)
+    const serverTraces = traces.filter(trace => trace.kind === 1)
+    const clientTraces = traces.filter(trace => trace.kind === 2)
+
+    assert.strictEqual(serverTraces.length, 1)
+    assert.strictEqual(clientTraces.length, 1)
+
+    for (const trace of serverTraces) {
+      const cacheIdAttribute = trace.attributes['http.cache.id']
+      assert.strictEqual(cacheIdAttribute, undefined)
+    }
+
+    let previousCacheIdAttribute = null
+    for (const trace of clientTraces) {
+      const cacheIdAttribute = trace.attributes['http.cache.id']
+      assert.ok(cacheIdAttribute)
+      assert.notStrictEqual(cacheIdAttribute, previousCacheIdAttribute)
+      previousCacheIdAttribute = cacheIdAttribute
+    }
+
+    const resultCacheId2 = clientTraces.at(-1).attributes['http.cache.id']
+    assert.strictEqual(resultCacheId1, resultCacheId2)
   }
 })
