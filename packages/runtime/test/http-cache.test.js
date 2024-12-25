@@ -437,14 +437,18 @@ test('should set an opentelemetry attribute', async (t) => {
 
     for (const trace of serverTraces) {
       const cacheIdAttribute = trace.attributes['http.cache.id']
+      const cacheHitAttribute = trace.attributes['http.cache.hit']
       assert.strictEqual(cacheIdAttribute, undefined)
+      assert.strictEqual(cacheHitAttribute, undefined)
     }
 
     let previousCacheIdAttribute = null
     for (const trace of clientTraces) {
       const cacheIdAttribute = trace.attributes['http.cache.id']
+      const cacheHitAttribute = trace.attributes['http.cache.hit']
       assert.ok(cacheIdAttribute)
       assert.notStrictEqual(cacheIdAttribute, previousCacheIdAttribute)
+      assert.strictEqual(cacheHitAttribute, false)
       previousCacheIdAttribute = cacheIdAttribute
     }
 
@@ -473,14 +477,18 @@ test('should set an opentelemetry attribute', async (t) => {
 
     for (const trace of serverTraces) {
       const cacheIdAttribute = trace.attributes['http.cache.id']
+      const cacheHitAttribute = trace.attributes['http.cache.hit']
       assert.strictEqual(cacheIdAttribute, undefined)
+      assert.strictEqual(cacheHitAttribute, undefined)
     }
 
     let previousCacheIdAttribute = null
     for (const trace of clientTraces) {
       const cacheIdAttribute = trace.attributes['http.cache.id']
+      const cacheHitAttribute = trace.attributes['http.cache.hit']
       assert.ok(cacheIdAttribute)
       assert.notStrictEqual(cacheIdAttribute, previousCacheIdAttribute)
+      assert.strictEqual(cacheHitAttribute, true)
       previousCacheIdAttribute = cacheIdAttribute
     }
 

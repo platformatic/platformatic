@@ -284,8 +284,12 @@ function setupTelemetry (opts, logger) {
       })
 
       const httpCacheId = response.headers?.['x-plt-http-cache-id']
+      const isCacheHit = response.headers?.age !== undefined
       if (httpCacheId) {
-        span.setAttributes({ 'http.cache.id': httpCacheId })
+        span.setAttributes({
+          'http.cache.id': httpCacheId,
+          'http.cache.hit': isCacheHit
+        })
       }
 
       span.setStatus(spanStatus)
