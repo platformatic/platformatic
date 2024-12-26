@@ -132,6 +132,8 @@ const httpCacheInterceptor = (interceptorOpts) => {
       const originOnResponseStart = handler.onResponseStart.bind(handler)
       handler.onResponseStart = (ac, statusCode, headers, statusMessage) => {
         const cacheEntryId = headers[kCacheIdHeader] ?? headers[CACHE_ID_HEADER]
+        const isCacheHit = headers.age !== undefined
+
         if (cacheEntryId) {
           // Setting a cache id header on cache hit
           headers[CACHE_ID_HEADER] = cacheEntryId
@@ -142,6 +144,7 @@ const httpCacheInterceptor = (interceptorOpts) => {
               const { span } = clientSpansAls.getStore()
               if (span) {
                 span.setAttribute('http.cache.id', cacheEntryId)
+                span.setAttribute('http.cache.hit', isCacheHit.toString())
               }
             } catch (err) {
               interceptorOpts.logger.error(err, 'Error setting cache id on span')

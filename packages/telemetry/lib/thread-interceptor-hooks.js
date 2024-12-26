@@ -95,8 +95,12 @@ const createTelemetryThreadInterceptorHooks = () => {
       })
 
       const httpCacheId = res.headers?.['x-plt-http-cache-id']
+      const isCacheHit = res.headers?.age !== undefined
       if (httpCacheId) {
-        span.setAttributes({ 'http.cache.id': httpCacheId })
+        span.setAttributes({
+          'http.cache.id': httpCacheId,
+          'http.cache.hit': isCacheHit.toString()
+        })
       }
 
       span.setStatus(spanStatus)
