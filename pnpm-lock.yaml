@@ -1580,7 +1580,7 @@ importers:
         version: 5.2.0
       isbot:
         specifier: ^5.1.17
-        version: 5.1.18
+        version: 5.1.19
       json-schema-to-typescript:
         specifier: ^15.0.1
         version: 15.0.3
@@ -6507,8 +6507,8 @@ packages:
   isarray@2.0.5:
     resolution: {integrity: sha512-xHjhDr3cNBK0BzdUJSPXZntQUx/mwMS5Rw4A7lPJ90XGAO6ISP/ePDNuo0vhqOZU+UD5JoodwCAAoZQd3FeAKw==}
 
-  isbot@5.1.18:
-    resolution: {integrity: sha512-df9RdChv1DheItzN5pNKtblc9/otzJYmxjf9GhCZG/f0TCcGCbQFmtM3e+SD0e8EI3/O2tIXPYVaG4FUaIIa6Q==}
+  isbot@5.1.19:
+    resolution: {integrity: sha512-8krWJBGKC3lVymkncvmBTpIEWMD5kKmjAvkM3/Xh6veE0bAydwgSNrI5h493DGrG2UNJCy0HuHpNPSKRy0dBJA==}
     engines: {node: '>=18'}
 
   isexe@2.0.0:
@@ -13852,7 +13852,7 @@ snapshots:
 
   isarray@2.0.5: {}
 
-  isbot@5.1.18: {}
+  isbot@5.1.19: {}
 
   isexe@2.0.0: {}
 
