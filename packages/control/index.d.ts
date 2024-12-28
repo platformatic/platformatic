@@ -10,11 +10,46 @@ declare namespace control {
     ws: WebSocket;
   }
 
+  interface Runtime {
+    pid: number,
+    cwd: string,
+    argv: string[],
+    uptimeSeconds: number,
+    execPath: string,
+    nodeVersion: string,
+    projectDir: string,
+    packageName: string | null,
+    packageVersion: string | null,
+    url: string | null,
+    platformaticVersion: string
+  }
+
+  interface Services {
+    entrypoint: string,
+    production: boolean,
+    services: ({
+      id: string;
+      type: string;
+      status: string;
+      version: string;
+      localUrl: string;
+      entrypoint: boolean;
+      dependencies: {
+        id: string;
+        url: string;
+        local: boolean;
+      }[];
+    } | {
+      id: string;
+      status: string;
+    })[]
+  }
+
   export class RuntimeApiClient {
-    getMatchingRuntime(opts: { pid?: string; name?: string }): Promise<unknown>;
-    getRuntimes(): Promise<unknown[]>;
-    getRuntimeMetadata(pid: number): Promise<unknown>;
-    getRuntimeServices(pid: number): Promise<unknown>;
+    getMatchingRuntime(opts: { pid?: string; name?: string }): Promise<Runtime>;
+    getRuntimes(): Promise<Runtime[]>;
+    getRuntimeMetadata(pid: number): Promise<Runtime>;
+    getRuntimeServices(pid: number): Promise<Services>;
     getRuntimeConfig(pid: number): Promise<void>;
     getRuntimeServiceConfig(pid: number, serviceId?: string): Promise<void>;
     getRuntimeEnv(pid: number): Promise<void>;
