@@ -24,7 +24,7 @@ declare namespace control {
     platformaticVersion: string
   }
 
-  interface Service {
+  interface RuntimeServices {
     entrypoint: string,
     production: boolean,
     services: ({
@@ -72,7 +72,7 @@ declare namespace control {
     getMatchingRuntime(options?: { pid?: string; name?: string }): Promise<Runtime>;
     getRuntimes(): Promise<Runtime[]>;
     getRuntimeMetadata(pid: number): Promise<Runtime>;
-    getRuntimeServices(pid: number): Promise<Service>;
+    getRuntimeServices(pid: number): Promise<RuntimeServices>;
     getRuntimeConfig(pid: number): Promise<void>;
     getRuntimeServiceConfig(pid: number, serviceId?: string): Promise<void>;
     getRuntimeEnv(pid: number): Promise<void>;

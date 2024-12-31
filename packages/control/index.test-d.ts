@@ -1,10 +1,10 @@
 import { expectError, expectType } from 'tsd'
-import { errors, Metric, Runtime, RuntimeApiClient, Service } from '.'
+import { errors, Metric, Runtime, RuntimeApiClient, RuntimeServices } from '.'
 import { FastifyError } from '@fastify/error'
 
 // RuntimeApiClient
 let runtime = {} as Runtime
-let service = {} as Service
+let service = {} as RuntimeServices
 let metric = {} as Metric
 const api = new RuntimeApiClient()
 expectType<Promise<Runtime>>(api.getMatchingRuntime())
@@ -19,7 +19,7 @@ expectType<string | null>(runtime.packageVersion)
 expectType<Promise<{
   entrypoint: string,
   production: boolean,
-  services: Service['services']
+  services: RuntimeServices['services']
 }>>(api.getRuntimeServices(45))
 expectType<string>(service.services[0].id)
 expectType<string>(service.services[0].status)
