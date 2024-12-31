@@ -1,11 +1,17 @@
 import { expectError, expectType } from 'tsd'
-import { errors, Runtime, RuntimeApiClient, Services } from '.'
+import { errors, Metric, Runtime, RuntimeApiClient, Service } from '.'
 import { FastifyError } from '@fastify/error'
 
 // RuntimeApiClient
 let runtime = {} as Runtime
-let services = {} as Services
+let service = {} as Service
+let metric = {} as Metric
 const api = new RuntimeApiClient()
+expectType<Promise<Runtime>>(api.getMatchingRuntime())
+expectType<Promise<Metric[]>>(api.getRuntimeMetrics(runtime.pid))
+expectType<Promise<Metric[]>>(api.getRuntimeMetrics(runtime.pid, {}))
+expectType<Promise<Metric[]>>(api.getRuntimeMetrics(runtime.pid, { format: 'json' }))
+expectType<Promise<string>>(api.getRuntimeMetrics(runtime.pid, { format: 'text' }))
 expectType<Promise<Runtime[]>>(api.getRuntimes())
 expectType<string[]>(runtime.argv)
 expectType<number>(runtime.uptimeSeconds)
@@ -13,10 +19,12 @@ expectType<string | null>(runtime.packageVersion)
 expectType<Promise<{
   entrypoint: string,
   production: boolean,
-  services: Services['services']
+  services: Service['services']
 }>>(api.getRuntimeServices(45))
-expectType<string>(services.services[0].id)
-expectType<string>(services.services[0].status)
+expectType<string>(service.services[0].id)
+expectType<string>(service.services[0].status)
+expectType<string>(metric.aggregator)
+expectType<string>(metric.values[0].labels.serviceId)
 expectType<Promise<void>>(api.close())
 
 // errors

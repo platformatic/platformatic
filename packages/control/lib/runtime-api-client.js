@@ -17,7 +17,7 @@ class RuntimeApiClient {
   #undiciClients = new Map()
   #webSockets = new Set()
 
-  async getMatchingRuntime (opts) {
+  async getMatchingRuntime (opts = {}) {
     const runtimes = await this.getRuntimes()
 
     let runtime = null
