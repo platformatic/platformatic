@@ -309,6 +309,18 @@ test('should get runtime live metrics', async t => {
   })
 })
 
+test('should get matching runtime', async t => {
+  const projectDir = join(fixturesDir, 'runtime-1')
+  const configFile = join(projectDir, 'platformatic.json')
+  const { runtime } = await startRuntime(configFile)
+  t.after(async () => { await kill(runtime) })
+
+  const runtimeClient = new RuntimeApiClient()
+  const { pid, url } = await runtimeClient.getMatchingRuntime()
+  assert.strictEqual(typeof pid, 'number')
+  assert.strictEqual(typeof url, 'string')
+})
+
 function getRuntimeTmpDir (runtimeDir) {
   const platformaticTmpDir = join(tmpdir(), 'platformatic', 'applications')
   const runtimeDirHash = createHash('md5').update(runtimeDir).digest('hex')

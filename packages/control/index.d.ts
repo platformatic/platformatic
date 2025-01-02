@@ -24,7 +24,7 @@ declare namespace control {
     platformaticVersion: string
   }
 
-  interface Services {
+  interface RuntimeServices {
     entrypoint: string,
     production: boolean,
     services: ({
@@ -45,11 +45,34 @@ declare namespace control {
     })[]
   }
 
+  interface MetricValue {
+    value: number,
+    labels: {
+      type?: string,
+      space?: string,
+      version?: string,
+      major?: number,
+      minor?: number,
+      patch?: number,
+      le?: number | string,
+      kind?: string,
+      serviceId: string
+    }
+  }
+  
+  interface Metric {
+    help: string,
+    name: string,
+    type: string,
+    values: MetricValue[],
+    aggregator: string
+  }
+
   export class RuntimeApiClient {
-    getMatchingRuntime(opts: { pid?: string; name?: string }): Promise<Runtime>;
+    getMatchingRuntime(options?: { pid?: string; name?: string }): Promise<Runtime>;
     getRuntimes(): Promise<Runtime[]>;
     getRuntimeMetadata(pid: number): Promise<Runtime>;
-    getRuntimeServices(pid: number): Promise<Services>;
+    getRuntimeServices(pid: number): Promise<RuntimeServices>;
     getRuntimeConfig(pid: number): Promise<void>;
     getRuntimeServiceConfig(pid: number, serviceId?: string): Promise<void>;
     getRuntimeEnv(pid: number): Promise<void>;
@@ -57,10 +80,10 @@ declare namespace control {
     reloadRuntime(pid: number, options?: object): Promise<ChildProcess>;
     restartRuntime(pid: number): Promise<void>;
     stopRuntime(pid: number): Promise<void>;
-    getRuntimeMetrics(
+    getRuntimeMetrics<T extends { format?: "text" | "json" }>(
       pid: number,
-      options?: { format?: "text" | "json" }
-    ): Promise<unknown>;
+      options?: T
+    ): Promise<T extends { format: "text" } ? string : Metric[]>;
     getRuntimeLiveMetricsStream(pid: number): WebSocketStream;
     getRuntimeLiveLogsStream(
       pid: number,
