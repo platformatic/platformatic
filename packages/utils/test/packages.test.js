@@ -6,6 +6,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { version, dependencies } = require('../package.json')
 const { getPlatformaticVersion, hasDependency, getDependencyVersion, checkForDependencies, getLatestNpmVersion } = require('../')
 const { MockAgent, setGlobalDispatcher } = require('undici')
+const semver = require('semver')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)
@@ -23,7 +24,8 @@ test('hasDependency', async t => {
 
 test('getDependencyVersion', async t => {
   const version = await getDependencyVersion(require, '@fastify/deepmerge')
-  equal(version, dependencies['@fastify/deepmerge'].replace('^', ''))
+  const toMatch = dependencies['@fastify/deepmerge']
+  equal(semver.satisfies(version, toMatch), true)
 })
 
 test('checkForDependencies missing dep', async t => {
