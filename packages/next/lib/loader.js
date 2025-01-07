@@ -56,6 +56,8 @@ function createEvaluatorWrapperFunction (original) {
     ? fileURLToPath(new URL(`./caching/${config.cache.adapter}.js`, import.meta.url)).replaceAll(sep, '/')
     : undefined
 
+  const trailingSlash = config?.next?.trailingSlash
+
   return functionDeclaration(
     null,
     [restElement(identifier('args'))],
@@ -74,6 +76,13 @@ function createEvaluatorWrapperFunction (original) {
                 ${originalId}.cacheHandler = '${cacheHandler}'
                 ${originalId}.cacheMaxMemorySize = 0
               }  
+            `)
+          : undefined,
+        trailingSlash
+          ? parseSingleExpression(`
+              if (typeof ${originalId}.trailingSlash === 'undefined') { 
+                ${originalId}.trailingSlash = true
+              }
             `)
           : undefined,
         parseSingleExpression(`globalThis[Symbol.for('plt.children.itc')]?.notify('config', ${originalId})`),

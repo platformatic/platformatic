@@ -93,6 +93,9 @@ export interface PlatformaticNextJsStackable {
       production?: string;
     };
   };
+  next?: {
+    trailingSlash?: boolean;
+  };
   cache?: {
     adapter: "redis" | "valkey";
     url: string;

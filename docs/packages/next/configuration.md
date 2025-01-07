@@ -30,7 +30,7 @@ Configures the HTTP server, see the [runtime](../../runtime/configuration.md#ser
 
 Manages watching of the service, see the [service](../../service/configuration.md#watch) documentation.
 
-## `caching`
+## `cache`
 
 Configures an [Incremental Server Rendering cache](https://nextjs.org/docs/app/api-reference/next-config-js/incrementalCacheHandlerPath) handler.
 
@@ -41,5 +41,11 @@ Supported object properties:
 - **`prefix`**: The prefix to use for all cache keys.
 - **`maxTTL`**: The maximum life of a server key, in seconds. If the Next.js `revalidate` value is greater than this value, then
   the adapter will refresh the key expire time as long as it is accessed every `maxTTL` seconds. The default value is `604800` (one week).
+
+## `next`
+
+Configures Next.js. Supported object properties:
+
+- **`trailingSlash`**: Enables [trailingSlash](https://nextjs.org/docs/pages/api-reference/config/next-config-js/trailingSlash) in the `next.config.js`.
 
 <Issues />
