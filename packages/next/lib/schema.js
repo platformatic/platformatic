@@ -34,6 +34,18 @@ export const cache = {
   additionalProperties: false
 }
 
+const next = {
+  type: 'object',
+  properties: {
+    trailingSlash: {
+      type: 'boolean',
+      default: false
+    }
+  },
+  default: {},
+  additionalProperties: false
+}
+
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/next/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
@@ -47,6 +59,7 @@ export const schema = {
     server: utilsSchemaComponents.server,
     watch: schemaComponents.watch,
     application: schemaComponents.application,
+    next,
     cache
   },
   additionalProperties: false

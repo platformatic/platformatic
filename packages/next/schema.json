@@ -297,6 +297,17 @@
       "additionalProperties": false,
       "default": {}
     },
+    "next": {
+      "type": "object",
+      "properties": {
+        "trailingSlash": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "default": {},
+      "additionalProperties": false
+    },
     "cache": {
       "type": "object",
       "properties": {
