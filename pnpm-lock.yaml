@@ -116,7 +116,7 @@ importers:
         version: 4.2.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
       ws:
         specifier: ^8.18.0
         version: 8.18.0
@@ -219,7 +219,7 @@ importers:
         version: 4.2.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
       wattpm:
         specifier: workspace:*
         version: link:../wattpm
@@ -304,7 +304,7 @@ importers:
         version: 5.0.1
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
     devDependencies:
       '@fastify/multipart':
         specifier: ^9.0.1
@@ -395,7 +395,7 @@ importers:
         version: 13.0.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
       yaml:
         specifier: ^2.4.1
         version: 2.7.0
@@ -564,7 +564,7 @@ importers:
         version: 0.3.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
     devDependencies:
       '@platformatic/client':
         specifier: workspace:*
@@ -646,7 +646,7 @@ importers:
         version: 7.6.3
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
     devDependencies:
       '@iarna/toml':
         specifier: ^2.2.5
@@ -710,7 +710,7 @@ importers:
         version: 6.9.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -807,7 +807,7 @@ importers:
         version: 7.1.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
       which:
         specifier: ^3.0.1
         version: 3.0.1
@@ -1049,7 +1049,7 @@ importers:
         version: 5.7.2
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
       vscode-json-languageservice:
         specifier: ^5.3.9
         version: 5.4.2
@@ -1079,7 +1079,7 @@ importers:
         version: 3.1.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
     devDependencies:
       '@fastify/cookie':
         specifier: ^11.0.0
@@ -1201,7 +1201,7 @@ importers:
         version: 0.25.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
     devDependencies:
       '@platformatic/utils':
         specifier: workspace:*
@@ -1319,7 +1319,7 @@ importers:
         version: 9.6.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
     devDependencies:
       '@types/inquirer':
         specifier: ^9.0.7
@@ -1768,7 +1768,7 @@ importers:
         version: 0.2.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
       undici-thread-interceptor:
         specifier: ^0.10.3
         version: 0.10.3
@@ -1996,7 +1996,7 @@ importers:
         version: 0.3.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
     devDependencies:
       '@fastify/aws-lambda':
         specifier: ^5.0.0
@@ -2628,7 +2628,7 @@ importers:
         version: 5.7.2
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
 
 packages:
 
@@ -8970,10 +8970,6 @@ packages:
     resolution: {integrity: sha512-BUgJXc752Kou3oOIuU1i+yZZypyZRqNPW0vqoMPl8VaoalSfeR0D8/t4iAS3yirs79SSMTxTag+ZC86uswv+Cw==}
     engines: {node: '>=18.17'}
 
-  undici@7.1.1:
-    resolution: {integrity: sha512-WZkQ6eH9f5ZT93gaIffsbUaDpBwjbpvmMbfaEhOnbdUneurTESeRxwPGwjI28mRFESH3W3e8Togijh37ptOQqA==}
-    engines: {node: '>=20.18.1'}
-
   undici@7.2.0:
     resolution: {integrity: sha512-klt+0S55GBViA9nsq48/NSCo4YX5mjydjypxD7UmHh/brMu8h/Mhd/F7qAeoH2NOO8SDTk6kjnTFc4WpzmfYpQ==}
     engines: {node: '>=20.18.1'}
@@ -10173,7 +10169,7 @@ snapshots:
       fast-querystring: 1.1.2
       fastify-plugin: 5.0.1
       toad-cache: 3.7.0
-      undici: 7.1.1
+      undici: 7.2.0
 
   '@fastify/send@3.3.1':
     dependencies:
@@ -10861,7 +10857,7 @@ snapshots:
       mercurius: 15.1.0(graphql@16.10.0)
       metaline: 1.1.0
       pino: 9.6.0
-      undici: 7.1.1
+      undici: 7.2.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -13688,7 +13684,7 @@ snapshots:
 
   inspector-client@0.2.0:
     dependencies:
-      undici: 7.1.1
+      undici: 7.2.0
 
   int64-buffer@0.1.10: {}
 
@@ -17094,7 +17090,7 @@ snapshots:
     dependencies:
       hyperid: 3.3.0
       light-my-request: 6.4.0
-      undici: 7.1.1
+      undici: 7.2.0
 
   undici-types@5.26.5: {}
 
@@ -17105,8 +17101,6 @@ snapshots:
       '@fastify/busboy': 2.1.1
 
   undici@6.21.0: {}
-
-  undici@7.1.1: {}
 
   undici@7.2.0: {}
 
