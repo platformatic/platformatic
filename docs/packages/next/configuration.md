@@ -42,7 +42,7 @@ Supported object properties:
 - **`maxTTL`**: The maximum life of a server key, in seconds. If the Next.js `revalidate` value is greater than this value, then
   the adapter will refresh the key expire time as long as it is accessed every `maxTTL` seconds. The default value is `604800` (one week).
 
-## `node`
+## `next`
 
 Configures Next.js. Supported object properties:
 
