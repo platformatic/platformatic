@@ -46,6 +46,6 @@ Supported object properties:
 
 Configures Next.js. Supported object properties:
 
-- **`trailingSlash`**: Enables [trailingSlash](https://nextjs.org/docs/pages/api-reference/config/next-config-js/trailingSlash) in the `next.config.js`.
+- **`trailingSlash`**: Enables [trailingSlash](https://nextjs.org/docs/pages/api-reference/config/next-config-js/trailingSlash) in the `next.config.js`. Default is `true` if the service is the entrypoint, `false` otherwise.
 
 <Issues />

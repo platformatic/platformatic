@@ -287,6 +287,11 @@ function transformConfig () {
     this.current.cache.adapter = 'valkey'
   }
 
+  if (this.current.next?.trailingSlash === undefined) {
+    this.current.next ??= {}
+    this.current.next.trailingSlash = (this.context.entrypoint || this.context.isEntrypoint) === true
+  }
+
   return basicTransformConfig.call(this)
 }
 

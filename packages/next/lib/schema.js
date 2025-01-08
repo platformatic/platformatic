@@ -38,8 +38,7 @@ const next = {
   type: 'object',
   properties: {
     trailingSlash: {
-      type: 'boolean',
-      default: false
+      type: 'boolean'
     }
   },
   default: {},

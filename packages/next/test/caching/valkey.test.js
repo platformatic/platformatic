@@ -534,7 +534,7 @@ test(
           deepStrictEqual(kind, 'APP_ROUTE')
           deepStrictEqual(
             headers['x-next-cache-tags'],
-            '_N_T_/layout,_N_T_/route,_N_T_/route/route,_N_T_/route,first,second,third'
+            '_N_T_/layout,_N_T_/route,_N_T_/route/route,_N_T_/route/,first,second,third'
           )
           break
       }
