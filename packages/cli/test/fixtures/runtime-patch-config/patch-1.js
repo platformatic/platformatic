@@ -1,4 +1,4 @@
-export default function () {
+module.exports = function () {
   return {
     runtime: [
       { op: 'add', path: '/restartOnError', value: true },
