@@ -11,7 +11,7 @@ const { findParentSpan, findSpanWithParentWithId } = require('./helper')
 
 process.setMaxListeners(100)
 
-let basicHelper
+let runtimeHelper
 
 const getSpans = async (spanPaths) => {
   const spans = await parseNDJson(spanPaths)
@@ -19,22 +19,21 @@ const getSpans = async (spanPaths) => {
 }
 
 test.beforeEach(async () => {
-  basicHelper = await import('../../basic/test/helper.js')
+  runtimeHelper = require('./runtime-helper')
   const fixturesDir = resolve(__dirname, './fixtures')
-  basicHelper.setFixturesDir(fixturesDir)
+  runtimeHelper.setFixturesDir(fixturesDir)
 })
 
 test('configure telemetry correctly with a node app', async t => {
-  const app = await basicHelper.createRuntime(t,
+  const app = await runtimeHelper.createRuntime(t,
     'node-api-with-telemetry',
-    false,
     false,
     'platformatic.json'
   )
   const { url, root } = app
   const spansPath = join(root, 'spans.log')
 
-  // Test request to add http metrics
+  // Test request
   const { statusCode } = await request(`${url}/test`, {
     method: 'GET',
   })
@@ -57,9 +56,8 @@ test('configure telemetry correctly with a node app', async t => {
 })
 
 test('configure telemetry correctly with a express app', async t => {
-  const app = await basicHelper.createRuntime(t,
+  const app = await runtimeHelper.createRuntime(t,
     'express-api-with-telemetry',
-    false,
     false,
     'platformatic.json'
   )
@@ -89,9 +87,8 @@ test('configure telemetry correctly with a express app', async t => {
 })
 
 test('configure telemetry correctly with a composer + node app', async t => {
-  const app = await basicHelper.createRuntime(t,
+  const app = await runtimeHelper.createRuntime(t,
     'composer-node',
-    false,
     false,
     'platformatic.json'
   )
@@ -142,9 +139,8 @@ test('configure telemetry correctly with a composer + node app', async t => {
 
 test('configure telemetry correctly with a composer + node + fastify', async t => {
   // composer -> fastify -> node
-  const app = await basicHelper.createRuntime(t,
+  const app = await runtimeHelper.createRuntime(t,
     'composer-node-fastify',
-    false,
     true,
     'platformatic.json'
   )
@@ -221,7 +217,7 @@ test('configure telemetry correctly with a composer + next', async t => {
   //                  -> node (via http)
   //
   // We need to be in production mode to be in the same runtime
-  const { root, config } = await basicHelper.prepareRuntime(t,
+  const { root, config } = await runtimeHelper.prepareRuntime(t,
     'composer-next-node-fastify',
     true,
     'platformatic.json'
@@ -234,7 +230,7 @@ test('configure telemetry correctly with a composer + next', async t => {
     cwd: root
   })
 
-  const { url } = await basicHelper.startRuntime(t, root, config, false)
+  const { url } = await runtimeHelper.startRuntime(t, root, config, false)
 
   const spansPath = join(root, 'spans.log')
 
