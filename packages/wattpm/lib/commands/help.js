@@ -4,7 +4,17 @@ import { logo } from '../logo.js'
 async function loadCommands () {
   const commands = {}
 
-  for (const file of ['init', 'build', 'execution', 'management', 'logs', 'inject', 'external', 'metrics']) {
+  for (const file of [
+    'init',
+    'build',
+    'execution',
+    'management',
+    'logs',
+    'inject',
+    'external',
+    'patch-config',
+    'metrics'
+  ]) {
     const category = await import(`./${file}.js`)
     Object.assign(commands, category.help)
   }

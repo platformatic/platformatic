@@ -90,6 +90,7 @@ Welcome to Platformatic. Available commands are:
 * `logs` - stream logs for a Platformatic runtime application.
 * `upgrade` - upgrade the Platformatic configuration to the latest version.
 * `resolve` - resolve Platformatic Runtime external services
+* `patch-config` - Applies a patch file to the runtime and services configurations.
 * `client` - generate a Platformatic client.
 * `build` - builds all services.
 * `install` - install all dependencies of an application and its services.
@@ -243,6 +244,15 @@ You can find more details about the configuration format here:
 * [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
 * [Platformatic Service Configuration](https://docs.platformatic.dev/docs/service/configuration)
 
+#### `patch-config`
+
+Applies a patch file to the runtime and services configurations.
+
+Arguments:
+
+* `-c, --config FILE` - Path to the runtime configuration file.
+- `-p, --patch PATCH`: The file containing the patch to execute. Its default export should be a function that receives the `runtime` and `services` arguments and returns an object containing
+  the `runtime` and `services` keys with [JSON Patch](https://jsonpatch.com/) formatted patch to apply to configuration files.
 
 #### start
 

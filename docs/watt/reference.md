@@ -193,6 +193,16 @@ Options:
 - `-s, --skip-dependencies`: Do not install services dependencies
 - `-P, --package-manager`: Use an alternative package manager (the default is to autodetect it)
 
+## `patch-config`
+
+Applies a patch file to the runtime and services configurations.
+
+Arguments:
+
+- `root`: The directory containing the application (the default is the current directory)
+- `patch`: The file containing the patch to execute. Its default export should be a function that receives the `runtime` and `services` arguments and returns an object containing
+  the `runtime` and `services` keys with [JSON Patch](https://jsonpatch.com/) formatted patch to apply to configuration files.
+
 ## `help`
 
 Show help about Watt or one of its commands.
