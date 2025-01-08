@@ -2391,12 +2391,6 @@ importers:
         specifier: ^5.0.0
         version: 5.0.1
     devDependencies:
-      '@platformatic/runtime':
-        specifier: workspace:*
-        version: link:../runtime
-      '@platformatic/utils':
-        specifier: workspace:*
-        version: link:../utils
       borp:
         specifier: ^0.19.0
         version: 0.19.0

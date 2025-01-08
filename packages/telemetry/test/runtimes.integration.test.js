@@ -86,7 +86,7 @@ const setupTelemetryServer = (root, config, args) => {
   config.configManager.current.telemetry = newTelemetry
 }
 
-test('configure telemetry correctly with a node app', async t => {
+test('configure telemetry correctly with a node app - integration test', async t => {
   const { root, config } = await runtimeHelper.prepareRuntime(
     t,
     'node-api-with-telemetry',
@@ -116,7 +116,7 @@ test('configure telemetry correctly with a node app', async t => {
   equal(serviceUrl.value.stringValue, `${url}/`)
 })
 
-test('configure telemetry correctly with a composer + next', async t => {
+test('configure telemetry correctly with a composer + next - integration test', async t => {
   // composer -> next -> fastify
   //                  -> node (via http)
   //

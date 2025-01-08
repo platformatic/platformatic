@@ -2,11 +2,11 @@
 
 const { loadConfig } = require('../../config/index.js')
 const { basename, resolve, dirname, join } = require('node:path')
-const { buildServer, platformaticRuntime } = require('@platformatic/runtime')
+const { buildServer, platformaticRuntime } = require('../../runtime/index.js')
 const { existsSync } = require('node:fs')
 const { cp, readFile, symlink } = require('node:fs/promises')
 const { platform } = require('node:os')
-const { createDirectory, safeRemove } = require('@platformatic/utils')
+const { createDirectory, safeRemove } = require('../../utils/index.js')
 
 let fixturesDir
 let additionalDependencies
