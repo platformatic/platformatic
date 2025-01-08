@@ -20,6 +20,7 @@ import { pathToFileURL } from 'node:url'
 import { logo } from './lib/ascii.js'
 import { build } from './lib/build.js'
 import { install } from './lib/install.js'
+import { patchConfig } from './lib/patch-config.js'
 import { resolve } from './lib/resolve.js'
 import { upgrade } from './lib/upgrade.js'
 
@@ -71,6 +72,7 @@ program.register('inject', async args => injectRuntimeCommand(args))
 program.register('logs', async args => streamRuntimeLogsCommand(args))
 program.register('upgrade', upgrade)
 program.register('resolve', resolve)
+program.register('patch-config', patchConfig)
 program.register('client', client)
 program.register('build', build)
 program.register('install', install)

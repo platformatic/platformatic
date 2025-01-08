@@ -637,18 +637,18 @@ class Runtime extends EventEmitter {
     return serviceDetails
   }
 
-  async getService (id) {
-    return this.#getServiceById(id, true)
+  async getService (id, ensureStarted = true) {
+    return this.#getServiceById(id, ensureStarted)
   }
 
-  async getServiceConfig (id) {
-    const service = await this.#getServiceById(id, true)
+  async getServiceConfig (id, ensureStarted = true) {
+    const service = await this.#getServiceById(id, ensureStarted)
 
     return sendViaITC(service, 'getServiceConfig')
   }
 
-  async getServiceEnv (id) {
-    const service = await this.#getServiceById(id, true)
+  async getServiceEnv (id, ensureStarted = true) {
+    const service = await this.#getServiceById(id, ensureStarted)
 
     return sendViaITC(service, 'getServiceEnv')
   }

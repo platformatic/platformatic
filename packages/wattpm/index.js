@@ -6,8 +6,9 @@ import { helpCommand } from './lib/commands/help.js'
 import { initCommand } from './lib/commands/init.js'
 import { injectCommand } from './lib/commands/inject.js'
 import { logsCommand } from './lib/commands/logs.js'
-import { metricsCommand } from './lib/commands/metrics.js'
 import { configCommand, envCommand, psCommand, servicesCommand } from './lib/commands/management.js'
+import { metricsCommand } from './lib/commands/metrics.js'
+import { patchConfigCommand } from './lib/commands/patch-config.js'
 import { version } from './lib/schema.js'
 import { createLogger, overrideFatal, parseArgs, setVerbose } from './lib/utils.js'
 
@@ -95,6 +96,9 @@ export async function main () {
     case 'resolve':
       command = resolveCommand
       break
+    case 'patch-config':
+      command = patchConfigCommand
+      break
     case 'install':
       command = installCommand
       break
@@ -117,3 +121,4 @@ export async function main () {
 export * from './lib/schema.js'
 
 export { resolveServices } from './lib/commands/external.js'
+export { patchConfig } from './lib/commands/patch-config.js'
