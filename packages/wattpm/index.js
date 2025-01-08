@@ -121,3 +121,4 @@ export async function main () {
 export * from './lib/schema.js'
 
 export { resolveServices } from './lib/commands/external.js'
+export { patchConfig } from './lib/commands/patch-config.js'
