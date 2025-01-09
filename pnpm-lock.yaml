@@ -2385,8 +2385,8 @@ importers:
         specifier: ^2.0.1
         version: 2.0.1
       fast-uri:
-        specifier: ^2.3.0
-        version: 2.4.0
+        specifier: ^3.0.0
+        version: 3.0.5
       fastify-plugin:
         specifier: ^5.0.0
         version: 5.0.1
