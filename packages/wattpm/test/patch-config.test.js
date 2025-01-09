@@ -3,11 +3,49 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { prepareRuntime } from '../../basic/test/helper.js'
+import { prepareRuntime, updateFile } from '../../basic/test/helper.js'
 import { fixturesDir, wattpm } from './helper.js'
 
 test('patch-config - should patch requested runtime and services config', async t => {
   const { root: buildDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const serviceDir = resolve(buildDir, 'web/main')
+
+  t.after(async () => {
+    await safeRemove(resolve(serviceDir, 'dist'))
+  })
+
+  const runtimeConfigOriginal = JSON.parse(await readFile(resolve(buildDir, 'watt.json'), 'utf-8'))
+  const mainServiceConfigOriginal = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
+  const alternateServiceConfigOriginal = JSON.parse(
+    await readFile(resolve(buildDir, 'web/alternative/watt.json'), 'utf-8')
+  )
+
+  await wattpm('patch-config', buildDir, resolve(fixturesDir, 'patches/patch-1.js'))
+
+  const runtimeConfigPatched = JSON.parse(await readFile(resolve(buildDir, 'watt.json'), 'utf-8'))
+  const mainServiceConfigPatched = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
+  const alternateServiceConfigPatched = JSON.parse(
+    await readFile(resolve(buildDir, 'web/alternative/watt.json'), 'utf-8')
+  )
+
+  deepStrictEqual(runtimeConfigPatched, { ...runtimeConfigOriginal, restartOnError: true, entrypoint: 'alternate' })
+  deepStrictEqual(mainServiceConfigPatched, {
+    $schema: mainServiceConfigOriginal.$schema,
+    application: { basePath: '/' }
+  })
+  deepStrictEqual(alternateServiceConfigPatched, alternateServiceConfigOriginal)
+})
+
+test('patch-config - should apply patch when the config is not set in the main configuration file', async t => {
+  const { root: buildDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
+    await updateFile(resolve(root, 'watt.json'), content => {
+      const config = JSON.parse(content)
+      config.autoload = undefined
+      config.services = [{ id: 'main', path: 'web/main' }]
+      return JSON.stringify(config, null, 2)
+    })
+  })
+
   const serviceDir = resolve(buildDir, 'web/main')
 
   t.after(async () => {
