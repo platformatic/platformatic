@@ -11,3 +11,8 @@
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
  limitations under the License.
+
+ The files in `test/otelserver/opentelemetry` has been created by the OpenTelemetry community and are licensed under the Apache License 2.0. The original files can be found at
+ https://github.com/open-telemetry/opentelemetry-proto/tree/1608f92cf08119f9aec237c910b200d1317ec696/opentelemetry 
+
+ 

@@ -1,3 +1,5 @@
+'use strict'
+
 const fastify = require('fastify')
 const telemetryPlugin = require('../lib/telemetry')
 const { createInterface } = require('readline')

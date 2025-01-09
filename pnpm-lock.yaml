@@ -2403,6 +2403,9 @@ importers:
       neostandard:
         specifier: ^0.12.0
         version: 0.12.0(eslint@9.17.0)(typescript@5.7.2)
+      protobufjs:
+        specifier: ^7.4.0
+        version: 7.4.0
       typescript:
         specifier: ^5.5.4
         version: 5.7.2
