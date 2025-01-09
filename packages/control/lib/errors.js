@@ -11,6 +11,7 @@ module.exports = {
   FailedToGetRuntimeMetadata: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_METADATA`, 'Failed to get runtime metadata %s.'),
   FailedToGetRuntimeServices: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_SERVICES`, 'Failed to get runtime services %s.'),
   FailedToGetRuntimeEnv: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_ENV`, 'Failed to get runtime environment variables %s.'),
+  FailedToGetRuntimeOpenapi: createError(`${ERROR_PREFIX}_FAILED_TO_GET_RUNTIME_OPENAPI`, 'Failed to get runtime OpenAPI schema %s.'),
   FailedToStreamRuntimeLogs: createError(`${ERROR_PREFIX}_FAILED_TO_STREAM_RUNTIME_LOGS`, 'Failed to stream runtime logs %s.'),
   FailedToStopRuntime: createError(`${ERROR_PREFIX}_FAILED_TO_STOP_RUNTIME`, 'Failed to stop the runtime %s.'),
   FailedToReloadRuntime: createError(`${ERROR_PREFIX}_FAILED_TO_RELOAD_RUNTIME`, 'Failed to reload the runtime %s.'),

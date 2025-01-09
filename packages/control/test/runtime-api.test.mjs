@@ -321,6 +321,56 @@ test('should get matching runtime', async t => {
   assert.strictEqual(typeof url, 'string')
 })
 
+test('should get runtime OpenAPI definition', async t => {
+  const projectDir = join(fixturesDir, 'runtime-1')
+  const configFile = join(projectDir, 'platformatic.json')
+  const { runtime } = await startRuntime(configFile)
+  t.after(async () => { await kill(runtime) })
+
+  const runtimeClient = new RuntimeApiClient()
+  const openapi = await runtimeClient.getRuntimeOpenapi(runtime.pid, 'service-1')
+  assert.deepEqual({
+    openapi: '3.0.3',
+    info: {
+      title: 'Platformatic',
+      description: 'This is a service built on top of Platformatic',
+      version: '1.0.0'
+    },
+    components: { schemas: {} },
+    paths: {
+      '/hello': {
+        get: {
+          responses: {
+            200: {
+              description: 'Default Response'
+            }
+          }
+        }
+      },
+      '/mirror': {
+        post: {
+          responses: {
+            200: {
+              description: 'Default Response'
+            }
+          }
+        }
+      }
+    },
+    servers: [
+      { url: '/' }
+    ]
+  }, openapi, 'valid service name is passed')
+
+  let error
+  try {
+    await runtimeClient.getRuntimeOpenapi(runtime.pid, 'invalid')
+  } catch (err) {
+    error = err
+  }
+  assert.strictEqual(error.code, 'PLT_CTR_FAILED_TO_GET_RUNTIME_OPENAPI', 'invalid runtime service name passed')
+})
+
 function getRuntimeTmpDir (runtimeDir) {
   const platformaticTmpDir = join(tmpdir(), 'platformatic', 'applications')
   const runtimeDirHash = createHash('md5').update(runtimeDir).digest('hex')
