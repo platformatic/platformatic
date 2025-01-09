@@ -1430,8 +1430,8 @@ importers:
         version: 7.6.3
     devDependencies:
       '@fastify/reply-from':
-        specifier: ^11.0.0
-        version: 11.0.2
+        specifier: ^12.0.0
+        version: 12.0.0
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
@@ -3420,9 +3420,6 @@ packages:
 
   '@fastify/proxy-addr@5.0.0':
     resolution: {integrity: sha512-37qVVA1qZ5sgH7KpHkkC4z9SK6StIsIcOmpjvMPXNb3vx2GQxhZocogVYbr2PbbeLCQxYIPDok307xEvRZOzGA==}
-
-  '@fastify/reply-from@11.0.2':
-    resolution: {integrity: sha512-VcHhe01PsHuVX2eVrkoskCs+pwNPgVfOOpwQJnSo3AwIKtISm0VCFB7bycQjHfxAuPYgkrI6ZvYoovdHx4sVMA==}
 
   '@fastify/reply-from@12.0.0':
     resolution: {integrity: sha512-Ob61xujZ5rRIqYR3Uj4kOXeYTn3QZU3l9LlBnUDs3cZBDjHocep1TZ9HjfAEwQSFJnJO/TkClrPXS0wZMqbL4w==}
@@ -10153,16 +10150,6 @@ snapshots:
     dependencies:
       '@fastify/forwarded': 3.0.0
       ipaddr.js: 2.2.0
-
-  '@fastify/reply-from@11.0.2':
-    dependencies:
-      '@fastify/error': 4.0.0
-      end-of-stream: 1.4.4
-      fast-content-type-parse: 2.0.1
-      fast-querystring: 1.1.2
-      fastify-plugin: 5.0.1
-      toad-cache: 3.7.0
-      undici: 6.21.0
 
   '@fastify/reply-from@12.0.0':
     dependencies:

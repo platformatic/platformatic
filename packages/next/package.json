@@ -37,7 +37,7 @@
     "semver": "^7.6.3"
   },
   "devDependencies": {
-    "@fastify/reply-from": "^11.0.0",
+    "@fastify/reply-from": "^12.0.0",
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@types/node": "^22.5.0",
