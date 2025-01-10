@@ -37,6 +37,9 @@ RUN cd packages/cli && pnpm link --global
 # No pnpm/build tools install here, we just copy the files from the previous stage
 FROM node:20-alpine
 
+# Make NPM available
+RUN npm install -g pnpm
+
 # We don't need the build tools anymore
 RUN apk update && apk add --no-cache dumb-init
 
