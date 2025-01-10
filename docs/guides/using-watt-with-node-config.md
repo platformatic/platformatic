@@ -7,20 +7,20 @@ When building a Watt application with multiple services, each service can mainta
 
 ## Installation and Setup
 
-First, install `node-config` in your Watt application:
+First, install `node-config` in the root of your Watt application:
 
 ```sh
 npm install config
 ```
 
-Create a `config` directory and set up your default configuration:
+Create a `config` directory in your `service` folder and set up your default configuration for each service:
 
 ```sh
 mkdir config
 touch config/default.json
 ```
 
-In `config/default.json`, add your base configuration:
+In `{service}/config/default.json`, add your base configuration:
 
 ```sh
 {
@@ -28,7 +28,23 @@ In `config/default.json`, add your base configuration:
 }
 ```
 
-## Configuration Structure
+## Environment-specific configuration 
+
+For development-specific settings, create a separate configuration file:
+
+```sh
+touch config/dev.json
+```
+
+In `{service}/config/dev.json`, override any default values:
+
+```sh
+{
+  "foo": "baz"
+}
+```
+
+## Configuration structure
 
 Instead of using simple key-value pairs, consider organizing your configurations more systematically, below is an example:
 
@@ -155,19 +171,6 @@ try {
 ### **Configuration Validation**
 
 We recommend using schema validation libraries like [TypeBox](https://github.com/sinclairzx81/typebox), [Ajv](https://ajv.js.org/), or [Zod](https://zod.dev/) to validate Watt node configurations, ensuring both runtime validation and type safety for your configuration parameters.
-
-Consider adding configuration validation at startup:
-
-```sh
-function validateConfig() {
-  const required = ['foo'];
-  for (const key of required) {
-    if (!config.has(key)) {
-      throw new Error(`Missing required config key: ${key}`);
-    }
-  }
-}
-```
 
 ## Additional Resources
 
