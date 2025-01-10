@@ -38,7 +38,7 @@ test('preload multiple', async t => {
   })
 
   {
-    const res = await request(entryUrl + '/hello')
+    const res = await request(entryUrl + '/preload')
 
     assert.strictEqual(res.statusCode, 200)
     assert.deepStrictEqual(await res.body.json(), { value: '12' })
@@ -57,14 +57,14 @@ test('preload multiple on runtime and preload multiple on services', async t => 
   })
 
   {
-    const res = await request(entryUrl + '/a/hello')
+    const res = await request(entryUrl + '/a/preload')
 
     assert.strictEqual(res.statusCode, 200)
     assert.deepStrictEqual(await res.body.json(), { value: '1234' })
   }
 
   {
-    const res = await request(entryUrl + '/b/hello')
+    const res = await request(entryUrl + '/b/preload')
 
     assert.strictEqual(res.statusCode, 200)
     assert.deepStrictEqual(await res.body.json(), { value: '125' })

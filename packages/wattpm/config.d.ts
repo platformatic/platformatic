@@ -31,6 +31,7 @@ export type HttpsSchemasPlatformaticDevWattpm2330Json = {
           maxHeapTotal?: number | string;
         };
         preload?: string | string[];
+        nodeOptions?: string;
       };
     };
   };

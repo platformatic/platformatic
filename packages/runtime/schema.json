@@ -179,6 +179,9 @@
                     }
                   }
                 ]
+              },
+              "nodeOptions": {
+                "type": "string"
               }
             }
           }
@@ -362,6 +365,9 @@
                 }
               }
             ]
+          },
+          "nodeOptions": {
+            "type": "string"
           }
         }
       }
@@ -555,6 +561,9 @@
                 }
               }
             ]
+          },
+          "nodeOptions": {
+            "type": "string"
           }
         }
       }

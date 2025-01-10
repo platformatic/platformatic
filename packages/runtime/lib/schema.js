@@ -78,7 +78,10 @@ const services = {
         type: 'string',
         enum: ['npm', 'pnpm', 'yarn']
       },
-      preload
+      preload,
+      nodeOptions: {
+        type: 'string'
+      }
     }
   }
 }
@@ -134,7 +137,10 @@ const platformaticRuntimeSchema = {
               },
               workers,
               health: { ...health, default: undefined },
-              preload
+              preload,
+              nodeOptions: {
+                type: 'string'
+              }
             }
           }
         }

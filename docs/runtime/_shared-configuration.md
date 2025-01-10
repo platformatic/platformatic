@@ -40,6 +40,7 @@ The `autoload` configuration is intended to be used with monorepo applications.
   - **`workers`** (`number`) - The number of workers to start for this service. If the service is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`.
   - **`health`** (object): Configures the health check for each worker of the service. It supports all the properties also supported in the runtime [health](#health) property. The values specified here overrides the values specified in the runtime.
   - **`preload`** (`string` or `array` of `string`s): A file or a list of files to load before the service code.
+  - **`nodeOptions`** (`string`): The `NODE_OPTIONS` to apply to the service. These options are appended to any existing option.
 
 ### `preload`
 
@@ -74,6 +75,7 @@ runtime. Each service object supports the following settings:
 - **`sourceMaps`** (`boolean`) - If `true`, source maps are enabled for the service. Default: `false`.
 - **`packageManager`** (`string`) - The package manager to use when using the `install-dependencies` or the `resolve` commands of `plt` or `wattpm`. Default is to autodetect it, unless it is specified via command line.
 - **`preload`** (`string` or `array` of `string`s): A file or a list of files to load before the service code.
+- **`nodeOptions`** (`string`): The `NODE_OPTIONS` to apply to the service. These options are appended to any existing option.
 
 If this property is present, then the services will not be reordered according to the
 `getBootstrapDependencies` function and they will be started in the order they are defined in
