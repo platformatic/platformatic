@@ -1,10 +1,9 @@
 # Using Watt With Node Config
 
-[Node-config](https://www.npmjs.com/package/config) is a powerful configuration management package that helps organize settings across different deployment environments in your application. It creates a unified configuration system that works seamlessly with both [Watt](https://platformatic.dev/docs/watt/overview) and other `npm` modules.
+[Node-config](https://www.npmjs.com/package/config) is a popular configuration management package that helps organize settings across different deployment environments in your application. It creates a unified configuration system that works seamlessly with both [Watt](https://platformatic.dev/docs/watt/overview) and other `npm` modules.
+When building a Watt application with multiple services, each service can maintain its own independent configuration using `node-config`. This allows different services to use different environment configurations as needed.
 
-## Benefits of node-config
 
-[Node-config](https://www.npmjs.com/package/config) provides a flexible hierarchy for your application settings. You can define default values and then customize them for specific environments like development, QA, staging, and production. The configuration values can come from multiple sources, including configuration files, environment variables, command line parameters, and external services.
 
 ## Installation and Setup
 
@@ -53,6 +52,47 @@ Instead of using simple key-value pairs, consider organizing your configurations
 :::important
 It's important to note that for a secure configuration, use your environment variables for your application  secrets and validate your configuration values when you run your application. 
 :::
+
+## Service-Specific Configuration 
+
+You can configure each [service](https://platformatic.dev/docs/service/overview) environment variables in your Watt configuration file:
+
+```json
+{
+  "services": [
+    {
+      "id": "service-a",
+      "path": "./services/service-a",
+      "env": {
+        "NODE_CONFIG_DIR": "./services/service-a/config",
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "id": "service-b",
+      "path": "./services/service-b",
+      "env": {
+        "NODE_CONFIG_DIR": "./services/service-b/config",
+        "NODE_ENV": "production"
+      }
+    }
+  ]
+}
+```
+
+You can also specify environment files per Platformatic service:
+
+```
+{
+  "services": [
+    {
+      "id": "service-a",
+      "path": "./services/service-a",
+      "envfile": "./services/service-a/.env"
+    }
+  ]
+}
+```
 
 ## Using Configuration Values in Watt Application
 
@@ -113,6 +153,8 @@ try {
 ```
 
 ### **Configuration Validation**
+
+We recommend using schema validation libraries like TypeBox, Ajv, or Zod to validate Watt node configurations, ensuring both runtime validation and type safety for your configuration parameters.
 
 Consider adding configuration validation at startup:
 
