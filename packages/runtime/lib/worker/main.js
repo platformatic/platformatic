@@ -75,10 +75,20 @@ function createLogger () {
   return loggerInstance
 }
 
-async function main () {
-  if (config.preload) {
-    await import(pathToFileURL(config.preload))
+async function performPreloading (...sources) {
+  for (const source of sources) {
+    const preload = typeof source.preload === 'string' ? [source.preload] : source.preload
+
+    if (Array.isArray(preload)) {
+      for (const file of preload) {
+        await import(pathToFileURL(file))
+      }
+    }
   }
+}
+
+async function main () {
+  await performPreloading(config, workerData.serviceConfig)
 
   const service = workerData.serviceConfig
 
@@ -160,13 +170,13 @@ async function main () {
       getGlobalDispatcher().compose(
         httpCacheInterceptor({
           store: new RemoteCacheStore({
-            onRequest: (opts) => {
+            onRequest: opts => {
               globalThis.platformatic?.onHttpCacheRequest?.(opts)
             },
-            onCacheHit: (opts) => {
+            onCacheHit: opts => {
               globalThis.platformatic?.onHttpCacheHit?.(opts)
             },
-            onCacheMiss: (opts) => {
+            onCacheMiss: opts => {
               globalThis.platformatic?.onHttpCacheMiss?.(opts)
             },
             logger: globalThis.platformatic.logger

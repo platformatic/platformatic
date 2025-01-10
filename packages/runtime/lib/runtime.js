@@ -992,6 +992,14 @@ class Runtime extends EventEmitter {
       execArgv.push('--enable-source-maps')
     }
 
+    const workerEnv = structuredClone(this.#env)
+
+    if (serviceConfig.nodeOptions?.trim().length > 0) {
+      const originalNodeOptions = workerEnv['NODE_OPTIONS'] ?? ''
+
+      workerEnv['NODE_OPTIONS'] = `${originalNodeOptions} ${serviceConfig.nodeOptions}`.trim()
+    }
+
     const worker = new Worker(kWorkerFile, {
       workerData: {
         config,
@@ -1011,7 +1019,7 @@ class Runtime extends EventEmitter {
         loggingPort
       },
       execArgv,
-      env: this.#env,
+      env: workerEnv,
       transferList: [loggingPort],
       resourceLimits: {
         maxOldGenerationSizeMb: health.maxHeapTotal

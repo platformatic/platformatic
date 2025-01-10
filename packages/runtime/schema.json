@@ -7,8 +7,19 @@
       "type": "string"
     },
     "preload": {
-      "type": "string",
-      "resolvePath": true
+      "anyOf": [
+        {
+          "type": "string",
+          "resolvePath": true
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "resolvePath": true
+          }
+        }
+      ]
     },
     "entrypoint": {
       "type": "string"
@@ -153,6 +164,24 @@
                   }
                 },
                 "additionalProperties": false
+              },
+              "preload": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "resolvePath": true
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "resolvePath": true
+                    }
+                  }
+                ]
+              },
+              "nodeOptions": {
+                "type": "string"
               }
             }
           }
@@ -321,6 +350,24 @@
               "pnpm",
               "yarn"
             ]
+          },
+          "preload": {
+            "anyOf": [
+              {
+                "type": "string",
+                "resolvePath": true
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "resolvePath": true
+                }
+              }
+            ]
+          },
+          "nodeOptions": {
+            "type": "string"
           }
         }
       }
@@ -499,6 +546,24 @@
               "pnpm",
               "yarn"
             ]
+          },
+          "preload": {
+            "anyOf": [
+              {
+                "type": "string",
+                "resolvePath": true
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "resolvePath": true
+                }
+              }
+            ]
+          },
+          "nodeOptions": {
+            "type": "string"
           }
         }
       }
