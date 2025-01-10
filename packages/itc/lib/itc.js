@@ -88,9 +88,8 @@ function sanitize (data) {
   let sanitized
 
   if (Buffer.isBuffer(data)) {
-    return {
-      data: Array.from(data.values())
-    }
+    // This will convert as Uint8Array
+    return data
   } else if (Array.isArray(data)) {
     sanitized = []
 

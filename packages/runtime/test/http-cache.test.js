@@ -8,6 +8,7 @@ const { rm } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { request } = require('undici')
 const { loadConfig } = require('@platformatic/config')
+const zlib = require('node:zlib')
 const { buildServer, platformaticRuntime } = require('..')
 
 const { parseNDJson } = require('@platformatic/telemetry/test/helper.js')
@@ -499,4 +500,62 @@ test('should set an opentelemetry attribute', async (t) => {
     const resultCacheId2 = clientTraces.at(-1).attributes['http.cache.id']
     assert.strictEqual(resultCacheId1, resultCacheId2)
   }
+})
+
+test('should cache http requests gzipped', async (t) => {
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  const cacheTimeoutSec = 5
+
+  let firstCacheEntryId = null
+  for (let i = 0; i < 5; i++) {
+    const res = await request(entryUrl + '/service-1/gzip-req-counter', {
+      query: { maxAge: cacheTimeoutSec },
+      headers: {
+        'accept-encoding': 'gzip'
+      }
+    })
+
+    assert.strictEqual(res.statusCode, 200)
+
+    const cacheControl = res.headers['cache-control']
+    const cacheEntryId = res.headers['x-plt-http-cache-id']
+    assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+    assert.ok(cacheEntryId)
+
+    if (firstCacheEntryId === null) {
+      firstCacheEntryId = cacheEntryId
+    } else {
+      assert.strictEqual(cacheEntryId, firstCacheEntryId)
+    }
+
+    const buf = await res.body.arrayBuffer()
+    const { counter } = JSON.parse(zlib.gunzipSync(buf))
+    assert.strictEqual(counter, 1)
+  }
+
+  await sleep(cacheTimeoutSec * 1000)
+
+  const res = await request(entryUrl + '/service-1/gzip-req-counter', {
+    query: { maxAge: cacheTimeoutSec },
+    headers: {
+      'Accept-Encoding': 'gzip'
+    }
+  })
+
+  assert.strictEqual(res.statusCode, 200)
+
+  const cacheControl = res.headers['cache-control']
+  const cacheEntryId = res.headers['x-plt-http-cache-id']
+  assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
+  assert.ok(cacheEntryId)
+  assert.notStrictEqual(cacheEntryId, firstCacheEntryId)
+
+  const { counter } = JSON.parse(zlib.gunzipSync(await res.body.arrayBuffer()))
+  assert.strictEqual(counter, 2)
 })
