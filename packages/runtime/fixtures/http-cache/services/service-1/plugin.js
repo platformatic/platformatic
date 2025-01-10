@@ -1,6 +1,7 @@
 'use strict'
 
 const { request } = require('undici')
+const compress = require('@fastify/compress')
 
 module.exports = async function (fastify) {
   let counter = 0
@@ -27,5 +28,22 @@ module.exports = async function (fastify) {
 
     const body = await res.body.text()
     return body
+  })
+
+  await fastify.register(async function (fastify) {
+    await fastify.register(compress, { encodings: ['gzip'], threshold: 1 })
+
+    let counter = 0
+
+    fastify.get('/gzip-req-counter', async (req, reply) => {
+      const { maxAge, cacheTags } = req.query
+      reply.header('Cache-Control', `public, s-maxage=${maxAge}`)
+
+      if (cacheTags) {
+        reply.header('Cache-Tags', cacheTags.join(','))
+      }
+
+      return { service: 'service-1', counter: ++counter }
+    })
   })
 }

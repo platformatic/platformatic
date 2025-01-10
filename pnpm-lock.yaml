@@ -1776,6 +1776,9 @@ importers:
         specifier: ^8.16.0
         version: 8.18.0
     devDependencies:
+      '@fastify/compress':
+        specifier: ^8.0.0
+        version: 8.0.1
       '@fastify/express':
         specifier: ^4.0.0
         version: 4.0.1

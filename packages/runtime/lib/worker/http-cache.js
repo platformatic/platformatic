@@ -33,8 +33,10 @@ class RemoteCacheStore {
     const itc = globalThis[kITC]
     if (!itc) return
 
+    const sanitizedRequest = this.#sanitizeRequest(request)
+
     const cachedValue = await itc.send('getHttpCacheValue', {
-      request: this.#sanitizeRequest(request)
+      request: sanitizedRequest
     })
     if (!cachedValue) {
       try {
@@ -71,16 +73,22 @@ class RemoteCacheStore {
     const itc = globalThis[kITC]
     if (!itc) throw new Error('Cannot write to cache without an ITC instance')
 
-    let payload = ''
+    const acc = []
 
     key = this.#sanitizeRequest(key)
 
     return new Writable({
       write (chunk, encoding, callback) {
-        payload += chunk
+        acc.push(chunk)
         callback()
       },
       final (callback) {
+        let payload
+        if (acc.length > 0 && typeof acc[0] === 'string') {
+          payload = acc.join('')
+        } else {
+          payload = Buffer.concat(acc)
+        }
         itc.send('setHttpCacheValue', { request: key, response: value, payload })
           .then(() => callback())
           .catch((err) => callback(err))

@@ -464,3 +464,31 @@ test('should throw if sender ITC port was closed', async t => {
 test('should throw if ITC is created without a name', async t => {
   assert.throws(() => new ITC({}))
 })
+
+test('should send a Buffer through', async t => {
+  const { port1, port2 } = new MessageChannel()
+
+  const itc1 = new ITC({ port: port1, name: 'itc1' })
+  const itc2 = new ITC({ port: port2, name: 'itc2' })
+
+  const requestName = 'test-command'
+  const testRequest = { test: 'test-req-message', buffer: Buffer.from('test-request') }
+
+  const testResponse = { test: 'test-res-message', buffer: Buffer.from('test-response') }
+
+  const requests = []
+  itc2.handle(requestName, async request => {
+    requests.push(request)
+    return testResponse
+  })
+
+  itc1.listen()
+  itc2.listen()
+
+  t.after(() => itc1.close())
+  t.after(() => itc2.close())
+
+  const response = await itc1.send(requestName, testRequest)
+  assert.deepStrictEqual(Buffer.from(response.buffer), Buffer.from('test-response'))
+  assert.deepStrictEqual(Buffer.from(requests[0].buffer), Buffer.from('test-request'))
+})

@@ -17,9 +17,16 @@ async function createSharedStore (projectDir, httpCacheConfig = {}) {
 
       const { body, ...response } = cachedValue
 
-      let payload = ''
+      const acc = []
       for await (const chunk of body) {
-        payload += chunk
+        acc.push(chunk)
+      }
+
+      let payload
+      if (acc.length > 0 && typeof acc[0] === 'string') {
+        payload = acc.join('')
+      } else {
+        payload = Buffer.concat(acc)
       }
 
       return { response, payload }
