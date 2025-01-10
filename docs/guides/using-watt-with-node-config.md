@@ -154,7 +154,7 @@ try {
 
 ### **Configuration Validation**
 
-We recommend using schema validation libraries like TypeBox, Ajv, or Zod to validate Watt node configurations, ensuring both runtime validation and type safety for your configuration parameters.
+We recommend using schema validation libraries like [TypeBox](https://github.com/sinclairzx81/typebox), [Ajv](https://ajv.js.org/), or [Zod](https://zod.dev/) to validate Watt node configurations, ensuring both runtime validation and type safety for your configuration parameters.
 
 Consider adding configuration validation at startup:
 
