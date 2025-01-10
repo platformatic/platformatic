@@ -96,6 +96,37 @@ You can configure each [service](https://platformatic.dev/docs/service/overview)
 }
 ```
 
+Platformatic allows you to use `.env` files for managing environment variables, and you can remap one variable to another using its interpolation feature. For example, to remap `SERVICE_A_NODE_ENV` to `NODE_ENV`, create a `.env` file in the `service-a` directory:
+
+1.  Set your service-specific environment variable: 
+
+```sh
+SERVICE_A_NODE_ENV=development
+```
+
+2.  Use interpolation syntax ${VARIABLE_NAME} in your Watt configuration to reference it:
+
+```json
+{
+  "services": [
+    {
+      "id": "service-a",
+      "path": "./services/service-a",
+      "env": {
+        "NODE_CONFIG_DIR": "./services/service-a/config",
+        "NODE_ENV": "${SERVICE_A_NODE_ENV}"
+      }
+    }
+  ]
+}
+```
+
+You can alsp use this pattern with `env` file:
+
+```env
+SERVICE_A_NODE_ENV=development
+```
+
 You can also specify environment files per Platformatic service:
 
 ```
