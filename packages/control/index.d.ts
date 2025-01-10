@@ -76,6 +76,7 @@ declare namespace control {
     getRuntimeConfig(pid: number): Promise<void>;
     getRuntimeServiceConfig(pid: number, serviceId?: string): Promise<void>;
     getRuntimeEnv(pid: number): Promise<void>;
+    getRuntimeOpenapi(pid: number, serviceId: string): Promise<unknown>;
     getRuntimeServiceEnv(pid: number, serviceId: string): Promise<unknown>;
     reloadRuntime(pid: number, options?: object): Promise<ChildProcess>;
     restartRuntime(pid: number): Promise<void>;
@@ -122,6 +123,7 @@ declare namespace control {
     export const FailedToGetRuntimeMetadata: FastifyError;
     export const FailedToGetRuntimeServices: FastifyError;
     export const FailedToGetRuntimeEnv: FastifyError;
+    export const FailedToGetRuntimeOpenapi: FastifyError;
     export const FailedToStreamRuntimeLogs: FastifyError;
     export const FailedToStopRuntime: FastifyError;
     export const FailedToReloadRuntime: FastifyError;

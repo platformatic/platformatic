@@ -156,6 +156,23 @@ class RuntimeApiClient {
     return runtimeEnv
   }
 
+  async getRuntimeOpenapi (pid, serviceId) {
+    const client = this.#getUndiciClient(pid)
+
+    const { statusCode, body } = await client.request({
+      path: `/api/v1/services/${serviceId}/openapi-schema`,
+      method: 'GET'
+    })
+
+    if (statusCode !== 200) {
+      const error = await body.text()
+      throw new errors.FailedToGetRuntimeOpenapi(error)
+    }
+
+    const openapi = await body.json()
+    return openapi
+  }
+
   async getRuntimeServiceEnv (pid, serviceId) {
     const client = this.#getUndiciClient(pid)
 

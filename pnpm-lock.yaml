@@ -116,7 +116,7 @@ importers:
         version: 4.2.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
       ws:
         specifier: ^8.18.0
         version: 8.18.0
@@ -144,7 +144,7 @@ importers:
         version: 0.12.0(eslint@9.17.0)(typescript@5.7.2)
       next:
         specifier: ^15.0.0
-        version: 15.1.3(@opentelemetry/api@1.9.0)(@playwright/test@1.49.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 15.1.4(@opentelemetry/api@1.9.0)(@playwright/test@1.49.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -219,7 +219,7 @@ importers:
         version: 4.2.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
       wattpm:
         specifier: workspace:*
         version: link:../wattpm
@@ -304,7 +304,7 @@ importers:
         version: 5.0.1
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
     devDependencies:
       '@fastify/multipart':
         specifier: ^9.0.1
@@ -395,7 +395,7 @@ importers:
         version: 13.0.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
       yaml:
         specifier: ^2.4.1
         version: 2.7.0
@@ -564,7 +564,7 @@ importers:
         version: 0.3.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
     devDependencies:
       '@platformatic/client':
         specifier: workspace:*
@@ -646,7 +646,7 @@ importers:
         version: 7.6.3
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
     devDependencies:
       '@iarna/toml':
         specifier: ^2.2.5
@@ -710,7 +710,7 @@ importers:
         version: 6.9.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -807,7 +807,7 @@ importers:
         version: 7.1.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
       which:
         specifier: ^3.0.1
         version: 3.0.1
@@ -1049,7 +1049,7 @@ importers:
         version: 5.7.2
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
       vscode-json-languageservice:
         specifier: ^5.3.9
         version: 5.4.2
@@ -1079,7 +1079,7 @@ importers:
         version: 3.1.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
     devDependencies:
       '@fastify/cookie':
         specifier: ^11.0.0
@@ -1201,7 +1201,7 @@ importers:
         version: 0.25.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
     devDependencies:
       '@platformatic/utils':
         specifier: workspace:*
@@ -1319,7 +1319,7 @@ importers:
         version: 9.6.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
     devDependencies:
       '@types/inquirer':
         specifier: ^9.0.7
@@ -1430,8 +1430,8 @@ importers:
         version: 7.6.3
     devDependencies:
       '@fastify/reply-from':
-        specifier: ^11.0.0
-        version: 11.0.2
+        specifier: ^12.0.0
+        version: 12.0.0
       '@platformatic/composer':
         specifier: workspace:*
         version: link:../composer
@@ -1461,7 +1461,7 @@ importers:
         version: 0.12.0(eslint@9.17.0)(typescript@5.7.2)
       next:
         specifier: ^15.0.0
-        version: 15.1.3(@opentelemetry/api@1.9.0)(@playwright/test@1.49.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 15.1.4(@opentelemetry/api@1.9.0)(@playwright/test@1.49.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -1488,7 +1488,7 @@ importers:
         version: link:../utils
       light-my-request:
         specifier: ^6.0.0
-        version: 6.4.0
+        version: 6.5.1
     devDependencies:
       '@platformatic/composer':
         specifier: workspace:*
@@ -1546,7 +1546,7 @@ importers:
         version: 4.21.2
       light-my-request:
         specifier: ^6.0.0
-        version: 6.4.0
+        version: 6.5.1
       pino-http:
         specifier: ^10.2.0
         version: 10.3.0
@@ -1580,7 +1580,7 @@ importers:
         version: 5.2.1
       isbot:
         specifier: ^5.1.17
-        version: 5.1.20
+        version: 5.1.21
       json-schema-to-typescript:
         specifier: ^15.0.1
         version: 15.0.3
@@ -1768,10 +1768,10 @@ importers:
         version: 0.2.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
       undici-thread-interceptor:
-        specifier: ^0.10.3
-        version: 0.10.3
+        specifier: ^0.11.0
+        version: 0.11.1
       ws:
         specifier: ^8.16.0
         version: 8.18.0
@@ -1996,7 +1996,7 @@ importers:
         version: 0.3.0
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
     devDependencies:
       '@fastify/aws-lambda':
         specifier: ^5.0.0
@@ -2385,8 +2385,8 @@ importers:
         specifier: ^2.0.1
         version: 2.0.1
       fast-uri:
-        specifier: ^2.3.0
-        version: 2.4.0
+        specifier: ^3.0.0
+        version: 3.0.5
       fastify-plugin:
         specifier: ^5.0.0
         version: 5.0.1
@@ -2403,6 +2403,9 @@ importers:
       neostandard:
         specifier: ^0.12.0
         version: 0.12.0(eslint@9.17.0)(typescript@5.7.2)
+      protobufjs:
+        specifier: ^7.4.0
+        version: 7.4.0
       typescript:
         specifier: ^5.5.4
         version: 5.7.2
@@ -2628,7 +2631,7 @@ importers:
         version: 5.7.2
       undici:
         specifier: ^7.0.0
-        version: 7.1.1
+        version: 7.2.0
 
 packages:
 
@@ -3418,9 +3421,6 @@ packages:
   '@fastify/proxy-addr@5.0.0':
     resolution: {integrity: sha512-37qVVA1qZ5sgH7KpHkkC4z9SK6StIsIcOmpjvMPXNb3vx2GQxhZocogVYbr2PbbeLCQxYIPDok307xEvRZOzGA==}
 
-  '@fastify/reply-from@11.0.2':
-    resolution: {integrity: sha512-VcHhe01PsHuVX2eVrkoskCs+pwNPgVfOOpwQJnSo3AwIKtISm0VCFB7bycQjHfxAuPYgkrI6ZvYoovdHx4sVMA==}
-
   '@fastify/reply-from@12.0.0':
     resolution: {integrity: sha512-Ob61xujZ5rRIqYR3Uj4kOXeYTn3QZU3l9LlBnUDs3cZBDjHocep1TZ9HjfAEwQSFJnJO/TkClrPXS0wZMqbL4w==}
 
@@ -3706,53 +3706,53 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@next/env@15.1.3':
-    resolution: {integrity: sha512-Q1tXwQCGWyA3ehMph3VO+E6xFPHDKdHFYosadt0F78EObYxPio0S09H9UGYznDe6Wc8eLKLG89GqcFJJDiK5xw==}
+  '@next/env@15.1.4':
+    resolution: {integrity: sha512-2fZ5YZjedi5AGaeoaC0B20zGntEHRhi2SdWcu61i48BllODcAmmtj8n7YarSPt4DaTsJaBFdxQAVEVzgmx2Zpw==}
 
-  '@next/swc-darwin-arm64@15.1.3':
-    resolution: {integrity: sha512-aZtmIh8jU89DZahXQt1La0f2EMPt/i7W+rG1sLtYJERsP7GRnNFghsciFpQcKHcGh4dUiyTB5C1X3Dde/Gw8gg==}
+  '@next/swc-darwin-arm64@15.1.4':
+    resolution: {integrity: sha512-wBEMBs+np+R5ozN1F8Y8d/Dycns2COhRnkxRc+rvnbXke5uZBHkUGFgWxfTXn5rx7OLijuUhyfB+gC/ap58dDw==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
 
-  '@next/swc-darwin-x64@15.1.3':
-    resolution: {integrity: sha512-aw8901rjkVBK5mbq5oV32IqkJg+CQa6aULNlN8zyCWSsePzEG3kpDkAFkkTOh3eJ0p95KbkLyWBzslQKamXsLA==}
+  '@next/swc-darwin-x64@15.1.4':
+    resolution: {integrity: sha512-7sgf5rM7Z81V9w48F02Zz6DgEJulavC0jadab4ZsJ+K2sxMNK0/BtF8J8J3CxnsJN3DGcIdC260wEKssKTukUw==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [darwin]
 
-  '@next/swc-linux-arm64-gnu@15.1.3':
-    resolution: {integrity: sha512-YbdaYjyHa4fPK4GR4k2XgXV0p8vbU1SZh7vv6El4bl9N+ZSiMfbmqCuCuNU1Z4ebJMumafaz6UCC2zaJCsdzjw==}
+  '@next/swc-linux-arm64-gnu@15.1.4':
+    resolution: {integrity: sha512-JaZlIMNaJenfd55kjaLWMfok+vWBlcRxqnRoZrhFQrhM1uAehP3R0+Aoe+bZOogqlZvAz53nY/k3ZyuKDtT2zQ==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@next/swc-linux-arm64-musl@15.1.3':
-    resolution: {integrity: sha512-qgH/aRj2xcr4BouwKG3XdqNu33SDadqbkqB6KaZZkozar857upxKakbRllpqZgWl/NDeSCBYPmUAZPBHZpbA0w==}
+  '@next/swc-linux-arm64-musl@15.1.4':
+    resolution: {integrity: sha512-7EBBjNoyTO2ipMDgCiORpwwOf5tIueFntKjcN3NK+GAQD7OzFJe84p7a2eQUeWdpzZvhVXuAtIen8QcH71ZCOQ==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@next/swc-linux-x64-gnu@15.1.3':
-    resolution: {integrity: sha512-uzafnTFwZCPN499fNVnS2xFME8WLC9y7PLRs/yqz5lz1X/ySoxfaK2Hbz74zYUdEg+iDZPd8KlsWaw9HKkLEVw==}
+  '@next/swc-linux-x64-gnu@15.1.4':
+    resolution: {integrity: sha512-9TGEgOycqZFuADyFqwmK/9g6S0FYZ3tphR4ebcmCwhL8Y12FW8pIBKJvSwV+UBjMkokstGNH+9F8F031JZKpHw==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
 
-  '@next/swc-linux-x64-musl@15.1.3':
-    resolution: {integrity: sha512-el6GUFi4SiDYnMTTlJJFMU+GHvw0UIFnffP1qhurrN1qJV3BqaSRUjkDUgVV44T6zpw1Lc6u+yn0puDKHs+Sbw==}
+  '@next/swc-linux-x64-musl@15.1.4':
+    resolution: {integrity: sha512-0578bLRVDJOh+LdIoKvgNDz77+Bd85c5JrFgnlbI1SM3WmEQvsjxTA8ATu9Z9FCiIS/AliVAW2DV/BDwpXbtiQ==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
 
-  '@next/swc-win32-arm64-msvc@15.1.3':
-    resolution: {integrity: sha512-6RxKjvnvVMM89giYGI1qye9ODsBQpHSHVo8vqA8xGhmRPZHDQUE4jcDbhBwK0GnFMqBnu+XMg3nYukNkmLOLWw==}
+  '@next/swc-win32-arm64-msvc@15.1.4':
+    resolution: {integrity: sha512-JgFCiV4libQavwII+kncMCl30st0JVxpPOtzWcAI2jtum4HjYaclobKhj+JsRu5tFqMtA5CJIa0MvYyuu9xjjQ==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [win32]
 
-  '@next/swc-win32-x64-msvc@15.1.3':
-    resolution: {integrity: sha512-VId/f5blObG7IodwC5Grf+aYP0O8Saz1/aeU3YcWqNdIUAmFQY3VEPKPaIzfv32F/clvanOb2K2BR5DtDs6XyQ==}
+  '@next/swc-win32-x64-msvc@15.1.4':
+    resolution: {integrity: sha512-xxsJy9wzq7FR5SqPCUqdgSXiNXrMuidgckBa8nH9HtjjxsilgcN6VgXF6tZ3uEWuVEadotQJI8/9EQ6guTC4Yw==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
@@ -4881,8 +4881,8 @@ packages:
     resolution: {integrity: sha512-8WB3Jcas3swSvjIeA2yvCJ+Miyz5l1ZmB6HFb9R1317dt9LCQoswg/BGrmAmkWVEszSrrg4RwmO46qIm2OEnSA==}
     engines: {node: '>=16'}
 
-  caniuse-lite@1.0.30001690:
-    resolution: {integrity: sha512-5ExiE3qQN6oF8Clf8ifIDcMRCRE/dMGcETG/XGMD8/XiXm6HXQgQTh1yZYLXXpSOsEUlJm1Xr7kGULZTuGtP/w==}
+  caniuse-lite@1.0.30001692:
+    resolution: {integrity: sha512-A95VKan0kdtrsnMubMKxEKUKImOPSuCpYgxSQBo036P5YYgVIcOYJEgt/txJWqObiRQeISNCfef9nvlQ0vbV7A==}
 
   ccount@2.0.1:
     resolution: {integrity: sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==}
@@ -6527,8 +6527,8 @@ packages:
   isarray@2.0.5:
     resolution: {integrity: sha512-xHjhDr3cNBK0BzdUJSPXZntQUx/mwMS5Rw4A7lPJ90XGAO6ISP/ePDNuo0vhqOZU+UD5JoodwCAAoZQd3FeAKw==}
 
-  isbot@5.1.20:
-    resolution: {integrity: sha512-cW535S5c05UBfx8bTAZHACjEXyY/p10bvAx5YeqoLEFoGC1HQ6A5n3ScpZRYd1zSwwNF8yYkEOq2F7WjFhX2ig==}
+  isbot@5.1.21:
+    resolution: {integrity: sha512-0q3naRVpENL0ReKHeNcwn/G7BDynp0DqZUckKyFtM9+hmpnPqgm8+8wbjiVZ0XNhq1wPQV28/Pb8Snh5adeUHA==}
     engines: {node: '>=18'}
 
   isexe@2.0.0:
@@ -6705,6 +6705,9 @@ packages:
 
   light-my-request@6.4.0:
     resolution: {integrity: sha512-U0UONITz4GVQodMPoygnqJan2RYfhyLsCzFBakJHWNfiQKyHzvp38YOxxLGs8lIDPwR6ngd4gmuZJQQJtRBu/A==}
+
+  light-my-request@6.5.1:
+    resolution: {integrity: sha512-0q82RyxIextuDtkA0UDofhPHIiQ2kmpa7fwElCSlm/8nQl36cDU1Cw+CAO90Es0lReH2HChClKL84I86Nc52hg==}
 
   lilconfig@3.1.3:
     resolution: {integrity: sha512-/vlFKAoH5Cgt3Ie+JLhRbwOsCQePABiU3tJ1egGvyQ+33R/vcwM2Zl2QR/LzjsBeItPt3oSVXapn+m4nQDvpzw==}
@@ -7364,8 +7367,8 @@ packages:
     resolution: {integrity: sha512-Z4SmBUweYa09+o6pG+eASabEpP6QkQ70yHj351pQoEXIs8uHbaU2DWVmzBANKgflPa47A50PtB2+NgRpQvr7vA==}
     engines: {node: '>= 10'}
 
-  next@15.1.3:
-    resolution: {integrity: sha512-5igmb8N8AEhWDYzogcJvtcRDU6n4cMGtBklxKD4biYv4LXN8+awc/bbQ2IM2NQHdVPgJ6XumYXfo3hBtErg1DA==}
+  next@15.1.4:
+    resolution: {integrity: sha512-mTaq9dwaSuwwOrcu3ebjDYObekkxRnXpuVL21zotM8qE2W0HBOdVIdg2Li9QjMEZrj73LN96LcWcz62V19FjAg==}
     engines: {node: ^18.18.0 || ^19.8.0 || >= 20.0.0}
     hasBin: true
     peerDependencies:
@@ -8953,8 +8956,8 @@ packages:
   undici-oidc-interceptor@0.5.0:
     resolution: {integrity: sha512-YU6ABaLFxzKZGjBmamrrRTlziIe6/jrEBUEyNEe2ZRtlXULorg6xo+/jsyEPZVizHdrTFFX3ZPEPxrNmO3pOEA==}
 
-  undici-thread-interceptor@0.10.3:
-    resolution: {integrity: sha512-PFWnN3/33CHzZ/qLeGkYUnCJ7xT7H9L6si6RiayGTb/0PPqB6KZHkROs4I7JkQ9/6HUo2H9rS56p+lTXMfqbmA==}
+  undici-thread-interceptor@0.11.1:
+    resolution: {integrity: sha512-iIRQZuFwH/krfkLIoPSTSeFCLg+50wfo8TiMHkqLMeAZDaUhEQaeLOLTfsjptKdEQmGbR77gq+qjTCgAZHkooA==}
 
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
@@ -8969,10 +8972,6 @@ packages:
   undici@6.21.0:
     resolution: {integrity: sha512-BUgJXc752Kou3oOIuU1i+yZZypyZRqNPW0vqoMPl8VaoalSfeR0D8/t4iAS3yirs79SSMTxTag+ZC86uswv+Cw==}
     engines: {node: '>=18.17'}
-
-  undici@7.1.1:
-    resolution: {integrity: sha512-WZkQ6eH9f5ZT93gaIffsbUaDpBwjbpvmMbfaEhOnbdUneurTESeRxwPGwjI28mRFESH3W3e8Togijh37ptOQqA==}
-    engines: {node: '>=20.18.1'}
 
   undici@7.2.0:
     resolution: {integrity: sha512-klt+0S55GBViA9nsq48/NSCo4YX5mjydjypxD7UmHh/brMu8h/Mhd/F7qAeoH2NOO8SDTk6kjnTFc4WpzmfYpQ==}
@@ -10155,16 +10154,6 @@ snapshots:
       '@fastify/forwarded': 3.0.0
       ipaddr.js: 2.2.0
 
-  '@fastify/reply-from@11.0.2':
-    dependencies:
-      '@fastify/error': 4.0.0
-      end-of-stream: 1.4.4
-      fast-content-type-parse: 2.0.1
-      fast-querystring: 1.1.2
-      fastify-plugin: 5.0.1
-      toad-cache: 3.7.0
-      undici: 6.21.0
-
   '@fastify/reply-from@12.0.0':
     dependencies:
       '@fastify/error': 4.0.0
@@ -10173,7 +10162,7 @@ snapshots:
       fast-querystring: 1.1.2
       fastify-plugin: 5.0.1
       toad-cache: 3.7.0
-      undici: 7.1.1
+      undici: 7.2.0
 
   '@fastify/send@3.3.1':
     dependencies:
@@ -10497,30 +10486,30 @@ snapshots:
   '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.3':
     optional: true
 
-  '@next/env@15.1.3': {}
+  '@next/env@15.1.4': {}
 
-  '@next/swc-darwin-arm64@15.1.3':
+  '@next/swc-darwin-arm64@15.1.4':
     optional: true
 
-  '@next/swc-darwin-x64@15.1.3':
+  '@next/swc-darwin-x64@15.1.4':
     optional: true
 
-  '@next/swc-linux-arm64-gnu@15.1.3':
+  '@next/swc-linux-arm64-gnu@15.1.4':
     optional: true
 
-  '@next/swc-linux-arm64-musl@15.1.3':
+  '@next/swc-linux-arm64-musl@15.1.4':
     optional: true
 
-  '@next/swc-linux-x64-gnu@15.1.3':
+  '@next/swc-linux-x64-gnu@15.1.4':
     optional: true
 
-  '@next/swc-linux-x64-musl@15.1.3':
+  '@next/swc-linux-x64-musl@15.1.4':
     optional: true
 
-  '@next/swc-win32-arm64-msvc@15.1.3':
+  '@next/swc-win32-arm64-msvc@15.1.4':
     optional: true
 
-  '@next/swc-win32-x64-msvc@15.1.3':
+  '@next/swc-win32-x64-msvc@15.1.4':
     optional: true
 
   '@nodelib/fs.scandir@2.1.5':
@@ -10861,7 +10850,7 @@ snapshots:
       mercurius: 15.1.0(graphql@16.10.0)
       metaline: 1.1.0
       pino: 9.6.0
-      undici: 7.1.1
+      undici: 7.2.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -11892,7 +11881,7 @@ snapshots:
 
   browserslist@4.24.3:
     dependencies:
-      caniuse-lite: 1.0.30001690
+      caniuse-lite: 1.0.30001692
       electron-to-chromium: 1.5.77
       node-releases: 2.0.19
       update-browserslist-db: 1.1.1(browserslist@4.24.3)
@@ -11982,7 +11971,7 @@ snapshots:
 
   camelcase@8.0.0: {}
 
-  caniuse-lite@1.0.30001690: {}
+  caniuse-lite@1.0.30001692: {}
 
   ccount@2.0.1: {}
 
@@ -13688,7 +13677,7 @@ snapshots:
 
   inspector-client@0.2.0:
     dependencies:
-      undici: 7.1.1
+      undici: 7.2.0
 
   int64-buffer@0.1.10: {}
 
@@ -13921,7 +13910,7 @@ snapshots:
 
   isarray@2.0.5: {}
 
-  isbot@5.1.20: {}
+  isbot@5.1.21: {}
 
   isexe@2.0.0: {}
 
@@ -14133,6 +14122,12 @@ snapshots:
       - supports-color
 
   light-my-request@6.4.0:
+    dependencies:
+      cookie: 1.0.2
+      process-warning: 4.0.1
+      set-cookie-parser: 2.7.1
+
+  light-my-request@6.5.1:
     dependencies:
       cookie: 1.0.2
       process-warning: 4.0.1
@@ -15192,26 +15187,26 @@ snapshots:
 
   neotraverse@0.6.18: {}
 
-  next@15.1.3(@opentelemetry/api@1.9.0)(@playwright/test@1.49.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  next@15.1.4(@opentelemetry/api@1.9.0)(@playwright/test@1.49.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
-      '@next/env': 15.1.3
+      '@next/env': 15.1.4
       '@swc/counter': 0.1.3
       '@swc/helpers': 0.5.15
       busboy: 1.6.0
-      caniuse-lite: 1.0.30001690
+      caniuse-lite: 1.0.30001692
       postcss: 8.4.31
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
       styled-jsx: 5.1.6(react@18.3.1)
     optionalDependencies:
-      '@next/swc-darwin-arm64': 15.1.3
-      '@next/swc-darwin-x64': 15.1.3
-      '@next/swc-linux-arm64-gnu': 15.1.3
-      '@next/swc-linux-arm64-musl': 15.1.3
-      '@next/swc-linux-x64-gnu': 15.1.3
-      '@next/swc-linux-x64-musl': 15.1.3
-      '@next/swc-win32-arm64-msvc': 15.1.3
-      '@next/swc-win32-x64-msvc': 15.1.3
+      '@next/swc-darwin-arm64': 15.1.4
+      '@next/swc-darwin-x64': 15.1.4
+      '@next/swc-linux-arm64-gnu': 15.1.4
+      '@next/swc-linux-arm64-musl': 15.1.4
+      '@next/swc-linux-x64-gnu': 15.1.4
+      '@next/swc-linux-x64-musl': 15.1.4
+      '@next/swc-win32-arm64-msvc': 15.1.4
+      '@next/swc-win32-x64-msvc': 15.1.4
       '@opentelemetry/api': 1.9.0
       '@playwright/test': 1.49.1
       sharp: 0.33.5
@@ -17090,11 +17085,11 @@ snapshots:
       fast-jwt: 4.0.5
       undici: 6.21.0
 
-  undici-thread-interceptor@0.10.3:
+  undici-thread-interceptor@0.11.1:
     dependencies:
       hyperid: 3.3.0
-      light-my-request: 6.4.0
-      undici: 7.1.1
+      light-my-request: 6.5.1
+      undici: 7.2.0
 
   undici-types@5.26.5: {}
 
@@ -17105,8 +17100,6 @@ snapshots:
       '@fastify/busboy': 2.1.1
 
   undici@6.21.0: {}
-
-  undici@7.1.1: {}
 
   undici@7.2.0: {}
 

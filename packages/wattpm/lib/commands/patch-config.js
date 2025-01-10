@@ -1,8 +1,10 @@
-import { getParser, getStringifier } from '@platformatic/config'
+import { ConfigManager, getParser, getStringifier } from '@platformatic/config'
 import { ensureLoggableError, loadModule } from '@platformatic/utils'
 import jsonPatch from 'fast-json-patch'
+import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
+import { resolve } from 'node:path'
 import { buildRuntime, findConfigurationFile, getRoot, parseArgs } from '../utils.js'
 
 async function patchFile (path, patch) {
@@ -37,7 +39,16 @@ export async function patchConfig (logger, configurationFile, patchPath) {
     const services = Object.fromEntries(loaded.runtime.services.map(service => [service.id, service]))
 
     // Load configuration for all services
-    for (const { id, config } of loaded.runtime.services) {
+    for (const service of loaded.runtime.services) {
+      if (!service.config) {
+        const candidate = ConfigManager.listConfigFiles().find(f => existsSync(resolve(service.path, f)))
+
+        if (candidate) {
+          service.config = resolve(service.path, candidate)
+        }
+      }
+
+      const { id, config } = service
       const parser = getParser(config)
 
       original.services[id] = parser(await readFile(configurationFile, 'utf-8'))
