@@ -23,6 +23,19 @@ const workers = {
   ]
 }
 
+const preload = {
+  anyOf: [
+    { type: 'string', resolvePath: true },
+    {
+      type: 'array',
+      items: {
+        type: 'string',
+        resolvePath: true
+      }
+    }
+  ]
+}
+
 const services = {
   type: 'array',
   items: {
@@ -64,7 +77,8 @@ const services = {
       packageManager: {
         type: 'string',
         enum: ['npm', 'pnpm', 'yarn']
-      }
+      },
+      preload
     }
   }
 }
@@ -79,10 +93,7 @@ const platformaticRuntimeSchema = {
     $schema: {
       type: 'string'
     },
-    preload: {
-      type: 'string',
-      resolvePath: true
-    },
+    preload,
     entrypoint: {
       type: 'string'
     },
@@ -122,7 +133,8 @@ const platformaticRuntimeSchema = {
                 type: 'boolean'
               },
               workers,
-              health: { ...health, default: undefined }
+              health: { ...health, default: undefined },
+              preload
             }
           }
         }

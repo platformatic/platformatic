@@ -9,7 +9,7 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime2330Json = {
   [k: string]: unknown;
 } & {
   $schema?: string;
-  preload?: string;
+  preload?: string | string[];
   entrypoint?: string;
   basePath?: string;
   autoload?: {
@@ -30,6 +30,7 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime2330Json = {
           maxHeapUsed?: number | string;
           maxHeapTotal?: number | string;
         };
+        preload?: string | string[];
       };
     };
   };
