@@ -975,6 +975,7 @@ class Runtime extends EventEmitter {
     if (config.telemetry) {
       serviceConfig.telemetry = {
         ...config.telemetry,
+        ...serviceConfig.telemetry,
         serviceName: `${config.telemetry.serviceName}-${serviceConfig.id}`
       }
     }

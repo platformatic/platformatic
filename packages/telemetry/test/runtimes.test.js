@@ -212,7 +212,7 @@ test('configure telemetry correctly with a composer + node + fastify', async t =
   equal(spanNodeServer.parentId, spanFastifyClient.id)
 })
 
-test('configure telemetry correctly with a composer + next', { only: true }, async t => {
+test('configure telemetry correctly with a composer + next', async t => {
   // composer -> next -> fastify
   //                  -> node (via http)
   //
@@ -297,4 +297,37 @@ test('configure telemetry correctly with a composer + next', { only: true }, asy
   equal(spanNextServer.parentId, spanComposerClient.id)
   equal(spanComposerClient.parentId, spanComposerServer.id)
   equal(spanComposerClient.traceId, traceId)
+})
+
+test('configure telemetry correctly with a express app and additional express instrumenter', async t => {
+  // TODO: add proper assert to check that the additional instrumenter is working
+
+  const app = await runtimeHelper.createRuntime(t,
+    'express-api-with-additional-instrumenters',
+    false,
+    'platformatic.json'
+  )
+  const { url, root } = app
+  const spansPath = join(root, 'spans.log')
+
+  // Test request to add http metrics
+  const { statusCode } = await request(`${url}/test`, {
+    method: 'GET',
+  })
+  equal(statusCode, 200)
+  await sleep(500)
+  const spans = await getSpans(spansPath)
+
+  equal(spans.length, 1)
+
+  const [span] = spans
+  equal(span.kind, SpanKind.SERVER)
+  // these asserts will fail when this will be fixed
+  // https://github.com/open-telemetry/opentelemetry-js/issues/5103
+  equal(span.attributes['http.method'], 'GET')
+  equal(span.attributes['http.scheme'], 'http')
+  equal(span.attributes['http.target'], '/test')
+
+  const resource = span.resource
+  deepEqual(resource._attributes['service.name'], 'test-service-api')
 })

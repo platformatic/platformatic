@@ -11,6 +11,15 @@
   "autoload": {
     "path": "api"
   },
+  "services": [
+    {
+      "id": "express",
+      "path": "./api/express",
+      "telemetry": {
+        "instrumentations": []
+      }
+    }
+  ],
   "basePath": "/",
   "telemetry": {
     "serviceName": "test-pg",

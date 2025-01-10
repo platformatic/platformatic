@@ -10,11 +10,10 @@ const { workerData } = require('node:worker_threads')
 const { resolve } = require('node:path')
 const { tmpdir } = require('node:os')
 const logger = require('abstract-logging')
-const { fileURLToPath } = require('node:url')
 const { statSync, readFileSync } = require('node:fs') // We want to have all this synch
 const util = require('node:util')
+const { getInstrumenters } = require('./pluggable-instrumentations')
 
-const ConfigManager = require('@platformatic/config')
 const debuglog = util.debuglog('@platformatic/telemetry')
 const {
   ConsoleSpanExporter,
@@ -23,28 +22,20 @@ const {
   InMemorySpanExporter,
 } = require('@opentelemetry/sdk-trace-base')
 
+const { PgInstrumentation } = require('@opentelemetry/instrumentation-pg')
 const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http')
-const { UndiciInstrumentation } = require('@opentelemetry/instrumentation-undici')
+const {
+  UndiciInstrumentation,
+} = require('@opentelemetry/instrumentation-undici')
 
 // See: https://www.npmjs.com/package/@opentelemetry/instrumentation-http
 // When this is fixed we should set this to 'http' and fixe the tests
 // https://github.com/open-telemetry/opentelemetry-js/issues/5103
 process.env.OTEL_SEMCONV_STABILITY_OPT_IN = 'http/dup'
 
-// We need to specify the supported instrumentations.
-// Currently, only `pg` is supported.
-const resolveInstrumentation = (instrumentation) => {
-  if (instrumentation === 'pg') {
-    const { PgInstrumentation } = require('@opentelemetry/instrumentation-pg')
-    return new PgInstrumentation()
-  }
-  return null
-}
-
-const setupNodeHTTPTelemetry = (opts, otelInstrumentations = []) => {
-  const { serviceName } = opts
-
-  const additionalInstrumentations = otelInstrumentations.map(resolveInstrumentation)
+const setupNodeHTTPTelemetry = (opts) => {
+  const { serviceName, instrumentations = [] } = opts
+  const additionalInstrumentations = getInstrumenters(instrumentations)
 
   let exporter = opts.exporter
   if (!exporter) {
@@ -107,6 +98,7 @@ const setupNodeHTTPTelemetry = (opts, otelInstrumentations = []) => {
         }
       }),
       new HttpInstrumentation(),
+      new PgInstrumentation(),
       ...additionalInstrumentations
     ],
     resource: new Resource({
@@ -122,62 +114,28 @@ const setupNodeHTTPTelemetry = (opts, otelInstrumentations = []) => {
   })
 }
 
-const parseNodeConfigOTELIntrumentations = async (servicePath) => {
-  if (!servicePath) {
-    return []
-  }
+let data = null
+const useWorkerData = !!workerData
 
-  const configFilename = await ConfigManager.findConfigFile(servicePath)
-  if (!configFilename) {
-    return []
-  }
-  const manager = new ConfigManager({ source: resolve(servicePath, configFilename) })
-  await manager.parse()
-  const config = manager.current
-
-  if (config?.node?.otelInstrumentations) {
-    return config.node.otelInstrumentations
-  }
-  return []
-}
-
-const main = async () => {
-  let data = null
-  const useWorkerData = !!workerData
-
-  if (useWorkerData) {
-    data = workerData
-  } else if (process.env.PLT_MANAGER_ID) {
-    try {
-      const dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${process.env.PLT_MANAGER_ID}.json`)
-      statSync(dataPath)
-      const jsonData = JSON.parse(readFileSync(dataPath, 'utf8'))
-      data = jsonData.data
-      debuglog(`Loaded data from ${dataPath}`)
-    } catch (e) {
-      debuglog('Error reading data from file %o', e)
-    }
-  }
-
-  if (data) {
-    debuglog('Setting up telemetry %o', data)
-    const telemetryConfig = useWorkerData ? data?.serviceConfig?.telemetry : data?.telemetryConfig
-    let servicePath = data?.serviceConfig?.path
-    if (!servicePath && data?.root) {
-      // when running commands, we don't have path :(
-      servicePath = fileURLToPath(data?.root)
-    }
-
-    const otelInstrumentations = await parseNodeConfigOTELIntrumentations(servicePath)
-    if (telemetryConfig) {
-      debuglog('telemetryConfig %o', telemetryConfig)
-      setupNodeHTTPTelemetry(telemetryConfig, otelInstrumentations)
-    }
+if (useWorkerData) {
+  data = workerData
+} else if (process.env.PLT_MANAGER_ID) {
+  try {
+    const dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${process.env.PLT_MANAGER_ID}.json`)
+    statSync(dataPath)
+    const jsonData = JSON.parse(readFileSync(dataPath, 'utf8'))
+    data = jsonData.data
+    debuglog(`Loaded data from ${dataPath}`)
+  } catch (e) {
+    debuglog('Error reading data from file %o', e)
   }
 }
 
-try {
-  main()
-} catch (e) {
-  debuglog('Error in telemetry setup %o', e)
+if (data) {
+  debuglog('Setting up telemetry %o', data)
+  const telemetryConfig = useWorkerData ? data?.serviceConfig?.telemetry : data?.telemetryConfig
+  if (telemetryConfig) {
+    debuglog('telemetryConfig %o', telemetryConfig)
+    setupNodeHTTPTelemetry(telemetryConfig)
+  }
 }
