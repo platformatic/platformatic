@@ -1,8 +1,8 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Platformatic DB",
-    "description": "Exposing a SQL database as REST",
+    "title": "FAN TOZZI",
+    "description": "Tozzi Fan!",
     "version": "1.0.0"
   },
   "components": {

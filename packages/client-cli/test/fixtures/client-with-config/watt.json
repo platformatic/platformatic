@@ -6,5 +6,16 @@
   },
   "logger": {
     "level": "info"
+  },
+  "restartOnError": true,
+  "gracefulShutdown": {
+    "runtime": 40000,
+    "service": 20000
+  },
+  "inspectorOptions": {
+    "breakFirstLine": true
+  },
+  "env": {
+    "FOO": "BAR"
   }
 }
