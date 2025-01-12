@@ -286,7 +286,7 @@ async function downloadAndProcess (options) {
     config = configFileNames.find((value, index) => configFilesAccessibility[index])
   }
 
-  if (config) {
+  if (config && !isFrontend) {
     // if config file is found, no implementation is needed because from the 'clients' section
     // of the config file, Platformatic will register automatically the client
     generateImplementation = false
@@ -425,7 +425,7 @@ async function downloadAndProcess (options) {
     throw new Error(`Could not find a valid OpenAPI or GraphQL schema at ${url}`)
   }
 
-  if (config && !typesOnly) {
+  if (config && !typesOnly && !isFrontend) {
     const parse = getParser(config)
     const stringify = getStringifier(config)
     const data = parse(await readFile(config, 'utf8'))
@@ -589,11 +589,12 @@ export async function command (argv) {
   }
 
   try {
+    options.isFrontend = !!options.frontend
     if (options['types-only']) {
       options.generateImplementation = false
       options.typesOnly = true
     } else {
-      options.generateImplementation = !options.config
+      options.generateImplementation = options.isFrontend ? true : !options.config
     }
 
     options.fullRequest = options['full-request']
@@ -607,7 +608,6 @@ export async function command (argv) {
       : []
 
     options.validateResponse = options['validate-response']
-    options.isFrontend = !!options.frontend
 
     if (!options.name) {
       options.name = options.isFrontend ? 'api' : 'client'

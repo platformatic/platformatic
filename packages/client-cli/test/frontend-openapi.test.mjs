@@ -726,3 +726,31 @@ test('add credentials: include in client implementation from url', async (t) => 
   equal(implementation.includes(expectedGetMethod), true)
   equal(implementation.includes(expectedPostMethod), true)
 })
+
+test('frontend client with config', async (t) => {
+  const dir = await moveToTmpdir(after)
+  const openAPIfile = join(__dirname, 'fixtures', 'client-with-config', 'openapi.json')
+  await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'client', '--language', 'ts', '--frontend', '--config', 'watt.json'])
+
+  const implementation = await readFile(join(dir, 'client', 'client.ts'), 'utf-8')
+  ok(implementation.includes(`import type { Client } from './client-types'
+import type * as Types from './client-types'`))
+  ok(implementation.includes(`const _getHello = async (url: string, request: Types.GetHelloRequest): Promise<Types.GetHelloResponses> => {
+  const headers = {
+    ...defaultHeaders
+  }`))
+  ok(implementation.includes(`export const getHello: Client['getHello'] = async (request: Types.GetHelloRequest): Promise<Types.GetHelloResponses> => {
+  return await _getHello(baseUrl, request)
+}`))
+
+  const types = await readFile(join(dir, 'client', 'client-types.d.ts'), 'utf-8')
+  ok(types.includes(`export type GetHelloResponses =
+  GetHelloResponseOK`))
+  ok(types.includes(`export interface Client {
+  setBaseUrl(newUrl: string) : void;
+  setDefaultHeaders(headers: Object) : void;
+  getHello(req: GetHelloRequest): Promise<GetHelloResponses>;
+}`))
+  ok(types.includes("type PlatformaticFrontendClient = Omit<Client, 'setBaseUrl'>"))
+  ok(types.includes('export default function build(url: string, options?: BuildOptions): PlatformaticFrontendClient'))
+})
