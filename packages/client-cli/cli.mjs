@@ -589,11 +589,12 @@ export async function command (argv) {
   }
 
   try {
+    options.isFrontend = !!options.frontend
     if (options['types-only']) {
       options.generateImplementation = false
       options.typesOnly = true
     } else {
-      options.generateImplementation = !options.config
+      options.generateImplementation = options.isFrontend ? true : !options.config
     }
 
     options.fullRequest = options['full-request']
@@ -607,7 +608,6 @@ export async function command (argv) {
       : []
 
     options.validateResponse = options['validate-response']
-    options.isFrontend = !!options.frontend
 
     if (!options.name) {
       options.name = options.isFrontend ? 'api' : 'client'

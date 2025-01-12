@@ -726,3 +726,15 @@ test('add credentials: include in client implementation from url', async (t) => 
   equal(implementation.includes(expectedGetMethod), true)
   equal(implementation.includes(expectedPostMethod), true)
 })
+
+test('frontend client with config', async (t) => {
+  const dir = await moveToTmpdir(after)
+  const openAPIfile = join(__dirname, 'fixtures', 'client-with-config', 'openapi.json')
+  await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'client', '--language', 'ts', '--frontend', '--config', 'watt.json'])
+
+  const implementation = await readFile(join(dir, 'client', 'client.ts'), 'utf-8')
+  ok(implementation.includes("import type { Client } from './client-types'"))
+
+  const types = await readFile(join(dir, 'client', 'client-types.d.ts'), 'utf-8')
+  ok(types.includes("type PlatformaticFrontendClient = Omit<Client, 'setBaseUrl'>"))
+})
