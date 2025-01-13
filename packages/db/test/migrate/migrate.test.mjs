@@ -10,7 +10,7 @@ test('migrate up', async (t) => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
   t.after(async () => { await dropTestDB() })
 
-  const { stdout } = await execa(
+  const { stdout, stderr } = await execa(
     'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('simple.json')],
     {
       env: {
@@ -18,7 +18,7 @@ test('migrate up', async (t) => {
       },
     }
   )
-
+  
   const sanitized = stripAnsi(stdout)
   assert.ok(sanitized.includes('001.do.sql'))
 })
