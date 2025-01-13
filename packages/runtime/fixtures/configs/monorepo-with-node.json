@@ -2,7 +2,7 @@
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
   "entrypoint": "serviceApp",
   "watch": false,
-  "managementApi": false,
+  "managementApi": true,
   "autoload": {
     "path": "../monorepo-with-node",
     "exclude": [
