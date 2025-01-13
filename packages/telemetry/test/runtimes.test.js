@@ -299,9 +299,41 @@ test('configure telemetry correctly with a composer + next', async t => {
   equal(spanComposerClient.traceId, traceId)
 })
 
-test('configure telemetry correctly with a express app and additional express instrumenter', async t => {
+test('configure telemetry correctly with a express app and additional express instrumentation', async t => {
   const app = await runtimeHelper.createRuntime(t,
     'express-api-with-additional-instrumenters',
+    true,
+    'platformatic.json'
+  )
+  const { url, root } = app
+  const spansPath = join(root, 'spans.log')
+
+  // Test request to add http metrics
+  const { statusCode } = await request(`${url}/test`, {
+    method: 'GET',
+  })
+  equal(statusCode, 200)
+  await sleep(500)
+
+  const spans = await getSpans(spansPath)
+  const expressSpans = spans.filter(span => span.instrumentationLibrary.name === '@opentelemetry/instrumentation-express')
+  const httpSpans = spans.filter(span => span.instrumentationLibrary.name === '@opentelemetry/instrumentation-http')
+
+  // we just check that we have spans from the additiona instrumentation and all the spans are on the smae trace:
+  equal(httpSpans.length, 1)
+  equal(expressSpans.length, 4)
+
+  const traceId = spans[0].traceId
+
+  // All spans should be part of the same trace
+  for (const span of spans) {
+    equal(span.traceId, traceId)
+  }
+})
+
+test('configure telemetry correctly with a ESM express app and additional express instrumentation', { skip: true }, async t => {
+  const app = await runtimeHelper.createRuntime(t,
+    'express-api-with-additional-instrumenters-esm',
     true,
     'platformatic.json'
   )

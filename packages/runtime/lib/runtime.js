@@ -986,6 +986,9 @@ class Runtime extends EventEmitter {
     const execArgv = []
 
     if (!serviceConfig.isPLTService) {
+      // we need the following because otherwise some open telemetry instrumentations won't work with ESM (like express)
+      // see: https://github.com/open-telemetry/opentelemetry-js/blob/main/doc/esm-support.md#instrumentation-hook-required-for-esm
+      execArgv.push('--experimental-loader', '@opentelemetry/instrumentation/hook.mjs')
       execArgv.push('--require', openTelemetrySetupPath)
     }
 

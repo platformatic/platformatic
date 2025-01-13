@@ -218,7 +218,7 @@ test('configure telemetry correctly with a composer + next - integration test', 
   equal(spanComposerClient.parentId, spanComposerServer.id)
 })
 
-test('configure telemetry correctly with a express app and additional express instrumenter', async t => {
+test('configure telemetry correctly with a express app and additional express instrumentation', async t => {
   const { root, config } = await runtimeHelper.prepareRuntime(
     t,
     'express-api-with-additional-instrumenters',

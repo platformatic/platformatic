@@ -63,7 +63,7 @@ export function importFile (path) {
 export function resolvePackage (root, pkg) {
   const require = createRequire(root)
 
-  return require.resolve(pkg, { paths: [root, ...require.main.paths] })
+  return require.resolve(pkg, { paths: [root, ...require.main?.paths || []] })
 }
 
 export function cleanBasePath (basePath) {

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.3.1.json",
+  "entrypoint": "api",
+  "logger": {
+    "level": "error"
+  },
+  "services": [
+    {
+      "id": "api",
+      "path": "./services/api",
+      "telemetry": {
+        "instrumentations": [
+          "express"
+        ]
+      },
+      "useHttp": true
+    }
+  ],
+  "telemetry": {
+    "serviceName": "test-service",
+    "version": "1.0.0",
+    "exporter": {
+      "type": "file"
+    }
+  }
+}
