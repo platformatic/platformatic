@@ -12,7 +12,8 @@
         "instrumentations": [
           "express"
         ]
-      }
+      },
+      "useHttp": true
     }
   ],
   "telemetry": {

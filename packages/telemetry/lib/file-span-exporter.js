@@ -48,6 +48,7 @@ class FileSpanExporter {
       events: span.events,
       links: span.links,
       resource: span.resource,
+      instrumentationLibrary: span.instrumentationLibrary,
     }
   }
 }

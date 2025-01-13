@@ -300,11 +300,9 @@ test('configure telemetry correctly with a composer + next', async t => {
 })
 
 test('configure telemetry correctly with a express app and additional express instrumenter', async t => {
-  // TODO: add proper assert to check that the additional instrumenter is working
-
   const app = await runtimeHelper.createRuntime(t,
     'express-api-with-additional-instrumenters',
-    false,
+    true,
     'platformatic.json'
   )
   const { url, root } = app
@@ -316,18 +314,19 @@ test('configure telemetry correctly with a express app and additional express in
   })
   equal(statusCode, 200)
   await sleep(500)
+
   const spans = await getSpans(spansPath)
+  const expressSpans = spans.filter(span => span.instrumentationLibrary.name === '@opentelemetry/instrumentation-express')
+  const httpSpans = spans.filter(span => span.instrumentationLibrary.name === '@opentelemetry/instrumentation-http')
 
-  equal(spans.length, 1)
+  // we just check that we have spans from the additiona instrumentation and all the spans are on the smae trace:
+  equal(httpSpans.length, 1)
+  equal(expressSpans.length, 4)
 
-  const [span] = spans
-  equal(span.kind, SpanKind.SERVER)
-  // these asserts will fail when this will be fixed
-  // https://github.com/open-telemetry/opentelemetry-js/issues/5103
-  equal(span.attributes['http.method'], 'GET')
-  equal(span.attributes['http.scheme'], 'http')
-  equal(span.attributes['http.target'], '/test')
+  const traceId = spans[0].traceId
 
-  const resource = span.resource
-  deepEqual(resource._attributes['service.name'], 'test-service-api')
+  // All spans should be part of the same trace
+  for (const span of spans) {
+    equal(span.traceId, traceId)
+  }
 })
