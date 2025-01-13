@@ -232,8 +232,8 @@ export class ChildProcess extends ITC {
 
       this.#logger = pino(pinoOptions)
 
-      Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(this.#logger, 'info') })
-      Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(this.#logger, 'error', true) })
+      Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(this.#logger, 'info', false, 'STDOUT') })
+      Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(this.#logger, 'error', true, 'STDERR') })
     } else {
       this.#logger = pino(pinoOptions)
     }
