@@ -16,6 +16,7 @@ export const setBaseUrl = (newUrl: string) : void => { baseUrl = sanitizeUrl(new
 export const setDefaultHeaders = (headers: object): void => { defaultHeaders = headers }
 
 type JSON = Record<string, unknown>
+/* @ts-ignore - potential unused variable */
 function headersToJSON(headers: Headers): JSON {
   const output: JSON = {}
   headers.forEach((value, key) => {
