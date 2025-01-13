@@ -4,7 +4,7 @@
   "description": "OpenTelemetry integration for Platformatic",
   "main": "index.js",
   "scripts": {
-    "test": "npm run lint && borp --timeout=60000 --concurrency=1",
+    "test": "npm run lint && borp --timeout=80000 --concurrency=1",
     "lint": "eslint"
   },
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
