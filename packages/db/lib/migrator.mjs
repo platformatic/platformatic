@@ -1,4 +1,4 @@
-import { join, basename } from 'path'
+import { basename } from 'path'
 import Postgrator from 'postgrator'
 import { createConnectionPool } from '@platformatic/sql-mapper'
 import { stat, readdir } from 'fs/promises'
@@ -50,7 +50,8 @@ class Migrator {
 
     this.db = db
 
-    const migrationPattern = join(this.migrationDir, '*')
+    // Glob patterns should always use / as a path separator, even on Windows systems, as \ is used to escape glob characters.
+    const migrationPattern = this.migrationDir + '/*'
     this.logger.debug(`Migrating from ${migrationPattern}`)
 
     this.postgrator = new Postgrator({
