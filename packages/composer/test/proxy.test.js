@@ -922,3 +922,90 @@ test('should properly allow all domains when a service is the only one with a ho
     assert.deepStrictEqual(body, 'REQUEST')
   }
 })
+
+test('should properly generate OpenAPI routes when a frontend is exposed on /', async t => {
+  const astroModulesRoot = resolve(__dirname, './proxy/fixtures/astro/node_modules')
+
+  await ensureCleanup(t, [astroModulesRoot, resolve(__dirname, './proxy/fixtures/astro/.astro')])
+
+  // Make sure there is @platformatic/astro available in the astro service.
+  // We can't simply specify it in the package.json due to circular dependencies.
+  await createDirectory(resolve(astroModulesRoot, '@platformatic'))
+  await symlink(resolve(__dirname, '../../astro'), resolve(astroModulesRoot, '@platformatic/astro'), 'dir')
+
+  const runtime = await createComposerInRuntime(
+    t,
+    'openapi-with-frontend',
+    {
+      composer: {
+        refreshTimeout: REFRESH_TIMEOUT,
+        services: [
+          {
+            id: 'backend',
+            openapi: {
+              url: '/documentation/json',
+              prefix: '/api'
+            }
+          },
+          {
+            id: 'frontend',
+            proxy: {
+              prefix: '/'
+            }
+          }
+        ]
+      }
+    },
+    [
+      {
+        id: 'backend',
+        path: resolve(__dirname, './proxy/fixtures/service')
+      },
+      {
+        id: 'frontend',
+        path: resolve(__dirname, './proxy/fixtures/astro')
+      }
+    ]
+  )
+
+  t.after(() => {
+    runtime.close()
+  })
+
+  const address = await runtime.start()
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'GET',
+      path: '/'
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.text()
+    assert.ok(body.includes('Hello from Astro'))
+  }
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'GET',
+      path: '/api/id'
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { from: 'service' })
+  }
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'GET',
+      path: '/documentation/openapi.json'
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.json()
+
+    assert.ok(body.paths['/api/id'])
+    assert.ok(body.paths['/api/hello'])
+  }
+})
