@@ -73,7 +73,7 @@ async function _getRedirect (url, request) {
       body: await response.json()
     }
   }
-  if (response.headers.get('content-type').startsWith('application/json')) {
+  if (response.headers.get('content-type')?.startsWith('application/json')) {
     return {
       statusCode: response.status,
       headers: headersToJSON(response.headers),
@@ -109,7 +109,7 @@ export default function build (url, options) {
   const factoryType = `
 type PlatformaticFrontendClient = Omit<Sample, 'setBaseUrl'>
 type BuildOptions = {
-  headers?: Object
+  headers?: object
 }
 export default function build(url: string, options?: BuildOptions): PlatformaticFrontendClient`
 
@@ -135,7 +135,7 @@ export const getCustomSwagger = async (request) => {
     const typesTemplate = `
 export interface Sample {
   setBaseUrl(newUrl: string) : void;
-  setDefaultHeaders(headers: Object) : void;
+  setDefaultHeaders(headers: object) : void;
   getCustomSwagger(req: GetCustomSwaggerRequest): Promise<GetCustomSwaggerResponses>;
   getRedirect(req: GetRedirectRequest): Promise<GetRedirectResponses>;
   getReturnUrl(req: GetReturnUrlRequest): Promise<GetReturnUrlResponses>;
@@ -263,7 +263,7 @@ export const getHello: Api['getHello'] = async (request: Types.GetHelloRequest):
   const typesTemplate = `
 export interface Api {
   setBaseUrl(newUrl: string) : void;
-  setDefaultHeaders(headers: Object) : void;
+  setDefaultHeaders(headers: object) : void;
   getHello(req: GetHelloRequest): Promise<GetHelloResponses>;
 }`
 
@@ -292,7 +292,7 @@ export const getHello: ACustomName['getHello'] = async (request: Types.GetHelloR
   const typesTemplate = `
 export interface ACustomName {
   setBaseUrl(newUrl: string) : void;
-  setDefaultHeaders(headers: Object) : void;
+  setDefaultHeaders(headers: object) : void;
   getHello(req: GetHelloRequest): Promise<GetHelloResponses>;
 }`
 
@@ -445,17 +445,17 @@ test('do not add headers to fetch if a get request', async (t) => {
       body: await response.text()
     }
   }
-  if (response.headers.get('content-type').startsWith('application/json')) {
+  if (response.headers.get('content-type')?.startsWith('application/json')) {
     return {
       statusCode: response.status as 200,
       headers: headersToJSON(response.headers),
-      body: await response.json() as any
+      body: await response.json()
     }
   }
   return {
     statusCode: response.status as 200,
     headers: headersToJSON(response.headers),
-    body: await response.text() as any
+    body: await response.text()
   }`), true)
 })
 
@@ -482,17 +482,17 @@ test('support empty response', async (t) => {
       body: await response.text()
     }
   }
-  if (response.headers.get('content-type').startsWith('application/json')) {
+  if (response.headers.get('content-type')?.startsWith('application/json')) {
     return {
       statusCode: response.status as 200,
       headers: headersToJSON(response.headers),
-      body: await response.json() as any
+      body: await response.json()
     }
   }
   return {
     statusCode: response.status as 200,
     headers: headersToJSON(response.headers),
-    body: await response.text() as any
+    body: await response.text()
   }
 `), true)
 
@@ -525,17 +525,17 @@ test('call response.json only for json responses', async (t) => {
       body: await response.text()
     }
   }
-  if (response.headers.get('content-type').startsWith('application/json')) {
+  if (response.headers.get('content-type')?.startsWith('application/json')) {
     return {
       statusCode: response.status as 200,
       headers: headersToJSON(response.headers),
-      body: await response.json() as any
+      body: await response.json()
     }
   }
   return {
     statusCode: response.status as 200,
     headers: headersToJSON(response.headers),
-    body: await response.text() as any
+    body: await response.text()
   }`
 
     equal(implementation.includes(expected), true)
@@ -748,7 +748,7 @@ import type * as Types from './client-types'`))
   GetHelloResponseOK`))
   ok(types.includes(`export interface Client {
   setBaseUrl(newUrl: string) : void;
-  setDefaultHeaders(headers: Object) : void;
+  setDefaultHeaders(headers: object) : void;
   getHello(req: GetHelloRequest): Promise<GetHelloResponses>;
 }`))
   ok(types.includes("type PlatformaticFrontendClient = Omit<Client, 'setBaseUrl'>"))

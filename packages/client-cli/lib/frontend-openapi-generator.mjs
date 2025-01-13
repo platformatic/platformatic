@@ -55,7 +55,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
       'export const setBaseUrl = (newUrl: string) : void => { baseUrl = sanitizeUrl(newUrl) }'
     )
     writer.newLine()
-    writer.writeLine('export const setDefaultHeaders = (headers: Object): void => { defaultHeaders = headers }')
+    writer.writeLine('export const setDefaultHeaders = (headers: object): void => { defaultHeaders = headers }')
     writer.newLine()
 
     writer.writeLine('type JSON = Record<string, unknown>')
@@ -255,7 +255,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         })
 
         // write default response as fallback
-        writer.write('if (response.headers.get(\'content-type\').startsWith(\'application/json\')) ').block(() => {
+        writer.write('if (response.headers.get(\'content-type\')?.startsWith(\'application/json\')) ').block(() => {
           writer.write('return ').block(() => {
             writer.write('statusCode: response.status')
             if (language === 'ts') {
@@ -265,9 +265,6 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
             }
             writer.writeLine('headers: headersToJSON(response.headers),')
             writer.write('body: await response.json()')
-            if (language === 'ts') {
-              writer.write(' as any')
-            }
           })
         })
         writer.write('return ').block(() => {
@@ -279,9 +276,6 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
           }
           writer.writeLine('headers: headersToJSON(response.headers),')
           writer.write('body: await response.text()')
-          if (language === 'ts') {
-            writer.write(' as any')
-          }
         })
       } else {
         writer.write('if (!response.ok)').block(() => {
@@ -322,7 +316,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
   // create factory
   if (language === 'ts') {
     writer.write('type BuildOptions = ').block(() => {
-      writer.writeLine('headers?: Object')
+      writer.writeLine('headers?: object')
     })
   }
 
@@ -389,7 +383,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, propsOptional }
   writer.blankLine()
   writer.write(`export interface ${camelCaseName}`).block(() => {
     writer.writeLine('setBaseUrl(newUrl: string) : void;')
-    writer.writeLine('setDefaultHeaders(headers: Object) : void;')
+    writer.writeLine('setDefaultHeaders(headers: object) : void;')
     writeOperations(interfaces, writer, operations, {
       fullRequest: false, fullResponse, optionalHeaders: [], schema, propsOptional
     })
@@ -397,7 +391,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, propsOptional }
 
   writer.writeLine(`type PlatformaticFrontendClient = Omit<${camelCaseName}, 'setBaseUrl'>`)
   writer.write('type BuildOptions = ').block(() => {
-    writer.writeLine('headers?: Object')
+    writer.writeLine('headers?: object')
   })
   writer.writeLine('export default function build(url: string, options?: BuildOptions): PlatformaticFrontendClient')
   return interfaces.toString() + writer.toString()
