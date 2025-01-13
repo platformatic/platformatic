@@ -91,9 +91,8 @@ class ServiceStackable {
       cwd,
       logger: this.logger
     }
-    if (!(await compile(compileOptions))) {
-      throw new Error(`Failed to compile ${cwd}`)
-    }
+
+    await compile(compileOptions)
   }
 
   getUrl () {
@@ -299,8 +298,12 @@ class ServiceStackable {
       registers: [registry]
     })
 
-    globalThis.platformatic.onHttpCacheHit = () => { cacheHitMetric.inc() }
-    globalThis.platformatic.onHttpCacheMiss = () => { cacheMissMetric.inc() }
+    globalThis.platformatic.onHttpCacheHit = () => {
+      cacheHitMetric.inc()
+    }
+    globalThis.platformatic.onHttpCacheMiss = () => {
+      cacheMissMetric.inc()
+    }
   }
 
   #updateConfig () {

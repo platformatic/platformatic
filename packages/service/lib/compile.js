@@ -13,7 +13,7 @@ function buildCompileCmd (app) {
 
     try {
       const { configManager } = await loadConfig({}, _args, app, {
-        watch: false,
+        watch: false
       })
       await configManager.parseAndValidate()
       config = configManager.current
@@ -27,18 +27,19 @@ function buildCompileCmd (app) {
     const logger = pino(
       pretty({
         translateTime: 'SYS:HH:MM:ss',
-        ignore: 'hostname,pid',
+        ignore: 'hostname,pid'
       })
     )
 
-    const compileOptions = {
-      ...extractTypeScriptCompileOptionsFromConfig(config),
-      cwd: fullPath,
-      logger,
-      clean: _args.includes('--clean'),
-    }
-
-    if (!await compile(compileOptions)) {
+    try {
+      await compile({
+        ...extractTypeScriptCompileOptionsFromConfig(config),
+        cwd: fullPath,
+        logger,
+        clean: _args.includes('--clean')
+      })
+    } catch (e) {
+      logger.error(e.message)
       process.exit(1)
     }
   }
@@ -49,7 +50,7 @@ module.exports.buildCompileCmd = buildCompileCmd
 function extractTypeScriptCompileOptionsFromConfig (config) {
   return {
     tsConfig: config.plugins?.typescript?.tsConfig,
-    flags: config.plugins?.typescript?.flags,
+    flags: config.plugins?.typescript?.flags
   }
 }
 

@@ -27,7 +27,9 @@ test('empty folder', async t => {
 
   assert.strictEqual(res, true)
 
-  pinoTest.consecutive(stream, [{ level: 30, msg: 'No typescript configuration file was found, skipping compilation.' }])
+  pinoTest.consecutive(stream, [
+    { level: 30, msg: 'No typescript configuration file was found, skipping compilation.' }
+  ])
 })
 
 test('successfully compile', async t => {
@@ -41,8 +43,8 @@ test('successfully compile', async t => {
     join(localTmpDir, 'tsconfig.json'),
     JSON.stringify({
       compilerOptions: {
-        outDir: 'dist',
-      },
+        outDir: 'dist'
+      }
     })
   )
 
@@ -72,8 +74,8 @@ test('clean', async t => {
     join(localTmpDir, 'tsconfig.json'),
     JSON.stringify({
       compilerOptions: {
-        outDir: 'dist',
-      },
+        outDir: 'dist'
+      }
     })
   )
 
@@ -90,8 +92,34 @@ test('clean', async t => {
 
   await pinoTest.consecutive(stream, [
     { level: 30, msg: 'Removing build directory ' + join(localTmpDir, 'dist') },
-    { level: 30, msg: 'Typescript compilation completed successfully.' },
+    { level: 30, msg: 'Typescript compilation completed successfully.' }
   ])
 
   await assert.rejects(access(join(localTmpDir, 'dist', 'whaat')))
+})
+
+test('throws on failed compilation', async t => {
+  const localTmpDir = join(tmpDir, 'compiled')
+  await createDirectory(join(localTmpDir), true)
+  t.after(async () => {
+    await safeRemove(localTmpDir)
+  })
+
+  await writeFile(
+    join(localTmpDir, 'tsconfig.json'),
+    JSON.stringify({
+      compilerOptions: {
+        outDir: 'dist'
+      }
+    })
+  )
+
+  await writeFile(join(localTmpDir, 'index.ts'), 'const x: string = 42', {
+    message: /Type 'number' is not assignable to type 'string'/
+  })
+
+  const stream = pinoTest.sink()
+  const logger = pino(stream)
+
+  await assert.rejects(() => compile({ cwd: localTmpDir, logger }))
 })
