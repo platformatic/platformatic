@@ -69,8 +69,8 @@ function createLogger () {
 
   const loggerInstance = pino(pinoOptions, destination)
 
-  Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(loggerInstance, 'info') })
-  Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(loggerInstance, 'error') })
+  Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(loggerInstance, 'info', false, 'STDOUT') })
+  Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(loggerInstance, 'error', false, 'STDERR') })
 
   return loggerInstance
 }

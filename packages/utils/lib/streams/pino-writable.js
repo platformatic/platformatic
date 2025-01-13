@@ -9,14 +9,16 @@ class PinoWritable extends Transform {
   #write
   #ignoreEmpty
   #hadOutput
+  #caller
 
   constructor (options) {
-    const { pino, level, ignoreEmpty, ...opts } = options
+    const { pino, level, ignoreEmpty, caller, ...opts } = options
 
     super({ ...opts, decodeStrings: false })
     this.#write = pino[level].bind(pino)
     this.#ignoreEmpty = ignoreEmpty
     this.#hadOutput = false
+    this.#caller = caller
   }
 
   _write (chunk, encoding, callback) {
@@ -31,7 +33,7 @@ class PinoWritable extends Transform {
       this.#hadOutput = true
     }
 
-    this.#write({ raw })
+    this.#write({ raw, caller: this.#caller })
     callback()
   }
 
@@ -42,8 +44,8 @@ class PinoWritable extends Transform {
   // We don't define _writev as we have to serialize messages one by one so batching wouldn't make any sense.
 }
 
-function createPinoWritable (pino, level, ignoreEmpty) {
-  const writable = new PinoWritable({ pino, level, ignoreEmpty })
+function createPinoWritable (pino, level, ignoreEmpty = false, caller = undefined) {
+  const writable = new PinoWritable({ pino, level, ignoreEmpty, caller })
   writable.write = writable.write.bind(writable)
   return writable
 }

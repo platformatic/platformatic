@@ -1,6 +1,6 @@
 'use strict'
 
-const { strictEqual, deepStrictEqual } = require('node:assert')
+const { ok, strictEqual, deepStrictEqual } = require('node:assert')
 const { join } = require('node:path')
 const { hostname: getHostname } = require('node:os')
 const { test } = require('node:test')
@@ -191,5 +191,69 @@ test('logs stdio from the service thread', async t => {
         payload: undefined
       }
     ])
+  }
+})
+
+test('logs with caller info', async t => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+
+  {
+    const { statusCode } = await app.inject('node', '/')
+    strictEqual(statusCode, 200)
+  }
+
+  {
+    const client = new Client(
+      {
+        hostname: 'localhost',
+        protocol: 'http:'
+      },
+      {
+        socketPath: app.getManagementApiUrl(),
+        keepAliveTimeout: 10,
+        keepAliveMaxTimeout: 10
+      }
+    )
+
+    await sleep(3000)
+
+    const { statusCode, body } = await client.request({
+      method: 'GET',
+      path: '/api/v1/logs/all'
+    })
+
+    strictEqual(statusCode, 200)
+
+    const messages = (await body.text())
+      .trim()
+      .split('\n')
+      .map(l => {
+        const { level, pid, hostname, name, msg, payload, caller } = JSON.parse(l)
+        return { level, pid, hostname, name, msg, payload, caller }
+      })
+
+    const expecteds = [
+      { level: 30, name: 'node', msg: 'This is console.debug', caller: 'STDOUT' },
+      { level: 30, name: 'node', msg: 'This is console.info', caller: 'STDOUT' },
+      { level: 30, name: 'node', msg: 'This is console.log', caller: 'STDOUT' },
+      { level: 50, name: 'node', msg: 'This is console.warn', caller: 'STDERR' },
+      { level: 50, name: 'node', msg: 'This is console.error', caller: 'STDERR' }
+    ]
+
+    for (const e of expecteds) {
+      ok(
+        messages.find(m => {
+          return m.level === e.level && m.name === e.name && m.msg === e.msg && m.caller === e.caller
+        })
+      )
+    }
   }
 })
