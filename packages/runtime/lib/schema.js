@@ -83,7 +83,7 @@ const services = {
         type: 'string'
       },
       telemetry: {
-        typr: 'object',
+        type: 'object',
         properties: {
           instrumentations: {
             type: 'array',
