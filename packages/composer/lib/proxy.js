@@ -5,6 +5,7 @@ const httpProxy = require('@fastify/http-proxy')
 const fp = require('fastify-plugin')
 
 const kITC = Symbol.for('plt.runtime.itc')
+const kProxyRoute = Symbol('plt.composer.proxy.route')
 
 async function resolveServiceProxyParameters (service) {
   // Get meta information from the service, if any, to eventually hook up to a TCP port
@@ -128,7 +129,7 @@ module.exports = fp(async function (app, opts) {
     // Do not show proxied services in Swagger
     if (!service.openapi) {
       app.addHook('onRoute', routeOptions => {
-        if (routeOptions.url.startsWith(basePath)) {
+        if (routeOptions.config?.[kProxyRoute] && routeOptions.url.startsWith(basePath)) {
           routeOptions.schema ??= {}
           routeOptions.schema.hide = true
         }
@@ -143,6 +144,9 @@ module.exports = fp(async function (app, opts) {
       wsUpstream: url ?? origin,
       undici: dispatcher,
       destroyAgent: false,
+      config: {
+        [kProxyRoute]: true
+      },
       internalRewriteLocationHeader,
       replyOptions: {
         rewriteRequestHeaders: (request, headers) => {
