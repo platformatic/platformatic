@@ -1,4 +1,4 @@
-import { join, basename } from 'path'
+import { basename } from 'path'
 import Postgrator from 'postgrator'
 import { createConnectionPool } from '@platformatic/sql-mapper'
 import { stat, readdir } from 'fs/promises'
