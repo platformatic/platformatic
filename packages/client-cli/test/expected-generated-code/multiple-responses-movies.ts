@@ -13,10 +13,10 @@ function sanitizeUrl(url: string) : string {
 }
 export const setBaseUrl = (newUrl: string) : void => { baseUrl = sanitizeUrl(newUrl) }
 
-export const setDefaultHeaders = (headers: Object): void => { defaultHeaders = headers }
+export const setDefaultHeaders = (headers: object): void => { defaultHeaders = headers }
 
 type JSON = Record<string, unknown>
-/* @ts-ignore */
+/* @ts-ignore - potential unused variable */
 function headersToJSON(headers: Headers): JSON {
   const output: JSON = {}
   headers.forEach((value, key) => {
@@ -58,17 +58,17 @@ const _getPkgScopeNameVersion = async (url: string, request: Types.GetPkgScopeNa
       body: await response.json()
     }
   }
-  if (response.headers.get('content-type').startsWith('application/json')) {
+  if (response.headers.get('content-type')?.startsWith('application/json')) {
     return {
       statusCode: response.status as 200 | 202 | 302 | 400 | 404,
       headers: headersToJSON(response.headers),
-      body: await response.json() as any
+      body: await response.json()
     }
   }
   return {
     statusCode: response.status as 200 | 202 | 302 | 400 | 404,
     headers: headersToJSON(response.headers),
-    body: await response.text() as any
+    body: await response.text()
   }
 }
 
@@ -76,7 +76,7 @@ export const getPkgScopeNameVersion: Movies['getPkgScopeNameVersion'] = async (r
   return await _getPkgScopeNameVersion(baseUrl, request)
 }
 type BuildOptions = {
-  headers?: Object
+  headers?: object
 }
 export default function build (url: string, options?: BuildOptions) {
   url = sanitizeUrl(url)
