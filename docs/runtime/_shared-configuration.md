@@ -81,6 +81,26 @@ If this property is present, then the services will not be reordered according t
 `getBootstrapDependencies` function and they will be started in the order they are defined in
 the configuration file.
 
+- **`telemetry`** (`object`): containing an `instrumentations` array to optionally configure additional open telemetry intrumentations per service, e.g.:
+
+```
+"services": [
+    {
+      "id": "api",
+      "path": "./services/api",
+      "telemetry": {
+        "instrumentations": ["mongodb", "redis"]
+      }
+    }
+  ]
+```
+
+It supports all the
+opentelemetry instrumentations from the `@opentelemetry/auto-insrumentations-node` metapackage, e.g.: https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/metapackages/auto-instrumentations-node#supported-instrumentations.
+The instrumentation labels is from the package name, following the `opentelemetry-instrumentation-${label}` pattern.
+For instance, to instrument a service with
+[@opentelemetry/instrumentation-kafkajs](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/instrumentation-kafkajs) use the `kafkajs` label.
+
 ### `web`
 
 An alias for `services`. If both are present, their content will be merged.
