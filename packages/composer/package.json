@@ -70,7 +70,7 @@
     "graphql": "^16.8.1",
     "help-me": "^5.0.0",
     "json-schema-traverse": "^1.0.0",
-    "mercurius": "^15.0.0",
+    "mercurius": "^16.0.0",
     "minimist": "^1.2.8",
     "my-ua-parser": "^2.0.2",
     "nunjucks": "^3.2.4",
