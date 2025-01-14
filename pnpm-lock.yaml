@@ -431,8 +431,8 @@ importers:
         specifier: ^5.0.0
         version: 5.2.1
       fastify-tsconfig:
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^3.0.0
+        version: 3.0.0
       fs-extra:
         specifier: ^11.2.0
         version: 11.2.0
@@ -2185,8 +2185,8 @@ importers:
         specifier: ^5.0.0
         version: 5.2.1
       fastify-tsconfig:
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^3.0.0
+        version: 3.0.0
       neostandard:
         specifier: ^0.12.0
         version: 0.12.0(eslint@9.18.0)(typescript@5.7.3)
@@ -5810,9 +5810,9 @@ packages:
     resolution: {integrity: sha512-kysUAilPM6At1SRmT8Rr4maoSpiOtt5G30fWWVXU2t39EpTYapMyWHQRXmA/wE1JZRODXuP0Pfwgg2OfkVKZtg==}
     engines: {node: '>= 20.18.0'}
 
-  fastify-tsconfig@2.0.0:
-    resolution: {integrity: sha512-pvYwdtbZUJr/aTD7ZE0rGlvtYpx7IThHKVLBoqCKmT3FJpwm23XA2+PDmq8ZzfqqG4ajpyrHd5bkIixcIFjPhQ==}
-    engines: {node: '>=18.0.0'}
+  fastify-tsconfig@3.0.0:
+    resolution: {integrity: sha512-TxFM9+MUUM2Ub6chZbP5sPNUFaPWA86kHU0VRd4o9OP6PBP92cj9c4/IEsnLoVHcLgrgXf2GUXWUzkJAO9iKFQ==}
+    engines: {node: '>=20.0.0'}
 
   fastify-user@1.4.0:
     resolution: {integrity: sha512-VqGa60xX3nFCz2gIJHfdVjDlJIsdJ9bwigDdazaKlZ/lSxsyeXOnxsyxtZ9XeMht2drc6WLUtJ0MMeo1BSvXCg==}
@@ -13094,7 +13094,7 @@ snapshots:
       zod: 3.24.1
       zod-to-json-schema: 3.24.1(zod@3.24.1)
 
-  fastify-tsconfig@2.0.0: {}
+  fastify-tsconfig@3.0.0: {}
 
   fastify-user@1.4.0:
     dependencies:
