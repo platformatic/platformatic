@@ -2164,8 +2164,8 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1
       '@mercuriusjs/gateway':
-        specifier: ^4.0.1
-        version: 4.0.1
+        specifier: ^5.0.0
+        version: 5.0.0
       '@platformatic/sql-events':
         specifier: workspace:*
         version: link:../sql-events
@@ -3692,14 +3692,11 @@ packages:
   '@mdx-js/mdx@2.3.0':
     resolution: {integrity: sha512-jLuwRlz8DQfQNiUCJR50Y09CGPq3fLtmtUQfVrj79E0JWu3dvsVcxVIcfhR5h0iXu+/z++zDrYeiJqifRynJkA==}
 
-  '@mercuriusjs/federation@4.0.0':
-    resolution: {integrity: sha512-dNwEjiXxSXOAvGO49wQq6YwOiD53dpu0m1ViP7V+weLeYN4h4n2b/RHeOs0fo2JBEWLQniDHUNfaw2Z+qIEM1Q==}
-
   '@mercuriusjs/federation@5.0.0':
     resolution: {integrity: sha512-5E2S3mgxq+yK4XZm0UMms3lcG3QG/83xh8mmo/XyjwQiT8DulX8ibBXvlQtmOO4g4U9N+AUEqrqPfnoC5I+TSA==}
 
-  '@mercuriusjs/gateway@4.0.1':
-    resolution: {integrity: sha512-wa4QTrHRSgESa7mrB95Pm7L+je0SEOOBzKsfKOwy/12wj02QUhRGQ9thJTrn1sNJ/PbD8le04JG0eJbeG0Ptxw==}
+  '@mercuriusjs/gateway@5.0.0':
+    resolution: {integrity: sha512-YpjSOZzz8Y99chHhI3j2Y0YTWTb6FqMBdgh19azYqp4rfXsniWKyUjoAhoNqrhYXraGTGJSXA72PgG5OGFAC1A==}
 
   '@mercuriusjs/subscription-client@2.0.0':
     resolution: {integrity: sha512-rjYVWfFa0Z6L1OjQ3akp5RrFZ2dnlgF+sfnZ7AjGJgj5vrIvv/S4UFYIWmdrRjVaxJwPvBLJVHiY0fDqnFjWEQ==}
@@ -9019,6 +9016,10 @@ packages:
     resolution: {integrity: sha512-klt+0S55GBViA9nsq48/NSCo4YX5mjydjypxD7UmHh/brMu8h/Mhd/F7qAeoH2NOO8SDTk6kjnTFc4WpzmfYpQ==}
     engines: {node: '>=20.18.1'}
 
+  undici@7.2.1:
+    resolution: {integrity: sha512-U2k0XHLJfaciARRxDcqTk2AZQsGXerHzdvfCZcy1hNhSf5KCAF4jIQQxL+apQviOekhRFPqED6Of5/+LcUSLzQ==}
+    engines: {node: '>=20.18.1'}
+
   unicorn-magic@0.1.0:
     resolution: {integrity: sha512-lRfVq8fE8gz6QMBuDM6a+LO3IAzTi05H6gCVaUpir2E1Rwpo4ZUog45KpNXKC/Mn3Yb9UDuHumeFTo9iV/D9FQ==}
     engines: {node: '>=18'}
@@ -10475,15 +10476,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@mercuriusjs/federation@4.0.0':
-    dependencies:
-      '@fastify/error': 4.0.0
-      graphql: 16.10.0
-      mercurius: 15.1.0(graphql@16.10.0)
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
   '@mercuriusjs/federation@5.0.0':
     dependencies:
       '@fastify/error': 4.0.0
@@ -10493,17 +10485,18 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@mercuriusjs/gateway@4.0.1':
+  '@mercuriusjs/gateway@5.0.0':
     dependencies:
-      '@mercuriusjs/federation': 4.0.0
+      '@mercuriusjs/federation': 5.0.0
       '@mercuriusjs/subscription-client': 2.0.0(graphql@16.10.0)
       fastify-plugin: 5.0.1
       graphql: 16.10.0
       graphql-ws: 5.16.2(graphql@16.10.0)
-      mercurius: 15.1.0(graphql@16.10.0)
+      mercurius: 16.0.1(graphql@16.10.0)
       p-map: 4.0.0
       single-user-cache: 1.0.1
       tiny-lru: 11.2.11
+      undici: 7.2.1
       use-strict: 1.0.1
       ws: 8.18.0
     transitivePeerDependencies:
@@ -17181,6 +17174,8 @@ snapshots:
   undici@6.21.0: {}
 
   undici@7.2.0: {}
+
+  undici@7.2.1: {}
 
   unicorn-magic@0.1.0: {}
 

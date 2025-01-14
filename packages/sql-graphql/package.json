@@ -27,7 +27,7 @@
   "devDependencies": {
     "@matteo.collina/snap": "^0.3.0",
     "@matteo.collina/tspl": "^0.1.1",
-    "@mercuriusjs/gateway": "^4.0.1",
+    "@mercuriusjs/gateway": "^5.0.0",
     "@platformatic/sql-events": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
