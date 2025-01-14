@@ -162,12 +162,26 @@ See the [configuration](./configuration.md) page.
 
 ## API
 
-- **`platformatic.setBasePath(path)`**: This function can be use to override the base path for the service. If not properly configure in the composer, this can make your application unaccessible.
-- **`platformatic.serviceId`**: The id of the service.
-- **`platformatic.workerId`**: The id of the service worker.
-- **`platformatic.root`**: The root directory of the service.
-- **`platformatic.basePath`**: The base path of the service in the composer.
-- **`platformatic.logLevel`**: The log level configured for the service.
-- **`platformatic.events.on('close')`**: This event is emitted when the process is being closed. A listener should be installed to perform a graceful close, which must finish in 10 seconds. If there is no listener, the process will be terminated by invoking `process.exit(0)`.
+During service execution some APIs are made available in the `globalThis.platformatic` object.
+
+- **`globalThis.platformatic.setBasePath(path)`**: This function can be use to override the base path for the service. If not properly configure in the composer, this can make your application unaccessible.
+- **`globalThis.platformatic.serviceId`**: The id of the service.
+- **`globalThis.platformatic.workerId`**: The id of the service worker.
+- **`globalThis.platformatic.root`**: The root directory of the service.
+- **`globalThis.platformatic.basePath`**: The base path of the service in the composer.
+- **`globalThis.platformatic.logLevel`**: The log level configured for the service.
+- **`globalThis.platformatic.events.on('close')`**: This event is emitted when the process is being closed. A listener should be installed to perform a graceful close, which must finish in 10 seconds. If there is no listener, the process will be terminated by invoking `process.exit(0)`.
+
+### Typings for the API
+
+In order to get full Typescript support for the API above, you can install the `@platformatic/globals` package and get an alternative, typed, access to the `globalThis.platformatic` object.
+
+The usage of the package is straight-forward:
+
+```js
+import { getGlobal } from '@platformatic/globals`
+
+const pltApi = getGlobal()
+```
 
 <Issues />
