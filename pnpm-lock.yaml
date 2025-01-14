@@ -1909,8 +1909,8 @@ importers:
         specifier: ^9.0.0
         version: 9.0.3
       '@mercuriusjs/federation':
-        specifier: ^4.0.0
-        version: 4.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@platformatic/client':
         specifier: workspace:*
         version: link:../client
@@ -2130,8 +2130,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       '@mercuriusjs/federation':
-        specifier: ^4.0.0
-        version: 4.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -3694,6 +3694,9 @@ packages:
 
   '@mercuriusjs/federation@4.0.0':
     resolution: {integrity: sha512-dNwEjiXxSXOAvGO49wQq6YwOiD53dpu0m1ViP7V+weLeYN4h4n2b/RHeOs0fo2JBEWLQniDHUNfaw2Z+qIEM1Q==}
+
+  '@mercuriusjs/federation@5.0.0':
+    resolution: {integrity: sha512-5E2S3mgxq+yK4XZm0UMms3lcG3QG/83xh8mmo/XyjwQiT8DulX8ibBXvlQtmOO4g4U9N+AUEqrqPfnoC5I+TSA==}
 
   '@mercuriusjs/gateway@4.0.1':
     resolution: {integrity: sha512-wa4QTrHRSgESa7mrB95Pm7L+je0SEOOBzKsfKOwy/12wj02QUhRGQ9thJTrn1sNJ/PbD8le04JG0eJbeG0Ptxw==}
@@ -10477,6 +10480,15 @@ snapshots:
       '@fastify/error': 4.0.0
       graphql: 16.10.0
       mercurius: 15.1.0(graphql@16.10.0)
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@mercuriusjs/federation@5.0.0':
+    dependencies:
+      '@fastify/error': 4.0.0
+      graphql: 16.10.0
+      mercurius: 16.0.1(graphql@16.10.0)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
