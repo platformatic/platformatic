@@ -1884,8 +1884,8 @@ importers:
         specifier: ^9.0.0
         version: 9.0.3
       '@mercuriusjs/federation':
-        specifier: ^4.0.0
-        version: 4.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@platformatic/client':
         specifier: workspace:*
         version: link:../client
@@ -2105,8 +2105,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       '@mercuriusjs/federation':
-        specifier: ^4.0.0
-        version: 4.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
@@ -3669,6 +3669,9 @@ packages:
 
   '@mercuriusjs/federation@4.0.0':
     resolution: {integrity: sha512-dNwEjiXxSXOAvGO49wQq6YwOiD53dpu0m1ViP7V+weLeYN4h4n2b/RHeOs0fo2JBEWLQniDHUNfaw2Z+qIEM1Q==}
+
+  '@mercuriusjs/federation@5.0.0':
+    resolution: {integrity: sha512-5E2S3mgxq+yK4XZm0UMms3lcG3QG/83xh8mmo/XyjwQiT8DulX8ibBXvlQtmOO4g4U9N+AUEqrqPfnoC5I+TSA==}
 
   '@mercuriusjs/gateway@4.0.1':
     resolution: {integrity: sha512-wa4QTrHRSgESa7mrB95Pm7L+je0SEOOBzKsfKOwy/12wj02QUhRGQ9thJTrn1sNJ/PbD8le04JG0eJbeG0Ptxw==}
@@ -6055,6 +6058,11 @@ packages:
     peerDependencies:
       graphql: '>=15'
 
+  graphql-jit@0.8.7:
+    resolution: {integrity: sha512-KGzCrsxQPfEiXOUIJCexWKiWF6ycjO89kAO6SdO8OWRGwYXbG0hsLuTnbFfMq0gj7d7/ib/Gh7jtst7FHZEEjw==}
+    peerDependencies:
+      graphql: '>=15'
+
   graphql-scalars@1.24.0:
     resolution: {integrity: sha512-olbFN39m0XsHHESACUdd7jWU/lGxMMS1B7NZ8XqpqhKZrjBxzeGYAnQ4Ax//huYds771wb7gCznA+65QDuUa+g==}
     engines: {node: '>=10'}
@@ -6960,6 +6968,12 @@ packages:
 
   mercurius@15.1.0:
     resolution: {integrity: sha512-/hmhLpT3Yuk+dQe5Rv+PMRZtEnLDheRVwHzffM+FWY/m+KAEqh2lh89ZdEAkCa7UsYQh2cHcT7Uzm6xyvZxbSw==}
+    engines: {node: ^20.9.0 || >=22.0.0}
+    peerDependencies:
+      graphql: ^16.0.0
+
+  mercurius@16.0.1:
+    resolution: {integrity: sha512-Yyu7nku6UH+92p3tht22A4lof1y6FQigHTgSjZp7iAElwIvKEo9HOdfTbSWvSvAFx8+Zaa66gLsIBubC6xd0iw==}
     engines: {node: ^20.9.0 || >=22.0.0}
     peerDependencies:
       graphql: ^16.0.0
@@ -10445,6 +10459,15 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  '@mercuriusjs/federation@5.0.0':
+    dependencies:
+      '@fastify/error': 4.0.0
+      graphql: 16.10.0
+      mercurius: 16.0.1(graphql@16.10.0)
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   '@mercuriusjs/gateway@4.0.1':
     dependencies:
       '@mercuriusjs/federation': 4.0.0
@@ -13371,6 +13394,16 @@ snapshots:
       lodash.merge: 4.6.2
       lodash.mergewith: 4.6.2
 
+  graphql-jit@0.8.7(graphql@16.10.0):
+    dependencies:
+      '@graphql-typed-document-node/core': 3.2.0(graphql@16.10.0)
+      fast-json-stringify: 5.16.1
+      generate-function: 2.3.1
+      graphql: 16.10.0
+      lodash.memoize: 4.1.2
+      lodash.merge: 4.6.2
+      lodash.mergewith: 4.6.2
+
   graphql-scalars@1.24.0(graphql@16.10.0):
     dependencies:
       graphql: 16.10.0
@@ -14552,6 +14585,27 @@ snapshots:
       single-user-cache: 1.0.1
       tiny-lru: 11.2.11
       undici: 6.21.0
+      ws: 8.18.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  mercurius@16.0.1(graphql@16.10.0):
+    dependencies:
+      '@fastify/error': 4.0.0
+      '@fastify/static': 8.0.4
+      '@fastify/websocket': 11.0.2
+      fastify-plugin: 5.0.1
+      graphql: 16.10.0
+      graphql-jit: 0.8.7(graphql@16.10.0)
+      mqemitter: 6.0.2
+      p-map: 4.0.0
+      quick-lru: 7.0.0
+      readable-stream: 4.7.0
+      safe-stable-stringify: 2.5.0
+      secure-json-parse: 3.0.2
+      single-user-cache: 1.0.1
+      tiny-lru: 11.2.11
       ws: 8.18.0
     transitivePeerDependencies:
       - bufferutil

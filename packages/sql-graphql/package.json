@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "@fastify/error": "^4.0.0",
-    "@mercuriusjs/federation": "^4.0.0",
+    "@mercuriusjs/federation": "^5.0.0",
     "@platformatic/utils": "workspace:*",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^5.0.0",
