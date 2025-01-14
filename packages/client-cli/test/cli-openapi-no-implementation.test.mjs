@@ -234,7 +234,7 @@ test('openapi client generation (typescript) with --types-only', async (t) => {
   }
 
   const plugin = `
-/// <reference types="./movies" />
+/// <reference types="${dir}/movies/movies" />
 import { type FastifyPluginAsync } from 'fastify'
 import pltClient from '@platformatic/client'
 

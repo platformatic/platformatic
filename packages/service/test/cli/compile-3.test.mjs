@@ -82,7 +82,7 @@ test('start command should not compile typescript plugin with errors', async t =
     await childProcess
     assert.fail('should not compile bad typescript plugin')
   } catch (err) {
-    if (!err.stdout.includes('Found 1 error')) {
+    if (!err.stderr.includes('Found 1 error')) {
       console.log(err.stdout)
       console.log(err.stderr)
       console.error(err)
