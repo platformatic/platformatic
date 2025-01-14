@@ -81,25 +81,38 @@ If this property is present, then the services will not be reordered according t
 `getBootstrapDependencies` function and they will be started in the order they are defined in
 the configuration file.
 
-- **`telemetry`** (`object`): containing an `instrumentations` array to optionally configure additional open telemetry intrumentations per service, e.g.:
+- **`telemetry`** (`object`): containing an `instrumentations` array to optionally configure additional open telemetry
+  intrumentations per service, e.g.:
 
-```
+```json
 "services": [
     {
       "id": "api",
       "path": "./services/api",
       "telemetry": {
-        "instrumentations": ["mongodb", "redis"]
+        "instrumentations": ["@opentelemetry/instrumentation-express"]
       }
     }
   ]
 ```
 
-It supports all the
-opentelemetry instrumentations from the `@opentelemetry/auto-insrumentations-node` metapackage, e.g.: https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/metapackages/auto-instrumentations-node#supported-instrumentations.
-The instrumentation labels is from the package name, following the `opentelemetry-instrumentation-${label}` pattern.
-For instance, to instrument a service with
-[@opentelemetry/instrumentation-kafkajs](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/instrumentation-kafkajs) use the `kafkajs` label.
+It's possible to specify the name of the export of the instrumentation and/or the options:
+
+```json
+"services": [
+    {
+      "id": "api",
+      "path": "./services/api",
+      "telemetry": {
+        "instrumentations": [{
+          "package": "@opentelemetry/instrumentation-express",
+          "exportName": "ExpressInstrumentation",
+          "options": {}
+        }]
+      }
+    }
+  ]
+```
 
 ### `web`
 

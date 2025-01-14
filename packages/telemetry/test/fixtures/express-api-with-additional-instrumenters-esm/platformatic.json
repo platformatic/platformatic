@@ -10,7 +10,7 @@
       "path": "./services/api",
       "telemetry": {
         "instrumentations": [
-          "express"
+          "@opentelemetry/instrumentation-express"
         ]
       },
       "useHttp": true

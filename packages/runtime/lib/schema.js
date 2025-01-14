@@ -89,7 +89,29 @@ const services = {
             type: 'array',
             description: 'An array of instrumentations loaded if telemetry is enabled',
             items: {
-              type: 'string',
+              oneOf: [
+                {
+                  type: 'string'
+                },
+                {
+                  type: 'object',
+                  properties: {
+                    package: {
+                      type: 'string'
+                    },
+                    exportName: {
+                      type: 'string'
+                    },
+                    options: {
+                      type: 'object',
+                      additionalProperties: true
+                    }
+                  },
+                  required: [
+                    'package'
+                  ]
+                }
+              ]
             }
           }
         }

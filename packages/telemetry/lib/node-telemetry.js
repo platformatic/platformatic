@@ -12,7 +12,7 @@ const { tmpdir } = require('node:os')
 const logger = require('abstract-logging')
 const { statSync, readFileSync } = require('node:fs') // We want to have all this synch
 const util = require('node:util')
-const { getInstrumenters } = require('./pluggable-instrumentations')
+const { getInstrumentations } = require('./pluggable-instrumentations')
 
 const debuglog = util.debuglog('@platformatic/telemetry')
 const {
@@ -33,9 +33,9 @@ const {
 // https://github.com/open-telemetry/opentelemetry-js/issues/5103
 process.env.OTEL_SEMCONV_STABILITY_OPT_IN = 'http/dup'
 
-const setupNodeHTTPTelemetry = (opts) => {
+const setupNodeHTTPTelemetry = async (opts) => {
   const { serviceName, instrumentations = [] } = opts
-  const additionalInstrumentations = getInstrumenters(instrumentations)
+  const additionalInstrumentations = await getInstrumentations(instrumentations)
 
   let exporter = opts.exporter
   if (!exporter) {
@@ -114,28 +114,36 @@ const setupNodeHTTPTelemetry = (opts) => {
   })
 }
 
-let data = null
-const useWorkerData = !!workerData
+const main = async () => {
+  let data = null
+  const useWorkerData = !!workerData
 
-if (useWorkerData) {
-  data = workerData
-} else if (process.env.PLT_MANAGER_ID) {
-  try {
-    const dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${process.env.PLT_MANAGER_ID}.json`)
-    statSync(dataPath)
-    const jsonData = JSON.parse(readFileSync(dataPath, 'utf8'))
-    data = jsonData.data
-    debuglog(`Loaded data from ${dataPath}`)
-  } catch (e) {
-    debuglog('Error reading data from file %o', e)
+  if (useWorkerData) {
+    data = workerData
+  } else if (process.env.PLT_MANAGER_ID) {
+    try {
+      const dataPath = resolve(tmpdir(), 'platformatic', 'runtimes', `${process.env.PLT_MANAGER_ID}.json`)
+      statSync(dataPath)
+      const jsonData = JSON.parse(readFileSync(dataPath, 'utf8'))
+      data = jsonData.data
+      debuglog(`Loaded data from ${dataPath}`)
+    } catch (e) {
+      debuglog('Error reading data from file %o', e)
+    }
+  }
+
+  if (data) {
+    debuglog('Setting up telemetry %o', data)
+    const telemetryConfig = useWorkerData ? data?.serviceConfig?.telemetry : data?.telemetryConfig
+    if (telemetryConfig) {
+      debuglog('telemetryConfig %o', telemetryConfig)
+      setupNodeHTTPTelemetry(telemetryConfig)
+    }
   }
 }
 
-if (data) {
-  debuglog('Setting up telemetry %o', data)
-  const telemetryConfig = useWorkerData ? data?.serviceConfig?.telemetry : data?.telemetryConfig
-  if (telemetryConfig) {
-    debuglog('telemetryConfig %o', telemetryConfig)
-    setupNodeHTTPTelemetry(telemetryConfig)
-  }
+try {
+  main()
+} catch (e) {
+  debuglog('Error in main %o', e)
 }
