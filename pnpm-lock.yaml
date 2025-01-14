@@ -1421,7 +1421,7 @@ importers:
         version: 0.2.2
       iovalkey:
         specifier: ^0.2.1
-        version: 0.2.1
+        version: 0.2.2
       msgpackr:
         specifier: ^1.11.2
         version: 1.11.2
@@ -6297,9 +6297,9 @@ packages:
     resolution: {integrity: sha512-0SZXGNGZ+WzISQ67QDyZ2x0+wVxjjUndtD8oSeik/4ajifeiRufed8fCb8QW8VMyi4MXcS+UO1k/0NGhvq1PAg==}
     engines: {node: '>=12.22.0'}
 
-  iovalkey@0.2.1:
-    resolution: {integrity: sha512-uHwgaumQRkSb6jHA5Xpo5IKzvjQjZxRMoGuYaCv77Uu3mOM5RsogO2NZaGriIpbCoeSM0lSF6XlcAKu95l+vxw==}
-    engines: {node: '>=12.22.0'}
+  iovalkey@0.2.2:
+    resolution: {integrity: sha512-7eVmLOYV2UamZ/YPXuUwTu/4zBDxXcfjj/wmOwlKBBhU2qjg60Th0Y/cqfED3OxNAhc6hUV2Ft4eQMCKi2EMpQ==}
+    engines: {node: '>=18.12.0'}
 
   ipaddr.js@1.9.1:
     resolution: {integrity: sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==}
@@ -13705,7 +13705,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  iovalkey@0.2.1:
+  iovalkey@0.2.2:
     dependencies:
       '@ioredis/commands': 1.2.0
       cluster-key-slot: 1.1.2
