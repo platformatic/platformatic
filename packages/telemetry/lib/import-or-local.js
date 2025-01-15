@@ -1,3 +1,5 @@
+'use strict'
+
 const { pathToFileURL } = require('node:url')
 const resolve = require('resolve')
 
