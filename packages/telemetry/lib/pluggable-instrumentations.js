@@ -1,5 +1,7 @@
 'use strict'
 
+const importOrLocal = require('./import-or-local')
+
 // These are already set automatically by the runtime, so we throw
 // if set again.
 const defaultInstrumentations = [
@@ -8,7 +10,7 @@ const defaultInstrumentations = [
   '@opentelemetry/instrumentation-undici'
 ]
 
-const getInstrumentationInstance = async (instrumentationConfig) => {
+const getInstrumentationInstance = async (instrumentationConfig, serviceDir) => {
   if (typeof instrumentationConfig === 'string') {
     instrumentationConfig = { package: instrumentationConfig, exportName: 'default', options: {} }
   }
@@ -20,7 +22,7 @@ const getInstrumentationInstance = async (instrumentationConfig) => {
 
   let mod
   try {
-    mod = await import(packageName)
+    mod = await importOrLocal({ pkg: packageName, projectDir: serviceDir })
   } catch (err) {
     throw new Error(`Instrumentation package not found: ${instrumentationConfig.package}, please add it to your dependencies.`)
   }
@@ -50,10 +52,10 @@ const getInstrumentationInstance = async (instrumentationConfig) => {
 //          "exportName": "RedisInstrumentation",
 //          "options": { "foo": "bar" }
 //       }
-const getInstrumentations = async (configs = []) => {
+const getInstrumentations = async (configs = [], serviceDir) => {
   const instrumentations = []
   for (const instrumentationConfig of configs) {
-    const instance = await getInstrumentationInstance(instrumentationConfig)
+    const instance = await getInstrumentationInstance(instrumentationConfig, serviceDir)
     instrumentations.push(instance)
   }
   return instrumentations

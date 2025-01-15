@@ -2424,6 +2424,9 @@ importers:
       fastify-plugin:
         specifier: ^5.0.0
         version: 5.0.1
+      resolve:
+        specifier: ^1.22.8
+        version: 1.22.10
     devDependencies:
       '@databases/pg':
         specifier: ^5.5.0

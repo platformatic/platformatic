@@ -33,9 +33,9 @@ const {
 // https://github.com/open-telemetry/opentelemetry-js/issues/5103
 process.env.OTEL_SEMCONV_STABILITY_OPT_IN = 'http/dup'
 
-const setupNodeHTTPTelemetry = async (opts) => {
+const setupNodeHTTPTelemetry = async (opts, serviceDir) => {
   const { serviceName, instrumentations = [] } = opts
-  const additionalInstrumentations = await getInstrumentations(instrumentations)
+  const additionalInstrumentations = await getInstrumentations(instrumentations, serviceDir)
 
   let exporter = opts.exporter
   if (!exporter) {
@@ -134,10 +134,11 @@ const main = async () => {
 
   if (data) {
     debuglog('Setting up telemetry %o', data)
+    const serviceDir = data.serviceConfig?.path
     const telemetryConfig = useWorkerData ? data?.serviceConfig?.telemetry : data?.telemetryConfig
     if (telemetryConfig) {
       debuglog('telemetryConfig %o', telemetryConfig)
-      setupNodeHTTPTelemetry(telemetryConfig)
+      setupNodeHTTPTelemetry(telemetryConfig, serviceDir)
     }
   }
 }
