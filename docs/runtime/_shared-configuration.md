@@ -81,6 +81,39 @@ If this property is present, then the services will not be reordered according t
 `getBootstrapDependencies` function and they will be started in the order they are defined in
 the configuration file.
 
+- **`telemetry`** (`object`): containing an `instrumentations` array to optionally configure additional open telemetry
+  intrumentations per service, e.g.:
+
+```json
+"services": [
+    {
+      "id": "api",
+      "path": "./services/api",
+      "telemetry": {
+        "instrumentations": ["@opentelemetry/instrumentation-express"]
+      }
+    }
+  ]
+```
+
+It's possible to specify the name of the export of the instrumentation and/or the options:
+
+```json
+"services": [
+    {
+      "id": "api",
+      "path": "./services/api",
+      "telemetry": {
+        "instrumentations": [{
+          "package": "@opentelemetry/instrumentation-express",
+          "exportName": "ExpressInstrumentation",
+          "options": {}
+        }]
+      }
+    }
+  ]
+```
+
 ### `web`
 
 An alias for `services`. If both are present, their content will be merged.

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.6.0.json",
+  "server": {
+    "healthCheck": true
+  },
+  "composer": {
+    "services": [
+      {
+        "id": "express",
+        "proxy": {
+          "prefix": "/express"
+        }
+      }
+    ],
+    "refreshTimeout": 10000
+  },
+  "watch": true
+}

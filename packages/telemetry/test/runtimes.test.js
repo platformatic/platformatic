@@ -1,6 +1,6 @@
 'use strict'
 
-const { equal, deepEqual } = require('node:assert')
+const { equal, deepEqual, ok } = require('node:assert')
 const { resolve, join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
@@ -275,6 +275,7 @@ test('configure telemetry correctly with a composer + next', async t => {
     return false
   })
   const spanNextClientNode = findParentSpan(spans, spanNodeServer, SpanKind.CLIENT, 'GET http://node.plt.local/')
+  ok(!!spanNextClientNode)
   const spanNextServer = findSpanWithParentWithId(spans, spanNextClientNode, spanComposerClient.id)
   equal(spanNextClientNode.traceId, traceId)
   equal(spanNextServer.traceId, traceId)
@@ -296,4 +297,68 @@ test('configure telemetry correctly with a composer + next', async t => {
   equal(spanNextServer.parentId, spanComposerClient.id)
   equal(spanComposerClient.parentId, spanComposerServer.id)
   equal(spanComposerClient.traceId, traceId)
+})
+
+test('configure telemetry correctly with a express app and additional express instrumentation', async t => {
+  const app = await runtimeHelper.createRuntime(t,
+    'express-api-with-additional-instrumenters',
+    true,
+    'platformatic.json'
+  )
+  const { url, root } = app
+  const spansPath = join(root, 'spans.log')
+
+  // Test request to add http metrics
+  const { statusCode } = await request(`${url}/test`, {
+    method: 'GET',
+  })
+  equal(statusCode, 200)
+  await sleep(500)
+
+  const spans = await getSpans(spansPath)
+  const expressSpans = spans.filter(span => span.instrumentationLibrary.name === '@opentelemetry/instrumentation-express')
+  const httpSpans = spans.filter(span => span.instrumentationLibrary.name === '@opentelemetry/instrumentation-http')
+
+  // we just check that we have spans from the additiona instrumentation and all the spans are on the smae trace:
+  equal(httpSpans.length, 1)
+  equal(expressSpans.length, 4)
+
+  const traceId = spans[0].traceId
+
+  // All spans should be part of the same trace
+  for (const span of spans) {
+    equal(span.traceId, traceId)
+  }
+})
+
+test('configure telemetry correctly with a ESM express app and additional express instrumentation', async t => {
+  const app = await runtimeHelper.createRuntime(t,
+    'express-api-with-additional-instrumenters-esm',
+    true,
+    'platformatic.json'
+  )
+  const { url, root } = app
+  const spansPath = join(root, 'spans.log')
+
+  // Test request to add http metrics
+  const { statusCode } = await request(`${url}/test`, {
+    method: 'GET',
+  })
+  equal(statusCode, 200)
+  await sleep(500)
+
+  const spans = await getSpans(spansPath)
+  const expressSpans = spans.filter(span => span.instrumentationLibrary.name === '@opentelemetry/instrumentation-express')
+  const httpSpans = spans.filter(span => span.instrumentationLibrary.name === '@opentelemetry/instrumentation-http')
+
+  // we just check that we have spans from the additiona instrumentation and all the spans are on the smae trace:
+  equal(httpSpans.length, 1)
+  equal(expressSpans.length, 4)
+
+  const traceId = spans[0].traceId
+
+  // All spans should be part of the same trace
+  for (const span of spans) {
+    equal(span.traceId, traceId)
+  }
 })

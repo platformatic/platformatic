@@ -1,6 +1,6 @@
 'use strict'
 
-const { equal } = require('node:assert')
+const { equal, deepEqual } = require('node:assert')
 const { resolve, join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
@@ -216,4 +216,47 @@ test('configure telemetry correctly with a composer + next - integration test', 
   // check the spans chain back from next to composer call
   equal(spanNextServer.parentId, spanComposerClient.id)
   equal(spanComposerClient.parentId, spanComposerServer.id)
+})
+
+test('configure telemetry correctly with a express app and additional express instrumentation', async t => {
+  const { root, config } = await runtimeHelper.prepareRuntime(
+    t,
+    'express-api-with-additional-instrumenters',
+    true, // we are interested in telemetry only in production mode
+    'platformatic.json',
+    setupTelemetryServer
+  )
+
+  const { url } = await runtimeHelper.startRuntime(t, root, config)
+  const { statusCode } = await request(`${url}/test`, {
+    method: 'GET',
+  })
+  equal(statusCode, 200)
+
+  await sleep(500)
+
+  // We check that we have received spans from the express instrumentation too and all the
+  // spans are part of the same trace
+  const libraires = [...new Set(received.map(r => r.scope).map(s => s.name))].sort()
+  deepEqual(libraires, [
+    '@opentelemetry/instrumentation-express',
+    '@opentelemetry/instrumentation-http'
+  ])
+
+  const allSpans = received.map(r => r.spans).flat().map(s => {
+    const spanId = s.spanId.toString('hex')
+    const parentSpanId = s.parentSpanId?.toString('hex') || null
+    return {
+      ...s,
+      traceId: s.traceId.toString('hex'),
+      spanId,
+      parentSpanId,
+    }
+  })
+
+  const traceId = allSpans[0].traceId
+  // All spans should be part of the same trace
+  for (const span of allSpans) {
+    equal(span.traceId, traceId)
+  }
 })

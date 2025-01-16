@@ -81,6 +81,40 @@ const services = {
       preload,
       nodeOptions: {
         type: 'string'
+      },
+      telemetry: {
+        type: 'object',
+        properties: {
+          instrumentations: {
+            type: 'array',
+            description: 'An array of instrumentations loaded if telemetry is enabled',
+            items: {
+              oneOf: [
+                {
+                  type: 'string'
+                },
+                {
+                  type: 'object',
+                  properties: {
+                    package: {
+                      type: 'string'
+                    },
+                    exportName: {
+                      type: 'string'
+                    },
+                    options: {
+                      type: 'object',
+                      additionalProperties: true
+                    }
+                  },
+                  required: [
+                    'package'
+                  ]
+                }
+              ]
+            }
+          }
+        }
       }
     }
   }

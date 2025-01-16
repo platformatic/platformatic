@@ -1,0 +1,16 @@
+{
+  "name": "node-service",
+  "scripts": {
+    "dev": "wattpm dev",
+    "start": "wattpm start"
+  },
+  "dependencies": {
+    "@platformatic/node": "^2.18.0",
+    "express": "^4.21.1",
+    "pg": "^8.13.1",
+    "postgrator": "^8.0.0"
+  },
+  "devDependencies": {
+    "neostandard": "^0.11.9"
+  }
+}
