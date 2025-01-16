@@ -1,6 +1,6 @@
 'use strict'
 
-const { Agent, request, interceptors } = require('undici')
+const { getGlobalDispatcher, request, interceptors } = require('undici')
 const { join } = require('path')
 const fs = require('fs/promises')
 const kHeaders = Symbol('headers')
@@ -221,7 +221,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
 
     if (throwOnError) {
       if (!dispatcher) {
-        dispatcher = new Agent()
+        dispatcher = getGlobalDispatcher()
       }
       dispatcher = dispatcher.compose(interceptors.responseError())
     }
