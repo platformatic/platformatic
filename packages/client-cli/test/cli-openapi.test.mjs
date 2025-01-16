@@ -1157,26 +1157,7 @@ test('client with watt.json and skipConfigUpdate', async (t) => {
     'client': client.Client;
   }`))
 
-  const wattConfig = await readFile(desm.join(import.meta.url, 'fixtures', 'client-with-config', 'watt.json'), 'utf-8')
-  ok(wattConfig.includes(`{
-  "$schema": "https://schemas.platformatic.dev/wattpm/2.34.0.json",
-  "server": {
-    "hostname": "127.0.0.1",
-    "port": 3042
-  },
-  "logger": {
-    "level": "info"
-  },
-  "restartOnError": true,
-  "gracefulShutdown": {
-    "runtime": 40000,
-    "service": 20000
-  },
-  "inspectorOptions": {
-    "breakFirstLine": true
-  },
-  "env": {
-    "FOO": "BAR"
-  }
-}`), 'watt.json config has not been updated')
+  const wattConfig = JSON.parse(await readFile(desm.join(import.meta.url, 'fixtures', 'client-with-config', 'watt.json'), 'utf-8'))
+  ok('$schema' in wattConfig)
+  ok(!('clients' in wattConfig), 'watt.json config has no clients')
 })

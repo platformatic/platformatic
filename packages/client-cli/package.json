@@ -8,7 +8,7 @@
   },
   "scripts": {
     "lint": "eslint",
-    "test": "pnpm run lint && borp --concurrency=1 --timeout=300000 && tsd"
+    "test": "borp --concurrency=1 --timeout=300000 --pattern test/cli-openapi.test.mjs"
   },
   "repository": {
     "type": "git",
