@@ -400,6 +400,7 @@ Options:
 * `--types-only` - Generate only the type file.
 * `--types-comment` - Add a comment at the beginning of the auto generated `.d.ts` type definition.
 * `--with-credentials` - Adds "credentials: 'include'" to all fetch requests (only for frontend clients).
+* `--skip-config-update` - If `true`, it will not update the `platformatic|watt` config found in your repo.
 
 
 ### composer
