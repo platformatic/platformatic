@@ -9,7 +9,7 @@ const fixturesDir = join(__dirname, '..', 'fixtures')
 const idp = require(join(fixturesDir, 'interceptors', 'idp'))
 const external = require(join(fixturesDir, 'interceptors', 'external'))
 
-test('interceptors as undici options', async (t) => {
+test('interceptors as undici options', async t => {
   const idpServer = await idp({ port: 0 })
   const externalServer = await external()
 
@@ -26,11 +26,7 @@ test('interceptors as undici options', async (t) => {
   const entryUrl = await app.start()
 
   t.after(async () => {
-    await Promise.all([
-      idpServer.close(),
-      externalServer.close(),
-      app.close(),
-    ])
+    await Promise.all([idpServer.close(), externalServer.close(), app.close()])
   })
 
   {
@@ -41,7 +37,7 @@ test('interceptors as undici options', async (t) => {
   }
 })
 
-test('composable interceptors', async (t) => {
+test('composable interceptors', async t => {
   const idpServer = await idp({ port: 0 })
   const externalServer = await external()
 
@@ -58,11 +54,7 @@ test('composable interceptors', async (t) => {
   const entryUrl = await app.start()
 
   t.after(async () => {
-    await Promise.all([
-      idpServer.close(),
-      externalServer.close(),
-      app.close(),
-    ])
+    await Promise.all([idpServer.close(), externalServer.close(), app.close()])
   })
 
   {
@@ -70,5 +62,52 @@ test('composable interceptors', async (t) => {
 
     assert.strictEqual(res.statusCode, 200)
     assert.deepStrictEqual(await res.body.json(), { hello: 'world' })
+  }
+})
+
+test('mesh network works from external processes via ChildManager', async t => {
+  const configFile = join(fixturesDir, 'interceptors-3', 'platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+  const entryUrl = await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  {
+    const res = await request(entryUrl + '/node/')
+    const body = await res.body.json()
+
+    assert.notEqual(body.pid, process.pid)
+
+    assert.deepStrictEqual(body.responses[0], {
+      body: {
+        from: 'a'
+      },
+      statusCode: 200
+    })
+
+    assert.deepStrictEqual(body.responses[1], {
+      body: {
+        from: 'b'
+      },
+      statusCode: 200
+    })
+
+    assert.deepStrictEqual(body.responses[2].statusCode, 502)
+    assert.deepStrictEqual(Object.keys(body.responses[2].body).sort(), [
+      'code',
+      'errno',
+      'hostname',
+      'message',
+      'stack',
+      'syscall'
+    ])
+
+    assert.deepStrictEqual(body.responses[3], {
+      body: `application/octet-stream:123:${'echo'.repeat(10)}`,
+      statusCode: 200
+    })
   }
 })

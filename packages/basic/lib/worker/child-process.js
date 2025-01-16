@@ -11,7 +11,7 @@ import { basename, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { isMainThread } from 'node:worker_threads'
 import pino from 'pino'
-import { Agent, setGlobalDispatcher } from 'undici'
+import { Agent, Pool, setGlobalDispatcher } from 'undici'
 import { WebSocket } from 'ws'
 import { exitCodes } from '../errors.js'
 import { importFile } from '../utils.js'
@@ -19,9 +19,21 @@ import { getSocketPath } from './child-manager.js'
 
 const windowsNpmExecutables = ['npm-prefix.js', 'npm-cli.js']
 
-function createInterceptor (itc) {
+function createInterceptor () {
+  const pool = new Pool(
+    {
+      hostname: 'localhost',
+      protocol: 'http:'
+    },
+    {
+      socketPath: getSocketPath(process.env.PLT_MANAGER_ID),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10
+    }
+  )
+
   return function (dispatch) {
-    return async (opts, handler) => {
+    return (opts, handler) => {
       let url = opts.origin
       if (!(url instanceof URL)) {
         url = new URL(opts.path, url)
@@ -32,49 +44,17 @@ function createInterceptor (itc) {
         return dispatch(opts, handler)
       }
 
-      const headers = {
-        ...opts?.headers
-      }
-
-      delete headers.connection
-      delete headers['transfer-encoding']
-      headers.host = url.host
-
-      const requestOpts = {
-        ...opts,
-        headers
-      }
-      delete requestOpts.dispatcher
-
-      itc
-        .send('fetch', requestOpts)
-        .then(res => {
-          if (res.rawPayload && !Buffer.isBuffer(res.rawPayload)) {
-            res.rawPayload = Buffer.from(res.rawPayload.data)
+      // Route the call via the UNIX socket
+      return pool.dispatch(
+        {
+          ...opts,
+          headers: {
+            host: url.host,
+            ...opts?.headers
           }
-
-          const headers = []
-          for (const [key, value] of Object.entries(res.headers)) {
-            if (Array.isArray(value)) {
-              for (const v of value) {
-                headers.push(key)
-                headers.push(v)
-              }
-            } else {
-              headers.push(key)
-              headers.push(value)
-            }
-          }
-
-          handler.onHeaders(res.statusCode, headers, () => {}, res.statusMessage)
-          handler.onData(res.rawPayload)
-          handler.onComplete([])
-        })
-        .catch(e => {
-          handler.onError(new Error(e.message))
-        })
-
-      return true
+        },
+        handler
+      )
     }
   }
 }
@@ -198,8 +178,12 @@ export class ChildProcess extends ITC {
       registers: [registry]
     })
 
-    globalThis.platformatic.onHttpCacheHit = () => { cacheHitMetric.inc() }
-    globalThis.platformatic.onHttpCacheMiss = () => { cacheMissMetric.inc() }
+    globalThis.platformatic.onHttpCacheHit = () => {
+      cacheHitMetric.inc()
+    }
+    globalThis.platformatic.onHttpCacheMiss = () => {
+      cacheMissMetric.inc()
+    }
   }
 
   async #getMetrics ({ format } = {}) {

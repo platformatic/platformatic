@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.33.0.json",
+  "application": {
+    "commands": {
+      "development": "node index.js"
+    }
+  },
+  "logger": {
+    "level": "error"
+  }
+}
