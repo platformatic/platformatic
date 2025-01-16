@@ -66,6 +66,12 @@ const services = {
       },
       workers,
       health: { ...health, default: undefined },
+      arguments: {
+        type: 'array',
+        items: {
+          type: 'string'
+        }
+      },
       env,
       envfile: {
         type: 'string'
@@ -107,9 +113,7 @@ const services = {
                       additionalProperties: true
                     }
                   },
-                  required: [
-                    'package'
-                  ]
+                  required: ['package']
                 }
               ]
             }
@@ -172,6 +176,12 @@ const platformaticRuntimeSchema = {
               workers,
               health: { ...health, default: undefined },
               preload,
+              arguments: {
+                type: 'array',
+                items: {
+                  type: 'string'
+                }
+              },
               nodeOptions: {
                 type: 'string'
               }

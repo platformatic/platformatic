@@ -1022,6 +1022,7 @@ class Runtime extends EventEmitter {
         runtimeLogsDir: this.#runtimeLogsDir,
         loggingPort
       },
+      argv: serviceConfig.arguments,
       execArgv,
       env: workerEnv,
       transferList: [loggingPort],

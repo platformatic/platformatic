@@ -180,6 +180,12 @@
                   }
                 ]
               },
+              "arguments": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
               "nodeOptions": {
                 "type": "string"
               }
@@ -329,6 +335,12 @@
               }
             },
             "additionalProperties": false
+          },
+          "arguments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "env": {
             "type": "object",
@@ -559,6 +571,12 @@
               }
             },
             "additionalProperties": false
+          },
+          "arguments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "env": {
             "type": "object",
