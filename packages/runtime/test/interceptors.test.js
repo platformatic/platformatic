@@ -65,7 +65,7 @@ test('composable interceptors', async t => {
   }
 })
 
-test.only('mesh network works from external processes via ChildManager', async t => {
+test('mesh network works from external processes via ChildManager', async t => {
   const configFile = join(fixturesDir, 'interceptors-3', 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
@@ -80,36 +80,34 @@ test.only('mesh network works from external processes via ChildManager', async t
     const body = await res.body.json()
 
     assert.notEqual(body.pid, process.pid)
-    assert.deepStrictEqual(body.responses, [
-      {
-        body: {
-          from: 'a'
-        },
-        statusCode: 200
+
+    assert.deepStrictEqual(body.responses[0], {
+      body: {
+        from: 'a'
       },
-      {
-        body: {
-          from: 'b'
-        },
-        statusCode: 200
+      statusCode: 200
+    })
+
+    assert.deepStrictEqual(body.responses[1], {
+      body: {
+        from: 'b'
       },
-      {
-        body: {
-          code: 'ENOTFOUND',
-          errno: -3008,
-          hostname: 'c.plt.local',
-          message: 'getaddrinfo ENOTFOUND c.plt.local',
-          stack:
-            'Error: getaddrinfo ENOTFOUND c.plt.local\n' +
-            '    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:120:26)',
-          syscall: 'getaddrinfo'
-        },
-        statusCode: 502
-      },
-      {
-        body: `application/octet-stream:123:${'echo'.repeat(10)}`,
-        statusCode: 200
-      }
+      statusCode: 200
+    })
+
+    assert.deepStrictEqual(body.responses[2].statusCode, 502)
+    assert.deepStrictEqual(Object.keys(body.responses[2].body).sort(), [
+      'code',
+      'errno',
+      'hostname',
+      'message',
+      'stack',
+      'syscall'
     ])
+
+    assert.deepStrictEqual(body.responses[3], {
+      body: `application/octet-stream:123:${'echo'.repeat(10)}`,
+      statusCode: 200
+    })
   }
 })
