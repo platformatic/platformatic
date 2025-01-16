@@ -276,14 +276,15 @@ async function downloadAndProcess (options) {
     urlAuthHeaders,
     typesComment,
     withCredentials,
-    propsOptional
+    propsOptional,
+    skipConfigUpdate
   } = options
 
   let generateImplementation = options.generateImplementation
   let config = options.config
   if (!config) {
     const configFilesAccessibility = await Promise.all(configFileNames.map(fileName => isFileAccessible(fileName)))
-    config = configFileNames.find((value, index) => configFilesAccessibility[index] && !value.startsWith('watt'))
+    config = configFileNames.find((value, index) => configFilesAccessibility[index])
   }
 
   if (config && !isFrontend) {
@@ -425,7 +426,7 @@ async function downloadAndProcess (options) {
     throw new Error(`Could not find a valid OpenAPI or GraphQL schema at ${url}`)
   }
 
-  if (config && !typesOnly && !isFrontend) {
+  if (config && !skipConfigUpdate && !typesOnly && !isFrontend) {
     const parse = getParser(config)
     const stringify = getStringifier(config)
     const data = parse(await readFile(config, 'utf8'))
@@ -497,7 +498,7 @@ export async function command (argv) {
     ...options
   } = parseArgs(argv, {
     string: ['name', 'folder', 'runtime', 'optional-headers', 'language', 'type', 'url-auth-headers', 'types-comment'],
-    boolean: ['typescript', 'full-response', 'types-only', 'full-request', 'full', 'frontend', 'validate-response', 'props-optional'],
+    boolean: ['typescript', 'full-response', 'types-only', 'full-request', 'full', 'frontend', 'validate-response', 'props-optional', 'skip-config-update'],
     default: {
       typescript: false,
       language: 'js'
@@ -616,6 +617,7 @@ export async function command (argv) {
     options.urlAuthHeaders = options['url-auth-headers']
     options.typesComment = options['types-comment']
     options.withCredentials = options['with-credentials']
+    options.skipConfigUpdate = options['skip-config-update']
     await downloadAndProcess({ url, ...options, logger, runtime: options.runtime })
     logger.info(`Client generated successfully into ${options.folder}`)
     logger.info('Check out the docs to know more: https://docs.platformatic.dev/docs/service/overview')

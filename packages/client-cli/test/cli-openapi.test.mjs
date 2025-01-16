@@ -1143,7 +1143,7 @@ test('export formdata on full request object', async (t) => {
   }`), true)
 })
 
-test('client with watt.json config', async (t) => {
+test('client with watt.json and skipConfigUpdate', async (t) => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'client-with-config', 'openapi.json')
