@@ -1,6 +1,6 @@
 import { request, moveToTmpdir, safeKill } from './helper.js'
 import { test, after } from 'node:test'
-import { equal, deepEqual as same, rejects } from 'node:assert'
+import { ok, equal, deepEqual as same, rejects } from 'node:assert'
 import { match } from '@platformatic/utils'
 import { buildServer } from '@platformatic/runtime'
 import { join } from 'path'
@@ -1141,4 +1141,42 @@ test('export formdata on full request object', async (t) => {
   export type PostSampleRequest = {
     body: FormData;
   }`), true)
+})
+
+test('client with watt.json config', async (t) => {
+  const dir = await moveToTmpdir(after)
+
+  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'client-with-config', 'openapi.json')
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'client', '--full-request'])
+
+  const data = await readFile(join(dir, 'client', 'client.d.ts'), 'utf-8')
+  ok(data.includes("import { type FormData } from 'undici"))
+  ok(data.includes('type ClientPlugin = FastifyPluginAsync<NonNullable<client.ClientOptions>>'))
+  ok(data.includes(`
+  interface FastifyRequest {
+    'client': client.Client;
+  }`))
+
+  const wattConfig = await readFile(desm.join(import.meta.url, 'fixtures', 'client-with-config', 'watt.json'), 'utf-8')
+  ok(wattConfig.includes(`{
+  "$schema": "https://schemas.platformatic.dev/wattpm/2.34.0.json",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 3042
+  },
+  "logger": {
+    "level": "info"
+  },
+  "restartOnError": true,
+  "gracefulShutdown": {
+    "runtime": 40000,
+    "service": 20000
+  },
+  "inspectorOptions": {
+    "breakFirstLine": true
+  },
+  "env": {
+    "FOO": "BAR"
+  }
+}`), 'watt.json config has not been updated')
 })

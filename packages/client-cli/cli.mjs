@@ -283,7 +283,7 @@ async function downloadAndProcess (options) {
   let config = options.config
   if (!config) {
     const configFilesAccessibility = await Promise.all(configFileNames.map(fileName => isFileAccessible(fileName)))
-    config = configFileNames.find((value, index) => configFilesAccessibility[index])
+    config = configFileNames.find((value, index) => configFilesAccessibility[index] && !value.startsWith('watt'))
   }
 
   if (config && !isFrontend) {
