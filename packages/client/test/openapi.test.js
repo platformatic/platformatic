@@ -1,6 +1,6 @@
 'use strict'
 
-const { getGlobalDispatcher } = require('undici')
+const { getGlobalDispatcher, setGlobalDispatcher, MockAgent } = require('undici')
 const errors = require('../errors')
 const assert = require('node:assert/strict')
 const { tmpdir } = require('node:os')
@@ -430,6 +430,126 @@ test('throw on error level response', async t => {
       assert.deepEqual(err.body, {
         error: 'Not Found',
         message: 'Route GET:/movies-api/movies/100 not found',
+        statusCode: 404
+      })
+      return true
+    }
+  )
+})
+
+test('throw on error level response (modified global dispatcher)', async t => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
+  try {
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(join(tmpDir, 'platformatic-prefix.db.json'))
+  const agent = getGlobalDispatcher()
+
+  t.after(async () => {
+    await app.close()
+    await safeRemove(tmpDir)
+    setGlobalDispatcher(agent)
+  })
+  await app.start()
+
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  setGlobalDispatcher(mockAgent)
+
+  // Provide the base url to the request
+  const mockPool = mockAgent.get(app.url)
+
+  // intercept the request
+  mockPool.intercept({
+    path: '/movies-api/movies/100',
+    method: 'GET'
+  }).reply(404, {
+    error: 'Mocked Error',
+    message: 'Route GET:/movies-api/movies/100 not found',
+    statusCode: 404
+  }, {
+    headers: { 'content-type': 'application/json' }
+  })
+
+  // should use getGlobalDispatcher() internally and hit mock
+  const client = await buildOpenAPIClient({
+    url: `${app.url}/movies-api`,
+    path: join(__dirname, 'fixtures', 'movies', 'openapi.json'),
+    throwOnError: true
+  })
+
+  await assert.rejects(
+    client.getMovieById({
+      id: 100
+    }),
+    (err) => {
+      assert.deepEqual(err.body, {
+        error: 'Mocked Error',
+        message: 'Route GET:/movies-api/movies/100 not found',
+        statusCode: 404
+      })
+      return true
+    }
+  )
+})
+
+test('throw on error level response (supplied dispatcher)', async t => {
+  const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
+  const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
+  await cp(fixtureDirPath, tmpDir, { recursive: true })
+
+  try {
+    await unlink(join(fixtureDirPath, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+  const app = await buildServer(join(tmpDir, 'platformatic-prefix.db.json'))
+
+  t.after(async () => {
+    await app.close()
+    await safeRemove(tmpDir)
+  })
+  await app.start()
+
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+
+  // Provide the base url to the request
+  const mockPool = mockAgent.get(app.url)
+
+  // intercept the request
+  mockPool.intercept({
+    path: '/movies-api/movies/200',
+    method: 'GET'
+  }).reply(404, {
+    error: 'Mocked Error',
+    message: 'Route GET:/movies-api/movies/200 not found',
+    statusCode: 404
+  }, {
+    headers: { 'content-type': 'application/json' }
+  })
+
+  // should use getGlobalDispatcher() internally and hit mock
+  const client = await buildOpenAPIClient({
+    url: `${app.url}/movies-api`,
+    path: join(__dirname, 'fixtures', 'movies', 'openapi.json'),
+    throwOnError: true,
+    dispatcher: mockAgent
+  })
+
+  await assert.rejects(
+    client.getMovieById({
+      id: 200
+    }),
+    (err) => {
+      assert.deepEqual(err.body, {
+        error: 'Mocked Error',
+        message: 'Route GET:/movies-api/movies/200 not found',
         statusCode: 404
       })
       return true
