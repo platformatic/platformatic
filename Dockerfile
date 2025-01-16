@@ -1,4 +1,4 @@
-FROM node:20-alpine as base
+FROM node:22-alpine as base
 
 ENV HOME=/home
 ENV PLT_HOME=$HOME/platformatic/
@@ -34,8 +34,11 @@ RUN pnpm install --prod --offline --node-linker=hoisted
 # Add platformatic to path
 RUN cd packages/cli && pnpm link --global
 
+# Add wattpm to path
+RUN cd packages/wattpm && pnpm link --global
+
 # No pnpm/build tools install here, we just copy the files from the previous stage
-FROM node:20-alpine
+FROM node:22-alpine
 
 # Make NPM available
 RUN npm install -g pnpm
