@@ -331,7 +331,7 @@ test('configure telemetry correctly with a express app and additional express in
   }
 })
 
-test('configure telemetry correctly with a ESM express app and additional express instrumentation', { skip: true }, async t => {
+test('configure telemetry correctly with a ESM express app and additional express instrumentation', async t => {
   const app = await runtimeHelper.createRuntime(t,
     'express-api-with-additional-instrumenters-esm',
     true,

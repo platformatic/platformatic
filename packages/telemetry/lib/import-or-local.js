@@ -1,14 +1,17 @@
 'use strict'
 
 const { pathToFileURL } = require('node:url')
-const resolve = require('resolve')
+const { createRequire } = require('node:module')
+const { join } = require('node:path')
 
 async function importOrLocal ({ projectDir, pkg }) {
   try {
     return import(pkg)
   } catch (err) {
-    const fileToImport = resolve.sync(pkg, { basedir: projectDir })
-    return await import(pathToFileURL(fileToImport))
+    const pkgJsonPath = join(projectDir, 'package.json')
+    const _require = createRequire(pkgJsonPath)
+    const fileToImport = _require.resolve(pkg)
+    return import(pathToFileURL(fileToImport))
   }
 }
 
