@@ -496,7 +496,7 @@ export async function command (argv) {
     _: [url],
     ...options
   } = parseArgs(argv, {
-    string: ['name', 'folder', 'runtime', 'optional-headers', 'language', 'type', 'url-auth-headers', 'types-comment'],
+    string: ['name', 'folder', 'runtime', 'optional-headers', 'language', 'type', 'url-auth-headers', 'types-comment', 'runtime-config-file'],
     boolean: ['typescript', 'full-response', 'types-only', 'full-request', 'full', 'frontend', 'validate-response', 'props-optional'],
     default: {
       typescript: false,
@@ -530,17 +530,35 @@ export async function command (argv) {
   let runtime
 
   if (options.runtime) {
-    // TODO add flag to allow specifying a runtime config file
-    const runtimeConfigFile =
-      (await findUp('platformatic.runtime.json', {
-        cwd: dirname(process.cwd())
-      })) ||
-      (await findUp('platformatic.json', {
-        cwd: dirname(process.cwd())
-      }))
+    const getRuntimeConfigFile = async (configFileName) => {
+      if (configFileName) {
+        return await findUp(configFileName, {
+          cwd: dirname(process.cwd())
+        })
+      }
+
+      const configFiles = [
+        'platformatic.runtime.json',
+        'platformatic.json',
+        'watt.json'
+      ]
+
+      for (const file of configFiles) {
+        const found = await findUp(file, {
+          cwd: dirname(process.cwd())
+        })
+        if (found) {
+          return found
+        }
+      }
+
+      return undefined
+    }
+
+    const runtimeConfigFile = await getRuntimeConfigFile(options['runtime-config-file'])
 
     if (!runtimeConfigFile) {
-      logger.error('Could not find a platformatic.json file in any parent directory.')
+      logger.error(`Could not find a ${options['runtime-config-file'] || 'platformatic.json'} file in any parent directory.`)
       process.exit(1)
     }
 
