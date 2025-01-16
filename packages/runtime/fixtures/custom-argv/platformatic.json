@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.33.0.json",
+  "entrypoint": "a",
+  "logger": {
+    "level": "error"
+  },
+  "services": [
+    {
+      "id": "a",
+      "path": "services/main",
+      "arguments": ["first", "second", "third"],
+      "logger": {
+        "level": "error"
+      }
+    },
+    {
+      "id": "b",
+      "path": "services/main",
+      "logger": {
+        "level": "error"
+      }
+    }
+  ]
+}

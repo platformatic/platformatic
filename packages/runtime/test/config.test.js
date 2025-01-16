@@ -2,7 +2,7 @@
 
 const assert = require('node:assert')
 const { readFile, writeFile, cp, mkdtemp } = require('node:fs/promises')
-const { join } = require('node:path')
+const { join, resolve } = require('node:path')
 const { test } = require('node:test')
 const { safeRemove, createDirectory } = require('@platformatic/utils')
 const { loadConfig } = require('@platformatic/config')
@@ -383,6 +383,45 @@ test('supports configurable envfile location', async t => {
     FROM_SERVICE_CONFIG_FILE: 'true',
     OVERRIDE_TEST: 'service-override'
   })
+})
+
+test('supports configurable arguments', async t => {
+  const configFile = join(fixturesDir, 'custom-argv', 'platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const dirname = config.configManager.dirname
+  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
+
+  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await runtime.init()
+  await runtime.start()
+
+  const workerMain = resolve(__dirname, '../lib/worker/main.js')
+
+  {
+    const { payload } = await runtime.inject('a', {
+      method: 'GET',
+      url: '/'
+    })
+    const data = JSON.parse(payload)
+
+    assert.deepStrictEqual(data, [process.argv[0], workerMain, 'first', 'second', 'third'])
+  }
+
+  {
+    const { payload } = await runtime.inject('b', {
+      method: 'GET',
+      url: '/'
+    })
+
+    const data = JSON.parse(payload)
+
+    assert.deepStrictEqual(data, [process.argv[0], workerMain, ...process.argv.slice(2)])
+  }
 })
 
 test('should manage service config patch', async t => {
