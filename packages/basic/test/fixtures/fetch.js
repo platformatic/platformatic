@@ -19,14 +19,17 @@ globalThis[Symbol.for('plt.children.itc')].handle('start', async port => {
     console.log(response.status, await response.json())
   }
 
-  try {
-    await fetch('http://service.plt.local/error')
-  } catch (e) {
-    console.error(e.cause.message)
+  {
+    const response = await fetch('http://service2.plt.local/error')
+
+    console.log(response.status, (await response.json()).message)
   }
 
   // GitHub CI is slow
-  await setTimeout(3000)
+  if (process.env.CI) {
+    await setTimeout(3000)
+  }
+
   return true
 })
 

@@ -4,8 +4,10 @@ import { createServer } from 'node:http'
 import { test } from 'node:test'
 import { setTimeout } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
+import { Worker } from 'node:worker_threads'
 import pino from 'pino'
-import { Client } from 'undici'
+import { Agent, Client, setGlobalDispatcher } from 'undici'
+import { createThreadInterceptor } from 'undici-thread-interceptor'
 import { createMockedLogger, createStackable } from '../helper.js'
 
 const pinoLevels = pino().levels.labels
@@ -151,6 +153,18 @@ test('ChildProcess - should notify listen error', async t => {
 
 test('ChildProcess - should intercept fetch calls', async t => {
   const server = createServer(serverHandler).listen({ host: '127.0.0.1', port: 0 })
+  await once(server, 'listening')
+
+  const tcpWirer = new Worker(new URL('../fixtures/tcp-wirer.js', import.meta.url), {
+    workerData: { port: server.address().port }
+  })
+
+  const interceptor = createThreadInterceptor({
+    domain: '.plt.local' // The prefix for all local domains
+  })
+
+  interceptor.route('service', tcpWirer)
+  setGlobalDispatcher(new Agent().compose(interceptor))
 
   const stackable = await createStackable(t, {
     isEntrypoint: true,
@@ -170,31 +184,11 @@ test('ChildProcess - should intercept fetch calls', async t => {
 
   await once(manager, 'ready')
 
-  manager.handle('fetch', opts => {
-    switch (opts.path) {
-      case '/error':
-        throw new Error('FETCH ERROR')
-      case '/foo': {
-        const payload = JSON.stringify({ ok: true })
-        return { statusCode: 200, headers: {}, body: payload, payload, rawPayload: Buffer.from(payload) }
-      }
-      case '/bar': {
-        const payload = JSON.stringify({ ok: true })
-        return {
-          statusCode: 200,
-          headers: { a: ['1', '2'], b: '3' },
-          body: payload,
-          payload,
-          rawPayload: Buffer.from(payload)
-        }
-      }
-    }
-  })
-
   ok(await manager.send(Array.from(manager.getClients())[0], 'start', server.address().port))
 
   await promise
   await server.close()
+  tcpWirer.terminate()
 
   deepStrictEqual(messages[0], ['DEBUG', `Executing "node ${executablePath}" ...`])
   deepStrictEqual(
@@ -204,7 +198,7 @@ test('ChildProcess - should intercept fetch calls', async t => {
       ['INFO', 30, '200 { ok: true }'],
       ['INFO', 30, '200 { ok: true }'],
       ['INFO', 30, '200 { ok: true }'],
-      ['ERROR', 50, 'Handler failed with error: FETCH ERROR']
+      ['INFO', 30, '502 No server found for service2.plt.local in 0']
     ]
   )
 })

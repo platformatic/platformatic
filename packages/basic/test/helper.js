@@ -61,16 +61,29 @@ export async function createStackable (
 
 export function createMockedLogger () {
   const messages = []
+  const verbose = process.env.PLT_TESTS_VERBOSE === 'true'
 
   const logger = {
     debug (message) {
       messages.push(['DEBUG', message])
+
+      if (verbose) {
+        process._rawDebug(['DEBUG', message])
+      }
     },
     info (message) {
       messages.push(['INFO', message])
+
+      if (verbose) {
+        process._rawDebug(['INFO', message])
+      }
     },
     error (message) {
       messages.push(['ERROR', message])
+
+      if (verbose) {
+        process._rawDebug(['ERROR', message])
+      }
     }
   }
 

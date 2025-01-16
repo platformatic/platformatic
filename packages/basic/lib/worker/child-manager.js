@@ -68,9 +68,6 @@ export class ChildManager extends ITC {
           const logs = Array.isArray(message.logs) ? message.logs : [message.logs]
           this._forwardLogs(logs)
         },
-        fetch: request => {
-          return this.#fetch(request)
-        },
         ...itcOpts.handlers
       }
     })
@@ -81,7 +78,7 @@ export class ChildManager extends ITC {
     this.#scripts = scripts
     this.#originalNodeOptions = process.env.NODE_OPTIONS
     this.#logger = globalThis.platformatic.logger
-    this.#server = createServer()
+    this.#server = createServer(this.#childProcessFetchHandler.bind(this))
     this.#socketPath ??= getSocketPath(this.#id)
     this.#clients = new Set()
     this.#requests = new Map()
@@ -246,13 +243,28 @@ export class ChildManager extends ITC {
     workerData.loggingPort.postMessage({ logs: logs.map(m => JSON.stringify(m)) })
   }
 
-  async #fetch (opts) {
-    const { statusCode, headers, body } = await request(opts)
+  async #childProcessFetchHandler (req, res) {
+    const { url, headers } = req
 
-    const rawPayload = Buffer.from(await body.arrayBuffer())
-    const payload = rawPayload.toString()
+    const requestOptions = { method: req.method, headers }
 
-    return { statusCode, headers, body: payload, payload, rawPayload }
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      requestOptions.body = req
+    }
+
+    try {
+      const {
+        statusCode,
+        headers: responseHeaders,
+        body
+      } = await request(`http://${headers.host}${url ?? '/'}`, requestOptions)
+
+      res.writeHead(statusCode, responseHeaders)
+      body.pipe(res)
+    } catch (error) {
+      res.writeHead(502, { 'content-type': 'application/json' })
+      res.end(JSON.stringify(ensureLoggableError(error)))
+    }
   }
 
   #handleUnexpectedError (error, message, exitCode) {
