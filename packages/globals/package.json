@@ -9,7 +9,6 @@
   "scripts": {
     "test": "npm run lint",
     "coverage": "npm run lint && borp -C -X test",
-    "prepublishOnly": "pnpm run build",
     "lint": "eslint"
   },
   "repository": {
