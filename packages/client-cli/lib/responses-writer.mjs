@@ -22,7 +22,7 @@ function responsesWriter (operationId, responsesObject, isFullResponse, writer, 
       let isResponseArray
       const responseContentType = getResponseContentType(response)
       if (responseContentType === 'application/json') {
-        writeResponse(typeName, response.content['application/json'].schema)
+        writeResponse(typeName, response.content['application/json'].schema, response.summary, response.description)
       } else if (responseContentType === null) {
         isFullResponse = true
         writer.writeLine(`export type ${typeName} = unknown`)
@@ -58,9 +58,24 @@ function responsesWriter (operationId, responsesObject, isFullResponse, writer, 
   }
   return 'FullResponse<unknown, 200>'
 
-  function writeResponse (typeName, responseSchema) {
+  function writeResponse (typeName, responseSchema, summary, description) {
     if (!responseSchema) {
       return
+    }
+    if (description || summary) {
+      writer.writeLine('/**')
+      if (summary) {
+        for (const line of summary.split('\n')) {
+          writer.writeLine(` * ${line}`)
+        }
+        writer.writeLine(' *')
+      }
+      if (description) {
+        for (const line of description.split('\n')) {
+          writer.writeLine(` * ${line}`)
+        }
+      }
+      writer.writeLine(' */')
     }
     if (responseSchema.type === 'object') {
       writer.write(`export type ${typeName} =`).block(() => {
