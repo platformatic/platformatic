@@ -7,7 +7,6 @@ import { register } from 'node:module'
 import { platform, tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { workerData } from 'node:worker_threads'
 import { request } from 'undici'
 import { WebSocketServer } from 'ws'
 import { exitCodes } from '../errors.js'
@@ -60,16 +59,8 @@ export class ChildManager extends ITC {
     scripts ??= []
 
     super({
-      name: 'child-manager',
       ...itcOpts,
-      handlers: {
-        log: message => {
-          /* c8 ignore next */
-          const logs = Array.isArray(message.logs) ? message.logs : [message.logs]
-          this._forwardLogs(logs)
-        },
-        ...itcOpts.handlers
-      }
+      name: 'child-manager'
     })
 
     this.#id = generateChildrenId(context)
@@ -236,11 +227,6 @@ export class ChildManager extends ITC {
 
   _close () {
     this.#server.close()
-  }
-
-  /* c8 ignore next 3 */
-  _forwardLogs (logs) {
-    workerData.loggingPort.postMessage({ logs: logs.map(m => JSON.stringify(m)) })
   }
 
   async #childProcessFetchHandler (req, res) {

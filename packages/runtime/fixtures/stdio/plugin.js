@@ -5,7 +5,7 @@ const pino = require('pino')
 module.exports = async function foo (app) {
   app.log.info('This is an info')
   app.log.warn('This is a warn')
-  app.log.warn('This is an error')
+  app.log.error('This is an error')
 
   app.get('/', async () => {
     console.log('This is a\n console.log')

@@ -1,6 +1,6 @@
 import { ITC } from '@platformatic/itc'
 import { client, collectMetrics } from '@platformatic/metrics'
-import { createPinoWritable, ensureLoggableError, features } from '@platformatic/utils'
+import { disablePinoDirectWrite, ensureFlushedWorkerStdio, ensureLoggableError, features } from '@platformatic/utils'
 import diagnosticChannel, { tracingChannel } from 'node:diagnostics_channel'
 import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
@@ -194,6 +194,9 @@ export class ChildProcess extends ITC {
   }
 
   #setupLogger () {
+    disablePinoDirectWrite()
+    ensureFlushedWorkerStdio()
+
     // Since this is executed by user code, make sure we only override this in the main thread
     // The rest will be intercepted by the BaseStackable.
     const pinoOptions = {
@@ -215,9 +218,6 @@ export class ChildProcess extends ITC {
       }
 
       this.#logger = pino(pinoOptions)
-
-      Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(this.#logger, 'info', false, 'STDOUT') })
-      Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(this.#logger, 'error', true, 'STDERR') })
     } else {
       this.#logger = pino(pinoOptions)
     }

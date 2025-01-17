@@ -87,7 +87,7 @@ test('logs stdio from the service thread', async t => {
         payload: undefined
       },
       {
-        level: 40,
+        level: 50,
         pid,
         hostname,
         name: 'stdio',
@@ -131,7 +131,15 @@ test('logs stdio from the service thread', async t => {
         pid,
         hostname,
         name: 'stdio',
-        msg: 'This is a\n console.log',
+        msg: 'This is a',
+        payload: undefined
+      },
+      {
+        level: 30,
+        pid,
+        hostname,
+        name: 'stdio',
+        msg: ' console.log',
         payload: undefined
       },
       {
@@ -139,7 +147,15 @@ test('logs stdio from the service thread', async t => {
         pid,
         hostname,
         name: 'stdio',
-        msg: 'This is a\n console.error',
+        msg: 'This is a',
+        payload: undefined
+      },
+      {
+        level: 50,
+        pid,
+        hostname,
+        name: 'stdio',
+        msg: ' console.error',
         payload: undefined
       },
       {
@@ -245,13 +261,14 @@ test('logs with caller info', async t => {
       { level: 30, name: 'node', msg: 'This is console.info', caller: 'STDOUT' },
       { level: 30, name: 'node', msg: 'This is console.log', caller: 'STDOUT' },
       { level: 50, name: 'node', msg: 'This is console.warn', caller: 'STDERR' },
-      { level: 50, name: 'node', msg: 'This is console.error', caller: 'STDERR' }
+      { level: 50, name: 'node', msg: 'This is console.error', caller: 'STDERR' },
+      { level: 50, name: 'node', msg: 'Trace: This is console.trace', caller: 'STDERR' }
     ]
 
     for (const e of expecteds) {
       ok(
         messages.find(m => {
-          return m.level === e.level && m.name === e.name && m.msg === e.msg && m.caller === e.caller
+          return m.level === e.level && m.name === e.name && m.msg.startsWith(e.msg) && m.caller === e.caller
         })
       )
     }

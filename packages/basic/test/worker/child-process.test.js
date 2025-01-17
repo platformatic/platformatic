@@ -191,16 +191,12 @@ test('ChildProcess - should intercept fetch calls', async t => {
   tcpWirer.terminate()
 
   deepStrictEqual(messages[0], ['DEBUG', `Executing "node ${executablePath}" ...`])
-  deepStrictEqual(
-    // eslint-disable-next-line no-control-regex
-    messages.slice(1).map(l => [l[0], l[1].level, l[1].raw.trim().replace(/\x1B\[33m|\x1B\[39m/g, '')]),
-    [
-      ['INFO', 30, '200 { ok: true }'],
-      ['INFO', 30, '200 { ok: true }'],
-      ['INFO', 30, '200 { ok: true }'],
-      ['INFO', 30, '502 No server found for service2.plt.local in 0']
-    ]
-  )
+  deepStrictEqual(messages.slice(1), [
+    ['INFO', '200 { ok: true }'],
+    ['INFO', '200 { ok: true }'],
+    ['INFO', '200 { ok: true }'],
+    ['INFO', '502 No server found for service2.plt.local in 0']
+  ])
 })
 
 test('ChildProcess - should properly setup globals', async t => {
