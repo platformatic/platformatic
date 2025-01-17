@@ -572,6 +572,9 @@ importers:
       '@platformatic/db':
         specifier: workspace:*
         version: link:../db
+      '@platformatic/node':
+        specifier: workspace:*
+        version: link:../node
       borp:
         specifier: ^0.19.0
         version: 0.19.0

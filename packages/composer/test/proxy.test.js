@@ -603,6 +603,53 @@ test('should rewrite Location headers for proxied services', async t => {
   }
 })
 
+test('should rewrite Location headers that include full url of the running service', async t => {
+  const runtime = await createComposerInRuntime(
+    t,
+    'composer-prefix-in-conf',
+    {
+      composer: {
+        services: [
+          {
+            id: 'main',
+            proxy: {
+              prefix: '/whatever'
+            }
+          }
+        ],
+        refreshTimeout: REFRESH_TIMEOUT
+      }
+    },
+    [
+      {
+        id: 'main',
+        path: resolve(__dirname, './proxy/fixtures/node'),
+      }
+    ]
+  )
+
+  t.after(() => {
+    return runtime.close()
+  })
+
+  const address = await runtime.start()
+
+  {
+    const {
+      statusCode,
+      body: rawBody,
+      headers
+    } = await request(address, {
+      method: 'GET',
+      path: '/whatever/redirect'
+    })
+    assert.equal(statusCode, 307)
+    assert.equal(headers.location, '/whatever/id')
+
+    rawBody.dump()
+  }
+})
+
 test('should properly configure the frontends on their paths if no composer configuration is present', async t => {
   const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
   const astroModulesRoot = resolve(__dirname, './proxy/fixtures/astro/node_modules')
