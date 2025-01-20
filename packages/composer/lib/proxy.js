@@ -183,7 +183,8 @@ module.exports = fp(async function (app, opts) {
             ...headers,
             ...telemetryHeaders,
             'x-forwarded-for': request.ip,
-            'x-forwarded-host': request.host
+            'x-forwarded-host': request.host,
+            'x-forwarded-proto': request.protocol,
           }
 
           return headers
