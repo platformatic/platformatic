@@ -1157,6 +1157,15 @@ test('adds x-forwarded-proto', async (t) => {
 })
 
 test('should rewrite Location headers for proxied services https', async t => {
+  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
+
+  await ensureCleanup(t, [nodeModulesRoot])
+
+  // Make sure there is @platformatic/node available in the node service.
+  // We can't simply specify it in the package.json due to circular dependencies.
+  await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
+  await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
+
   const { certificate, privateKey } = selfCert({})
   const localDir = tmpdir()
   const tmpDir = await mkdtemp(join(localDir, 'plt-composer-proxy-https-test-'))
