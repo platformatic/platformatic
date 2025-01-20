@@ -212,15 +212,7 @@ export class ChildProcess extends ITC {
       }
     }
 
-    if (isMainThread && globalThis.platformatic.interceptLogging) {
-      pinoOptions.transport = {
-        target: new URL('./child-transport.js', import.meta.url).toString()
-      }
-
-      this.#logger = pino(pinoOptions)
-    } else {
-      this.#logger = pino(pinoOptions)
-    }
+    this.#logger = pino(pinoOptions)
   }
 
   #setupServer () {

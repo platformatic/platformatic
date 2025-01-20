@@ -1,5 +1,9 @@
 import { setTimeout } from 'node:timers/promises'
 
+const interval = setInterval(() => {
+  // No-op
+}, 1000)
+
 globalThis[Symbol.for('plt.children.itc')].handle('start', async port => {
   {
     const response = await fetch(`http://127.0.0.1:${port}`)
@@ -30,6 +34,7 @@ globalThis[Symbol.for('plt.children.itc')].handle('start', async port => {
     await setTimeout(3000)
   }
 
+  clearInterval(interval)
   return true
 })
 

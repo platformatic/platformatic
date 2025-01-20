@@ -87,7 +87,7 @@ export function parseArgs (args, options, stopAtFirstPositional = true) {
   }
 }
 
-export function getPackageManager (root) {
+export function getPackageManager (root, defaultManager = 'npm') {
   if (existsSync(resolve(root, 'pnpm-lock.yaml'))) {
     return 'pnpm'
   }
@@ -96,7 +96,7 @@ export function getPackageManager (root) {
     return 'yarn'
   }
 
-  return 'npm'
+  return defaultManager
 }
 
 export function getPackageArgs (packageManager, production) {

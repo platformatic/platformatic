@@ -20,7 +20,7 @@ export class BaseStackable {
   #subprocessStarted
   #metricsCollected
 
-  constructor (type, version, options, root, configManager) {
+  constructor (type, version, options, root, configManager, standardStreams = {}) {
     options.context.worker ??= { count: 1, index: 0 }
 
     this.type = type
@@ -44,6 +44,8 @@ export class BaseStackable {
     this.endHttpTimer = null
     this.clientWs = null
     this.runtimeConfig = deepmerge(options.context?.runtimeConfig ?? {}, workerData?.config ?? {})
+    this.stdout = standardStreams?.stdout ?? process.stdout
+    this.stderr = standardStreams?.stderr ?? process.stderr
 
     // Setup the logger
     const pinoOptions = {
@@ -58,7 +60,7 @@ export class BaseStackable {
       pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: this.workerId }
     }
 
-    this.logger = pino(pinoOptions)
+    this.logger = pino(pinoOptions, standardStreams?.stdout)
 
     // Setup globals
     this.registerGlobals({
@@ -296,8 +298,9 @@ export class BaseStackable {
 
     subprocess.stdout.setEncoding('utf8')
     subprocess.stderr.setEncoding('utf8')
-    subprocess.stdout.pipe(process.stdout)
-    subprocess.stdout.pipe(process.stderr)
+
+    subprocess.stdout.pipe(this.stdout, { end: false })
+    subprocess.stderr.pipe(this.stderr, { end: false })
 
     // Wait for the process to be started
     await new Promise((resolve, reject) => {
