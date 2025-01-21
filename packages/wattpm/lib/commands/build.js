@@ -62,7 +62,7 @@ export async function installDependencies (logger, root, services, production, p
 
   for (const service of services) {
     /* c8 ignore next */
-    const servicePackageManager = service.packageManager ?? getPackageManager(service.path) ?? packageManager
+    const servicePackageManager = service.packageManager ?? getPackageManager(service.path, packageManager)
     const servicePackageArgs = getPackageArgs(servicePackageManager, production)
 
     try {

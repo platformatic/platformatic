@@ -370,7 +370,7 @@ class ServiceStackable {
       pinoOptions.name = this.context.serviceId
     }
 
-    if (typeof this.context?.worker?.index !== 'undefined') {
+    if (this.context?.worker?.count > 1) {
       pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: this.context.worker.index }
     }
 

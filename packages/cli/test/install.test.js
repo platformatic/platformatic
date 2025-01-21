@@ -51,9 +51,9 @@ test('should install dependencies of application and its services using a specif
   const child = await execa('node', [cliPath, 'install', '-P', 'pnpm'], { cwd: rootDir, env: { NO_COLOR: 'true' } })
 
   ok(child.stdout.includes('Installing dependencies for the application using pnpm ...'))
-  ok(child.stdout.includes('Installing dependencies for the service composer using npm ...'))
-  ok(child.stdout.includes('Installing dependencies for the service db using npm ...'))
-  ok(child.stdout.includes('Installing dependencies for the service service using npm ...'))
+  ok(child.stdout.includes('Installing dependencies for the service composer using pnpm ...'))
+  ok(child.stdout.includes('Installing dependencies for the service db using pnpm ...'))
+  ok(child.stdout.includes('Installing dependencies for the service service using pnpm ...'))
 })
 
 test('should install production dependencies only', async t => {
@@ -70,7 +70,7 @@ test('should install production dependencies only', async t => {
   })
 
   ok(child.stdout.includes('Installing production dependencies for the application using pnpm ...'))
-  ok(child.stdout.includes('Installing production dependencies for the service composer using npm ...'))
-  ok(child.stdout.includes('Installing production dependencies for the service db using npm ...'))
-  ok(child.stdout.includes('Installing production dependencies for the service service using npm ...'))
+  ok(child.stdout.includes('Installing production dependencies for the service composer using pnpm ...'))
+  ok(child.stdout.includes('Installing production dependencies for the service db using pnpm ...'))
+  ok(child.stdout.includes('Installing production dependencies for the service service using pnpm ...'))
 })

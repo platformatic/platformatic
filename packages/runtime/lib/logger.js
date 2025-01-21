@@ -1,5 +1,6 @@
 'use strict'
 
+const { once } = require('node:events')
 const { join } = require('node:path')
 const { isatty } = require('node:tty')
 
@@ -17,7 +18,7 @@ const customPrettifiers = {
   }
 }
 
-function createLogger (config, runtimeLogsDir) {
+async function createLogger (config, runtimeLogsDir) {
   const loggerConfig = { ...config.logger }
 
   // PLT_RUNTIME_LOGGER_STDOUT is used in test to reduce verbosity
@@ -62,6 +63,9 @@ function createLogger (config, runtimeLogsDir) {
     })
 
     multiStream.add({ level: 'trace', stream: pinoRoll })
+
+    // Make sure there is a file before continuing otherwise the management API log endpoint might bail out
+    await once(pinoRoll, 'ready')
   }
 
   return [pino({ level: 'trace' }, multiStream), multiStream]

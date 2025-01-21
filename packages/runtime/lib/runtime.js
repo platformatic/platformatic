@@ -1,16 +1,18 @@
 'use strict'
 
+const { ITC } = require('@platformatic/itc')
+const { ensureLoggableError, executeWithTimeout, deepmerge } = require('@platformatic/utils')
 const { once, EventEmitter } = require('node:events')
 const { createReadStream, watch, existsSync } = require('node:fs')
 const { readdir, readFile, stat, access } = require('node:fs/promises')
 const { STATUS_CODES } = require('node:http')
+const { hostname } = require('node:os')
 const { join } = require('node:path')
-const { setTimeout: sleep } = require('node:timers/promises')
+const { setTimeout: sleep, setImmediate: sleepUntilNextTick } = require('node:timers/promises')
 const { Worker } = require('node:worker_threads')
-const { ITC } = require('@platformatic/itc')
-const { Agent, interceptors: undiciInterceptors, request } = require('undici')
-const { ensureLoggableError, executeWithTimeout, deepmerge } = require('@platformatic/utils')
+const split2 = require('split2')
 const ts = require('tail-file-stream')
+const { Agent, interceptors: undiciInterceptors, request } = require('undici')
 const { createThreadInterceptor } = require('undici-thread-interceptor')
 
 const { checkDependencies, topologicalSort } = require('./dependencies')
@@ -29,9 +31,8 @@ const {
   kITC,
   kHealthCheckTimer,
   kConfig,
-  kLoggerDestination,
-  kLoggingPort,
-  kWorkerStatus
+  kWorkerStatus,
+  kStderrMarker
 } = require('./worker/symbols')
 
 const fastify = require('fastify')
@@ -110,7 +111,7 @@ class Runtime extends EventEmitter {
     }
 
     // Create the logger
-    const [logger, destination] = createLogger(config, this.#runtimeLogsDir)
+    const [logger, destination] = await createLogger(config, this.#runtimeLogsDir)
     this.logger = logger
     this.#loggerDestination = destination
 
@@ -461,6 +462,7 @@ class Runtime extends EventEmitter {
     runtimePID = runtimePID ?? process.pid
 
     const runtimeLogFiles = await this.#getRuntimeLogFiles(runtimePID)
+
     if (runtimeLogFiles.length === 0) {
       writableStream.end()
       return
@@ -958,9 +960,6 @@ class Runtime extends EventEmitter {
     const { restartOnError } = config
     const workerId = `${serviceId}:${index}`
 
-    const { port1: loggerDestination, port2: loggingPort } = new MessageChannel()
-    loggerDestination.on('message', this.#forwardThreadLog.bind(this))
-
     // Handle inspector
     let inspectorOptions
 
@@ -1019,26 +1018,19 @@ class Runtime extends EventEmitter {
         },
         inspectorOptions,
         dirname: this.#configManager.dirname,
-        runtimeLogsDir: this.#runtimeLogsDir,
-        loggingPort
+        runtimeLogsDir: this.#runtimeLogsDir
       },
       argv: serviceConfig.arguments,
       execArgv,
       env: workerEnv,
-      transferList: [loggingPort],
       resourceLimits: {
         maxOldGenerationSizeMb: health.maxHeapTotal
       },
-      /*
-        Important: always set stdout and stderr to true, so that worker's output is not automatically
-        piped to the parent thread. We actually never output the thread output since we replace it
-        with PinoWritable, and disabling the piping avoids us to redeclare some internal Node.js methods.
-
-        The author of this (Paolo and Matteo) are not proud of the solution. Forgive us.
-      */
       stdout: true,
       stderr: true
     })
+
+    this.#handleWorkerStandardStreams(worker, serviceId, workersCount > 1 ? index : undefined)
 
     // Make sure the listener can handle a lot of API requests at once before raising a warning
     worker.setMaxListeners(1e3)
@@ -1081,8 +1073,6 @@ class Runtime extends EventEmitter {
     worker[kId] = workersCount > 1 ? workerId : serviceId
     worker[kServiceId] = serviceId
     worker[kWorkerId] = workersCount > 1 ? index : undefined
-    worker[kLoggerDestination] = loggerDestination
-    worker[kLoggingPort] = loggingPort
 
     if (inspectorOptions) {
       worker[kInspectorOptions] = {
@@ -1226,6 +1216,8 @@ class Runtime extends EventEmitter {
         workerUrl = await sendViaITC(worker, 'start')
       }
 
+      await this.#avoidOutOfOrderThreadLogs()
+
       if (workerUrl) {
         this.#url = workerUrl
       }
@@ -1319,6 +1311,8 @@ class Runtime extends EventEmitter {
       await worker.terminate()
     }
 
+    await this.#avoidOutOfOrderThreadLogs()
+
     worker[kWorkerStatus] = 'stopped'
   }
 
@@ -1326,8 +1320,7 @@ class Runtime extends EventEmitter {
     this.#workers.delete(workerId)
 
     worker[kITC].close()
-    worker[kLoggerDestination].close()
-    worker[kLoggingPort].close()
+
     clearTimeout(worker[kHealthCheckTimer])
   }
 
@@ -1466,46 +1459,75 @@ class Runtime extends EventEmitter {
     return runtimesLogFiles.sort((runtime1, runtime2) => runtime1.lastModified - runtime2.lastModified)
   }
 
-  #forwardThreadLog (message) {
+  #handleWorkerStandardStreams (worker, serviceId, workerId) {
+    const pinoOptions = { level: 'trace', name: serviceId }
+
+    if (typeof workerId !== 'undefined') {
+      pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: workerId }
+    }
+
+    const logger = this.logger.child(pinoOptions)
+
+    const selectors = {
+      stdout: { level: 'info', caller: 'STDOUT' },
+      stderr: { level: 'error', caller: 'STDERR' }
+    }
+
+    worker.stdout.pipe(split2()).on('data', raw => {
+      let selector = selectors.stdout
+
+      if (raw.includes(kStderrMarker)) {
+        selector = selectors.stderr
+        raw = raw.replaceAll(kStderrMarker, '')
+      }
+
+      this.#forwardThreadLog(logger, selector, raw)
+    })
+
+    // Whatever is outputted here, it come from a direct process.stderr.write in the thread.
+    // There's nothing we can do about it in regard of out of order logs due to a Node bug.
+    worker.stderr.pipe(split2()).on('data', raw => {
+      this.#forwardThreadLog(logger, selectors.stderr, raw)
+    })
+  }
+
+  #forwardThreadLog (logger, { level, caller }, raw) {
     if (!this.#loggerDestination) {
       return
     }
 
-    for (const log of message.logs) {
-      // In order to being able to forward messages serialized in the
-      // worker threads by directly writing to the destinations using multistream
-      // we unfortunately need to reparse the message to set some internal flags
-      // of the destination which are never set since we bypass pino.
-      let message = JSON.parse(log)
-      let { level, time, msg, raw } = message
+    // Attempt to check if the message is already in pino format. If so, we directly write it to the destination
+    let message
+    try {
+      message = JSON.parse(raw)
+    } catch (e) {
+      // No-op, we assume the message is raw
+    }
 
-      try {
-        const parsed = JSON.parse(raw.trimEnd())
-
-        if (typeof parsed.level === 'number' && typeof parsed.time === 'number') {
-          level = parsed.level
-          time = parsed.time
-          message = parsed
-        } else {
-          message.raw = undefined
-          message.payload = parsed
-        }
-      } catch {
-        if (typeof message.raw === 'string') {
-          message.msg = message.raw.replace(/\n$/, '')
-        }
-
-        message.raw = undefined
-      }
-
-      this.#loggerDestination.lastLevel = level
-      this.#loggerDestination.lastTime = time
-      this.#loggerDestination.lastMsg = msg
+    // Not a pino message, output it
+    if (!message) {
+      // Log the message
+      logger[level]({ caller }, raw.replace(/\n$/, ''))
+    } else if (typeof message?.level === 'number' && typeof message?.time === 'number') {
+      this.#loggerDestination.lastLevel = message.level
+      this.#loggerDestination.lastTime = message.time
+      this.#loggerDestination.lastMsg = message.msg
       this.#loggerDestination.lastObj = message
-      this.#loggerDestination.lastLogger = this.logger
+      this.#loggerDestination.lastLogger = logger
 
-      // Never drop the `\n` as the worker thread trimmed the message
-      this.#loggerDestination.write(JSON.stringify(message) + '\n')
+      // Remember to add '\n' back as split2 removed it
+      this.#loggerDestination.write(raw + '\n')
+    } else {
+      logger[level]({ payload: message })
+    }
+  }
+
+  // Due to Worker Threads implementation via MessagePort, it might happen that if two messages are printed almost
+  // at the same time from a worker and the main thread, the latter always arrives first.
+  // Let's wait few more ticks to ensure the right order.
+  async #avoidOutOfOrderThreadLogs () {
+    for (let i = 0; i < 2; i++) {
+      await sleepUntilNextTick()
     }
   }
 }

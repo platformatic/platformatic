@@ -1,7 +1,6 @@
 'use strict'
 
 const { EventEmitter } = require('node:events')
-const { createRequire } = require('@platformatic/utils')
 const { hostname } = require('node:os')
 const { join, resolve } = require('node:path')
 const { parentPort, workerData, threadId } = require('node:worker_threads')
@@ -10,6 +9,15 @@ const inspector = require('node:inspector')
 const diagnosticChannel = require('node:diagnostics_channel')
 const { ServerResponse } = require('node:http')
 
+const { createTelemetryThreadInterceptorHooks } = require('@platformatic/telemetry')
+const {
+  createRequire,
+  disablePinoDirectWrite,
+  ensureFlushedWorkerStdio,
+  executeWithTimeout,
+  ensureLoggableError,
+  getPrivateSymbol
+} = require('@platformatic/utils')
 const dotenv = require('dotenv')
 const pino = require('pino')
 const { fetch, setGlobalDispatcher, getGlobalDispatcher, Agent } = require('undici')
@@ -20,31 +28,9 @@ const { RemoteCacheStore, httpCacheInterceptor } = require('./http-cache')
 const { PlatformaticApp } = require('./app')
 const { setupITC } = require('./itc')
 const { loadInterceptors } = require('./interceptors')
-const { createTelemetryThreadInterceptorHooks } = require('@platformatic/telemetry')
+const { kId, kITC, kStderrMarker } = require('./symbols')
 
-const {
-  MessagePortWritable,
-  createPinoWritable,
-  executeWithTimeout,
-  ensureLoggableError
-} = require('@platformatic/utils')
-const { kId, kITC } = require('./symbols')
-
-process.on('uncaughtException', handleUnhandled.bind(null, 'uncaught exception'))
-process.on('unhandledRejection', handleUnhandled.bind(null, 'unhandled rejection'))
-
-globalThis.fetch = fetch
-globalThis[kId] = threadId
-
-let app
-
-const config = workerData.config
-globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, {
-  logger: createLogger(),
-  events: new EventEmitter()
-})
-
-function handleUnhandled (type, err) {
+function handleUnhandled (app, type, err) {
   const label =
     workerData.worker.count > 1
       ? `worker ${workerData.worker.index} of the service "${workerData.serviceConfig.id}"`
@@ -59,20 +45,37 @@ function handleUnhandled (type, err) {
     })
 }
 
+function patchLogging () {
+  disablePinoDirectWrite()
+  ensureFlushedWorkerStdio()
+
+  const kFormatForStderr = getPrivateSymbol(console, 'kFormatForStderr')
+
+  // To avoid out of order printing on the main thread, instruct console to only print to the stdout.
+  console._stderr = console._stdout
+  console._stderrErrorHandler = console._stdoutErrorHandler
+
+  // To recognize stderr in the main thread, each line is prepended with a special private Unicode character.
+  const originalFormatter = console[kFormatForStderr]
+  console[kFormatForStderr] = function (args) {
+    let string = kStderrMarker + originalFormatter(args).replaceAll('\n', '\n' + kStderrMarker)
+
+    if (string.endsWith(kStderrMarker)) {
+      string = string.slice(0, -1)
+    }
+
+    return string
+  }
+}
+
 function createLogger () {
-  const destination = new MessagePortWritable({ port: workerData.loggingPort })
   const pinoOptions = { level: 'trace', name: workerData.serviceConfig.id }
 
-  if (typeof workerData.worker?.index !== 'undefined') {
+  if (workerData.worker?.count > 1) {
     pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: workerData.worker.index }
   }
 
-  const loggerInstance = pino(pinoOptions, destination)
-
-  Reflect.defineProperty(process, 'stdout', { value: createPinoWritable(loggerInstance, 'info', false, 'STDOUT') })
-  Reflect.defineProperty(process, 'stderr', { value: createPinoWritable(loggerInstance, 'error', false, 'STDERR') })
-
-  return loggerInstance
+  return pino(pinoOptions)
 }
 
 async function performPreloading (...sources) {
@@ -88,6 +91,15 @@ async function performPreloading (...sources) {
 }
 
 async function main () {
+  globalThis.fetch = fetch
+  globalThis[kId] = threadId
+  globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, {
+    logger: createLogger(),
+    events: new EventEmitter()
+  })
+
+  const config = workerData.config
+
   await performPreloading(config, workerData.serviceConfig)
 
   const service = workerData.serviceConfig
@@ -101,6 +113,7 @@ async function main () {
       path: envfile
     })
   }
+
   if (config.env) {
     Object.assign(process.env, config.env)
   }
@@ -219,7 +232,7 @@ async function main () {
   }
 
   // Create the application
-  app = new PlatformaticApp(
+  const app = new PlatformaticApp(
     service,
     workerData.worker.count > 1 ? workerData.worker.index : undefined,
     service.telemetry,
@@ -229,6 +242,9 @@ async function main () {
     !!config.managementApi,
     !!config.watch
   )
+
+  process.on('uncaughtException', handleUnhandled.bind(null, app, 'uncaught exception'))
+  process.on('unhandledRejection', handleUnhandled.bind(null, app, 'unhandled rejection'))
 
   await app.init()
 
@@ -294,6 +310,8 @@ function stripBasePath (basePath) {
     originSetHeader.call(this, name, value)
   }
 }
+
+patchLogging()
 
 // No need to catch this because there is the unhadledRejection handler on top.
 main()

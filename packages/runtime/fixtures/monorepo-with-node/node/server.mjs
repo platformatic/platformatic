@@ -7,6 +7,7 @@ console.info('This is console.info')
 console.log('This is console.log')
 console.warn('This is console.warn')
 console.error('This is console.error')
+console.trace('This is console.trace')
 
 const server = createServer((req, res) => {
   res.setHeader('Content-Type', 'application/json')

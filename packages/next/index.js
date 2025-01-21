@@ -12,6 +12,7 @@ import {
   schemaOptions
 } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
+import { ChildProcess } from 'node:child_process'
 import { once } from 'node:events'
 import { readFile } from 'node:fs/promises'
 import { dirname, resolve as pathResolve } from 'node:path'
@@ -173,6 +174,8 @@ export class NextStackable extends BaseStackable {
       await this.childManager.inject()
       const childPromise = createChildProcessListener()
 
+      this.#ensurePipeableStreamsInFork()
+
       if (this.#nextVersion.major === 14 && this.#nextVersion.minor < 2) {
         await nextDev({
           '--hostname': serverOptions.host,
@@ -184,6 +187,11 @@ export class NextStackable extends BaseStackable {
       }
 
       this.#child = await childPromise
+      this.#child.stdout.setEncoding('utf8')
+      this.#child.stderr.setEncoding('utf8')
+
+      this.#child.stdout.pipe(process.stdout, { end: false })
+      this.#child.stderr.pipe(process.stderr, { end: false })
     } finally {
       await this.childManager.eject()
     }
@@ -270,6 +278,29 @@ export class NextStackable extends BaseStackable {
     }
 
     return scripts
+  }
+
+  // In development mode, Next.js starts the dev server using child_process.fork with stdio set to 'inherit'.
+  // In order to capture the output, we need to ensure that the streams are pipeable and thus we perform a one-time
+  // monkey-patch of the ChildProcess.prototype.spawn method to override stdio[1] and stdio[2] to 'pipe'.
+  #ensurePipeableStreamsInFork () {
+    const originalSpawn = ChildProcess.prototype.spawn
+
+    // IMPORTANT: If Next.js code changes this might not work anymore. When this gives error, dig into Next.js code
+    // to evaluate the new path and/or if this is still necessary.
+    const startServerPath = pathResolve(this.#next, './dist/server/lib/start-server.js')
+
+    ChildProcess.prototype.spawn = function (options) {
+      if (options.args?.[1] === startServerPath) {
+        options.stdio[1] = 'pipe'
+        options.stdio[2] = 'pipe'
+
+        // Uninstall the patch
+        ChildProcess.prototype.spawn = originalSpawn
+      }
+
+      return originalSpawn.call(this, options)
+    }
   }
 }
 

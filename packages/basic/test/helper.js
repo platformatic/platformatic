@@ -7,6 +7,7 @@ import { existsSync } from 'node:fs'
 import { cp, readdir, readFile, symlink, writeFile } from 'node:fs/promises'
 import { platform } from 'node:os'
 import { basename, dirname, resolve } from 'node:path'
+import { Writable } from 'node:stream'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
@@ -35,6 +36,26 @@ export const pltRoot = fileURLToPath(new URL('../../..', import.meta.url))
 export const temporaryFolder = fileURLToPath(new URL('../../../tmp', import.meta.url))
 export const commonFixturesRoot = fileURLToPath(new URL('./fixtures/common', import.meta.url))
 
+class MockedWritable extends Writable {
+  constructor () {
+    super()
+
+    this.verbose = process.env.PLT_TESTS_VERBOSE === 'true'
+    this.messages = []
+  }
+
+  _write (chunk, _, cb) {
+    const message = chunk.toString('utf-8').trim()
+    this.messages.push(message)
+
+    if (this.verbose) {
+      process._rawDebug(message)
+    }
+
+    cb()
+  }
+}
+
 // These come from @platformatic/service, where they are not listed explicitly inside services
 export const defaultDependencies = ['fastify', 'typescript']
 
@@ -56,38 +77,15 @@ export async function createStackable (
   await createDirectory(base)
   t.after(() => safeRemove(base))
 
-  return new BaseStackable(name, version, { context }, base, config)
+  return new BaseStackable(name, version, { context }, base, config, {
+    stdout: new MockedWritable(),
+    stderr: new MockedWritable()
+  })
 }
 
-export function createMockedLogger () {
-  const messages = []
-  const verbose = process.env.PLT_TESTS_VERBOSE === 'true'
-
-  const logger = {
-    debug (message) {
-      messages.push(['DEBUG', message])
-
-      if (verbose) {
-        process._rawDebug(['DEBUG', message])
-      }
-    },
-    info (message) {
-      messages.push(['INFO', message])
-
-      if (verbose) {
-        process._rawDebug(['INFO', message])
-      }
-    },
-    error (message) {
-      messages.push(['ERROR', message])
-
-      if (verbose) {
-        process._rawDebug(['ERROR', message])
-      }
-    }
-  }
-
-  return { logger, messages }
+export function getExecutedCommandLogMessage (command) {
+  // This is needed to handle backslashes on Windows
+  return JSON.stringify(`Executing "${command}" ...`)
 }
 
 export function setFixturesDir (directory) {

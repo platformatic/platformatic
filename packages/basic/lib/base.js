@@ -8,7 +8,6 @@ import { hostname, platform } from 'node:os'
 import { pathToFileURL } from 'node:url'
 import { workerData } from 'node:worker_threads'
 import pino from 'pino'
-import split2 from 'split2'
 import { NonZeroExitCode } from './errors.js'
 import { cleanBasePath } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
@@ -21,7 +20,7 @@ export class BaseStackable {
   #subprocessStarted
   #metricsCollected
 
-  constructor (type, version, options, root, configManager) {
+  constructor (type, version, options, root, configManager, standardStreams = {}) {
     options.context.worker ??= { count: 1, index: 0 }
 
     this.type = type
@@ -45,6 +44,8 @@ export class BaseStackable {
     this.endHttpTimer = null
     this.clientWs = null
     this.runtimeConfig = deepmerge(options.context?.runtimeConfig ?? {}, workerData?.config ?? {})
+    this.stdout = standardStreams?.stdout ?? process.stdout
+    this.stderr = standardStreams?.stderr ?? process.stderr
 
     // Setup the logger
     const pinoOptions = {
@@ -59,7 +60,7 @@ export class BaseStackable {
       pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: this.workerId }
     }
 
-    this.logger = pino(pinoOptions)
+    this.logger = pino(pinoOptions, standardStreams?.stdout)
 
     // Setup globals
     this.registerGlobals({
@@ -182,27 +183,7 @@ export class BaseStackable {
     try {
       await this.childManager?.inject()
 
-      const subprocess = this.spawn(command)
-      subprocess.stdout.setEncoding('utf8')
-      subprocess.stderr.setEncoding('utf8')
-
-      // Wait for the process to be started
-      await new Promise((resolve, reject) => {
-        subprocess.on('spawn', resolve)
-        subprocess.on('error', reject)
-      })
-
-      // Route anything not catched by child process logger to the logger manually
-      /* c8 ignore next 3 */
-      subprocess.stdout.pipe(split2()).on('data', line => {
-        this.logger.info(line)
-      })
-
-      /* c8 ignore next 3 */
-      subprocess.stderr.pipe(split2()).on('data', line => {
-        this.logger.error(line)
-      })
-
+      const subprocess = await this.spawn(command)
       const [exitCode] = await once(subprocess, 'exit')
 
       if (exitCode !== 0) {
@@ -250,28 +231,7 @@ export class BaseStackable {
 
     try {
       await this.childManager.inject()
-
-      this.subprocess = this.spawn(command)
-      this.subprocess.stdout.setEncoding('utf8')
-      this.subprocess.stderr.setEncoding('utf8')
-
-      // Route anything not catched by child process logger to the logger manually
-      /* c8 ignore next 3 */
-      this.subprocess.stdout.pipe(split2()).on('data', line => {
-        this.logger.info(line)
-      })
-
-      /* c8 ignore next 3 */
-      this.subprocess.stderr.pipe(split2()).on('data', line => {
-        this.logger.error(line)
-      })
-
-      // Wait for the process to be started
-      await new Promise((resolve, reject) => {
-        this.subprocess.on('spawn', resolve)
-        this.subprocess.on('error', reject)
-      })
-
+      this.subprocess = await this.spawn(command)
       this.#subprocessStarted = true
     } catch (e) {
       this.childManager.close()
@@ -327,13 +287,28 @@ export class BaseStackable {
     return this.childManager
   }
 
-  spawn (command) {
+  async spawn (command) {
     const [executable, ...args] = parseCommandString(command)
 
     /* c8 ignore next 3 */
-    return platform() === 'win32'
-      ? spawn(command, { cwd: this.root, shell: true, windowsVerbatimArguments: true })
-      : spawn(executable, args, { cwd: this.root })
+    const subprocess =
+      platform() === 'win32'
+        ? spawn(command, { cwd: this.root, shell: true, windowsVerbatimArguments: true })
+        : spawn(executable, args, { cwd: this.root })
+
+    subprocess.stdout.setEncoding('utf8')
+    subprocess.stderr.setEncoding('utf8')
+
+    subprocess.stdout.pipe(this.stdout, { end: false })
+    subprocess.stderr.pipe(this.stderr, { end: false })
+
+    // Wait for the process to be started
+    await new Promise((resolve, reject) => {
+      subprocess.on('spawn', resolve)
+      subprocess.on('error', reject)
+    })
+
+    return subprocess
   }
 
   async _collectMetrics () {
@@ -437,8 +412,7 @@ export class BaseStackable {
       /* c8 ignore next 2 */
       port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
-      telemetryConfig: this.telemetryConfig,
-      interceptLogging: typeof workerData?.loggingPort !== 'undefined'
+      telemetryConfig: this.telemetryConfig
     }
   }
 }

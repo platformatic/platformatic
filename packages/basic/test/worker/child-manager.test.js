@@ -5,10 +5,34 @@ import { test } from 'node:test'
 import { WebSocket } from 'ws'
 import { exitCodes } from '../../lib/errors.js'
 import { ChildManager } from '../../lib/worker/child-manager.js'
-import { createMockedLogger } from '../helper.js'
 
 function createLogger () {
-  const { messages, logger } = createMockedLogger()
+  const messages = []
+  const verbose = process.env.PLT_TESTS_VERBOSE === 'true'
+
+  const logger = {
+    debug (message) {
+      messages.push(['DEBUG', message])
+
+      if (verbose) {
+        process._rawDebug(['DEBUG', message])
+      }
+    },
+    info (message) {
+      messages.push(['INFO', message])
+
+      if (verbose) {
+        process._rawDebug(['INFO', message])
+      }
+    },
+    error (message) {
+      messages.push(['ERROR', message])
+
+      if (verbose) {
+        process._rawDebug(['ERROR', message])
+      }
+    }
+  }
 
   globalThis.platformatic ??= {}
   globalThis.platformatic.logger = logger

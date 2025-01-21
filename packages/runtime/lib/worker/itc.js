@@ -65,6 +65,9 @@ function setupITC (app, service, dispatcher) {
         if (status === 'starting') {
           await once(app, 'start')
         } else {
+          // This gives a chance to a stackable to perform custom logic
+          globalThis.platformatic.events.emit('start')
+
           await app.start()
         }
 
@@ -84,6 +87,9 @@ function setupITC (app, service, dispatcher) {
         }
 
         if (status !== 'stopped') {
+          // This gives a chance to a stackable to perform custom logic
+          globalThis.platformatic.events.emit('stop')
+
           await app.stop()
         }
 
