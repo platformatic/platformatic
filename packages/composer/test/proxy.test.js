@@ -1155,3 +1155,90 @@ test('adds x-forwarded-proto', async (t) => {
     assert.equal(parsed.headers['x-forwarded-proto'], 'https')
   }
 })
+
+test('should rewrite Location headers for proxied services https', async t => {
+  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
+
+  await ensureCleanup(t, [nodeModulesRoot])
+
+  // Make sure there is @platformatic/node available in the node service.
+  // We can't simply specify it in the package.json due to circular dependencies.
+  await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
+  await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
+
+  const { certificate, privateKey } = selfCert({})
+  const localDir = tmpdir()
+  const tmpDir = await mkdtemp(join(localDir, 'plt-composer-proxy-https-test-'))
+  const privateKeyPath = join(tmpDir, 'plt.key')
+  const certificatePath = join(tmpDir, 'plt.cert')
+
+  await writeFile(privateKeyPath, privateKey)
+  await writeFile(certificatePath, certificate)
+
+  {
+    const previousDispatcher = getGlobalDispatcher()
+    setGlobalDispatcher(new Agent({
+      connect: {
+        rejectUnauthorized: false,
+      },
+    }))
+    t.after(() => {
+      setGlobalDispatcher(previousDispatcher)
+    })
+  }
+
+  const runtime = await createComposerInRuntime(
+    t,
+    'composer-prefix-in-conf',
+    {
+      server: {
+        https: {
+          key: {
+            path: privateKeyPath
+          },
+          cert: {
+            path: certificatePath
+          }
+        }
+      },
+      composer: {
+        services: [
+          {
+            id: 'main',
+            proxy: {
+              prefix: '/whatever'
+            }
+          }
+        ],
+        refreshTimeout: REFRESH_TIMEOUT
+      }
+    },
+    [
+      {
+        id: 'main',
+        path: resolve(__dirname, './proxy/fixtures/node')
+      }
+    ]
+  )
+
+  t.after(() => {
+    return runtime.close()
+  })
+
+  const address = await runtime.start()
+
+  {
+    const {
+      statusCode,
+      body: rawBody,
+      headers
+    } = await request(address, {
+      method: 'GET',
+      path: '/whatever/redirect-secure'
+    })
+    assert.equal(statusCode, 307)
+    assert.equal(headers.location, '/whatever/id')
+
+    rawBody.dump()
+  }
+})

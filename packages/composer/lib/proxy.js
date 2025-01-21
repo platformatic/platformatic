@@ -138,7 +138,7 @@ module.exports = fp(async function (app, opts) {
       })
     }
 
-    const toReplace = url?.replace(/127\.0\.0\.1/, 'localhost').replace(/\[::\]/, 'localhost')
+    const toReplace = url ? new RegExp(url.replace(/127\.0\.0\.1/, 'localhost').replace(/\[::\]/, 'localhost').replace('http://', 'https?://')) : null
 
     const proxyOptions = {
       websocket: true,
@@ -156,8 +156,10 @@ module.exports = fp(async function (app, opts) {
         rewriteHeaders: (headers) => {
           let location = headers.location
           if (location) {
-            location = location.replace(toReplace, '')
-            if (location && !urlPattern.test(location) && internalRewriteLocationHeader) {
+            if (toReplace) {
+              location = location.replace(toReplace, '')
+            }
+            if (!urlPattern.test(location) && internalRewriteLocationHeader) {
               location = location.replace(rewritePrefix, prefix)
             }
             headers.location = location
