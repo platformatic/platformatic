@@ -6,7 +6,7 @@ import { platform } from 'node:os'
 import { test } from 'node:test'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
-import { createStackable, isWindows, temporaryFolder } from './helper.js'
+import { createStackable, getExecutedCommandLogMessage, isWindows, temporaryFolder } from './helper.js'
 
 test('BaseStackable - should properly initialize', async t => {
   const stackable = await createStackable(t, { serviceId: 'service' })
@@ -116,7 +116,7 @@ test('BaseStackable - buildWithCommand - should execute the requested command', 
   const executablePath = fileURLToPath(new URL('./fixtures/print-cwd.js', import.meta.url))
   await stackable.buildWithCommand(['node', executablePath], import.meta.dirname)
 
-  ok(stackable.stdout.messages[0].includes(`Executing \\"node ${executablePath}\\" ...`))
+  ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
   deepStrictEqual(stackable.stderr.messages[0], temporaryFolder)
 })
 
@@ -129,7 +129,7 @@ test('BaseStackable - buildWithCommand - should handle exceptions', async t => {
     /PLT_BASIC_NON_ZERO_EXIT_CODE/
   )
 
-  ok(stackable.stdout.messages[0].includes(`Executing \\"node ${executablePath}\\" ...`))
+  ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
   ok(JSON.parse(stackable.stdout.messages[1]).err.message.startsWith(`Cannot find module '${executablePath}'`))
 })
 
@@ -140,9 +140,9 @@ test('BaseStackable - buildWithCommand - should not inject the Platformatic code
   await stackable.buildWithCommand(`node ${executablePath}`, import.meta.dirname)
   await stackable.buildWithCommand(`node ${executablePath}`, import.meta.dirname, { disableChildManager: true })
 
-  ok(stackable.stdout.messages[0].includes(`Executing \\"node ${executablePath}\\" ...`))
+  ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
   deepStrictEqual(stackable.stdout.messages[1], 'INJECTED true')
-  ok(stackable.stdout.messages[2].includes(`Executing \\"node ${executablePath}\\" ...`))
+  ok(stackable.stdout.messages[2].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
   deepStrictEqual(stackable.stdout.messages[3], 'INJECTED false')
 })
 
@@ -154,7 +154,7 @@ test(
 
     await stackable.buildWithCommand('/usr/bin/env', import.meta.dirname, { disableChildManager: true })
 
-    ok(stackable.stdout.messages[0].includes('Executing \\"/usr/bin/env\\" ...'))
+    ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage('/usr/bin/env')))
     ok(stackable.stdout.messages.slice(1).every(s => s.match(/[a-z0-9-_]=.+/i)))
   }
 )
@@ -168,7 +168,7 @@ test(
     const executablePath = fileURLToPath(new URL('./fixtures/build-context.sh', import.meta.url))
     await stackable.buildWithCommand(executablePath, import.meta.dirname, { disableChildManager: true })
 
-    ok(stackable.stdout.messages[0].includes(`Executing \\"${executablePath}\\" ...`))
+    ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(executablePath)))
     deepStrictEqual(stackable.stdout.messages.slice(1), [`PWD=${temporaryFolder}`])
 
     deepStrictEqual(stackable.stderr.messages.slice(0), [

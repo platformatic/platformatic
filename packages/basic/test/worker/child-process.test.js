@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 import { Worker } from 'node:worker_threads'
 import { Agent, Client, setGlobalDispatcher } from 'undici'
 import { createThreadInterceptor } from 'undici-thread-interceptor'
-import { createStackable } from '../helper.js'
+import { createStackable, getExecutedCommandLogMessage } from '../helper.js'
 
 function serverHandler (_, res) {
   res.writeHead(200, {
@@ -38,7 +38,7 @@ test('ChildProcess - can load a script with additional loader and scripts', asyn
     scripts: [new URL('../fixtures/imported.js', import.meta.url)]
   })
 
-  ok(stackable.stdout.messages[0].includes(`Executing \\"node ${executablePath}\\" ...`))
+  ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
   deepStrictEqual(stackable.stdout.messages.slice(1), ['IMPORTED', 'LOADED true'])
 })
 
@@ -160,7 +160,7 @@ test('ChildProcess - should intercept fetch calls', async t => {
   await server.close()
   tcpWirer.terminate()
 
-  ok(stackable.stdout.messages[0].includes(`Executing \\"node ${executablePath}\\" ...`))
+  ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
   deepStrictEqual(
     // eslint-disable-next-line no-control-regex
     stackable.stdout.messages.slice(1).map(l => l.replace(/(\x1b\[[0-9;]+m)/gi, '')),

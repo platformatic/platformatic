@@ -83,6 +83,11 @@ export async function createStackable (
   })
 }
 
+export function getExecutedCommandLogMessage (command) {
+  // This is needed to handle backslashes on Windows
+  return JSON.stringify(`Executing "${command}" ...`)
+}
+
 export function setFixturesDir (directory) {
   fixturesDir = directory
 }
