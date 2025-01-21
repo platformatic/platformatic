@@ -161,7 +161,7 @@ test('resolve - should install dependencies using a different package manager', 
 
   ok(resolveProcess.stdout.includes(`Cloning ${repo} into web${sep}resolved`))
   ok(resolveProcess.stdout.includes('Installing dependencies for the application using pnpm ...'))
-  ok(resolveProcess.stdout.includes('Installing dependencies for the service resolved using npm ...'))
+  ok(resolveProcess.stdout.includes('Installing dependencies for the service resolved using pnpm ...'))
 
   deepStrictEqual(await readFile(resolve(rootDir, 'web/resolved/branch'), 'utf8'), 'main')
 })

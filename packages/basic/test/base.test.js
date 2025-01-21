@@ -6,7 +6,7 @@ import { platform } from 'node:os'
 import { test } from 'node:test'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
-import { createMockedLogger, createStackable, isWindows, temporaryFolder } from './helper.js'
+import { createStackable, getExecutedCommandLogMessage, isWindows, temporaryFolder } from './helper.js'
 
 test('BaseStackable - should properly initialize', async t => {
   const stackable = await createStackable(t, { serviceId: 'service' })
@@ -81,16 +81,12 @@ test('BaseStackable - getWatchConfig - disabled', async t => {
 test('BaseStackable - log - should properly log', async t => {
   const stackable = await createStackable(t)
 
-  const { messages, logger } = createMockedLogger()
-  stackable.logger = logger
-
   await stackable.log({ message: 'MESSAGE 1' })
   await stackable.log({ message: 'MESSAGE 2', level: 'error' })
 
-  deepStrictEqual(messages, [
-    ['INFO', 'MESSAGE 1'],
-    ['ERROR', 'MESSAGE 2']
-  ])
+  const messages = stackable.stdout.messages.map(JSON.parse)
+  ok(messages[0].level === 30 && messages[0].msg === 'MESSAGE 1')
+  ok(messages[1].level === 50 && messages[1].msg === 'MESSAGE 2')
 })
 
 test('BaseStackable - verifyOutputDirectory - throw an error', async t => {
@@ -116,22 +112,16 @@ test('BaseStackable - verifyOutputDirectory - do not throw on existing directori
 
 test('BaseStackable - buildWithCommand - should execute the requested command', async t => {
   const stackable = await createStackable(t, { isProduction: true })
-  const { messages, logger } = createMockedLogger()
-  stackable.logger = logger
 
   const executablePath = fileURLToPath(new URL('./fixtures/print-cwd.js', import.meta.url))
   await stackable.buildWithCommand(['node', executablePath], import.meta.dirname)
 
-  deepStrictEqual(messages, [
-    ['DEBUG', `Executing "node ${executablePath}" ...`],
-    ['ERROR', temporaryFolder]
-  ])
+  ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
+  deepStrictEqual(stackable.stderr.messages[0], temporaryFolder)
 })
 
 test('BaseStackable - buildWithCommand - should handle exceptions', async t => {
   const stackable = await createStackable(t, {})
-  const { messages, logger } = createMockedLogger()
-  stackable.logger = logger
 
   const executablePath = fileURLToPath(new URL('./fixtures/invalid.js', import.meta.url))
   await rejects(
@@ -139,25 +129,21 @@ test('BaseStackable - buildWithCommand - should handle exceptions', async t => {
     /PLT_BASIC_NON_ZERO_EXIT_CODE/
   )
 
-  deepStrictEqual(messages[0], ['DEBUG', `Executing "node ${executablePath}" ...`])
-  ok(JSON.parse(messages[1][1]).err.message.startsWith(`Cannot find module '${executablePath}'`))
+  ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
+  ok(JSON.parse(stackable.stdout.messages[1]).err.message.startsWith(`Cannot find module '${executablePath}'`))
 })
 
 test('BaseStackable - buildWithCommand - should not inject the Platformatic code if asked to', async t => {
   const stackable = await createStackable(t, {})
-  const { messages, logger } = createMockedLogger()
-  stackable.logger = logger
 
   const executablePath = fileURLToPath(new URL('./fixtures/build-context.js', import.meta.url))
   await stackable.buildWithCommand(`node ${executablePath}`, import.meta.dirname)
   await stackable.buildWithCommand(`node ${executablePath}`, import.meta.dirname, { disableChildManager: true })
 
-  deepStrictEqual(messages, [
-    ['DEBUG', `Executing "node ${executablePath}" ...`],
-    ['INFO', 'INJECTED true'],
-    ['DEBUG', `Executing "node ${executablePath}" ...`],
-    ['INFO', 'INJECTED false']
-  ])
+  ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
+  deepStrictEqual(stackable.stdout.messages[1], 'INJECTED true')
+  ok(stackable.stdout.messages[2].includes(getExecutedCommandLogMessage(`node ${executablePath}`)))
+  deepStrictEqual(stackable.stdout.messages[3], 'INJECTED false')
 })
 
 test(
@@ -165,14 +151,11 @@ test(
   { skip: isWindows },
   async t => {
     const stackable = await createStackable(t, {})
-    const { messages, logger } = createMockedLogger()
-    stackable.logger = logger
-
-    const env = Object.entries(process.env).map(([key, value]) => ['INFO', `${key}=${value}`])
 
     await stackable.buildWithCommand('/usr/bin/env', import.meta.dirname, { disableChildManager: true })
 
-    deepStrictEqual(messages, [['DEBUG', 'Executing "/usr/bin/env" ...'], ...env])
+    ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage('/usr/bin/env')))
+    ok(stackable.stdout.messages.slice(1).every(s => s.match(/[a-z0-9-_]=.+/i)))
   }
 )
 
@@ -181,18 +164,17 @@ test(
   { skip: isWindows },
   async t => {
     const stackable = await createStackable(t, {})
-    const { messages, logger } = createMockedLogger()
-    stackable.logger = logger
 
     const executablePath = fileURLToPath(new URL('./fixtures/build-context.sh', import.meta.url))
     await stackable.buildWithCommand(executablePath, import.meta.dirname, { disableChildManager: true })
 
-    deepStrictEqual(messages, [
-      ['DEBUG', `Executing "${executablePath}" ...`],
-      ['ERROR', '++ pwd'],
-      ['ERROR', `+ OUTPUT=${temporaryFolder}`],
-      ['ERROR', `+ echo PWD=${temporaryFolder}`],
-      ['INFO', `PWD=${temporaryFolder}`]
+    ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(executablePath)))
+    deepStrictEqual(stackable.stdout.messages.slice(1), [`PWD=${temporaryFolder}`])
+
+    deepStrictEqual(stackable.stderr.messages.slice(0), [
+      '++ pwd',
+      `+ OUTPUT=${temporaryFolder}`,
+      `+ echo PWD=${temporaryFolder}`
     ])
   }
 )
@@ -256,8 +238,7 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
       telemetryConfig: {},
       isEntrypoint: true,
       runtimeBasePath: null,
-      wantsAbsoluteUrls: false,
-      interceptLogging: false
+      wantsAbsoluteUrls: false
     })
   }
 
@@ -341,8 +322,7 @@ test('BaseStackable - should import and setup open telemetry HTTP instrumentatio
       },
       isEntrypoint: true,
       runtimeBasePath: null,
-      wantsAbsoluteUrls: false,
-      interceptLogging: false
+      wantsAbsoluteUrls: false
     })
   }
 
@@ -437,8 +417,7 @@ test('BaseStackable - stopCommand - should forcefully exit the process if it doe
       isEntrypoint: true,
       runtimeBasePath: null,
       wantsAbsoluteUrls: false,
-      events: undefined,
-      interceptLogging: false
+      events: undefined
     })
   }
 

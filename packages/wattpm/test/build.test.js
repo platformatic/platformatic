@@ -89,7 +89,7 @@ test('install - should install dependencies of application and its services usin
   const installProcess = await wattpm('install', rootDir, '-P', 'pnpm')
 
   ok(installProcess.stdout.includes('Installing dependencies for the application using pnpm ...'))
-  ok(installProcess.stdout.includes('Installing dependencies for the service main using npm ...'))
+  ok(installProcess.stdout.includes('Installing dependencies for the service main using pnpm ...'))
 })
 
 test('install - should respect the service package manager, if any', async t => {
@@ -124,5 +124,5 @@ test('install - should install production dependencies only', async t => {
   const installProcess = await wattpm('install', rootDir, '-p', '-P', 'pnpm')
 
   ok(installProcess.stdout.includes('Installing production dependencies for the application using pnpm ...'))
-  ok(installProcess.stdout.includes('Installing production dependencies for the service main using npm ...'))
+  ok(installProcess.stdout.includes('Installing production dependencies for the service main using pnpm ...'))
 })
