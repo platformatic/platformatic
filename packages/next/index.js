@@ -285,11 +285,21 @@ export class NextStackable extends BaseStackable {
   // monkey-patch of the ChildProcess.prototype.spawn method to override stdio[1] and stdio[2] to 'pipe'.
   #ensurePipeableStreamsInFork () {
     const originalSpawn = ChildProcess.prototype.spawn
+
+    // IMPORTANT: If Next.js code changes this might not work anymore. When this gives error, dig into Next.js code
+    // to evaluate the new path and/or if this is still necessary.
+    const startServerPath = pathResolve(this.#next, './dist/server/lib/start-server.js')
+
     ChildProcess.prototype.spawn = function (options) {
-      options.stdio[1] = 'pipe'
-      options.stdio[2] = 'pipe'
+      if (options.args?.[1] === startServerPath) {
+        options.stdio[1] = 'pipe'
+        options.stdio[2] = 'pipe'
+
+        // Uninstall the patch
+        ChildProcess.prototype.spawn = originalSpawn
+      }
+
       originalSpawn.call(this, options)
-      ChildProcess.prototype.spawn = originalSpawn
     }
   }
 }
