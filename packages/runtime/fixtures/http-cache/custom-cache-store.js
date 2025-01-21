@@ -3,7 +3,8 @@
 const { Writable } = require('node:stream')
 
 class CustomCacheStore {
-  constructor () {
+  constructor (opts = {}) {
+    this.opts = opts
     this.counter = 0
   }
 
@@ -15,7 +16,10 @@ class CustomCacheStore {
       headers: {
         'content-type': 'application/json'
       },
-      body: 'Custom cache store response',
+      body: JSON.stringify({
+        message: 'Custom cache store response',
+        options: this.opts
+      }),
       cacheTags: [],
       cachedAt: Date.now(),
       staleAt: Date.now() + 5000,
