@@ -299,7 +299,7 @@ export class NextStackable extends BaseStackable {
         ChildProcess.prototype.spawn = originalSpawn
       }
 
-      originalSpawn.call(this, options)
+      return originalSpawn.call(this, options)
     }
   }
 }
