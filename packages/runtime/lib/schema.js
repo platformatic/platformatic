@@ -302,6 +302,15 @@ const platformaticRuntimeSchema = {
             },
             cacheTagsHeader: {
               type: 'string'
+            },
+            maxSize: {
+              type: 'integer'
+            },
+            maxEntrySize: {
+              type: 'integer'
+            },
+            maxCount: {
+              type: 'integer'
             }
           }
         }

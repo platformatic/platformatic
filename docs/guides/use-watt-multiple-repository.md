@@ -54,6 +54,94 @@ npx wattpm resolve {repository name and directory path}
 }
 ```
 
+## Multi-Repository Structure Setup
+
+### Repository Organization
+When working with multiple repositories in Watt, you'll typically have:
+1. A main application repository containing your Watt configuration
+2. One or more service repositories containing individual services
+
+### Setting Up the Main Repository
+
+1. Create your main application repository:
+
+```sh
+mkdir my-watt-app
+cd my-watt-app
+git init
+```
+
+2. Initialize your Watt application:
+
+```sh
+npx wattpm@latest init
+```
+
+
+3. Create the directory structure for external services:
+
+```sh
+mkdir -p web/
+mkdir -p external/
+```
+### Adding Service Repositories
+
+1. Update your root `watt.json` file to define your service repositories:
+
+```sh
+ "web": [
+    {
+      "id": "composer",
+      "path": "web/composer"
+    },
+    {
+      "id": "app",
+      "path": "web/app"
+    },
+    {
+      "id": "node",
+      "path": "{PLT_NODE_PATH}",
+      "url": "YOUR_SERVICE_GITHUB_URL"
+    },
+    {
+      "id": "next",
+      "path": "{PLT_NEXT_PATH}",
+      "url": "YOUR_SERVICE_GITHUB_URL"
+    }
+  ],
+```
+
+### Version Control Configuration
+
+1. Update your main repository's `.gitignore`:
+
+```sh
+# Ignore resolved services
+web/*
+external/*
+!web/.gitkeep
+!external/.gitkeep
+
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+```
+
+2. Update your `package.json` 
+
+In your root `package.json` file and update your workspace to include service workspaces: 
+
+```sh
+{
+  "workspaces": [
+    "web/services/*",
+    "external/services/*"
+  ]
+}
+```
+
 ## Working with Services
 
 ### Resolving Services

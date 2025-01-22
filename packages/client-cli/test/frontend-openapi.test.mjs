@@ -136,9 +136,25 @@ export const getCustomSwagger = async (request) => {
 export interface Sample {
   setBaseUrl(newUrl: string) : void;
   setDefaultHeaders(headers: object) : void;
+  /**
+   * @param req - request parameters object
+   * @returns the API response body
+   */
   getCustomSwagger(req: GetCustomSwaggerRequest): Promise<GetCustomSwaggerResponses>;
+  /**
+   * @param req - request parameters object
+   * @returns the API response body
+   */
   getRedirect(req: GetRedirectRequest): Promise<GetRedirectResponses>;
+  /**
+   * @param req - request parameters object
+   * @returns the API response body
+   */
   getReturnUrl(req: GetReturnUrlRequest): Promise<GetReturnUrlResponses>;
+  /**
+   * @param req - request parameters object
+   * @returns the API response body
+   */
   postFoobar(req: PostFoobarRequest): Promise<PostFoobarResponses>;
 }`
 
@@ -264,6 +280,10 @@ export const getHello: Api['getHello'] = async (request: Types.GetHelloRequest):
 export interface Api {
   setBaseUrl(newUrl: string) : void;
   setDefaultHeaders(headers: object) : void;
+  /**
+   * @param req - request parameters object
+   * @returns the API response body
+   */
   getHello(req: GetHelloRequest): Promise<GetHelloResponses>;
 }`
 
@@ -293,6 +313,10 @@ export const getHello: ACustomName['getHello'] = async (request: Types.GetHelloR
 export interface ACustomName {
   setBaseUrl(newUrl: string) : void;
   setDefaultHeaders(headers: object) : void;
+  /**
+   * @param req - request parameters object
+   * @returns the API response body
+   */
   getHello(req: GetHelloRequest): Promise<GetHelloResponses>;
 }`
 
@@ -749,6 +773,10 @@ import type * as Types from './client-types'`))
   ok(types.includes(`export interface Client {
   setBaseUrl(newUrl: string) : void;
   setDefaultHeaders(headers: object) : void;
+  /**
+   * @param req - request parameters object
+   * @returns the API response body
+   */
   getHello(req: GetHelloRequest): Promise<GetHelloResponses>;
 }`))
   ok(types.includes("type PlatformaticFrontendClient = Omit<Client, 'setBaseUrl'>"))

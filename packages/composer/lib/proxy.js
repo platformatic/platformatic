@@ -7,6 +7,8 @@ const fp = require('fastify-plugin')
 const kITC = Symbol.for('plt.runtime.itc')
 const kProxyRoute = Symbol('plt.composer.proxy.route')
 
+const urlPattern = /^https?:\/\//
+
 async function resolveServiceProxyParameters (service) {
   // Get meta information from the service, if any, to eventually hook up to a TCP port
   const meta = (await globalThis[kITC]?.send('getServiceMeta', service.id))?.composer ?? { prefix: service.id }
@@ -136,6 +138,8 @@ module.exports = fp(async function (app, opts) {
       })
     }
 
+    const toReplace = url ? new RegExp(url.replace(/127\.0\.0\.1/, 'localhost').replace(/\[::\]/, 'localhost').replace('http://', 'https?://')) : null
+
     const proxyOptions = {
       websocket: true,
       prefix,
@@ -147,8 +151,21 @@ module.exports = fp(async function (app, opts) {
       config: {
         [kProxyRoute]: true
       },
-      internalRewriteLocationHeader,
+      internalRewriteLocationHeader: false,
       replyOptions: {
+        rewriteHeaders: (headers) => {
+          let location = headers.location
+          if (location) {
+            if (toReplace) {
+              location = location.replace(toReplace, '')
+            }
+            if (!urlPattern.test(location) && internalRewriteLocationHeader) {
+              location = location.replace(rewritePrefix, prefix)
+            }
+            headers.location = location
+          }
+          return headers
+        },
         rewriteRequestHeaders: (request, headers) => {
           const targetUrl = `${origin}${request.url}`
           const context = request.span?.context
@@ -168,7 +185,8 @@ module.exports = fp(async function (app, opts) {
             ...headers,
             ...telemetryHeaders,
             'x-forwarded-for': request.ip,
-            'x-forwarded-host': request.host
+            'x-forwarded-host': request.host,
+            'x-forwarded-proto': request.protocol,
           }
 
           return headers

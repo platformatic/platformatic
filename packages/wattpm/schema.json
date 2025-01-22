@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/wattpm/2.36.1.json",
+  "$id": "https://schemas.platformatic.dev/wattpm/2.38.0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
@@ -1067,6 +1067,15 @@
             },
             "cacheTagsHeader": {
               "type": "string"
+            },
+            "maxSize": {
+              "type": "integer"
+            },
+            "maxEntrySize": {
+              "type": "integer"
+            },
+            "maxCount": {
+              "type": "integer"
             }
           }
         }
