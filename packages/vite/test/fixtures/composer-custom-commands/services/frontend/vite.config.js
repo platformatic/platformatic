@@ -14,5 +14,8 @@ export default defineConfig({
   // This is needed for GitHub actions due to https://github.com/vitejs/vite/issues/10802
   resolve: {
     preserveSymlinks: true
+  },
+  server: {
+    allowedHosts: ['.plt.local']
   }
 })
