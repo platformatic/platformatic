@@ -30,7 +30,8 @@ export default defineConfig({
     server: {
       fs: {
         strict: false
-      }
+      },
+      allowedHosts: ['.plt.local']
     }
   }
 })
