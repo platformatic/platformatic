@@ -145,6 +145,9 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime2380Json = {
          */
         methods?: [string, ...string[]];
         cacheTagsHeader?: string;
+        maxSize?: number;
+        maxEntrySize?: number;
+        maxCount?: number;
         [k: string]: unknown;
       };
   watch?: boolean | string;

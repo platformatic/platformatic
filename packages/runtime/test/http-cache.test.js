@@ -135,8 +135,15 @@ test('should use a custom cache storage', async (t) => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
 
+  const cacheStoreOptions = {
+    maxCount: 42,
+    maxSize: 424242,
+    maxEntrySize: 4242
+  }
+
   config.configManager.current.httpCache = {
-    store: join(fixturesDir, 'http-cache', 'custom-cache-store.js')
+    store: join(fixturesDir, 'http-cache', 'custom-cache-store.js'),
+    ...cacheStoreOptions
   }
 
   const app = await buildServer(config.configManager.current)
@@ -154,7 +161,10 @@ test('should use a custom cache storage', async (t) => {
     assert.strictEqual(res.statusCode, 200)
 
     const response = await res.body.text()
-    assert.strictEqual(response, 'Custom cache store response')
+    assert.deepStrictEqual(JSON.parse(response), {
+      message: 'Custom cache store response',
+      options: cacheStoreOptions
+    })
   }
 
   const res = await request(entryUrl + '/service-1/cached-req-counter', {

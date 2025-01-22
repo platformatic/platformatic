@@ -242,6 +242,9 @@ It can be a boolean or an object with the following settings:
 - **`store`** (`string`) - The store to use for the cache. Set an npm package name to use a custom store or path to a file to use a custom store from a file. By default, the `memory` store is used.
 - **`methods`** (`array`) - The HTTP methods to cache. By default, GET and HEAD methods are cached.
 - **`cacheTagsHeader`** (`string`) - The header to use for cache tags.
+- **`maxCount`** (`integer`) - The maximum number of entries in the cache.
+- **`maxSize`** (`integer`) - The maximum size of the cache in bytes.
+- **`maxEntrySize`** (`integer`) - The maximum size of a single entry in the cache in bytes.
 
 ### `server`
 
