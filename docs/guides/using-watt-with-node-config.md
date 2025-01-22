@@ -104,7 +104,7 @@ Platformatic allows you to use `.env` files for managing environment variables, 
 SERVICE_A_NODE_ENV=development
 ```
 
-2.  Use interpolation syntax ${VARIABLE_NAME} in your Watt configuration to reference it:
+2.  Use interpolation syntax `${VARIABLE_NAME}` in your Watt configuration to reference it:
 
 ```json
 {
@@ -114,7 +114,7 @@ SERVICE_A_NODE_ENV=development
       "path": "./services/service-a",
       "env": {
         "NODE_CONFIG_DIR": "./services/service-a/config",
-        "NODE_ENV": "${SERVICE_A_NODE_ENV}"
+        "NODE_ENV": `${YOUR_SERVICE_NODE_ENV}`
       }
     }
   ]
