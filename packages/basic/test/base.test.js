@@ -173,8 +173,6 @@ test(
 
     const actual = stackable.stderr.messages.slice(0).map((line) => line.trim())
 
-    console.log(actual)
-
     deepStrictEqual(actual, [
       '++ pwd',
       `+ OUTPUT=${temporaryFolder}`,
