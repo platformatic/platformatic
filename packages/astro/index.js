@@ -100,7 +100,7 @@ export class AstroStackable extends BaseStackable {
               }
             }
           }
-        ]
+        ],
       })
     } finally {
       globalThis.platformatic.isBuilding = false

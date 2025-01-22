@@ -27,6 +27,9 @@ export default defineConfig({
         strict: false
       },
       allowedHosts: ['.plt.local']
+    },
+    preview: {
+      allowedHosts: ['.plt.local']
     }
   }
 })
