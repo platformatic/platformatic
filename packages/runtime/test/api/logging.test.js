@@ -63,6 +63,14 @@ test('logs stdio from the service thread', async t => {
 
     deepStrictEqual(messages, [
       {
+        level: 20,
+        pid,
+        hostname,
+        name: 'stdio',
+        msg: 'Loading envfile...',
+        payload: undefined
+      },
+      {
         level: 30,
         pid,
         hostname,
