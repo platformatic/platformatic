@@ -107,6 +107,7 @@ class RemoteCacheStore {
 
   #sanitizeRequest (request) {
     return {
+      id: request.id,
       origin: request.origin,
       method: request.method,
       path: request.path,
