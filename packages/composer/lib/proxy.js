@@ -189,6 +189,8 @@ module.exports = fp(async function (app, opts) {
             'x-forwarded-proto': request.protocol,
           }
 
+          request.log.trace({ headers }, 'rewritten headers before proxying')
+
           return headers
         },
         onResponse: (request, reply, res) => {

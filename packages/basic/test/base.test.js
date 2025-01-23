@@ -171,7 +171,9 @@ test(
     ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(executablePath)))
     deepStrictEqual(stackable.stdout.messages.slice(1), [`PWD=${temporaryFolder}`])
 
-    deepStrictEqual(stackable.stderr.messages.slice(0), [
+    const actual = stackable.stderr.messages.slice(0).map((line) => line.trim())
+
+    deepStrictEqual(actual, [
       '++ pwd',
       `+ OUTPUT=${temporaryFolder}`,
       `+ echo PWD=${temporaryFolder}`

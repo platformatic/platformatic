@@ -175,6 +175,7 @@ export class ViteStackable extends BaseStackable {
       https,
       cors,
       hmr: true,
+      allowedHosts: ['.plt.local'],
       fs: {
         strict: config.vite.devServer.strict
       }

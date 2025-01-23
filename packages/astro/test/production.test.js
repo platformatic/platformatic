@@ -54,6 +54,8 @@ const configurations = [
     prefix: '/nested/base/dir'
   },
   {
+    // This is skipped due to https://github.com/vitejs/vite/security/advisories/GHSA-vg6x-rcgg-rjx6
+    skip: true,
     id: 'composer-custom-commands',
     name: 'Astro (in composer with prefix using custom commands)',
     files,

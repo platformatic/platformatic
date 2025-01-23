@@ -100,7 +100,7 @@ export class AstroStackable extends BaseStackable {
               }
             }
           }
-        ]
+        ],
       })
     } finally {
       globalThis.platformatic.isBuilding = false
@@ -192,6 +192,11 @@ export class AstroStackable extends BaseStackable {
       configFile,
       logLevel: this.logger.level,
       server: serverOptions,
+      vite: {
+        server: {
+          allowedHosts: ['.plt.local']
+        }
+      },
       integrations: [
         {
           name: 'platformatic',

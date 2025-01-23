@@ -16,7 +16,7 @@ Supported object properties:
   - **`install`**: The command to execute to install the service dependencies. The default is `npm ci --omit-dev`.
   - **`build`**: The command to execute to build the application.
   - **`development`**: The command to execute to start the application in development mode.
-  - **`production`**: The command to execute to start the application in production mode.
+  - **`production`**: The command to execute to start the application in production mode. This currently does not work due to due to [`CVE-2025-24010`](https://github.com/vitejs/vite/security/advisories/GHSA-vg6x-rcgg-rjx6).
 
 ## `logger`
 

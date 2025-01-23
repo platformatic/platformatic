@@ -34,6 +34,23 @@ When running in production mode, a custom Fastify server will serve the static o
 
 In both modes if the service uses the `commands` property then it's responsible to start a HTTP server. The Platformatic runtime will modify the server port replacing it with a random port and then it will integrate the external service in the runtime.
 
+### Using custom commands
+
+Due to [`CVE-2025-24010`](https://github.com/vitejs/vite/security/advisories/GHSA-vg6x-rcgg-rjx6), you need to set:
+
+```js
+{
+  ...
+  "vite": {
+    "server": {
+      "allowedHosts": [".plt.local"]
+    }
+  }
+}
+```
+
+This will allow other services inside the platformatic mesh network to contact your Vite server.
+
 ## Configuration
 
 See the [configuration](./configuration.md) page.
