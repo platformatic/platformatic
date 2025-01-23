@@ -38,7 +38,7 @@ test('should inject Platformatic code by default when building', async t => {
   await runtime.buildService('frontend')
 
   const logs = await getLogs(runtime)
-  deepEqual(logs[0].msg, 'INJECTED true')
+  deepEqual(logs[1].msg, 'INJECTED true')
 })
 
 test('should not inject Platformatic code when building if asked to', async t => {
@@ -72,5 +72,5 @@ test('should not inject Platformatic code when building if asked to', async t =>
   await runtime.buildService('frontend')
 
   const logs = await getLogs(runtime)
-  deepEqual(logs[0].msg, 'INJECTED false')
+  deepEqual(logs[1].msg, 'INJECTED false')
 })
