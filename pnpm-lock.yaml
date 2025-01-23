@@ -308,7 +308,7 @@ importers:
     devDependencies:
       '@fastify/multipart':
         specifier: ^9.0.1
-        version: 9.0.2
+        version: 9.0.3
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
@@ -3455,8 +3455,8 @@ packages:
   '@fastify/middie@9.0.3':
     resolution: {integrity: sha512-7OYovKXp9UKYeVMcjcFLMcSpoMkmcZmfnG+eAvtdiatN35W7c+r9y1dRfpA+pfFVNuHGGqI3W+vDTmjvcfLcMA==}
 
-  '@fastify/multipart@9.0.2':
-    resolution: {integrity: sha512-UOB5zl62YYTrM99o06Hk8gFVpHBhPwuP7IXeihRjl4nK835XQG3XwN9a+Dd2b4aFYapsQtt1h+QqTCY3ZPhEww==}
+  '@fastify/multipart@9.0.3':
+    resolution: {integrity: sha512-pJogxQCrT12/6I5Fh6jr3narwcymA0pv4B0jbC7c6Bl9wnrxomEUnV0d26w6gUls7gSXmhG8JGRMmHFIPsxt1g==}
 
   '@fastify/pre-commit@2.2.0':
     resolution: {integrity: sha512-P/01iODIvntjCGKNGhCttCuW81Fi6RmU+n3uk0m1w5gr2t6gU/t9gyNJ1WalUmQgJBsJnK+CVAxoY4ugqQo03g==}
@@ -10226,7 +10226,7 @@ snapshots:
       path-to-regexp: 8.2.0
       reusify: 1.0.4
 
-  '@fastify/multipart@9.0.2':
+  '@fastify/multipart@9.0.3':
     dependencies:
       '@fastify/busboy': 3.1.1
       '@fastify/deepmerge': 2.0.1
