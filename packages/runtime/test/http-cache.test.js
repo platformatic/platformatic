@@ -153,31 +153,32 @@ test('should use a custom cache storage', async (t) => {
 
   const cacheTimeoutSec = 10
 
-  for (let i = 0; i < 5; i++) {
-    const res = await request(entryUrl + '/service-1/cached-req-counter', {
+  {
+    // Caching the response
+    const { statusCode, body } = await request(entryUrl + '/service-1/cached-req-counter', {
       query: { maxAge: cacheTimeoutSec }
     })
+    assert.strictEqual(statusCode, 200)
 
-    assert.strictEqual(res.statusCode, 200)
+    const { counter } = await body.json()
+    assert.strictEqual(counter, 1)
 
-    const response = await res.body.text()
-    assert.deepStrictEqual(JSON.parse(response), {
-      message: 'Custom cache store response',
-      options: cacheStoreOptions
-    })
+    await sleep(1000)
   }
 
-  const res = await request(entryUrl + '/service-1/cached-req-counter', {
+  const { statusCode, headers, body } = await request(entryUrl + '/service-1/cached-req-counter', {
     query: { maxAge: cacheTimeoutSec }
   })
+  assert.strictEqual(statusCode, 200)
 
-  assert.strictEqual(res.statusCode, 200)
+  const { message, options, entries } = await body.json()
+  assert.strictEqual(message, 'Custom cache store response')
+  assert.deepStrictEqual(options, cacheStoreOptions)
+  assert.strictEqual(entries.length, 1)
 
-  const cacheControl = res.headers['cache-control']
-  assert.strictEqual(cacheControl, `public, s-maxage=${cacheTimeoutSec}`)
-
-  const { counter } = await res.body.json()
-  assert.strictEqual(counter, 1)
+  const cacheEntry = entries[0]
+  const cacheEntryId = headers['x-plt-http-cache-id']
+  assert.strictEqual(cacheEntry.key.id, cacheEntryId)
 })
 
 test('should remove a url from an http cache', async (t) => {
