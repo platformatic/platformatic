@@ -105,14 +105,18 @@ async function main () {
   const service = workerData.serviceConfig
 
   // Load env file and mixin env vars from service config
+  let envfile
   if (service.envfile) {
-    const envfile = resolve(workerData.dirname, service.envfile)
-    globalThis.platformatic.logger.info({ envfile }, 'Loading envfile...')
-
-    dotenv.config({
-      path: envfile
-    })
+    envfile = resolve(workerData.dirname, service.envfile)
+  } else {
+    envfile = resolve(workerData.serviceConfig.path, '.env')
   }
+
+  globalThis.platformatic.logger.debug({ envfile }, 'Loading envfile...')
+
+  dotenv.config({
+    path: envfile
+  })
 
   if (config.env) {
     Object.assign(process.env, config.env)

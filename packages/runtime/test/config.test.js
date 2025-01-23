@@ -385,6 +385,35 @@ test('supports configurable envfile location', async t => {
   })
 })
 
+test('supports default envfile location', async t => {
+  const configFile = join(fixturesDir, 'env-service', 'platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const dirname = config.configManager.dirname
+  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
+
+  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await runtime.init()
+  await runtime.start()
+
+  const { payload } = await runtime.inject('hello', {
+    method: 'GET',
+    url: '/'
+  })
+  const data = JSON.parse(payload)
+
+  assert.deepStrictEqual(data, {
+    FROM_ENV_FILE: 'true',
+    FROM_MAIN_CONFIG_FILE: 'true',
+    FROM_SERVICE_CONFIG_FILE: 'true',
+    OVERRIDE_TEST: 'service-override'
+  })
+})
+
 test('supports configurable arguments', async t => {
   const configFile = join(fixturesDir, 'custom-argv', 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
