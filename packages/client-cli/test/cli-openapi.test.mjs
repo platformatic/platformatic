@@ -1244,6 +1244,16 @@ test('tsdoc client operation descriptions', async (t) => {
      * @returns the API response body
      */
     updateMovie(req: UpdateMovieRequest): Promise<UpdateMovieResponses>;`))
+
+  // Deprecated method
+  ok(data.includes(`
+    /**
+     * Patch a movie
+     * @deprecated
+     * @param req - request parameters object
+     * @returns the API response body
+     */
+    patchMovie(req: PatchMovieRequest): Promise<PatchMovieResponses>;`))
 })
 
 test('tsdoc client request option descriptions', async (t) => {
@@ -1255,16 +1265,6 @@ test('tsdoc client request option descriptions', async (t) => {
   const data = await readFile(join(dir, 'tsdoc', 'tsdoc.d.ts'), 'utf-8')
 
   // Description on title, not on id, built from requestBody scheme #ref
-  ok(data.includes(`
-  export type CreateMovieRequest = {
-    'id'?: number;
-    /**
-     * The title of the movie
-     */
-    'title': string;
-  }`))
-
-  // Description on title, not on id, built from requestBody schema #ref
   ok(data.includes(`
   export type CreateMovieRequest = {
     'id'?: number;
@@ -1289,6 +1289,24 @@ test('tsdoc client request option descriptions', async (t) => {
     'fields'?: Array<'id' | 'title'>;
     /**
      * The ID of the movie
+     */
+    'id': number;
+    /**
+     * The title of the movie
+     */
+    'title': string;
+  }`))
+
+  // Deprecated fields with and without descriptions
+  ok(data.includes(`
+  export type PatchMovieRequest = {
+    /**
+     * @deprecated
+     */
+    'fields'?: Array<'id' | 'title'>;
+    /**
+     * The ID of the movie
+     * @deprecated
      */
     'id': number;
     /**
