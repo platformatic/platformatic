@@ -1,7 +1,6 @@
 'use strict'
 import { STATUS_CODES } from 'node:http'
 import { capitalize, classCase, getResponseContentType, getResponseTypes } from './utils.mjs'
-import { writeObjectProperties } from './openapi-common.mjs'
 import { getType } from './get-type.mjs'
 
 function responsesWriter (operationId, responsesObject, isFullResponse, writer, spec) {
@@ -77,13 +76,7 @@ function responsesWriter (operationId, responsesObject, isFullResponse, writer, 
       }
       writer.writeLine(' */')
     }
-    if (responseSchema.type === 'object') {
-      writer.write(`export type ${typeName} =`).block(() => {
-        writeObjectProperties(writer, responseSchema, spec, new Set(), 'res')
-      })
-    } else {
-      writer.writeLine(`export type ${typeName} = ${getType(responseSchema, 'res', spec)}`)
-    }
+    writer.writeLine(`export type ${typeName} = ${getType(responseSchema, 'res', spec)}`)
   }
 }
 

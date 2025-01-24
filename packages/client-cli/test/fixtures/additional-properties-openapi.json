@@ -142,6 +142,31 @@
           }
         }
       }
+    },
+    "/another": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "description": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["description"],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

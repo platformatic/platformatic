@@ -47,13 +47,8 @@ test('support multiple responses', async (t) => {
 
   const output = responsesWriter('MyOperation', responses, false, writer)
   const expected = `
-export type MyOperationResponseOK = {
-  'id': number;
-  'unfriendly-key'?: string;
-}
-export type MyOperationResponseForbidden = {
-  'message': string;
-}
+export type MyOperationResponseOK = { 'id': number; 'unfriendly-key'?: string }
+export type MyOperationResponseForbidden = { 'message': string }
 export type MyOperationResponses =
   MyOperationResponseOK
   | MyOperationResponseForbidden`
@@ -105,16 +100,11 @@ test('tsdoc comment with response description and summary properties', async (t)
  *
  * Response description
  */
-export type MyOperationResponseOK = {
-  'id': number;
-  'unfriendly-key'?: string;
-}
+export type MyOperationResponseOK = { 'id': number; 'unfriendly-key'?: string }
 /**
  * Response description
  */
-export type MyOperationResponseForbidden = {
-  'message': string;
-}
+export type MyOperationResponseForbidden = { 'message': string }
 export type MyOperationResponses =
   MyOperationResponseOK
   | MyOperationResponseForbidden`
@@ -173,10 +163,7 @@ test('support object', async (t) => {
   }
   responsesWriter('TheOperationId', responses, false, writer)
   assert.equal(writer.toString().trim(), `
-export type TheOperationIdResponseOK = {
-  'id': number;
-  'name'?: string;
-}
+export type TheOperationIdResponseOK = { 'id': number; 'name'?: string }
 export type TheOperationIdResponses =
   TheOperationIdResponseOK
 `.trim())
