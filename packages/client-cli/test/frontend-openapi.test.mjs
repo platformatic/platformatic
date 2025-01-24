@@ -48,11 +48,11 @@ test('build basic client from url', async (t) => {
   ok(types.includes("'normalStringReq': string;"))
 
   // Response shouldn't contain `Date` for the same fields as above
-  ok(types.includes("'messageRes': string | null;"))
-  ok(types.includes("'dateTimeRes': string;"))
-  ok(types.includes("'otherDateRes': string;"))
-  ok(types.includes("'nullableDateRes': string | null;"))
-  ok(types.includes("'normalStringRes': string;"))
+  ok(types.includes("'messageRes'?: string | null;"))
+  ok(types.includes("'dateTimeRes'?: string;"))
+  ok(types.includes("'otherDateRes'?: string;"))
+  ok(types.includes("'nullableDateRes'?: string | null;"))
+  ok(types.includes("'normalStringRes'?: string"))
 
   // handle non 200 code endpoint
   const expectedImplementation = `

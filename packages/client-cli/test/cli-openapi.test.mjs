@@ -830,9 +830,7 @@ test('nested optional parameters are correctly identified', async (t) => {
   const data = await readFile(typeFile, 'utf-8')
 
   equal(data.includes(`
-  export type GetMoviesResponseOK = {
-    'data': { 'foo': string; 'bar'?: string; 'baz'?: { 'nested1'?: string; 'nested2': string } };
-  }
+  export type GetMoviesResponseOK = { 'data'?: { 'foo': string; 'bar'?: string; 'baz'?: { 'nested1'?: string; 'nested2': string } } }
 `), true)
 })
 
