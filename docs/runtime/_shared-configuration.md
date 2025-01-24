@@ -72,7 +72,7 @@ runtime. Each service object supports the following settings:
 - **`workers`** (`number`) - The number of workers to start for this service. If the service is the entrypoint or if the runtime is running in development mode this value is ignored and hardcoded to `1`.
 - **`health`** (object): Configures the health check for each worker of the service. It supports all the properties also supported in the runtime [health](#health) property. The values specified here overrides the values specified in the runtime.
 - **`arguments`** (`array` of `string`s) - The arguments to pass to the service. They will be available in `process.argv`.
-- **`envfile`** (`string`) - The path to an `.env` file to load for the service.
+- **`envfile`** (`string`) - The path to an `.env` file to load for the service. By default, the `.env` file is loaded from the service directory.
 - **`env`** (`object`) - An object containing environment variables to set for the service. Values set here takes precedence over values set in the `envfile`.
 - **`sourceMaps`** (`boolean`) - If `true`, source maps are enabled for the service. Default: `false`.
 - **`packageManager`** (`string`) - The package manager to use when using the `install-dependencies` or the `resolve` commands of `plt` or `wattpm`. Default is to autodetect it, unless it is specified via command line.
@@ -337,7 +337,9 @@ PLT_ENTRYPOINT=service
 ```
 
 The `.env` file must be located in the same folder as the Platformatic
-configuration file or in the current working directory.
+configuration file or in the current working directory. Each service would
+also see their respective `.env` file loaded if they are located in a subdirectory.
+This can be configured by the `envfile` property in the service configuration.
 
 Environment variables can also be set directly on the command line, for example:
 
