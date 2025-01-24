@@ -58,26 +58,30 @@ export function getType (typeDef, methodType, spec) {
     }).join(' & ')
   }
   if (typeDef.type === 'array') {
-    return `Array<${getType(typeDef.items, methodType, spec)}>`
+    const nullable = typeDef.nullable
+    return `Array<${getType(typeDef.items, methodType, spec)}>${nullable === true ? ' | null' : ''}`
   }
   if (typeDef.enum) {
+    const nullable = typeDef.nullable
     return typeDef.enum.map((en) => {
       if (typeDef.type === 'string') {
         return `'${en.replace(/'/g, "\\'")}'`
       } else {
         return en
       }
-    }).join(' | ')
+    }).join(' | ') + (nullable === true ? ' | null' : '')
   }
   if (typeDef.type === 'object') {
     const additionalProps = typeDef?.additionalProperties
     const additionalPropsObj = additionalProps?.properties
     const additionalPropsType = additionalProps?.type
     const additionalPropsRequired = additionalProps?.required
+    const nullable = typeDef.nullable
     const objProperties = typeDef.properties || additionalPropsObj
     if (!objProperties || Object.keys(objProperties).length === 0) {
       // Object without properties
-      return additionalPropsType ? `Record<string, ${JSONSchemaToTsType({ type: additionalPropsType })}>` : 'object'
+      const resultType = additionalPropsType ? `Record<string, ${JSONSchemaToTsType({ type: additionalPropsType })}>` : 'object'
+      return nullable === true ? `${resultType} | null` : resultType
     }
 
     let output = additionalPropsObj && additionalPropsType === 'object' ? 'Record<string, { ' : '{ '
@@ -98,6 +102,9 @@ export function getType (typeDef, methodType, spec) {
     }
     output += props.join('; ')
     output += additionalPropsObj ? ' }>' : ' }'
+    if (nullable === true) {
+      output += ' | null'
+    }
     return output
   }
   return JSONSchemaToTsType(typeDef, methodType)
