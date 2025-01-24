@@ -158,10 +158,10 @@ class Runtime extends EventEmitter {
     }
 
     try {
-      // Make sure the list exists before computing the dependencies, otherwise some services might not be stopped
+      checkDependencies(config.services)
 
+      // Make sure the list exists before computing the dependencies, otherwise some services might not be stopped
       if (autoloadEnabled) {
-        checkDependencies(config.services)
         this.#workers = topologicalSort(this.#workers, config)
       }
 
