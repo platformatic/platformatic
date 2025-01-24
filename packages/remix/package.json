@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/remix",
-  "version": "2.39.1",
+  "version": "2.40.0",
   "description": "Platformatic Remix Stackable",
   "main": "index.js",
   "type": "module",
