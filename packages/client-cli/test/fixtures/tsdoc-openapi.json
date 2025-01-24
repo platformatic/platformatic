@@ -137,6 +137,61 @@
           }
         }
       },
+      "patch": {
+        "summary": "Patch a movie",
+        "operationId": "patchMovie",
+        "deprecated": true,
+        "parameters": [
+          {
+            "deprecated": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "id",
+                  "title"
+                ]
+              }
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false
+          },
+          {
+            "description": "The ID of the movie",
+            "deprecated": true,
+            "schema": {
+              "type": "integer"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Movie"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Movie"
+                }
+              }
+            },
+            "links": {}
+          }
+        }
+      }
     }
   }
 }

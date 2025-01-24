@@ -15,7 +15,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
   let currentFullResponse = originalFullResponse
   let currentFullRequest = originalFullRequest
   for (const operation of operations) {
-    const { operationId, description, summary } = operation.operation
+    const { operationId, description, summary, deprecated } = operation.operation
     const camelCaseOperationId = camelcase(operationId)
     const { parameters, responses, requestBody } = operation.operation
     currentFullRequest = fullRequest || hasDuplicatedParameters(operation.operation)
@@ -116,6 +116,9 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
         mainWriter.writeLine(` * ${line}`)
       }
     }
+    if (deprecated) {
+      mainWriter.writeLine(' * @deprecated')
+    }
     mainWriter.writeLine(' * @param req - request parameters object')
     mainWriter.writeLine(` * @returns the API response${fullResponse ? '' : ' body'}`)
     mainWriter.writeLine(' */')
@@ -148,10 +151,15 @@ export function writeProperties (writer, blockName, parameters, addedProps, meth
 export function writeProperty (writer, key, value, addedProps, required = true, methodType, spec) {
   addedProps.add(key)
 
-  if (value.description) {
+  if (value.description || value.deprecated) {
     writer.writeLine('/**')
-    for (const line of value.description.split('\n')) {
-      writer.writeLine(` * ${line}`)
+    if (value.description) {
+      for (const line of value.description.split('\n')) {
+        writer.writeLine(` * ${line}`)
+      }
+    }
+    if (value.deprecated) {
+      writer.writeLine(' * @deprecated')
     }
     writer.writeLine(' */')
   }
