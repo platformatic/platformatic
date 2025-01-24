@@ -63,6 +63,24 @@ test('correct throws on missing dependencies', async t => {
   })
 })
 
+test('correct throws on missing dependencies, showing all services', async t => {
+  const configFile = join(fixturesDir, 'configs', 'monorepo-missing-dependencies2.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const dirname = config.configManager.dirname
+  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
+
+  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+
+  t.after(async () => {
+    await runtime.close()
+  })
+
+  await assert.rejects(() => runtime.init(), {
+    name: 'FastifyError',
+    message: "Missing dependency: \"service 'main' has unknown dependency: 'service-1'. Did you mean 'service-2'? Known services are: service-2.\""
+  })
+})
+
 test('correct warns on reversed dependencies', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-reversed-dependencies.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)

@@ -7,10 +7,14 @@ const errors = require('./errors')
 const { RoundRobinMap } = require('./worker/round-robin-map')
 
 function missingDependencyErrorMessage (clientName, service, services) {
-  const closestName = closest(clientName, [...services.keys()])
+  const allNames = services.map(s => s.id).filter(id => id !== service.id).sort()
+  const closestName = closest(clientName, allNames)
   let errorMsg = `service '${service.id}' has unknown dependency: '${clientName}'.`
   if (closestName) {
     errorMsg += ` Did you mean '${closestName}'?`
+  }
+  if (allNames.length) {
+    errorMsg += ` Known services are: ${allNames.join(', ')}.`
   }
   return errorMsg
 }
