@@ -12,7 +12,7 @@ async function composeOpenAPI (app, opts) {
       },
       servers: [{ url: globalThis.platformatic?.runtimeBasePath ?? '/' }],
     },
-    transform: ({ schema, url }) => {
+    transform ({ schema, url }) {
       for (const service of opts.services) {
         if (!service.proxy) continue
 
@@ -27,6 +27,10 @@ async function composeOpenAPI (app, opts) {
         }
       }
       return { schema, url }
+    },
+    transformObject ({ openapiObject }) {
+      openapiObject.components = app.composedOpenApiSchema.components
+      return openapiObject
     }
   })
 

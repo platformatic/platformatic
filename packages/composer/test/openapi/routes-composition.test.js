@@ -358,3 +358,109 @@ test('should compose empty responses', async (t) => {
   assert.ok(emptyRouteResponses['204'])
   assert.ok(emptyRouteResponses['302'])
 })
+
+test.only('should compose services with authentication components', async (t) => {
+  const api = await createBasicService(t, {
+    openapi: {
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: "http",
+            scheme: "bearer",
+            bearerFormat: "JWT",
+            description: "Enter the token with the `Bearer` prefix, e.g. \"Bearer abcde12345\""
+          }
+        }
+      }
+    }
+  })
+
+  api.get('/authenticated', {
+    schema: {
+      security: [{
+        bearerAuth: []
+      }],
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            hello: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    return { hello: 'world' }
+  })
+
+  await api.listen({ port: 0 })
+
+  const composer = await createComposer(t, {
+    composer: {
+      services: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            prefix: '/api',
+          },
+        },
+      ],
+      addEmptySchema: true,
+    },
+  })
+
+  await composer.start()
+
+  const { statusCode, body } = await composer.inject({
+    method: 'GET',
+    url: '/documentation/json',
+  })
+  assert.equal(statusCode, 200)
+
+  const openApiSchema = JSON.parse(body)
+  console.log(JSON.stringify(openApiSchema, null, 2))
+  openApiValidator.validate(openApiSchema)
+
+  assert.deepStrictEqual(openApiSchema.components, {
+    "securitySchemes": {
+      "api1_bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Enter the token with the `Bearer` prefix, e.g. \"Bearer abcde12345\""
+      }
+    },
+    "schemas": {}
+  })
+
+  const authenticatedPath = openApiSchema.paths['/api/authenticated']
+
+  console.log(JSON.stringify(authenticatedPath, null, 2))
+
+  assert.deepStrictEqual(authenticatedPath.get, {
+    "security": [
+      {
+        "api1_bearerAuth": []
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Default Response",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "hello": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+})

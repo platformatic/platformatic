@@ -76,6 +76,10 @@ async function composeOpenAPI (app, opts) {
 
   const composedOpenApiSchema = composeOpenApi(openApiSchemas, opts.openapi)
 
+  console.log('composedOpenApiSchema', JSON.stringify(composedOpenApiSchema, null, 2))
+
+  app.decorate('composedOpenApiSchema', composedOpenApiSchema)
+
   const dispatcher = getGlobalDispatcher()
 
   await app.register(require('@fastify/reply-from'), {
@@ -91,6 +95,16 @@ async function composeOpenAPI (app, opts) {
       const originPath = schema[originPathSymbol]
 
       const mapRoutePath = createPathMapper(originPath, openApiPath, prefix)
+
+      console.log('------------------')
+      console.log('operationId', operationId)
+      console.log('method', method)
+      console.log('openApiPath', openApiPath)
+      console.log('origin', origin)
+      console.log('prefix', prefix)
+      console.log('schema', schema)
+      console.log('originPath', originPath)
+      console.log('mapRoutePath', mapRoutePath)
 
       return {
         config: { openApiPath },
