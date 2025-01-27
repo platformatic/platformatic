@@ -6,7 +6,6 @@ const { platformaticService, buildServer, buildStackable } = require('@platforma
 
 const { schema } = require('./lib/schema')
 const serviceProxy = require('./lib/proxy')
-const openapi = require('./lib/openapi.js')
 const graphql = require('./lib/graphql')
 const composerHook = require('./lib/composer-hook')
 const openapiGenerator = require('./lib/openapi-generator')
@@ -42,12 +41,9 @@ async function platformaticComposer (app, opts) {
     }
   }
 
-  if (hasOpenapiServices) {
-    app.register(openapi, config.composer)
-  }
   app.register(serviceProxy, { ...config.composer, context: opts.context })
   app.register(composerHook)
-  await app.register(platformaticService, { config, context: opts.context })
+  await app.register(platformaticService, { config: { ...config, service: { openapi: false } }, context: opts.context })
 
   if (hasOpenapiServices) {
     await app.register(openapiGenerator, config.composer)

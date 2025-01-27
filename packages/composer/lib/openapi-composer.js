@@ -11,11 +11,22 @@ function composeOpenApi (apis, options = {}) {
   for (const { id, prefix, schema } of apis) {
     const { paths, components } = clone(schema)
 
-
     const apiPrefix = generateOperationIdApiPrefix(id)
     for (const [path, pathSchema] of Object.entries(paths)) {
       namespaceSchemaRefs(apiPrefix, pathSchema)
       namespaceSchemaOperationIds(apiPrefix, pathSchema)
+
+      for (const methodSchema of Object.values(pathSchema)) {
+        if (methodSchema.security) {
+          methodSchema.security = methodSchema.security.map(security => {
+            const newSecurity = {}
+            for (const [securityKey, securityValue] of Object.entries(security)) {
+              newSecurity[apiPrefix + securityKey] = securityValue
+            }
+            return newSecurity
+          })
+        }
+      }
 
       const mergedPath = prefix ? prefix + path : path
 

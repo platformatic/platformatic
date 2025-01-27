@@ -3,12 +3,14 @@
 const { readFile } = require('node:fs/promises')
 const { request, getGlobalDispatcher } = require('undici')
 const fp = require('fastify-plugin')
-const errors = require('./errors')
+const fastifySwagger = require('@fastify/swagger')
 
+const errors = require('./errors')
 const { modifyOpenApiSchema, originPathSymbol } = require('./openapi-modifier')
 const composeOpenApi = require('./openapi-composer')
 const loadOpenApiConfig = require('./openapi-load-config.js')
 const { prefixWithSlash } = require('./utils.js')
+const openApiScalar = require('./openapi-scalar')
 
 async function fetchOpenApiSchema (openApiUrl) {
   const { body } = await request(openApiUrl)
@@ -76,11 +78,39 @@ async function composeOpenAPI (app, opts) {
 
   const composedOpenApiSchema = composeOpenApi(openApiSchemas, opts.openapi)
 
-  console.log('composedOpenApiSchema', JSON.stringify(composedOpenApiSchema, null, 2))
-
   app.decorate('composedOpenApiSchema', composedOpenApiSchema)
 
   const dispatcher = getGlobalDispatcher()
+
+  await app.register(fastifySwagger, {
+    exposeRoute: true,
+    openapi: {
+      info: {
+        title: opts.openapi?.title || 'Platformatic Composer',
+        version: opts.openapi?.version || '1.0.0'
+      },
+      servers: [{ url: globalThis.platformatic?.runtimeBasePath ?? '/' }],
+      components: app.composedOpenApiSchema.components
+    },
+    transform ({ schema, url }) {
+      for (const service of opts.services) {
+        if (!service.proxy) continue
+
+        const prefix = service.proxy.prefix ?? ''
+        const proxyPrefix = prefix.at(-1) === '/' ? prefix.slice(0, -1) : prefix
+
+        const proxyUrls = [proxyPrefix + '/', proxyPrefix + '/*']
+        if (proxyUrls.includes(url)) {
+          schema = schema ?? {}
+          schema.hide = true
+          break
+        }
+      }
+      return { schema, url }
+    }
+  })
+
+  await app.register(openApiScalar, opts)
 
   await app.register(require('@fastify/reply-from'), {
     undici: dispatcher,
@@ -95,16 +125,6 @@ async function composeOpenAPI (app, opts) {
       const originPath = schema[originPathSymbol]
 
       const mapRoutePath = createPathMapper(originPath, openApiPath, prefix)
-
-      console.log('------------------')
-      console.log('operationId', operationId)
-      console.log('method', method)
-      console.log('openApiPath', openApiPath)
-      console.log('origin', origin)
-      console.log('prefix', prefix)
-      console.log('schema', schema)
-      console.log('originPath', originPath)
-      console.log('mapRoutePath', mapRoutePath)
 
       return {
         config: { openApiPath },
