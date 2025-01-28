@@ -8,7 +8,7 @@ const { schema } = require('./lib/schema')
 const serviceProxy = require('./lib/proxy')
 const graphql = require('./lib/graphql')
 const composerHook = require('./lib/composer-hook')
-const openapiGenerator = require('./lib/openapi-generator')
+const { openApiGenerator, openApiComposer } = require('./lib/openapi-generator')
 const graphqlGenerator = require('./lib/graphql-generator')
 const { isSameGraphqlSchema, fetchGraphqlSubgraphs } = require('./lib/graphql-fetch')
 const notHostConstraints = require('./lib/proxy/not-host-constraints')
@@ -41,12 +41,18 @@ async function platformaticComposer (app, opts) {
     }
   }
 
-  app.register(serviceProxy, { ...config.composer, context: opts.context })
-  app.register(composerHook)
-  await app.register(platformaticService, { config: { ...config, service: { openapi: false } }, context: opts.context })
+  await app.register(composerHook)
 
+  let generatedComposedOpenAPI = null
   if (hasOpenapiServices) {
-    await app.register(openapiGenerator, config.composer)
+    generatedComposedOpenAPI = await openApiGenerator(app, config.composer)
+  }
+
+  app.register(serviceProxy, { ...config.composer, context: opts.context })
+  await app.register(platformaticService, { config: { ...config, openapi: false }, context: opts.context })
+
+  if (generatedComposedOpenAPI) {
+    await app.register(openApiComposer, { opts: config.composer, generated: generatedComposedOpenAPI })
   }
 
   if (hasGraphqlServices) {

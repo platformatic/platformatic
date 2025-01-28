@@ -31,7 +31,7 @@ async function getOpenApiSchema (origin, openapi) {
   return readOpenApiSchema(openapi.file)
 }
 
-async function composeOpenAPI (app, opts) {
+async function generateComposedOpenApi (app, opts) {
   if (!opts.services.some(s => s.openapi)) { return }
 
   const { services } = opts
@@ -74,13 +74,10 @@ async function composeOpenAPI (app, opts) {
     openApiSchemas.push({ id, prefix, schema, originSchema, config: openapiConfig })
   }
 
-  app.decorate('openApiSchemas', openApiSchemas)
-
   const composedOpenApiSchema = composeOpenApi(openApiSchemas, opts.openapi)
 
+  app.decorate('openApiSchemas', openApiSchemas)
   app.decorate('composedOpenApiSchema', composedOpenApiSchema)
-
-  const dispatcher = getGlobalDispatcher()
 
   await app.register(fastifySwagger, {
     exposeRoute: true,
@@ -112,13 +109,21 @@ async function composeOpenAPI (app, opts) {
 
   await app.register(openApiScalar, opts)
 
+  return { apiByApiRoutes }
+}
+
+async function openApiComposer (app, { opts, generated }) {
+  const { apiByApiRoutes } = generated
+
+  const dispatcher = getGlobalDispatcher()
+
   await app.register(require('@fastify/reply-from'), {
     undici: dispatcher,
     destroyAgent: false,
   })
 
   await app.register(await import('@platformatic/fastify-openapi-glue'), {
-    specification: composedOpenApiSchema,
+    specification: app.composedOpenApiSchema,
     addEmptySchema: opts.addEmptySchema,
     operationResolver: (operationId, method, openApiPath) => {
       const { origin, prefix, schema } = apiByApiRoutes[openApiPath]
@@ -201,4 +206,5 @@ function generateRenamedPath (renamedOpenApiPath, routeParams) {
   return renamedOpenApiPath.replace(/{(.*?)}/g, () => routeParams.shift())
 }
 
-module.exports = fp(composeOpenAPI)
+module.exports.openApiGenerator = generateComposedOpenApi
+module.exports.openApiComposer = fp(openApiComposer)
