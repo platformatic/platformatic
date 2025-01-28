@@ -51,7 +51,7 @@
     "@fastify/swagger": "^9.0.0",
     "@fastify/view": "^10.0.1",
     "@platformatic/config": "workspace:*",
-    "@platformatic/fastify-openapi-glue": "^5.0.0",
+    "@platformatic/fastify-openapi-glue": "^5.1.0",
     "@platformatic/generators": "workspace:*",
     "@platformatic/graphql-composer": "^0.10.0",
     "@platformatic/scalar-theme": "workspace:*",

@@ -41,7 +41,7 @@ const LOGS_WRITE_DELAY = process.env.CI ? 10000 : 3000
 
 setGlobalDispatcher(agent)
 
-async function createBasicService (t) {
+async function createBasicService (t, options = {}) {
   const app = fastify({
     logger: false,
     keepAliveTimeout: 10,
@@ -53,7 +53,8 @@ async function createBasicService (t) {
       info: {
         title: 'Test',
         version: '0.1.0'
-      }
+      },
+      ...options.openapi
     }
   })
 

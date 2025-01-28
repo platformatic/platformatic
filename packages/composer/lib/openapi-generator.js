@@ -3,12 +3,14 @@
 const { readFile } = require('node:fs/promises')
 const { request, getGlobalDispatcher } = require('undici')
 const fp = require('fastify-plugin')
-const errors = require('./errors')
+const fastifySwagger = require('@fastify/swagger')
 
+const errors = require('./errors')
 const { modifyOpenApiSchema, originPathSymbol } = require('./openapi-modifier')
 const composeOpenApi = require('./openapi-composer')
 const loadOpenApiConfig = require('./openapi-load-config.js')
 const { prefixWithSlash } = require('./utils.js')
+const openApiScalar = require('./openapi-scalar')
 
 async function fetchOpenApiSchema (openApiUrl) {
   const { body } = await request(openApiUrl)
@@ -29,7 +31,7 @@ async function getOpenApiSchema (origin, openapi) {
   return readOpenApiSchema(openapi.file)
 }
 
-async function composeOpenAPI (app, opts) {
+async function generateComposedOpenApi (app, opts) {
   if (!opts.services.some(s => s.openapi)) { return }
 
   const { services } = opts
@@ -72,9 +74,46 @@ async function composeOpenAPI (app, opts) {
     openApiSchemas.push({ id, prefix, schema, originSchema, config: openapiConfig })
   }
 
-  app.decorate('openApiSchemas', openApiSchemas)
-
   const composedOpenApiSchema = composeOpenApi(openApiSchemas, opts.openapi)
+
+  app.decorate('openApiSchemas', openApiSchemas)
+  app.decorate('composedOpenApiSchema', composedOpenApiSchema)
+
+  await app.register(fastifySwagger, {
+    exposeRoute: true,
+    openapi: {
+      info: {
+        title: opts.openapi?.title || 'Platformatic Composer',
+        version: opts.openapi?.version || '1.0.0'
+      },
+      servers: [{ url: globalThis.platformatic?.runtimeBasePath ?? '/' }],
+      components: app.composedOpenApiSchema.components
+    },
+    transform ({ schema, url }) {
+      for (const service of opts.services) {
+        if (!service.proxy) continue
+
+        const prefix = service.proxy.prefix ?? ''
+        const proxyPrefix = prefix.at(-1) === '/' ? prefix.slice(0, -1) : prefix
+
+        const proxyUrls = [proxyPrefix + '/', proxyPrefix + '/*']
+        if (proxyUrls.includes(url)) {
+          schema = schema ?? {}
+          schema.hide = true
+          break
+        }
+      }
+      return { schema, url }
+    }
+  })
+
+  await app.register(openApiScalar, opts)
+
+  return { apiByApiRoutes }
+}
+
+async function openApiComposer (app, { opts, generated }) {
+  const { apiByApiRoutes } = generated
 
   const dispatcher = getGlobalDispatcher()
 
@@ -84,7 +123,7 @@ async function composeOpenAPI (app, opts) {
   })
 
   await app.register(await import('@platformatic/fastify-openapi-glue'), {
-    specification: composedOpenApiSchema,
+    specification: app.composedOpenApiSchema,
     addEmptySchema: opts.addEmptySchema,
     operationResolver: (operationId, method, openApiPath) => {
       const { origin, prefix, schema } = apiByApiRoutes[openApiPath]
@@ -167,4 +206,5 @@ function generateRenamedPath (renamedOpenApiPath, routeParams) {
   return renamedOpenApiPath.replace(/{(.*?)}/g, () => routeParams.shift())
 }
 
-module.exports = fp(composeOpenAPI)
+module.exports.openApiGenerator = generateComposedOpenApi
+module.exports.openApiComposer = fp(openApiComposer)

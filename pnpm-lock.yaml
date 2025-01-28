@@ -476,8 +476,8 @@ importers:
         specifier: workspace:*
         version: link:../config
       '@platformatic/fastify-openapi-glue':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^5.1.0
+        version: 5.1.0
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
@@ -4068,8 +4068,8 @@ packages:
   '@platformatic/fastify-http-metrics@0.2.0':
     resolution: {integrity: sha512-EGAPJO5Zqu+IzYiEhfx2wQUZhjuLjbscELrOnDw8sHrBN22OlwwZ5+ePJvtzvYkkShgSKZaElNkaIP8hnxLhIQ==}
 
-  '@platformatic/fastify-openapi-glue@5.0.0':
-    resolution: {integrity: sha512-VvmOmKbgqVXxOd0QQf5jzkLQpINJwJVlAgtd64FIuYXjkLmHIZphpS2cElrhoMZawgen3SJmcKP5FTzG5OHYtg==}
+  '@platformatic/fastify-openapi-glue@5.1.0':
+    resolution: {integrity: sha512-R5bHPQast/w5p+I+/Y5X1r+A8Fxqn7z0etWeaSYrFkbLvvGTEFGvldu0QGXnKjHo6XQo0P2o6D6gNr5uc36ZEA==}
 
   '@platformatic/graphql-composer@0.10.0':
     resolution: {integrity: sha512-wCX63v0HQRN0PPPR0M08VF73bhGqUyrccK04AK6eVR2+5nPcUJym4r4WyAy1KqhTkLj6kJWhul4NmSLoINbxDg==}
@@ -10982,7 +10982,7 @@ snapshots:
       fastify-plugin: 4.5.1
       prom-client: 15.1.3
 
-  '@platformatic/fastify-openapi-glue@5.0.0':
+  '@platformatic/fastify-openapi-glue@5.1.0':
     dependencies:
       '@platformatic/openapi-schema-validator': 3.0.0
       fastify-plugin: 5.0.1

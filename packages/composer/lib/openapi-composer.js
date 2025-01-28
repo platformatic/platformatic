@@ -6,6 +6,7 @@ const errors = require('./errors')
 function composeOpenApi (apis, options = {}) {
   const mergedPaths = {}
   const mergedSchemas = {}
+  const mergedSecuritySchemes = {}
 
   for (const { id, prefix, schema } of apis) {
     const { paths, components } = clone(schema)
@@ -15,6 +16,18 @@ function composeOpenApi (apis, options = {}) {
       namespaceSchemaRefs(apiPrefix, pathSchema)
       namespaceSchemaOperationIds(apiPrefix, pathSchema)
 
+      for (const methodSchema of Object.values(pathSchema)) {
+        if (methodSchema.security) {
+          methodSchema.security = methodSchema.security.map(security => {
+            const newSecurity = {}
+            for (const [securityKey, securityValue] of Object.entries(security)) {
+              newSecurity[apiPrefix + securityKey] = securityValue
+            }
+            return newSecurity
+          })
+        }
+      }
+
       const mergedPath = prefix ? prefix + path : path
 
       if (mergedPaths[mergedPath]) {
@@ -23,13 +36,21 @@ function composeOpenApi (apis, options = {}) {
       mergedPaths[mergedPath] = pathSchema
     }
 
-    if (components && components.schemas) {
-      for (const [schemaKey, schema] of Object.entries(components.schemas)) {
-        if (schema.title == null) {
-          schema.title = schemaKey
+    if (components) {
+      if (components.schemas) {
+        for (const [schemaKey, schema] of Object.entries(components.schemas)) {
+          if (schema.title == null) {
+            schema.title = schemaKey
+          }
+          namespaceSchemaRefs(apiPrefix, schema)
+          mergedSchemas[apiPrefix + schemaKey] = schema
         }
-        namespaceSchemaRefs(apiPrefix, schema)
-        mergedSchemas[apiPrefix + schemaKey] = schema
+      }
+
+      if (components.securitySchemes) {
+        for (const [securitySchemeKey, securityScheme] of Object.entries(components.securitySchemes)) {
+          mergedSecuritySchemes[apiPrefix + securitySchemeKey] = securityScheme
+        }
       }
     }
   }
@@ -41,6 +62,7 @@ function composeOpenApi (apis, options = {}) {
       version: options.version || '1.0.0',
     },
     components: {
+      securitySchemes: mergedSecuritySchemes,
       schemas: mergedSchemas,
     },
     paths: mergedPaths,
