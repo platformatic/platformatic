@@ -9,7 +9,7 @@ First of all, make sure you use a [composer](../../composer/overview.md) as the 
 Then, enable `httpCache` in the [application configuration](../../runtime/configuration.md#httpcache) file.
 
 Finally, make sure your pages return a proper `Cache-Control` header.
-See the [Astro documentation](https://remix.run/docs/en/main/route/headers) to learn more.
+See the [Remix documentation](https://remix.run/docs/en/main/route/headers) to learn more.
 
 You are all set!
 
