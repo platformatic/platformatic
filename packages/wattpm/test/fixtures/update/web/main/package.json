@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "@platformatic/node": "^2.0.0",
+    "@platformatic/remix": "~2.5.0",
+    "@platformatic/db": "~1.1.0 || ~1.15.0",
+    "@platformatic/vite": ">1"
+  },
+  "devDependencies": {
+    "@platformatic/config": "^2.0.0"
+  }
+}

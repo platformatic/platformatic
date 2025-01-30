@@ -36,6 +36,16 @@ Options:
 - `-p, --production`: Only install production dependencies
 - `-P, --package-manager`: Use an alternative package manager (the default is to autodetect it)
 
+## `update`
+
+Updates all the Platformatic runtime and stackable packages in your `package.json` files to the latest available version.
+
+It will only work on packages whose are defined with the `~` or `^` syntax.
+
+Arguments:
+
+- `root`: The directory containing the application (the default is the current directory)
+
 ## `dev`
 
 Starts an application in development mode.

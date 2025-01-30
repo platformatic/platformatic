@@ -17,9 +17,10 @@
   "scripts": {
     "test": "npm run lint && borp --concurrency=1 --timeout=300000",
     "coverage": "npm run lint && borp -X test -C --concurrency=1 --timeout=300000",
+    "gen-packages": "node scripts/list-package.js > lib/packages.js",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
-    "build": "pnpm run gen-schema && pnpm run gen-types",
+    "build": "pnpm run gen-packages && pnpm run gen-schema && pnpm run gen-types",
     "prepublishOnly": "pnpm run build",
     "lint": "eslint"
   },
@@ -47,6 +48,7 @@
     "minimist": "^1.2.8",
     "pino": "^9.4.0",
     "pino-pretty": "^13.0.0",
+    "semver": "^7.7.0",
     "split2": "^4.2.0",
     "table": "^6.8.2"
   },

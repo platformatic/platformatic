@@ -1,0 +1,7 @@
+{
+  "$schema": "https://schemas.platformatic.dev/wattpm/2.0.0.json",
+  "entrypoint": "main",
+  "autoload": {
+    "path": "web"
+  }
+}

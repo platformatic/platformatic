@@ -6,7 +6,7 @@ import { test } from 'node:test'
 import { pino } from 'pino'
 import { prepareRuntime } from '../../basic/test/helper.js'
 import { loadRawConfigurationFile, saveConfigurationFile } from '../lib/utils.js'
-import { wattpm } from './helper.js'
+import { cliPath, executeCommand, wattpm } from './helper.js'
 
 const logger = pino()
 
@@ -125,4 +125,44 @@ test('install - should install production dependencies only', async t => {
 
   ok(installProcess.stdout.includes('Installing production dependencies for the application using pnpm ...'))
   ok(installProcess.stdout.includes('Installing production dependencies for the service main using pnpm ...'))
+})
+
+test('update - should update version in package.json files', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
+
+  const updateProcess = await executeCommand(
+    'node',
+    '--import',
+    resolve(rootDir, 'mock-registry.js'),
+    cliPath,
+    'update',
+    rootDir
+  )
+
+  const mainPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/main/package.json'))
+  const anotherPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/another/package.json'))
+
+  deepStrictEqual(mainPackageJson.dependencies, {
+    '@platformatic/node': '^2.41.0',
+    '@platformatic/remix': '~2.5.5',
+    '@platformatic/db': '~1.15.1',
+    '@platformatic/vite': '>1'
+  })
+
+  deepStrictEqual(mainPackageJson.devDependencies, {
+    '@platformatic/config': '^2.41.0'
+  })
+
+  deepStrictEqual(anotherPackageJson.dependencies, {
+    '@platformatic/service': '^2.41.0',
+    '@platformatic/db': '^1.53.4',
+    '@platformatic/db-dashboard': '^0.1.0'
+  })
+
+  ok(
+    updateProcess.stdout.includes(
+      'Updating dependency @platformatic/service of service another from ^2.0.0 to ^2.41.0 ...'
+    )
+  )
+  ok(updateProcess.stdout.includes('All dependencies have been updated.'))
 })
