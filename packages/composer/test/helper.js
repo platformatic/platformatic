@@ -388,7 +388,7 @@ async function createComposer (t, composerConfig, loggerInstance = undefined) {
   return app
 }
 
-async function createComposerInRuntime (t, prefix, composerConfig, services, autoload) {
+async function createComposerInRuntime (t, prefix, composerConfig, services, autoload, additionalRuntimeConfig, production = false) {
   await createDirectory(tmpBaseDir)
   const tmpDir = await mkdtemp(resolve(tmpBaseDir, prefix))
   await createDirectory(resolve(tmpDir, 'composer'))
@@ -400,7 +400,7 @@ async function createComposerInRuntime (t, prefix, composerConfig, services, aut
   await writeFile(
     runtimeConfigPath,
     JSON.stringify({
-      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/1.51.0.json',
+      $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.41.0.json',
       entrypoint: 'composer',
       watch: false,
       services: (services ?? []).concat([
@@ -413,7 +413,8 @@ async function createComposerInRuntime (t, prefix, composerConfig, services, aut
       autoload: autoload ? { path: autoload } : undefined,
       logger: {
         level: 'error'
-      }
+      },
+      ...additionalRuntimeConfig
     }),
     'utf-8'
   )
@@ -446,7 +447,7 @@ async function createComposerInRuntime (t, prefix, composerConfig, services, aut
     'utf-8'
   )
 
-  const runtime = await buildRuntime(runtimeConfigPath)
+  const runtime = await buildRuntime(runtimeConfigPath, { production })
 
   t.after(async () => {
     await runtime.close()

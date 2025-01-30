@@ -635,7 +635,7 @@ test('should rewrite Location headers that include full url of the running servi
     [
       {
         id: 'main',
-        path: resolve(__dirname, './proxy/fixtures/node'),
+        path: resolve(__dirname, './proxy/fixtures/node')
       }
     ]
   )
@@ -1069,7 +1069,7 @@ test('should properly generate OpenAPI routes when a frontend is exposed on /', 
   }
 })
 
-test('adds x-forwarded-proto', async (t) => {
+test('adds x-forwarded-proto', async t => {
   const { certificate, privateKey } = selfCert({})
   const localDir = tmpdir()
   const tmpDir = await mkdtemp(join(localDir, 'plt-composer-proxy-https-test-'))
@@ -1081,11 +1081,13 @@ test('adds x-forwarded-proto', async (t) => {
 
   {
     const previousDispatcher = getGlobalDispatcher()
-    setGlobalDispatcher(new Agent({
-      connect: {
-        rejectUnauthorized: false,
-      },
-    }))
+    setGlobalDispatcher(
+      new Agent({
+        connect: {
+          rejectUnauthorized: false
+        }
+      })
+    )
     t.after(() => {
       setGlobalDispatcher(previousDispatcher)
     })
@@ -1129,7 +1131,7 @@ test('adds x-forwarded-proto', async (t) => {
     [
       {
         id: 'main',
-        path: resolve(__dirname, './proxy/fixtures/node'),
+        path: resolve(__dirname, './proxy/fixtures/node')
       }
     ]
   )
@@ -1141,10 +1143,7 @@ test('adds x-forwarded-proto', async (t) => {
   const address = await runtime.start()
 
   {
-    const {
-      statusCode,
-      body
-    } = await request(address, {
+    const { statusCode, body } = await request(address, {
       method: 'GET',
       path: '/whatever/headers'
     })
@@ -1177,11 +1176,13 @@ test('should rewrite Location headers for proxied services https', async t => {
 
   {
     const previousDispatcher = getGlobalDispatcher()
-    setGlobalDispatcher(new Agent({
-      connect: {
-        rejectUnauthorized: false,
-      },
-    }))
+    setGlobalDispatcher(
+      new Agent({
+        connect: {
+          rejectUnauthorized: false
+        }
+      })
+    )
     t.after(() => {
       setGlobalDispatcher(previousDispatcher)
     })
@@ -1241,4 +1242,76 @@ test('should rewrite Location headers for proxied services https', async t => {
 
     rawBody.dump()
   }
+})
+
+test.only('should properly strip runtime basePath from proxied services', async t => {
+  const remixModulesRoot = resolve(__dirname, './proxy/fixtures/remix/node_modules')
+
+  await ensureCleanup(t, [remixModulesRoot, resolve(__dirname, './proxy/fixtures/remix/build')])
+
+  // Make sure there is @platformatic/remix available in the node service.
+  // We can't simply specify it in the package.json due to circular dependencies.
+  await createDirectory(resolve(remixModulesRoot, '@platformatic'))
+  await symlink(resolve(__dirname, '../../remix'), resolve(remixModulesRoot, '@platformatic/remix'), 'dir')
+
+  const runtime = await createComposerInRuntime(
+    t,
+    'base-path-no-configuration',
+    {
+      composer: {
+        refreshTimeout: REFRESH_TIMEOUT,
+        services: [
+          {
+            id: 'remix'
+          }
+        ]
+      }
+    },
+    [
+      {
+        id: 'remix',
+        path: resolve(__dirname, './proxy/fixtures/remix')
+      }
+    ],
+    null,
+    {
+      basePath: '/base'
+    },
+    true
+  )
+
+  await runtime.buildService('remix')
+  const address = await runtime.start()
+
+  const { statusCode, body: rawBody } = await request(address, {
+    method: 'GET',
+    path: '/base/remix/'
+  })
+  assert.equal(statusCode, 200)
+
+  const body = await rawBody.text()
+
+  // Check the index works
+  assert.ok(body.match(/Hello from v<!-- -->\d+<\/div>/))
+
+  // Check that asset works
+  const scriptUrl = body.match(/<link rel="modulepreload" href="([a-z0-9.\-_/]+\.js)"\/>/i)[1]
+  assert.ok(scriptUrl.startsWith('/base/remix/'))
+
+  {
+    const { statusCode, headers } = await request(address, {
+      method: 'GET',
+      path: scriptUrl
+    })
+
+    assert.equal(statusCode, 200)
+    assert.ok(headers['content-type'].startsWith('application/javascript'))
+  }
+
+  const composerConfig = await runtime.getServiceMeta('composer', 'getMeta')
+  const remixConfig = await runtime.getServiceMeta('remix', 'getMeta')
+
+  assert.equal(composerConfig.composer.proxies.remix.prefix, '/remix')
+  assert.equal(composerConfig.composer.proxies.remix.rewritePrefix, '/base/remix/')
+  assert.equal(remixConfig.composer.prefix, '/base/remix/')
 })

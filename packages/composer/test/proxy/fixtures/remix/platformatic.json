@@ -1,0 +1,6 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/remix/2.0.0.json",
+  "application": {
+    "basePath": "/base/remix"
+  }
+}
