@@ -3,8 +3,10 @@ import { bold } from 'colorette'
 import { parse } from 'dotenv'
 import { execa } from 'execa'
 import { existsSync } from 'node:fs'
-import { readFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import { rsort, satisfies } from 'semver'
+import { packages } from '../packages.js'
 import {
   buildRuntime,
   findConfigurationFile,
@@ -149,6 +151,84 @@ export async function installCommand (logger, args) {
   logger.done('All services have been resolved.')
 }
 
+export async function updateCommand (logger, args) {
+  const { positionals } = parseArgs(args, {}, false)
+
+  /* c8 ignore next */
+  const root = getRoot(positionals)
+  const configurationFile = await findConfigurationFile(logger, root)
+  const { services } = await loadConfigurationFile(logger, configurationFile)
+
+  // First of all, get all version from NPM for the runtime
+  const selfInfoResponse = await fetch('https://registry.npmjs.org/@platformatic/runtime')
+
+  if (!selfInfoResponse.ok) {
+    logger.fatal(
+      { response: selfInfoResponse.status, body: await selfInfoResponse.text() },
+      'Unable to fetch version information.'
+    )
+  }
+
+  const selfInfo = await selfInfoResponse.json()
+  const availableVersions = rsort(
+    Object.values(selfInfo.versions)
+      .filter(s => !s.deprecated)
+      .map(s => s.version)
+  )
+
+  // Now, for all the services in the configuration file, update the dependencies
+  for (const service of services) {
+    // Parse the configuration file, if any
+    const packageJsonPath = resolve(service.path, 'package.json')
+    if (!existsSync(packageJsonPath)) {
+      continue
+    }
+
+    let updated = false
+    const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf-8'))
+
+    for (const section of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {
+      const sectionLabel = section === 'dependencies' ? '' : ` (${bold(section)})`
+      for (const [pkg, range] of Object.entries(packageJson[section] ?? {})) {
+        const specifier = range[0]
+
+        if (!packages.includes(pkg)) {
+          continue
+        }
+
+        if (specifier !== '^' && specifier !== '~') {
+          continue
+        }
+
+        // Search the first version that satisfies the range
+        let newRange = availableVersions.find(v => satisfies(v, range))
+
+        // Nothing new, move on
+        if (!newRange) {
+          continue
+        }
+
+        newRange = specifier + newRange
+
+        if (newRange && specifier + newRange !== range) {
+          updated = true
+          logger.info(
+            `Updating dependency ${bold(pkg)} of service ${bold(service.id)}${sectionLabel} from ${bold(range)} to ${bold(newRange)} ...`
+          )
+
+          packageJson[section][pkg] = newRange
+        }
+      }
+    }
+
+    if (updated) {
+      await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2))
+    }
+  }
+
+  logger.done('All dependencies have been updated.')
+}
+
 export const help = {
   build: {
     usage: 'build [root]',
@@ -177,6 +257,16 @@ export const help = {
       {
         usage: '-P, --package-manager <executable>',
         description: 'Use an alternative package manager (the default is to autodetect it)'
+      }
+    ]
+  },
+  update: {
+    usage: 'update [root]',
+    description: 'Updates all the Platformatic packages to the latest available version.',
+    args: [
+      {
+        name: 'root',
+        description: 'The directory containing the application (the default is the current directory)'
       }
     ]
   }
