@@ -7,6 +7,7 @@ import { pino } from 'pino'
 import { prepareRuntime } from '../../basic/test/helper.js'
 import { loadRawConfigurationFile, saveConfigurationFile } from '../lib/utils.js'
 import { cliPath, executeCommand, wattpm } from './helper.js'
+import { pathToFileURL } from 'node:url'
 
 const logger = pino()
 
@@ -130,10 +131,12 @@ test('install - should install production dependencies only', async t => {
 test('update - should update version in package.json files', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
 
+  const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
+
   const updateProcess = await executeCommand(
     'node',
     '--import',
-    resolve(rootDir, 'mock-registry.mjs'),
+    loader,
     cliPath,
     'update',
     rootDir
