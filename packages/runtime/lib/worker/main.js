@@ -176,8 +176,10 @@ async function main () {
   const hooks = telemetry ? createTelemetryThreadInterceptorHooks() : {}
   // Setup mesh networker
   const threadDispatcher = wire({
+    // Specifying the domain is critical to avoid flooding the DNS
+    // with requests for a domain that's never going to exist.
+    domain: '.plt.local',
     port: parentPort,
-    useNetwork: service.useHttp,
     timeout: config.serviceTimeout,
     ...hooks
   })

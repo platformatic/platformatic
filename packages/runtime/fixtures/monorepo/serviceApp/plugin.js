@@ -15,6 +15,22 @@ module.exports = async function (app) {
     return text
   })
 
+  app.get('/unknown', async (_, reply) => {
+    try {
+      const res = await request('http://unknown.plt.local')
+      const text = await res.body.text()
+      return reply.code(500).send({
+        msg: 'should not have reached here',
+        text
+      })
+    } catch (err) {
+      return {
+        msg: err.message,
+        code: err.code
+      }
+    }
+  })
+
   app.get('/crash', () => {
     setImmediate(() => {
       throw new Error('boom')
