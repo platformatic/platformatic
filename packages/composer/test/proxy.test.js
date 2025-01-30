@@ -666,11 +666,13 @@ test('should properly configure the frontends on their paths if no composer conf
   const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
   const astroModulesRoot = resolve(__dirname, './proxy/fixtures/astro/node_modules')
   const nextModulesRoot = resolve(__dirname, './proxy/fixtures/next/node_modules')
+  const remixModulesRoot = resolve(__dirname, './proxy/fixtures/remix/node_modules')
 
   await ensureCleanup(t, [
     nodeModulesRoot,
     astroModulesRoot,
     nextModulesRoot,
+    remixModulesRoot,
     resolve(__dirname, './proxy/fixtures/astro/.astro'),
     resolve(__dirname, './proxy/fixtures/next/.next')
   ])
@@ -689,6 +691,11 @@ test('should properly configure the frontends on their paths if no composer conf
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nextModulesRoot, '@platformatic'))
   await symlink(resolve(__dirname, '../../next'), resolve(nextModulesRoot, '@platformatic/next'), 'dir')
+
+  // Make sure there is @platformatic/next available in the next service.
+  // We can't simply specify it in the package.json due to circular dependencies.
+  await createDirectory(resolve(remixModulesRoot, '@platformatic'))
+  await symlink(resolve(__dirname, '../../remix'), resolve(remixModulesRoot, '@platformatic/remix'), 'dir')
 
   const runtime = await createComposerInRuntime(
     t,
@@ -802,7 +809,7 @@ test('should properly match services by their hostname', async t => {
   {
     const { statusCode, body: rawBody } = await request(address, {
       method: 'GET',
-      path: '/service/id',
+      path: '/id',
       headers: {
         host: 'service.example.com'
       }
@@ -820,7 +827,7 @@ test('should properly match services by their hostname', async t => {
         host: 'service.example.com',
         'content-type': 'text/plain'
       },
-      path: '/service/echo',
+      path: '/echo',
       body: 'REQUEST'
     })
     assert.equal(statusCode, 200)
@@ -833,14 +840,30 @@ test('should properly match services by their hostname', async t => {
     const { statusCode, body: rawBody } = await request(address, {
       method: 'GET',
       headers: {
-        host: 'node.example.com'
+        'content-type': 'text/plain'
       },
-      path: '/node/id'
+      path: '/service/id',
+      body: 'REQUEST'
     })
     assert.equal(statusCode, 200)
 
     const body = await rawBody.json()
-    assert.deepStrictEqual(body, { from: 'node' })
+    assert.deepStrictEqual(body, { from: 'service' })
+  }
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'POST',
+      headers: {
+        'content-type': 'text/plain'
+      },
+      path: '/service/echo',
+      body: 'REQUEST'
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.text()
+    assert.deepStrictEqual(body, 'REQUEST')
   }
 
   // All other hostnames are permitted
@@ -860,6 +883,35 @@ test('should properly match services by their hostname', async t => {
     assert.deepStrictEqual(body, 'REQUEST')
   }
 
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'GET',
+      headers: {
+        host: 'node.example.com'
+      },
+      path: '/id'
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { from: 'node' })
+  }
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'POST',
+      headers: {
+        'content-type': 'text/plain'
+      },
+      path: '/node/id',
+      body: 'REQUEST'
+    })
+    assert.equal(statusCode, 200)
+
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { from: 'node' })
+  }
+
   // The route is defined on the "service" service but not on the "node" service, we therefore forbid access
   {
     const { statusCode } = await request(address, {
@@ -868,7 +920,7 @@ test('should properly match services by their hostname', async t => {
         host: 'node.example.com',
         'content-type': 'text/plain'
       },
-      path: '/service/echo',
+      path: '/echo',
       body: 'REQUEST'
     })
     assert.equal(statusCode, 404)
@@ -1244,7 +1296,7 @@ test('should rewrite Location headers for proxied services https', async t => {
   }
 })
 
-test.only('should properly strip runtime basePath from proxied services', async t => {
+test('should properly strip runtime basePath from proxied services', async t => {
   const remixModulesRoot = resolve(__dirname, './proxy/fixtures/remix/node_modules')
 
   await ensureCleanup(t, [remixModulesRoot, resolve(__dirname, './proxy/fixtures/remix/build')])

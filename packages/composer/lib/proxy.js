@@ -223,6 +223,7 @@ module.exports = fp(async function (app, opts) {
     if (host) {
       await app.register(httpProxy, {
         ...proxyOptions,
+        prefix: '/',
         constraints: { host }
       })
 
