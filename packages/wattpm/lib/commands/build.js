@@ -180,6 +180,7 @@ export async function updateCommand (logger, args) {
   for (const service of services) {
     // Parse the configuration file, if any
     const packageJsonPath = resolve(service.path, 'package.json')
+    console.log(packageJsonPath)
     if (!existsSync(packageJsonPath)) {
       continue
     }
