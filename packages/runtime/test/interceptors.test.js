@@ -96,7 +96,6 @@ test('mesh network works from external processes via ChildManager', async t => {
     })
 
     assert.deepStrictEqual(body.responses[2].statusCode, 502)
-    console.log(JSON.stringify(body, null, 2))
     assert.deepStrictEqual(Object.keys(body.responses[2].body).sort(), [
       'message',
       'stack'
