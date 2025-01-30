@@ -1,8 +1,9 @@
 'use strict'
 
-const { getGlobalDispatcher } = require('undici')
 const httpProxy = require('@fastify/http-proxy')
 const fp = require('fastify-plugin')
+const { workerData } = require('node:worker_threads')
+const { getGlobalDispatcher } = require('undici')
 
 const kITC = Symbol.for('plt.runtime.itc')
 const kProxyRoute = Symbol('plt.composer.proxy.route')
@@ -14,12 +15,18 @@ async function resolveServiceProxyParameters (service) {
   const meta = (await globalThis[kITC]?.send('getServiceMeta', service.id))?.composer ?? { prefix: service.id }
 
   // If no prefix could be found, assume the service id
-  const prefix = (service.proxy?.prefix ?? meta.prefix ?? service.id).replace(/(\/$)/g, '')
-
+  let prefix = (service.proxy?.prefix ?? meta.prefix ?? service.id).replace(/(\/$)/g, '')
   let rewritePrefix = ''
   let internalRewriteLocationHeader = true
 
   if (meta.wantsAbsoluteUrls) {
+    const basePath = workerData.config.basePath
+
+    // Strip the runtime basepath from the prefix when it comes from the service meta
+    if (basePath && !service.proxy?.prefix && prefix.startsWith(basePath)) {
+      prefix = prefix.substring(basePath.length)
+    }
+
     // The rewritePrefix purposely ignores service.proxy?.prefix to let
     // the service always being able to configure their value
     rewritePrefix = meta.prefix ?? service.id
@@ -138,7 +145,14 @@ module.exports = fp(async function (app, opts) {
       })
     }
 
-    const toReplace = url ? new RegExp(url.replace(/127\.0\.0\.1/, 'localhost').replace(/\[::\]/, 'localhost').replace('http://', 'https?://')) : null
+    const toReplace = url
+      ? new RegExp(
+        url
+          .replace(/127\.0\.0\.1/, 'localhost')
+          .replace(/\[::\]/, 'localhost')
+          .replace('http://', 'https?://')
+      )
+      : null
 
     const proxyOptions = {
       websocket: true,
@@ -153,7 +167,7 @@ module.exports = fp(async function (app, opts) {
       },
       internalRewriteLocationHeader: false,
       replyOptions: {
-        rewriteHeaders: (headers) => {
+        rewriteHeaders: headers => {
           let location = headers.location
           if (location) {
             if (toReplace) {
@@ -186,7 +200,7 @@ module.exports = fp(async function (app, opts) {
             ...telemetryHeaders,
             'x-forwarded-for': request.ip,
             'x-forwarded-host': request.host,
-            'x-forwarded-proto': request.protocol,
+            'x-forwarded-proto': request.protocol
           }
 
           request.log.trace({ headers }, 'rewritten headers before proxying')
@@ -209,6 +223,7 @@ module.exports = fp(async function (app, opts) {
     if (host) {
       await app.register(httpProxy, {
         ...proxyOptions,
+        prefix: '/',
         constraints: { host }
       })
 
