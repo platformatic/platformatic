@@ -131,7 +131,6 @@ test('install - should install production dependencies only', async t => {
 test('update - should update version in package.json files', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
 
-
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
 
   const updateProcess = await executeCommand(
