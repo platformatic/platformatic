@@ -133,7 +133,7 @@ test('update - should update version in package.json files', async t => {
   const updateProcess = await executeCommand(
     'node',
     '--import',
-    resolve(rootDir, 'mock-registry.js'),
+    resolve(rootDir, 'mock-registry.mjs'),
     cliPath,
     'update',
     rootDir
