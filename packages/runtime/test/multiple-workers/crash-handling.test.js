@@ -59,10 +59,7 @@ test('can restart only crashed workers when they throw an exception during start
 
   for (let i = 1; i <= 5; i++) {
     ok(
-      messages.find(
-        m =>
-          m.msg === `Attempt ${i} of 5 to start the worker 0 of the service "node" again will be performed in 500ms ...`
-      )
+      messages.find(m => m.msg === `Performing attempt ${i} of 5 to start the worker 0 of the service "node" again ...`)
     )
   }
 
@@ -122,10 +119,7 @@ test('can restart only crashed workers when they exit during start', async t => 
 
   for (let i = 1; i <= 5; i++) {
     ok(
-      messages.find(
-        m =>
-          m.msg === `Attempt ${i} of 5 to start the worker 0 of the service "node" again will be performed in 500ms ...`
-      )
+      messages.find(m => m.msg === `Performing attempt ${i} of 5 to start the worker 0 of the service "node" again ...`)
     )
   }
 
@@ -173,9 +167,9 @@ test('can restart only crashed workers when they crash', async t => {
     'The worker 0 of the service "node" unexpectedly exited with code 1.',
     'The worker 2 of the service "node" unexpectedly exited with code 1.',
     'The worker 4 of the service "node" unexpectedly exited with code 1.',
-    'The worker 0 of the service "node" will be restarted in 500ms...',
-    'The worker 2 of the service "node" will be restarted in 500ms...',
-    'The worker 4 of the service "node" will be restarted in 500ms...'
+    'The worker 0 of the service "node" is being restarted ...',
+    'The worker 2 of the service "node" is being restarted ...',
+    'The worker 4 of the service "node" is being restarted ...'
   )
 
   await client.request({ method: 'POST', path: '/api/v1/services/node/stop' })
@@ -202,8 +196,8 @@ test('can restart only crashed workers when they crash', async t => {
 
   ok(!messages.find(m => m.msg === 'The worker 1 of the service "node" threw an uncaught exception.'))
   ok(!messages.find(m => m.msg === 'The worker 3 of the service "node" threw an uncaught exception.'))
-  ok(!messages.find(m => m.msg === 'The worker 1 of the service "node" will be restarted in 500ms...'))
-  ok(!messages.find(m => m.msg === 'The worker 3 of the service "node" will be restarted in 500ms..'))
+  ok(!messages.find(m => m.msg === 'The worker 1 of the service "node" is being restarted ...'))
+  ok(!messages.find(m => m.msg === 'The worker 3 of the service "node" is being restarted ...'))
 
   managementApiWebsocket.terminate()
 })
@@ -245,9 +239,9 @@ test('can restart only crashed workers when they exit', async t => {
     'The worker 0 of the service "node" unexpectedly exited with code 1.',
     'The worker 2 of the service "node" unexpectedly exited with code 1.',
     'The worker 4 of the service "node" unexpectedly exited with code 1.',
-    'The worker 0 of the service "node" will be restarted in 500ms...',
-    'The worker 2 of the service "node" will be restarted in 500ms...',
-    'The worker 4 of the service "node" will be restarted in 500ms...'
+    'The worker 0 of the service "node" is being restarted ...',
+    'The worker 2 of the service "node" is being restarted ...',
+    'The worker 4 of the service "node" is being restarted ...'
   )
 
   await client.request({ method: 'POST', path: '/api/v1/services/node/stop' })
@@ -258,8 +252,8 @@ test('can restart only crashed workers when they exit', async t => {
 
   ok(!messages.find(m => m.msg === 'The worker 1 of the service "node" unexpectedly exited with code 1.'))
   ok(!messages.find(m => m.msg === 'The worker 3 of the service "node" unexpectedly exited with code 1.'))
-  ok(!messages.find(m => m.msg === 'The worker 1 of the service "node" will be restarted in 500ms...'))
-  ok(!messages.find(m => m.msg === 'The worker 3 of the service "node" will be restarted in 500ms..'))
+  ok(!messages.find(m => m.msg === 'The worker 1 of the service "node" is being restarted ...'))
+  ok(!messages.find(m => m.msg === 'The worker 3 of the service "node" is being restarted ...'))
 
   managementApiWebsocket.terminate()
 })

@@ -48,6 +48,7 @@ const MAX_METRICS_QUEUE_LENGTH = 5 * 60 // 5 minutes in seconds
 const COLLECT_METRICS_TIMEOUT = 1000
 
 const MAX_BOOTSTRAP_ATTEMPTS = 5
+const IMMEDIATE_RESTART_MAX_THRESHOLD = 10
 
 const telemetryPath = require.resolve('@platformatic/telemetry')
 const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
@@ -1111,7 +1112,12 @@ class Runtime extends EventEmitter {
         // Restart the service if it was started
         if (started && this.#status === 'started') {
           if (restartOnError > 0) {
-            this.logger.warn(`The ${errorLabel} will be restarted in ${restartOnError}ms...`)
+            if (restartOnError < IMMEDIATE_RESTART_MAX_THRESHOLD) {
+              this.logger.warn(`The ${errorLabel} is being restarted ...`)
+            } else {
+              this.logger.warn(`The ${errorLabel} will be restarted in ${restartOnError}ms ...`)
+            }
+
             this.#restartCrashedWorker(config, serviceConfig, workersCount, serviceId, index, false, 0).catch(err => {
               this.logger.error({ err: ensureLoggableError(err) }, `${errorLabel} could not be restarted.`)
             })
@@ -1233,13 +1239,28 @@ class Runtime extends EventEmitter {
       })
 
       if (unhealthy) {
+        if (elu > maxELU) {
+          this.logger.error(
+            `The ${errorLabel} has an ELU of ${(elu * 100).toFixed(2)} %, above the maximum allowed usage of ${(maxELU * 100).toFixed(2)} %.`
+          )
+        }
+
+        if (memoryUsage > maxHeapUsed) {
+          this.logger.error(
+            `The ${errorLabel} is using ${(elu * 100).toFixed(2)} % of the memory, above the maximum allowed usage of ${(maxELU * 100).toFixed(2)} %.`
+          )
+        }
+
         unhealthyChecks++
       } else {
         unhealthyChecks = 0
       }
 
       if (unhealthyChecks >= maxUnhealthyChecks) {
-        this.logger.error(`The ${errorLabel} is unhealthy. Forcefully terminating it ...`)
+        this.logger.error(
+          { elu, maxELU, memoryUsage, maxMemoryUsage: maxHeapUsed },
+          `The ${errorLabel} is unhealthy. Forcefully terminating it ...`
+        )
         worker.terminate()
         return
       }
@@ -1334,9 +1355,15 @@ class Runtime extends EventEmitter {
         throw error
       }
 
-      this.logger.warn(
-        `Attempt ${bootstrapAttempt} of ${MAX_BOOTSTRAP_ATTEMPTS} to start the ${label} again will be performed in ${restartOnError}ms ...`
-      )
+      if (restartOnError < IMMEDIATE_RESTART_MAX_THRESHOLD) {
+        this.logger.warn(
+          `Performing attempt ${bootstrapAttempt} of ${MAX_BOOTSTRAP_ATTEMPTS} to start the ${label} again ...`
+        )
+      } else {
+        this.logger.warn(
+          `Attempt ${bootstrapAttempt} of ${MAX_BOOTSTRAP_ATTEMPTS} to start the ${label} again will be performed in ${restartOnError}ms ...`
+        )
+      }
 
       await this.#restartCrashedWorker(config, serviceConfig, workersCount, id, index, silent, bootstrapAttempt)
     }
@@ -1414,7 +1441,7 @@ class Runtime extends EventEmitter {
     }
 
     restartPromise = new Promise((resolve, reject) => {
-      setTimeout(async () => {
+      async function restart () {
         this.#restartingWorkers.delete(workerId)
 
         // If some processes were scheduled to restart
@@ -1436,7 +1463,13 @@ class Runtime extends EventEmitter {
 
           reject(err)
         }
-      }, config.restartOnError)
+      }
+
+      if (config.restartOnError < IMMEDIATE_RESTART_MAX_THRESHOLD) {
+        process.nextTick(restart.bind(this))
+      } else {
+        setTimeout(restart.bind(this), config.restartOnError)
+      }
     })
 
     this.#restartingWorkers.set(workerId, restartPromise)

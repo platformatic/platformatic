@@ -192,7 +192,7 @@ test('config - should list configuration for an application', async t => {
       exclude: []
     },
     sourceMaps: false,
-    restartOnError: 5000,
+    restartOnError: 2,
     startTimeout: 30000,
     managementApi: true,
     serviceMap: {},
@@ -235,10 +235,10 @@ test('config - should list configuration for an application', async t => {
       enabled: true,
       gracePeriod: 30000,
       interval: 30000,
-      maxELU: 0.95,
+      maxELU: 0.99,
       maxHeapTotal: 4294967296,
-      maxHeapUsed: 0.95,
-      maxUnhealthyChecks: 3
+      maxHeapUsed: 0.99,
+      maxUnhealthyChecks: 10
     },
     resolvedServicesBasePath: 'external'
   })

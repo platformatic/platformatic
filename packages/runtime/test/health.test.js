@@ -61,6 +61,15 @@ test('should restart the process if it exceeded maximum threshold', async t => {
   const messages = (await waitPromise).map(m => m.msg)
 
   for (const service of ['db-app', 'serviceApp', 'with-logger', 'multi-plugin-service']) {
+    const eluMatcher = new RegExp(
+      `The service "${service}" has an ELU of \\d+\\.\\d+ %, above the maximum allowed usage of \\d+\\.\\d+ %\\.`
+    )
+    const memoryMatcher = new RegExp(
+      `The service "${service}" is using \\d+\\.\\d+ % of the memory, above the maximum allowed usage of \\d+\\.\\d+ %\\.`
+    )
+
+    ok(messages.some(m => eluMatcher.test(m)))
+    ok(messages.some(m => memoryMatcher.test(m)))
     ok(messages.includes(`The service "${service}" is unhealthy. Forcefully terminating it ...`))
     ok(messages.includes(`The service "${service}" unexpectedly exited with code 1.`))
   }

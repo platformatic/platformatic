@@ -182,6 +182,10 @@ The number of milliseconds to wait before attempting to restart a service that u
 
 If not specified or set to `true`, the default value is `5000`, set to `0` or `false` to disable.
 
+Any value smaller than `10` will cause immediate restart of the service.
+
+This setting is ignored in production, where services are always restarted immediately.
+
 ### `health`
 
 Configures the health check for each worker. This is enabled only if `restartOnError` is greater than zero.
@@ -191,9 +195,9 @@ The object supports the following settings:
 - `enabled` (`boolean`): If to enable the health check. Default: `true`.
 - `interval` (`number`): The interval between checks in milliseconds. Default: `30000`.
 - `gracePeriod`: How long after the service started before starting to perform health checks. Default: `30000`.
-- `maxUnhealthyChecks`: The number of consecutive failed checks before killing the worker. Default: `1`.
-- `maxELU`: The maximum allowed Event Loop Utilization. The value must be a percentage between `0` and `1`. Default: `0.95`.
-- `maxHeapUsed`: The maximum allowed memory utilization. The value must be a percentage between `0` and `1`. Default: `0.95`.
+- `maxUnhealthyChecks`: The number of consecutive failed checks before killing the worker. Default: `10`.
+- `maxELU`: The maximum allowed Event Loop Utilization. The value must be a percentage between `0` and `1`. Default: `0.99`.
+- `maxHeapUsed`: The maximum allowed memory utilization. The value must be a percentage between `0` and `1`. Default: `0.99`.
 - `maxHeapTotal`: The maximum allowed memory allocatable by the process. The value must be an amount in bytes. Default: `4G`.
 
 ### `telemetry`
