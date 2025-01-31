@@ -1,9 +1,18 @@
 import logUpdate from 'log-update'
 import { pltGreen } from './colors.mjs'
-import { sleep, randomBetween } from './utils.mjs'
+import { randomBetween, sleep } from './utils.mjs'
 
-export const say = async (messages) => {
+export async function say (messages) {
   const _messages = Array.isArray(messages) ? messages : [messages]
+
+  if (process.env.NO_COLOR) {
+    for (const message of _messages) {
+      console.log(message)
+    }
+
+    logUpdate.done()
+    return
+  }
 
   for (const message of _messages) {
     const _message = Array.isArray(message) ? message : message.split(' ')
