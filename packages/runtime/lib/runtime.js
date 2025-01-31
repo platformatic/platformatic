@@ -1317,6 +1317,8 @@ class Runtime extends EventEmitter {
         await worker.terminate()
       }
 
+      this.emit('service:worker:start:error', eventPayload)
+
       if (error.code !== 'PLT_RUNTIME_SERVICE_START_TIMEOUT') {
         this.logger.error({ err: ensureLoggableError(error) }, `Failed to start ${label}.`)
       }
@@ -1328,7 +1330,6 @@ class Runtime extends EventEmitter {
       }
 
       if (bootstrapAttempt++ >= MAX_BOOTSTRAP_ATTEMPTS || restartOnError === 0) {
-        this.emit('service:worker:start:error', eventPayload)
         this.logger.error(`Failed to start ${label} after ${MAX_BOOTSTRAP_ATTEMPTS} attempts.`)
         throw error
       }
