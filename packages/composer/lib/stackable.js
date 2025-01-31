@@ -4,7 +4,7 @@ const { ServiceStackable } = require('@platformatic/service')
 
 const kITC = Symbol.for('plt.runtime.itc')
 
-async function ensureServices (config) {
+async function ensureServices (composerId, config) {
   if (config.composer?.services?.length) {
     return
   }
@@ -17,16 +17,17 @@ async function ensureServices (config) {
 
   if (services) {
     config.composer.services = services
-      .filter(id => id !== globalThis.platformatic.serviceId) // Remove ourself
+      .filter(id => id !== composerId) // Remove ourself
       .map(id => ({ id, proxy: { prefix: `/${id}` } }))
   }
 }
 
 class ComposerStackable extends ServiceStackable {
   #meta
+  #dependencies
 
   async getBootstrapDependencies () {
-    await ensureServices(this.configManager.current)
+    await ensureServices(this.serviceId, this.configManager.current)
 
     // We do not call init() on purpose, as we don't want to load the app just yet.
 
@@ -43,21 +44,8 @@ class ComposerStackable extends ServiceStackable {
       )
     }
 
+    this.#dependencies = dependencies
     return dependencies
-  }
-
-  async #parseDependency (id, urlString) {
-    let url = this.#getServiceUrl(id)
-
-    if (urlString) {
-      const remoteUrl = await this.configManager.replaceEnv(urlString)
-
-      if (remoteUrl) {
-        url = remoteUrl
-      }
-    }
-
-    return { id, url, local: url.endsWith('.plt.local') }
   }
 
   registerMeta (meta) {
@@ -74,8 +62,36 @@ class ComposerStackable extends ServiceStackable {
     }
   }
 
-  #getServiceUrl (id) {
-    return `http://${id}.plt.local`
+  async isHealthy () {
+    // Still booting, assume healthy
+    if (!this.#dependencies) {
+      return true
+    }
+
+    const composedServices = this.#dependencies.map(dep => dep.id)
+    const workers = await globalThis[kITC].send('getWorkers')
+
+    for (const worker of Object.values(workers)) {
+      if (composedServices.includes(worker.service) && !worker.status.startsWith('start')) {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  async #parseDependency (id, urlString) {
+    let url = `http://${id}.plt.local`
+
+    if (urlString) {
+      const remoteUrl = await this.configManager.replaceEnv(urlString)
+
+      if (remoteUrl) {
+        url = remoteUrl
+      }
+    }
+
+    return { id, url, local: url.endsWith('.plt.local') }
   }
 }
 module.exports = { ComposerStackable, ensureServices }
