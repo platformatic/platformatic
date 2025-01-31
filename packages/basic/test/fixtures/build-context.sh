@@ -1,6 +1,7 @@
 #!/bin/bash
 
-set -x -e # This is to print on stderr the commands and to exit on errors
+set -e # This is to fail on errors
 
 OUTPUT=$(pwd)
-echo "PWD=$OUTPUT"
+echo "STDOUT=$OUTPUT"
+echo "STDERR=$OUTPUT" >&2

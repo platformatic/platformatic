@@ -169,15 +169,14 @@ test(
     await stackable.buildWithCommand(executablePath, import.meta.dirname, { disableChildManager: true })
 
     ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(executablePath)))
-    deepStrictEqual(stackable.stdout.messages.slice(1), [`PWD=${temporaryFolder}`])
-
-    const actual = stackable.stderr.messages.slice(0).map((line) => line.trim())
-
-    deepStrictEqual(actual, [
-      '++ pwd',
-      `+ OUTPUT=${temporaryFolder}`,
-      `+ echo PWD=${temporaryFolder}`
-    ])
+    deepStrictEqual(
+      stackable.stdout.messages.slice(1).map(l => l.trim()),
+      [`STDOUT=${temporaryFolder}`]
+    )
+    deepStrictEqual(
+      stackable.stderr.messages.map(l => l.trim()),
+      [`STDERR=${temporaryFolder}`]
+    )
   }
 )
 

@@ -1,14 +1,14 @@
-import os from 'node:os'
-import { execa } from 'execa'
-import { join } from 'desm'
-import stripAnsi from 'strip-ansi'
-import { promisify } from 'node:util'
-import { promises as fs } from 'node:fs'
-import path from 'node:path'
 import { createDirectory } from '@platformatic/utils'
+import { join } from 'desm'
+import { execa } from 'execa'
 import fastify from 'fastify'
-import { fileURLToPath } from 'node:url'
+import { promises as fs } from 'node:fs'
 import { symlink } from 'node:fs/promises'
+import os from 'node:os'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { promisify } from 'node:util'
+import stripAnsi from 'strip-ansi'
 
 process.env.MARKETPLACE_TEST = 'true'
 const pltRoot = fileURLToPath(new URL('../..', import.meta.url))
@@ -19,30 +19,32 @@ export const keys = {
   DOWN: '\x1B\x5B\x42',
   UP: '\x1B\x5B\x41',
   ENTER: '\x0D',
-  SPACE: '\x20',
+  SPACE: '\x20'
 }
 
 export const createPath = join(import.meta.url, '..', '..', 'create-platformatic.mjs')
 
 const match = (str, match) => {
   if (Array.isArray(match)) {
-    return match.some((m) => str.includes(m))
+    return match.some(m => str.includes(m))
   }
   return str.includes(match)
 }
 
-export const walk = async (dir) => {
+export const walk = async dir => {
   let files = await fs.readdir(dir)
-  files = await Promise.all(files.map(async file => {
-    const filePath = path.join(dir, file)
-    const stats = await fs.stat(filePath)
-    if (stats.isDirectory()) return walk(filePath)
-    else if (stats.isFile()) return filePath
-  }))
+  files = await Promise.all(
+    files.map(async file => {
+      const filePath = path.join(dir, file)
+      const stats = await fs.stat(filePath)
+      if (stats.isDirectory()) return walk(filePath)
+      else if (stats.isFile()) return filePath
+    })
+  )
   return files.reduce((all, folderContents) => all.concat(folderContents), [])
 }
 
-export const getServices = async (dir) => {
+export const getServices = async dir => {
   const files = await fs.readdir(dir)
   const services = []
   for (const file of files) {
@@ -67,25 +69,26 @@ export async function executeCreatePlatformatic (dir, actions = [], options = {}
     try {
       const execaOptions = {
         cwd: dir,
-      }
-
-      if (pkgManager === 'pnpm') {
-        execaOptions.env = {
-          npm_config_user_agent: 'pnpm/6.14.1 npm/? node/v16.4.2 darwin x64',
+        env: {
+          NO_COLOR: 'true'
         }
       }
 
-      const child = execa('node', [
-        createPath,
-        `--install=${pkgMgrInstall.toString()}`,
-        `--marketplace-host=${marketplaceHost}`,
-      ], execaOptions)
+      if (pkgManager === 'pnpm') {
+        execaOptions.env.npm_config_user_agent = 'pnpm/6.14.1 npm/? node/v16.4.2 darwin x64'
+      }
+
+      const child = execa(
+        'node',
+        [createPath, `--install=${pkgMgrInstall.toString()}`, `--marketplace-host=${marketplaceHost}`],
+        execaOptions
+      )
 
       // We just need the "lastPrompt" printed before the process stopped to wait for an answer
       // If we don't have any outptu from process for more than 500ms, we assume it's waiting for an answer
       let lastPrompt = ''
 
-      child.stdout.on('data', (chunk) => {
+      child.stdout.on('data', chunk => {
         const str = stripAnsi(chunk.toString()).trim()
         if (str) {
           lastPrompt = str
@@ -150,11 +153,7 @@ export async function startMarketplace (t, opts = {}) {
     if (opts.templatesCallback) {
       return opts.templatesCallback(request, reply)
     }
-    return [
-      { name: '@platformatic/composer' },
-      { name: '@platformatic/db' },
-      { name: '@platformatic/service' },
-    ]
+    return [{ name: '@platformatic/composer' }, { name: '@platformatic/db' }, { name: '@platformatic/service' }]
   })
 
   await marketplace.listen({ port: 0 })
