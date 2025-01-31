@@ -1,6 +1,6 @@
 import fastify from 'fastify'
 
-export function create() {
+export function create () {
   const server = fastify()
 
   server.get('/api', async () => {

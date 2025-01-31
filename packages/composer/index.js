@@ -26,7 +26,7 @@ async function platformaticComposer (app, opts) {
   let hasGraphqlServices, hasOpenapiServices
 
   // When no services are specified, get the list from the runtime.
-  await ensureServices(opts.context.stackable.serviceId, config)
+  await ensureServices(opts.context?.stackable?.serviceId, config)
 
   const { services } = configManager.current.composer
 
