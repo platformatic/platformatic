@@ -9,7 +9,7 @@ async function ensureServices (composerId, config) {
     return
   }
 
-  composerId ??= globalThis.platformatic.serviceId
+  composerId ??= globalThis.platformatic?.serviceId
   config.composer ??= {}
   config.composer.services ??= []
 
