@@ -3,6 +3,7 @@
 const deepEqual = require('fast-deep-equal')
 const ConfigManager = require('@platformatic/config')
 const { platformaticService, buildServer, buildStackable } = require('@platformatic/service')
+const { isKeyEnabled } = require('@platformatic/utils')
 
 const { schema } = require('./lib/schema')
 const serviceProxy = require('./lib/proxy')
@@ -25,7 +26,7 @@ async function platformaticComposer (app, opts) {
   let hasGraphqlServices, hasOpenapiServices
 
   // When no services are specified, get the list from the runtime.
-  await ensureServices(config)
+  await ensureServices(opts.context?.stackable?.serviceId, config)
 
   const { services } = configManager.current.composer
 
@@ -46,6 +47,15 @@ async function platformaticComposer (app, opts) {
   let generatedComposedOpenAPI = null
   if (hasOpenapiServices) {
     generatedComposedOpenAPI = await openApiGenerator(app, config.composer)
+  }
+
+  if (isKeyEnabled('healthCheck', config.server)) {
+    if (typeof config.server.healthCheck !== 'object') {
+      config.server.healthCheck = {}
+    }
+
+    const stackable = opts.context.stackable
+    config.server.healthCheck.fn = stackable.isHealthy.bind(stackable)
   }
 
   app.register(serviceProxy, { ...config.composer, context: opts.context })

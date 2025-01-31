@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/1.52.0.json",
+  "entrypoint": "serviceThrowsOnStart",
+  "services": [
+    {
+      "id": "serviceThrowsOnStart",
+      "path": "../serviceAppThrowsOnStart",
+      "config": "platformatic.service.json"
+    }
+  ],
+  "gracefulShutdown": {
+    "runtime": 1000,
+    "service": 1000
+  },
+  "restartOnError": 1000,
+  "logger": {
+    "level": "fatal"
+  }
+}
