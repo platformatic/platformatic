@@ -10,5 +10,6 @@
     "logger": {
       "level": "info"
     }
-  }
+  },
+  "restartOnError": 1000
 }

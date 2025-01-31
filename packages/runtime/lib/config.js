@@ -15,6 +15,13 @@ const { parseArgs } = require('node:util')
 async function _transformConfig (configManager, args) {
   const config = configManager.current
 
+  const { values } = parseArgs({
+    args,
+    strict: false,
+    options: { production: { type: 'boolean', short: 'p', default: false } }
+  })
+  const production = values.production
+
   let services
   if (config.web?.length) {
     if (config.services?.length) {
@@ -30,13 +37,7 @@ async function _transformConfig (configManager, args) {
   if (watchType === 'string') {
     config.watch = config.watch === 'true'
   } else if (watchType === 'undefined') {
-    const { values } = parseArgs({
-      args,
-      strict: false,
-      options: { production: { type: 'boolean', short: 'p', default: false } }
-    })
-
-    config.watch = !values.production
+    config.watch = !production
   }
 
   if (config.autoload) {
@@ -109,7 +110,7 @@ async function _transformConfig (configManager, args) {
         // https://github.com/rust-lang/rust/issues/91979
         // https://github.com/rollup/rollup/issues/5761
         // TODO(mcollina): we should expose this inside every stackable configuration.
-        serviceConfig.app.modulesToLoad?.forEach((m) => {
+        serviceConfig.app.modulesToLoad?.forEach(m => {
           const toLoad = _require.resolve(m)
           loadModule(_require, toLoad).catch(() => {})
         })
@@ -142,7 +143,7 @@ async function _transformConfig (configManager, args) {
         // https://github.com/rust-lang/rust/issues/91979
         // https://github.com/rollup/rollup/issues/5761
         // TODO(mcollina): we should expose this inside every stackable configuration.
-        imported.stackable.default.modulesToLoad?.forEach((m) => {
+        imported.stackable.default.modulesToLoad?.forEach(m => {
           const toLoad = _require.resolve(m)
           loadModule(_require, toLoad).catch(() => {})
         })
@@ -210,8 +211,15 @@ async function _transformConfig (configManager, args) {
   configManager.current.services = services
   configManager.current.web = undefined
 
-  if (configManager.current.restartOnError === true) {
-    configManager.current.restartOnError = 5000
+  if (production) {
+    // Any value below 10 is considered as "immediate restart" and won't be processed via setTimeout or similar
+    configManager.current.restartOnError = 1
+  } else {
+    if (configManager.current.restartOnError === true) {
+      configManager.current.restartOnError = 5000
+    } else if (configManager.current.restartOnError < 0) {
+      configManager.current.restartOnError = 0
+    }
   }
 }
 

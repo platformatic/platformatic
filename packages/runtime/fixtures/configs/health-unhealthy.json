@@ -32,7 +32,8 @@
     "enabled": true,
     "gracePeriod": 100,
     "interval": 500,
-    "maxELU": 0.00001
+    "maxELU": 0.001,
+    "maxHeapUsed": 0.001
   },
   "metrics": true
 }

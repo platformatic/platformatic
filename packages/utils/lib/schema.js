@@ -146,7 +146,7 @@ const logger = {
                   },
                   level: {
                     type: 'string'
-                  },
+                  }
                 },
                 additionalProperties: false
               }
@@ -220,9 +220,9 @@ const health = {
     enabled: overridableValue({ type: 'boolean' }, true),
     interval: overridableValue({ type: 'number', minimum: 0 }, 30000),
     gracePeriod: overridableValue({ type: 'number', minimum: 0 }, 30000),
-    maxUnhealthyChecks: overridableValue({ type: 'number', minimum: 1 }, 3),
-    maxELU: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.95),
-    maxHeapUsed: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.95),
+    maxUnhealthyChecks: overridableValue({ type: 'number', minimum: 1 }, 10),
+    maxELU: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
+    maxHeapUsed: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
     maxHeapTotal: overridableValue({ type: 'number', minimum: 0 }, 4 * Math.pow(1024, 3))
   },
   additionalProperties: false

@@ -113,7 +113,7 @@
                     ]
                   },
                   "maxUnhealthyChecks": {
-                    "default": 3,
+                    "default": 10,
                     "anyOf": [
                       {
                         "type": "number",
@@ -125,7 +125,7 @@
                     ]
                   },
                   "maxELU": {
-                    "default": 0.95,
+                    "default": 0.99,
                     "anyOf": [
                       {
                         "type": "number",
@@ -138,7 +138,7 @@
                     ]
                   },
                   "maxHeapUsed": {
-                    "default": 0.95,
+                    "default": 0.99,
                     "anyOf": [
                       {
                         "type": "number",
@@ -284,7 +284,7 @@
                 ]
               },
               "maxUnhealthyChecks": {
-                "default": 3,
+                "default": 10,
                 "anyOf": [
                   {
                     "type": "number",
@@ -296,7 +296,7 @@
                 ]
               },
               "maxELU": {
-                "default": 0.95,
+                "default": 0.99,
                 "anyOf": [
                   {
                     "type": "number",
@@ -309,7 +309,7 @@
                 ]
               },
               "maxHeapUsed": {
-                "default": 0.95,
+                "default": 0.99,
                 "anyOf": [
                   {
                     "type": "number",
@@ -520,7 +520,7 @@
                 ]
               },
               "maxUnhealthyChecks": {
-                "default": 3,
+                "default": 10,
                 "anyOf": [
                   {
                     "type": "number",
@@ -532,7 +532,7 @@
                 ]
               },
               "maxELU": {
-                "default": 0.95,
+                "default": 0.99,
                 "anyOf": [
                   {
                     "type": "number",
@@ -545,7 +545,7 @@
                 ]
               },
               "maxHeapUsed": {
-                "default": 0.95,
+                "default": 0.99,
                 "anyOf": [
                   {
                     "type": "number",
@@ -949,7 +949,7 @@
           ]
         },
         "maxUnhealthyChecks": {
-          "default": 3,
+          "default": 10,
           "anyOf": [
             {
               "type": "number",
@@ -961,7 +961,7 @@
           ]
         },
         "maxELU": {
-          "default": 0.95,
+          "default": 0.99,
           "anyOf": [
             {
               "type": "number",
@@ -974,7 +974,7 @@
           ]
         },
         "maxHeapUsed": {
-          "default": 0.95,
+          "default": 0.99,
           "anyOf": [
             {
               "type": "number",

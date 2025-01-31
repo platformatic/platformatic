@@ -235,10 +235,10 @@ test('config - should list configuration for an application', async t => {
       enabled: true,
       gracePeriod: 30000,
       interval: 30000,
-      maxELU: 0.95,
+      maxELU: 0.99,
       maxHeapTotal: 4294967296,
-      maxHeapUsed: 0.95,
-      maxUnhealthyChecks: 3
+      maxHeapUsed: 0.99,
+      maxUnhealthyChecks: 10
     },
     resolvedServicesBasePath: 'external'
   })
