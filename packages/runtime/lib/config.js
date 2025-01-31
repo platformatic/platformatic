@@ -213,7 +213,8 @@ async function _transformConfig (configManager, args) {
 
   if (production) {
     // Any value below 10 is considered as "immediate restart" and won't be processed via setTimeout or similar
-    configManager.current.restartOnError = 1
+    // Important: do not use 2 otherwise ajv will convert to boolean `true`
+    configManager.current.restartOnError = 2
   } else {
     if (configManager.current.restartOnError === true) {
       configManager.current.restartOnError = 5000

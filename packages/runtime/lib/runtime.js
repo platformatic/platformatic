@@ -1355,9 +1355,15 @@ class Runtime extends EventEmitter {
         throw error
       }
 
-      this.logger.warn(
-        `Attempt ${bootstrapAttempt} of ${MAX_BOOTSTRAP_ATTEMPTS} to start the ${label} again will be performed in ${restartOnError}ms ...`
-      )
+      if (restartOnError < IMMEDIATE_RESTART_MAX_THRESHOLD) {
+        this.logger.warn(
+          `Performing attempt ${bootstrapAttempt} of ${MAX_BOOTSTRAP_ATTEMPTS} to start the ${label} again ...`
+        )
+      } else {
+        this.logger.warn(
+          `Attempt ${bootstrapAttempt} of ${MAX_BOOTSTRAP_ATTEMPTS} to start the ${label} again will be performed in ${restartOnError}ms ...`
+        )
+      }
 
       await this.#restartCrashedWorker(config, serviceConfig, workersCount, id, index, silent, bootstrapAttempt)
     }
@@ -1460,7 +1466,7 @@ class Runtime extends EventEmitter {
       }
 
       if (config.restartOnError < IMMEDIATE_RESTART_MAX_THRESHOLD) {
-        restart.call(this)
+        process.nextTick(restart.bind(this))
       } else {
         setTimeout(restart.bind(this), config.restartOnError)
       }

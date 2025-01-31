@@ -206,7 +206,7 @@ const platformaticRuntimeSchema = {
         { type: 'boolean' },
         {
           type: 'number',
-          minimum: 100
+          minimum: 0
         }
       ]
     },

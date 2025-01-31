@@ -870,7 +870,7 @@
         },
         {
           "type": "number",
-          "minimum": 100
+          "minimum": 0
         }
       ]
     },

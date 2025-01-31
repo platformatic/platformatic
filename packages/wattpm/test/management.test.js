@@ -192,7 +192,7 @@ test('config - should list configuration for an application', async t => {
       exclude: []
     },
     sourceMaps: false,
-    restartOnError: 5000,
+    restartOnError: 1,
     startTimeout: 30000,
     managementApi: true,
     serviceMap: {},
