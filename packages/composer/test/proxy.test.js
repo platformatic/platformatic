@@ -806,6 +806,7 @@ test('should properly match services by their hostname', async t => {
 
   const address = await runtime.start()
 
+  // Hostname based access work without prefix
   {
     const { statusCode, body: rawBody } = await request(address, {
       method: 'GET',
@@ -823,11 +824,11 @@ test('should properly match services by their hostname', async t => {
   {
     const { statusCode, body: rawBody } = await request(address, {
       method: 'POST',
+      path: '/echo',
       headers: {
         host: 'service.example.com',
         'content-type': 'text/plain'
       },
-      path: '/echo',
       body: 'REQUEST'
     })
     assert.equal(statusCode, 200)
@@ -836,14 +837,36 @@ test('should properly match services by their hostname', async t => {
     assert.deepStrictEqual(body, 'REQUEST')
   }
 
+  // Hostname based access does not work with prefix
+  {
+    const { statusCode } = await request(address, {
+      method: 'GET',
+      path: '/service/id',
+      headers: {
+        host: 'service.example.com'
+      }
+    })
+    assert.equal(statusCode, 404)
+  }
+
+  {
+    const { statusCode } = await request(address, {
+      method: 'POST',
+      path: '/service/echo',
+      headers: {
+        host: 'service.example.com',
+        'content-type': 'text/plain'
+      },
+      body: 'REQUEST'
+    })
+    assert.equal(statusCode, 404)
+  }
+
+  // Regular access without hostname and with prefix works
   {
     const { statusCode, body: rawBody } = await request(address, {
       method: 'GET',
-      headers: {
-        'content-type': 'text/plain'
-      },
-      path: '/service/id',
-      body: 'REQUEST'
+      path: '/service/id'
     })
     assert.equal(statusCode, 200)
 
@@ -854,16 +877,28 @@ test('should properly match services by their hostname', async t => {
   {
     const { statusCode, body: rawBody } = await request(address, {
       method: 'POST',
+      path: '/service/echo',
       headers: {
         'content-type': 'text/plain'
       },
-      path: '/service/echo',
       body: 'REQUEST'
     })
     assert.equal(statusCode, 200)
 
     const body = await rawBody.text()
     assert.deepStrictEqual(body, 'REQUEST')
+  }
+
+  // Hostname access with prefix should not work
+  {
+    const { statusCode } = await request(address, {
+      method: 'GET',
+      path: '/service/id',
+      headers: {
+        host: 'service.example.com'
+      }
+    })
+    assert.equal(statusCode, 404)
   }
 
   // All other hostnames are permitted
@@ -883,6 +918,7 @@ test('should properly match services by their hostname', async t => {
     assert.deepStrictEqual(body, 'REQUEST')
   }
 
+  // Other hostnames also work
   {
     const { statusCode, body: rawBody } = await request(address, {
       method: 'GET',
@@ -912,15 +948,29 @@ test('should properly match services by their hostname', async t => {
     assert.deepStrictEqual(body, { from: 'node' })
   }
 
-  // The route is defined on the "service" service but not on the "node" service, we therefore forbid access
   {
     const { statusCode } = await request(address, {
       method: 'POST',
+      path: '/node/id',
       headers: {
         host: 'node.example.com',
         'content-type': 'text/plain'
       },
+      body: 'REQUEST'
+    })
+    assert.equal(statusCode, 404)
+  }
+
+  // Routes are not mixed between hostnames
+  // The route is defined on the "service" service but not on the "node" service, we therefore forbid access
+  {
+    const { statusCode } = await request(address, {
+      method: 'POST',
       path: '/echo',
+      headers: {
+        host: 'node.example.com',
+        'content-type': 'text/plain'
+      },
       body: 'REQUEST'
     })
     assert.equal(statusCode, 404)
@@ -975,7 +1025,7 @@ test('should properly allow all domains when a service is the only one with a ho
   {
     const { statusCode, body: rawBody } = await request(address, {
       method: 'GET',
-      path: '/service/id',
+      path: '/id',
       headers: {
         host: 'service.example.com'
       }
@@ -993,13 +1043,24 @@ test('should properly allow all domains when a service is the only one with a ho
         host: 'service.example.com',
         'content-type': 'text/plain'
       },
-      path: '/service/echo',
+      path: '/echo',
       body: 'REQUEST'
     })
     assert.equal(statusCode, 200)
 
     const body = await rawBody.text()
     assert.deepStrictEqual(body, 'REQUEST')
+  }
+
+  {
+    const { statusCode } = await request(address, {
+      method: 'GET',
+      path: '/service/id',
+      headers: {
+        host: 'service.example.com'
+      }
+    })
+    assert.equal(statusCode, 404)
   }
 
   {
