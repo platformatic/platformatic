@@ -46,7 +46,7 @@ async function resolveServiceProxyParameters (service) {
 
 module.exports = fp(async function (app, opts) {
   const meta = { proxies: {} }
-  const allDomains = opts.services.map(s => s.proxy?.hostname).filter(Boolean)
+  const hostnameLessProxies = []
 
   for (const service of opts.services) {
     if (!service.proxy) {
@@ -207,7 +207,7 @@ module.exports = fp(async function (app, opts) {
 
           return headers
         },
-        onResponse: (request, reply, res) => {
+        onResponse: (_, reply, res) => {
           app.openTelemetry?.endHTTPSpanClient(reply.request.proxedCallSpan, {
             statusCode: reply.statusCode,
             headers: res.headers
@@ -217,8 +217,9 @@ module.exports = fp(async function (app, opts) {
       }
     }
 
+    hostnameLessProxies.push(proxyOptions)
+
     const host = service.proxy?.hostname
-    const notHost = allDomains.filter(d => d !== host)
 
     if (host) {
       await app.register(httpProxy, {
@@ -226,14 +227,16 @@ module.exports = fp(async function (app, opts) {
         prefix: '/',
         constraints: { host }
       })
-
-      await app.register(httpProxy, {
-        ...proxyOptions,
-        ...(notHost.length ? { constraints: { notHost } } : {})
-      })
-    } else {
-      await app.register(httpProxy, proxyOptions)
     }
+  }
+
+  const hostnames = opts.services.map(s => s.proxy?.hostname).filter(Boolean)
+  for (const options of hostnameLessProxies) {
+    if (hostnames.length > 0) {
+      options.constraints = { notHost: hostnames }
+    }
+
+    await app.register(httpProxy, options)
   }
 
   opts.context?.stackable?.registerMeta(meta)
