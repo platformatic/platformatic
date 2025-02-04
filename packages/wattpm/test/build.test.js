@@ -3,11 +3,11 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
+import { pathToFileURL } from 'node:url'
 import { pino } from 'pino'
 import { prepareRuntime } from '../../basic/test/helper.js'
 import { loadRawConfigurationFile, saveConfigurationFile } from '../lib/utils.js'
 import { cliPath, executeCommand, wattpm } from './helper.js'
-import { pathToFileURL } from 'node:url'
 
 const logger = pino()
 
@@ -133,13 +133,49 @@ test('update - should update version in package.json files', async t => {
 
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
 
+  const updateProcess = await executeCommand('node', '--import', loader, cliPath, 'update', rootDir)
+
+  const mainPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/main/package.json'))
+  const anotherPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/another/package.json'))
+
+  deepStrictEqual(mainPackageJson.dependencies, {
+    '@platformatic/node': '^2.41.0',
+    '@platformatic/remix': '~2.5.5',
+    '@platformatic/db': '~1.15.1',
+    '@platformatic/vite': '>1'
+  })
+
+  deepStrictEqual(mainPackageJson.devDependencies, {
+    '@platformatic/config': '^2.41.0'
+  })
+
+  deepStrictEqual(anotherPackageJson.dependencies, {
+    '@platformatic/service': '^2.41.0',
+    '@platformatic/db': '^1.53.4',
+    '@platformatic/db-dashboard': '^0.1.0'
+  })
+
+  ok(
+    updateProcess.stdout.includes(
+      'Updating dependency @platformatic/service of service another from ^2.0.0 to ^2.41.0 ...'
+    )
+  )
+  ok(updateProcess.stdout.includes('All dependencies have been updated.'))
+})
+
+test('update - should work when executed inside a service folder', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
+
+  const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
+
+  // Note that web/main folder contains a watt.json which will be considered as the root of the project.
   const updateProcess = await executeCommand(
     'node',
     '--import',
     loader,
     cliPath,
     'update',
-    rootDir
+    resolve(rootDir, 'web/main')
   )
 
   const mainPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/main/package.json'))
