@@ -2,6 +2,7 @@ import {
   ConfigManager,
   getParser,
   getStringifier,
+  matchKnownSchema,
   loadConfig as pltConfigLoadConfig,
   Store
 } from '@platformatic/config'
@@ -163,9 +164,20 @@ export function serviceToEnvVariable (service) {
 export async function findConfigurationFile (logger, root) {
   let current = root
   let configurationFile
-  while (configurationFile === undefined) {
+
+  while (!configurationFile) {
     // Find a wattpm.json or watt.json file
     configurationFile = await ConfigManager.findConfigFile(current, true)
+
+    // If a file is found, verify it actually represents a watt or runtime configuration
+    if (configurationFile) {
+      const configuration = await loadRawConfigurationFile(logger, resolve(current, configurationFile))
+
+      if (matchKnownSchema(configuration.$schema) !== 'runtime') {
+        configurationFile = null
+      }
+    }
+
     if (!configurationFile) {
       const newCurrent = dirname(current)
 
