@@ -17,6 +17,7 @@ const {
   createComposerInRuntime,
   REFRESH_TIMEOUT
 } = require('./helper')
+const { buildServer: buildRuntime } = require('../../runtime')
 const { safeRemove, createDirectory } = require('@platformatic/utils')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
@@ -1390,10 +1391,14 @@ test('should properly strip runtime basePath from proxied services', async t => 
     {
       basePath: '/base'
     },
-    true
+    true,
+    async runtimeConfigPath => {
+      const devRuntime = await buildRuntime(runtimeConfigPath)
+      await devRuntime.buildService('remix')
+      await devRuntime.close()
+    }
   )
 
-  await runtime.buildService('remix')
   const address = await runtime.start()
 
   const { statusCode, body: rawBody } = await request(address, {

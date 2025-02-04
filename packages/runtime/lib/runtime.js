@@ -1338,7 +1338,7 @@ class Runtime extends EventEmitter {
         await worker.terminate()
       }
 
-      this.emit('service:worker:start:error', eventPayload)
+      this.emit('service:worker:start:error', { ...eventPayload, error })
 
       if (error.code !== 'PLT_RUNTIME_SERVICE_START_TIMEOUT') {
         this.logger.error({ err: ensureLoggableError(error) }, `Failed to start ${label}.`)

@@ -39,12 +39,14 @@ export class RemixStackable extends ViteStackable {
   async init () {
     await super.init()
 
-    this.#remix = resolve(dirname(resolvePackage(this.root, '@remix-run/dev')), '..')
-    const remixPackage = JSON.parse(await readFile(resolve(this.#remix, 'package.json'), 'utf-8'))
+    if (!this.isProduction) {
+      this.#remix = resolve(dirname(resolvePackage(this.root, '@remix-run/dev')), '..')
+      const remixPackage = JSON.parse(await readFile(resolve(this.#remix, 'package.json'), 'utf-8'))
 
-    /* c8 ignore next 3 */
-    if (!satisfies(remixPackage.version, supportedVersions)) {
-      throw new errors.UnsupportedVersion('@remix-run/dev', remixPackage.version, supportedVersions)
+      /* c8 ignore next 3 */
+      if (!satisfies(remixPackage.version, supportedVersions)) {
+        throw new errors.UnsupportedVersion('@remix-run/dev', remixPackage.version, supportedVersions)
+      }
     }
 
     const config = this.configManager.current
@@ -70,20 +72,7 @@ export class RemixStackable extends ViteStackable {
       return this.startWithCommand(command)
     }
 
-    if (this.isProduction) {
-      return this.#startProduction(listen)
-    }
-
-    const { preloadViteEsm } = await importFile(resolve(this.#remix, './dist/vite/import-vite-esm-sync.js'))
-    await preloadViteEsm()
-    await super.start({ listen })
-
-    /* c8 ignore next 3 */
-    if (!this._getVite().config.plugins.some(p => p.name === 'remix')) {
-      this.logger.warn('Could not find Remix plugin in your Vite configuration. Continuing as plain Vite application.')
-    }
-
-    this._collectMetrics()
+    return this.isProduction ? this.#startProduction(listen) : this.#startDevelopment(listen)
   }
 
   async stop () {
@@ -158,6 +147,19 @@ export class RemixStackable extends ViteStackable {
         needsRootRedirect: true
       }
     }
+  }
+
+  async #startDevelopment (listen) {
+    const { preloadViteEsm } = await importFile(resolve(this.#remix, './dist/vite/import-vite-esm-sync.js'))
+    await preloadViteEsm()
+    await super.start({ listen })
+
+    /* c8 ignore next 3 */
+    if (!this._getVite().config.plugins.some(p => p.name === 'remix')) {
+      this.logger.warn('Could not find Remix plugin in your Vite configuration. Continuing as plain Vite application.')
+    }
+
+    this._collectMetrics()
   }
 
   async #startProduction (listen) {
