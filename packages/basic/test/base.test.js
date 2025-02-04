@@ -180,6 +180,28 @@ test(
   }
 )
 
+test(
+  'BaseStackable - buildWithCommand - should properly change the working directory',
+  { skip: isWindows },
+  async t => {
+    const stackable = await createStackable(t, {})
+
+    const fixturesDir = fileURLToPath(new URL('./fixtures', import.meta.url))
+    const executablePath = fileURLToPath(new URL('./fixtures/chdir-and-run.sh', import.meta.url))
+    await stackable.buildWithCommand(executablePath, import.meta.dirname)
+
+    ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(executablePath)))
+    deepStrictEqual(
+      stackable.stdout.messages.slice(1).map(l => l.trim()),
+      [`STDOUT=${fixturesDir}`]
+    )
+    deepStrictEqual(
+      stackable.stderr.messages.map(l => l.trim()),
+      [`STDERR=${fixturesDir}`]
+    )
+  }
+)
+
 test('BaseStackable - startCommand and stopCommand - should execute the requested command', async t => {
   const stackable = await createStackable(
     t,

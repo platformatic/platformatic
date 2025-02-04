@@ -8,7 +8,6 @@ import { ServerResponse } from 'node:http'
 import { register } from 'node:module'
 import { hostname, platform, tmpdir } from 'node:os'
 import { basename, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { isMainThread } from 'node:worker_threads'
 import pino from 'pino'
 import { Agent, Pool, setGlobalDispatcher } from 'undici'
@@ -370,10 +369,6 @@ async function main () {
 
   globalThis.platformatic = data
   globalThis.platformatic.events = new EventEmitter()
-
-  if (data.root && isMainThread) {
-    process.chdir(fileURLToPath(data.root))
-  }
 
   if (loader) {
     register(loader, { data })
