@@ -10,5 +10,6 @@
   ],
   "logger": {
     "level": "error"
-  }
+  },
+  "restartOnError": false
 }

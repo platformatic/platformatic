@@ -34,6 +34,10 @@ export class AstroStackable extends BaseStackable {
   }
 
   async init () {
+    if (this.isProduction) {
+      return
+    }
+
     this.#astro = resolve(dirname(resolvePackage(this.root, 'astro')), '../..')
     const astroPackage = JSON.parse(await readFile(resolve(this.#astro, 'package.json'), 'utf-8'))
 
@@ -100,7 +104,7 @@ export class AstroStackable extends BaseStackable {
               }
             }
           }
-        ],
+        ]
       })
     } finally {
       globalThis.platformatic.isBuilding = false
