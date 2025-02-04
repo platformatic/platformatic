@@ -8,7 +8,7 @@ const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('does not wait forever if worker exits during api operation', async t => {
+test('emits an exhaustive list of events', async t => {
   const configFile = join(fixturesDir, 'configs', 'service-events.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
@@ -35,34 +35,46 @@ test('does not wait forever if worker exits during api operation', async t => {
       event.message = event.payload.message
       delete event.payload
     }
+
+    if (event.payload?.error) {
+      event.payload.error = event.payload.error.message
+    }
+  }
+
+  const startingPayload = { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 }
+  const startingErrorPayload = {
+    service: 'serviceThrowsOnStart',
+    worker: 0,
+    workersCount: 1,
+    error: 'The service "serviceThrowsOnStart" exited prematurely with error code 1'
   }
 
   assert.deepStrictEqual(events, [
     { event: 'starting', payload: undefined },
     { event: 'service:starting', payload: 'serviceThrowsOnStart' },
-    { event: 'service:worker:starting', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
-    { event: 'service:worker:exited', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
-    { event: 'service:worker:start:error', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
+    { event: 'service:worker:starting', payload: startingPayload },
+    { event: 'service:worker:exited', payload: startingPayload },
+    { event: 'service:worker:start:error', payload: startingErrorPayload },
     { event: 'service:worker:boot', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
-    { event: 'service:worker:starting', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
-    { event: 'service:worker:exited', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
-    { event: 'service:worker:start:error', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
+    { event: 'service:worker:starting', payload: startingPayload },
+    { event: 'service:worker:exited', payload: startingPayload },
+    { event: 'service:worker:start:error', payload: startingErrorPayload },
     { event: 'service:worker:boot', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
-    { event: 'service:worker:starting', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
-    { event: 'service:worker:exited', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
-    { event: 'service:worker:start:error', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
+    { event: 'service:worker:starting', payload: startingPayload },
+    { event: 'service:worker:exited', payload: startingPayload },
+    { event: 'service:worker:start:error', payload: startingErrorPayload },
     { event: 'service:worker:boot', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
-    { event: 'service:worker:starting', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
-    { event: 'service:worker:exited', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
-    { event: 'service:worker:start:error', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
+    { event: 'service:worker:starting', payload: startingPayload },
+    { event: 'service:worker:exited', payload: startingPayload },
+    { event: 'service:worker:start:error', payload: startingErrorPayload },
     { event: 'service:worker:boot', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
-    { event: 'service:worker:starting', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
-    { event: 'service:worker:exited', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
-    { event: 'service:worker:start:error', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
+    { event: 'service:worker:starting', payload: startingPayload },
+    { event: 'service:worker:exited', payload: startingPayload },
+    { event: 'service:worker:start:error', payload: startingErrorPayload },
     { event: 'service:worker:boot', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
-    { event: 'service:worker:starting', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
-    { event: 'service:worker:exited', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
-    { event: 'service:worker:start:error', payload: { service: 'serviceThrowsOnStart', worker: 0, workersCount: 1 } },
+    { event: 'service:worker:starting', payload: startingPayload },
+    { event: 'service:worker:exited', payload: startingPayload },
+    { event: 'service:worker:start:error', payload: startingErrorPayload },
     { event: 'errored', message: 'The service "serviceThrowsOnStart" exited prematurely with error code 1' },
     { event: 'closing', payload: undefined },
     { event: 'stopping', payload: undefined },

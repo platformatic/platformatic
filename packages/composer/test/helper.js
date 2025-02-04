@@ -388,7 +388,16 @@ async function createComposer (t, composerConfig, loggerInstance = undefined) {
   return app
 }
 
-async function createComposerInRuntime (t, prefix, composerConfig, services, autoload, additionalRuntimeConfig, production = false) {
+async function createComposerInRuntime (
+  t,
+  prefix,
+  composerConfig,
+  services,
+  autoload,
+  additionalRuntimeConfig,
+  production = false,
+  additionalSetup = null
+) {
   await createDirectory(tmpBaseDir)
   const tmpDir = await mkdtemp(resolve(tmpBaseDir, prefix))
   await createDirectory(resolve(tmpDir, 'composer'))
@@ -447,6 +456,7 @@ async function createComposerInRuntime (t, prefix, composerConfig, services, aut
     'utf-8'
   )
 
+  await additionalSetup?.(runtimeConfigPath, composerConfigPath)
   const runtime = await buildRuntime(runtimeConfigPath, { production })
 
   t.after(async () => {
