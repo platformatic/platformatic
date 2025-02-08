@@ -11,6 +11,7 @@ const {
 const { addLoggerToTheConfig, isDocker } = require('./utils.js')
 const { randomUUID } = require('crypto')
 const { fastify } = require('fastify')
+const { features } = require('@platformatic/utils')
 
 async function adjustHttpsKeyAndCert (arg) {
   if (typeof arg === 'string') {
@@ -116,7 +117,8 @@ async function buildServer (options, app, context) {
   handler.start = async function () {
     serverContext.url = await handler.listen({
       host: options.server?.hostname || '127.0.0.1',
-      port: options.server?.port || 0
+      port: options.server?.port || 0,
+      reusePort: features.node.reusePort && context?.isProduction
     })
     return serverContext.url
   }

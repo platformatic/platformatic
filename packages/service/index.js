@@ -143,8 +143,8 @@ platformaticService.configType = 'service'
 platformaticService.schema = schema
 platformaticService.configManagerConfig = module.exports.configManagerConfig
 
-function _buildServer (options, app) {
-  return buildServer(options, app || module.exports)
+function _buildServer (options, app, context) {
+  return buildServer(options, app || module.exports, context)
 }
 
 async function buildStackable (options, app = platformaticService, Stackable = ServiceStackable) {
