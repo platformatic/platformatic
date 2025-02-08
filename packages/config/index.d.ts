@@ -24,7 +24,7 @@ interface IEnv {
 }
 export interface IConfigManagerOptions {
   source: string | JsonMap
-  dirname: string
+  dirname?: string
   schema?: object
   fixPaths?: boolean
   schemaOptions?: Partial<InstanceOptions>
