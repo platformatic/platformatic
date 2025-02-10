@@ -13,10 +13,12 @@ import {
 } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
 import { ChildProcess } from 'node:child_process'
+import { createRequire } from 'node:module'
 import { once } from 'node:events'
 import { readFile } from 'node:fs/promises'
 import { dirname, resolve as pathResolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { getGlobalDispatcher } from 'undici'
 import { parse, satisfies } from 'semver'
 import { packageJson, schema } from './lib/schema.js'
 
@@ -36,6 +38,8 @@ export class NextStackable extends BaseStackable {
   }
 
   async init () {
+    this.#patchVmCreateContext()
+
     this.#next = pathResolve(dirname(resolvePackage(this.root, 'next')), '../..')
     const nextPackage = JSON.parse(await readFile(pathResolve(this.#next, 'package.json'), 'utf-8'))
     this.#nextVersion = parse(nextPackage.version)
@@ -300,6 +304,27 @@ export class NextStackable extends BaseStackable {
       }
 
       return originalSpawn.call(this, options)
+    }
+  }
+
+  #patchVmCreateContext () {
+    const globalDispatcher = getGlobalDispatcher()
+    const _require = createRequire(this.root)
+    const vm = _require('vm')
+
+    const originalCreateContext = vm.createContext
+    vm.createContext = (contextObject, opts) => {
+      const context = originalCreateContext(contextObject, opts)
+      queueMicrotask(() => {
+        if (contextObject.fetch === undefined) return
+
+        const originalFetch = contextObject.fetch
+        contextObject.fetch = (input, init = {}) => {
+          init.dispatcher = globalDispatcher
+          return originalFetch(input, init)
+        }
+      })
+      return context
     }
   }
 }
