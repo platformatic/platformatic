@@ -59,3 +59,30 @@ test('attach x-plt-telemetry-id header', async (t) => {
   const telemetryIdHeader = echoReqHeaders['x-plt-telemetry-id']
   assert.strictEqual(telemetryIdHeader, 'test-runtime-echo')
 })
+
+test.only('disabled telemetry', async (t) => {
+  const configFile = join(fixturesDir, 'telemetry', 'disabled-telemetry.runtime.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildRuntime(config.configManager)
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const entryUrl = await app.start()
+
+  const traceId = '5e994e8fb53b27c91dcd2fec22771d15'
+  const spanId = '166f3ab30f21800b'
+  const traceparent = `00-${traceId}-${spanId}-01`
+  const res = await request(entryUrl, {
+    method: 'GET',
+    path: '/',
+    headers: {
+      traceparent,
+    },
+  })
+
+  assert.strictEqual(res.statusCode, 200)
+  const response = await res.body.json()
+  assert.strictEqual(response.traceId, undefined)
+})

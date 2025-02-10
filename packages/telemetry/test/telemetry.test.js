@@ -421,3 +421,11 @@ test('should use multiple exporters and sent traces to all the exporters', async
   equal(span1.name, 'GET /test')
   equal(span1.status.code, SpanStatusCode.OK)
 })
+
+test('telemetry can be disabled', async () => {
+  const app = fastify()
+  await app.register(telemetryPlugin, { enabled: false })
+  await app.ready()
+
+  equal(app.openTelemetry, undefined)
+})
