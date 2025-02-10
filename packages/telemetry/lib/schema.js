@@ -34,6 +34,16 @@ const TelemetrySchema = {
   $id: '/OpenTelemetry',
   type: 'object',
   properties: {
+    enabled: {
+      anyOf: [
+        {
+          type: 'boolean'
+        },
+        {
+          type: 'string'
+        }
+      ]
+    },
     serviceName: {
       type: 'string',
       description: 'The name of the service. Defaults to the folder name if not specified.',

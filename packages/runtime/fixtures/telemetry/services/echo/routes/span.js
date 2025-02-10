@@ -5,7 +5,7 @@ const { request } = require('undici')
 module.exports = async function (fastify, opts) {
   // This returns the traceId set on the span by the service
   fastify.get('/', async (req, reply) => {
-    const traceId = req.span.spanContext().traceId
+    const traceId = req.span?.spanContext()?.traceId
     return { traceId }
   })
 

@@ -6,6 +6,10 @@ const { setupTelemetry } = require('./telemetry-config')
 
 // Telemetry fastify plugin
 async function telemetry (app, opts) {
+  if (opts.enabled === false) {
+    return
+  }
+
   const {
     startHTTPSpan,
     endHTTPSpan,

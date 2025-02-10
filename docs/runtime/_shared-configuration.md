@@ -116,9 +116,24 @@ It's possible to specify the name of the export of the instrumentation and/or th
   ]
 ```
 
-### `web`
-
 An alias for `services`. If both are present, their content will be merged.
+
+It's also possible to disable the instrumentation by setting the `enabled` value property to `false` (env variables are also supported):
+
+```json
+"services": [
+    {
+      "id": "api",
+      "path": "./services/api",
+      "telemetry": {
+        "enabled": "false",
+        "instrumentations": [{
+          "package": "@opentelemetry/instrumentation-express",
+        }]
+      }
+    }
+  ]
+```
 
 ### `env`
 
