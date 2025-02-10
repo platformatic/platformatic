@@ -307,6 +307,10 @@ export class NextStackable extends BaseStackable {
     }
   }
 
+  // Next.js runs middlewares in it's own patched vm context. So the global dispatcher in
+  // the middleware context is different from a service global dispatcher. This
+  // method sets a service global dispatcher after next.js defines it's own version of
+  // fetch function.
   #patchVmCreateContext () {
     const globalDispatcher = getGlobalDispatcher()
     const _require = createRequire(this.root)
