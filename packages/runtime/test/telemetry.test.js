@@ -60,7 +60,7 @@ test('attach x-plt-telemetry-id header', async (t) => {
   assert.strictEqual(telemetryIdHeader, 'test-runtime-echo')
 })
 
-test.only('disabled telemetry', async (t) => {
+test('disabled telemetry', async (t) => {
   const configFile = join(fixturesDir, 'telemetry', 'disabled-telemetry.runtime.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildRuntime(config.configManager)
