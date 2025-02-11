@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/wattpm/2.44.2.json",
+  "$id": "https://schemas.platformatic.dev/wattpm/2.44.3.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
@@ -1174,6 +1174,16 @@
       "$id": "/OpenTelemetry",
       "type": "object",
       "properties": {
+        "enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
         "serviceName": {
           "type": "string",
           "description": "The name of the service. Defaults to the folder name if not specified."

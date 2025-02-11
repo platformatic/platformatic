@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type HttpsSchemasPlatformaticDevPlatformaticRuntime2442Json = {
+export type HttpsSchemasPlatformaticDevPlatformaticRuntime2443Json = {
   [k: string]: unknown;
 } & {
   $schema?: string;
@@ -197,6 +197,7 @@ export interface UndiciInterceptor {
   [k: string]: unknown;
 }
 export interface OpenTelemetry {
+  enabled?: boolean | string;
   /**
    * The name of the service. Defaults to the folder name if not specified.
    */

@@ -604,6 +604,7 @@ export interface Tag {
   [k: string]: unknown;
 }
 export interface OpenTelemetry {
+  enabled?: boolean | string;
   /**
    * The name of the service. Defaults to the folder name if not specified.
    */
