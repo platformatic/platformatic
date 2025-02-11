@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/next/2.36.1.json",
+  "application": {
+    "basePath": "/",
+    "commands": {
+      "production": "npm run start",
+      "development": "npm run dev"
+    }
+  },
+  "next": {
+    "trailingSlash": true
+  }
+}
