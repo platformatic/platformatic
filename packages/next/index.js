@@ -40,6 +40,13 @@ export class NextStackable extends BaseStackable {
     const nextPackage = JSON.parse(await readFile(pathResolve(this.#next, 'package.json'), 'utf-8'))
     this.#nextVersion = parse(nextPackage.version)
 
+    if (
+      this.#nextVersion.major < 15 ||
+      (this.#nextVersion.major <= 15 && this.#nextVersion.minor < 1)
+    ) {
+      await import('./lib/create-context-patch.js')
+    }
+
     /* c8 ignore next 3 */
     if (!supportedVersions.some(v => satisfies(nextPackage.version, v))) {
       throw new errors.UnsupportedVersion('next', nextPackage.version, supportedVersions)
@@ -205,7 +212,17 @@ export class NextStackable extends BaseStackable {
     this.#basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
 
     if (command) {
-      return this.startWithCommand(command, loaderUrl, this.#getChildManagerScripts())
+      const childManagerScripts = this.#getChildManagerScripts()
+
+      if (
+        this.#nextVersion.major < 15 ||
+        (this.#nextVersion.major <= 15 && this.#nextVersion.minor < 1)
+      ) {
+        childManagerScripts.push(
+          new URL('./lib/create-context-patch.js', import.meta.url)
+        )
+      }
+      return this.startWithCommand(command, loaderUrl, childManagerScripts)
     }
 
     this.childManager = new ChildManager({

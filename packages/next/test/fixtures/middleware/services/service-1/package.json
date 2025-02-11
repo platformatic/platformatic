@@ -1,0 +1,6 @@
+{
+  "name": "backend",
+  "dependencies": {
+    "@platformatic/service": "^2.44.0"
+  }
+}
