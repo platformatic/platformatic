@@ -1247,7 +1247,7 @@ class Runtime extends EventEmitter {
 
         if (memoryUsage > maxHeapUsed) {
           this.logger.error(
-            `The ${errorLabel} is using ${(elu * 100).toFixed(2)} % of the memory, above the maximum allowed usage of ${(maxELU * 100).toFixed(2)} %.`
+            `The ${errorLabel} is using ${(memoryUsage * 100).toFixed(2)} % of the memory, above the maximum allowed usage of ${(maxHeapUsed * 100).toFixed(2)} %.`
           )
         }
 
