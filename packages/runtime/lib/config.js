@@ -70,7 +70,7 @@ async function _transformConfig (configManager, args) {
         config = join(entryPath, configFilename)
       }
 
-      const service = { id, config, path: entryPath, useHttp: !!mapping.useHttp }
+      const service = { id, config, path: entryPath, useHttp: !!mapping.useHttp, health: mapping.health }
       const existingServiceId = services.findIndex(service => service.id === id)
 
       if (existingServiceId !== -1) {

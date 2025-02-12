@@ -26,6 +26,7 @@ const { sendViaITC, waitEventFromITC } = require('./worker/itc')
 const { RoundRobinMap } = require('./worker/round-robin-map.js')
 const {
   kId,
+  kFullId,
   kServiceId,
   kWorkerId,
   kITC,
@@ -273,7 +274,7 @@ class Runtime extends EventEmitter {
     if (this.#inspectorServer) {
       await this.#inspectorServer.close()
     }
-
+    await this.#meshInterceptor.close()
     for (const service of this.#servicesIds) {
       await this.stopService(service, silent)
     }
@@ -285,6 +286,7 @@ class Runtime extends EventEmitter {
     this.emit('restarting')
 
     await this.stop()
+    this.#meshInterceptor.restart()
     await this.start()
 
     this.emit('restarted')
@@ -296,7 +298,7 @@ class Runtime extends EventEmitter {
     return this.#status
   }
 
-  async close (fromManagementApi = false, silent = false) {
+  async close (silent = false) {
     this.#updateStatus('closing')
 
     clearInterval(this.#metricsTimeout)
@@ -304,14 +306,10 @@ class Runtime extends EventEmitter {
     await this.stop(silent)
 
     if (this.#managementApi) {
-      if (fromManagementApi) {
-        // This allow a close request coming from the management API to correctly be handled
-        setImmediate(() => {
-          this.#managementApi.close()
-        })
-      } else {
-        await this.#managementApi.close()
-      }
+      // This allow a close request coming from the management API to correctly be handled
+      setImmediate(() => {
+        this.#managementApi.close()
+      })
     }
 
     if (this.#prometheusServer) {
@@ -1006,7 +1004,7 @@ class Runtime extends EventEmitter {
     this.emit('service:init', id)
   }
 
-  async #setupWorker (config, serviceConfig, workersCount, serviceId, index) {
+  async #setupWorker (config, serviceConfig, workersCount, serviceId, index, enabled = true) {
     const { restartOnError } = config
     const workerId = `${serviceId}:${index}`
 
@@ -1096,7 +1094,7 @@ class Runtime extends EventEmitter {
       worker[kWorkerStatus] = 'exited'
       this.emit('service:worker:exited', eventPayload)
 
-      this.#cleanupWorker(workerId, worker)
+      this.#cleanupWorker(worker)
 
       if (this.#status === 'stopping') {
         return
@@ -1130,8 +1128,10 @@ class Runtime extends EventEmitter {
     })
 
     worker[kId] = workersCount > 1 ? workerId : serviceId
+    worker[kFullId] = workerId
     worker[kServiceId] = serviceId
     worker[kWorkerId] = workersCount > 1 ? index : undefined
+    worker[kWorkerStatus] = 'init'
     worker[kForwardEvents] = false
 
     if (inspectorOptions) {
@@ -1190,18 +1190,20 @@ class Runtime extends EventEmitter {
       })
     }
 
-    // Store locally
-    this.#workers.set(workerId, worker)
+    if (enabled) {
+      // Store locally
+      this.#workers.set(workerId, worker)
+
+      // Setup the interceptor
+      this.#meshInterceptor.route(serviceId, worker)
+    }
+
+    // Store dependencies
+    const [{ dependencies }] = await waitEventFromITC(worker, 'init')
 
     if (serviceConfig.entrypoint) {
       this.#entrypointId = serviceId
     }
-
-    // Setup the interceptor
-    this.#meshInterceptor.route(serviceId, worker)
-
-    // Store dependencies
-    const [{ dependencies }] = await waitEventFromITC(worker, 'init')
 
     serviceConfig.dependencies = dependencies
     for (const { envVar, url } of dependencies) {
@@ -1214,9 +1216,11 @@ class Runtime extends EventEmitter {
     worker[kConfig] = { ...serviceConfig, health }
     worker[kWorkerStatus] = 'boot'
     this.emit('service:worker:boot', eventPayload)
+
+    return worker
   }
 
-  #setupHealthCheck (worker, errorLabel) {
+  #setupHealthCheck (config, serviceConfig, workersCount, id, index, workerId, worker, errorLabel) {
     // Clear the timeout when exiting
     worker.on('exit', () => clearTimeout(worker[kHealthCheckTimer]))
 
@@ -1229,9 +1233,10 @@ class Runtime extends EventEmitter {
       const memoryUsage = heapUsed / maxHeapTotal
       const unhealthy = elu > maxELU || memoryUsage > maxHeapUsed
 
+      const serviceId = worker[kServiceId]
       this.emit('health', {
         id: worker[kId],
-        service: worker[kServiceId],
+        service: serviceId,
         worker: worker[kWorkerId],
         currentHealth: health,
         unhealthy,
@@ -1256,20 +1261,39 @@ class Runtime extends EventEmitter {
         unhealthyChecks = 0
       }
 
-      if (unhealthyChecks >= maxUnhealthyChecks) {
-        this.logger.error(
-          { elu, maxELU, memoryUsage, maxMemoryUsage: maxHeapUsed },
-          `The ${errorLabel} is unhealthy. Forcefully terminating it ...`
-        )
-        worker.terminate()
-        return
-      }
+      if (unhealthyChecks === maxUnhealthyChecks) {
+        try {
+          this.logger.error(
+            { elu, maxELU, memoryUsage, maxMemoryUsage: maxHeapUsed },
+            `The ${errorLabel} is unhealthy. Replacing it ...`
+          )
 
-      worker[kHealthCheckTimer].refresh()
+          await this.#replaceWorker(config, serviceConfig, workersCount, id, index, workerId, worker)
+        } catch (e) {
+          this.logger.error(
+            { elu, maxELU, memoryUsage, maxMemoryUsage: maxHeapUsed },
+            `Cannot replace the ${errorLabel}. Forcefully terminating it ...`
+          )
+
+          worker.terminate()
+        }
+      } else {
+        worker[kHealthCheckTimer].refresh()
+      }
     }, interval)
   }
 
-  async #startWorker (config, serviceConfig, workersCount, id, index, silent, bootstrapAttempt = 0) {
+  async #startWorker (
+    config,
+    serviceConfig,
+    workersCount,
+    id,
+    index,
+    silent,
+    bootstrapAttempt = 0,
+    worker = undefined,
+    disableRestartAttempts = false
+  ) {
     const workerId = `${id}:${index}`
     const label = this.#workerExtendedLabel(id, index, workersCount)
 
@@ -1277,7 +1301,10 @@ class Runtime extends EventEmitter {
       this.logger?.info(`Starting the ${label}...`)
     }
 
-    let worker = await this.#getWorkerById(id, index, false, false)
+    if (!worker) {
+      worker = await this.#getWorkerById(id, index, false, false)
+    }
+
     const eventPayload = { service: id, worker: index, workersCount }
 
     // The service was stopped, recreate the thread
@@ -1321,7 +1348,7 @@ class Runtime extends EventEmitter {
       if (enabled && config.restartOnError > 0) {
         worker[kHealthCheckTimer] = setTimeout(
           () => {
-            this.#setupHealthCheck(worker, label)
+            this.#setupHealthCheck(config, serviceConfig, workersCount, id, index, workerId, worker, label)
           },
           gracePeriod > 0 ? gracePeriod : 1
         )
@@ -1330,7 +1357,7 @@ class Runtime extends EventEmitter {
       // TODO: handle port allocation error here
       if (error.code === 'EADDRINUSE') throw error
 
-      this.#cleanupWorker(workerId, worker)
+      this.#cleanupWorker(worker)
 
       if (worker[kWorkerStatus] !== 'exited') {
         // This prevent the exit handler to restart service
@@ -1346,7 +1373,7 @@ class Runtime extends EventEmitter {
 
       const restartOnError = config.restartOnError
 
-      if (!restartOnError) {
+      if (disableRestartAttempts || !restartOnError) {
         throw error
       }
 
@@ -1369,11 +1396,18 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async #stopWorker (workersCount, id, index, silent) {
-    const worker = await this.#getWorkerById(id, index, false, false)
+  async #stopWorker (workersCount, id, index, silent, worker = undefined) {
+    if (!worker) {
+      worker = await this.#getWorkerById(id, index, false, false)
+    }
 
     if (!worker) {
       return
+    }
+
+    // Starting should be aborted, discard the worker
+    if (worker[kWorkerStatus] !== 'started') {
+      return this.#discardWorker(worker)
     }
 
     const eventPayload = { service: id, worker: index, workersCount }
@@ -1419,12 +1453,23 @@ class Runtime extends EventEmitter {
     this.emit('service:worker:stopped', eventPayload)
   }
 
-  #cleanupWorker (workerId, worker) {
-    this.#workers.delete(workerId)
+  #cleanupWorker (worker) {
+    clearTimeout(worker[kHealthCheckTimer])
+
+    const currentWorker = this.#workers.get(worker[kFullId])
+
+    if (currentWorker === worker) {
+      this.#workers.delete(worker[kFullId])
+    }
 
     worker[kITC].close()
+  }
 
-    clearTimeout(worker[kHealthCheckTimer])
+  async #discardWorker (worker) {
+    worker.removeAllListeners('exit')
+    await worker.terminate()
+
+    return this.#cleanupWorker(worker)
   }
 
   #workerExtendedLabel (serviceId, workerId, workersCount) {
@@ -1474,6 +1519,39 @@ class Runtime extends EventEmitter {
 
     this.#restartingWorkers.set(workerId, restartPromise)
     await restartPromise
+  }
+
+  async #replaceWorker (config, serviceConfig, workersCount, serviceId, index, workerId, worker) {
+    let newWorker
+
+    try {
+      // Create a new worker
+      newWorker = await this.#setupWorker(config, serviceConfig, workersCount, serviceId, index, false)
+
+      // Make sure the runtime hasn't been stopped in the meanwhile
+      if (this.#status !== 'started') {
+        return this.#discardWorker(newWorker)
+      }
+
+      // Add the worker to the mesh
+      await this.#startWorker(config, serviceConfig, workersCount, serviceId, index, false, 0, newWorker, true)
+
+      // Make sure the runtime hasn't been stopped in the meanwhile
+      if (this.#status !== 'started') {
+        return this.#discardWorker(newWorker)
+      }
+
+      this.#workers.set(workerId, newWorker)
+      this.#meshInterceptor.route(serviceId, newWorker)
+
+      // Remove the old worker and then kill it
+      await sendViaITC(worker, 'removeFromMesh')
+    } catch (e) {
+      newWorker?.terminate?.()
+      throw e
+    }
+
+    await this.#stopWorker(workersCount, serviceId, index, false, worker)
   }
 
   async #getServiceById (serviceId, ensureStarted = false, mustExist = true) {

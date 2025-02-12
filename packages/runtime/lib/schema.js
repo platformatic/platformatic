@@ -3,7 +3,7 @@
 
 const telemetry = require('@platformatic/telemetry').schema
 const {
-  schemaComponents: { server, logger, health }
+  schemaComponents: { server, logger, health, healthWithoutDefaults }
 } = require('@platformatic/utils')
 
 const env = {
@@ -65,7 +65,7 @@ const services = {
         type: 'boolean'
       },
       workers,
-      health: { ...health, default: undefined },
+      health: { ...healthWithoutDefaults, default: undefined },
       arguments: {
         type: 'array',
         items: {
@@ -174,7 +174,7 @@ const platformaticRuntimeSchema = {
                 type: 'boolean'
               },
               workers,
-              health: { ...health, default: undefined },
+              health: { ...healthWithoutDefaults, default: undefined },
               preload,
               arguments: {
                 type: 'array',

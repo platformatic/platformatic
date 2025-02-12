@@ -36,7 +36,7 @@ async function managementApiPlugin (app, opts) {
 
   app.post('/stop', async () => {
     app.log.debug('stop services')
-    await runtime.close(true)
+    await runtime.close()
   })
 
   app.post('/restart', async () => {

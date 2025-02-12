@@ -1,6 +1,7 @@
 'use strict'
 
 const httpProxy = require('@fastify/http-proxy')
+const { ensureLoggableError } = require('@platformatic/utils')
 const fp = require('fastify-plugin')
 const { workerData } = require('node:worker_threads')
 const { getGlobalDispatcher } = require('undici')
@@ -213,6 +214,10 @@ module.exports = fp(async function (app, opts) {
             headers: res.headers
           })
           reply.send(res.stream)
+        },
+        onError: (reply, { error }) => {
+          app.log.error({ error: ensureLoggableError(error) }, 'Error while proxying request to another service')
+          return reply.send(error)
         }
       }
     }

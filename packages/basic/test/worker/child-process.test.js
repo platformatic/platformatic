@@ -164,7 +164,12 @@ test('ChildProcess - should intercept fetch calls', async t => {
   deepStrictEqual(
     // eslint-disable-next-line no-control-regex
     stackable.stdout.messages.slice(1).map(l => l.replace(/(\x1b\[[0-9;]+m)/gi, '')),
-    ['200 { ok: true }', '200 { ok: true }', '200 { ok: true }', '502 No server found for service2.plt.local in 0']
+    [
+      '200 { ok: true }',
+      '200 { ok: true }',
+      '200 { ok: true }',
+      '502 No target found for service2.plt.local in thread 0.'
+    ]
   )
 })
 

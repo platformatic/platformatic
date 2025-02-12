@@ -93,12 +93,20 @@ function setupITC (app, service, dispatcher) {
           await app.stop()
         }
 
-        dispatcher.interceptor.close()
+        await dispatcher.interceptor.close()
         itc.close()
       },
 
       async build () {
         return app.stackable.build()
+      },
+
+      async removeFromMesh () {
+        return dispatcher.interceptor.close()
+      },
+
+      inject (injectParams) {
+        return app.stackable.inject(injectParams)
       },
 
       getStatus () {
@@ -158,10 +166,6 @@ function setupITC (app, service, dispatcher) {
         } catch (err) {
           throw new errors.FailedToRetrieveHealthError(service.id, err.message)
         }
-      },
-
-      inject (injectParams) {
-        return app.stackable.inject(injectParams)
       }
     }
   })

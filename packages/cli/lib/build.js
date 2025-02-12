@@ -33,5 +33,5 @@ export async function build (args) {
   }
 
   logger.info('✅ All services have been built.')
-  await runtime.close(false, true)
+  await runtime.close(true)
 }
