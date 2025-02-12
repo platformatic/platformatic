@@ -112,6 +112,7 @@ packages/db/fixtures/sqlite/db
 packages/db/test/fixtures/sqlite/db
 
 # IDE folders
+.vim
 .vscode
 .idea
 
