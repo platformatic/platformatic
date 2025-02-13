@@ -256,6 +256,24 @@ class ServiceStackable {
       getCustomLabels: req => {
         const telemetryId = req.headers['x-plt-telemetry-id'] ?? 'unknown'
         return { telemetry_id: telemetryId }
+      },
+      summary: {
+        collect: function () {
+          const size = Object.keys(this.hashMap).length
+          if (size === 0) {
+            const summaryTimer = this.startTimer()
+            summaryTimer()
+          }
+        }
+      },
+      histogram: {
+        collect: function () {
+          const size = Object.keys(this.hashMap).length
+          if (size === 0) {
+            const histogramTimer = this.startTimer()
+            histogramTimer()
+          }
+        }
       }
     })
 
