@@ -14,6 +14,10 @@ function ensureFlushedWorkerStdio () {
 
   // Fetch the needed symbols
   const kWritableCallbacks = getPrivateSymbol(process.stdout, 'kWritableCallbacks')
+  // This has been fixed in Node.js 22.14.0
+  if (kWritableCallbacks === undefined) {
+    return
+  }
   const kPort = getPrivateSymbol(process.stdout, 'kPort')
   const kName = getPrivateSymbol(process.stdout, 'kName')
   const kWaitingStreams = getPrivateSymbol(process.stdout[kPort], 'kWaitingStreams')
