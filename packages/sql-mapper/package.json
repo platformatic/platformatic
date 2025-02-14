@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-mapper",
-  "version": "2.44.4",
+  "version": "2.44.5",
   "description": "A data mapper utility for SQL databases",
   "main": "mapper.js",
   "types": "mapper.d.ts",
