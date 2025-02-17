@@ -19,7 +19,7 @@ async function collectMetrics (serviceId, workerId, metricsConfig = {}, registry
   if (workerId) {
     labels.workerId = workerId
   }
-  registry.setDefaultLabels({ ...labels, serviceId, workerId })
+  registry.setDefaultLabels(labels)
 
   if (metricsConfig.defaultMetrics) {
     collectDefaultMetrics({ register: registry })
