@@ -163,6 +163,7 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime2445Json = {
     | boolean
     | {
         port?: number | string;
+        enabled?: boolean | string;
         hostname?: string;
         endpoint?: string;
         auth?: {

@@ -174,3 +174,23 @@ test('should track http cache hits/misses', async (t) => {
   assert.ok(metrics.includes('http_cache_hit_count{serviceId="service-2"} 0'))
   assert.ok(metrics.includes('http_cache_miss_count{serviceId="service-2"} 1'))
 })
+
+test('metrics can be disabled', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'metrics-disabled.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  await t.assert.rejects(request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/metrics'
+  }))
+})

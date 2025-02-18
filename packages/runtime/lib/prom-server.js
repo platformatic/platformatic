@@ -3,6 +3,9 @@
 const fastify = require('fastify')
 
 async function startPrometheusServer (runtime, opts) {
+  if (opts.enabled === false) {
+    return
+  }
   const host = opts.hostname ?? '0.0.0.0'
   const port = opts.port ?? 9090
   const metricsEndpoint = opts.endpoint ?? '/metrics'
