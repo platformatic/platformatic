@@ -1137,6 +1137,16 @@
                 }
               ]
             },
+            "enabled": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
             "hostname": {
               "type": "string"
             },

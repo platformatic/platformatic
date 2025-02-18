@@ -359,6 +359,13 @@ const platformaticRuntimeSchema = {
             port: {
               anyOf: [{ type: 'integer' }, { type: 'string' }]
             },
+            enabled: {
+              anyOf: [{
+                type: 'boolean'
+              }, {
+                type: 'string'
+              }]
+            },
             hostname: { type: 'string' },
             endpoint: { type: 'string' },
             auth: {
