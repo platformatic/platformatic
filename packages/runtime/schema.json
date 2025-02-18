@@ -1140,8 +1140,7 @@
             "enabled": {
               "anyOf": [
                 {
-                  "type": "boolean",
-                  "default": true
+                  "type": "boolean"
                 },
                 {
                   "type": "string"
