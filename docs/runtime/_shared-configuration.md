@@ -323,12 +323,15 @@ The number of milliseconds to wait when invoking another service using the its `
 
 This configures the Platformatic Runtime Prometheus server. The Prometheus server exposes aggregated metrics from the Platformatic Runtime services.
 
+- **`enabled`** (`boolean` or `string`). If `true`, the Prometheus server will be started. Default: `true`.
 - **`hostname`** (`string`). The hostname where the Prometheus server will be listening. Default: `0.0.0.0`.
 - **`port`** (`number`). The port where the Prometheus server will be listening. Default: `9090`.
 - **`endpoint`** (`string`). The endpoint where the Prometheus server will be listening. Default: `/metrics`.
 - **`auth`** (`object`). Optional configuration for the Prometheus server authentication.
   - **`username`** (`string`). The username for the Prometheus server authentication.
   - **`password`** (`string`). The password for the Prometheus server authentication.
+
+If the `metrics` object is not provided, the Prometheus server will not be started.
 
 ### `managementApi`
 
