@@ -65,6 +65,14 @@ async function openLogsWebsocket (app) {
 
     managementApiWebsocket.on('error', reject)
 
+    if (process.env.PLT_TESTS_VERBOSE === 'true') {
+      managementApiWebsocket.on('message', msg => {
+        for (const line of msg.toString().trim().split('\n')) {
+          process._rawDebug(line)
+        }
+      })
+    }
+
     managementApiWebsocket.on('open', () => {
       clearTimeout(timeout)
       managementApiWebsocket.off('error', reject)
@@ -81,10 +89,6 @@ async function waitForLogs (socket, ...exprs) {
 
   for await (const [msg] of on(socket, 'message')) {
     for (const line of msg.toString().trim().split('\n')) {
-      if (process.env.PLT_TESTS_VERBOSE === 'true') {
-        process._rawDebug(line)
-      }
-
       let message
       try {
         message = JSON.parse(line)

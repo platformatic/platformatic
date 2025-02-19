@@ -7,6 +7,16 @@ function overridableValue (spec, defaultValue) {
   }
 }
 
+function removeDefaults (schema) {
+  const cloned = structuredClone(schema)
+
+  for (const value of Object.values(cloned.properties)) {
+    delete value.default
+  }
+
+  return cloned
+}
+
 const cors = {
   type: 'object',
   $comment: 'See https://github.com/fastify/fastify-cors',
@@ -227,6 +237,8 @@ const health = {
   },
   additionalProperties: false
 }
+
+const healthWithoutDefaults = removeDefaults(health)
 
 const server = {
   type: 'object',
@@ -553,3 +565,4 @@ module.exports.cors = cors
 module.exports.logger = logger
 module.exports.watch = watch
 module.exports.health = health
+module.exports.healthWithoutDefaults = healthWithoutDefaults

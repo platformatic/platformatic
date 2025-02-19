@@ -78,7 +78,6 @@
                 "type": "object",
                 "properties": {
                   "enabled": {
-                    "default": true,
                     "anyOf": [
                       {
                         "type": "boolean"
@@ -89,7 +88,6 @@
                     ]
                   },
                   "interval": {
-                    "default": 30000,
                     "anyOf": [
                       {
                         "type": "number",
@@ -101,7 +99,6 @@
                     ]
                   },
                   "gracePeriod": {
-                    "default": 30000,
                     "anyOf": [
                       {
                         "type": "number",
@@ -113,7 +110,6 @@
                     ]
                   },
                   "maxUnhealthyChecks": {
-                    "default": 10,
                     "anyOf": [
                       {
                         "type": "number",
@@ -125,7 +121,6 @@
                     ]
                   },
                   "maxELU": {
-                    "default": 0.99,
                     "anyOf": [
                       {
                         "type": "number",
@@ -138,7 +133,6 @@
                     ]
                   },
                   "maxHeapUsed": {
-                    "default": 0.99,
                     "anyOf": [
                       {
                         "type": "number",
@@ -151,7 +145,6 @@
                     ]
                   },
                   "maxHeapTotal": {
-                    "default": 4294967296,
                     "anyOf": [
                       {
                         "type": "number",
@@ -249,7 +242,6 @@
             "type": "object",
             "properties": {
               "enabled": {
-                "default": true,
                 "anyOf": [
                   {
                     "type": "boolean"
@@ -260,7 +252,6 @@
                 ]
               },
               "interval": {
-                "default": 30000,
                 "anyOf": [
                   {
                     "type": "number",
@@ -272,7 +263,6 @@
                 ]
               },
               "gracePeriod": {
-                "default": 30000,
                 "anyOf": [
                   {
                     "type": "number",
@@ -284,7 +274,6 @@
                 ]
               },
               "maxUnhealthyChecks": {
-                "default": 10,
                 "anyOf": [
                   {
                     "type": "number",
@@ -296,7 +285,6 @@
                 ]
               },
               "maxELU": {
-                "default": 0.99,
                 "anyOf": [
                   {
                     "type": "number",
@@ -309,7 +297,6 @@
                 ]
               },
               "maxHeapUsed": {
-                "default": 0.99,
                 "anyOf": [
                   {
                     "type": "number",
@@ -322,7 +309,6 @@
                 ]
               },
               "maxHeapTotal": {
-                "default": 4294967296,
                 "anyOf": [
                   {
                     "type": "number",
@@ -485,7 +471,6 @@
             "type": "object",
             "properties": {
               "enabled": {
-                "default": true,
                 "anyOf": [
                   {
                     "type": "boolean"
@@ -496,7 +481,6 @@
                 ]
               },
               "interval": {
-                "default": 30000,
                 "anyOf": [
                   {
                     "type": "number",
@@ -508,7 +492,6 @@
                 ]
               },
               "gracePeriod": {
-                "default": 30000,
                 "anyOf": [
                   {
                     "type": "number",
@@ -520,7 +503,6 @@
                 ]
               },
               "maxUnhealthyChecks": {
-                "default": 10,
                 "anyOf": [
                   {
                     "type": "number",
@@ -532,7 +514,6 @@
                 ]
               },
               "maxELU": {
-                "default": 0.99,
                 "anyOf": [
                   {
                     "type": "number",
@@ -545,7 +526,6 @@
                 ]
               },
               "maxHeapUsed": {
-                "default": 0.99,
                 "anyOf": [
                   {
                     "type": "number",
@@ -558,7 +538,6 @@
                 ]
               },
               "maxHeapTotal": {
-                "default": 4294967296,
                 "anyOf": [
                   {
                     "type": "number",

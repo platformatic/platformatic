@@ -120,7 +120,7 @@ export async function buildCommand (logger, args) {
   }
 
   logger.done('All services have been built.')
-  await runtime.close(false, true)
+  await runtime.close(true)
 }
 
 export async function installCommand (logger, args) {
