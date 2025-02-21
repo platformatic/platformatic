@@ -782,3 +782,45 @@ import type * as Types from './client-types'`))
   ok(types.includes("type PlatformaticFrontendClient = Omit<Client, 'setBaseUrl'>"))
   ok(types.includes('export default function build(url: string, options?: BuildOptions): PlatformaticFrontendClient'))
 })
+
+test('frontend client with full option', async (t) => {
+  const dir = await moveToTmpdir(after)
+  const openAPIfile = join(__dirname, 'fixtures', 'full-req-res', 'openapi.json')
+  await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'full-opt', '--language', 'ts', '--frontend', '--full'])
+
+  const implementation = await readFile(join(dir, 'full-opt', 'full-opt.ts'), 'utf-8')
+  ok(implementation.includes(`const _postHello = async (url: string, request: Types.PostHelloRequest): Promise<Types.PostHelloResponses> => {
+  const queryParameters: (keyof Types.PostHelloRequest['query'])[]  = ['queryId']
+  const searchParams = new URLSearchParams()
+  queryParameters.forEach((qp) => {
+    if (request.query[qp]) {
+      if (Array.isArray(request.query[qp])) {
+        (request.query[qp] as string[]).forEach((p) => {
+          searchParams.append(qp, p)
+        })
+      } else {
+        searchParams.append(qp, request.query[qp]?.toString() || '')
+      }
+    }
+    delete request.query[qp]
+  })`))
+
+  ok(implementation.includes(`if (request.headers['headerId'] !== undefined) {
+    headers['headerId'] = request.headers['headerId']
+    delete request.headers['headerId']
+  }`))
+  ok(implementation.includes("body: 'body' in request ? JSON.stringify(request.body) : undefined,"))
+
+  const types = await readFile(join(dir, 'full-opt', 'full-opt-types.d.ts'), 'utf-8')
+  ok(types.includes(`export type PostHelloRequest = {
+  body: {
+    'bodyId': string;
+  }
+  query: {
+    'queryId': string;
+  }
+  headers: {
+    'headerId': string;
+  }
+}`))
+})
