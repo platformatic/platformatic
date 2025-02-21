@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/service/2.0.0.json",
+  "watch": false,
+  "service": {
+    "proxy": {
+      "upstream": "http://localhost:8080",
+      "prefix": "/ws",
+      "hostname": "localhost",
+      "ws": {
+        "upstream": "ws://localhost:8080",
+        "reconnect": {
+          "pingInterval": 1000,
+          "maxReconnectionRetries": 999,
+          "reconnectInterval": 1000,
+          "reconnectDecay": 1.1,
+          "connectionTimeout": 1000,
+          "reconnectOnClose": true,
+          "logs": true
+        },
+        "hooks": {
+          "path": "./hooks.js"
+        }
+      }
+    }
+  }
+}

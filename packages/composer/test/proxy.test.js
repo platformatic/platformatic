@@ -5,6 +5,7 @@ const selfCert = require('self-cert')
 const { tmpdir } = require('node:os')
 const { resolve, join } = require('node:path')
 const { symlink, mkdtemp, writeFile } = require('node:fs/promises')
+const { once } = require('node:events')
 const { test } = require('node:test')
 const { request } = require('undici')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
@@ -15,6 +16,7 @@ const {
   createOpenApiService,
   testEntityRoutes,
   createComposerInRuntime,
+  createWebsocketService,
   REFRESH_TIMEOUT
 } = require('./helper')
 const { buildServer: buildRuntime } = require('../../runtime')
@@ -1433,3 +1435,67 @@ test('should properly strip runtime basePath from proxied services', async t => 
   assert.equal(composerConfig.composer.proxies.remix.rewritePrefix, '/base/remix/')
   assert.equal(remixConfig.composer.prefix, '/base/remix/')
 })
+
+test('should proxy to a websocket service', async t => {
+  // const { service, wsServer } = await createWebsocketService(t)
+  // wsServer.on('connection', (socket) => {
+  //   socket.on('message', (message) => {
+  //     socket.send(message)
+  //   })
+  // })
+  // const port = service.address().port
+
+  // const origin = `http://127.0.0.1:${port}`
+  // const wsOrigin = `ws://127.0.0.1:${port}`
+
+  // const config = {
+  //   composer: {
+  //     services: [
+  //       {
+  //         id: 'ws',
+  //         origin,
+  //         proxy: {
+  //           prefix: '/',
+  //           ws: {
+  //             upstream: wsOrigin,
+  //             reconnect: {
+  //               pingInterval: 1_000,
+  //               maxReconnectionRetries: Infinity,
+  //               reconnectInterval: 1_000,
+  //               reconnectDecay: 1.1,
+  //               connectionTimeout: 1_000,
+  //               reconnectOnClose: true,
+  //               logs: true
+  //             },
+  //             hooks: {
+  //               path: resolve(__dirname, './proxy/fixtures/ws/hooks.js')
+  //             }
+  //           }
+  //         }
+  //       }
+  //     ],
+  //     refreshTimeout: 1000
+  //   }
+  // }
+
+  // const composer = await createComposer(t, config)
+  // const composerOrigin = await composer.start()
+
+  // const client = new WebSocket(composerOrigin.replace('http://', 'ws://'))
+  // await once(client, 'open')
+  // client.send('hello')
+
+  // client.close()
+  // await composer.close()
+
+  // TODO
+  // send and receive messages through the composer
+  // spy logs?
+  // assert hooks
+})
+
+// TODO if !ws.upstream, use ws://origin
+// TODO from fixtures/ws/platformatic.json
+// TODO should proxy to multiple websocket services
+// TODO test reconnect
+// TODO test hooks

@@ -263,6 +263,46 @@ const openapi = {
   ]
 }
 
+// same as composer/proxy
+const proxy = {
+  type: 'object',
+  properties: {
+    upstream: { type: 'string' },
+    prefix: { type: 'string' },
+    hostname: { type: 'string' },
+    ws: {
+      type: 'object',
+      properties: {
+        upstream: { type: 'string' },
+        reconnect: {
+          type: 'object',
+          properties: {
+            pingInterval: { type: 'number' },
+            maxReconnectionRetries: { type: 'number' },
+            reconnectInterval: { type: 'number' },
+            reconnectDecay: { type: 'number' },
+            connectionTimeout: { type: 'number' },
+            reconnectOnClose: { type: 'boolean' },
+            logs: { type: 'boolean' },
+          }
+        },
+        hooks: {
+          type: 'object',
+          properties: {
+            path: { type: 'string' }
+          },
+          required: ['path'],
+          additionalProperties: false
+        }
+      },
+      required: ['upstream'],
+      additionalProperties: false
+    }
+  },
+  required: [],
+  additionalProperties: false
+}
+
 const graphqlBase = {
   type: 'object',
   properties: {
@@ -289,7 +329,8 @@ const service = {
   type: 'object',
   properties: {
     openapi,
-    graphql
+    graphql,
+    proxy
   },
   additionalProperties: false
 }

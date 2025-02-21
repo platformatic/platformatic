@@ -8,6 +8,8 @@ const { mkdtemp, writeFile } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { platform } = require('node:os')
 const { resolve } = require('node:path')
+const { promisify } = require('node:util')
+const { createServer } = require('node:http')
 const { request, setGlobalDispatcher, Client, Agent } = require('undici')
 const fastify = require('fastify')
 const Swagger = require('@fastify/swagger')
@@ -360,6 +362,19 @@ async function createGraphqlService (t, { schema, resolvers, extend, file, expos
   }
 
   return app
+}
+
+async function createWebsocketService (t, wsServerOptions = {}, port) {
+  const service = createServer()
+  const wsServer = new WebSocket.Server({ server: service, ...wsServerOptions })
+  await promisify(service.listen.bind(service))({ port, host: '127.0.0.1' })
+
+  t.after(() => {
+    wsServer.close()
+    service.close()
+  })
+
+  return { service, wsServer }
 }
 
 async function createComposer (t, composerConfig, loggerInstance = undefined) {
@@ -715,6 +730,7 @@ module.exports = {
   createOpenApiService,
   createGraphqlService,
   createBasicService,
+  createWebsocketService,
   testEntityRoutes,
   graphqlRequest,
   createPlatformaticDbService,

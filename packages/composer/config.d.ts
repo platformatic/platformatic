@@ -226,12 +226,27 @@ export interface PlatformaticComposer {
               };
             };
           };
-      proxy?:
-        | false
-        | {
-            prefix?: string;
-            hostname?: string;
+      proxy?: {
+        upstream?: string;
+        prefix?: string;
+        hostname?: string;
+        ws?: {
+          upstream: string;
+          reconnect?: {
+            pingInterval?: number;
+            maxReconnectionRetries?: number;
+            reconnectInterval?: number;
+            reconnectDecay?: number;
+            connectionTimeout?: number;
+            reconnectOnClose?: boolean;
+            logs?: boolean;
+            [k: string]: unknown;
           };
+          hooks?: {
+            path: string;
+          };
+        };
+      };
     }[];
     openapi?: {
       info?: Info;
