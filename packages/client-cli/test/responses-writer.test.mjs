@@ -13,7 +13,7 @@ function getWriter () {
   })
 }
 
-test('support multiple responses', async (t) => {
+test('support multiple responses', async () => {
   const writer = getWriter()
   const responses = {
     200: {
@@ -57,7 +57,7 @@ export type MyOperationResponses =
   assert.equal(output, 'MyOperationResponses')
 })
 
-test('tsdoc comment with response description and summary properties', async (t) => {
+test('tsdoc comment with response description and summary properties', async () => {
   const writer = getWriter()
   const responses = {
     200: {
@@ -113,7 +113,7 @@ export type MyOperationResponses =
   assert.equal(output, 'MyOperationResponses')
 })
 
-test('support array of objects', async (t) => {
+test('support array of objects', async () => {
   const writer = getWriter()
   const responses = {
     200: {
@@ -142,7 +142,7 @@ export type MyOperationResponses =
   MyOperationResponseOK`)
 })
 
-test('support object', async (t) => {
+test('support object', async () => {
   const writer = getWriter()
   const responses = {
     200: {
@@ -169,7 +169,59 @@ export type TheOperationIdResponses =
 `.trim())
 })
 
-test('support array of allOf structure', async (t) => {
+test('support 204 without full response', async () => {
+  const writer = getWriter()
+  const responses = {
+    204: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              fantozzi: { type: 'number' },
+              filini: { type: 'string' }
+            },
+            required: ['fantozzi']
+          }
+        }
+      }
+    }
+
+  }
+  responsesWriter('FantozziFilini', responses, false, writer)
+  assert.equal(writer.toString().trim(), `export type FantozziFiliniResponseNoContent = { 'fantozzi': number; 'filini'?: string }
+export type FantozziFiliniResponses =
+  undefined
+`.trim(), 'result without full response')
+})
+
+test('support 204 with full response', async () => {
+  const writer = getWriter()
+  const responses = {
+    204: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              filini: { type: 'number' },
+              fantozzi: { type: 'string' }
+            },
+            required: ['filini']
+          }
+        }
+      }
+    }
+
+  }
+  responsesWriter('FiliniFantozzi', responses, true, writer)
+  assert.equal(writer.toString().trim(), `export type FiliniFantozziResponseNoContent = { 'filini': number; 'fantozzi'?: string }
+export type FiliniFantozziResponses =
+  FullResponse<undefined, 204>
+`.trim(), 'result with full response')
+})
+
+test('support array of allOf structure', async () => {
   const writer = getWriter()
   const responses = {
     200: {
@@ -227,7 +279,7 @@ export type MyOperationResponses =
 `.trim())
 })
 
-test('support allOf structure', async (t) => {
+test('support allOf structure', async () => {
   const writer = getWriter()
   const responses = {
     200: {
@@ -282,7 +334,7 @@ export type MyOperationResponses =
 `.trim())
 })
 
-test('convert to unknown', async (t) => {
+test('convert to unknown', async () => {
   const writer = getWriter()
   const responses = {
     200: {
@@ -303,7 +355,7 @@ export type MyOperationResponses =
   MyOperationResponseOK`.trim())
 })
 
-test('support anyOf structure', async (t) => {
+test('support anyOf structure', async () => {
   const writer = getWriter()
   const responses = {
     200: {
@@ -359,7 +411,7 @@ export type MyOperationResponses =
 `.trim())
 })
 
-test('support array of anyOf structure', async (t) => {
+test('support array of anyOf structure', async () => {
   const writer = getWriter()
   const responses = {
     200: {
@@ -419,7 +471,7 @@ export type MyOperationResponses =
 `.trim())
 })
 
-test('support array of $ref', async (t) => {
+test('support array of $ref', async () => {
   const writer = getWriter()
   const spec = {
     components: {
@@ -465,7 +517,7 @@ export type MyOperationResponses =
   assert.equal(writer.toString().trim(), expected)
 })
 
-test('support $ref', async (t) => {
+test('support $ref', async () => {
   const writer = getWriter()
   const spec = {
     components: {
@@ -508,7 +560,7 @@ export type MyOperationResponses =
   assert.equal(writer.toString().trim(), expected)
 })
 
-test('support discriminator object', async (t) => {
+test('support discriminator object', async () => {
   const writer = getWriter()
   const spec = {
     components: {
