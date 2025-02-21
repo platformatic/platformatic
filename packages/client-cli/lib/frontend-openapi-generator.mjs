@@ -255,18 +255,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         })
 
         // write default response as fallback
-        writer.write('if (response.headers.get(\'content-type\')?.startsWith(\'application/json\')) ').block(() => {
-          writer.write('return ').block(() => {
-            writer.write('statusCode: response.status')
-            if (language === 'ts') {
-              writer.write(` as ${allResponseCodes.join(' | ')},`)
-            } else {
-              writer.write(',')
-            }
-            writer.writeLine('headers: headersToJSON(response.headers),')
-            writer.write('body: await response.json()')
-          })
-        })
+        writer.writeLine('const responseType = response.headers.get(\'content-type\')?.startsWith(\'application/json\') ? \'json\' : \'text\'')
         writer.write('return ').block(() => {
           writer.write('statusCode: response.status')
           if (language === 'ts') {
@@ -275,7 +264,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
             writer.write(',')
           }
           writer.writeLine('headers: headersToJSON(response.headers),')
-          writer.write('body: await response.text()')
+          writer.write('body: await response[responseType]()')
         })
       } else {
         writer.write('if (!response.ok)').block(() => {
