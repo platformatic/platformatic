@@ -7,9 +7,6 @@ function responsesWriter (operationId, responsesObject, isFullResponse, writer, 
   const mappedResponses = getResponseTypes(responsesObject)
   const responseTypes = Object.entries(responsesObject)
     .map(([statusCode, response]) => {
-      if (statusCode === '204') {
-        return 'undefined'
-      }
       // Unrecognized status code
       const statusCodeName = STATUS_CODES[statusCode]
       let typeName
@@ -36,7 +33,13 @@ function responsesWriter (operationId, responsesObject, isFullResponse, writer, 
 
       const lowerStatusCode = statusCode.toLowerCase()
       const isStatusCodeRange = lowerStatusCode === '1xx' || lowerStatusCode === '2xx' || lowerStatusCode === '3xx' || lowerStatusCode === '4xx' || lowerStatusCode === '5xx'
-
+      if (statusCode === '204') {
+        if (isFullResponse) {
+          typeName = undefined
+        } else {
+          return 'undefined'
+        }
+      }
       if (isResponseArray) typeName = `Array<${typeName}>`
       if (isFullResponse) typeName = `FullResponse<${typeName}, ${isStatusCodeRange ? `StatusCode${lowerStatusCode}` : statusCode}>`
       return typeName
