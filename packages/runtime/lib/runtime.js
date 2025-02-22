@@ -276,7 +276,9 @@ class Runtime extends EventEmitter {
     }
 
     // Stop the entrypoint first so that no new requests are accepted
-    await this.stopService(this.#entrypointId, silent)
+    if (this.#entrypointId) {
+      await this.stopService(this.#entrypointId, silent)
+    }
 
     // Stop services in reverse order to ensure services which depend on others are stopped first
     for (const service of this.#servicesIds.reverse()) {
