@@ -274,10 +274,21 @@ class Runtime extends EventEmitter {
     if (this.#inspectorServer) {
       await this.#inspectorServer.close()
     }
-    await this.#meshInterceptor.close()
-    for (const service of this.#servicesIds) {
+
+    // Stop the entrypoint first so that no new requests are accepted
+    await this.stopService(this.#entrypointId, silent)
+
+    // Stop services in reverse order to ensure services which depend on others are stopped first
+    for (const service of this.#servicesIds.reverse()) {
+      // The entrypoint has been stopped above
+      if (service === this.#entrypointId) {
+        continue
+      }
+
       await this.stopService(service, silent)
     }
+
+    await this.#meshInterceptor.close()
 
     this.#updateStatus('stopped')
   }
@@ -1131,7 +1142,7 @@ class Runtime extends EventEmitter {
     worker[kFullId] = workerId
     worker[kServiceId] = serviceId
     worker[kWorkerId] = workersCount > 1 ? index : undefined
-    worker[kWorkerStatus] = 'init'
+    worker[kWorkerStatus] = 'boot'
     worker[kForwardEvents] = false
 
     if (inspectorOptions) {
@@ -1214,8 +1225,8 @@ class Runtime extends EventEmitter {
 
     // This must be done here as the dependencies are filled above
     worker[kConfig] = { ...serviceConfig, health }
-    worker[kWorkerStatus] = 'boot'
-    this.emit('service:worker:boot', eventPayload)
+    worker[kWorkerStatus] = 'init'
+    this.emit('service:worker:init', eventPayload)
 
     return worker
   }
@@ -1405,8 +1416,8 @@ class Runtime extends EventEmitter {
       return
     }
 
-    // Starting should be aborted, discard the worker
-    if (worker[kWorkerStatus] !== 'started') {
+    // Boot should be aborted, discard the worker
+    if (worker[kWorkerStatus] === 'boot') {
       return this.#discardWorker(worker)
     }
 
