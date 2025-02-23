@@ -5,17 +5,22 @@ const selfCert = require('self-cert')
 const { tmpdir } = require('node:os')
 const { resolve, join } = require('node:path')
 const { symlink, mkdtemp, writeFile } = require('node:fs/promises')
+const { once } = require('node:events')
 const { test } = require('node:test')
 const { request } = require('undici')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const { Agent, setGlobalDispatcher, getGlobalDispatcher } = require('undici')
+const { WebSocket } = require('ws')
 
 const {
   createComposer,
   createOpenApiService,
   testEntityRoutes,
   createComposerInRuntime,
-  REFRESH_TIMEOUT
+  createWebsocketService,
+  REFRESH_TIMEOUT,
+  createLoggerSpy,
+  waitForLogMessage
 } = require('./helper')
 const { buildServer: buildRuntime } = require('../../runtime')
 const { safeRemove, createDirectory } = require('@platformatic/utils')
@@ -1433,3 +1438,84 @@ test('should properly strip runtime basePath from proxied services', async t => 
   assert.equal(composerConfig.composer.proxies.remix.rewritePrefix, '/base/remix/')
   assert.equal(remixConfig.composer.prefix, '/base/remix/')
 })
+
+test('should proxy to a websocket service', async t => {
+  const { service, wsServer } = await createWebsocketService(t)
+  wsServer.on('connection', (socket) => {
+    socket.on('message', (message) => {
+      socket.send(message)
+    })
+  })
+  const port = service.address().port
+
+  const origin = `http://127.0.0.1:${port}`
+  const wsOrigin = `ws://127.0.0.1:${port}`
+
+  const { logger, loggerSpy } = createLoggerSpy()
+
+  const proxyConfig = {
+    id: 'to-ws',
+    origin,
+    proxy: {
+      prefix: '/',
+      ws: {
+        upstream: wsOrigin,
+        // reconnect: {
+        //   pingInterval: 1_000,
+        //   maxReconnectionRetries: Infinity,
+        //   reconnectInterval: 1_000,
+        //   reconnectDecay: 1.1,
+        //   connectionTimeout: 1_000,
+        //   reconnectOnClose: true,
+        //   logs: true
+        // },
+        // hooks: {
+        //   path: resolve(__dirname, './proxy/fixtures/ws/hooks.js')
+        // }
+      }
+    }
+  }
+
+  const composer = await createComposer(t,
+    {
+      composer: {
+        services: [
+          proxyConfig
+        ],
+      },
+    },
+    logger
+  )
+
+  const composerOrigin = await composer.start()
+  const client = new WebSocket(composerOrigin.replace('http://', 'ws://'))
+
+  client.on('message', (message) => {
+    logger.info('received: ' + message)
+  })
+
+  await once(client, 'open')
+  client.send('hello')
+
+  await waitForLogMessage(loggerSpy, { msg: 'received: hello', level: 30 })
+
+  client.close()
+  await composer.close()
+
+  // TODO
+  // assert hooks, use context
+})
+
+test('should proxy to a websocket service with reconnect options', async t => {
+  // TODO
+})
+
+test('should proxy to a websocket service and use hooks', async t => {
+  // TODO
+})
+
+test('should proxy to a websocket service using the json configuration', async t => {
+  // TODO test hooks and reconnect
+})
+
+// TODO config? proxy ws: no hostname, !prefix
