@@ -10,6 +10,7 @@ const { test } = require('node:test')
 const { request } = require('undici')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const { Agent, setGlobalDispatcher, getGlobalDispatcher } = require('undici')
+const { WebSocket } = require('ws')
 
 const {
   createComposer,
@@ -17,7 +18,9 @@ const {
   testEntityRoutes,
   createComposerInRuntime,
   createWebsocketService,
-  REFRESH_TIMEOUT
+  REFRESH_TIMEOUT,
+  createLoggerSpy,
+  waitForLogMessage
 } = require('./helper')
 const { buildServer: buildRuntime } = require('../../runtime')
 const { safeRemove, createDirectory } = require('@platformatic/utils')
@@ -1437,65 +1440,82 @@ test('should properly strip runtime basePath from proxied services', async t => 
 })
 
 test('should proxy to a websocket service', async t => {
-  // const { service, wsServer } = await createWebsocketService(t)
-  // wsServer.on('connection', (socket) => {
-  //   socket.on('message', (message) => {
-  //     socket.send(message)
-  //   })
-  // })
-  // const port = service.address().port
+  const { service, wsServer } = await createWebsocketService(t)
+  wsServer.on('connection', (socket) => {
+    socket.on('message', (message) => {
+      socket.send(message)
+    })
+  })
+  const port = service.address().port
 
-  // const origin = `http://127.0.0.1:${port}`
-  // const wsOrigin = `ws://127.0.0.1:${port}`
+  const origin = `http://127.0.0.1:${port}`
+  const wsOrigin = `ws://127.0.0.1:${port}`
 
-  // const config = {
-  //   composer: {
-  //     services: [
-  //       {
-  //         id: 'ws',
-  //         origin,
-  //         proxy: {
-  //           prefix: '/',
-  //           ws: {
-  //             upstream: wsOrigin,
-  //             reconnect: {
-  //               pingInterval: 1_000,
-  //               maxReconnectionRetries: Infinity,
-  //               reconnectInterval: 1_000,
-  //               reconnectDecay: 1.1,
-  //               connectionTimeout: 1_000,
-  //               reconnectOnClose: true,
-  //               logs: true
-  //             },
-  //             hooks: {
-  //               path: resolve(__dirname, './proxy/fixtures/ws/hooks.js')
-  //             }
-  //           }
-  //         }
-  //       }
-  //     ],
-  //     refreshTimeout: 1000
-  //   }
-  // }
+  const { logger, loggerSpy } = createLoggerSpy()
 
-  // const composer = await createComposer(t, config)
-  // const composerOrigin = await composer.start()
+  const proxyConfig = {
+    id: 'to-ws',
+    origin,
+    proxy: {
+      prefix: '/',
+      ws: {
+        upstream: wsOrigin,
+        // reconnect: {
+        //   pingInterval: 1_000,
+        //   maxReconnectionRetries: Infinity,
+        //   reconnectInterval: 1_000,
+        //   reconnectDecay: 1.1,
+        //   connectionTimeout: 1_000,
+        //   reconnectOnClose: true,
+        //   logs: true
+        // },
+        // hooks: {
+        //   path: resolve(__dirname, './proxy/fixtures/ws/hooks.js')
+        // }
+      }
+    }
+  }
 
-  // const client = new WebSocket(composerOrigin.replace('http://', 'ws://'))
-  // await once(client, 'open')
-  // client.send('hello')
+  const composer = await createComposer(t,
+    {
+      composer: {
+        services: [
+          proxyConfig
+        ],
+      },
+    },
+    logger
+  )
 
-  // client.close()
-  // await composer.close()
+  const composerOrigin = await composer.start()
+  const client = new WebSocket(composerOrigin.replace('http://', 'ws://'))
+
+  client.on('message', (message) => {
+    logger.info('received: ' + message)
+  })
+
+  await once(client, 'open')
+  client.send('hello')
+
+  await waitForLogMessage(loggerSpy, { msg: 'received: hello', level: 30 })
+
+  client.close()
+  await composer.close()
 
   // TODO
-  // send and receive messages through the composer
-  // spy logs?
-  // assert hooks
+  // assert hooks, use context
 })
 
-// TODO if !ws.upstream, use ws://origin
-// TODO from fixtures/ws/platformatic.json
-// TODO should proxy to multiple websocket services
-// TODO test reconnect
-// TODO test hooks
+test('should proxy to a websocket service with reconnect options', async t => {
+  // TODO
+})
+
+test('should proxy to a websocket service and use hooks', async t => {
+  // TODO
+})
+
+test('should proxy to a websocket service using the json configuration', async t => {
+  // TODO test hooks and reconnect
+})
+
+// TODO config? proxy ws: no hostname, !prefix

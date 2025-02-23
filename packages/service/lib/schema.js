@@ -265,42 +265,47 @@ const openapi = {
 
 // same as composer/proxy
 const proxy = {
-  type: 'object',
-  properties: {
-    upstream: { type: 'string' },
-    prefix: { type: 'string' },
-    hostname: { type: 'string' },
-    ws: {
+  anyOf: [
+    { type: 'boolean', const: false },
+    {
       type: 'object',
       properties: {
         upstream: { type: 'string' },
-        reconnect: {
+        prefix: { type: 'string' },
+        hostname: { type: 'string' },
+        ws: {
           type: 'object',
           properties: {
-            pingInterval: { type: 'number' },
-            maxReconnectionRetries: { type: 'number' },
-            reconnectInterval: { type: 'number' },
-            reconnectDecay: { type: 'number' },
-            connectionTimeout: { type: 'number' },
-            reconnectOnClose: { type: 'boolean' },
-            logs: { type: 'boolean' },
-          }
-        },
-        hooks: {
-          type: 'object',
-          properties: {
-            path: { type: 'string' }
+            upstream: { type: 'string' },
+            reconnect: {
+              type: 'object',
+              properties: {
+                pingInterval: { type: 'number' },
+                maxReconnectionRetries: { type: 'number' },
+                reconnectInterval: { type: 'number' },
+                reconnectDecay: { type: 'number' },
+                connectionTimeout: { type: 'number' },
+                reconnectOnClose: { type: 'boolean' },
+                logs: { type: 'boolean' },
+              }
+            },
+            hooks: {
+              type: 'object',
+              properties: {
+                path: { type: 'string' }
+              },
+              required: ['path'],
+              additionalProperties: false
+            }
           },
-          required: ['path'],
+          required: [],
           additionalProperties: false
         }
       },
-      required: ['upstream'],
+      required: [],
       additionalProperties: false
     }
-  },
-  required: [],
-  additionalProperties: false
+  ]
 }
 
 const graphqlBase = {

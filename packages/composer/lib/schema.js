@@ -121,42 +121,47 @@ const composer = {
           openapi: openApiService,
           graphql: graphqlService,
           proxy: {
-            type: 'object',
-            properties: {
-              upstream: { type: 'string' },
-              prefix: { type: 'string' },
-              hostname: { type: 'string' },
-              ws: {
+            anyOf: [
+              { type: 'boolean', const: false },
+              {
                 type: 'object',
                 properties: {
                   upstream: { type: 'string' },
-                  reconnect: {
+                  prefix: { type: 'string' },
+                  hostname: { type: 'string' },
+                  ws: {
                     type: 'object',
                     properties: {
-                      pingInterval: { type: 'number' },
-                      maxReconnectionRetries: { type: 'number' },
-                      reconnectInterval: { type: 'number' },
-                      reconnectDecay: { type: 'number' },
-                      connectionTimeout: { type: 'number' },
-                      reconnectOnClose: { type: 'boolean' },
-                      logs: { type: 'boolean' },
+                      upstream: { type: 'string' },
+                      reconnect: {
+                        type: 'object',
+                        properties: {
+                          pingInterval: { type: 'number' },
+                          maxReconnectionRetries: { type: 'number' },
+                          reconnectInterval: { type: 'number' },
+                          reconnectDecay: { type: 'number' },
+                          connectionTimeout: { type: 'number' },
+                          reconnectOnClose: { type: 'boolean' },
+                          logs: { type: 'boolean' },
+                        },
+                      },
+                      hooks: {
+                        type: 'object',
+                        properties: {
+                          path: { type: 'string' }
+                        },
+                        required: ['path'],
+                        additionalProperties: false
+                      }
                     },
-                  },
-                  hooks: {
-                    type: 'object',
-                    properties: {
-                      path: { type: 'string' }
-                    },
-                    required: ['path'],
+                    required: [],
                     additionalProperties: false
-                  }
+                  },
                 },
-                required: ['upstream'],
+                required: [],
                 additionalProperties: false
-              },
-            },
-            required: [],
-            additionalProperties: false
+              }
+            ],
           }
         },
         required: ['id'],

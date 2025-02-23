@@ -18,6 +18,9 @@ const WebSocket = require('ws')
 const { getIntrospectionQuery } = require('graphql')
 const { buildServer: dbBuildServer } = require('@platformatic/db')
 const { createDirectory, safeRemove } = require('@platformatic/utils')
+const pinoTest = require('pino-test')
+const pino = require('pino')
+
 // This is to avoid a circular dependency
 const { buildServer: buildRuntime, symbols } = require('../../runtime')
 const { buildServer } = require('..')
@@ -614,46 +617,34 @@ async function startServices (t, names) {
 }
 
 function createLoggerSpy () {
+  const loggerSpy = pinoTest.sink()
+  const logger = pino(loggerSpy)
+
   return {
-    level: 'trace',
-    _trace: [],
-    _debug: [],
-    _info: [],
-    _warn: [],
-    _error: [],
-    _fatal: [],
-
-    trace: function (...args) {
-      this._trace.push(args)
-    },
-    debug: function (...args) {
-      this._debug.push(args)
-    },
-    info: function (...args) {
-      this._info.push(args)
-    },
-    warn: function (...args) {
-      this._warn.push(args)
-    },
-    error: function (...args) {
-      this._error.push(args)
-    },
-    fatal: function (...args) {
-      this._fatal.push(args)
-    },
-    child: function () {
-      return this
-    },
-
-    reset: function () {
-      this._trace = []
-      this._debug = []
-      this._info = []
-      this._warn = []
-      this._error = []
-      this._fatal = []
-    }
+    logger,
+    loggerSpy
   }
+}
+
+function waitForLogMessage (loggerSpy, message, max = 100, debug = false) {
+  return new Promise((resolve, reject) => {
+    let count = 0
+    const fn = (received) => {
+      if (debug) {
+        console.log('received', received)
+      }
+      if (received.msg === message.msg && received.level === message.level) {
+        loggerSpy.off('data', fn)
+        resolve()
+      }
+      count++
+      if (count > max) {
+        loggerSpy.off('data', fn)
+        reject(new Error(`Max message count reached on waitForLogMessage: level ${message.level} msg ${message.msg}`))
+      }
+    }
+    loggerSpy.on('data', fn)
+  })
 }
 
 async function waitForRestart (runtime, previousUrl) {
@@ -736,6 +727,7 @@ module.exports = {
   createPlatformaticDbService,
   startServices,
   createLoggerSpy,
+  waitForLogMessage,
   getRuntimeLogs,
   waitForRestart,
   checkSchema
