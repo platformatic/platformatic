@@ -291,7 +291,6 @@ class Runtime extends EventEmitter {
     }
 
     await this.#meshInterceptor.close()
-
     this.#updateStatus('stopped')
   }
 
@@ -1479,6 +1478,7 @@ class Runtime extends EventEmitter {
   }
 
   async #discardWorker (worker) {
+    this.#meshInterceptor.unroute(worker[kServiceId], worker, true)
     worker.removeAllListeners('exit')
     await worker.terminate()
 
