@@ -73,17 +73,11 @@ async function _getRedirect (url, request) {
       body: await response.json()
     }
   }
-  if (response.headers.get('content-type')?.startsWith('application/json')) {
-    return {
-      statusCode: response.status,
-      headers: headersToJSON(response.headers),
-      body: await response.json()
-    }
-  }
+  const responseType = response.headers.get('content-type')?.startsWith('application/json') ? 'json' : 'text'
   return {
     statusCode: response.status,
     headers: headersToJSON(response.headers),
-    body: await response.text()
+    body: await response[responseType]()
   }
 }
 
@@ -469,17 +463,11 @@ test('do not add headers to fetch if a get request', async (t) => {
       body: await response.text()
     }
   }
-  if (response.headers.get('content-type')?.startsWith('application/json')) {
-    return {
-      statusCode: response.status as 200,
-      headers: headersToJSON(response.headers),
-      body: await response.json()
-    }
-  }
+  const responseType = response.headers.get('content-type')?.startsWith('application/json') ? 'json' : 'text'
   return {
     statusCode: response.status as 200,
     headers: headersToJSON(response.headers),
-    body: await response.text()
+    body: await response[responseType]()
   }`), true)
 })
 
@@ -506,17 +494,11 @@ test('support empty response', async (t) => {
       body: await response.text()
     }
   }
-  if (response.headers.get('content-type')?.startsWith('application/json')) {
-    return {
-      statusCode: response.status as 200,
-      headers: headersToJSON(response.headers),
-      body: await response.json()
-    }
-  }
+  const responseType = response.headers.get('content-type')?.startsWith('application/json') ? 'json' : 'text'
   return {
     statusCode: response.status as 200,
     headers: headersToJSON(response.headers),
-    body: await response.text()
+    body: await response[responseType]()
   }
 `), true)
 
@@ -549,17 +531,11 @@ test('call response.json only for json responses', async (t) => {
       body: await response.text()
     }
   }
-  if (response.headers.get('content-type')?.startsWith('application/json')) {
-    return {
-      statusCode: response.status as 200,
-      headers: headersToJSON(response.headers),
-      body: await response.json()
-    }
-  }
+  const responseType = response.headers.get('content-type')?.startsWith('application/json') ? 'json' : 'text'
   return {
     statusCode: response.status as 200,
     headers: headersToJSON(response.headers),
-    body: await response.text()
+    body: await response[responseType]()
   }`
 
     equal(implementation.includes(expected), true)
