@@ -58,17 +58,11 @@ const _getPkgScopeNameVersion = async (url: string, request: Types.GetPkgScopeNa
       body: await response.json()
     }
   }
-  if (response.headers.get('content-type')?.startsWith('application/json')) {
-    return {
-      statusCode: response.status as 200 | 202 | 302 | 400 | 404,
-      headers: headersToJSON(response.headers),
-      body: await response.json()
-    }
-  }
+  const responseType = response.headers.get('content-type')?.startsWith('application/json') ? 'json' : 'text'
   return {
     statusCode: response.status as 200 | 202 | 302 | 400 | 404,
     headers: headersToJSON(response.headers),
-    body: await response.text()
+    body: await response[responseType]()
   }
 }
 
