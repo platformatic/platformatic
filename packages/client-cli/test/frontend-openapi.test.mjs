@@ -331,20 +331,21 @@ test('append query parameters to url in non-GET requests', async (t) => {
 
   const tsImplementationTemplate = `
 const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<Types.PostRootResponses> => {
-  const queryParameters: (keyof Types.PostRootRequest)[]  = ['level']
+  const queryParameters: (keyof NonNullable<Types.PostRootRequest>)[] = ['level']
   const searchParams = new URLSearchParams()
-  queryParameters.forEach((qp) => {
-    if (request[qp]) {
-      if (Array.isArray(request[qp])) {
-        (request[qp] as string[]).forEach((p) => {
-          searchParams.append(qp, p)
-        })
-      } else {
-        searchParams.append(qp, request[qp]?.toString() || '')
+  if (request) {
+    queryParameters.forEach((qp) => {
+      const queryValue = request?.[qp]
+      if (queryValue) {
+        if (Array.isArray(queryValue)) {
+          queryValue.forEach((p) => searchParams.append(qp, p))
+        } else {
+          searchParams.append(qp, queryValue.toString())
+        }
       }
-    }
-    delete request[qp]
-  })
+      delete request?.[qp]
+    })
+  }
 
   const headers = {
     ...defaultHeaders,
@@ -577,20 +578,21 @@ test('serialize correctly array query parameters', async (t) => {
     const implementationFile = join(dir, 'movies', 'movies.ts')
     const implementation = await readFile(implementationFile, 'utf-8')
     const expected = `
-  const queryParameters: (keyof Types.GetMoviesRequest)[]  = ['ids']
+  const queryParameters: (keyof NonNullable<Types.GetMoviesRequest>)[] = ['ids']
   const searchParams = new URLSearchParams()
-  queryParameters.forEach((qp) => {
-    if (request[qp]) {
-      if (Array.isArray(request[qp])) {
-        (request[qp] as string[]).forEach((p) => {
-          searchParams.append(qp, p)
-        })
-      } else {
-        searchParams.append(qp, request[qp]?.toString() || '')
+  if (request) {
+    queryParameters.forEach((qp) => {
+      const queryValue = request?.[qp]
+      if (queryValue) {
+        if (Array.isArray(queryValue)) {
+          queryValue.forEach((p) => searchParams.append(qp, p))
+        } else {
+          searchParams.append(qp, queryValue.toString())
+        }
       }
-    }
-    delete request[qp]
-  })`
+      delete request?.[qp]
+    })
+  }`
     equal(implementation.includes(expected), true)
   }
 })
@@ -766,20 +768,21 @@ test('frontend client with full option', async (t) => {
 
   const implementation = await readFile(join(dir, 'full-opt', 'full-opt.ts'), 'utf-8')
   ok(implementation.includes(`const _postHello = async (url: string, request: Types.PostHelloRequest): Promise<Types.PostHelloResponses> => {
-  const queryParameters: (keyof Types.PostHelloRequest['query'])[]  = ['queryId']
+  const queryParameters: (keyof NonNullable<Types.PostHelloRequest['query']>)[] = ['queryId']
   const searchParams = new URLSearchParams()
-  queryParameters.forEach((qp) => {
-    if (request.query[qp]) {
-      if (Array.isArray(request.query[qp])) {
-        (request.query[qp] as string[]).forEach((p) => {
-          searchParams.append(qp, p)
-        })
-      } else {
-        searchParams.append(qp, request.query[qp]?.toString() || '')
+  if (request.query) {
+    queryParameters.forEach((qp) => {
+      const queryValue = request.query?.[qp]
+      if (queryValue) {
+        if (Array.isArray(queryValue)) {
+          queryValue.forEach((p) => searchParams.append(qp, p))
+        } else {
+          searchParams.append(qp, queryValue.toString())
+        }
       }
-    }
-    delete request.query[qp]
-  })`))
+      delete request.query?.[qp]
+    })
+  }`))
 
   ok(implementation.includes(`if (request.headers['headerId'] !== undefined) {
     headers['headerId'] = request.headers['headerId']

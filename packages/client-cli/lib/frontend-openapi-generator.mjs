@@ -161,33 +161,26 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         const quotedParams = queryParams.map((qp) => `'${qp}'`)
         let queryParametersType = ''
         if (language === 'ts') {
-          queryParametersType = `: (keyof Types.${fullRequest ? `${operationRequestName}['query']` : operationRequestName})[] `
+          queryParametersType = `: (keyof NonNullable<Types.${fullRequest ? `${operationRequestName}['query']` : operationRequestName}>)[]`
         }
         writer.writeLine(`const queryParameters${queryParametersType} = [${quotedParams.join(', ')}]`)
         writer.writeLine('const searchParams = new URLSearchParams()')
         const query = fullRequest ? 'request.query' : 'request'
-        writer.write('queryParameters.forEach((qp) => ').inlineBlock(() => {
-          writer.write(`if (${query}[qp]) `).inlineBlock(() => {
-            writer.write(`if (Array.isArray(${query}[qp])) `).inlineBlock(() => {
-              if (language === 'ts') {
-                writer.write(`(${query}[qp] as string[]).forEach((p) => `).inlineBlock(() => {
-                  writer.write('searchParams.append(qp, p)')
-                })
-              } else {
-                writer.write(`${query}[qp].forEach((p) => `).inlineBlock(() => {
-                  writer.write('searchParams.append(qp, p)')
-                })
-              }
-
-              writer.write(')')
+        writer.write(`if (${query}) `).inlineBlock(() => {
+          writer.write('queryParameters.forEach((qp) => ').inlineBlock(() => {
+            writer.writeLine(`const queryValue = ${query}?.[qp]`)
+            writer.write('if (queryValue) ').inlineBlock(() => {
+              writer.write('if (Array.isArray(queryValue)) ').inlineBlock(() => {
+                writer.write('queryValue.forEach((p) => searchParams.append(qp, p))')
+              })
+              writer.write(' else ').inlineBlock(() => {
+                writer.writeLine('searchParams.append(qp, queryValue.toString())')
+              })
             })
-            writer.write(' else ').inlineBlock(() => {
-              writer.writeLine('searchParams.append(qp, ' + query + '[qp]?.toString() || \'\')')
-            })
+            writer.writeLine(`delete ${query}?.[qp]`)
           })
-          writer.writeLine(`delete ${query}[qp]`)
+          writer.write(')')
         })
-        writer.write(')')
         writer.blankLine()
       }
       if (method === 'get') {
