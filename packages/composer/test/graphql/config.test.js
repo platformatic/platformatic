@@ -4,7 +4,7 @@ const assert = require('assert/strict')
 const { test } = require('node:test')
 const { request } = require('undici')
 
-const { createComposer, createGraphqlService, createLoggerSpy } = require('../helper')
+const { createComposer, createGraphqlService, createLoggerSpy, waitForLogMessage } = require('../helper')
 
 function createSampleGraphqlService (t) {
   return createGraphqlService(t, {
@@ -24,7 +24,7 @@ function createSampleGraphqlService (t) {
 
 test('should get a warning using graphql services', async t => {
   const graphql1 = await createSampleGraphqlService(t)
-  const logger = createLoggerSpy()
+  const { logger, loggerSpy } = createLoggerSpy()
 
   const graphql1Host = await graphql1.listen()
 
@@ -45,7 +45,7 @@ test('should get a warning using graphql services', async t => {
 
   await composer.start()
 
-  assert.ok(logger._warn.find(l => l[0] === 'graphql composer is an experimental feature'))
+  await waitForLogMessage(loggerSpy, { msg: 'graphql composer is an experimental feature', level: 40 })
 })
 
 test('should enable graphiql on composer', async t => {
@@ -98,3 +98,7 @@ test('graphiql should be disabled on composer by default', async t => {
   const res = await request(`${composerHost}/graphiql`)
   assert.strictEqual(res.statusCode, 404, '/graphiql response')
 })
+
+// TODO should validate proxy settings
+// proxy.upstream or url
+// ...

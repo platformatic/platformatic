@@ -5,17 +5,22 @@ const selfCert = require('self-cert')
 const { tmpdir } = require('node:os')
 const { resolve, join } = require('node:path')
 const { symlink, mkdtemp, writeFile } = require('node:fs/promises')
+const { once } = require('node:events')
 const { test } = require('node:test')
 const { request } = require('undici')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const { Agent, setGlobalDispatcher, getGlobalDispatcher } = require('undici')
+const { WebSocket } = require('ws')
 
 const {
   createComposer,
   createOpenApiService,
   testEntityRoutes,
   createComposerInRuntime,
-  REFRESH_TIMEOUT
+  createWebsocketService,
+  REFRESH_TIMEOUT,
+  createLoggerSpy,
+  waitForLogMessage
 } = require('./helper')
 const { buildServer: buildRuntime } = require('../../runtime')
 const { safeRemove, createDirectory } = require('@platformatic/utils')
@@ -1432,4 +1437,127 @@ test('should properly strip runtime basePath from proxied services', async t => 
   assert.equal(composerConfig.composer.proxies.remix.prefix, '/remix')
   assert.equal(composerConfig.composer.proxies.remix.rewritePrefix, '/base/remix/')
   assert.equal(remixConfig.composer.prefix, '/base/remix/')
+})
+
+test('should proxy to a websocket service', async t => {
+  const { service, wsServer } = await createWebsocketService(t)
+  wsServer.on('connection', (socket) => {
+    socket.on('message', (message) => {
+      socket.send(message)
+    })
+  })
+  const port = service.address().port
+
+  const origin = `http://127.0.0.1:${port}`
+  const wsOrigin = `ws://127.0.0.1:${port}`
+
+  const { logger, loggerSpy } = createLoggerSpy()
+
+  const proxyConfig = {
+    id: 'to-ws',
+    origin,
+    proxy: {
+      prefix: '/',
+      ws: { upstream: wsOrigin }
+    }
+  }
+
+  const composer = await createComposer(t,
+    {
+      composer: {
+        services: [
+          proxyConfig
+        ],
+      },
+    },
+    logger
+  )
+
+  const composerOrigin = await composer.start()
+  const client = new WebSocket(composerOrigin.replace('http://', 'ws://'))
+
+  client.on('message', (message) => {
+    logger.info('received: ' + message)
+  })
+
+  await once(client, 'open')
+  client.send('hello')
+
+  await waitForLogMessage(loggerSpy, { msg: 'received: hello', level: 30 })
+
+  client.close()
+  await composer.close()
+})
+
+test('should proxy to a websocket service with reconnect options', async t => {
+  const { service: wsService, wsServer } = await createWebsocketService(t, { autoPong: false })
+  wsServer.on('connection', (socket) => {
+    socket.on('message', (message) => {
+      socket.send(message)
+    })
+  })
+  const port = wsService.address().port
+
+  const origin = `http://127.0.0.1:${port}`
+  const wsOrigin = `ws://127.0.0.1:${port}`
+
+  const { logger, loggerSpy } = createLoggerSpy()
+
+  const proxyConfig = {
+    id: 'to-ws',
+    origin,
+    proxy: {
+      prefix: '/',
+      ws: {
+        upstream: wsOrigin,
+        reconnect: {
+          pingInterval: 500,
+          maxReconnectionRetries: 9,
+          reconnectInterval: 100,
+          reconnectDecay: 1,
+          connectionTimeout: 500,
+          reconnectOnClose: true,
+          logs: true
+        },
+        hooks: {
+          path: resolve(__dirname, './proxy/fixtures/ws/hooks.js')
+        }
+      }
+    }
+  }
+
+  const composer = await createComposer(t,
+    {
+      composer: {
+        services: [
+          proxyConfig
+        ],
+      },
+    },
+    logger
+  )
+
+  const composerOrigin = await composer.start()
+
+  const client = new WebSocket(composerOrigin.replace('http://', 'ws://'))
+  await once(client, 'open')
+  client.send('hello')
+
+  await waitForLogMessage(loggerSpy, { msg: 'onIncomingMessage', level: 30 })
+  await waitForLogMessage(loggerSpy, { msg: 'onConnect', level: 30 })
+  await waitForLogMessage(loggerSpy, { msg: 'onOutgoingMessage', level: 30 })
+
+  // close the target to cause reconnection
+  await wsService.close()
+  await wsServer.close()
+
+  await createWebsocketService(t, {}, port)
+
+  await waitForLogMessage(loggerSpy, { msg: 'onReconnect', level: 30 }, { debug: true })
+  await waitForLogMessage(loggerSpy, { msg: 'onPong', level: 30 })
+
+  client.close()
+  await composer.close()
+
+  await waitForLogMessage(loggerSpy, { msg: 'onDisconnect', level: 30 })
 })
