@@ -4,14 +4,14 @@ import { capitalize, getAllResponseCodes, getResponseContentType, getResponseTyp
 import camelcase from 'camelcase'
 import { writeOperations } from '../../client-cli/lib/openapi-common.mjs'
 
-export function processFrontendOpenAPI ({ schema, name, language, fullResponse, logger, withCredentials, propsOptional }) {
+export function processFrontendOpenAPI ({ schema, name, language, fullResponse, fullRequest, logger, withCredentials, propsOptional }) {
   return {
-    types: generateTypesFromOpenAPI({ schema, name, fullResponse, propsOptional }),
-    implementation: generateFrontendImplementationFromOpenAPI({ schema, name, language, fullResponse, logger, withCredentials })
+    types: generateTypesFromOpenAPI({ schema, name, fullResponse, fullRequest, propsOptional }),
+    implementation: generateFrontendImplementationFromOpenAPI({ schema, name, language, fullResponse, fullRequest, logger, withCredentials })
   }
 }
 
-function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fullResponse, logger, withCredentials }) {
+function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fullResponse, fullRequest, logger, withCredentials }) {
   const camelCaseName = capitalize(camelcase(name))
   const { paths } = schema
   const generatedOperationIds = []
@@ -149,30 +149,32 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
     }
 
     writer.block(() => {
+      const req = fullRequest ? 'request.path' : 'request'
       // Transform
       // /organizations/{orgId}/members/{memberId}
       // to
       // /organizations/${request.orgId}/members/${request.memberId}
-      const stringLiteralPath = path.replace(/\{/gm, '${request[\'').replace(/\}/gm, '\']}')
+      const stringLiteralPath = path.replace(/\{/gm, '${' + req + '[\'').replace(/\}/gm, '\']}')
       // GET methods need query strings instead of JSON bodies
       if (queryParams.length) {
         // query parameters should be appended to the url
         const quotedParams = queryParams.map((qp) => `'${qp}'`)
         let queryParametersType = ''
         if (language === 'ts') {
-          queryParametersType = `: (keyof Types.${operationRequestName})[] `
+          queryParametersType = `: (keyof Types.${fullRequest ? `${operationRequestName}['query']` : operationRequestName})[] `
         }
         writer.writeLine(`const queryParameters${queryParametersType} = [${quotedParams.join(', ')}]`)
         writer.writeLine('const searchParams = new URLSearchParams()')
+        const query = fullRequest ? 'request.query' : 'request'
         writer.write('queryParameters.forEach((qp) => ').inlineBlock(() => {
-          writer.write('if (request[qp]) ').inlineBlock(() => {
-            writer.write('if (Array.isArray(request[qp])) ').inlineBlock(() => {
+          writer.write(`if (${query}[qp]) `).inlineBlock(() => {
+            writer.write(`if (Array.isArray(${query}[qp])) `).inlineBlock(() => {
               if (language === 'ts') {
-                writer.write('(request[qp] as string[]).forEach((p) => ').inlineBlock(() => {
+                writer.write(`(${query}[qp] as string[]).forEach((p) => `).inlineBlock(() => {
                   writer.write('searchParams.append(qp, p)')
                 })
               } else {
-                writer.write('request[qp].forEach((p) => ').inlineBlock(() => {
+                writer.write(`${query}[qp].forEach((p) => `).inlineBlock(() => {
                   writer.write('searchParams.append(qp, p)')
                 })
               }
@@ -180,10 +182,10 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
               writer.write(')')
             })
             writer.write(' else ').inlineBlock(() => {
-              writer.writeLine('searchParams.append(qp, request[qp]?.toString() || \'\')')
+              writer.writeLine('searchParams.append(qp, ' + query + '[qp]?.toString() || \'\')')
             })
           })
-          writer.writeLine('delete request[qp]')
+          writer.writeLine(`delete ${query}[qp]`)
         })
         writer.write(')')
         writer.blankLine()
@@ -199,10 +201,11 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         })
       }
 
-      headerParams.forEach((param, idx) => {
-        writer.write(`if (request['${param}'] !== undefined)`).block(() => {
-          writer.writeLine(`headers['${param}'] = request['${param}']`)
-          writer.writeLine(`delete request['${param}']`)
+      const headers = fullRequest ? 'request.headers' : 'request'
+      headerParams.forEach((param) => {
+        writer.write(`if (${headers}['${param}'] !== undefined)`).block(() => {
+          writer.writeLine(`headers['${param}'] = ${headers}['${param}']`)
+          writer.writeLine(`delete ${headers}['${param}']`)
         })
       })
       writer.blankLine()
@@ -214,7 +217,11 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
           .write(`const response = await fetch(\`\${url}${stringLiteralPath}${searchString}\`, `)
           .inlineBlock(() => {
             writer.write('method: ').quote().write(method.toUpperCase()).quote().write(',')
-            writer.writeLine('body: JSON.stringify(request),')
+            if (fullRequest) {
+              writer.writeLine("body: 'body' in request ? JSON.stringify(request.body) : undefined,")
+            } else {
+              writer.writeLine('body: JSON.stringify(request),')
+            }
             if (withCredentials) {
               writer.writeLine('credentials: \'include\',')
             }
@@ -255,18 +262,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         })
 
         // write default response as fallback
-        writer.write('if (response.headers.get(\'content-type\')?.startsWith(\'application/json\')) ').block(() => {
-          writer.write('return ').block(() => {
-            writer.write('statusCode: response.status')
-            if (language === 'ts') {
-              writer.write(` as ${allResponseCodes.join(' | ')},`)
-            } else {
-              writer.write(',')
-            }
-            writer.writeLine('headers: headersToJSON(response.headers),')
-            writer.write('body: await response.json()')
-          })
-        })
+        writer.writeLine('const responseType = response.headers.get(\'content-type\')?.startsWith(\'application/json\') ? \'json\' : \'text\'')
         writer.write('return ').block(() => {
           writer.write('statusCode: response.status')
           if (language === 'ts') {
@@ -275,7 +271,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
             writer.write(',')
           }
           writer.writeLine('headers: headersToJSON(response.headers),')
-          writer.write('body: await response.text()')
+          writer.write('body: await response[responseType]()')
         })
       } else {
         writer.write('if (!response.ok)').block(() => {
@@ -343,7 +339,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
   return writer.toString()
 }
 
-function generateTypesFromOpenAPI ({ schema, name, fullResponse, propsOptional }) {
+function generateTypesFromOpenAPI ({ schema, name, fullRequest, fullResponse, propsOptional }) {
   const camelCaseName = capitalize(camelcase(name))
   const { paths } = schema
   const generatedOperationIds = []
@@ -385,7 +381,7 @@ function generateTypesFromOpenAPI ({ schema, name, fullResponse, propsOptional }
     writer.writeLine('setBaseUrl(newUrl: string) : void;')
     writer.writeLine('setDefaultHeaders(headers: object) : void;')
     writeOperations(interfaces, writer, operations, {
-      fullRequest: false, fullResponse, optionalHeaders: [], schema, propsOptional
+      fullRequest, fullResponse, optionalHeaders: [], schema, propsOptional
     })
   })
 

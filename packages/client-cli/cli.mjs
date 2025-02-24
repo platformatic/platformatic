@@ -76,6 +76,7 @@ async function writeOpenAPIClient (
     const { types, implementation } = processFrontendOpenAPI({
       schema,
       name,
+      fullRequest,
       fullResponse,
       language,
       logger,
