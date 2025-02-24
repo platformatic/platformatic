@@ -227,6 +227,8 @@ platformatic start
 pnpm test
 ```
 
+To update schemas, run `pnpm run gen-schema` in the package directory or `pnpm run build` in the root directory.
+
 If you encounter issues with failing tests without code changes, try:
 
 1. Clean the environment.

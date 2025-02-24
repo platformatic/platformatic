@@ -15,7 +15,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "pnpm run test:prepare && vite build",
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "test:types": "tsc",

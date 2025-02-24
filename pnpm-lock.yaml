@@ -458,8 +458,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       '@fastify/http-proxy':
-        specifier: ^11.0.0
-        version: 11.0.1
+        specifier: ^11.1.1
+        version: 11.1.1
       '@fastify/reply-from':
         specifier: ^12.0.0
         version: 12.0.2
@@ -593,6 +593,9 @@ importers:
       openapi-schema-validator:
         specifier: ^12.1.3
         version: 12.1.3
+      pino-test:
+        specifier: ^1.0.1
+        version: 1.1.0
       self-cert:
         specifier: ^2.0.0
         version: 2.0.1
@@ -3468,8 +3471,8 @@ packages:
   '@fastify/forwarded@3.0.0':
     resolution: {integrity: sha512-kJExsp4JCms7ipzg7SJ3y8DwmePaELHxKYtg+tZow+k0znUTf3cb+npgyqm8+ATZOdmfgfydIebPDWM172wfyA==}
 
-  '@fastify/http-proxy@11.0.1':
-    resolution: {integrity: sha512-EU/PUINRfeI8BfU1HDqt+yVYpBPNShCKyqd1Eki+giE/mpQuy53WGiK1g/tTAIZJzSS87ti7YtcpcXW9/25H2A==}
+  '@fastify/http-proxy@11.1.1':
+    resolution: {integrity: sha512-lrkEz7X9eKLfkpXMk53QN99Iy+xqhi4CoGa6N948Fop8nRiYa7EuxAw8ZMSzEhyVNlz99aMwr6H0uNei716I8Q==}
 
   '@fastify/jwt@9.0.4':
     resolution: {integrity: sha512-OJ5moNArmagwYIAeAE5xRI/cnZk7Nvuc+kz7Q+EWzODBszBfQaaeRABIkPD8nIkDrOh1fOnlNyrSpNV/QomiaQ==}
@@ -10340,7 +10343,7 @@ snapshots:
 
   '@fastify/forwarded@3.0.0': {}
 
-  '@fastify/http-proxy@11.0.1':
+  '@fastify/http-proxy@11.1.1':
     dependencies:
       '@fastify/reply-from': 12.0.2
       fast-querystring: 1.1.2
