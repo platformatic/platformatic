@@ -11,7 +11,7 @@ const kProxyRoute = Symbol('plt.composer.proxy.route')
 
 const urlPattern = /^https?:\/\//
 
-async function resolveServiceProxyParameters(service) {
+async function resolveServiceProxyParameters (service) {
   // Get meta information from the service, if any, to eventually hook up to a TCP port
   const meta = (await globalThis[kITC]?.send('getServiceMeta', service.id))?.composer ?? { prefix: service.id }
 
