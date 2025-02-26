@@ -24,7 +24,6 @@ async function resolveServiceProxyParameters (service) {
   let rewritePrefix = ''
   let internalRewriteLocationHeader = true
 
-  // TODO review: for external services, we should not use the full url?
   if (service.origin || meta?.wantsAbsoluteUrls) {
     const basePath = workerData.config.basePath
 
