@@ -184,17 +184,12 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         })
         writer.blankLine()
       }
-      const headersVariable = `const headers${isTsLang ? ': HeadersInit' : ''} =`
-      if (method === 'get') {
-        writer.write(headersVariable).block(() => {
-          writer.writeLine('...defaultHeaders')
-        })
-      } else {
-        writer.write(headersVariable).block(() => {
-          writer.writeLine('...defaultHeaders,')
+      writer.write(`const headers${isTsLang ? ': HeadersInit' : ''} =`).block(() => {
+        writer.writeLine('...defaultHeaders,')
+        if (method !== 'get') {
           writer.writeLine('\'Content-type\': \'application/json; charset=utf-8\'')
-        })
-      }
+        }
+      })
 
       const headers = fullRequest ? 'request.headers' : 'request'
       headerParams.forEach((param) => {
