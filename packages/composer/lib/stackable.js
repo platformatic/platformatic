@@ -45,7 +45,7 @@ class ComposerStackable extends ServiceStackable {
       )
     }
 
-    this.#dependencies = dependencies.filter(dep => dep.local)
+    this.#dependencies = dependencies
     return this.#dependencies
   }
 
