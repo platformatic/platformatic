@@ -26,7 +26,7 @@ function headersToJSON(headers: Headers): JSON {
 }
 
 const _getPkgScopeNameVersion = async (url: string, request: Types.GetPkgScopeNameVersionRequest): Promise<Types.GetPkgScopeNameVersionResponses> => {
-  const headers = {
+  const headers: HeadersInit = {
     ...defaultHeaders
   }
 
