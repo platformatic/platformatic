@@ -347,7 +347,7 @@ const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<T
     })
   }
 
-  const headers = {
+  const headers: HeadersInit = {
     ...defaultHeaders,
     'Content-type': 'application/json; charset=utf-8'
   }
@@ -370,15 +370,15 @@ test('handle headers parameters', async (t) => {
   const implementation = await readFile(join(dir, 'fontend', 'fontend.ts'), 'utf8')
 
   const tsImplementationTemplate = `const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<Types.PostRootResponses> => {
-  const headers = {
+  const headers: HeadersInit = {
     ...defaultHeaders,
     'Content-type': 'application/json; charset=utf-8'
   }
-  if (request['level'] !== undefined) {
+  if (request && request['level'] !== undefined) {
     headers['level'] = request['level']
     delete request['level']
   }
-  if (request['foo'] !== undefined) {
+  if (request && request['foo'] !== undefined) {
     headers['foo'] = request['foo']
     delete request['foo']
   }
@@ -402,14 +402,14 @@ test('handle headers parameters in get request', async (t) => {
 
   const tsImplementationTemplate = `
 const _getRoot = async (url: string, request: Types.GetRootRequest): Promise<Types.GetRootResponses> => {
-  const headers = {
+  const headers: HeadersInit = {
     ...defaultHeaders
   }
-  if (request['level'] !== undefined) {
+  if (request && request['level'] !== undefined) {
     headers['level'] = request['level']
     delete request['level']
   }
-  if (request['foo'] !== undefined) {
+  if (request && request['foo'] !== undefined) {
     headers['foo'] = request['foo']
     delete request['foo']
   }
@@ -738,7 +738,7 @@ test('frontend client with config', async (t) => {
   ok(implementation.includes(`import type { Client } from './client-types'
 import type * as Types from './client-types'`))
   ok(implementation.includes(`const _getHello = async (url: string, request: Types.GetHelloRequest): Promise<Types.GetHelloResponses> => {
-  const headers = {
+  const headers: HeadersInit = {
     ...defaultHeaders
   }`))
   ok(implementation.includes(`export const getHello: Client['getHello'] = async (request: Types.GetHelloRequest): Promise<Types.GetHelloResponses> => {
@@ -784,7 +784,7 @@ test('frontend client with full option', async (t) => {
     })
   }`))
 
-  ok(implementation.includes(`if (request.headers['headerId'] !== undefined) {
+  ok(implementation.includes(`if (request.headers && request.headers['headerId'] !== undefined) {
     headers['headerId'] = request.headers['headerId']
     delete request.headers['headerId']
   }`))
