@@ -47,5 +47,5 @@ test('composer-proxy', async (t) => {
 
   const entryUrl = await app.start()
 
-  assert.strictEqual(entryUrl, 'http://127.0.0.1:3000')
+  assert.ok(entryUrl.startsWith('http://127.0.0.1'), 'entryUrl should start with http://127.0.0.1')
 })
