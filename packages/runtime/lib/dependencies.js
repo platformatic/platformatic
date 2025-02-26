@@ -39,6 +39,8 @@ function topologicalSort (workers, config) {
       .filter(dep => dep.local)
       .map(dep => dep.id)
 
+console.log("***", service.id)
+
     topo.add(service, {
       group: service.id,
       after: localDependencyIds,

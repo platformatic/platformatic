@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.48.0.json",
+  "server": {
+    "healthCheck": true
+  },
+  "composer": {
+    "services": [
+      {
+        "id": "composer",
+        "origin": "http://external-service/",
+        "proxy": {
+          "prefix": "/",
+          "upstream": "http://localhost:3000/",
+          "ws": {
+            "upstream": "ws://localhost:3000/graphql",
+            "reconnect": {
+              "logs": true
+            },
+            "hooks": {
+              "path": "{PLT_ROOT}/hooks.js"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

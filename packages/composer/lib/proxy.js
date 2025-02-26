@@ -12,15 +12,20 @@ const kProxyRoute = Symbol('plt.composer.proxy.route')
 const urlPattern = /^https?:\/\//
 
 async function resolveServiceProxyParameters (service) {
-  // Get meta information from the service, if any, to eventually hook up to a TCP port
-  const meta = (await globalThis[kITC]?.send('getServiceMeta', service.id))?.composer ?? { prefix: service.id }
+  let meta
+  // if service.origin is specified, skip the meta lookup because the service id does not exists in the runtime services list
+  if (!service.origin) {
+    // Get meta information from the service, if any, to eventually hook up to a TCP port
+    meta = (await globalThis[kITC]?.send('getServiceMeta', service.id))?.composer ?? { prefix: service.id }
+  }
 
   // If no prefix could be found, assume the service id
   let prefix = (service.proxy?.prefix ?? meta.prefix ?? service.id).replace(/(\/$)/g, '')
   let rewritePrefix = ''
   let internalRewriteLocationHeader = true
 
-  if (meta.wantsAbsoluteUrls) {
+  // TODO review: for external services, we should not use the full url?
+  if (service.origin || meta?.wantsAbsoluteUrls) {
     const basePath = workerData.config.basePath
 
     // Strip the runtime basepath from the prefix when it comes from the service meta
@@ -30,7 +35,7 @@ async function resolveServiceProxyParameters (service) {
 
     // The rewritePrefix purposely ignores service.proxy?.prefix to let
     // the service always being able to configure their value
-    rewritePrefix = meta.prefix ?? service.id
+    rewritePrefix = meta?.prefix ?? service.id
     internalRewriteLocationHeader = false
   }
 
@@ -41,12 +46,12 @@ async function resolveServiceProxyParameters (service) {
 
   return {
     origin: service.origin,
-    url: meta.url,
+    url: meta?.url,
     prefix,
     rewritePrefix,
     internalRewriteLocationHeader,
-    needsRootRedirect: meta.needsRootRedirect,
-    needsRefererBasedRedirect: meta.needsRefererBasedRedirect,
+    needsRootRedirect: meta?.needsRootRedirect,
+    needsRefererBasedRedirect: meta?.needsRefererBasedRedirect,
     upstream: service.proxy?.upstream,
     ws: service.proxy?.ws
   }

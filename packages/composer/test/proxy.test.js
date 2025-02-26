@@ -1448,17 +1448,17 @@ test('should proxy to a websocket service', async t => {
   })
   const port = service.address().port
 
-  const origin = `http://127.0.0.1:${port}`
-  const wsOrigin = `ws://127.0.0.1:${port}`
+  const upstream = `http://127.0.0.1:${port}`
+  const wsUpstream = `ws://127.0.0.1:${port}`
 
   const { logger, loggerSpy } = createLoggerSpy()
 
   const proxyConfig = {
     id: 'to-ws',
-    origin,
     proxy: {
       prefix: '/',
-      ws: { upstream: wsOrigin }
+      upstream,
+      ws: { upstream: wsUpstream }
     }
   }
 
@@ -1498,18 +1498,18 @@ test('should proxy to a websocket service with reconnect options', async t => {
   })
   const port = wsService.address().port
 
-  const origin = `http://127.0.0.1:${port}`
-  const wsOrigin = `ws://127.0.0.1:${port}`
+  const upstream = `http://127.0.0.1:${port}`
+  const wsUpstream = `ws://127.0.0.1:${port}`
 
   const { logger, loggerSpy } = createLoggerSpy()
 
   const proxyConfig = {
     id: 'to-ws',
-    origin,
     proxy: {
+      upstream,
       prefix: '/',
       ws: {
-        upstream: wsOrigin,
+        upstream: wsUpstream,
         reconnect: {
           pingInterval: 500,
           maxReconnectionRetries: 9,
@@ -1553,7 +1553,7 @@ test('should proxy to a websocket service with reconnect options', async t => {
 
   await createWebsocketService(t, {}, port)
 
-  await waitForLogMessage(loggerSpy, { msg: 'onReconnect', level: 30 }, { debug: true })
+  await waitForLogMessage(loggerSpy, { msg: 'onReconnect', level: 30 })
   await waitForLogMessage(loggerSpy, { msg: 'onPong', level: 30 })
 
   client.close()
