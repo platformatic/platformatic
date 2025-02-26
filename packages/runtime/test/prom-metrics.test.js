@@ -194,3 +194,104 @@ test('metrics can be disabled', async t => {
     path: '/metrics'
   }))
 })
+
+test('should get 404 if readiness is not enabled', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'readiness-disabled.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  const { statusCode } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/ready'
+  })
+  assert.strictEqual(statusCode, 404)
+})
+
+test('should expose readiness by default and get a success response when all services are started, with default settings', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  const { statusCode, body } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/ready'
+  })
+  assert.strictEqual(statusCode, 200)
+  assert.strictEqual(await body.text(), 'OK')
+})
+
+test('should expose readiness and get a fail response when not all services are started, with default settings', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const { services } = await app.getServices()
+  await app.stopService(services[0].id)
+
+  const { statusCode, body } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/ready'
+  })
+  assert.strictEqual(statusCode, 500)
+  assert.strictEqual(await body.text(), 'ERR')
+})
+
+test('should expose readiness and get a fail and success responses with custom settings', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'readiness-custom.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/health'
+    })
+    assert.strictEqual(statusCode, 201)
+    assert.strictEqual(await body.text(), 'All right')
+  }
+
+  const { services } = await app.getServices()
+  await app.stopService(services[0].id)
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/health'
+    })
+    assert.strictEqual(statusCode, 501)
+    assert.strictEqual(await body.text(), 'No good')
+  }
+})

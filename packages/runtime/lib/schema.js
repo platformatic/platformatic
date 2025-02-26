@@ -380,9 +380,28 @@ const platformaticRuntimeSchema = {
             labels: {
               type: 'object',
               additionalProperties: { type: 'string' }
-            }
-          },
-          additionalProperties: false
+            },
+            readiness: {
+              anyOf: [
+                { type: 'boolean' },
+                {
+                  type: 'object',
+                  properties: {
+                    endpoint: { type: 'string' },
+                    success: {
+                      statusCode: { type: 'number' },
+                      body: { type: 'string' }
+                    },
+                    fail: {
+                      statusCode: { type: 'number' },
+                      body: { type: 'string' }
+                    },
+                  }
+                }
+              ]
+            },
+            additionalProperties: false
+          }
         }
       ]
     },

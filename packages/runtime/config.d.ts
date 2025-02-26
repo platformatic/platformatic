@@ -173,6 +173,20 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime2480Json = {
         labels?: {
           [k: string]: string;
         };
+        readiness?:
+          | boolean
+          | {
+              endpoint?: string;
+              success?: {
+                [k: string]: unknown;
+              };
+              fail?: {
+                [k: string]: unknown;
+              };
+              [k: string]: unknown;
+            };
+        additionalProperties?: never;
+        [k: string]: unknown;
       };
   telemetry?: OpenTelemetry;
   inspectorOptions?: {
