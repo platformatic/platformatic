@@ -185,8 +185,10 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         writer.blankLine()
       }
       writer.write(`const headers${isTsLang ? ': HeadersInit' : ''} =`).block(() => {
-        writer.writeLine('...defaultHeaders,')
-        if (method !== 'get') {
+        if (method === 'get') {
+          writer.writeLine('...defaultHeaders')
+        } else {
+          writer.writeLine('...defaultHeaders,')
           writer.writeLine('\'Content-type\': \'application/json; charset=utf-8\'')
         }
       })
