@@ -389,14 +389,23 @@ const platformaticRuntimeSchema = {
                   properties: {
                     endpoint: { type: 'string' },
                     success: {
-                      statusCode: { type: 'number' },
-                      body: { type: 'string' }
+                      type: 'object',
+                      properties: {
+                        statusCode: { type: 'number' },
+                        body: { type: 'string' }
+                      },
+                      additionalProperties: false
                     },
                     fail: {
-                      statusCode: { type: 'number' },
-                      body: { type: 'string' }
-                    },
-                  }
+                      type: 'object',
+                      properties: {
+                        statusCode: { type: 'number' },
+                        body: { type: 'string' }
+                      },
+                      additionalProperties: false
+                    }
+                  },
+                  additionalProperties: false
                 }
               ]
             },

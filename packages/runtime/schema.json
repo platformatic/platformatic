@@ -1166,22 +1166,31 @@
                       "type": "string"
                     },
                     "success": {
-                      "statusCode": {
-                        "type": "number"
+                      "type": "object",
+                      "properties": {
+                        "statusCode": {
+                          "type": "number"
+                        },
+                        "body": {
+                          "type": "string"
+                        }
                       },
-                      "body": {
-                        "type": "string"
-                      }
+                      "additionalProperties": false
                     },
                     "fail": {
-                      "statusCode": {
-                        "type": "number"
+                      "type": "object",
+                      "properties": {
+                        "statusCode": {
+                          "type": "number"
+                        },
+                        "body": {
+                          "type": "string"
+                        }
                       },
-                      "body": {
-                        "type": "string"
-                      }
+                      "additionalProperties": false
                     }
-                  }
+                  },
+                  "additionalProperties": false
                 }
               ]
             },

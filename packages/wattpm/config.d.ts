@@ -178,12 +178,13 @@ export type HttpsSchemasPlatformaticDevWattpm2480Json = {
           | {
               endpoint?: string;
               success?: {
-                [k: string]: unknown;
+                statusCode?: number;
+                body?: string;
               };
               fail?: {
-                [k: string]: unknown;
+                statusCode?: number;
+                body?: string;
               };
-              [k: string]: unknown;
             };
         additionalProperties?: never;
         [k: string]: unknown;
