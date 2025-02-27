@@ -76,7 +76,8 @@ async function startPrometheusServer (runtime, opts) {
         const ready = await checkReadiness(runtime)
 
         if (ready) {
-          reply.status(successStatusCode).send(successBody)
+          reply.status(successStatusCode)
+          return successBody
         } else {
           reply.status(failStatusCode)
           return failBody
