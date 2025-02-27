@@ -173,6 +173,21 @@ export type HttpsSchemasPlatformaticDevWattpm2480Json = {
         labels?: {
           [k: string]: string;
         };
+        readiness?:
+          | boolean
+          | {
+              endpoint?: string;
+              success?: {
+                statusCode?: number;
+                body?: string;
+              };
+              fail?: {
+                statusCode?: number;
+                body?: string;
+              };
+            };
+        additionalProperties?: never;
+        [k: string]: unknown;
       };
   telemetry?: OpenTelemetry;
   inspectorOptions?: {

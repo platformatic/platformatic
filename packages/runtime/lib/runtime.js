@@ -66,7 +66,7 @@ class Runtime extends EventEmitter {
   #loggerDestination
   #metrics
   #metricsTimeout
-  #status
+  #status // starting, started, stopping, stopped, closed
   #meshInterceptor
   #dispatcher
   #managementApi
