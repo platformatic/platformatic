@@ -11,6 +11,17 @@ const DEFAULT_READINESS_SUCCESS_BODY = 'OK'
 const DEFAULT_READINESS_FAIL_STATUS_CODE = 500
 const DEFAULT_READINESS_FAIL_BODY = 'ERR'
 
+async function checkReadiness (runtime) {
+  const workers = await runtime.getWorkers()
+
+  for (const worker of Object.values(workers)) {
+    if (worker.status !== 'started') {
+      return false
+    }
+  }
+  return true
+}
+
 async function startPrometheusServer (runtime, opts) {
   if (opts.enabled === false) {
     return
@@ -50,17 +61,6 @@ async function startPrometheusServer (runtime, opts) {
   })
 
   if (opts.readiness !== false) {
-    async function checkReadiness (runtime) {
-      const workers = await runtime.getWorkers()
-
-      for (const worker of Object.values(workers)) {
-        if (worker.status !== 'started') {
-          return false
-        }
-      }
-      return true
-    }
-
     const successStatusCode = opts.readiness?.success?.statusCode ?? DEFAULT_READINESS_SUCCESS_STATUS_CODE
     const successBody = opts.readiness?.success?.body ?? DEFAULT_READINESS_SUCCESS_BODY
     const failStatusCode = opts.readiness?.fail?.statusCode ?? DEFAULT_READINESS_FAIL_STATUS_CODE
