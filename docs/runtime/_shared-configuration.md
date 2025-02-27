@@ -330,12 +330,20 @@ This configures the Platformatic Runtime Prometheus server. The Prometheus serve
 - **`auth`** (`object`). Optional configuration for the Prometheus server authentication.
   - **`username`** (`string`). The username for the Prometheus server authentication.
   - **`password`** (`string`). The password for the Prometheus server authentication.
-- **`readiness`** (`object`). Optional configuration for the Prometheus server readiness checks.
+- **`readiness`** (`object` or `boolean`, default: `true`). Optional configuration for the Prometheus server readiness checks. If set to `true`, default readiness checks are enabled. If an object is provided, it can include:
   - **`endpoint`** (`string`). The endpoint for the Prometheus server readiness checks. Default: `/ready`.
   - **`success`** (`object`). The success criteria for the Prometheus server readiness checks.
     - **`statusCode`** (`number`). The HTTP status code indicating success. Default: `200`.
     - **`body`** (`string`). The response body indicating success. Default: `OK`.
   - **`fail`** (`object`). The failure criteria for the Prometheus server readiness checks.
+    - **`statusCode`** (`number`). The HTTP status code indicating failure. Default: `500`.
+    - **`body`** (`string`). The response body indicating failure. Default: `ERR`.
+- **`liveness`** (`object` or `boolean`, default: `true`). Optional configuration for the Prometheus server liveness checks. If set to `true`, default liveness checks are enabled. If an object is provided, it can include:
+  - **`endpoint`** (`string`). The endpoint for the Prometheus server liveness checks. Default: `/status`.
+  - **`success`** (`object`). The success criteria for the Prometheus server liveness checks.
+    - **`statusCode`** (`number`). The HTTP status code indicating success. Default: `200`.
+    - **`body`** (`string`). The response body indicating success. Default: `OK`.
+  - **`fail`** (`object`). The failure criteria for the Prometheus server liveness checks.
     - **`statusCode`** (`number`). The HTTP status code indicating failure. Default: `500`.
     - **`body`** (`string`). The response body indicating failure. Default: `ERR`.
 

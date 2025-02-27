@@ -176,6 +176,17 @@ class ServiceStackable {
     return this.app.graphql ? printSchema(this.app.graphql.schema) : null
   }
 
+  setCustomHealthCheck (check) {
+    this.customHealthCheck = check
+  }
+
+  async getCustomHealthCheck () {
+    if (!this.customHealthCheck) {
+      return true
+    }
+    return await this.customHealthCheck()
+  }
+  
   // This method is not a part of Stackable interface because we need to register
   // fastify metrics before the server is started.
   async #collectMetrics () {

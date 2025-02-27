@@ -106,6 +106,14 @@ Supported object properties:
   - **`fail`** (`object`) — Defines the failure criteria for readiness checks.
     - **`statusCode`** (`number`, default: `500`) — The HTTP status code indicating failure.
     - **`body`** (`string`, default: `ERR`) — The response body indicating failure.
+- **`liveness`** (`object` or `boolean`, default: `true`) — Configuration for liveness checks. If set to `true`, default liveness checks are enabled. If an object is provided, it can include:
+  - **`endpoint`** (`string`, default: `/status`) — The endpoint for liveness checks.
+  - **`success`** (`object`) — Defines the success criteria for liveness checks.
+    - **`statusCode`** (`number`, default: `200`) — The HTTP status code indicating success.
+    - **`body`** (`string`, default: `OK`) — The response body indicating success.
+  - **`fail`** (`object`) — Defines the failure criteria for liveness checks.
+    - **`statusCode`** (`number`, default: `500`) — The HTTP status code indicating failure.
+    - **`body`** (`string`, default: `ERR`) — The response body indicating failure.
 
 ### `plugins`
 
