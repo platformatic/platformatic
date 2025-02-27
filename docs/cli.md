@@ -90,7 +90,6 @@ Welcome to Platformatic. Available commands are:
 * `logs` - stream logs for a Platformatic runtime application.
 * `upgrade` - upgrade the Platformatic configuration to the latest version.
 * `resolve` - resolve Platformatic Runtime external services
-* `patch-config` - Applies a patch file to the runtime and services configurations.
 * `client` - generate a Platformatic client.
 * `build` - builds all services.
 * `install` - install all dependencies of an application and its services.
@@ -142,6 +141,20 @@ set the `managementApi` option to `true` in the runtime configuration file.
 
 To get the list of runtimes with enabled management API use the
 `platformatic ctl ps` command.
+
+
+#### install
+
+Install all dependencies of an application and its services.
+
+```bash
+platformatic install
+```
+
+Options:
+
+* `-p, --production`: Only install production dependencies.
+* `-P, --package-manager EXECUTABLE`: Use an alternative package manager (the default is to autodetect it).
 
 
 #### logs
@@ -244,15 +257,6 @@ You can find more details about the configuration format here:
 * [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
 * [Platformatic Service Configuration](https://docs.platformatic.dev/docs/service/configuration)
 
-#### `patch-config`
-
-Applies a patch file to the runtime and services configurations.
-
-Arguments:
-
-* `-c, --config FILE` - Path to the runtime configuration file.
-- `-p, --patch PATCH`: The file containing the patch to execute. Its default export should be a function that receives the `runtime` and `services` arguments and returns an object containing
-  the `runtime` and `services` keys with [JSON Patch](https://jsonpatch.com/) formatted patch to apply to configuration files.
 
 #### start
 
@@ -301,19 +305,6 @@ You can find more details about the configuration format here:
 platformatic client <command>
 ```
 
-
-### install
-
-Install all dependencies of an application and its services.
-
-```bash
-platformatic install
-```
-
-Options:
-
-* `-p, --production`: Only install production dependencies.
-* `-P, --package-manager EXECUTABLE`: Use an alternative package manager (the default is to autodetect it).
 
 #### help
 
@@ -400,7 +391,9 @@ Options:
 * `--types-only` - Generate only the type file.
 * `--types-comment` - Add a comment at the beginning of the auto generated `.d.ts` type definition.
 * `--with-credentials` - Adds "credentials: 'include'" to all fetch requests (only for frontend clients).
+* `--props-optional` - If `true`, properties will be defined as optional unless they're part of the `required` array. By default this option is `false`.
 * `--skip-config-update` - If `true`, it will not update the `platformatic|watt` config found in your repo.
+
 
 
 ### composer
@@ -1142,6 +1135,24 @@ set the `managementApi` option to `true` in the runtime configuration file.
 
 To get the list of runtimes with enabled management API use the
 `platformatic ctl ps` command.
+
+
+#### metrics
+
+Get metrics from the platformatic runtime application.
+
+``` bash
+  $ platformatic ctl metrics
+```
+
+Options:
+
+* `-p, --pid <number>` - The process id of the runtime.
+* `-f, --format <string>` - The format of the metrics, which should be either `text` or `json` (default to `json`).
+
+If `--pid` is not specified, the command will get metrics from the first available matching runtime.
+
+To see the list of all available control commands, run `platformatic ctl help`.
 
 
 #### ps

@@ -330,6 +330,14 @@ This configures the Platformatic Runtime Prometheus server. The Prometheus serve
 - **`auth`** (`object`). Optional configuration for the Prometheus server authentication.
   - **`username`** (`string`). The username for the Prometheus server authentication.
   - **`password`** (`string`). The password for the Prometheus server authentication.
+- **`readiness`** (`object`). Optional configuration for the Prometheus server readiness checks.
+  - **`endpoint`** (`string`). The endpoint for the Prometheus server readiness checks. Default: `/ready`.
+  - **`success`** (`object`). The success criteria for the Prometheus server readiness checks.
+    - **`statusCode`** (`number`). The HTTP status code indicating success. Default: `200`.
+    - **`body`** (`string`). The response body indicating success. Default: `OK`.
+  - **`fail`** (`object`). The failure criteria for the Prometheus server readiness checks.
+    - **`statusCode`** (`number`). The HTTP status code indicating failure. Default: `500`.
+    - **`body`** (`string`). The response body indicating failure. Default: `ERR`.
 
 If the `metrics` object is not provided, the Prometheus server will not be started.
 
