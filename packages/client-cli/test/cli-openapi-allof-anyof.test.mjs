@@ -6,7 +6,7 @@ import * as desm from 'desm'
 import { execa } from 'execa'
 import { readFile } from 'fs/promises'
 
-test('generate types for allOf and anyOf combinations in Megaditta request body', async () => {
+test('generate types for allOf/anyOf combinations in body', async () => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'allof-anyof-openapi.json')
@@ -22,7 +22,6 @@ test('generate types for allOf and anyOf combinations in Megaditta request body'
   const typeFile = join(dir, 'fantozzi-types', 'fantozzi-types.d.ts')
   const data = await readFile(typeFile, 'utf-8')
 
-  console.log('data', data)
   ok(data.includes(`export type PostFantozziFracchiaRequest = {
     body: { 'ragionier': string } & { 'megaditta': 'filini'; 'dati': { 'numeroNuvola': string; 'contaMinuti'?: number; 'nomeNuvolaDiFantozzi'?: string } } | { 'megaditta': 'calboni'; 'dati': { 'partitaDoppia': number; 'contabilitaCalboni': string; 'polizzaInfortuni'?: boolean } }
   }
