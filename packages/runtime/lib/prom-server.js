@@ -78,7 +78,8 @@ async function startPrometheusServer (runtime, opts) {
         if (ready) {
           reply.status(successStatusCode).send(successBody)
         } else {
-          reply.status(failStatusCode).send(failBody)
+          reply.status(failStatusCode)
+          return failBody
         }
       },
     })
