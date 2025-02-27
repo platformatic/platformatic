@@ -16,7 +16,7 @@ const DEFAULT_LIVENESS_SUCCESS_BODY = 'OK'
 const DEFAULT_LIVENESS_FAIL_STATUS_CODE = 500
 const DEFAULT_LIVENESS_FAIL_BODY = 'ERR'
 
-async function checkReadiness(runtime) {
+async function checkReadiness (runtime) {
   const workers = await runtime.getWorkers()
 
   for (const worker of Object.values(workers)) {
@@ -27,22 +27,17 @@ async function checkReadiness(runtime) {
   return true
 }
 
-async function checkLiveness(runtime) {
-  if (!(await runtime.checkReadiness())) {
+async function checkLiveness (runtime) {
+  if (!(await checkReadiness(runtime))) {
     return false
   }
 
-  const checks = await runtime.getCustomHealthCheck()
+  const checks = await runtime.getCustomHealthChecks()
 
-  for (const check of checks) {
-    if (!check) {
-      return false
-    }
-  }
-  return true
+  return Object.values(checks).every(check => check)
 }
 
-async function startPrometheusServer(runtime, opts) {
+async function startPrometheusServer (runtime, opts) {
   if (opts.enabled === false) {
     return
   }

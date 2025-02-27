@@ -31,6 +31,8 @@ class ServiceStackable {
 
     this.runtimeConfig = deepmerge(this.context.runtimeConfig ?? {}, workerData?.config ?? {})
 
+    this.customHealthCheck = null
+
     this.configManager.on('error', err => {
       /* c8 ignore next */
       this.stackable.log({
@@ -53,7 +55,8 @@ class ServiceStackable {
       setBasePath: this.setBasePath.bind(this),
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       invalidateHttpCache: this.#invalidateHttpCache.bind(this),
-      prometheus: { client, registry: this.metricsRegistry }
+      prometheus: { client, registry: this.metricsRegistry },
+      setCustomHealthCheck: this.setCustomHealthCheck.bind(this)
     })
   }
 
@@ -176,8 +179,8 @@ class ServiceStackable {
     return this.app.graphql ? printSchema(this.app.graphql.schema) : null
   }
 
-  setCustomHealthCheck (check) {
-    this.customHealthCheck = check
+  setCustomHealthCheck (fn) {
+    this.customHealthCheck = fn
   }
 
   async getCustomHealthCheck () {
@@ -186,7 +189,7 @@ class ServiceStackable {
     }
     return await this.customHealthCheck()
   }
-  
+
   // This method is not a part of Stackable interface because we need to register
   // fastify metrics before the server is started.
   async #collectMetrics () {

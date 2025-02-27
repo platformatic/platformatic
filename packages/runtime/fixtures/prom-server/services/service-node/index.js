@@ -10,12 +10,12 @@ export function create () {
   })
 
   app.get('/', (req, res) => {
-    res.send('Hello World')
+    res.send('Hello')
   })
 
   app.get('/set/status', (req, res) => {
     status = req.query.status === 'true'
-    res.send('Status set')
+    res.send('service status is now set to ' + status)
   })
 
   return app

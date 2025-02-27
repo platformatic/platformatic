@@ -339,7 +339,7 @@ test('liveness - should expose liveness by default and get a success response wh
   assert.strictEqual(await body.text(), 'OK')
 })
 
-test('liveness - should expose liveness and get a fail response when not all services are started, with default settings', async t => {
+test('liveness - should expose liveness and get a fail response when not all services are ready, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
@@ -361,14 +361,36 @@ test('liveness - should expose liveness and get a fail response when not all ser
   assert.strictEqual(await body.text(), 'ERR')
 })
 
-// TODO custom check fails
+test('liveness - should expose liveness and get a fail response when not all services are healthy, with default settings', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  const entryUrl = await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await request(entryUrl, {
+    path: '/service-node/set/status',
+    query: { status: false }
+  })
+
+  const { statusCode, body } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/status'
+  })
+  assert.strictEqual(statusCode, 500)
+  assert.strictEqual(await body.text(), 'ERR')
+})
 
 test('liveness - should expose liveness and get a fail and success responses with custom settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'liveness-custom.json')
   const app = await buildServer(configFile)
 
-  await app.start()
+  const entryUrl = await app.start()
 
   t.after(async () => {
     await app.close()
@@ -386,8 +408,10 @@ test('liveness - should expose liveness and get a fail and success responses wit
     assert.strictEqual(await body.text(), 'All right')
   }
 
-  const { services } = await app.getServices()
-  await app.stopService(services[0].id)
+  await request(entryUrl, {
+    path: '/service-node/set/status',
+    query: { status: false }
+  })
 
   {
     const { statusCode, body } = await request('http://127.0.0.1:9090', {

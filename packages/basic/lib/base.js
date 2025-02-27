@@ -138,8 +138,8 @@ export class BaseStackable {
     this.graphqlSchema = schema
   }
 
-  setCustomHealthCheck (check) {
-    this.customHealthCheck = check
+  setCustomHealthCheck (fn) {
+    this.customHealthCheck = fn
   }
 
   async getCustomHealthCheck () {

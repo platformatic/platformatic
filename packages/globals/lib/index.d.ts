@@ -49,6 +49,7 @@ interface PlatformaticGlobalInterface {
   setOpenapiSchema(schema: object): void
   setGraphqlSchema(schema: object): void
   setConnectionString(connection: string): void
+  setCustomHealthCheck(healthCheck: Function): void
 }
 
 export type PlatformaticGlobal = Optional<PlatformaticGlobalInterface>
