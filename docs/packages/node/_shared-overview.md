@@ -11,6 +11,7 @@ During service execution some APIs are made available in the `globalThis.platfor
 - **`globalThis.platformatic.basePath`**: The base path of the service in the composer.
 - **`globalThis.platformatic.logLevel`**: The log level configured for the service.
 - **`globalThis.platformatic.events.on('close')`**: This event is emitted when the process is being closed. A listener should be installed to perform a graceful close, which must finish in 10 seconds. If there is no listener, the process will be terminated by invoking `process.exit(0)`.
+- **`globalThis.platformatic.setCustomHealthCheck(fn)`**: This function can be use to set a custom healthcheck function for the service.
 
 ## Custom Metrics
 
@@ -49,3 +50,34 @@ const pltApi = getGlobal()
 ```
 
 <Issues />
+
+### Custom Healthcheck
+
+Custom health check can be defined to provide more specific and detailed information about the health of your service, in case the default healthcheck for the service itself is not enough and you need to add more checks for the service dependencies.  
+This can be done by using the `setCustomHealthCheck` method available on the `globalThis.platformatic` object.
+
+Here is an example of how to set a custom health check:
+
+```js
+
+import fastify from 'fastify'
+
+export function create () {
+  const app = fastify()
+
+  globalThis.platformatic.setCustomHealthCheck(async () => {
+    return Promise.all([
+      // Check if the database is reachable
+      app.db.query('SELECT 1'),
+      // Check if the external service is reachable
+      fetch('https://payment-service.com/status')
+    ])
+  })
+
+  app.get('/', (req, res) => {
+    res.send('Hello')
+  })
+
+  return app
+}
+```

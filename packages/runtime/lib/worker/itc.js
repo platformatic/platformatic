@@ -172,7 +172,7 @@ function setupITC (app, service, dispatcher) {
         try {
           return await app.stackable.getCustomHealthCheck()
         } catch (err) {
-          throw new errors.FailedToRetrieveCustomHealthcheckError(service.id, err.message)
+          throw new errors.FailedToPerformCustomHealthCheckError(service.id, err.message)
         }
       }
     }
