@@ -45,6 +45,24 @@ console.log(movies)
 
 You can use both named operations and the factory in the same file. They can work on different hosts, so the factory does _not_ use the global `setBaseUrl` function.
 
+### Default fetch params
+
+You can set additional parameters to be passed to the client `fetch` instance.
+
+```js
+import build from './api.js'
+import { setDefaultFetchParams } from './api.js'
+
+setDefaultFetchParams({
+    keepalive: false,
+    mode: 'no-cors'
+})
+
+// `fetch` will be called with the `keepalive` and `mode` method as defined above
+const movies = await getMovies({})
+console.log(movies)
+```
+
 ### Default Headers
 
 You can set headers that will be sent along with all the requests made by the client. This is useful, for instance, for authentication.
@@ -57,11 +75,6 @@ setBaseUrl('http://my-server-url.com') // modifies the global `baseUrl` variable
 
 setDefaultHeaders({
     authorization: 'Bearer MY_TOKEN'
-})
-
-setDefaultFetchParams({
-    keepalive: false,
-    mode: 'no-cors'
 })
 
 const movies = await getMovies({})
