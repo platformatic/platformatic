@@ -62,7 +62,8 @@ async function _getRedirect (url, request) {
   }
 
   const response = await fetch(\`\${url}/redirect\`, {
-    headers
+    headers,
+    ...defaultFetchParams
   })
 
   const jsonResponses = [302, 400]
@@ -128,8 +129,9 @@ export const getCustomSwagger = async (request) => {
 }`
     const typesTemplate = `
 export interface Sample {
-  setBaseUrl(newUrl: string) : void;
-  setDefaultHeaders(headers: object) : void;
+  setBaseUrl(newUrl: string): void;
+  setDefaultHeaders(headers: object): void;
+  setDefaultFetchParams(fetchParams: RequestInit): void;
   /**
    * @param req - request parameters object
    * @returns the API response body
@@ -272,8 +274,9 @@ export const getHello: Api['getHello'] = async (request: Types.GetHelloRequest):
 }`
   const typesTemplate = `
 export interface Api {
-  setBaseUrl(newUrl: string) : void;
-  setDefaultHeaders(headers: object) : void;
+  setBaseUrl(newUrl: string): void;
+  setDefaultHeaders(headers: object): void;
+  setDefaultFetchParams(fetchParams: RequestInit): void;
   /**
    * @param req - request parameters object
    * @returns the API response body
@@ -305,8 +308,9 @@ export const getHello: ACustomName['getHello'] = async (request: Types.GetHelloR
 }`
   const typesTemplate = `
 export interface ACustomName {
-  setBaseUrl(newUrl: string) : void;
-  setDefaultHeaders(headers: object) : void;
+  setBaseUrl(newUrl: string): void;
+  setDefaultHeaders(headers: object): void;
+  setDefaultFetchParams(fetchParams: RequestInit): void;
   /**
    * @param req - request parameters object
    * @returns the API response body
@@ -355,7 +359,8 @@ const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<T
   const response = await fetch(\`\${url}/?\${searchParams.toString()}\`, {
     method: 'POST',
     body: JSON.stringify(request),
-    headers
+    headers,
+    ...defaultFetchParams
   })
 `
   ok(implementation)
@@ -386,7 +391,8 @@ test('handle headers parameters', async (t) => {
   const response = await fetch(\`\${url}/\`, {
     method: 'POST',
     body: JSON.stringify(request),
-    headers
+    headers,
+    ...defaultFetchParams
   })`
 
   ok(implementation)
@@ -415,7 +421,8 @@ const _getRoot = async (url: string, request: Types.GetRootRequest): Promise<Typ
   }
 
   const response = await fetch(\`\${url}/\`, {
-    headers
+    headers,
+    ...defaultFetchParams
   })`
 
   ok(implementation)
@@ -436,7 +443,8 @@ async function _getPkgScopeNameRange (url, request) {
   }
 
   const response = await fetch(\`\${url}/pkg/@\${request['scope']}/\${request['name']}/\${request['range']}/\${request['*']}\`, {
-    headers
+    headers,
+    ...defaultFetchParams
   })
 `
   ok(implementation)
@@ -453,7 +461,8 @@ test('do not add headers to fetch if a get request', async (t) => {
   const data = await readFile(typeFile, 'utf-8')
   equal(data.includes(`
   const response = await fetch(\`\${url}/auth/login\`, {
-    headers
+    headers,
+    ...defaultFetchParams
   })
 
   const textResponses = [200]
@@ -484,7 +493,8 @@ test('support empty response', async (t) => {
   // Empty responses led to a full response returns
   equal(implementation.includes(`
   const response = await fetch(\`\${url}/auth/login\`, {
-    headers
+    headers,
+    ...defaultFetchParams
   })
 
   const textResponses = [200]
@@ -521,7 +531,8 @@ test('call response.json only for json responses', async (t) => {
     const implementation = await readFile(implementationFile, 'utf-8')
     const expected = `
   const response = await fetch(\`\${url}/auth/login\`, {
-    headers
+    headers,
+    ...defaultFetchParams
   })
 
   const textResponses = [200]
@@ -548,7 +559,8 @@ test('call response.json only for json responses', async (t) => {
     const implementation = await readFile(implementationFile, 'utf-8')
     const expected = `
   const response = await fetch(\`\${url}/hello\`, {
-    headers
+    headers,
+    ...defaultFetchParams
   })
 
   if (!response.ok) {
@@ -681,14 +693,16 @@ test('add credentials: include in client implementation from file', async (t) =>
     const expectedGetMethod = `
   const response = await fetch(\`\${url}/hello/\${request['name']}\`, {
     credentials: 'include',
-    headers
+    headers,
+    ...defaultFetchParams
   })`
     const expectedPostMethod = `
   const response = await fetch(\`\${url}/movies/\${request['id']}?\${searchParams.toString()}\`, {
     method: 'POST',
     body: JSON.stringify(request),
     credentials: 'include',
-    headers
+    headers,
+    ...defaultFetchParams
   })`
     equal(implementation.includes(expectedGetMethod), true)
     equal(implementation.includes(expectedPostMethod), true)
@@ -716,14 +730,16 @@ test('add credentials: include in client implementation from url', async (t) => 
   const expectedGetMethod = `
   const response = await fetch(\`\${url}/returnUrl\`, {
     credentials: 'include',
-    headers
+    headers,
+    ...defaultFetchParams
   })`
   const expectedPostMethod = `
   const response = await fetch(\`\${url}/foobar\`, {
     method: 'POST',
     body: JSON.stringify(request),
     credentials: 'include',
-    headers
+    headers,
+    ...defaultFetchParams
   })`
   equal(implementation.includes(expectedGetMethod), true)
   equal(implementation.includes(expectedPostMethod), true)
@@ -749,8 +765,9 @@ import type * as Types from './client-types'`))
   ok(types.includes(`export type GetHelloResponses =
   GetHelloResponseOK`))
   ok(types.includes(`export interface Client {
-  setBaseUrl(newUrl: string) : void;
-  setDefaultHeaders(headers: object) : void;
+  setBaseUrl(newUrl: string): void;
+  setDefaultHeaders(headers: object): void;
+  setDefaultFetchParams(fetchParams: RequestInit): void;
   /**
    * @param req - request parameters object
    * @returns the API response body

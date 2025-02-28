@@ -45,6 +45,24 @@ console.log(movies)
 
 You can use both named operations and the factory in the same file. They can work on different hosts, so the factory does _not_ use the global `setBaseUrl` function.
 
+### Default fetch params
+
+You can set additional parameters to be passed to the client `fetch` instance.
+
+```js
+import build from './api.js'
+import { setDefaultFetchParams } from './api.js'
+
+setDefaultFetchParams({
+    keepalive: false,
+    mode: 'no-cors'
+})
+
+// `fetch` will be called with the `keepalive` and `mode` method as defined above
+const movies = await getMovies({})
+console.log(movies)
+```
+
 ### Default Headers
 
 You can set headers that will be sent along with all the requests made by the client. This is useful, for instance, for authentication.
@@ -58,6 +76,7 @@ setBaseUrl('http://my-server-url.com') // modifies the global `baseUrl` variable
 setDefaultHeaders({
     authorization: 'Bearer MY_TOKEN'
 })
+
 const movies = await getMovies({})
 console.log(movies)
 ```
@@ -98,8 +117,9 @@ interface GetMoviesResponseOK {
   'title': string;
 }
 export interface Api {
-  setBaseUrl(newUrl: string) : void;
-  setDefaultHeaders(headers: Object) : void;
+  setBaseUrl(newUrl: string): void;
+  setDefaultHeaders(headers: Object): void;
+  setDefaultFetchParams(fetchParams: RequestInit): void;
   getMovies(req: GetMoviesRequest): Promise<Array<GetMoviesResponseOK>>;
   // ... all operations listed here
 }
@@ -118,9 +138,11 @@ let defaultHeaders = ''
 /**  @type {import('./api-types.d.ts').Api['setBaseUrl']} */
 export const setBaseUrl = (newUrl) => { baseUrl = newUrl }
 
-
 /**  @type {import('./api-types.d.ts').Api['setDefaultHeaders']} */
 export const setDefaultHeaders = (headers) => { defaultHeaders = headers }
+
+/**  @type {import('./${name}-types.d.ts').${camelCaseName}['setDefaultFetchParams']} */
+export const setDefaultFetchParams = (fetchParams) => { defaultFetchParams = fetchParams }
 
 /**  @type {import('./api-types.d.ts').Api['getMovies']} */
 export const getMovies = async (request) => {
@@ -165,11 +187,14 @@ import type { Api } from './api-types'
 import type * as Types from './api-types'
 
 let baseUrl = ''
-let defaultHeaders = ''
+let defaultHeaders = {}
+let defaultFetchParams = {}
 
 export const setBaseUrl = (newUrl: string) : void => { baseUrl = newUrl }
 
 export const setDefaultHeaders = (headers: Object) => { defaultHeaders = headers }
+
+export const setDefaultFetchParams = (fetchParams: RequestInit): void => { defaultFetchParams = fetchParams }
 
 const _getMovies = async (url: string, request: Types.GetMoviesRequest) => {
   const response = await fetch(`${url}/movies/?${new URLSearchParams(Object.entries(request || {})).toString()}`)

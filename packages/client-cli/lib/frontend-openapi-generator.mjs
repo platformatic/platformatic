@@ -47,6 +47,8 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
   writer.writeLine('let baseUrl = \'\'')
   writer.writeLine('// The default headers to send within each request. This can be overridden by calling `setDefaultHeaders`.')
   writer.writeLine('let defaultHeaders = {}')
+  writer.writeLine('// The additional parameters you want to pass to the `fetch` instance.')
+  writer.writeLine('let defaultFetchParams = {}')
   writer.newLine()
   if (isTsLang) {
     writer.write('function sanitizeUrl(url: string) : string ').block(() => {
@@ -57,6 +59,8 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
     )
     writer.newLine()
     writer.writeLine('export const setDefaultHeaders = (headers: object): void => { defaultHeaders = headers }')
+    writer.newLine()
+    writer.writeLine('export const setDefaultFetchParams = (fetchParams: RequestInit): void => { defaultFetchParams = fetchParams }')
     writer.newLine()
 
     writer.writeLine('type JSON = Record<string, unknown>')
@@ -82,6 +86,9 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
     writer.newLine()
     writer.writeLine(`/**  @type {import('./${name}-types.d.ts').${camelCaseName}['setDefaultHeaders']} */`)
     writer.writeLine('export const setDefaultHeaders = (headers) => { defaultHeaders = headers }')
+    writer.newLine()
+    writer.writeLine(`/**  @type {import('./${name}-types.d.ts').${camelCaseName}['setDefaultFetchParams']} */`)
+    writer.writeLine('export const setDefaultFetchParams = (fetchParams) => { defaultFetchParams = fetchParams }')
     writer.newLine()
     writer.write('function headersToJSON(headers) ').block(() => {
       writer.writeLine('const output = {}')
@@ -217,7 +224,8 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
             if (withCredentials) {
               writer.writeLine('credentials: \'include\',')
             }
-            writer.writeLine('headers')
+            writer.writeLine('headers,')
+            writer.writeLine('...defaultFetchParams')
           })
           .write(')')
       } else {
@@ -226,7 +234,8 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
             if (withCredentials) {
               writer.writeLine('credentials: \'include\',')
             }
-            writer.write('headers')
+            writer.writeLine('headers,')
+            writer.writeLine('...defaultFetchParams')
           })
           .write(')')
       }
@@ -370,8 +379,9 @@ function generateTypesFromOpenAPI ({ schema, name, fullRequest, fullResponse, pr
 
   writer.blankLine()
   writer.write(`export interface ${camelCaseName}`).block(() => {
-    writer.writeLine('setBaseUrl(newUrl: string) : void;')
-    writer.writeLine('setDefaultHeaders(headers: object) : void;')
+    writer.writeLine('setBaseUrl(newUrl: string): void;')
+    writer.writeLine('setDefaultHeaders(headers: object): void;')
+    writer.writeLine('setDefaultFetchParams(fetchParams: RequestInit): void;')
     writeOperations(interfaces, writer, operations, {
       fullRequest, fullResponse, optionalHeaders: [], schema, propsOptional
     })
