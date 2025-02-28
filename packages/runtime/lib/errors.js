@@ -20,6 +20,7 @@ module.exports = {
   FailedToRetrieveMetaError: createError(`${ERROR_PREFIX}_FAILED_TO_RETRIEVE_META`, 'Failed to retrieve metadata for service with id "%s": %s'),
   FailedToRetrieveMetricsError: createError(`${ERROR_PREFIX}_FAILED_TO_RETRIEVE_METRICS`, 'Failed to retrieve metrics for service with id "%s": %s'),
   FailedToRetrieveHealthError: createError(`${ERROR_PREFIX}_FAILED_TO_RETRIEVE_HEALTH`, 'Failed to retrieve health for service with id "%s": %s'),
+  FailedToPerformCustomHealthCheckError: createError(`${ERROR_PREFIX}_FAILED_TO_PERFORM_CUSTOM_HEALTH_CHECK`, 'Failed to perform custom healthcheck for service with id "%s": %s'),
   ApplicationAlreadyStartedError: createError(`${ERROR_PREFIX}_APPLICATION_ALREADY_STARTED`, 'Application is already started'),
   ApplicationNotStartedError: createError(`${ERROR_PREFIX}_APPLICATION_NOT_STARTED`, 'Application has not been started'),
   ConfigPathMustBeStringError: createError(`${ERROR_PREFIX}_CONFIG_PATH_MUST_BE_STRING`, 'Config path must be a string'),

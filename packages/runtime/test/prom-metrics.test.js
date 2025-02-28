@@ -195,7 +195,7 @@ test('metrics can be disabled', async t => {
   }))
 })
 
-test('should get 404 if readiness is not enabled', async t => {
+test('readiness - should get 404 if readiness is not enabled', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'readiness-disabled.json')
   const app = await buildServer(configFile)
@@ -216,7 +216,7 @@ test('should get 404 if readiness is not enabled', async t => {
   assert.strictEqual(statusCode, 404)
 })
 
-test('should expose readiness by default and get a success response when all services are started, with default settings', async t => {
+test('readiness - should expose readiness by default and get a success response when all services are started, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
@@ -238,7 +238,7 @@ test('should expose readiness by default and get a success response when all ser
   assert.strictEqual(await body.text(), 'OK')
 })
 
-test('should expose readiness and get a fail response when not all services are started, with default settings', async t => {
+test('readiness - should expose readiness and get a fail response when not all services are started, with default settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
@@ -260,7 +260,7 @@ test('should expose readiness and get a fail response when not all services are 
   assert.strictEqual(await body.text(), 'ERR')
 })
 
-test('should expose readiness and get a fail and success responses with custom settings', async t => {
+test('readiness - should expose readiness and get a fail and success responses with custom settings', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'readiness-custom.json')
   const app = await buildServer(configFile)
@@ -290,6 +290,133 @@ test('should expose readiness and get a fail and success responses with custom s
     const { statusCode, body } = await request('http://127.0.0.1:9090', {
       method: 'GET',
       path: '/health'
+    })
+    assert.strictEqual(statusCode, 501)
+    assert.strictEqual(await body.text(), 'No good')
+  }
+})
+
+test('liveness - should get 404 if liveness is not enabled', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'liveness-disabled.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  const { statusCode } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/status'
+  })
+  assert.strictEqual(statusCode, 404)
+})
+
+test('liveness - should expose liveness by default and get a success response when all services are started, with default settings', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  const { statusCode, body } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/status'
+  })
+  assert.strictEqual(statusCode, 200)
+  assert.strictEqual(await body.text(), 'OK')
+})
+
+test('liveness - should expose liveness and get a fail response when not all services are ready, with default settings', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const { services } = await app.getServices()
+  await app.stopService(services[0].id)
+
+  const { statusCode, body } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/status'
+  })
+  assert.strictEqual(statusCode, 500)
+  assert.strictEqual(await body.text(), 'ERR')
+})
+
+test('liveness - should expose liveness and get a fail response when not all services are healthy, with default settings', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  const entryUrl = await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await request(entryUrl, {
+    path: '/service-node/set/status',
+    query: { status: false }
+  })
+
+  const { statusCode, body } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/status'
+  })
+  assert.strictEqual(statusCode, 500)
+  assert.strictEqual(await body.text(), 'ERR')
+})
+
+test('liveness - should expose liveness and get a fail and success responses with custom settings', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'liveness-custom.json')
+  const app = await buildServer(configFile)
+
+  const entryUrl = await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/live'
+    })
+    assert.strictEqual(statusCode, 201)
+    assert.strictEqual(await body.text(), 'All right')
+  }
+
+  await request(entryUrl, {
+    path: '/service-node/set/status',
+    query: { status: false }
+  })
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/live'
     })
     assert.strictEqual(statusCode, 501)
     assert.strictEqual(await body.text(), 'No good')

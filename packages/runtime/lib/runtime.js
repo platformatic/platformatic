@@ -648,6 +648,21 @@ class Runtime extends EventEmitter {
     return status
   }
 
+  async getCustomHealthChecks () {
+    const status = {}
+
+    for (const [service, { count }] of Object.entries(this.#workers.configuration)) {
+      for (let i = 0; i < count; i++) {
+        const label = `${service}:${i}`
+        const worker = this.#workers.get(label)
+
+        status[label] = await sendViaITC(worker, 'getCustomHealthCheck')
+      }
+    }
+
+    return status
+  }
+
   async getServiceDetails (id, allowUnloaded = false) {
     let service
 
