@@ -7,6 +7,8 @@ import type * as Types from './movies-types'
 let baseUrl = ''
 // The default headers to send within each request. This can be overridden by calling `setDefaultHeaders`.
 let defaultHeaders = {}
+// The additional parameters you want to pass to the `fetch` instance.
+let defaultFetchParams = {}
 
 function sanitizeUrl(url: string) : string {
   if (url.endsWith('/')) { return url.slice(0, -1) } else { return url }
@@ -14,6 +16,8 @@ function sanitizeUrl(url: string) : string {
 export const setBaseUrl = (newUrl: string) : void => { baseUrl = sanitizeUrl(newUrl) }
 
 export const setDefaultHeaders = (headers: object): void => { defaultHeaders = headers }
+
+export const setDefaultFetchParams = (fetchParams: RequestInit): void => { defaultFetchParams = fetchParams }
 
 type JSON = Record<string, unknown>
 /* @ts-ignore - potential unused variable */
@@ -31,7 +35,8 @@ const _getPkgScopeNameVersion = async (url: string, request: Types.GetPkgScopeNa
   }
 
   const response = await fetch(`${url}/pkg/@${request['scope']}/${request['name']}/${request['version']}/${request['*']}`, {
-    headers
+    headers,
+    ...defaultFetchParams
   })
 
   const textResponses = [302, 400]

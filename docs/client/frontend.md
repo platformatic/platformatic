@@ -58,6 +58,12 @@ setBaseUrl('http://my-server-url.com') // modifies the global `baseUrl` variable
 setDefaultHeaders({
     authorization: 'Bearer MY_TOKEN'
 })
+
+setDefaultFetchParams({
+    keepalive: false,
+    mode: 'no-cors'
+})
+
 const movies = await getMovies({})
 console.log(movies)
 ```
@@ -98,8 +104,9 @@ interface GetMoviesResponseOK {
   'title': string;
 }
 export interface Api {
-  setBaseUrl(newUrl: string) : void;
-  setDefaultHeaders(headers: Object) : void;
+  setBaseUrl(newUrl: string): void;
+  setDefaultHeaders(headers: Object): void;
+  setDefaultFetchParams(fetchParams: RequestInit): void;
   getMovies(req: GetMoviesRequest): Promise<Array<GetMoviesResponseOK>>;
   // ... all operations listed here
 }
@@ -118,9 +125,11 @@ let defaultHeaders = ''
 /**  @type {import('./api-types.d.ts').Api['setBaseUrl']} */
 export const setBaseUrl = (newUrl) => { baseUrl = newUrl }
 
-
 /**  @type {import('./api-types.d.ts').Api['setDefaultHeaders']} */
 export const setDefaultHeaders = (headers) => { defaultHeaders = headers }
+
+/**  @type {import('./${name}-types.d.ts').${camelCaseName}['setDefaultFetchParams']} */
+export const setDefaultFetchParams = (fetchParams) => { defaultFetchParams = fetchParams }
 
 /**  @type {import('./api-types.d.ts').Api['getMovies']} */
 export const getMovies = async (request) => {
@@ -165,11 +174,14 @@ import type { Api } from './api-types'
 import type * as Types from './api-types'
 
 let baseUrl = ''
-let defaultHeaders = ''
+let defaultHeaders = {}
+let defaultFetchParams = {}
 
 export const setBaseUrl = (newUrl: string) : void => { baseUrl = newUrl }
 
 export const setDefaultHeaders = (headers: Object) => { defaultHeaders = headers }
+
+export const setDefaultFetchParams = (fetchParams: RequestInit): void => { defaultFetchParams = fetchParams }
 
 const _getMovies = async (url: string, request: Types.GetMoviesRequest) => {
   const response = await fetch(`${url}/movies/?${new URLSearchParams(Object.entries(request || {})).toString()}`)
