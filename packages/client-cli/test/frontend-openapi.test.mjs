@@ -73,17 +73,11 @@ async function _getRedirect (url, request) {
       body: await response.json()
     }
   }
-  if (response.headers.get('content-type')?.startsWith('application/json')) {
-    return {
-      statusCode: response.status,
-      headers: headersToJSON(response.headers),
-      body: await response.json()
-    }
-  }
+  const responseType = response.headers.get('content-type')?.startsWith('application/json') ? 'json' : 'text'
   return {
     statusCode: response.status,
     headers: headersToJSON(response.headers),
-    body: await response.text()
+    body: await response[responseType]()
   }
 }
 
@@ -337,22 +331,23 @@ test('append query parameters to url in non-GET requests', async (t) => {
 
   const tsImplementationTemplate = `
 const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<Types.PostRootResponses> => {
-  const queryParameters: (keyof Types.PostRootRequest)[]  = ['level']
+  const queryParameters: (keyof NonNullable<Types.PostRootRequest>)[] = ['level']
   const searchParams = new URLSearchParams()
-  queryParameters.forEach((qp) => {
-    if (request[qp]) {
-      if (Array.isArray(request[qp])) {
-        (request[qp] as string[]).forEach((p) => {
-          searchParams.append(qp, p)
-        })
-      } else {
-        searchParams.append(qp, request[qp]?.toString() || '')
+  if (request) {
+    queryParameters.forEach((qp) => {
+      const queryValue = request?.[qp]
+      if (queryValue) {
+        if (Array.isArray(queryValue)) {
+          queryValue.forEach((p) => searchParams.append(qp, p))
+        } else {
+          searchParams.append(qp, queryValue.toString())
+        }
       }
-    }
-    delete request[qp]
-  })
+      delete request?.[qp]
+    })
+  }
 
-  const headers = {
+  const headers: HeadersInit = {
     ...defaultHeaders,
     'Content-type': 'application/json; charset=utf-8'
   }
@@ -375,15 +370,15 @@ test('handle headers parameters', async (t) => {
   const implementation = await readFile(join(dir, 'fontend', 'fontend.ts'), 'utf8')
 
   const tsImplementationTemplate = `const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<Types.PostRootResponses> => {
-  const headers = {
+  const headers: HeadersInit = {
     ...defaultHeaders,
     'Content-type': 'application/json; charset=utf-8'
   }
-  if (request['level'] !== undefined) {
+  if (request && request['level'] !== undefined) {
     headers['level'] = request['level']
     delete request['level']
   }
-  if (request['foo'] !== undefined) {
+  if (request && request['foo'] !== undefined) {
     headers['foo'] = request['foo']
     delete request['foo']
   }
@@ -407,14 +402,14 @@ test('handle headers parameters in get request', async (t) => {
 
   const tsImplementationTemplate = `
 const _getRoot = async (url: string, request: Types.GetRootRequest): Promise<Types.GetRootResponses> => {
-  const headers = {
+  const headers: HeadersInit = {
     ...defaultHeaders
   }
-  if (request['level'] !== undefined) {
+  if (request && request['level'] !== undefined) {
     headers['level'] = request['level']
     delete request['level']
   }
-  if (request['foo'] !== undefined) {
+  if (request && request['foo'] !== undefined) {
     headers['foo'] = request['foo']
     delete request['foo']
   }
@@ -469,17 +464,11 @@ test('do not add headers to fetch if a get request', async (t) => {
       body: await response.text()
     }
   }
-  if (response.headers.get('content-type')?.startsWith('application/json')) {
-    return {
-      statusCode: response.status as 200,
-      headers: headersToJSON(response.headers),
-      body: await response.json()
-    }
-  }
+  const responseType = response.headers.get('content-type')?.startsWith('application/json') ? 'json' : 'text'
   return {
     statusCode: response.status as 200,
     headers: headersToJSON(response.headers),
-    body: await response.text()
+    body: await response[responseType]()
   }`), true)
 })
 
@@ -506,17 +495,11 @@ test('support empty response', async (t) => {
       body: await response.text()
     }
   }
-  if (response.headers.get('content-type')?.startsWith('application/json')) {
-    return {
-      statusCode: response.status as 200,
-      headers: headersToJSON(response.headers),
-      body: await response.json()
-    }
-  }
+  const responseType = response.headers.get('content-type')?.startsWith('application/json') ? 'json' : 'text'
   return {
     statusCode: response.status as 200,
     headers: headersToJSON(response.headers),
-    body: await response.text()
+    body: await response[responseType]()
   }
 `), true)
 
@@ -549,17 +532,11 @@ test('call response.json only for json responses', async (t) => {
       body: await response.text()
     }
   }
-  if (response.headers.get('content-type')?.startsWith('application/json')) {
-    return {
-      statusCode: response.status as 200,
-      headers: headersToJSON(response.headers),
-      body: await response.json()
-    }
-  }
+  const responseType = response.headers.get('content-type')?.startsWith('application/json') ? 'json' : 'text'
   return {
     statusCode: response.status as 200,
     headers: headersToJSON(response.headers),
-    body: await response.text()
+    body: await response[responseType]()
   }`
 
     equal(implementation.includes(expected), true)
@@ -601,20 +578,21 @@ test('serialize correctly array query parameters', async (t) => {
     const implementationFile = join(dir, 'movies', 'movies.ts')
     const implementation = await readFile(implementationFile, 'utf-8')
     const expected = `
-  const queryParameters: (keyof Types.GetMoviesRequest)[]  = ['ids']
+  const queryParameters: (keyof NonNullable<Types.GetMoviesRequest>)[] = ['ids']
   const searchParams = new URLSearchParams()
-  queryParameters.forEach((qp) => {
-    if (request[qp]) {
-      if (Array.isArray(request[qp])) {
-        (request[qp] as string[]).forEach((p) => {
-          searchParams.append(qp, p)
-        })
-      } else {
-        searchParams.append(qp, request[qp]?.toString() || '')
+  if (request) {
+    queryParameters.forEach((qp) => {
+      const queryValue = request?.[qp]
+      if (queryValue) {
+        if (Array.isArray(queryValue)) {
+          queryValue.forEach((p) => searchParams.append(qp, p))
+        } else {
+          searchParams.append(qp, queryValue.toString())
+        }
       }
-    }
-    delete request[qp]
-  })`
+      delete request?.[qp]
+    })
+  }`
     equal(implementation.includes(expected), true)
   }
 })
@@ -760,7 +738,7 @@ test('frontend client with config', async (t) => {
   ok(implementation.includes(`import type { Client } from './client-types'
 import type * as Types from './client-types'`))
   ok(implementation.includes(`const _getHello = async (url: string, request: Types.GetHelloRequest): Promise<Types.GetHelloResponses> => {
-  const headers = {
+  const headers: HeadersInit = {
     ...defaultHeaders
   }`))
   ok(implementation.includes(`export const getHello: Client['getHello'] = async (request: Types.GetHelloRequest): Promise<Types.GetHelloResponses> => {
@@ -781,4 +759,47 @@ import type * as Types from './client-types'`))
 }`))
   ok(types.includes("type PlatformaticFrontendClient = Omit<Client, 'setBaseUrl'>"))
   ok(types.includes('export default function build(url: string, options?: BuildOptions): PlatformaticFrontendClient'))
+})
+
+test('frontend client with full option', async (t) => {
+  const dir = await moveToTmpdir(after)
+  const openAPIfile = join(__dirname, 'fixtures', 'full-req-res', 'openapi.json')
+  await execa('node', [join(__dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'full-opt', '--language', 'ts', '--frontend', '--full'])
+
+  const implementation = await readFile(join(dir, 'full-opt', 'full-opt.ts'), 'utf-8')
+  ok(implementation.includes(`const _postHello = async (url: string, request: Types.PostHelloRequest): Promise<Types.PostHelloResponses> => {
+  const queryParameters: (keyof NonNullable<Types.PostHelloRequest['query']>)[] = ['queryId']
+  const searchParams = new URLSearchParams()
+  if (request.query) {
+    queryParameters.forEach((qp) => {
+      const queryValue = request.query?.[qp]
+      if (queryValue) {
+        if (Array.isArray(queryValue)) {
+          queryValue.forEach((p) => searchParams.append(qp, p))
+        } else {
+          searchParams.append(qp, queryValue.toString())
+        }
+      }
+      delete request.query?.[qp]
+    })
+  }`))
+
+  ok(implementation.includes(`if (request.headers && request.headers['headerId'] !== undefined) {
+    headers['headerId'] = request.headers['headerId']
+    delete request.headers['headerId']
+  }`))
+  ok(implementation.includes("body: 'body' in request ? JSON.stringify(request.body) : undefined,"))
+
+  const types = await readFile(join(dir, 'full-opt', 'full-opt-types.d.ts'), 'utf-8')
+  ok(types.includes(`export type PostHelloRequest = {
+  body: {
+    'bodyId': string;
+  }
+  query: {
+    'queryId': string;
+  }
+  headers: {
+    'headerId': string;
+  }
+}`))
 })

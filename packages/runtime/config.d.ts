@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type HttpsSchemasPlatformaticDevPlatformaticRuntime2443Json = {
+export type HttpsSchemasPlatformaticDevPlatformaticRuntime2490Json = {
   [k: string]: unknown;
 } & {
   $schema?: string;
@@ -163,6 +163,7 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime2443Json = {
     | boolean
     | {
         port?: number | string;
+        enabled?: boolean | string;
         hostname?: string;
         endpoint?: string;
         auth?: {
@@ -172,6 +173,34 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime2443Json = {
         labels?: {
           [k: string]: string;
         };
+        readiness?:
+          | boolean
+          | {
+              endpoint?: string;
+              success?: {
+                statusCode?: number;
+                body?: string;
+              };
+              fail?: {
+                statusCode?: number;
+                body?: string;
+              };
+            };
+        liveness?:
+          | boolean
+          | {
+              endpoint?: string;
+              success?: {
+                statusCode?: number;
+                body?: string;
+              };
+              fail?: {
+                statusCode?: number;
+                body?: string;
+              };
+            };
+        additionalProperties?: never;
+        [k: string]: unknown;
       };
   telemetry?: OpenTelemetry;
   inspectorOptions?: {

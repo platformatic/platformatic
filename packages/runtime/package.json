@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/runtime",
-  "version": "2.44.3",
+  "version": "2.49.0",
   "description": "",
   "main": "index.js",
   "bin": {
@@ -41,6 +41,7 @@
     "@platformatic/service": "workspace:*",
     "@platformatic/sql-graphql": "workspace:*",
     "@platformatic/sql-mapper": "workspace:*",
+    "autocannon": "^8.0.0",
     "borp": "^0.19.0",
     "c8": "^10.0.0",
     "eslint": "9",
@@ -95,7 +96,7 @@
     "tail-file-stream": "^0.2.0",
     "thread-cpu-usage": "^0.2.0",
     "undici": "^7.0.0",
-    "undici-thread-interceptor": "^0.11.0",
+    "undici-thread-interceptor": "^0.13.1",
     "ws": "^8.16.0"
   }
 }

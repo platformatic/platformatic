@@ -86,19 +86,27 @@ function setupITC (app, service, dispatcher) {
           await once(app, 'start')
         }
 
-        if (status !== 'stopped') {
+        if (status.startsWith('start')) {
           // This gives a chance to a stackable to perform custom logic
           globalThis.platformatic.events.emit('stop')
 
           await app.stop()
         }
 
-        dispatcher.interceptor.close()
+        await dispatcher.interceptor.close()
         itc.close()
       },
 
       async build () {
         return app.stackable.build()
+      },
+
+      async removeFromMesh () {
+        return dispatcher.interceptor.close()
+      },
+
+      inject (injectParams) {
+        return app.stackable.inject(injectParams)
       },
 
       getStatus () {
@@ -160,8 +168,12 @@ function setupITC (app, service, dispatcher) {
         }
       },
 
-      inject (injectParams) {
-        return app.stackable.inject(injectParams)
+      async getCustomHealthCheck () {
+        try {
+          return await app.stackable.getCustomHealthCheck()
+        } catch (err) {
+          throw new errors.FailedToPerformCustomHealthCheckError(service.id, err.message)
+        }
       }
     }
   })

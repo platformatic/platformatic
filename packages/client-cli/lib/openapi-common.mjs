@@ -197,7 +197,7 @@ export function writeContent (writer, content, spec, addedProps, methodType, wra
       // Response body has no schema that can be processed
       // Should not be possible with well formed OpenAPI
       /* c8 ignore next 3 */
-      if (!body.schema?.type && !body.schema?.$ref) {
+      if (!body.schema?.type && !body.schema?.$ref && !body.schema?.allOf && !body.schema?.anyOf) {
         break
       }
       if (body.schema.type === 'object' || body.schema.$ref) {

@@ -92,13 +92,28 @@ This setting can be a `boolean` or an `object`. If set to `true` the Prometheus 
 
 Supported object properties:
 
-- **`server`** (`enum`) — Can be set to "own", "parent" or "hide" determines if metrics will be served on a different server or the same server as the Platformatic application or hidden at all.
-- **`hostname`** (`string`) — The hostname where Prometheus server will listen for connections, should be used only if `server` is set to "own".
-- **`port`** (`number` or `string`) — The port where Prometheus server will listen for connections, should be used only if `server` is set to "own".
-- **`endpoint`** (`string`) — The endpoint on which metrics will be served.
-- **`auth`** (`object`) — Basic Auth configuration. **`username`** and **`password`** are required here
-  (use [environment variables](#environment-variables)).
-- **`labels`** (`object`) - `{ key : value }` map of labels that are applied to metrics
+- **`server`** (`enum`) — Can be set to "own", "parent" or "hide" to determine if metrics will be served on a different server, the same server as the Platformatic application, or hidden entirely.
+- **`hostname`** (`string`, default: `0.0.0.0`) — The hostname where the Prometheus server will listen for connections. This should be used only if `server` is set to "own".
+- **`port`** (`number` or `string`, default: `9090`) — The port where the Prometheus server will listen for connections. This should be used only if `server` is set to "own".
+- **`endpoint`** (`string`, default: `/metrics`) — The endpoint on which metrics will be served.
+- **`auth`** (`object`) — Basic Auth configuration. **`username`** and **`password`** are required here (use [environment variables](#environment-variables)).
+- **`labels`** (`object`) — `{ key : value }` Map of labels that are applied to metrics.
+- **`readiness`** (`object` or `boolean`, default: `true`) — Configuration for readiness checks. If set to `true`, default readiness checks are enabled. If an object is provided, it can include:
+  - **`endpoint`** (`string`, default: `/ready`) — The endpoint for readiness checks.
+  - **`success`** (`object`) — Defines the success criteria for readiness checks.
+    - **`statusCode`** (`number`, default: `200`) — The HTTP status code indicating success.
+    - **`body`** (`string`, default: `OK`) — The response body indicating success.
+  - **`fail`** (`object`) — Defines the failure criteria for readiness checks.
+    - **`statusCode`** (`number`, default: `500`) — The HTTP status code indicating failure.
+    - **`body`** (`string`, default: `ERR`) — The response body indicating failure.
+- **`liveness`** (`object` or `boolean`, default: `true`) — Configuration for liveness checks. If set to `true`, default liveness checks are enabled. If an object is provided, it can include:
+  - **`endpoint`** (`string`, default: `/status`) — The endpoint for liveness checks.
+  - **`success`** (`object`) — Defines the success criteria for liveness checks.
+    - **`statusCode`** (`number`, default: `200`) — The HTTP status code indicating success.
+    - **`body`** (`string`, default: `OK`) — The response body indicating success.
+  - **`fail`** (`object`) — Defines the failure criteria for liveness checks.
+    - **`statusCode`** (`number`, default: `500`) — The HTTP status code indicating failure.
+    - **`body`** (`string`, default: `ERR`) — The response body indicating failure.
 
 ### `plugins`
 

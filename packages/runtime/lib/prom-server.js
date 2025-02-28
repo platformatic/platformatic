@@ -2,10 +2,48 @@
 
 const fastify = require('fastify')
 
+const DEFAULT_HOSTNAME = '0.0.0.0'
+const DEFAULT_PORT = 9090
+const DEFAULT_METRICS_ENDPOINT = '/metrics'
+const DEFAULT_READINESS_ENDPOINT = '/ready'
+const DEFAULT_READINESS_SUCCESS_STATUS_CODE = 200
+const DEFAULT_READINESS_SUCCESS_BODY = 'OK'
+const DEFAULT_READINESS_FAIL_STATUS_CODE = 500
+const DEFAULT_READINESS_FAIL_BODY = 'ERR'
+const DEFAULT_LIVENESS_ENDPOINT = '/status'
+const DEFAULT_LIVENESS_SUCCESS_STATUS_CODE = 200
+const DEFAULT_LIVENESS_SUCCESS_BODY = 'OK'
+const DEFAULT_LIVENESS_FAIL_STATUS_CODE = 500
+const DEFAULT_LIVENESS_FAIL_BODY = 'ERR'
+
+async function checkReadiness (runtime) {
+  const workers = await runtime.getWorkers()
+
+  for (const worker of Object.values(workers)) {
+    if (worker.status !== 'started') {
+      return false
+    }
+  }
+  return true
+}
+
+async function checkLiveness (runtime) {
+  if (!(await checkReadiness(runtime))) {
+    return false
+  }
+
+  const checks = await runtime.getCustomHealthChecks()
+
+  return Object.values(checks).every(check => check)
+}
+
 async function startPrometheusServer (runtime, opts) {
-  const host = opts.hostname ?? '0.0.0.0'
-  const port = opts.port ?? 9090
-  const metricsEndpoint = opts.endpoint ?? '/metrics'
+  if (opts.enabled === false) {
+    return
+  }
+  const host = opts.hostname ?? DEFAULT_HOSTNAME
+  const port = opts.port ?? DEFAULT_PORT
+  const metricsEndpoint = opts.endpoint ?? DEFAULT_METRICS_ENDPOINT
   const auth = opts.auth ?? null
 
   const promServer = fastify({ name: 'Prometheus server' })
@@ -36,6 +74,54 @@ async function startPrometheusServer (runtime, opts) {
       return metrics
     },
   })
+
+  if (opts.readiness !== false) {
+    const successStatusCode = opts.readiness?.success?.statusCode ?? DEFAULT_READINESS_SUCCESS_STATUS_CODE
+    const successBody = opts.readiness?.success?.body ?? DEFAULT_READINESS_SUCCESS_BODY
+    const failStatusCode = opts.readiness?.fail?.statusCode ?? DEFAULT_READINESS_FAIL_STATUS_CODE
+    const failBody = opts.readiness?.fail?.body ?? DEFAULT_READINESS_FAIL_BODY
+
+    promServer.route({
+      url: opts.readiness?.endpoint ?? DEFAULT_READINESS_ENDPOINT,
+      method: 'GET',
+      logLevel: 'warn',
+      handler: async (req, reply) => {
+        reply.type('text/plain')
+
+        const ready = await checkReadiness(runtime)
+
+        if (ready) {
+          reply.status(successStatusCode).send(successBody)
+        } else {
+          reply.status(failStatusCode).send(failBody)
+        }
+      },
+    })
+  }
+
+  if (opts.liveness !== false) {
+    const successStatusCode = opts.liveness?.success?.statusCode ?? DEFAULT_LIVENESS_SUCCESS_STATUS_CODE
+    const successBody = opts.liveness?.success?.body ?? DEFAULT_LIVENESS_SUCCESS_BODY
+    const failStatusCode = opts.liveness?.fail?.statusCode ?? DEFAULT_LIVENESS_FAIL_STATUS_CODE
+    const failBody = opts.liveness?.fail?.body ?? DEFAULT_LIVENESS_FAIL_BODY
+
+    promServer.route({
+      url: opts.liveness?.endpoint ?? DEFAULT_LIVENESS_ENDPOINT,
+      method: 'GET',
+      logLevel: 'warn',
+      handler: async (req, reply) => {
+        reply.type('text/plain')
+
+        const live = await checkLiveness(runtime)
+
+        if (live) {
+          reply.status(successStatusCode).send(successBody)
+        } else {
+          reply.status(failStatusCode).send(failBody)
+        }
+      },
+    })
+  }
 
   await promServer.listen({ port, host })
   return promServer

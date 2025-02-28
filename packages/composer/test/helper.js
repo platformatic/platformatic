@@ -8,6 +8,8 @@ const { mkdtemp, writeFile } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { platform } = require('node:os')
 const { resolve } = require('node:path')
+const { promisify } = require('node:util')
+const { createServer } = require('node:http')
 const { request, setGlobalDispatcher, Client, Agent } = require('undici')
 const fastify = require('fastify')
 const Swagger = require('@fastify/swagger')
@@ -16,6 +18,9 @@ const WebSocket = require('ws')
 const { getIntrospectionQuery } = require('graphql')
 const { buildServer: dbBuildServer } = require('@platformatic/db')
 const { createDirectory, safeRemove } = require('@platformatic/utils')
+const pinoTest = require('pino-test')
+const pino = require('pino')
+
 // This is to avoid a circular dependency
 const { buildServer: buildRuntime, symbols } = require('../../runtime')
 const { buildServer } = require('..')
@@ -84,7 +89,7 @@ async function createBasicService (t, options = {}) {
         }
       }
     },
-    async () => {}
+    async () => { }
   )
 
   app.get(
@@ -362,6 +367,19 @@ async function createGraphqlService (t, { schema, resolvers, extend, file, expos
   return app
 }
 
+async function createWebsocketService (t, wsServerOptions = {}, port) {
+  const service = createServer()
+  const wsServer = new WebSocket.Server({ server: service, ...wsServerOptions })
+  await promisify(service.listen.bind(service))({ port, host: '127.0.0.1' })
+
+  t.after(() => {
+    wsServer.close()
+    service.close()
+  })
+
+  return { service, wsServer }
+}
+
 async function createComposer (t, composerConfig, loggerInstance = undefined) {
   const defaultConfig = {
     server: {
@@ -570,10 +588,10 @@ async function graphqlRequest ({ query, variables, url, host }) {
 async function createPlatformaticDbService (t, { name, jsonFile }) {
   try {
     fs.unlinkSync(path.join(__dirname, 'graphql', 'fixtures', name, 'db0.sqlite'))
-  } catch {}
+  } catch { }
   try {
     fs.unlinkSync(path.join(__dirname, 'graphql', 'fixtures', name, 'db1.sqlite'))
-  } catch {}
+  } catch { }
 
   const service = await dbBuildServer(path.join(__dirname, 'graphql', 'fixtures', name, jsonFile))
   service.get('/.well-known/graphql-composition', async function (req, reply) {
@@ -583,7 +601,7 @@ async function createPlatformaticDbService (t, { name, jsonFile }) {
   t.after(async () => {
     try {
       await service.close()
-    } catch {}
+    } catch { }
   })
 
   return service
@@ -599,46 +617,34 @@ async function startServices (t, names) {
 }
 
 function createLoggerSpy () {
+  const loggerSpy = pinoTest.sink()
+  const logger = pino(loggerSpy)
+
   return {
-    level: 'trace',
-    _trace: [],
-    _debug: [],
-    _info: [],
-    _warn: [],
-    _error: [],
-    _fatal: [],
-
-    trace: function (...args) {
-      this._trace.push(args)
-    },
-    debug: function (...args) {
-      this._debug.push(args)
-    },
-    info: function (...args) {
-      this._info.push(args)
-    },
-    warn: function (...args) {
-      this._warn.push(args)
-    },
-    error: function (...args) {
-      this._error.push(args)
-    },
-    fatal: function (...args) {
-      this._fatal.push(args)
-    },
-    child: function () {
-      return this
-    },
-
-    reset: function () {
-      this._trace = []
-      this._debug = []
-      this._info = []
-      this._warn = []
-      this._error = []
-      this._fatal = []
-    }
+    logger,
+    loggerSpy
   }
+}
+
+function waitForLogMessage (loggerSpy, message, { max = 100, debug = false } = {}) {
+  return new Promise((resolve, reject) => {
+    let count = 0
+    const fn = (received) => {
+      if (debug) {
+        console.log('received', received)
+      }
+      if (received.msg === message.msg && received.level === message.level) {
+        loggerSpy.off('data', fn)
+        resolve()
+      }
+      count++
+      if (count > max) {
+        loggerSpy.off('data', fn)
+        reject(new Error(`Max message count reached on waitForLogMessage: level ${message.level} msg ${message.msg}`))
+      }
+    }
+    loggerSpy.on('data', fn)
+  })
 }
 
 async function waitForRestart (runtime, previousUrl) {
@@ -715,11 +721,13 @@ module.exports = {
   createOpenApiService,
   createGraphqlService,
   createBasicService,
+  createWebsocketService,
   testEntityRoutes,
   graphqlRequest,
   createPlatformaticDbService,
   startServices,
   createLoggerSpy,
+  waitForLogMessage,
   getRuntimeLogs,
   waitForRestart,
   checkSchema

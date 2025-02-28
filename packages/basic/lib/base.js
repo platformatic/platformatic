@@ -40,6 +40,7 @@ export class BaseStackable {
     this.isProduction = options.context.isProduction
     this.metricsRegistry = new client.Registry()
     this.#metricsCollected = false
+    this.customHealthCheck = null
     this.startHttpTimer = null
     this.endHttpTimer = null
     this.clientWs = null
@@ -75,7 +76,8 @@ export class BaseStackable {
       setBasePath: this.setBasePath.bind(this),
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       invalidateHttpCache: this.#invalidateHttpCache.bind(this),
-      prometheus: { client, registry: this.metricsRegistry }
+      prometheus: { client, registry: this.metricsRegistry },
+      setCustomHealthCheck: this.setCustomHealthCheck.bind(this),
     })
   }
 
@@ -134,6 +136,17 @@ export class BaseStackable {
 
   setGraphqlSchema (schema) {
     this.graphqlSchema = schema
+  }
+
+  setCustomHealthCheck (fn) {
+    this.customHealthCheck = fn
+  }
+
+  async getCustomHealthCheck () {
+    if (!this.customHealthCheck) {
+      return true
+    }
+    return await this.customHealthCheck()
   }
 
   setConnectionString (connectionString) {

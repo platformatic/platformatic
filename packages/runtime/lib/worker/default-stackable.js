@@ -16,6 +16,7 @@ const defaultStackable = {
   getDispatchTarget: () => null,
   getOpenapiSchema: () => null,
   getGraphqlSchema: () => null,
+  getCustomHealthCheck: () => null,
   getMeta: () => ({}),
   getMetrics: () => null,
   inject: () => {

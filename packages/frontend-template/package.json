@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/frontend-template",
-  "version": "2.44.3",
+  "version": "2.49.0",
   "main": "index.js",
   "type": "module",
   "description": "Platformatic Frontend Template",
@@ -15,7 +15,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "pnpm run test:prepare && vite build",
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "test:types": "tsc",

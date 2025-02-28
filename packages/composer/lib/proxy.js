@@ -1,6 +1,7 @@
 'use strict'
 
 const httpProxy = require('@fastify/http-proxy')
+const { ensureLoggableError } = require('@platformatic/utils')
 const fp = require('fastify-plugin')
 const { workerData } = require('node:worker_threads')
 const { getGlobalDispatcher } = require('undici')
@@ -33,6 +34,11 @@ async function resolveServiceProxyParameters (service) {
     internalRewriteLocationHeader = false
   }
 
+  if (service.proxy?.ws?.hooks) {
+    const hooks = require(service.proxy.ws.hooks.path)
+    service.proxy.ws.hooks = hooks
+  }
+
   return {
     origin: service.origin,
     url: meta.url,
@@ -40,7 +46,9 @@ async function resolveServiceProxyParameters (service) {
     rewritePrefix,
     internalRewriteLocationHeader,
     needsRootRedirect: meta.needsRootRedirect,
-    needsRefererBasedRedirect: meta.needsRefererBasedRedirect
+    needsRefererBasedRedirect: meta.needsRefererBasedRedirect,
+    upstream: service.proxy?.upstream,
+    ws: service.proxy?.ws
   }
 }
 
@@ -65,7 +73,8 @@ module.exports = fp(async function (app, opts) {
       rewritePrefix,
       internalRewriteLocationHeader,
       needsRootRedirect,
-      needsRefererBasedRedirect
+      needsRefererBasedRedirect,
+      ws
     } = parameters
     meta.proxies[service.id] = parameters
 
@@ -158,8 +167,19 @@ module.exports = fp(async function (app, opts) {
       websocket: true,
       prefix,
       rewritePrefix,
-      upstream: origin,
-      wsUpstream: url ?? origin,
+      upstream: service.proxy?.upstream ?? origin,
+
+      wsUpstream: ws?.upstream ?? url ?? origin,
+      wsReconnect: ws?.reconnect,
+      wsHooks: {
+        onConnect: ws?.hooks?.onConnect,
+        onDisconnect: ws?.hooks?.onDisconnect,
+        onReconnect: ws?.hooks?.onReconnect,
+        onPong: ws?.hooks?.onPong,
+        onIncomingMessage: ws?.hooks?.onIncomingMessage,
+        onOutgoingMessage: ws?.hooks?.onOutgoingMessage
+      },
+
       undici: dispatcher,
       destroyAgent: false,
       config: {
@@ -213,6 +233,10 @@ module.exports = fp(async function (app, opts) {
             headers: res.headers
           })
           reply.send(res.stream)
+        },
+        onError: (reply, { error }) => {
+          app.log.error({ error: ensureLoggableError(error) }, 'Error while proxying request to another service')
+          return reply.send(error)
         }
       }
     }

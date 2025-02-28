@@ -3,7 +3,7 @@
 
 const telemetry = require('@platformatic/telemetry').schema
 const {
-  schemaComponents: { server, logger, health }
+  schemaComponents: { server, logger, health, healthWithoutDefaults }
 } = require('@platformatic/utils')
 
 const env = {
@@ -65,7 +65,7 @@ const services = {
         type: 'boolean'
       },
       workers,
-      health: { ...health, default: undefined },
+      health: { ...healthWithoutDefaults, default: undefined },
       arguments: {
         type: 'array',
         items: {
@@ -174,7 +174,7 @@ const platformaticRuntimeSchema = {
                 type: 'boolean'
               },
               workers,
-              health: { ...health, default: undefined },
+              health: { ...healthWithoutDefaults, default: undefined },
               preload,
               arguments: {
                 type: 'array',
@@ -359,6 +359,13 @@ const platformaticRuntimeSchema = {
             port: {
               anyOf: [{ type: 'integer' }, { type: 'string' }]
             },
+            enabled: {
+              anyOf: [{
+                type: 'boolean'
+              }, {
+                type: 'string'
+              }]
+            },
             hostname: { type: 'string' },
             endpoint: { type: 'string' },
             auth: {
@@ -373,9 +380,65 @@ const platformaticRuntimeSchema = {
             labels: {
               type: 'object',
               additionalProperties: { type: 'string' }
-            }
-          },
-          additionalProperties: false
+            },
+            readiness: {
+              anyOf: [
+                { type: 'boolean' },
+                {
+                  type: 'object',
+                  properties: {
+                    endpoint: { type: 'string' },
+                    success: {
+                      type: 'object',
+                      properties: {
+                        statusCode: { type: 'number' },
+                        body: { type: 'string' }
+                      },
+                      additionalProperties: false
+                    },
+                    fail: {
+                      type: 'object',
+                      properties: {
+                        statusCode: { type: 'number' },
+                        body: { type: 'string' }
+                      },
+                      additionalProperties: false
+                    }
+                  },
+                  additionalProperties: false
+                }
+              ]
+            },
+            liveness: {
+              anyOf: [
+                { type: 'boolean' },
+                {
+                  type: 'object',
+                  properties: {
+                    endpoint: { type: 'string' },
+                    success: {
+                      type: 'object',
+                      properties: {
+                        statusCode: { type: 'number' },
+                        body: { type: 'string' }
+                      },
+                      additionalProperties: false
+                    },
+                    fail: {
+                      type: 'object',
+                      properties: {
+                        statusCode: { type: 'number' },
+                        body: { type: 'string' }
+                      },
+                      additionalProperties: false
+                    }
+                  },
+                  additionalProperties: false
+                }
+              ]
+            },
+            additionalProperties: false
+          }
         }
       ]
     },

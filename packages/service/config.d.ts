@@ -210,6 +210,29 @@ export interface PlatformaticService {
           graphiql?: boolean;
         }
       | boolean;
+    proxy?:
+      | false
+      | {
+          upstream?: string;
+          prefix?: string;
+          hostname?: string;
+          ws?: {
+            upstream?: string;
+            reconnect?: {
+              pingInterval?: number;
+              maxReconnectionRetries?: number;
+              reconnectInterval?: number;
+              reconnectDecay?: number;
+              connectionTimeout?: number;
+              reconnectOnClose?: boolean;
+              logs?: boolean;
+              [k: string]: unknown;
+            };
+            hooks?: {
+              path: string;
+            };
+          };
+        };
   };
   clients?: {
     serviceId?: string;

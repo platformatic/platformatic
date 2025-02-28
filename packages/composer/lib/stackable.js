@@ -46,7 +46,7 @@ class ComposerStackable extends ServiceStackable {
     }
 
     this.#dependencies = dependencies
-    return dependencies
+    return this.#dependencies
   }
 
   registerMeta (meta) {

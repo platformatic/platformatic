@@ -104,24 +104,24 @@ test('should support custom metrics', async t => {
 
   assert.ok(metrics.includes('# HELP custom_service_1 Custom Service 1'))
   assert.ok(metrics.includes('# TYPE custom_service_1 counter'))
-  assert.ok(metrics.includes('custom_service_1{serviceId="service",workerId="undefined"} 123'))
+  assert.ok(metrics.includes('custom_service_1{serviceId="service"} 123'))
   assert.ok(metrics.includes('# HELP custom_service_2 Custom Service 2'))
   assert.ok(metrics.includes('# TYPE custom_service_2 gauge'))
-  assert.ok(metrics.includes('custom_service_2{serviceId="service",workerId="undefined"} 456'))
+  assert.ok(metrics.includes('custom_service_2{serviceId="service"} 456'))
 
   assert.ok(metrics.includes('# HELP custom_internal_1 Custom Internal 1'))
   assert.ok(metrics.includes('# TYPE custom_internal_1 counter'))
-  assert.ok(metrics.includes('custom_internal_1{serviceId="internal",workerId="undefined"} 123'))
+  assert.ok(metrics.includes('custom_internal_1{serviceId="internal"} 123'))
   assert.ok(metrics.includes('# HELP custom_internal_2 Custom Internal 2'))
   assert.ok(metrics.includes('# TYPE custom_internal_2 gauge'))
-  assert.ok(metrics.includes('custom_internal_2{serviceId="internal",workerId="undefined"} 456'))
+  assert.ok(metrics.includes('custom_internal_2{serviceId="internal"} 456'))
 
   assert.ok(metrics.includes('# HELP custom_external_1 Custom External 1'))
   assert.ok(metrics.includes('# TYPE custom_external_1 counter'))
-  assert.ok(metrics.includes('custom_external_1{serviceId="external",workerId="undefined"} 123'))
+  assert.ok(metrics.includes('custom_external_1{serviceId="external"} 123'))
   assert.ok(metrics.includes('# HELP custom_external_2 Custom External 2'))
   assert.ok(metrics.includes('# TYPE custom_external_2 gauge'))
-  assert.ok(metrics.includes('custom_external_2{serviceId="external",workerId="undefined"} 456'))
+  assert.ok(metrics.includes('custom_external_2{serviceId="external"} 456'))
 })
 
 test('should track http cache hits/misses', async (t) => {
@@ -165,12 +165,260 @@ test('should track http cache hits/misses', async (t) => {
 
   const metrics = await body.text()
 
-  assert.ok(metrics.match(/http_cache_hit_count\{serviceId="main",workerId="undefined"\} \d+/))
-  assert.ok(metrics.match(/http_cache_miss_count\{serviceId="main",workerId="undefined"\} \d+/))
+  assert.ok(metrics.match(/http_cache_hit_count\{serviceId="main"\} \d+/))
+  assert.ok(metrics.match(/http_cache_miss_count\{serviceId="main"\} \d+/))
 
-  assert.ok(metrics.includes('http_cache_hit_count{serviceId="service-1",workerId="undefined"} 0'))
-  assert.ok(metrics.includes('http_cache_miss_count{serviceId="service-1",workerId="undefined"} 0'))
+  assert.ok(metrics.includes('http_cache_hit_count{serviceId="service-1"} 0'))
+  assert.ok(metrics.includes('http_cache_miss_count{serviceId="service-1"} 0'))
 
-  assert.ok(metrics.includes('http_cache_hit_count{serviceId="service-2",workerId="undefined"} 0'))
-  assert.ok(metrics.includes('http_cache_miss_count{serviceId="service-2",workerId="undefined"} 1'))
+  assert.ok(metrics.includes('http_cache_hit_count{serviceId="service-2"} 0'))
+  assert.ok(metrics.includes('http_cache_miss_count{serviceId="service-2"} 1'))
+})
+
+test('metrics can be disabled', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'metrics-disabled.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  await t.assert.rejects(request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/metrics'
+  }))
+})
+
+test('readiness - should get 404 if readiness is not enabled', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'readiness-disabled.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  const { statusCode } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/ready'
+  })
+  assert.strictEqual(statusCode, 404)
+})
+
+test('readiness - should expose readiness by default and get a success response when all services are started, with default settings', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  const { statusCode, body } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/ready'
+  })
+  assert.strictEqual(statusCode, 200)
+  assert.strictEqual(await body.text(), 'OK')
+})
+
+test('readiness - should expose readiness and get a fail response when not all services are started, with default settings', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const { services } = await app.getServices()
+  await app.stopService(services[0].id)
+
+  const { statusCode, body } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/ready'
+  })
+  assert.strictEqual(statusCode, 500)
+  assert.strictEqual(await body.text(), 'ERR')
+})
+
+test('readiness - should expose readiness and get a fail and success responses with custom settings', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'readiness-custom.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/health'
+    })
+    assert.strictEqual(statusCode, 201)
+    assert.strictEqual(await body.text(), 'All right')
+  }
+
+  const { services } = await app.getServices()
+  await app.stopService(services[0].id)
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/health'
+    })
+    assert.strictEqual(statusCode, 501)
+    assert.strictEqual(await body.text(), 'No good')
+  }
+})
+
+test('liveness - should get 404 if liveness is not enabled', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'liveness-disabled.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  const { statusCode } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/status'
+  })
+  assert.strictEqual(statusCode, 404)
+})
+
+test('liveness - should expose liveness by default and get a success response when all services are started, with default settings', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  const { statusCode, body } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/status'
+  })
+  assert.strictEqual(statusCode, 200)
+  assert.strictEqual(await body.text(), 'OK')
+})
+
+test('liveness - should expose liveness and get a fail response when not all services are ready, with default settings', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  const { services } = await app.getServices()
+  await app.stopService(services[0].id)
+
+  const { statusCode, body } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/status'
+  })
+  assert.strictEqual(statusCode, 500)
+  assert.strictEqual(await body.text(), 'ERR')
+})
+
+test('liveness - should expose liveness and get a fail response when not all services are healthy, with default settings', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  const entryUrl = await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await request(entryUrl, {
+    path: '/service-node/set/status',
+    query: { status: false }
+  })
+
+  const { statusCode, body } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/status'
+  })
+  assert.strictEqual(statusCode, 500)
+  assert.strictEqual(await body.text(), 'ERR')
+})
+
+test('liveness - should expose liveness and get a fail and success responses with custom settings', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'liveness-custom.json')
+  const app = await buildServer(configFile)
+
+  const entryUrl = await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/live'
+    })
+    assert.strictEqual(statusCode, 201)
+    assert.strictEqual(await body.text(), 'All right')
+  }
+
+  await request(entryUrl, {
+    path: '/service-node/set/status',
+    query: { status: false }
+  })
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/live'
+    })
+    assert.strictEqual(statusCode, 501)
+    assert.strictEqual(await body.text(), 'No good')
+  }
 })

@@ -32,23 +32,25 @@ const app = await buildServer({
     hostname: '127.0.0.1',
     port: 0
   },
-  services: [
-    {
-      id: 'auth-service',
-      origin: 'https://auth-service.com',
-      openapi: {
-        url: '/documentation/json',
-        prefix: 'auth'
+  composer: {
+    services: [
+      {
+        id: 'auth-service',
+        origin: 'https://auth-service.com',
+        openapi: {
+          url: '/documentation/json',
+          prefix: 'auth'
+        }
+      },
+      {
+        id: 'payment-service',
+        origin: 'https://payment-service.com',
+        openapi: {
+          file: './schemas/payment-service.json'
+        }
       }
-    },
-    {
-      id: 'payment-service',
-      origin: 'https://payment-service.com',
-      openapi: {
-        file: './schemas/payment-service.json'
-      }
-    }
-  ]
+    ]
+  }
 })
 
 await app.start()
