@@ -32,7 +32,7 @@ jobs:
           cache: 'pnpm'
       - run: npm install npm -g
       - name: pnpm install
-        uses: nick-fields/retry@v3.0.0
+        uses: nick-fields/retry@v3.0.2
         with:
           max_attempts: 10
           timeout_minutes: 15
@@ -44,7 +44,7 @@ jobs:
           sh scripts/sync-version.sh
           pnpm -r run --if-present prepublishOnly
       - name: update lockfile
-        uses: nick-fields/retry@v3.0.0
+        uses: nick-fields/retry@v3.0.2
         with:
           max_attempts: 10
           timeout_minutes: 15
