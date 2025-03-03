@@ -9,8 +9,7 @@
     "noEmitOnError": true,
     "incremental": true,
     "strict": true,
-    "outDir": "dist",
-    "skipLibCheck": true
+    "outDir": "dist"
   },
   "watchOptions": {
     "watchFile": "fixedPollingInterval",

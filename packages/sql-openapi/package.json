@@ -45,7 +45,8 @@
     "@platformatic/foundation": "workspace:*",
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/sql-json-schema-mapper": "workspace:*",
-    "@scalar/fastify-api-reference": "1.34.6",
+    "@platformatic/utils": "workspace:*",
+    "@scalar/fastify-api-reference": "1.25.122",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^5.0.0",
     "inflected": "^2.1.0"
