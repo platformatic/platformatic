@@ -1,7 +1,6 @@
 'use strict'
 
 const Swagger = require('@fastify/swagger')
-const ScalarApiReference = require('@scalar/fastify-api-reference')
 const deepmerge = require('@fastify/deepmerge')({ all: true })
 const { mapSQLEntityToJSONSchema } = require('@platformatic/sql-json-schema-mapper')
 const { findNearestString } = require('@platformatic/utils')
@@ -43,12 +42,13 @@ async function setupOpenAPI (app, opts) {
   const paths = opts.paths || {}
 
   const { default: scalarTheme } = await import('@platformatic/scalar-theme')
+  const { default: scalarApiReference } = await import('@scalar/fastify-api-reference')
   const routePrefix = opts.swaggerPrefix || '/documentation'
 
   app.get(`${routePrefix}/json`, { schema: { hide: true }, logLevel: 'warn' }, async () => app.swagger())
   app.get(`${routePrefix}/yaml`, { schema: { hide: true }, logLevel: 'warn' }, async () => app.swagger({ yaml: true }))
 
-  app.register(ScalarApiReference, {
+  app.register(scalarApiReference, {
     ...opts,
     logLevel: 'warn',
     prefix: undefined,
