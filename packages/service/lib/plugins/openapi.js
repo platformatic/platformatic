@@ -1,7 +1,6 @@
 'use strict'
 
 const Swagger = require('@fastify/swagger')
-const ScalarApiReference = require('@scalar/fastify-api-reference')
 const deepmerge = require('@fastify/deepmerge')({ all: true })
 const fp = require('fastify-plugin')
 
@@ -45,6 +44,8 @@ async function setupOpenAPI (app, opts) {
   await app.register(Swagger, swaggerOptions)
 
   const { default: scalarTheme } = await import('@platformatic/scalar-theme')
+  const { default: scalarApiReference } = await import('@scalar/fastify-api-reference')
+
   const routePrefix = openapi.swaggerPrefix || '/documentation'
 
   /** Serve spec file in yaml and json */
@@ -57,7 +58,7 @@ async function setupOpenAPI (app, opts) {
     logLevel: 'warn',
   }, async () => app.swagger({ yaml: true }))
 
-  app.register(ScalarApiReference, {
+  app.register(scalarApiReference, {
     ...opts,
     ...openapi,
     routePrefix,
