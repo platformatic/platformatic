@@ -14,6 +14,7 @@ import { ViteStackable } from '@platformatic/vite'
 import { createRequestHandler } from '@remix-run/express'
 import express from 'express'
 import inject from 'light-my-request'
+import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { pinoHttp } from 'pino-http'
@@ -150,8 +151,17 @@ export class RemixStackable extends ViteStackable {
   }
 
   async #startDevelopment (listen) {
-    const { preloadViteEsm } = await importFile(resolve(this.#remix, './dist/vite/import-vite-esm-sync.js'))
-    await preloadViteEsm()
+    const preloadViteEsmPath = resolve(this.#remix, './dist/vite/import-vite-esm-sync.js')
+
+    // Older versions
+    if (existsSync(preloadViteEsmPath)) {
+      const { preloadViteEsm } = await importFile(resolve(this.#remix, './dist/vite/import-vite-esm-sync.js'))
+      await preloadViteEsm()
+    } else {
+      const { preloadVite } = await importFile(resolve(this.#remix, './dist/vite/vite.js'))
+      await preloadVite()
+    }
+
     await super.start({ listen })
 
     /* c8 ignore next 3 */
