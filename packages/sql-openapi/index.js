@@ -1,10 +1,14 @@
-import Swagger from '@fastify/swagger'
-import { deepmerge, findNearestString } from '@platformatic/foundation'
-import { mapSQLEntityToJSONSchema } from '@platformatic/sql-json-schema-mapper'
-import fp from 'fastify-plugin'
-import { entityPlugin } from './lib/entity-to-routes.js'
-import { manyToMany } from './lib/many-to-many.js'
-import { getSchemaOverrideFromOpenApiPathItem } from './lib/utils.js'
+'use strict'
+
+const Swagger = require('@fastify/swagger')
+const deepmerge = require('@fastify/deepmerge')({ all: true })
+const { mapSQLEntityToJSONSchema } = require('@platformatic/sql-json-schema-mapper')
+const { findNearestString } = require('@platformatic/utils')
+const entityPlugin = require('./lib/entity-to-routes')
+const manyToMany = require('./lib/many-to-many')
+const { getSchemaOverrideFromOpenApiPathItem } = require('./lib/utils')
+const fp = require('fastify-plugin')
+const errors = require('./lib/errors')
 
 async function setupOpenAPI (app, opts) {
   const prefix = opts.prefix || ''
