@@ -353,12 +353,12 @@ const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<T
 
   const headers: HeadersInit = {
     ...defaultHeaders,
-    'Content-type': 'application/json; charset=utf-8'
+    ...(request instanceof FormData ? {} : { 'Content-type': 'application/json; charset=utf-8' })
   }
 
   const response = await fetch(\`\${url}/?\${searchParams.toString()}\`, {
     method: 'POST',
-    body: JSON.stringify(request),
+    body: request instanceof FormData ? request : JSON.stringify(request),
     headers,
     ...defaultFetchParams
   })
@@ -377,7 +377,7 @@ test('handle headers parameters', async (t) => {
   const tsImplementationTemplate = `const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<Types.PostRootResponses> => {
   const headers: HeadersInit = {
     ...defaultHeaders,
-    'Content-type': 'application/json; charset=utf-8'
+    ...(request instanceof FormData ? {} : { 'Content-type': 'application/json; charset=utf-8' })
   }
   if (request && request['level'] !== undefined) {
     headers['level'] = request['level']
@@ -390,7 +390,7 @@ test('handle headers parameters', async (t) => {
 
   const response = await fetch(\`\${url}/\`, {
     method: 'POST',
-    body: JSON.stringify(request),
+    body: request instanceof FormData ? request : JSON.stringify(request),
     headers,
     ...defaultFetchParams
   })`
@@ -607,6 +607,49 @@ test('serialize correctly array query parameters', async (t) => {
   }`
     equal(implementation.includes(expected), true)
   }
+})
+
+test('integration test for FormData handling', async (t) => {
+  const fixturesDir = join(__dirname, 'fixtures', 'form-data')
+  try {
+    await fs.unlink(join(fixturesDir, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+
+  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.register(import('@fastify/multipart'))
+
+  await app.start()
+  const dir = await moveToTmpdir(after)
+
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'formdata', '--frontend'])
+  const testFile = `
+'use strict'
+
+import build from './formdata.mjs'
+const client = build('${app.url}')
+
+// Create FormData instance
+const formData = new FormData()
+formData.append('file', new Blob(['test content'], { type: 'text/plain' }), 'test.txt')
+formData.append('description', 'Test file upload')
+
+// Test FormData submission
+const response = await client.uploadFile(formData)
+console.log('FormData response:', response)
+`
+
+  await writeFile(join(dir, 'formdata', 'test.mjs'), testFile)
+
+  const output = await execa('node', [join(dir, 'formdata', 'test.mjs')])
+  /* eslint-disable no-control-regex */
+  const [line] = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n')
+  equal(line, "FormData response: { success: true, fileName: 'test.txt' }")
 })
 
 test('integration test for custom fetch parameters', async (t) => {
@@ -1017,7 +1060,7 @@ test('add credentials: include in client implementation from file', async (t) =>
     const expectedPostMethod = `
   const response = await fetch(\`\${url}/movies/\${request['id']}?\${searchParams.toString()}\`, {
     method: 'POST',
-    body: JSON.stringify(request),
+    body: request instanceof FormData ? request : JSON.stringify(request),
     credentials: 'include',
     headers,
     ...defaultFetchParams
@@ -1054,7 +1097,7 @@ test('add credentials: include in client implementation from url', async (t) => 
   const expectedPostMethod = `
   const response = await fetch(\`\${url}/foobar\`, {
     method: 'POST',
-    body: JSON.stringify(request),
+    body: request instanceof FormData ? request : JSON.stringify(request),
     credentials: 'include',
     headers,
     ...defaultFetchParams
@@ -1123,7 +1166,7 @@ test('frontend client with full option', async (t) => {
     headers['headerId'] = request.headers['headerId']
     delete request.headers['headerId']
   }`))
-  ok(implementation.includes("body: 'body' in request ? JSON.stringify(request.body) : undefined,"))
+  ok(implementation.includes("body: 'body' in request ? (request.body instanceof FormData ? request.body : JSON.stringify(request.body)) : undefined,"))
 
   const types = await readFile(join(dir, 'full-opt', 'full-opt-types.d.ts'), 'utf-8')
   ok(types.includes(`export type PostHelloRequest = {

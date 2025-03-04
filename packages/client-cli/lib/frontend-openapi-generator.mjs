@@ -191,12 +191,13 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         })
         writer.blankLine()
       }
+      const reqBody = fullRequest ? 'request.body' : 'request'
       writer.write(`const headers${isTsLang ? ': HeadersInit' : ''} =`).block(() => {
         if (method === 'get') {
           writer.writeLine('...defaultHeaders')
         } else {
           writer.writeLine('...defaultHeaders,')
-          writer.writeLine('\'Content-type\': \'application/json; charset=utf-8\'')
+          writer.writeLine(`...(${fullRequest ? "'body' in request && " : ''}${reqBody} instanceof FormData ? {} : { 'Content-type': 'application/json; charset=utf-8' })`)
         }
       })
 
@@ -216,10 +217,11 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
           .write(`const response = await fetch(\`\${url}${stringLiteralPath}${searchString}\`, `)
           .inlineBlock(() => {
             writer.write('method: ').quote().write(method.toUpperCase()).quote().write(',')
+            const body = `${reqBody} instanceof FormData ? ${reqBody} : JSON.stringify(${reqBody})`
             if (fullRequest) {
-              writer.writeLine("body: 'body' in request ? JSON.stringify(request.body) : undefined,")
+              writer.writeLine(`body: 'body' in request ? (${body}) : undefined,`)
             } else {
-              writer.writeLine('body: JSON.stringify(request),')
+              writer.writeLine(`body: ${body},`)
             }
             if (withCredentials) {
               writer.writeLine('credentials: \'include\',')
