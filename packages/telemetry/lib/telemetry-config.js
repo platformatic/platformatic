@@ -30,46 +30,47 @@ const { name: moduleName, version: moduleVersion } = require('../package.json')
 // - zipkin (https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-exporter-zipkin/README.md)
 // - memory: for testing
 
-// This has been partially copied and modified from @autotelic/opentelemetry: https://github.com/autotelic/fastify-opentelemetry/blob/main/index.js
-// , according with [MIT license](https://github.com/autotelic/fastify-opentelemetry/blob/main/LICENSE.md):
-// MIT License
-// Copyright (c) 2020 autotelic
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-const extractPath = (request) => {
-  // We must user RouterPath, because otherwise `/test/123` will be considered as
-  // a different operation than `/test/321`. In case is not set (this should actually happen only for HTTP/404) we fallback to the path.
-  const { routeOptions, url } = request
-  let path
-  const routerPath = routeOptions && routeOptions.url
-  if (routerPath) {
-    path = formatParamUrl(routerPath)
-  } else {
-    path = url
+const extractRoute = (request) => {
+  if (request.routeOptions?.url) {
+    return formatParamUrl(request.routeOptions.url)
   }
-  return path
+  return null
 }
 
-function formatSpanName (request, path) {
-  const { method } = request
-  /* istanbul ignore next */
-  return path ? `${method} ${path}` : method
+function formatSpanName (request, route) {
+  const { method, url } = request
+  return `${method} ${route ?? url}`
 }
 
 const formatSpanAttributes = {
-  request (request, path) {
+  request (request, route) {
     const { hostname, method, url, protocol = 'http' } = request
     // Inspired by: https://github.com/fastify/fastify-url-data/blob/master/plugin.js#L11
-    const urlData = fastUri.parse(`${protocol}://${hostname}${url}`)
-    return {
+    const fullUrl = `${protocol}://${hostname}${url}`
+    const urlData = fastUri.parse(fullUrl)
+
+    const attributes = {
       'server.address': hostname,
       'server.port': urlData.port,
       'http.request.method': method,
-      'http.route': path,
-      'url.path': path,
+      'url.full': fullUrl,
+      'url.path': urlData.path,
       'url.scheme': protocol,
     }
+
+    if (route) {
+      attributes['http.route'] = route
+    }
+
+    if (urlData.query) {
+      attributes['url.query'] = urlData.query
+    }
+
+    if (urlData.fragment) {
+      attributes['url.fragment'] = urlData.fragment
+    }
+
+    return attributes
   },
   reply (reply) {
     return {
@@ -180,12 +181,12 @@ function setupTelemetry (opts, logger) {
       fastifyTextMapGetter
     )
 
-    const path = extractPath(request)
-    const span = tracer.startSpan(formatSpanName(request, path), {}, context)
+    const route = extractRoute(request)
+    const span = tracer.startSpan(formatSpanName(request, route), {}, context)
     span.kind = SpanKind.SERVER
     // Next 2 lines are needed by W3CTraceContextPropagator
     context = context.setSpan(span)
-    span.setAttributes(formatSpanAttributes.request(request, path))
+    span.setAttributes(formatSpanAttributes.request(request, route))
     span.context = context
     // Inject the propagation headers
     propagator.inject(context, reply, fastifyTextMapSetter)
@@ -368,5 +369,5 @@ module.exports = {
   setupTelemetry,
   formatSpanName,
   formatSpanAttributes,
-  extractPath
+  extractRoute
 }
