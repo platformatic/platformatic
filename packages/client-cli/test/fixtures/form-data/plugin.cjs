@@ -8,16 +8,6 @@ module.exports = async function (app) {
 
   app.post('/upload', async (request, reply) => {
     const data = await request.file()
-    const fields = {}
-
-    for (const [key, value] of Object.entries(request.body || {})) {
-      fields[key] = value
-    }
-
-    return {
-      success: true,
-      fileName: data.filename,
-      description: fields.description
-    }
+    return { success: true, fileName: data.filename }
   })
 }
