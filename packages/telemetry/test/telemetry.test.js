@@ -55,6 +55,7 @@ test('should trace a request not failing', async () => {
   equal(span.name, 'GET /test')
   equal(span.status.code, SpanStatusCode.OK)
   equal(span.attributes['http.request.method'], 'GET')
+  equal(span.attributes['http.route'], '/test')
   equal(span.attributes['url.path'], '/test')
   equal(span.attributes['http.response.status_code'], 200)
   equal(span.attributes['url.scheme'], 'http')

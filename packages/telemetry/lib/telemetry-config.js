@@ -66,6 +66,7 @@ const formatSpanAttributes = {
       'server.address': hostname,
       'server.port': urlData.port,
       'http.request.method': method,
+      'http.route': path,
       'url.path': path,
       'url.scheme': protocol,
     }
