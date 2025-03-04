@@ -83,6 +83,7 @@ test('should setup telemetry if configured', async (t) => {
   const span = finishedSpans[0]
   assert.strictEqual(span.name, 'GET /')
   assert.strictEqual(span.attributes['http.request.method'], 'GET')
+  assert.strictEqual(span.attributes['http.route'], '/')
   assert.strictEqual(span.attributes['url.path'], '/')
   assert.strictEqual(span.attributes['http.response.status_code'], 200)
 })
