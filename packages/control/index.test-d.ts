@@ -26,6 +26,7 @@ expectType<string>(service.services[0].id)
 expectType<string>(service.services[0].status)
 expectType<string>(metric.aggregator)
 expectType<string>(metric.values[0].labels.serviceId)
+expectType<number>(metric.values[0].labels?.quantile)
 expectType<Promise<void>>(api.close())
 
 // errors
