@@ -54,12 +54,13 @@ const pltApi = getGlobal()
 ### Custom Healthcheck
 
 Custom health check can be defined to provide more specific and detailed information about the health of your service, in case the default healthcheck for the service itself is not enough and you need to add more checks for the service dependencies.  
-This can be done by using the `setCustomHealthCheck` method available on the `globalThis.platformatic` object.
+This can be done by using the `setCustomHealthCheck` method available on the `globalThis.platformatic` object, and run it as a platformatic service.
 
 Here is an example of how to set a custom health check:
 
-```js
+`app.js`
 
+```js
 import fastify from 'fastify'
 
 export function create () {
@@ -79,5 +80,31 @@ export function create () {
   })
 
   return app
+}
+```
+
+`platformatic.json`
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.51.0.json"
+}
+```
+
+`package.json`
+
+```json
+{
+    "type": "module",
+    "name": "service-node",
+    "version": "1.0.0",
+    "main": "app.js",
+    "scripts": {
+        "start": "platformatic start"
+    },
+    "dependencies": {
+        "fastify": "^5.0.0",
+        "@platformatic/node": "^2.48.0"
+    }
 }
 ```
