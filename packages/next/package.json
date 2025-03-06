@@ -32,7 +32,7 @@
     "@platformatic/config": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "amaro": "^0.3.0",
-    "iovalkey": "^0.2.1",
+    "iovalkey": "^0.3.0",
     "msgpackr": "^1.11.2",
     "semver": "^7.6.3"
   },

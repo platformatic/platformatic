@@ -1451,8 +1451,8 @@ importers:
         specifier: ^0.3.0
         version: 0.3.2
       iovalkey:
-        specifier: ^0.2.1
-        version: 0.2.2
+        specifier: ^0.3.0
+        version: 0.3.1
       msgpackr:
         specifier: ^1.11.2
         version: 1.11.2
@@ -3673,6 +3673,9 @@ packages:
 
   '@ioredis/commands@1.2.0':
     resolution: {integrity: sha512-Sx1pU8EM64o2BrqNpEO1CNLtKQwyhuXuqyfH7oGKCk+1a33d2r5saW8zNwm3j6BTExtjrv2BxTgzzkMwts6vGg==}
+
+  '@iovalkey/commands@0.1.0':
+    resolution: {integrity: sha512-/B9W4qKSSITDii5nkBCHyPkIkAi+ealUtr1oqBJsLxjSRLka4pxun2VvMNSmcwgAMxgXtQfl0qRv7TE+udPJzg==}
 
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -6445,8 +6448,8 @@ packages:
     resolution: {integrity: sha512-7CutT89g23FfSa8MDoIFs2GYYa0PaNiW/OrT+nRyjRXHDZd17HmIgy+reOQ/yhh72NznNjGuS8kbCAcA4Ro4mw==}
     engines: {node: '>=12.22.0'}
 
-  iovalkey@0.2.2:
-    resolution: {integrity: sha512-7eVmLOYV2UamZ/YPXuUwTu/4zBDxXcfjj/wmOwlKBBhU2qjg60Th0Y/cqfED3OxNAhc6hUV2Ft4eQMCKi2EMpQ==}
+  iovalkey@0.3.1:
+    resolution: {integrity: sha512-pSmFj/ZDFLP8AzqIAMpNJArhHYNeyqIwfcUULwZv8g6y3eaUGrlnlT7QXLrJAp0yiGCAqe1hPA33x/h5opNP9w==}
     engines: {node: '>=18.12.0'}
 
   ipaddr.js@1.9.1:
@@ -10598,6 +10601,8 @@ snapshots:
 
   '@ioredis/commands@1.2.0': {}
 
+  '@iovalkey/commands@0.1.0': {}
+
   '@isaacs/cliui@8.0.2':
     dependencies:
       string-width: 5.1.2
@@ -14073,9 +14078,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  iovalkey@0.2.2:
+  iovalkey@0.3.1:
     dependencies:
-      '@ioredis/commands': 1.2.0
+      '@iovalkey/commands': 0.1.0
       cluster-key-slot: 1.1.2
       debug: 4.4.0
       denque: 2.1.0
