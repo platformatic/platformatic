@@ -249,6 +249,9 @@ const sharedAuthorizationRule = {
   find: {
     $ref: '#/$defs/crud-operation-auth'
   },
+  updateMany: {
+    $ref: '#/$defs/crud-operation-auth'
+  },
   save: {
     $ref: '#/$defs/crud-operation-auth'
   },
