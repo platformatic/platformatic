@@ -53,8 +53,6 @@ test('should get runtime metrics in a json format', async t => {
 
   const { metrics } = await app.getMetrics()
 
-  console.log(JSON.stringify(metrics, null, 2))
-
   const expectedMetricNames = [
     'nodejs_active_handles',
     'nodejs_active_handles_total',
