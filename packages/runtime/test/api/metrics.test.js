@@ -103,6 +103,10 @@ test('should get runtime metrics in a json format', async t => {
       assert.ok(foundMetric, `Missing metric for service "${serviceId}"`)
 
       for (const { labels } of foundMetric.values) {
+        if (labels.route === '/__empty_metrics') {
+          continue
+        }
+
         assert.strictEqual(labels.serviceId, serviceId)
         assert.strictEqual(labels.custom_label, 'custom-value')
 
@@ -186,8 +190,7 @@ test('should get runtime metrics in a text format', async t => {
     }, [])
 
   const serviceIds = [...new Set(services)].sort()
-  assert.deepEqual(serviceIds, ['service-1'])
-  // assert.deepEqual(serviceIds, ['service-1', 'service-2', 'service-db'])
+  assert.deepEqual(serviceIds, ['service-1', 'service-2', 'service-db'])
 })
 
 function getMetricsLines (metrics) {
