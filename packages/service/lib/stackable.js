@@ -270,7 +270,8 @@ class ServiceStackable {
       getCustomLabels: req => {
         const telemetryId = req.headers['x-plt-telemetry-id'] ?? 'unknown'
         return { telemetry_id: telemetryId }
-      }
+      },
+      zeroFill: true
     })
 
     this.app.register(httpMetrics, {
@@ -293,7 +294,8 @@ class ServiceStackable {
         collect: function () {
           process.nextTick(() => this.reset())
         }
-      }
+      },
+      zeroFill: true
     })
   }
 
