@@ -141,7 +141,7 @@ env:
 
 ## Project Structure
 
-You can see a full working example in [demo/k8s-readiness-liveness](../../demo/k8s-readiness-liveness).
+You can see a full working example in [https://github.com/platformatic/k8s-readiness-liveness](https://github.com/platformatic/k8s-readiness-liveness).
 
 The example project structure demonstrates a Watt application with health checks:
 
@@ -173,7 +173,7 @@ The `watt.json` configuration exposes the metrics server on port 9090:
 
 This configuration exposes health check endpoints available at `/ready` and `/status` on port `9090` and the service endpoints on port `3001`.
 
-You can follow the `README.md` in the [demo/k8s-readiness-liveness](../../demo/k8s-readiness-liveness) to run the example.
+You can follow the `README.md` in the [demo/k8s-readiness-liveness](https://github.com/platformatic/k8s-readiness-liveness/blob/main/README.md) to run the example.
 
 ## References
 
