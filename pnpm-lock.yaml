@@ -497,8 +497,8 @@ importers:
         specifier: workspace:^
         version: link:../utils
       '@scalar/fastify-api-reference':
-        specifier: 1.25.122
-        version: 1.25.122
+        specifier: 1.26.2
+        version: 1.26.2
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -1948,8 +1948,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@scalar/fastify-api-reference':
-        specifier: 1.25.122
-        version: 1.25.122
+        specifier: 1.26.2
+        version: 1.26.2
       '@types/ws':
         specifier: ^8.5.10
         version: 8.5.14
@@ -2331,8 +2331,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@scalar/fastify-api-reference':
-        specifier: 1.25.122
-        version: 1.25.122
+        specifier: 1.26.2
+        version: 1.26.2
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -4325,16 +4325,24 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@scalar/fastify-api-reference@1.25.122':
-    resolution: {integrity: sha512-JieuQ3UYcnOZK4rM5K73hCKgHutI5G6icbivNfu0bIW2KsVVe/GFWeb0rDS4f8V5TEYydRQcKJXfJQsBe5SJwQ==}
+  '@scalar/core@0.1.1':
+    resolution: {integrity: sha512-7qnZp8ykrXoKScFIZcwt638CuFFyj7G3SsgVfD5liNgb533K8/lhWqdmp1vK2u4BKKJ9GBAPKMlWZE/+yA8WTw==}
     engines: {node: '>=18'}
 
-  '@scalar/openapi-types@0.1.8':
-    resolution: {integrity: sha512-iufA5/6hPCmRIVD2eh7qGpoKvoA08Gw/qUb2JECifBtAwA93fo7+1k9uHK440f2LMJsbxIzA+nv7RS0BmfiO/g==}
+  '@scalar/fastify-api-reference@1.26.2':
+    resolution: {integrity: sha512-/LD1C7zyZ5qY4Pjj724szR75fnHeDvDvX1MiMqKqWxj9tp5CWD41XDdUZdV3R/+O5obYSvWPe/YhIAWKxovuXg==}
     engines: {node: '>=18'}
 
-  '@scalar/types@0.0.34':
-    resolution: {integrity: sha512-q01ctijmHArM5KOny2zU+sHfhpsgOAENrDENecK2TsQNn5FYLmFZouMKeW2M6F7KFLPZnFxUiL/rT88b6Rp/Kg==}
+  '@scalar/openapi-parser@0.10.10':
+    resolution: {integrity: sha512-6MSgvpNKu/anZy96dn8tXQZo1PuDCoeB4m2ZLLDS4vC2zaTnuNBvvQHx+gjwXNKWhTbIVy8bQpYBzlMAYnFNcQ==}
+    engines: {node: '>=18'}
+
+  '@scalar/openapi-types@0.1.9':
+    resolution: {integrity: sha512-HQQudOSQBU7ewzfnBW9LhDmBE2XOJgSfwrh5PlUB7zJup/kaRkBGNgV2wMjNz9Af/uztiU/xNrO179FysmUT+g==}
+    engines: {node: '>=18'}
+
+  '@scalar/types@0.0.40':
+    resolution: {integrity: sha512-0J6o+yZzgZEvl3KhvLTAGiXXyrCeEPKvs9gUWQDf1Rb5NfFxF0lA10ougCQCwVJIguWNEzZfOUiSoAFzGy2EqQ==}
     engines: {node: '>=18'}
 
   '@sec-ant/readable-stream@0.4.1':
@@ -6851,6 +6859,10 @@ packages:
   leven@3.1.0:
     resolution: {integrity: sha512-qsda+H8jTaUaN/x5vzW2rzc+8Rw4TAQ/4KjB46IwK5VH+IlVeeeje/EoZRpiXvIqjFgK84QffqPztGI3VBLG1A==}
     engines: {node: '>=6'}
+
+  leven@4.0.0:
+    resolution: {integrity: sha512-puehA3YKku3osqPlNuzGDUHq8WpwXupUg1V6NXdV38G+gr+gkBwFC8g1b/+YcIvp8gnqVIus+eJCH/eGsRmJNw==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
   levn@0.3.0:
     resolution: {integrity: sha512-0OO4y2iOHix2W6ujICbKIaEQXvFQHue65vUG3pb5EUomzPI90z9hsA1VsO/dbIIpC53J8gxM9Q4Oho0jrCM/yA==}
@@ -11411,17 +11423,35 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.34.9':
     optional: true
 
-  '@scalar/fastify-api-reference@1.25.122':
+  '@scalar/core@0.1.1':
     dependencies:
-      '@scalar/types': 0.0.34
+      '@scalar/types': 0.0.40
+
+  '@scalar/fastify-api-reference@1.26.2':
+    dependencies:
+      '@scalar/core': 0.1.1
+      '@scalar/openapi-parser': 0.10.10
+      '@scalar/openapi-types': 0.1.9
+      '@scalar/types': 0.0.40
       fastify-plugin: 4.5.1
+      github-slugger: 2.0.0
 
-  '@scalar/openapi-types@0.1.8': {}
-
-  '@scalar/types@0.0.34':
+  '@scalar/openapi-parser@0.10.10':
     dependencies:
-      '@scalar/openapi-types': 0.1.8
+      ajv: 8.17.1
+      ajv-draft-04: 1.0.0(ajv@8.17.1)
+      ajv-formats: 3.0.1(ajv@8.17.1)
+      jsonpointer: 5.0.1
+      leven: 4.0.0
+      yaml: 2.7.0
+
+  '@scalar/openapi-types@0.1.9': {}
+
+  '@scalar/types@0.0.40':
+    dependencies:
+      '@scalar/openapi-types': 0.1.9
       '@unhead/schema': 1.11.20
+      zod: 3.24.2
 
   '@sec-ant/readable-stream@0.4.1': {}
 
@@ -14485,6 +14515,8 @@ snapshots:
       - supports-color
 
   leven@3.1.0: {}
+
+  leven@4.0.0: {}
 
   levn@0.3.0:
     dependencies:
