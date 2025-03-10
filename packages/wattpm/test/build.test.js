@@ -135,8 +135,14 @@ test('update - should update version in package.json files', async t => {
 
   const updateProcess = await executeCommand('node', '--import', loader, cliPath, 'update', rootDir)
 
+  const rootPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'package.json'))
   const mainPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/main/package.json'))
   const anotherPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/another/package.json'))
+
+  deepStrictEqual(rootPackageJson.dependencies, {
+    wattpm: '^2.41.0',
+    '@platformatic/runtime': '^2.41.0'
+  })
 
   deepStrictEqual(mainPackageJson.dependencies, {
     '@platformatic/node': '^2.41.0',
@@ -157,7 +163,13 @@ test('update - should update version in package.json files', async t => {
 
   ok(
     updateProcess.stdout.includes(
-      'Updating dependency @platformatic/service of service another from ^2.0.0 to ^2.41.0 ...'
+      'Updating dependency @platformatic/runtime of the application from ^2.1.0 to ^2.41.0 ...'
+    )
+  )
+
+  ok(
+    updateProcess.stdout.includes(
+      'Updating dependency @platformatic/service of the service another from ^2.0.0 to ^2.41.0 ...'
     )
   )
   ok(updateProcess.stdout.includes('All dependencies have been updated.'))
@@ -200,7 +212,7 @@ test('update - should work when executed inside a service folder', async t => {
 
   ok(
     updateProcess.stdout.includes(
-      'Updating dependency @platformatic/service of service another from ^2.0.0 to ^2.41.0 ...'
+      'Updating dependency @platformatic/service of the service another from ^2.0.0 to ^2.41.0 ...'
     )
   )
   ok(updateProcess.stdout.includes('All dependencies have been updated.'))

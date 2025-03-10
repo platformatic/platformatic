@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "dependencies": {
+    "wattpm": "^2.0.0",
+    "@platformatic/runtime": "^2.1.0"
+  }
+}
