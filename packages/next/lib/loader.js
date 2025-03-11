@@ -63,6 +63,8 @@ function createEvaluatorWrapperFunction (original) {
     [restElement(identifier('args'))],
     blockStatement(
       [
+        // This is to avoid https://github.com/vercel/next.js/issues/76981
+        parseSingleExpression("Headers.prototype[Symbol.for('nodejs.util.inspect.custom')] = undefined"),
         variableDeclaration('let', [variableDeclarator(identifier(originalId), original)]),
         parseSingleExpression(
           `if (typeof ${originalId} === 'function') { ${originalId} = await ${originalId}(...args) }`
