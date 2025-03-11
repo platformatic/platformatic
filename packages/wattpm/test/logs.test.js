@@ -5,7 +5,7 @@ import split2 from 'split2'
 import { prepareRuntime } from '../../basic/test/helper.js'
 import { wattpm } from './helper.js'
 
-async function matchLogs (stream) {
+async function matchLogs (stream, requiresMainLog = true) {
   let mainLogFound
   let serviceLogFound
   let traceFound
@@ -15,7 +15,12 @@ async function matchLogs (stream) {
 
     if (parsed.msg.startsWith('Platformatic is now listening')) {
       mainLogFound = true
-      continue
+
+      if (serviceLogFound) {
+        break
+      } else {
+        continue
+      }
     }
 
     if (parsed.msg === 'This is a trace') {
@@ -25,7 +30,10 @@ async function matchLogs (stream) {
 
     if (parsed.msg.startsWith('Service listening') && parsed.name === 'main') {
       serviceLogFound = true
-      break
+
+      if (mainLogFound || !requiresMainLog) {
+        break
+      }
     }
   }
 
@@ -81,7 +89,7 @@ test('inject - should stream runtime logs filtering by service', async t => {
   }
 
   const logsProcess = wattpm('logs', 'main', 'main')
-  const { mainLogFound, serviceLogFound, traceFound } = await matchLogs(logsProcess.stdout)
+  const { mainLogFound, serviceLogFound, traceFound } = await matchLogs(logsProcess.stdout, false)
 
   ok(serviceLogFound)
   ok(!mainLogFound)
