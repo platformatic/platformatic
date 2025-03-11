@@ -351,14 +351,16 @@ const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<T
     })
   }
 
+  const body = request
+  const isFormData = body instanceof FormData
   const headers: HeadersInit = {
     ...defaultHeaders,
-    ...(request instanceof FormData ? {} : { 'Content-type': 'application/json; charset=utf-8' })
+    ...(isFormData ? {} : defaultJsonType)
   }
 
   const response = await fetch(\`\${url}/?\${searchParams.toString()}\`, {
     method: 'POST',
-    body: request instanceof FormData ? request : JSON.stringify(request),
+    body: isFormData ? body : JSON.stringify(body),
     headers,
     ...defaultFetchParams
   })
@@ -375,9 +377,11 @@ test('handle headers parameters', async (t) => {
   const implementation = await readFile(join(dir, 'fontend', 'fontend.ts'), 'utf8')
 
   const tsImplementationTemplate = `const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<Types.PostRootResponses> => {
+  const body = request
+  const isFormData = body instanceof FormData
   const headers: HeadersInit = {
     ...defaultHeaders,
-    ...(request instanceof FormData ? {} : { 'Content-type': 'application/json; charset=utf-8' })
+    ...(isFormData ? {} : defaultJsonType)
   }
   if (request && request['level'] !== undefined) {
     headers['level'] = request['level']
@@ -390,7 +394,7 @@ test('handle headers parameters', async (t) => {
 
   const response = await fetch(\`\${url}/\`, {
     method: 'POST',
-    body: request instanceof FormData ? request : JSON.stringify(request),
+    body: isFormData ? body : JSON.stringify(body),
     headers,
     ...defaultFetchParams
   })`
@@ -1060,7 +1064,7 @@ test('add credentials: include in client implementation from file', async (t) =>
     const expectedPostMethod = `
   const response = await fetch(\`\${url}/movies/\${request['id']}?\${searchParams.toString()}\`, {
     method: 'POST',
-    body: request instanceof FormData ? request : JSON.stringify(request),
+    body: isFormData ? body : JSON.stringify(body),
     credentials: 'include',
     headers,
     ...defaultFetchParams
@@ -1097,7 +1101,7 @@ test('add credentials: include in client implementation from url', async (t) => 
   const expectedPostMethod = `
   const response = await fetch(\`\${url}/foobar\`, {
     method: 'POST',
-    body: request instanceof FormData ? request : JSON.stringify(request),
+    body: isFormData ? body : JSON.stringify(body),
     credentials: 'include',
     headers,
     ...defaultFetchParams
@@ -1166,7 +1170,7 @@ test('frontend client with full option', async (t) => {
     headers['headerId'] = request.headers['headerId']
     delete request.headers['headerId']
   }`))
-  ok(implementation.includes("body: 'body' in request ? (request.body instanceof FormData ? request.body : JSON.stringify(request.body)) : undefined,"))
+  ok(implementation.includes('body: isFormData ? body : JSON.stringify(body),'))
 
   const types = await readFile(join(dir, 'full-opt', 'full-opt-types.d.ts'), 'utf-8')
   ok(types.includes(`export type PostHelloRequest = {
