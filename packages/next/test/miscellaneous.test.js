@@ -28,3 +28,16 @@ test('can properly show the headers in the output', async t => {
     ok(logs.some(l => l.msg.includes('x-test')))
   }
 })
+
+test('can access Platformatic globals in production mode', async t => {
+  const { root, config } = await prepareRuntime(t, 'basepath-production', true, null)
+  const { url } = await startRuntime(t, root, config, null, ['frontend'])
+
+  {
+    const { statusCode, body } = await request(url + '/frontend')
+    deepStrictEqual(statusCode, 200)
+
+    const text = await body.text()
+    ok(text.includes('<code>/frontend<!-- --> <!-- -->true</code>'))
+  }
+})
