@@ -145,7 +145,10 @@ export class CacheHandler {
     return value
   }
 
-  async set (cacheKey, value, { tags, revalidate }, isRedisKey) {
+  async set (cacheKey, value, ctx, isRedisKey) {
+    const tags = ctx.tags
+    const revalidate = ctx.revalidate ?? ctx.cacheControl?.revalidate ?? value.revalidate ?? 0
+
     this.#logger.trace({ key: cacheKey, value, tags, revalidate }, 'set')
 
     const key = this.#standalone || isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)

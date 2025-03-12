@@ -186,6 +186,7 @@ export class ChildManager extends ITC {
   }
 
   register () {
+    Object.assign(globalThis.platformatic, this.#context)
     register(this.#loader, { data: this.#context })
   }
 
