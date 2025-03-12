@@ -107,7 +107,7 @@ export function pause (t, url, root, timeout) {
   }
 
   console.log(
-    `--- Pausing on test "${t.name}" - Server is listening at ${url.replace('[::]', '127.0.0.1')} (located at ${root}). Press any key to resume ...`
+    `--- Pausing on test "${t.name}" - Server is listening at ${url.replace('[::]', '127.0.0.1')}/ (located at ${root}). Press any key to resume ...`
   )
 
   return new Promise(resolve => {
@@ -253,7 +253,8 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   await cp(resolve(fixturesDir, fixturePath), root, { recursive: true })
 
   // Init the runtime
-  const args = ['-c', resolve(root, configFile)]
+  const configFilePath = resolve(root, configFile)
+  const args = ['-c', configFilePath]
 
   if (production) {
     args.push('--production')
@@ -262,9 +263,18 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   // Ensure the dependencies
   await ensureDependencies([root])
 
-  const config = await loadConfig({}, args, platformaticRuntime)
+  let config = await loadConfig({}, args, platformaticRuntime)
 
-  await additionalSetup?.(root, config, args)
+  if (additionalSetup) {
+    const oldContents = await readFile(configFilePath, 'utf-8')
+    await additionalSetup(root, config, args)
+    const newContents = await readFile(configFilePath, 'utf-8')
+
+    if (newContents !== oldContents) {
+      config = await loadConfig({}, args, platformaticRuntime)
+    }
+  }
+
   // Ensure the dependencies
   await ensureDependencies(config)
 
