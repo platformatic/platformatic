@@ -330,7 +330,7 @@ test('should send a span for a route with a parametric path', async () => {
   equal(span.attributes['http.request.method'], 'GET')
   equal(span.attributes['url.full'], 'http://test/test/123')
   equal(span.attributes['url.path'], '/test/123')
-  equal(span.attributes['http.route'], '/test/{id}')
+  equal(span.attributes['http.route'], '/test/:id')
   equal(span.attributes['http.response.status_code'], 200)
   equal(span.attributes['url.scheme'], 'http')
   equal(span.attributes['server.address'], 'test')
