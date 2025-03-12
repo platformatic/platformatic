@@ -9,6 +9,7 @@ let baseUrl = ''
 let defaultHeaders = {}
 // The additional parameters you want to pass to the `fetch` instance.
 let defaultFetchParams = {}
+const defaultJsonType = { 'Content-type': 'application/json; charset=utf-8' }
 
 function sanitizeUrl(url: string) : string {
   if (url.endsWith('/')) { return url.slice(0, -1) } else { return url }

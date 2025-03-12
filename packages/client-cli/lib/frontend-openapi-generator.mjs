@@ -49,6 +49,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
   writer.writeLine('let defaultHeaders = {}')
   writer.writeLine('// The additional parameters you want to pass to the `fetch` instance.')
   writer.writeLine('let defaultFetchParams = {}')
+  writer.writeLine("const defaultJsonType = { 'Content-type': 'application/json; charset=utf-8' }")
   writer.newLine()
   if (isTsLang) {
     writer.write('function sanitizeUrl(url: string) : string ').block(() => {
@@ -128,6 +129,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
     }
     allOperations.push(operationId)
     const { method, path } = operation
+    const isGetMethod = method === 'get'
 
     // Only dealing with success responses
     const successResponses = Object.entries(responses).filter(([s]) => s.startsWith('2'))
@@ -192,12 +194,17 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         writer.blankLine()
       }
       const reqBody = fullRequest ? 'request.body' : 'request'
+      if (!isGetMethod) {
+        writer.writeLine(`const body = ${fullRequest ? `'body' in request ? (${reqBody}) : undefined` : reqBody}`)
+        writer.writeLine('const isFormData = body instanceof FormData')
+      }
+
       writer.write(`const headers${isTsLang ? ': HeadersInit' : ''} =`).block(() => {
-        if (method === 'get') {
+        if (isGetMethod) {
           writer.writeLine('...defaultHeaders')
         } else {
           writer.writeLine('...defaultHeaders,')
-          writer.writeLine(`...(${fullRequest ? "'body' in request && " : ''}${reqBody} instanceof FormData ? {} : { 'Content-type': 'application/json; charset=utf-8' })`)
+          writer.writeLine('...(isFormData ? {} : defaultJsonType)')
         }
       })
 
@@ -212,17 +219,12 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
 
       /* eslint-disable-next-line no-template-curly-in-string */
       const searchString = queryParams.length > 0 ? '?${searchParams.toString()}' : ''
-      if (method !== 'get') {
+      if (!isGetMethod) {
         writer
           .write(`const response = await fetch(\`\${url}${stringLiteralPath}${searchString}\`, `)
           .inlineBlock(() => {
             writer.write('method: ').quote().write(method.toUpperCase()).quote().write(',')
-            const body = `${reqBody} instanceof FormData ? ${reqBody} : JSON.stringify(${reqBody})`
-            if (fullRequest) {
-              writer.writeLine(`body: 'body' in request ? (${body}) : undefined,`)
-            } else {
-              writer.writeLine(`body: ${body},`)
-            }
+            writer.writeLine('body: isFormData ? body : JSON.stringify(body),')
             if (withCredentials) {
               writer.writeLine('credentials: \'include\',')
             }
