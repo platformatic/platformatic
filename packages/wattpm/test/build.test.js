@@ -133,7 +133,7 @@ test('update - should update version in package.json files', async t => {
 
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
 
-  const updateProcess = await executeCommand('node', '--import', loader, cliPath, 'update', rootDir)
+  const updateProcess = await executeCommand('node', '--import', loader, cliPath, 'update', '-f', rootDir)
 
   const rootPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'package.json'))
   const mainPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/main/package.json'))
@@ -148,7 +148,7 @@ test('update - should update version in package.json files', async t => {
     '@platformatic/node': '^2.41.0',
     '@platformatic/remix': '~2.5.5',
     '@platformatic/db': '~1.15.1',
-    '@platformatic/vite': '>1'
+    '@platformatic/vite': '^3.4.1'
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
@@ -187,6 +187,7 @@ test('update - should work when executed inside a service folder', async t => {
     loader,
     cliPath,
     'update',
+    '-f',
     resolve(rootDir, 'web/main')
   )
 
@@ -197,7 +198,7 @@ test('update - should work when executed inside a service folder', async t => {
     '@platformatic/node': '^2.41.0',
     '@platformatic/remix': '~2.5.5',
     '@platformatic/db': '~1.15.1',
-    '@platformatic/vite': '>1'
+    '@platformatic/vite': '^3.4.1'
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
@@ -216,4 +217,44 @@ test('update - should work when executed inside a service folder', async t => {
     )
   )
   ok(updateProcess.stdout.includes('All dependencies have been updated.'))
+})
+
+test('update - should fail when a dependency cannot be updated', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
+
+  const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
+
+  const updateProcess = await executeCommand('node', '--import', loader, cliPath, 'update', rootDir, { reject: false })
+
+  const rootPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'package.json'))
+  const mainPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/main/package.json'))
+  const anotherPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/another/package.json'))
+
+  deepStrictEqual(rootPackageJson.dependencies, {
+    wattpm: '^2.41.0',
+    '@platformatic/runtime': '^2.41.0'
+  })
+
+  deepStrictEqual(mainPackageJson.dependencies, {
+    '@platformatic/db': '~1.1.0 || ~1.15.0',
+    '@platformatic/node': '^2.0.0',
+    '@platformatic/remix': '~2.5.0',
+    '@platformatic/vite': '>1'
+  })
+
+  deepStrictEqual(mainPackageJson.devDependencies, {
+    '@platformatic/config': '^2.0.0'
+  })
+
+  deepStrictEqual(anotherPackageJson.dependencies, {
+    '@platformatic/service': '^2.41.0',
+    '@platformatic/db': '^1.53.4',
+    '@platformatic/db-dashboard': '^0.1.0'
+  })
+
+  ok(
+    updateProcess.stdout.includes(
+      'Dependency @platformatic/vite of the service main requires a non-updatable range >1. Try again with -f/--force to update to the latest version.'
+    )
+  )
 })
