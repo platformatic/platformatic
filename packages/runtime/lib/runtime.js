@@ -1675,20 +1675,21 @@ class Runtime extends EventEmitter {
   }
 
   #handleWorkerStandardStreams (worker, serviceId, workerId) {
-    const pinoOptions = { level: 'trace', name: serviceId }
+    const binding = { name: serviceId }
 
     if (typeof workerId !== 'undefined') {
-      pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: workerId }
+      binding.worker = workerId
     }
 
-    const logger = this.logger.child(pinoOptions)
+    const logger = this.logger.child(binding, { level: 'trace' })
 
     const selectors = {
       stdout: { level: 'info', caller: 'STDOUT' },
       stderr: { level: 'error', caller: 'STDERR' }
     }
 
-    worker.stdout.pipe(split2()).on('data', raw => {
+    worker.stdout.setEncoding('utf8')
+    worker.stdout.on('data', raw => {
       let selector = selectors.stdout
 
       if (raw.includes(kStderrMarker)) {
@@ -1701,39 +1702,52 @@ class Runtime extends EventEmitter {
 
     // Whatever is outputted here, it come from a direct process.stderr.write in the thread.
     // There's nothing we can do about it in regard of out of order logs due to a Node bug.
-    worker.stderr.pipe(split2()).on('data', raw => {
+    worker.stderr.setEncoding('utf8')
+    worker.stderr.on('data', raw => {
       this.#forwardThreadLog(logger, selectors.stderr, raw)
     })
   }
 
-  #forwardThreadLog (logger, { level, caller }, raw) {
+  #forwardThreadLog (logger, { level, caller }, data) {
     if (!this.#loggerDestination) {
       return
     }
 
-    // Attempt to check if the message is already in pino format. If so, we directly write it to the destination
-    let message
-    try {
-      message = JSON.parse(raw)
-    } catch (e) {
-      // No-op, we assume the message is raw
-    }
+    let plainMessages = ''
+    for (const raw of data.split('\n')) {
+      // First of all, try to parse the message as JSON
+      let message
+      try {
+        message = JSON.parse(raw)
+      } catch (e) {
+        // No-op, we assume the message is raw
+      }
 
-    // Not a pino message, output it
-    if (!message) {
-      // Log the message
-      logger[level]({ caller }, raw.replace(/\n$/, ''))
-    } else if (typeof message?.level === 'number' && typeof message?.time === 'number') {
+      // Not a Pino JSON, accumulate the message and continue
+      if (typeof message?.level !== 'number' || typeof message?.time !== 'number') {
+        plainMessages += (plainMessages.length ? '\n' : '') + raw
+        continue
+      }
+
+      // Before continuing, write any previous plain messages
+      if (plainMessages.length > 0) {
+        logger[level]({ caller }, plainMessages.replace(/\n$/, ''))
+        plainMessages = ''
+      }
+
+      // Now we directly write to the Pino destination
       this.#loggerDestination.lastLevel = message.level
       this.#loggerDestination.lastTime = message.time
       this.#loggerDestination.lastMsg = message.msg
       this.#loggerDestination.lastObj = message
       this.#loggerDestination.lastLogger = logger
 
-      // Remember to add '\n' back as split2 removed it
       this.#loggerDestination.write(raw + '\n')
-    } else {
-      logger[level]({ payload: message })
+    }
+
+    // Write whatever is left
+    if (plainMessages.length > 0) {
+      logger[level]({ caller }, plainMessages.replace(/\n$/, ''))
     }
   }
 

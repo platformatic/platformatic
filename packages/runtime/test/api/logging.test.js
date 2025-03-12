@@ -2,16 +2,34 @@
 
 const { ok, strictEqual, deepStrictEqual } = require('node:assert')
 const { join } = require('node:path')
-const { hostname: getHostname } = require('node:os')
+const { hostname: getHostname, tmpdir } = require('node:os')
 const { test } = require('node:test')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { Client } = require('undici')
 
 const { loadConfig } = require('@platformatic/config')
+const { safeRemove } = require('@platformatic/utils')
 const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
+function hideLogs (t) {
+  const originalEnv = process.env.PLT_RUNTIME_LOGGER_STDOUT
+
+  if (!originalEnv) {
+    return
+  }
+
+  process.env.PLT_RUNTIME_LOGGER_STDOUT = join(tmpdir(), `test-runtime-${process.pid}-${Date.now()}-stdout.log`)
+
+  t.after(async () => {
+    await safeRemove(process.env.PLT_RUNTIME_LOGGER_STDOUT)
+    process.env.PLT_RUNTIME_LOGGER_STDOUT = originalEnv
+  })
+}
+
 test('logs stdio from the service thread', async t => {
+  hideLogs(t)
+
   const configFile = join(fixturesDir, 'configs', 'service-with-stdio.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
@@ -139,15 +157,7 @@ test('logs stdio from the service thread', async t => {
         pid,
         hostname,
         name: 'stdio',
-        msg: 'This is a',
-        payload: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: 'stdio',
-        msg: ' console.log',
+        msg: 'This is a\n console.log',
         payload: undefined
       },
       {
@@ -155,15 +165,7 @@ test('logs stdio from the service thread', async t => {
         pid,
         hostname,
         name: 'stdio',
-        msg: 'This is a',
-        payload: undefined
-      },
-      {
-        level: 50,
-        pid,
-        hostname,
-        name: 'stdio',
-        msg: ' console.error',
+        msg: 'This is a\n console.error',
         payload: undefined
       },
       {
@@ -171,8 +173,8 @@ test('logs stdio from the service thread', async t => {
         pid,
         hostname,
         name: 'stdio',
-        msg: undefined,
-        payload: { ts: '123', foo: 'bar' }
+        msg: JSON.stringify({ ts: '123', foo: 'bar' }),
+        payload: undefined
       },
       {
         level: 30,
@@ -219,6 +221,8 @@ test('logs stdio from the service thread', async t => {
 })
 
 test('logs with caller info', async t => {
+  hideLogs(t)
+
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
