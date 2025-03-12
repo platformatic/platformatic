@@ -30,14 +30,11 @@ const { name: moduleName, version: moduleVersion } = require('../package.json')
 // - zipkin (https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-exporter-zipkin/README.md)
 // - memory: for testing
 
-const extractRoute = (request) => {
-  if (request.routeOptions?.url) {
-    return formatParamUrl(request.routeOptions.url)
-  }
-  return null
-}
-
 function formatSpanName (request, route) {
+  if (route) {
+    route = formatParamUrl(route)
+  }
+
   const { method, url } = request
   return `${method} ${route ?? url}`
 }
@@ -181,7 +178,7 @@ function setupTelemetry (opts, logger) {
       fastifyTextMapGetter
     )
 
-    const route = extractRoute(request)
+    const route = request.routeOptions?.url ?? null
     const span = tracer.startSpan(formatSpanName(request, route), {}, context)
     span.kind = SpanKind.SERVER
     // Next 2 lines are needed by W3CTraceContextPropagator
@@ -368,6 +365,5 @@ function setupTelemetry (opts, logger) {
 module.exports = {
   setupTelemetry,
   formatSpanName,
-  formatSpanAttributes,
-  extractRoute
+  formatSpanAttributes
 }
