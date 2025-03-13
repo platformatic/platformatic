@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-openapi",
-  "version": "2.50.0",
+  "version": "2.53.0",
   "description": "Map a SQL database to OpenAPI, for Fastify",
   "main": "index.js",
   "types": "index.d.ts",
@@ -45,7 +45,7 @@
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/sql-json-schema-mapper": "workspace:*",
     "@platformatic/utils": "workspace:*",
-    "@scalar/fastify-api-reference": "1.25.122",
+    "@scalar/fastify-api-reference": "1.26.2",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^5.0.0",
     "inflected": "^2.1.0"

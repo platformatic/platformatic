@@ -55,6 +55,7 @@ test('should trace a request not failing', async () => {
   equal(span.name, 'GET /test')
   equal(span.status.code, SpanStatusCode.OK)
   equal(span.attributes['http.request.method'], 'GET')
+  equal(span.attributes['http.route'], '/test')
   equal(span.attributes['url.path'], '/test')
   equal(span.attributes['http.response.status_code'], 200)
   equal(span.attributes['url.scheme'], 'http')
@@ -95,7 +96,9 @@ test('should not put query in `url.path', async () => {
   equal(span.name, 'GET /test')
   equal(span.status.code, SpanStatusCode.OK)
   equal(span.attributes['http.request.method'], 'GET')
+  equal(span.attributes['url.full'], 'http://test/test?foo=bar')
   equal(span.attributes['url.path'], '/test')
+  equal(span.attributes['url.query'], 'foo=bar')
   equal(span.attributes['http.response.status_code'], 200)
   equal(span.attributes['url.scheme'], 'http')
   equal(span.attributes['server.address'], 'test')
@@ -294,7 +297,7 @@ test('should not trace if the operation is skipped', async () => {
   equal(finishedSpans.length, 0)
 })
 
-test('should not put the URL param in path', async () => {
+test('should send a span for a route with a parametric path', async () => {
   const handler = async (request, reply) => {
     return { foo: 'bar' }
   }
@@ -325,7 +328,9 @@ test('should not put the URL param in path', async () => {
   equal(span.name, 'GET /test/{id}')
   equal(span.status.code, SpanStatusCode.OK)
   equal(span.attributes['http.request.method'], 'GET')
-  equal(span.attributes['url.path'], '/test/{id}')
+  equal(span.attributes['url.full'], 'http://test/test/123')
+  equal(span.attributes['url.path'], '/test/123')
+  equal(span.attributes['http.route'], '/test/:id')
   equal(span.attributes['http.response.status_code'], 200)
   equal(span.attributes['url.scheme'], 'http')
   equal(span.attributes['server.address'], 'test')

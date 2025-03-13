@@ -95,6 +95,7 @@ test('creates the spans for the graphql mutation', async (t) => {
 
   equal(httpSpan.name, 'POST /graphql')
   equal(httpSpan.attributes['http.request.method'], 'POST')
+  equal(httpSpan.attributes['http.route'], '/graphql')
   equal(httpSpan.attributes['url.path'], '/graphql')
   equal(httpSpan.attributes['http.response.status_code'], 200)
 

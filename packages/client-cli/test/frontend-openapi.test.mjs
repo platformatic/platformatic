@@ -351,14 +351,16 @@ const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<T
     })
   }
 
+  const body = request
+  const isFormData = body instanceof FormData
   const headers: HeadersInit = {
     ...defaultHeaders,
-    'Content-type': 'application/json; charset=utf-8'
+    ...(isFormData ? {} : defaultJsonType)
   }
 
   const response = await fetch(\`\${url}/?\${searchParams.toString()}\`, {
     method: 'POST',
-    body: JSON.stringify(request),
+    body: isFormData ? body : JSON.stringify(body),
     headers,
     ...defaultFetchParams
   })
@@ -375,9 +377,11 @@ test('handle headers parameters', async (t) => {
   const implementation = await readFile(join(dir, 'fontend', 'fontend.ts'), 'utf8')
 
   const tsImplementationTemplate = `const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<Types.PostRootResponses> => {
+  const body = request
+  const isFormData = body instanceof FormData
   const headers: HeadersInit = {
     ...defaultHeaders,
-    'Content-type': 'application/json; charset=utf-8'
+    ...(isFormData ? {} : defaultJsonType)
   }
   if (request && request['level'] !== undefined) {
     headers['level'] = request['level']
@@ -390,7 +394,7 @@ test('handle headers parameters', async (t) => {
 
   const response = await fetch(\`\${url}/\`, {
     method: 'POST',
-    body: JSON.stringify(request),
+    body: isFormData ? body : JSON.stringify(body),
     headers,
     ...defaultFetchParams
   })`
@@ -609,6 +613,367 @@ test('serialize correctly array query parameters', async (t) => {
   }
 })
 
+test('integration test for FormData handling', async (t) => {
+  const fixturesDir = join(__dirname, 'fixtures', 'form-data')
+  try {
+    await fs.unlink(join(fixturesDir, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+
+  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.register(import('@fastify/multipart'))
+
+  await app.start()
+  const dir = await moveToTmpdir(after)
+
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'formdata', '--frontend'])
+  const testFile = `
+'use strict'
+
+import build from './formdata.mjs'
+const client = build('${app.url}')
+
+// Create FormData instance
+const formData = new FormData()
+formData.append('file', new Blob(['test content'], { type: 'text/plain' }), 'test.txt')
+formData.append('description', 'Test file upload')
+
+// Test FormData submission
+const response = await client.uploadFile(formData)
+console.log('FormData response:', response)
+`
+
+  await writeFile(join(dir, 'formdata', 'test.mjs'), testFile)
+
+  const output = await execa('node', [join(dir, 'formdata', 'test.mjs')])
+  /* eslint-disable no-control-regex */
+  const [line] = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n')
+  equal(line, "FormData response: { success: true, fileName: 'test.txt' }")
+})
+
+test('integration test for custom fetch parameters', async (t) => {
+  const fixturesDir = join(__dirname, 'fixtures', 'fetch-params')
+  try {
+    await fs.unlink(join(fixturesDir, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+
+  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+  const dir = await moveToTmpdir(after)
+
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'fetch-params', '--frontend'])
+  const testFile = `
+'use strict'
+
+import build, { setDefaultFetchParams } from './fetch-params.mjs'
+
+// Create a client with custom fetch parameters
+const client = build('${app.url}')
+setDefaultFetchParams({ 
+  cache: 'no-store',
+  mode: 'cors'
+})
+
+// Test that fetch parameters are correctly applied
+console.log(await client.getRequestInfo())
+`
+
+  await writeFile(join(dir, 'fetch-params', 'test.mjs'), testFile)
+
+  const output = await execa('node', [join(dir, 'fetch-params', 'test.mjs')])
+  /* eslint-disable no-control-regex */
+  const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n')
+  equal(lines[0], '{ method: \'GET\', cache: \'no-store\', mode: \'cors\' }')
+})
+
+test('integration test for allOf and anyOf schema types', async (t) => {
+  const fixturesDir = join(__dirname, 'fixtures', 'allof-anyof-schema')
+  try {
+    await fs.unlink(join(fixturesDir, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+
+  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+  const dir = await moveToTmpdir(after)
+
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'combined-types', '--frontend'])
+  const testFile = `
+'use strict'
+
+import build from './combined-types.mjs'
+const client = build('${app.url}')
+
+// Test with combined schema
+console.log('Combined schema response:', await client.getCombinedExample({
+  id: 'test-id-123'
+}))
+
+// Test with discriminated schema
+console.log('Type A response:', await client.postTypeExample({
+  objectType: 'typeA',
+  valueA: 'test value A'
+}))
+
+console.log('Type B response:', await client.postTypeExample({
+  objectType: 'typeB',
+  valueB: 42
+}))
+`
+
+  await writeFile(join(dir, 'combined-types', 'test.mjs'), testFile)
+
+  const output = await execa('node', [join(dir, 'combined-types', 'test.mjs')])
+  /* eslint-disable no-control-regex */
+  const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n')
+
+  equal(lines[0], 'Combined schema response: {')
+  equal(lines[1], "  id: 'test-id-123',")
+  equal(lines[2], "  name: 'combined example',")
+  equal(lines[3], "  description: 'Combined properties',")
+  equal(lines[4], "  timestamp: '2023-01-01T00:00:00Z'")
+  equal(lines[6], "Type A response: { result: 'typeA', originalValue: 'test value A' }")
+  equal(lines[7], "Type B response: { result: 'typeB', originalValue: 42 }")
+})
+
+test('integration test for optional headers', async (t) => {
+  const fixturesDir = join(__dirname, 'fixtures', 'optional-headers')
+  try {
+    await fs.unlink(join(fixturesDir, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+
+  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+  const dir = await moveToTmpdir(after)
+
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'optheaders', '--frontend'])
+  const testFile = `
+'use strict'
+
+import build from './optheaders.mjs'
+const client = build('${app.url}')
+
+// Test with all headers
+console.log('With all headers:', await client.getHeadersInfo({ 
+  requiredHeader: 'must-be-present',
+  optionalHeader: 'sometimes-present'
+}))
+
+// Test with only required header
+console.log('Only required header:', await client.getHeadersInfo({ 
+  requiredHeader: 'must-be-present'
+}))
+`
+
+  await writeFile(join(dir, 'optheaders', 'test.mjs'), testFile)
+
+  const output = await execa('node', [join(dir, 'optheaders', 'test.mjs')])
+  /* eslint-disable no-control-regex */
+  const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n')
+
+  ok(lines[1].includes("requiredHeader: 'must-be-present'"))
+  ok(lines[2].includes("optionalHeader: 'sometimes-present'"))
+  equal(lines[4], "Only required header: { requiredHeader: 'must-be-present', optionalHeader: null }")
+})
+
+test('integration test for optional query parameters', async (t) => {
+  const fixturesDir = join(__dirname, 'fixtures', 'optional-query-params')
+  try {
+    await fs.unlink(join(fixturesDir, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+
+  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+  const dir = await moveToTmpdir(after)
+
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'optparams', '--frontend'])
+  const testFile = `
+'use strict'
+
+import build from './optparams.mjs'
+const client = build('${app.url}')
+
+// Test with all parameters
+console.log('With all parameters:', await client.getOptionalParams({ 
+  required: 'always-here', 
+  optional: 'sometimes-here' 
+}))
+
+// Test with only required parameters
+console.log('Only required parameter:', await client.getOptionalParams({ 
+  required: 'always-here' 
+}))
+`
+
+  await writeFile(join(dir, 'optparams', 'test.mjs'), testFile)
+
+  const output = await execa('node', [join(dir, 'optparams', 'test.mjs')])
+  /* eslint-disable no-control-regex */
+  const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n')
+
+  equal(lines[0], 'With all parameters: { required: \'always-here\', optional: \'sometimes-here\' }')
+  equal(lines[1], 'Only required parameter: { required: \'always-here\', optional: null }')
+})
+
+test('integration test for JSON and text response types', async (t) => {
+  const fixturesDir = join(__dirname, 'fixtures', 'content-types')
+  try {
+    await fs.unlink(join(fixturesDir, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+
+  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+  const dir = await moveToTmpdir(after)
+
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'content-types', '--frontend'])
+  const testFile = `
+'use strict'
+
+import build from './content-types.mjs'
+const client = build('${app.url}')
+
+// Test JSON response
+const jsonResponse = await client.getJsonData({})
+console.log('JSON response type:', typeof jsonResponse)
+console.log('JSON response value:', JSON.stringify(jsonResponse))
+
+// Test text response
+const textResponse = await client.getTextData({})
+console.log('Text response type:', typeof textResponse)
+console.log('Text response value:', textResponse)
+`
+
+  await writeFile(join(dir, 'content-types', 'test.mjs'), testFile)
+
+  const output = await execa('node', [join(dir, 'content-types', 'test.mjs')])
+  /* eslint-disable no-control-regex */
+  const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n')
+
+  equal(lines[0], 'JSON response type: object')
+  ok(lines[1].includes('"name":"JSON data"'))
+  ok(lines[1].includes('"id":123'))
+
+  equal(lines[2], 'Text response type: string')
+  equal(lines[3], 'Text response value: This is plain text data')
+})
+
+test('integration test for simple 200 response with --full option', async (t) => {
+  const fixturesDir = join(__dirname, 'fixtures', 'full-response-simple')
+  try {
+    await fs.unlink(join(fixturesDir, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+
+  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+  const dir = await moveToTmpdir(after)
+
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'fullresponse', '--frontend', '--full'])
+
+  const testFile = `
+'use strict'
+
+import build from './fullresponse.mjs'
+const client = build('${app.url}')
+
+// Test 200 response with full response option
+const response = await client.getSimpleObject({})
+console.log('Response type:', typeof response)
+console.log('Response structure has statusCode:', 'statusCode' in response)
+console.log('Response structure has headers:', 'headers' in response)
+console.log('Response structure has body:', 'body' in response)
+console.log('Response statusCode:', response.statusCode)
+console.log('Response body:', JSON.stringify(response.body))
+`
+
+  await writeFile(join(dir, 'fullresponse', 'test.mjs'), testFile)
+
+  const output = await execa('node', [join(dir, 'fullresponse', 'test.mjs')])
+
+  /* eslint-disable no-control-regex */
+  const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n')
+
+  equal(lines[0], 'Response type: object')
+  equal(lines[1], 'Response structure has statusCode: true')
+  equal(lines[2], 'Response structure has headers: true')
+  equal(lines[3], 'Response structure has body: true')
+  equal(lines[4], 'Response statusCode: 200')
+  equal(lines[5], 'Response body: {"name":"simple object","value":42,"active":true}')
+})
+
+test('integration test for 204 No Content responses', async (t) => {
+  const fixturesDir = join(__dirname, 'fixtures', 'no-content-response')
+  try {
+    await fs.unlink(join(fixturesDir, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+
+  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+  const dir = await moveToTmpdir(after)
+
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'nocontent', '--frontend'])
+  const testFile = `
+'use strict'
+
+import build from './nocontent.mjs'
+const client = build('${app.url}')
+
+console.log('DELETE response:', await client.deleteResource({}))
+`
+
+  await writeFile(join(dir, 'nocontent', 'test.mjs'), testFile)
+
+  const output = await execa('node', [join(dir, 'nocontent', 'test.mjs')])
+  /* eslint-disable no-control-regex */
+  const line = output.stdout.replace(/\u001b\[.*?m/g, '')
+  ok(line.includes("body: ''"))
+})
+
 test('integration test for query parameters', async (t) => {
   const fixturesDir = join(__dirname, 'fixtures', 'array-query-params')
   try {
@@ -699,7 +1064,7 @@ test('add credentials: include in client implementation from file', async (t) =>
     const expectedPostMethod = `
   const response = await fetch(\`\${url}/movies/\${request['id']}?\${searchParams.toString()}\`, {
     method: 'POST',
-    body: JSON.stringify(request),
+    body: isFormData ? body : JSON.stringify(body),
     credentials: 'include',
     headers,
     ...defaultFetchParams
@@ -736,7 +1101,7 @@ test('add credentials: include in client implementation from url', async (t) => 
   const expectedPostMethod = `
   const response = await fetch(\`\${url}/foobar\`, {
     method: 'POST',
-    body: JSON.stringify(request),
+    body: isFormData ? body : JSON.stringify(body),
     credentials: 'include',
     headers,
     ...defaultFetchParams
@@ -805,7 +1170,7 @@ test('frontend client with full option', async (t) => {
     headers['headerId'] = request.headers['headerId']
     delete request.headers['headerId']
   }`))
-  ok(implementation.includes("body: 'body' in request ? JSON.stringify(request.body) : undefined,"))
+  ok(implementation.includes('body: isFormData ? body : JSON.stringify(body),'))
 
   const types = await readFile(join(dir, 'full-opt', 'full-opt-types.d.ts'), 'utf-8')
   ok(types.includes(`export type PostHelloRequest = {

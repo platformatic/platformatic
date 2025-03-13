@@ -86,6 +86,63 @@ export async function installDependencies (logger, root, services, production, p
   }
 }
 
+async function updateDependencies (logger, availableVersions, path, target, force) {
+  // Parse the configuration file, if any
+  const packageJsonPath = resolve(path, 'package.json')
+
+  if (!existsSync(packageJsonPath)) {
+    return
+  }
+
+  let updated = false
+  const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf-8'))
+
+  for (const section of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {
+    const sectionLabel = section === 'dependencies' ? '' : ` (${bold(section)})`
+    for (const [pkg, range] of Object.entries(packageJson[section] ?? {})) {
+      let specifier = range[0]
+
+      if (!packages.includes(pkg)) {
+        continue
+      }
+
+      let newRange
+      if (specifier !== '^' && specifier !== '~') {
+        if (!force) {
+          logger.fatal(
+            `Dependency ${bold(pkg)} of ${target}${sectionLabel} requires a non-updatable range ${bold(range)}. Try again with ${bold('-f/--force')} to update to the latest version.`
+          )
+        }
+
+        specifier = '^'
+        newRange = availableVersions[0]
+      } else {
+        newRange = availableVersions.find(v => satisfies(v, range))
+      }
+
+      // Nothing new, move on
+      if (!newRange) {
+        continue
+      }
+
+      newRange = specifier + newRange
+
+      if (newRange && specifier + newRange !== range) {
+        updated = true
+        logger.info(
+          `Updating dependency ${bold(pkg)} of ${target}${sectionLabel} from ${bold(range)} to ${bold(newRange)} ...`
+        )
+
+        packageJson[section][pkg] = newRange
+      }
+    }
+  }
+
+  if (updated) {
+    await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2))
+  }
+}
+
 export async function buildCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
   /* c8 ignore next */
@@ -152,7 +209,19 @@ export async function installCommand (logger, args) {
 }
 
 export async function updateCommand (logger, args) {
-  const { positionals } = parseArgs(args, {}, false)
+  const {
+    positionals,
+    values: { force }
+  } = parseArgs(
+    args,
+    {
+      force: {
+        type: 'boolean',
+        short: 'f'
+      }
+    },
+    false
+  )
 
   /* c8 ignore next */
   const root = getRoot(positionals)
@@ -176,54 +245,11 @@ export async function updateCommand (logger, args) {
       .map(s => s.version)
   )
 
+  await updateDependencies(logger, availableVersions, root, `the ${bold('application')}`, force)
+
   // Now, for all the services in the configuration file, update the dependencies
   for (const service of services) {
-    // Parse the configuration file, if any
-    const packageJsonPath = resolve(service.path, 'package.json')
-    if (!existsSync(packageJsonPath)) {
-      continue
-    }
-
-    let updated = false
-    const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf-8'))
-
-    for (const section of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {
-      const sectionLabel = section === 'dependencies' ? '' : ` (${bold(section)})`
-      for (const [pkg, range] of Object.entries(packageJson[section] ?? {})) {
-        const specifier = range[0]
-
-        if (!packages.includes(pkg)) {
-          continue
-        }
-
-        if (specifier !== '^' && specifier !== '~') {
-          continue
-        }
-
-        // Search the first version that satisfies the range
-        let newRange = availableVersions.find(v => satisfies(v, range))
-
-        // Nothing new, move on
-        if (!newRange) {
-          continue
-        }
-
-        newRange = specifier + newRange
-
-        if (newRange && specifier + newRange !== range) {
-          updated = true
-          logger.info(
-            `Updating dependency ${bold(pkg)} of service ${bold(service.id)}${sectionLabel} from ${bold(range)} to ${bold(newRange)} ...`
-          )
-
-          packageJson[section][pkg] = newRange
-        }
-      }
-    }
-
-    if (updated) {
-      await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2))
-    }
+    await updateDependencies(logger, availableVersions, service.path, `the service ${bold(service.id)}`, force)
   }
 
   logger.done('All dependencies have been updated.')
@@ -267,6 +293,12 @@ export const help = {
       {
         name: 'root',
         description: 'The directory containing the application (the default is the current directory)'
+      }
+    ],
+    options: [
+      {
+        usage: '-f --force',
+        description: 'Force dependencies update even if it violates the package.json version range'
       }
     ]
   }

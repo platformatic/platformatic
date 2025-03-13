@@ -1,7 +1,7 @@
 'use strict'
 
 const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
-const { formatSpanName, formatSpanAttributes, extractPath } = require('./telemetry-config')
+const { formatSpanName, formatSpanAttributes } = require('./telemetry-config')
 const api = require('@opentelemetry/api')
 const fastUri = require('fast-uri')
 const packageJson = require('../package.json')
@@ -12,9 +12,9 @@ const createTelemetryThreadInterceptorHooks = () => {
   const onServerRequest = (req, cb) => {
     const activeContext = api.propagation.extract(api.context.active(), req.headers)
 
-    const path = extractPath(req)
-    const span = tracer.startSpan(formatSpanName(req, path), {
-      attributes: formatSpanAttributes.request(req, path),
+    const route = req.routeOptions?.url ?? null
+    const span = tracer.startSpan(formatSpanName(req, route), {
+      attributes: formatSpanAttributes.request(req, route),
       kind: SpanKind.SERVER
     }, activeContext)
     const ctx = api.trace.setSpan(activeContext, span)

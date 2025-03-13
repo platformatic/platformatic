@@ -46,6 +46,10 @@ Arguments:
 
 - `root`: The directory containing the application (the default is the current directory)
 
+Options:
+
+- `-f --force`: Force dependencies update even if it violates the package.json version range
+
 ## `dev`
 
 Starts an application in development mode.

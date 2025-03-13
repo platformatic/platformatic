@@ -1,0 +1,17 @@
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "0",
+    "logger": {
+      "level": "error"
+    }
+  },
+  "db": {
+    "connectionString": "sqlite://./db.sqlite",
+    "graphql": true,
+    "openapi": true
+  },
+  "plugins": {
+    "paths": ["./plugin.cjs"]
+  }
+}

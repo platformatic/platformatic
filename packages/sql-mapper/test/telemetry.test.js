@@ -139,6 +139,7 @@ test('should trace a request getting DB from the request and running the query m
     equal(span.name, 'GET /custom-pages')
     equal(span.status.code, SpanStatusCode.OK)
     equal(span.attributes['http.request.method'], 'GET')
+    equal(span.attributes['http.route'], '/custom-pages')
     equal(span.attributes['url.path'], '/custom-pages')
     equal(span.attributes['http.response.status_code'], 200)
     equal(span.attributes['url.scheme'], 'http')

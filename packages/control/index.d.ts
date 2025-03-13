@@ -48,6 +48,7 @@ declare namespace control {
   interface MetricValue {
     value: number,
     labels: {
+      quantile?: number,
       type?: string,
       space?: string,
       version?: string,
@@ -57,7 +58,9 @@ declare namespace control {
       le?: number | string,
       kind?: string,
       serviceId: string
-    }
+    },
+    metricName?: string,
+    exemplar?: unknown
   }
   
   interface Metric {
