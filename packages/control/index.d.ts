@@ -58,7 +58,9 @@ declare namespace control {
       le?: number | string,
       kind?: string,
       serviceId: string
-    }
+    },
+    metricName?: string,
+    exemplar?: unknown
   }
   
   interface Metric {
