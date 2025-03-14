@@ -118,5 +118,8 @@ test('use client interceptors for internal requests', async t => {
   const { statusCode, body } = await request(entryUrl + '/hello')
 
   assert.strictEqual(statusCode, 200)
-  assert.deepStrictEqual(await body.json(), { intercepted: 'true' })
+  assert.deepStrictEqual(await body.json(), {
+    reqIntercepted: 'true',
+    resIntercepted: 'true'
+  })
 })

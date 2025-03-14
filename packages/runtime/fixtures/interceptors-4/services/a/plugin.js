@@ -3,8 +3,12 @@
 const { request } = require('undici')
 
 module.exports = async function (fastify) {
-  fastify.get('/hello', async () => {
-    const { body } = await request('http://b.plt.local/hello')
-    return body.json()
+  fastify.get('/hello', async (req, reply) => {
+    const { headers, body } = await request('http://b.plt.local/hello')
+
+    const resIntercepted = headers['x-res-intercepted']
+    const { intercepted: reqIntercepted } = await body.json()
+
+    return { reqIntercepted, resIntercepted }
   })
 }
