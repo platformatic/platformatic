@@ -168,9 +168,7 @@ async function main () {
     }
   }
 
-  const globalDispatcher = new Agent(dispatcherOpts).compose(composedInterceptors)
-
-  setGlobalDispatcher(globalDispatcher)
+  setGlobalDispatcher(new Agent(dispatcherOpts))
 
   const { telemetry } = service
   const hooks = telemetry ? createTelemetryThreadInterceptorHooks() : {}
@@ -185,27 +183,27 @@ async function main () {
   })
 
   if (config.httpCache) {
-    setGlobalDispatcher(
-      getGlobalDispatcher().compose(
-        httpCacheInterceptor({
-          store: new RemoteCacheStore({
-            onRequest: opts => {
-              globalThis.platformatic?.onHttpCacheRequest?.(opts)
-            },
-            onCacheHit: opts => {
-              globalThis.platformatic?.onHttpCacheHit?.(opts)
-            },
-            onCacheMiss: opts => {
-              globalThis.platformatic?.onHttpCacheMiss?.(opts)
-            },
-            logger: globalThis.platformatic.logger
-          }),
-          methods: config.httpCache.methods ?? ['GET', 'HEAD'],
-          logger: globalThis.platformatic.logger
-        })
-      )
-    )
+    const cacheInterceptor = httpCacheInterceptor({
+      store: new RemoteCacheStore({
+        onRequest: opts => {
+          globalThis.platformatic?.onHttpCacheRequest?.(opts)
+        },
+        onCacheHit: opts => {
+          globalThis.platformatic?.onHttpCacheHit?.(opts)
+        },
+        onCacheMiss: opts => {
+          globalThis.platformatic?.onHttpCacheMiss?.(opts)
+        },
+        logger: globalThis.platformatic.logger
+      }),
+      methods: config.httpCache.methods ?? ['GET', 'HEAD'],
+      logger: globalThis.platformatic.logger
+    })
+    composedInterceptors.push(cacheInterceptor)
   }
+
+  const globalDispatcher = getGlobalDispatcher()
+  setGlobalDispatcher(globalDispatcher.compose(composedInterceptors))
 
   // If the service is an entrypoint and runtime server config is defined, use it.
   let serverConfig = null

@@ -107,3 +107,19 @@ test('mesh network works from external processes via ChildManager', async t => {
     })
   }
 })
+
+test('use client interceptors for internal requests', async t => {
+  const configFile = join(fixturesDir, 'interceptors-4', 'platformatic.runtime.json')
+  const app = await buildServer(configFile)
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  const { statusCode, body } = await request(entryUrl + '/hello')
+
+  assert.strictEqual(statusCode, 200)
+  assert.deepStrictEqual(await body.json(), {
+    reqIntercepted: 'true',
+    resIntercepted: 'true'
+  })
+})

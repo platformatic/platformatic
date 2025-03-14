@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/service/1.52.0.json",
+  "server": {
+    "logger": {
+      "level": "warn"
+    }
+  },
+  "plugins": {
+    "paths": [{
+      "path": "plugin.js",
+      "encapsulate": false,
+      "options": {
+        "externalService": "{{PLT_EXTERNAL_SERVICE}}"
+      }
+    }]
+  }
+}
