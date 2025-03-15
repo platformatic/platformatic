@@ -1,4 +1,4 @@
-import SharedConfiguration from './_shared-configuration.md'
+import SharedConfiguration from './_shared-configuration.md';
 
 # Configuration
 
