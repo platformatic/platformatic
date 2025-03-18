@@ -191,6 +191,7 @@ const sidebars = {
           items: [
             'guides/deployment/overview',
             'guides/deployment/dockerize-a-watt-app',
+            'guides/deployment/k8s-readiness-liveness',
             'guides/deployment/deploy-to-fly-io-with-sqlite',
             'guides/deployment/advanced-fly-io-deployment',
             'guides/deployment/deploying-on-lambda'
