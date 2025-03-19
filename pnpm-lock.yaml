@@ -1880,8 +1880,8 @@ importers:
         specifier: ^5.5.4
         version: 5.7.3
       undici-oidc-interceptor:
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.6.0
+        version: 0.6.0
       why-is-node-running:
         specifier: ^2.2.2
         version: 2.3.0
@@ -5945,10 +5945,6 @@ packages:
   fast-json-stringify@6.0.1:
     resolution: {integrity: sha512-s7SJE83QKBZwg54dIbD5rCtzOBVD43V1ReWXXYqBgwCwHLYAAT0RQc/FmrQglXqWPpz6omtryJQOau5jI4Nrvg==}
 
-  fast-jwt@4.0.5:
-    resolution: {integrity: sha512-QnpNdn0955GT7SlT8iMgYfhTsityUWysrQjM+Q7bGFijLp6+TNWzlbSMPvgalbrQGRg4ZaHZgMcns5fYOm5avg==}
-    engines: {node: '>=16'}
-
   fast-jwt@5.0.6:
     resolution: {integrity: sha512-LPE7OCGUl11q3ZgW681cEU2d0d2JZ37hhJAmetCgNyW8waVaJVZXhyFF6U2so1Iim58Yc7pfxJe2P7MNetQH2g==}
     engines: {node: '>=20'}
@@ -9278,8 +9274,8 @@ packages:
   underscore@1.12.1:
     resolution: {integrity: sha512-hEQt0+ZLDVUMhebKxL4x1BTtDY7bavVofhZ9KZ4aI26X9SRaE+Y3m83XUL1UP2jn8ynjndwCCpEHdUG+9pP1Tw==}
 
-  undici-oidc-interceptor@0.5.0:
-    resolution: {integrity: sha512-YU6ABaLFxzKZGjBmamrrRTlziIe6/jrEBUEyNEe2ZRtlXULorg6xo+/jsyEPZVizHdrTFFX3ZPEPxrNmO3pOEA==}
+  undici-oidc-interceptor@0.6.0:
+    resolution: {integrity: sha512-9Cddcqv9kLsvsYlGd5wuC9CywgontjyKmhvOC0JUj0HOUzr6nr3zfJZG4NfAEtutLzlyMAiGRq5gNhMqbmxqIw==}
 
   undici-thread-interceptor@0.13.1:
     resolution: {integrity: sha512-XvBAnwEmBJ6/WzJxeeNp7Zudm80NrxBEv662Suw4otO9ctd++U8aKF2QhUooJ08MBveEiAJBWY1fbr7RcsEWZg==}
@@ -13506,13 +13502,6 @@ snapshots:
       fast-uri: 3.0.6
       json-schema-ref-resolver: 2.0.1
       rfdc: 1.4.1
-
-  fast-jwt@4.0.5:
-    dependencies:
-      '@lukeed/ms': 2.0.2
-      asn1.js: 5.4.1
-      ecdsa-sig-formatter: 1.0.11
-      mnemonist: 0.39.8
 
   fast-jwt@5.0.6:
     dependencies:
@@ -17790,10 +17779,10 @@ snapshots:
 
   underscore@1.12.1: {}
 
-  undici-oidc-interceptor@0.5.0:
+  undici-oidc-interceptor@0.6.0:
     dependencies:
-      fast-jwt: 4.0.5
-      undici: 6.21.2
+      fast-jwt: 5.0.6
+      undici: 7.2.3
 
   undici-thread-interceptor@0.13.1:
     dependencies:
