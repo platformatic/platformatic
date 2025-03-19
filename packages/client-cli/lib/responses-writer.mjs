@@ -35,7 +35,7 @@ function responsesWriter (operationId, responsesObject, isFullResponse, writer, 
       const isStatusCodeRange = lowerStatusCode === '1xx' || lowerStatusCode === '2xx' || lowerStatusCode === '3xx' || lowerStatusCode === '4xx' || lowerStatusCode === '5xx'
       if (statusCode === '204') {
         if (isFullResponse) {
-          typeName = 'undefined'
+          typeName = undefined
         } else {
           return 'undefined'
         }
