@@ -1,0 +1,20 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Carlo Martello",
+    "description": "Espone un endpoint di Carlo Martello",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/martello": {
+      "put": {
+        "operationId": "putMartello",
+        "responses": {
+          "204": {
+            "description": "Questo endpoint inserisce Carlo Martello come condottiero capostipite dei sovrani carolingi"
+          }
+        }
+      }
+    }
+  }
+}
