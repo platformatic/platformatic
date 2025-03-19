@@ -248,6 +248,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
       const mappedResponses = getResponseTypes(operation.operation.responses)
       if (currentFullResponse) {
         const allResponseCodes = getAllResponseCodes(operation.operation.responses)
+        const has204Response = allResponseCodes.includes(204)
         Object.keys(mappedResponses).forEach((responseType) => {
           if (mappedResponses[responseType].length > 0) {
             writer.writeLine(`const ${responseType}Responses = [${mappedResponses[responseType].join(', ')}]`)
@@ -260,7 +261,11 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
                   writer.write(',')
                 }
                 writer.writeLine('headers: headersToJSON(response.headers),')
-                writer.writeLine(`body: await response.${responseType}()`)
+                if (has204Response && mappedResponses[responseType].includes(204)) {
+                  writer.writeLine(`body: response.status === 204 ? undefined: await response.${responseType}()`)
+                } else {
+                  writer.writeLine(`body: await response.${responseType}()`)
+                }
               })
             })
           }
@@ -284,6 +289,13 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
         })
 
         writer.blankLine()
+
+        const has204Response = Object.keys(operation.operation.responses).includes('204')
+        if (has204Response) {
+          writer.write('if (response.status === 204) ').block(() => {
+            writer.writeLine('return undefined')
+          })
+        }
         if (is200JsonResponse(operation.operation.responses)) {
           writer.writeLine('return await response.json()')
         } else {
