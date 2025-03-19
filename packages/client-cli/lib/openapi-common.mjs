@@ -122,7 +122,7 @@ export function writeOperations (interfacesWriter, mainWriter, operations, { ful
     mainWriter.writeLine(' * @param req - request parameters object')
     mainWriter.writeLine(` * @returns the API response${fullResponse ? '' : ' body'}`)
     mainWriter.writeLine(' */')
-    mainWriter.writeLine(`${camelCaseOperationId}(req: ${operationRequestName}${isRequestArray ? '[]' : ''}): Promise<${allResponsesName}>;`)
+    mainWriter.writeLine(`${camelCaseOperationId}(req: ${operationRequestName}): Promise<${allResponsesName}>;`)
     currentFullResponse = originalFullResponse
     currentFullRequest = originalFullRequest
   }

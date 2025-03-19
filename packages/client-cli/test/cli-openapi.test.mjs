@@ -1111,7 +1111,7 @@ test('requestbody as array', async (t) => {
      * @param req - request parameters object
      * @returns the API response body
      */
-    postFoobar(req: PostFoobarRequest[]): Promise<PostFoobarResponses>;
+    postFoobar(req: PostFoobarRequest): Promise<PostFoobarResponses>;
   }
 `), true)
   equal(data.includes('export type PostFoobarRequest = Array<{ \'id\'?: string; \'title\'?: string }>'), true)
