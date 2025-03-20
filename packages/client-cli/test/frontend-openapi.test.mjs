@@ -971,7 +971,7 @@ console.log('DELETE response:', await client.deleteResource({}))
   const output = await execa('node', [join(dir, 'nocontent', 'test.mjs')])
   /* eslint-disable no-control-regex */
   const line = output.stdout.replace(/\u001b\[.*?m/g, '')
-  ok(line.includes("body: ''"))
+  ok(line.includes('body: undefined'))
 })
 
 test('integration test for query parameters', async (t) => {
