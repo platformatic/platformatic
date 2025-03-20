@@ -138,7 +138,9 @@ function hasDuplicatedParameters (methodMeta) {
 }
 
 async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout, dispatcher) {
-  await $RefParser.dereference(spec)
+  if (validateResponse) {
+    await $RefParser.dereference(spec)
+  }
   const ajv = new Ajv()
   const url = new URL(baseUrl)
   method = method.toUpperCase()
