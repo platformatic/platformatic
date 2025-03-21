@@ -248,7 +248,12 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
       const mappedResponses = getResponseTypes(operation.operation.responses)
       if (currentFullResponse) {
         const allResponseCodes = getAllResponseCodes(operation.operation.responses)
-        const has204Response = allResponseCodes.includes(204)
+        if (allResponseCodes.includes(204)) {
+          mappedResponses.text = mappedResponses.text.filter(code => code !== 204)
+          writer.write('if (response.status === 204)').block(() => {
+            writer.writeLine('return { statusCode: response.status, headers: headersToJSON(response.headers), body: undefined }')
+          })
+        }
         Object.keys(mappedResponses).forEach((responseType) => {
           if (mappedResponses[responseType].length > 0) {
             writer.writeLine(`const ${responseType}Responses = [${mappedResponses[responseType].join(', ')}]`)
@@ -261,11 +266,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
                   writer.write(',')
                 }
                 writer.writeLine('headers: headersToJSON(response.headers),')
-                if (has204Response && mappedResponses[responseType].includes(204)) {
-                  writer.writeLine(`body: response.status === 204 ? undefined: await response.${responseType}()`)
-                } else {
-                  writer.writeLine(`body: await response.${responseType}()`)
-                }
+                writer.writeLine(`body: await response.${responseType}()`)
               })
             })
           }
