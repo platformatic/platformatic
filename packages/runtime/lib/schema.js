@@ -478,6 +478,47 @@ const platformaticRuntimeSchema = {
     sourceMaps: {
       type: 'boolean',
       default: false
+    },
+    scheduler: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          enabled: {
+            type: 'boolean',
+            default: true
+          },
+          name: {
+            type: 'string'
+          },
+          cron: {
+            type: 'string'
+          },
+          callbackUrl: {
+            type: 'string'
+          },
+          method: {
+            type: 'string',
+            enum: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+            default: 'GET'
+          },
+          headers: {
+            type: 'object',
+            additionalProperties: {
+              type: 'string'
+            }
+          },
+          body: {
+            anyOf: [{ type: 'string' }, { type: 'object', additionalProperties: true }]
+          },
+          maxRetries: {
+            type: 'number',
+            minimum: 0,
+            default: 3
+          }
+        },
+        required: ['name', 'cron', 'callbackUrl']
+      }
     }
   },
   anyOf: [{ required: ['autoload'] }, { required: ['services'] }, { required: ['web'] }],
