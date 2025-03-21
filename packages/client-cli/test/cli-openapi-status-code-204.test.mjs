@@ -30,21 +30,65 @@ test(name, async () => {
 
   equal(await isFileAccessible(join(dir, name, name + '.cjs')), false)
 
+  const typeDef = join(dir, name, name + '-types.d.ts')
+  const def = await readFile(typeDef, 'utf-8')
+  ok(def.includes(`export type PutMartelloRequest = {
+  
+}
+
+export type PutMartelloResponseOK = { 'name'?: string; 'value'?: number; 'active'?: boolean }
+export type PutMartelloResponseCreated = boolean
+export type PutMartelloResponseAccepted = unknown
+export type PutMartelloResponseNoContent = unknown
+export type PutMartelloResponses =
+  FullResponse<PutMartelloResponseOK, 200>
+  | FullResponse<PutMartelloResponseCreated, 201>
+  | FullResponse<PutMartelloResponseAccepted, 202>
+  | FullResponse<undefined, 204>
+
+
+
+export interface StatusCode204 {
+  setBaseUrl(newUrl: string): void;
+  setDefaultHeaders(headers: object): void;
+  setDefaultFetchParams(fetchParams: RequestInit): void;
+  /**
+   * @param req - request parameters object
+   * @returns the API response
+   */
+  putMartello(req: PutMartelloRequest): Promise<PutMartelloResponses>;
+}
+type PlatformaticFrontendClient = Omit<StatusCode204, 'setBaseUrl'>
+type BuildOptions = {
+  headers?: object
+}
+export default function build(url: string, options?: BuildOptions): PlatformaticFrontendClient`))
+
   const typeFile = join(dir, name, name + '.ts')
   const data = await readFile(typeFile, 'utf-8')
-
   ok(data.includes(`
-  const textResponses = [204]
+  if (response.status === 204) {
+    return { statusCode: response.status, headers: headersToJSON(response.headers), body: undefined }
+  }
+  const textResponses = [202]
   if (textResponses.includes(response.status)) {
     return {
-      statusCode: response.status as 204,
+      statusCode: response.status as 202,
       headers: headersToJSON(response.headers),
-      body: response.status === 204 ? undefined: await response.text()
+      body: await response.text()
+    }
+  }
+  const jsonResponses = [200, 201]
+  if (jsonResponses.includes(response.status)) {
+    return {
+      statusCode: response.status as 200 | 201,
+      headers: headersToJSON(response.headers),
+      body: await response.json()
     }
   }
   const responseType = response.headers.get('content-type')?.startsWith('application/json') ? 'json' : 'text'
   return {
-    statusCode: response.status as 204,
+    statusCode: response.status as 200 | 201 | 202 | 204,
     headers: headersToJSON(response.headers),
     body: await response[responseType]()
   }
