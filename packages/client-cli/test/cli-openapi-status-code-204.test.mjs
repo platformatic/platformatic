@@ -32,6 +32,7 @@ test(name, async () => {
 
   const typeDef = join(dir, name, name + '-types.d.ts')
   const def = await readFile(typeDef, 'utf-8')
+  console.log('def', def)
   ok(def.includes(`export type PutMartelloRequest = {
   
 }
@@ -44,7 +45,7 @@ export type PutMartelloResponses =
   FullResponse<PutMartelloResponseOK, 200>
   | FullResponse<PutMartelloResponseCreated, 201>
   | FullResponse<PutMartelloResponseAccepted, 202>
-  | FullResponse<unknown, 204>
+  | FullResponse<undefined, 204>
 
 
 
