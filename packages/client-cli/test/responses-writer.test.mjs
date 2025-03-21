@@ -191,7 +191,7 @@ test('support 204 without full response', async () => {
   responsesWriter('FantozziFilini', responses, false, writer)
   assert.equal(writer.toString().trim(), `export type FantozziFiliniResponseNoContent = { 'fantozzi': number; 'filini'?: string }
 export type FantozziFiliniResponses =
-  undefined
+  unknown
 `.trim(), 'result without full response')
 })
 
@@ -217,7 +217,7 @@ test('support 204 with full response', async () => {
   responsesWriter('FiliniFantozzi', responses, true, writer)
   assert.equal(writer.toString().trim(), `export type FiliniFantozziResponseNoContent = { 'filini': number; 'fantozzi'?: string }
 export type FiliniFantozziResponses =
-  FullResponse<undefined, 204>
+  FullResponse<unknown, 204>
 `.trim(), 'result with full response')
 })
 
