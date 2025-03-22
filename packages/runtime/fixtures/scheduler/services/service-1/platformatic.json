@@ -1,0 +1,9 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/service/2.53.2.json",
+  "plugins": {
+    "paths": [
+      "./routes"
+    ],
+    "typescript": false
+  }
+}

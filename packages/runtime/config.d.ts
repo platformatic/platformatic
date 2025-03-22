@@ -216,6 +216,23 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime2532Json = {
     [k: string]: string;
   };
   sourceMaps?: boolean;
+  scheduler?: {
+    enabled?: boolean;
+    name: string;
+    cron: string;
+    callbackUrl: string;
+    method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+    headers?: {
+      [k: string]: string;
+    };
+    body?:
+      | string
+      | {
+          [k: string]: unknown;
+        };
+    maxRetries?: number;
+    [k: string]: unknown;
+  }[];
 };
 
 export interface UndiciInterceptor {

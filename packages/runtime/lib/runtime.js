@@ -18,6 +18,7 @@ const errors = require('./errors')
 const { createLogger } = require('./logger')
 const { startManagementApi } = require('./management-api')
 const { startPrometheusServer } = require('./prom-server')
+const { startScheduler } = require('./scheduler')
 const { createSharedStore } = require('./shared-http-cache')
 const { getRuntimeTmpDir } = require('./utils')
 const { sendViaITC, waitEventFromITC } = require('./worker/itc')
@@ -74,6 +75,7 @@ class Runtime extends EventEmitter {
   #restartingWorkers
   #sharedHttpCache
   servicesConfigsPatches
+  #scheduler
 
   constructor (configManager, runtimeLogsDir, env) {
     super()
@@ -115,6 +117,10 @@ class Runtime extends EventEmitter {
     const [logger, destination] = await createLogger(config, this.#runtimeLogsDir)
     this.logger = logger
     this.#loggerDestination = destination
+
+    if (config.scheduler) {
+      this.#scheduler = startScheduler(config.scheduler, logger)
+    }
 
     this.#isProduction = this.#configManager.args?.production ?? false
     this.#servicesIds = config.services.map(service => service.id)
@@ -263,6 +269,10 @@ class Runtime extends EventEmitter {
   }
 
   async stop (silent = false) {
+    if (this.#scheduler) {
+      await this.#scheduler.stop()
+    }
+
     if (this.#status === 'starting') {
       await once(this, 'started')
     }
@@ -289,6 +299,7 @@ class Runtime extends EventEmitter {
     }
 
     await this.#meshInterceptor.close()
+
     this.#updateStatus('stopped')
   }
 
