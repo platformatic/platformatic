@@ -912,3 +912,62 @@ test('ILIKE', async () => {
 
   deepEqual(await entity.find({ where: { counter: { ilike: null } } }), [], 'where: { counter: { ilike: null } }')
 })
+
+test('pagination can be disabled', async () => {
+  const mapper = await connect({
+    ...connInfo,
+    log: fakeLogger,
+    async onDatabaseLoad (db, sql) {
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
+      ok('onDatabaseLoad called')
+
+      await clear(db, sql)
+
+      if (isSQLite) {
+        await db.query(sql`CREATE TABLE posts (
+          id INTEGER PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT,
+          counter INTEGER
+        );`)
+      } else {
+        await db.query(sql`CREATE TABLE posts (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(42),
+          long_text TEXT,
+          counter INTEGER
+        );`)
+      }
+    },
+  })
+
+  const entity = mapper.entities.post
+  const posts = [{
+    title: 'Dog',
+    longText: 'Foo',
+    counter: 10,
+  }, {
+    title: 'Cat',
+    longText: 'Bar',
+    counter: 20,
+  }, {
+    title: 'Mouse',
+    longText: 'Baz',
+    counter: 30,
+  }, {
+    title: 'Duck',
+    longText: 'A duck tale',
+    counter: 40,
+  }]
+  await entity.insert({
+    inputs: posts,
+  })
+
+  const limit = 2
+  deepEqual((await entity.find({ limit })).length, limit, 'pagination enabled by default')
+  deepEqual((await entity.find({ limit, paginate: true })).length, limit)
+  deepEqual((await entity.find({ limit, paginate: false })).length, posts.length)
+})
