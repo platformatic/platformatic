@@ -118,10 +118,6 @@ class Runtime extends EventEmitter {
     this.logger = logger
     this.#loggerDestination = destination
 
-    if (config.scheduler) {
-      this.#scheduler = startScheduler(config.scheduler, logger)
-    }
-
     this.#isProduction = this.#configManager.args?.production ?? false
     this.#servicesIds = config.services.map(service => service.id)
     this.#workers.configure(config.services, this.#configManager.current.workers, this.#isProduction)
@@ -204,6 +200,10 @@ class Runtime extends EventEmitter {
     }
 
     this.#dispatcher = new Agent(dispatcherOpts).compose(interceptors)
+
+    if (config.scheduler) {
+      this.#scheduler = startScheduler(config.scheduler, this.#dispatcher, logger)
+    }
 
     this.#updateStatus('init')
   }

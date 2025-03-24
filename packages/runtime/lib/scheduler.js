@@ -1,11 +1,15 @@
+'use strict'
+
 const { CronJob, validateCronExpression } = require('cron')
+const { setTimeout } = require('node:timers/promises')
 const { request } = require('undici')
 
 class SchedulerService {
-  constructor (schedulerConfig, logger) {
+  constructor (schedulerConfig, dispatcher, logger) {
     this.logger = logger
     this.jobsConfig = []
     this.cronJobs = []
+    this.dispatcher = dispatcher
     this.validateCronSchedulers(schedulerConfig)
   }
 
@@ -68,18 +72,24 @@ class SchedulerService {
 
         if (delay > 0) {
           this.logger.info(`Retrying scheduler "${scheduler.name}" in ${delay}ms (attempt ${attempt + 1}/${scheduler.maxRetries})`)
-          await new Promise(resolve => setTimeout(resolve, delay))
+          await setTimeout(delay)
         }
         const headers = {
           'x-retry-attempt': attempt + 1,
           ...scheduler.headers
         }
+
         const bodyString = typeof scheduler.body === 'string' ? scheduler.body : JSON.stringify(scheduler.body)
         const response = await request(scheduler.callbackUrl, {
           method: scheduler.method,
           headers,
-          body: bodyString
+          body: bodyString,
+          dispatcher: this.dispatcher
         })
+
+        // Consumes the body, but we are not interested in the body content,
+        // we don't save it anywere, so we just dump it
+        await response.body.dump()
 
         if (response.statusCode >= 200 && response.statusCode < 300) {
           this.logger.info(`Scheduler "${scheduler.name}" executed successfully`)
@@ -99,12 +109,13 @@ class SchedulerService {
   }
 }
 
-const startScheduler = (config, logger) => {
-  const schedulerService = new SchedulerService(config, logger)
+const startScheduler = (config, interceptors, logger) => {
+  const schedulerService = new SchedulerService(config, interceptors, logger)
   schedulerService.start()
   return schedulerService
 }
 
 module.exports = {
-  startScheduler
+  startScheduler,
+  SchedulerService
 }

@@ -6,9 +6,12 @@ const { join } = require('node:path')
 const { loadConfig } = require('@platformatic/config')
 const { platformaticRuntime } = require('..')
 const { buildServer } = require('..')
+const { buildRuntime } = require('../lib/start')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 const Fastify = require('fastify')
 const { once, EventEmitter } = require('events')
+const { setTimeout: sleep } = require('node:timers/promises')
+const { request } = require('undici')
 
 test('Should throw if cron is not valid', async (t) => {
   const ee = new EventEmitter()
@@ -237,4 +240,33 @@ test('Shoud stop retrying after 3 times ', async (t) => {
 
   // 3 attempts, then should be reset
   assert.deepStrictEqual(attempts, [1, 2, 3, 1])
+})
+
+test('Works with the mesh network', async (t) => {
+  const port = 16667
+  const callbackUrl = `http://service.plt.local:${port}/inc`
+
+  const configFile = join(fixturesDir, 'scheduler', 'platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  config.configManager.current.scheduler = [
+    {
+      name: 'test',
+      cron: '*/1 * * * * *', // every second
+      callbackUrl,
+      headers: {
+        'content-type': 'application/json',
+      },
+      method: 'POST',
+    },
+  ]
+  const app = await buildRuntime(config.configManager)
+  t.after(() => app.close())
+
+  const entryUrl = await app.start()
+  await sleep(1500)
+  const res = await request(`${entryUrl}/counter`)
+
+  const body = await res.body.json()
+  const { counter } = body
+  assert.ok(counter > 0)
 })

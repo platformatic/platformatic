@@ -485,7 +485,11 @@ const platformaticRuntimeSchema = {
         type: 'object',
         properties: {
           enabled: {
-            type: 'boolean',
+            anyOf: [{
+              type: 'boolean'
+            }, {
+              type: 'string'
+            }],
             default: true
           },
           name: {

@@ -364,9 +364,9 @@ inside the OS temporary folder.
 ### `scheduler`
 
 An optional array of objects to configure HTTP call triggered by cron jobs.
-Every object has:
+_Every object_ has:
 
-- **`enabled`** (`boolean`): Optional, if `false` is disabled. Default: true.
+- **`enabled`** (`boolean` or `string`). Optional. If `false` the scheduler is disabled. Default: `true`.
 - **`name`** (`string`): The job name
 - **`cron`** (`string`): the crontab schedule expession. See https://crontab.guru/examples.html for some examples.
 - **`callbackUrl`** (`string`): the HTTP URL to be called
