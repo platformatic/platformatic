@@ -40,6 +40,7 @@ class SchedulerService {
         cronTime: job.cron,
         onTick: async () => {
           this.logger.info(`Executing scheduler "${job.name}"`)
+          // This cannot throw, the try/catch is inside
           await this.executeCallback(job)
         },
         start: true,
