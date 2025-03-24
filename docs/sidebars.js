@@ -225,7 +225,8 @@ const sidebars = {
         "guides/jwt-keycloak",
         "guides/use-env-with-platformatic",
         "guides/using-watt-with-node-config",
-        "guides/use-watt-multiple-repository"
+        "guides/use-watt-multiple-repository",
+        "guides/scheduler.md"
       ],
     },
     'learn/glossary',
