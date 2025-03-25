@@ -18,6 +18,7 @@ const errors = require('./errors')
 const { createLogger } = require('./logger')
 const { startManagementApi } = require('./management-api')
 const { startPrometheusServer } = require('./prom-server')
+const { startScheduler } = require('./scheduler')
 const { createSharedStore } = require('./shared-http-cache')
 const { getRuntimeTmpDir } = require('./utils')
 const { sendViaITC, waitEventFromITC } = require('./worker/itc')
@@ -74,6 +75,7 @@ class Runtime extends EventEmitter {
   #restartingWorkers
   #sharedHttpCache
   servicesConfigsPatches
+  #scheduler
 
   constructor (configManager, runtimeLogsDir, env) {
     super()
@@ -199,6 +201,10 @@ class Runtime extends EventEmitter {
 
     this.#dispatcher = new Agent(dispatcherOpts).compose(interceptors)
 
+    if (config.scheduler) {
+      this.#scheduler = startScheduler(config.scheduler, this.#dispatcher, logger)
+    }
+
     this.#updateStatus('init')
   }
 
@@ -263,6 +269,10 @@ class Runtime extends EventEmitter {
   }
 
   async stop (silent = false) {
+    if (this.#scheduler) {
+      await this.#scheduler.stop()
+    }
+
     if (this.#status === 'starting') {
       await once(this, 'started')
     }
@@ -289,6 +299,7 @@ class Runtime extends EventEmitter {
     }
 
     await this.#meshInterceptor.close()
+
     this.#updateStatus('stopped')
   }
 

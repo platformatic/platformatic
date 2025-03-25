@@ -253,7 +253,7 @@ OTLP traces can be consumed by different solutions, like [Jaeger](https://www.ja
 }
 ```
 
-### httpCache
+### `httpCache`
 
 The `httpCache` configuration is used to enable the HTTP cache for the Platformatic Runtime.
 It can be a boolean or an object with the following settings:
@@ -360,6 +360,33 @@ inside the OS temporary folder.
 
 - **`logs`** (`object`). Optional configuration for the runtime logs.
   - **`maxSize`** (`number`). Maximum size of the logs that will be stored in the file system in MB. Default: `200`. Minimum: `5`.
+
+### `scheduler`
+
+An optional array of objects to configure HTTP call triggered by cron jobs.
+_Every object_ has:
+
+- **`enabled`** (`boolean` or `string`). Optional. If `false` the scheduler is disabled. Default: `true`.
+- **`name`** (`string`): The job name
+- **`cron`** (`string`): the crontab schedule expession. See https://crontab.guru/examples.html for some examples.
+- **`callbackUrl`** (`string`): the HTTP URL to be called
+- **`method`** (`string`): Optional, can be `GET`, `POST`, `PUT`, `PATCH`, `DELETE`. Default: `GET`.
+- **`body`** (`string` or `object`). Optional.
+- **`headers`** (`object`). Optional. Headers added to the HTTP call.
+- **`maxRetry`** (`number`). Number of attempts for the HTTP call. Default: 3
+
+```json title="Example Scheduler"
+{
+  "scheduler": [
+    {
+      "name": "test",
+      "callbackUrl": "http://mytarget",
+      "cron": "0 * * * *",
+      "mehod": "GET"
+    }
+  ]
+}
+```
 
 ## Setting and Using ENV placeholders
 

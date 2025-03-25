@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.53.2.json",
+  "entrypoint": "service",
+  "watch": true,
+  "autoload": {
+    "path": "services",
+    "exclude": [
+      "docs"
+    ]
+  },
+  "scheduler": [],
+  "logger": {
+    "level": "silent"
+  },
+  "server": {
+    "port": 16667
+  }
+}
