@@ -1,6 +1,6 @@
 'use strict'
 
-const { ok, deepStrictEqual } = require('node:assert')
+const { ok, deepStrictEqual, strictEqual } = require('node:assert')
 const { once } = require('node:events')
 const { tmpdir } = require('node:os')
 const { join } = require('node:path')
@@ -10,6 +10,7 @@ const { safeRemove } = require('@platformatic/utils')
 const { buildServer, loadConfig } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 const { openLogsWebsocket, waitForLogs } = require('./helpers')
+const { request } = require('undici')
 
 test('should continously monitor workers health', async t => {
   const configFile = join(fixturesDir, 'configs', 'health-healthy.json')
@@ -117,4 +118,28 @@ test('should not lose any connection when restarting the process', async t => {
   ok(!rawMessages.some(m => m.error?.code === 'FST_REPLY_FROM_INTERNAL_SERVER_ERROR'))
   deepStrictEqual(results.errors, 0)
   deepStrictEqual(results.non2xx, 0)
+})
+
+test.only('set the spaces memory correctly', async t => {
+  const configFile = join(fixturesDir, 'health-spaces', 'platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile])
+
+  const server = await buildServer({
+    app: config.app,
+    ...config.configManager.current
+  })
+
+  const url = await server.start()
+
+  t.after(() => {
+    return server.close()
+  })
+
+  {
+    const res = await request(url + '/')
+
+    const { resourceLimits } = await res.body.json()
+    strictEqual(resourceLimits.maxOldGenerationSizeMb, 192)
+    strictEqual(resourceLimits.maxYoungGenerationSizeMb, 64)
+  }
 })

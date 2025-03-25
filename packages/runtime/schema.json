@@ -154,6 +154,10 @@
                         "type": "string"
                       }
                     ]
+                  },
+                  "maxYoungGeneration": {
+                    "type": "number",
+                    "minimum": 0
                   }
                 },
                 "additionalProperties": false
@@ -318,6 +322,10 @@
                     "type": "string"
                   }
                 ]
+              },
+              "maxYoungGeneration": {
+                "type": "number",
+                "minimum": 0
               }
             },
             "additionalProperties": false
@@ -547,6 +555,10 @@
                     "type": "string"
                   }
                 ]
+              },
+              "maxYoungGeneration": {
+                "type": "number",
+                "minimum": 0
               }
             },
             "additionalProperties": false
@@ -976,6 +988,10 @@
               "type": "string"
             }
           ]
+        },
+        "maxYoungGeneration": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "additionalProperties": false
