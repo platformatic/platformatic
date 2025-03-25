@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/wattpm/2.54.0.json",
+  "$id": "https://schemas.platformatic.dev/wattpm/2.55.0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
@@ -154,6 +154,10 @@
                         "type": "string"
                       }
                     ]
+                  },
+                  "maxYoungGeneration": {
+                    "type": "number",
+                    "minimum": 0
                   }
                 },
                 "additionalProperties": false
@@ -318,6 +322,10 @@
                     "type": "string"
                   }
                 ]
+              },
+              "maxYoungGeneration": {
+                "type": "number",
+                "minimum": 0
               }
             },
             "additionalProperties": false
@@ -547,6 +555,10 @@
                     "type": "string"
                   }
                 ]
+              },
+              "maxYoungGeneration": {
+                "type": "number",
+                "minimum": 0
               }
             },
             "additionalProperties": false
@@ -976,6 +988,10 @@
               "type": "string"
             }
           ]
+        },
+        "maxYoungGeneration": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "additionalProperties": false

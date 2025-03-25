@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type HttpsSchemasPlatformaticDevWattpm2540Json = {
+export type HttpsSchemasPlatformaticDevWattpm2550Json = {
   [k: string]: unknown;
 } & {
   $schema?: string;
@@ -29,6 +29,7 @@ export type HttpsSchemasPlatformaticDevWattpm2540Json = {
           maxELU?: number | string;
           maxHeapUsed?: number | string;
           maxHeapTotal?: number | string;
+          maxYoungGeneration?: number;
         };
         preload?: string | string[];
         arguments?: string[];
@@ -121,6 +122,7 @@ export type HttpsSchemasPlatformaticDevWattpm2540Json = {
     maxELU?: number | string;
     maxHeapUsed?: number | string;
     maxHeapTotal?: number | string;
+    maxYoungGeneration?: number;
   };
   undici?: {
     agentOptions?: {
