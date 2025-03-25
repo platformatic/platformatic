@@ -120,7 +120,7 @@ test('should not lose any connection when restarting the process', async t => {
   deepStrictEqual(results.non2xx, 0)
 })
 
-test.only('set the spaces memory correctly', async t => {
+test('set the spaces memory correctly', async t => {
   const configFile = join(fixturesDir, 'health-spaces', 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile])
 
