@@ -1087,6 +1087,11 @@ class Runtime extends EventEmitter {
       workerEnv['NODE_OPTIONS'] = `${originalNodeOptions} ${serviceConfig.nodeOptions}`.trim()
     }
 
+    const maxOldGenerationSizeMb = Math.floor(
+      (health.maxYoungGeneration > 0 ? health.maxHeapTotal - health.maxYoungGeneration : health.maxHeapTotal) / (1024 * 1024)
+    )
+    const maxYoungGenerationSizeMb = health.maxYoungGeneration ? Math.floor(health.maxYoungGeneration / (1024 * 1024)) : undefined
+
     const worker = new Worker(kWorkerFile, {
       workerData: {
         config,
@@ -1108,7 +1113,8 @@ class Runtime extends EventEmitter {
       execArgv,
       env: workerEnv,
       resourceLimits: {
-        maxOldGenerationSizeMb: health.maxHeapTotal
+        maxOldGenerationSizeMb,
+        maxYoungGenerationSizeMb
       },
       stdout: true,
       stderr: true

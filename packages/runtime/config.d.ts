@@ -29,6 +29,7 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime2540Json = {
           maxELU?: number | string;
           maxHeapUsed?: number | string;
           maxHeapTotal?: number | string;
+          maxYoungGeneration?: number;
         };
         preload?: string | string[];
         arguments?: string[];
@@ -121,6 +122,7 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime2540Json = {
     maxELU?: number | string;
     maxHeapUsed?: number | string;
     maxHeapTotal?: number | string;
+    maxYoungGeneration?: number;
   };
   undici?: {
     agentOptions?: {
