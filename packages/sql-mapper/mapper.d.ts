@@ -140,6 +140,10 @@ export interface WhereCondition {
   }
 }
 
+export type Cursor = {
+  [columnName: string]: string | number | boolean | null,
+}
+
 interface Find<EntityFields> {
   (options?: {
     /**
@@ -167,6 +171,10 @@ interface Find<EntityFields> {
      * @default true
      */
     paginate?: boolean,
+    /**
+     * Cursor to paginate the results.
+     */
+    cursor?: Cursor,
     /**
      * If present, the entity participates in transaction
      */
