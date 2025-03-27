@@ -502,6 +502,30 @@ jobs:
       - name: Run test suite with code coverage for generator
         run: cd packages/client-cli && pnpm test
 
+  ci-metrics:
+    needs: setup-node_modules
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        node-version: [20, 22]
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+      - uses: 'nick-fields/retry@v3.0.2'
+        with:
+          max_attempts: 10
+          timeout_minutes: 15
+          retry_on: error
+          command: pnpm install --frozen-lockfile
+      - name: Run test suite
+        run: cd packages/metrics && pnpm test
+
   ci-telemetry:
     needs: setup-node_modules
     runs-on: ${{matrix.os}}

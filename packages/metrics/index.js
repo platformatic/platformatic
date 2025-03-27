@@ -16,7 +16,7 @@ async function collectMetrics (serviceId, workerId, metricsConfig = {}, registry
   const httpResponseCallbacks = []
 
   const labels = { ...metricsConfig.labels, serviceId }
-  if (workerId) {
+  if (workerId >= 0) {
     labels.workerId = workerId
   }
   registry.setDefaultLabels(labels)
