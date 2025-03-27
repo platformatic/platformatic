@@ -324,12 +324,14 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
       query = sql`${query} ORDER BY ${sql.join(orderBy, sql`, `)}`
     }
 
-    query = sql`${query} LIMIT ${sanitizeLimit(opts.limit, limitConfig)}`
-    if (opts.offset !== undefined) {
-      if (opts.offset < 0) {
-        throw new errors.ParamNotAllowedError(opts.offset)
+    if (opts.paginate !== false) {
+      query = sql`${query} LIMIT ${sanitizeLimit(opts.limit, limitConfig)}`
+      if (opts.offset !== undefined) {
+        if (opts.offset < 0) {
+          throw new errors.ParamNotAllowedError(opts.offset)
+        }
+        query = sql`${query} OFFSET ${opts.offset}`
       }
-      query = sql`${query} OFFSET ${opts.offset}`
     }
 
     const rows = await db.query(query)

@@ -163,6 +163,11 @@ interface Find<EntityFields> {
      */
     offset?: number,
     /**
+     * If false pagination is disabled.
+     * @default true
+     */
+    paginate?: boolean,
+    /**
      * If present, the entity participates in transaction
      */
     tx?: Database
