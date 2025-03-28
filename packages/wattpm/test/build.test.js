@@ -135,8 +135,6 @@ test('update - should update version in package.json files', async t => {
 
   const updateProcess = await executeCommand('node', '--import', loader, cliPath, 'update', '-f', rootDir)
 
-  console.log(updateProcess.stdout)
-
   const rootPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'package.json'))
 
   deepStrictEqual(rootPackageJson.dependencies, {
