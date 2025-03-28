@@ -86,7 +86,7 @@ export async function installDependencies (logger, root, services, production, p
   }
 }
 
-async function updateDependencies (logger, availableVersions, path, target, force) {
+async function updateDependencies (logger, latest, availableVersions, path, target, force) {
   // Parse the configuration file, if any
   const packageJsonPath = resolve(path, 'package.json')
 
@@ -112,10 +112,10 @@ async function updateDependencies (logger, availableVersions, path, target, forc
           logger.fatal(
             `Dependency ${bold(pkg)} of ${target}${sectionLabel} requires a non-updatable range ${bold(range)}. Try again with ${bold('-f/--force')} to update to the latest version.`
           )
+        } else {
+          specifier = ''
+          newRange = latest
         }
-
-        specifier = '^'
-        newRange = availableVersions[0]
       } else {
         newRange = availableVersions.find(v => satisfies(v, range))
       }
@@ -239,17 +239,19 @@ export async function updateCommand (logger, args) {
   }
 
   const selfInfo = await selfInfoResponse.json()
+  const { latest } = selfInfo['dist-tags']
+
   const availableVersions = rsort(
     Object.values(selfInfo.versions)
       .filter(s => !s.deprecated)
       .map(s => s.version)
   )
 
-  await updateDependencies(logger, availableVersions, root, `the ${bold('application')}`, force)
+  await updateDependencies(logger, latest, availableVersions, root, `the ${bold('application')}`, force)
 
   // Now, for all the services in the configuration file, update the dependencies
   for (const service of services) {
-    await updateDependencies(logger, availableVersions, service.path, `the service ${bold(service.id)}`, force)
+    await updateDependencies(logger, latest, availableVersions, service.path, `the service ${bold(service.id)}`, force)
   }
 
   logger.done('All dependencies have been updated.')
