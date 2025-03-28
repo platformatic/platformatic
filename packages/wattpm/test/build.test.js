@@ -136,24 +136,26 @@ test('update - should update version in package.json files', async t => {
   const updateProcess = await executeCommand('node', '--import', loader, cliPath, 'update', '-f', rootDir)
 
   const rootPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'package.json'))
-  const mainPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/main/package.json'))
-  const anotherPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/another/package.json'))
 
   deepStrictEqual(rootPackageJson.dependencies, {
     wattpm: '^2.41.0',
     '@platformatic/runtime': '^2.41.0'
   })
 
+  const mainPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/main/package.json'))
+
   deepStrictEqual(mainPackageJson.dependencies, {
     '@platformatic/node': '^2.41.0',
     '@platformatic/remix': '~2.5.5',
     '@platformatic/db': '~1.15.1',
-    '@platformatic/vite': '^3.4.1'
+    '@platformatic/vite': '2.41.0'
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
     '@platformatic/config': '^2.41.0'
   })
+
+  const anotherPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/another/package.json'))
 
   deepStrictEqual(anotherPackageJson.dependencies, {
     '@platformatic/service': '^2.41.0',
@@ -198,7 +200,7 @@ test('update - should work when executed inside a service folder', async t => {
     '@platformatic/node': '^2.41.0',
     '@platformatic/remix': '~2.5.5',
     '@platformatic/db': '~1.15.1',
-    '@platformatic/vite': '^3.4.1'
+    '@platformatic/vite': '2.41.0'
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
