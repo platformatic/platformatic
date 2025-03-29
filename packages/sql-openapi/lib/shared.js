@@ -131,6 +131,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
 
         if (key.startsWith('where.')) {
           const [, field, modifier] = key.split('.')
+          const fieldIsNullable = entity.camelCasedFields[field].isNullable
           where[field] ||= {}
           let value = query[key]
           if (modifier === 'in' || modifier === 'nin') {
@@ -140,7 +141,12 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
               value = value.map((v) => parseInt(v))
             }
           }
-          where[field][modifier] = value
+
+          if (fieldIsNullable && (typeof value === 'string' && value.toLowerCase() === 'null')) {
+            where[field][modifier] = null
+          } else {
+            where[field][modifier] = value
+          }
         } else if (key.startsWith('orderby.')) {
           const [, field] = key.split('.')
           orderBy[field] ||= {}
