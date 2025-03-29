@@ -9,6 +9,7 @@ import { logsCommand } from './lib/commands/logs.js'
 import { configCommand, envCommand, psCommand, servicesCommand } from './lib/commands/management.js'
 import { metricsCommand } from './lib/commands/metrics.js'
 import { patchConfigCommand } from './lib/commands/patch-config.js'
+import { adminCommand } from './lib/commands/admin.js'
 import { version } from './lib/schema.js'
 import { createLogger, overrideFatal, parseArgs, setVerbose } from './lib/utils.js'
 
@@ -110,6 +111,9 @@ export async function main () {
       break
     case 'metrics':
       command = metricsCommand
+      break
+    case 'admin':
+      command = adminCommand
       break
     default:
       logger.fatal(
