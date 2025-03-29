@@ -48,6 +48,7 @@ declare namespace control {
   interface MetricValue {
     value: number,
     labels: {
+      route?: string,
       quantile?: number,
       type?: string,
       space?: string,
