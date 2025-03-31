@@ -50,6 +50,9 @@ declare namespace control {
     labels: {
       route?: string,
       quantile?: number,
+      method?: string,
+      status_code?: number,
+      telemetry_id?: string,
       type?: string,
       space?: string,
       version?: string,
@@ -58,7 +61,8 @@ declare namespace control {
       patch?: number,
       le?: number | string,
       kind?: string,
-      serviceId: string
+      serviceId: string,
+      workerId?: number
     },
     metricName?: string,
     exemplar?: unknown
