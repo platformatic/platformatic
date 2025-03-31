@@ -176,6 +176,11 @@ interface Find<EntityFields> {
      */
     cursor?: Cursor,
     /**
+      * If set to false, the previous page will be fetched in cursor pagination.
+     * @default true
+     */
+    nextPage?: boolean,
+    /**
      * If present, the entity participates in transaction
      */
     tx?: Database
