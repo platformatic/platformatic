@@ -225,6 +225,15 @@ Arguments:
 
 - `command`: The command which show the help of (if omitted, it will list all Watt commands)
 
+## `admin`
+
+Start [watt-admin](https://github.com/platformatic/watt-admin), the Watt administration interface.
+This is started via [`npx`](https://docs.npmjs.com/cli/v11/commands/npx).
+
+Arguments:
+
+- `latest`: use the latest released version of watt-admin.
+
 ## `version`
 
 Show current Watt version.
