@@ -5,7 +5,7 @@ const errors = require('./errors')
 function encodeCursor () {} // todo(shcube): api
 function decodeCursor () {} // todo(shcube): api
 
-function getCursorFields (cursor, orderBy, inputToFieldMap, fields, primaryKeys) {
+function sanitizeCursor (cursor, orderBy, inputToFieldMap, fields, primaryKeys) {
   if (!orderBy || orderBy.length === 0) throw new errors.MissingOrderByClauseError()
   let hasUniqueField = false
   const validCursorFields = new Map()
@@ -77,7 +77,7 @@ function buildQuery (cursorFields, sql, computeCriteriaValue, isBackwardPaginati
 
 function buildCursorCondition (sql, cursor, orderBy, inputToFieldMap, fields, computeCriteriaValue, primaryKeys, isBackwardPagination) {
   if (!cursor || Object.keys(cursor).length === 0) return null
-  const cursorFields = getCursorFields(cursor, orderBy, inputToFieldMap, fields, primaryKeys)
+  const cursorFields = sanitizeCursor(cursor, orderBy, inputToFieldMap, fields, primaryKeys)
   const sameSortDirection = cursorFields.every(({ direction }) => direction === cursorFields[0].direction)
   return sameSortDirection ? buildTupleQuery(cursorFields, sql, computeCriteriaValue, isBackwardPagination) : buildQuery(cursorFields, sql, computeCriteriaValue, isBackwardPagination)
 }
