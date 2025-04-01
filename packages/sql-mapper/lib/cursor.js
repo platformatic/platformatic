@@ -19,7 +19,7 @@ function getCursorFields (cursor, orderBy, inputToFieldMap, fields, primaryKeys)
     validCursorFields.set(key, {
       dbField,
       value,
-      direction: order.direction,
+      direction: order.direction.toLowerCase(),
       fieldWrap: fields[dbField]
     })
   }
@@ -35,20 +35,34 @@ function getCursorFields (cursor, orderBy, inputToFieldMap, fields, primaryKeys)
   return cursorFields
 }
 
-// todo(shcube): remove db prop after test
-function buildCursorCondition (sql, cursor, orderBy, inputToFieldMap, fields, computeCriteriaValue, db, primaryKeys, reverse) {
-  if (!cursor || Object.keys(cursor).length === 0) return null
+function buildTupleQuery (cursorFields, sql, computeCriteriaValue, isBackwardPagination) {
+  const direction = cursorFields[0].direction
+  let operator
+  if (isBackwardPagination) {
+    operator = direction === 'desc' ? '>' : '<'
+  } else {
+    operator = direction === 'desc' ? '<' : '>'
+  }
+  const fields = sql.join(
+    cursorFields.map(({ dbField }) => sql.ident(dbField)),
+    sql`, `
+  )
+  const values = sql.join(
+    cursorFields.map(({ fieldWrap, value }) => computeCriteriaValue(fieldWrap, value)),
+    sql`, `
+  )
+  return sql`(${fields}) ${sql.__dangerous__rawValue(operator)} (${values})`
+}
 
-  const cursorFields = getCursorFields(cursor, orderBy, inputToFieldMap, fields, primaryKeys)
+function buildQuery (cursorFields, sql, computeCriteriaValue, isBackwardPagination) {
   const conditions = []
   const equalityParts = []
-
   for (const { dbField, fieldWrap, value, direction } of cursorFields) {
     let operator
-    if (reverse) {
-      operator = direction.toLowerCase() === 'desc' ? '>' : '<'
+    if (isBackwardPagination) {
+      operator = direction === 'desc' ? '>' : '<'
     } else {
-      operator = direction.toLowerCase() === 'desc' ? '<' : '>'
+      operator = direction === 'desc' ? '<' : '>'
     }
     const inequalityPart = sql`${sql.ident(dbField)} ${sql.__dangerous__rawValue(operator)} ${computeCriteriaValue(fieldWrap, value)}`
     if (equalityParts.length === 0) {
@@ -58,8 +72,14 @@ function buildCursorCondition (sql, cursor, orderBy, inputToFieldMap, fields, co
     }
     equalityParts.push(sql`${sql.ident(dbField)} = ${computeCriteriaValue(fieldWrap, value)}`)
   }
-
   return sql`(${sql.join(conditions, sql` OR `)})`
+}
+
+function buildCursorCondition (sql, cursor, orderBy, inputToFieldMap, fields, computeCriteriaValue, primaryKeys, isBackwardPagination) {
+  if (!cursor || Object.keys(cursor).length === 0) return null
+  const cursorFields = getCursorFields(cursor, orderBy, inputToFieldMap, fields, primaryKeys)
+  const sameSortDirection = cursorFields.every(({ direction }) => direction === cursorFields[0].direction)
+  return sameSortDirection ? buildTupleQuery(cursorFields, sql, computeCriteriaValue, isBackwardPagination) : buildQuery(cursorFields, sql, computeCriteriaValue, isBackwardPagination)
 }
 
 module.exports = {

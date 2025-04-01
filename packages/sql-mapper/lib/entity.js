@@ -308,7 +308,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     const fieldsToRetrieve = computeFields(opts.fields).map((f) => sql.ident(f))
     const criteria = computeCriteria(opts)
     const criteriaExists = criteria.length > 0
-    const reverse = opts.nextPage === false
+    const isBackwardPagination = opts.nextPage === false
 
     let query = sql`
       SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
@@ -320,7 +320,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     }
 
     if (opts.cursor) {
-      const cursorCondition = buildCursorCondition(sql, opts.cursor, opts.orderBy, inputToFieldMap, fields, computeCriteriaValue, db, primaryKeys, reverse)
+      const cursorCondition = buildCursorCondition(sql, opts.cursor, opts.orderBy, inputToFieldMap, fields, computeCriteriaValue, primaryKeys, isBackwardPagination)
       if (cursorCondition) {
         if (criteriaExists) query = sql`${query} AND ${cursorCondition}`
         else query = sql`${query} WHERE ${cursorCondition}`
@@ -330,8 +330,8 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     if (opts.orderBy && opts.orderBy.length > 0) {
       const orderBy = opts.orderBy.map((order) => {
         const field = inputToFieldMap[order.field]
-        let direction = order.direction
-        if (reverse) {
+        let direction = order.direction.toLowerCase()
+        if (isBackwardPagination) {
           direction = direction === 'asc' ? 'desc' : 'asc'
         }
         return sql`${sql.ident(field)} ${sql.__dangerous__rawValue(direction)}`
@@ -351,7 +351,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
 
     const rows = await db.query(query)
     const res = rows.map(fixOutput)
-    return reverse ? res.reverse() : res
+    return isBackwardPagination ? res.reverse() : res
   }
 
   async function count (opts = {}) {
