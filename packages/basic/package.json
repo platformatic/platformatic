@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "npm run lint && borp --concurrency=1 --no-timeout --pattern test/base.test.js",
+    "test": "npm run lint && borp --concurrency=1 --no-timeout",
     "coverage": "npm run lint && borp -C -X test -X test/fixtures --concurrency=1 --no-timeout",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
