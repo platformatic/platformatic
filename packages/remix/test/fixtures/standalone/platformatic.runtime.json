@@ -11,5 +11,6 @@
   "logger": {
     "level": "error"
   },
+  "metrics": true,
   "restartOnError": false
 }

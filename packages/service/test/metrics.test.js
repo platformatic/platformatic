@@ -360,6 +360,7 @@ test('specify custom labels', async (t) => {
     const httpRequestSeconds = findFirstPrometheusLineForMetric('http_request_duration_seconds', body)
     const labels = parseLabels(httpRequestSeconds)
     assert.strictEqual(labels.foo, 'bar')
+    // TODO check value/s
   }
 
   {
@@ -436,3 +437,34 @@ test('specify different custom labels on two different services', async (t) => {
     assert.strictEqual(labels.foo, 'bar2')
   }
 })
+
+// test('TODO http_request values', { only: true }, async (t) => {
+//   const app = await buildServer({
+//     server: {
+//       hostname: '127.0.0.1',
+//       port: 0,
+//     },
+//     metrics: true,
+//   })
+
+//   t.after(async () => {
+//     await app.close()
+//   })
+
+//   app.get('/hello', async (req, reply) => {
+//     return 'hello'
+//   })
+
+//   await app.start()
+//   {
+//     const res = await (request(`http://127.0.0.1:${app.server.address().port}/hello`))
+//   }
+//   // needed to reach 100% code cov, otherwise the ELU check won't run
+//   await setTimeout(120)
+//   const res = await (request('http://127.0.0.1:9090/metrics'))
+//   const body = await res.body.text()
+//   // assert.strictEqual(res.statusCode, 200)
+//   // assert.match(res.headers['content-type'], /^text\/plain/)
+//   // testPrometheusOutput(body)
+//   console.log(body)
+// })

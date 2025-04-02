@@ -271,16 +271,6 @@ class ServiceStackable {
         const telemetryId = req.headers['x-plt-telemetry-id'] ?? 'unknown'
         return { telemetry_id: telemetryId }
       },
-      zeroFill: true
-    })
-
-    this.app.register(httpMetrics, {
-      registry: this.metricsRegistry,
-      customLabels: ['telemetry_id'],
-      getCustomLabels: req => {
-        const telemetryId = req.headers['x-plt-telemetry-id'] ?? 'unknown'
-        return { telemetry_id: telemetryId }
-      },
       histogram: {
         name: 'http_request_all_duration_seconds',
         help: 'request duration in seconds summary for all requests',
