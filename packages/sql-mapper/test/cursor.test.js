@@ -12,7 +12,7 @@ const fakeLogger = {
   warn: () => {},
 }
 
-test('single field cursor pagination', async () => {
+test('single field cursor pagination', async (test) => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
@@ -137,7 +137,7 @@ test('single field cursor pagination', async () => {
   }
 })
 
-test('compound cursor: simple pagination', async () => {
+test('compound cursor: simple pagination', async (test) => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
@@ -202,7 +202,7 @@ test('compound cursor: simple pagination', async () => {
   }
 })
 
-test('compound cursor: several rows have same timestamp', async () => {
+test('compound cursor: several rows have same timestamp', async (test) => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
@@ -269,7 +269,7 @@ test('compound cursor: several rows have same timestamp', async () => {
   deepEqual(lastWithCursor.map(p => p.id), ['9'], 'Cursor pagination correctly follows tie-breaker order')
 })
 
-test('compound cursor: backward pagination with same direction', async () => {
+test('compound cursor: backward pagination with same direction', async (test) => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
@@ -327,7 +327,7 @@ test('compound cursor: backward pagination with same direction', async () => {
   deepEqual(previousPage.map(p => p.id), ['1', '2', '3'], 'Previous page contains correct IDs')
 })
 
-test('compound cursor: mixed directions', async () => {
+test('compound cursor: mixed directions', async (test) => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
@@ -394,7 +394,7 @@ test('compound cursor: mixed directions', async () => {
   deepEqual(previousPage.map(p => p.id), ['1', '2', '3'], 'Previous page with mixed directions contains correct IDs')
 })
 
-test('compound cursor: four or more fields', async () => {
+test('compound cursor: four or more fields', async (test) => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
@@ -480,7 +480,7 @@ test('compound cursor: four or more fields', async () => {
   deepEqual(previousPage.map(p => p.id), ['4', '3', '2'], 'Previous page with three fields contains correct IDs')
 })
 
-test('compound cursor: where clause', async () => {
+test('compound cursor: where clause', async (test) => {
   const mapper = await connect({
     ...connInfo,
     log: fakeLogger,
