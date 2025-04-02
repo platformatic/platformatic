@@ -446,3 +446,43 @@ test('BaseStackable - stopCommand - should forcefully exit the process if it doe
 
   await stackable.stopCommand()
 })
+
+test('BaseStackable - spawn - should handle chained commands', { skip: isWindows }, async t => {
+  const stackable = await createStackable(t)
+
+  const fs = await import('node:fs/promises')
+  const path = await import('node:path')
+  const testFile1 = path.join(temporaryFolder, 'test-file-1.txt')
+  const testFile2 = path.join(temporaryFolder, 'test-file-2.txt')
+
+  try {
+    await fs.unlink(testFile1).catch(() => {})
+    await fs.unlink(testFile2).catch(() => {})
+
+    const chainedCommand = `touch ${testFile1} && touch ${testFile2}`
+    await stackable.buildWithCommand(chainedCommand, temporaryFolder, { disableChildManager: true })
+
+    const file1Exists = await fs.access(testFile1).then(() => true).catch(() => false)
+    const file2Exists = await fs.access(testFile2).then(() => true).catch(() => false)
+
+    ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(chainedCommand)))
+    ok(file1Exists, 'First command in chain did not execute')
+    ok(file2Exists, 'Second command in chain did not execute')
+
+    await fs.unlink(testFile1).catch(() => {})
+    await fs.unlink(testFile2).catch(() => {})
+
+    const semicolonCommand = `touch ${testFile1}; touch ${testFile2}`
+    await stackable.buildWithCommand(semicolonCommand, temporaryFolder, { disableChildManager: true })
+
+    const file1ExistsAgain = await fs.access(testFile1).then(() => true).catch(() => false)
+    const file2ExistsAgain = await fs.access(testFile2).then(() => true).catch(() => false)
+
+    ok(stackable.stdout.messages.some(msg => msg.includes(getExecutedCommandLogMessage(semicolonCommand))))
+    ok(file1ExistsAgain, 'First command with semicolon did not execute')
+    ok(file2ExistsAgain, 'Second command with semicolon did not execute')
+  } finally {
+    await fs.unlink(testFile1).catch(() => {})
+    await fs.unlink(testFile2).catch(() => {})
+  }
+})
