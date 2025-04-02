@@ -479,3 +479,92 @@ test('compound cursor: four or more fields', async () => {
   })
   deepEqual(previousPage.map(p => p.id), ['4', '3', '2'], 'Previous page with three fields contains correct IDs')
 })
+
+test('compound cursor: where clause', async () => {
+  const mapper = await connect({
+    ...connInfo,
+    log: fakeLogger,
+    async onDatabaseLoad (db, sql) {
+      test.after(async () => {
+        await clear(db, sql)
+        db.dispose()
+      })
+      await clear(db, sql)
+      if (isSQLite) {
+        await db.query(sql`CREATE TABLE articles (
+          id INTEGER PRIMARY KEY,
+          timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+          category VARCHAR(100),
+          rating INTEGER,
+          title VARCHAR(100),
+          content TEXT
+        );`)
+      } else {
+        await db.query(sql`CREATE TABLE articles (
+          id SERIAL PRIMARY KEY,
+          timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          category VARCHAR(100),
+          rating INTEGER,
+          title VARCHAR(100),
+          content TEXT
+        );`)
+      }
+    },
+  })
+
+  const entity = mapper.entities.article
+  await entity.insert({
+    inputs: [
+      { title: 'A1', content: 'Content 1', timestamp: '2025-01-01', category: 'tech', rating: 5 },
+      { title: 'A2', content: 'Content 2', timestamp: '2025-01-01', category: 'tech', rating: 4 },
+      { title: 'A3', content: 'Content 3', timestamp: '2025-01-01', category: 'food', rating: 5 },
+      { title: 'A4', content: 'Content 4', timestamp: '2025-01-01', category: 'food', rating: 4 },
+      { title: 'A5', content: 'Content 5', timestamp: '2025-01-02', category: 'tech', rating: 5 },
+      { title: 'A6', content: 'Content 6', timestamp: '2025-01-02', category: 'tech', rating: 4 },
+      { title: 'A7', content: 'Content 7', timestamp: '2025-01-02', category: 'food', rating: 5 },
+      { title: 'A8', content: 'Content 8', timestamp: '2025-01-02', category: 'food', rating: 4 },
+    ],
+  })
+
+  const orderBy = [
+    { field: 'timestamp', direction: 'asc' },
+    { field: 'rating', direction: 'asc' },
+    { field: 'id', direction: 'ASC' }
+  ]
+  const where = {
+    category: { eq: 'food' }
+  }
+
+  // 4, 3, 8, 7
+  const firstPage = await entity.find({
+    limit: 2,
+    orderBy,
+    where,
+  })
+  deepEqual(firstPage.map(p => p.id), ['4', '3'], 'First page contains correct IDs')
+
+  const secondPage = await entity.find({
+    limit: 2,
+    cursor: {
+      timestamp: firstPage.at(-1).timestamp,
+      rating: firstPage.at(-1).rating,
+      id: firstPage.at(-1).id
+    },
+    orderBy,
+    where,
+  })
+  deepEqual(secondPage.map(p => p.id), ['8', '7'], 'Second page with three fields contains correct IDs')
+
+  const previousPage = await entity.find({
+    limit: 2,
+    nextPage: false,
+    cursor: {
+      timestamp: secondPage.at(0).timestamp,
+      rating: secondPage.at(0).rating,
+      id: secondPage.at(0).id
+    },
+    orderBy,
+    where,
+  })
+  deepEqual(previousPage.map(p => p.id), ['4', '3'], 'Previous page with three fields contains correct IDs')
+})
