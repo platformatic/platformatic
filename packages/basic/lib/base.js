@@ -302,12 +302,13 @@ export class BaseStackable {
 
   async spawn (command) {
     const [executable, ...args] = parseCommandString(command)
+    const hasChainedCommands = command.includes('&&') || command.includes('||') || command.includes(';')
 
     /* c8 ignore next 3 */
     const subprocess =
       platform() === 'win32'
         ? spawn(command, { cwd: this.root, shell: true, windowsVerbatimArguments: true })
-        : spawn(executable, args, { cwd: this.root })
+        : spawn(executable, args, { cwd: this.root, shell: hasChainedCommands })
 
     subprocess.stdout.setEncoding('utf8')
     subprocess.stderr.setEncoding('utf8')
