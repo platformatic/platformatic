@@ -842,3 +842,48 @@ export async function verifyReusePort (t, configuration, integrityCheck) {
     ok(usedWorkers.size > 1)
   }
 }
+
+// helper to create a runtime
+export async function fullSetupRuntime ({ t, port, configRoot, build = false, production = false, configFile = 'platformatic.runtime.json' }) {
+  if (!port) {
+    const getPort = await import('get-port')
+    port = await getPort.default()
+  }
+
+  const root = resolve(temporaryFolder, basename(configRoot) + '-' + Date.now())
+  await createDirectory(root)
+
+  // Copy the fixtures
+  await cp(configRoot, root, { recursive: true })
+
+  // Init the runtime
+  const configFilePath = resolve(root, configFile)
+  const args = ['-c', configFilePath]
+
+  if (production) {
+    args.push('--production')
+  }
+
+  // Ensure the dependencies
+  await ensureDependencies([root])
+  const config = await loadConfig({}, args, platformaticRuntime)
+
+  // Ensure the dependencies
+  await ensureDependencies(config)
+
+  config.configManager.current.server = { port }
+
+  const { logger } = config.configManager.current.server ?? {}
+
+  if (build) {
+    await execa('node', [cliPath, 'build'], {
+      cwd: root,
+      stdio: logger?.level !== 'error' ? 'inherit' : undefined
+    })
+  }
+
+  // Start the runtime
+  const { url } = await startRuntime(t, root, config)
+
+  return { url, root, config, args }
+}

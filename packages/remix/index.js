@@ -117,8 +117,6 @@ export class RemixStackable extends ViteStackable {
   }
 
   async inject (injectParams, onInject) {
-    console.log('\n\n\n\n ******* remix.inject', { injectParams, onInject, isProduction: this.isProduction })
-
     if (!this.isProduction) {
       return super.inject(injectParams, onInject)
     }

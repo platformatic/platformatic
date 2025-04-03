@@ -1,36 +1,48 @@
 import assert from 'node:assert'
-import { resolve } from 'node:path'
+import path from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { createProductionRuntime, createRuntime, setFixturesDir } from '../../basic/test/helper.js'
+import { fullSetupRuntime } from '../../basic/test/helper.js'
+import { assertMetric, expectedMetrics } from '../../metrics/test/helper.js'
 
-setFixturesDir(resolve(import.meta.dirname, './fixtures'))
+export const cliPath = path.join(import.meta.dirname, '../../cli', 'cli.js')
 
-// test('services are started with multiple workers even for the entrypoint when Node.js supports reusePort', async t => {
-//   await verifyReusePort(t, 'standalone', async res => {
-//     const text = await res.body.text()
-
-//     deepStrictEqual(res.statusCode, 200)
-//     ok(/Hello from (v(<!-- -->)?\d+)(\s*(t(<!-- -->)?\d+))?/i.test(text))
-//   })
-// })
-
-test('metrics are collected', async t => {
-  const { url } = await createRuntime(t, 'metrics')
-
-  console.log(url)
-
-  {
-    const res = await request(url + '/')
-    const body = await res.body.text()
-    console.log(body)
+const envs = {
+  production: {
+    build: true,
+    production: true,
+  },
+  dev: {
+    build: false,
+    production: false,
   }
+}
 
-  {
-    const res = await request('http://localhost:9090/metrics')
-    const body = await res.body.text()
-    console.log(body)
-  }
-})
+for (const [env, options] of Object.entries(envs)) {
+  test(`remix service properly collects metrics ${env}`, async t => {
+    const { url } = await fullSetupRuntime({
+      t,
+      configRoot: path.resolve(import.meta.dirname, './fixtures/metrics'),
+      build: options.build,
+      production: options.production,
+    })
+    
+    {
+      const res = await request(`${url}/`)
+      const body = await res.body.text()
 
-// createProductionRuntime, createRuntime
+      assert.ok(body.length > 0)
+      assert.strictEqual(res.statusCode, 200)
+    }
+
+    {
+      const hostname = new URL(url).hostname
+      const res = await request(`http://${hostname}:9090/metrics`)
+      const metrics = await res.body.text()
+
+      for (const metric of expectedMetrics) {
+        assertMetric(metrics, metric)
+      }
+    }
+  })
+}
