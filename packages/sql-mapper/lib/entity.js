@@ -12,6 +12,7 @@ const { singularize } = require('inflected')
 const { findNearestString } = require('@platformatic/utils')
 const errors = require('./errors')
 const { wrapDB } = require('./telemetry')
+const { buildCursorCondition } = require('./cursor')
 
 function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relations, queries, autoTimestamp, schema, useSchemaInName, limitConfig, columns, constraintsList) {
   /* istanbul ignore next */ // Ignoring because this won't be fully covered by DB not supporting schemas (SQLite)
@@ -306,20 +307,34 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
     const db = getDB(opts)
     const fieldsToRetrieve = computeFields(opts.fields).map((f) => sql.ident(f))
     const criteria = computeCriteria(opts)
+    const criteriaExists = criteria.length > 0
+    const isBackwardPagination = opts.nextPage === false
 
     let query = sql`
       SELECT ${sql.join(fieldsToRetrieve, sql`, `)}
       FROM ${tableName(sql, table, schema)}
     `
 
-    if (criteria.length > 0) {
+    if (criteriaExists) {
       query = sql`${query} WHERE ${sql.join(criteria, sql` AND `)}`
+    }
+
+    if (opts.cursor) {
+      const cursorCondition = buildCursorCondition(sql, opts.cursor, opts.orderBy, inputToFieldMap, fields, computeCriteriaValue, primaryKeys, isBackwardPagination)
+      if (cursorCondition) {
+        if (criteriaExists) query = sql`${query} AND ${cursorCondition}`
+        else query = sql`${query} WHERE ${cursorCondition}`
+      }
     }
 
     if (opts.orderBy && opts.orderBy.length > 0) {
       const orderBy = opts.orderBy.map((order) => {
         const field = inputToFieldMap[order.field]
-        return sql`${sql.ident(field)} ${sql.__dangerous__rawValue(order.direction)}`
+        let direction = order.direction.toLowerCase()
+        if (isBackwardPagination) {
+          direction = direction === 'asc' ? 'desc' : 'asc'
+        }
+        return sql`${sql.ident(field)} ${sql.__dangerous__rawValue(direction)}`
       })
       query = sql`${query} ORDER BY ${sql.join(orderBy, sql`, `)}`
     }
@@ -336,7 +351,7 @@ function createMapper (defaultDb, sql, log, table, fields, primaryKeys, relation
 
     const rows = await db.query(query)
     const res = rows.map(fixOutput)
-    return res
+    return isBackwardPagination ? res.reverse() : res
   }
 
   async function count (opts = {}) {
