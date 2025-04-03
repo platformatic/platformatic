@@ -124,13 +124,32 @@ export class ViteStackable extends BaseStackable {
 
   // This is only used in production mode
   async inject (injectParams, onInject) {
-    const res = await this.#app.inject(injectParams, onInject)
+    // const res = await this.#app.inject(injectParams, onInject)
+    // if (onInject) {
+    //   return
+    // }
+
+    if (this.startHttpTimer && this.endHttpTimer) {
+      this.startHttpTimer({ request: injectParams })
+
+      if (onInject) {
+        const originalOnInject = onInject
+        onInject = (err, response) => {
+          this.endHttpTimer({ request: injectParams, response })
+          originalOnInject(err, response)
+        }
+      }
+    }
+
+    const res = await this.#app.inject(this.#app, injectParams, onInject)
 
     /* c8 ignore next 3 */
     if (onInject) {
       return
+    } else if (this.endHttpTimer) {
+      this.endHttpTimer({ request: injectParams, response: res })
     }
-
+        
     // Since inject might be called from the main thread directly via ITC, let's clean it up
     const { statusCode, headers, body, payload, rawPayload } = res
     return { statusCode, headers, body, payload, rawPayload }

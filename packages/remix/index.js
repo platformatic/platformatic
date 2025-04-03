@@ -117,8 +117,22 @@ export class RemixStackable extends ViteStackable {
   }
 
   async inject (injectParams, onInject) {
+    console.log('\n\n\n\n ******* remix.inject', { injectParams, onInject, isProduction: this.isProduction })
+
     if (!this.isProduction) {
       return super.inject(injectParams, onInject)
+    }
+
+    if (this.startHttpTimer && this.endHttpTimer) {
+      this.startHttpTimer({ request: injectParams })
+
+      if (onInject) {
+        const originalOnInject = onInject
+        onInject = (err, response) => {
+          this.endHttpTimer({ request: injectParams, response })
+          originalOnInject(err, response)
+        }
+      }
     }
 
     const res = await inject(this.#app, injectParams, onInject)
@@ -126,11 +140,12 @@ export class RemixStackable extends ViteStackable {
     /* c8 ignore next 3 */
     if (onInject) {
       return
+    } else if (this.endHttpTimer) {
+      this.endHttpTimer({ request: injectParams, response: res })
     }
 
     // Since inject might be called from the main thread directly via ITC, let's clean it up
     const { statusCode, headers, body, payload, rawPayload } = res
-
     return { statusCode, headers, body, payload, rawPayload }
   }
 
