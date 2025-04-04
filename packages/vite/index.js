@@ -124,11 +124,6 @@ export class ViteStackable extends BaseStackable {
 
   // This is only used in production mode
   async inject (injectParams, onInject) {
-    // const res = await this.#app.inject(injectParams, onInject)
-    // if (onInject) {
-    //   return
-    // }
-
     if (this.startHttpTimer && this.endHttpTimer) {
       this.startHttpTimer({ request: injectParams })
 
@@ -149,7 +144,7 @@ export class ViteStackable extends BaseStackable {
     } else if (this.endHttpTimer) {
       this.endHttpTimer({ request: injectParams, response: res })
     }
-        
+
     // Since inject might be called from the main thread directly via ITC, let's clean it up
     const { statusCode, headers, body, payload, rawPayload } = res
     return { statusCode, headers, body, payload, rawPayload }

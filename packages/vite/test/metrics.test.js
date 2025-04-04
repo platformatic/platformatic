@@ -19,7 +19,7 @@ const envs = {
 }
 
 for (const [env, options] of Object.entries(envs)) {
-  test(`astro service properly collects metrics ${env}`, async t => {
+  test(`vite service properly collects metrics ${env}`, async t => {
     const { url } = await fullSetupRuntime({
       t,
       configRoot: path.resolve(import.meta.dirname, './fixtures/metrics'),
