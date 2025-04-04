@@ -141,11 +141,6 @@ export class AstroStackable extends BaseStackable {
 
   // This is only used in non SSR production mode as in other modes a TCP server is started
   async inject (injectParams, onInject) {
-    // const res = await this.#app.inject(injectParams, onInject)
-    // if (onInject) {
-    //   return
-    // }
-
     if (this.startHttpTimer && this.endHttpTimer) {
       this.startHttpTimer({ request: injectParams })
 
