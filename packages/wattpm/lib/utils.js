@@ -161,9 +161,8 @@ export function serviceToEnvVariable (service) {
   return `PLT_SERVICE_${service.toUpperCase().replaceAll(/[^A-Z0-9_]/g, '_')}_PATH`
 }
 
-export async function findConfigurationFile (logger, root) {
+export async function findConfigurationFile (logger, root, configurationFile) {
   let current = root
-  let configurationFile
 
   while (!configurationFile) {
     // Find a wattpm.json or watt.json file

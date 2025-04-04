@@ -32,6 +32,10 @@ export async function startCommand (logger, args) {
       inspect: {
         type: 'boolean',
         short: 'i'
+      },
+      config: {
+        type: 'string',
+        short: 'c'
       }
     },
     false
@@ -39,7 +43,7 @@ export async function startCommand (logger, args) {
   /* c8 ignore next */
   const root = getRoot(positionals)
 
-  const configurationFile = await findConfigurationFile(logger, root)
+  const configurationFile = await findConfigurationFile(logger, root, values.config)
   const cmd = ['--production', '-c', configurationFile]
   if (values.inspect) {
     cmd.push('--inspect')
