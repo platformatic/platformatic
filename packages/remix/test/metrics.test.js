@@ -26,7 +26,7 @@ for (const [env, options] of Object.entries(envs)) {
       build: options.build,
       production: options.production,
     })
-    
+
     {
       const res = await request(`${url}/`)
       const body = await res.body.text()

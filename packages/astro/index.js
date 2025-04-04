@@ -153,7 +153,7 @@ export class AstroStackable extends BaseStackable {
       }
     }
 
-    const res = await this.#app.inject(this.#app, injectParams, onInject)
+    const res = await this.#app.inject(injectParams, onInject)
 
     /* c8 ignore next 3 */
     if (onInject) {
