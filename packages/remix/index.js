@@ -214,7 +214,9 @@ export class RemixStackable extends ViteStackable {
     const build = await importFile(resolve(this.root, `${outputDirectory}/server/index.js`))
     this.#basePath = ensureTrailingSlash(cleanBasePath(build.basename))
 
+    // Setup express app
     this.#app = express()
+    this.#app.disable('x-powered-by')
     this.#app.use(pinoHttp({ logger: this.logger }))
     this.#app.use(this.#basePath, express.static(resolve(this.root, `${outputDirectory}/client`)))
     this.#app.all(`${ensureTrailingSlash(cleanBasePath(this.#basePath))}*`, createRequestHandler({ build }))
