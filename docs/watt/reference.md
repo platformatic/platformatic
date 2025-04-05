@@ -69,6 +69,7 @@ Arguments:
 Options:
 
 - `-i, --inspect`: Start the inspector
+- `-c, --config`: Pass a custom path to the `watt` config (that can be outside from the project)
 
 ## `stop`
 

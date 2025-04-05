@@ -1,9 +1,57 @@
 import { test } from 'node:test'
 import { deepEqual, strictEqual } from 'node:assert'
-import { getPackageArgs, getPackageManager } from '../lib/utils.js'
-import { join } from 'node:path'
-import { mkdtemp, rmdir, unlink, writeFile } from 'node:fs/promises'
+import { findConfigurationFile, getPackageArgs, getPackageManager } from '../lib/utils.js'
+import { join, resolve } from 'node:path'
+import { mkdir, mkdtemp, rm, rmdir, unlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
+
+test('findConfigurationFile - should search for configuration file when none is passed', async () => {
+  let fatalCalled = false
+  const logger = {
+    fatal: () => {
+      fatalCalled = true
+    }
+  }
+
+  const tmpDir = await mkdtemp(join(tmpdir(), 'wattpm-tests-'))
+
+  try {
+    const subDir = join(tmpDir, 'subdir')
+    await mkdir(subDir, { recursive: true })
+
+    const configFilePath = join(tmpDir, 'watt.json')
+    await writeFile(configFilePath, JSON.stringify({
+      $schema: 'https://platformatic.dev/schemas/v1.0.0/runtime'
+    }))
+
+    const result = await findConfigurationFile(logger, subDir)
+
+    strictEqual(result, resolve(configFilePath), 'Should find configuration file in parent directory')
+    strictEqual(fatalCalled, false, 'Should not call fatal when configuration file is found')
+  } finally {
+    await rm(tmpDir, { recursive: true, force: true })
+  }
+})
+
+test('findConfigurationFile - should return resolved path when configuration file is passed', async () => {
+  const logger = {
+    fatal: () => {}
+  }
+
+  const tmpDir = await mkdtemp(join(tmpdir(), 'wattpm-tests-'))
+
+  try {
+    const configFilePath = join(tmpDir, 'watt.json')
+    await writeFile(configFilePath, JSON.stringify({
+      $schema: 'https://platformatic.dev/schemas/v1.0.0/runtime'
+    }))
+
+    const result = await findConfigurationFile(logger, tmpDir, configFilePath)
+    strictEqual(result, resolve(configFilePath), 'Should return the resolved path of the passed configuration file')
+  } finally {
+    await rm(tmpDir, { recursive: true, force: true })
+  }
+})
 
 test('getPackageArgs - should return the right package args', () => {
   deepEqual(getPackageArgs(), ['install'], 'no args passed')
