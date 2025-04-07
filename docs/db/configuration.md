@@ -200,7 +200,7 @@ postgres://user:password@my-database:5432/db-name
   ```
 
   You can for example add the `security` section, so that Swagger will allow you to add the authentication header to your requests.
-  We're adding a Bearer token in the form of a [JWT](/reference/db/authorization/strategies.md#json-web-token-jwt) in the code block below: 
+  We're adding a Bearer token in the form of a [JWT](./authorization/strategies.md#json-web-token-jwt) in the code block below: 
 
   ```json title="Example Object"
   {

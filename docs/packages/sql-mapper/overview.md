@@ -8,7 +8,7 @@ label: Introduction to @platformatic/sql-mapper
 `@platformatic/sql-mapper` is the underlining utility that Platformatic DB uses to create useful utilities to
 manipulate your SQL database using JavaScript.
 
-This module is bundled with [Platformatic DB](/reference/db/introduction.md) via [a fastify plugin](./fastify-plugin.md)
+This module is bundled with [Platformatic DB](/db/overview.md) via [a fastify plugin](./fastify-plugin.md)
 The rest of this guide shows how to use this module directly.
 
 ## Install
@@ -26,7 +26,7 @@ It will inspect a database schema and return an object containing:
 
 - `db` — A database abstraction layer from [`@databases`](https://www.atdatabases.org/).
 - `sql` — The SQL builder from [`@databases`](https://www.atdatabases.org/).
-- `entities` — An object containing a key for each table found in the schema, with basic CRUD operations. See [Entity Reference](./entities/introduction.md) for details.
+- `entities` — An object containing a key for each table found in the schema, with basic CRUD operations. See [Entity Reference](./entities/overview.md) for details.
 
 The valid options are:
 

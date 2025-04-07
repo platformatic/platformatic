@@ -4,13 +4,13 @@ A database is as useful as the data that it contains: a fresh, empty database
 isn't always the best starting point. We can add a few rows from our migrations
 using SQL, but we might need to use JavaScript from time to time.
 
-The [platformatic db seed](/reference/cli.md#seed) command allows us to run a
+The [platformatic db seed](/cli.md#seed) command allows us to run a
 script that will populate — or "seed" — our database.
 
 ## Example
 
 Our seed script should export a `Function` that accepts an argument:
-an instance of [`@platformatic/sql-mapper`](/reference/sql-mapper/introduction.md).
+an instance of [`@platformatic/sql-mapper`](/packages/sql-mapper/overview.md).
 
 ```javascript title="seed.js"
 'use strict'

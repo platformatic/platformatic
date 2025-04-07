@@ -43,8 +43,6 @@ app.post('/', async (req, reply) => {
 })
 ```
 
-Check some [examples](/guides/add-custom-functionality/introduction.md).
-
 ## Hot Reload
 
 Plugin files are monitored by the [`fs.watch`](https://nodejs.org/api/fs.html#fspromiseswatchfilename-options) function.

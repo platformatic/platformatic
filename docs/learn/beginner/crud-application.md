@@ -15,9 +15,8 @@ This guide will walk you through the steps to build Todo CRUD API with Platforma
 ## Prerequisites
 Before we begin, make sure you have the following installed:
 
-- [Node.js](https://nodejs.org/en) (v18 or higher)
+- [Node.js](https://nodejs.org/) (v20.16.0+ or v22.3.0+)
 - [Platformatic CLI](../../cli.md)
-
 
 ## Building a Todo API
 
@@ -125,6 +124,48 @@ Click on **Test request** and test the **Create Todo** endpoint as shown below:
 ![Testing API endpoint](../images/test-endpoint.png)
 
 You should get a **200 OK** status code for a successful request.
+
+### Enable CORS on the API
+
+When we build "like" functionality into our frontend, we'll be making a client
+side HTTP request to our GraphQL API. Our backend API and our frontend are running
+on different origins, so we need to configure our API to allow requests from
+the frontend. This is known as Cross-Origin Resource Sharing (CORS).
+
+To enable CORS on our API, let's open up our API's **`.env`** file and add in
+a new setting:
+
+```
+PLT_SERVER_CORS_ORIGIN=http://localhost:3000
+```
+
+The value of `PLT_SERVER_CORS_ORIGIN` is our frontend application's origin.
+
+Now we can add a `cors` configuration object in our API's configuration file,
+**`web/db/platformatic.json`**:
+
+```json
+{
+// highlight-start
+  "server": {
+    "cors": {
+      "origin": "{PLT_SERVER_CORS_ORIGIN}"
+    }
+  },
+// highlight-end
+  ...
+}
+```
+
+The HTTP responses from all endpoints on our API will now include the header:
+
+```
+access-control-allow-origin: http://localhost:3000
+```
+
+This will allow JavaScript running on web pages under the `http://localhost:3000`
+origin to make requests to our API.
+
 
 ## Conclusion
 
