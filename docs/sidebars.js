@@ -50,7 +50,11 @@ const sidebars = {
         'db/plugin',
         'db/logging',
         'db/programmatic',
-        'db/schema-support'
+        'db/schema-support',
+        'db/seed',
+        "db/securing-platformatic-db",
+        "db/jwt-auth0",
+        "db/jwt-keycloak",
       ]
     },
     {
@@ -177,57 +181,35 @@ const sidebars = {
       type: 'category',
       label: 'Beginner Tutorials',
       collapsed: true,
-      items: ['learn/beginner/crud-application']
+      items: [
+        'learn/beginner/crud-application',
+        "learn/beginner/environment-variables",
+      ]
+    },
+    {
+      type: 'category',
+      label: 'Deployment',
+      collapsed: true,
+      items: [
+        'guides/deployment/dockerize-a-watt-app',
+        'guides/deployment/compiling-typescript',
+        'guides/deployment/k8s-readiness-liveness'
+      ]
     },
     {
       type: 'category',
       label: 'Advanced Guides',
       collapsed: true,
       items: [
-        {
-          type: 'category',
-          label: 'Deployment',
-          collapsed: true,
-          items: [
-            'guides/deployment/overview',
-            'guides/deployment/dockerize-a-watt-app',
-            'guides/deployment/k8s-readiness-liveness',
-            'guides/deployment/deploy-to-fly-io-with-sqlite',
-            'guides/deployment/advanced-fly-io-deployment',
-            'guides/deployment/deploying-on-lambda'
-          ]
-        },
-        'guides/seed-a-database',
-        {
-          type: 'category',
-          label: 'Add Custom Functionality',
-          collapsed: true,
-          items: [
-            'guides/add-custom-functionality/overview',
-            'guides/add-custom-functionality/prerequisites',
-            'guides/add-custom-functionality/extend-graphql',
-            'guides/add-custom-functionality/extend-rest'
-          ]
-        },
-        "guides/securing-platformatic-db",
-        "guides/jwt-auth0",
-        "guides/http-cache",
         "guides/cache-with-platformatic-watt",
         "guides/monitoring",
-        "guides/debug-platformatic-db",
-        "guides/environment-variables",
-        "guides/prisma",
         "guides/generate-frontend-code-to-consume-platformatic-rest-api",
-        "guides/migrating-fastify-app-to-platformatic-service",
-        "guides/migrating-express-app-to-platformatic-service",
         "guides/telemetry",
         "guides/build-modular-monolith",
         "guides/logging-to-elasticsearch",
-        "guides/jwt-keycloak",
-        "guides/use-env-with-platformatic",
         "guides/using-watt-with-node-config",
         "guides/use-watt-multiple-repository",
-        "guides/scheduler.md"
+        "guides/scheduler"
       ],
     },
     'learn/glossary',

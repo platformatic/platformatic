@@ -3,7 +3,7 @@ title: Overview
 label: Astro
 ---
 
-import SharedOverview from '../_shared-overview.md';
+import SharedOverview from './_shared-overview.md';
 
 # Platformatic Node
 

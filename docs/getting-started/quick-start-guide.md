@@ -19,7 +19,7 @@ While this guide uses [SQLite](https://www.sqlite.org/), Platformatic DB also su
 ## Prerequisites
 
 Before starting, ensure you have the following installed:
-- [Node.js](https://nodejs.org/) (v18.8.0 or higher)
+- [Node.js](https://nodejs.org/) (v20.16.0+ or v22.3.0+)
 - [npm](https://docs.npmjs.com/cli/) (v7 or higher)
 - A code editor, (e.g., [Visual Studio Code](https://code.visualstudio.com/))
 
