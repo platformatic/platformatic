@@ -64,7 +64,7 @@ export async function isDirectory (path) {
   return statObject.isDirectory()
 }
 
-export async function waitForStart (startProcess) {
+export async function waitForStart (startProcess, buffer) {
   let url
 
   startProcess.stderr.pipe(startProcess.stdout)
@@ -76,6 +76,7 @@ export async function waitForStart (startProcess) {
     let parsed
     try {
       parsed = JSON.parse(log.toString())
+      buffer.push(parsed)
     } catch (e) {
       continue
     }
@@ -93,7 +94,7 @@ export async function waitForStart (startProcess) {
 export function executeCommand (cmd, ...args) {
   const options = typeof args.at(-1) === 'object' ? args.pop() : {}
 
-  return execa(cmd, args, { env: { NO_COLOR: 'true' }, ...options })
+  return execa(cmd, args, options)
 }
 
 export function wattpm (...args) {

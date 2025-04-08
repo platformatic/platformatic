@@ -43,6 +43,11 @@ function isKoa (app) {
   return typeof app.callback === 'function'
 }
 
+function serviceIsBuildable (serviceId) {
+  // TODO
+  return true // serviceId === 'ts-service'
+}
+
 export class NodeStackable extends BaseStackable {
   #module
   #app
@@ -69,8 +74,15 @@ export class NodeStackable extends BaseStackable {
       return this.url
     }
 
+    const mode = this.isProduction ? 'production' : 'development'
     const config = this.configManager.current
-    const command = config.application.commands[this.isProduction ? 'production' : 'development']
+    const command = config.application.commands[mode]
+
+    if (mode === 'development' && serviceIsBuildable(this.serviceId)) {
+      this.logger.debug({ serviceId: this.serviceId }, 'Building before start')
+      await this.build()
+      this.logger.debug({ serviceId: this.serviceId }, 'Build completed')
+    }
 
     if (command) {
       return this.startWithCommand(command)

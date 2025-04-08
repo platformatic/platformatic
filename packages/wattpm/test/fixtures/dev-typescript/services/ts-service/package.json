@@ -1,0 +1,16 @@
+{
+  "name": "service",
+  "scripts": {
+    "start": "platformatic start",
+    "clean": "rm -fr ./dist",
+    "build": "platformatic compile"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@platformatic/service": "^2.56.0",
+    "fastify": "^5.2.2"
+  }
+}

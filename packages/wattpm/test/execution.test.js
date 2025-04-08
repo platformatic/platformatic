@@ -14,7 +14,7 @@ test('dev - should start in development mode', async t => {
 
   t.after(() => {
     startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
+    return startProcess.catch(() => { })
   })
 
   const startProcess = wattpm('dev', rootDir)
@@ -48,7 +48,7 @@ test('dev - should restart an application if files are changed', async t => {
 
   t.after(() => {
     startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
+    return startProcess.catch(() => { })
   })
 
   const startProcess = wattpm('dev', rootDir)
@@ -102,7 +102,7 @@ test('dev - should restart an application if the runtime configuration file is c
 
   t.after(() => {
     startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
+    return startProcess.catch(() => { })
   })
 
   const startProcess = wattpm('dev', rootDir)
@@ -153,7 +153,7 @@ test('dev - should restart an application if the service configuration file is c
 
   t.after(() => {
     startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
+    return startProcess.catch(() => { })
   })
 
   const startProcess = wattpm('dev', rootDir)
@@ -203,7 +203,7 @@ test('start - should start in production mode', async t => {
 
   t.after(() => {
     startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
+    return startProcess.catch(() => { })
   })
 
   const startProcess = wattpm('start', rootDir)
@@ -230,7 +230,7 @@ test('start - should start in production mode with the inspector', async t => {
 
   t.after(() => {
     startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
+    return startProcess.catch(() => { })
   })
 
   const startProcess = wattpm('start', rootDir, '--inspect')
@@ -268,7 +268,7 @@ test('start - should use default folders for resolved services', async t => {
 
   t.after(() => {
     startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
+    return startProcess.catch(() => { })
   })
 
   process.chdir(rootDir)
@@ -352,7 +352,7 @@ test('stop - should stop an application', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   t.after(() => {
-    return startProcess.catch(() => {})
+    return startProcess.catch(() => { })
   })
 
   const startProcess = wattpm('start', rootDir)
@@ -377,7 +377,7 @@ test('restart - should restart an application', async t => {
 
   t.after(() => {
     startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
+    return startProcess.catch(() => { })
   })
 
   const startProcess = wattpm('start', rootDir)
@@ -416,4 +416,47 @@ test('reload - should complain when a runtime is not found', async t => {
 
   deepStrictEqual(logsProcess.exitCode, 1)
   ok(logsProcess.stdout.includes('Cannot find a matching runtime.'))
+})
+
+test('dev - should build typescript application in development mode', /*{ only: true },*/ async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'dev-typescript', false, 'watt.json')
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => { })
+  })
+
+  const startProcess = wattpm('dev', rootDir)
+  const logs = []
+  const url = await waitForStart(startProcess, logs)
+
+  const { statusCode } = await request(url)
+  deepStrictEqual(statusCode, 200)
+
+  ok(logs.find(log => log.msg === 'Started the service "no-ts"...'))
+
+  ok(logs.find(log => log.name === 'ts-service' && log.msg === 'Typescript compilation completed successfully.'))
+  ok(logs.find(log => log.msg === 'Started the service "ts-service"...'))
+
+  ok(logs.find(log => log.name === 'ts-node' && log.msg === '> build\n> tsc -p .\n'))
+  ok(logs.find(log => log.msg === 'Started the service "ts-node"...'))
+})
+
+test('reload - should reload an application and rebuild typescript services', {only: true},async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'dev-typescript', false, 'watt.json')
+
+  const startProcess = wattpm('dev', rootDir)
+  const logs = []
+  const url = await waitForStart(startProcess, logs)
+
+  console.log(logs)
+
+  const reload = await wattpm('reload', 'main')
+  const { exitCode } = await startProcess
+
+  // const mo = reload.stdout.match(/Runtime main have been reloaded and it is now running as PID (\d+)./)
+  // ok(mo)
+  // deepStrictEqual(exitCode, 0)
+
+  // process.kill(parseInt(mo[1]), 'SIGINT')
 })

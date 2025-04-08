@@ -1,0 +1,13 @@
+{
+  "name": "build",
+  "private": true,
+  "scripts": {
+    "dev": "wattpm dev",
+    "build": "wattpm build",
+    "start": "wattpm start"
+  },
+  "dependencies": {
+    "@platformatic/node": "^2.57.0",
+    "wattpm": "^2.57.0"
+  }
+}

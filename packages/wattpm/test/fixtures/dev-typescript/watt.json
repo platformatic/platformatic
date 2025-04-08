@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schemas.platformatic.dev/wattpm/2.57.0.json",
+  "server": {
+    "hostname": "127.0.0.1"
+  },
+  "logger": {
+    "level": "debug"
+  },
+  "entrypoint": "ts-node",
+  "services": [
+    {
+      "id": "no-ts",
+      "path": "./services/no-ts"
+    },
+    {
+      "id": "ts-node",
+      "path": "./services/ts-node"
+    },
+    {
+      "id": "ts-service",
+      "path": "./services/ts-service"
+    }
+  ]
+}
