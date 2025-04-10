@@ -1,6 +1,6 @@
 'use strict'
 
-import { test } from 'node:test'
+import { describe, test } from 'node:test'
 import { strict as assert } from 'node:assert'
 import { resolve, join } from 'node:path'
 import { mkdtemp, writeFile, rm, mkdir, readFile } from 'node:fs/promises'
@@ -9,9 +9,9 @@ import { ignoreDirs, isServiceBuildable } from '../lib/utils.js'
 
 const tempDir = resolve(tmpdir(), 'packages-node-utils')
 
-test('utils - isServiceBuildable', async (t) => {
+describe('utils - isServiceBuildable', () => {
   // Test with config having build command
-  await t.test('should return true for config with application.commands.build', async () => {
+  test('should return true for config with application.commands.build', async () => {
     const serviceDir = '/some/path' // Path doesn't matter for this test
     const config = {
       application: {
@@ -26,7 +26,7 @@ test('utils - isServiceBuildable', async (t) => {
   })
 
   // Test for app-no-config which has package.json with build script
-  await t.test('should return true for service with build script in package.json', async () => {
+  test('should return true for service with build script in package.json', async () => {
     const fixturesDir = resolve(import.meta.dirname, 'fixtures/dev-ts-build')
     const serviceDir = join(fixturesDir, 'services/app-no-config')
 
@@ -35,7 +35,7 @@ test('utils - isServiceBuildable', async (t) => {
   })
 
   // Test for app-with-config which also has package.json with build script
-  await t.test('should return true for service with platformatic.json and build script', async () => {
+  test('should return true for service with platformatic.json and build script', async () => {
     const fixturesDir = resolve(import.meta.dirname, 'fixtures/dev-ts-build')
     const serviceDir = join(fixturesDir, 'services/app-with-config')
 
@@ -44,7 +44,7 @@ test('utils - isServiceBuildable', async (t) => {
   })
 
   // Test with package.json but no build script
-  await t.test('should return false for package.json without build script', async () => {
+  test('should return false for package.json without build script', async () => {
     const dir = await mkdtemp(tempDir)
     try {
       // Create package.json without build script
@@ -66,7 +66,7 @@ test('utils - isServiceBuildable', async (t) => {
   })
 
   // Test with invalid package.json
-  await t.test('should return false if package.json is invalid', async () => {
+  test('should return false if package.json is invalid', async () => {
     const dir = await mkdtemp(tempDir)
     try {
       // Create invalid JSON in package.json
@@ -80,7 +80,7 @@ test('utils - isServiceBuildable', async (t) => {
   })
 
   // Test with no valid files
-  await t.test('should return false for directory with no package.json', async () => {
+  test('should return false for directory with no package.json', async () => {
     const dir = await mkdtemp(tempDir)
 
     try {
@@ -95,14 +95,14 @@ test('utils - isServiceBuildable', async (t) => {
   })
 
   // Test with non-existent directory
-  await t.test('should return false for non-existent directory', async () => {
+  test('should return false for non-existent directory', async () => {
     const result = await isServiceBuildable('/path/does/not/exist')
     assert.equal(result, false)
   })
 })
 
-test('utils - ignoreDirs', async (t) => {
-  await t.test('should handle both outDir and watchOptionsExcludeDirectories', async () => {
+describe('utils - ignoreDirs', () => {
+  test('should handle both outDir and watchOptionsExcludeDirectories', async () => {
     const outDir = 'dist'
     const watchOptionsExcludeDirectories = ['**/node_modules', 'cache']
 
@@ -122,7 +122,7 @@ test('utils - ignoreDirs', async (t) => {
     assert.equal(result.length, 4)
   })
 
-  await t.test('should handle outDir with /** suffix', async () => {
+  test('should handle outDir with /** suffix', async () => {
     const outDir = 'build/**'
     const watchOptionsExcludeDirectories = ['**/node_modules']
 
@@ -138,7 +138,7 @@ test('utils - ignoreDirs', async (t) => {
     assert.equal(result.length, 2)
   })
 
-  await t.test('should handle outDir-only case', async () => {
+  test('should handle outDir-only case', async () => {
     const outDir = 'dist'
 
     const result = ignoreDirs(outDir, null)
@@ -153,7 +153,7 @@ test('utils - ignoreDirs', async (t) => {
     assert.equal(result.length, 2)
   })
 
-  await t.test('should handle watchOptionsExcludeDirectories-only case', async () => {
+  test('should handle watchOptionsExcludeDirectories-only case', async () => {
     const watchOptionsExcludeDirectories = ['**/node_modules', 'temp', 'logs']
 
     const result = ignoreDirs(null, watchOptionsExcludeDirectories)
@@ -167,14 +167,14 @@ test('utils - ignoreDirs', async (t) => {
     assert.equal(result.length, 3)
   })
 
-  await t.test('should handle null arguments', async () => {
+  test('should handle null arguments', async () => {
     const result = ignoreDirs(null, null)
 
     // Should return empty array when both args are null
     assert.deepEqual(result, ['dist', 'dist/**'])
   })
 
-  await t.test('should handle empty watchOptionsExcludeDirectories', async () => {
+  test('should handle empty watchOptionsExcludeDirectories', async () => {
     const result = ignoreDirs('dist', [])
 
     // Should include outDir
@@ -187,7 +187,7 @@ test('utils - ignoreDirs', async (t) => {
     assert.equal(result.length, 2)
   })
 
-  await t.test('should deduplicate directories', async () => {
+  test('should deduplicate directories', async () => {
     const outDir = 'dist'
     const watchOptionsExcludeDirectories = ['dist', '**/node_modules', 'dist/**']
 
@@ -206,7 +206,7 @@ test('utils - ignoreDirs', async (t) => {
     assert.equal(result.length, 3)
   })
 
-  await t.test('should work with fixture tsconfig.json values', async () => {
+  test('should work with fixture tsconfig.json values', async () => {
     // Using values from fixtures/dev-ts-build/tsconfig.json
     const outDir = 'dist'
     const watchOptionsExcludeDirectories = ['**/node_modules', 'dist']
@@ -226,7 +226,7 @@ test('utils - ignoreDirs', async (t) => {
     assert.equal(result.length, 3)
   })
 
-  await t.test('should work with actual tsconfig.json fixture file', async () => {
+  test('should work with actual tsconfig.json fixture file', async () => {
     const fixturesDir = resolve(import.meta.dirname, 'fixtures/dev-ts-build')
     const tsconfigPath = join(fixturesDir, 'tsconfig.json')
     const tsconfig = JSON.parse(await readFile(tsconfigPath, 'utf8'))
