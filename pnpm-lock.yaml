@@ -1517,6 +1517,9 @@ importers:
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
+      json5:
+        specifier: ^2.2.3
+        version: 2.2.3
       light-my-request:
         specifier: ^6.0.0
         version: 6.6.0

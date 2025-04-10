@@ -1,10 +1,13 @@
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.56.0.json",
   "application": {
     "commands": {
       "build": "npm run custom-build",
       "development": "npm run dev",
       "production": "npm run start"
     }
+  },
+  "watch": {
+    "enabled": true
   }
 }
