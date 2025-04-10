@@ -2,6 +2,26 @@
 
 This guide will walk you through dockerizing a JavaScript Platformatic Watt Application.
 
+## Preparation
+
+Before you start, make sure you have the following setting in your `watt.json` / `platformatic.json` root file:
+
+```json
+{
+  "server": {
+    "hostname": "{PLT_HOSTNAME}",
+    "port": "{PORT}"
+  }
+}
+```
+
+For local development, those values can be set in your `.env` file:
+
+```env
+PLT_HOSTNAME=127.0.0.1
+PORT=3042
+```
+
 ## Dockerfile for JavaScript/TypeScript Watt Application
 
 Below is an example of a multi-build Dockerfile for a Platformatic JavaScript Watt application with a frontend, composer and DB service:
@@ -45,6 +65,12 @@ COPY --from=build /app ./
 # Install only production dependencies
 RUN --mount=type=cache,target=/root/.npm npm install --omit=dev
 
+# We must listen to all network interfaces
+ENV PLT_HOSTNAME=0.0.0.0
+
+# Set the environment variable for the port
+ENV PORT=3042
+
 # Expose the port
 EXPOSE 3042
 
@@ -56,8 +82,10 @@ CMD npm run start
 - **WORKDIR /app**: Sets the working directory inside the container to /app, where all commands will be executed.
 - **COPY package.json .**: Copies the `package.json` file from the local directory to the `/app` directory in the container. It's important to do this for all files in each service. 
 - **RUN --mount=type=bind,source=./package.json,target=./package.json**: Installs dependencies for the main application using a [bind mount](https://docs.docker.com/engine/storage/bind-mounts/) for the `package.json` file.
-- **--mount=type=cache,target=/root/.npm**: Caches the node_modules in the specified directory to speed up subsequent builds.
-- **COPY . .**: Copies all remaining files and folders into the /app directory in the container.
+- **--mount=type=cache,target=/root/.npm**: Caches the `node_modules` in the specified directory to speed up subsequent builds.
+- **COPY . .**: Copies all remaining files and folders into the `/app` directory in the container.
 - **RUN npm run build**: Executes the build script defined in the `package.json`, which typically compiles assets and prepares the application for production. This is usually done with `npx wattpm build`.
+- **ENV PLT_HOSTNAME=0.0.0.0**: set the `PLT_HOSTNAME` variable so that it listens to all network interfaces.
+- **ENV PORT=3042**: Sets the `PORT` environment variable to 3042, which is the port the application will listen on.
 - **EXPOSE 3042**: Exposes port 3042, allowing external access to the application running in the container.
 - **CMD npm run start**: Specifies the command to start the application, using the start script defined in the `package.json`.
