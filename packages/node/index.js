@@ -17,7 +17,7 @@ import { readFile } from 'node:fs/promises'
 import { Server } from 'node:http'
 import { resolve as pathResolve, resolve } from 'node:path'
 import { packageJson, schema } from './lib/schema.js'
-import { isServiceBuildable } from './lib/utils.js'
+import { getTsconfig, ignoreDirs, isServiceBuildable } from './lib/utils.js'
 
 const validFields = [
   'main',
@@ -350,6 +350,32 @@ export class NodeStackable extends BaseStackable {
     }
 
     return hasBuildScript
+  }
+
+  async getWatchConfig () {
+    const config = this.configManager.current
+
+    const enabled = config.watch?.enabled !== false
+
+    if (!enabled) {
+      return { enabled, path: this.root }
+    }
+
+    // ignore the outDir from tsconfig or service config if any
+    let ignore = config.watch?.ignore
+    if (!ignore) {
+      const tsConfig = await getTsconfig(this.root, config)
+      if (tsConfig) {
+        ignore = ignoreDirs(tsConfig?.compilerOptions?.outDir, tsConfig?.watchOptions?.excludeDirectories)
+      }
+    }
+
+    return {
+      enabled,
+      path: this.root,
+      allow: config.watch?.allow,
+      ignore
+    }
   }
 }
 
