@@ -4,9 +4,10 @@ import { test } from 'node:test'
 import { strict as assert } from 'node:assert'
 import { resolve, join } from 'node:path'
 import { mkdtemp, writeFile, rm, mkdir, readFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import { ignoreDirs, isServiceBuildable } from '../lib/utils.js'
 
-const tempDir = resolve(import.meta.dirname, '../../../tmp', 'packages-node-utils')
+const tempDir = resolve(tmpdir(), 'packages-node-utils')
 
 test('utils - isServiceBuildable', async (t) => {
   // Test with config having build command
