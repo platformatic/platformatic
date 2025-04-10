@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "commonjs",
     "esModuleInterop": true,
     "lib": ["es2022"],
     "target": "es2022",
@@ -10,14 +9,13 @@
     "noEmitOnError": true,
     "incremental": true,
     "strict": true,
-    "outDir": "dist",
-    "skipLibCheck": true
+    "outDir": "dist"
   },
   "watchOptions": {
     "watchFile": "fixedPollingInterval",
     "watchDirectory": "fixedPollingInterval",
     "fallbackPolling": "dynamicPriority",
     "synchronousWatchDirectory": true,
-    "excludeDirectories": ["**/node_modules", "**/dist"]
+    "excludeDirectories": ["**/node_modules", "dist"]
   }
 }

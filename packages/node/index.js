@@ -17,6 +17,7 @@ import { readFile } from 'node:fs/promises'
 import { Server } from 'node:http'
 import { resolve as pathResolve, resolve } from 'node:path'
 import { packageJson, schema } from './lib/schema.js'
+import { isServiceBuildable } from './lib/utils.js'
 
 const validFields = [
   'main',
@@ -70,6 +71,17 @@ export class NodeStackable extends BaseStackable {
     }
 
     const config = this.configManager.current
+
+    if (!this.isProduction && isServiceBuildable(this.root, config)) {
+      this.logger.info(`Building "${this.serviceId}" before starting, in dev`)
+      try {
+        await this.build()
+        this.childManager = null
+      } catch (e) {
+        this.logger.error(`Error building "${this.serviceId}" before starting, in dev: ${e.message}`)
+      }
+    }
+
     const command = config.application.commands[this.isProduction ? 'production' : 'development']
 
     if (command) {

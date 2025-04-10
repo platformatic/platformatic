@@ -96,7 +96,13 @@ class FileWatcher extends EventEmitter {
       return false
     }
 
-    return this.watchIgnore.some(ignoredFile => minimatch(fileName, ignoredFile))
+    for (const ignoredFile of this.watchIgnore) {
+      if (minimatch(fileName, ignoredFile)) {
+        return true
+      }
+    }
+
+    return false
   }
 }
 

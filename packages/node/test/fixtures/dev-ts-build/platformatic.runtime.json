@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.56.0.json",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  },
+  "entrypoint": "app-no-config",
+  "services": [
+    {
+      "id": "app-with-config",
+      "config": "platformatic.json",
+      "path": "./services/app-with-config"
+    },
+    {
+      "id": "app-no-config",
+      "path": "./services/app-no-config"
+    }
+  ],
+  "logger": {
+    "level": "debug"
+  },
+  "managementApi": true
+}

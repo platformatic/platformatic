@@ -11,6 +11,7 @@ import pino from 'pino'
 import { NonZeroExitCode } from './errors.js'
 import { cleanBasePath } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
+import { getTsconfig, ignoreDirs } from '../../node/lib/utils.js'
 
 const kITC = Symbol.for('plt.runtime.itc')
 
@@ -102,11 +103,20 @@ export class BaseStackable {
       return { enabled, path: this.root }
     }
 
+    // ignore the outDir from tsconfig or service config if any
+    let ignore = config.watch?.ignore
+    if (!ignore) {
+      const tsConfig = await getTsconfig(this.root, config)
+      if (tsConfig) {
+        ignore = ignoreDirs(tsConfig?.compilerOptions?.outDir, tsConfig?.watchOptions?.excludeDirectories)
+      }
+    }
+
     return {
       enabled,
       path: this.root,
       allow: config.watch?.allow,
-      ignore: config.watch?.ignore
+      ignore
     }
   }
 
