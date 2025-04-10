@@ -3,6 +3,11 @@ import { readFile } from 'node:fs/promises'
 import json5 from 'json5'
 
 export async function isServiceBuildable (serviceRoot, config) {
+  // skip vite as stackable as it has its own build command
+  if (config?.vite) {
+    return false
+  }
+
   if (config?.application?.commands?.build) {
     return true
   }
