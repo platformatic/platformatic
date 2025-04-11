@@ -124,6 +124,15 @@ const configurations = [
     prefix: ''
   },
   {
+    id: 'node-with-build-no-main',
+    name: 'Node.js application with (with a build function in development mode when standalone)',
+    files: ['services/frontend/dist/server.js'],
+    only: true,
+    checks: [verifyStandalone],
+    language: 'ts',
+    prefix: ''
+  },
+  {
     only: isCIOnWindows,
     id: 'node-with-build-composer-with-prefix',
     name: 'Node.js application with (with a build function in development mode when exposed in a composer with a prefix)',
