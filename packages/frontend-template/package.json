@@ -37,7 +37,7 @@
     "help-me": "^5.0.0",
     "jsonpointer": "^5.0.1",
     "minimist": "^1.2.8",
-    "scheduler": "^0.25.0",
+    "scheduler": "^0.26.0",
     "undici": "^7.0.0"
   },
   "devDependencies": {
