@@ -300,7 +300,6 @@ export class NodeStackable extends BaseStackable {
 
   async _findEntrypoint () {
     const config = this.configManager.current
-    const outputRoot = resolve(this.root, config.application.outputDirectory)
 
     if (config.node.main) {
       return pathResolve(this.root, config.node.main)
@@ -324,19 +323,7 @@ export class NodeStackable extends BaseStackable {
       }
     }
 
-    let root = this.root
-
-    if (this.isProduction) {
-      const hasCommand = this.configManager.current.application.commands.build
-      const hasBuildScript = await this.#hasBuildScript()
-
-      if (hasCommand || hasBuildScript) {
-        this.verifyOutputDirectory(outputRoot)
-        root = outputRoot
-      }
-    }
-
-    return pathResolve(root, entrypoint)
+    return pathResolve(this.root, entrypoint)
   }
 
   async #hasBuildScript () {
