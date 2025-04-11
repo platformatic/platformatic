@@ -1,14 +1,19 @@
-import { createRequire } from '@platformatic/utils'
 import { pathToFileURL } from 'node:url'
+import { hostname } from 'node:os'
+import path from 'node:path'
+import vm from 'node:vm';
+import { readFileSync } from 'node:fs';
 import { request } from 'undici'
+import pino from 'pino'
+import { createRequire } from '@platformatic/utils'
 
-export function getServerUrl (server) {
+export function getServerUrl(server) {
   const { family, address, port } = server.address()
 
   return new URL(family === 'IPv6' ? `http://[${address}]:${port}` : `http://${address}:${port}`).origin
 }
 
-export async function injectViaRequest (baseUrl, injectParams, onInject) {
+export async function injectViaRequest(baseUrl, injectParams, onInject) {
   try {
     const url = new URL(injectParams.url, baseUrl).href
     const requestParams = { method: injectParams.method, headers: injectParams.headers }
@@ -39,7 +44,7 @@ export async function injectViaRequest (baseUrl, injectParams, onInject) {
   }
 }
 
-export function ensureFileUrl (pathOrUrl) {
+export function ensureFileUrl(pathOrUrl) {
   if (!pathOrUrl) {
     return pathOrUrl
   }
@@ -55,12 +60,12 @@ export function ensureFileUrl (pathOrUrl) {
 
 /* c8 ignore next 4 */
 // This is to avoid common path/URL problems on Windows
-export function importFile (path) {
+export function importFile(path) {
   return import(ensureFileUrl(path))
 }
 
 /* c8 ignore next 6 */
-export function resolvePackage (root, pkg) {
+export function resolvePackage(root, pkg) {
   const require = createRequire(root)
   // We need to add the main module paths to the require.resolve call
   // Note that `require.main` is not defined in `next` if we set sthe instrumentation hook reequired for ESM applications.
@@ -68,10 +73,60 @@ export function resolvePackage (root, pkg) {
   return require.resolve(pkg, { paths: [root, ...require.main?.paths || []] })
 }
 
-export function cleanBasePath (basePath) {
+export function cleanBasePath(basePath) {
   return basePath ? `/${basePath}`.replaceAll(/\/+/g, '/').replace(/\/$/, '') : '/'
 }
 
-export function ensureTrailingSlash (basePath) {
+export function ensureTrailingSlash(basePath) {
   return basePath ? `${basePath}${basePath.endsWith('/') ? '' : '/'}` : '/'
+}
+
+// Setup the logger
+export async function buildPinoOptions(loggerConfig, serverConfig, serviceId, workerId, serviceOptions, root) {
+  const pinoOptions = {
+    level: loggerConfig?.level ?? serverConfig?.level ?? 'trace'
+  }
+
+  if (serviceId) {
+    pinoOptions.name = serviceId
+  }
+
+  if (typeof serviceOptions.context.worker?.index !== 'undefined') {
+    pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: workerId }
+  }
+
+  if (loggerConfig?.formatters) {
+    pinoOptions.formatters = {}
+    if (loggerConfig.formatters.bindings) {
+      pinoOptions.formatters.bindings = loadFunction(loggerConfig.formatters.bindings.path)
+    }
+    if (loggerConfig.formatters.level) {
+      pinoOptions.formatters.level = loadFunction(loggerConfig.formatters.level.path)
+    }
+  }
+
+  if (loggerConfig?.timestamp !== undefined) {
+    if (typeof loggerConfig.timestamp === 'string') {
+      pinoOptions.timestamp = stdTimeFunctions[loggerConfig.timestamp]
+    } else if (loggerConfig.timestamp.path) {
+      pinoOptions.timestamp = loadFunction(loggerConfig.timestamp.path)
+    } else { // boolean
+      pinoOptions.timestamp = loggerConfig.timestamp
+    }
+  }
+
+  return pinoOptions
+}
+
+export function loadFunction(file) {
+
+  
+}
+
+
+const stdTimeFunctions = {
+  epochTime: pino.stdTimeFunctions.epochTime,
+  unixTime: pino.stdTimeFunctions.unixTime,
+  nullTime: pino.stdTimeFunctions.nullTime,
+  isoTime: pino.stdTimeFunctions.isoTime
 }

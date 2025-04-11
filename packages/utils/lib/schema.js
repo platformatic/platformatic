@@ -181,8 +181,55 @@ const logger = {
         }
       },
       additionalProperties: false
+    },
+
+    formatters: {
+      type: 'object',
+      properties: {
+        bindings: {
+          type: 'object',
+          properties: {
+            path: {
+              type: 'string',
+              resolvePath: true
+            }
+          },
+          additionalProperties: false
+        },
+        level: {
+          type: 'object',
+          properties: {
+            path: {
+              type: 'string',
+              resolvePath: true
+            }
+          },
+          additionalProperties: false
+        }
+      },
+      additionalProperties: false
+    },
+
+    timestamp: {
+      anyOf: [
+        { type: 'boolean' },
+        {
+          enum: ['epochTime', 'unixTime', 'nullTime', 'isoTime']
+        },
+        {
+          type: 'object',
+          properties: {
+            path: {
+              type: 'string',
+              resolvePath: true
+            }
+          },
+          additionalProperties: false
+        }
+      ]
     }
   },
+
   required: ['level'],
   default: {},
   additionalProperties: true

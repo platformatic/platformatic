@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.58.0.json",
+  "logger": {
+    "level": "info",
+    "formatters": {
+      "bindings": {
+        "path": "logger-bindings.js"
+      },
+      "level": {
+        "path": "logger-level.js"
+      }
+    },
+    "timestamp": {
+      "path": "logger-timestamp.js"
+    }
+  }
+}
