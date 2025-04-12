@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "@matteo.collina/tspl": "^0.1.1",
+    "@matteo.collina/tspl": "^0.2.0",
     "@platformatic/composer": "workspace:*",
     "@platformatic/db": "workspace:*",
     "@platformatic/runtime": "workspace:*",
