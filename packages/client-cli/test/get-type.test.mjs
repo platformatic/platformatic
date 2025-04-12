@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import { equal } from 'node:assert'
 import { getType } from '../lib/get-type.mjs'
 
-test('get type with schema', async (t) => {
+test('get type with schema', async () => {
   const def = {
     schema: {
       type: 'array',
@@ -19,7 +19,7 @@ test('get type with schema', async (t) => {
   equal(type, 'Array<\'id\' | \'title\'>')
 })
 
-test('get type without schema', async (t) => {
+test('get type without schema', async () => {
   const arrayStringDef = {
     type: 'array',
     items: {
@@ -37,7 +37,7 @@ test('get type without schema', async (t) => {
   equal(getType(arrayStringDef), 'Array<\'id\' | \'title\'>')
 })
 
-test('support anyOf', async (t) => {
+test('support anyOf', async () => {
   const anyOfDef = {
     schema: {
       anyOf: [
@@ -59,7 +59,7 @@ test('support anyOf', async (t) => {
   equal(getType(anyOfDef), 'string | Array<string> | number')
 })
 
-test('support allOf', async (t) => {
+test('support allOf', async () => {
   const allOfDef = {
     schema: {
       allOf: [
@@ -81,7 +81,7 @@ test('support allOf', async (t) => {
   equal(getType(allOfDef), 'string & Array<string> & number')
 })
 
-test('support objects', async (t) => {
+test('support objects', async () => {
   const objectDef = {
     type: 'object',
     properties: {
@@ -92,7 +92,7 @@ test('support objects', async (t) => {
   equal(getType(objectDef), '{ \'foo\'?: string; \'bar\'?: number }')
 })
 
-test('support nested objects', async (t) => {
+test('support nested objects', async () => {
   const objectDef = {
     type: 'object',
     properties: {
@@ -112,7 +112,7 @@ test('support nested objects', async (t) => {
   equal(getType(objectDef), '{ \'foo\'?: string; \'bar\'?: { \'prop1\'?: string; \'prop2\'?: Array<string> } }')
 })
 
-test('support array of objects', async (t) => {
+test('support array of objects', async () => {
   const arrayOfObjectsDef = {
     items: {
       additionalProperties: false,
@@ -125,7 +125,7 @@ test('support array of objects', async (t) => {
   equal(getType(arrayOfObjectsDef), 'Array<{ \'attachedAt\'?: string; \'id\': string }>')
 })
 
-test('support array with anyOf', async (t) => {
+test('support array with anyOf', async () => {
   const arrayOfObjectsDef = {
     items: {
       anyOf: [
@@ -142,7 +142,7 @@ test('support array with anyOf', async (t) => {
   equal(getType(arrayOfObjectsDef), 'Array<string | number>')
 })
 
-test('support enum', async (t) => {
+test('support enum', async () => {
   const enumDef = {
     properties: {
       prop1: {
@@ -164,7 +164,7 @@ test('support enum', async (t) => {
   equal(getType(enumDef), '{ \'prop1\': \'foo\' | \'bar\' | \'pippo\\\'Giuseppe_Raimondo_Vittorio\\\'baudo\'; \'prop2\': string }')
 })
 
-test('support enum with numbers', async (t) => {
+test('support enum with numbers', async () => {
   const enumDef = {
     properties: {
       prop1: {
@@ -181,7 +181,7 @@ test('support enum with numbers', async (t) => {
   equal(getType(enumDef), '{ \'prop1\'?: 1 | 2; \'prop2\'?: string }')
 })
 
-test('object without properties', async (t) => {
+test('object without properties', async () => {
   const emptyObjectDef = {
     type: 'object',
     properties: {
@@ -199,7 +199,7 @@ test('object without properties', async (t) => {
   equal(getType(emptyObjectDef), '{ \'prop1\'?: string; \'prop2\'?: object; \'prop3\'?: object }')
 })
 
-test('support oneOf', async (t) => {
+test('support oneOf', async () => {
   const oneOfDef = {
     schema: {
       oneOf: [
@@ -221,7 +221,7 @@ test('support oneOf', async (t) => {
   equal(getType(oneOfDef), 'string | Array<string> | number')
 })
 
-test('support discriminator object', async (t) => {
+test('support discriminator object', async () => {
   const spec = {
     components: {
       schemas: {
@@ -256,4 +256,13 @@ test('support discriminator object', async (t) => {
     }
   }
   equal(getType(anyOfDef, 'res', spec), '{ \'type\': \'Dog\'; \'barkSound\': string } | { \'type\': \'Cat\'; \'meowSound\': string }')
+})
+
+test('support null', async () => {
+  const nullDef = {
+    schema: {
+      type: 'null'
+    }
+  }
+  equal(getType(nullDef), 'null')
 })
