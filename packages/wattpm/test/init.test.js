@@ -2,7 +2,7 @@ import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { readFile, writeFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { test } from 'node:test'
-import { defaultConfiguration, defaultPackageJson } from '../lib/defaults.js'
+import { defaultConfiguration, defaultPackageJson, defaultEnv } from '../lib/defaults.js'
 import { gitignore } from '../lib/gitignore.js'
 import { schema, version } from '../lib/schema.js'
 import { createTemporaryDirectory, isDirectory, wattpm } from './helper.js'
@@ -26,6 +26,9 @@ test('init - should create a new application for NPM', async t => {
   })
 
   strictEqual(await readFile(resolve(directory, '.gitignore'), 'utf-8'), gitignore)
+
+  strictEqual(await readFile(resolve(directory, '.env'), 'utf-8'), defaultEnv)
+  strictEqual(await readFile(resolve(directory, '.env.sample'), 'utf-8'), defaultEnv)
 })
 
 test('init - should create a new application for PNPM', async t => {
@@ -47,6 +50,9 @@ test('init - should create a new application for PNPM', async t => {
   })
 
   deepStrictEqual(await readFile(resolve(directory, 'pnpm-workspace.yaml'), 'utf-8'), 'packages:\n  - web/*\n  - external/*\n')
+
+  strictEqual(await readFile(resolve(directory, '.env'), 'utf-8'), defaultEnv)
+  strictEqual(await readFile(resolve(directory, '.env.sample'), 'utf-8'), defaultEnv)
 })
 
 test('init - should fail if the destination is a file', async t => {

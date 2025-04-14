@@ -1,7 +1,7 @@
 export const defaultConfiguration = {
   server: {
-    hostname: '127.0.0.1',
-    port: 3042
+    hostname: '{HOSTNAME}',
+    port: '{PORT}',
   },
   logger: {
     level: 'info'
@@ -22,3 +22,8 @@ export const defaultPackageJson = {
 }
 
 export const defaultServiceJson = {}
+
+export const defaultEnv = `
+PORT=3042
+HOSTNAME=127.0.0.1
+`
