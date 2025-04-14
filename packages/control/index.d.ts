@@ -34,6 +34,8 @@ declare namespace control {
       version: string;
       localUrl: string;
       entrypoint: boolean;
+      url?: string;
+      workers?: number;
       dependencies: {
         id: string;
         url: string;
