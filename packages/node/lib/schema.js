@@ -28,6 +28,43 @@ const node = {
   additionalProperties: false
 }
 
+const logger = utilsSchemaComponents.logger
+
+logger.properties = {
+  ...logger.properties,
+  formatters: {
+    type: 'object',
+    properties: {
+      path: {
+        type: 'string',
+        resolvePath: true
+      }
+    },
+    required: ['path'],
+    additionalProperties: false
+  },
+
+  timestamp: {
+    enum: ['epochTime', 'unixTime', 'nullTime', 'isoTime']
+  },
+
+  redact: {
+    type: 'object',
+    properties: {
+      paths: {
+        type: 'array',
+        items: { type: 'string' }
+      },
+      censor: {
+        type: 'string',
+        default: '[redacted]'
+      }
+    },
+    required: ['paths'],
+    additionalProperties: false
+  }
+}
+
 export const schemaComponents = { node }
 
 export const schema = {
@@ -39,7 +76,7 @@ export const schema = {
     $schema: {
       type: 'string'
     },
-    logger: utilsSchemaComponents.logger,
+    logger,
     server: utilsSchemaComponents.server,
     watch: basicSchemaComponents.watch,
     application: basicSchemaComponents.application,
