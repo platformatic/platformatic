@@ -94,8 +94,7 @@ async function main () {
   globalThis.fetch = fetch
   globalThis[kId] = threadId
   globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, {
-    // TODO check and comment
-    logger: globalThis.platformatic?.logger ?? createLogger(),
+    logger: createLogger(),
     events: new EventEmitter()
   })
 
