@@ -31,6 +31,67 @@ Configures Node. Supported object properties:
 
 Configures the logger, see the [logger configuration](https://www.fastify.io/docs/latest/Reference/Server/#logger) for more information.
 
+Additionally to the [logger configuration](https://www.fastify.io/docs/latest/Reference/Server/#logger), the following properties are supported:
+
+- **`formatters`**: specifying the formatters to use for the logger, for `bindings` and `level`, following the [pino formatters](https://github.com/pinojs/pino/blob/main/docs/api.md#formatters-object). The functions must be specified and exported in a separate ESM file and referenced with the `path` property.
+- **`timestamp`**: the timestamp format to use for the logs, one of:
+  - `isoTime`
+  - `epochTime`
+  - `unixTime`
+  - `nullTime`
+- **`redact`**: specify the `paths` and optionally the `censor` for redactions, see [pino redact](https://github.com/pinojs/pino/blob/main/docs/api.md#redact-array--object).
+
+Example:
+
+`platformatic.application.json`
+
+``` json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.60.0.json",
+  "logger": {
+    "formatters": {
+      "path": "formatters.js",
+    },
+    "timestamp": "isoTime",
+    "redact": {
+      "censor": "[redacted]",
+      "paths": ["secret", "req.headers.authorization"]
+    }
+  }
+}
+```
+
+`formatters.js`
+
+``` js
+export function bindings (bindings) {
+  return { service: 'service-name' }
+}
+
+export function level (label) {
+  return { level: label.toUpperCase() }
+}
+```
+
+Alternatively, `formatters.bindings` and `redact` can be specified deriving from the `globalThis.platformatic.logger` object as follows; note that the `timestamp` and `formatters.level` are not supported in this case.
+
+```js
+const app = fastify({
+  loggerInstance: globalThis.platformatic.logger.child({ service: 'app1' },
+    {
+      formatters: {
+        bindings: (bindings) => {
+          return { name: bindings.service }
+        },
+      },
+      redact: {
+        paths: ['secret'],
+        censor: '***HIDDEN***'
+      }
+    })
+})
+```
+
 ## `server`
 
 Configures the HTTP server, see the [runtime](../../runtime/configuration.md#server) documentation.

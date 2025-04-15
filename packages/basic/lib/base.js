@@ -1,10 +1,10 @@
 import { client, collectMetrics } from '@platformatic/metrics'
-import { deepmerge, executeWithTimeout } from '@platformatic/utils'
+import { deepmerge, executeWithTimeout, buildPinoOptions } from '@platformatic/utils'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
 import { existsSync } from 'node:fs'
-import { hostname, platform } from 'node:os'
+import { platform } from 'node:os'
 import { pathToFileURL } from 'node:url'
 import { workerData } from 'node:worker_threads'
 import pino from 'pino'
@@ -48,19 +48,7 @@ export class BaseStackable {
     this.stdout = standardStreams?.stdout ?? process.stdout
     this.stderr = standardStreams?.stderr ?? process.stderr
 
-    // Setup the logger
-    const pinoOptions = {
-      level: this.configManager.current?.logger?.level ?? this.serverConfig?.logger?.level ?? 'trace'
-    }
-
-    if (this.serviceId) {
-      pinoOptions.name = this.serviceId
-    }
-
-    if (typeof options.context.worker?.index !== 'undefined') {
-      pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: this.workerId }
-    }
-
+    const pinoOptions = buildPinoOptions(this.configManager.current?.logger, this.serverConfig?.logger, this.serviceId, this.workerId, options, this.root)
     this.logger = pino(pinoOptions, standardStreams?.stdout)
 
     // Setup globals
@@ -164,6 +152,7 @@ export class BaseStackable {
 
   registerGlobals (globals) {
     globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, globals)
+    globalThis.platformatic.logger = this.logger
   }
 
   verifyOutputDirectory (path) {

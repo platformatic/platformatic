@@ -183,6 +183,7 @@ const logger = {
       additionalProperties: false
     }
   },
+
   required: ['level'],
   default: {},
   additionalProperties: true
