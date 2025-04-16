@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/remix/2.59.1.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/remix/2.60.0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Remix Stackable",
   "type": "object",
@@ -94,6 +94,46 @@
               "type": "object"
             }
           },
+          "additionalProperties": false
+        },
+        "formatters": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "resolvePath": true
+            }
+          },
+          "required": [
+            "path"
+          ],
+          "additionalProperties": false
+        },
+        "timestamp": {
+          "enum": [
+            "epochTime",
+            "unixTime",
+            "nullTime",
+            "isoTime"
+          ]
+        },
+        "redact": {
+          "type": "object",
+          "properties": {
+            "paths": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "censor": {
+              "type": "string",
+              "default": "[redacted]"
+            }
+          },
+          "required": [
+            "paths"
+          ],
           "additionalProperties": false
         }
       },
