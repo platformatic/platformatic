@@ -66,6 +66,7 @@ export class BaseStackable {
       invalidateHttpCache: this.#invalidateHttpCache.bind(this),
       prometheus: { client, registry: this.metricsRegistry },
       setCustomHealthCheck: this.setCustomHealthCheck.bind(this),
+      logger: this.logger
     })
   }
 
@@ -152,7 +153,6 @@ export class BaseStackable {
 
   registerGlobals (globals) {
     globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, globals)
-    globalThis.platformatic.logger = this.logger
   }
 
   verifyOutputDirectory (path) {
