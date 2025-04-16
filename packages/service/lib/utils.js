@@ -39,14 +39,12 @@ function addLoggerToTheConfig (config) {
     }
   }
 
-  if (config.server.logger) {
+  if (config.server.logger?.formatters) {
     setPinoFormatters(config.server.logger)
   }
-  if (config.server.logger) {
+  if (config.server.logger?.timestamp) {
     setPinoTimestamp(config.server.logger)
   }
-
-  console.log('logger config', config.server.logger)
 }
 /* c8 ignore stop */
 

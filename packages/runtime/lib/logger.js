@@ -3,9 +3,9 @@
 const { once } = require('node:events')
 const { join } = require('node:path')
 const { isatty } = require('node:tty')
-
 const pino = require('pino')
 const pretty = require('pino-pretty')
+const { buildPinoFormatters, buildPinoTimestamp } = require('@platformatic/utils')
 
 const customPrettifiers = {
   name (name, _, obj) {
@@ -27,6 +27,13 @@ async function createLogger (config, runtimeLogsDir) {
     : isatty(1)
       ? pretty({ customPrettifiers })
       : pino.destination(1)
+
+  if (loggerConfig.formatters) {
+    loggerConfig.formatters = buildPinoFormatters(loggerConfig.formatters)
+  }
+  if (loggerConfig.timestamp) {
+    loggerConfig.timestamp = buildPinoTimestamp(loggerConfig.timestamp)
+  }
 
   if (!config.managementApi) {
     return [pino(loggerConfig, cliStream), cliStream]
