@@ -3,6 +3,7 @@
 const { access, readFile, stat } = require('node:fs/promises')
 const { resolve, join, relative, dirname, basename } = require('node:path')
 const { isatty } = require('tty')
+const { setPinoFormatters, setPinoTimestamp } = require('@platformatic/utils')
 
 async function isFileAccessible (filename, directory) {
   try {
@@ -37,6 +38,15 @@ function addLoggerToTheConfig (config) {
       }
     }
   }
+
+  if (config.server.logger) {
+    setPinoFormatters(config.server.logger)
+  }
+  if (config.server.logger) {
+    setPinoTimestamp(config.server.logger)
+  }
+
+  console.log('logger config', config.server.logger)
 }
 /* c8 ignore stop */
 

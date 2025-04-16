@@ -1,11 +1,34 @@
 'use strict'
 
+const path = require('node:path')
 const { hostname } = require('node:os')
 const pino = require('pino')
 const { createRequire } = require('./modules')
 
-// Setup the logger
-function buildPinoOptions (loggerConfig, serverConfig, serviceId, workerId, serviceOptions, root) {
+function setPinoFormatters(options) {
+  const r = createRequire(path.dirname(options.formatters.path))
+  const formatters = loadFormatters(r, options.formatters.path)
+  if (formatters.bindings) {
+    if (typeof formatters.bindings === 'function') {
+      options.formatters.bindings = formatters.bindings
+    } else {
+      throw new Error('logger.formatters.bindings must be a function')
+    }
+  }
+  if (formatters.level) {
+    if (typeof formatters.level === 'function') {
+      options.formatters.level = formatters.level
+    } else {
+      throw new Error('logger.formatters.level must be a function')
+    }
+  }
+}
+
+function setPinoTimestamp(options) {
+  options.timestamp = stdTimeFunctions[options.timestamp]
+}
+
+function buildPinoOptions(loggerConfig, serverConfig, serviceId, workerId, serviceOptions, root) {
   const pinoOptions = {
     level: loggerConfig?.level ?? serverConfig?.level ?? 'trace'
   }
@@ -51,7 +74,7 @@ function buildPinoOptions (loggerConfig, serverConfig, serviceId, workerId, serv
   return pinoOptions
 }
 
-function loadFormatters (require, file) {
+function loadFormatters(require, file) {
   try {
     // Check if the file is a valid path
     const resolvedPath = require.resolve(file)
@@ -70,4 +93,4 @@ const stdTimeFunctions = {
   isoTime: pino.stdTimeFunctions.isoTime
 }
 
-module.exports = { buildPinoOptions, loadFormatters }
+module.exports = { buildPinoOptions, loadFormatters, setPinoFormatters, setPinoTimestamp }
