@@ -32,7 +32,7 @@ Below is an example of a multi-build Dockerfile for a Platformatic JavaScript Wa
 # syntax=docker/dockerfile:1.7-labs
 
 # Stage 1: Build
-ARG NODE_VERSION=20
+ARG NODE_VERSION=22
 FROM node:${NODE_VERSION}-alpine AS build
 
 WORKDIR /app
@@ -74,7 +74,7 @@ ENV HOSTNAME=0.0.0.0
 ENV PORT=3042
 
 # Expose the port
-EXPOSE 3042
+EXPOSE ${PORT}
 
 # Start the application
 CMD npm run start
