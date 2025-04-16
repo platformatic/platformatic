@@ -1,10 +1,9 @@
-import { ConfigManager } from '@platformatic/config'
 import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { existsSync } from 'node:fs'
 import { mkdir, stat, writeFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
-import { defaultConfiguration, defaultPackageJson } from '../defaults.js'
+import { defaultConfiguration, defaultPackageJson, defaultEnv } from '../defaults.js'
 import { gitignore } from '../gitignore.js'
 import { schema, version } from '../schema.js'
 import { getRoot, parseArgs, saveConfigurationFile, verbose } from '../utils.js'
@@ -66,21 +65,14 @@ export async function initCommand (logger, args) {
     )
   }
 
-  // Write the configuration file - Using a ConfigManager will automatically insert defaults
-  const configManager = new ConfigManager({
-    source: defaultConfiguration,
-    schema,
-    logger,
-    fixPaths: false
-  })
-
-  await configManager.parse(true, [], { transformOnValidationErrors: true })
-
   await saveConfigurationFile(logger, configurationFile, {
     $schema: schema.$id,
-    ...configManager.current,
+    ...defaultConfiguration,
     entrypoint: positionals[1] ?? undefined
   })
+
+  await writeFile(resolve(root, '.env.sample'), defaultEnv, 'utf-8')
+  await writeFile(resolve(root, '.env'), defaultEnv, 'utf-8')
 
   const packageJson = {
     name: basename(root),

@@ -9,7 +9,7 @@ Before you start, make sure you have the following setting in your `watt.json` /
 ```json
 {
   "server": {
-    "hostname": "{PLT_HOSTNAME}",
+    "hostname": "{HOSTNAME}",
     "port": "{PORT}"
   }
 }
@@ -18,9 +18,11 @@ Before you start, make sure you have the following setting in your `watt.json` /
 For local development, those values can be set in your `.env` file:
 
 ```env
-PLT_HOSTNAME=127.0.0.1
+HOSTNAME=127.0.0.1
 PORT=3042
 ```
+
+Those are already configured like so in values by the `wattpm init` command. You can change them to your liking.
 
 ## Dockerfile for JavaScript/TypeScript Watt Application
 
@@ -30,7 +32,7 @@ Below is an example of a multi-build Dockerfile for a Platformatic JavaScript Wa
 # syntax=docker/dockerfile:1.7-labs
 
 # Stage 1: Build
-ARG NODE_VERSION=20
+ARG NODE_VERSION=22
 FROM node:${NODE_VERSION}-alpine AS build
 
 WORKDIR /app
@@ -66,13 +68,13 @@ COPY --from=build /app ./
 RUN --mount=type=cache,target=/root/.npm npm install --omit=dev
 
 # We must listen to all network interfaces
-ENV PLT_HOSTNAME=0.0.0.0
+ENV HOSTNAME=0.0.0.0
 
 # Set the environment variable for the port
 ENV PORT=3042
 
 # Expose the port
-EXPOSE 3042
+EXPOSE ${PORT}
 
 # Start the application
 CMD npm run start
@@ -85,7 +87,7 @@ CMD npm run start
 - **--mount=type=cache,target=/root/.npm**: Caches the `node_modules` in the specified directory to speed up subsequent builds.
 - **COPY . .**: Copies all remaining files and folders into the `/app` directory in the container.
 - **RUN npm run build**: Executes the build script defined in the `package.json`, which typically compiles assets and prepares the application for production. This is usually done with `npx wattpm build`.
-- **ENV PLT_HOSTNAME=0.0.0.0**: set the `PLT_HOSTNAME` variable so that it listens to all network interfaces.
+- **ENV HOSTNAME=0.0.0.0**: set the `HOSTNAME` variable so that it listens to all network interfaces.
 - **ENV PORT=3042**: Sets the `PORT` environment variable to 3042, which is the port the application will listen on.
 - **EXPOSE 3042**: Exposes port 3042, allowing external access to the application running in the container.
 - **CMD npm run start**: Specifies the command to start the application, using the start script defined in the `package.json`.
