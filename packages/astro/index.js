@@ -21,7 +21,7 @@ import { dirname, resolve } from 'node:path'
 import { satisfies } from 'semver'
 import { packageJson, schema } from './lib/schema.js'
 
-const supportedVersions = '^5.0.0'
+const supportedVersions = '^4.0.0 || ^5.0.0'
 
 export class AstroStackable extends BaseStackable {
   #astro
