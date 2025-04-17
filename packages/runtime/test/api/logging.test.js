@@ -286,3 +286,65 @@ test('logs with caller info', async t => {
     }
   }
 })
+
+test('isoTime support', async t => {
+  hideLogs(t)
+
+  const configFile = join(fixturesDir, 'isotime-logs', 'platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildServer(config.configManager.current)
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+
+  {
+    const { statusCode } = await app.inject('hello', '/')
+    strictEqual(statusCode, 200)
+  }
+
+  {
+    const client = new Client(
+      {
+        hostname: 'localhost',
+        protocol: 'http:'
+      },
+      {
+        socketPath: app.getManagementApiUrl(),
+        keepAliveTimeout: 10,
+        keepAliveMaxTimeout: 10
+      }
+    )
+
+    await sleep(3000)
+
+    const { statusCode, body } = await client.request({
+      method: 'GET',
+      path: '/api/v1/logs/all'
+    })
+
+    strictEqual(statusCode, 200)
+
+    const messages = (await body.text())
+      .trim()
+      .split('\n')
+      .map(l => {
+        const { level, pid, hostname, name, msg, payload } = JSON.parse(l)
+        return { level, pid, hostname, name, msg, payload }
+      })
+
+    const expected = [
+      { level: 30, name: 'hello', msg: 'Request received' }
+    ]
+
+    for (const e of expected) {
+      ok(
+        messages.find(m => {
+          return m.level === e.level && m.name === e.name && m.msg.startsWith(e.msg)
+        })
+      )
+    }
+  }
+})

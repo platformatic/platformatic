@@ -1733,7 +1733,7 @@ class Runtime extends EventEmitter {
       // First of all, try to parse the message as JSON
       let message
       // The message is a JSON object if it has at least 2 bytes
-      if (raw.length < 2) {
+      if (raw.length >= 2) {
         try {
           message = JSON.parse(raw)
         } catch (e) {

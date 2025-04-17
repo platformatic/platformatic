@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.60.0.json",
+  "entrypoint": "hello",
+  "services": [
+    {
+      "id": "hello",
+      "path": "services/hello"
+    }
+  ],
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  }
+}
