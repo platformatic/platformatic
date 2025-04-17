@@ -1739,7 +1739,7 @@ class Runtime extends EventEmitter {
       }
 
       // Not a Pino JSON, accumulate the message and continue
-      if (typeof message?.level !== 'number' || typeof message?.time !== 'number') {
+      if (typeof message?.level !== 'number' || (typeof message?.time !== 'number' && typeof message?.msg !== 'string')) {
         plainMessages += (plainMessages.length ? '\n' : '') + raw
         continue
       }
