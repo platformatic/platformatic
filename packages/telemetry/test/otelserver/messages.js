@@ -7,6 +7,13 @@ const { join } = require('path')
 // Protobuf setup to correctly decode messages
 async function plugin (fastify, opts) {
   const traceProtoPath = join('opentelemetry/proto/trace/v1/trace.proto')
+
+  // Considering that we just process socket ports and HTTP status codes, we don't need Long.
+  // (otherwise we get Long instances instead of numbers).
+  // See: https://github.com/protobufjs/protobuf.js/issues/1109#issuecomment-789711134
+  protobuf.util.Long = undefined
+  protobuf.configure()
+
   // This must point where the `opentelemetry` folder is located
   const root = new protobuf.Root()
   root.resolvePath = (_origin, target) => {
@@ -17,12 +24,6 @@ async function plugin (fastify, opts) {
   const tracePackage = root.lookupType('opentelemetry.proto.trace.v1.TracesData')
   const spanKind = root.lookupEnum('opentelemetry.proto.trace.v1.Span.SpanKind')
   const { SPAN_KIND_SERVER, SPAN_KIND_CLIENT, SPAN_KIND_INTERNAL } = spanKind.values
-
-  // Considering that we just process socket ports and HTTP status codes, we don't need Long.
-  // (otherwise we get Long instances instead of numbers).
-  // See: https://github.com/protobufjs/protobuf.js/issues/1109#issuecomment-789711134
-  protobuf.util.Long = undefined
-  protobuf.configure()
 
   fastify.decorate('messages', {
     tracePackage,

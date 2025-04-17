@@ -1413,6 +1413,7 @@ importers:
       prom-client:
         specifier: ^15.1.2
         version: 15.1.3
+    optionalDependencies:
       thread-cpu-usage:
         specifier: ^0.2.0
         version: 0.2.0
@@ -1801,9 +1802,6 @@ importers:
         specifier: ^0.3.0
         version: 0.3.0
       tail-file-stream:
-        specifier: ^0.2.0
-        version: 0.2.0
-      thread-cpu-usage:
         specifier: ^0.2.0
         version: 0.2.0
       undici:
@@ -2428,8 +2426,8 @@ importers:
         specifier: ^1.22.0
         version: 1.30.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions':
-        specifier: ^1.27.0
-        version: 1.32.0
+        specifier: 1.30.0
+        version: 1.30.0
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
@@ -2462,7 +2460,7 @@ importers:
         specifier: ^0.12.0
         version: 0.12.1(eslint@9.24.0)(typescript@5.7.3)
       protobufjs:
-        specifier: ^7.4.0
+        specifier: ^7.5.0
         version: 7.5.0
       typescript:
         specifier: ^5.5.4
@@ -3388,8 +3386,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@eslint-community/eslint-utils@4.6.0':
-    resolution: {integrity: sha512-WhCn7Z7TauhBtmzhvKpoQs0Wwb/kBcy4CwpuI0/eEIr2Lx2auxmulAzLr91wVZJaz47iUZdkXOK7WlAfxGKCnA==}
+  '@eslint-community/eslint-utils@4.6.1':
+    resolution: {integrity: sha512-KTsJMmobmbrFLe3LDh0PC2FXpcSYJt/MLjlkh/9LEnmKYLSYmT/0EW9JWANjeoemiuZrmogti0tW5Ch+qNUYDw==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
       eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
@@ -4202,8 +4200,8 @@ packages:
     resolution: {integrity: sha512-lp4qAiMTD4sNWW4DbKLBkfiMZ4jbAboJIGOQr5DvciMRI494OapieI9qiODpOt0XBr1LjIDy1xAGAnVs5supTA==}
     engines: {node: '>=14'}
 
-  '@opentelemetry/semantic-conventions@1.32.0':
-    resolution: {integrity: sha512-s0OpmpQFSfMrmedAn9Lhg4KWJELHCU6uU9dtIJ28N8UGhf9Y55im5X8fEzwhwDwiSqN+ZPSNrDJF7ivf/AuRPQ==}
+  '@opentelemetry/semantic-conventions@1.30.0':
+    resolution: {integrity: sha512-4VlGgo32k2EQ2wcCY3vEU28A0O13aOtHz3Xt2/2U5FAh9EfhD6t6DqL5Z6yAnRCntbTFDU4YfbpyzSlHNWycPw==}
     engines: {node: '>=14'}
 
   '@opentelemetry/sql-common@0.40.1':
@@ -10034,8 +10032,8 @@ packages:
       typescript: ^4.9.4 || ^5.0.2
       zod: ^3
 
-  zod@3.24.2:
-    resolution: {integrity: sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ==}
+  zod@3.24.3:
+    resolution: {integrity: sha512-HhY1oqzWCQWuUqvBFnsyrtZRhyPeR7SUGv+C4+MsisMuVfSPx8HpwWqH8tRahSlt6M3PiFAcoeFhZAqIXTxoSg==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -10668,7 +10666,7 @@ snapshots:
   '@esbuild/win32-x64@0.25.2':
     optional: true
 
-  '@eslint-community/eslint-utils@4.6.0(eslint@9.24.0)':
+  '@eslint-community/eslint-utils@4.6.1(eslint@9.24.0)':
     dependencies:
       eslint: 9.24.0
       eslint-visitor-keys: 3.4.3
@@ -11469,7 +11467,7 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/core': 1.30.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/instrumentation': 0.57.2(@opentelemetry/api@1.9.0)
-      '@opentelemetry/semantic-conventions': 1.32.0
+      '@opentelemetry/semantic-conventions': 1.30.0
     transitivePeerDependencies:
       - supports-color
 
@@ -11629,7 +11627,7 @@ snapshots:
 
   '@opentelemetry/semantic-conventions@1.28.0': {}
 
-  '@opentelemetry/semantic-conventions@1.32.0': {}
+  '@opentelemetry/semantic-conventions@1.30.0': {}
 
   '@opentelemetry/sql-common@0.40.1(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -11955,7 +11953,7 @@ snapshots:
 
   '@scalar/openapi-types@0.2.0':
     dependencies:
-      zod: 3.24.2
+      zod: 3.24.3
 
   '@scalar/types@0.1.7':
     dependencies:
@@ -11963,7 +11961,7 @@ snapshots:
       '@unhead/schema': 1.11.20
       nanoid: 5.1.5
       type-fest: 4.40.0
-      zod: 3.24.2
+      zod: 3.24.3
 
   '@sec-ant/readable-stream@0.4.1': {}
 
@@ -12240,7 +12238,7 @@ snapshots:
 
   '@typescript-eslint/utils@8.30.1(eslint@9.24.0)(typescript@5.7.3)':
     dependencies:
-      '@eslint-community/eslint-utils': 4.6.0(eslint@9.24.0)
+      '@eslint-community/eslint-utils': 4.6.1(eslint@9.24.0)
       '@typescript-eslint/scope-manager': 8.30.1
       '@typescript-eslint/types': 8.30.1
       '@typescript-eslint/typescript-estree': 8.30.1(typescript@5.7.3)
@@ -12635,9 +12633,9 @@ snapshots:
       xxhash-wasm: 1.1.0
       yargs-parser: 21.1.1
       yocto-spinner: 0.2.1
-      zod: 3.24.2
-      zod-to-json-schema: 3.24.5(zod@3.24.2)
-      zod-to-ts: 1.2.0(typescript@5.7.3)(zod@3.24.2)
+      zod: 3.24.3
+      zod-to-json-schema: 3.24.5(zod@3.24.3)
+      zod-to-ts: 1.2.0(typescript@5.7.3)(zod@3.24.3)
     optionalDependencies:
       sharp: 0.33.5
     transitivePeerDependencies:
@@ -13685,7 +13683,7 @@ snapshots:
 
   eslint-plugin-es-x@7.8.0(eslint@9.24.0):
     dependencies:
-      '@eslint-community/eslint-utils': 4.6.0(eslint@9.24.0)
+      '@eslint-community/eslint-utils': 4.6.1(eslint@9.24.0)
       '@eslint-community/regexpp': 4.12.1
       eslint: 9.24.0
       eslint-compat-utils: 0.5.1(eslint@9.24.0)
@@ -13712,7 +13710,7 @@ snapshots:
 
   eslint-plugin-n@17.17.0(eslint@9.24.0):
     dependencies:
-      '@eslint-community/eslint-utils': 4.6.0(eslint@9.24.0)
+      '@eslint-community/eslint-utils': 4.6.1(eslint@9.24.0)
       enhanced-resolve: 5.18.1
       eslint: 9.24.0
       eslint-plugin-es-x: 7.8.0(eslint@9.24.0)
@@ -13724,7 +13722,7 @@ snapshots:
 
   eslint-plugin-promise@7.2.1(eslint@9.24.0):
     dependencies:
-      '@eslint-community/eslint-utils': 4.6.0(eslint@9.24.0)
+      '@eslint-community/eslint-utils': 4.6.1(eslint@9.24.0)
       eslint: 9.24.0
 
   eslint-plugin-react@7.37.5(eslint@9.24.0):
@@ -13762,7 +13760,7 @@ snapshots:
 
   eslint@9.24.0:
     dependencies:
-      '@eslint-community/eslint-utils': 4.6.0(eslint@9.24.0)
+      '@eslint-community/eslint-utils': 4.6.1(eslint@9.24.0)
       '@eslint-community/regexpp': 4.12.1
       '@eslint/config-array': 0.20.0
       '@eslint/config-helpers': 0.2.1
@@ -14041,8 +14039,8 @@ snapshots:
       acquerello: 3.0.1
       fastify-plugin: 5.0.1
       table: 6.9.0
-      zod: 3.24.2
-      zod-to-json-schema: 3.24.5(zod@3.24.2)
+      zod: 3.24.3
+      zod-to-json-schema: 3.24.5(zod@3.24.3)
 
   fastify-tsconfig@3.0.0: {}
 
@@ -16381,7 +16379,8 @@ snapshots:
     dependencies:
       semver: 7.7.1
 
-  node-addon-api@8.3.1: {}
+  node-addon-api@8.3.1:
+    optional: true
 
   node-fetch-native@1.6.6: {}
 
@@ -18062,6 +18061,7 @@ snapshots:
   thread-cpu-usage@0.2.0:
     dependencies:
       node-addon-api: 8.3.1
+    optional: true
 
   thread-stream@3.1.0:
     dependencies:
@@ -18804,15 +18804,15 @@ snapshots:
 
   zhead@2.2.4: {}
 
-  zod-to-json-schema@3.24.5(zod@3.24.2):
+  zod-to-json-schema@3.24.5(zod@3.24.3):
     dependencies:
-      zod: 3.24.2
+      zod: 3.24.3
 
-  zod-to-ts@1.2.0(typescript@5.7.3)(zod@3.24.2):
+  zod-to-ts@1.2.0(typescript@5.7.3)(zod@3.24.3):
     dependencies:
       typescript: 5.7.3
-      zod: 3.24.2
+      zod: 3.24.3
 
-  zod@3.24.2: {}
+  zod@3.24.3: {}
 
   zwitch@2.0.4: {}
