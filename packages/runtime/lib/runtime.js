@@ -7,7 +7,7 @@ const { createReadStream, watch, existsSync } = require('node:fs')
 const { readdir, readFile, stat, access } = require('node:fs/promises')
 const { STATUS_CODES } = require('node:http')
 const { join } = require('node:path')
-const { setTimeout: sleep, setImmediate: sleepUntilNextTick } = require('node:timers/promises')
+const { setTimeout: sleep, setImmediate: immediate } = require('node:timers/promises')
 const { Worker } = require('node:worker_threads')
 const ts = require('tail-file-stream')
 const { Agent, interceptors: undiciInterceptors, request } = require('undici')
@@ -1774,7 +1774,7 @@ class Runtime extends EventEmitter {
   // Let's wait few more ticks to ensure the right order.
   async #avoidOutOfOrderThreadLogs () {
     for (let i = 0; i < 2; i++) {
-      await sleepUntilNextTick()
+      await immediate()
     }
   }
 }
