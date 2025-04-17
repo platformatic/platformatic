@@ -1732,10 +1732,13 @@ class Runtime extends EventEmitter {
     for (const raw of data.split('\n')) {
       // First of all, try to parse the message as JSON
       let message
-      try {
-        message = JSON.parse(raw)
-      } catch (e) {
-        // No-op, we assume the message is raw
+      // The message is a JSON object if it has at least 2 bytes
+      if (raw.length < 2) {
+        try {
+          message = JSON.parse(raw)
+        } catch (e) {
+          // No-op, we assume the message is raw
+        }
       }
 
       // Not a Pino JSON, accumulate the message and continue
