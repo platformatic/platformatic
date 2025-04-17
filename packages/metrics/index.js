@@ -77,8 +77,19 @@ async function collectMetrics (serviceId, workerId, metricsConfig = {}, registry
 }
 
 async function collectThreadCpuMetrics (registry) {
-  // We need until we switch to 22 as thread-cpu-usage is ESM
-  const { threadCpuUsage } = await import('thread-cpu-usage')
+  let threadCpuUsage
+
+  try {
+    // We need until we switch to 22 as thread-cpu-usage is ESM
+    const res = await import('thread-cpu-usage')
+    threadCpuUsage = res.threadCpuUsage
+  } catch {
+    process.emitWarning('thread-cpu-usage not available')
+    // We ignore the loading error, as this might
+    // happen if the library has failed to compile
+    // on this platform.
+    return
+  }
 
   let lastSample = process.hrtime.bigint()
   let lastUsage = threadCpuUsage()
