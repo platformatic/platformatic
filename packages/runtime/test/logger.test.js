@@ -115,8 +115,6 @@ test('should inherit full logger options from runtime to different services', as
   const content = readFileSync(file, 'utf8')
   const logs = content.split('\n').filter(line => line.trim() !== '').map(line => JSON.parse(line))
 
-  // console.log(logs)
-
   for (const t of ['composer', 'service', 'node']) {
     assert.ok(logs.find(log => log.level === 'INFO' &&
       log.time.length === 24 && // isotime
