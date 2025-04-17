@@ -1,6 +1,7 @@
 'use strict'
 
 const { mapSQLTypeToOpenAPIType } = require('@platformatic/sql-json-schema-mapper')
+const { transformQueryToCursor, buildCursorHeaders } = require('./utils')
 
 function generateArgs (entity, ignore) {
   const sortedEntityFields = Object.keys(entity.fields).sort()
@@ -80,11 +81,8 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
             offset: { type: 'integer' },
             totalCount: { type: 'boolean', default: false },
             // todo(shcube): maybe move descriptions to somewhere else
-            // todo(shcube): end headers to schema
-            cursor: { 
-              type: 'string', 
-              description: 'Comma-separated list of fields for cursor pagination. Ignored if startAfter or endBefore provided' 
-            },
+            // todo(shcube): add headers to schema
+            cursor: { type: 'boolean', default: false, description: 'Include cursor headers in response. Cursor keys built from orderBy clause' },
             startAfter: {
               type: 'string',
               description: 'Cursor for forward pagination. List objects after this cursor position'
@@ -111,7 +109,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
       },
     }, async function (request, reply) {
       const query = request.query
-      const { limit, offset, fields } = query
+      const { limit, offset, fields, startAfter, endBefore } = query
       const queryKeys = Object.keys(query)
       const where = {}
       const orderBy = []
@@ -166,7 +164,8 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
       }
 
       const ctx = { app: this, reply }
-      const res = await entity.find({ limit, offset, fields, orderBy, where, ctx })
+      const { cursor, nextPage } = transformQueryToCursor({ startAfter, endBefore })
+      const res = await entity.find({ limit, offset, fields, orderBy, where, ctx, cursor, nextPage })
 
       // X-Total-Count header
       if (query.totalCount) {
@@ -177,6 +176,17 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
           totalCount = await entity.count({ where, ctx })
         }
         reply.header('X-Total-Count', totalCount)
+      }
+
+      // cursor headers
+      if (query.cursor) {
+        const { startAfter, endBefore } = buildCursorHeaders({
+          findResult: res,
+          orderBy,
+          primaryKeys: entity.primaryKeys,
+        })
+        reply.header('X-Start-After', startAfter)
+        reply.header('X-End-Before', endBefore)
       }
 
       return res
