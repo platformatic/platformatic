@@ -84,7 +84,7 @@ async function collectThreadCpuMetrics (registry) {
     const res = await import('thread-cpu-usage')
     threadCpuUsage = res.threadCpuUsage
   } catch {
-    proces.emitWarning('thread-cpu-usage not available')
+    process.emitWarning('thread-cpu-usage not available')
     // We ignore the loading error, as this might
     // happen if the library has failed to compile
     // on this platform.
