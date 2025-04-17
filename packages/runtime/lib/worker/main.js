@@ -16,7 +16,9 @@ const {
   ensureFlushedWorkerStdio,
   executeWithTimeout,
   ensureLoggableError,
-  getPrivateSymbol
+  getPrivateSymbol,
+  buildPinoFormatters,
+  buildPinoTimestamp
 } = require('@platformatic/utils')
 const dotenv = require('dotenv')
 const pino = require('pino')
@@ -69,10 +71,21 @@ function patchLogging () {
 }
 
 function createLogger () {
-  const pinoOptions = { level: 'trace', name: workerData.serviceConfig.id }
+  const pinoOptions = {
+    level: 'trace',
+    name: workerData.serviceConfig.id,
+    ...workerData.config.logger
+  }
 
   if (workerData.worker?.count > 1) {
     pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: workerData.worker.index }
+  }
+
+  if (pinoOptions.formatters) {
+    pinoOptions.formatters = buildPinoFormatters(pinoOptions.formatters)
+  }
+  if (pinoOptions.timestamp) {
+    pinoOptions.timestamp = buildPinoTimestamp(pinoOptions.timestamp)
   }
 
   return pino(pinoOptions)

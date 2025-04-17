@@ -18,6 +18,7 @@ const customPrettifiers = {
   }
 }
 
+// Create the runtime logger
 async function createLogger (config, runtimeLogsDir) {
   const loggerConfig = { ...config.logger }
 
