@@ -7,7 +7,7 @@ const { createReadStream, watch, existsSync } = require('node:fs')
 const { readdir, readFile, stat, access } = require('node:fs/promises')
 const { STATUS_CODES } = require('node:http')
 const { join } = require('node:path')
-const { setTimeout: sleep, setImmediate: sleepUntilNextTick } = require('node:timers/promises')
+const { setTimeout: sleep, setImmediate: immediate } = require('node:timers/promises')
 const { Worker } = require('node:worker_threads')
 const ts = require('tail-file-stream')
 const { Agent, interceptors: undiciInterceptors, request } = require('undici')
@@ -1732,14 +1732,17 @@ class Runtime extends EventEmitter {
     for (const raw of data.split('\n')) {
       // First of all, try to parse the message as JSON
       let message
-      try {
-        message = JSON.parse(raw)
-      } catch (e) {
-        // No-op, we assume the message is raw
+      // The message is a JSON object if it has at least 2 bytes
+      if (raw.length >= 2) {
+        try {
+          message = JSON.parse(raw)
+        } catch (e) {
+          // No-op, we assume the message is raw
+        }
       }
 
       // Not a Pino JSON, accumulate the message and continue
-      if (typeof message?.level !== 'number' || typeof message?.time !== 'number') {
+      if (typeof message?.level !== 'number' || (typeof message?.time !== 'number' && typeof message?.msg !== 'string')) {
         plainMessages += (plainMessages.length ? '\n' : '') + raw
         continue
       }
@@ -1771,7 +1774,7 @@ class Runtime extends EventEmitter {
   // Let's wait few more ticks to ensure the right order.
   async #avoidOutOfOrderThreadLogs () {
     for (let i = 0; i < 2; i++) {
-      await sleepUntilNextTick()
+      await immediate()
     }
   }
 }
