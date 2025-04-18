@@ -270,7 +270,11 @@ export class AstroStackable extends BaseStackable {
       return this.url
     }
 
-    this.#app = fastify({ logger: { level: this.logger.level } })
+    console.log('AstroStackable #startProduction')
+    console.log(this.logger)
+
+    // this.#app = fastify({ logger: { level: this.logger.level } })
+    this.#app = fastify({ loggerInstance: this.logger })
 
     const root = resolve(this.root, outputDirectory)
     this.verifyOutputDirectory(root)
