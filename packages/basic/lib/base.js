@@ -48,7 +48,8 @@ export class BaseStackable {
     this.stdout = standardStreams?.stdout ?? process.stdout
     this.stderr = standardStreams?.stderr ?? process.stderr
 
-    const pinoOptions = buildPinoOptions(this.configManager.current?.logger, this.serverConfig?.logger, this.serviceId, this.workerId, options, this.root)
+    const loggerOptions = deepmerge(this.runtimeConfig?.logger ?? {}, this.configManager.current?.logger ?? {})
+    const pinoOptions = buildPinoOptions(loggerOptions, this.serverConfig?.logger, this.serviceId, this.workerId, options, this.root)
     this.logger = pino(pinoOptions, standardStreams?.stdout)
 
     // Setup globals
@@ -66,6 +67,7 @@ export class BaseStackable {
       invalidateHttpCache: this.#invalidateHttpCache.bind(this),
       prometheus: { client, registry: this.metricsRegistry },
       setCustomHealthCheck: this.setCustomHealthCheck.bind(this),
+      logger: this.logger
     })
   }
 
@@ -152,7 +154,6 @@ export class BaseStackable {
 
   registerGlobals (globals) {
     globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, globals)
-    globalThis.platformatic.logger = this.logger
   }
 
   verifyOutputDirectory (path) {

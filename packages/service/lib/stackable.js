@@ -10,7 +10,7 @@ const { client, collectMetrics } = require('@platformatic/metrics')
 const httpMetrics = require('@platformatic/fastify-http-metrics')
 const { extractTypeScriptCompileOptionsFromConfig } = require('./compile')
 const { compile } = require('@platformatic/ts-compiler')
-const { deepmerge } = require('@platformatic/utils')
+const { deepmerge, buildPinoFormatters, buildPinoTimestamp } = require('@platformatic/utils')
 
 const kITC = Symbol.for('plt.runtime.itc')
 
@@ -111,6 +111,7 @@ class ServiceStackable {
   async getConfig () {
     const config = Object.assign({}, this.configManager.current)
     config.server = Object.assign({}, config.server)
+
     const logger = config.server.loggerInstance
 
     if (logger) {
@@ -388,6 +389,13 @@ class ServiceStackable {
 
     if (this.context?.worker?.count > 1) {
       pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: this.context.worker.index }
+    }
+
+    if (this.loggerConfig?.formatters) {
+      pinoOptions.formatters = buildPinoFormatters(this.loggerConfig?.formatters)
+    }
+    if (this.loggerConfig?.timestamp) {
+      pinoOptions.timestamp = buildPinoTimestamp(this.loggerConfig?.timestamp)
     }
 
     this.logger = pino(pinoOptions)
