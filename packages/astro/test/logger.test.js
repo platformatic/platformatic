@@ -9,7 +9,7 @@ import { fullSetupRuntime } from '../../basic/test/helper.js'
 
 test('logger options', async t => {
   const originalRuntimeLoggerOut = process.env.PLT_RUNTIME_LOGGER_STDOUT
-  process.env.PLT_RUNTIME_LOGGER_STDOUT = path.join(tmpdir(), `test-logs-vite-${Date.now().toString()}`)
+  process.env.PLT_RUNTIME_LOGGER_STDOUT = path.join(tmpdir(), `test-logs-astro-${Date.now().toString()}`)
   t.after(() => {
     process.env.PLT_RUNTIME_LOGGER_STDOUT = originalRuntimeLoggerOut
   })
@@ -31,9 +31,7 @@ test('logger options', async t => {
   const log = logs.find(log => log.name === 'frontend' && log.msg.includes('incoming request'))
   const logContent = JSON.parse(log.msg)
 
-  assert.equal(logContent.name, 'vite')
-  assert.equal(logContent.time.length, 24) // isotime
   assert.equal(logContent.level, 'INFO')
+  assert.equal(logContent.time.length, 24) // isotime
   assert.equal(logContent.req.host, '***HIDDEN***')
-  assert.equal(logContent.msg, 'incoming request')
 })

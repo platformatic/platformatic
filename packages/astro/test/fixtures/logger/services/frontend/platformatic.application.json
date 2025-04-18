@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/astro/2.60.0.json",
+  "logger": {
+    "level": "debug",
+    "formatters": {
+      "path": "logger-formatters.mjs"
+    },
+    "timestamp": "isoTime",
+    "redact": {
+      "paths": [
+        "req.host"
+      ],
+      "censor": "***HIDDEN***"
+    }
+  }
+}
