@@ -80,8 +80,6 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
             limit: { type: 'integer', description: 'Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown' },
             offset: { type: 'integer' },
             totalCount: { type: 'boolean', default: false },
-            // todo(shcube): maybe move descriptions to somewhere else
-            // todo(shcube): add headers to schema
             cursor: { type: 'boolean', default: false, description: 'Include cursor headers in response. Cursor keys built from orderBy clause' },
             startAfter: {
               type: 'string',
