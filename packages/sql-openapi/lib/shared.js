@@ -96,7 +96,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
             ...orderByArgs,
           },
           not: {
-            required: ['startAfter', 'endBefore'], // todo(shcube): test this
+            required: ['startAfter', 'endBefore'],
           },
           additionalProperties: false,
         },
@@ -104,6 +104,20 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
           200: {
             type: 'array',
             items: entitySchema,
+            headers: {
+              'X-Total-Count': {
+                type: 'integer',
+                description: 'Total number of items matching the query (returned when totalCount=true)'
+              },
+              'X-Start-After': {
+                type: 'string',
+                description: 'Cursor for forward pagination - use as startAfter parameter to get the next page'
+              },
+              'X-End-Before': {
+                type: 'string',
+                description: 'Cursor for backward pagination - use as endBefore parameter to get the previous page'
+              }
+            }
           },
         },
       },
@@ -179,7 +193,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
       }
 
       // cursor headers
-      if (query.cursor) {
+      if ((query.cursor || startAfter || endBefore) && res.length > 0) {
         const { startAfter, endBefore } = buildCursorHeaders({
           findResult: res,
           orderBy,

@@ -31,7 +31,6 @@ function getSchemaOverrideFromOpenApiPathItem (pathItem, method) {
   return schemaOverride
 }
 
-// todo(shcube): can be bigint in cursor?
 function encodeCursor (cursor) {
   return Buffer.from(JSON.stringify(cursor)).toString('base64url')
 }
@@ -75,8 +74,8 @@ function buildCursorHeaders ({ findResult, orderBy, primaryKeys }) {
   }
   if (!hasPrimaryKey) throw new PrimaryKeyNotIncludedInOrderByInCursorPaginationError()
   return {
-    startAfter: encodeCursor(firstItemCursor),
-    endBefore: encodeCursor(lastItemCursor),
+    endBefore: encodeCursor(firstItemCursor),
+    startAfter: encodeCursor(lastItemCursor),
   }
 }
 
