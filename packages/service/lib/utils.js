@@ -17,7 +17,7 @@ async function isFileAccessible (filename, directory) {
 
 /* c8 ignore start */
 function addLoggerToTheConfig (config) {
-  if (config.server.loggerInstance) {
+  if (config.server?.loggerInstance) {
     return
   }
 

@@ -193,11 +193,11 @@ const logger = {
       required: ['path'],
       additionalProperties: false
     },
-  
+
     timestamp: {
       enum: ['epochTime', 'unixTime', 'nullTime', 'isoTime']
     },
-  
+
     redact: {
       type: 'object',
       properties: {
@@ -212,7 +212,7 @@ const logger = {
       },
       required: ['paths'],
       additionalProperties: false
-    }    
+    }
   },
 
   required: ['level'],

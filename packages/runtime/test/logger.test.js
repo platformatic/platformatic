@@ -9,6 +9,8 @@ const { request } = require('undici')
 const { tmpdir } = require('node:os')
 const { buildServer } = require('..')
 
+const WAIT_LOGS_FLUSH = 3_000
+
 test('should use full logger options - formatters, timestamp, redaction', async t => {
   process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
   process.env.PLT_RUNTIME_LOGGER_STDOUT = 1
@@ -23,7 +25,7 @@ test('should use full logger options - formatters, timestamp, redaction', async 
 
   await request(url, { path: '/logs' })
   // wait for logger flush
-  await wait(500)
+  await wait(WAIT_LOGS_FLUSH)
 
   const content = readFileSync(file, 'utf8')
   const logs = content.split('\n').filter(line => line.trim() !== '').map(line => JSON.parse(line))
@@ -46,6 +48,7 @@ test('should inherit full logger options from runtime to a platformatic/service'
   process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
   process.env.PLT_RUNTIME_LOGGER_STDOUT = 1
   const file = path.join(process.env.LOG_DIR, 'service.log')
+
   const serviceRoot = path.join(__dirname, '..', 'fixtures', 'logger-options')
 
   const app = await buildServer(path.join(serviceRoot, 'platformatic.json'))
@@ -56,7 +59,7 @@ test('should inherit full logger options from runtime to a platformatic/service'
 
   await request(url, { path: '/logs' })
   // wait for logger flush
-  await wait(500)
+  await wait(WAIT_LOGS_FLUSH)
 
   const content = readFileSync(file, 'utf8')
   const logs = content.split('\n').filter(line => line.trim() !== '').map(line => JSON.parse(line))
@@ -110,7 +113,7 @@ test('should inherit full logger options from runtime to different services', as
 
   await request(url, { path: '/logs' })
   // wait for logger flush
-  await wait(2_000)
+  await wait(WAIT_LOGS_FLUSH)
 
   const content = readFileSync(file, 'utf8')
   const logs = content.split('\n').filter(line => line.trim() !== '').map(line => JSON.parse(line))
@@ -121,5 +124,4 @@ test('should inherit full logger options from runtime to different services', as
       log.name === 'service' &&
       log.msg === `Started the service "${t}"...`))
   }
-
 })

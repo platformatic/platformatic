@@ -112,7 +112,6 @@ class ServiceStackable {
     const config = Object.assign({}, this.configManager.current)
     config.server = Object.assign({}, config.server)
 
-    console.log(' ********** service.getConfig swap loggerInstance for logger')
     const logger = config.server.loggerInstance
 
     if (logger) {
