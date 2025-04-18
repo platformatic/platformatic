@@ -22,19 +22,19 @@ test('cursor pagination basics', async (t) => {
         await db.query(sql`CREATE TABLE posts (
             id INTEGER PRIMARY KEY,
             title VARCHAR(42),
-            created_at INTEGER
+            created_at TIMESTAMP
           );`)
       } else if (isMysql) {
         await db.query(sql`CREATE TABLE posts (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             title VARCHAR(42),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP NULL DEFAULT NULL
           );`)
       } else {
         await db.query(sql`CREATE TABLE posts (
             id SERIAL PRIMARY KEY,
             title VARCHAR(42),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP
           );`)
       }
     },
