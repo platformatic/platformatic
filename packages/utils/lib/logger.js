@@ -8,7 +8,7 @@ const { createRequire } = require('./modules')
 // Utilities to build pino options from a config object
 // There are many variants to fit better the different use cases
 
-function setPinoFormatters(options) {
+function setPinoFormatters (options) {
   const r = createRequire(path.dirname(options.formatters.path))
   const formatters = loadFormatters(r, options.formatters.path)
   if (formatters.bindings) {
@@ -27,7 +27,7 @@ function setPinoFormatters(options) {
   }
 }
 
-function buildPinoFormatters(formatters) {
+function buildPinoFormatters (formatters) {
   const r = createRequire(path.dirname(formatters.path))
   const f = loadFormatters(r, formatters.path)
   const pinoFormatters = {}
@@ -48,15 +48,15 @@ function buildPinoFormatters(formatters) {
   return pinoFormatters
 }
 
-function setPinoTimestamp(options) {
+function setPinoTimestamp (options) {
   options.timestamp = stdTimeFunctions[options.timestamp]
 }
 
-function buildPinoTimestamp(timestamp) {
+function buildPinoTimestamp (timestamp) {
   return stdTimeFunctions[timestamp]
 }
 
-function buildPinoOptions(loggerConfig, serverConfig, serviceId, workerId, serviceOptions, root) {
+function buildPinoOptions (loggerConfig, serverConfig, serviceId, workerId, serviceOptions, root) {
   const pinoOptions = {
     level: loggerConfig?.level ?? serverConfig?.level ?? 'trace'
   }
@@ -102,7 +102,7 @@ function buildPinoOptions(loggerConfig, serverConfig, serviceId, workerId, servi
   return pinoOptions
 }
 
-function loadFormatters(require, file) {
+function loadFormatters (require, file) {
   try {
     // Check if the file is a valid path
     const resolvedPath = require.resolve(file)
