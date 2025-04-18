@@ -368,6 +368,26 @@
         "responses": {
           "200": {
             "description": "Default Response",
+            "headers": {
+              "X-Total-Count": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Total number of items matching the query (returned when totalCount=true)"
+              },
+              "X-Start-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Cursor for forward pagination - use as startAfter parameter to get the next page"
+              },
+              "X-End-Before": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Cursor for backward pagination - use as endBefore parameter to get the previous page"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
