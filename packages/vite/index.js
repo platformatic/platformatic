@@ -250,7 +250,7 @@ export class ViteStackable extends BaseStackable {
       return this.url
     }
 
-    this.#app = fastify({ logger: { level: 'info' } })
+    this.#app = fastify({ loggerInstance: this.logger })
 
     const outputDirectory = resolve(this.root, config.application.outputDirectory)
     this.verifyOutputDirectory(outputDirectory)

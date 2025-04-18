@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/remix/2.60.0.json",
+  "logger": {
+    "level": "debug",
+    "formatters": {
+      "path": "logger-formatters.js"
+    },
+    "timestamp": "isoTime",
+    "redact": {
+      "paths": [
+        "req.headers.authorization"
+      ],
+      "censor": "***HIDDEN***"
+    }    
+  }
+}
