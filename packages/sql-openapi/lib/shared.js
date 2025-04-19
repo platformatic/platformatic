@@ -1,6 +1,7 @@
 'use strict'
 
 const { mapSQLTypeToOpenAPIType } = require('@platformatic/sql-json-schema-mapper')
+const { transformQueryToCursor, buildCursorHeaders } = require('./utils')
 
 function generateArgs (entity, ignore) {
   const sortedEntityFields = Object.keys(entity.fields).sort()
@@ -79,9 +80,21 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
             limit: { type: 'integer', description: 'Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown' },
             offset: { type: 'integer' },
             totalCount: { type: 'boolean', default: false },
+            cursor: { type: 'boolean', default: false, description: 'Include cursor headers in response. Cursor keys built from orderBy clause' },
+            startAfter: {
+              type: 'string',
+              description: 'Cursor for forward pagination. List objects after this cursor position'
+            },
+            endBefore: {
+              type: 'string',
+              description: 'Cursor for backward pagination. List objects before this cursor position'
+            },
             fields,
             ...whereArgs,
             ...orderByArgs,
+          },
+          not: {
+            required: ['startAfter', 'endBefore'],
           },
           additionalProperties: false,
         },
@@ -89,12 +102,26 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
           200: {
             type: 'array',
             items: entitySchema,
+            headers: {
+              'X-Total-Count': {
+                type: 'integer',
+                description: 'Total number of items matching the query (returned when totalCount=true)'
+              },
+              'X-Start-After': {
+                type: 'string',
+                description: 'Cursor for forward pagination - use as startAfter parameter to get the next page'
+              },
+              'X-End-Before': {
+                type: 'string',
+                description: 'Cursor for backward pagination - use as endBefore parameter to get the previous page'
+              }
+            }
           },
         },
       },
     }, async function (request, reply) {
       const query = request.query
-      const { limit, offset, fields } = query
+      const { limit, offset, fields, startAfter, endBefore } = query
       const queryKeys = Object.keys(query)
       const where = {}
       const orderBy = []
@@ -149,7 +176,8 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
       }
 
       const ctx = { app: this, reply }
-      const res = await entity.find({ limit, offset, fields, orderBy, where, ctx })
+      const { cursor, nextPage } = transformQueryToCursor({ startAfter, endBefore })
+      const res = await entity.find({ limit, offset, fields, orderBy, where, ctx, cursor, nextPage })
 
       // X-Total-Count header
       if (query.totalCount) {
@@ -160,6 +188,17 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
           totalCount = await entity.count({ where, ctx })
         }
         reply.header('X-Total-Count', totalCount)
+      }
+
+      // cursor headers
+      if ((query.cursor || startAfter || endBefore) && res.length > 0) {
+        const { startAfter, endBefore } = buildCursorHeaders({
+          findResult: res,
+          orderBy,
+          primaryKeys: entity.primaryKeys,
+        })
+        reply.header('X-Start-After', startAfter)
+        reply.header('X-End-Before', endBefore)
       }
 
       return res

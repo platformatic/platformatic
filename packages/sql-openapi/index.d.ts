@@ -27,4 +27,6 @@ export default plugin
 export module errors {
   export const UnableToCreateTheRouteForTheReverseRelationshipError: () => FastifyError
   export const UnableToCreateTheRouteForThePKColRelationshipError: () => FastifyError
+  export const UnableToDecodeCursorError: () => FastifyError
+  export const PrimaryKeyNotIncludedInOrderByInCursorPaginationError: () => FastifyError
 }
