@@ -1452,8 +1452,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       amaro:
-        specifier: ^0.3.0
-        version: 0.3.2
+        specifier: ^0.5.0
+        version: 0.5.2
       iovalkey:
         specifier: ^0.3.0
         version: 0.3.1
@@ -4920,8 +4920,8 @@ packages:
   ajv@8.17.1:
     resolution: {integrity: sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g==}
 
-  amaro@0.3.2:
-    resolution: {integrity: sha512-sT/odZCW8I77QHvSvsoexIEHeAT9EZpwONIEp0Dw7JMUetR8csljFqlmtIQBpXnGYuv8dYSp4Grzqi4pQbbkbQ==}
+  amaro@0.5.2:
+    resolution: {integrity: sha512-4EW+b3YBNw1h0VGdICvDwyDrgnKgucfCG3e6vtOVpSavb6Yqs9cQZKoA0QHqY7ZtuTLukiXjVt6IuRKkyyU6Fg==}
     engines: {node: '>=22'}
 
   ansi-align@3.0.1:
@@ -12452,7 +12452,7 @@ snapshots:
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
-  amaro@0.3.2: {}
+  amaro@0.5.2: {}
 
   ansi-align@3.0.1:
     dependencies:
