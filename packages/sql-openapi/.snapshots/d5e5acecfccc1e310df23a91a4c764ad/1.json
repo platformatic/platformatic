@@ -7,50 +7,64 @@
   },
   "components": {
     "schemas": {
-      "Page": {
-        "title": "Page",
-        "description": "A Page",
+      "Item": {
+        "title": "Item",
+        "description": "A Item",
         "type": "object",
         "properties": {
           "id": {
             "type": "integer",
             "nullable": true
           },
-          "title": {
+          "name": {
             "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "type": "string",
+            "nullable": true
+          },
+          "score": {
+            "type": "integer",
             "nullable": true
           }
         },
         "additionalProperties": false
       },
-      "PageInput": {
-        "title": "PageInput",
-        "description": "A Page",
+      "ItemInput": {
+        "title": "ItemInput",
+        "description": "A Item",
         "type": "object",
         "properties": {
           "id": {
             "type": "integer"
           },
-          "title": {
-            "type": "string"
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "type": "string",
+            "nullable": true
+          },
+          "score": {
+            "type": "integer",
+            "nullable": true
           }
         },
-        "additionalProperties": false,
-        "required": [
-          "title"
-        ]
+        "additionalProperties": false
       }
     }
   },
   "paths": {
-    "/pages/": {
+    "/items/": {
       "get": {
-        "operationId": "getPages",
-        "summary": "Get pages.",
+        "operationId": "getItems",
+        "summary": "Get items.",
         "tags": [
-          "pages"
+          "items"
         ],
-        "description": "Fetch pages from the database.",
+        "description": "Fetch items from the database.",
         "parameters": [
           {
             "schema": {
@@ -112,13 +126,119 @@
               "items": {
                 "type": "string",
                 "enum": [
+                  "category",
                   "id",
-                  "title"
+                  "name",
+                  "score"
                 ]
               }
             },
             "in": "query",
             "name": "fields",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.eq",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.neq",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.gt",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.gte",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.lt",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.lte",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.ilike",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.in",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.nin",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.contains",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.contained",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.overlaps",
             "required": false
           },
           {
@@ -230,7 +350,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.eq",
+            "name": "where.name.eq",
             "required": false
           },
           {
@@ -238,7 +358,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.neq",
+            "name": "where.name.neq",
             "required": false
           },
           {
@@ -246,7 +366,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.gt",
+            "name": "where.name.gt",
             "required": false
           },
           {
@@ -254,7 +374,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.gte",
+            "name": "where.name.gte",
             "required": false
           },
           {
@@ -262,7 +382,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.lt",
+            "name": "where.name.lt",
             "required": false
           },
           {
@@ -270,7 +390,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.lte",
+            "name": "where.name.lte",
             "required": false
           },
           {
@@ -278,7 +398,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.like",
+            "name": "where.name.like",
             "required": false
           },
           {
@@ -286,7 +406,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.ilike",
+            "name": "where.name.ilike",
             "required": false
           },
           {
@@ -294,7 +414,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.in",
+            "name": "where.name.in",
             "required": false
           },
           {
@@ -302,7 +422,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.nin",
+            "name": "where.name.nin",
             "required": false
           },
           {
@@ -310,7 +430,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.contains",
+            "name": "where.name.contains",
             "required": false
           },
           {
@@ -318,7 +438,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.contained",
+            "name": "where.name.contained",
             "required": false
           },
           {
@@ -326,7 +446,111 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.overlaps",
+            "name": "where.name.overlaps",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.score.eq",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.score.neq",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.score.gt",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.score.gte",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.score.lt",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.score.lte",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.score.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.score.ilike",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.score.in",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.score.nin",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.score.contains",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.score.contained",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.score.overlaps",
             "required": false
           },
           {
@@ -338,6 +562,18 @@
             },
             "in": "query",
             "name": "where.or",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            },
+            "in": "query",
+            "name": "orderby.category",
             "required": false
           },
           {
@@ -361,7 +597,19 @@
               ]
             },
             "in": "query",
-            "name": "orderby.title",
+            "name": "orderby.name",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            },
+            "in": "query",
+            "name": "orderby.score",
             "required": false
           }
         ],
@@ -373,7 +621,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Page"
+                    "$ref": "#/components/schemas/Item"
                   }
                 }
               }
@@ -382,28 +630,28 @@
         }
       },
       "post": {
-        "operationId": "createPage",
-        "summary": "Create page.",
+        "operationId": "createItem",
+        "summary": "Create item.",
         "tags": [
-          "pages"
+          "items"
         ],
-        "description": "Add new page to the database.",
+        "description": "Add new item to the database.",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PageInput"
+                "$ref": "#/components/schemas/ItemInput"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "A Page",
+            "description": "A Item",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Page"
+                  "$ref": "#/components/schemas/Item"
                 }
               }
             },
@@ -412,17 +660,17 @@
         }
       },
       "put": {
-        "operationId": "updatePages",
-        "summary": "Update pages.",
+        "operationId": "updateItems",
+        "summary": "Update items.",
         "tags": [
-          "pages"
+          "items"
         ],
-        "description": "Update one or more pages in the database.",
+        "description": "Update one or more items in the database.",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PageInput"
+                "$ref": "#/components/schemas/ItemInput"
               }
             }
           }
@@ -434,13 +682,119 @@
               "items": {
                 "type": "string",
                 "enum": [
+                  "category",
                   "id",
-                  "title"
+                  "name",
+                  "score"
                 ]
               }
             },
             "in": "query",
             "name": "fields",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.eq",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.neq",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.gt",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.gte",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.lt",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.lte",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.ilike",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.in",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.nin",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.contains",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.contained",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.category.overlaps",
             "required": false
           },
           {
@@ -552,7 +906,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.eq",
+            "name": "where.name.eq",
             "required": false
           },
           {
@@ -560,7 +914,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.neq",
+            "name": "where.name.neq",
             "required": false
           },
           {
@@ -568,7 +922,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.gt",
+            "name": "where.name.gt",
             "required": false
           },
           {
@@ -576,7 +930,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.gte",
+            "name": "where.name.gte",
             "required": false
           },
           {
@@ -584,7 +938,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.lt",
+            "name": "where.name.lt",
             "required": false
           },
           {
@@ -592,7 +946,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.lte",
+            "name": "where.name.lte",
             "required": false
           },
           {
@@ -600,7 +954,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.like",
+            "name": "where.name.like",
             "required": false
           },
           {
@@ -608,7 +962,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.ilike",
+            "name": "where.name.ilike",
             "required": false
           },
           {
@@ -616,7 +970,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.in",
+            "name": "where.name.in",
             "required": false
           },
           {
@@ -624,7 +978,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.nin",
+            "name": "where.name.nin",
             "required": false
           },
           {
@@ -632,7 +986,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.contains",
+            "name": "where.name.contains",
             "required": false
           },
           {
@@ -640,7 +994,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.contained",
+            "name": "where.name.contained",
             "required": false
           },
           {
@@ -648,7 +1002,111 @@
               "type": "string"
             },
             "in": "query",
-            "name": "where.title.overlaps",
+            "name": "where.name.overlaps",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.score.eq",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.score.neq",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.score.gt",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.score.gte",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.score.lt",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.score.lte",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.score.like",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "where.score.ilike",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.score.in",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.score.nin",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.score.contains",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.score.contained",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "where.score.overlaps",
             "required": false
           },
           {
@@ -671,7 +1129,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Page"
+                    "$ref": "#/components/schemas/Item"
                   }
                 }
               }
@@ -681,14 +1139,14 @@
         }
       }
     },
-    "/pages/{id}": {
+    "/items/{id}": {
       "get": {
-        "operationId": "getPageById",
-        "summary": "Get Page by id.",
+        "operationId": "getItemById",
+        "summary": "Get Item by id.",
         "tags": [
-          "pages"
+          "items"
         ],
-        "description": "Fetch Page using its id from the database.",
+        "description": "Fetch Item using its id from the database.",
         "parameters": [
           {
             "schema": {
@@ -696,8 +1154,10 @@
               "items": {
                 "type": "string",
                 "enum": [
+                  "category",
                   "id",
-                  "title"
+                  "name",
+                  "score"
                 ]
               }
             },
@@ -716,11 +1176,11 @@
         ],
         "responses": {
           "200": {
-            "description": "A Page",
+            "description": "A Item",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Page"
+                  "$ref": "#/components/schemas/Item"
                 }
               }
             },
@@ -729,17 +1189,17 @@
         }
       },
       "put": {
-        "operationId": "updatePage",
-        "summary": "Update page.",
+        "operationId": "updateItem",
+        "summary": "Update item.",
         "tags": [
-          "pages"
+          "items"
         ],
-        "description": "Update page in the database.",
+        "description": "Update item in the database.",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PageInput"
+                "$ref": "#/components/schemas/ItemInput"
               }
             }
           }
@@ -751,8 +1211,10 @@
               "items": {
                 "type": "string",
                 "enum": [
+                  "category",
                   "id",
-                  "title"
+                  "name",
+                  "score"
                 ]
               }
             },
@@ -771,11 +1233,11 @@
         ],
         "responses": {
           "200": {
-            "description": "A Page",
+            "description": "A Item",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Page"
+                  "$ref": "#/components/schemas/Item"
                 }
               }
             },
@@ -784,12 +1246,12 @@
         }
       },
       "delete": {
-        "operationId": "deletePages",
-        "summary": "Delete pages.",
+        "operationId": "deleteItems",
+        "summary": "Delete items.",
         "tags": [
-          "pages"
+          "items"
         ],
-        "description": "Delete one or more pages from the Database.",
+        "description": "Delete one or more items from the Database.",
         "parameters": [
           {
             "schema": {
@@ -797,8 +1259,10 @@
               "items": {
                 "type": "string",
                 "enum": [
+                  "category",
                   "id",
-                  "title"
+                  "name",
+                  "score"
                 ]
               }
             },
@@ -817,11 +1281,11 @@
         ],
         "responses": {
           "200": {
-            "description": "A Page",
+            "description": "A Item",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Page"
+                  "$ref": "#/components/schemas/Item"
                 }
               }
             }
