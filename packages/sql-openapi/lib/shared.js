@@ -102,20 +102,6 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
           200: {
             type: 'array',
             items: entitySchema,
-            headers: {
-              'X-Total-Count': {
-                type: 'integer',
-                description: 'Total number of items matching the query (returned when totalCount=true)'
-              },
-              'X-Start-After': {
-                type: 'string',
-                description: 'Cursor for forward pagination - use as startAfter parameter to get the next page'
-              },
-              'X-End-Before': {
-                type: 'string',
-                description: 'Cursor for backward pagination - use as endBefore parameter to get the previous page'
-              }
-            }
           },
         },
       },

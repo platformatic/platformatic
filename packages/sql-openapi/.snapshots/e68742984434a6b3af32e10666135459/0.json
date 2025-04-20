@@ -86,34 +86,6 @@
           },
           {
             "schema": {
-              "type": "boolean",
-              "default": false
-            },
-            "in": "query",
-            "name": "cursor",
-            "required": false,
-            "description": "Include cursor headers in response. Cursor keys built from orderBy clause"
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "startAfter",
-            "required": false,
-            "description": "Cursor for forward pagination. List objects after this cursor position"
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "endBefore",
-            "required": false,
-            "description": "Cursor for backward pagination. List objects before this cursor position"
-          },
-          {
-            "schema": {
               "type": "array",
               "items": {
                 "type": "string",
@@ -491,26 +463,6 @@
         "responses": {
           "200": {
             "description": "Default Response",
-            "headers": {
-              "X-Total-Count": {
-                "schema": {
-                  "type": "integer"
-                },
-                "description": "Total number of items matching the query (returned when totalCount=true)"
-              },
-              "X-Start-After": {
-                "schema": {
-                  "type": "string"
-                },
-                "description": "Cursor for forward pagination - use as startAfter parameter to get the next page"
-              },
-              "X-End-Before": {
-                "schema": {
-                  "type": "string"
-                },
-                "description": "Cursor for backward pagination - use as endBefore parameter to get the previous page"
-              }
-            },
             "content": {
               "application/json": {
                 "schema": {
