@@ -346,7 +346,12 @@ See the [above](#plural).
 
 ## Pagination
 
-Platformatic DB supports result pagination through input parameters: `limit` and `offset`
+Platformatic DB supports two methods of pagination for navigating through large datasets:
+
+1. **Offset-based pagination** - using `limit` and `offset` parameters
+2. **Cursor-based pagination** - using `startAfter` and `endBefore` parameters
+
+### Offset-based Pagination
 
 **Example**
 ```bash
@@ -395,6 +400,80 @@ By default, *offset* is not applied to the request.
 Clients can override this behavior by passing a value.
 
 *Offset* only accepts values `>= 0`. Otherwise, an error is returned.
+
+### Cursor
+
+Platformatic DB supports cursor-based pagination as an alternative to offset pagination.
+
+When using cursor pagination, server returns opaque cursor tokens that clients can use to navigate through result set.
+
+To enable cursor pagination, add `cursor=true` to your query:
+
+```bash
+$ curl -X 'GET' 'http://localhost:3042/movies?limit=5&cursor=true&orderby.id=asc'
+
+[
+  {
+    "title": "Terminator",
+    "id": 1
+  },
+  ...
+  {
+    "title": "Star Trek",
+    "id": 5
+  }
+]
+```
+
+When cursor pagination is enabled response includes two headers:
+- `x-start-after`: points to the last item in the current page
+- `x-end-before`: points to the first item in the current page
+
+To get the next page, use `startAfter` parameter with value from `x-start-after` header:
+```bash
+$ curl -X 'GET' 'http://localhost:3042/movies?limit=5&startAfter=eyJpZCI6NX0=&orderby.id=asc'
+
+[
+  {
+    "title": "Star Wars",
+    "id": 6
+  },
+  ...
+]
+```
+
+To get the previous page, use `endBefore` parameter with value from `x-end-before` header:
+```bash
+$ curl -X 'GET' 'http://localhost:3042/movies?limit=5&endBefore=eyJpZCI6MX0=&orderby.id=asc'
+
+[
+  ...
+]
+```
+
+Cursor pagination works with all other query parameters like `where` clauses:
+```bash
+$ curl -X 'GET' 'http://localhost:3042/movies?limit=3&cursor=true&where.title.like=Star%&orderby.id=asc'
+```
+
+**Compound Cursors**
+
+For multiple ordering fields, you can create a compound cursor by including multiple fields in `orderby` clause:
+```bash
+$ curl -X 'GET' 'http://localhost:3042/movies?limit=5&cursor=true&orderby.createdAt=desc&orderby.id=asc'
+```
+This ensures consistent pagination when the first ordering field contains duplicate values.
+
+**Requirements:**
+- When using cursor pagination, the primary key (e.g., `id`) **must** be included in the `orderby` clause
+- You **cannot** use both `startAfter` and `endBefore` in the same request
+- Cursor values are base64-encoded and should be treated as opaque tokens
+- Cursor values are generated directly from fields specified in `orderby` clause
+- The order of fields in `orderby` clause is significant; usually you want to place the primary key (e.g., `id`) last in compound ordering to serve as a tie-breaker:
+```bash
+$ curl -X 'GET' 'http://localhost:3042/movies?limit=5&cursor=true&orderby.releaseDate=desc&orderby.id=asc'
+```
+
 
 ## Allow the primary keys in the input
 
