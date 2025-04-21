@@ -401,7 +401,7 @@ Clients can override this behavior by passing a value.
 
 *Offset* only accepts values `>= 0`. Otherwise, an error is returned.
 
-### Cursor
+### Cursor-based pagination
 
 Platformatic DB supports cursor-based pagination as an alternative to offset pagination.
 
