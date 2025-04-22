@@ -1039,9 +1039,9 @@ test('can be used without the runtime - per-method flag', { skip: isCIOnWindows 
   )
 
   deepStrictEqual(logs, [
-    { msg: 'set', key, value: 'value' },
-    { msg: 'get', key, value: undefined },
-    { msg: 'remove', key, value: undefined }
+    { msg: 'cache set', key, value: 'value' },
+    { msg: 'cache get', key, value: undefined },
+    { msg: 'cache remove', key, value: undefined }
   ])
 })
 
@@ -1119,9 +1119,9 @@ test('can be used without the runtime - standalone mode', { skip: isCIOnWindows 
   )
 
   deepStrictEqual(logs, [
-    { msg: 'set', key, value: 'value' },
-    { msg: 'get', key, value: undefined },
-    { msg: 'remove', key, value: undefined }
+    { msg: 'cache set', key, value: 'value' },
+    { msg: 'cache get', key, value: undefined },
+    { msg: 'cache remove', key, value: undefined }
   ])
 })
 
