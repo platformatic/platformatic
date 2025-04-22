@@ -32,7 +32,7 @@ Configures Vite. Supported object properties:
 
 ## `logger`
 
-Configures the logger, see the [logger configuration](https://www.fastify.io/docs/latest/Reference/Server/#logger) for more information.
+Configures the logger, see the [logger configuration](../logger.md) documentation for more information.
 
 ## `server`
 

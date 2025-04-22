@@ -285,9 +285,7 @@ An object with the following settings:
 
 ### `logger`
 
-This configures the Platformatic Runtime logger.
-
-See the [logger configuration](https://www.fastify.io/docs/latest/Reference/Server/#logger) for more information.
+This configures the Platformatic Runtime logger, see the [logger configuration](../logger.md) documentation for more information.
 
 ### `undici`
 
