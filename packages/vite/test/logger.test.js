@@ -21,9 +21,7 @@ test('logger options', async t => {
     production: true,
   })
 
-  const response = await request(`${url}/`)
-  console.log(response.statusCode)
-  console.log(await response.body.text())
+  await request(`${url}/`)
 
   // wait for logger flush
   await wait(500)
