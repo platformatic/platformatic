@@ -265,10 +265,21 @@ test('cursor pagination edge cases', async (t) => {
     equal(res.headers['x-start-after'], undefined, 'No cursor headers on empty results')
   }
 
+  // Test invalid startAfter value
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/items?startAfter=invalid-cursor-value'
+      url: '/items?startAfter=invalid-cursor-value&orderby.id=asc'
+    })
+    equal(res.statusCode, 400, 'Invalid cursor should return 400')
+    equal(res.json().code, new UnableToDecodeCursor().code)
+  }
+
+  // Test invalid endBefore value
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/items?endBefore=invalid-cursor-value&orderby.id=asc'
     })
     equal(res.statusCode, 400, 'Invalid cursor should return 400')
     equal(res.json().code, new UnableToDecodeCursor().code)
