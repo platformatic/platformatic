@@ -1,4 +1,4 @@
-import { ensureLoggableError } from '@platformatic/utils'
+import { buildPinoFormatters, buildPinoTimestamp, ensureLoggableError } from '@platformatic/utils'
 import { Redis } from 'iovalkey'
 import { pack, unpack } from 'msgpackr'
 import { existsSync, readFileSync } from 'node:fs'
@@ -98,7 +98,7 @@ export class CacheHandler {
   }
 
   async get (cacheKey, _, isRedisKey) {
-    this.#logger.trace({ key: cacheKey }, 'get')
+    this.#logger.trace({ key: cacheKey }, 'cache get')
 
     const key = this.#standalone || isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
 
@@ -149,7 +149,7 @@ export class CacheHandler {
     const tags = ctx.tags
     const revalidate = ctx.revalidate ?? ctx.cacheControl?.revalidate ?? value.revalidate ?? 0
 
-    this.#logger.trace({ key: cacheKey, value, tags, revalidate }, 'set')
+    this.#logger.trace({ key: cacheKey, value, tags, revalidate }, 'cache set')
 
     const key = this.#standalone || isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
 
@@ -192,7 +192,7 @@ export class CacheHandler {
   }
 
   async remove (cacheKey, isRedisKey) {
-    this.#logger.trace({ key: cacheKey }, 'remove')
+    this.#logger.trace({ key: cacheKey }, 'cache remove')
 
     const key = this.#standalone || isRedisKey ? cacheKey : this.#keyFor(cacheKey, sections.values)
 
@@ -242,7 +242,7 @@ export class CacheHandler {
   }
 
   async revalidateTag (tags) {
-    this.#logger.trace({ tags }, 'revalidateTag')
+    this.#logger.trace({ tags }, 'cache revalidateTag')
 
     if (typeof tags === 'string') {
       tags = [tags]
@@ -300,8 +300,17 @@ export class CacheHandler {
   }
 
   #createPlatformaticLogger () {
+    const loggerConfig = globalThis.platformatic?.config?.logger
+
     const pinoOptions = {
-      level: globalThis.platformatic?.logLevel ?? 'info'
+      ...loggerConfig,
+      level: globalThis.platformatic?.logLevel ?? loggerConfig?.level ?? 'info'
+    }
+    if (pinoOptions.formatters) {
+      pinoOptions.formatters = buildPinoFormatters(pinoOptions.formatters)
+    }
+    if (pinoOptions.timestamp) {
+      pinoOptions.timestamp = buildPinoTimestamp(pinoOptions.timestamp)
     }
 
     if (this.serviceId) {

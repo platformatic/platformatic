@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.61.0.json",
+  "composer": {
+    "services": [
+      {
+        "id": "next",
+        "proxy": {
+          "prefix": "/next"
+        }
+      }
+    ]
+  },
+  "watch": false
+}
