@@ -1,5 +1,8 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/vite/2.0.0.json",
+  "vite": {
+    "ssr": true
+  },
   "logger": {
     "level": "debug",
     "formatters": {
@@ -12,8 +15,5 @@
       ],
       "censor": "***HIDDEN***"
     }
-  },
-  "vite": {
-    "ssr": true
   }
 }
