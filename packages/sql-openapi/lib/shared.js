@@ -122,7 +122,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
                 v = v.map((v) => parseInt(v))
               }
             }
-            acc.push({ [field]: { [modifier]: v } })
+            acc.push({ [field]: { [modifier]: parseNullableValue(field, v) } })
             return acc
           }, [])
           where.or = parsed
@@ -131,7 +131,6 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
 
         if (key.startsWith('where.')) {
           const [, field, modifier] = key.split('.')
-          const fieldIsNullable = entity.camelCasedFields[field].isNullable
           where[field] ||= {}
           let value = query[key]
           if (modifier === 'in' || modifier === 'nin') {
@@ -142,11 +141,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
             }
           }
 
-          if (fieldIsNullable && (typeof value === 'string' && value.toLowerCase() === 'null')) {
-            where[field][modifier] = null
-          } else {
-            where[field][modifier] = value
-          }
+          where[field][modifier] = parseNullableValue(field, value)
         } else if (key.startsWith('orderby.')) {
           const [, field] = key.split('.')
           orderBy[field] ||= {}
@@ -199,6 +194,15 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
     })
   }
 
+  const parseNullableValue = (field, value) => {
+    const fieldIsNullable = entity.camelCasedFields[field].isNullable
+    if (fieldIsNullable && (typeof value === 'string' && value.toLowerCase() === 'null')) {
+      return null
+    } else {
+      return value
+    }
+  }
+
   const ignoredPUTRoute = ignoreRoutes.find(ignoreRoute => {
     return ignoreRoute.path === app.prefix && ignoreRoute.method === 'PUT'
   })
@@ -247,7 +251,7 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
                 value = value.map((v) => parseInt(v))
               }
             }
-            where[field][modifier] = value
+            where[field][modifier] = parseNullableValue(field, value)
           }
         }
 
