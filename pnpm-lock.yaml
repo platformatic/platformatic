@@ -2045,9 +2045,6 @@ importers:
       '@fastify/compress':
         specifier: ^8.0.0
         version: 8.0.1
-      '@mercuriusjs/federation':
-        specifier: ^5.0.0
-        version: 5.0.0
       bindings:
         specifier: ^1.5.0
         version: 1.5.0
