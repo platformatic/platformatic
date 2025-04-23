@@ -1924,9 +1924,6 @@ importers:
       '@fastify/under-pressure':
         specifier: ^9.0.0
         version: 9.0.3
-      '@mercuriusjs/federation':
-        specifier: ^5.0.0
-        version: 5.0.0
       '@platformatic/client':
         specifier: workspace:*
         version: link:../client
@@ -2048,6 +2045,9 @@ importers:
       '@fastify/compress':
         specifier: ^8.0.0
         version: 8.0.1
+      '@mercuriusjs/federation':
+        specifier: ^5.0.0
+        version: 5.0.0
       bindings:
         specifier: ^1.5.0
         version: 1.5.0
@@ -2389,9 +2389,6 @@ importers:
 
   packages/telemetry:
     dependencies:
-      '@fastify/swagger':
-        specifier: ^9.0.0
-        version: 9.5.0
       '@opentelemetry/api':
         specifier: ^1.8.0
         version: 1.9.0
@@ -2444,6 +2441,9 @@ importers:
       '@databases/pg':
         specifier: ^5.5.0
         version: 5.5.0(typescript@5.7.3)
+      '@fastify/swagger':
+        specifier: ^9.0.0
+        version: 9.5.0
       '@opentelemetry/instrumentation-express':
         specifier: ^0.47.0
         version: 0.47.1(@opentelemetry/api@1.9.0)

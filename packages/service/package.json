@@ -28,6 +28,7 @@
   "devDependencies": {
     "@fastify/aws-lambda": "^5.0.0",
     "@fastify/compress": "^8.0.0",
+    "@mercuriusjs/federation": "^5.0.0",
     "bindings": "^1.5.0",
     "borp": "^0.19.0",
     "eslint": "9",
@@ -55,7 +56,6 @@
     "@fastify/static": "^8.0.0",
     "@fastify/swagger": "^9.0.0",
     "@fastify/under-pressure": "^9.0.0",
-    "@mercuriusjs/federation": "^5.0.0",
     "@platformatic/client": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/fastify-http-metrics": "^0.3.0",
