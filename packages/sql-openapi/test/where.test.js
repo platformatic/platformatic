@@ -185,6 +185,57 @@ test('list', async (t) => {
     }], 'GET /posts?where.longText.neq=null Where NOT NULL response')
   }
 
+  // test NULL OR filter
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.or=(longText.eq=null|id.eq=4)&fields=id,title,longText',
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.longText.eq=null Where NULL status code')
+    same(res.json(), [
+      {
+        id: 4,
+        title: 'Duck',
+        longText: 'A duck tale',
+      },
+      {
+        id: 5,
+        title: 'Bear',
+        longText: null,
+      }], 'GET /posts?where.longText.eq=null Where NULL response')
+  }
+
+  // test NOT NULL OR filter
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.or=(longText.neq=null|id.eq=5)&fields=id,title,longText',
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.longText.neq=null Where NOT NULL status code')
+    same(res.json(), [{
+      id: 1,
+      title: 'Dog',
+      longText: 'Foo',
+    }, {
+      id: 2,
+      title: 'Cat',
+      longText: 'Bar',
+    }, {
+      id: 3,
+      title: 'Mouse',
+      longText: 'Baz',
+    }, {
+      id: 4,
+      title: 'Duck',
+      longText: 'A duck tale',
+    },
+    {
+      id: 5,
+      title: 'Bear',
+      longText: null,
+    }], 'GET /posts?where.longText.neq=null Where NOT NULL response')
+  }
+
   {
     const res = await app.inject({
       method: 'GET',

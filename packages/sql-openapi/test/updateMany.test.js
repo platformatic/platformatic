@@ -74,6 +74,14 @@ test('updateMany', async (t) => {
     title: 'Duck',
     longText: 'A duck tale',
     counter: 40,
+  }, {
+    title: 'Bear',
+    longText: null,
+    counter: null,
+  }, {
+    title: 'Goat',
+    longText: null,
+    counter: 60,
   }]
 
   for (const body of posts) {
@@ -217,5 +225,65 @@ test('updateMany', async (t) => {
       error: 'Not Found',
       statusCode: 404,
     }, 'PUT /post?where.id.in=1,2 response')
+  }
+
+  // test where NULL/NOT NULL
+  {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/posts?where.longText.eq=null',
+      body: {
+        counter: 99,
+      },
+    })
+    equal(res.statusCode, 200, '/posts?where.longText.eq=null status code')
+    same(res.json(), [{
+      id: 5,
+      title: 'Bear',
+      longText: null,
+      counter: 99,
+    },
+    {
+      id: 6,
+      title: 'Goat',
+      longText: null,
+      counter: 99,
+    }], '/posts?where.longText.eq=null response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/posts?where.longText.neq=null',
+      body: {
+        counter: 2,
+      },
+    })
+    equal(res.statusCode, 200, '/posts?where.longText.neq=null status code')
+    const json = await res.json()
+    same(json.sort((recordA, recordB) => recordA.id - recordB.id), [{
+      id: 1,
+      title: 'Best pet friends',
+      longText: 'Updated long text (2)',
+      counter: 2,
+    },
+    {
+      id: 2,
+      title: 'Best pet friends',
+      longText: 'Updated long text (2)',
+      counter: 2,
+    },
+    {
+      id: 3,
+      title: 'Updated title',
+      longText: 'Baz',
+      counter: 2,
+    },
+    {
+      id: 4,
+      title: 'Updated title',
+      longText: 'A duck tale',
+      counter: 2,
+    }], '/posts?where.longText.neq=null response')
   }
 })
