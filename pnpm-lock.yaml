@@ -2404,9 +2404,6 @@ importers:
       '@opentelemetry/instrumentation-http':
         specifier: ^0.56.0
         version: 0.56.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/instrumentation-pg':
-        specifier: ^0.50.0
-        version: 0.50.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/instrumentation-undici':
         specifier: ^0.10.0
         version: 0.10.1(@opentelemetry/api@1.9.0)
@@ -2444,6 +2441,9 @@ importers:
       '@opentelemetry/instrumentation-express':
         specifier: ^0.47.0
         version: 0.47.1(@opentelemetry/api@1.9.0)
+      '@opentelemetry/instrumentation-pg':
+        specifier: ^0.50.0
+        version: 0.50.0(@opentelemetry/api@1.9.0)
       borp:
         specifier: ^0.19.0
         version: 0.19.0
