@@ -325,6 +325,7 @@ export interface PlatformaticDB {
           find?: CrudOperationAuth;
           save?: CrudOperationAuth;
           delete?: CrudOperationAuth;
+          updateMany?: CrudOperationAuth;
         }
       | {
           /**
@@ -344,6 +345,7 @@ export interface PlatformaticDB {
           find?: CrudOperationAuth;
           save?: CrudOperationAuth;
           delete?: CrudOperationAuth;
+          updateMany?: CrudOperationAuth;
         }
     )[];
   };
