@@ -98,7 +98,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "byte"
             },
             "in": "query",
             "name": "startAfter",
@@ -107,7 +108,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "byte"
             },
             "in": "query",
             "name": "endBefore",
