@@ -7,7 +7,7 @@ const { test } = require('node:test')
 const fastify = require('fastify')
 const sqlOpenAPI = require('..')
 const sqlMapper = require('@platformatic/sql-mapper')
-const { PrimaryKeyNotIncludedInOrderByInCursorPaginationError, UnableToDecodeCursor } = require('../lib/errors')
+const { PrimaryKeyNotIncludedInOrderByInCursorPaginationError, UnableToParseCursorStrError, CursorValidationError } = require('../lib/errors')
 
 const snap = Snap(__filename)
 
@@ -168,22 +168,19 @@ test('cursor pagination edge cases', async (t) => {
         await db.query(sql`CREATE TABLE items (
             id INTEGER PRIMARY KEY,
             name VARCHAR(42),
-            category VARCHAR(42),
-            score INTEGER
+            category VARCHAR(42)
           );`)
       } else if (isMysql) {
         await db.query(sql`CREATE TABLE items (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(42),
-            category VARCHAR(42),
-            score INTEGER
+            category VARCHAR(42)
           );`)
       } else {
         await db.query(sql`CREATE TABLE items (
             id SERIAL PRIMARY KEY,
             name VARCHAR(42),
-            category VARCHAR(42),
-            score INTEGER
+            category VARCHAR(42)
           );`)
       }
     },
@@ -203,10 +200,14 @@ test('cursor pagination edge cases', async (t) => {
     same(openapi, snapshot)
   }
 
+  const wierdItem = { name: 'Corrupted Magic Item ÿÿÿ', category: 'ÿ' }
   const itemsToCreate = [
     { name: 'Item A1', category: 'A' },
     { name: 'Item A2', category: 'A' },
-    { name: 'Item A3', category: 'A', },
+    { name: 'Item B1', category: 'B' },
+    { name: 'Item B2', category: 'B' },
+    wierdItem,
+    { name: 'Item C1', category: 'C' },
   ]
 
   for (const item of itemsToCreate) {
@@ -222,17 +223,25 @@ test('cursor pagination edge cases', async (t) => {
   {
     const res1 = await app.inject({
       method: 'GET',
-      url: '/items?cursor=true&orderby.category=asc&orderby.id=desc'
+      url: '/items?limit=2&cursor=true&orderby.category=asc&orderby.id=desc'
     })
     equal(res1.statusCode, 200, 'First page with category ordering')
-    same(res1.json().length, 3, 'First page has 3 items')
 
     equal(res1.json()[0].category, 'A', 'First item is category A')
     equal(res1.json()[1].category, 'A', 'Second item is category A')
-    equal(res1.json()[2].category, 'A', 'Third item is category A')
+    equal(res1.json()[0].id, 2, 'First item ID is 2')
+    equal(res1.json()[1].id, 1, 'Second item ID is 1')
 
-    equal(res1.json()[0].id > res1.json()[1].id, true, 'First A item has higher ID than second')
-    equal(res1.json()[1].id > res1.json()[2].id, true, 'Second A item has higher ID than third')
+    const startAfter = res1.headers['x-start-after']
+    const res2 = await app.inject({
+      method: 'GET',
+      url: `/items?limit=2&startAfter=${startAfter}&orderby.category=asc&orderby.id=desc`
+    })
+    equal(res2.statusCode, 200, 'Second page with category ordering')
+    equal(res2.json()[0].category, 'B', 'First item is category B')
+    equal(res2.json()[1].category, 'B', 'Second item is category B')
+    equal(res2.json()[0].id, 4, 'First item ID is 4')
+    equal(res2.json()[1].id, 3, 'Second item ID is 3')
   }
 
   {
@@ -245,17 +254,6 @@ test('cursor pagination edge cases', async (t) => {
   }
 
   {
-    const startAfter = 'some-cursor-value'
-    const endBefore = 'some-other-cursor-value'
-
-    const res = await app.inject({
-      method: 'GET',
-      url: `/items?startAfter=${startAfter}&endBefore=${endBefore}&orderby.id=asc`
-    })
-    equal(res.statusCode, 400, 'Using both startAfter and endBefore should fail')
-  }
-
-  {
     const res = await app.inject({
       method: 'GET',
       url: '/items?cursor=true&where.name.eq=NonExistentItem&orderby.id=asc'
@@ -265,23 +263,111 @@ test('cursor pagination edge cases', async (t) => {
     equal(res.headers['x-start-after'], undefined, 'No cursor headers on empty results')
   }
 
-  // Test invalid startAfter value
+  // Test invalidation of cursor schema
   {
+    const invalidStartAfter = Buffer.from(JSON.stringify({ id: 'start' })).toString('base64')
+    const invalidEndBefore = Buffer.from(JSON.stringify({ id: 'end' })).toString('base64')
     const res = await app.inject({
       method: 'GET',
-      url: '/items?startAfter=invalid-cursor-value&orderby.id=asc'
+      url: `/items?startAfter=${invalidStartAfter}&orderby.id=asc`
     })
     equal(res.statusCode, 400, 'Invalid cursor should return 400')
-    equal(res.json().code, new UnableToDecodeCursor().code)
+    equal(res.json().code, new CursorValidationError().code)
+    pass(res.json().message.includes('id must be integer'))
+
+    const res1 = await app.inject({
+      method: 'GET',
+      url: `/items?endBefore=${invalidEndBefore}&orderby.id=asc`
+    })
+    equal(res1.statusCode, 400, 'Invalid cursor should return 400')
+    equal(res1.json().code, new CursorValidationError().code)
+    pass(res1.json().message.includes('id must be integer'))
   }
 
-  // Test invalid endBefore value
+  // cursor prototype pollution: __proto__ should not be allowed
+  {
+    const pollutedCursor = '{"id":2,"__proto__":{"polluted":"yes"}}'
+    const startAfter = Buffer.from(pollutedCursor).toString('base64')
+    const res = await app.inject({
+      method: 'GET',
+      url: `/items?startAfter=${startAfter}&orderby.id=asc`
+    })
+    equal(res.statusCode, 400, 'Cursor with prototype pollution should return 400')
+    equal(res.json().code, new UnableToParseCursorStrError().code)
+    pass(res.json().message.includes('Object contains forbidden prototype property'))
+  }
+
+  // cursor prototype pollution: constructor.prototype should not be allowed
+  {
+    const pollutedCursor = '{"id":2,"constructor":{"prototype":{"bar": "baz"}}}'
+    const startAfter = Buffer.from(pollutedCursor).toString('base64')
+    const res = await app.inject({
+      method: 'GET',
+      url: `/items?startAfter=${startAfter}&orderby.id=asc`
+    })
+    equal(res.statusCode, 400, 'Cursor with prototype pollution should return 400')
+    equal(res.json().code, new UnableToParseCursorStrError().code)
+    pass(res.json().message.includes('Object contains forbidden prototype property'))
+  }
+
+  // non-JSON in base64
+  {
+    const startAfter = Buffer.from('some-cursor-value').toString('base64')
+    const endBefore = Buffer.from('another-cursor-value').toString('base64')
+    const res = await app.inject({
+      method: 'GET',
+      url: `/items?startAfter=${startAfter}&orderby.id=asc`
+    })
+    equal(res.statusCode, 400, 'Invalid cursor should return 400')
+    equal(res.json().code, new UnableToParseCursorStrError().code)
+
+    const res1 = await app.inject({
+      method: 'GET',
+      url: `/items?endBefore=${endBefore}&orderby.id=asc`
+    })
+    equal(res1.statusCode, 400, 'Invalid cursor should return 400')
+    equal(res1.json().code, new UnableToParseCursorStrError().code)
+  }
+
+  // test cursor whose base64 encoding contains special characters
+  {
+    const wierdCursor = await app.inject({
+      method: 'GET',
+      url: `/items?where.name.eq=${wierdItem.name}`
+    }).then(res => res.json()[0])
+    const encodedCursor = Buffer.from(JSON.stringify(wierdCursor)).toString('base64')
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/items?limit=1&startAfter=${encodedCursor}&orderby.id=asc&&orderby.name=asc&orderby.category=asc`
+    })
+    equal(res.statusCode, 200, 'Valid cursor should return 200')
+    same(res.json()[0].id, wierdCursor.id + 1, 'Returned correct item')
+
+    const res1 = await app.inject({
+      method: 'GET',
+      url: `/items?limit=1&endBefore=${encodedCursor}&orderby.id=asc&&orderby.name=asc&orderby.category=asc`
+    })
+    equal(res1.statusCode, 200, 'Valid cursor should return 200')
+    same(res1.json()[0].id, wierdCursor.id - 1, 'Returned correct item')
+  }
+
+  // Both startAfter and endBefore provided. (startAfter should be used)
   {
     const res = await app.inject({
       method: 'GET',
-      url: '/items?endBefore=invalid-cursor-value&orderby.id=asc'
+      url: '/items?limit=2&cursor=true&orderby.id=asc'
     })
-    equal(res.statusCode, 400, 'Invalid cursor should return 400')
-    equal(res.json().code, new UnableToDecodeCursor().code)
+    equal(res.statusCode, 200)
+    const startAfter = res.headers['x-start-after']
+    const endBefore = res.headers['x-end-before']
+    const lastItem = res.json().at(-1)
+
+    const res1 = await app.inject({
+      method: 'GET',
+      url: `/items?limit=1&startAfter=${startAfter}&endBefore=${endBefore}&orderby.id=asc`
+    })
+    equal(res1.statusCode, 200)
+    same(res1.json()[0].id, lastItem.id + 1, 'Returned correct item')
   }
 })

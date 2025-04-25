@@ -1,7 +1,7 @@
 'use strict'
 
+const { buildCursorUtils } = require('./cursor')
 const { mapSQLTypeToOpenAPIType } = require('@platformatic/sql-json-schema-mapper')
-const { transformQueryToCursor, buildCursorHeaders } = require('./utils')
 
 function generateArgs (entity, ignore) {
   const sortedEntityFields = Object.keys(entity.fields).sort()
@@ -68,6 +68,8 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
   })
 
   if (!ignoredGETRoute) {
+    const { buildCursorHeaders, transformQueryToCursor } = buildCursorUtils(app, entity)
+
     app.get('/', {
       schema: {
         operationId: 'get' + capitalize(entity.pluralName),
@@ -83,18 +85,17 @@ function rootEntityRoutes (app, entity, whereArgs, orderByArgs, entityLinks, ent
             cursor: { type: 'boolean', default: false, description: 'Include cursor headers in response. Cursor keys built from orderBy clause' },
             startAfter: {
               type: 'string',
-              description: 'Cursor for forward pagination. List objects after this cursor position'
+              description: 'Cursor for forward pagination. List objects after this cursor position',
+              format: 'byte'
             },
             endBefore: {
               type: 'string',
-              description: 'Cursor for backward pagination. List objects before this cursor position'
+              description: 'Cursor for backward pagination. List objects before this cursor position',
+              format: 'byte'
             },
             fields,
             ...whereArgs,
             ...orderByArgs,
-          },
-          not: {
-            required: ['startAfter', 'endBefore'],
           },
           additionalProperties: false,
         },

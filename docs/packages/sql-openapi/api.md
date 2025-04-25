@@ -466,7 +466,7 @@ This ensures consistent pagination when the first ordering field contains duplic
 
 **Requirements:**
 - When using cursor pagination, the primary key (e.g., `id`) **must** be included in the `orderby` clause
-- You **cannot** use both `startAfter` and `endBefore` in the same request
+- If both `startAfter` and `endBefore` provided in the same request, `startAfter` will be used by default
 - Cursor values are base64-encoded and should be treated as opaque tokens
 - Cursor values are generated directly from fields specified in `orderby` clause
 - The order of fields in `orderby` clause is significant; usually you want to place the primary key (e.g., `id`) last in compound ordering to serve as a tie-breaker:
