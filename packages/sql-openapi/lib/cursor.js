@@ -3,16 +3,18 @@
 const Ajv = require('ajv')
 const camelCase = require('camelcase')
 const sjson = require('secure-json-parse')
+const fjs = require('fast-json-stringify')
 const { UnableToParseCursorStrError, CursorValidationError, PrimaryKeyNotIncludedInOrderByInCursorPaginationError } = require('./errors')
 
-const ajv = new Ajv({
+const ajvOptions = {
   coerceTypes: 'array',
   useDefaults: true,
   removeAdditional: true,
   uriResolver: require('fast-uri'),
   addUsedSchema: false,
   allErrors: false
-})
+}
+const ajv = new Ajv(ajvOptions)
 
 function buildCursorUtils (app, entity) {
   const entitySchema = app.getSchema(entity.name)
@@ -25,9 +27,12 @@ function buildCursorUtils (app, entity) {
     additionalProperties: false,
   }
   const validateCursor = ajv.compile(cursorSchema)
+  const stringifyCursor = fjs(cursorSchema, {
+    ajv: ajvOptions,
+  })
 
   function encodeCursor (cursor) {
-    return Buffer.from(JSON.stringify(cursor)).toString('base64')
+    return Buffer.from(stringifyCursor(cursor)).toString('base64')
   }
 
   function decodeCursor (cursorBase64) {
