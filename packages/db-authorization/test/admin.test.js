@@ -41,12 +41,18 @@ test('admin can impersonate a users', async () => {
           userId: 'X-PLATFORMATIC-USER-ID',
         },
       },
+      updateMany: {
+        checks: {
+          userId: 'X-PLATFORMATIC-USER-ID',
+        },
+      },
     }, {
       role: 'anonymous',
       entity: 'page',
       find: false,
       delete: false,
       save: false,
+      updateMany: false
     }],
   })
   test.after(() => {

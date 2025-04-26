@@ -16,7 +16,9 @@
       "id": "express",
       "path": "./api/express",
       "telemetry": {
-        "instrumentations": []
+        "instrumentations": [
+          "@opentelemetry/instrumentation-pg"
+        ]
       }
     }
   ],

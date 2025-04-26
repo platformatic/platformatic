@@ -22,7 +22,6 @@ const {
   InMemorySpanExporter,
 } = require('@opentelemetry/sdk-trace-base')
 
-const { PgInstrumentation } = require('@opentelemetry/instrumentation-pg')
 const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http')
 const {
   UndiciInstrumentation,
@@ -98,7 +97,6 @@ const setupNodeHTTPTelemetry = async (opts, serviceDir) => {
         }
       }),
       new HttpInstrumentation(),
-      new PgInstrumentation(),
       ...additionalInstrumentations
     ],
     resource: new Resource({

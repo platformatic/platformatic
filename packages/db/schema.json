@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/db/2.61.0.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/db/2.62.1.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic DB",
   "type": "object",
@@ -883,6 +883,9 @@
                   },
                   "delete": {
                     "$ref": "#/$defs/crud-operation-auth"
+                  },
+                  "updateMany": {
+                    "$ref": "#/$defs/crud-operation-auth"
                   }
                 },
                 "required": [
@@ -918,6 +921,9 @@
                     "$ref": "#/$defs/crud-operation-auth"
                   },
                   "delete": {
+                    "$ref": "#/$defs/crud-operation-auth"
+                  },
+                  "updateMany": {
                     "$ref": "#/$defs/crud-operation-auth"
                   }
                 },

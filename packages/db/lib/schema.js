@@ -254,6 +254,9 @@ const sharedAuthorizationRule = {
   },
   delete: {
     $ref: '#/$defs/crud-operation-auth'
+  },
+  updateMany: {
+    $ref: '#/$defs/crud-operation-auth'
   }
 }
 

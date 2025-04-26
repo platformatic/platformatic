@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/metrics",
-  "version": "2.61.0",
+  "version": "2.62.1",
   "description": "Platformatic Stackable Metrics",
   "main": "index.js",
   "type": "commonjs",

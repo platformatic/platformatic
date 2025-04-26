@@ -5,7 +5,6 @@ const importOrLocal = require('./import-or-local')
 // These are already set automatically by the runtime, so we throw
 // if set again.
 const defaultInstrumentations = [
-  '@opentelemetry/instrumentation-pg',
   '@opentelemetry/instrumentation-http',
   '@opentelemetry/instrumentation-undici'
 ]
