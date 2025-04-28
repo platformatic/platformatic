@@ -32,7 +32,7 @@ Configures Vite. Supported object properties:
 
 ## `logger`
 
-Configures the logger, see the [logger configuration](../logger.md) documentation for more information.
+Configures the `logger`, see the [runtime](../../runtime/configuration.md#logger) documentation.
 
 ## `server`
 

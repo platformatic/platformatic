@@ -285,7 +285,27 @@ An object with the following settings:
 
 ### `logger`
 
-This configures the Platformatic Runtime logger, see the [logger configuration](../logger.md) documentation for more information.
+This configures the Platformatic Runtime `logger`, based on [pino](https://getpino.io).
+
+An object with the following settings:
+
+- **`level`** — The log level. Default: `info`. Valid values are: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`.
+- **`transport`** — Configuration for logging transport, see [pino.transport](https://getpino.io/#/docs/transports) for more information. Can be configured in two ways:
+  - As a single transport: An object with properties:
+    - **`target`** — A string specifying the transport module.
+    - **`options`** — An object containing options for the transport.
+  - As multiple targets: An object with properties:
+    - **`targets`** — An array of objects, each with:
+      - **`target`** — A string specifying the transport module.
+      - **`options`** — An object containing options for the transport.
+      - **`level`** — The log level for this specific transport.
+    - **`options`** — An object containing shared options for all targets.
+- **`formatters`** — Configuration for logging formatters. An object with properties:
+  - **`path`** (**required**) — A string specifying the path to the formatters; the file exports a function for `bindings` and `level`, see [pino.formatters](https://getpino.io/#/docs/api?id=formatters-object) for more information.
+- **`timestamp`** — The timestamp format to use in logs. Valid values are: `epochTime`, `unixTime`, `nullTime`, `isoTime`, see [pino.timestamp](https://getpino.io/#/docs/api?id=pino-stdtimefunctions) for more information.
+- **`redact`** — Configuration for redacting sensitive information, see [pino.redact]https://getpino.io/#/docs/redaction) for more information. An object with properties:
+  - **`paths`** (**required**) — An array of strings specifying paths to redact.
+  - **`censor`** — A string to replace redacted values with. Default: `[redacted]`.
 
 ### `undici`
 

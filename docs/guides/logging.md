@@ -1,6 +1,10 @@
 # Logger Configuration
 
-Platformatic provides robust logging capabilities built on [Pino](https://getpino.io/), offering various configuration options to customize the logs.
+Platformatic provides robust logging capabilities built on [Pino](https://getpino.io/), offering various configuration options to customize the logs for every kind of Platformatic service.
+
+The default logger configuration is `level: info` and `transport: pino-pretty` when running in a terminal or in development mode.
+
+The typical usage is to set the `logger` options in the `watt.json` configuration file and have them consistent across all services, since the logger configuration is inherited from the parent configurations to the child services, but the settings can be overridden in the `platformatic.json` configuration file for specific services.
 
 ## Options
 
@@ -17,9 +21,9 @@ The logger configuration supports the following properties:
 
   See the [Pino documentation](https://github.com/pinojs/pino/blob/main/docs/api.md#level-string) for more details.
 
-- **`transport`**: Configure different transports to improve logs visualization and destination.
+- **`transport`**: The default transport will output logs to stdout and stderr; for specific need different transports can be set, usually to collect logs to a specific destination.
 
-  This can be configured in two ways:
+This can be configured in two ways:
   
   - Single transport:
     ```json
@@ -108,52 +112,38 @@ The logger configuration supports the following properties:
 
   See the [Pino redaction documentation](https://github.com/pinojs/pino/blob/main/docs/redaction.md) for more details.
 
-## Inheritance
+### Using Environment Variables
 
-In Platformatic applications, logger configuration can be inherited from parent configurations. When a service is part of a composed application or a runtime application, the logger configuration is inherited from the parent unless explicitly overridden. This ensures consistent logging behavior across the entire application, and allows for different logging configurations for specific services needs; so usually you will only need to configure the logger for the `watt.json` config file.
-
-## Examples
-
-### Basic Configuration
-
-`platformatic.service.json`:
+You can use environment variables in your logger configuration:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/service/1.0.0.json",
   "logger": {
-    "level": "info"
+    "level": "{LOG_LEVEL}",
+    "transport": {
+      "target": "pino/file",
+      "options": {
+        "destination": "{LOG_DIR}/service.log",
+        "mkdir": true
+      }
+    }
   }
 }
 ```
 
-### Advanced Configuration
+---
 
-`platformatic.application.json`:
+## Examples
+
+### Full options configuration
+
+A `platformatic.json` configuration file contains the following logger options will look like this:
 
 ```json
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.60.0.json",
   "logger": {
     "level": "debug",
-    "transport": {
-      "targets": [
-        {
-          "target": "pino-pretty",
-          "options": {
-            "colorize": true
-          }
-        },
-        {
-          "target": "pino/file",
-          "options": {
-            "destination": "{LOG_DIR}/app.log",
-            "mkdir": true
-          },
-          "level": "error"
-        }
-      ]
-    },
     "formatters": {
       "path": "formatters.js"
     },
@@ -178,24 +168,8 @@ export function level (label) {
 }
 ```
 
-### Using Environment Variables
-
-You can use environment variables in your logger configuration:
-
-```json
-{
-  "logger": {
-    "level": "{LOG_LEVEL}",
-    "transport": {
-      "target": "pino/file",
-      "options": {
-        "destination": "{LOG_DIR}/service.log",
-        "mkdir": true
-      }
-    }
-  }
-}
-```
+In this example, the logger is configured run a `@platformatic/node` service, but the same configuration can be used for any other Platformatic service.
+In this example, the logger is configured to use a file transport and the `level` is set to `debug`.
 
 ## Programmatic Usage
 
@@ -219,4 +193,15 @@ const app = fastify({
 ```
 
 Note that the `timestamp` and `formatters.level` are not supported when using the logger programmatically in this way.
+
+---
+
+## Setting up a Platformatic application with logging
+
+TODO example of a Platformatic application with watt, composer, backend and frontend services.
+
+The watt service will have a shared logger configuration that will be used by all the services, it sets the timestamp in ISO format and the level in uppercase. Setting it in the watt service ensures that the logs will be consistent across all the services.
+
+
+
 
