@@ -34,7 +34,18 @@ async function checkLiveness (runtime) {
 
   const checks = await runtime.getCustomHealthChecks()
 
-  return Object.values(checks).every(check => check)
+  let live
+  const status = Object.values(checks).every(check => {
+    if (typeof check === 'boolean') {
+      return check
+    } else if (typeof check === 'object') {
+      live = check
+      return check.status
+    }
+    return false
+  })
+
+  return live ?? status
 }
 
 async function startPrometheusServer (runtime, opts) {
@@ -114,10 +125,19 @@ async function startPrometheusServer (runtime, opts) {
 
         const live = await checkLiveness(runtime)
 
-        if (live) {
-          reply.status(successStatusCode).send(successBody)
-        } else {
-          reply.status(failStatusCode).send(failBody)
+        if (typeof live === 'boolean') {
+          if (live) {
+            reply.status(successStatusCode).send(successBody)
+          } else {
+            reply.status(failStatusCode).send(failBody)
+          }
+        } else if (typeof live === 'object') {
+          const { status, body, statusCode } = live
+          if (status) {
+            reply.status(statusCode || successStatusCode).send(body || successBody)
+          } else {
+            reply.status(statusCode || failStatusCode).send(body || failBody)
+          }
         }
       },
     })

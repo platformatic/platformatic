@@ -56,6 +56,12 @@ const pltApi = getGlobal()
 Custom health check can be defined to provide more specific and detailed information about the health of your service, in case the default healthcheck for the service itself is not enough and you need to add more checks for the service dependencies.  
 This can be done by using the `setCustomHealthCheck` method available on the `globalThis.platformatic` object, and run it as a platformatic service.
 
+The function should return a boolean value, or an object with the following properties, that will be used to set the status code and body of the response to the healthcheck endpoint:
+
+- `status`: **required** a boolean value
+- `statusCode`: **optional** an HTTP status code
+- `body`: **optional** an HTTP response body
+
 Here is an example of how to set a custom health check:
 
 `app.js`
@@ -82,6 +88,43 @@ export function create () {
   return app
 }
 ```
+
+Setting custom response for the healthcheck endpoint:
+
+```js
+import fastify from 'fastify'
+
+export function create () {
+  const app = fastify()
+
+  globalThis.platformatic.setCustomHealthCheck(async () => {
+      // Check if the database is reachable
+      if (!app.db.query('SELECT 1')) {
+        return {
+          status: false,
+          statusCode: 500,
+          body: 'Database is unreachable'
+        }
+      }
+      // Check if the external service is reachable
+      const payment = await fetch('https://payment-service.com/status')
+      if (!payment.ok) {
+        return {
+          status: false,
+          statusCode: 500,
+          body: 'Payment service is unreachable'
+        }
+      }
+  })
+
+  app.get('/', (req, res) => {
+    res.send('Hello')
+  })
+
+  return app
+}
+```
+
 
 `platformatic.json`
 
