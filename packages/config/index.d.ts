@@ -102,7 +102,7 @@ export interface StackableInterface {
   setConnectionStatus?: (status: string) => Promise<void>
   setOpenapiSchema?: (schema: object) => Promise<void>
   setGraphqlSchema?: (schema: string) => Promise<void>
-  setCustomHealthCheck?: (healthCheck: () => boolean | Promise<boolean>) => Promise<void>
+  setCustomHealthCheck?: (healthCheck: () => boolean | Promise<boolean> | { status: boolean, statusCode?: number, body?: string } | Promise<{ status: boolean, statusCode?: number, body?: string }>) => Promise<void>
   collectMetrics?: () => Promise<any>
   getMetrics: ({ format: string }) => Promise<string | Array<object>>
   getMeta?(): () => Promise<object>

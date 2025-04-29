@@ -422,3 +422,107 @@ test('liveness - should expose liveness and get a fail and success responses wit
     assert.strictEqual(await body.text(), 'No good')
   }
 })
+
+test('liveness - should respond to liveness with a custom content from setCustomHealthCheck', async t => {
+  const projectDir = join(fixturesDir, 'healthcheck-custom-response')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  const entryUrl = await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/live'
+    })
+    assert.strictEqual(statusCode, 201)
+    assert.strictEqual(await body.text(), 'All right')
+  }
+
+  await request(entryUrl, {
+    path: '/service/set/status',
+    query: { status: false, body: 'Database is unreachable', statusCode: 500 }
+  })
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/live'
+    })
+    assert.strictEqual(statusCode, 500)
+    assert.strictEqual(await body.text(), 'Database is unreachable')
+  }
+
+  await request(entryUrl, {
+    path: '/service/set/status',
+    query: { status: true, body: 'Everything is fine', statusCode: 211 }
+  })
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/live'
+    })
+    assert.strictEqual(statusCode, 211)
+    assert.strictEqual(await body.text(), 'Everything is fine')
+  }
+})
+
+test('liveness - should respond to liveness with the response from settings when setCustomHealthCheck does not return a response', async t => {
+  const projectDir = join(fixturesDir, 'healthcheck-custom-response')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  const entryUrl = await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/live'
+    })
+    assert.strictEqual(statusCode, 201)
+    assert.strictEqual(await body.text(), 'All right')
+  }
+
+  await request(entryUrl, {
+    path: '/service/set/status',
+    query: { status: false }
+  })
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/live'
+    })
+    assert.strictEqual(statusCode, 501)
+    assert.strictEqual(await body.text(), 'No good')
+  }
+
+  await request(entryUrl, {
+    path: '/service/set/status',
+    query: { status: true }
+  })
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/live'
+    })
+    assert.strictEqual(statusCode, 201)
+    assert.strictEqual(await body.text(), 'All right')
+  }
+})

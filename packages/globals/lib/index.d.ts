@@ -49,7 +49,7 @@ interface PlatformaticGlobalInterface {
   setOpenapiSchema(schema: object): void
   setGraphqlSchema(schema: object): void
   setConnectionString(connection: string): void
-  setCustomHealthCheck(healthCheck: () => boolean | Promise<boolean>): void
+  setCustomHealthCheck(healthCheck: () => boolean | Promise<boolean> | { status: boolean, statusCode?: number, body?: string } | Promise<{ status: boolean, statusCode?: number, body?: string }>): void
 }
 
 export type PlatformaticGlobal = Optional<PlatformaticGlobalInterface>
