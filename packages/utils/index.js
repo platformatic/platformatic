@@ -19,7 +19,7 @@ const { withResolvers } = require('./lib/promises')
 const { checkNodeVersionForServices } = require('./lib/check-node-version')
 const { createRequire, loadModule } = require('./lib/modules')
 const { getPrivateSymbol } = require('./lib/symbols')
-const { buildPinoOptions } = require('./lib/logger')
+const { buildPinoOptions, buildPinoFormatters, buildPinoTimestamp, setPinoFormatters, setPinoTimestamp } = require('./lib/logger')
 
 module.exports.FileWatcher = FileWatcher
 module.exports.findNearestString = findNearestString
@@ -50,3 +50,7 @@ module.exports.getPrivateSymbol = getPrivateSymbol
 module.exports.ensureFlushedWorkerStdio = ensureFlushedWorkerStdio
 module.exports.disablePinoDirectWrite = disablePinoDirectWrite
 module.exports.buildPinoOptions = buildPinoOptions
+module.exports.setPinoFormatters = setPinoFormatters
+module.exports.setPinoTimestamp = setPinoTimestamp
+module.exports.buildPinoFormatters = buildPinoFormatters
+module.exports.buildPinoTimestamp = buildPinoTimestamp

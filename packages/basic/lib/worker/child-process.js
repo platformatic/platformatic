@@ -1,6 +1,6 @@
 import { ITC } from '@platformatic/itc'
 import { client, collectMetrics } from '@platformatic/metrics'
-import { disablePinoDirectWrite, ensureFlushedWorkerStdio, ensureLoggableError, features } from '@platformatic/utils'
+import { buildPinoFormatters, buildPinoTimestamp, disablePinoDirectWrite, ensureFlushedWorkerStdio, ensureLoggableError, features } from '@platformatic/utils'
 import diagnosticChannel, { tracingChannel } from 'node:diagnostics_channel'
 import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
@@ -100,6 +100,7 @@ export class ChildProcess extends ITC {
     })
 
     this.registerGlobals({
+      logger: this.#logger,
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
       setConnectionString: this.setConnectionString.bind(this),
@@ -198,9 +199,17 @@ export class ChildProcess extends ITC {
 
     // Since this is executed by user code, make sure we only override this in the main thread
     // The rest will be intercepted by the BaseStackable.
+    const loggerOptions = globalThis.platformatic?.config?.logger ?? {}
     const pinoOptions = {
-      level: 'info',
+      ...loggerOptions,
+      level: loggerOptions.level ?? 'info',
       name: globalThis.platformatic.serviceId
+    }
+    if (loggerOptions.formatters) {
+      pinoOptions.formatters = buildPinoFormatters(loggerOptions.formatters)
+    }
+    if (loggerOptions.timestamp) {
+      pinoOptions.timestamp = buildPinoTimestamp(loggerOptions.timestamp)
     }
 
     if (typeof globalThis.platformatic.workerId !== 'undefined') {

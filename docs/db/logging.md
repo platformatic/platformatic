@@ -2,27 +2,7 @@ import Issues from '../getting-started/issues.md';
 
 # Logging
 
-Platformatic DB uses a low overhead logger named [Pino](https://github.com/pinojs/pino)
-to output structured log messages, which are efficient and easy to parse both programmatically and visually.
-
-## Logger output level
-
-The default logging level is set to `info`. This means that all log messages from `info` level and above (`warn`, `error`, `fatal`) will be displayed. To override the logger output, add a `logger` object in the `server` configuration settings:
-
-```json title="platformatic.json"
-{
-  "server": {
-    "logger": {
-      "level": "error"
-    },
-   ...
-  },
-  ...
-}
-```
-
-For a full list of log levels and their meanings, see the [Pino documentation](https://github.com/pinojs/pino/blob/main/docs/api.md#level-string).
-
+Configures the `logger`, see the [runtime](../../runtime/configuration.md#logger) documentation.
 
 ## Log formatting
 

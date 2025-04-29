@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/vite/2.0.0.json",
+  "vite": {
+    "ssr": true
+  },
+  "logger": {
+    "level": "debug",
+    "formatters": {
+      "path": "logger-formatters.js"
+    },
+    "timestamp": "isoTime",
+    "redact": {
+      "paths": [
+        "req.host"
+      ],
+      "censor": "***HIDDEN***"
+    }
+  }
+}

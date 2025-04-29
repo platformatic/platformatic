@@ -883,7 +883,7 @@ export async function fullSetupRuntime ({ t, port, configRoot, build = false, pr
   }
 
   // Start the runtime
-  const { url } = await startRuntime(t, root, config)
+  const { url, runtime } = await startRuntime(t, root, config)
 
-  return { url, root, config, args }
+  return { url, runtime, root, config, args }
 }

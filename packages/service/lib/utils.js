@@ -3,6 +3,7 @@
 const { access, readFile, stat } = require('node:fs/promises')
 const { resolve, join, relative, dirname, basename } = require('node:path')
 const { isatty } = require('tty')
+const { setPinoFormatters, setPinoTimestamp } = require('@platformatic/utils')
 
 async function isFileAccessible (filename, directory) {
   try {
@@ -16,26 +17,35 @@ async function isFileAccessible (filename, directory) {
 
 /* c8 ignore start */
 function addLoggerToTheConfig (config) {
+  if (config.server?.loggerInstance) {
+    return
+  }
+
   // We might have a config with no server
   if (!config.server) {
     config.server = {}
   }
-  // Set the logger if not present
-  if (!config.server.loggerInstance) {
-    let logger = config.server.logger
-    if (!logger) {
-      config.server.logger = { level: 'info' }
-      logger = config.server.logger
-    }
 
-    // If TTY use pino-pretty
-    if (isatty(1)) {
-      if (!logger.transport) {
-        logger.transport = {
-          target: 'pino-pretty',
-        }
+  let logger = config.server.logger
+  if (!logger) {
+    config.server.logger = { level: 'info' }
+    logger = config.server.logger
+  }
+
+  // If TTY use pino-pretty
+  if (isatty(1)) {
+    if (!logger.transport) {
+      logger.transport = {
+        target: 'pino-pretty',
       }
     }
+  }
+
+  if (config.server.logger?.formatters) {
+    setPinoFormatters(config.server.logger)
+  }
+  if (config.server.logger?.timestamp) {
+    setPinoTimestamp(config.server.logger)
   }
 }
 /* c8 ignore stop */

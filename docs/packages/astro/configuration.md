@@ -20,7 +20,7 @@ Supported object properties:
 
 ## `logger`
 
-Configures the logger, see the [logger configuration](https://www.fastify.io/docs/latest/Reference/Server/#logger) for more information.
+Configures the `logger`, see the [runtime](../../runtime/configuration.md#logger) documentation.
 
 ## `server`
 

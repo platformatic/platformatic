@@ -9,6 +9,6 @@
     }
   ],
   "logger": {
-    "level": "error"
+    "level": "debug"
   }
 }

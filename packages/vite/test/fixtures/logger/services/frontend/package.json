@@ -1,0 +1,16 @@
+{
+  "name": "vite",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@platformatic/basic": "^2.60.0",
+    "@platformatic/vite": "^2.60.0",
+    "vite": "^5.3.4"
+  }
+}
