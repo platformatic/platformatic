@@ -6,7 +6,10 @@
   },
   "logger": {
     "level": "info",
-    "timestamp": "isoTime"
+    "timestamp": "isoTime",
+    "formatters": {
+      "path": "logger-formatters.js"
+    }
   },
   "autoload": {
     "path": "services"

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.61.0.json",
+  "logger": {
+    "level": "info",
+    "redact": {
+      "paths": [
+        "req.headers.authorization"
+      ],
+      "censor": "***HIDDEN***"
+    }
+  }
+}

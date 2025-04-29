@@ -4,9 +4,6 @@
     "basePath": "/next"    
   },
   "logger": {
-    "level": "trace",
-    "formatters": {
-      "path": "logger-formatters.js"
-    }
+    "level": "debug"
   }
 }

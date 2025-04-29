@@ -7,7 +7,6 @@
     "start": "wattpm start"
   },
   "dependencies": {
-    "@platformatic/composer": "^2.61.0",
     "wattpm": "^2.61.0"
   }
 }

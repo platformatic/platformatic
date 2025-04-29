@@ -196,12 +196,91 @@ Note that the `timestamp` and `formatters.level` are not supported when using th
 
 ---
 
-## Setting up a Platformatic application with logging
+## Setting up a Platformatic application with logging configuration
 
-TODO example of a Platformatic application with watt, composer, backend and frontend services.
+Let's see an example of a Platformatic application with `watt`, `composer`, `backend` based on `@platformatic/node` and `frontend` based on `@platformatic/next` services, the application is available in the `docs/guides/logger` directory.
 
-The watt service will have a shared logger configuration that will be used by all the services, it sets the timestamp in ISO format and the level in uppercase. Setting it in the watt service ensures that the logs will be consistent across all the services.
+The main `watt` service has a shared logger configuration that is used by all the services, it sets the timestamp in ISO format and the level in uppercase. Setting it in the `watt` service ensures that the logs will be consistent across all the services.
+
+`watt.json`
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/wattpm/2.61.0.json",
+  "server": {
+    "hostname": "{HOSTNAME}",
+    "port": "{PORT}"
+  },
+  "logger": {
+    "level": "info",
+    "timestamp": "isoTime"
+  },
+  "autoload": {
+    "path": "services"
+  }
+}
+```
+
+The other services have their own logger configuration, for example the `backend` service has a redaction configuration
+
+`backend/platformatic.json`
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.61.0.json",
+  "logger": {
+    "level": "debug",
+    "redact": {
+      "paths": [
+        "req.headers.authorization"
+      ],
+      "censor": "***HIDDEN***"
+    }
+  }
+}
+```
+
+In the `node` application the logger is available as `globalThis.platformatic.logger`, for example
+
+`backend/src/app.js`
+
+```js
+import fastify from 'fastify'
+
+const app = fastify({
+  loggerInstance: globalThis.platformatic.logger
+})
+```
 
 
+The `next` service has a custom formatter that adds the `service` property to the logs, note the service level is different in the services.
 
+`next/platformatic.json`
 
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/next/2.60.0.json",
+  "application": {
+    "basePath": "/next"    
+  },
+  "logger": {
+    "level": "debug"
+  }
+}
+```
+
+Then in the  `next` application the logger is available as `globalThis.platformatic.logger`, for example
+
+`next/src/app/page.jsx`
+
+```jsx
+export default function Home() {
+  globalThis.platformatic.logger?.debug('Home page called')
+
+  return (
+    <main>
+      <div>Hello World!</div>
+    </main>
+  )
+}
+```
