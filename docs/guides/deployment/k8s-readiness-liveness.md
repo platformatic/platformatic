@@ -15,7 +15,14 @@ Platformatic provides a built-in API for implementing readiness and liveness thr
 
 - The `/ready` endpoint indicates if the service is running and ready to accept traffic
 - The `/status` endpoint indicates if all services in the stack are reachable
-- Custom health checks can be added using the `setCustomHealthCheck` method available on the `globalThis.platformatic` object
+- Custom health checks can be added using the `setCustomHealthCheck` method available on the `globalThis.platformatic` object. The method receives a function that returns a boolean or an object with the following properties:
+  - `status`: a boolean indicating if the health check is successful
+  - `statusCode`: an optional HTTP status code to return
+  - `body`: an optional body to return
+- Custom readiness checks can be added using the `setCustomReadinessCheck` method available on the `globalThis.platformatic` object. The method receives a function that returns a boolean or an object with the following properties:
+  - `status`: a boolean indicating if the readiness check is successful
+  - `statusCode`: an optional HTTP status code to return
+  - `body`: an optional body to return
 
 ## Implementation
 
@@ -36,6 +43,22 @@ export function create () {
   globalThis.platformatic.setCustomHealthCheck(async () => {
     try {
       // Add your health checks here
+      // For example:
+      // await Promise.all([
+      //   app.db?.query('SELECT 1'),
+      //   fetch('https://external-service/health')
+      // ])
+      return true
+    } catch (err) {
+      app.log.error(err)
+      return false
+    }
+  })
+
+  // Register custom readiness check with Platformatic
+  globalThis.platformatic.setCustomReadinessCheck(async () => {
+    try {
+      // Add your readiness checks here
       // For example:
       // await Promise.all([
       //   app.db?.query('SELECT 1'),

@@ -41,6 +41,7 @@ export class BaseStackable {
     this.metricsRegistry = new client.Registry()
     this.#metricsCollected = false
     this.customHealthCheck = null
+    this.customReadinessCheck = null
     this.startHttpTimer = null
     this.endHttpTimer = null
     this.clientWs = null
@@ -67,6 +68,7 @@ export class BaseStackable {
       invalidateHttpCache: this.#invalidateHttpCache.bind(this),
       prometheus: { client, registry: this.metricsRegistry },
       setCustomHealthCheck: this.setCustomHealthCheck.bind(this),
+      setCustomReadinessCheck: this.setCustomReadinessCheck.bind(this),
       logger: this.logger
     })
   }
@@ -132,11 +134,22 @@ export class BaseStackable {
     this.customHealthCheck = fn
   }
 
+  setCustomReadinessCheck (fn) {
+    this.customReadinessCheck = fn
+  }
+
   async getCustomHealthCheck () {
     if (!this.customHealthCheck) {
       return true
     }
     return await this.customHealthCheck()
+  }
+
+  async getCustomReadinessCheck () {
+    if (!this.customReadinessCheck) {
+      return true
+    }
+    return await this.customReadinessCheck()
   }
 
   setConnectionString (connectionString) {
