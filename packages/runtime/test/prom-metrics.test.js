@@ -526,3 +526,140 @@ test('liveness - should respond to liveness with the response from settings when
     assert.strictEqual(await body.text(), 'All right')
   }
 })
+
+test('readiness - should respond to readiness with a custom content from setCustomReadinessCheck', async t => {
+  const projectDir = join(fixturesDir, 'readiness-custom-response')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  const entryUrl = await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/readiness'
+    })
+    assert.strictEqual(statusCode, 200)
+    assert.strictEqual(await body.text(), 'All ready')
+  }
+
+  await request(entryUrl, {
+    path: '/service/set/ready',
+    query: { status: false, body: 'Database is unreachable', statusCode: 502 }
+  })
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/readiness'
+    })
+    assert.strictEqual(statusCode, 502)
+    assert.strictEqual(await body.text(), 'Database is unreachable')
+  }
+
+  await request(entryUrl, {
+    path: '/service/set/ready',
+    query: { status: true, body: 'Everything is ready', statusCode: 202 }
+  })
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/readiness'
+    })
+    assert.strictEqual(statusCode, 202)
+    assert.strictEqual(await body.text(), 'Everything is ready')
+  }
+})
+
+test('readiness - should respond to readiness with the response from settings when setCustomReadinessCheck does not return a response', async t => {
+  const projectDir = join(fixturesDir, 'readiness-custom-response')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  const entryUrl = await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/readiness'
+    })
+    assert.strictEqual(statusCode, 200)
+    assert.strictEqual(await body.text(), 'All ready')
+  }
+
+  await request(entryUrl, {
+    path: '/service/set/ready',
+    query: { status: false }
+  })
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/readiness'
+    })
+    assert.strictEqual(statusCode, 502)
+    assert.strictEqual(await body.text(), 'Not ready')
+  }
+
+  await request(entryUrl, {
+    path: '/service/set/ready',
+    query: { status: true }
+  })
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/readiness'
+    })
+    assert.strictEqual(statusCode, 202)
+    assert.strictEqual(await body.text(), 'All ready')
+  }
+})
+
+test('liveness - should respond to liveness with the custom readiness response from setCustomHealthCheck on liveness failure consequent of readiness check failure', async t => {
+  const projectDir = join(fixturesDir, 'readiness-custom-response')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  const entryUrl = await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  await request(entryUrl, {
+    path: '/service/set/health',
+    query: { status: true }
+  })
+  await request(entryUrl, {
+    path: '/service/set/ready',
+    query: { status: false, body: 'Not ready', statusCode: 502 }
+  })
+
+  {
+    const { statusCode, body } = await request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/status'
+    })
+    assert.strictEqual(statusCode, 500)
+    assert.strictEqual(await body.text(), 'Not ready')
+  }
+})

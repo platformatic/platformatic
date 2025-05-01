@@ -19,33 +19,52 @@ const DEFAULT_LIVENESS_FAIL_BODY = 'ERR'
 async function checkReadiness (runtime) {
   const workers = await runtime.getWorkers()
 
+  // check if all workers are started
   for (const worker of Object.values(workers)) {
     if (worker.status !== 'started') {
-      return false
+      return { status: false }
     }
   }
-  return true
-}
 
-async function checkLiveness (runtime) {
-  if (!(await checkReadiness(runtime))) {
-    return false
-  }
+  // perform custom readiness checks, get custom response content if any
+  const checks = await runtime.getCustomReadinessChecks()
 
-  const checks = await runtime.getCustomHealthChecks()
-
-  let live
+  let response
   const status = Object.values(checks).every(check => {
     if (typeof check === 'boolean') {
       return check
     } else if (typeof check === 'object') {
-      live = check
+      response = check
       return check.status
     }
     return false
   })
 
-  return live ?? status
+  return { response, status }
+}
+
+async function checkLiveness (runtime) {
+  const { status: ready, response: readinessResponse } = await checkReadiness(runtime)
+  if (!ready) {
+    return { status: false, readiness: readinessResponse }
+  }
+  // TODO test, doc
+  // in case of readiness check failure, if custom readiness response is set, we return the readiness check response on health check endpoint
+
+  const checks = await runtime.getCustomHealthChecks()
+
+  let response
+  const status = Object.values(checks).every(check => {
+    if (typeof check === 'boolean') {
+      return check
+    } else if (typeof check === 'object') {
+      response = check
+      return check.status
+    }
+    return false
+  })
+
+  return { response, status }
 }
 
 async function startPrometheusServer (runtime, opts) {
@@ -99,12 +118,27 @@ async function startPrometheusServer (runtime, opts) {
       handler: async (req, reply) => {
         reply.type('text/plain')
 
-        const ready = await checkReadiness(runtime)
+        const { status, response } = await checkReadiness(runtime)
 
-        if (ready) {
-          reply.status(successStatusCode).send(successBody)
-        } else {
-          reply.status(failStatusCode).send(failBody)
+        if (typeof response === 'boolean') {
+          if (status) {
+            reply.status(successStatusCode).send(successBody)
+          } else {
+            reply.status(failStatusCode).send(failBody)
+          }
+        } else if (typeof response === 'object') {
+          const { status, body, statusCode } = response
+          if (status) {
+            reply.status(statusCode || successStatusCode).send(body || successBody)
+          } else {
+            reply.status(statusCode || failStatusCode).send(body || failBody)
+          }
+        } else if (!response) {
+          if (status) {
+            reply.status(successStatusCode).send(successBody)
+          } else {
+            reply.status(failStatusCode).send(failBody)
+          }
         }
       },
     })
@@ -123,20 +157,26 @@ async function startPrometheusServer (runtime, opts) {
       handler: async (req, reply) => {
         reply.type('text/plain')
 
-        const live = await checkLiveness(runtime)
+        const { status, response, readiness } = await checkLiveness(runtime)
 
-        if (typeof live === 'boolean') {
-          if (live) {
+        if (typeof response === 'boolean') {
+          if (status) {
             reply.status(successStatusCode).send(successBody)
           } else {
-            reply.status(failStatusCode).send(failBody)
+            reply.status(failStatusCode).send(readiness?.body || failBody)
           }
-        } else if (typeof live === 'object') {
-          const { status, body, statusCode } = live
+        } else if (typeof response === 'object') {
+          const { status, body, statusCode } = response
           if (status) {
             reply.status(statusCode || successStatusCode).send(body || successBody)
           } else {
-            reply.status(statusCode || failStatusCode).send(body || failBody)
+            reply.status(statusCode || failStatusCode).send(body || readiness?.body || failBody)
+          }
+        } else if (!response) {
+          if (status) {
+            reply.status(successStatusCode).send(successBody)
+          } else {
+            reply.status(failStatusCode).send(readiness?.body || failBody)
           }
         }
       },

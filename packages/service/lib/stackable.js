@@ -56,7 +56,8 @@ class ServiceStackable {
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       invalidateHttpCache: this.#invalidateHttpCache.bind(this),
       prometheus: { client, registry: this.metricsRegistry },
-      setCustomHealthCheck: this.setCustomHealthCheck.bind(this)
+      setCustomHealthCheck: this.setCustomHealthCheck.bind(this),
+      setCustomReadinessCheck: this.setCustomReadinessCheck.bind(this)
     })
   }
 
@@ -191,6 +192,16 @@ class ServiceStackable {
     return await this.customHealthCheck()
   }
 
+  setCustomReadinessCheck (fn) {
+    this.customReadinessCheck = fn
+  }
+
+  async getCustomReadinessCheck () {
+    if (!this.customReadinessCheck) {
+      return true
+    }
+    return await this.customReadinessCheck()
+  }
   // This method is not a part of Stackable interface because we need to register
   // fastify metrics before the server is started.
   async #collectMetrics () {

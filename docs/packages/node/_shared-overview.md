@@ -11,7 +11,17 @@ During service execution some APIs are made available in the `globalThis.platfor
 - **`globalThis.platformatic.basePath`**: The base path of the service in the composer.
 - **`globalThis.platformatic.logLevel`**: The log level configured for the service.
 - **`globalThis.platformatic.events.on('close')`**: This event is emitted when the process is being closed. A listener should be installed to perform a graceful close, which must finish in 10 seconds. If there is no listener, the process will be terminated by invoking `process.exit(0)`.
-- **`globalThis.platformatic.setCustomHealthCheck(fn)`**: This function can be use to set a custom healthcheck function for the service.
+- **`globalThis.platformatic.setCustomHealthCheck(fn)`**: This function can be use to set a custom healthcheck function for the service. The function should return a boolean value, or an object with the following properties:
+  - `status`: a boolean indicating if the health check is successful
+  - `statusCode`: an optional HTTP status code
+  - `body`: an optional body to return
+
+The healthcheck function will ensure the readiness of the service, and the readiness check function will ensure the readiness of the service dependencies; if the healthcheck fails, the readiness check will fail, and the service will be marked as unhealthy; in this case, the liveness probe will return the readiness check response in the body.
+
+- **`globalThis.platformatic.setCustomReadinessCheck(fn)`**: This function can be use to set a custom readiness check function for the service. The function should return a boolean value, or an object with the following properties:
+  - `status`: a boolean indicating if the readiness check is successful
+  - `statusCode`: an optional HTTP status code
+  - `body`: an optional body to return
 
 ## Custom Metrics
 
@@ -115,6 +125,15 @@ export function create () {
           body: 'Payment service is unreachable'
         }
       }
+  })
+
+  globalThis.platformatic.setCustomReadinessCheck(async () => {
+    return Promise.all([
+      // Check if the database is reachable
+      app.db.query('SELECT 1'),
+      // Check if the external service is reachable
+      fetch('https://payment-service.com/status')
+    ])
   })
 
   app.get('/', (req, res) => {

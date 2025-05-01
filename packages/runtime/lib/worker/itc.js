@@ -174,6 +174,14 @@ function setupITC (app, service, dispatcher) {
         } catch (err) {
           throw new errors.FailedToPerformCustomHealthCheckError(service.id, err.message)
         }
+      },
+
+      async getCustomReadinessCheck () {
+        try {
+          return await app.stackable.getCustomReadinessCheck()
+        } catch (err) {
+          throw new errors.FailedToPerformCustomReadinessCheckError(service.id, err.message)
+        }
       }
     }
   })
