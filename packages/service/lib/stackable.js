@@ -202,6 +202,7 @@ class ServiceStackable {
     }
     return await this.customReadinessCheck()
   }
+
   // This method is not a part of Stackable interface because we need to register
   // fastify metrics before the server is started.
   async #collectMetrics () {
