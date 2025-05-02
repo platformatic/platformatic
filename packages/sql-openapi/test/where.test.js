@@ -74,6 +74,10 @@ test('list', async (t) => {
     title: 'Duck',
     longText: 'A duck tale',
     counter: 40,
+  }, {
+    title: 'Bear',
+    longText: null,
+    counter: 50
   }]
 
   for (const body of posts) {
@@ -107,6 +111,10 @@ test('list', async (t) => {
       id: 4,
       title: 'Duck',
       longText: 'A duck tale',
+    }, {
+      id: 5,
+      title: 'Bear',
+      longText: null,
     }], 'GET /posts?fields=id,title,longText response')
   }
 
@@ -137,6 +145,97 @@ test('list', async (t) => {
     }], 'GET /posts?where.title.ilike=Dog response')
   }
 
+  // test NULL filter
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.longText.eq=null&fields=id,title,longText',
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.longText.eq=null Where NULL status code')
+    same(res.json(), [{
+      id: 5,
+      title: 'Bear',
+      longText: null,
+    }], 'GET /posts?where.longText.eq=null Where NULL response')
+  }
+
+  // test NOT NULL filter
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.longText.neq=null&fields=id,title,longText',
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.longText.neq=null Where NOT NULL status code')
+    same(res.json(), [{
+      id: 1,
+      title: 'Dog',
+      longText: 'Foo',
+    }, {
+      id: 2,
+      title: 'Cat',
+      longText: 'Bar',
+    }, {
+      id: 3,
+      title: 'Mouse',
+      longText: 'Baz',
+    }, {
+      id: 4,
+      title: 'Duck',
+      longText: 'A duck tale',
+    }], 'GET /posts?where.longText.neq=null Where NOT NULL response')
+  }
+
+  // test NULL OR filter
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.or=(longText.eq=null|id.eq=4)&fields=id,title,longText',
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.longText.eq=null Where NULL status code')
+    same(res.json(), [
+      {
+        id: 4,
+        title: 'Duck',
+        longText: 'A duck tale',
+      },
+      {
+        id: 5,
+        title: 'Bear',
+        longText: null,
+      }], 'GET /posts?where.longText.eq=null Where NULL response')
+  }
+
+  // test NOT NULL OR filter
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/posts?where.or=(longText.neq=null|id.eq=5)&fields=id,title,longText',
+    })
+    equal(res.statusCode, 200, 'GET /posts?where.longText.neq=null Where NOT NULL status code')
+    same(res.json(), [{
+      id: 1,
+      title: 'Dog',
+      longText: 'Foo',
+    }, {
+      id: 2,
+      title: 'Cat',
+      longText: 'Bar',
+    }, {
+      id: 3,
+      title: 'Mouse',
+      longText: 'Baz',
+    }, {
+      id: 4,
+      title: 'Duck',
+      longText: 'A duck tale',
+    },
+    {
+      id: 5,
+      title: 'Bear',
+      longText: null,
+    }], 'GET /posts?where.longText.neq=null Where NOT NULL response')
+  }
+
   {
     const res = await app.inject({
       method: 'GET',
@@ -155,6 +254,10 @@ test('list', async (t) => {
       id: 4,
       title: 'Duck',
       longText: 'A duck tale',
+    }, {
+      id: 5,
+      title: 'Bear',
+      longText: null
     }], 'GET /posts?where.title.neq=Dog response')
   }
 
@@ -176,6 +279,10 @@ test('list', async (t) => {
       id: 4,
       title: 'Duck',
       longText: 'A duck tale',
+    }, {
+      id: 5,
+      title: 'Bear',
+      longText: null,
     }], 'GET /posts?where.counter.gt=10 response')
   }
 
@@ -239,6 +346,10 @@ test('list', async (t) => {
       id: 4,
       title: 'Duck',
       longText: 'A duck tale',
+    }, {
+      id: 5,
+      title: 'Bear',
+      longText: null,
     }], 'GET /posts?where.counter.gte=20 response')
   }
 
@@ -273,6 +384,10 @@ test('list', async (t) => {
       id: 3,
       title: 'Mouse',
       longText: 'Baz',
+    }, {
+      id: 5,
+      title: 'Bear',
+      longText: null,
     }], '/posts response')
   }
 
@@ -316,7 +431,7 @@ test('list', async (t) => {
       method: 'GET',
       url: '/posts?where.foo.in=Dog,Cat&fields=id,title,longText',
     })
-    equal(res.statusCode, 200, 'GET /posts?where.title.in=Dog,Cat status code')
+    equal(res.statusCode, 200, 'GET /posts?where.foo.in=Dog,Cat status code')
     same(res.json(), [{
       id: 1,
       title: 'Dog',
@@ -333,7 +448,11 @@ test('list', async (t) => {
       id: 4,
       title: 'Duck',
       longText: 'A duck tale',
-    }], 'GET /posts?where.title.in=Dog,Cat response')
+    }, {
+      id: 5,
+      title: 'Bear',
+      longText: null,
+    }], 'GET /posts?where.foo.in=Dog,Cat response')
   }
 })
 
@@ -770,7 +889,7 @@ test('list with NOT NULL', async (t) => {
       method: 'GET',
       url: '/posts?where.foo.in=Dog,Cat&fields=id,title,longText',
     })
-    equal(res.statusCode, 200, 'GET /posts?where.title.in=Dog,Cat status code')
+    equal(res.statusCode, 200, 'GET /posts?where.foo.in=Dog,Cat status code')
     same(res.json(), [{
       id: 1,
       title: 'Dog',
@@ -787,7 +906,7 @@ test('list with NOT NULL', async (t) => {
       id: 4,
       title: 'Duck',
       longText: 'A duck tale',
-    }], 'GET /posts?where.title.in=Dog,Cat response')
+    }], 'GET /posts?where.foo.in=Dog,Cat response')
   }
 
   {
