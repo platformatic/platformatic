@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "devDependencies": {
-    "borp": "^0.19.0",
+    "borp": "^0.20.0",
     "eslint": "9",
     "fastify": "^5.0.0",
     "neostandard": "^0.12.0",
