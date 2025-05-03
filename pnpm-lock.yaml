@@ -500,8 +500,8 @@ importers:
         specifier: workspace:^
         version: link:../utils
       '@scalar/fastify-api-reference':
-        specifier: 1.28.27
-        version: 1.28.27
+        specifier: 1.28.31
+        version: 1.28.31
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -1952,8 +1952,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@scalar/fastify-api-reference':
-        specifier: 1.28.27
-        version: 1.28.27
+        specifier: 1.28.31
+        version: 1.28.31
       '@types/ws':
         specifier: ^8.5.10
         version: 8.18.1
@@ -2335,8 +2335,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@scalar/fastify-api-reference':
-        specifier: 1.28.27
-        version: 1.28.27
+        specifier: 1.28.31
+        version: 1.28.31
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -4462,24 +4462,24 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@scalar/core@0.2.12':
-    resolution: {integrity: sha512-rAgRbHq8g4H1fffJMHrvmsOTqwUU3QNh1UgiOe7H8wy0yIVGN9C5YmduF99Mt+7V43oGposeHdlfs+ECSUk8Fg==}
+  '@scalar/core@0.2.14':
+    resolution: {integrity: sha512-w2oLqUVJt88ed2uHKFgg8UOFeyHDpi3QmSJqqc4CZPjAz/lKj34antHYMEG3A4Iom+06W31XQeqFO9zQ2eNsfA==}
     engines: {node: '>=18'}
 
-  '@scalar/fastify-api-reference@1.28.27':
-    resolution: {integrity: sha512-Ntyl7sfB8URtkJlRBtDt2kNQXkd4h8eiWU5wY21k38d1lZCQvd+ZD7deELII2rbgMzgC9J+riBSQ6klcNTxc/g==}
+  '@scalar/fastify-api-reference@1.28.31':
+    resolution: {integrity: sha512-l8Qj65BHsChbXGDgv+ldH3HjBaXkubDYzrwSoYFtI8dQCdx33+dst8xtPfxnX3SCGlAhJ+2zw2pYz8gEPQaXtg==}
     engines: {node: '>=18'}
 
-  '@scalar/openapi-parser@0.10.16':
-    resolution: {integrity: sha512-UF+noQXEEQ52lm2Uum7mxkZdvsl8pMCIoTtN9jCTAfjutRwUPo7vfuic4JK+ChFLHDZyiYXYsbCwlP+aLk+4Xg==}
+  '@scalar/openapi-parser@0.10.17':
+    resolution: {integrity: sha512-SO+vw+kv8xEROJ527KpiT5ccAVQZuE6n8G4qTN6b72QVT0URHoLwr8uHQQnEGlyA0QhAx7En+lKD1Hy39xZ9oQ==}
     engines: {node: '>=18'}
 
-  '@scalar/openapi-types@0.2.1':
-    resolution: {integrity: sha512-UMxX54taQXnEWYEuesbH+pkjlXRVV1u/Wx6YbVeU3QoJdFGqT3Z7si9zsokoG6MXDcdi1LGny7A0KwownmPvUQ==}
+  '@scalar/openapi-types@0.2.2':
+    resolution: {integrity: sha512-fwWboUf3W5U4qWU7nj4jrs+KYilnfKyVp0d6LC1ejB2aROgWXIAscRtVaPLPaNLpTZOBsMC8XpiAPm3/SlU+mA==}
     engines: {node: '>=18'}
 
-  '@scalar/types@0.1.12':
-    resolution: {integrity: sha512-GSZ/eS94hNu/TkQHhAx96J0PD8tlm303OXRRyp5TPs+1UJ4HCC5LHjSnlz5WTZoi86/fup8R0MIHW9mJw7AoDg==}
+  '@scalar/types@0.1.14':
+    resolution: {integrity: sha512-N7qZ9qARJfi4Gl5MEsRfwPHFWs68qDXWQ+jGi05LGExDqErAJStc4PPkEmxt44uSO4+TVx4ADxWB6xNoGMG/Zg==}
     engines: {node: '>=18'}
 
   '@sec-ant/readable-stream@0.4.1':
@@ -4719,9 +4719,6 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
-
-  '@unhead/schema@1.11.20':
-    resolution: {integrity: sha512-0zWykKAaJdm+/Y7yi/Yds20PrUK7XabLe9c3IRcjnwYmSWY6z0Cr19VIs3ozCj8P+GhR+/TI2mwtGlueCEYouA==}
 
   '@unrs/resolver-binding-darwin-arm64@1.5.0':
     resolution: {integrity: sha512-YmocNlEcX/AgJv8gI41bhjMOTcKcea4D2nRIbZj+MhRtSH5+vEU8r/pFuTuoF+JjVplLsBueU+CILfBPVISyGQ==}
@@ -6579,9 +6576,6 @@ packages:
 
   hmac-drbg@1.0.1:
     resolution: {integrity: sha512-Tti3gMqLdZfhOQY1Mzf/AanLiqh1WTiJgEj26ZuYQ9fbkLomzGchCws4FyrSd4VkpBfiNhaE1On+lOz894jvXg==}
-
-  hookable@5.5.3:
-    resolution: {integrity: sha512-Yc+BQe8SvoXH1643Qez1zqLRmbA5rCL+sSmk6TVos0LWVfNIB7PGncdlId77WzLGSIB5KaWgTaNTs2lNVEI6VQ==}
 
   hosted-git-info@2.8.9:
     resolution: {integrity: sha512-mxIDAb9Lsm6DoOJ7xH+5+X4y1LU/4Hi50L9C5sIswK3JzULS4bwk1FvjdBgvYR4bzT4tuUQiC15FE2f5HbLvYw==}
@@ -10020,9 +10014,6 @@ packages:
     resolution: {integrity: sha512-GQHQqAopRhwU8Kt1DDM8NjibDXHC8eoh1erhGAJPEyveY9qqVeXvVikNKrDz69sHowPMorbPUrH/mx8c50eiBQ==}
     engines: {node: '>=18'}
 
-  zhead@2.2.4:
-    resolution: {integrity: sha512-8F0OI5dpWIA5IGG5NHUg9staDwz/ZPxZtvGVf01j7vHqSyZ0raHY+78atOVxRqb73AotX22uV1pXt3gYSstGag==}
-
   zod-to-json-schema@3.24.5:
     resolution: {integrity: sha512-/AuWwMP+YqiPbsJx5D6TfgRTc4kTLjsh5SOcd4bLsfUg2RcEXrFMJl1DGgdHy2aCfsIA/cr/1JM0xcB2GZji8g==}
     peerDependencies:
@@ -10033,6 +10024,9 @@ packages:
     peerDependencies:
       typescript: ^4.9.4 || ^5.0.2
       zod: ^3
+
+  zod@3.24.1:
+    resolution: {integrity: sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==}
 
   zod@3.24.3:
     resolution: {integrity: sha512-HhY1oqzWCQWuUqvBFnsyrtZRhyPeR7SUGv+C4+MsisMuVfSPx8HpwWqH8tRahSlt6M3PiFAcoeFhZAqIXTxoSg==}
@@ -11931,20 +11925,20 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.40.0':
     optional: true
 
-  '@scalar/core@0.2.12':
+  '@scalar/core@0.2.14':
     dependencies:
-      '@scalar/types': 0.1.12
+      '@scalar/types': 0.1.14
 
-  '@scalar/fastify-api-reference@1.28.27':
+  '@scalar/fastify-api-reference@1.28.31':
     dependencies:
-      '@scalar/core': 0.2.12
-      '@scalar/openapi-parser': 0.10.16
-      '@scalar/openapi-types': 0.2.1
-      '@scalar/types': 0.1.12
+      '@scalar/core': 0.2.14
+      '@scalar/openapi-parser': 0.10.17
+      '@scalar/openapi-types': 0.2.2
+      '@scalar/types': 0.1.14
       fastify-plugin: 4.5.1
       github-slugger: 2.0.0
 
-  '@scalar/openapi-parser@0.10.16':
+  '@scalar/openapi-parser@0.10.17':
     dependencies:
       ajv: 8.17.1
       ajv-draft-04: 1.0.0(ajv@8.17.1)
@@ -11953,17 +11947,15 @@ snapshots:
       leven: 4.0.0
       yaml: 2.7.1
 
-  '@scalar/openapi-types@0.2.1':
+  '@scalar/openapi-types@0.2.2':
     dependencies:
-      zod: 3.24.3
+      zod: 3.24.1
 
-  '@scalar/types@0.1.12':
+  '@scalar/types@0.1.14':
     dependencies:
-      '@scalar/openapi-types': 0.2.1
-      '@unhead/schema': 1.11.20
+      '@scalar/openapi-types': 0.2.2
       nanoid: 5.1.5
-      type-fest: 4.40.0
-      zod: 3.24.3
+      zod: 3.24.1
 
   '@sec-ant/readable-stream@0.4.1': {}
 
@@ -12332,11 +12324,6 @@ snapshots:
       eslint-visitor-keys: 4.2.0
 
   '@ungap/structured-clone@1.3.0': {}
-
-  '@unhead/schema@1.11.20':
-    dependencies:
-      hookable: 5.5.3
-      zhead: 2.2.4
 
   '@unrs/resolver-binding-darwin-arm64@1.5.0':
     optional: true
@@ -14698,8 +14685,6 @@ snapshots:
       hash.js: 1.1.7
       minimalistic-assert: 1.0.1
       minimalistic-crypto-utils: 1.0.1
-
-  hookable@5.5.3: {}
 
   hosted-git-info@2.8.9: {}
 
@@ -18951,8 +18936,6 @@ snapshots:
 
   yoctocolors@2.1.1: {}
 
-  zhead@2.2.4: {}
-
   zod-to-json-schema@3.24.5(zod@3.24.3):
     dependencies:
       zod: 3.24.3
@@ -18961,6 +18944,8 @@ snapshots:
     dependencies:
       typescript: 5.7.3
       zod: 3.24.3
+
+  zod@3.24.1: {}
 
   zod@3.24.3: {}
 
