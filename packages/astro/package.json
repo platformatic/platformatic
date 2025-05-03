@@ -37,7 +37,7 @@
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
     "astro": "^5.7.1",
-    "borp": "^0.19.0",
+    "borp": "^0.20.0",
     "eslint": "9",
     "json-schema-to-typescript": "^15.0.1",
     "minimatch": "^10.0.1",

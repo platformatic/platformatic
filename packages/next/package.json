@@ -41,7 +41,7 @@
     "@platformatic/composer": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@types/node": "^22.5.0",
-    "borp": "^0.19.0",
+    "borp": "^0.20.0",
     "eslint": "9",
     "execa": "^9.5.1",
     "fastify": "^5.0.0",

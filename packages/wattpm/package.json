@@ -54,7 +54,7 @@
   },
   "devDependencies": {
     "@platformatic/node": "workspace:*",
-    "borp": "^0.19.0",
+    "borp": "^0.20.0",
     "eslint": "9",
     "inspector-client": "^0.2.0",
     "json-schema-to-typescript": "^15.0.0",
