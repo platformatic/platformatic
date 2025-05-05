@@ -64,6 +64,14 @@ export interface PlatformaticService {
               [k: string]: unknown;
             };
           };
+          formatters?: {
+            path: string;
+          };
+          timestamp?: "epochTime" | "unixTime" | "nullTime" | "isoTime";
+          redact?: {
+            paths: string[];
+            censor?: string;
+          };
           [k: string]: unknown;
         };
     loggerInstance?: {

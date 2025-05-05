@@ -1,6 +1,6 @@
 {
   "name": "platformatic",
-  "version": "2.62.1",
+  "version": "2.63.0",
   "description": "Platformatic CLI",
   "main": "cli.js",
   "type": "module",
