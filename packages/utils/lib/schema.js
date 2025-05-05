@@ -289,6 +289,9 @@ const server = {
     https: {
       type: 'object',
       properties: {
+        allowHTTP1: {
+          type: 'boolean'
+        },
         key: {
           anyOf: [
             {
@@ -362,11 +365,17 @@ const server = {
               }
             }
           ]
+        },
+        requestCert: {
+          type: 'boolean'
+        },
+        rejectUnauthorized: {
+          type: 'boolean'
         }
       },
       additionalProperties: false,
       required: ['key', 'cert']
-    }
+    },
   },
   additionalProperties: false
 }
