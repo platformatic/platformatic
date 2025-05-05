@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type HttpsSchemasPlatformaticDevPlatformaticRuntime2631Json = {
+export type HttpsSchemasPlatformaticDevPlatformaticRuntime2632Json = {
   [k: string]: unknown;
 } & {
   $schema?: string;
@@ -92,6 +92,7 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime2631Json = {
     port?: number | string;
     http2?: boolean;
     https?: {
+      allowHTTP1?: boolean;
       key:
         | string
         | {
@@ -114,6 +115,8 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime2631Json = {
                 path?: string;
               }
           )[];
+      requestCert?: boolean;
+      rejectUnauthorized?: boolean;
     };
   };
   startTimeout?: number;

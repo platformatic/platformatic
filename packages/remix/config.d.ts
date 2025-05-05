@@ -55,6 +55,7 @@ export interface PlatformaticRemixStackable {
     port?: number | string;
     http2?: boolean;
     https?: {
+      allowHTTP1?: boolean;
       key:
         | string
         | {
@@ -77,6 +78,8 @@ export interface PlatformaticRemixStackable {
                 path?: string;
               }
           )[];
+      requestCert?: boolean;
+      rejectUnauthorized?: boolean;
     };
   };
   watch?:

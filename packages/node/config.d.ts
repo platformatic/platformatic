@@ -55,6 +55,7 @@ export interface PlatformaticNodeJsStackable {
     port?: number | string;
     http2?: boolean;
     https?: {
+      allowHTTP1?: boolean;
       key:
         | string
         | {
@@ -77,6 +78,8 @@ export interface PlatformaticNodeJsStackable {
                 path?: string;
               }
           )[];
+      requestCert?: boolean;
+      rejectUnauthorized?: boolean;
     };
   };
   watch?:
