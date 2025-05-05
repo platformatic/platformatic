@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db-authorization",
-  "version": "2.63.0",
+  "version": "2.63.1",
   "description": "",
   "main": "index.js",
   "scripts": {
