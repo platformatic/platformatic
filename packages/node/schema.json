@@ -166,6 +166,9 @@
         "https": {
           "type": "object",
           "properties": {
+            "allowHTTP1": {
+              "type": "boolean"
+            },
             "key": {
               "anyOf": [
                 {
@@ -239,6 +242,12 @@
                   }
                 }
               ]
+            },
+            "requestCert": {
+              "type": "boolean"
+            },
+            "rejectUnauthorized": {
+              "type": "boolean"
             }
           },
           "additionalProperties": false,
