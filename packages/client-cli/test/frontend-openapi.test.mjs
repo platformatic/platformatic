@@ -355,7 +355,7 @@ const _postRoot = async (url: string, request: Types.PostRootRequest): Promise<T
   const isFormData = body instanceof FormData
   const headers: HeadersInit = {
     ...defaultHeaders,
-    ...(isFormData ? {} : defaultJsonType)
+    ...(isFormData || body === undefined) ? {} : defaultJsonType
   }
 
   const response = await fetch(\`\${url}/?\${searchParams.toString()}\`, {
@@ -381,7 +381,7 @@ test('handle headers parameters', async (t) => {
   const isFormData = body instanceof FormData
   const headers: HeadersInit = {
     ...defaultHeaders,
-    ...(isFormData ? {} : defaultJsonType)
+    ...(isFormData || body === undefined) ? {} : defaultJsonType
   }
   if (request && request['level'] !== undefined) {
     headers['level'] = request['level']
@@ -1045,6 +1045,48 @@ console.log(await client.getReturnHeaders())
   /* eslint-disable no-control-regex */
   const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n') // remove ANSI colors, if any
   equal(lines[0], '{ message: \'ok\', data: { authorization: \'Bearer foobar\' } }')
+})
+
+test('integration test for DELETE without body', async (t) => {
+  const fixturesDir = join(__dirname, 'fixtures', 'delete-no-body')
+  try {
+    await fs.unlink(join(fixturesDir, 'db.sqlite'))
+  } catch {
+    // noop
+  }
+
+  const app = await buildServer(join(fixturesDir, 'platformatic.db.json'))
+  t.after(async () => {
+    await app.close()
+  })
+
+  await app.start()
+  const dir = await moveToTmpdir(after)
+
+  await execa('node', [cliPath, join(fixturesDir, 'openapi.json'), '--name', 'delete-api', '--frontend'])
+  const testFile = `
+'use strict'
+
+import build from './delete-api.mjs'
+const client = build('${app.url}')
+
+// Test DELETE without body
+const deleteResponse = await client.deleteResource({ id: '123' })
+console.log('DELETE response:', deleteResponse)
+
+// Test DELETE with path parameter
+const deleteWithPathResponse = await client.deleteResourceById({ id: '456' })
+console.log('DELETE with path parameter response:', deleteWithPathResponse)
+`
+
+  await writeFile(join(dir, 'delete-api', 'test.mjs'), testFile)
+
+  const output = await execa('node', [join(dir, 'delete-api', 'test.mjs')])
+  /* eslint-disable no-control-regex */
+  const lines = output.stdout.replace(/\u001b\[.*?m/g, '').split('\n')
+
+  equal(lines[0], 'DELETE response: { success: true, id: \'123\' }')
+  equal(lines[1], 'DELETE with path parameter response: { success: true, id: \'456\' }')
 })
 
 test('add credentials: include in client implementation from file', async (t) => {

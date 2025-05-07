@@ -204,7 +204,7 @@ function generateFrontendImplementationFromOpenAPI ({ schema, name, language, fu
           writer.writeLine('...defaultHeaders')
         } else {
           writer.writeLine('...defaultHeaders,')
-          writer.writeLine('...(isFormData ? {} : defaultJsonType)')
+          writer.writeLine('...(isFormData || body === undefined) ? {} : defaultJsonType')
         }
       })
 
