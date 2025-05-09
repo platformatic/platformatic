@@ -11,6 +11,8 @@ import { cliPath, safeKill } from './helper.mjs'
 
 process.setMaxListeners(100)
 
+const hasTypeStripping = process.features.typescript
+
 let count = 0
 
 function urlDirname (url) {
@@ -129,7 +131,7 @@ test('should compile typescript plugin with start command from a folder', async 
   assert.fail('should compile typescript plugin with start command')
 })
 
-test('should start the service if it was precompiled and typescript is `false`', async t => {
+test('should start the service if it was precompiled and typescript is `false`', { skip: hasTypeStripping }, async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
   const cwd = await getCWD(t)
 
@@ -162,7 +164,7 @@ test('should start the service if it was precompiled and typescript is `false`',
   assert.fail('should load the typescript plugin without compiling it')
 })
 
-test('should not start the service if it was not precompiled and typescript is `false`', async t => {
+test('should not start the service if it was not precompiled and typescript is `false`', { skip: hasTypeStripping }, async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
   const cwd = await getCWD(t)
 
@@ -231,7 +233,7 @@ test('should compile typescript plugin with string config', async t => {
   assert.fail('should compile typescript plugin with a compile command')
 })
 
-test('should not start the service if it was not precompiled and typescript is `"false"`', async t => {
+test('should not start the service if it was not precompiled and typescript is `"false"`', { skip: hasTypeStripping }, async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile')
   const cwd = await getCWD(t)
 
@@ -293,7 +295,7 @@ test('should compile typescript plugin with start command with custom tsconfig',
   assert.fail('should compile typescript plugin with start command')
 })
 
-test('should not start the service if it was not precompiled and typescript is `false`', async t => {
+test('should not start the service if it was not precompiled and typescript is `false`', { skip: hasTypeStripping }, async t => {
   const testDir = path.join(urlDirname(import.meta.url), '..', 'fixtures', 'typescript-plugin-nocompile-enabled')
   const cwd = await getCWD(t)
 
