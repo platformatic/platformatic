@@ -59,7 +59,7 @@
     "@platformatic/service": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:^",
-    "@scalar/fastify-api-reference": "1.28.31",
+    "@scalar/fastify-api-reference": "1.28.32",
     "ajv": "^8.12.0",
     "commist": "^3.2.0",
     "console-table-printer": "^2.12.0",

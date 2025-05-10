@@ -500,8 +500,8 @@ importers:
         specifier: workspace:^
         version: link:../utils
       '@scalar/fastify-api-reference':
-        specifier: 1.28.31
-        version: 1.28.31
+        specifier: 1.28.32
+        version: 1.28.32
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -1952,8 +1952,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@scalar/fastify-api-reference':
-        specifier: 1.28.31
-        version: 1.28.31
+        specifier: 1.28.32
+        version: 1.28.32
       '@types/ws':
         specifier: ^8.5.10
         version: 8.18.1
@@ -2335,8 +2335,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@scalar/fastify-api-reference':
-        specifier: 1.28.31
-        version: 1.28.31
+        specifier: 1.28.32
+        version: 1.28.32
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -4466,8 +4466,8 @@ packages:
     resolution: {integrity: sha512-w2oLqUVJt88ed2uHKFgg8UOFeyHDpi3QmSJqqc4CZPjAz/lKj34antHYMEG3A4Iom+06W31XQeqFO9zQ2eNsfA==}
     engines: {node: '>=18'}
 
-  '@scalar/fastify-api-reference@1.28.31':
-    resolution: {integrity: sha512-l8Qj65BHsChbXGDgv+ldH3HjBaXkubDYzrwSoYFtI8dQCdx33+dst8xtPfxnX3SCGlAhJ+2zw2pYz8gEPQaXtg==}
+  '@scalar/fastify-api-reference@1.28.32':
+    resolution: {integrity: sha512-Ps0TB6/TWM0/FWnBH9I1t6P9v0WzJTZ5LBKpNW/kw4X/DRtlbwOr7IoV/sIw9diuuJrURcUbFJMG7WcJ2Mabyw==}
     engines: {node: '>=18'}
 
   '@scalar/openapi-parser@0.10.17':
@@ -11933,7 +11933,7 @@ snapshots:
     dependencies:
       '@scalar/types': 0.1.14
 
-  '@scalar/fastify-api-reference@1.28.31':
+  '@scalar/fastify-api-reference@1.28.32':
     dependencies:
       '@scalar/core': 0.2.14
       '@scalar/openapi-parser': 0.10.17

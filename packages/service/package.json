@@ -64,7 +64,7 @@
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/ts-compiler": "workspace:*",
     "@platformatic/utils": "workspace:*",
-    "@scalar/fastify-api-reference": "1.28.31",
+    "@scalar/fastify-api-reference": "1.28.32",
     "@types/ws": "^8.5.10",
     "ajv": "^8.12.0",
     "cli-progress": "^3.12.0",
