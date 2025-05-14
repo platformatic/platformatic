@@ -38,7 +38,7 @@ export async function resolve (argv) {
       }
     })
 
-    await resolveServices(
+    const resolved = await resolveServices(
       logger,
       configManager.dirname,
       configManager.fullPath,
@@ -48,7 +48,9 @@ export async function resolve (argv) {
       args.packageManager
     )
 
-    logger.info('✅ All external services have been resolved')
+    if (resolved) {
+      logger.info('✅ All external services have been resolved')
+    }
   } catch (err) {
     console.log(err)
     process.exit(1)

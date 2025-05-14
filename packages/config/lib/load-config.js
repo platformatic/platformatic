@@ -50,14 +50,8 @@ async function loadConfig (minimistConfig, args, app, overrides = {}, replaceEnv
 }
 
 async function loadEmptyConfig (path, app, overrides, replaceEnv, logger) {
-  let store
-  if (app instanceof Store) {
-    store = app
-    app = null
-  } else {
-    store = new Store({ logger })
-    store.add(app)
-  }
+  const store = new Store({ logger })
+  store.add(app)
 
   const loaded = await store.loadEmptyConfig({ app, directory: path })
   const configManager = loaded.configManager

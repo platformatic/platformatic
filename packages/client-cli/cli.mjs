@@ -1,11 +1,10 @@
 #! /usr/bin/env node
 
-import { ConfigManager, getParser, getStringifier, loadConfig } from '@platformatic/config'
+import { findConfigurationFile, getParser, getStringifier, loadConfig } from '@platformatic/config'
 import { createDirectory } from '@platformatic/utils'
 import camelcase from 'camelcase'
 import * as desm from 'desm'
 import isMain from 'es-main'
-import { findUp } from 'find-up'
 import { access, readFile, writeFile } from 'fs/promises'
 import graphql from 'graphql'
 import helpMe from 'help-me'
@@ -33,6 +32,7 @@ function parseFile (content) {
   }
   return parsed
 }
+
 export async function isFileAccessible (filename) {
   try {
     await access(filename)
@@ -41,8 +41,6 @@ export async function isFileAccessible (filename) {
     return false
   }
 }
-
-const configFileNames = ConfigManager.listConfigFiles()
 
 async function writeOpenAPIClient (
   folder,
@@ -283,9 +281,9 @@ async function downloadAndProcess (options) {
 
   let generateImplementation = options.generateImplementation
   let config = options.config
-  if (!config) {
-    const configFilesAccessibility = await Promise.all(configFileNames.map(fileName => isFileAccessible(fileName)))
-    config = configFileNames.find((value, index) => configFilesAccessibility[index])
+
+  if (!config && !isFrontend) {
+    config = await findConfigurationFile(process.cwd(), null, ['service', 'db', 'composer'])
   }
 
   if (config && !isFrontend) {
@@ -293,6 +291,7 @@ async function downloadAndProcess (options) {
     // of the config file, Platformatic will register automatically the client
     generateImplementation = false
   }
+
   let found = false
   const toTry = []
   if (url.startsWith('http')) {
@@ -532,14 +531,8 @@ export async function command (argv) {
   let runtime
 
   if (options.runtime) {
-    // TODO add flag to allow specifying a runtime config file
-    const runtimeConfigFile =
-      (await findUp('platformatic.runtime.json', {
-        cwd: dirname(process.cwd())
-      })) ||
-      (await findUp('platformatic.json', {
-        cwd: dirname(process.cwd())
-      }))
+    // Find the runtime config file
+    const runtimeConfigFile = await findConfigurationFile(process.cwd(), null, 'runtime')
 
     if (!runtimeConfigFile) {
       logger.error('Could not find a platformatic.json file in any parent directory.')
@@ -567,6 +560,7 @@ export async function command (argv) {
     const { configManager } = await loadConfig({}, ['-c', runtimeConfigFile], platformaticRuntime)
 
     configManager.current.watch = false
+    configManager.current.logger.level = 'error'
 
     for (const service of configManager.current.services) {
       service.localServiceEnvVars.set('PLT_SERVER_LOGGER_LEVEL', 'warn')
