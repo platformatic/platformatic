@@ -177,6 +177,7 @@ const sidebars = {
     'learn/overview',
     'getting-started/quick-start-watt',
     'getting-started/quick-start-guide',
+    'getting-started/port-your-app',
     {
       type: 'category',
       label: 'Beginner Tutorials',

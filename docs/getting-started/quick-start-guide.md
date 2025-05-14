@@ -142,7 +142,7 @@ Here, you've created a API endpoint that lets users like a quote in the database
 In your `web/db` directory, run the command below for database migrations
 
 ```sh
-npx $ platformatic db migrations apply
+npx platformatic db migrations apply
 ```
 
 ## Add a Composer service 
