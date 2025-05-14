@@ -8,10 +8,14 @@ import { findConfigurationFile, getMatchingRuntime, getRoot, parseArgs } from '.
 
 export async function devCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
-  /* c8 ignore next */
   const root = getRoot(positionals)
 
   const configurationFile = await findConfigurationFile(logger, root)
+
+  if (!configurationFile) {
+    return
+  }
+
   let runtime = await pltStartCommand(['-c', configurationFile], true, true)
 
   // Add a watcher on the configurationFile so that we can eventually restart the runtime
@@ -22,7 +26,7 @@ export async function devCommand (logger, args) {
     await runtime.close()
     runtime = await pltStartCommand(['-c', configurationFile], true, true)
   }
-  /* c8 ignore next */
+  /* c8 ignore next - Mistakenly reported as uncovered by C8 */
 }
 
 export async function startCommand (logger, args) {
@@ -40,10 +44,14 @@ export async function startCommand (logger, args) {
     },
     false
   )
-  /* c8 ignore next */
-  const root = getRoot(positionals)
 
+  const root = getRoot(positionals)
   const configurationFile = await findConfigurationFile(logger, root, values.config)
+
+  if (!configurationFile) {
+    return
+  }
+
   const cmd = ['--production', '-c', configurationFile]
   if (values.inspect) {
     cmd.push('--inspect')

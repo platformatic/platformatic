@@ -1,10 +1,9 @@
 import { spawn } from 'node:child_process'
-import { parseArgs } from '../utils.js'
+import { getPackageManager, parseArgs } from '../utils.js'
 
 export function adminCommand (logger, args) {
-  logger.info('Running watt-admin via npx')
-  const {
-    values: { latest },
+  let {
+    values: { latest, 'package-manager': packageManager },
   } = parseArgs(
     args,
     {
@@ -12,11 +11,31 @@ export function adminCommand (logger, args) {
         type: 'boolean',
         short: 'l'
       },
+      'package-manager': {
+        type: 'string',
+        short: 'P'
+      }
     },
     false
   )
+
+  if (!packageManager) {
+    packageManager = getPackageManager(process.cwd())
+  }
+
   const modifier = latest ? '@latest' : ''
-  const proc = spawn('npx', ['-y', '@platformatic/watt-admin' + modifier], { stdio: 'inherit' })
+
+  let command = 'npx'
+  const commandArgs = ['@platformatic/watt-admin' + modifier]
+
+  if (packageManager === 'pnpm') {
+    command = 'pnpx'
+  } else {
+    commandArgs.unshift('-y')
+  }
+
+  logger.info(`Running watt-admin via ${command} ...`)
+  const proc = spawn(command, commandArgs, { stdio: 'inherit' })
 
   proc.on('exit', (code) => {
     process.exit(code)
@@ -32,6 +51,10 @@ export const help = {
         usage: '-l --latest',
         description: 'Use the latest version of @platformatic/watt-admin from',
       },
+      {
+        usage: 'P, --package-manager <executable>',
+        description: 'Use an alternative package manager (the default is to autodetect it)'
+      }
     ]
   },
 }

@@ -43,7 +43,7 @@ export async function logsCommand (logger, args) {
 
       output.write(line + '\n')
     }
-    /* c8 ignore next */ // Mistakenly reported as missing by c8
+    /* c8 ignore next - Mistakenly reported as uncovered by C8 */
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       logger.fatal('Cannot find a matching runtime.')

@@ -79,10 +79,10 @@ export async function psCommand (logger) {
     })
     console.log(
       '\n' +
-        table(
-          [[bold('PID'), bold('Name'), bold('Version'), bold('Uptime'), bold('URL'), bold('Directory')], ...rows],
-          tableConfig
-        )
+      table(
+        [[bold('PID'), bold('Name'), bold('Version'), bold('Uptime'), bold('URL'), bold('Directory')], ...rows],
+        tableConfig
+      )
     )
     /* c8 ignore next 3 */
   } catch (error) {
@@ -138,10 +138,10 @@ export async function envCommand (logger, args) {
     if (values.table) {
       console.log(
         '\n' +
-          table(
-            [[bold('Name'), bold('Value')], ...Object.entries(env).map(([k, v]) => [bold(k), reset(v)])],
-            tableConfig
-          )
+        table(
+          [[bold('Name'), bold('Value')], ...Object.entries(env).map(([k, v]) => [bold(k), reset(v)])],
+          tableConfig
+        )
       )
     } else {
       console.log(

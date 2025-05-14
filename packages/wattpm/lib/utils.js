@@ -1,8 +1,5 @@
 import {
-  ConfigManager,
-  getParser,
-  getStringifier,
-  matchKnownSchema,
+  findConfigurationFile as findRawConfigurationFile,
   loadConfig as pltConfigLoadConfig,
   Store
 } from '@platformatic/config'
@@ -10,8 +7,7 @@ import { errors } from '@platformatic/control'
 import { platformaticRuntime, buildRuntime as pltBuildRuntime } from '@platformatic/runtime'
 import { bgGreen, black, bold } from 'colorette'
 import { existsSync } from 'node:fs'
-import { readFile, writeFile } from 'node:fs/promises'
-import { dirname, resolve } from 'node:path'
+import { resolve } from 'node:path'
 import { parseArgs as nodeParseArgs } from 'node:util'
 import { pino } from 'pino'
 import pinoPretty from 'pino-pretty'
@@ -36,7 +32,8 @@ export function createLogger (level) {
         level (logLevel, _u1, _u2, { label, labelColorized, colors }) {
           return logLevel === 35 ? bgGreen(black(label)) : labelColorized
         }
-      }
+      },
+      sync: true,
     })
   )
 }
@@ -45,7 +42,7 @@ export function overrideFatal (logger) {
   const originalFatal = logger.fatal.bind(logger)
   logger.fatal = function (...args) {
     originalFatal(...args)
-    process.exit(1)
+    process.exitCode = 1
   }
 }
 
@@ -162,42 +159,19 @@ export function serviceToEnvVariable (service) {
 }
 
 export async function findConfigurationFile (logger, root, configurationFile) {
-  let current = root
+  const configFile = await findRawConfigurationFile(root, configurationFile, 'runtime')
 
-  while (!configurationFile) {
-    // Find a wattpm.json or watt.json file
-    configurationFile = await ConfigManager.findConfigFile(current, true)
-
-    // If a file is found, verify it actually represents a watt or runtime configuration
-    if (configurationFile) {
-      const configuration = await loadRawConfigurationFile(logger, resolve(current, configurationFile))
-
-      if (matchKnownSchema(configuration.$schema) !== 'runtime') {
-        configurationFile = null
-      }
-    }
-
-    if (!configurationFile) {
-      const newCurrent = dirname(current)
-
-      if (newCurrent === current) {
-        break
-      }
-
-      current = newCurrent
-    }
-  }
-
-  if (typeof configurationFile !== 'string') {
+  if (!configFile) {
     logger.fatal(
       `Cannot find a supported Watt configuration file (like ${bold(
         'watt.json'
       )}, a ${bold('wattpm.json')} or a ${bold('platformatic.json')}) in ${bold(root)}.`
     )
+
+    return null
   }
 
-  const resolved = resolve(current, configurationFile)
-  return resolved
+  return configFile
 }
 
 export async function loadConfigurationFile (logger, configurationFile) {
@@ -219,18 +193,6 @@ export async function loadConfigurationFile (logger, configurationFile) {
 
   await configManager.parse(true, [], { transformOnValidationErrors: true })
   return configManager.current
-}
-
-export async function loadRawConfigurationFile (_, configurationFile) {
-  const parseConfig = getParser(configurationFile)
-
-  return parseConfig(await readFile(configurationFile, 'utf-8'))
-}
-
-export function saveConfigurationFile (logger, configurationFile, config) {
-  const stringifyConfig = getStringifier(configurationFile)
-
-  return writeFile(configurationFile, stringifyConfig(config), 'utf-8')
 }
 
 export async function buildRuntime (logger, configurationFile) {

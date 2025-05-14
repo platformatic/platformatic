@@ -1,15 +1,12 @@
+import { loadConfigurationFile as loadRawConfigurationFile, saveConfigurationFile } from '@platformatic/config'
 import { safeRemove } from '@platformatic/utils'
 import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { pathToFileURL } from 'node:url'
-import { pino } from 'pino'
 import { prepareRuntime } from '../../basic/test/helper.js'
-import { loadRawConfigurationFile, saveConfigurationFile } from '../lib/utils.js'
 import { cliPath, executeCommand, wattpm } from './helper.js'
-
-const logger = pino()
 
 test('build - should build the application', async t => {
   const { root: buildDir } = await prepareRuntime(t, 'build', false, 'watt.json')
@@ -47,9 +44,9 @@ test('install - should install dependencies of autoloaded services', async t => 
 
   // Introduce a validation error. In that case with invalid configuration, the transformConfig will not be invoked.
   const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+  const originalFileContents = await loadRawConfigurationFile(configurationFile)
   originalFileContents.logger = { level: 'invalid' }
-  await saveConfigurationFile(logger, configurationFile, originalFileContents)
+  await saveConfigurationFile(configurationFile, originalFileContents)
 
   const installProcess = await wattpm('install', rootDir)
 
@@ -100,7 +97,7 @@ test('install - should respect the service package manager, if any', async t => 
   })
 
   const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+  const originalFileContents = await loadRawConfigurationFile(configurationFile)
   originalFileContents.services = [
     {
       id: 'main',
@@ -108,7 +105,7 @@ test('install - should respect the service package manager, if any', async t => 
       packageManager: 'npm'
     }
   ]
-  await saveConfigurationFile(logger, configurationFile, originalFileContents)
+  await saveConfigurationFile(configurationFile, originalFileContents)
 
   const installProcess = await wattpm('install', rootDir, '-P', 'pnpm')
 
@@ -135,14 +132,14 @@ test('update - should update version in package.json files', async t => {
 
   const updateProcess = await executeCommand('node', '--import', loader, cliPath, 'update', '-f', rootDir)
 
-  const rootPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'package.json'))
+  const rootPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'package.json'))
 
   deepStrictEqual(rootPackageJson.dependencies, {
     wattpm: '^2.41.0',
     '@platformatic/runtime': '^2.41.0'
   })
 
-  const mainPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/main/package.json'))
+  const mainPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/main/package.json'))
 
   deepStrictEqual(mainPackageJson.dependencies, {
     '@platformatic/node': '^2.41.0',
@@ -155,12 +152,13 @@ test('update - should update version in package.json files', async t => {
     '@platformatic/config': '^2.41.0'
   })
 
-  const anotherPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/another/package.json'))
+  const anotherPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/another/package.json'))
 
   deepStrictEqual(anotherPackageJson.dependencies, {
     '@platformatic/service': '^2.41.0',
     '@platformatic/db': '^1.53.4',
-    '@platformatic/db-dashboard': '^0.1.0'
+    '@platformatic/db-dashboard': '^0.1.0',
+    '@platformatic/composer': '^99.0.0'
   })
 
   ok(
@@ -193,8 +191,8 @@ test('update - should work when executed inside a service folder', async t => {
     resolve(rootDir, 'web/main')
   )
 
-  const mainPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/main/package.json'))
-  const anotherPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/another/package.json'))
+  const mainPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/main/package.json'))
+  const anotherPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/another/package.json'))
 
   deepStrictEqual(mainPackageJson.dependencies, {
     '@platformatic/node': '^2.41.0',
@@ -210,7 +208,8 @@ test('update - should work when executed inside a service folder', async t => {
   deepStrictEqual(anotherPackageJson.dependencies, {
     '@platformatic/service': '^2.41.0',
     '@platformatic/db': '^1.53.4',
-    '@platformatic/db-dashboard': '^0.1.0'
+    '@platformatic/db-dashboard': '^0.1.0',
+    '@platformatic/composer': '^99.0.0'
   })
 
   ok(
@@ -226,11 +225,10 @@ test('update - should fail when a dependency cannot be updated', async t => {
 
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
 
-  const updateProcess = await executeCommand('node', '--import', loader, cliPath, 'update', rootDir, { reject: false })
-
-  const rootPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'package.json'))
-  const mainPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/main/package.json'))
-  const anotherPackageJson = await loadRawConfigurationFile(logger, resolve(rootDir, 'web/another/package.json'))
+  const updateProcess = await executeCommand(process.argv[0], '--import', loader, cliPath, 'update', rootDir, { reject: false })
+  const rootPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'package.json'))
+  const mainPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/main/package.json'))
+  const anotherPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/another/package.json'))
 
   deepStrictEqual(rootPackageJson.dependencies, {
     wattpm: '^2.41.0',
@@ -251,7 +249,8 @@ test('update - should fail when a dependency cannot be updated', async t => {
   deepStrictEqual(anotherPackageJson.dependencies, {
     '@platformatic/service': '^2.41.0',
     '@platformatic/db': '^1.53.4',
-    '@platformatic/db-dashboard': '^0.1.0'
+    '@platformatic/db-dashboard': '^0.1.0',
+    '@platformatic/composer': '^99.0.0'
   })
 
   ok(
@@ -259,4 +258,14 @@ test('update - should fail when a dependency cannot be updated', async t => {
       'Dependency @platformatic/vite of the service main requires a non-updatable range >1. Try again with -f/--force to update to the latest version.'
     )
   )
+})
+
+test('update - should fail when NPM is not responsing', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
+
+  const loader = pathToFileURL(resolve(rootDir, 'mock-registry-fail.mjs')).href
+
+  const updateProcess = await executeCommand(process.argv[0], '--import', loader, cliPath, 'update', rootDir, { reject: false })
+
+  ok(updateProcess.stdout.includes('Unable to fetch version information.'))
 })

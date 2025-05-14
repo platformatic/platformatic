@@ -103,12 +103,15 @@ export async function patchConfigCommand (logger, args) {
 
   const configurationFile = await findConfigurationFile(logger, root)
 
+  if (!configurationFile) {
+    return
+  }
+
   try {
     await patchConfig(logger, configurationFile, patch)
   } catch (error) {
-    logger.error({ err: ensureLoggableError(error) }, `Patching configuration has throw an exception: ${error.message}`)
-
-    process.exit(1)
+    logger.fatal({ err: ensureLoggableError(error) }, `Patching configuration has throw an exception: ${error.message}`)
+    return
   }
 
   logger.done('Patch executed correctly.')

@@ -1,4 +1,5 @@
 import { configCandidates } from '@platformatic/basic'
+import { loadConfigurationFile as loadRawConfigurationFile, saveConfigurationFile } from '@platformatic/config'
 import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { parse } from 'dotenv'
@@ -12,10 +13,8 @@ import {
   findConfigurationFile,
   getRoot,
   loadConfigurationFile,
-  loadRawConfigurationFile,
   overrideFatal,
   parseArgs,
-  saveConfigurationFile,
   serviceToEnvVariable
 } from '../utils.js'
 import { installDependencies } from './build.js'
@@ -92,6 +91,11 @@ export async function appendEnvVariable (envFile, key, value) {
 
 async function fixConfiguration (logger, root) {
   const configurationFile = await findConfigurationFile(logger, root)
+
+  if (!configurationFile) {
+    return
+  }
+
   const config = await loadConfigurationFile(logger, configurationFile)
 
   // For each service, if there is no watt.json, create one and fix package dependencies
@@ -115,14 +119,14 @@ async function fixConfiguration (logger, root) {
 
     logger.info(`Detected stackable ${bold(stackable)} for service ${bold(id)}, adding to the service dependencies.`)
 
-    await saveConfigurationFile(logger, resolve(path, 'package.json'), packageJson)
-    await saveConfigurationFile(logger, resolve(path, 'watt.json'), wattJson)
+    await saveConfigurationFile(resolve(path, 'package.json'), packageJson)
+    await saveConfigurationFile(resolve(path, 'watt.json'), wattJson)
   }
 }
 
 async function importService (logger, configurationFile, id, path, url, branch) {
   const config = await loadConfigurationFile(logger, configurationFile)
-  const rawConfig = await loadRawConfigurationFile(logger, configurationFile)
+  const rawConfig = await loadRawConfigurationFile(configurationFile)
   const root = dirname(configurationFile)
   const envFile = resolve(root, '.env')
   const envSampleFile = resolve(root, '.env.sample')
@@ -163,6 +167,7 @@ async function importService (logger, configurationFile, id, path, url, branch) 
   // Make sure the service is not already defined
   if (config.serviceMap.has(id)) {
     logger.fatal(`There is already a service ${bold(id)} defined, please choose a different service ID.`)
+    return false
   }
 
   /* c8 ignore next */
@@ -185,6 +190,7 @@ async function importService (logger, configurationFile, id, path, url, branch) 
         logger.fatal(
           `There is already an environment variable ${bold(envVariable)} defined, please choose a different service ID.`
         )
+        return false
       }
     }
 
@@ -199,7 +205,8 @@ async function importService (logger, configurationFile, id, path, url, branch) 
     rawConfig.web.push({ id, path: relative(root, path) })
   }
 
-  await saveConfigurationFile(logger, configurationFile, rawConfig)
+  await saveConfigurationFile(configurationFile, rawConfig)
+  return true
 }
 
 async function importURL (logger, _, configurationFile, rawUrl, id, http, branch) {
@@ -214,7 +221,9 @@ async function importURL (logger, _, configurationFile, rawUrl, id, http, branch
 async function importLocal (logger, root, configurationFile, path, overridenId) {
   const { id, url, packageJson, stackable } = await parseLocalFolder(path)
 
-  await importService(logger, configurationFile, overridenId ?? id, path, url)
+  if (!await importService(logger, configurationFile, overridenId ?? id, path, url)) {
+    return
+  }
 
   // Check if there is any configuration file we recognize. If so, don't do anything
   const wattConfiguration = await findExistingConfiguration(root, path)
@@ -238,8 +247,8 @@ async function importLocal (logger, root, configurationFile, path, overridenId) 
 
   logger.info(`Detected stackable ${bold(stackable)} for service ${bold(id)}, adding to the service dependencies.`)
 
-  await saveConfigurationFile(logger, resolve(path, 'package.json'), packageJson)
-  await saveConfigurationFile(logger, resolve(path, 'watt.json'), wattJson)
+  await saveConfigurationFile(resolve(path, 'package.json'), packageJson)
+  await saveConfigurationFile(resolve(path, 'watt.json'), wattJson)
 }
 
 export async function resolveServices (
@@ -338,13 +347,17 @@ export async function resolveServices (
         { error: ensureLoggableError(error) },
         `Unable to clone repository of the service ${bold(service.id)}`
       )
+
+      return false
     }
   }
 
   // Install dependencies
   if (!skipDependencies) {
-    await installDependencies(logger, root, toResolve, false, packageManager)
+    return await installDependencies(logger, root, toResolve, false, packageManager)
   }
+  /* c8 ignore next - Mistakenly reported as uncovered by C8 */
+  return true
 }
 
 export async function importCommand (logger, args) {
@@ -379,7 +392,6 @@ export async function importCommand (logger, args) {
     Two arguments = root and URL
   */
   if (positionals.length === 0) {
-    /* c8 ignore next */
     return fixConfiguration(logger, '')
   } else if (positionals.length === 1) {
     root = getRoot()
@@ -390,6 +402,10 @@ export async function importCommand (logger, args) {
   }
 
   const configurationFile = await findConfigurationFile(logger, root)
+
+  if (!configurationFile) {
+    return
+  }
 
   // If the rawUrl exists as local folder, import a local folder, otherwise go for Git.
   // Try a relative from the root folder or from process.cwd().
@@ -434,12 +450,18 @@ export async function resolveCommand (logger, args) {
     false
   )
 
-  /* c8 ignore next */
   const root = getRoot(positionals)
   const configurationFile = await findConfigurationFile(logger, root)
 
-  await resolveServices(logger, root, configurationFile, username, password, skipDependencies, packageManager)
-  logger.done('All services have been resolved.')
+  if (!configurationFile) {
+    return
+  }
+
+  const resolved = await resolveServices(logger, root, configurationFile, username, password, skipDependencies, packageManager)
+
+  if (resolved) {
+    logger.done('All services have been resolved.')
+  }
 }
 
 export const help = {

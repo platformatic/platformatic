@@ -1,7 +1,7 @@
-import { ensureLoggableError } from '@platformatic/utils'
 import { RuntimeApiClient } from '@platformatic/control'
+import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
-import { parseArgs, getMatchingRuntime } from '../utils.js'
+import { getMatchingRuntime, parseArgs } from '../utils.js'
 
 export async function metricsCommand (logger, args) {
   try {

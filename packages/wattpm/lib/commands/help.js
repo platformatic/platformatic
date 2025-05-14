@@ -100,6 +100,7 @@ export async function helpCommand (logger, args) {
   const commands = await loadCommands()
   if (!commands[command]) {
     logger.fatal(`Unknown command ${bold(command)}. Please run ${bold("'wattpm help'")} to see available commands.`)
+    return
   }
 
   showHelp(commands[command])
