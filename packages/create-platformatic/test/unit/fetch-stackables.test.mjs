@@ -30,32 +30,17 @@ test('should fetch stackables from the marketplace', async () => {
   deepEqual(stackables, mockStackables.map(s => s.name))
 })
 
-test('should fetch private stackables from the marketplace', async () => {
-  const mockStackables = [
-    { name: 'mock-service-1' },
-    { name: 'mock-service-2' },
-    { name: 'mock-service-3' },
-    { name: 'private-mock-service-1' },
-  ]
-
-  mockPool.intercept({ path: '/templates' }).reply(200, mockStackables)
-
-  const stackables = await fetchStackables(MARKETPLACE_HOST)
-  deepEqual(stackables, mockStackables.map(s => s.name))
-})
-
-test('should fetch only public stackables if user api key is wrong', async () => {
+test('add custom stackables', async () => {
   const mockStackables = [
     { name: 'mock-service-1' },
     { name: 'mock-service-2' },
     { name: 'mock-service-3' },
   ]
 
-  mockPool.intercept({ path: '/templates' }).reply(401)
   mockPool.intercept({ path: '/templates' }).reply(200, mockStackables)
 
-  const stackables = await fetchStackables(MARKETPLACE_HOST)
-  deepEqual(stackables, mockStackables.map(s => s.name))
+  const stackables = await fetchStackables(undefined, ['foo'])
+  deepEqual(stackables, [...mockStackables.map(s => s.name), 'foo'])
 })
 
 test('should return default stackables if fetching from the marketplace takes too long', async () => {
