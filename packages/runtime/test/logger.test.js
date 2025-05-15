@@ -88,12 +88,11 @@ test('should inherit full logger options from runtime to a platformatic/service'
     if (log.level === 'INFO' &&
       log.time.length === 24 && // isotime
       log.name === 'app') {
-      const msg = JSON.parse(log.msg)
-      return msg.level === 'DEBUG' &&
-        msg.time.length === 24 && // isotime
-        msg.name === 'service' &&
-        msg.secret === 'foo' &&
-        msg.msg === 'call route /logs'
+      return log.stdout.level === 'DEBUG' &&
+        log.stdout.time.length === 24 && // isotime
+        log.stdout.name === 'service' &&
+        log.stdout.secret === 'foo' &&
+        log.stdout.msg === 'call route /logs'
     }
     return false
   }))
@@ -124,4 +123,44 @@ test('should inherit full logger options from runtime to different services', as
       log.name === 'service' &&
       log.msg === `Started the service "${t}"...`))
   }
+})
+
+test('should get proper formatted logs from thread services', { only: true }, async t => {
+  process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
+  process.env.PLT_RUNTIME_LOGGER_STDOUT = 1
+  const file = path.join(process.env.LOG_DIR, 'service.log')
+  const serviceRoot = path.join(__dirname, '..', 'fixtures', 'logger-options-all')
+
+  const app = await buildServer(path.join(serviceRoot, 'platformatic.json'))
+  t.after(async () => {
+    await app.close()
+  })
+  const url = await app.start()
+
+  await request(url, { path: '/' })
+
+  // wait for logger flush
+  await wait(WAIT_LOGS_FLUSH)
+
+  const content = readFileSync(file, 'utf8')
+
+  console.log(content)
+
+  const logs = content.split('\n')
+    .filter(line => line.trim() !== '').map(line => JSON.parse(line))
+    .filter(log => log.caller === 'STDOUT')
+
+  assert.ok(logs.find(log => {
+    return log.stdout.level === 'INFO' &&
+      log.stdout.time.length === 24 && // isotime
+      log.stdout.name === 'service' &&
+      log.stdout.msg === 'incoming request'
+  }))
+
+  assert.ok(logs.find(log => {
+    return log.stdout.level === 'INFO' &&
+      log.stdout.time.length === 24 && // isotime
+      log.stdout.name === 'service' &&
+      log.stdout.msg === 'request completed'
+  }))
 })

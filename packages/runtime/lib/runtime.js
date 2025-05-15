@@ -1727,18 +1727,19 @@ class Runtime extends EventEmitter {
         raw = raw.replaceAll(kStderrMarker, '')
       }
 
-      this.#forwardThreadLog(logger, selector, raw)
+      this.#forwardThreadLog(logger, selector, raw, 'stdout')
     })
 
     // Whatever is outputted here, it come from a direct process.stderr.write in the thread.
     // There's nothing we can do about it in regard of out of order logs due to a Node bug.
     worker.stderr.setEncoding('utf8')
     worker.stderr.on('data', raw => {
-      this.#forwardThreadLog(logger, selectors.stderr, raw)
+      this.#forwardThreadLog(logger, selectors.stderr, raw, 'stderr')
     })
   }
 
-  #forwardThreadLog (logger, { level, caller }, data) {
+  // label is the key in the logger object, either 'stdout' or 'stderr'
+  #forwardThreadLog (logger, { level, caller }, data, label) {
     if (!this.#loggerDestination) {
       return
     }
@@ -1747,35 +1748,39 @@ class Runtime extends EventEmitter {
     for (const raw of data.split('\n')) {
       // First of all, try to parse the message as JSON
       let message
+      let json
       // The message is a JSON object if it has at least 2 bytes
       if (raw.length >= 2) {
         try {
           message = JSON.parse(raw)
-        } catch (e) {
+          json = true
+        } catch {
           // No-op, we assume the message is raw
         }
       }
 
-      // Not a Pino JSON, accumulate the message and continue
-      if (typeof message?.level !== 'number' || (typeof message?.time !== 'number' && typeof message?.msg !== 'string')) {
-        plainMessages += (plainMessages.length ? '\n' : '') + raw
+      const pinoLog = typeof message?.level === 'number' && typeof message?.time === 'number' && typeof message?.msg === 'string'
+
+      // Directly write to the Pino destination
+      if (pinoLog) {
+        this.#loggerDestination.lastLevel = message.level
+        this.#loggerDestination.lastTime = message.time
+        this.#loggerDestination.lastMsg = message.msg
+        this.#loggerDestination.lastObj = message
+        this.#loggerDestination.lastLogger = logger
+        this.#loggerDestination.write(raw + '\n')
         continue
       }
 
-      // Before continuing, write any previous plain messages
-      if (plainMessages.length > 0) {
-        logger[level]({ caller }, plainMessages.replace(/\n$/, ''))
-        plainMessages = ''
+      if (json) {
+        logger[level]({ caller, [label]: message })
+        continue
       }
 
-      // Now we directly write to the Pino destination
-      this.#loggerDestination.lastLevel = message.level
-      this.#loggerDestination.lastTime = message.time
-      this.#loggerDestination.lastMsg = message.msg
-      this.#loggerDestination.lastObj = message
-      this.#loggerDestination.lastLogger = logger
-
-      this.#loggerDestination.write(raw + '\n')
+      // Not a Pino JSON nor a JSON object, accumulate the message
+      if (!pinoLog && !json) {
+        plainMessages += (plainMessages.length ? '\n' : '') + raw
+      }
     }
 
     // Write whatever is left
