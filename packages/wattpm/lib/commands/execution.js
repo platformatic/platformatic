@@ -4,7 +4,7 @@ import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
 import { watch } from 'node:fs/promises'
-import { findConfigurationFile, getMatchingRuntime, getRoot, parseArgs } from '../utils.js'
+import { findConfigurationFile, getMatchingRuntime, getRoot, logFatalError, parseArgs } from '../utils.js'
 
 export async function devCommand (logger, args) {
   const { positionals } = parseArgs(args, {}, false)
@@ -72,10 +72,10 @@ export async function stopCommand (logger, args) {
     logger.done(`Runtime ${bold(runtime.packageName)} have been stopped.`)
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
-      logger.fatal('Cannot find a matching runtime.')
+      return logFatalError(logger, 'Cannot find a matching runtime.')
       /* c8 ignore next 3 */
     } else {
-      logger.fatal({ error: ensureLoggableError(error) }, `Cannot stop the runtime: ${error.message}`)
+      return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot stop the runtime: ${error.message}`)
     }
   }
 }
@@ -93,10 +93,10 @@ export async function restartCommand (logger, args) {
     logger.done(`Runtime ${bold(runtime.packageName)} has been restarted.`)
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
-      logger.fatal('Cannot find a matching runtime.')
+      return logFatalError(logger, 'Cannot find a matching runtime.')
       /* c8 ignore next 3 */
     } else {
-      logger.fatal({ error: ensureLoggableError(error) }, `Cannot restart the runtime: ${error.message}`)
+      return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot restart the runtime: ${error.message}`)
     }
   }
 }
@@ -127,10 +127,10 @@ export async function reloadCommand (logger, args) {
     logger.done(`Runtime ${bold(runtime.packageName)} have been reloaded and it is now running as PID ${child.pid}.`)
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
-      logger.fatal('Cannot find a matching runtime.')
+      return logFatalError(logger, 'Cannot find a matching runtime.')
       /* c8 ignore next 3 */
     } else {
-      logger.fatal({ error: ensureLoggableError(error) }, `Cannot reload the runtime: ${error.message}`)
+      return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot reload the runtime: ${error.message}`)
     }
   }
 }

@@ -38,12 +38,10 @@ export function createLogger (level) {
   )
 }
 
-export function overrideFatal (logger) {
-  const originalFatal = logger.fatal.bind(logger)
-  logger.fatal = function (...args) {
-    originalFatal(...args)
-    process.exitCode = 1
-  }
+export function logFatalError (logger, ...args) {
+  process.exitCode = 1
+  logger.fatal(...args)
+  return false
 }
 
 export function parseArgs (args, options, stopAtFirstPositional = true) {
@@ -162,13 +160,11 @@ export async function findConfigurationFile (logger, root, configurationFile) {
   const configFile = await findRawConfigurationFile(root, configurationFile, 'runtime')
 
   if (!configFile) {
-    logger.fatal(
+    return logFatalError(logger,
       `Cannot find a supported Watt configuration file (like ${bold(
         'watt.json'
       )}, a ${bold('wattpm.json')} or a ${bold('platformatic.json')}) in ${bold(root)}.`
     )
-
-    return null
   }
 
   return configFile

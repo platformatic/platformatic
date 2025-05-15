@@ -13,7 +13,7 @@ import {
   findConfigurationFile,
   getRoot,
   loadConfigurationFile,
-  overrideFatal,
+  logFatalError,
   parseArgs,
   serviceToEnvVariable
 } from '../utils.js'
@@ -166,8 +166,7 @@ async function importService (logger, configurationFile, id, path, url, branch) 
 
   // Make sure the service is not already defined
   if (config.serviceMap.has(id)) {
-    logger.fatal(`There is already a service ${bold(id)} defined, please choose a different service ID.`)
-    return false
+    return logFatalError(logger, `There is already a service ${bold(id)} defined, please choose a different service ID.`)
   }
 
   /* c8 ignore next */
@@ -187,10 +186,9 @@ async function importService (logger, configurationFile, id, path, url, branch) 
       const env = parse(await readFile(envFile, 'utf-8'))
 
       if (env[envVariable]) {
-        logger.fatal(
+        return logFatalError(logger,
           `There is already an environment variable ${bold(envVariable)} defined, please choose a different service ID.`
         )
-        return false
       }
     }
 
@@ -308,7 +306,6 @@ export async function resolveServices (
   // Resolve the services
   for (const service of toResolve) {
     const childLogger = logger.child({ name: service.id })
-    overrideFatal(childLogger)
 
     try {
       const absolutePath = service.path
@@ -343,12 +340,10 @@ export async function resolveServices (
 
       await execa('git', cloneArgs)
     } catch (error) {
-      childLogger.fatal(
+      return logFatalError(childLogger,
         { error: ensureLoggableError(error) },
         `Unable to clone repository of the service ${bold(service.id)}`
       )
-
-      return false
     }
   }
 

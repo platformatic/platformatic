@@ -14,7 +14,7 @@ import {
   getPackageManager,
   getRoot,
   loadConfigurationFile,
-  overrideFatal,
+  logFatalError,
   parseArgs
 } from '../utils.js'
 
@@ -59,8 +59,7 @@ export async function installDependencies (logger, root, services, production, p
     await executeCommand(root, packageManager, args, { cwd: root, stdio: 'inherit' })
     /* c8 ignore next 4 */
   } catch (error) {
-    logger.fatal({ error: ensureLoggableError(error) }, 'Unable to install dependencies of the application.')
-    return false
+    return logFatalError(logger, { error: ensureLoggableError(error) }, 'Unable to install dependencies of the application.')
   }
 
   for (const service of services) {
@@ -77,14 +76,12 @@ export async function installDependencies (logger, root, services, production, p
         cwd: resolve(root, service.path),
         stdio: 'inherit'
       })
-      /* c8 ignore next 8 */
+      /* c8 ignore next 6 */
     } catch (error) {
-      logger.fatal(
+      return logFatalError(logger,
         { error: ensureLoggableError(error) },
         `Unable to install dependencies of the service ${bold(service.id)}.`
       )
-
-      return false
     }
   }
 
@@ -114,11 +111,9 @@ async function updateDependencies (logger, latest, availableVersions, path, targ
       let newRange
       if (specifier !== '^' && specifier !== '~') {
         if (!force) {
-          logger.fatal(
+          return logFatalError(logger,
             `Dependency ${bold(pkg)} of ${target}${sectionLabel} requires a non-updatable range ${bold(range)}. Try again with ${bold('-f/--force')} to update to the latest version.`
           )
-
-          return false
         } else {
           specifier = ''
           newRange = latest
@@ -169,7 +164,6 @@ export async function buildCommand (logger, args) {
   for (const { id } of services) {
     const currentLogger = logger.child({ name: id })
     currentLogger.debug(`Building service ${bold(id)} ...`)
-    overrideFatal(currentLogger)
 
     try {
       await runtime.buildService(id)
@@ -254,12 +248,10 @@ export async function updateCommand (logger, args) {
   const selfInfoResponse = await fetch('https://registry.npmjs.org/@platformatic/runtime')
 
   if (!selfInfoResponse.ok) {
-    logger.fatal(
+    return logFatalError(logger,
       { response: selfInfoResponse.status, body: await selfInfoResponse.text() },
       'Unable to fetch version information.'
     )
-
-    return false
   }
 
   const selfInfo = await selfInfoResponse.json()

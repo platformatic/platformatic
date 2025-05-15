@@ -7,7 +7,7 @@ import { basename, resolve } from 'node:path'
 import { defaultConfiguration, defaultEnv, defaultPackageJson } from '../defaults.js'
 import { gitignore } from '../gitignore.js'
 import { schema, version } from '../schema.js'
-import { getRoot, parseArgs, verbose } from '../utils.js'
+import { getRoot, logFatalError, parseArgs, verbose } from '../utils.js'
 
 export async function initCommand (logger, args) {
   const {
@@ -34,8 +34,7 @@ export async function initCommand (logger, args) {
     const statObject = await stat(root)
 
     if (!statObject.isDirectory()) {
-      logger.fatal(`Path ${bold(root)} exists but it is not a directory.`)
-      return
+      return logFatalError(logger, `Path ${bold(root)} exists but it is not a directory.`)
     }
 
     const webFolder = resolve(root, 'web')
@@ -44,15 +43,13 @@ export async function initCommand (logger, args) {
       const statObject = await stat(webFolder)
 
       if (!statObject.isDirectory()) {
-        logger.fatal(`Path ${bold(webFolder)} exists but it is not a directory.`)
-        return
+        return logFatalError(logger, `Path ${bold(webFolder)} exists but it is not a directory.`)
       }
     }
 
     for (const file of ['watt.json', 'package.json', '.gitignore']) {
       if (existsSync(resolve(root, file))) {
-        logger.fatal(`Path ${bold(resolve(root, file))} already exists.`)
-        return
+        return logFatalError(logger, `Path ${bold(resolve(root, file))} already exists.`)
       }
     }
   }
@@ -62,11 +59,10 @@ export async function initCommand (logger, args) {
     await mkdir(web, { recursive: true })
     /* c8 ignore next 8 */
   } catch (error) {
-    logger.fatal(
+    return logFatalError(logger,
       verbose ? { error: ensureLoggableError(error) } : undefined,
       `Cannot create folder ${web}: ${error.message}`
     )
-    return
   }
 
   await saveConfigurationFile(configurationFile, {

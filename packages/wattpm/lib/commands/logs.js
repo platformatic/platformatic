@@ -2,7 +2,7 @@ import { RuntimeApiClient } from '@platformatic/control'
 import { ensureLoggableError } from '@platformatic/utils'
 import pinoPretty from 'pino-pretty'
 import split2 from 'split2'
-import { getMatchingRuntime, parseArgs } from '../utils.js'
+import { getMatchingRuntime, logFatalError, parseArgs } from '../utils.js'
 
 export async function logsCommand (logger, args) {
   const { values, positionals: allPositionals } = parseArgs(
@@ -46,10 +46,10 @@ export async function logsCommand (logger, args) {
     /* c8 ignore next - Mistakenly reported as uncovered by C8 */
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
-      logger.fatal('Cannot find a matching runtime.')
+      return logFatalError(logger, 'Cannot find a matching runtime.')
       /* c8 ignore next 6 */
     } else {
-      logger.fatal(
+      return logFatalError(logger,
         { error: ensureLoggableError(error) },
         `Cannot stream ${service ? 'service' : 'runtime'} logs: ${error.message}`
       )

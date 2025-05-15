@@ -5,7 +5,7 @@ import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
-import { buildRuntime, findConfigurationFile, getRoot, parseArgs } from '../utils.js'
+import { buildRuntime, findConfigurationFile, getRoot, logFatalError, parseArgs } from '../utils.js'
 
 async function patchFile (path, patch) {
   let config = getParser(path)(await readFile(path, 'utf-8'))
@@ -110,8 +110,7 @@ export async function patchConfigCommand (logger, args) {
   try {
     await patchConfig(logger, configurationFile, patch)
   } catch (error) {
-    logger.fatal({ err: ensureLoggableError(error) }, `Patching configuration has throw an exception: ${error.message}`)
-    return
+    return logFatalError(logger, { err: ensureLoggableError(error) }, `Patching configuration has throw an exception: ${error.message}`)
   }
 
   logger.done('Patch executed correctly.')

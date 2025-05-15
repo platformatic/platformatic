@@ -1,7 +1,7 @@
 import { RuntimeApiClient } from '@platformatic/control'
 import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
-import { getMatchingRuntime, parseArgs } from '../utils.js'
+import { getMatchingRuntime, logFatalError, parseArgs } from '../utils.js'
 
 export async function metricsCommand (logger, args) {
   try {
@@ -21,10 +21,10 @@ export async function metricsCommand (logger, args) {
     logger.done(`Runtime ${bold(runtime.packageName)} have been stopped.`)
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
-      logger.fatal('Cannot find a matching runtime.')
+      return logFatalError(logger, 'Cannot find a matching runtime.')
       /* c8 ignore next 3 */
     } else {
-      logger.fatal({ error: ensureLoggableError(error) }, `Cannot reload the runtime: ${error.message}`)
+      return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot reload the runtime: ${error.message}`)
     }
   }
 }
