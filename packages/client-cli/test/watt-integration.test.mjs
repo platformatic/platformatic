@@ -27,7 +27,7 @@ test('should create a client for a service inside a Watt runtime', async (t) => 
     [
       {
         name: 'client1',
-        schema: 'client-1/client-1.openapi.json',
+        schema: join('client-1', 'client-1.openapi.json'),
         serviceId: 'first',
         type: 'openapi'
       }
@@ -56,7 +56,7 @@ test('should create a client for a service inside a Watt runtime and update the 
     [
       {
         name: 'client1',
-        schema: 'second/client-1/client-1.openapi.json',
+        schema: join('second', 'client-1', 'client-1.openapi.json'),
         serviceId: 'first',
         type: 'openapi'
       }
