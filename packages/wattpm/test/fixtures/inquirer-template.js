@@ -1,5 +1,11 @@
 const expected = []
 
+process.on('beforeExit', () => {
+  if (expected.length) {
+    throw new Error(`Expected questions not asked: ${JSON.stringify(expected, null, 2)}`)
+  }
+})
+
 export function prompt (questions) {
   const replies = {}
 

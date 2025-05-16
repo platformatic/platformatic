@@ -23,7 +23,7 @@ test('create - should create a new project using watt.json by default', async t 
 
   const inquirerPath = await setupInquirer(temporaryFolder, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
-    { type: 'list', question: 'Which kind of project do you want to create?', reply: '@platformatic/service' },
+    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
@@ -51,12 +51,53 @@ test('create - should create a new project using watt.json by default', async t 
   })
 })
 
+test('create - should create a new project with two services', async t => {
+  const temporaryFolder = await createTemporaryDirectory(t, 'create')
+
+  const inquirerPath = await setupInquirer(temporaryFolder, [
+    { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
+    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
+    { type: 'input', question: 'What is the name of the service?', reply: 'main' },
+    { type: 'list', question: 'Do you want to create another service?', reply: 'yes' },
+    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
+    { type: 'input', question: 'What is the name of the service?', reply: 'alternate' },
+    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
+    { type: 'list', question: 'Which service should be exposed?', reply: 'alternate' },
+    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
+    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+  ])
+
+  await wattpm('create', '-s', {
+    cwd: temporaryFolder,
+    env: { NO_COLOR: true, INQUIRER_PATH: inquirerPath }
+  })
+
+  deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf8')), {
+    $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.63.4.json',
+    autoload: {
+      exclude: ['docs'],
+      path: 'web'
+    },
+    logger: {
+      level: '{PLT_SERVER_LOGGER_LEVEL}'
+    },
+    managementApi: '{PLT_MANAGEMENT_API}',
+    server: {
+      hostname: '{PLT_SERVER_HOSTNAME}',
+      port: '{PORT}'
+    },
+    watch: true,
+    entrypoint: 'alternate'
+  })
+})
+
 test('create - should not install @platformatic/runtime as it is already available', async t => {
   const temporaryFolder = await createTemporaryDirectory(t, 'create')
 
   const inquirerPath = await setupInquirer(temporaryFolder, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
-    { type: 'list', question: 'Which kind of project do you want to create?', reply: '@platformatic/service' },
+    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
@@ -77,7 +118,7 @@ test('create - should use a custom configuration file', async t => {
 
   const inquirerPath = await setupInquirer(temporaryFolder, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
-    { type: 'list', question: 'Which kind of project do you want to create?', reply: '@platformatic/service' },
+    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
@@ -113,7 +154,7 @@ test('create - should correctly set the chosen user entrypoint', async t => {
 
   const inquirerPath1 = await setupInquirer(temporaryFolder, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
-    { type: 'list', question: 'Which kind of project do you want to create?', reply: '@platformatic/service' },
+    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
@@ -142,12 +183,11 @@ test('create - should correctly set the chosen user entrypoint', async t => {
 
   const inquirerPath2 = await setupInquirer(temporaryFolder, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
-    { type: 'list', question: 'Which kind of project do you want to create?', reply: '@platformatic/service' },
+    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'alternate' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'list', question: 'Which service should be exposed?', reply: 'alternate' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
-    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' }
   ])
 
   await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, INQUIRER_PATH: inquirerPath2 } })
@@ -163,7 +203,7 @@ test('create - should create a new project using a different package manager', a
 
   const inquirerPath = await setupInquirer(temporaryFolder, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
-    { type: 'list', question: 'Which kind of project do you want to create?', reply: '@platformatic/service' },
+    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
@@ -186,13 +226,12 @@ test('create - should support providing stackable via command line', async t => 
 
   const inquirerPath = await setupInquirer(temporaryFolder, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
-    { type: 'list', question: 'Which kind of project do you want to create?', reply: '@platformatic/service' },
+    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
-    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' },
-    { type: 'list', question: 'WTF', reply: 'no' }
+    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
   const createProcess = await wattpm('create', '-M', 'first', '-M', 'second,third', '-M', '  fourth ,fifth  ', '-s', {
@@ -203,7 +242,7 @@ test('create - should support providing stackable via command line', async t => 
   ok(
     createProcess.stdout.includes(
       `
-? Which kind of project do you want to create? @platformatic/service
+? Which kind of service do you want to create? @platformatic/service
   first
   second
   third

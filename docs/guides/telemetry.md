@@ -41,7 +41,7 @@ To make it simple, use `sqlite` and create/apply the default migrations. This DB
 
  Hello user, welcome to Platformatic 0.32.0!
  Let's start by creating a new project.
-? Which kind of project do you want to create? DB
+? Which kind of service do you want to create? DB
 ? Where would you like to create your project? .
 ? What database do you want to use? SQLite
 ? Do you want to use the connection string "sqlite://./db.sqlite"? Confirm
@@ -97,7 +97,7 @@ Then create a `service` on the `5043` port in the folder using `npx create-platf
 
  Hello user, welcome to Platformatic 0.32.0!
  Let's start by creating a new project.
-? Which kind of project do you want to create? Service
+? Which kind of service do you want to create? Service
 ? Where would you like to create your project? .
 ? Do you want to run npm install? no
 ? Do you want to use TypeScript? no
@@ -171,7 +171,7 @@ Then create a `composer` on the `5044` port in the folder using `npx create-plat
 
  Hello marcopiraccini, welcome to Platformatic 0.32.0!
  Let's start by creating a new project.
-? Which kind of project do you want to create? Composer
+? Which kind of service do you want to create? Composer
 ? Where would you like to create your project? .
 ? What port do you want to use? 5044
 ? Do you want to run npm install? no

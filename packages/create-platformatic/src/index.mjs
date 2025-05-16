@@ -1,10 +1,10 @@
-import { ConfigManager, saveConfigurationFile } from '@platformatic/config'
+import { ConfigManager } from '@platformatic/config'
 import { createDirectory, executeWithTimeout, generateDashedName, getPkgManager } from '@platformatic/utils'
 import { execa } from 'execa'
 import defaultInquirer from 'inquirer'
 import parseArgs from 'minimist'
 import { readFile, writeFile } from 'node:fs/promises'
-import path, { basename, join } from 'node:path'
+import { basename, join, resolve as pathResolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import ora from 'ora'
 import pino from 'pino'
@@ -44,7 +44,7 @@ export async function chooseStackable (inquirer, stackables) {
   const options = await inquirer.prompt({
     type: 'list',
     name: 'type',
-    message: 'Which kind of project do you want to create?',
+    message: 'Which kind of service do you want to create?',
     default: stackables[0],
     choices: stackables
   })
@@ -133,7 +133,7 @@ export async function createApplication (
       default: 'platformatic'
     })
 
-    projectDir = path.resolve(process.cwd(), optionsDir.dir)
+    projectDir = pathResolve(process.cwd(), optionsDir.dir)
   }
   const projectName = basename(projectDir)
 
@@ -255,19 +255,17 @@ export async function createApplication (
 
   await generator.ask()
   await generator.prepare()
-  await generator.writeFiles()
 
   if (chooseEntrypoint) {
-    // TODO(Paolo): this is a workaround, we should use the generator to write the config
-    // test it via brand new generation of a project with multiple services
-    const rootConfigPath = path.resolve(projectDir, generator.runtimeConfig)
-    // TODO handle other formats
-    const config = JSON.parse(await readFile(rootConfigPath, 'utf-8'))
-    await saveConfigurationFile(rootConfigPath, {
-      ...config,
-      entrypoint
-    })
+    // This can return null if the generator was not supposed to modify the config
+    const configObject = generator.getFileObject(generator.runtimeConfig)
+    const config = configObject ? JSON.parse(configObject.contents) : generator.existingConfigRaw
+    config.entrypoint = entrypoint
+
+    generator.addFile({ path: '', file: generator.runtimeConfig, contents: JSON.stringify(config, null, 2) })
   }
+
+  await generator.writeFiles()
 
   // Create project here
   if (!generator.existingConfigRaw) {

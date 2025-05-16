@@ -38,7 +38,7 @@ npm create platformatic@latest
 
 And then let's enter the following settings:
 
-- **Which kind of project do you want to create?**
+- **Which kind of service do you want to create?**
   - `Runtime`
 - **Where would you like to create your project?**
   - `library-app`
@@ -59,7 +59,7 @@ Let's enter the following settings for our new service:
 
 - **What is the name of the service?**
   - `people-service`
-- **Which kind of project do you want to create?**
+- **Which kind of service do you want to create?**
   - `DB`
 - **What database do you want to use?**
   - `SQLite`
@@ -259,7 +259,7 @@ Then let's enter the following settings:
 
 - **What is the name of the service?**
   - `books-service`
-- **Which kind of project do you want to create?**
+- **Which kind of service do you want to create?**
   - `DB`
 - **What database do you want to use?**
   - `SQLite`
@@ -436,7 +436,7 @@ Then let's enter the following settings:
 
 - **What is the name of the service?**
   - `movies-service`
-- **Which kind of project do you want to create?**
+- **Which kind of service do you want to create?**
   - `DB`
 - **What database do you want to use?**
   - `SQLite`
@@ -618,7 +618,7 @@ Then let's enter the following settings:
 
 - **What is the name of the service?**
   - `media-service`
-- **Which kind of project do you want to create?**
+- **Which kind of service do you want to create?**
   - `Composer`
 - **What port do you want to use?**
   - `3045`

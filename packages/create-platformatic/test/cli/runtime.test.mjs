@@ -31,7 +31,7 @@ test('Creates a Platformatic Runtime with two Services', { timeout }, async t =>
       waitAfter: 8000
     },
     {
-      match: 'Which kind of project do you want to create?',
+      match: 'Which kind of service do you want to create?',
       do: [keys.ENTER] // Service
     },
     {
@@ -43,7 +43,7 @@ test('Creates a Platformatic Runtime with two Services', { timeout }, async t =>
       do: [keys.ENTER] // yes
     },
     {
-      match: 'Which kind of project do you want to create?',
+      match: 'Which kind of service do you want to create?',
       do: [keys.ENTER] // Service
     },
     {
@@ -119,7 +119,7 @@ test('Add another service to an existing application', { timeout }, async t => {
         waitAfter: 8000
       },
       {
-        match: 'Which kind of project do you want to create?',
+        match: 'Which kind of service do you want to create?',
         do: [keys.ENTER] // Service
       },
       {
@@ -178,7 +178,7 @@ test('Add another service to an existing application', { timeout }, async t => {
     // The actions must match IN ORDER
     const actions = [
       {
-        match: 'Which kind of project do you want to create?',
+        match: 'Which kind of service do you want to create?',
         do: [keys.ENTER] // Service
       },
       {
