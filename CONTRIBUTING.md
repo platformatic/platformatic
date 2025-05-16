@@ -53,18 +53,8 @@ docker-compose up
 
 ## Link Platformatic Globally 
 
-To ensure your global installation of `platformatic` resolves to your local copy, add a script in the root project to handle linking. This will allow you to use `platformatic` and `plt` commands globally.
+To ensure your global installation of `platformatic` and `wattpm` resolve to your local copy, add a script in the root project to handle linking. This will allow you to use `platformatic` and `plt` commands globally.
 
-1. **Add global-links Script**
-In the `package.json` file of the root project, add the following script:
-
-```json
-"scripts": {
-  "global-links": "cd packages/cli && pnpm link --global && cd ../create-platformatic && pnpm link --global"
-}
-```
-
-2. **Run the global-links Script**
 From the root folder of the project, run:
 
 ```sh
@@ -75,6 +65,7 @@ You might receive a `pnpm` warning, but everything should be set up correctly. V
 
 ```sh
 platformatic 
+wattpm
 ```
 
 ## Running Platformatic locally 

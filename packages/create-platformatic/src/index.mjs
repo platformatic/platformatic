@@ -19,10 +19,10 @@ import { getUsername, getVersion } from './utils.mjs'
 const MARKETPLACE_HOST = 'https://marketplace.platformatic.dev'
 const defaultStackables = ['@platformatic/composer', '@platformatic/db', '@platformatic/service']
 
-export async function fetchStackables (marketplaceHost) {
+export async function fetchStackables (marketplaceHost, modules = []) {
   // Skip the remote network request if we are running tests
   if (process.env.MARKETPLACE_TEST) {
-    return [...defaultStackables]
+    return [...defaultStackables, ...modules]
   }
 
   marketplaceHost = marketplaceHost || MARKETPLACE_HOST
@@ -33,11 +33,11 @@ export async function fetchStackables (marketplaceHost) {
   try {
     const { statusCode, body } = await Promise.race([stackablesRequest, stackablesRequestTimeout])
     if (statusCode === 200) {
-      return (await body.json()).map(stackable => stackable.name)
+      return [...(await body.json()).map(stackable => stackable.name), ...modules]
     }
-  } catch (err) {}
+  } catch {}
 
-  return [...defaultStackables]
+  return [...defaultStackables, ...modules]
 }
 
 export async function chooseStackable (stackables) {
@@ -88,9 +88,10 @@ export const createPlatformatic = async argv => {
   const args = parseArgs(argv, {
     default: {
       install: true,
+      module: []
     },
     boolean: ['install'],
-    string: ['global-config', 'marketplace-host'],
+    string: ['global-config', 'marketplace-host', 'module'],
   })
 
   const username = await getUsername()
@@ -106,10 +107,11 @@ export const createPlatformatic = async argv => {
   )
 
   const pkgManager = getPkgManager()
-  await createApplication(args, logger, pkgManager)
+  const modules = Array.isArray(args.module) ? args.module : [args.module]
+  await createApplication(args, logger, pkgManager, modules)
 }
 
-async function createApplication (args, logger, pkgManager) {
+async function createApplication (args, logger, pkgManager, modules) {
   let projectDir = process.cwd()
   if (!(await ConfigManager.findConfigFile())) {
     const optionsDir = await inquirer.prompt({
@@ -147,7 +149,7 @@ async function createApplication (args, logger, pkgManager) {
     await say('Using existing configuration')
   }
 
-  const stackables = await fetchStackables(args['marketplace-host'])
+  const stackables = await fetchStackables(args['marketplace-host'], modules)
 
   const names = []
 
