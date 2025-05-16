@@ -4,11 +4,12 @@ import { execa } from 'execa'
 import defaultInquirer from 'inquirer'
 import parseArgs from 'minimist'
 import { readFile, writeFile } from 'node:fs/promises'
-import path, { basename, join, resolve } from 'node:path'
+import path, { basename, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import ora from 'ora'
 import pino from 'pino'
 import pretty from 'pino-pretty'
+import resolve from 'resolve'
 import { request } from 'undici'
 import { createGitRepository } from './create-git-repository.mjs'
 import { getUsername, getVersion, say } from './utils.mjs'
@@ -257,8 +258,13 @@ export async function createApplication (
   await generator.writeFiles()
 
   if (chooseEntrypoint) {
-    await saveConfigurationFile(resolve(projectDir, generator.runtimeConfig), {
-      ...generator.existingConfigRaw,
+    // TODO(Paolo): this is a workaround, we should use the generator to write the config
+    // test it via brand new generation of a project with multiple services
+    const rootConfigPath = path.resolve(projectDir, generator.runtimeConfig)
+    // TODO handle other formats
+    const config = JSON.parse(await readFile(rootConfigPath, 'utf-8'))
+    await saveConfigurationFile(rootConfigPath, {
+      ...config,
       entrypoint
     })
   }
