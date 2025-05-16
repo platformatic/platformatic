@@ -20,11 +20,11 @@ const { flattenObject } = require('./utils')
 const { envStringToObject } = require('./utils')
 /* c8 ignore start */
 const fakeLogger = {
-  info: () => {},
-  warn: () => {},
-  debug: () => {},
-  trace: () => {},
-  error: () => {},
+  info: () => { },
+  warn: () => { },
+  debug: () => { },
+  trace: () => { },
+  error: () => { },
 }
 /* c8 ignore start */
 
@@ -40,6 +40,7 @@ class BaseGenerator extends FileGenerator {
     this.config = this.getDefaultConfig()
     this.packages = []
     this.module = opts.module
+    this.runtimeConfig = opts.runtimeConfig ?? 'platformatic.json'
     if (!this.module) {
       throw ModuleNeeded()
     }
@@ -175,8 +176,8 @@ class BaseGenerator extends FileGenerator {
       if (this.config.isUpdating) {
         // only the packages options may have changed, let's update those
         await this.generateConfigFile()
-        const generatedConfigFile = JSON.parse(this.getFileObject('platformatic.json', '').contents)
-        const fileFromDisk = await this.loadFile({ file: 'platformatic.json', path: '' })
+        const generatedConfigFile = JSON.parse(this.getFileObject(this.runtimeConfig, '').contents)
+        const fileFromDisk = await this.loadFile({ file: this.runtimeConfig, path: '' })
         const currentConfigFile = JSON.parse(fileFromDisk.contents)
         if (currentConfigFile.plugins) {
           if (generatedConfigFile.plugins && generatedConfigFile.plugins.packages) {
@@ -189,7 +190,7 @@ class BaseGenerator extends FileGenerator {
         this.reset()
         this.addFile({
           path: '',
-          file: 'platformatic.json',
+          file: this.runtimeConfig,
           contents: JSON.stringify(currentConfigFile, null, 2),
         })
       } else {
@@ -251,7 +252,7 @@ class BaseGenerator extends FileGenerator {
 
   checkEnvVariablesInConfigFile () {
     const excludedEnvs = [PLT_ROOT]
-    const configFileName = 'platformatic.json'
+    const configFileName = this.runtimeConfig
     const fileObject = this.getFileObject(configFileName)
     const envVars = extractEnvVariablesFromText(fileObject.contents)
     const envKeys = Object.keys(this.config.env)
@@ -323,7 +324,7 @@ class BaseGenerator extends FileGenerator {
   }
 
   async generateConfigFile () {
-    const configFileName = 'platformatic.json'
+    const configFileName = this.runtimeConfig
     const contents = await this._getConfigFileContents()
     // handle packages
     if (this.packages.length > 0) {
@@ -451,7 +452,7 @@ class BaseGenerator extends FileGenerator {
   }
 
   async loadFromDir (serviceName, runtimeRootPath) {
-    const runtimePkgConfigFileData = JSON.parse(await readFile(join(runtimeRootPath, 'platformatic.json'), 'utf-8'))
+    const runtimePkgConfigFileData = JSON.parse(await readFile(join(runtimeRootPath, this.runtimeConfig), 'utf-8'))
     const servicesPath = runtimePkgConfigFileData.autoload.path
     const servicePkgJsonFileData = JSON.parse(await readFile(join(runtimeRootPath, servicesPath, serviceName, 'platformatic.json'), 'utf-8'))
     const runtimeEnv = envStringToObject(await readFile(join(runtimeRootPath, '.env'), 'utf-8'))
@@ -494,9 +495,9 @@ class BaseGenerator extends FileGenerator {
 
   // implement in the subclass
   /* c8 ignore next 1 */
-  async postInstallActions () {}
-  async _beforePrepare () {}
-  async _afterPrepare () {}
+  async postInstallActions () { }
+  async _beforePrepare () { }
+  async _afterPrepare () { }
   async _getConfigFileContents () { return {} }
 }
 

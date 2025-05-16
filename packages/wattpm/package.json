@@ -42,6 +42,7 @@
     "@platformatic/utils": "workspace:*",
     "colorette": "^2.0.20",
     "commist": "^3.2.0",
+    "create-platformatic": "workspace:*",
     "dotenv": "^16.4.5",
     "execa": "^9.4.0",
     "help-me": "^5.0.0",

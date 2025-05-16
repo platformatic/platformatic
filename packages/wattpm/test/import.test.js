@@ -6,7 +6,6 @@ import { appendFile, cp, readFile, writeFile } from 'node:fs/promises'
 import { basename, join, resolve } from 'node:path'
 import { test } from 'node:test'
 import { prepareRuntime } from '../../basic/test/helper.js'
-import { defaultServiceJson } from '../lib/defaults.js'
 import { version } from '../lib/schema.js'
 import { serviceToEnvVariable } from '../lib/utils.js'
 import { createTemporaryDirectory, executeCommand, wattpm } from './helper.js'
@@ -77,7 +76,7 @@ test('import - should import a GitHub repo via HTTP', async t => {
   const originalFileContents = await loadRawConfigurationFile(configurationFile)
 
   process.chdir(rootDir)
-  await wattpm('import', rootDir, 'foo/bar', '-h', '-i', 'id')
+  await wattpm('import', rootDir, 'foo/bar', '-H', '-i', 'id')
 
   deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
     ...originalFileContents,
@@ -378,7 +377,6 @@ for (const [name, dependency] of Object.entries(autodetect)) {
     })
 
     deepStrictEqual(await loadRawConfigurationFile(resolve(directory, 'watt.json')), {
-      ...defaultServiceJson,
       $schema: `https://schemas.platformatic.dev/@platformatic/${name}/${version}.json`
     })
   })
@@ -404,7 +402,6 @@ test('import - when launched without arguments, should fix the configuration of 
     })
 
     deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, servicePath, 'watt.json')), {
-      ...defaultServiceJson,
       $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`
     })
   }

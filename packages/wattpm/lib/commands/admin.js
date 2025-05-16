@@ -3,7 +3,7 @@ import { getPackageManager, parseArgs } from '../utils.js'
 
 export function adminCommand (logger, args) {
   let {
-    values: { latest, 'package-manager': packageManager },
+    values: { latest, 'package-manager': packageManager }
   } = parseArgs(
     args,
     {
@@ -37,7 +37,7 @@ export function adminCommand (logger, args) {
   logger.info(`Running watt-admin via ${command} ...`)
   const proc = spawn(command, commandArgs, { stdio: 'inherit' })
 
-  proc.on('exit', (code) => {
+  proc.on('exit', code => {
     process.exit(code)
   })
 }
@@ -49,12 +49,12 @@ export const help = {
     options: [
       {
         usage: '-l --latest',
-        description: 'Use the latest version of @platformatic/watt-admin from',
+        description: 'Use the latest version of @platformatic/watt-admin from'
       },
       {
         usage: 'P, --package-manager <executable>',
         description: 'Use an alternative package manager (the default is to autodetect it)'
       }
     ]
-  },
+  }
 }

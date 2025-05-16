@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { isFileAccessible } from '../../src/utils.mjs'
-import { executeCreatePlatformatic, getServices, keys, startMarketplace, walk, linkDependencies } from './helper.mjs'
+import { executeCreatePlatformatic, getServices, keys, linkDependencies, startMarketplace, walk } from './helper.mjs'
 import { timeout } from './timeout.mjs'
 
 let tmpDir
@@ -28,52 +28,52 @@ test('Creates a Platformatic Runtime with two Services', { timeout }, async t =>
     {
       match: 'Where would you like to create your project?',
       do: [keys.ENTER],
-      waitAfter: 8000,
+      waitAfter: 8000
     },
     {
       match: 'Which kind of project do you want to create?',
-      do: [keys.ENTER], // Service
+      do: [keys.ENTER] // Service
     },
     {
       match: 'What is the name of the service?',
-      do: [keys.ENTER],
+      do: [keys.ENTER]
     },
     {
       match: 'Do you want to create another service?',
-      do: [keys.ENTER], // yes
+      do: [keys.ENTER] // yes
     },
     {
       match: 'Which kind of project do you want to create?',
-      do: [keys.ENTER], // Service
+      do: [keys.ENTER] // Service
     },
     {
       match: 'What is the name of the service?',
-      do: [keys.ENTER],
+      do: [keys.ENTER]
     },
     {
       match: 'Do you want to create another service?',
-      do: [keys.DOWN, keys.ENTER], // no
+      do: [keys.DOWN, keys.ENTER] // no
     },
     {
       match: 'Which service should be exposed?',
-      do: [keys.ENTER],
+      do: [keys.ENTER]
     },
     {
       match: 'Do you want to use TypeScript',
-      do: [keys.DOWN, keys.ENTER], // yes
+      do: [keys.DOWN, keys.ENTER] // yes
     },
     {
       match: 'What port do you want to use?',
-      do: [keys.ENTER],
+      do: [keys.ENTER]
     },
     {
       match: 'Do you want to init the git repository',
-      do: [keys.DOWN, keys.ENTER], // yes
-    },
+      do: [keys.DOWN, keys.ENTER] // yes
+    }
   ]
   await executeCreatePlatformatic(tmpDir, actions, {
     marketplaceHost,
-    pkgManager: 'pnpm',
+    pkgManager: 'pnpm'
   })
 
   const baseProjectDir = join(tmpDir, 'platformatic')
@@ -116,36 +116,36 @@ test('Add another service to an existing application', { timeout }, async t => {
       {
         match: 'Where would you like to create your project?',
         do: [keys.ENTER],
-        waitAfter: 8000,
+        waitAfter: 8000
       },
       {
         match: 'Which kind of project do you want to create?',
-        do: [keys.ENTER], // Service
+        do: [keys.ENTER] // Service
       },
       {
         match: 'What is the name of the service?',
-        do: [keys.ENTER],
+        do: [keys.ENTER]
       },
       {
         match: 'Do you want to create another service?',
-        do: [keys.DOWN, keys.ENTER], // no
+        do: [keys.DOWN, keys.ENTER] // no
       },
       {
         match: 'Do you want to use TypeScript',
-        do: [keys.ENTER], // no
+        do: [keys.ENTER] // no
       },
       {
         match: 'What port do you want to use?',
-        do: [keys.ENTER],
+        do: [keys.ENTER]
       },
       {
         match: 'Do you want to init the git repository',
-        do: [keys.ENTER], // no
-      },
+        do: [keys.ENTER] // no
+      }
     ]
     await executeCreatePlatformatic(tmpDir, actions, {
       marketplaceHost,
-      pkgManager: 'pnpm',
+      pkgManager: 'pnpm'
     })
 
     const baseProjectDir = join(tmpDir, 'platformatic')
@@ -179,29 +179,29 @@ test('Add another service to an existing application', { timeout }, async t => {
     const actions = [
       {
         match: 'Which kind of project do you want to create?',
-        do: [keys.ENTER], // Service
+        do: [keys.ENTER] // Service
       },
       {
         match: 'What is the name of the service?',
-        do: [keys.ENTER],
+        do: [keys.ENTER]
       },
       {
         match: 'Do you want to create another service?',
-        do: [keys.DOWN, keys.ENTER], // no
+        do: [keys.DOWN, keys.ENTER] // no
+      },
+      {
+        match: 'Which service should be exposed?',
+        do: [keys.ENTER]
       },
       {
         match: 'Do you want to use TypeScript',
-        do: [keys.ENTER], // no
-      },
-      {
-        match: 'Do you want to init the git repository',
-        do: [keys.ENTER], // no
-      },
+        do: [keys.ENTER] // no
+      }
     ]
     const baseProjectDir = join(tmpDir, 'platformatic')
     await executeCreatePlatformatic(baseProjectDir, actions, {
       marketplaceHost,
-      pkgManager: 'pnpm',
+      pkgManager: 'pnpm'
     })
 
     const files = await walk(baseProjectDir)

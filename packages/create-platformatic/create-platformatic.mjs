@@ -23,4 +23,5 @@ if (isMain(import.meta)) {
   await createPlatformatic(_args)
 }
 
-export { createPlatformatic }
+export * from './src/index.mjs'
+export * from './src/utils.mjs'

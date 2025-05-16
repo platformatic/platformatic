@@ -57,9 +57,13 @@ export async function installDependencies (logger, root, services, production, p
     )
 
     await executeCommand(root, packageManager, args, { cwd: root, stdio: 'inherit' })
-    /* c8 ignore next 4 */
+    /* c8 ignore next 7 */
   } catch (error) {
-    return logFatalError(logger, { error: ensureLoggableError(error) }, 'Unable to install dependencies of the application.')
+    return logFatalError(
+      logger,
+      { error: ensureLoggableError(error) },
+      'Unable to install dependencies of the application.'
+    )
   }
 
   for (const service of services) {
@@ -69,16 +73,19 @@ export async function installDependencies (logger, root, services, production, p
 
     try {
       logger.info(
-        `Installing ${production ? 'production ' : ''}dependencies for the service ${bold(service.id)} using ${servicePackageManager} ...`
+        `Installing ${production ? 'production ' : ''}dependencies for the service ${bold(
+          service.id
+        )} using ${servicePackageManager} ...`
       )
 
       await executeCommand(root, servicePackageManager, servicePackageArgs, {
         cwd: resolve(root, service.path),
         stdio: 'inherit'
       })
-      /* c8 ignore next 6 */
+      /* c8 ignore next 7 */
     } catch (error) {
-      return logFatalError(logger,
+      return logFatalError(
+        logger,
         { error: ensureLoggableError(error) },
         `Unable to install dependencies of the service ${bold(service.id)}.`
       )
@@ -111,8 +118,11 @@ async function updateDependencies (logger, latest, availableVersions, path, targ
       let newRange
       if (specifier !== '^' && specifier !== '~') {
         if (!force) {
-          return logFatalError(logger,
-            `Dependency ${bold(pkg)} of ${target}${sectionLabel} requires a non-updatable range ${bold(range)}. Try again with ${bold('-f/--force')} to update to the latest version.`
+          return logFatalError(
+            logger,
+            `Dependency ${bold(pkg)} of ${target}${sectionLabel} requires a non-updatable range ${bold(
+              range
+            )}. Try again with ${bold('-f/--force')} to update to the latest version.`
           )
         } else {
           specifier = ''
@@ -148,11 +158,24 @@ async function updateDependencies (logger, latest, availableVersions, path, targ
 }
 
 export async function buildCommand (logger, args) {
-  const { positionals } = parseArgs(args, {}, false)
+  const {
+    values: { config },
+    positionals
+  } = parseArgs(
+    args,
+    {
+      config: {
+        type: 'string',
+        short: 'c'
+      }
+    },
+    false
+  )
   const root = getRoot(positionals)
 
-  const configurationFile = await findConfigurationFile(logger, root)
+  const configurationFile = await findConfigurationFile(logger, root, config)
 
+  /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
     return
   }
@@ -188,11 +211,15 @@ export async function buildCommand (logger, args) {
 
 export async function installCommand (logger, args) {
   const {
-    values: { production, 'package-manager': packageManager },
+    values: { config, production, 'package-manager': packageManager },
     positionals
   } = parseArgs(
     args,
     {
+      config: {
+        type: 'string',
+        short: 'c'
+      },
       production: {
         type: 'boolean',
         short: 'p',
@@ -207,8 +234,9 @@ export async function installCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findConfigurationFile(logger, root)
+  const configurationFile = await findConfigurationFile(logger, root, config)
 
+  /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
     return
   }
@@ -223,10 +251,14 @@ export async function installCommand (logger, args) {
 export async function updateCommand (logger, args) {
   const {
     positionals,
-    values: { force }
+    values: { config, force }
   } = parseArgs(
     args,
     {
+      config: {
+        type: 'string',
+        short: 'c'
+      },
       force: {
         type: 'boolean',
         short: 'f'
@@ -236,8 +268,9 @@ export async function updateCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findConfigurationFile(logger, root)
+  const configurationFile = await findConfigurationFile(logger, root, config)
 
+  /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
     return
   }
@@ -248,7 +281,8 @@ export async function updateCommand (logger, args) {
   const selfInfoResponse = await fetch('https://registry.npmjs.org/@platformatic/runtime')
 
   if (!selfInfoResponse.ok) {
-    return logFatalError(logger,
+    return logFatalError(
+      logger,
       { response: selfInfoResponse.status, body: await selfInfoResponse.text() },
       'Unable to fetch version information.'
     )
@@ -282,6 +316,12 @@ export const help = {
         name: 'root',
         description: 'The directory containing the application (the default is the current directory)'
       }
+    ],
+    options: [
+      {
+        usage: '-c, --config <config>',
+        description: 'Name of the configuration file to use (the default is to autodetect it)'
+      }
     ]
   },
   install: {
@@ -294,6 +334,10 @@ export const help = {
       }
     ],
     options: [
+      {
+        usage: '-c, --config <config>',
+        description: 'Name of the configuration file to use (the default is to autodetect it)'
+      },
       {
         usage: '-p --production',
         description: 'Only install production dependencies'
@@ -314,6 +358,10 @@ export const help = {
       }
     ],
     options: [
+      {
+        usage: '-c, --config <config>',
+        description: 'Name of the configuration file to use (the default is watt.json)'
+      },
       {
         usage: '-f --force',
         description: 'Force dependencies update even if it violates the package.json version range'

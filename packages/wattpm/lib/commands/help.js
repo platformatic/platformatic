@@ -6,10 +6,11 @@ async function loadCommands () {
   const commands = {}
 
   for (const file of [
-    'init',
+    'create',
     'build',
     'execution',
     'management',
+    'admin',
     'logs',
     'inject',
     'external',
@@ -90,7 +91,7 @@ export async function helpCommand (logger, args) {
   const command = args?.[0]
 
   if (!command) {
-    /* c8 ignore next 3 */
+    /* c8 ignore next 3 - Hard to test */
     if (isColorSupported && process.stdout.isTTY) {
       console.log(logo)
     }
@@ -100,7 +101,10 @@ export async function helpCommand (logger, args) {
 
   const commands = await loadCommands()
   if (!commands[command]) {
-    return logFatalError(logger, `Unknown command ${bold(command)}. Please run ${bold("'wattpm help'")} to see available commands.`)
+    return logFatalError(
+      logger,
+      `Unknown command ${bold(command)}. Please run ${bold("'wattpm help'")} to see available commands.`
+    )
   }
 
   showHelp(commands[command])

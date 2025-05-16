@@ -1,11 +1,11 @@
-import { test } from 'node:test'
 import { deepEqual, strictEqual } from 'node:assert'
-import { findConfigurationFile, getPackageArgs, getPackageManager } from '../lib/utils.js'
-import { join, resolve } from 'node:path'
 import { mkdir, mkdtemp, rm, rmdir, unlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
+import { test } from 'node:test'
+import { findConfigurationFile, getPackageArgs, getPackageManager } from '../lib/utils.js'
 
-test('findConfigurationFile - should search for configuration file when none is passed', async () => {
+test('utils - findConfigurationFile - should search for configuration file when none is passed', async () => {
   let fatalCalled = false
   const logger = {
     fatal: () => {
@@ -20,9 +20,12 @@ test('findConfigurationFile - should search for configuration file when none is 
     await mkdir(subDir, { recursive: true })
 
     const configFilePath = join(tmpDir, 'watt.json')
-    await writeFile(configFilePath, JSON.stringify({
-      $schema: 'https://platformatic.dev/schemas/v1.0.0/runtime'
-    }))
+    await writeFile(
+      configFilePath,
+      JSON.stringify({
+        $schema: 'https://platformatic.dev/schemas/v1.0.0/runtime'
+      })
+    )
 
     const result = await findConfigurationFile(logger, subDir)
 
@@ -33,7 +36,7 @@ test('findConfigurationFile - should search for configuration file when none is 
   }
 })
 
-test('findConfigurationFile - should return resolved path when configuration file is passed', async () => {
+test('utils - findConfigurationFile - should return resolved path when configuration file is passed', async () => {
   const logger = {
     fatal: () => {}
   }
@@ -42,9 +45,12 @@ test('findConfigurationFile - should return resolved path when configuration fil
 
   try {
     const configFilePath = join(tmpDir, 'watt.json')
-    await writeFile(configFilePath, JSON.stringify({
-      $schema: 'https://platformatic.dev/schemas/v1.0.0/runtime'
-    }))
+    await writeFile(
+      configFilePath,
+      JSON.stringify({
+        $schema: 'https://platformatic.dev/schemas/v1.0.0/runtime'
+      })
+    )
 
     const result = await findConfigurationFile(logger, tmpDir, configFilePath)
     strictEqual(result, resolve(configFilePath), 'Should return the resolved path of the passed configuration file')
@@ -53,14 +59,14 @@ test('findConfigurationFile - should return resolved path when configuration fil
   }
 })
 
-test('getPackageArgs - should return the right package args', () => {
+test('utils - getPackageArgs - should return the right package args', () => {
   deepEqual(getPackageArgs(), ['install'], 'no args passed')
   deepEqual(getPackageArgs('yarn'), ['install'], 'yarn passed, no prod')
   deepEqual(getPackageArgs('pnpm', true), ['install', '--prod'], 'pnpm passed, prod mode')
   deepEqual(getPackageArgs('npm', true), ['install', '--omit=dev'], 'npm passed, prod mode')
 })
 
-test('getPackageManager - should return the right package manager, depending on the cases', async () => {
+test('utils - getPackageManager - should return the right package manager, depending on the cases', async () => {
   const tmpDir = await mkdtemp(join(tmpdir(), 'wattpm-tests-'))
   strictEqual(getPackageManager('wrong'), 'npm', 'path is wrong, default to npm')
 

@@ -2,18 +2,17 @@ import Issues from '../getting-started/issues.md';
 
 # Watt Commands
 
-## `init`
+## `create` or `init`
 
-Creates a new Watt application.
+Creates a new Watt project.
 
 Arguments:
 
-- `root`: The directory where to create the application (the default is the current directory)
-- `entrypoint`: The name of the entrypoint service
-
-Options:
-
-- `-p, --package-manager`: Use an alternative package manager (the default is `npm`)
+- `-c, --config <config>`: Name of the configuration file to use (the default is `watt.json`)
+- `-s, --skip-dependencies`: Do not install dependencies after creating the files
+- `-m, --marketplace <url>`: Platformatic Marketplace host (the default is `https://marketplace.platformatic.dev`)
+- `-P, --package-manager <executable>`: Use an alternative package manager (the default is `npm`)
+- `-M, --module <name>`: An additional module (or a comma separated list of modules) to use as service generator (it can be used multiple times)
 
 ## `build`
 
@@ -22,6 +21,10 @@ Builds all services of an application.
 Arguments:
 
 - `root`: The directory containing the application (the default is the current directory)
+
+Options:
+
+- `-c, --config <config>`: Name of the configuration file to use (the default is to autodetect it)
 
 ## `install`
 
@@ -33,8 +36,9 @@ Arguments:
 
 Options:
 
+- `-c, --config <config>`: Name of the configuration file to use (the default is to autodetect it)
 - `-p, --production`: Only install production dependencies
-- `-P, --package-manager`: Use an alternative package manager (the default is to autodetect it)
+- `-P, --package-manager <executable>`: Use an alternative package manager (the default is to autodetect it)
 
 ## `update`
 
@@ -48,7 +52,8 @@ Arguments:
 
 Options:
 
-- `-f --force`: Force dependencies update even if it violates the package.json version range
+- `-c, --config <config>`: Name of the configuration file to use (the default is to autodetect it)
+- `-f, --force`: Force dependencies update even if it violates the package.json version range
 
 ## `dev`
 
@@ -57,6 +62,10 @@ Starts an application in development mode.
 Arguments:
 
 - `root`: The directory containing the application (the default is the current directory)
+
+Options:
+
+- `-c, --config <config>`: Name of the configuration file to use (the default is to autodetect it)
 
 ## `start`
 
@@ -68,8 +77,8 @@ Arguments:
 
 Options:
 
+- `-c, --config <config>`: Name of the configuration file to use (the default is to autodetect it)
 - `-i, --inspect`: Start the inspector
-- `-c, --config`: Pass a custom path to the `watt` config (that can be outside from the project)
 
 ## `stop`
 
@@ -161,7 +170,7 @@ Options:
 
 - `-m, --method <value>`: The request method (the default is `GET`)
 - `-p, --path <value>`: The request path (the default is `/`)
-- `-h, --header <value>`: The request header (it can be used multiple times)
+- `-H, --header <value>`: The request header (it can be used multiple times)
 - `-d, --data <value>`: The request body
 - `-D, --data-file <path>`: Read the request body from the specified file
 - `-o, --output <path>`: Write the response to the specified file
@@ -186,9 +195,10 @@ Arguments:
 
 Options:
 
+- `-c, --config <config>`: Name of the configuration file to use (the default is to autodetect it)
 - `-i, --id <value>`: The id of the service (the default is the basename of the URL)
 - `-p, --path <value>`: The path where to import the service (the default is the service id)
-- `-h, --http`: Use HTTP URL when expanding GitHub repositories
+- `-H, --http`: Use HTTP URL when expanding GitHub repositories
 - `-b, --branch <branch>`: The branch to clone (the default is `main`)
 
 ## `resolve`
@@ -203,10 +213,11 @@ Arguments:
 
 Options:
 
+- `-c, --config <config>`: Name of the configuration file to use (the default is to autodetect it)
 - `-u, --username <value>`: The username to use for HTTP URLs
 - `-p, --password <value>`: The password to use for HTTP URLs
 - `-s, --skip-dependencies`: Do not install services dependencies
-- `-P, --package-manager`: Use an alternative package manager (the default is to autodetect it)
+- `-P, --package-manager <executable>`: Use an alternative package manager (the default is to autodetect it)
 
 ## `patch-config`
 
@@ -214,6 +225,7 @@ Applies a patch file to the runtime and services configurations.
 
 Arguments:
 
+- `-c, --config <config>`: Name of the configuration file to use (the default is to autodetect it)
 - `root`: The directory containing the application (the default is the current directory)
 - `patch`: The file containing the patch to execute. Its default export should be a function that receives the `runtime` and `services` arguments and returns an object containing
   the `runtime` and `services` keys with [JSON Patch](https://jsonpatch.com/) formatted patch to apply to configuration files.
@@ -234,7 +246,7 @@ This is started via [`npx`](https://docs.npmjs.com/cli/v11/commands/npx).
 Arguments:
 
 - `latest`: use the latest released version of watt-admin.
-- `-P, --package-manager`: Use an alternative package manager (the default is to autodetect it)
+- `-P, --package-manager <executable>`: Use an alternative package manager (the default is to autodetect it)
 
 ## `version`
 

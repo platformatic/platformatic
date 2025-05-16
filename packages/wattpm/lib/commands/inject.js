@@ -36,7 +36,7 @@ export async function injectCommand (logger, args) {
       },
       header: {
         type: 'string',
-        short: 'h',
+        short: 'H',
         multiple: true,
         default: []
       },
@@ -141,7 +141,7 @@ export async function injectCommand (logger, args) {
       return logFatalError(logger, 'Cannot find a matching runtime.')
     } else if (error.code === 'PLT_CTR_SERVICE_NOT_FOUND') {
       return logFatalError(logger, 'Cannot find a matching service.')
-      /* c8 ignore next 3 */
+      /* c8 ignore next 3 - Hard to test */
     } else {
       return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot perform a request: ${error.message}`)
     }
@@ -160,7 +160,7 @@ request is sent to the runtime entrypoint.
     options: [
       { usage: '-m, --method <value>', description: 'The request method (the default is GET)' },
       { usage: '-p, --path <value>', description: 'The request path (the default is /)' },
-      { usage: '-h, --header <value>', description: 'The request header (it can be used multiple times)' },
+      { usage: '-H, --header <value>', description: 'The request header (it can be used multiple times)' },
       { usage: '-d, --data <value>', description: 'The request body' },
       { usage: '-D, --data-file <path>', description: 'Read the request body from the specified file' },
       { usage: '-o, --output <path>', description: 'Write the response to the specified file' },
