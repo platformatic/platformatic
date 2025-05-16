@@ -361,7 +361,6 @@ class ConfigManager extends EventEmitter {
       // A config type (service, db, etc.) was explicitly provided.
       return [
         ...typeless,
-        ...ConfigManager.knownExtensions.map(ext => `watt.${type}.${ext}`),
         ...ConfigManager.knownExtensions.map(ext => `platformatic.${type}.${ext}`),
       ]
     } else {
