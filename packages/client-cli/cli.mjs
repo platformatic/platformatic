@@ -442,6 +442,10 @@ async function downloadAndProcess (options) {
     } else if (found === 'graphql') {
       schema = posix.join(relative(dirname(resolve(config)), resolve(folder)), `${name}.schema.graphql`)
     }
+
+    // Make sure only Unix paths are used in the config file
+    schema = schema.replace(/\\/g, '/')
+
     const toPush = {
       schema,
       name: camelcase(name),
