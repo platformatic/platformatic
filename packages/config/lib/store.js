@@ -15,6 +15,7 @@ const pltVersion = JSON.parse(readFileSync(join(__dirname, '../package.json'), '
 const knownSchemas = [
   [/^https:\/\/platformatic.dev\/schemas\/(.*)\/(.*)/, match => match[2]],
   [/^https:\/\/schemas.platformatic.dev\/@platformatic\/(.*)\/(.*)\.json/, match => match[1]],
+  /* c8 ignore next */
   [/^https:\/\/schemas.platformatic.dev\/wattpm\/(.*)\.json/, () => 'runtime']
 ]
 
@@ -312,10 +313,7 @@ class Store {
   }
 
   #createRequire (type, directory) {
-    // For generic application, we load the @platformatic/basic which is a dependency of @platformatic/runtime
-    if (type === 'basic') {
-      return require
-    } else if (directory) {
+    if (directory) {
       return createRequire(join(directory, 'noop.js'))
     }
 

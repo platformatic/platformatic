@@ -1,12 +1,13 @@
+import { saveConfigurationFile } from '@platformatic/config'
 import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { existsSync } from 'node:fs'
 import { mkdir, stat, writeFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
-import { defaultConfiguration, defaultPackageJson, defaultEnv } from '../defaults.js'
+import { defaultConfiguration, defaultEnv, defaultPackageJson } from '../defaults.js'
 import { gitignore } from '../gitignore.js'
 import { schema, version } from '../schema.js'
-import { getRoot, parseArgs, saveConfigurationFile, verbose } from '../utils.js'
+import { getRoot, logFatalError, parseArgs, verbose } from '../utils.js'
 
 export async function initCommand (logger, args) {
   const {
@@ -24,7 +25,6 @@ export async function initCommand (logger, args) {
     false
   )
 
-  /* c8 ignore next */
   const root = getRoot(positionals)
   const web = resolve(root, 'web')
   const configurationFile = resolve(root, 'watt.json')
@@ -34,7 +34,7 @@ export async function initCommand (logger, args) {
     const statObject = await stat(root)
 
     if (!statObject.isDirectory()) {
-      logger.fatal(`Path ${bold(root)} exists but it is not a directory.`)
+      return logFatalError(logger, `Path ${bold(root)} exists but it is not a directory.`)
     }
 
     const webFolder = resolve(root, 'web')
@@ -43,13 +43,13 @@ export async function initCommand (logger, args) {
       const statObject = await stat(webFolder)
 
       if (!statObject.isDirectory()) {
-        logger.fatal(`Path ${bold(webFolder)} exists but it is not a directory.`)
+        return logFatalError(logger, `Path ${bold(webFolder)} exists but it is not a directory.`)
       }
     }
 
     for (const file of ['watt.json', 'package.json', '.gitignore']) {
       if (existsSync(resolve(root, file))) {
-        logger.fatal(`Path ${bold(resolve(root, file))} already exists.`)
+        return logFatalError(logger, `Path ${bold(resolve(root, file))} already exists.`)
       }
     }
   }
@@ -57,15 +57,15 @@ export async function initCommand (logger, args) {
   // Create the web folder, will implicitly create the root
   try {
     await mkdir(web, { recursive: true })
-    /* c8 ignore next 6 */
+    /* c8 ignore next 8 */
   } catch (error) {
-    logger.fatal(
+    return logFatalError(logger,
       verbose ? { error: ensureLoggableError(error) } : undefined,
       `Cannot create folder ${web}: ${error.message}`
     )
   }
 
-  await saveConfigurationFile(logger, configurationFile, {
+  await saveConfigurationFile(configurationFile, {
     $schema: schema.$id,
     ...defaultConfiguration,
     entrypoint: positionals[1] ?? undefined
@@ -83,11 +83,11 @@ export async function initCommand (logger, args) {
   if (packageManager === 'npm') {
     packageJson.workspaces = ['web/*', 'external/*']
   } else if (packageManager === 'pnpm') {
-    await saveConfigurationFile(logger, resolve(root, 'pnpm-workspace.yaml'), { packages: ['web/*', 'external/*'] })
+    await saveConfigurationFile(resolve(root, 'pnpm-workspace.yaml'), { packages: ['web/*', 'external/*'] })
   }
 
   // Write the package.json file
-  await saveConfigurationFile(logger, resolve(root, 'package.json'), packageJson)
+  await saveConfigurationFile(resolve(root, 'package.json'), packageJson)
 
   // Write the .gitignore file
   await writeFile(resolve(root, '.gitignore'), gitignore, 'utf-8')

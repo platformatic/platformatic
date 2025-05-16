@@ -97,5 +97,5 @@ export function executeCommand (cmd, ...args) {
 }
 
 export function wattpm (...args) {
-  return executeCommand('node', cliPath, ...args)
+  return executeCommand(process.argv[0], cliPath, ...args)
 }

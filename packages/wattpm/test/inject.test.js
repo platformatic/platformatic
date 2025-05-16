@@ -1,14 +1,11 @@
+import { loadConfigurationFile as loadRawConfigurationFile, saveConfigurationFile } from '@platformatic/config'
 import { createDirectory } from '@platformatic/utils'
 import { deepStrictEqual, ok } from 'node:assert'
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { pino } from 'pino'
 import { prepareRuntime } from '../../basic/test/helper.js'
-import { loadRawConfigurationFile, saveConfigurationFile } from '../lib/utils.js'
 import { createTemporaryDirectory, waitForStart, wattpm } from './helper.js'
-
-const logger = pino()
 
 test('inject - should send a request to an application', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
@@ -21,7 +18,7 @@ test('inject - should send a request to an application', async t => {
 
   t.after(() => {
     startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
+    return startProcess.catch(() => { })
   })
 
   const entrypointProcess = await wattpm('inject', 'main')
@@ -88,7 +85,7 @@ test('inject - should complain when a service is not found', async t => {
 
   t.after(() => {
     startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
+    return startProcess.catch(() => { })
   })
 
   const envProcess = await wattpm('inject', 'main', 'invalid', { reject: false })
@@ -108,7 +105,7 @@ test('inject - should properly autodetect the runtime and use the first argument
 
   t.after(() => {
     startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
+    return startProcess.catch(() => { })
   })
 
   const entrypointProcess = await wattpm('inject', 'main')
@@ -168,9 +165,9 @@ test('inject - should use the same shared memory HTTP cache of the runtime', asy
 
   const configurationFile = resolve(rootDir, 'watt.json')
 
-  const contents = await loadRawConfigurationFile(logger, configurationFile)
+  const contents = await loadRawConfigurationFile(configurationFile)
   contents.httpCache = true
-  await saveConfigurationFile(logger, configurationFile, contents)
+  await saveConfigurationFile(configurationFile, contents)
 
   const startProcess = wattpm('start', rootDir)
   startProcess.stderr.pipe(process.stdout)
@@ -178,7 +175,7 @@ test('inject - should use the same shared memory HTTP cache of the runtime', asy
 
   t.after(() => {
     startProcess.kill('SIGINT')
-    return startProcess.catch(() => {})
+    return startProcess.catch(() => { })
   })
 
   const request1 = await wattpm('inject', 'main', '-p', '/time')

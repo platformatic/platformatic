@@ -1,4 +1,5 @@
 import { bold } from 'colorette'
+import { adminCommand } from './lib/commands/admin.js'
 import { buildCommand, installCommand, updateCommand } from './lib/commands/build.js'
 import { devCommand, reloadCommand, restartCommand, startCommand, stopCommand } from './lib/commands/execution.js'
 import { importCommand, resolveCommand } from './lib/commands/external.js'
@@ -9,16 +10,12 @@ import { logsCommand } from './lib/commands/logs.js'
 import { configCommand, envCommand, psCommand, servicesCommand } from './lib/commands/management.js'
 import { metricsCommand } from './lib/commands/metrics.js'
 import { patchConfigCommand } from './lib/commands/patch-config.js'
-import { adminCommand } from './lib/commands/admin.js'
 import { version } from './lib/schema.js'
-import { createLogger, overrideFatal, parseArgs, setVerbose } from './lib/utils.js'
+import { createLogger, parseArgs, setVerbose } from './lib/utils.js'
 
 export async function main () {
   globalThis.platformatic = { executable: 'watt' }
-
   const logger = createLogger('info')
-
-  overrideFatal(logger)
 
   const options = {
     verbose: {
@@ -115,11 +112,12 @@ export async function main () {
     case 'admin':
       command = adminCommand
       break
+    /* c8 ignore next 5 */
     default:
       logger.fatal(
         `Unknown command ${bold(unparsed[0])}. Please run ${bold("'wattpm help'")} to see available commands.`
       )
-      break
+      return
   }
 
   await command(logger, unparsed.slice(1))

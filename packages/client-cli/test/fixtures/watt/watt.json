@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schemas.platformatic.dev/wattpm/2.63.3.json",
+  "server": {
+    "hostname": "{HOSTNAME}",
+    "port": "{PORT}"
+  },
+  "entrypoint": "second",
+  "logger": {
+    "level": "info"
+  },
+  "autoload": {
+    "path": "web"
+  }
+}

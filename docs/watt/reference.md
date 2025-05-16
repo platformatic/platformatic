@@ -234,6 +234,7 @@ This is started via [`npx`](https://docs.npmjs.com/cli/v11/commands/npx).
 Arguments:
 
 - `latest`: use the latest released version of watt-admin.
+- `-P, --package-manager`: Use an alternative package manager (the default is to autodetect it)
 
 ## `version`
 

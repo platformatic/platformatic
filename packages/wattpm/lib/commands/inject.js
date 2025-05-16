@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { finished } from 'node:stream/promises'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { getMatchingRuntime, parseArgs, verbose } from '../utils.js'
+import { getMatchingRuntime, logFatalError, parseArgs, verbose } from '../utils.js'
 
 function appendOutput (logger, stream, fullOutput, line) {
   if (verbose) {
@@ -138,12 +138,12 @@ export async function injectCommand (logger, args) {
     await client.close()
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
-      logger.fatal('Cannot find a matching runtime.')
+      return logFatalError(logger, 'Cannot find a matching runtime.')
     } else if (error.code === 'PLT_CTR_SERVICE_NOT_FOUND') {
-      logger.fatal('Cannot find a matching service.')
+      return logFatalError(logger, 'Cannot find a matching service.')
       /* c8 ignore next 3 */
     } else {
-      logger.fatal({ error: ensureLoggableError(error) }, `Cannot perform a request: ${error.message}`)
+      return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot perform a request: ${error.message}`)
     }
   }
 }

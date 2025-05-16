@@ -18,6 +18,8 @@ const PLT_ROOT = 'PLT_ROOT'
 const skipReplaceEnv = Symbol('skipReplaceEnv')
 
 class ConfigManager extends EventEmitter {
+  static knownExtensions = ['json', 'json5', 'yaml', 'yml', 'toml', 'tml']
+
   constructor (opts) {
     super()
     this.pupa = null
@@ -136,7 +138,7 @@ class ConfigManager extends EventEmitter {
     return config
   }
 
-  _transformConfig () {}
+  _transformConfig () { }
 
   async parse (replaceEnv = true, args = [], opts = {}) {
     let valid = true
@@ -176,6 +178,7 @@ class ConfigManager extends EventEmitter {
           version = res[1]
         }
 
+        /* c8 ignore next 5 - Not used */
         if (!version && this.current.$schema?.indexOf('https://schemas.platformatic.dev/@platformatic/') === 0) {
           const url = new URL(this.current.$schema)
           const res = url.pathname.match(/^\/@platformatic\/[^/]+\/(\d+\.\d+\.\d+(?:-[^/]+)?)\.json$/)
@@ -322,11 +325,7 @@ class ConfigManager extends EventEmitter {
     const validationResult = await this.parse(replaceEnv)
     if (!validationResult) {
       throw new errors.ValidationErrors(
-        this.validationErrors
-          .map(err => {
-            return err.message
-          })
-          .join('\n')
+        this.validationErrors.map(err => { return err.message }).join('\n')
       )
     }
   }
@@ -348,46 +347,33 @@ class ConfigManager extends EventEmitter {
     return configString
   }
 
-  static listConfigFiles (type) {
+  static listConfigFiles (type, skipTypeless = false) {
+    let typeless = []
+
+    if (!skipTypeless) {
+      typeless = [
+        ...ConfigManager.knownExtensions.map(ext => `watt.${ext}`),
+        ...ConfigManager.knownExtensions.map(ext => `platformatic.${ext}`),
+      ]
+    }
+
     if (type) {
       // A config type (service, db, etc.) was explicitly provided.
       return [
-        ...(typeof type === 'string'
-          ? new Set([
-              `platformatic.${type}.json`,
-              `platformatic.${type}.json5`,
-              `platformatic.${type}.yaml`,
-              `platformatic.${type}.yml`,
-              `platformatic.${type}.toml`,
-              `platformatic.${type}.tml`
-          ])
-          : []),
-        ...new Set([
-          'platformatic.json',
-          'platformatic.json5',
-          'platformatic.yaml',
-          'platformatic.yml',
-          'platformatic.toml',
-          'platformatic.tml',
-          'watt.json',
-          'watt.json5',
-          'watt.yaml',
-          'watt.yml',
-          'watt.toml',
-          'watt.tml'
-        ])
+        ...typeless,
+        ...ConfigManager.knownExtensions.map(ext => `platformatic.${type}.${ext}`),
       ]
     } else {
       // A config type was not provided. Search for all known types and
       // formats. Unfortunately, this means the ConfigManager needs to be
       // aware of the different application types (but that should be small).
       return [
-        ...new Set([
-          ...this.listConfigFiles('service'),
-          ...this.listConfigFiles('db'),
-          ...this.listConfigFiles('composer'),
-          ...this.listConfigFiles('runtime')
-        ])
+        ...typeless,
+        ...ConfigManager.listConfigFiles('runtime', true),
+        ...ConfigManager.listConfigFiles('service', true),
+        ...ConfigManager.listConfigFiles('application', true),
+        ...ConfigManager.listConfigFiles('db', true),
+        ...ConfigManager.listConfigFiles('composer', true)
       ]
     }
   }

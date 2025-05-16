@@ -1,5 +1,6 @@
 import { bold, isColorSupported } from 'colorette'
 import { logo } from '../logo.js'
+import { logFatalError } from '../utils.js'
 
 async function loadCommands () {
   const commands = {}
@@ -99,7 +100,7 @@ export async function helpCommand (logger, args) {
 
   const commands = await loadCommands()
   if (!commands[command]) {
-    logger.fatal(`Unknown command ${bold(command)}. Please run ${bold("'wattpm help'")} to see available commands.`)
+    return logFatalError(logger, `Unknown command ${bold(command)}. Please run ${bold("'wattpm help'")} to see available commands.`)
   }
 
   showHelp(commands[command])

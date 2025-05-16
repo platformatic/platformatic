@@ -1,17 +1,16 @@
+import { loadConfigurationFile as loadRawConfigurationFile, saveConfigurationFile } from '@platformatic/config'
 import { createDirectory, safeRemove } from '@platformatic/utils'
 import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
 import { appendFile, cp, readFile, writeFile } from 'node:fs/promises'
 import { basename, join, resolve } from 'node:path'
 import { test } from 'node:test'
-import { pino } from 'pino'
 import { prepareRuntime } from '../../basic/test/helper.js'
 import { defaultServiceJson } from '../lib/defaults.js'
 import { version } from '../lib/schema.js'
-import { loadRawConfigurationFile, saveConfigurationFile, serviceToEnvVariable } from '../lib/utils.js'
+import { serviceToEnvVariable } from '../lib/utils.js'
 import { createTemporaryDirectory, executeCommand, wattpm } from './helper.js'
 
-const logger = pino()
 const autodetect = {
   astro: 'astro',
   node: null,
@@ -25,12 +24,12 @@ test('import - should import a URL', async t => {
   t.after(() => safeRemove(rootDir))
 
   const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+  const originalFileContents = await loadRawConfigurationFile(configurationFile)
 
   process.chdir(rootDir)
   await wattpm('import', 'http://github.com/foo/bar.git')
 
-  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), {
+  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
     ...originalFileContents,
     web: [
       {
@@ -50,12 +49,12 @@ test('import - should import a GitHub repo via SSH', async t => {
   t.after(() => safeRemove(rootDir))
 
   const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+  const originalFileContents = await loadRawConfigurationFile(configurationFile)
 
   process.chdir(rootDir)
   await wattpm('import', rootDir, 'foo/bar', '-i', 'id')
 
-  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), {
+  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
     ...originalFileContents,
     web: [
       {
@@ -75,12 +74,12 @@ test('import - should import a GitHub repo via HTTP', async t => {
   t.after(() => safeRemove(rootDir))
 
   const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+  const originalFileContents = await loadRawConfigurationFile(configurationFile)
 
   process.chdir(rootDir)
   await wattpm('import', rootDir, 'foo/bar', '-h', '-i', 'id')
 
-  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), {
+  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
     ...originalFileContents,
     web: [
       {
@@ -100,7 +99,7 @@ test('import - should import a local folder with a Git remote', async t => {
   t.after(() => safeRemove(rootDir))
 
   const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+  const originalFileContents = await loadRawConfigurationFile(configurationFile)
 
   const directory = await createTemporaryDirectory(t, 'local-with-git')
   await executeCommand('git', 'init', { cwd: directory })
@@ -111,7 +110,7 @@ test('import - should import a local folder with a Git remote', async t => {
   process.chdir(rootDir)
   await wattpm('import', directory)
 
-  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), {
+  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
     ...originalFileContents,
     web: [
       {
@@ -131,7 +130,7 @@ test('import - should import a local folder without a Git remote', async t => {
   t.after(() => safeRemove(rootDir))
 
   const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+  const originalFileContents = await loadRawConfigurationFile(configurationFile)
 
   const directory = await createTemporaryDirectory(t, 'local-with-git')
   const id = basename(directory)
@@ -140,7 +139,7 @@ test('import - should import a local folder without a Git remote', async t => {
   process.chdir(rootDir)
   const importProcess = await wattpm('import', directory)
 
-  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), {
+  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
     ...originalFileContents,
     web: [
       {
@@ -161,7 +160,7 @@ test('import - should import a local folder within the repository without using 
   t.after(() => safeRemove(rootDir))
 
   const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+  const originalFileContents = await loadRawConfigurationFile(configurationFile)
 
   const id = 'in-a-repo'
   const path = join('this', 'is', 'in-a-repo') // This is for Windows compatibility
@@ -173,7 +172,7 @@ test('import - should import a local folder within the repository without using 
   process.chdir(rootDir)
   await wattpm('import', resolve(rootDir, path))
 
-  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), {
+  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
     ...originalFileContents,
     web: [
       {
@@ -212,9 +211,9 @@ test('import - should not do anything when the local folder is already a defined
 
   const configurationFile = resolve(rootDir, 'watt.json')
 
-  const contents = await loadRawConfigurationFile(logger, configurationFile)
+  const contents = await loadRawConfigurationFile(configurationFile)
   contents.web = [{ id: 'main', path: 'main' }]
-  await saveConfigurationFile(logger, configurationFile, contents)
+  await saveConfigurationFile(configurationFile, contents)
   await createDirectory(resolve(rootDir, 'main'))
   await cp(resolve(rootDir, 'web/main/watt.json'), resolve(rootDir, 'main/watt.json'))
 
@@ -279,7 +278,7 @@ test('import - should properly manage environment files', async t => {
   t.after(() => safeRemove(rootDir))
 
   const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+  const originalFileContents = await loadRawConfigurationFile(configurationFile)
 
   await cp(resolve(rootDir, '.env'), resolve(rootDir, '.env.sample'))
   await safeRemove(resolve(rootDir, '.env'))
@@ -287,7 +286,7 @@ test('import - should properly manage environment files', async t => {
   process.chdir(rootDir)
   await wattpm('import', 'http://github.com/foo/bar.git')
 
-  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), {
+  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
     ...originalFileContents,
     web: [
       {
@@ -310,7 +309,7 @@ test('import - should not modify existing watt.json files when exporting local f
   t.after(() => safeRemove(rootDir))
 
   const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+  const originalFileContents = await loadRawConfigurationFile(configurationFile)
 
   const directory = await createTemporaryDirectory(t, 'local-with-git')
   await writeFile(resolve(directory, 'watt.json'), JSON.stringify({ foo: 'bar' }), 'utf-8')
@@ -320,7 +319,7 @@ test('import - should not modify existing watt.json files when exporting local f
   process.chdir(rootDir)
   await wattpm('import', directory)
 
-  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), {
+  deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
     ...originalFileContents,
     web: [
       {
@@ -332,7 +331,7 @@ test('import - should not modify existing watt.json files when exporting local f
 
   deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), `RUNTIME_ENV=foo\n${envVariable}=${directory}\n`)
   deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), `${envVariable}=\n`)
-  deepStrictEqual(await loadRawConfigurationFile(logger, resolve(directory, 'watt.json')), { foo: 'bar' })
+  deepStrictEqual(await loadRawConfigurationFile(resolve(directory, 'watt.json')), { foo: 'bar' })
 })
 
 for (const [name, dependency] of Object.entries(autodetect)) {
@@ -341,7 +340,7 @@ for (const [name, dependency] of Object.entries(autodetect)) {
     t.after(() => safeRemove(rootDir))
 
     const configurationFile = resolve(rootDir, 'watt.json')
-    const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+    const originalFileContents = await loadRawConfigurationFile(configurationFile)
 
     const directory = await createTemporaryDirectory(t, 'local-with-git')
     if (dependency) {
@@ -358,7 +357,7 @@ for (const [name, dependency] of Object.entries(autodetect)) {
     process.chdir(rootDir)
     await wattpm('import', directory)
 
-    deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), {
+    deepStrictEqual(await loadRawConfigurationFile(configurationFile), {
       ...originalFileContents,
       web: [
         {
@@ -371,14 +370,14 @@ for (const [name, dependency] of Object.entries(autodetect)) {
     deepStrictEqual(await readFile(resolve(rootDir, '.env'), 'utf-8'), `RUNTIME_ENV=foo\n${envVariable}=${directory}\n`)
     deepStrictEqual(await readFile(resolve(rootDir, '.env.sample'), 'utf-8'), `${envVariable}=\n`)
 
-    deepStrictEqual(await loadRawConfigurationFile(logger, resolve(directory, 'package.json')), {
+    deepStrictEqual(await loadRawConfigurationFile(resolve(directory, 'package.json')), {
       dependencies: {
         ...(dependency ? { [dependency]: '*' } : {}),
         [`@platformatic/${name}`]: `^${version}`
       }
     })
 
-    deepStrictEqual(await loadRawConfigurationFile(logger, resolve(directory, 'watt.json')), {
+    deepStrictEqual(await loadRawConfigurationFile(resolve(directory, 'watt.json')), {
       ...defaultServiceJson,
       $schema: `https://schemas.platformatic.dev/@platformatic/${name}/${version}.json`
     })
@@ -390,27 +389,27 @@ test('import - when launched without arguments, should fix the configuration of 
   t.after(() => safeRemove(rootDir))
 
   const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+  const originalFileContents = await loadRawConfigurationFile(configurationFile)
 
   process.chdir(rootDir)
   await wattpm('import')
 
-  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), originalFileContents)
+  deepStrictEqual(await loadRawConfigurationFile(configurationFile), originalFileContents)
 
   for (const servicePath of ['web-1/first', 'web-1/second']) {
-    deepStrictEqual(await loadRawConfigurationFile(logger, resolve(rootDir, servicePath, 'package.json')), {
+    deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, servicePath, 'package.json')), {
       dependencies: {
         '@platformatic/node': `^${version}`
       }
     })
 
-    deepStrictEqual(await loadRawConfigurationFile(logger, resolve(rootDir, servicePath, 'watt.json')), {
+    deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, servicePath, 'watt.json')), {
       ...defaultServiceJson,
       $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`
     })
   }
 
-  deepStrictEqual(await loadRawConfigurationFile(logger, resolve(rootDir, 'web-2/third/watt.json')), { foo: 'bar' })
+  deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, 'web-2/third/watt.json')), { foo: 'bar' })
 })
 
 test('import - should find the nearest watt.json', async t => {
@@ -418,7 +417,7 @@ test('import - should find the nearest watt.json', async t => {
   t.after(() => safeRemove(rootDir))
 
   const configurationFile = resolve(rootDir, 'watt.json')
-  const originalFileContents = await loadRawConfigurationFile(logger, configurationFile)
+  const originalFileContents = await loadRawConfigurationFile(configurationFile)
 
   const directory = resolve(rootDir, 'web/next')
   await createDirectory(directory)
@@ -426,7 +425,7 @@ test('import - should find the nearest watt.json', async t => {
   process.chdir(resolve(rootDir, 'web/next'))
   await wattpm('import', '.')
 
-  deepStrictEqual(await loadRawConfigurationFile(logger, configurationFile), originalFileContents)
+  deepStrictEqual(await loadRawConfigurationFile(configurationFile), originalFileContents)
 
   ok(!existsSync(resolve(directory, 'web/next/package.json')))
   ok(!existsSync(resolve(directory, 'web/next/watt.json')))

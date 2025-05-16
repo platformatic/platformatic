@@ -211,87 +211,101 @@ test('should look for a .env file in process.cwd() too', async t => {
 
 test('ConfigManager.listConfigFiles() lists possible configs by type', async t => {
   assert.deepEqual(ConfigManager.listConfigFiles('db'), [
+    'watt.json',
+    'watt.json5',
+    'watt.yaml',
+    'watt.yml',
+    'watt.toml',
+    'watt.tml',
+    'platformatic.json',
+    'platformatic.json5',
+    'platformatic.yaml',
+    'platformatic.yml',
+    'platformatic.toml',
+    'platformatic.tml',
     'platformatic.db.json',
     'platformatic.db.json5',
     'platformatic.db.yaml',
     'platformatic.db.yml',
     'platformatic.db.toml',
     'platformatic.db.tml',
-    'platformatic.json',
-    'platformatic.json5',
-    'platformatic.yaml',
-    'platformatic.yml',
-    'platformatic.toml',
-    'platformatic.tml',
+  ])
+
+  assert.deepEqual(ConfigManager.listConfigFiles('service'), [
     'watt.json',
     'watt.json5',
     'watt.yaml',
     'watt.yml',
     'watt.toml',
     'watt.tml',
-  ])
-  assert.deepEqual(ConfigManager.listConfigFiles('service'), [
+    'platformatic.json',
+    'platformatic.json5',
+    'platformatic.yaml',
+    'platformatic.yml',
+    'platformatic.toml',
+    'platformatic.tml',
     'platformatic.service.json',
     'platformatic.service.json5',
     'platformatic.service.yaml',
     'platformatic.service.yml',
     'platformatic.service.toml',
     'platformatic.service.tml',
-    'platformatic.json',
-    'platformatic.json5',
-    'platformatic.yaml',
-    'platformatic.yml',
-    'platformatic.toml',
-    'platformatic.tml',
+  ])
+
+  assert.deepEqual(ConfigManager.listConfigFiles('runtime'), [
     'watt.json',
     'watt.json5',
     'watt.yaml',
     'watt.yml',
     'watt.toml',
     'watt.tml',
-  ])
-  assert.deepEqual(ConfigManager.listConfigFiles('runtime'), [
+    'platformatic.json',
+    'platformatic.json5',
+    'platformatic.yaml',
+    'platformatic.yml',
+    'platformatic.toml',
+    'platformatic.tml',
     'platformatic.runtime.json',
     'platformatic.runtime.json5',
     'platformatic.runtime.yaml',
     'platformatic.runtime.yml',
     'platformatic.runtime.toml',
     'platformatic.runtime.tml',
-    'platformatic.json',
-    'platformatic.json5',
-    'platformatic.yaml',
-    'platformatic.yml',
-    'platformatic.toml',
-    'platformatic.tml',
+  ])
+})
+
+test('ConfigManager.listConfigFiles() lists all possible configs', async t => {
+  assert.deepEqual(ConfigManager.listConfigFiles(), [
     'watt.json',
     'watt.json5',
     'watt.yaml',
     'watt.yml',
     'watt.toml',
     'watt.tml',
-  ])
-})
-
-test('ConfigManager.listConfigFiles() lists all possible configs', async t => {
-  assert.deepEqual(ConfigManager.listConfigFiles(), [
+    'platformatic.json',
+    'platformatic.json5',
+    'platformatic.yaml',
+    'platformatic.yml',
+    'platformatic.toml',
+    'platformatic.tml',
+    'platformatic.runtime.json',
+    'platformatic.runtime.json5',
+    'platformatic.runtime.yaml',
+    'platformatic.runtime.yml',
+    'platformatic.runtime.toml',
+    'platformatic.runtime.tml',
     'platformatic.service.json',
     'platformatic.service.json5',
     'platformatic.service.yaml',
     'platformatic.service.yml',
     'platformatic.service.toml',
     'platformatic.service.tml',
-    'platformatic.json',
-    'platformatic.json5',
-    'platformatic.yaml',
-    'platformatic.yml',
-    'platformatic.toml',
-    'platformatic.tml',
-    'watt.json',
-    'watt.json5',
-    'watt.yaml',
-    'watt.yml',
-    'watt.toml',
-    'watt.tml',
+    'platformatic.application.json',
+    'platformatic.application.json5',
+    'platformatic.application.yaml',
+    'platformatic.application.yml',
+    'platformatic.application.toml',
+    'platformatic.application.tml',
     'platformatic.db.json',
     'platformatic.db.json5',
     'platformatic.db.yaml',
@@ -304,12 +318,6 @@ test('ConfigManager.listConfigFiles() lists all possible configs', async t => {
     'platformatic.composer.yml',
     'platformatic.composer.toml',
     'platformatic.composer.tml',
-    'platformatic.runtime.json',
-    'platformatic.runtime.json5',
-    'platformatic.runtime.yaml',
-    'platformatic.runtime.yml',
-    'platformatic.runtime.toml',
-    'platformatic.runtime.tml',
   ])
 })
 
@@ -332,7 +340,7 @@ test('should throw if there is upgrade but not version', async t => {
   try {
     // eslint-disable-next-line no-new
     new ConfigManager({
-      upgrade () {},
+      upgrade () { },
     })
     assert.fail()
   } catch (err) {

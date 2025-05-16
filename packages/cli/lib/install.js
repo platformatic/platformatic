@@ -38,7 +38,7 @@ export async function install (argv) {
       }
     })
 
-    await installDependencies(
+    const installed = await installDependencies(
       logger,
       configManager.dirname,
       configManager.fullPath,
@@ -46,7 +46,9 @@ export async function install (argv) {
       args['package-manager']
     )
 
-    logger.info('✅ All dependencies have been installed')
+    if (installed) {
+      logger.info('✅ All dependencies have been installed')
+    }
   } catch (err) {
     console.log(err)
     process.exit(1)

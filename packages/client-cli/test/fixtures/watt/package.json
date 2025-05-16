@@ -1,0 +1,15 @@
+{
+  "name": "client-cli-test",
+  "private": true,
+  "scripts": {
+    "dev": "wattpm dev",
+    "build": "wattpm build",
+    "start": "wattpm start"
+  },
+  "dependencies": {
+    "@platformatic/runtime": "^2.63.3",
+    "@platformatic/service": "^2.63.3",
+    "wattpm": "^2.63.3"
+  },
+  "workspaces": ["web/*"]
+}
