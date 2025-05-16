@@ -5,12 +5,14 @@ const { Store, matchKnownSchema } = require('./lib/store')
 const {
   loadConfig,
   loadEmptyConfig,
+  loadConfigurationFile,
+  findConfigurationFile,
   printConfigValidationErrors,
   printAndExitLoadConfigError
 } = require('./lib/load-config')
 const { getParser, getStringifier } = require('./lib/formats')
 const errors = require('./lib/errors')
-const { findConfigurationFile, loadConfigurationFile, saveConfigurationFile } = require('./lib/simple')
+const { saveConfigurationFile } = require('./lib/save-config')
 
 module.exports = ConfigManager
 module.exports.ConfigManager = ConfigManager

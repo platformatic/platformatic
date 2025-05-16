@@ -171,5 +171,13 @@ export module errors {
   export const NoConfigFileFoundError: FastifyError
 }
 
+export function printConfigValidationErrors(err: any): void
 export function printAndExitLoadConfigError(err: any): void
-export function printAndExitValidationError(err: any): void
+export function findConfigurationFile(
+  root: string,
+  configurationFile: string | null,
+  schemas?: string | string[],
+  typeOrCandidates: boolean | string | string[]
+): void
+export function loadConfigurationFile(configurationFile: string): Promise<object>
+export function saveConfigurationFile(configurationFile: string, config: object): Promise<void>
