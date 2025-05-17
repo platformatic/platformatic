@@ -272,7 +272,7 @@ test('start - should use default folders for resolved services', async t => {
   })
 
   process.chdir(rootDir)
-  await wattpm('import', rootDir, '-h', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
+  await wattpm('import', rootDir, '-H', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
   await wattpm('resolve', rootDir)
   await updateFile(resolve(rootDir, 'external/resolved/package.json'), content => {
     const config = JSON.parse(content)
@@ -303,7 +303,7 @@ test('start - should throw an error when a service has not been resolved', async
   await prepareGitRepository(t, rootDir)
 
   process.chdir(rootDir)
-  await wattpm('import', rootDir, '-h', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
+  await wattpm('import', rootDir, '-H', '-i', 'resolved', '{PLT_GIT_REPO_URL}')
 
   const startProcess = await wattpm('start', rootDir, { reject: false })
 

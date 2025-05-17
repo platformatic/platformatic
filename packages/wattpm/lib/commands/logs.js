@@ -47,9 +47,10 @@ export async function logsCommand (logger, args) {
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       return logFatalError(logger, 'Cannot find a matching runtime.')
-      /* c8 ignore next 6 */
+      /* c8 ignore next 8 */
     } else {
-      return logFatalError(logger,
+      return logFatalError(
+        logger,
         { error: ensureLoggableError(error) },
         `Cannot stream ${service ? 'service' : 'runtime'} logs: ${error.message}`
       )

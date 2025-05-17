@@ -18,7 +18,7 @@ test('inject - should send a request to an application', async t => {
 
   t.after(() => {
     startProcess.kill('SIGINT')
-    return startProcess.catch(() => { })
+    return startProcess.catch(() => {})
   })
 
   const entrypointProcess = await wattpm('inject', 'main')
@@ -31,7 +31,7 @@ test('inject - should send a request to an application', async t => {
     'POST',
     '-p',
     '/',
-    '-h',
+    '-H',
     'Content-Type: text/plain',
     '-d',
     'AAAA'
@@ -48,7 +48,7 @@ test('inject - should send a request to an application', async t => {
     'POST',
     '-p',
     '/',
-    '-h',
+    '-H',
     'Content-Type: text/plain',
     '-D',
     resolve(directory, 'input.txt')
@@ -85,7 +85,7 @@ test('inject - should complain when a service is not found', async t => {
 
   t.after(() => {
     startProcess.kill('SIGINT')
-    return startProcess.catch(() => { })
+    return startProcess.catch(() => {})
   })
 
   const envProcess = await wattpm('inject', 'main', 'invalid', { reject: false })
@@ -105,7 +105,7 @@ test('inject - should properly autodetect the runtime and use the first argument
 
   t.after(() => {
     startProcess.kill('SIGINT')
-    return startProcess.catch(() => { })
+    return startProcess.catch(() => {})
   })
 
   const entrypointProcess = await wattpm('inject', 'main')
@@ -118,7 +118,7 @@ test('inject - should properly autodetect the runtime and use the first argument
     'POST',
     '-p',
     '/',
-    '-h',
+    '-H',
     'Content-Type: text/plain',
     '-d',
     'AAAA'
@@ -135,7 +135,7 @@ test('inject - should properly autodetect the runtime and use the first argument
     'POST',
     '-p',
     '/',
-    '-h',
+    '-H',
     'Content-Type: text/plain',
     '-D',
     resolve(directory, 'input.txt')
@@ -175,7 +175,7 @@ test('inject - should use the same shared memory HTTP cache of the runtime', asy
 
   t.after(() => {
     startProcess.kill('SIGINT')
-    return startProcess.catch(() => { })
+    return startProcess.catch(() => {})
   })
 
   const request1 = await wattpm('inject', 'main', '-p', '/time')

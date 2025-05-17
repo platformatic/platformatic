@@ -5,11 +5,7 @@ import { getMatchingRuntime, logFatalError, parseArgs } from '../utils.js'
 
 export async function metricsCommand (logger, args) {
   try {
-    const { values, positionals } = parseArgs(
-      args,
-      { format: { type: 'string', short: 'f', default: 'json' } },
-      false
-    )
+    const { values, positionals } = parseArgs(args, { format: { type: 'string', short: 'f', default: 'json' } }, false)
 
     const client = new RuntimeApiClient()
     const [runtime] = await getMatchingRuntime(client, positionals)
@@ -22,7 +18,7 @@ export async function metricsCommand (logger, args) {
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       return logFatalError(logger, 'Cannot find a matching runtime.')
-      /* c8 ignore next 3 */
+      /* c8 ignore next 3 - Hard to test */
     } else {
       return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot reload the runtime: ${error.message}`)
     }

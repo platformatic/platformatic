@@ -151,7 +151,7 @@ Ok to proceed? (y) y
 ? Where would you like to create your project? .
 ✔ Installing @platformatic/runtime@2.0.0...
  Using existing configuration
-? Which kind of project do you want to create? @platformatic/composer
+? Which kind of service do you want to create? @platformatic/composer
 ✔ Installing @platformatic/composer@2.0.0...
 ? What is the name of the service? composer
 ? Do you want to create another service? no

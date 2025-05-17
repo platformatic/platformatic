@@ -148,6 +148,8 @@ class ConfigManager extends EventEmitter {
         const configString = await this.load()
 
         let config = this._parser(configString)
+        this.currentRaw = structuredClone(config)
+
         if (replaceEnv) {
           config = await this.replaceEnv(config, {
             escapeJSON: false,

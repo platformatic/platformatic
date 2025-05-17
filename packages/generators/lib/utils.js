@@ -18,6 +18,7 @@ function stripVersion (version) {
   if (match) {
     return match[0]
   }
+  /* c8 ignore next */
   return version
 }
 
@@ -70,7 +71,7 @@ function extractEnvVariablesFromText (text) {
 function getPackageConfigurationObject (config, serviceName = '') {
   const output = {
     config: {},
-    env: {},
+    env: {}
   }
   let current = output.config
   for (const param of config) {
@@ -172,6 +173,7 @@ function flattenObject (ob) {
 function getServiceTemplateFromSchemaUrl (schemaUrl) {
   const splitted = schemaUrl.split('/')
 
+  /* c8 ignore next 3 - Legacy interface */
   if (schemaUrl.startsWith('https://platformatic.dev/schemas')) {
     return `@platformatic/${splitted[splitted.length - 1]}`
   }
@@ -190,5 +192,5 @@ module.exports = {
   createDirectory,
   stripVersion,
   PLT_ROOT,
-  getLatestNpmVersion,
+  getLatestNpmVersion
 }

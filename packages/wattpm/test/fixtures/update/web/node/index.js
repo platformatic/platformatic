@@ -1,3 +1,1 @@
-export function create () {
-
-}
+export function create () {}

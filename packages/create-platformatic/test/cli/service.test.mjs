@@ -31,7 +31,7 @@ test('Creates a Platformatic Service with no typescript', { timeout }, async t =
       waitAfter: 20000,
     },
     {
-      match: 'Which kind of project do you want to create?',
+      match: 'Which kind of service do you want to create?',
       do: [keys.ENTER], // Service
     },
     {
@@ -88,7 +88,7 @@ test('Creates a Platformatic Service with typescript', { timeout }, async t => {
       waitAfter: 8000,
     },
     {
-      match: 'Which kind of project do you want to create?',
+      match: 'Which kind of service do you want to create?',
       do: [keys.ENTER], // Service
     },
     {

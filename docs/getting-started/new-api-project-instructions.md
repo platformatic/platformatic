@@ -31,7 +31,7 @@ This interactive command-line tool will guide you through setting up a new Platf
 
 ```
 - Where would you like to create your project?  => .
-- Which kind of project do you want to create?  => @platformatic/db 
+- Which kind of service do you want to create?  => @platformatic/db 
 - What is the name of the service?              => (generated-randomly), e.g. legal-soup
 - What is the connection string?                => sqlite://./db.sqlite
 - Do you want to create default migrations?     => Yes

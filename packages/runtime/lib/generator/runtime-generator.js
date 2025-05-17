@@ -2,6 +2,7 @@
 
 const { BaseGenerator } = require('@platformatic/generators')
 const { NoEntryPointError, NoServiceNamedError } = require('./errors')
+const { existsSync } = require('node:fs')
 const { join } = require('node:path')
 const { envObjectToString } = require('@platformatic/generators/lib/utils')
 const { readFile, readdir, stat } = require('node:fs/promises')
@@ -20,7 +21,9 @@ class RuntimeGenerator extends BaseGenerator {
       module: '@platformatic/runtime'
     })
     this.runtimeName = opts.name
+    this.servicesFolder = opts.servicesFolder ?? 'services'
     this.services = []
+    this.existingServices = []
     this.entryPoint = null
   }
 
@@ -47,7 +50,7 @@ class RuntimeGenerator extends BaseGenerator {
   }
 
   setEntryPoint (entryPoint) {
-    const service = this.services.find(svc => svc.name === entryPoint)
+    const service = this.existingServices.includes(entryPoint) || this.services.find(svc => svc.name === entryPoint)
     if (!service) {
       throw new NoServiceNamedError(entryPoint)
     }
@@ -57,7 +60,7 @@ class RuntimeGenerator extends BaseGenerator {
   async generatePackageJson () {
     const template = {
       name: `${this.runtimeName}`,
-      workspaces: ['services/*'],
+      workspaces: [this.servicesFolder + '/*'],
       scripts: {
         start: 'platformatic start'
       },
@@ -115,17 +118,20 @@ class RuntimeGenerator extends BaseGenerator {
       return
     }
     this._hasCheckedForExistingConfig = true
-    const existingConfigFile = await ConfigManager.findConfigFile(this.targetDirectory, 'runtime')
-    if (existingConfigFile) {
+    const existingConfigFile = this.runtimeConfig ?? await ConfigManager.findConfigFile(this.targetDirectory, 'runtime')
+    if (existingConfigFile && existsSync(join(this.targetDirectory, existingConfigFile))) {
       const configManager = new ConfigManager({
         ...platformaticRuntime.configManagerConfig,
         source: join(this.targetDirectory, existingConfigFile)
       })
       await configManager.parse()
+
       this.existingConfig = configManager.current
+      this.existingConfigRaw = configManager.currentRaw
       this.config.env = configManager.env
       this.config.port = configManager.env.PORT
       this.entryPoint = configManager.current.services.find(svc => svc.entrypoint)
+      this.existingServices = configManager.current.services.map(s => s.id)
     }
   }
 
@@ -160,7 +166,7 @@ class RuntimeGenerator extends BaseGenerator {
       entrypoint: this.entryPoint.name,
       watch: true,
       autoload: {
-        path: this.config.autoload || 'services',
+        path: this.config.autoload || this.servicesFolder,
         exclude: ['docs']
       },
       logger: {
@@ -256,7 +262,7 @@ class RuntimeGenerator extends BaseGenerator {
       if (this.existingConfig) {
         basePath = this.existingConfig.autoload.path
       } else {
-        basePath = join(this.targetDirectory, this.config.autoload || 'services')
+        basePath = join(this.targetDirectory, this.config.autoload || this.servicesFolder)
       }
       service.setTargetDirectory(join(basePath, service.config.serviceName))
     })
@@ -320,7 +326,7 @@ class RuntimeGenerator extends BaseGenerator {
       services: []
     }
     const runtimePkgConfigFileData = JSON.parse(
-      await readFile(join(this.targetDirectory, 'platformatic.json'), 'utf-8')
+      await readFile(join(this.targetDirectory, this.runtimeConfig), 'utf-8')
     )
     const servicesPath = join(this.targetDirectory, runtimePkgConfigFileData.autoload.path)
 
@@ -331,8 +337,9 @@ class RuntimeGenerator extends BaseGenerator {
       const currentServicePath = join(servicesPath, s)
       const dirStat = await stat(currentServicePath)
       if (dirStat.isDirectory()) {
-        // load the package json file
-        const servicePltJson = JSON.parse(await readFile(join(currentServicePath, 'platformatic.json'), 'utf-8'))
+        // load the service config
+        const configFile = await ConfigManager.findConfigFile(currentServicePath)
+        const servicePltJson = JSON.parse(await readFile(join(currentServicePath, configFile), 'utf-8'))
         // get module to load
         const template = servicePltJson.module || getServiceTemplateFromSchemaUrl(servicePltJson.$schema)
         const Generator = await this._getGeneratorForTemplate(currentServicePath, template)
@@ -378,8 +385,10 @@ class RuntimeGenerator extends BaseGenerator {
         })
 
         // delete dependencies
+        const servicePath = join(this.targetDirectory, this.servicesFolder, s.name)
+        const configFile = await ConfigManager.findConfigFile(servicePath)
         const servicePackageJson = JSON.parse(
-          await readFile(join(this.targetDirectory, 'services', s.name, 'platformatic.json'), 'utf-8')
+          await readFile(join(servicePath, configFile), 'utf-8')
         )
         if (servicePackageJson.plugins && servicePackageJson.plugins.packages) {
           servicePackageJson.plugins.packages.forEach(p => {
@@ -387,7 +396,7 @@ class RuntimeGenerator extends BaseGenerator {
           })
         }
         // delete directory
-        await safeRemove(join(this.targetDirectory, 'services', s.name))
+        await safeRemove(join(this.targetDirectory, this.servicesFolder, s.name))
       }
       // throw new CannotRemoveServiceOnUpdateError(removedServices.join(', '))
     }
@@ -404,7 +413,7 @@ class RuntimeGenerator extends BaseGenerator {
       })
       const baseConfig = {
         isRuntimeContext: true,
-        targetDirectory: join(this.targetDirectory, 'services', newService.name),
+        targetDirectory: join(this.targetDirectory, this.servicesFolder, newService.name),
         serviceName: newService.name,
         plugin: true
       }
@@ -475,14 +484,14 @@ class RuntimeGenerator extends BaseGenerator {
     if (newEntrypoint) {
       // load platformatic.json runtime config
       const runtimePkgConfigFileData = JSON.parse(
-        await readFile(join(this.targetDirectory, 'platformatic.json'), 'utf-8')
+        await readFile(join(this.targetDirectory, this.runtimeConfig), 'utf-8')
       )
 
       this.setEntryPoint(newEntrypoint)
       runtimePkgConfigFileData.entrypoint = newEntrypoint
       this.addFile({
         path: '',
-        file: 'platformatic.json',
+        file: this.runtimeConfig,
         contents: JSON.stringify(runtimePkgConfigFileData, null, 2)
       })
     }

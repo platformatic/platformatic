@@ -7,7 +7,6 @@ import { execa } from 'execa'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
-import { defaultServiceJson } from '../defaults.js'
 import { version } from '../schema.js'
 import {
   findConfigurationFile,
@@ -89,9 +88,10 @@ export async function appendEnvVariable (envFile, key, value) {
   return writeFile(envFile, contents, 'utf-8')
 }
 
-async function fixConfiguration (logger, root) {
-  const configurationFile = await findConfigurationFile(logger, root)
+async function fixConfiguration (logger, root, configOption) {
+  const configurationFile = await findConfigurationFile(logger, root, configOption)
 
+  /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
     return
   }
@@ -102,7 +102,7 @@ async function fixConfiguration (logger, root) {
   for (const { path } of config.services) {
     const wattConfiguration = await findExistingConfiguration(root, path)
 
-    /* c8 ignore next 3 */
+    /* c8 ignore next 3 - Hard to test */
     if (wattConfiguration) {
       continue
     }
@@ -113,7 +113,6 @@ async function fixConfiguration (logger, root) {
     packageJson.dependencies[stackable] = `^${version}`
 
     const wattJson = {
-      ...defaultServiceJson,
       $schema: `https://schemas.platformatic.dev/${stackable}/${version}.json`
     }
 
@@ -166,7 +165,10 @@ async function importService (logger, configurationFile, id, path, url, branch) 
 
   // Make sure the service is not already defined
   if (config.serviceMap.has(id)) {
-    return logFatalError(logger, `There is already a service ${bold(id)} defined, please choose a different service ID.`)
+    return logFatalError(
+      logger,
+      `There is already a service ${bold(id)} defined, please choose a different service ID.`
+    )
   }
 
   /* c8 ignore next */
@@ -186,7 +188,8 @@ async function importService (logger, configurationFile, id, path, url, branch) 
       const env = parse(await readFile(envFile, 'utf-8'))
 
       if (env[envVariable]) {
-        return logFatalError(logger,
+        return logFatalError(
+          logger,
           `There is already an environment variable ${bold(envVariable)} defined, please choose a different service ID.`
         )
       }
@@ -219,7 +222,7 @@ async function importURL (logger, _, configurationFile, rawUrl, id, http, branch
 async function importLocal (logger, root, configurationFile, path, overridenId) {
   const { id, url, packageJson, stackable } = await parseLocalFolder(path)
 
-  if (!await importService(logger, configurationFile, overridenId ?? id, path, url)) {
+  if (!(await importService(logger, configurationFile, overridenId ?? id, path, url))) {
     return
   }
 
@@ -239,7 +242,6 @@ async function importLocal (logger, root, configurationFile, path, overridenId) 
   packageJson.dependencies[stackable] = `^${version}`
 
   const wattJson = {
-    ...defaultServiceJson,
     $schema: `https://schemas.platformatic.dev/${stackable}/${version}.json`
   }
 
@@ -290,7 +292,9 @@ export async function resolveServices (
     if (!existsSync(directory)) {
       if (!directory.startsWith(root)) {
         logger.warn(
-          `Skipping service ${bold(service.id)} as the non existent directory ${bold(service.path)} is outside the project directory.`
+          `Skipping service ${bold(service.id)} as the non existent directory ${bold(
+            service.path
+          )} is outside the project directory.`
         )
       } else {
         // This repository must be resolved
@@ -298,7 +302,9 @@ export async function resolveServices (
       }
     } else {
       logger.warn(
-        `Skipping service ${bold(service.id)} as the generated path ${bold(join(config.resolvedServicesBasePath, service.id))} already exists.`
+        `Skipping service ${bold(service.id)} as the generated path ${bold(
+          join(config.resolvedServicesBasePath, service.id)
+        )} already exists.`
       )
     }
   }
@@ -340,7 +346,8 @@ export async function resolveServices (
 
       await execa('git', cloneArgs)
     } catch (error) {
-      return logFatalError(childLogger,
+      return logFatalError(
+        childLogger,
         { error: ensureLoggableError(error) },
         `Unable to clone repository of the service ${bold(service.id)}`
       )
@@ -357,18 +364,22 @@ export async function resolveServices (
 
 export async function importCommand (logger, args) {
   const {
-    values: { id, http, branch },
+    values: { config, id, http, branch },
     positionals
   } = parseArgs(
     args,
     {
+      config: {
+        type: 'string',
+        short: 'c'
+      },
       id: {
         type: 'string',
         short: 'i'
       },
       http: {
         type: 'boolean',
-        short: 'h'
+        short: 'H'
       },
       branch: {
         type: 'string',
@@ -387,7 +398,7 @@ export async function importCommand (logger, args) {
     Two arguments = root and URL
   */
   if (positionals.length === 0) {
-    return fixConfiguration(logger, '')
+    return fixConfiguration(logger, '', config)
   } else if (positionals.length === 1) {
     root = getRoot()
     rawUrl = positionals[0]
@@ -396,8 +407,9 @@ export async function importCommand (logger, args) {
     rawUrl = positionals[1]
   }
 
-  const configurationFile = await findConfigurationFile(logger, root)
+  const configurationFile = await findConfigurationFile(logger, root, config)
 
+  /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
     return
   }
@@ -417,11 +429,15 @@ export async function importCommand (logger, args) {
 
 export async function resolveCommand (logger, args) {
   const {
-    values: { username, password, 'skip-dependencies': skipDependencies, 'package-manager': packageManager },
+    values: { config, username, password, 'skip-dependencies': skipDependencies, 'package-manager': packageManager },
     positionals
   } = parseArgs(
     args,
     {
+      config: {
+        type: 'string',
+        short: 'c'
+      },
       username: {
         type: 'string',
         short: 'u',
@@ -446,13 +462,22 @@ export async function resolveCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findConfigurationFile(logger, root)
+  const configurationFile = await findConfigurationFile(logger, root, config)
 
+  /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
     return
   }
 
-  const resolved = await resolveServices(logger, root, configurationFile, username, password, skipDependencies, packageManager)
+  const resolved = await resolveServices(
+    logger,
+    root,
+    configurationFile,
+    username,
+    password,
+    skipDependencies,
+    packageManager
+  )
 
   if (resolved) {
     logger.done('All services have been resolved.')
@@ -475,11 +500,15 @@ export const help = {
     ],
     options: [
       {
+        usage: '-c, --config <config>',
+        description: 'Name of the configuration file to use (the default to autodetect it)'
+      },
+      {
         usage: '-i, --id <value>',
         description: 'The id of the service (the default is the basename of the URL)'
       },
       {
-        usage: '-h, --http',
+        usage: '-H, --http',
         description: 'Use HTTP URL when expanding GitHub repositories'
       },
       {
@@ -498,6 +527,10 @@ export const help = {
       }
     ],
     options: [
+      {
+        usage: '-c, --config <config>',
+        description: 'Name of the configuration file to use (the default to autodetect it)'
+      },
       {
         usage: '-u, --username <value>',
         description: 'The username to use for HTTP URLs'

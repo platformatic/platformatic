@@ -82,7 +82,19 @@ export async function patchConfig (logger, configurationFile, patchPath) {
 }
 
 export async function patchConfigCommand (logger, args) {
-  const { positionals } = parseArgs(args, {}, false)
+  const {
+    values: { config },
+    positionals
+  } = parseArgs(
+    args,
+    {
+      config: {
+        type: 'string',
+        short: 'c'
+      }
+    },
+    false
+  )
 
   let root
   let patch
@@ -101,8 +113,9 @@ export async function patchConfigCommand (logger, args) {
     patch = positionals[1]
   }
 
-  const configurationFile = await findConfigurationFile(logger, root)
+  const configurationFile = await findConfigurationFile(logger, root, config)
 
+  /* c8 ignore next 3 */
   if (!configurationFile) {
     return
   }
@@ -110,7 +123,11 @@ export async function patchConfigCommand (logger, args) {
   try {
     await patchConfig(logger, configurationFile, patch)
   } catch (error) {
-    return logFatalError(logger, { err: ensureLoggableError(error) }, `Patching configuration has throw an exception: ${error.message}`)
+    return logFatalError(
+      logger,
+      { err: ensureLoggableError(error) },
+      `Patching configuration has throw an exception: ${error.message}`
+    )
   }
 
   logger.done('Patch executed correctly.')
@@ -129,6 +146,12 @@ export const help = {
       {
         name: 'patch',
         description: 'The file containing the patch to execute.'
+      }
+    ],
+    options: [
+      {
+        usage: '-c, --config <config>',
+        description: 'Name of the configuration file to use (the default is watt.json)'
       }
     ]
   }

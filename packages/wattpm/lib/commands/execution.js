@@ -7,11 +7,24 @@ import { watch } from 'node:fs/promises'
 import { findConfigurationFile, getMatchingRuntime, getRoot, logFatalError, parseArgs } from '../utils.js'
 
 export async function devCommand (logger, args) {
-  const { positionals } = parseArgs(args, {}, false)
+  const {
+    values: { config },
+    positionals
+  } = parseArgs(
+    args,
+    {
+      config: {
+        type: 'string',
+        short: 'c'
+      }
+    },
+    false
+  )
   const root = getRoot(positionals)
 
-  const configurationFile = await findConfigurationFile(logger, root)
+  const configurationFile = await findConfigurationFile(logger, root, config)
 
+  /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
     return
   }
@@ -30,30 +43,34 @@ export async function devCommand (logger, args) {
 }
 
 export async function startCommand (logger, args) {
-  const { positionals, values } = parseArgs(
+  const {
+    positionals,
+    values: { inspect, config }
+  } = parseArgs(
     args,
     {
-      inspect: {
-        type: 'boolean',
-        short: 'i'
-      },
       config: {
         type: 'string',
         short: 'c'
+      },
+      inspect: {
+        type: 'boolean',
+        short: 'i'
       }
     },
     false
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findConfigurationFile(logger, root, values.config)
+  const configurationFile = await findConfigurationFile(logger, root, config)
 
+  /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
     return
   }
 
   const cmd = ['--production', '-c', configurationFile]
-  if (values.inspect) {
+  if (inspect) {
     cmd.push('--inspect')
   }
   await pltStartCommand(cmd, true)
@@ -73,7 +90,7 @@ export async function stopCommand (logger, args) {
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       return logFatalError(logger, 'Cannot find a matching runtime.')
-      /* c8 ignore next 3 */
+      /* c8 ignore next 3 - Hard to test */
     } else {
       return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot stop the runtime: ${error.message}`)
     }
@@ -94,9 +111,13 @@ export async function restartCommand (logger, args) {
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       return logFatalError(logger, 'Cannot find a matching runtime.')
-      /* c8 ignore next 3 */
+      /* c8 ignore next 7 - Hard to test */
     } else {
-      return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot restart the runtime: ${error.message}`)
+      return logFatalError(
+        logger,
+        { error: ensureLoggableError(error) },
+        `Cannot restart the runtime: ${error.message}`
+      )
     }
   }
 }
@@ -128,7 +149,7 @@ export async function reloadCommand (logger, args) {
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       return logFatalError(logger, 'Cannot find a matching runtime.')
-      /* c8 ignore next 3 */
+      /* c8 ignore next 3 - Hard to test */
     } else {
       return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot reload the runtime: ${error.message}`)
     }
@@ -144,6 +165,12 @@ export const help = {
         name: 'root',
         description: 'The directory containing the application (the default is the current directory)'
       }
+    ],
+    options: [
+      {
+        usage: '-c, --config <config>',
+        description: 'Name of the configuration file to use (the default to autodetect it)'
+      }
     ]
   },
   start: {
@@ -156,6 +183,10 @@ export const help = {
       }
     ],
     options: [
+      {
+        usage: '-c, --config <config>',
+        description: 'Name of the configuration file to use (the default to autodetect it)'
+      },
       {
         usage: '-i --inspect',
         description: 'Enables the inspector for each service'

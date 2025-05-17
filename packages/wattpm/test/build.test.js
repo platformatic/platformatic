@@ -225,7 +225,9 @@ test('update - should fail when a dependency cannot be updated', async t => {
 
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
 
-  const updateProcess = await executeCommand(process.argv[0], '--import', loader, cliPath, 'update', rootDir, { reject: false })
+  const updateProcess = await executeCommand(process.argv[0], '--import', loader, cliPath, 'update', rootDir, {
+    reject: false
+  })
   const rootPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'package.json'))
   const mainPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/main/package.json'))
   const anotherPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/another/package.json'))
@@ -265,7 +267,9 @@ test('update - should fail when NPM is not responsing', async t => {
 
   const loader = pathToFileURL(resolve(rootDir, 'mock-registry-fail.mjs')).href
 
-  const updateProcess = await executeCommand(process.argv[0], '--import', loader, cliPath, 'update', rootDir, { reject: false })
+  const updateProcess = await executeCommand(process.argv[0], '--import', loader, cliPath, 'update', rootDir, {
+    reject: false
+  })
 
   ok(updateProcess.stdout.includes('Unable to fetch version information.'))
 })

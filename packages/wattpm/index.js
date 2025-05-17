@@ -1,10 +1,10 @@
 import { bold } from 'colorette'
 import { adminCommand } from './lib/commands/admin.js'
 import { buildCommand, installCommand, updateCommand } from './lib/commands/build.js'
+import { createCommand } from './lib/commands/create.js'
 import { devCommand, reloadCommand, restartCommand, startCommand, stopCommand } from './lib/commands/execution.js'
 import { importCommand, resolveCommand } from './lib/commands/external.js'
 import { helpCommand } from './lib/commands/help.js'
-import { initCommand } from './lib/commands/init.js'
 import { injectCommand } from './lib/commands/inject.js'
 import { logsCommand } from './lib/commands/logs.js'
 import { configCommand, envCommand, psCommand, servicesCommand } from './lib/commands/management.js'
@@ -27,6 +27,7 @@ export async function main () {
       type: 'boolean'
     },
     help: {
+      short: 'h',
       type: 'boolean'
     }
   }
@@ -39,7 +40,10 @@ export async function main () {
   }
 
   if (values.help) {
-    helpCommand([])
+    helpCommand(logger, [])
+    return
+  } else if (unparsed.includes('-h') || unparsed.includes('--help')) {
+    helpCommand(logger, unparsed)
     return
   }
 
@@ -49,9 +53,6 @@ export async function main () {
 
   let command
   switch (unparsed[0]) {
-    case 'init':
-      command = initCommand
-      break
     case 'build':
       command = buildCommand
       break
@@ -108,6 +109,11 @@ export async function main () {
       break
     case 'metrics':
       command = metricsCommand
+      break
+    /* c8 ignore next - Just an alias */
+    case 'init':
+    case 'create':
+      command = createCommand
       break
     case 'admin':
       command = adminCommand
