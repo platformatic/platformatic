@@ -1,8 +1,8 @@
+import { loadConfigurationFile } from '@platformatic/config'
 import { existsSync } from 'node:fs'
 import { readdir } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { loadRawConfigurationFile } from '../lib/utils.js'
 
 const packages = []
 
@@ -11,7 +11,7 @@ for (const path of await readdir(packagesDir)) {
   const packageJsonPath = resolve(packagesDir, path, 'package.json')
 
   if (existsSync(packageJsonPath)) {
-    const packageJson = await loadRawConfigurationFile(null, packageJsonPath)
+    const packageJson = await loadConfigurationFile(packageJsonPath)
     packages.push(packageJson.name)
   }
 }
