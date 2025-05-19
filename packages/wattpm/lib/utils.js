@@ -27,13 +27,13 @@ export function createLogger (level) {
       }
     },
     pinoPretty({
-      colorize: true,
+      colorize: process.env.NO_COLOR !== 'true',
       customPrettifiers: {
         level (logLevel, _u1, _u2, { label, labelColorized, colors }) {
           return logLevel === 35 ? bgGreen(black(label)) : labelColorized
         }
       },
-      sync: true,
+      sync: true
     })
   )
 }
@@ -160,10 +160,11 @@ export async function findConfigurationFile (logger, root, configurationFile) {
   const configFile = await findRawConfigurationFile(root, configurationFile, 'runtime')
 
   if (!configFile) {
-    return logFatalError(logger,
-      `Cannot find a supported Watt configuration file (like ${bold(
-        'watt.json'
-      )}, a ${bold('wattpm.json')} or a ${bold('platformatic.json')}) in ${bold(root)}.`
+    return logFatalError(
+      logger,
+      `Cannot find a supported Watt configuration file (like ${bold('watt.json')}, a ${bold('wattpm.json')} or a ${bold(
+        'platformatic.json'
+      )}) in ${bold(root)}.`
     )
   }
 
@@ -201,7 +202,7 @@ export async function buildRuntime (logger, configurationFile) {
   const runtimeConfig = config.configManager
   try {
     return await pltBuildRuntime(runtimeConfig)
-    /* c8 ignore next 3 */
+    /* c8 ignore next 3 - Hard to test */
   } catch (e) {
     process.exit(1)
   }

@@ -59,12 +59,10 @@ import { getGlobal } from '@platformatic/globals`
 const pltApi = getGlobal()
 ```
 
-<Issues />
-
 ### Custom Healthcheck
 
 Custom health check can be defined to provide more specific and detailed information about the health of your service, in case the default healthcheck for the service itself is not enough and you need to add more checks for the service dependencies.  
-This can be done by using the `setCustomHealthCheck` method available on the `globalThis.platformatic` object, and run it as a platformatic service.
+This can be done by using the `setCustomHealthCheck` method available on the `globalThis.platformatic` object, and run it as a Platformatic service.
 
 The function should return a boolean value, or an object with the following properties, that will be used to set the status code and body of the response to the healthcheck endpoint:
 
@@ -170,3 +168,5 @@ export function create () {
     }
 }
 ```
+
+<Issues />

@@ -152,24 +152,18 @@ npx platformatic db migrations apply
 Inside `web` folder, let's create a new Platformatic Composer
 
 ```bash
-npx create-platformatic
+npx wattpm create
 ```
 
 This will output:
 
 ```
-Need to install the following packages:
-create-platformatic@2.14.0
-Ok to proceed? (y) y
-
- Hello Fortune Ikechi, welcome to Platformatic 2.14.0
-? Where would you like to create your project? .
-✔ Installing @platformatic/runtime@2.14.0...
- Using existing configuration
-? Which kind of project do you want to create? @platformatic/composer
-✔ Installing @platformatic/composer@2.14.0...
+Hello Fortune Ikechi, welcome to Platformatic 2.64.0
+Using existing configuration ...
+? Which kind of service do you want to create? @platformatic/composer
 ? What is the name of the service? composer
 ? Do you want to create another service? no
+? Which service should be exposed? composer
 ? Do you want to use TypeScript? no
 [16:06:50] INFO: /Users/tmp/my-app/.env written!
 [16:06:50] INFO: /Users/tmp/my-app/.env.sample written!
@@ -178,8 +172,8 @@ Ok to proceed? (y) y
 [16:06:50] INFO: /Users/tmp/my-app/web/composer/.gitignore written!
 [16:06:50] INFO: /Users/tmp/my-app/web/composer/global.d.ts written!
 [16:06:50] INFO: /Users/tmp/my-app/web/composer/README.md written!
-? Do you want to init the git repository? no
-✔ Installing dependencies...
+[16:06:50] INFO: Installing dependencies for the application using npm ...
+[16:06:50] INFO: Installing dependencies for the service composer using npm ...
 [16:06:52] INFO: Project created successfully, executing post-install actions...
 [16:06:52] INFO: You are all set! Run `npm start` to start your project.
 ```

@@ -26,7 +26,7 @@ async function prepareSpawner (t) {
   return repo
 }
 
-test('admin should run watt-admin with npx by default', { skip: isWindows }, async (t) => {
+test('admin should run watt-admin with npx by default', { skip: isWindows }, async t => {
   const root = await prepareSpawner(t)
   await wattpm('admin', { cwd: root, env: { PATH: root } })
 
@@ -34,7 +34,7 @@ test('admin should run watt-admin with npx by default', { skip: isWindows }, asy
   deepStrictEqual(output.trim(), 'npx -y @platformatic/watt-admin')
 })
 
-test('admin should autodetect the package manager', { skip: isWindows }, async (t) => {
+test('admin should autodetect the package manager', { skip: isWindows }, async t => {
   const root = await prepareSpawner(t)
   await writeFile(resolve(root, 'pnpm-lock.yaml'), '--', 'utf8')
   await wattpm('admin', '-l', { cwd: root, env: { PATH: root } })
@@ -43,7 +43,7 @@ test('admin should autodetect the package manager', { skip: isWindows }, async (
   deepStrictEqual(output.trim(), 'pnpx @platformatic/watt-admin@latest')
 })
 
-test('admin should allow to specify the package manager explictly', { skip: isWindows }, async (t) => {
+test('admin should allow to specify the package manager explictly', { skip: isWindows }, async t => {
   const root = await prepareSpawner(t)
   await wattpm('admin', '-P', 'pnpm', { cwd: root, env: { PATH: root } })
 

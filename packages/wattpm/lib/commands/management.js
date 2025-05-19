@@ -79,12 +79,12 @@ export async function psCommand (logger) {
     })
     console.log(
       '\n' +
-      table(
-        [[bold('PID'), bold('Name'), bold('Version'), bold('Uptime'), bold('URL'), bold('Directory')], ...rows],
-        tableConfig
-      )
+        table(
+          [[bold('PID'), bold('Name'), bold('Version'), bold('Uptime'), bold('URL'), bold('Directory')], ...rows],
+          tableConfig
+        )
     )
-    /* c8 ignore next 3 */
+    /* c8 ignore next 3 - Hard to test */
   } catch (error) {
     return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot list runtime: ${error.message}`)
   }
@@ -114,9 +114,13 @@ export async function servicesCommand (logger, args) {
   } catch (error) {
     if (error.code === 'PLT_CTR_RUNTIME_NOT_FOUND') {
       return logFatalError(logger, 'Cannot find a matching runtime.')
-      /* c8 ignore next 3 */
+      /* c8 ignore next 7 - Hard to test */
     } else {
-      return logFatalError(logger, { error: ensureLoggableError(error) }, `Cannot list runtime services: ${error.message}`)
+      return logFatalError(
+        logger,
+        { error: ensureLoggableError(error) },
+        `Cannot list runtime services: ${error.message}`
+      )
     }
   }
 }
@@ -138,10 +142,10 @@ export async function envCommand (logger, args) {
     if (values.table) {
       console.log(
         '\n' +
-        table(
-          [[bold('Name'), bold('Value')], ...Object.entries(env).map(([k, v]) => [bold(k), reset(v)])],
-          tableConfig
-        )
+          table(
+            [[bold('Name'), bold('Value')], ...Object.entries(env).map(([k, v]) => [bold(k), reset(v)])],
+            tableConfig
+          )
       )
     } else {
       console.log(
@@ -155,9 +159,10 @@ export async function envCommand (logger, args) {
       return logFatalError(logger, 'Cannot find a matching runtime.')
     } else if (error.code === 'PLT_CTR_SERVICE_NOT_FOUND') {
       return logFatalError(logger, 'Cannot find a matching service.')
-      /* c8 ignore next 6 */
+      /* c8 ignore next 7 */
     } else {
-      return logFatalError(logger,
+      return logFatalError(
+        logger,
         { error: ensureLoggableError(error) },
         `Cannot get ${service ? 'service' : 'runtime'} environment variables: ${error.message}`
       )
@@ -185,9 +190,10 @@ export async function configCommand (logger, args) {
       return logFatalError(logger, 'Cannot find a matching runtime.')
     } else if (error.code === 'PLT_CTR_SERVICE_NOT_FOUND') {
       return logFatalError(logger, 'Cannot find a matching service.')
-      /* c8 ignore next 6 */
+      /* c8 ignore next 7 */
     } else {
-      return logFatalError(logger,
+      return logFatalError(
+        logger,
         { error: ensureLoggableError(error) },
         `Cannot get ${service ? 'service' : 'runtime'} configuration: ${error.message}`
       )

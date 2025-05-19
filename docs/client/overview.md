@@ -282,7 +282,7 @@ it accordingly.
 
 ## Usage with Standalone Fastify
 
-If a platformatic configuration file is not found, a complete Fastify plugin is generated to be 
+If a Platformatic configuration file is not found, a complete Fastify plugin is generated to be 
 used in your Fastify application like this:
 
 ```js

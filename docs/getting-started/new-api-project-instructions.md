@@ -1,13 +1,13 @@
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-To start the Platformatic creator wizard, run the appropriate command for your package manager in your terminal:
+To start the Watt creator wizard, run the appropriate command for your package manager in your terminal:
 
 <Tabs groupId="package-manager-create">
 <TabItem value="npm" label="npm">
 
 ```bash
-npm create platformatic@latest
+npx wattpm create
 ```
 
 </TabItem>
@@ -21,7 +21,7 @@ yarn create platformatic
 <TabItem value="pnpm" label="pnpm">
 
 ```bash
-pnpm create platformatic@latest
+pnpx wattpm create
 ```
 
 </TabItem>
@@ -31,7 +31,7 @@ This interactive command-line tool will guide you through setting up a new Platf
 
 ```
 - Where would you like to create your project?  => .
-- Which kind of project do you want to create?  => @platformatic/db 
+- Which kind of service do you want to create?  => @platformatic/db 
 - What is the name of the service?              => (generated-randomly), e.g. legal-soup
 - What is the connection string?                => sqlite://./db.sqlite
 - Do you want to create default migrations?     => Yes

@@ -1,11 +1,10 @@
 import { ConfigManager } from '@platformatic/config'
-import { createDirectory, generateDashedName, getPkgManager } from '@platformatic/utils'
+import { createDirectory, executeWithTimeout, generateDashedName, getPkgManager } from '@platformatic/utils'
 import { execa } from 'execa'
-import inquirer from 'inquirer'
+import defaultInquirer from 'inquirer'
 import parseArgs from 'minimist'
 import { readFile, writeFile } from 'node:fs/promises'
-import path, { basename, join } from 'node:path'
-import { setTimeout } from 'node:timers/promises'
+import { basename, join, resolve as pathResolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import ora from 'ora'
 import pino from 'pino'
@@ -13,40 +12,41 @@ import pretty from 'pino-pretty'
 import resolve from 'resolve'
 import { request } from 'undici'
 import { createGitRepository } from './create-git-repository.mjs'
-import { say } from './say.mjs'
-import { getUsername, getVersion } from './utils.mjs'
-
+import { getUsername, getVersion, say } from './utils.mjs'
 const MARKETPLACE_HOST = 'https://marketplace.platformatic.dev'
-const defaultStackables = ['@platformatic/composer', '@platformatic/db', '@platformatic/service']
+const defaultStackables = ['@platformatic/service', '@platformatic/composer', '@platformatic/db']
 
 export async function fetchStackables (marketplaceHost, modules = []) {
+  const stackables = new Set([...modules, ...defaultStackables])
+
   // Skip the remote network request if we are running tests
   if (process.env.MARKETPLACE_TEST) {
-    return [...defaultStackables, ...modules]
+    return Array.from(stackables)
   }
 
-  marketplaceHost = marketplaceHost || MARKETPLACE_HOST
-
-  const stackablesRequest = request(marketplaceHost + '/templates')
-  const stackablesRequestTimeout = setTimeout(5000, new Error('Request timed out'))
-
+  let response
   try {
-    const { statusCode, body } = await Promise.race([stackablesRequest, stackablesRequestTimeout])
-    if (statusCode === 200) {
-      return [...(await body.json()).map(stackable => stackable.name), ...modules]
-    }
-  } catch {}
+    response = await executeWithTimeout(request(new URL('/templates', marketplaceHost || MARKETPLACE_HOST)), 5000)
+  } catch (err) {
+    // No-op: we just use the default stackables
+  }
 
-  return [...defaultStackables, ...modules]
+  if (response && response.statusCode === 200) {
+    for (const stackable of await response.body.json()) {
+      stackables.add(stackable.name)
+    }
+  }
+
+  return Array.from(stackables)
 }
 
-export async function chooseStackable (stackables) {
+export async function chooseStackable (inquirer, stackables) {
   const options = await inquirer.prompt({
     type: 'list',
     name: 'type',
-    message: 'Which kind of project do you want to create?',
-    default: stackables.indexOf('@platformatic/service'),
-    choices: stackables,
+    message: 'Which kind of service do you want to create?',
+    default: stackables[0],
+    choices: stackables
   })
 
   return options.type
@@ -59,7 +59,9 @@ async function importOrLocal ({ pkgManager, name, projectDir, pkg }) {
     try {
       const fileToImport = resolve.sync(pkg, { basedir: projectDir })
       return await import(pathToFileURL(fileToImport))
-    } catch {}
+    } catch {
+      // No-op
+    }
 
     let version = ''
 
@@ -84,14 +86,14 @@ async function importOrLocal ({ pkgManager, name, projectDir, pkg }) {
   }
 }
 
-export const createPlatformatic = async argv => {
+export async function createPlatformatic (argv) {
   const args = parseArgs(argv, {
     default: {
       install: true,
       module: []
     },
     boolean: ['install'],
-    string: ['global-config', 'marketplace-host', 'module'],
+    string: ['global-config', 'marketplace-host', 'module']
   })
 
   const username = await getUsername()
@@ -102,66 +104,78 @@ export const createPlatformatic = async argv => {
   const logger = pino(
     pretty({
       translateTime: 'SYS:HH:MM:ss',
-      ignore: 'hostname,pid',
+      ignore: 'hostname,pid'
     })
   )
 
   const pkgManager = getPkgManager()
   const modules = Array.isArray(args.module) ? args.module : [args.module]
-  await createApplication(args, logger, pkgManager, modules)
+  await createApplication(logger, pkgManager, modules, args['marketplace-host'], args['install'])
 }
 
-async function createApplication (args, logger, pkgManager, modules) {
+export async function createApplication (
+  logger,
+  packageManager,
+  modules,
+  marketplaceHost,
+  install,
+  additionalGeneratorOptions = {}
+) {
+  // This is only used for testing for now, but might be useful in the future
+  const inquirer = process.env.INQUIRER_PATH ? await import(process.env.INQUIRER_PATH) : defaultInquirer
+
   let projectDir = process.cwd()
   if (!(await ConfigManager.findConfigFile())) {
     const optionsDir = await inquirer.prompt({
       type: 'input',
       name: 'dir',
       message: 'Where would you like to create your project?',
-      default: 'platformatic',
+      default: 'platformatic'
     })
 
-    projectDir = path.resolve(process.cwd(), optionsDir.dir)
+    projectDir = pathResolve(process.cwd(), optionsDir.dir)
   }
   const projectName = basename(projectDir)
 
   await createDirectory(projectDir)
 
   const runtime = await importOrLocal({
-    pkgManager,
+    pkgManager: packageManager,
     name: projectName,
     projectDir,
-    pkg: '@platformatic/runtime',
+    pkg: '@platformatic/runtime'
   })
 
   const generator = new runtime.Generator({
     logger,
     name: projectName,
     inquirer,
+    ...additionalGeneratorOptions
   })
+
   generator.setConfig({
     ...generator.config,
-    targetDirectory: projectDir,
+    targetDirectory: projectDir
   })
 
   await generator.populateFromExistingConfig()
   if (generator.existingConfig) {
-    await say('Using existing configuration')
+    await say('Using existing configuration ...')
   }
 
-  const stackables = await fetchStackables(args['marketplace-host'], modules)
+  const stackables = await fetchStackables(marketplaceHost, modules)
 
-  const names = []
+  const names = generator.existingServices ?? []
 
   while (true) {
-    const stackableName = await chooseStackable(stackables)
+    const stackableName = await chooseStackable(inquirer, stackables)
     // await say(`Creating a ${stackable} project in ${projectDir}...`)
 
     const stackable = await importOrLocal({
-      pkgManager,
+      pkgManager: packageManager,
       name: projectName,
       projectDir,
-      pkg: stackableName,
+      pkg: stackableName
     })
 
     const { serviceName } = await inquirer.prompt({
@@ -183,19 +197,19 @@ async function createApplication (args, logger, pkgManager, modules) {
         }
 
         return true
-      },
+      }
     })
 
     names.push(serviceName)
 
     const stackableGenerator = new stackable.Generator({
       logger,
-      inquirer,
+      inquirer
     })
 
     stackableGenerator.setConfig({
       ...stackableGenerator.config,
-      serviceName,
+      serviceName
     })
 
     generator.addService(stackableGenerator, serviceName)
@@ -210,9 +224,9 @@ async function createApplication (args, logger, pkgManager, modules) {
         default: false,
         choices: [
           { name: 'yes', value: false },
-          { name: 'no', value: true },
-        ],
-      },
+          { name: 'no', value: true }
+        ]
+      }
     ])
 
     if (shouldBreak) {
@@ -221,15 +235,16 @@ async function createApplication (args, logger, pkgManager, modules) {
   }
 
   let entrypoint = ''
+  const chooseEntrypoint = names.length > 1 && (!generator.existingConfigRaw || !generator.existingConfigRaw.entrypoint)
 
-  if (names.length > 1) {
+  if (chooseEntrypoint) {
     const results = await inquirer.prompt([
       {
         type: 'list',
         name: 'entrypoint',
         message: 'Which service should be exposed?',
-        choices: names.map(name => ({ name, value: name })),
-      },
+        choices: names.map(name => ({ name, value: name }))
+      }
     ])
     entrypoint = results.entrypoint
   } else {
@@ -240,40 +255,54 @@ async function createApplication (args, logger, pkgManager, modules) {
 
   await generator.ask()
   await generator.prepare()
+
+  if (chooseEntrypoint) {
+    // This can return null if the generator was not supposed to modify the config
+    const configObject = generator.getFileObject(generator.runtimeConfig)
+    const config = configObject ? JSON.parse(configObject.contents) : generator.existingConfigRaw
+    config.entrypoint = entrypoint
+
+    generator.addFile({ path: '', file: generator.runtimeConfig, contents: JSON.stringify(config, null, 2) })
+  }
+
   await generator.writeFiles()
 
   // Create project here
+  if (!generator.existingConfigRaw) {
+    const { initGitRepository } = await inquirer.prompt({
+      type: 'list',
+      name: 'initGitRepository',
+      message: 'Do you want to init the git repository?',
+      default: false,
+      choices: [
+        { name: 'yes', value: true },
+        { name: 'no', value: false }
+      ]
+    })
 
-  const { initGitRepository } = await inquirer.prompt({
-    type: 'list',
-    name: 'initGitRepository',
-    message: 'Do you want to init the git repository?',
-    default: false,
-    choices: [
-      { name: 'yes', value: true },
-      { name: 'no', value: false },
-    ],
-  })
-
-  if (initGitRepository) {
-    await createGitRepository(logger, projectDir)
+    if (initGitRepository) {
+      await createGitRepository(logger, projectDir)
+    }
   }
 
-  if (pkgManager === 'pnpm') {
+  if (packageManager === 'pnpm') {
     // add pnpm-workspace.yaml file if needed
     const content = `packages:
 # all packages in direct subdirs of packages/
-- 'services/*'`
+- 'services/*'
+- 'web/*'`
     await writeFile(join(projectDir, 'pnpm-workspace.yaml'), content)
   }
 
-  if (args.install) {
+  if (typeof install === 'function') {
+    await install(projectDir, generator.runtimeConfig, packageManager)
+  } else if (install) {
     const spinner = ora('Installing dependencies...').start()
-    await execa(pkgManager, ['install'], { cwd: projectDir })
+    await execa(packageManager, ['install'], { cwd: projectDir })
     spinner.succeed()
   }
 
   logger.info('Project created successfully, executing post-install actions...')
   await generator.postInstallActions()
-  logger.info('You are all set! Run `npm start` to start your project.')
+  logger.info(`You are all set! Run \`${packageManager} start\` to start your project.`)
 }

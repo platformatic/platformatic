@@ -8,7 +8,7 @@ source files before shipping to a server.
 ## Setup
 
 The following is supported by all Platformatic applications, as they are all based on the same [plugin system](/service/plugin.md).
-If you have generated your application using `npx create-platformatic@latest`, you will have a similar section in your config file:
+If you have generated your application using `npx wattpm create`, you will have a similar section in your config file:
 
 ```json
 {

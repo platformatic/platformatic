@@ -122,7 +122,7 @@ async function myPlugin (app, opts) {
 
 ## TypeScript Support
 
-To ensure this module works in a TypeScript setup (outside an application created with `create-platformatic`), you need to add the following to your types:
+To ensure this module works in a TypeScript setup (outside an application created with `wattpm create`), you need to add the following to your types:
 
 ### Type Declarations 
 

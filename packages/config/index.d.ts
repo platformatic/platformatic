@@ -53,6 +53,7 @@ interface ISerializer {
 export class ConfigManager<T = object> {
   constructor(opts: IConfigManagerOptions)
   current: T
+  currentRaw: T
   fullPath: string
   dirname: string
   getSerializer(): ISerializer
@@ -102,8 +103,20 @@ export interface StackableInterface {
   setConnectionStatus?: (status: string) => Promise<void>
   setOpenapiSchema?: (schema: object) => Promise<void>
   setGraphqlSchema?: (schema: string) => Promise<void>
-  setCustomHealthCheck?: (healthCheck: () => boolean | Promise<boolean> | { status: boolean, statusCode?: number, body?: string } | Promise<{ status: boolean, statusCode?: number, body?: string }>) => Promise<void>
-  setCustomReadinessCheck?: (readinessCheck: () => boolean | Promise<boolean> | { status: boolean, statusCode?: number, body?: string } | Promise<{ status: boolean, statusCode?: number, body?: string }>) => Promise<void>
+  setCustomHealthCheck?: (
+    healthCheck: () =>
+      | boolean
+      | Promise<boolean>
+      | { status: boolean; statusCode?: number; body?: string }
+      | Promise<{ status: boolean; statusCode?: number; body?: string }>
+  ) => Promise<void>
+  setCustomReadinessCheck?: (
+    readinessCheck: () =>
+      | boolean
+      | Promise<boolean>
+      | { status: boolean; statusCode?: number; body?: string }
+      | Promise<{ status: boolean; statusCode?: number; body?: string }>
+  ) => Promise<void>
   collectMetrics?: () => Promise<any>
   getMetrics: ({ format: string }) => Promise<string | Array<object>>
   getMeta?(): () => Promise<object>
@@ -178,6 +191,6 @@ export function findConfigurationFile(
   configurationFile: string | null,
   schemas?: string | string[],
   typeOrCandidates?: boolean | string | string[]
-): void
+): string | undefined
 export function loadConfigurationFile(configurationFile: string): Promise<object>
 export function saveConfigurationFile(configurationFile: string, config: object): Promise<void>
