@@ -1,13 +1,13 @@
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-To start the Platformatic creator wizard, run the appropriate command for your package manager in your terminal:
+To start the Watt creator wizard, run the appropriate command for your package manager in your terminal:
 
 <Tabs groupId="package-manager-create">
 <TabItem value="npm" label="npm">
 
 ```bash
-npm create platformatic@latest
+npx wattpm create
 ```
 
 </TabItem>
@@ -21,7 +21,7 @@ yarn create platformatic
 <TabItem value="pnpm" label="pnpm">
 
 ```bash
-pnpm create platformatic@latest
+pnpx wattpm create
 ```
 
 </TabItem>

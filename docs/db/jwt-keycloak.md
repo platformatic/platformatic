@@ -118,11 +118,11 @@ Note also that the access token is valid for 5 minutes (keycloak default)
 
 ## Platformatic Setup and Test
 
-Create a platformatic application using `npx create-platformatic@latest`.
+Create a Platformatic application using `npx wattpm create`.
 Call it `keycloak-test` with a `db-service`. 
 Specify to use sqlite and the default migrations:
 
-![Create Platformatic](./keycloak-images/create_platformatic.png)
+![Wattpm Create](./keycloak-images/watt-create.png)
 
 Go to `keycloak-test/services/db-service` folder and open `platformatic.json`.
 Add the `authorization` section with the `jwt` configuration:

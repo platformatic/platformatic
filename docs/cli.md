@@ -782,7 +782,7 @@ In order to add type support to your plugins, you need to install some additiona
 dependencies. To do this, copy and run an `npm install` command with dependencies
 that "platformatic db types" will ask you.
 
-Here is an example of a platformatic plugin.js with jsdoc support.
+Here is an example of a Platformatic plugin.js with jsdoc support.
 You can use it to add autocomplete to your code.
 
 ``` javascript
@@ -1067,10 +1067,10 @@ To get the list of runtimes with enabled management API use the
 
 Available commands:
 
-* `ps` - lists all platformatic runtime applications.
-* `stop` - stops a platformatic runtime application.
-* `restart` - restarts all platformatic runtime services.
-* `reload` - reloads all platformatic runtime services.
+* `ps` - lists all Platformatic runtime applications.
+* `stop` - stops a Platformatic runtime application.
+* `restart` - restarts all Platformatic runtime services.
+* `reload` - reloads all Platformatic runtime services.
 * `services` - lists the runtime services.
 * `config` - prints runtime or runtime service config file.
 * `env` - lists the runtime environment variables.
@@ -1171,7 +1171,7 @@ set the `managementApi` option to `true` in the runtime configuration file.
 
 #### reload
 
-Reloads a platformatic runtime application.
+Reloads a Platformatic runtime application.
 
 ``` bash
   $ platformatic ctl reload -n runtime-name
@@ -1194,7 +1194,7 @@ To get the list of runtimes with enabled management API use the
 
 #### restart
 
-Restarts a platformatic runtime application.
+Restarts a Platformatic runtime application.
 
 ``` bash
   $ platformatic ctl restart -n runtime-name
@@ -1234,7 +1234,7 @@ To get the list of runtimes with enabled management API use the
 
 #### stop
 
-Stops a platformatic runtime application.
+Stops a Platformatic runtime application.
 
 ``` bash
   $ platformatic ctl stop -n runtime-name

@@ -5,9 +5,9 @@ deliver logs to [ElasticSearch](https://www.elastic.co/elasticsearch/)
 or via any other supported [transports](https://getpino.io/#/docs/transports).
 The logs will then be visualized via [Kibana](https://www.elastic.co/kibana).
 
-## Create a platformatic application
+## Create a Platformatic application
 
-Create a platformatic application using `npx create-platformatic@latest`.
+Create a Platformatic application using `npx wattpm create`.
 
 ## Setup ElasticSearch and Kibana
 

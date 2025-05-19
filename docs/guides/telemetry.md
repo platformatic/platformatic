@@ -23,48 +23,54 @@ In this way we show that the telemetry is propagated from the Composer throughou
 Let's setup all these components:
 
 ### Platformatic DB Service
-Create a folder for DB and cd into it:
+
+Create a DB service using `npx wattpm create`:
+
 ```bash
 mkdir test-db
 cd test-db
+npx wattpm create
 ```
-Then create a `db` in the folder using `npx create-platformatic@latest`:
 
-```bash
-npx create-platformatic@latest
-```
 To make it simple, use `sqlite` and create/apply the default migrations. This DB Service is exposed on port `5042`:
 
 ```bash 
-
-➜ npx create-platformatic@latest
-
- Hello user, welcome to Platformatic 0.32.0!
- Let's start by creating a new project.
-? Which kind of service do you want to create? DB
+Hello User, welcome to Watt 2.64.0!
 ? Where would you like to create your project? .
-? What database do you want to use? SQLite
-? Do you want to use the connection string "sqlite://./db.sqlite"? Confirm
+? Which kind of service do you want to create? @platformatic/db
+? What is the name of the service? main
+? What is the connection string? sqlite://./db.sqlite
 ? Do you want to create default migrations? yes
-? Do you want to create a plugin? no
+? Do you want to create another service? no
 ? Do you want to use TypeScript? no
 ? What port do you want to use? 5042
-[15:40:46] INFO: Configuration file platformatic.db.json successfully created.
-[15:40:46] INFO: Environment file .env successfully created.
-[15:40:46] INFO: Migrations folder migrations successfully created.
-[15:40:46] INFO: Migration file 001.do.sql successfully created.
-[15:40:46] INFO: Migration file 001.undo.sql successfully created.
-[15:40:46] INFO: Plugin file created at plugin.js
-? Do you want to run npm install? no
-? Do you want to apply migrations? yes
-✔ ...done!
-? Do you want to generate types? no
- 
-All done! Please open the project directory and check the README.
-Will test this in one example with a Platformatic Composer that proxy requests to a Platformatic Service, which in turn invokes a Platformatic DB.
-
+[12:11:45.131] INFO (504): /work/package.json written!
+[12:11:45.135] INFO (504): /work/watt.json written!
+[12:11:45.137] INFO (504): /work/.env written!
+[12:11:45.138] INFO (504): /work/.env.sample written!
+[12:11:45.138] INFO (504): /work/.gitignore written!
+[12:11:45.139] INFO (504): /work/README.md written!
+[12:11:45.140] INFO (504): /work/web/main/package.json written!
+[12:11:45.141] INFO (504): /work/web/main/platformatic.json written!
+[12:11:45.142] INFO (504): /work/web/main/plugins/example.js written!
+[12:11:45.144] INFO (504): /work/web/main/routes/root.js written!
+[12:11:45.144] INFO (504): /work/web/main/test/helper.js written!
+[12:11:45.145] INFO (504): /work/web/main/test/plugins/example.test.js written!
+[12:11:45.146] INFO (504): /work/web/main/test/routes/root.test.js written!
+[12:11:45.146] INFO (504): /work/web/main/.gitignore written!
+[12:11:45.147] INFO (504): /work/web/main/migrations/001.do.sql written!
+[12:11:45.148] INFO (504): /work/web/main/migrations/001.undo.sql written!
+[12:11:45.148] INFO (504): /work/web/main/README.md written!
+[12:11:45.149] INFO (504): /work/web/main/test/routes/movies.test.js written!
+[12:11:45.149] INFO (504): /work/web/main/global.d.ts written!
+? Do you want to init the git repository? no
+[12:11:46.798] INFO (504): Installing dependencies for the application using npm ...
+[12:11:51.343] INFO (504): Installing dependencies for the service db using npm ...
+[12:11:52.165] INFO (504): Project created successfully, executing post-install actions...
+[12:11:52.166] INFO (504): You are all set! Run `npm start` to start your project.
 ```
-Open the `platformatic.db.json` file and add the telementry configuration:
+
+Open the `web/main/platformatic.json` file and add the telemetry configuration:
 
 ```json
   "telemetry": {
@@ -77,38 +83,57 @@ Open the `platformatic.db.json` file and add the telementry configuration:
     }
   }
 ```
-Finally, start the DB service:
+
+Finally, start the application:
 
 ```bash
-npx platformatic db start
+npm run start
 ```
+
 ### Platformatic Service
+
 Create at the same level of `test-db` another folder for Service and cd into it:
 
 ```bash
 mkdir test-service
 cd test-service
+npx wattpm create
 ```
 
-Then create a `service` on the `5043` port in the folder using `npx create-platformatic@latest`:
+Then create a `service` on the `5043` port in the folder using `npx wattpm create`:
 
 ```bash
-➜ npx create-platformatic@latest
-
- Hello user, welcome to Platformatic 0.32.0!
- Let's start by creating a new project.
-? Which kind of service do you want to create? Service
+Hello User, welcome to Watt 2.64.0!
 ? Where would you like to create your project? .
-? Do you want to run npm install? no
+? Which kind of service do you want to create? @platformatic/service
+? What is the name of the service? main
+? Do you want to create another service? no
 ? Do you want to use TypeScript? no
 ? What port do you want to use? 5043
-[15:55:35] INFO: Configuration file platformatic.service.json successfully created.
-[15:55:35] INFO: Environment file .env successfully created.
-[15:55:35] INFO: Plugins folder "plugins" successfully created.
-[15:55:35] INFO: Routes folder "routes" successfully created.
-
+[12:14:16.552] INFO (1819): /work/test-service/package.json written!
+[12:14:16.557] INFO (1819): /work/test-service/watt.json written!
+[12:14:16.558] INFO (1819): /work/test-service/.env written!
+[12:14:16.559] INFO (1819): /work/test-service/.env.sample written!
+[12:14:16.560] INFO (1819): /work/test-service/.gitignore written!
+[12:14:16.560] INFO (1819): /work/test-service/README.md written!
+[12:14:16.562] INFO (1819): /work/test-service/web/main/package.json written!
+[12:14:16.563] INFO (1819): /work/test-service/web/main/platformatic.json written!
+[12:14:16.564] INFO (1819): /work/test-service/web/main/plugins/example.js written!
+[12:14:16.566] INFO (1819): /work/test-service/web/main/routes/root.js written!
+[12:14:16.566] INFO (1819): /work/test-service/web/main/test/helper.js written!
+[12:14:16.567] INFO (1819): /work/test-service/web/main/test/plugins/example.test.js written!
+[12:14:16.567] INFO (1819): /work/test-service/web/main/test/routes/root.test.js written!
+[12:14:16.567] INFO (1819): /work/test-service/web/main/.gitignore written!
+[12:14:16.568] INFO (1819): /work/test-service/web/main/global.d.ts written!
+[12:14:16.568] INFO (1819): /work/test-service/web/main/README.md written!
+? Do you want to init the git repository? no
+[12:14:17.793] INFO (1819): Installing dependencies for the application using npm ...
+[12:14:45.663] INFO (1819): Installing dependencies for the service service using npm ...
+[12:14:46.568] INFO (1819): Project created successfully, executing post-install actions...
+[12:14:46.568] INFO (1819): You are all set! Run `npm start` to start your project.
 ```
-Open the `platformatic.service.json` file and add the following telemetry configuration (it's exactly the same as `DB`, but with a different `serviceName`)
+
+Open the `web/main/platformatic.json` file and add the following telemetry configuration (it's exactly the same as `DB`, but with a different `serviceName`)
 
 ```json
   "telemetry": {
@@ -154,8 +179,9 @@ This code calls `movies` to get all the movies and returns the length of the arr
 Finally, start the service:
 
 ```bash
-npx platformatic service start
+npm run start
 ```
+
 ### Platformatic Composer
 Create at the same level of `test-db` and `test-service` another folder for Composer and cd into it:
 
@@ -163,36 +189,40 @@ Create at the same level of `test-db` and `test-service` another folder for Comp
 ```bash
 mkdir test-composer
 cd test-composer
+npx wattpm create
 ```
-Then create a `composer` on the `5044` port in the folder using `npx create-platformatic@latest`:
 
 ```bash
-➜ npx create-platformatic@latest
-
- Hello marcopiraccini, welcome to Platformatic 0.32.0!
- Let's start by creating a new project.
-? Which kind of service do you want to create? Composer
+Hello User, welcome to Watt 2.64.0!
 ? Where would you like to create your project? .
+? Which kind of service do you want to create? @platformatic/composer
+? What is the name of the service? main
+? Do you want to create another service? no
+? Do you want to use TypeScript? no
 ? What port do you want to use? 5044
-? Do you want to run npm install? no
-[16:05:28] INFO: Configuration file platformatic.composer.json successfully created.
-[16:05:28] INFO: Environment file .env successfully created.
- 
-All done! Please open the project directory and check the README.
+[12:19:25.784] INFO (3205): /work/test-composer/package.json written!
+[12:19:25.790] INFO (3205): /work/test-composer/watt.json written!
+[12:19:25.791] INFO (3205): /work/test-composer/.env written!
+[12:19:25.792] INFO (3205): /work/test-composer/.env.sample written!
+[12:19:25.793] INFO (3205): /work/test-composer/.gitignore written!
+[12:19:25.793] INFO (3205): /work/test-composer/README.md written!
+[12:19:25.794] INFO (3205): /work/test-composer/web/main/package.json written!
+[12:19:25.795] INFO (3205): /work/test-composer/web/main/platformatic.json written!
+[12:19:25.796] INFO (3205): /work/test-composer/web/main/.gitignore written!
+[12:19:25.797] INFO (3205): /work/test-composer/web/main/global.d.ts written!
+[12:19:25.798] INFO (3205): /work/test-composer/web/main/README.md written!
+? Do you want to init the git repository? no
+[12:19:26.820] INFO (3205): Installing dependencies for the application using npm ...
+[12:19:57.209] INFO (3205): Installing dependencies for the service main using npm ...
+[12:19:58.573] INFO (3205): Project created successfully, executing post-install actions...
+[12:19:58.573] INFO (3205): You are all set! Run `npm start` to start your project.
 ```
 
-Open `platformatic.composer.js` and change it to the following:
+Open `web/main/platformatic.json` and change it to the following:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
-  "server": {
-    "hostname": "{PLT_SERVER_HOSTNAME}",
-    "port": "{PORT}",
-    "logger": {
-      "level": "{PLT_SERVER_LOGGER_LEVEL}"
-    }
-  },
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.64.0.json",
   "composer": {
     "services": [
       {
@@ -223,10 +253,11 @@ Note that we just added `test-service` as `origin` of the proxied service and ad
 Finally, start the composer:
 
 ```bash
-npx platformatic composer start
+npm run start
 ```
 
 ## Run the Test
+
 Check that the composer is exposing `movies-length` opening: http://127.0.0.1:5044/documentation/
 
 You should see:
