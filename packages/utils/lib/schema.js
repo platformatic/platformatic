@@ -289,7 +289,12 @@ const logger = {
       },
       required: ['paths'],
       additionalProperties: false
-    }
+    },
+
+    captureStdio: {
+      type: 'boolean',
+      default: true
+    }    
   },
 
   required: ['level'],

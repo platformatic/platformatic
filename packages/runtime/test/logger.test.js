@@ -13,7 +13,6 @@ const WAIT_LOGS_FLUSH = 3_000
 
 test('should use full logger options - formatters, timestamp, redaction', async t => {
   process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
-  process.env.PLT_RUNTIME_LOGGER_STDOUT = 1
   const file = path.join(process.env.LOG_DIR, 'service.log')
   const serviceRoot = path.join(__dirname, '..', 'fixtures', 'logger-options')
 
@@ -46,7 +45,6 @@ test('should use full logger options - formatters, timestamp, redaction', async 
 
 test('should inherit full logger options from runtime to a platformatic/service', async t => {
   process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
-  process.env.PLT_RUNTIME_LOGGER_STDOUT = 1
   const file = path.join(process.env.LOG_DIR, 'service.log')
 
   const serviceRoot = path.join(__dirname, '..', 'fixtures', 'logger-options')
@@ -100,7 +98,6 @@ test('should inherit full logger options from runtime to a platformatic/service'
 
 test('should inherit full logger options from runtime to different services', async t => {
   process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
-  process.env.PLT_RUNTIME_LOGGER_STDOUT = 1
   const file = path.join(process.env.LOG_DIR, 'service.log')
   const serviceRoot = path.join(__dirname, '..', 'fixtures', 'logger-options-all')
 
@@ -125,9 +122,8 @@ test('should inherit full logger options from runtime to different services', as
   }
 })
 
-test('should get proper formatted logs from thread services', { only: true }, async t => {
+test('should get json logs from thread services when they are not pino default config', async t => {
   process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
-  process.env.PLT_RUNTIME_LOGGER_STDOUT = 1
   const file = path.join(process.env.LOG_DIR, 'service.log')
   const serviceRoot = path.join(__dirname, '..', 'fixtures', 'logger-options-all')
 
@@ -143,8 +139,6 @@ test('should get proper formatted logs from thread services', { only: true }, as
   await wait(WAIT_LOGS_FLUSH)
 
   const content = readFileSync(file, 'utf8')
-
-  console.log(content)
 
   const logs = content.split('\n')
     .filter(line => line.trim() !== '').map(line => JSON.parse(line))
@@ -164,3 +158,55 @@ test('should get proper formatted logs from thread services', { only: true }, as
       log.stdout.msg === 'request completed'
   }))
 })
+
+test('should handle logs from thread services as they are with captureStdio: false', { only: true }, async t => {
+  process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
+  const file = path.join(process.env.LOG_DIR, 'service.log')
+  const serviceRoot = path.join(__dirname, '..', 'fixtures', 'logger-no-capture')
+
+  const app = await buildServer(path.join(serviceRoot, 'platformatic.json'))
+  t.after(async () => {
+    await app.close()
+  })
+  const url = await app.start()
+
+  await request(url, { path: '/service/' })
+  await request(url, { path: '/node/' })
+
+  // wait for logger flush
+  await wait(WAIT_LOGS_FLUSH)
+
+  const content = readFileSync(file, 'utf8')
+
+  const logs = content.split('\n')
+    .filter(line => line.trim() !== '').map(line => JSON.parse(line))
+
+  assert.ok(logs.find(log => {
+    return log.nodeLevel === 'debug' &&
+      log.name === 'node' &&
+      log.msg === 'call route / on node'
+  }))
+
+  assert.ok(logs.find(log => {
+    return log.serviceLevel === 'debug' &&
+      log.name === 'service' &&
+      log.msg === 'call route / on service'
+  }))
+
+  assert.ok(logs.find(log => {
+    return log.customLevelName === 'info' &&
+      log.msg === 'Starting the service "node"...'
+  }))
+
+  assert.ok(logs.find(log => {
+    return log.customLevelName === 'info' &&
+      log.msg === 'Starting the service "service"...'
+  }))
+
+  assert.ok(logs.find(log => {
+    return log.customLevelName === 'info' &&
+      log.msg === 'Starting the service "composer"...'
+  }))
+})
+
+// TODO managementApi false

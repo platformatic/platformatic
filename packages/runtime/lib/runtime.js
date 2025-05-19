@@ -1744,6 +1744,14 @@ class Runtime extends EventEmitter {
       return
     }
 
+    // When captureStdio is false, write directly to the logger destination
+    if (!this.#configManager.current.logger.captureStdio) {
+      this.#loggerDestination.lastLogger = logger
+      this.#loggerDestination.write(data)
+
+      return
+    }
+
     let plainMessages = ''
     for (const raw of data.split('\n')) {
       // First of all, try to parse the message as JSON
