@@ -71,6 +71,7 @@ class RuntimeGenerator extends BaseGenerator {
       dependencies: {
         '@platformatic/runtime': `^${this.platformaticVersion}`,
         platformatic: `^${this.platformaticVersion}`,
+        wattpm: `^${this.platformaticVersion}`,
         ...this.config.dependencies
       },
       engines: {

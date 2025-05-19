@@ -82,7 +82,8 @@ test('Creates a Platformatic DB service with no migrations', { timeout }, async 
   console.log(baseServiceDir)
   equal(await isFileAccessible(join(baseServiceDir, 'platformatic.json')), true)
   equal(await isFileAccessible(join(baseServiceDir, 'README.md')), true)
-  equal(await isFileAccessible(join(baseServiceDir, 'migrations')), false)
+  // This is accessible only because is a folder with a .gitkeep file only
+  equal(await isFileAccessible(join(baseServiceDir, 'migrations')), true)
   equal(await isFileAccessible(join(baseServiceDir, 'routes', 'root.js')), true)
   equal(await isFileAccessible(join(baseServiceDir, 'plugins', 'example.js')), true)
 })

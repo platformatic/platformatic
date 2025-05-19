@@ -65,6 +65,8 @@ class DBGenerator extends BaseGenerator {
         dir: migrations,
         autoApply: `{${this.getEnvVarName('PLT_APPLY_MIGRATIONS')}}`,
       }
+
+      this.addFile({ path: 'migrations', file: '.gitkeep', contents: '' })
     }
 
     if (plugin === true) {

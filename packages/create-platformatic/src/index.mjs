@@ -289,7 +289,8 @@ export async function createApplication (
     // add pnpm-workspace.yaml file if needed
     const content = `packages:
 # all packages in direct subdirs of packages/
-- 'services/*'`
+- 'services/*'
+- 'web/*'`
     await writeFile(join(projectDir, 'pnpm-workspace.yaml'), content)
   }
 

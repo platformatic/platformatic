@@ -61,7 +61,7 @@ class FileGenerator {
     }
     await createDirectory(this.targetDirectory)
     for (const fileToWrite of this.files) {
-      if (fileToWrite.contents.length === 0) {
+      if (fileToWrite.contents.length === 0 && !fileToWrite.file.match(/^\..+keep$/)) {
         continue
       }
       const baseDir = join(this.targetDirectory, fileToWrite.path)
