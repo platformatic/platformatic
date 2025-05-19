@@ -1,11 +1,13 @@
+import { isWindows } from '@platformatic/basic/test/helper.js'
 import { deepStrictEqual, ok } from 'node:assert'
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
+import { pathToFileURL } from 'node:url'
 import { createTemporaryDirectory, wattpm } from './helper.js'
 
 async function setupInquirer (root, expected) {
-  const newInquirerPath = resolve(root, 'inquirer.js')
+  let newInquirerPath = resolve(root, 'inquirer.js')
 
   const template = await readFile(new URL('./fixtures/inquirer-template.js', import.meta.url), 'utf8')
 
@@ -14,6 +16,10 @@ async function setupInquirer (root, expected) {
     template.replace('const expected = []', `const expected = ${JSON.stringify(expected)}\n`),
     'utf-8'
   )
+
+  if (isWindows) {
+    newInquirerPath = pathToFileURL(newInquirerPath).toString()
+  }
 
   return newInquirerPath
 }
