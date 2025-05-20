@@ -33,26 +33,22 @@ for (const env of Object.keys(envs)) {
     const logs = await getLogs(runtime)
 
     // logs from next app
-    {
-      const nextLog = logs.find(l => l.name === 'next' && l.msg.includes('Home page called'))
-      const msgs = nextLog.msg.split('\n').find(l => l.includes('Home page called'))
-      const log = JSON.parse(msgs)
-      assert.ok(log.level === 'INFO' &&
-        log.time.length === 24 &&
-        log.bindings === 'custom' &&
-        log.secret === '***HIDDEN***' &&
-        log.msg === 'Home page called')
-    }
+    assert.ok(logs.find(log => {
+      return log.stdout &&
+          log.stdout.level === 'INFO' &&
+          log.stdout.time.length === 24 &&
+          log.stdout.bindings === 'custom' &&
+          log.stdout.secret === '***HIDDEN***' &&
+          log.stdout.msg === 'Home page called'
+    }))
 
     // logs from cache
-    {
-      const cacheLog = logs.find(l => l.name === 'next' && l.msg.includes('cache get'))
-      const msgs = cacheLog.msg.split('\n').find(l => l.includes('cache get'))
-      const log = JSON.parse(msgs)
-      assert.ok(log.level === 'TRACE' &&
-        log.time.length === 24 &&
-        log.bindings === 'custom' &&
-        log.msg === 'cache get')
-    }
+    assert.ok(logs.find(log => {
+      return log.stdout &&
+          log.stdout.level === 'TRACE' &&
+          log.stdout.time.length === 24 &&
+          log.stdout.bindings === 'custom' &&
+          log.stdout.msg === 'cache get'
+    }))
   })
 }
