@@ -15,6 +15,12 @@ Create or copy your application inside the `web` or `services` folder. If you ar
 
 You are all set, you can now start your runtime as usual via `wattpm dev` or `plt start`.
 
+## Install
+
+```bash
+npm install @platformatic/node
+```
+
 ## Example configuration file
 
 ```json
