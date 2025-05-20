@@ -5,7 +5,7 @@
 const pkg = require('../package.json')
 const openApiDefs = require('./openapi-schema-defs')
 const telemetry = require('@platformatic/telemetry').schema
-const { fastifyServer: server, cors, watch } = require('@platformatic/utils').schemaComponents
+const { fastifyServer: server, cors, watch, wrappedRuntime } = require('@platformatic/utils').schemaComponents
 
 const plugins = {
   type: 'object',
@@ -286,7 +286,7 @@ const proxy = {
                 reconnectDecay: { type: 'number' },
                 connectionTimeout: { type: 'number' },
                 reconnectOnClose: { type: 'boolean' },
-                logs: { type: 'boolean' },
+                logs: { type: 'boolean' }
               }
             },
             hooks: {
@@ -405,7 +405,8 @@ const platformaticServiceSchema = {
       type: 'string'
     },
     service,
-    clients
+    clients,
+    runtime: wrappedRuntime
   },
   additionalProperties: false,
   $defs: openApiDefs

@@ -2419,6 +2419,9 @@ importers:
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
+      '@platformatic/utils':
+        specifier: workspace:*
+        version: link:../utils
       abstract-logging:
         specifier: ^2.0.1
         version: 2.0.1

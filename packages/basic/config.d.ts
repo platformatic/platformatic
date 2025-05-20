@@ -7,5 +7,8 @@
 
 export interface PlatformaticStackable {
   $schema?: string;
+  runtime?: {
+    [k: string]: unknown;
+  };
   [k: string]: unknown;
 }

@@ -104,6 +104,9 @@ export interface PlatformaticNextJsStackable {
       production?: string;
     };
   };
+  runtime?: {
+    [k: string]: unknown;
+  };
   next?: {
     trailingSlash?: boolean;
   };

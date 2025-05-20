@@ -17,6 +17,83 @@ function removeDefaults (schema) {
   return cloned
 }
 
+function omitProperties (obj, properties) {
+  if (!Array.isArray(properties)) {
+    properties = [properties]
+  }
+
+  const omitted = structuredClone(obj)
+  for (const prop of properties) {
+    delete omitted[prop]
+  }
+  return omitted
+}
+
+const env = {
+  type: 'object',
+  additionalProperties: {
+    type: 'string'
+  }
+}
+
+const workers = {
+  anyOf: [
+    {
+      type: 'number',
+      minimum: 1
+    },
+    { type: 'string' }
+  ]
+}
+
+const preload = {
+  anyOf: [
+    { type: 'string', resolvePath: true },
+    {
+      type: 'array',
+      items: {
+        type: 'string',
+        resolvePath: true
+      }
+    }
+  ]
+}
+
+const watch = {
+  type: 'object',
+  properties: {
+    enabled: {
+      default: true,
+      anyOf: [
+        {
+          type: 'boolean'
+        },
+        {
+          type: 'string'
+        }
+      ]
+    },
+    allow: {
+      type: 'array',
+      items: {
+        type: 'string'
+      },
+      minItems: 1,
+      nullable: true,
+      default: null
+    },
+    ignore: {
+      type: 'array',
+      items: {
+        type: 'string'
+      },
+      nullable: true,
+      default: null
+    }
+  },
+  additionalProperties: false
+}
+
 const cors = {
   type: 'object',
   $comment: 'See https://github.com/fastify/fastify-cors',
@@ -220,59 +297,6 @@ const logger = {
   additionalProperties: true
 }
 
-const watch = {
-  type: 'object',
-  properties: {
-    enabled: {
-      default: true,
-      anyOf: [
-        {
-          type: 'boolean'
-        },
-        {
-          type: 'string'
-        }
-      ]
-    },
-    allow: {
-      type: 'array',
-      items: {
-        type: 'string'
-      },
-      minItems: 1,
-      nullable: true,
-      default: null
-    },
-    ignore: {
-      type: 'array',
-      items: {
-        type: 'string'
-      },
-      nullable: true,
-      default: null
-    }
-  },
-  additionalProperties: false
-}
-
-const health = {
-  type: 'object',
-  default: {},
-  properties: {
-    enabled: overridableValue({ type: 'boolean' }, true),
-    interval: overridableValue({ type: 'number', minimum: 0 }, 30000),
-    gracePeriod: overridableValue({ type: 'number', minimum: 0 }, 30000),
-    maxUnhealthyChecks: overridableValue({ type: 'number', minimum: 1 }, 10),
-    maxELU: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
-    maxHeapUsed: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
-    maxHeapTotal: overridableValue({ type: 'number', minimum: 0 }, 4 * Math.pow(1024, 3)),
-    maxYoungGeneration: { type: 'number', minimum: 0 }
-  },
-  additionalProperties: false
-}
-
-const healthWithoutDefaults = removeDefaults(health)
-
 const server = {
   type: 'object',
   properties: {
@@ -375,7 +399,7 @@ const server = {
       },
       additionalProperties: false,
       required: ['key', 'cert']
-    },
+    }
   },
   additionalProperties: false
 }
@@ -601,10 +625,634 @@ const fastifyServer = {
   additionalProperties: false
 }
 
-module.exports.server = server
-module.exports.fastifyServer = fastifyServer
-module.exports.cors = cors
-module.exports.logger = logger
-module.exports.watch = watch
-module.exports.health = health
-module.exports.healthWithoutDefaults = healthWithoutDefaults
+const undiciInterceptor = {
+  type: 'object',
+  properties: {
+    module: {
+      type: 'string'
+    },
+    options: {
+      type: 'object',
+      additionalProperties: true
+    }
+  },
+  required: ['module', 'options']
+}
+
+const health = {
+  type: 'object',
+  default: {},
+  properties: {
+    enabled: overridableValue({ type: 'boolean' }, true),
+    interval: overridableValue({ type: 'number', minimum: 0 }, 30000),
+    gracePeriod: overridableValue({ type: 'number', minimum: 0 }, 30000),
+    maxUnhealthyChecks: overridableValue({ type: 'number', minimum: 1 }, 10),
+    maxELU: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
+    maxHeapUsed: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
+    maxHeapTotal: overridableValue({ type: 'number', minimum: 0 }, 4 * Math.pow(1024, 3)),
+    maxYoungGeneration: { type: 'number', minimum: 0 }
+  },
+  additionalProperties: false
+}
+
+const healthWithoutDefaults = removeDefaults(health)
+
+const telemetryExporter = {
+  type: 'object',
+  properties: {
+    type: {
+      type: 'string',
+      enum: ['console', 'otlp', 'zipkin', 'memory', 'file'],
+      default: 'console'
+    },
+    options: {
+      type: 'object',
+      description: 'Options for the exporter. These are passed directly to the exporter.',
+      properties: {
+        url: {
+          type: 'string',
+          description: 'The URL to send the traces to. Not used for console or memory exporters.'
+        },
+        headers: {
+          type: 'object',
+          description: 'Headers to send to the exporter. Not used for console or memory exporters.'
+        },
+        path: {
+          type: 'string',
+          description: 'The path to write the traces to. Only for file exporter.'
+        }
+      }
+    },
+    additionalProperties: false
+  }
+}
+
+const telemetry = {
+  type: 'object',
+  properties: {
+    enabled: {
+      anyOf: [
+        {
+          type: 'boolean'
+        },
+        {
+          type: 'string'
+        }
+      ]
+    },
+    serviceName: {
+      type: 'string',
+      description: 'The name of the service. Defaults to the folder name if not specified.'
+    },
+    version: {
+      type: 'string',
+      description: 'The version of the service (optional)'
+    },
+    skip: {
+      type: 'array',
+      description:
+        'An array of paths to skip when creating spans. Useful for health checks and other endpoints that do not need to be traced.',
+      items: {
+        type: 'object',
+        properties: {
+          path: {
+            type: 'string',
+            description: 'The path to skip. Can be a string or a regex.'
+          },
+          method: {
+            description: 'HTTP method to skip',
+            type: 'string',
+            enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']
+          }
+        }
+      }
+    },
+    exporter: {
+      anyOf: [
+        {
+          type: 'array',
+          items: telemetryExporter
+        },
+        telemetryExporter
+      ]
+    }
+  },
+  required: ['serviceName'],
+  additionalProperties: false
+}
+
+const services = {
+  type: 'array',
+  items: {
+    type: 'object',
+    anyOf: [{ required: ['id', 'path'] }, { required: ['id', 'url'] }],
+    properties: {
+      id: {
+        type: 'string'
+      },
+      path: {
+        type: 'string',
+        // This is required for the resolve command to allow empty paths after environment variable replacement
+        allowEmptyPaths: true,
+        resolvePath: true
+      },
+      config: {
+        type: 'string'
+      },
+      url: {
+        type: 'string'
+      },
+      gitBranch: {
+        type: 'string',
+        default: 'main'
+      },
+      useHttp: {
+        type: 'boolean'
+      },
+      workers,
+      health: { ...healthWithoutDefaults, default: undefined },
+      arguments: {
+        type: 'array',
+        items: {
+          type: 'string'
+        }
+      },
+      env,
+      envfile: {
+        type: 'string'
+      },
+      sourceMaps: {
+        type: 'boolean',
+        default: false
+      },
+      packageManager: {
+        type: 'string',
+        enum: ['npm', 'pnpm', 'yarn']
+      },
+      preload,
+      nodeOptions: {
+        type: 'string'
+      },
+      telemetry: {
+        type: 'object',
+        properties: {
+          instrumentations: {
+            type: 'array',
+            description: 'An array of instrumentations loaded if telemetry is enabled',
+            items: {
+              oneOf: [
+                {
+                  type: 'string'
+                },
+                {
+                  type: 'object',
+                  properties: {
+                    package: {
+                      type: 'string'
+                    },
+                    exportName: {
+                      type: 'string'
+                    },
+                    options: {
+                      type: 'object',
+                      additionalProperties: true
+                    }
+                  },
+                  required: ['package']
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+const runtime = {
+  $schema: {
+    type: 'string'
+  },
+  preload,
+  entrypoint: {
+    type: 'string'
+  },
+  basePath: {
+    type: 'string'
+  },
+  autoload: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['path'],
+    properties: {
+      path: {
+        type: 'string',
+        resolvePath: true
+      },
+      exclude: {
+        type: 'array',
+        default: [],
+        items: {
+          type: 'string'
+        }
+      },
+      mappings: {
+        type: 'object',
+        additionalProperties: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['id'],
+          properties: {
+            id: {
+              type: 'string'
+            },
+            config: {
+              type: 'string'
+            },
+            useHttp: {
+              type: 'boolean'
+            },
+            workers,
+            health: { ...healthWithoutDefaults, default: undefined },
+            preload,
+            arguments: {
+              type: 'array',
+              items: {
+                type: 'string'
+              }
+            },
+            nodeOptions: {
+              type: 'string'
+            }
+          }
+        }
+      }
+    }
+  },
+  services,
+  workers: { ...workers, default: 1 },
+  web: services,
+  logger,
+  server,
+  startTimeout: {
+    default: 30000,
+    type: 'number',
+    minimum: 0
+  },
+  restartOnError: {
+    default: true,
+    anyOf: [
+      { type: 'boolean' },
+      {
+        type: 'number',
+        minimum: 0
+      }
+    ]
+  },
+  gracefulShutdown: {
+    type: 'object',
+    properties: {
+      runtime: {
+        anyOf: [
+          {
+            type: 'number',
+            minimum: 1
+          },
+          { type: 'string' }
+        ],
+        default: 10000
+      },
+      service: {
+        anyOf: [
+          {
+            type: 'number',
+            minimum: 1
+          },
+          { type: 'string' }
+        ],
+        default: 10000
+      }
+    },
+    default: {},
+    required: ['runtime', 'service'],
+    additionalProperties: false
+  },
+  health,
+  undici: {
+    type: 'object',
+    properties: {
+      agentOptions: {
+        type: 'object',
+        additionalProperties: true
+      },
+      interceptors: {
+        anyOf: [
+          {
+            type: 'array',
+            items: undiciInterceptor
+          },
+          {
+            type: 'object',
+            properties: {
+              Client: {
+                type: 'array',
+                items: undiciInterceptor
+              },
+              Pool: {
+                type: 'array',
+                items: undiciInterceptor
+              },
+              Agent: {
+                type: 'array',
+                items: undiciInterceptor
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  httpCache: {
+    oneOf: [
+      {
+        type: 'boolean'
+      },
+      {
+        type: 'object',
+        properties: {
+          store: {
+            type: 'string'
+          },
+          methods: {
+            type: 'array',
+            items: {
+              type: 'string'
+            },
+            default: ['GET', 'HEAD'],
+            minItems: 1
+          },
+          cacheTagsHeader: {
+            type: 'string'
+          },
+          maxSize: {
+            type: 'integer'
+          },
+          maxEntrySize: {
+            type: 'integer'
+          },
+          maxCount: {
+            type: 'integer'
+          }
+        }
+      }
+    ]
+  },
+  watch: {
+    anyOf: [
+      {
+        type: 'boolean'
+      },
+      {
+        type: 'string'
+      }
+    ]
+  },
+  managementApi: {
+    anyOf: [
+      { type: 'boolean' },
+      { type: 'string' },
+      {
+        type: 'object',
+        properties: {
+          logs: {
+            type: 'object',
+            properties: {
+              maxSize: {
+                type: 'number',
+                minimum: 5,
+                default: 200
+              }
+            },
+            additionalProperties: false
+          }
+        },
+        additionalProperties: false
+      }
+    ],
+    default: true
+  },
+  metrics: {
+    anyOf: [
+      { type: 'boolean' },
+      {
+        type: 'object',
+        properties: {
+          port: {
+            anyOf: [{ type: 'integer' }, { type: 'string' }]
+          },
+          enabled: {
+            anyOf: [
+              {
+                type: 'boolean'
+              },
+              {
+                type: 'string'
+              }
+            ]
+          },
+          hostname: { type: 'string' },
+          endpoint: { type: 'string' },
+          auth: {
+            type: 'object',
+            properties: {
+              username: { type: 'string' },
+              password: { type: 'string' }
+            },
+            additionalProperties: false,
+            required: ['username', 'password']
+          },
+          labels: {
+            type: 'object',
+            additionalProperties: { type: 'string' }
+          },
+          readiness: {
+            anyOf: [
+              { type: 'boolean' },
+              {
+                type: 'object',
+                properties: {
+                  endpoint: { type: 'string' },
+                  success: {
+                    type: 'object',
+                    properties: {
+                      statusCode: { type: 'number' },
+                      body: { type: 'string' }
+                    },
+                    additionalProperties: false
+                  },
+                  fail: {
+                    type: 'object',
+                    properties: {
+                      statusCode: { type: 'number' },
+                      body: { type: 'string' }
+                    },
+                    additionalProperties: false
+                  }
+                },
+                additionalProperties: false
+              }
+            ]
+          },
+          liveness: {
+            anyOf: [
+              { type: 'boolean' },
+              {
+                type: 'object',
+                properties: {
+                  endpoint: { type: 'string' },
+                  success: {
+                    type: 'object',
+                    properties: {
+                      statusCode: { type: 'number' },
+                      body: { type: 'string' }
+                    },
+                    additionalProperties: false
+                  },
+                  fail: {
+                    type: 'object',
+                    properties: {
+                      statusCode: { type: 'number' },
+                      body: { type: 'string' }
+                    },
+                    additionalProperties: false
+                  }
+                },
+                additionalProperties: false
+              }
+            ]
+          },
+          additionalProperties: false
+        }
+      }
+    ]
+  },
+  telemetry,
+  inspectorOptions: {
+    type: 'object',
+    properties: {
+      host: {
+        type: 'string'
+      },
+      port: {
+        type: 'number'
+      },
+      breakFirstLine: {
+        type: 'boolean'
+      },
+      watchDisabled: {
+        type: 'boolean'
+      }
+    }
+  },
+  serviceTimeout: {
+    anyOf: [
+      {
+        type: 'number',
+        minimum: 1
+      },
+      { type: 'string' }
+    ],
+    default: 300000 // 5 minutes
+  },
+  resolvedServicesBasePath: {
+    type: 'string',
+    default: 'external'
+  },
+  env,
+  sourceMaps: {
+    type: 'boolean',
+    default: false
+  },
+  scheduler: {
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        enabled: {
+          anyOf: [
+            {
+              type: 'boolean'
+            },
+            {
+              type: 'string'
+            }
+          ],
+          default: true
+        },
+        name: {
+          type: 'string'
+        },
+        cron: {
+          type: 'string'
+        },
+        callbackUrl: {
+          type: 'string'
+        },
+        method: {
+          type: 'string',
+          enum: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+          default: 'GET'
+        },
+        headers: {
+          type: 'object',
+          additionalProperties: {
+            type: 'string'
+          }
+        },
+        body: {
+          anyOf: [{ type: 'string' }, { type: 'object', additionalProperties: true }]
+        },
+        maxRetries: {
+          type: 'number',
+          minimum: 0,
+          default: 3
+        }
+      },
+      required: ['name', 'cron', 'callbackUrl']
+    }
+  }
+}
+
+const runtimeUnwrappableProperties = [
+  '$schema',
+  'entrypoint',
+  'autoload',
+  'services',
+  'web',
+  'resolvedServicesBasePath'
+]
+
+const wrappedRuntime = omitProperties(runtime, runtimeUnwrappableProperties)
+
+module.exports = {
+  overridableValue,
+  removeDefaults,
+  omitProperties,
+  env,
+  workers,
+  preload,
+  watch,
+  cors,
+  logger,
+  server,
+  fastifyServer,
+  undiciInterceptor,
+  telemetryExporter,
+  telemetry,
+  health,
+  healthWithoutDefaults,
+  services,
+  runtime,
+  runtimeUnwrappableProperties,
+  wrappedRuntime
+}

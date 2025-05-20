@@ -157,7 +157,7 @@ export function serviceToEnvVariable (service) {
 }
 
 export async function findConfigurationFile (logger, root, configurationFile) {
-  const configFile = await findRawConfigurationFile(root, configurationFile, 'runtime')
+  const configFile = await findRawConfigurationFile(root, configurationFile)
 
   if (!configFile) {
     return logFatalError(

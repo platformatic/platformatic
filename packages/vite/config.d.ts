@@ -104,6 +104,9 @@ export interface PlatformaticViteStackable {
       production?: string;
     };
   };
+  runtime?: {
+    [k: string]: unknown;
+  };
   vite?: {
     configFile?: string | boolean;
     devServer?: {

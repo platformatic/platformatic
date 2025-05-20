@@ -104,6 +104,9 @@ export interface PlatformaticAstroStackable {
       production?: string;
     };
   };
+  runtime?: {
+    [k: string]: unknown;
+  };
   astro?: {
     configFile?: string | boolean;
   };

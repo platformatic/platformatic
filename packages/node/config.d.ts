@@ -113,4 +113,7 @@ export interface PlatformaticNodeJsStackable {
     dispatchViaHttp?: boolean;
     disablePlatformaticInBuild?: boolean;
   };
+  runtime?: {
+    [k: string]: unknown;
+  };
 }

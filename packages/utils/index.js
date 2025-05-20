@@ -13,13 +13,19 @@ const errors = require('./lib/errors')
 const features = require('./lib/features')
 const getPkgManager = require('./lib/get-pkg-manager')
 const match = require('./lib/match')
-const schemaComponents = require('./lib/schema')
+const { overridableValue, removeDefaults, omitProperties, ...schemaComponents } = require('./lib/schema')
 const { createDirectory, safeRemove, generateDashedName } = require('./lib/directory')
 const { withResolvers } = require('./lib/promises')
 const { checkNodeVersionForServices } = require('./lib/check-node-version')
 const { createRequire, loadModule } = require('./lib/modules')
 const { getPrivateSymbol } = require('./lib/symbols')
-const { buildPinoOptions, buildPinoFormatters, buildPinoTimestamp, setPinoFormatters, setPinoTimestamp } = require('./lib/logger')
+const {
+  buildPinoOptions,
+  buildPinoFormatters,
+  buildPinoTimestamp,
+  setPinoFormatters,
+  setPinoTimestamp
+} = require('./lib/logger')
 
 module.exports.FileWatcher = FileWatcher
 module.exports.findNearestString = findNearestString
@@ -38,6 +44,9 @@ module.exports.errors = errors
 module.exports.ensureLoggableError = errors.ensureLoggableError
 module.exports.features = features
 module.exports.match = match
+module.exports.overridableValue = overridableValue
+module.exports.removeDefaults = removeDefaults
+module.exports.omitProperties = omitProperties
 module.exports.schemaComponents = schemaComponents
 module.exports.createDirectory = createDirectory
 module.exports.safeRemove = safeRemove

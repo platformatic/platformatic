@@ -3,6 +3,7 @@
 
 const { metrics, server, plugins, watch, clients, openApiBase, openApiDefs, graphqlBase } =
   require('@platformatic/service').schemas
+const { schemaComponents } = require('@platformatic/utils')
 const telemetry = require('@platformatic/telemetry').schema
 const pkg = require('../package.json')
 
@@ -142,8 +143,8 @@ const composer = {
                           reconnectDecay: { type: 'number' },
                           connectionTimeout: { type: 'number' },
                           reconnectOnClose: { type: 'boolean' },
-                          logs: { type: 'boolean' },
-                        },
+                          logs: { type: 'boolean' }
+                        }
                       },
                       hooks: {
                         type: 'object',
@@ -156,12 +157,12 @@ const composer = {
                     },
                     required: [],
                     additionalProperties: false
-                  },
+                  }
                 },
                 required: [],
                 additionalProperties: false
               }
-            ],
+            ]
           }
         },
         required: ['id'],
@@ -209,6 +210,7 @@ const platformaticComposerSchema = {
     types,
     plugins,
     clients,
+    runtime: schemaComponents.wrappedRuntime,
     telemetry,
     watch: {
       anyOf: [

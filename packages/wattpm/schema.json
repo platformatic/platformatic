@@ -1057,7 +1057,20 @@
             {
               "type": "array",
               "items": {
-                "$ref": "#/$defs/undiciInterceptor"
+                "type": "object",
+                "properties": {
+                  "module": {
+                    "type": "string"
+                  },
+                  "options": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                },
+                "required": [
+                  "module",
+                  "options"
+                ]
               }
             },
             {
@@ -1066,19 +1079,58 @@
                 "Client": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/$defs/undiciInterceptor"
+                    "type": "object",
+                    "properties": {
+                      "module": {
+                        "type": "string"
+                      },
+                      "options": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "required": [
+                      "module",
+                      "options"
+                    ]
                   }
                 },
                 "Pool": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/$defs/undiciInterceptor"
+                    "type": "object",
+                    "properties": {
+                      "module": {
+                        "type": "string"
+                      },
+                      "options": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "required": [
+                      "module",
+                      "options"
+                    ]
                   }
                 },
                 "Agent": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/$defs/undiciInterceptor"
+                    "type": "object",
+                    "properties": {
+                      "module": {
+                        "type": "string"
+                      },
+                      "options": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "required": [
+                      "module",
+                      "options"
+                    ]
                   }
                 }
               }
@@ -1305,7 +1357,6 @@
       ]
     },
     "telemetry": {
-      "$id": "/OpenTelemetry",
       "type": "object",
       "properties": {
         "enabled": {
@@ -1562,23 +1613,5 @@
       ]
     }
   ],
-  "additionalProperties": false,
-  "$defs": {
-    "undiciInterceptor": {
-      "type": "object",
-      "properties": {
-        "module": {
-          "type": "string"
-        },
-        "options": {
-          "type": "object",
-          "additionalProperties": true
-        }
-      },
-      "required": [
-        "module",
-        "options"
-      ]
-    }
-  }
+  "additionalProperties": false
 }

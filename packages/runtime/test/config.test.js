@@ -2,7 +2,7 @@
 
 const assert = require('node:assert')
 const { readFile, writeFile, cp, mkdtemp } = require('node:fs/promises')
-const { join, resolve } = require('node:path')
+const { join, resolve, dirname } = require('node:path')
 const { test } = require('node:test')
 const { safeRemove, createDirectory } = require('@platformatic/utils')
 const { loadConfig } = require('@platformatic/config')
@@ -264,6 +264,37 @@ test('defaults name to `main` if package.json exists but has no name', async t =
   const conf = runtimeConfig.current
   assert.strictEqual(conf.services.length, 1)
   assert.strictEqual(conf.services[0].id, 'main')
+})
+
+// Note, the file's runtime property purposely has invalid properties to make sure
+// API usage excludes them despite of JSON schema validation
+test('uses application runtime configuration, avoiding overriding of sensible properties', async t => {
+  const configFile = join(fixturesDir, 'wrapped-runtime', 'platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile], platformaticDB)
+
+  const runtimeConfig = await wrapConfigInRuntimeConfig(config)
+  const conf = runtimeConfig.current
+
+  assert.ok(typeof conf.web, 'undefined')
+  assert.ok(typeof conf.autoload, 'undefined')
+  assert.ok(conf.watch === false)
+  assert.deepStrictEqual(conf.server, { hostname: '127.0.0.1', port: 1234 })
+  assert.deepStrictEqual(conf.services, [
+    {
+      config: configFile,
+      dependencies: [],
+      entrypoint: true,
+      gitBranch: 'main',
+      id: 'main',
+      isPLTService: true,
+      localServiceEnvVars: new Map(),
+      localUrl: 'http://main.plt.local',
+      path: dirname(configFile),
+      sourceMaps: false,
+      type: 'db',
+      watch: false
+    }
+  ])
 })
 
 test('loads with the store', async t => {

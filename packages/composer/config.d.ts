@@ -399,7 +399,85 @@ export interface PlatformaticComposer {
     fullRequest?: boolean;
     validateResponse?: boolean;
   }[];
-  telemetry?: OpenTelemetry;
+  runtime?: {
+    [k: string]: unknown;
+  };
+  telemetry?: {
+    enabled?: boolean | string;
+    /**
+     * The name of the service. Defaults to the folder name if not specified.
+     */
+    serviceName: string;
+    /**
+     * The version of the service (optional)
+     */
+    version?: string;
+    /**
+     * An array of paths to skip when creating spans. Useful for health checks and other endpoints that do not need to be traced.
+     */
+    skip?: {
+      /**
+       * The path to skip. Can be a string or a regex.
+       */
+      path?: string;
+      /**
+       * HTTP method to skip
+       */
+      method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
+      [k: string]: unknown;
+    }[];
+    exporter?:
+      | {
+          type?: "console" | "otlp" | "zipkin" | "memory" | "file";
+          /**
+           * Options for the exporter. These are passed directly to the exporter.
+           */
+          options?: {
+            /**
+             * The URL to send the traces to. Not used for console or memory exporters.
+             */
+            url?: string;
+            /**
+             * Headers to send to the exporter. Not used for console or memory exporters.
+             */
+            headers?: {
+              [k: string]: unknown;
+            };
+            /**
+             * The path to write the traces to. Only for file exporter.
+             */
+            path?: string;
+            [k: string]: unknown;
+          };
+          additionalProperties?: never;
+          [k: string]: unknown;
+        }[]
+      | {
+          type?: "console" | "otlp" | "zipkin" | "memory" | "file";
+          /**
+           * Options for the exporter. These are passed directly to the exporter.
+           */
+          options?: {
+            /**
+             * The URL to send the traces to. Not used for console or memory exporters.
+             */
+            url?: string;
+            /**
+             * Headers to send to the exporter. Not used for console or memory exporters.
+             */
+            headers?: {
+              [k: string]: unknown;
+            };
+            /**
+             * The path to write the traces to. Only for file exporter.
+             */
+            path?: string;
+            [k: string]: unknown;
+          };
+          additionalProperties?: never;
+          [k: string]: unknown;
+        };
+  };
   watch?:
     | {
         enabled?: boolean | string;
@@ -627,80 +705,4 @@ export interface Tag {
    * via the `patternProperty` "^x-".
    */
   [k: string]: unknown;
-}
-export interface OpenTelemetry {
-  enabled?: boolean | string;
-  /**
-   * The name of the service. Defaults to the folder name if not specified.
-   */
-  serviceName: string;
-  /**
-   * The version of the service (optional)
-   */
-  version?: string;
-  /**
-   * An array of paths to skip when creating spans. Useful for health checks and other endpoints that do not need to be traced.
-   */
-  skip?: {
-    /**
-     * The path to skip. Can be a string or a regex.
-     */
-    path?: string;
-    /**
-     * HTTP method to skip
-     */
-    method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
-    [k: string]: unknown;
-  }[];
-  exporter?:
-    | {
-        type?: "console" | "otlp" | "zipkin" | "memory" | "file";
-        /**
-         * Options for the exporter. These are passed directly to the exporter.
-         */
-        options?: {
-          /**
-           * The URL to send the traces to. Not used for console or memory exporters.
-           */
-          url?: string;
-          /**
-           * Headers to send to the exporter. Not used for console or memory exporters.
-           */
-          headers?: {
-            [k: string]: unknown;
-          };
-          /**
-           * The path to write the traces to. Only for file exporter.
-           */
-          path?: string;
-          [k: string]: unknown;
-        };
-        additionalProperties?: never;
-        [k: string]: unknown;
-      }[]
-    | {
-        type?: "console" | "otlp" | "zipkin" | "memory" | "file";
-        /**
-         * Options for the exporter. These are passed directly to the exporter.
-         */
-        options?: {
-          /**
-           * The URL to send the traces to. Not used for console or memory exporters.
-           */
-          url?: string;
-          /**
-           * Headers to send to the exporter. Not used for console or memory exporters.
-           */
-          headers?: {
-            [k: string]: unknown;
-          };
-          /**
-           * The path to write the traces to. Only for file exporter.
-           */
-          path?: string;
-          [k: string]: unknown;
-        };
-        additionalProperties?: never;
-        [k: string]: unknown;
-      };
 }

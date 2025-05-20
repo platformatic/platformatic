@@ -32,6 +32,7 @@ export const schema = {
     server: utilsSchemaComponents.server,
     watch: basicSchemaComponents.watch,
     application: basicSchemaComponents.application,
+    runtime: utilsSchemaComponents.wrappedRuntime,
     vite: viteSchemaComponents.vite,
     remix
   },

@@ -2,8 +2,12 @@
 
 const { readdir } = require('node:fs/promises')
 const { join, resolve: pathResolve, isAbsolute } = require('node:path')
-
-const { createRequire, loadModule } = require('@platformatic/utils')
+const {
+  createRequire,
+  loadModule,
+  omitProperties,
+  schemaComponents: { runtimeUnwrappableProperties }
+} = require('@platformatic/utils')
 const ConfigManager = require('@platformatic/config')
 const { Store } = require('@platformatic/config')
 
@@ -259,11 +263,13 @@ async function wrapConfigInRuntimeConfig ({ configManager, args }) {
     // on purpose, the package.json might be missing
   }
 
+  // Important: do not change the order of the properties in this object
   /* c8 ignore next */
   const wrapperConfig = {
     $schema: schema.$id,
-    entrypoint: serviceId,
     watch: true,
+    ...omitProperties(configManager.current.runtime ?? {}, runtimeUnwrappableProperties),
+    entrypoint: serviceId,
     services: [
       {
         id: serviceId,
@@ -272,6 +278,7 @@ async function wrapConfigInRuntimeConfig ({ configManager, args }) {
       }
     ]
   }
+
   const cm = new ConfigManager({
     source: wrapperConfig,
     schema,
@@ -287,6 +294,7 @@ async function wrapConfigInRuntimeConfig ({ configManager, args }) {
   })
 
   await cm.parseAndValidate()
+
   return cm
 }
 
