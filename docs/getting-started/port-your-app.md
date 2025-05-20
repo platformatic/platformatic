@@ -54,11 +54,11 @@ Then, install the required dependencies for Watt:
 npm install --save wattpm @platformatic/node
 ```
 
-Where [`wattpm`](https://docs.platformatic.dev/docs/watt/overview) is the Watt CLI and [`@platformatic/node`](https://docs.platformatic.dev/docs/packages/node/overview) is the generic adapter for "bare" Node.js applications, 
+Where [`wattpm`](/docs/watt/overview) is the Watt CLI and [`@platformatic/node`](/docs/packages/node/overview) is the generic adapter for "bare" Node.js applications, 
 if yours is a Next.js, Astro, or Remix application you might want to use the respective packages:
-[`@platformatic/next`](https://docs.platformatic.dev/docs/packages/next/overview),
-[`@platformatic/remix`](https://docs.platformatic.dev/docs/packages/remix/overview),
-[`@platformatic/astro`](https://docs.platformatic.dev/docs/packages/astro/overview).
+[`@platformatic/next`](/packages/next/overview),
+[`@platformatic/remix`](/packages/remix/overview),
+[`@platformatic/astro`](/packages/astro/overview).
 
 ### 3. Create Configuration Files
 
