@@ -28,22 +28,26 @@ This can be configured in two ways:
   - Single transport:
     ```json
     {
-      "transport": {
-        "targets": [{
-          "target": "pino-elasticsearch",
+      "logger": {
+        "transport": {
+          "targets": [{
+            "target": "pino-elasticsearch",
           "options": {
-            "node": "http://127.0.0.1:9200"
+              "node": "http://127.0.0.1:9200"
+            }
           }
-        }
+        ]
+      }
     }
     ```
     
   - Multiple transports:
     ```json
     {
-      "transport": {
-        "targets": [
-          {
+      "logger": {
+        "transport": {
+          "targets": [
+            {
             "target": "pino-pretty",
             "level": "info",
             "options": {
@@ -58,7 +62,8 @@ This can be configured in two ways:
               "mkdir": true
             }
           }
-        ]
+          ]
+        }
       }
     }
     ```
@@ -69,8 +74,10 @@ This can be configured in two ways:
 
   ```json
   {
-    "formatters": {
-      "path": "formatters.js"
+    "logger": {
+      "formatters": {
+        "path": "formatters.js"
+      }
     }
   }
   ```
@@ -101,9 +108,11 @@ This can be configured in two ways:
 
   ```json
   {
-    "redact": {
-      "paths": ["req.headers.authorization", "password"],
-      "censor": "[redacted]"
+    "logger": {
+      "redact": {
+        "paths": ["req.headers.authorization", "password"],
+        "censor": "[redacted]"
+      }
     }
   }
   ```
@@ -111,6 +120,69 @@ This can be configured in two ways:
   The `censor` property defaults to `"[redacted]"` if not specified.
 
   See the [Pino redaction documentation](https://github.com/pinojs/pino/blob/main/docs/redaction.md) for more details.
+
+- **base**: The base object for the logs; it can be either be `null` to remove `pid` and `hostname` or a custom key/value object to add custom properties to the logs.
+
+  ```json
+  {
+    "logger": {
+      "base": {
+        "service": "my-service",
+        "version": "1.0.0"
+      }
+    }
+  }
+
+  {
+    "logger": {
+      "base": null
+    }
+  }
+  ```
+
+  See the [Pino base documentation](https://github.com/pinojs/pino/blob/main/docs/api.md#base-object) for more details.
+
+- **messageKey**: The key to use for the log message, it defaults to `msg` but can be set to any other key.
+
+  ```json
+  {
+    "logger": {
+      "messageKey": "message"
+    }
+  }
+  ```
+
+  See the [Pino messageKey documentation](https://github.com/pinojs/pino/blob/main/docs/api.md#messagekey-string) for more details.
+
+---
+
+### Capture Thread Services logs
+
+By default, Platformatic services logs are captured by the main service and wrapped in the `stdout` and `stderr` streams, for example:
+
+```txt
+{"level":"info","time":1747840934509,"pid":23381,"hostname":"work","name":"node","caller":"STDOUT","stdout":{"level":"info","time":1747840934509,"pid":23381,"hostname":"work","name":"node","reqId":"req-1","req":{"method":"GET","url":"/","host":"node.plt.local"},"msg":"incoming request"}}
+```
+
+The `captureStdio` option in `wattpm` can be set to `false` to disable the capture of the logs of the child services; in this case logs will be written directly to the `stdout` and `stderr` streams of the main service.
+
+`watt.json`
+
+```json
+{
+  "logger": {
+    "captureStdio": false
+  }
+}
+```
+
+So the previous log output will be
+
+```txt
+{"level":"info","time":1747840934509,"pid":23381,"hostname":"work","name":"node","reqId":"req-1","req":{"method":"GET","url":"/","host":"node.plt.local"},"msg":"incoming request"}
+```
+
+Note the log is the content of the `stdout` property.
 
 ### Using Environment Variables
 

@@ -36,7 +36,7 @@ test('should use full logger options - formatters, timestamp, redaction', async 
     log.msg.startsWith('Platformatic is now listening at http://127.0.0.1:')))
 })
 
-test('should inherit full logger options from runtime to a platformatic/service', { only: true }, async t => {
+test('should inherit full logger options from runtime to a platformatic/service', async t => {
   const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options', 'platformatic.json')
 
   let requested = false

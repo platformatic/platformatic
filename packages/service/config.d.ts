@@ -72,6 +72,10 @@ export interface PlatformaticService {
             paths: string[];
             censor?: string;
           };
+          base?: {
+            [k: string]: unknown;
+          } | null;
+          messageKey?: string;
           [k: string]: unknown;
         };
     loggerInstance?: {
