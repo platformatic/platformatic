@@ -1,10 +1,11 @@
 import ConfigManager, { findConfigurationFile, loadConfigurationFile } from '@platformatic/config'
 import { createDirectory, executeWithTimeout, generateDashedName, getPkgManager } from '@platformatic/utils'
 import { execa } from 'execa'
+import { glob } from 'glob'
 import defaultInquirer from 'inquirer'
 import parseArgs from 'minimist'
 import { existsSync } from 'node:fs'
-import { glob, readFile, writeFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import { basename, dirname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import ora from 'ora'
@@ -92,12 +93,10 @@ async function findApplicationRoot (projectDir) {
     return projectDir
   }
 
-  const iterator = glob('**/*.{js,mjs,cjs,ts,mts,cts}', { cwd: projectDir })
-  const { value } = await iterator.next()
-  await iterator.return()
+  const files = await glob('**/*.{js,mjs,cjs,ts,mts,cts}', { cwd: projectDir })
 
-  if (value) {
-    return dirname(resolve(projectDir, value))
+  if (files.length > 0) {
+    return dirname(resolve(projectDir, files[0]))
   }
 
   return null
