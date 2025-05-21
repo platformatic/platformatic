@@ -70,8 +70,9 @@ export async function createCommand (logger, args) {
       servicesFolder: 'web'
     },
     {
-      startCommand: 'wattpm start',
-      devCommand: 'wattpm dev'
+      devCommand: 'wattpm dev',
+      buildCommand: 'wattpm build',
+      startCommand: 'wattpm start'
     }
   )
 }

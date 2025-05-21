@@ -1,15 +1,16 @@
-import { ConfigManager } from '@platformatic/config'
+import ConfigManager, { findConfigurationFile, loadConfigurationFile } from '@platformatic/config'
 import { createDirectory, executeWithTimeout, generateDashedName, getPkgManager } from '@platformatic/utils'
 import { execa } from 'execa'
 import defaultInquirer from 'inquirer'
 import parseArgs from 'minimist'
-import { readFile, writeFile } from 'node:fs/promises'
-import { basename, join, resolve as pathResolve } from 'node:path'
+import { existsSync } from 'node:fs'
+import { glob, readFile, writeFile } from 'node:fs/promises'
+import { basename, dirname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import ora from 'ora'
 import pino from 'pino'
 import pretty from 'pino-pretty'
-import resolve from 'resolve'
+import * as resolveModule from 'resolve'
 import { request } from 'undici'
 import { createGitRepository } from './create-git-repository.mjs'
 import { getUsername, getVersion, say } from './utils.mjs'
@@ -57,7 +58,7 @@ async function importOrLocal ({ pkgManager, name, projectDir, pkg }) {
     return await import(pkg)
   } catch (err) {
     try {
-      const fileToImport = resolve.sync(pkg, { basedir: projectDir })
+      const fileToImport = resolveModule.sync(pkg, { basedir: projectDir })
       return await import(pathToFileURL(fileToImport))
     } catch {
       // No-op
@@ -81,9 +82,93 @@ async function importOrLocal ({ pkgManager, name, projectDir, pkg }) {
     await execa(pkgManager, ['install', pkg + version], { cwd: projectDir })
     spinner.succeed()
 
-    const fileToImport = resolve.sync(pkg, { basedir: projectDir })
+    const fileToImport = resolveModule.sync(pkg, { basedir: projectDir })
     return await import(pathToFileURL(fileToImport))
   }
+}
+
+async function findApplicationRoot (projectDir) {
+  if (existsSync(resolve(projectDir, 'package.json'))) {
+    return projectDir
+  }
+
+  const iterator = glob('**/*.{js,mjs,cjs,ts,mts,cts}', { cwd: projectDir })
+  const { value } = await iterator.next()
+  await iterator.return()
+
+  if (value) {
+    return dirname(resolve(projectDir, value))
+  }
+
+  return null
+}
+
+export async function determineApplicationType (projectDir) {
+  let rootPackageJson
+  try {
+    rootPackageJson = JSON.parse(await readFile(resolve(projectDir, 'package.json'), 'utf-8'))
+  } catch {
+    rootPackageJson = {}
+  }
+
+  const { dependencies, devDependencies } = rootPackageJson
+
+  if (dependencies?.next || devDependencies?.next) {
+    return ['@platformatic/next', 'Next.js']
+  } else if (dependencies?.['@remix-run/dev'] || devDependencies?.['@remix-run/dev']) {
+    return ['@platformatic/remix', 'Remix']
+  } else if (dependencies?.vite || devDependencies?.vite) {
+    return ['@platformatic/vite', 'Vite']
+  } else if (dependencies?.astro || devDependencies?.astro) {
+    return ['@platformatic/astro', 'Astro']
+  }
+
+  return ['@platformatic/node', 'Node.js']
+}
+
+export async function wrapApplication (
+  logger,
+  inquirer,
+  packageManager,
+  module,
+  install,
+  projectDir,
+  additionalGeneratorOptions = {},
+  additionalGeneratorConfig = {}
+) {
+  const projectName = basename(projectDir)
+
+  const runtime = await importOrLocal({
+    pkgManager: packageManager,
+    name: projectName,
+    projectDir,
+    pkg: '@platformatic/runtime'
+  })
+
+  const generator = new runtime.WrappedGenerator({
+    logger,
+    module,
+    name: projectName,
+    inquirer,
+    ...additionalGeneratorOptions
+  })
+  generator.setConfig({
+    ...generator.config,
+    ...additionalGeneratorConfig,
+    targetDirectory: projectDir,
+    typescript: false
+  })
+
+  await generator.ask()
+  await generator.prepare()
+  await generator.writeFiles()
+
+  if (install) {
+    logger.info(`Installing dependencies for the application using ${packageManager} ...`)
+    await execa(packageManager, ['install'], { cwd: projectDir, stdio: 'inherit' })
+  }
+
+  logger.info(`You are all set! Run \`${packageManager} start\` to start your project.`)
 }
 
 export async function createPlatformatic (argv) {
@@ -119,13 +204,75 @@ export async function createApplication (
   modules,
   marketplaceHost,
   install,
-  additionalGeneratorOptions = {}
+  additionalGeneratorOptions = {},
+  additionalGeneratorConfig = {}
 ) {
   // This is only used for testing for now, but might be useful in the future
   const inquirer = process.env.INQUIRER_PATH ? await import(process.env.INQUIRER_PATH) : defaultInquirer
 
+  // Check in the directory and its parents if there is a config file
+  let shouldChooseProjectDir = true
   let projectDir = process.cwd()
-  if (!(await ConfigManager.findConfigFile())) {
+  const runtimeConfigFile = await findConfigurationFile(projectDir, null, 'runtime')
+
+  if (runtimeConfigFile) {
+    shouldChooseProjectDir = false
+    projectDir = dirname(runtimeConfigFile)
+  } else {
+    // Check the current directory for suitable config files
+    const applicationRoot = await findApplicationRoot(projectDir)
+
+    if (applicationRoot) {
+      const [module, label] = await determineApplicationType(projectDir)
+
+      // Check if the file belongs to a Watt application, this can happen for instance if we executed watt create
+      // in the services folder
+      const existingRuntime = await findConfigurationFile(applicationRoot, null, 'runtime')
+
+      if (!existingRuntime) {
+        // If there is a watt.json file with a runtime property, we assume we already executed watt create and we exit.
+        const existingService = await ConfigManager.findConfigFile(projectDir)
+
+        if (existingService) {
+          const serviceConfig = await loadConfigurationFile(existingService)
+
+          if (serviceConfig.runtime) {
+            await say(`The ${label} application has already been wrapped into Watt.`)
+            return
+          }
+        }
+
+        const { shouldWrap } = await inquirer.prompt({
+          type: 'list',
+          name: 'shouldWrap',
+          message: `This folder seems to already contain a ${label} application. Do you want to wrap into Watt?`,
+          // default: 'yes',
+          choices: [
+            { name: 'yes', value: true },
+            { name: 'no', value: false }
+          ]
+        })
+
+        if (shouldWrap) {
+          return wrapApplication(
+            logger,
+            inquirer,
+            packageManager,
+            module,
+            install,
+            process.cwd(),
+            additionalGeneratorOptions,
+            { ...additionalGeneratorConfig, skipTypescript: true }
+          )
+        }
+      } else {
+        projectDir = dirname(existingRuntime)
+        shouldChooseProjectDir = false
+      }
+    }
+  }
+
+  if (shouldChooseProjectDir) {
     const optionsDir = await inquirer.prompt({
       type: 'input',
       name: 'dir',
@@ -133,11 +280,11 @@ export async function createApplication (
       default: 'platformatic'
     })
 
-    projectDir = pathResolve(process.cwd(), optionsDir.dir)
+    projectDir = resolve(process.cwd(), optionsDir.dir)
+    await createDirectory(projectDir)
   }
-  const projectName = basename(projectDir)
 
-  await createDirectory(projectDir)
+  const projectName = basename(projectDir)
 
   const runtime = await importOrLocal({
     pkgManager: packageManager,
@@ -155,6 +302,7 @@ export async function createApplication (
 
   generator.setConfig({
     ...generator.config,
+    ...additionalGeneratorConfig,
     targetDirectory: projectDir
   })
 

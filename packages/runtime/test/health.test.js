@@ -83,7 +83,12 @@ test('should not lose any connection when restarting the process', async t => {
 
   t.after(async () => {
     await safeRemove(process.env.PLT_RUNTIME_LOGGER_STDOUT)
-    process.env.PLT_RUNTIME_LOGGER_STDOUT = originalEnv
+
+    if (typeof originalEnv === 'undefined') {
+      delete process.env.PLT_RUNTIME_LOGGER_STDOUT
+    } else {
+      process.env.PLT_RUNTIME_LOGGER_STDOUT = originalEnv
+    }
   })
 
   const server = await buildServer({

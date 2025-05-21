@@ -3,7 +3,7 @@
 const { BaseGenerator } = require('@platformatic/generators')
 const { NoEntryPointError, NoServiceNamedError } = require('./errors')
 const { existsSync } = require('node:fs')
-const { join } = require('node:path')
+const { join, basename } = require('node:path')
 const { envObjectToString } = require('@platformatic/generators/lib/utils')
 const { readFile, readdir, stat } = require('node:fs/promises')
 const { ConfigManager } = require('@platformatic/config')
@@ -13,6 +13,30 @@ const { DotEnvTool } = require('dotenv-tool')
 const { getArrayDifference } = require('../utils')
 const { pathToFileURL } = require('node:url')
 const { createRequire, safeRemove, generateDashedName } = require('@platformatic/utils')
+
+const wrappableProperties = {
+  logger: {
+    level: '{PLT_SERVER_LOGGER_LEVEL}'
+  },
+  server: {
+    hostname: '{PLT_SERVER_HOSTNAME}',
+    port: '{PORT}'
+  },
+  managementApi: '{PLT_MANAGEMENT_API}'
+}
+
+const engines = {
+  node: '^18.8.0 || >=20.6.0'
+}
+
+function getRuntimeBaseEnvVars (config) {
+  return {
+    PLT_SERVER_HOSTNAME: '127.0.0.1',
+    PORT: config.port || 3042,
+    PLT_SERVER_LOGGER_LEVEL: config.logLevel || 'info',
+    PLT_MANAGEMENT_API: true
+  }
+}
 
 class RuntimeGenerator extends BaseGenerator {
   constructor (opts) {
@@ -62,7 +86,8 @@ class RuntimeGenerator extends BaseGenerator {
       name: `${this.runtimeName}`,
       workspaces: [this.servicesFolder + '/*'],
       scripts: {
-        start: 'platformatic start'
+        dev: this.config.devCommand,
+        start: this.config.startCommand ?? 'platformatic start'
       },
       devDependencies: {
         fastify: `^${this.fastifyVersion}`,
@@ -74,9 +99,7 @@ class RuntimeGenerator extends BaseGenerator {
         wattpm: `^${this.platformaticVersion}`,
         ...this.config.dependencies
       },
-      engines: {
-        node: '^18.8.0 || >=20.6.0'
-      }
+      engines
     }
     if (this.config.typescript) {
       const typescriptVersion = JSON.parse(await readFile(join(__dirname, '..', '..', 'package.json'), 'utf-8'))
@@ -93,15 +116,7 @@ class RuntimeGenerator extends BaseGenerator {
     this.setServicesConfigValues()
     this.addServicesDependencies()
 
-    this.addEnvVars(
-      {
-        PLT_SERVER_HOSTNAME: '127.0.0.1',
-        PORT: this.config.port || 3042,
-        PLT_SERVER_LOGGER_LEVEL: this.config.logLevel || 'info',
-        PLT_MANAGEMENT_API: true
-      },
-      { overwrite: false, default: true }
-    )
+    this.addEnvVars(getRuntimeBaseEnvVars(this.config), { overwrite: false, default: true })
   }
 
   addServicesDependencies () {
@@ -119,7 +134,8 @@ class RuntimeGenerator extends BaseGenerator {
       return
     }
     this._hasCheckedForExistingConfig = true
-    const existingConfigFile = this.runtimeConfig ?? await ConfigManager.findConfigFile(this.targetDirectory, 'runtime')
+    const existingConfigFile =
+      this.runtimeConfig ?? (await ConfigManager.findConfigFile(this.targetDirectory, 'runtime'))
     if (existingConfigFile && existsSync(join(this.targetDirectory, existingConfigFile))) {
       const configManager = new ConfigManager({
         ...platformaticRuntime.configManagerConfig,
@@ -170,14 +186,7 @@ class RuntimeGenerator extends BaseGenerator {
         path: this.config.autoload || this.servicesFolder,
         exclude: ['docs']
       },
-      logger: {
-        level: '{PLT_SERVER_LOGGER_LEVEL}'
-      },
-      server: {
-        hostname: '{PLT_SERVER_HOSTNAME}',
-        port: '{PORT}'
-      },
-      managementApi: '{PLT_MANAGEMENT_API}'
+      ...wrappableProperties
     }
 
     return config
@@ -326,9 +335,7 @@ class RuntimeGenerator extends BaseGenerator {
     const output = {
       services: []
     }
-    const runtimePkgConfigFileData = JSON.parse(
-      await readFile(join(this.targetDirectory, this.runtimeConfig), 'utf-8')
-    )
+    const runtimePkgConfigFileData = JSON.parse(await readFile(join(this.targetDirectory, this.runtimeConfig), 'utf-8'))
     const servicesPath = join(this.targetDirectory, runtimePkgConfigFileData.autoload.path)
 
     // load all services
@@ -388,9 +395,7 @@ class RuntimeGenerator extends BaseGenerator {
         // delete dependencies
         const servicePath = join(this.targetDirectory, this.servicesFolder, s.name)
         const configFile = await ConfigManager.findConfigFile(servicePath)
-        const servicePackageJson = JSON.parse(
-          await readFile(join(servicePath, configFile), 'utf-8')
-        )
+        const servicePackageJson = JSON.parse(await readFile(join(servicePath, configFile), 'utf-8'))
         if (servicePackageJson.plugins && servicePackageJson.plugins.packages) {
           servicePackageJson.plugins.packages.forEach(p => {
             delete currrentPackageJson.dependencies[p.name]
@@ -502,5 +507,96 @@ class RuntimeGenerator extends BaseGenerator {
   }
 }
 
-module.exports = RuntimeGenerator
-module.exports.RuntimeGenerator = RuntimeGenerator
+class WrappedGenerator extends BaseGenerator {
+  async prepare () {
+    await this.getPlatformaticVersion()
+    await this.#updateEnvironment()
+    await this.#updatePackageJson()
+    await this.#createConfigFile()
+  }
+
+  async #updateEnvironment () {
+    this.addEnvVars(getRuntimeBaseEnvVars(this.config), { overwrite: false, default: true })
+
+    this.addFile({
+      path: '',
+      file: '.env',
+      contents: (await this.#readExistingFile('.env', '', '\n')) + envObjectToString(this.config.env)
+    })
+
+    this.addFile({
+      path: '',
+      file: '.env.sample',
+      contents: (await this.#readExistingFile('.env.sample', '', '\n')) + envObjectToString(this.config.env)
+    })
+  }
+
+  async #updatePackageJson () {
+    // Manipulate the package.json, if any
+    const packageJson = JSON.parse(await this.#readExistingFile('package.json', '{}'))
+    let { name, dependencies, devDependencies, scripts, engines: packageJsonEngines, ...rest } = packageJson
+
+    // Add the dependencies
+    dependencies = {
+      ...dependencies,
+      [this.module]: `^${this.platformaticVersion}`,
+      platformatic: `^${this.platformaticVersion}`,
+      wattpm: `^${this.platformaticVersion}`
+    }
+
+    // For easier readbility, sort dependencies and devDependencies by name
+    dependencies = Object.fromEntries(Object.entries(dependencies).sort(([a], [b]) => a.localeCompare(b)))
+    devDependencies = Object.fromEntries(Object.entries(devDependencies ?? {}).sort(([a], [b]) => a.localeCompare(b)))
+
+    scripts ??= {}
+    scripts.dev ??= this.config.devCommand
+    scripts.build ??= this.config.buildCommand
+    scripts.start ??= this.config.startCommand ?? 'platformatic start'
+
+    this.addFile({
+      path: '',
+      file: 'package.json',
+      contents: JSON.stringify(
+        {
+          name: name ?? this.projectName ?? this.runtimeName ?? basename(this.targetDirectory),
+          scripts,
+          dependencies,
+          devDependencies,
+          ...rest,
+          engines: { ...packageJsonEngines, ...engines }
+        },
+        null,
+        2
+      )
+    })
+  }
+
+  async #createConfigFile () {
+    const config = {
+      $schema: `https://schemas.platformatic.dev/${this.module}/${this.platformaticVersion}.json`,
+      runtime: wrappableProperties
+    }
+
+    this.addFile({
+      path: '',
+      file: 'watt.json',
+      contents: JSON.stringify(config, null, 2)
+    })
+  }
+
+  async #readExistingFile (path, emptyContents = '', suffix = '') {
+    const filePath = join(this.targetDirectory, path)
+
+    if (!existsSync(filePath)) {
+      return emptyContents
+    }
+
+    const contents = await readFile(filePath, 'utf-8')
+    return contents + suffix
+  }
+}
+
+module.exports = {
+  RuntimeGenerator,
+  WrappedGenerator
+}

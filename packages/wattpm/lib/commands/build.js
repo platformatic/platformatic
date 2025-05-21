@@ -23,7 +23,7 @@ async function executeCommand (root, ...args) {
   const npmrc = resolve(root, '.npmrc')
   if (existsSync(npmrc)) {
     try {
-      const env = parse(await readFile(npmrc, 'utf8'))
+      const env = parse(await readFile(npmrc, 'utf-8'))
 
       if (env['dry-run'] === 'true') {
         return

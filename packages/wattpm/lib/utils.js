@@ -156,8 +156,8 @@ export function serviceToEnvVariable (service) {
   return `PLT_SERVICE_${service.toUpperCase().replaceAll(/[^A-Z0-9_]/g, '_')}_PATH`
 }
 
-export async function findConfigurationFile (logger, root, configurationFile) {
-  const configFile = await findRawConfigurationFile(root, configurationFile)
+export async function findConfigurationFile (logger, root, configurationFile, schemas = 'runtime') {
+  const configFile = await findRawConfigurationFile(root, configurationFile, schemas)
 
   if (!configFile) {
     return logFatalError(

@@ -18,8 +18,8 @@ async function prepareSpawner (t) {
   await createDirectory(repo)
   t.after(() => safeRemove(repo))
 
-  await writeFile(resolve(repo, 'pnpx'), content.replace('$executable', 'pnpx'), 'utf8')
-  await writeFile(resolve(repo, 'npx'), content.replace('$executable', 'npx'), 'utf8')
+  await writeFile(resolve(repo, 'pnpx'), content.replace('$executable', 'pnpx'), 'utf-8')
+  await writeFile(resolve(repo, 'npx'), content.replace('$executable', 'npx'), 'utf-8')
   await chmod(resolve(repo, 'pnpx'), 0o755)
   await chmod(resolve(repo, 'npx'), 0o755)
 
@@ -30,16 +30,16 @@ test('admin should run watt-admin with npx by default', { skip: isWindows }, asy
   const root = await prepareSpawner(t)
   await wattpm('admin', { cwd: root, env: { PATH: root } })
 
-  const output = await readFile(resolve(root, 'cmdline'), 'utf8')
+  const output = await readFile(resolve(root, 'cmdline'), 'utf-8')
   deepStrictEqual(output.trim(), 'npx -y @platformatic/watt-admin')
 })
 
 test('admin should autodetect the package manager', { skip: isWindows }, async t => {
   const root = await prepareSpawner(t)
-  await writeFile(resolve(root, 'pnpm-lock.yaml'), '--', 'utf8')
+  await writeFile(resolve(root, 'pnpm-lock.yaml'), '--', 'utf-8')
   await wattpm('admin', '-l', { cwd: root, env: { PATH: root } })
 
-  const output = await readFile(resolve(root, 'cmdline'), 'utf8')
+  const output = await readFile(resolve(root, 'cmdline'), 'utf-8')
   deepStrictEqual(output.trim(), 'pnpx @platformatic/watt-admin@latest')
 })
 
@@ -47,6 +47,6 @@ test('admin should allow to specify the package manager explictly', { skip: isWi
   const root = await prepareSpawner(t)
   await wattpm('admin', '-P', 'pnpm', { cwd: root, env: { PATH: root } })
 
-  const output = await readFile(resolve(root, 'cmdline'), 'utf8')
+  const output = await readFile(resolve(root, 'cmdline'), 'utf-8')
   deepStrictEqual(output.trim(), 'pnpx @platformatic/watt-admin')
 })
