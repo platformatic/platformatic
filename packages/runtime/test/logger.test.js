@@ -2,32 +2,25 @@
 
 const assert = require('node:assert')
 const path = require('node:path')
-const { readFileSync } = require('node:fs')
 const { test } = require('node:test')
-const { setTimeout: wait } = require('node:timers/promises')
 const { request } = require('undici')
-const { tmpdir } = require('node:os')
-const { buildServer } = require('..')
-
-const WAIT_LOGS_FLUSH = 3_000
+const { execRuntime, stdioOutputToLogs } = require('./helpers')
 
 test('should use full logger options - formatters, timestamp, redaction', async t => {
-  process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
-  const file = path.join(process.env.LOG_DIR, 'service.log')
-  const serviceRoot = path.join(__dirname, '..', 'fixtures', 'logger-options')
+  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options', 'platformatic.json')
 
-  const app = await buildServer(path.join(serviceRoot, 'platformatic.json'))
-  t.after(async () => {
-    await app.close()
+  let requested = false
+  const { stdout } = await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      await request(url, { path: '/logs' })
+      requested = true
+    },
+    done: (message) => {
+      return requested
+    }
   })
-  const url = await app.start()
-
-  await request(url, { path: '/logs' })
-  // wait for logger flush
-  await wait(WAIT_LOGS_FLUSH)
-
-  const content = readFileSync(file, 'utf8')
-  const logs = content.split('\n').filter(line => line.trim() !== '').map(line => JSON.parse(line))
+  const logs = stdioOutputToLogs(stdout)
 
   assert.ok(logs.find(log => log.level === 'INFO' &&
     log.time.length === 24 && // isotime
@@ -43,29 +36,26 @@ test('should use full logger options - formatters, timestamp, redaction', async 
     log.msg.startsWith('Platformatic is now listening at http://127.0.0.1:')))
 })
 
-test('should inherit full logger options from runtime to a platformatic/service', async t => {
-  process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
-  const file = path.join(process.env.LOG_DIR, 'service.log')
+test('should inherit full logger options from runtime to a platformatic/service', { only: true }, async t => {
+  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options', 'platformatic.json')
 
-  const serviceRoot = path.join(__dirname, '..', 'fixtures', 'logger-options')
-
-  const app = await buildServer(path.join(serviceRoot, 'platformatic.json'))
-  t.after(async () => {
-    await app.close()
+  let requested = false
+  const { stdout } = await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      await request(url, { path: '/logs' })
+      requested = true
+    },
+    done: (message) => {
+      return requested && message.includes('call route /logs')
+    }
   })
-  const url = await app.start()
+  const logs = stdioOutputToLogs(stdout)
 
-  await request(url, { path: '/logs' })
-  // wait for logger flush
-  await wait(WAIT_LOGS_FLUSH)
-
-  const content = readFileSync(file, 'utf8')
-  const logs = content.split('\n').filter(line => line.trim() !== '').map(line => JSON.parse(line))
-
-  assert.ok(logs.find(log => log.level === 'DEBUG' &&
-    log.time.length === 24 && // isotime
-    log.name === 'service' &&
-    log.msg === 'Loading envfile...'))
+  assert.ok(logs.find(log => log.stdout.level === 'DEBUG' &&
+    log.stdout.time.length === 24 && // isotime
+    log.stdout.name === 'service' &&
+    log.stdout.msg === 'Loading envfile...'))
 
   assert.ok(logs.find(log => log.level === 'INFO' &&
     log.time.length === 24 && // isotime
@@ -89,7 +79,7 @@ test('should inherit full logger options from runtime to a platformatic/service'
       return log.stdout.level === 'DEBUG' &&
         log.stdout.time.length === 24 && // isotime
         log.stdout.name === 'service' &&
-        log.stdout.secret === 'foo' &&
+        log.stdout.secret === '***HIDDEN***' &&
         log.stdout.msg === 'call route /logs'
     }
     return false
@@ -97,22 +87,20 @@ test('should inherit full logger options from runtime to a platformatic/service'
 })
 
 test('should inherit full logger options from runtime to different services', async t => {
-  process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
-  const file = path.join(process.env.LOG_DIR, 'service.log')
-  const serviceRoot = path.join(__dirname, '..', 'fixtures', 'logger-options-all')
+  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options-all', 'platformatic.json')
 
-  const app = await buildServer(path.join(serviceRoot, 'platformatic.json'))
-  t.after(async () => {
-    await app.close()
+  let requested = false
+  const { stdout } = await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      await request(url, { path: '/logs' })
+      requested = true
+    },
+    done: (message) => {
+      return requested
+    }
   })
-  const url = await app.start()
-
-  await request(url, { path: '/logs' })
-  // wait for logger flush
-  await wait(WAIT_LOGS_FLUSH)
-
-  const content = readFileSync(file, 'utf8')
-  const logs = content.split('\n').filter(line => line.trim() !== '').map(line => JSON.parse(line))
+  const logs = stdioOutputToLogs(stdout)
 
   for (const t of ['composer', 'service', 'node']) {
     assert.ok(logs.find(log => log.level === 'INFO' &&
@@ -123,25 +111,20 @@ test('should inherit full logger options from runtime to different services', as
 })
 
 test('should get json logs from thread services when they are not pino default config', async t => {
-  process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
-  const file = path.join(process.env.LOG_DIR, 'service.log')
-  const serviceRoot = path.join(__dirname, '..', 'fixtures', 'logger-options-all')
+  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options-all', 'platformatic.json')
 
-  const app = await buildServer(path.join(serviceRoot, 'platformatic.json'))
-  t.after(async () => {
-    await app.close()
+  let requested = false
+  const { stdout } = await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      await request(url, { path: '/' })
+      requested = true
+    },
+    done: (message) => {
+      return requested
+    }
   })
-  const url = await app.start()
-
-  await request(url, { path: '/' })
-
-  // wait for logger flush
-  await wait(WAIT_LOGS_FLUSH)
-
-  const content = readFileSync(file, 'utf8')
-
-  const logs = content.split('\n')
-    .filter(line => line.trim() !== '').map(line => JSON.parse(line))
+  const logs = stdioOutputToLogs(stdout)
     .filter(log => log.caller === 'STDOUT')
 
   assert.ok(logs.find(log => {
@@ -159,27 +142,28 @@ test('should get json logs from thread services when they are not pino default c
   }))
 })
 
-test('should handle logs from thread services as they are with captureStdio: false', { only: true }, async t => {
-  process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
-  const file = path.join(process.env.LOG_DIR, 'service.log')
-  const serviceRoot = path.join(__dirname, '..', 'fixtures', 'logger-no-capture')
+test('should handle logs from thread services as they are with captureStdio: false', async t => {
+  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-no-capture', 'platformatic.json')
 
-  const app = await buildServer(path.join(serviceRoot, 'platformatic.json'))
-  t.after(async () => {
-    await app.close()
+  let responses = 0
+  let requested = false
+  const { stdout } = await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      await request(url, { path: '/service/' })
+      await request(url, { path: '/node/' })
+      requested = true
+    },
+    done: (message) => {
+      if (message.includes('call route / on service')) {
+        responses++
+      } else if (message.includes('call route / on node')) {
+        responses++
+      }
+      return requested && responses > 1
+    }
   })
-  const url = await app.start()
-
-  await request(url, { path: '/service/' })
-  await request(url, { path: '/node/' })
-
-  // wait for logger flush
-  await wait(WAIT_LOGS_FLUSH)
-
-  const content = readFileSync(file, 'utf8')
-
-  const logs = content.split('\n')
-    .filter(line => line.trim() !== '').map(line => JSON.parse(line))
+  const logs = stdioOutputToLogs(stdout)
 
   assert.ok(logs.find(log => {
     return log.nodeLevel === 'debug' &&
@@ -209,4 +193,114 @@ test('should handle logs from thread services as they are with captureStdio: fal
   }))
 })
 
-// TODO managementApi false
+test('should handle logs from thread services as they are with captureStdio: false and managementApi: false', async t => {
+  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-no-capture-no-mgmt-api', 'platformatic.json')
+
+  let responses = 0
+  let requested = false
+  const { stdout } = await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      await request(url, { path: '/service/' })
+      await request(url, { path: '/node/' })
+      requested = true
+    },
+    done: (message) => {
+      if (message.includes('call route / on service')) {
+        responses++
+      } else if (message.includes('call route / on node')) {
+        responses++
+      }
+      return requested && responses > 1
+    }
+  })
+  const logs = stdioOutputToLogs(stdout)
+
+  assert.ok(logs.find(log => {
+    return log.nodeLevel === 'debug' &&
+      log.name === 'node' &&
+      log.msg === 'call route / on node'
+  }))
+
+  assert.ok(logs.find(log => {
+    return log.serviceLevel === 'debug' &&
+      log.name === 'service' &&
+      log.msg === 'call route / on service'
+  }))
+
+  assert.ok(logs.find(log => {
+    return log.customLevelName === 'info' &&
+      log.msg === 'Starting the service "node"...'
+  }))
+
+  assert.ok(logs.find(log => {
+    return log.customLevelName === 'info' &&
+      log.msg === 'Starting the service "service"...'
+  }))
+
+  assert.ok(logs.find(log => {
+    return log.customLevelName === 'info' &&
+      log.msg === 'Starting the service "composer"...'
+  }))
+})
+
+test('should use base and messageKey options', async t => {
+  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options-base-message-key', 'platformatic.json')
+
+  let responses = 0
+  let requested = false
+  const { stdout } = await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      await request(url, { path: '/service/' })
+      await request(url, { path: '/node/' })
+      requested = true
+    },
+    done: (message) => {
+      if (message.includes('call route / on service')) {
+        responses++
+      } else if (message.includes('call route / on node')) {
+        responses++
+      }
+      return requested && responses > 1
+    }
+  })
+  const logs = stdioOutputToLogs(stdout)
+
+  assert.ok(logs.every(log => {
+    return log.customBaseName === 'a' &&
+      log.customBaseItem === 'b' &&
+      (log.theMessage ? log.theMessage.length > 0 : true) &&
+      (log.stdout ? log.stdout.theMessage.length > 0 : true)
+  }))
+})
+
+test('should use null base in options', async t => {
+  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-options-null-base', 'platformatic.json')
+
+  let responses = 0
+  let requested = false
+  const { stdout } = await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      await request(url, { path: '/service/' })
+      await request(url, { path: '/node/' })
+      requested = true
+    },
+    done: (message) => {
+      if (message.includes('call route / on service')) {
+        responses++
+      } else if (message.includes('call route / on node')) {
+        responses++
+      }
+      return requested && responses > 1
+    }
+  })
+  const logs = stdioOutputToLogs(stdout)
+
+  assert.ok(logs.every(log => {
+    const keys = Object.keys(log)
+    return !keys.includes('pid') &&
+      !keys.includes('hostname')
+  }))
+})

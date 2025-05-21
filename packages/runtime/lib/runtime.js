@@ -12,6 +12,7 @@ const { Worker } = require('node:worker_threads')
 const ts = require('tail-file-stream')
 const { Agent, interceptors: undiciInterceptors, request } = require('undici')
 const { createThreadInterceptor } = require('undici-thread-interceptor')
+const SonicBoom = require('sonic-boom')
 
 const { checkDependencies, topologicalSort } = require('./dependencies')
 const errors = require('./errors')
@@ -76,6 +77,7 @@ class Runtime extends EventEmitter {
   #sharedHttpCache
   servicesConfigsPatches
   #scheduler
+  #stdio
 
   constructor (configManager, runtimeLogsDir, env) {
     super()
@@ -96,6 +98,13 @@ class Runtime extends EventEmitter {
     this.#restartingWorkers = new Map()
     this.#sharedHttpCache = null
     this.servicesConfigsPatches = new Map()
+
+    if (!this.#configManager.current.logger.captureStdio) {
+      this.#stdio = {
+        stdout: new SonicBoom({ fd: process.stdout.fd }),
+        stderr: new SonicBoom({ fd: process.stderr.fd })
+      }
+    }
   }
 
   async init () {
@@ -1720,14 +1729,11 @@ class Runtime extends EventEmitter {
 
     worker.stdout.setEncoding('utf8')
     worker.stdout.on('data', raw => {
-      let selector = selectors.stdout
-
       if (raw.includes(kStderrMarker)) {
-        selector = selectors.stderr
-        raw = raw.replaceAll(kStderrMarker, '')
+        this.#forwardThreadLog(logger, selectors.stderr, raw.replaceAll(kStderrMarker, ''), 'stderr')
+      } else {
+        this.#forwardThreadLog(logger, selectors.stdout, raw, 'stdout')
       }
-
-      this.#forwardThreadLog(logger, selector, raw, 'stdout')
     })
 
     // Whatever is outputted here, it come from a direct process.stderr.write in the thread.
@@ -1740,15 +1746,9 @@ class Runtime extends EventEmitter {
 
   // label is the key in the logger object, either 'stdout' or 'stderr'
   #forwardThreadLog (logger, { level, caller }, data, label) {
-    if (!this.#loggerDestination) {
-      return
-    }
-
     // When captureStdio is false, write directly to the logger destination
     if (!this.#configManager.current.logger.captureStdio) {
-      this.#loggerDestination.lastLogger = logger
-      this.#loggerDestination.write(data)
-
+      this.#stdio[label].write(data)
       return
     }
 
@@ -1771,6 +1771,10 @@ class Runtime extends EventEmitter {
 
       // Directly write to the Pino destination
       if (pinoLog) {
+        if (!this.#loggerDestination) {
+          continue
+        }
+
         this.#loggerDestination.lastLevel = message.level
         this.#loggerDestination.lastTime = message.time
         this.#loggerDestination.lastMsg = message.msg

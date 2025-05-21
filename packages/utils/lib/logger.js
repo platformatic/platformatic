@@ -58,15 +58,22 @@ function buildPinoTimestamp (timestamp) {
 
 function buildPinoOptions (loggerConfig, serverConfig, serviceId, workerId, serviceOptions, root) {
   const pinoOptions = {
-    level: loggerConfig?.level ?? serverConfig?.level ?? 'trace'
+    level: loggerConfig?.level ?? serverConfig?.level ?? 'trace',
   }
 
   if (serviceId) {
     pinoOptions.name = serviceId
   }
 
-  if (typeof serviceOptions.context.worker?.index !== 'undefined') {
-    pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: workerId }
+  if (loggerConfig?.base !== null && typeof serviceOptions.context.worker?.index !== 'undefined') {
+    pinoOptions.base = {
+      ...(loggerConfig?.base ?? {}),
+      pid: process.pid,
+      hostname: hostname(),
+      worker: workerId
+    }
+  } else if (loggerConfig?.base === null) {
+    pinoOptions.base = undefined
   }
 
   if (loggerConfig?.formatters) {

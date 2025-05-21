@@ -9,19 +9,12 @@
     "port": "0"
   },
   "watch": false,
-  "managementApi": false,
+  "managementApi": true,
   "logger": {
     "captureStdio": false,
     "level": "debug",
     "formatters": {
       "path": "logger-formatters.js"
-    },
-    "transport": {
-      "target": "pino/file",
-      "options": {
-        "destination": "{LOG_DIR}/service.log",
-        "mkdir": true
-      }
     }
   }
 }

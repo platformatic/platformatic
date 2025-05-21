@@ -270,11 +270,9 @@ const logger = {
       required: ['path'],
       additionalProperties: false
     },
-
     timestamp: {
       enum: ['epochTime', 'unixTime', 'nullTime', 'isoTime']
     },
-
     redact: {
       type: 'object',
       properties: {
@@ -294,7 +292,16 @@ const logger = {
     captureStdio: {
       type: 'boolean',
       default: true
-    }    
+    },  
+    base: {
+      anyOf: [
+        { type: 'object', additionalProperties: true },
+        { type: 'null' }
+      ]
+    },
+    messageKey: {
+      type: 'string'
+    }
   },
 
   required: ['level'],

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.63.0.json",
+  "entrypoint": "composer",
+  "autoload": {
+    "path": "services"
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "0"
+  },
+  "watch": false,
+  "managementApi": false,
+  "logger": {
+    "level": "debug",
+    "base": {
+      "customBaseName": "a",
+      "customBaseItem": "b"
+    },
+    "messageKey": "theMessage"
+  }
+}

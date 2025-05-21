@@ -44,14 +44,7 @@ async function createLogger (config, runtimeLogsDir) {
     return [pino(loggerConfig, cliStream), cliStream]
   }
 
-  // TODO? level
   const multiStream = pino.multistream([{ stream: cliStream, level: loggerConfig.level || 'info' }])
-
-  if (loggerConfig.transport) {
-    const transport = pino.transport(loggerConfig.transport)
-    // TODO? level
-    multiStream.add({ level: loggerConfig.level || 'info', stream: transport })
-  }
 
   const logsFileMb = 5
   const logsLimitMb = config.managementApi?.logs?.maxSize || 200
@@ -75,7 +68,6 @@ async function createLogger (config, runtimeLogsDir) {
     }
   })
 
-  // TODO? level
   multiStream.add({ level: 'trace', stream: pinoRoll })
 
   // Make sure there is a file before continuing otherwise the management API log endpoint might bail out

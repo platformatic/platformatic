@@ -317,8 +317,15 @@ export class CacheHandler {
       pinoOptions.name = `cache:${this.serviceId}`
     }
 
-    if (typeof globalThis.platformatic.workerId !== 'undefined') {
-      pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: this.workerId }
+    if (pinoOptions.base !== null && typeof globalThis.platformatic.workerId !== 'undefined') {
+      pinoOptions.base = {
+        ...(pinoOptions.base ?? {}),
+        pid: process.pid,
+        hostname: hostname(),
+        worker: this.workerId
+      }
+    } else if (pinoOptions.base === null) {
+      pinoOptions.base = undefined
     }
 
     return pino(pinoOptions)

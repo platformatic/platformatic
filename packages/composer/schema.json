@@ -220,6 +220,20 @@
                     "paths"
                   ],
                   "additionalProperties": false
+                },
+                "base": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "messageKey": {
+                  "type": "string"
                 }
               },
               "required": [
