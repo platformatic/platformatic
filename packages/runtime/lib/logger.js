@@ -46,6 +46,11 @@ async function createLogger (config, runtimeLogsDir) {
 
   const multiStream = pino.multistream([{ stream: cliStream, level: loggerConfig.level || 'info' }])
 
+  // if (loggerConfig.transport) {
+  //   const transport = pino.transport(loggerConfig.transport)
+  //   multiStream.add({ level: loggerConfig.level || 'info', stream: transport })
+  // }
+
   const logsFileMb = 5
   const logsLimitMb = config.managementApi?.logs?.maxSize || 200
 

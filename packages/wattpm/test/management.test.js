@@ -184,7 +184,8 @@ test('config - should list configuration for an application', async t => {
       hostname: '127.0.0.1'
     },
     logger: {
-      level: 'info'
+      captureStdio: true,
+      level: 'trace'
     },
     entrypoint: 'main',
     autoload: {

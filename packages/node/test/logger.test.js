@@ -28,17 +28,12 @@ test('should run the service with custom logger options on json', async t => {
 
   const logs = await getLogs(runtime)
 
-  // Find log entry with 'call route /' in the message
   assert.ok(logs.find(log => {
-    try {
-      const parsedLog = JSON.parse(log.msg)
-      return parsedLog.level === 'DEBUG' &&
-        parsedLog.name === 'RUNTIME' &&
-        parsedLog.msg === 'call route /' &&
-        parsedLog.secret === '***HIDDEN***' &&
-        parsedLog.time.length === 24 // isoTime
-    } catch { }
-    return false
+    return log.stdout && log.stdout.level === 'DEBUG' &&
+      log.stdout.name === 'RUNTIME' &&
+      log.stdout.msg === 'call route /' &&
+      log.stdout.secret === '***HIDDEN***' &&
+      log.stdout.time.length === 24 // isoTime
   }))
 })
 
