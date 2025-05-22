@@ -25,6 +25,7 @@ Watt is a powerful environment manager for your Node.js applications that provid
 Follow these steps to make your project run in Watt:
 
 ## 0. Prerequisites
+
 Before we begin, make sure you have the following installed:
 
 - [Node.js](https://nodejs.org/) (v20.16.0+ or v22.3.0+)
@@ -38,39 +39,22 @@ npm install --save wattpm @platformatic/node
 
 ### 2. Create Configuration Files
 
-You need two configuration files for Watt:
-
-#### watt.json
-
-This is the main configuration file for Watt. Create it in your project root:
+Create a `watt.json` in your project root:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/wattpm/2.63.2.json",
-  "server": {
-    "hostname": "{HOSTNAME}",
-    "port": "{PORT}"
-  },
-  "logger": {
-    "level": "info"
-  },
-  "services": [{
-    "id": "your-service-name",
-    "config": "./watt-svc.json",
-    "path": "."
-  }]
-}
-```
-
-#### watt-svc.json
-
-This file defines your specific service configuration:
-
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.63.2.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.65.0.json",
   "node": {
     "main": "path/to/your/server/entry-point.js"
+  },
+  "runtime": {
+    "server": {
+      "hostname": "{HOSTNAME}",
+      "port": "{PORT}"
+    },
+    "logger": {
+      "level": "info"
+    }
   }
 }
 ```
@@ -118,28 +102,48 @@ npx wattpm start
 For projects with multiple services, you can define them in your `watt.json`:
 
 ```json
-"services": [
-  {
-    "id": "service1",
-    "config": "./service1/watt-svc.json",
-    "path": "./service1"
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.65.0.json",
+  "server": {
+    "hostname": "{HOSTNAME}",
+    "port": "{PORT}"
   },
-  {
-    "id": "service2",
-    "config": "./service2/watt-svc.json",
-    "path": "./service2"
-  }
-]
+  "logger": {
+    "level": "info"
+  },
+  "services": [
+    {
+      "id": "service1",
+      "config": "./service1/watt.json",
+      "path": "./service1"
+    },
+    {
+      "id": "service2",
+      "config": "./service2/watt.json",
+      "path": "./service2"
+    }
+  ]
+}
 ```
 
 In this case you are better served in using the [`autoload`](/docs/reference/watt/configuration#autoload) feature.
+
+Each of the `watt.json` in the subfolders should look like this one:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.65.0.json",
+  "node": {
+    "main": "path/to/your/server/entry-point.js"
+  }
+}
+```
 
 Note that if you need to expose multiple services, you'd need to add a [Composer](/docs/composer/overview).
 
 ## Common Issues and Solutions
 
 - **Port conflicts**: If the specified port is already in use, Watt will try the next one.
-- **Missing entry point**: Verify that the path in `watt-svc.json` points to your actual server entry file.
+- **Missing entry point**: Verify that the path in `watt.json` points to your actual server entry file.
 - **Build step**: For TypeScript projects, ensure you've built your project before running Watt. You can use `npx wattpm build` to compile your TypeScript files.
 - **Environment variables**: Confirm that all required environment variables are available.
 
