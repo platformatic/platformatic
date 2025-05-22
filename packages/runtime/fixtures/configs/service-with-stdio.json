@@ -4,7 +4,7 @@
   "managementApi": {},
   "server": {
     "logger": {
-      "level": "debug"
+      "level": "trace"
     }
   },
   "services": [

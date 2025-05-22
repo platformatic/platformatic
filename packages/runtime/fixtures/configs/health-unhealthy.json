@@ -21,7 +21,7 @@
     }
   },
   "logger": {
-    "level": "silent"
+    "level": "trace"
   },
   "restartOnError": 1000,
   "gracefulShutdown": {

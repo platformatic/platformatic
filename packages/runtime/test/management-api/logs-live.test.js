@@ -157,14 +157,14 @@ test('should support custom use transport', async t => {
   await new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       reject(new Error('Timeout'))
-    }, 100000)
+    }, 30_000)
 
     webSocket.on('error', err => {
       reject(err)
     })
 
     webSocket.on('message', data => {
-      if (data.includes('Server listening at')) {
+      if (data.toString().includes('Platformatic is now listening at')) {
         clearTimeout(timeout)
         webSocket.close()
         resolve()
@@ -173,8 +173,8 @@ test('should support custom use transport', async t => {
   })
 
   // Wait for logs to be written
-  await sleep(1000)
+  await sleep(1_000)
 
   const logs = await readFile(logsPath, 'utf8')
-  assert.ok(logs.includes('Server listening at'))
+  assert.ok(logs.includes('Platformatic is now listening at'))
 })

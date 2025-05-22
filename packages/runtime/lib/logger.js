@@ -20,7 +20,7 @@ const customPrettifiers = {
 
 // Create the runtime logger
 async function createLogger (config, runtimeLogsDir) {
-  const loggerConfig = { ...config.logger }
+  const loggerConfig = { ...config.logger, transport: undefined }
 
   // PLT_RUNTIME_LOGGER_STDOUT is used in test to reduce verbosity
   let cliStream = process.env.PLT_RUNTIME_LOGGER_STDOUT
@@ -29,8 +29,8 @@ async function createLogger (config, runtimeLogsDir) {
       ? pretty({ customPrettifiers })
       : pino.destination(1)
 
-  if (loggerConfig.transport) {
-    cliStream = pino.transport(loggerConfig.transport)
+  if (config.logger.transport) {
+    cliStream = pino.transport(config.logger.transport)
   }
 
   if (loggerConfig.formatters) {
@@ -44,12 +44,7 @@ async function createLogger (config, runtimeLogsDir) {
     return [pino(loggerConfig, cliStream), cliStream]
   }
 
-  const multiStream = pino.multistream([{ stream: cliStream, level: loggerConfig.level || 'info' }])
-
-  // if (loggerConfig.transport) {
-  //   const transport = pino.transport(loggerConfig.transport)
-  //   multiStream.add({ level: loggerConfig.level || 'info', stream: transport })
-  // }
+  const multiStream = pino.multistream([{ stream: cliStream, level: loggerConfig.level }])
 
   const logsFileMb = 5
   const logsLimitMb = config.managementApi?.logs?.maxSize || 200
@@ -73,7 +68,7 @@ async function createLogger (config, runtimeLogsDir) {
     }
   })
 
-  multiStream.add({ level: 'trace', stream: pinoRoll })
+  multiStream.add({ level: loggerConfig.level, stream: pinoRoll })
 
   // Make sure there is a file before continuing otherwise the management API log endpoint might bail out
   await once(pinoRoll, 'ready')

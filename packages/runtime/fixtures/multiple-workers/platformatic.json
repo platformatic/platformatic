@@ -16,7 +16,7 @@
     }
   ],
   "logger": {
-    "level": "info"
+    "level": "trace"
   },
   "workers": 3
 }

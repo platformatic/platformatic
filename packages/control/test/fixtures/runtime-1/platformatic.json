@@ -10,7 +10,7 @@
     "port": 0
   },
   "logger": {
-    "level": "info"
+    "level": "trace"
   },
   "managementApi": true
 }

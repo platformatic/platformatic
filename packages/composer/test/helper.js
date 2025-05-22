@@ -38,7 +38,7 @@ const agent = new Agent({
 
 const tmpBaseDir = resolve(__dirname, '../tmp')
 
-const REFRESH_TIMEOUT = 1000
+const REFRESH_TIMEOUT = 1_000
 const REFRESH_TIMEOUT_DELAY_FACTOR = 20
 
 // GitHub actions are REALLY slow.
@@ -439,7 +439,7 @@ async function createComposerInRuntime (
       ]),
       autoload: autoload ? { path: autoload } : undefined,
       logger: {
-        level: 'error'
+        level: 'trace'
       },
       ...additionalRuntimeConfig
     }),
@@ -650,7 +650,6 @@ function waitForLogMessage (loggerSpy, message, { max = 100, debug = false } = {
 async function waitForRestart (runtime, previousUrl) {
   const id = (await runtime.getEntrypointDetails()).id
   const socketPath = runtime.getManagementApiUrl()
-
   const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
   const webSocket = new WebSocket(protocol + socketPath + ':/api/v1/logs/live')
 
@@ -666,7 +665,7 @@ async function waitForRestart (runtime, previousUrl) {
       })
 
       webSocket.on('message', data => {
-        if (data.includes(`Service \\"${id}\\" has been successfully reloaded`)) {
+        if (data.toString().includes(`Service \\"${id}\\" has been successfully reloaded`)) {
           clearTimeout(timeout)
 
           setImmediate(async () => {
