@@ -270,7 +270,9 @@ test('defaults name to `main` if package.json exists but has no name', async t =
 // API usage excludes them despite of JSON schema validation
 test('uses application runtime configuration, avoiding overriding of sensible properties', async t => {
   const configFile = join(fixturesDir, 'wrapped-runtime', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticDB)
+
+  // Do not use loadConfig here, as the schema is purposefully invalid
+  const config = await loadConfig({}, ['-c', configFile], platformaticDB, {}, true, null, { validation: false })
 
   const runtimeConfig = await wrapConfigInRuntimeConfig(config)
   const conf = runtimeConfig.current

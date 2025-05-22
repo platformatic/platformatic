@@ -10,7 +10,7 @@ const { getParser } = require('./formats')
 const { ConfigManager } = require('./manager')
 const { matchKnownSchema } = require('./store')
 
-async function loadConfig (minimistConfig, args, app, overrides = {}, replaceEnv = true, logger) {
+async function loadConfig (minimistConfig, args, app, overrides = {}, replaceEnv = true, logger = null, opts = {}) {
   const providedArgs = parseArgs(
     args,
     deepmerge({ all: true })(
@@ -43,7 +43,7 @@ async function loadConfig (minimistConfig, args, app, overrides = {}, replaceEnv
   app = loaded.app
   const configManager = loaded.configManager
 
-  const parsingResult = await configManager.parse(replaceEnv, args)
+  const parsingResult = await configManager.parse(replaceEnv, args, opts)
   if (!parsingResult) {
     const err = new errors.ConfigurationDoesNotValidateAgainstSchemaError()
     err.validationErrors = configManager.validationErrors

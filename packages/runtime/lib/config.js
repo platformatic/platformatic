@@ -6,7 +6,7 @@ const {
   createRequire,
   loadModule,
   omitProperties,
-  schemaComponents: { runtimeUnwrappableProperties }
+  schemaComponents: { runtimeUnwrappablePropertiesList }
 } = require('@platformatic/utils')
 const ConfigManager = require('@platformatic/config')
 const { Store } = require('@platformatic/config')
@@ -268,7 +268,7 @@ async function wrapConfigInRuntimeConfig ({ configManager, args }) {
   const wrapperConfig = {
     $schema: schema.$id,
     watch: true,
-    ...omitProperties(configManager.current.runtime ?? {}, runtimeUnwrappableProperties),
+    ...omitProperties(configManager.current.runtime ?? {}, runtimeUnwrappablePropertiesList),
     entrypoint: serviceId,
     services: [
       {
