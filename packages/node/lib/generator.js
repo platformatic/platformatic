@@ -60,6 +60,11 @@ export class Generator extends BaseGenerator {
         2
       )
     })
+
+    return {
+      targetDirectory: this.targetDirectory,
+      env: this.config.env
+    }
   }
 
   async _getConfigFileContents () {}
