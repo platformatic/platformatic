@@ -87,6 +87,7 @@ class RuntimeGenerator extends BaseGenerator {
       workspaces: [this.servicesFolder + '/*'],
       scripts: {
         dev: this.config.devCommand,
+        build: this.config.buildCommand,
         start: this.config.startCommand ?? 'platformatic start'
       },
       devDependencies: {

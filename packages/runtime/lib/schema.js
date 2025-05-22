@@ -9,7 +9,7 @@ const platformaticRuntimeSchema = {
   $id: `https://schemas.platformatic.dev/@platformatic/runtime/${pkg.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
   type: 'object',
-  properties: schemaComponents.runtime,
+  properties: schemaComponents.runtimeProperties,
   anyOf: [{ required: ['autoload'] }, { required: ['services'] }, { required: ['web'] }],
   additionalProperties: false
 }

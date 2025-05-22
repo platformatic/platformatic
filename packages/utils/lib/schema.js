@@ -829,7 +829,16 @@ const services = {
   }
 }
 
-const runtime = {
+const runtimeUnwrappablePropertiesList = [
+  '$schema',
+  'entrypoint',
+  'autoload',
+  'services',
+  'web',
+  'resolvedServicesBasePath'
+]
+
+const runtimeProperties = {
   $schema: {
     type: 'string'
   },
@@ -1223,16 +1232,13 @@ const runtime = {
   }
 }
 
-const runtimeUnwrappableProperties = [
-  '$schema',
-  'entrypoint',
-  'autoload',
-  'services',
-  'web',
-  'resolvedServicesBasePath'
-]
+const wrappedRuntimeProperties = omitProperties(runtimeProperties, runtimeUnwrappablePropertiesList)
 
-const wrappedRuntime = omitProperties(runtime, runtimeUnwrappableProperties)
+const wrappedRuntime = {
+  type: 'object',
+  properties: wrappedRuntimeProperties,
+  additionalProperties: false
+}
 
 module.exports = {
   overridableValue,
@@ -1252,7 +1258,8 @@ module.exports = {
   health,
   healthWithoutDefaults,
   services,
-  runtime,
-  runtimeUnwrappableProperties,
+  runtimeUnwrappablePropertiesList,
+  runtimeProperties,
+  wrappedRuntimeProperties,
   wrappedRuntime
 }
