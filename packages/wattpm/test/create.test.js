@@ -4,6 +4,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { pathToFileURL } from 'node:url'
+import { version } from '../lib/schema.js'
 import { createTemporaryDirectory, wattpm } from './helper.js'
 
 async function setupInquirer (root, expected) {
@@ -40,7 +41,7 @@ test('create - should create a new project using watt.json by default', async t 
   await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, INQUIRER_PATH: inquirerPath } })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf8')), {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.63.4.json',
+    $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
     autoload: {
       exclude: ['docs'],
       path: 'web'
@@ -80,7 +81,7 @@ test('create - should create a new project with two services', async t => {
   })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf8')), {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.63.4.json',
+    $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
     autoload: {
       exclude: ['docs'],
       path: 'web'
@@ -138,7 +139,7 @@ test('create - should use a custom configuration file', async t => {
   })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt-alternative.json'), 'utf8')), {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.63.4.json',
+    $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
     autoload: {
       exclude: ['docs'],
       path: 'web'
@@ -171,7 +172,7 @@ test('create - should correctly set the chosen user entrypoint', async t => {
   await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, INQUIRER_PATH: inquirerPath1 } })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf8')), {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/runtime/2.63.4.json',
+    $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
     autoload: {
       exclude: ['docs'],
       path: 'web'
