@@ -95,12 +95,12 @@ export async function importStackableAndConfig (root, config) {
   } else if (dependencies?.['@remix-run/dev'] || devDependencies?.['@remix-run/dev']) {
     autodetectDescription = 'is using Remix'
     moduleName = '@platformatic/remix'
-  } else if (dependencies?.vite || devDependencies?.vite) {
-    autodetectDescription = 'is using Vite'
-    moduleName = '@platformatic/vite'
   } else if (dependencies?.astro || devDependencies?.astro) {
     autodetectDescription = 'is using Astro'
     moduleName = '@platformatic/astro'
+  } else if (dependencies?.vite || devDependencies?.vite) {
+    autodetectDescription = 'is using Vite'
+    moduleName = '@platformatic/vite'
   }
 
   const stackable = await importStackablePackage(root, moduleName)

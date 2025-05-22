@@ -116,10 +116,10 @@ export async function determineApplicationType (projectDir) {
     return ['@platformatic/next', 'Next.js']
   } else if (dependencies?.['@remix-run/dev'] || devDependencies?.['@remix-run/dev']) {
     return ['@platformatic/remix', 'Remix']
-  } else if (dependencies?.vite || devDependencies?.vite) {
-    return ['@platformatic/vite', 'Vite']
   } else if (dependencies?.astro || devDependencies?.astro) {
     return ['@platformatic/astro', 'Astro']
+  } else if (dependencies?.vite || devDependencies?.vite) {
+    return ['@platformatic/vite', 'Vite']
   }
 
   return ['@platformatic/node', 'Node.js']
