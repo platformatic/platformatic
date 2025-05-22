@@ -565,6 +565,6 @@ describe('WrappedGenerator', () => {
       }
     }
 
-    assert.deepStrictEqual(packageJson.contents.split('\n'), JSON.stringify(expected, null, 2).split('\n'))
+    assert.deepStrictEqual(packageJson.contents.split(/\r?\n/), JSON.stringify(expected, null, 2).split(/\r?\n/))
   })
 })
