@@ -301,6 +301,10 @@ const logger = {
     },
     messageKey: {
       type: 'string'
+    },
+    customLevels: {
+      type: 'object',
+      additionalProperties: true
     }
   },
 

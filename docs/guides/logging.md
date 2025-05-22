@@ -154,6 +154,20 @@ This can be configured in two ways:
 
   See the [Pino messageKey documentation](https://github.com/pinojs/pino/blob/main/docs/api.md#messagekey-string) for more details.
 
+- **customLevels**: Specify custom levels for the logger, it can be an object with the level name and the level value.
+
+  ```json
+  {
+    "logger": {
+      "customLevels": {
+        "verbose": 10
+      }
+    }
+  }
+  ```
+
+  See the [Pino customLevels documentation](https://github.com/pinojs/pino/blob/main/docs/api.md#customlevels-object) for more details.
+
 ---
 
 ### Capture Thread Services logs

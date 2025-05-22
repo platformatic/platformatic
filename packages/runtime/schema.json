@@ -788,6 +788,10 @@
         "messageKey": {
           "type": "string"
         },
+        "customLevels": {
+          "type": "object",
+          "additionalProperties": true
+        },
         "captureStdio": {
           "type": "boolean",
           "default": true

@@ -76,6 +76,9 @@ export interface PlatformaticComposer {
             [k: string]: unknown;
           } | null;
           messageKey?: string;
+          customLevels?: {
+            [k: string]: unknown;
+          };
           [k: string]: unknown;
         };
     loggerInstance?: {

@@ -52,6 +52,9 @@ export interface PlatformaticRemixStackable {
       [k: string]: unknown;
     } | null;
     messageKey?: string;
+    customLevels?: {
+      [k: string]: unknown;
+    };
     [k: string]: unknown;
   };
   server?: {

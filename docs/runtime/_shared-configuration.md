@@ -309,6 +309,7 @@ An object with the following settings:
 - **`captureStdio`** — If `true`, the logger will capture the `stdout` and `stderr` streams of the main service. Default: `false`.
 - **`base`** — The base logger configuration; setting to `null` will remove `pid` and `hostname` from the logs, otherwise it can be an object to add custom properties to the logs.
 - **`messageKey`** — The key to use for the log message. Default: `msg`.
+- **`customLevels`** — Configuration for custom levels, see [pino.customLevels](https://getpino.io/#/docs/api?id=customlevels-object) for more information.
 
 ### `undici`
 

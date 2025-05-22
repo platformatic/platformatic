@@ -304,3 +304,33 @@ test('should use null base in options', async t => {
       !keys.includes('hostname')
   }))
 })
+
+test('should use custom config', async t => {
+  const configPath = path.join(__dirname, '..', 'fixtures', 'logger-custom-config', 'platformatic.json')
+
+  let responses = 0
+  let requested = false
+  const { stdout } = await execRuntime({
+    configPath,
+    onReady: async ({ url }) => {
+      await request(url, { path: '/service/' })
+      await request(url, { path: '/node/' })
+      requested = true
+    },
+    done: (message) => {
+      if (message.includes('request completed')) {
+        responses++
+      }
+      return requested && responses > 2
+    }
+  })
+  const logs = stdioOutputToLogs(stdout)
+
+  assert.ok(logs.every(log => {
+    const keys = Object.keys(log)
+    return log.severity === 'INFO' &&
+      log.message.length > 0 &&
+      !keys.includes('pid') &&
+      !keys.includes('hostname')
+  }))
+})
