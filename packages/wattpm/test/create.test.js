@@ -275,26 +275,22 @@ test('create - should wrap existing Node.js applications into Watt', async t => 
   ])
 
   await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, INQUIRER_PATH: inquirerPath } })
+  const envFile = await readFile(resolve(temporaryFolder, '.env'), 'utf-8')
+  const envSampleFile = await readFile(resolve(temporaryFolder, '.env.sample'), 'utf-8')
 
-  deepStrictEqual(
-    await readFile(resolve(temporaryFolder, '.env'), 'utf-8'),
-    `
-PLT_SERVER_HOSTNAME=127.0.0.1
-PORT=3042
-PLT_SERVER_LOGGER_LEVEL=info
-PLT_MANAGEMENT_API=true
-`.trim()
-  )
+  deepStrictEqual(envFile.split(/\r?\n/), [
+    'PLT_SERVER_HOSTNAME=127.0.0.1',
+    'PORT=3042',
+    'PLT_SERVER_LOGGER_LEVEL=info',
+    'PLT_MANAGEMENT_API=true'
+  ])
 
-  deepStrictEqual(
-    await readFile(resolve(temporaryFolder, '.env.sample'), 'utf-8'),
-    `
-PLT_SERVER_HOSTNAME=127.0.0.1
-PORT=3042
-PLT_SERVER_LOGGER_LEVEL=info
-PLT_MANAGEMENT_API=true
-`.trim()
-  )
+  deepStrictEqual(envSampleFile.split(/\r?\n/), [
+    'PLT_SERVER_HOSTNAME=127.0.0.1',
+    'PORT=3042',
+    'PLT_SERVER_LOGGER_LEVEL=info',
+    'PLT_MANAGEMENT_API=true'
+  ])
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'package.json')), 'utf-8'), {
     dependencies: {
@@ -404,29 +400,26 @@ test('create - should wrap existing frontend applications into Watt', async t =>
 
   await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, INQUIRER_PATH: inquirerPath } })
 
-  deepStrictEqual(
-    await readFile(resolve(temporaryFolder, '.env'), 'utf-8'),
-    `
-A=B
-C=D
-PLT_SERVER_HOSTNAME=127.0.0.1
-PORT=3042
-PLT_SERVER_LOGGER_LEVEL=info
-PLT_MANAGEMENT_API=true
-`.trim()
-  )
+  const envFile = await readFile(resolve(temporaryFolder, '.env'), 'utf-8')
+  const envSampleFile = await readFile(resolve(temporaryFolder, '.env.sample'), 'utf-8')
 
-  deepStrictEqual(
-    await readFile(resolve(temporaryFolder, '.env.sample'), 'utf-8'),
-    `
-E=F
-G=H
-PLT_SERVER_HOSTNAME=127.0.0.1
-PORT=3042
-PLT_SERVER_LOGGER_LEVEL=info
-PLT_MANAGEMENT_API=true
-`.trim()
-  )
+  deepStrictEqual(envFile.split(/\r?\n/), [
+    'A=B',
+    'C=D',
+    'PLT_SERVER_HOSTNAME=127.0.0.1',
+    'PORT=3042',
+    'PLT_SERVER_LOGGER_LEVEL=info',
+    'PLT_MANAGEMENT_API=true'
+  ])
+
+  deepStrictEqual(envSampleFile.split(/\r?\n/), [
+    'E=F',
+    'G=H',
+    'PLT_SERVER_HOSTNAME=127.0.0.1',
+    'PORT=3042',
+    'PLT_SERVER_LOGGER_LEVEL=info',
+    'PLT_MANAGEMENT_API=true'
+  ])
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'package.json')), 'utf-8'), {
     name: 'test-app',

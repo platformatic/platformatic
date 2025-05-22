@@ -457,7 +457,7 @@ describe('WrappedGenerator', () => {
     const env = generator.getFileObject('.env')
     const envSample = generator.getFileObject('.env.sample')
 
-    assert.deepStrictEqual(env.contents.split('\n'), [
+    assert.deepStrictEqual(env.contents.split(/\r?\n/), [
       'A=1',
       'PLT_SERVER_HOSTNAME=127.0.0.1',
       'PORT=3042',
@@ -465,7 +465,7 @@ describe('WrappedGenerator', () => {
       'PLT_MANAGEMENT_API=true'
     ])
 
-    assert.deepStrictEqual(envSample.contents.split('\n'), [
+    assert.deepStrictEqual(envSample.contents.split(/\r?\n/), [
       'PLT_SERVER_HOSTNAME=127.0.0.1',
       'PORT=3042',
       'PLT_SERVER_LOGGER_LEVEL=info',
