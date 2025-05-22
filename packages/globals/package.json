@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/globals",
-  "version": "2.64.0",
+  "version": "2.65.0",
   "description": "Platformatic Global Object Getter",
   "type": "module",
   "main": "./lib/index.js",
