@@ -8,6 +8,18 @@ test('should export a Generator property', async () => {
   deepStrictEqual(generator.module, '@platformatic/node')
 })
 
+test('should return environment and environment variables', async () => {
+  const generator = new Generator()
+
+  generator.targetDirectory = 'foo'
+  generator.setConfig({ env: { foo: 'bar' } })
+
+  deepStrictEqual(await generator.prepare(), {
+    targetDirectory: 'foo',
+    env: { foo: 'bar' }
+  })
+})
+
 test('should generate proper index.js file', async () => {
   const generator = new Generator()
   await generator.prepare()
