@@ -292,7 +292,7 @@ const logger = {
     captureStdio: {
       type: 'boolean',
       default: true
-    },  
+    },
     base: {
       anyOf: [
         { type: 'object', additionalProperties: true },
