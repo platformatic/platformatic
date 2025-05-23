@@ -1,35 +1,15 @@
-import { isWindows } from '@platformatic/basic/test/helper.js'
 import { deepStrictEqual, ok } from 'node:assert'
 import { readFile, writeFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { test } from 'node:test'
-import { pathToFileURL } from 'node:url'
+import { setupUserInputHandler } from '../../create-platformatic/test/cli/helper.mjs'
 import { version } from '../lib/schema.js'
 import { createTemporaryDirectory, wattpm } from './helper.js'
-
-async function setupInquirer (t, expected) {
-  const temporaryFolder = await createTemporaryDirectory(t, 'inquirer')
-  let newInquirerPath = resolve(temporaryFolder, 'inquirer.js')
-
-  const template = await readFile(new URL('./fixtures/inquirer-template.js', import.meta.url), 'utf-8')
-
-  await writeFile(
-    newInquirerPath,
-    template.replace('const expected = []', `const expected = ${JSON.stringify(expected)}\n`),
-    'utf-8'
-  )
-
-  if (isWindows) {
-    newInquirerPath = pathToFileURL(newInquirerPath).toString()
-  }
-
-  return newInquirerPath
-}
 
 test('create - should create a new project using watt.json by default', async t => {
   const temporaryFolder = await createTemporaryDirectory(t, 'create')
 
-  const inquirerPath = await setupInquirer(t, [
+  const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
@@ -39,7 +19,7 @@ test('create - should create a new project using watt.json by default', async t 
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
-  await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, INQUIRER_PATH: inquirerPath } })
+  await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, USER_INPUT_HANDLER: userInputHandler } })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf-8')), {
     $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
@@ -62,7 +42,7 @@ test('create - should create a new project using watt.json by default', async t 
 test('create - should create a new project with two services', async t => {
   const temporaryFolder = await createTemporaryDirectory(t, 'create')
 
-  const inquirerPath = await setupInquirer(t, [
+  const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
@@ -76,7 +56,7 @@ test('create - should create a new project with two services', async t => {
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
-  await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, INQUIRER_PATH: inquirerPath } })
+  await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, USER_INPUT_HANDLER: userInputHandler } })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf-8')), {
     $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
@@ -100,7 +80,7 @@ test('create - should create a new project with two services', async t => {
 test('create - should not install @platformatic/runtime as it is already available', async t => {
   const temporaryFolder = await createTemporaryDirectory(t, 'create')
 
-  const inquirerPath = await setupInquirer(t, [
+  const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
@@ -112,7 +92,7 @@ test('create - should not install @platformatic/runtime as it is already availab
 
   const createProcess = await wattpm('create', '-s', {
     cwd: temporaryFolder,
-    env: { NO_COLOR: true, INQUIRER_PATH: inquirerPath }
+    env: { NO_COLOR: true, USER_INPUT_HANDLER: userInputHandler }
   })
 
   ok(!createProcess.stdout.includes('Installing @platformatic/runtime'))
@@ -121,7 +101,7 @@ test('create - should not install @platformatic/runtime as it is already availab
 test('create - should use a custom configuration file', async t => {
   const temporaryFolder = await createTemporaryDirectory(t, 'create')
 
-  const inquirerPath = await setupInquirer(t, [
+  const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
@@ -133,7 +113,7 @@ test('create - should use a custom configuration file', async t => {
 
   await wattpm('create', '-c', 'watt-alternative.json', '-s', {
     cwd: temporaryFolder,
-    env: { NO_COLOR: true, INQUIRER_PATH: inquirerPath }
+    env: { NO_COLOR: true, USER_INPUT_HANDLER: userInputHandler }
   })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt-alternative.json'), 'utf-8')), {
@@ -157,7 +137,7 @@ test('create - should use a custom configuration file', async t => {
 test('create - should correctly set the chosen user entrypoint', async t => {
   const temporaryFolder = await createTemporaryDirectory(t, 'create')
 
-  const inquirerPath1 = await setupInquirer(t, [
+  const userInputHandler1 = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
@@ -167,7 +147,7 @@ test('create - should correctly set the chosen user entrypoint', async t => {
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
-  await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, INQUIRER_PATH: inquirerPath1 } })
+  await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, USER_INPUT_HANDLER: userInputHandler1 } })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf-8')), {
     $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
@@ -186,7 +166,7 @@ test('create - should correctly set the chosen user entrypoint', async t => {
     watch: true
   })
 
-  const inquirerPath2 = await setupInquirer(t, [
+  const userInputHandler2 = await setupUserInputHandler(t, [
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'alternate' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
@@ -194,7 +174,7 @@ test('create - should correctly set the chosen user entrypoint', async t => {
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' }
   ])
 
-  await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, INQUIRER_PATH: inquirerPath2 } })
+  await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, USER_INPUT_HANDLER: userInputHandler2 } })
 
   deepStrictEqual(
     JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf-8')).entrypoint,
@@ -205,7 +185,7 @@ test('create - should correctly set the chosen user entrypoint', async t => {
 test('create - should create a new project using a different package manager', async t => {
   const temporaryFolder = await createTemporaryDirectory(t, 'create')
 
-  const inquirerPath = await setupInquirer(t, [
+  const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
@@ -217,7 +197,7 @@ test('create - should create a new project using a different package manager', a
 
   const createProcess = await wattpm('create', '-P', 'pnpm', {
     cwd: temporaryFolder,
-    env: { NO_COLOR: true, INQUIRER_PATH: inquirerPath }
+    env: { NO_COLOR: true, USER_INPUT_HANDLER: userInputHandler }
   })
 
   ok(createProcess.stdout.includes('Installing dependencies for the application using pnpm'))
@@ -228,7 +208,7 @@ test('create - should create a new project using a different package manager', a
 test('create - should support providing stackable via command line', async t => {
   const temporaryFolder = await createTemporaryDirectory(t, 'create')
 
-  const inquirerPath = await setupInquirer(t, [
+  const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
@@ -240,7 +220,7 @@ test('create - should support providing stackable via command line', async t => 
 
   const createProcess = await wattpm('create', '-M', 'first', '-M', 'second,third', '-M', '  fourth ,fifth  ', '-s', {
     cwd: temporaryFolder,
-    env: { NO_COLOR: true, INQUIRER_PATH: inquirerPath }
+    env: { NO_COLOR: true, USER_INPUT_HANDLER: userInputHandler }
   })
 
   ok(
@@ -265,7 +245,7 @@ test('create - should wrap existing Node.js applications into Watt', async t => 
 
   await writeFile(resolve(temporaryFolder, 'index.js'), 'console.log("Hello world")', 'utf-8')
 
-  const inquirerPath = await setupInquirer(t, [
+  const userInputHandler = await setupUserInputHandler(t, [
     {
       type: 'list',
       question: 'This folder seems to already contain a Node.js application. Do you want to wrap into Watt?',
@@ -274,7 +254,7 @@ test('create - should wrap existing Node.js applications into Watt', async t => 
     { type: 'input', question: 'What port do you want to use?', reply: '3042' }
   ])
 
-  await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, INQUIRER_PATH: inquirerPath } })
+  await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, USER_INPUT_HANDLER: userInputHandler } })
   const envFile = await readFile(resolve(temporaryFolder, '.env'), 'utf-8')
   const envSampleFile = await readFile(resolve(temporaryFolder, '.env.sample'), 'utf-8')
 
@@ -330,7 +310,7 @@ test('create - should not attempt to wrap twice', async t => {
 
   await writeFile(resolve(temporaryFolder, 'index.js'), 'console.log("Hello world")', 'utf-8')
 
-  const firstInquirerPath = await setupInquirer(t, [
+  const firstuserInputHandler = await setupUserInputHandler(t, [
     {
       type: 'list',
       question: 'This folder seems to already contain a Node.js application. Do you want to wrap into Watt?',
@@ -339,16 +319,16 @@ test('create - should not attempt to wrap twice', async t => {
     { type: 'input', question: 'What port do you want to use?', reply: '3042' }
   ])
 
-  const secondInquirerPath = await setupInquirer(t, [])
+  const seconduserInputHandler = await setupUserInputHandler(t, [])
 
   await wattpm('create', '-s', {
     cwd: temporaryFolder,
-    env: { NO_COLOR: true, INQUIRER_PATH: firstInquirerPath }
+    env: { NO_COLOR: true, USER_INPUT_HANDLER: firstuserInputHandler }
   })
 
   const createProcess = await wattpm('create', '-s', {
     cwd: temporaryFolder,
-    env: { NO_COLOR: true, INQUIRER_PATH: secondInquirerPath }
+    env: { NO_COLOR: true, USER_INPUT_HANDLER: seconduserInputHandler }
   })
 
   ok(
@@ -389,7 +369,7 @@ test('create - should wrap existing frontend applications into Watt', async t =>
     'utf-8'
   )
 
-  const inquirerPath = await setupInquirer(t, [
+  const userInputHandler = await setupUserInputHandler(t, [
     {
       type: 'list',
       question: 'This folder seems to already contain a Next.js application. Do you want to wrap into Watt?',
@@ -398,7 +378,7 @@ test('create - should wrap existing frontend applications into Watt', async t =>
     { type: 'input', question: 'What port do you want to use?', reply: '3042' }
   ])
 
-  await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, INQUIRER_PATH: inquirerPath } })
+  await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, USER_INPUT_HANDLER: userInputHandler } })
 
   const envFile = await readFile(resolve(temporaryFolder, '.env'), 'utf-8')
   const envSampleFile = await readFile(resolve(temporaryFolder, '.env.sample'), 'utf-8')

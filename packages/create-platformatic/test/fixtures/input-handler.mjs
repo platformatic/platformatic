@@ -1,3 +1,4 @@
+// This will be replaced by the test script, do not change it
 const expected = []
 
 process.on('beforeExit', () => {

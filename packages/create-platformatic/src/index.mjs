@@ -207,7 +207,7 @@ export async function createApplication (
   additionalGeneratorConfig = {}
 ) {
   // This is only used for testing for now, but might be useful in the future
-  const inquirer = process.env.INQUIRER_PATH ? await import(process.env.INQUIRER_PATH) : defaultInquirer
+  const inquirer = process.env.USER_INPUT_HANDLER ? await import(process.env.USER_INPUT_HANDLER) : defaultInquirer
 
   // Check in the directory and its parents if there is a config file
   let shouldChooseProjectDir = true

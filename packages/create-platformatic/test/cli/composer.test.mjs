@@ -1,67 +1,33 @@
-import { safeRemove } from '@platformatic/utils'
-import { mkdtemp } from 'fs/promises'
-import { equal } from 'node:assert'
+import { deepStrictEqual, equal } from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { tmpdir } from 'os'
 import { isFileAccessible } from '../../src/utils.mjs'
-import { executeCreatePlatformatic, getServices, keys, startMarketplace, walk } from './helper.mjs'
-import { timeout } from './timeout.mjs'
+import {
+  createTemporaryDirectory,
+  executeCreatePlatformatic,
+  getServices,
+  setupUserInputHandler,
+  startMarketplace
+} from './helper.mjs'
 
-let tmpDir
-test.beforeEach(async () => {
-  tmpDir = await mkdtemp(join(tmpdir(), 'test-create-platformatic-'))
-})
-
-test.afterEach(async () => {
-  try {
-    await safeRemove(tmpDir)
-  } catch (e) {
-    // on purpose, in win the resource might be still "busy"
-  }
-})
-
-test('Creates a Platformatic Composer', { timeout }, async t => {
+test('Creates a Platformatic Composer', async t => {
+  const root = await createTemporaryDirectory(t, 'composer')
   const marketplaceHost = await startMarketplace(t)
-  // The actions must match IN ORDER
-  const actions = [
-    {
-      match: 'Where would you like to create your project?',
-      do: [keys.ENTER],
-      waitAfter: 8000,
-    },
-    {
-      match: 'Which kind of service do you want to create?',
-      do: [keys.UP, keys.UP, keys.ENTER], // Composer
-    },
-    {
-      match: 'What is the name of the service?',
-      do: [keys.ENTER],
-    },
-    {
-      match: 'Do you want to create another service?',
-      do: [keys.DOWN, keys.ENTER], // no
-    },
-    {
-      // NOTE THAT HERE THE DEFAULT OPTION FOR SERVICE IS "YES"
-      match: 'Do you want to use TypeScript',
-      do: [keys.ENTER], // no
-      waitAfter: 8000,
-    },
-    {
-      match: 'What port do you want to use?',
-      do: [keys.ENTER],
-    },
-    {
-      match: 'Do you want to init the git repository',
-      do: [keys.DOWN, keys.ENTER], // yes
-    },
-  ]
-  await executeCreatePlatformatic(tmpDir, actions, { marketplaceHost })
 
-  const baseProjectDir = join(tmpDir, 'platformatic')
-  const files = await walk(baseProjectDir)
-  console.log('==> created files', files)
+  // The actions must match IN ORDER
+  const userInputHandler = await setupUserInputHandler(t, [
+    { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
+    { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/composer' },
+    { type: 'input', question: 'What is the name of the service?', reply: 'main' },
+    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
+    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'input', question: 'What port do you want to use?', reply: '3042' },
+    { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
+  ])
+
+  await executeCreatePlatformatic(root, { marketplaceHost, userInputHandler })
+
+  const baseProjectDir = join(root, 'platformatic')
   equal(await isFileAccessible(join(baseProjectDir, '.gitignore')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env.sample')), true)
@@ -70,9 +36,8 @@ test('Creates a Platformatic Composer', { timeout }, async t => {
 
   // Here check the generated service
   const services = await getServices(join(baseProjectDir, 'services'))
-  equal(services.length, 1)
+  deepStrictEqual(services, ['main'])
   const baseServiceDir = join(baseProjectDir, 'services', services[0])
-  console.log(baseServiceDir)
   equal(await isFileAccessible(join(baseServiceDir, 'platformatic.json')), true)
   equal(await isFileAccessible(join(baseServiceDir, 'README.md')), true)
   equal(await isFileAccessible(join(baseServiceDir, 'routes', 'root.js')), false)
