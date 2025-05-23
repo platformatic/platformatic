@@ -36,6 +36,14 @@ export class NextStackable extends BaseStackable {
   }
 
   async init () {
+    // This is needed to avoid Next.js to throw an error when the lockfile is not correct
+    // and the user is using npm but has pnpm in its $PATH.
+    //
+    // See: https://github.com/platformatic/composer-next-node-fastify/pull/3
+    //
+    // PS by Paolo: Sob.
+    process.env.NEXT_IGNORE_INCORRECT_LOCKFILE = 'true'
+
     this.#next = pathResolve(dirname(resolvePackage(this.root, 'next')), '../..')
     const nextPackage = JSON.parse(await readFile(pathResolve(this.#next, 'package.json'), 'utf-8'))
     this.#nextVersion = parse(nextPackage.version)
