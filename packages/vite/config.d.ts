@@ -104,6 +104,311 @@ export interface PlatformaticViteStackable {
       production?: string;
     };
   };
+  runtime?: {
+    preload?: string | string[];
+    basePath?: string;
+    workers?: number | string;
+    logger?: {
+      level: (
+        | ("fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent")
+        | {
+            [k: string]: unknown;
+          }
+      ) &
+        string;
+      transport?:
+        | {
+            target?: string;
+            options?: {
+              [k: string]: unknown;
+            };
+          }
+        | {
+            targets?: {
+              target?: string;
+              options?: {
+                [k: string]: unknown;
+              };
+              level?: string;
+            }[];
+            options?: {
+              [k: string]: unknown;
+            };
+          };
+      pipeline?: {
+        target?: string;
+        options?: {
+          [k: string]: unknown;
+        };
+      };
+      formatters?: {
+        path: string;
+      };
+      timestamp?: "epochTime" | "unixTime" | "nullTime" | "isoTime";
+      redact?: {
+        paths: string[];
+        censor?: string;
+      };
+      [k: string]: unknown;
+    };
+    server?: {
+      hostname?: string;
+      port?: number | string;
+      http2?: boolean;
+      https?: {
+        allowHTTP1?: boolean;
+        key:
+          | string
+          | {
+              path?: string;
+            }
+          | (
+              | string
+              | {
+                  path?: string;
+                }
+            )[];
+        cert:
+          | string
+          | {
+              path?: string;
+            }
+          | (
+              | string
+              | {
+                  path?: string;
+                }
+            )[];
+        requestCert?: boolean;
+        rejectUnauthorized?: boolean;
+      };
+    };
+    startTimeout?: number;
+    restartOnError?: boolean | number;
+    gracefulShutdown?: {
+      runtime: number | string;
+      service: number | string;
+    };
+    health?: {
+      enabled?: boolean | string;
+      interval?: number | string;
+      gracePeriod?: number | string;
+      maxUnhealthyChecks?: number | string;
+      maxELU?: number | string;
+      maxHeapUsed?: number | string;
+      maxHeapTotal?: number | string;
+      maxYoungGeneration?: number;
+    };
+    undici?: {
+      agentOptions?: {
+        [k: string]: unknown;
+      };
+      interceptors?:
+        | {
+            module: string;
+            options: {
+              [k: string]: unknown;
+            };
+            [k: string]: unknown;
+          }[]
+        | {
+            Client?: {
+              module: string;
+              options: {
+                [k: string]: unknown;
+              };
+              [k: string]: unknown;
+            }[];
+            Pool?: {
+              module: string;
+              options: {
+                [k: string]: unknown;
+              };
+              [k: string]: unknown;
+            }[];
+            Agent?: {
+              module: string;
+              options: {
+                [k: string]: unknown;
+              };
+              [k: string]: unknown;
+            }[];
+            [k: string]: unknown;
+          };
+      [k: string]: unknown;
+    };
+    httpCache?:
+      | boolean
+      | {
+          store?: string;
+          /**
+           * @minItems 1
+           */
+          methods?: [string, ...string[]];
+          cacheTagsHeader?: string;
+          maxSize?: number;
+          maxEntrySize?: number;
+          maxCount?: number;
+          [k: string]: unknown;
+        };
+    watch?: boolean | string;
+    managementApi?:
+      | boolean
+      | string
+      | {
+          logs?: {
+            maxSize?: number;
+          };
+        };
+    metrics?:
+      | boolean
+      | {
+          port?: number | string;
+          enabled?: boolean | string;
+          hostname?: string;
+          endpoint?: string;
+          auth?: {
+            username: string;
+            password: string;
+          };
+          labels?: {
+            [k: string]: string;
+          };
+          readiness?:
+            | boolean
+            | {
+                endpoint?: string;
+                success?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+                fail?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+              };
+          liveness?:
+            | boolean
+            | {
+                endpoint?: string;
+                success?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+                fail?: {
+                  statusCode?: number;
+                  body?: string;
+                };
+              };
+          additionalProperties?: never;
+          [k: string]: unknown;
+        };
+    telemetry?: {
+      enabled?: boolean | string;
+      /**
+       * The name of the service. Defaults to the folder name if not specified.
+       */
+      serviceName: string;
+      /**
+       * The version of the service (optional)
+       */
+      version?: string;
+      /**
+       * An array of paths to skip when creating spans. Useful for health checks and other endpoints that do not need to be traced.
+       */
+      skip?: {
+        /**
+         * The path to skip. Can be a string or a regex.
+         */
+        path?: string;
+        /**
+         * HTTP method to skip
+         */
+        method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
+        [k: string]: unknown;
+      }[];
+      exporter?:
+        | {
+            type?: "console" | "otlp" | "zipkin" | "memory" | "file";
+            /**
+             * Options for the exporter. These are passed directly to the exporter.
+             */
+            options?: {
+              /**
+               * The URL to send the traces to. Not used for console or memory exporters.
+               */
+              url?: string;
+              /**
+               * Headers to send to the exporter. Not used for console or memory exporters.
+               */
+              headers?: {
+                [k: string]: unknown;
+              };
+              /**
+               * The path to write the traces to. Only for file exporter.
+               */
+              path?: string;
+              [k: string]: unknown;
+            };
+            additionalProperties?: never;
+            [k: string]: unknown;
+          }[]
+        | {
+            type?: "console" | "otlp" | "zipkin" | "memory" | "file";
+            /**
+             * Options for the exporter. These are passed directly to the exporter.
+             */
+            options?: {
+              /**
+               * The URL to send the traces to. Not used for console or memory exporters.
+               */
+              url?: string;
+              /**
+               * Headers to send to the exporter. Not used for console or memory exporters.
+               */
+              headers?: {
+                [k: string]: unknown;
+              };
+              /**
+               * The path to write the traces to. Only for file exporter.
+               */
+              path?: string;
+              [k: string]: unknown;
+            };
+            additionalProperties?: never;
+            [k: string]: unknown;
+          };
+    };
+    inspectorOptions?: {
+      host?: string;
+      port?: number;
+      breakFirstLine?: boolean;
+      watchDisabled?: boolean;
+      [k: string]: unknown;
+    };
+    serviceTimeout?: number | string;
+    env?: {
+      [k: string]: string;
+    };
+    sourceMaps?: boolean;
+    scheduler?: {
+      enabled?: boolean | string;
+      name: string;
+      cron: string;
+      callbackUrl: string;
+      method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+      headers?: {
+        [k: string]: string;
+      };
+      body?:
+        | string
+        | {
+            [k: string]: unknown;
+          };
+      maxRetries?: number;
+      [k: string]: unknown;
+    }[];
+  };
   vite?: {
     configFile?: string | boolean;
     devServer?: {

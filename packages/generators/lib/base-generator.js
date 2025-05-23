@@ -305,21 +305,27 @@ class BaseGenerator extends FileGenerator {
         })
       }
 
-      // typescript
-      this.questions.push({
-        type: 'list',
-        name: 'typescript',
-        message: 'Do you want to use TypeScript?',
-        default: false,
-        choices: [{ name: 'yes', value: true }, { name: 'no', value: false }],
-      })
+      if (!this.config.skipTypescript) {
+        this.questions.push({
+          type: 'list',
+          name: 'typescript',
+          message: 'Do you want to use TypeScript?',
+          default: false,
+          choices: [
+            { name: 'yes', value: true },
+            { name: 'no', value: false }
+          ]
+        })
+      }
 
       // port
-      this.questions.push({
-        type: 'input',
-        name: 'port',
-        message: 'What port do you want to use?',
-      })
+      if (!this.config.skipPort) {
+        this.questions.push({
+          type: 'input',
+          name: 'port',
+          message: 'What port do you want to use?'
+        })
+      }
     }
   }
 

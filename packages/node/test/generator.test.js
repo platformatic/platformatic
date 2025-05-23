@@ -25,7 +25,7 @@ test('should generate proper index.js file', async () => {
   await generator.prepare()
   const file = generator.getFileObject('index.js')
 
-  deepStrictEqual(file.contents.split('\n'), [
+  deepStrictEqual(file.contents.split(/\r?\n/), [
     "import { createServer } from 'node:http'",
     '',
     'export function create() {',

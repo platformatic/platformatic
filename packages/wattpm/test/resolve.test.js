@@ -22,7 +22,7 @@ test('resolve - should clone a URL when the environment variable is set to a fol
   ok(resolveProcess.stdout.includes(`Cloning ${repo} into web${sep}resolved`))
   ok(resolveProcess.stdout.includes('Installing dependencies for the service resolved using npm ...'))
 
-  deepStrictEqual(await readFile(resolve(rootDir, 'web/resolved/branch'), 'utf8'), 'main')
+  deepStrictEqual(await readFile(resolve(rootDir, 'web/resolved/branch'), 'utf-8'), 'main')
 })
 
 test('resolve - should clone a URL when the environment variable is not set', async t => {
@@ -142,7 +142,7 @@ test('resolve - should clone a different branch', async t => {
   ok(resolveProcess.stdout.includes(`Cloning ${repo} (branch another) into web${sep}resolved`))
   ok(resolveProcess.stdout.includes('Installing dependencies for the service resolved using npm ...'))
 
-  deepStrictEqual(await readFile(resolve(rootDir, 'web/resolved/branch'), 'utf8'), 'another')
+  deepStrictEqual(await readFile(resolve(rootDir, 'web/resolved/branch'), 'utf-8'), 'another')
 })
 
 test('resolve - should install dependencies using a different package manager', async t => {
@@ -160,7 +160,7 @@ test('resolve - should install dependencies using a different package manager', 
   ok(resolveProcess.stdout.includes('Installing dependencies for the application using pnpm ...'))
   ok(resolveProcess.stdout.includes('Installing dependencies for the service resolved using pnpm ...'))
 
-  deepStrictEqual(await readFile(resolve(rootDir, 'web/resolved/branch'), 'utf8'), 'main')
+  deepStrictEqual(await readFile(resolve(rootDir, 'web/resolved/branch'), 'utf-8'), 'main')
 })
 
 test('install - should respect the service package manager, if any', async t => {

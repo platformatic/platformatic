@@ -25,6 +25,7 @@ Watt is a powerful environment manager for your Node.js applications that provid
 Follow these steps to make your project run in Watt:
 
 ## 0. Prerequisites
+
 Before we begin, make sure you have the following installed:
 
 - [Node.js](https://nodejs.org/) (v20.16.0+ or v22.3.0+)
@@ -49,12 +50,11 @@ npm install
 
 Then, install the required dependencies for Watt:
 
-
 ```bash
 npm install --save wattpm @platformatic/node
 ```
 
-Where [`wattpm`](/docs/watt/overview) is the Watt CLI and [`@platformatic/node`](/docs/packages/node/overview) is the generic adapter for "bare" Node.js applications, 
+Where [`wattpm`](/docs/watt/overview) is the Watt CLI and [`@platformatic/node`](/docs/packages/node/overview) is the generic adapter for "bare" Node.js applications,
 if yours is a Next.js, Astro, or Remix application you might want to use the respective packages:
 [`@platformatic/next`](/packages/next/overview),
 [`@platformatic/remix`](/packages/remix/overview),
@@ -62,39 +62,22 @@ if yours is a Next.js, Astro, or Remix application you might want to use the res
 
 ### 3. Create Configuration Files
 
-You need two configuration files for Watt: one for Watt itself and one for your service, we will call them `watt.json` and `watt-svc.json`, respectively.
-
-#### watt.json
-
-This is the main configuration file for Watt. Create it in your project root:
+Create a `watt.json` in your project root:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/wattpm/2.63.2.json",
-  "server": {
-    "hostname": "{HOSTNAME}",
-    "port": "{PORT}"
-  },
-  "logger": {
-    "level": "info"
-  },
-  "services": [{
-    "id": "fastify-demo",
-    "config": "./watt-svc.json",
-    "path": "."
-  }]
-}
-```
-
-#### watt-svc.json
-
-This file defines your specific service configuration, create it in the project root:
-
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.63.2.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.65.0.json",
   "node": {
-    "main": "dist/server.js"
+    "main": "path/to/your/server/entry-point.js"
+  },
+  "runtime": {
+    "server": {
+      "hostname": "{HOSTNAME}",
+      "port": "{PORT}"
+    },
+    "logger": {
+      "level": "info"
+    }
   }
 }
 ```
@@ -146,28 +129,54 @@ npx wattpm start
 
 ## Next-step: add more services
 
-In case you want to divide your application into multiple services, you can do so by creating multiple `watt-svc.json` files, one for each service.
+In case you want to divide your application into multiple services, you can do so by creating multiple `watt.json` files, one for each service.
 Then you can add them to the `watt.json` file like this:
 
-
 ```json
-"services": [
-  {
-    "id": "service1",
-    "config": "./service1/watt-svc.json",
-    "path": "./service1"
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.65.0.json",
+  "server": {
+    "hostname": "{HOSTNAME}",
+    "port": "{PORT}"
   },
-  {
-    "id": "service2",
-    "config": "./service2/watt-svc.json",
-    "path": "./service2"
-  }
-]
+  "logger": {
+    "level": "info"
+  },
+  "services": [
+    {
+      "id": "service1",
+      "config": "./service1/watt.json",
+      "path": "./service1"
+    },
+    {
+      "id": "service2",
+      "config": "./service2/watt.json",
+      "path": "./service2"
+    }
+  ]
+}
 ```
 
 In this case you are better served in using the [`autoload`](/docs/reference/watt/configuration#autoload) feature.
 
+Each of the `watt.json` in the subfolders should look like this one:
+
+```json
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.65.0.json",
+  "node": {
+    "main": "path/to/your/server/entry-point.js"
+  }
+}
+```
+
 Note that if you need to expose multiple services, you'd need to add a [Composer](/docs/composer/overview).
+
+## Common Issues and Solutions
+
+- **Port conflicts**: If the specified port is already in use, Watt will try the next one.
+- **Missing entry point**: Verify that the path in `watt.json` points to your actual server entry file.
+- **Build step**: For TypeScript projects, ensure you've built your project before running Watt. You can use `npx wattpm build` to compile your TypeScript files.
+- **Environment variables**: Confirm that all required environment variables are available.
 
 ## Learn More
 

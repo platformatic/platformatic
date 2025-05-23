@@ -1,50 +1,18 @@
-import { createDirectory } from '@platformatic/utils'
-import { join } from 'desm'
+import { createDirectory, safeRemove } from '@platformatic/utils'
 import { execa } from 'execa'
 import fastify from 'fastify'
 import { promises as fs } from 'node:fs'
-import { symlink } from 'node:fs/promises'
-import os from 'node:os'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { promisify } from 'node:util'
-import stripAnsi from 'strip-ansi'
+import { mkdir, readFile, symlink, writeFile } from 'node:fs/promises'
+import { platform, tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
-process.env.MARKETPLACE_TEST = 'true'
+const isWindows = platform() === 'win32'
+const pltCreatePath = fileURLToPath(new URL('../../create-platformatic.mjs', import.meta.url))
 const pltRoot = fileURLToPath(new URL('../..', import.meta.url))
+let tmpCount = 0
 
-const sleep = promisify(setTimeout)
-
-export const keys = {
-  DOWN: '\x1B\x5B\x42',
-  UP: '\x1B\x5B\x41',
-  ENTER: '\x0D',
-  SPACE: '\x20'
-}
-
-export const createPath = join(import.meta.url, '..', '..', 'create-platformatic.mjs')
-
-const match = (str, match) => {
-  if (Array.isArray(match)) {
-    return match.some(m => str.includes(m))
-  }
-  return str.includes(match)
-}
-
-export const walk = async dir => {
-  let files = await fs.readdir(dir)
-  files = await Promise.all(
-    files.map(async file => {
-      const filePath = path.join(dir, file)
-      const stats = await fs.stat(filePath)
-      if (stats.isDirectory()) return walk(filePath)
-      else if (stats.isFile()) return filePath
-    })
-  )
-  return files.reduce((all, folderContents) => all.concat(folderContents), [])
-}
-
-export const getServices = async dir => {
+export async function getServices (dir) {
   const files = await fs.readdir(dir)
   const services = []
   for (const file of files) {
@@ -53,97 +21,62 @@ export const getServices = async dir => {
   return services
 }
 
+export async function createTemporaryDirectory (t, prefix) {
+  const directory = join(tmpdir(), `test-create-platformatic-${prefix}-${process.pid}-${tmpCount++}`)
+
+  t.after(async () => {
+    await safeRemove(directory)
+  })
+
+  await mkdir(directory)
+  return directory
+}
+
+export async function setupUserInputHandler (t, expected) {
+  const temporaryFolder = await createTemporaryDirectory(t, 'inquirer')
+  let inputHandler = resolve(temporaryFolder, 'input-handler.mjs')
+
+  const template = await readFile(new URL('../fixtures/input-handler.mjs', import.meta.url), 'utf-8')
+
+  await writeFile(
+    inputHandler,
+    template.replace('const expected = []', `const expected = ${JSON.stringify(expected)}\n`),
+    'utf-8'
+  )
+
+  if (isWindows) {
+    inputHandler = pathToFileURL(inputHandler).toString()
+  }
+
+  return inputHandler
+}
+
 // Actions are in the form:
-// {
-//    match: 'Server listening at',
-//    do: [keys.DOWN, keys.ENTER]
-// }
-export async function executeCreatePlatformatic (dir, actions = [], options = {}) {
-  const done = options.done || 'You are all set!'
+export async function executeCreatePlatformatic (dir, options = {}) {
   const pkgMgrInstall = options.pkgMgrInstall || false
   const pkgManager = options.pkgManager || 'npm'
   const marketplaceHost = options.marketplaceHost
 
-  const runCreatePlatformatic = async () => {
-    const questions = [...actions]
-    try {
-      const execaOptions = {
-        cwd: dir,
-        env: {
-          NO_COLOR: 'true'
-        }
-      }
-
-      if (pkgManager === 'pnpm') {
-        execaOptions.env.npm_config_user_agent = 'pnpm/6.14.1 npm/? node/v16.4.2 darwin x64'
-      }
-
-      const child = execa(
-        'node',
-        [createPath, `--install=${pkgMgrInstall.toString()}`, `--marketplace-host=${marketplaceHost}`],
-        execaOptions
-      )
-
-      // We just need the "lastPrompt" printed before the process stopped to wait for an answer
-      // If we don't have any outptu from process for more than 500ms, we assume it's waiting for an answer
-      let lastPrompt = ''
-
-      child.stdout.on('data', chunk => {
-        const str = stripAnsi(chunk.toString()).trim()
-        if (str) {
-          lastPrompt = str
-        }
-      })
-
-      let expectedQuestion = questions.shift()
-
-      // We need this because the prompt prints an introduction before asking anything.
-      // If we don't like this, we could use a flag to recognize when the introduction is done
-      await sleep(5000)
-
-      while (true) {
-        if (!expectedQuestion) {
-          await sleep(500)
-          // We processed all expected questions, so now we wait for the process to be done.
-          // If the "done" string is not printed, the test will timeout
-          if (lastPrompt && lastPrompt.includes(done)) {
-            safeKill(child)
-            return
-          }
-        } else if (match(lastPrompt, expectedQuestion.match)) {
-          console.log('==> MATCH', expectedQuestion.match)
-          lastPrompt = ''
-
-          for (const key of expectedQuestion.do) {
-            child.stdin?.write(key)
-            const waitAfter = expectedQuestion.waitAfter || 500
-            await sleep(waitAfter)
-          }
-          expectedQuestion = questions.shift()
-        } else {
-          throw new Error(`Expected ${expectedQuestion.match}, got ${lastPrompt}`)
-        }
-      }
-    } catch (err) {
-      console.error(err)
-      throw err
+  const execaOptions = {
+    cwd: dir,
+    env: {
+      NO_COLOR: 'true',
+      MARKETPLACE_TEST: 'true',
+      USER_INPUT_HANDLER: options.userInputHandler
     }
   }
-  await runCreatePlatformatic()
-}
 
-export async function safeKill (child) {
-  child.kill('SIGINT')
-  if (os.platform() === 'win32') {
-    try {
-      await execa('taskkill', ['/pid', child.pid, '/f', '/t'])
-    } catch (err) {
-      if (err.stderr.indexOf('not found') === 0) {
-        console.error(`Failed to kill process ${child.pid}`)
-        console.error(err)
-      }
-    }
+  if (pkgManager === 'pnpm') {
+    execaOptions.env.npm_config_user_agent = 'pnpm/6.14.1 npm/? node/v16.4.2 darwin x64'
   }
+
+  const child = execa(
+    'node',
+    [pltCreatePath, `--install=${pkgMgrInstall.toString()}`, `--marketplace-host=${marketplaceHost}`],
+    execaOptions
+  )
+
+  return child
 }
 
 export async function startMarketplace (t, opts = {}) {
@@ -165,13 +98,12 @@ export async function startMarketplace (t, opts = {}) {
 
 export async function linkDependencies (projectDir, dependencies) {
   for (const dep of dependencies) {
-    console.log('==> Linking dependency', dep, path.resolve(projectDir, 'node_modules', dep))
-    const moduleRoot = path.resolve(projectDir, 'node_modules', dep)
-    const resolved = path.resolve(pltRoot, 'node_modules', dep)
+    const moduleRoot = resolve(projectDir, 'node_modules', dep)
+    const resolved = resolve(pltRoot, 'node_modules', dep)
 
-    await createDirectory(path.resolve(projectDir, 'node_modules'))
+    await createDirectory(resolve(projectDir, 'node_modules'))
     if (dep.includes('@platformatic')) {
-      await createDirectory(path.resolve(projectDir, 'node_modules', '@platformatic'))
+      await createDirectory(resolve(projectDir, 'node_modules', '@platformatic'))
     }
     // Symlink the dependency
     await symlink(resolved, moduleRoot, 'dir')

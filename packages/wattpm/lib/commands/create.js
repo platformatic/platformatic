@@ -50,6 +50,7 @@ export async function createCommand (logger, args) {
 
   const username = await getUsername()
   const version = await getVersion()
+
   /* c8 ignore next 2 - Ignoring else branches */
   const greeting = username ? `Hello ${username},` : 'Hello,'
   await say(`${greeting} welcome to ${version ? `Watt ${version}!` : 'Watt!'}`)
@@ -67,6 +68,11 @@ export async function createCommand (logger, args) {
     {
       runtimeConfig: config,
       servicesFolder: 'web'
+    },
+    {
+      devCommand: 'wattpm dev',
+      buildCommand: 'wattpm build',
+      startCommand: 'wattpm start'
     }
   )
 }

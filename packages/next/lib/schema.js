@@ -59,6 +59,7 @@ export const schema = {
     server: utilsSchemaComponents.server,
     watch: schemaComponents.watch,
     application: schemaComponents.application,
+    runtime: utilsSchemaComponents.wrappedRuntime,
     next,
     cache
   },

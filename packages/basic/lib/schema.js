@@ -69,7 +69,8 @@ export const schema = {
   properties: {
     $schema: {
       type: 'string'
-    }
+    },
+    runtime: utilsSchemaComponents.wrappedRuntime
   },
   additionalProperties: true
 }

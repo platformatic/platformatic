@@ -6,23 +6,30 @@ const { test } = require('node:test')
 const { join } = require('node:path')
 const { readFile, writeFile } = require('node:fs/promises')
 const { loadConfig } = require('@platformatic/config')
+const { safeRemove } = require('@platformatic/utils')
 const { platformaticRuntime } = require('..')
 const { buildRuntime } = require('../lib/start')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
-test('should strip the runtime base path for a service as an entrypoint', async t => {
-  const configFile = join(fixturesDir, 'base-path', 'platformatic.json')
-  await setEntrypoint(configFile, 'service')
+async function startApplicationWithEntrypoint (t, fixture, entrypoint) {
+  const configFile = join(fixturesDir, fixture, 'platformatic-with-entrypoint.json')
+  const config = JSON.parse(await readFile(join(fixturesDir, fixture, 'platformatic.json'), 'utf8'))
+  config.entrypoint = entrypoint
+  await writeFile(configFile, JSON.stringify(config, null, 2))
 
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager)
+  const appConfig = await loadConfig({}, ['-c', configFile], platformaticRuntime)
+  const app = await buildRuntime(appConfig.configManager)
 
   t.after(async () => {
-    await setEntrypoint(configFile, 'composer')
+    await safeRemove(configFile)
     await app.close()
   })
 
-  const entryUrl = await app.start()
+  return app.start()
+}
+
+test('should strip the runtime base path for a service as an entrypoint', async t => {
+  const entryUrl = await startApplicationWithEntrypoint(t, 'base-path', 'service')
 
   {
     // Send a request without the base path
@@ -79,18 +86,7 @@ test('should strip the runtime base path for a service as an entrypoint', async 
 })
 
 test('should strip the runtime base path for a composer as an entrypoint', async t => {
-  const configFile = join(fixturesDir, 'base-path', 'platformatic.json')
-  await setEntrypoint(configFile, 'composer')
-
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager)
-
-  t.after(async () => {
-    await setEntrypoint(configFile, 'composer')
-    await app.close()
-  })
-
-  const entryUrl = await app.start()
+  const entryUrl = await startApplicationWithEntrypoint(t, 'base-path', 'composer')
 
   {
     // Send a request without the base path
@@ -147,18 +143,7 @@ test('should strip the runtime base path for a composer as an entrypoint', async
 })
 
 test('should strip the runtime base path for a node as an entrypoint', async t => {
-  const configFile = join(fixturesDir, 'base-path', 'platformatic.json')
-  await setEntrypoint(configFile, 'node')
-
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager)
-
-  t.after(async () => {
-    await setEntrypoint(configFile, 'composer')
-    await app.close()
-  })
-
-  const entryUrl = await app.start()
+  const entryUrl = await startApplicationWithEntrypoint(t, 'base-path', 'node')
 
   {
     // Send a request without the base path
@@ -204,18 +189,7 @@ test('should strip the runtime base path for a node as an entrypoint', async t =
 })
 
 test('should strip the runtime base path for an express as an entrypoint', async t => {
-  const configFile = join(fixturesDir, 'base-path', 'platformatic.json')
-  await setEntrypoint(configFile, 'express')
-
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager)
-
-  t.after(async () => {
-    await setEntrypoint(configFile, 'composer')
-    await app.close()
-  })
-
-  const entryUrl = await app.start()
+  const entryUrl = await startApplicationWithEntrypoint(t, 'base-path', 'express')
 
   {
     // Send a request without the base path
@@ -261,18 +235,7 @@ test('should strip the runtime base path for an express as an entrypoint', async
 })
 
 test('should strip the runtime base path for a nodejs in a child process as an entrypoint', async t => {
-  const configFile = join(fixturesDir, 'base-path', 'platformatic.json')
-  await setEntrypoint(configFile, 'node-child')
-
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager)
-
-  t.after(async () => {
-    await setEntrypoint(configFile, 'composer')
-    await app.close()
-  })
-
-  const entryUrl = await app.start()
+  const entryUrl = await startApplicationWithEntrypoint(t, 'base-path', 'node-child')
 
   {
     // Send a request without the base path
@@ -318,18 +281,7 @@ test('should strip the runtime base path for a nodejs in a child process as an e
 })
 
 test('should not strip the runtime base path for a stackable that opted-out', async t => {
-  const configFile = join(fixturesDir, 'base-path', 'platformatic.json')
-  await setEntrypoint(configFile, 'node-no-strip')
-
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager)
-
-  t.after(async () => {
-    await setEntrypoint(configFile, 'composer')
-    await app.close()
-  })
-
-  const entryUrl = await app.start()
+  const entryUrl = await startApplicationWithEntrypoint(t, 'base-path', 'node-no-strip')
 
   {
     const { statusCode, body } = await request(entryUrl, {
@@ -351,10 +303,3 @@ test('should not strip the runtime base path for a stackable that opted-out', as
     assert.strictEqual(location, '/base-path/hello')
   }
 })
-
-async function setEntrypoint (configPath, entrypoint) {
-  const configFile = await readFile(configPath, 'utf8')
-  const config = JSON.parse(configFile)
-  config.entrypoint = entrypoint
-  await writeFile(configPath, JSON.stringify(config, null, 2))
-}

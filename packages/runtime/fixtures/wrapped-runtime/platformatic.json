@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/db/2.64.0.json",
+  "db": {
+    "connectionString": "sqlite://db.sqlite",
+    "graphql": true,
+    "ignore": {
+      "versions": true
+    },
+    "events": false
+  },
+  "runtime": {
+    "watch": false,
+    "server": {
+      "port": 1234
+    },
+    "autoload": {
+      "path": "autoloaded"
+    },
+    "web": [
+      {
+        "id": "alternate",
+        "origin": "http://localhost:5678"
+      }
+    ],
+    "services": [
+      {
+        "id": "another",
+        "path": "./another"
+      }
+    ]
+  }
+}
