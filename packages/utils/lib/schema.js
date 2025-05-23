@@ -288,11 +288,6 @@ const logger = {
       required: ['paths'],
       additionalProperties: false
     },
-
-    captureStdio: {
-      type: 'boolean',
-      default: true
-    },
     base: {
       anyOf: [
         { type: 'object', additionalProperties: true },

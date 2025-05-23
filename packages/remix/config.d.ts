@@ -48,6 +48,7 @@ export interface PlatformaticRemixStackable {
       paths: string[];
       censor?: string;
     };
+    captureStdio?: boolean;
     base?: {
       [k: string]: unknown;
     } | null;
@@ -155,6 +156,14 @@ export interface PlatformaticRemixStackable {
       redact?: {
         paths: string[];
         censor?: string;
+      };
+      captureStdio?: boolean;
+      base?: {
+        [k: string]: unknown;
+      } | null;
+      messageKey?: string;
+      customLevels?: {
+        [k: string]: unknown;
       };
       [k: string]: unknown;
     };

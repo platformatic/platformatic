@@ -85,6 +85,7 @@ export type HttpsSchemasPlatformaticDevWattpm2651Json = {
       paths: string[];
       censor?: string;
     };
+    captureStdio?: boolean;
     base?: {
       [k: string]: unknown;
     } | null;
@@ -92,7 +93,6 @@ export type HttpsSchemasPlatformaticDevWattpm2651Json = {
     customLevels?: {
       [k: string]: unknown;
     };
-    captureStdio?: boolean;
     [k: string]: unknown;
   };
   server?: {

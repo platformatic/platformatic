@@ -5,6 +5,19 @@ const { schemaComponents } = require('@platformatic/utils')
 
 const pkg = require('../package.json')
 
+const runtimeLogger = {
+  ...schemaComponents.runtimeProperties.logger,
+  properties: {
+    ...schemaComponents.runtimeProperties.logger.properties,
+    captureStdio: {
+      type: 'boolean',
+      default: true
+    }
+  }
+}
+
+schemaComponents.runtimeProperties.logger = runtimeLogger
+
 const platformaticRuntimeSchema = {
   $id: `https://schemas.platformatic.dev/@platformatic/runtime/${pkg.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
