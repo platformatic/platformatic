@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/service",
-  "version": "2.64.0",
+  "version": "2.65.1",
   "description": "",
   "main": "index.js",
   "bin": {
