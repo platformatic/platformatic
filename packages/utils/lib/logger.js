@@ -71,18 +71,19 @@ function buildPinoOptions (loggerConfig, serverConfig, serviceId, workerId, serv
         throw new Error(`logger.base.${key} must be a string`)
       }
     }
-    pinoOptions.base = loggerConfig.base
+
+    if (typeof serviceOptions.context.worker?.index !== 'undefined') {
+      pinoOptions.base = {
+        ...(pinoOptions.base ?? {}),
+        pid: process.pid,
+        hostname: hostname(),
+        worker: workerId
+      }
+    } else {
+      pinoOptions.base = loggerConfig.base
+    }
   } else if (loggerConfig?.base === null) {
     pinoOptions.base = undefined
-  }
-
-  if (typeof serviceOptions.context.worker?.index !== 'undefined') {
-    pinoOptions.base = {
-      ...(pinoOptions.base ?? {}),
-      pid: process.pid,
-      hostname: hostname(),
-      worker: workerId
-    }
   }
 
   if (loggerConfig?.formatters) {

@@ -21,6 +21,9 @@ const customPrettifiers = {
 // Create the runtime logger
 async function createLogger (config, runtimeLogsDir) {
   const loggerConfig = { ...config.logger, transport: undefined }
+  if (config.logger.base == null) {
+    loggerConfig.base = undefined
+  }
 
   // PLT_RUNTIME_LOGGER_STDOUT is used in test to reduce verbosity
   let cliStream = process.env.PLT_RUNTIME_LOGGER_STDOUT
