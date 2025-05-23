@@ -15,6 +15,12 @@ Create or copy an Next application inside the `web` or `services` folder. If you
 
 You are all set, you can now start your runtime as usual via `wattpm dev` or `plt start`.
 
+## Install
+
+```bash
+npm install @platformatic/next
+```
+
 ## Example configuration file
 
 ```json
