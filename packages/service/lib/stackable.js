@@ -388,6 +388,7 @@ class ServiceStackable {
     this.loggerConfig = deepmerge(this.context.loggerConfig ?? {}, this.configManager.current.server?.logger ?? {})
 
     const pinoOptions = {
+      ...(this.loggerConfig ?? {}),
       level: this.loggerConfig?.level ?? 'trace'
     }
 
@@ -399,8 +400,10 @@ class ServiceStackable {
       pinoOptions.name = this.context.serviceId
     }
 
-    if (this.context?.worker?.count > 1) {
+    if (this.context?.worker?.count > 1 && this.loggerConfig?.base !== null) {
       pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: this.context.worker.index }
+    } else if (this.loggerConfig?.base === null) {
+      pinoOptions.base = undefined
     }
 
     if (this.loggerConfig?.formatters) {

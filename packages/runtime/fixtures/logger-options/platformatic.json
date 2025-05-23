@@ -12,13 +12,6 @@
   "managementApi": false,
   "logger": {
     "level": "debug",
-    "transport": {
-      "target": "pino/file",
-      "options": {
-        "destination": "{LOG_DIR}/service.log",
-        "mkdir": true
-      }
-    },
     "formatters": {
       "path": "logger-formatters.js"
     },

@@ -72,6 +72,14 @@ export interface PlatformaticService {
             paths: string[];
             censor?: string;
           };
+          captureStdio?: boolean;
+          base?: {
+            [k: string]: unknown;
+          } | null;
+          messageKey?: string;
+          customLevels?: {
+            [k: string]: unknown;
+          };
           [k: string]: unknown;
         };
     loggerInstance?: {
@@ -372,6 +380,14 @@ export interface PlatformaticService {
       redact?: {
         paths: string[];
         censor?: string;
+      };
+      captureStdio?: boolean;
+      base?: {
+        [k: string]: unknown;
+      } | null;
+      messageKey?: string;
+      customLevels?: {
+        [k: string]: unknown;
       };
       [k: string]: unknown;
     };

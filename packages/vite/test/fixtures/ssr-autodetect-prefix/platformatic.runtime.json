@@ -19,6 +19,6 @@
     }
   ],
   "logger": {
-    "level": "error"
+    "level": "trace"
   }
 }

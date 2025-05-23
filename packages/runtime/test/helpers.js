@@ -8,6 +8,8 @@ const { createDirectory } = require('@platformatic/utils')
 const { safeRemove } = require('@platformatic/utils')
 const { link } = require('fs/promises')
 const WebSocket = require('ws')
+const { execa } = require('execa')
+const { cliPath } = require('./cli/helper.mjs')
 
 let counter = 0
 async function getTempDir (baseDir) {
@@ -113,6 +115,103 @@ async function waitForLogs (socket, ...exprs) {
   }
 }
 
+function stdioOutputToLogs (data) {
+  const logs = data.map(line => {
+    try {
+      return JSON.parse(line)
+    } catch {
+      return line.trim().split('\n').map(l => {
+        try {
+          return JSON.parse(l)
+        } catch { }
+        return null
+      }).filter(log => log)
+    }
+  }).filter(log => log)
+
+  return logs.flat()
+}
+
+function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = false }) {
+  return new Promise((resolve, reject) => {
+    if (!done) {
+      reject(new Error('done fn is required'))
+    }
+
+    const result = {
+      stdout: [],
+      stderr: [],
+      url: null,
+    }
+    let ready = false
+    let teardownCalled = false
+
+    async function teardown () {
+      if (teardownCalled) { return }
+      teardownCalled = true
+
+      timeoutId && clearTimeout(timeoutId)
+
+      if (!child) {
+        return
+      }
+      child.kill('SIGKILL')
+      child.catch(() => { })
+      child = null
+    }
+
+    let child = execa(process.execPath, [cliPath, 'start', '-c', configPath], { encoding: 'utf8' })
+
+    const timeoutId = setTimeout(async () => {
+      clearTimeout(timeoutId)
+
+      await teardown()
+      reject(new Error('Timeout'))
+    }, timeout)
+
+    child.stdout.on('data', (message) => {
+      const m = message.toString()
+      if (debug) {
+        console.log(' >>> stdout', m)
+      }
+
+      result.stdout.push(m)
+
+      if (done(m)) {
+        teardown().then(() => {
+          resolve(result)
+        })
+        return
+      }
+
+      if (ready) {
+        return
+      }
+
+      const match = m.match(/Platformatic is now listening at (http:\/\/127\.0\.0\.1:\d+)/)
+      if (match) {
+        result.url = match[1]
+        try {
+          onReady?.({ url: result.url })
+        } catch (err) {
+          teardown().then(() => {
+            reject(new Error('Error calling onReady', { cause: err }))
+          })
+        }
+        ready = true
+      }
+    })
+
+    child.stderr.on('data', (message) => {
+      const msg = message.toString()
+      if (debug) {
+        console.log(' >>> stderr', msg)
+      }
+      result.stderr.push(msg)
+    })
+  })
+}
+
 module.exports = {
   getTempDir,
   moveToTmpdir,
@@ -120,5 +219,7 @@ module.exports = {
   updateFile,
   updateConfigFile,
   openLogsWebsocket,
-  waitForLogs
+  waitForLogs,
+  execRuntime,
+  stdioOutputToLogs
 }

@@ -422,6 +422,54 @@ describe('buildPinoOptions', () => {
       censor: '[REDACTED]'
     })
   })
+
+  test('buildPinoOptions - invalid base', (t) => {
+    const loggerConfig = {
+      base: {
+        pid: 1n
+      }
+    }
+
+    throws(
+      () => {
+        buildPinoOptions(
+          loggerConfig,
+          {},
+          'test-service',
+          'worker-1',
+          { context: {} },
+          __dirname
+        )
+      },
+      (err) => {
+        return err.message === 'logger.base.pid must be a string'
+      }
+    )
+  })
+
+  test('buildPinoOptions - invalid customLevels', (t) => {
+    const loggerConfig = {
+      customLevels: {
+        i: 'not a number'
+      }
+    }
+
+    throws(
+      () => {
+        buildPinoOptions(
+          loggerConfig,
+          {},
+          'test-service',
+          'worker-1',
+          { context: {} },
+          __dirname
+        )
+      },
+      (err) => {
+        return err.message === 'logger.customLevels.i must be a number'
+      }
+    )
+  })
 })
 
 describe('loadFormatters', () => {
@@ -497,3 +545,6 @@ describe('loadFormatters', () => {
     )
   })
 })
+
+// invalid base
+// invalid customLevels

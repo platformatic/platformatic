@@ -221,6 +221,24 @@
                     "paths"
                   ],
                   "additionalProperties": false
+                },
+                "base": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "messageKey": {
+                  "type": "string"
+                },
+                "customLevels": {
+                  "type": "object",
+                  "additionalProperties": true
                 }
               },
               "required": [
@@ -1592,6 +1610,24 @@
                 "paths"
               ],
               "additionalProperties": false
+            },
+            "base": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": true
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "messageKey": {
+              "type": "string"
+            },
+            "customLevels": {
+              "type": "object",
+              "additionalProperties": true
             }
           },
           "required": [

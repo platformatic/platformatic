@@ -270,11 +270,9 @@ const logger = {
       required: ['path'],
       additionalProperties: false
     },
-
     timestamp: {
       enum: ['epochTime', 'unixTime', 'nullTime', 'isoTime']
     },
-
     redact: {
       type: 'object',
       properties: {
@@ -289,6 +287,19 @@ const logger = {
       },
       required: ['paths'],
       additionalProperties: false
+    },
+    base: {
+      anyOf: [
+        { type: 'object', additionalProperties: true },
+        { type: 'null' }
+      ]
+    },
+    messageKey: {
+      type: 'string'
+    },
+    customLevels: {
+      type: 'object',
+      additionalProperties: true
     }
   },
 

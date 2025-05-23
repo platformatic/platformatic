@@ -18,21 +18,20 @@ test('logger options', async t => {
 
   const logs = await getLogs(runtime)
 
-  {
-    const frontendLog = logs.find(log => log.name === 'frontend' && log.msg.includes('Log from remix App page'))
-    const log = JSON.parse(frontendLog.msg)
-    assert.equal(log.name, 'remix')
-    assert.equal(log.time.length, 24) // isotime
-    assert.equal(log.level, 'INFO')
-    assert.equal(log.msg, 'Log from remix App page')
-  }
+  assert.ok(logs.find(log => {
+    return log.stdout &&
+      log.stdout.name === 'remix' &&
+      log.stdout.level === 'INFO' &&
+      log.stdout.time.length === 24 && // isotime
+      log.stdout.msg === 'Log from remix App page'
+  }))
 
-  { const frontendLog = logs.find(log => log.name === 'frontend' && log.msg.includes('request completed'))
-    const log = JSON.parse(frontendLog.msg)
-    assert.equal(log.name, 'remix')
-    assert.equal(log.time.length, 24) // isotime
-    assert.equal(log.level, 'INFO')
-    assert.equal(log.req.headers.authorization, '***HIDDEN***')
-    assert.equal(log.msg, 'request completed')
-  }
+  assert.ok(logs.find(log => {
+    return log.stdout &&
+      log.stdout.name === 'remix' &&
+      log.stdout.level === 'INFO' &&
+      log.stdout.time.length === 24 && // isotime
+      log.stdout.req?.headers?.authorization === '***HIDDEN***' &&
+      log.stdout.msg === 'request completed'
+  }))
 })

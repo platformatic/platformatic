@@ -94,6 +94,7 @@
     "pino-roll": "^2.0.0",
     "prom-client": "^15.1.2",
     "semgrator": "^0.3.0",
+    "sonic-boom": "^4.2.0",
     "tail-file-stream": "^0.2.0",
     "undici": "^7.0.0",
     "undici-thread-interceptor": "^0.13.1",

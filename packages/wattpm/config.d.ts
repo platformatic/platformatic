@@ -85,6 +85,14 @@ export type HttpsSchemasPlatformaticDevWattpm2651Json = {
       paths: string[];
       censor?: string;
     };
+    captureStdio?: boolean;
+    base?: {
+      [k: string]: unknown;
+    } | null;
+    messageKey?: string;
+    customLevels?: {
+      [k: string]: unknown;
+    };
     [k: string]: unknown;
   };
   server?: {

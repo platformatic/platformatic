@@ -14,6 +14,6 @@
     }
   ],
   "logger": {
-    "level": "fatal"
+    "level": "trace"
   }
 }

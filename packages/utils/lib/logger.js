@@ -58,15 +58,30 @@ function buildPinoTimestamp (timestamp) {
 
 function buildPinoOptions (loggerConfig, serverConfig, serviceId, workerId, serviceOptions, root) {
   const pinoOptions = {
-    level: loggerConfig?.level ?? serverConfig?.level ?? 'trace'
+    level: loggerConfig?.level ?? serverConfig?.level ?? 'trace',
   }
 
   if (serviceId) {
     pinoOptions.name = serviceId
   }
 
-  if (typeof serviceOptions.context.worker?.index !== 'undefined') {
-    pinoOptions.base = { pid: process.pid, hostname: hostname(), worker: workerId }
+  if (loggerConfig?.base) {
+    for (const [key, value] of Object.entries(loggerConfig.base)) {
+      if (typeof value !== 'string') {
+        throw new Error(`logger.base.${key} must be a string`)
+      }
+    }
+  } else if (loggerConfig?.base === null) {
+    pinoOptions.base = undefined
+  }
+
+  if (typeof serviceOptions.context.worker?.index !== 'undefined' && loggerConfig?.base !== null) {
+    pinoOptions.base = {
+      ...(pinoOptions.base ?? {}),
+      pid: process.pid,
+      hostname: hostname(),
+      worker: workerId
+    }
   }
 
   if (loggerConfig?.formatters) {
@@ -97,6 +112,19 @@ function buildPinoOptions (loggerConfig, serverConfig, serviceId, workerId, serv
       paths: loggerConfig.redact.paths,
       censor: loggerConfig.redact.censor
     }
+  }
+
+  if (loggerConfig?.messageKey) {
+    pinoOptions.messageKey = loggerConfig.messageKey
+  }
+
+  if (loggerConfig?.customLevels) {
+    for (const [key, value] of Object.entries(loggerConfig.customLevels)) {
+      if (typeof value !== 'number') {
+        throw new Error(`logger.customLevels.${key} must be a number`)
+      }
+    }
+    pinoOptions.customLevels = loggerConfig.customLevels
   }
 
   return pinoOptions

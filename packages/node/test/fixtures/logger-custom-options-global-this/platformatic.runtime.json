@@ -8,6 +8,6 @@
     }
   ],
   "logger": {
-    "level": "info"
+    "level": "trace"
   }
 }

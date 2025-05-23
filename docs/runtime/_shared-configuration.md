@@ -306,6 +306,10 @@ An object with the following settings:
 - **`redact`** — Configuration for redacting sensitive information, see [pino.redact]https://getpino.io/#/docs/redaction) for more information. An object with properties:
   - **`paths`** (**required**) — An array of strings specifying paths to redact.
   - **`censor`** — A string to replace redacted values with. Default: `[redacted]`.
+- **`captureStdio`** — If `true`, the logger will capture the `stdout` and `stderr` streams of the main service. Default: `false`.
+- **`base`** — The base logger configuration; setting to `null` will remove `pid` and `hostname` from the logs, otherwise it can be an object to add custom properties to the logs.
+- **`messageKey`** — The key to use for the log message. Default: `msg`.
+- **`customLevels`** — Configuration for custom levels, see [pino.customLevels](https://getpino.io/#/docs/api?id=customlevels-object) for more information.
 
 ### `undici`
 

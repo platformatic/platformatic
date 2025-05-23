@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/service/2.63.0.json",
+  "server": {
+    "logger": {
+      "level": "debug",
+      "formatters": {
+        "path": "logger-formatters.js"
+      }
+    }
+  },
+  "plugins": {
+    "paths": [
+      "./routes"
+    ]
+  }
+}

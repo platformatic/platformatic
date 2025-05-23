@@ -1798,6 +1798,9 @@ importers:
       semgrator:
         specifier: ^0.3.0
         version: 0.3.0
+      sonic-boom:
+        specifier: ^4.2.0
+        version: 4.2.0
       tail-file-stream:
         specifier: ^0.2.0
         version: 0.2.0

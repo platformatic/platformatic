@@ -79,7 +79,6 @@ test('composer should restart if an external service with openapi and graphql up
     await testEntityRoutes(composerOrigin, ['/api1/users'], 'same openapi')
   })
 
-  /*
   await t.test('change openapi', async t => {
     const schema = 'type Query {\n  rnd: Int\n}'
 
@@ -141,5 +140,4 @@ test('composer should restart if an external service with openapi and graphql up
     }
     await testEntityRoutes(composerOrigin, ['/api1/posts'], 'openapi updated')
   })
-  */
 })

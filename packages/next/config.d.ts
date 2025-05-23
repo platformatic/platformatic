@@ -48,6 +48,14 @@ export interface PlatformaticNextJsStackable {
       paths: string[];
       censor?: string;
     };
+    captureStdio?: boolean;
+    base?: {
+      [k: string]: unknown;
+    } | null;
+    messageKey?: string;
+    customLevels?: {
+      [k: string]: unknown;
+    };
     [k: string]: unknown;
   };
   server?: {
@@ -148,6 +156,14 @@ export interface PlatformaticNextJsStackable {
       redact?: {
         paths: string[];
         censor?: string;
+      };
+      captureStdio?: boolean;
+      base?: {
+        [k: string]: unknown;
+      } | null;
+      messageKey?: string;
+      customLevels?: {
+        [k: string]: unknown;
       };
       [k: string]: unknown;
     };

@@ -28,22 +28,26 @@ This can be configured in two ways:
   - Single transport:
     ```json
     {
-      "transport": {
-        "targets": [{
-          "target": "pino-elasticsearch",
+      "logger": {
+        "transport": {
+          "targets": [{
+            "target": "pino-elasticsearch",
           "options": {
-            "node": "http://127.0.0.1:9200"
+              "node": "http://127.0.0.1:9200"
+            }
           }
-        }
+        ]
+      }
     }
     ```
     
   - Multiple transports:
     ```json
     {
-      "transport": {
-        "targets": [
-          {
+      "logger": {
+        "transport": {
+          "targets": [
+            {
             "target": "pino-pretty",
             "level": "info",
             "options": {
@@ -58,7 +62,8 @@ This can be configured in two ways:
               "mkdir": true
             }
           }
-        ]
+          ]
+        }
       }
     }
     ```
@@ -69,8 +74,10 @@ This can be configured in two ways:
 
   ```json
   {
-    "formatters": {
-      "path": "formatters.js"
+    "logger": {
+      "formatters": {
+        "path": "formatters.js"
+      }
     }
   }
   ```
@@ -101,9 +108,11 @@ This can be configured in two ways:
 
   ```json
   {
-    "redact": {
-      "paths": ["req.headers.authorization", "password"],
-      "censor": "[redacted]"
+    "logger": {
+      "redact": {
+        "paths": ["req.headers.authorization", "password"],
+        "censor": "[redacted]"
+      }
     }
   }
   ```
@@ -111,6 +120,163 @@ This can be configured in two ways:
   The `censor` property defaults to `"[redacted]"` if not specified.
 
   See the [Pino redaction documentation](https://github.com/pinojs/pino/blob/main/docs/redaction.md) for more details.
+
+- **base**: The base object for the logs; it can be either be `null` to remove `pid` and `hostname` or a custom key/value object to add custom properties to the logs.
+
+  ```json
+  {
+    "logger": {
+      "base": {
+        "service": "my-service",
+        "version": "1.0.0"
+      }
+    }
+  }
+
+  {
+    "logger": {
+      "base": null
+    }
+  }
+  ```
+
+  See the [Pino base documentation](https://github.com/pinojs/pino/blob/main/docs/api.md#base-object) for more details.
+
+- **messageKey**: The key to use for the log message, it defaults to `msg` but can be set to any other key.
+
+  ```json
+  {
+    "logger": {
+      "messageKey": "message"
+    }
+  }
+  ```
+
+  See the [Pino messageKey documentation](https://github.com/pinojs/pino/blob/main/docs/api.md#messagekey-string) for more details.
+
+- **customLevels**: Specify custom levels for the logger, it can be an object with the level name and the level value.
+
+  ```json
+  {
+    "logger": {
+      "customLevels": {
+        "verbose": 10
+      }
+    }
+  }
+  ```
+
+  See the [Pino customLevels documentation](https://github.com/pinojs/pino/blob/main/docs/api.md#customlevels-object) for more details.
+
+---
+
+### Note on using custom logger configuration
+
+When using custom logger configuration that alterate the format of the output, such as `messageKey`, `formatter.level`, `timestamp` or `customLevels`, the log entry from a thread service is not recognized as a `pino` entry log entry, so it is treated as a json log entry.
+
+For example, the difference between the default pino settings and a custom logger configuration that uses a custom `messageKey` is:
+
+With default pino settings:
+
+```json
+{
+  "level": 30,
+  "time": 1747988551789,
+  "pid": 29580,
+  "hostname": "work",
+  "name": "composer",
+  "reqId": "c9f5d5b8-6ea5-4782-8c81-00ffb27386b3",
+  "res": { "statusCode": 500 },
+  "responseTime": 10.037883000448346,
+  "msg": "request completed"
+}
+```
+
+With custom logger configuration, for example 
+
+```json
+{
+  "logger": {
+    "captureStdio": false,
+    "level": "info",
+    "customLevels": {
+      "verbose": 10
+    },
+    "base": null,
+    "messageKey": "message",
+    "timestamp": "isoTime",
+    "formatters": {
+      "path": "logger-formatters.js"
+    }
+  }
+}
+```
+
+```json
+{
+  "severity": "INFO",
+  "time": "2025-05-23T08:20:51.464Z",
+  "name": "composer",
+  "caller": "STDOUT",
+  "stdout": {
+    "severity": "INFO",
+    "time": "2025-05-23T08:20:51.464Z",
+    "name": "composer",
+    "reqId": "420ab3ab-aa5f-42d4-9736-d941cfaaf514",
+    "res": {
+      "statusCode": 200
+    },
+    "responseTime": 10.712485999800265,
+    "message": "request completed"
+  }
+}
+```
+
+To avoid the log entry to be wrapped in the `stdout` property, set the `captureStdio` option in `wattpm` to `false` (see [Capture Thread Services logs](#capture-thread-services-logs) for more details); the result will be close to the default pino settings:
+
+```json
+{
+  "severity": "INFO",
+  "time": "2025-05-23T08:21:49.813Z",
+  "name": "composer",
+  "reqId": "4a8ad43d-f749-4993-a1f4-3055c55b23ba",
+  "res": {
+    "statusCode": 200
+  },
+  "responseTime": 11.091869999654591,
+  "message": "request completed"
+}
+```
+
+---
+
+### Capture Thread Services logs
+
+By default, Platformatic services logs are captured by the main service and wrapped in the `stdout` and `stderr` streams, for example:
+
+```txt
+{"level":"info","time":1747840934509,"pid":23381,"hostname":"work","name":"node","caller":"STDOUT","stdout":{"level":"info","time":1747840934509,"pid":23381,"hostname":"work","name":"node","reqId":"req-1","req":{"method":"GET","url":"/","host":"node.plt.local"},"msg":"incoming request"}}
+```
+
+The `captureStdio` option in `wattpm` can be set to `false` to disable the capture of the logs of the child services; in this case logs will be written directly to the `stdout` and `stderr` streams of the main service.
+
+`watt.json`
+
+```json
+{
+  "logger": {
+    "captureStdio": false
+  }
+}
+```
+
+So the previous log output will be
+
+```txt
+{"level":"info","time":1747840934509,"pid":23381,"hostname":"work","name":"node","reqId":"req-1","req":{"method":"GET","url":"/","host":"node.plt.local"},"msg":"incoming request"}
+```
+
+Note the log is the content of the `stdout` property.
 
 ### Using Environment Variables
 

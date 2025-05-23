@@ -86,7 +86,7 @@ test('should properly report as failed on the health check route when all depend
     null,
     {
       logger: {
-        level: 'info'
+        level: 'trace'
       },
       restartOnError: 2000
     },

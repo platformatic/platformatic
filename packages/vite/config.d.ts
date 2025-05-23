@@ -48,6 +48,14 @@ export interface PlatformaticViteStackable {
       paths: string[];
       censor?: string;
     };
+    captureStdio?: boolean;
+    base?: {
+      [k: string]: unknown;
+    } | null;
+    messageKey?: string;
+    customLevels?: {
+      [k: string]: unknown;
+    };
     [k: string]: unknown;
   };
   server?: {
@@ -148,6 +156,14 @@ export interface PlatformaticViteStackable {
       redact?: {
         paths: string[];
         censor?: string;
+      };
+      captureStdio?: boolean;
+      base?: {
+        [k: string]: unknown;
+      } | null;
+      messageKey?: string;
+      customLevels?: {
+        [k: string]: unknown;
       };
       [k: string]: unknown;
     };

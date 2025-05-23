@@ -20,7 +20,7 @@
     }
   ],
   "logger": {
-    "level": "info"
+    "level": "trace"
   },
   "managementApi": true,
   "health": {
