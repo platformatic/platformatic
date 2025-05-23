@@ -197,7 +197,17 @@ With custom logger configuration, for example
 ```json
 {
   "logger": {
-    ...
+    "captureStdio": false,
+    "level": "info",
+    "customLevels": {
+      "verbose": 10
+    },
+    "base": null,
+    "messageKey": "message",
+    "timestamp": "isoTime",
+    "formatters": {
+      "path": "logger-formatters.js"
+    }
   }
 }
 ```
