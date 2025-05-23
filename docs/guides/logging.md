@@ -170,6 +170,76 @@ This can be configured in two ways:
 
 ---
 
+### Note on using custom logger configuration
+
+When using custom logger configuration that alterate the format of the output, such as `messageKey`, `formatter.level`, `timestamp` or `customLevels`, the log entry from a thread service is not recognized as a `pino` entry log entry, so it is treated as a json log entry.
+
+For example, the difference between the default pino settings and a custom logger configuration that uses a custom `messageKey` is:
+
+With default pino settings:
+
+```json
+{
+  "level": 30,
+  "time": 1747988551789,
+  "pid": 29580,
+  "hostname": "work",
+  "name": "composer",
+  "reqId": "c9f5d5b8-6ea5-4782-8c81-00ffb27386b3",
+  "res": { "statusCode": 500 },
+  "responseTime": 10.037883000448346,
+  "msg": "request completed"
+}
+```
+
+With custom logger configuration, for example 
+
+```json
+{
+  "logger": {
+    ...
+  }
+}
+```
+
+```json
+{
+  "severity": "INFO",
+  "time": "2025-05-23T08:20:51.464Z",
+  "name": "composer",
+  "caller": "STDOUT",
+  "stdout": {
+    "severity": "INFO",
+    "time": "2025-05-23T08:20:51.464Z",
+    "name": "composer",
+    "reqId": "420ab3ab-aa5f-42d4-9736-d941cfaaf514",
+    "res": {
+      "statusCode": 200
+    },
+    "responseTime": 10.712485999800265,
+    "message": "request completed"
+  }
+}
+```
+
+To avoid the log entry to be wrapped in the `stdout` property, set the `captureStdio` option in `wattpm` to `false` (see [Capture Thread Services logs](#capture-thread-services-logs) for more details); the result will be close to the default pino settings:
+
+```json
+{
+  "severity": "INFO",
+  "time": "2025-05-23T08:21:49.813Z",
+  "name": "composer",
+  "reqId": "4a8ad43d-f749-4993-a1f4-3055c55b23ba",
+  "res": {
+    "statusCode": 200
+  },
+  "responseTime": 11.091869999654591,
+  "message": "request completed"
+}
+```
+
+---
+
 ### Capture Thread Services logs
 
 By default, Platformatic services logs are captured by the main service and wrapped in the `stdout` and `stderr` streams, for example:
