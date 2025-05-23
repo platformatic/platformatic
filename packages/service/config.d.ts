@@ -72,7 +72,6 @@ export interface PlatformaticService {
             paths: string[];
             censor?: string;
           };
-          captureStdio?: boolean;
           base?: {
             [k: string]: unknown;
           } | null;
@@ -381,7 +380,6 @@ export interface PlatformaticService {
         paths: string[];
         censor?: string;
       };
-      captureStdio?: boolean;
       base?: {
         [k: string]: unknown;
       } | null;

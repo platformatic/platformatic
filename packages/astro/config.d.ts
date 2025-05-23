@@ -48,7 +48,6 @@ export interface PlatformaticAstroStackable {
       paths: string[];
       censor?: string;
     };
-    captureStdio?: boolean;
     base?: {
       [k: string]: unknown;
     } | null;
@@ -157,7 +156,6 @@ export interface PlatformaticAstroStackable {
         paths: string[];
         censor?: string;
       };
-      captureStdio?: boolean;
       base?: {
         [k: string]: unknown;
       } | null;

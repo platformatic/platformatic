@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type HttpsSchemasPlatformaticDevPlatformaticRuntime2651Json = {
+export type HttpsSchemasPlatformaticDevPlatformaticRuntime2660Json = {
   [k: string]: unknown;
 } & {
   $schema?: string;
@@ -85,7 +85,6 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime2651Json = {
       paths: string[];
       censor?: string;
     };
-    captureStdio?: boolean;
     base?: {
       [k: string]: unknown;
     } | null;
@@ -93,6 +92,7 @@ export type HttpsSchemasPlatformaticDevPlatformaticRuntime2651Json = {
     customLevels?: {
       [k: string]: unknown;
     };
+    captureStdio?: boolean;
     [k: string]: unknown;
   };
   server?: {
