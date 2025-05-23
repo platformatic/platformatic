@@ -7,7 +7,8 @@ import { platform, tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
-const pltCreatePath = new URL('../../create-platformatic.mjs', import.meta.url).pathname
+const isWindows = platform() === 'win32'
+const pltCreatePath = fileURLToPath(new URL('../../create-platformatic.mjs', import.meta.url))
 const pltRoot = fileURLToPath(new URL('../..', import.meta.url))
 let tmpCount = 0
 
@@ -43,7 +44,7 @@ export async function setupUserInputHandler (t, expected) {
     'utf-8'
   )
 
-  if (platform() === 'win32') {
+  if (isWindows) {
     inputHandler = pathToFileURL(inputHandler).toString()
   }
 
