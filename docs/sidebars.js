@@ -52,9 +52,9 @@ const sidebars = {
         'db/programmatic',
         'db/schema-support',
         'db/seed',
-        "db/securing-platformatic-db",
-        "db/jwt-auth0",
-        "db/jwt-keycloak",
+        'db/securing-platformatic-db',
+        'db/jwt-auth0',
+        'db/jwt-keycloak'
       ]
     },
     {
@@ -97,6 +97,12 @@ const sidebars = {
           label: 'Astro',
           collapsed: true,
           items: ['packages/astro/overview', 'packages/astro/configuration', 'packages/astro/caching']
+        },
+        {
+          type: 'category',
+          label: 'NestJS',
+          collapsed: true,
+          items: ['packages/nest/overview', 'packages/nest/configuration']
         },
         {
           type: 'category',
@@ -182,10 +188,7 @@ const sidebars = {
       type: 'category',
       label: 'Beginner Tutorials',
       collapsed: true,
-      items: [
-        'learn/beginner/crud-application',
-        "learn/beginner/environment-variables",
-      ]
+      items: ['learn/beginner/crud-application', 'learn/beginner/environment-variables']
     },
     {
       type: 'category',
@@ -202,16 +205,16 @@ const sidebars = {
       label: 'Advanced Guides',
       collapsed: true,
       items: [
-        "guides/cache-with-platformatic-watt",
-        "guides/monitoring",
-        "guides/generate-frontend-code-to-consume-platformatic-rest-api",
-        "guides/telemetry",
-        "guides/build-modular-monolith",
-        "guides/logging-to-elasticsearch",
-        "guides/using-watt-with-node-config",
-        "guides/use-watt-multiple-repository",
-        "guides/scheduler"
-      ],
+        'guides/cache-with-platformatic-watt',
+        'guides/monitoring',
+        'guides/generate-frontend-code-to-consume-platformatic-rest-api',
+        'guides/telemetry',
+        'guides/build-modular-monolith',
+        'guides/logging-to-elasticsearch',
+        'guides/using-watt-with-node-config',
+        'guides/use-watt-multiple-repository',
+        'guides/scheduler'
+      ]
     },
     'learn/glossary',
     'FAQs'

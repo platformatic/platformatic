@@ -28,6 +28,10 @@ export const configCandidates = [
   'watt.tml'
 ]
 
+function hasDependency (packageJson, dependency) {
+  return packageJson.dependencies?.[dependency] || packageJson.devDependencies?.[dependency]
+}
+
 function isImportFailedError (error, pkg) {
   if (error.code !== 'ERR_MODULE_NOT_FOUND' && error.code !== 'MODULE_NOT_FOUND') {
     return false
@@ -60,7 +64,7 @@ async function importStackablePackage (directory, pkg) {
 
     const serviceDirectory = workerData ? relative(workerData.dirname, directory) : directory
     throw new Error(
-      `Unable to import package '${pkg}'. Please add it as a dependency  in the package.json file in the folder ${serviceDirectory}.`
+      `Unable to import package '${pkg}'. Please add it as a dependency in the package.json file in the folder ${serviceDirectory}.`
     )
   }
 }
@@ -87,18 +91,20 @@ export async function importStackableAndConfig (root, config) {
     }
   }
 
-  const { dependencies, devDependencies } = rootPackageJson
-
-  if (dependencies?.next || devDependencies?.next) {
+  if (hasDependency(rootPackageJson, '@nestjs/core')) {
+    autodetectDescription = 'is using NestJS'
+    moduleName = '@platformatic/nest'
+  } else if (hasDependency(rootPackageJson, 'next')) {
     autodetectDescription = 'is using Next.js'
     moduleName = '@platformatic/next'
-  } else if (dependencies?.['@remix-run/dev'] || devDependencies?.['@remix-run/dev']) {
+  } else if (hasDependency(rootPackageJson, '@remix-run/dev')) {
     autodetectDescription = 'is using Remix'
     moduleName = '@platformatic/remix'
-  } else if (dependencies?.astro || devDependencies?.astro) {
+  } else if (hasDependency(rootPackageJson, 'astro')) {
     autodetectDescription = 'is using Astro'
     moduleName = '@platformatic/astro'
-  } else if (dependencies?.vite || devDependencies?.vite) {
+    // Since Vite is often used with other frameworks, we must check for Vite last
+  } else if (hasDependency(rootPackageJson, 'vite')) {
     autodetectDescription = 'is using Vite'
     moduleName = '@platformatic/vite'
   }

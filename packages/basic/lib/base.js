@@ -1,8 +1,8 @@
 import { client, collectMetrics } from '@platformatic/metrics'
-import { deepmerge, executeWithTimeout, buildPinoOptions } from '@platformatic/utils'
+import { buildPinoOptions, deepmerge, executeWithTimeout } from '@platformatic/utils'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
-import { once } from 'node:events'
+import EventEmitter, { once } from 'node:events'
 import { existsSync } from 'node:fs'
 import { platform } from 'node:os'
 import { pathToFileURL } from 'node:url'
@@ -14,13 +14,17 @@ import { ChildManager } from './worker/child-manager.js'
 
 const kITC = Symbol.for('plt.runtime.itc')
 
-export class BaseStackable {
+export class BaseStackable extends EventEmitter {
   childManager
   subprocess
+  subprocessForceClose
+  subprocessTerminationSignal
   #subprocessStarted
   #metricsCollected
 
   constructor (type, version, options, root, configManager, standardStreams = {}) {
+    super()
+
     options.context.worker ??= { count: 1, index: 0 }
 
     this.type = type
@@ -48,9 +52,18 @@ export class BaseStackable {
     this.runtimeConfig = deepmerge(options.context?.runtimeConfig ?? {}, workerData?.config ?? {})
     this.stdout = standardStreams?.stdout ?? process.stdout
     this.stderr = standardStreams?.stderr ?? process.stderr
+    this.subprocessForceClose = false
+    this.subprocessTerminationSignal = 'SIGINT'
 
     const loggerOptions = deepmerge(this.runtimeConfig?.logger ?? {}, this.configManager.current?.logger ?? {})
-    const pinoOptions = buildPinoOptions(loggerOptions, this.serverConfig?.logger, this.serviceId, this.workerId, options, this.root)
+    const pinoOptions = buildPinoOptions(
+      loggerOptions,
+      this.serverConfig?.logger,
+      this.serviceId,
+      this.workerId,
+      options,
+      this.root
+    )
     this.logger = pino(pinoOptions, standardStreams?.stdout)
 
     // Setup globals
@@ -69,6 +82,7 @@ export class BaseStackable {
       prometheus: { client, registry: this.metricsRegistry },
       setCustomHealthCheck: this.setCustomHealthCheck.bind(this),
       setCustomReadinessCheck: this.setCustomReadinessCheck.bind(this),
+      notifyConfig: this.#notifyConfig.bind(this),
       logger: this.logger
     })
   }
@@ -112,6 +126,22 @@ export class BaseStackable {
 
   async getDispatchTarget () {
     return this.getUrl() ?? this.getDispatchFunc()
+  }
+
+  getMeta () {
+    return {
+      composer: {
+        wantsAbsoluteUrls: false
+      }
+    }
+  }
+
+  async getMetrics ({ format } = {}) {
+    if (this.childManager && this.clientWs) {
+      return this.childManager.send(this.clientWs, 'getMetrics', { format })
+    }
+
+    return format === 'json' ? await this.metricsRegistry.getMetricsAsJSON() : await this.metricsRegistry.metrics()
   }
 
   async getOpenapiSchema () {
@@ -227,6 +257,7 @@ export class BaseStackable {
 
     this.childManager.on('config', config => {
       this.subprocessConfig = config
+      this.#notifyConfig(config)
     })
 
     this.childManager.on('connectionString', connectionString => {
@@ -278,13 +309,18 @@ export class BaseStackable {
     const exitPromise = once(this.subprocess, 'exit')
 
     // Attempt graceful close on the process
-    this.childManager.notify(this.clientWs, 'close')
+    const handled = await this.childManager.send(this.clientWs, 'close', this.subprocessTerminationSignal)
+
+    if (!handled && this.subprocessForceClose) {
+      this.subprocess.kill(this.subprocessTerminationSignal)
+    }
 
     // If the process hasn't exited in X seconds, kill it in the polite way
     /* c8 ignore next 10 */
     const res = await executeWithTimeout(exitPromise, exitTimeout)
+
     if (res === 'timeout') {
-      this.subprocess.kill(this.subprocessTerminationSignal ?? 'SIGINT')
+      this.subprocess.kill(this.subprocessTerminationSignal)
 
       // If the process hasn't exited in X seconds, kill it the hard way
       const res = await executeWithTimeout(exitPromise, exitTimeout)
@@ -301,6 +337,28 @@ export class BaseStackable {
 
   getChildManager () {
     return this.childManager
+  }
+
+  async getChildManagerContext (basePath) {
+    const meta = await this.getMeta()
+
+    return {
+      id: this.id,
+      config: this.configManager.current,
+      serviceId: this.serviceId,
+      workerId: this.workerId,
+      // Always use URL to avoid serialization problem in Windows
+      root: pathToFileURL(this.root).toString(),
+      basePath,
+      logLevel: this.logger.level,
+      isEntrypoint: this.isEntrypoint,
+      runtimeBasePath: this.runtimeConfig?.basePath ?? null,
+      wantsAbsoluteUrls: meta.composer?.wantsAbsoluteUrls ?? false,
+      /* c8 ignore next 2 */
+      port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
+      host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
+      telemetryConfig: this.telemetryConfig
+    }
   }
 
   async spawn (command) {
@@ -391,45 +449,11 @@ export class BaseStackable {
     }
   }
 
-  async getMetrics ({ format } = {}) {
-    if (this.childManager && this.clientWs) {
-      return this.childManager.send(this.clientWs, 'getMetrics', { format })
-    }
-
-    return format === 'json' ? await this.metricsRegistry.getMetricsAsJSON() : await this.metricsRegistry.metrics()
+  #notifyConfig (config) {
+    this.emit('config', config)
   }
 
   async #invalidateHttpCache (opts = {}) {
     await globalThis[kITC].send('invalidateHttpCache', opts)
-  }
-
-  getMeta () {
-    return {
-      composer: {
-        wantsAbsoluteUrls: false
-      }
-    }
-  }
-
-  async getChildManagerContext (basePath) {
-    const meta = await this.getMeta()
-
-    return {
-      id: this.id,
-      config: this.configManager.current,
-      serviceId: this.serviceId,
-      workerId: this.workerId,
-      // Always use URL to avoid serialization problem in Windows
-      root: pathToFileURL(this.root).toString(),
-      basePath,
-      logLevel: this.logger.level,
-      isEntrypoint: this.isEntrypoint,
-      runtimeBasePath: this.runtimeConfig?.basePath ?? null,
-      wantsAbsoluteUrls: meta.composer?.wantsAbsoluteUrls ?? false,
-      /* c8 ignore next 2 */
-      port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
-      host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
-      telemetryConfig: this.telemetryConfig
-    }
   }
 }

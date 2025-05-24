@@ -1,6 +1,13 @@
 import { ITC } from '@platformatic/itc'
 import { client, collectMetrics } from '@platformatic/metrics'
-import { buildPinoFormatters, buildPinoTimestamp, disablePinoDirectWrite, ensureFlushedWorkerStdio, ensureLoggableError, features } from '@platformatic/utils'
+import {
+  buildPinoFormatters,
+  buildPinoTimestamp,
+  disablePinoDirectWrite,
+  ensureFlushedWorkerStdio,
+  ensureLoggableError,
+  features
+} from '@platformatic/utils'
 import diagnosticChannel, { tracingChannel } from 'node:diagnostics_channel'
 import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
@@ -61,7 +68,6 @@ function createInterceptor () {
 export class ChildProcess extends ITC {
   #listener
   #socket
-  #child
   #logger
   #metricsRegistry
   #pendingMessages
@@ -76,6 +82,18 @@ export class ChildProcess extends ITC {
         },
         getMetrics: (...args) => {
           return this.#getMetrics(...args)
+        },
+        close (signal) {
+          const handled = globalThis.platformatic.events.emit('close', signal)
+
+          if (!handled) {
+            // No user event, just exit without errors
+            setImmediate(() => {
+              process.exit(0)
+            })
+          }
+
+          return handled
         }
       }
     })
@@ -92,21 +110,35 @@ export class ChildProcess extends ITC {
     this.#setupServer()
     this.#setupInterceptors()
 
-    this.on('close', () => {
-      if (!globalThis.platformatic.events.emit('close')) {
-        // No user event, just exit without errors
-        process.exit(0)
-      }
-    })
-
     this.registerGlobals({
       logger: this.#logger,
       setOpenapiSchema: this.setOpenapiSchema.bind(this),
       setGraphqlSchema: this.setGraphqlSchema.bind(this),
       setConnectionString: this.setConnectionString.bind(this),
       setBasePath: this.setBasePath.bind(this),
-      prometheus: { client, registry: this.#metricsRegistry }
+      prometheus: { client, registry: this.#metricsRegistry },
+      notifyConfig: this.#notifyConfig.bind(this)
     })
+  }
+
+  registerGlobals (globals) {
+    globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, globals)
+  }
+
+  setOpenapiSchema (schema) {
+    this.notify('openapiSchema', schema)
+  }
+
+  setGraphqlSchema (schema) {
+    this.notify('graphqlSchema', schema)
+  }
+
+  setConnectionString (connectionString) {
+    this.notify('connectionString', connectionString)
+  }
+
+  setBasePath (basePath) {
+    this.notify('basePath', basePath)
   }
 
   _setupListener (listener) {
@@ -229,7 +261,7 @@ export class ChildProcess extends ITC {
   #setupServer () {
     const subscribers = {
       asyncStart ({ options }) {
-      // Unix socket, do nothing
+        // Unix socket, do nothing
         if (options.path) {
           return
         }
@@ -287,9 +319,9 @@ export class ChildProcess extends ITC {
 
   #setupHandlers () {
     const errorLabel =
-    typeof globalThis.platformatic.workerId !== 'undefined'
-      ? `worker ${globalThis.platformatic.workerId} of the service "${globalThis.platformatic.serviceId}"`
-      : `service "${globalThis.platformatic.serviceId}"`
+      typeof globalThis.platformatic.workerId !== 'undefined'
+        ? `worker ${globalThis.platformatic.workerId} of the service "${globalThis.platformatic.serviceId}"`
+        : `service "${globalThis.platformatic.serviceId}"`
 
     function handleUnhandled (type, err) {
       this.#logger.error({ err: ensureLoggableError(err) }, `Child process for the ${errorLabel} threw an ${type}.`)
@@ -302,24 +334,8 @@ export class ChildProcess extends ITC {
     process.on('unhandledRejection', handleUnhandled.bind(this, 'unhandled rejection'))
   }
 
-  registerGlobals (globals) {
-    globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, globals)
-  }
-
-  setOpenapiSchema (schema) {
-    this.notify('openapiSchema', schema)
-  }
-
-  setGraphqlSchema (schema) {
-    this.notify('graphqlSchema', schema)
-  }
-
-  setConnectionString (connectionString) {
-    this.notify('connectionString', connectionString)
-  }
-
-  setBasePath (basePath) {
-    this.notify('basePath', basePath)
+  #notifyConfig (config) {
+    this.notify('config', config)
   }
 }
 

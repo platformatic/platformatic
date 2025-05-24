@@ -48,10 +48,7 @@ export class NextStackable extends BaseStackable {
     const nextPackage = JSON.parse(await readFile(pathResolve(this.#next, 'package.json'), 'utf-8'))
     this.#nextVersion = parse(nextPackage.version)
 
-    if (
-      this.#nextVersion.major < 15 ||
-      (this.#nextVersion.major <= 15 && this.#nextVersion.minor < 1)
-    ) {
+    if (this.#nextVersion.major < 15 || (this.#nextVersion.major <= 15 && this.#nextVersion.minor < 1)) {
       await import('./lib/create-context-patch.js')
     }
 
@@ -66,6 +63,10 @@ export class NextStackable extends BaseStackable {
     if (this.url) {
       return this.url
     }
+
+    this.on('config', config => {
+      this.#basePath = config.basePath
+    })
 
     if (this.isProduction) {
       await this.#startProduction(listen)
@@ -181,10 +182,6 @@ export class NextStackable extends BaseStackable {
   async #startDevelopmentNext (serverOptions) {
     const { nextDev } = await importFile(pathResolve(this.#next, './dist/cli/next-dev.js'))
 
-    this.childManager.on('config', config => {
-      this.#basePath = config.basePath
-    })
-
     try {
       await this.childManager.inject()
       const childPromise = createChildProcessListener()
@@ -222,13 +219,8 @@ export class NextStackable extends BaseStackable {
     if (command) {
       const childManagerScripts = this.#getChildManagerScripts()
 
-      if (
-        this.#nextVersion.major < 15 ||
-        (this.#nextVersion.major <= 15 && this.#nextVersion.minor < 1)
-      ) {
-        childManagerScripts.push(
-          new URL('./lib/create-context-patch.js', import.meta.url)
-        )
+      if (this.#nextVersion.major < 15 || (this.#nextVersion.major <= 15 && this.#nextVersion.minor < 1)) {
+        childManagerScripts.push(new URL('./lib/create-context-patch.js', import.meta.url))
       }
       return this.startWithCommand(command, loaderUrl, childManagerScripts)
     }
@@ -266,11 +258,6 @@ export class NextStackable extends BaseStackable {
         hostname: hostname || '127.0.0.1',
         port: port || 0
       }
-
-      // Since we are in the same process
-      process.once('plt:next:config', config => {
-        this.#basePath = config.basePath
-      })
 
       this.childManager.register()
       const serverPromise = createServerListener(

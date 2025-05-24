@@ -1,9 +1,9 @@
 ---
 title: Overview
-label: Astro
+label: Next.js
 ---
 
-import SharedOverview from '../node/_shared-overview.md';
+import SharedOverview from '../node/\_shared-overview.md';
 
 # Platformatic Next
 
@@ -13,7 +13,7 @@ The Platformatic Next allows to run a [Next](https://nextjs.org/) application as
 
 Create or copy an Next application inside the `web` or `services` folder. If you are not using [`autoload`](../../runtime/configuration.md#autoload), you also have to explictly add the new service.
 
-You are all set, you can now start your runtime as usual via `wattpm dev` or `plt start`.
+You are all set, you can now start your runtime as usual via `wattpm dev` or `wattpm start`.
 
 ## Install
 

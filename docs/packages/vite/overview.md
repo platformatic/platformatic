@@ -1,9 +1,9 @@
 ---
 title: Overview
-label: Astro
+label: Vite
 ---
 
-import SharedOverview from '../node/_shared-overview.md';
+import SharedOverview from '../node/\_shared-overview.md';
 
 # Platformatic Vite
 
@@ -13,7 +13,7 @@ The Platformatic Vite allows to run a [Vite](https://vitejs.dev/) application as
 
 Create or copy a Vite application inside the `web` or `services` folder. If you are not using [`autoload`](../../runtime/configuration.md#autoload), you also have to explictly add the new service.
 
-You are all set, you can now start your runtime as usual via `wattpm dev` or `plt start`.
+You are all set, you can now start your runtime as usual via `wattpm dev` or `wattpm start`.
 
 ## Install
 
@@ -31,7 +31,6 @@ npm install @platformatic/vite
   }
 }
 ```
-
 
 ## Architecture
 
