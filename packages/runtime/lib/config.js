@@ -263,10 +263,15 @@ async function wrapConfigInRuntimeConfig ({ configManager, args }) {
     // on purpose, the package.json might be missing
   }
 
+  // If the service supports its (so far, only @platformatic/service and descendants)
+  const { hostname, port, http2, https } = configManager.current.server ?? {}
+  const server = { hostname, port, http2, https }
+
   // Important: do not change the order of the properties in this object
   /* c8 ignore next */
   const wrapperConfig = {
     $schema: schema.$id,
+    server,
     watch: true,
     ...omitProperties(configManager.current.runtime ?? {}, runtimeUnwrappablePropertiesList),
     entrypoint: serviceId,

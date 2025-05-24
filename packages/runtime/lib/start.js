@@ -91,16 +91,29 @@ async function setupAndStartRuntime (config) {
 
   let address = null
   const startErr = null
-  const originalPort = runtimeConfig.current.server?.port || 0
+
+  runtimeConfig.current.server ??= { port: 0 }
+  let port = runtimeConfig.current.server.port
   while (address === null) {
     try {
       address = await runtime.start()
     } catch (err) {
       if (err.code === 'EADDRINUSE') {
+        // Get the actual port from the error message if original port was 0
+        if (!port) {
+          const mo = err.message.match(/ address already in use (.+)/)
+          const url = new URL(`http://${mo[1]}`)
+          port = Number(url.port)
+        }
+
+        port++
         await runtime.close()
 
-        if (runtimeConfig.current?.server?.port > MAX_PORT) throw err
-        runtimeConfig.current.server.port++
+        if (port > MAX_PORT) {
+          throw err
+        }
+
+        runtimeConfig.current.server.port = port
         runtime = await buildRuntime(runtimeConfig)
       } else {
         throw err
@@ -114,7 +127,7 @@ async function setupAndStartRuntime (config) {
         ignore: 'hostname,pid'
       })
     )
-    logger.warn(`Port: ${originalPort} is already in use!`)
+    logger.warn(`Port: ${port} is already in use!`)
     logger.warn(`Changing the port to ${runtimeConfig.current.server.port}`)
   }
   return { address, runtime }
