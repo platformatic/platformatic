@@ -1,7 +1,6 @@
 {
   "name": "platformatic",
-  "version": "2.66.0",
-  "private": true,
+  "version": "2.66
   "scripts": {
     "test": "pnpm -r --workspace-concurrency=1 --if-present test",
     "gen-schema": "pnpm -r --workspace-concurrency=1 run --if-present gen-schema",
