@@ -206,10 +206,7 @@ const sidebars = {
       type: 'category',
       label: 'Beginner Tutorials',
       collapsed: true,
-      items: [
-        'learn/beginner/crud-application',
-        "learn/beginner/environment-variables",
-      ]
+      items: ['learn/beginner/crud-application', 'learn/beginner/environment-variables']
     },
     {
       type: 'category',
@@ -226,16 +223,16 @@ const sidebars = {
       label: 'Advanced Guides',
       collapsed: true,
       items: [
-        "guides/cache-with-platformatic-watt",
-        "guides/monitoring",
-        "guides/generate-frontend-code-to-consume-platformatic-rest-api",
-        "guides/telemetry",
-        "guides/build-modular-monolith",
-        "guides/logging-to-elasticsearch",
-        "guides/using-watt-with-node-config",
-        "guides/use-watt-multiple-repository",
-        "guides/scheduler"
-      ],
+        'guides/cache-with-platformatic-watt',
+        'guides/monitoring',
+        'guides/generate-frontend-code-to-consume-platformatic-rest-api',
+        'guides/telemetry',
+        'guides/build-modular-monolith',
+        'guides/logging-to-elasticsearch',
+        'guides/using-watt-with-node-config',
+        'guides/use-watt-multiple-repository',
+        'guides/scheduler'
+      ]
     },
     'learn/glossary',
     'FAQs'

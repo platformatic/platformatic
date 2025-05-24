@@ -1,4 +1,4 @@
-import { configCandidates } from '@platformatic/basic'
+import { configCandidates, detectStackable } from '@platformatic/basic'
 import { loadConfigurationFile as loadRawConfigurationFile, saveConfigurationFile } from '@platformatic/config'
 import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
@@ -44,22 +44,9 @@ async function parseLocalFolder (path) {
   }
 
   // Check which stackable we should use
-  const { dependencies, devDependencies } = packageJson
+  const { name: stackable, label } = detectStackable(packageJson)
 
-  /* c8 ignore next 11 */
-  let stackable = '@platformatic/node'
-
-  if (dependencies?.next || devDependencies?.next) {
-    stackable = '@platformatic/next'
-  } else if (dependencies?.['@remix-run/dev'] || devDependencies?.['@remix-run/dev']) {
-    stackable = '@platformatic/remix'
-  } else if (dependencies?.vite || devDependencies?.vite) {
-    stackable = '@platformatic/vite'
-  } else if (dependencies?.astro || devDependencies?.astro) {
-    stackable = '@platformatic/astro'
-  }
-
-  return { id: packageJson.name ?? basename(path), url, packageJson, stackable }
+  return { id: packageJson.name ?? basename(path), url, packageJson, stackable, label }
 }
 
 async function findExistingConfiguration (root, path) {
@@ -106,7 +93,7 @@ async function fixConfiguration (logger, root, configOption) {
       continue
     }
 
-    const { id, packageJson, stackable } = await parseLocalFolder(resolve(root, path))
+    const { id, packageJson, stackable, label } = await parseLocalFolder(resolve(root, path))
 
     packageJson.dependencies ??= {}
     packageJson.dependencies[stackable] = `^${version}`
@@ -115,7 +102,11 @@ async function fixConfiguration (logger, root, configOption) {
       $schema: `https://schemas.platformatic.dev/${stackable}/${version}.json`
     }
 
-    logger.info(`Detected stackable ${bold(stackable)} for service ${bold(id)}, adding to the service dependencies.`)
+    if (stackable === '@platformatic/node') {
+      logger.info(`Service ${bold(id)} is a ${bold('generic Node.js application')}. Adding ${bold(stackable)} to its package.json dependencies.`)
+    } else {
+      logger.info(`Service ${bold(id)} is using ${bold(label)}. Adding ${bold(stackable)} to its package.json dependencies.`)
+    }
 
     await saveConfigurationFile(resolve(path, 'package.json'), packageJson)
     await saveConfigurationFile(resolve(path, 'watt.json'), wattJson)

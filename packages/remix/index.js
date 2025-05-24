@@ -44,7 +44,6 @@ export class RemixStackable extends ViteStackable {
       this.#remix = resolve(dirname(resolvePackage(this.root, '@remix-run/dev')), '..')
       const remixPackage = JSON.parse(await readFile(resolve(this.#remix, 'package.json'), 'utf-8'))
 
-      /* c8 ignore next 3 */
       if (!satisfies(remixPackage.version, supportedVersions)) {
         throw new errors.UnsupportedVersion('@remix-run/dev', remixPackage.version, supportedVersions)
       }
@@ -182,7 +181,7 @@ export class RemixStackable extends ViteStackable {
       this.logger.warn('Could not find Remix plugin in your Vite configuration. Continuing as plain Vite application.')
     }
 
-    this._collectMetrics()
+    await this._collectMetrics()
   }
 
   async #startProduction (listen) {
@@ -221,7 +220,7 @@ export class RemixStackable extends ViteStackable {
     this.#app.use(this.#basePath, express.static(resolve(this.root, `${outputDirectory}/client`)))
     this.#app.all(`${ensureTrailingSlash(cleanBasePath(this.#basePath))}*`, createRequestHandler({ build }))
 
-    this._collectMetrics()
+    await this._collectMetrics()
     return this.url
   }
 
