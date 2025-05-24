@@ -289,10 +289,7 @@ const logger = {
       additionalProperties: false
     },
     base: {
-      anyOf: [
-        { type: 'object', additionalProperties: true },
-        { type: 'null' }
-      ]
+      anyOf: [{ type: 'object', additionalProperties: true }, { type: 'null' }]
     },
     messageKey: {
       type: 'string'
@@ -422,9 +419,7 @@ const fastifyServer = {
     hostname: {
       type: 'string'
     },
-    port: {
-      anyOf: [{ type: 'integer' }, { type: 'string' }]
-    },
+    port: server.properties.port,
     pluginTimeout: {
       type: 'integer'
     },
@@ -538,99 +533,8 @@ const fastifyServer = {
         { type: 'integer' }
       ]
     },
-    http2: {
-      type: 'boolean'
-    },
-    https: {
-      type: 'object',
-      properties: {
-        allowHTTP1: {
-          type: 'boolean'
-        },
-        key: {
-          anyOf: [
-            {
-              type: 'string'
-            },
-            {
-              type: 'object',
-              properties: {
-                path: {
-                  type: 'string',
-                  resolvePath: true
-                }
-              },
-              additionalProperties: false
-            },
-            {
-              type: 'array',
-              items: {
-                anyOf: [
-                  {
-                    type: 'string'
-                  },
-                  {
-                    type: 'object',
-                    properties: {
-                      path: {
-                        type: 'string',
-                        resolvePath: true
-                      }
-                    },
-                    additionalProperties: false
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        cert: {
-          anyOf: [
-            {
-              type: 'string'
-            },
-            {
-              type: 'object',
-              properties: {
-                path: {
-                  type: 'string',
-                  resolvePath: true
-                }
-              },
-              additionalProperties: false
-            },
-            {
-              type: 'array',
-              items: {
-                anyOf: [
-                  {
-                    type: 'string'
-                  },
-                  {
-                    type: 'object',
-                    properties: {
-                      path: {
-                        type: 'string',
-                        resolvePath: true
-                      }
-                    },
-                    additionalProperties: false
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        requestCert: {
-          type: 'boolean'
-        },
-        rejectUnauthorized: {
-          type: 'boolean'
-        }
-      },
-      additionalProperties: false,
-      required: ['key', 'cert']
-    },
+    http2: server.properties.http2,
+    https: server.properties.https,
     cors
   },
   additionalProperties: false

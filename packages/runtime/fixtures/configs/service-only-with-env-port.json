@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/service/2.64.0.json",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": "{PORT}"
+  },
+  "plugins": {
+    "paths": ["../monorepo/serviceApp/plugin.js"]
+  }
+}
