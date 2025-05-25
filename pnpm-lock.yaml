@@ -2527,8 +2527,8 @@ importers:
         specifier: ^7.6.3
         version: 7.7.1
       undici:
-        specifier: 7.8.0
-        version: 7.8.0
+        specifier: 7.10.0
+        version: 7.10.0
     devDependencies:
       '@matteo.collina/tspl':
         specifier: ^0.2.0
@@ -9479,12 +9479,12 @@ packages:
     resolution: {integrity: sha512-uROZWze0R0itiAKVPsYhFov9LxrPMHLMEQFszeI2gCN6bnIIZ8twzBCJcN2LJrBBLfrP0t1FW0g+JmKVl8Vk1g==}
     engines: {node: '>=18.17'}
 
-  undici@7.2.3:
-    resolution: {integrity: sha512-2oSLHaDalSt2/O/wHA9M+/ZPAOcU2yrSP/cdBYJ+YxZskiPYDSqHbysLSlD7gq3JMqOoJI5O31RVU3BxX/MnAA==}
+  undici@7.10.0:
+    resolution: {integrity: sha512-u5otvFBOBZvmdjWLVW+5DAc9Nkq8f24g0O9oY7qw2JVIF1VocIFoyz9JFkuVOS2j41AufeO0xnlweJ2RLT8nGw==}
     engines: {node: '>=20.18.1'}
 
-  undici@7.8.0:
-    resolution: {integrity: sha512-vFv1GA99b7eKO1HG/4RPu2Is3FBTWBrmzqzO0mz+rLxN3yXkE4mqRcb8g8fHxzX4blEysrNZLqg5RbJLqX5buA==}
+  undici@7.2.3:
+    resolution: {integrity: sha512-2oSLHaDalSt2/O/wHA9M+/ZPAOcU2yrSP/cdBYJ+YxZskiPYDSqHbysLSlD7gq3JMqOoJI5O31RVU3BxX/MnAA==}
     engines: {node: '>=20.18.1'}
 
   unicode-properties@1.4.1:
@@ -18399,9 +18399,9 @@ snapshots:
 
   undici@6.21.2: {}
 
-  undici@7.2.3: {}
+  undici@7.10.0: {}
 
-  undici@7.8.0: {}
+  undici@7.2.3: {}
 
   unicode-properties@1.4.1:
     dependencies:
