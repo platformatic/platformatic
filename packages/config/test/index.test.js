@@ -446,3 +446,64 @@ test('configManager.parse should skip validation and transformation if asked', a
   await cm.parse({}, [], { validate: false, transform: false })
   assert.deepEqual(cm.current, config)
 })
+
+test('should not load .env file when disableEnvLoad is true', async () => {
+  const tmpDir = join(tmpdir(), `plt-${pid}-disable-env`)
+  await createDirectory(tmpDir)
+  const config = {
+    name: 'Platformatic',
+    props: {
+      foo: '{PLT_PROP}',
+    },
+  }
+  const schema = {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      props: {
+        type: 'object',
+        properties: {
+          foo: { type: 'string' },
+          bar: { type: 'integer' },
+        },
+      },
+    },
+  }
+
+  const file = join(tmpDir, 'uses-env.json')
+  const envFile = join(tmpDir, '.env')
+
+  await writeFile(envFile, 'PLT_PROP=fighters\n')
+  await writeFile(file, JSON.stringify(config))
+
+  const cm = new ConfigManager({
+    source: file,
+    schema,
+    disableEnvLoad: true
+  })
+  await cm.parse()
+
+  assert.strictEqual(cm.current.props.foo, '')
+  assert.deepEqual(cm.current, {
+    name: 'Platformatic',
+    props: {
+      foo: '',
+    },
+  }, 'The variable from .env file should not be loaded, so PLT_PROP should remain as is in the output')
+
+  const cm2 = new ConfigManager({
+    source: file,
+    schema
+  })
+  await cm2.parse()
+  assert.strictEqual(cm2.current.props.foo, 'fighters')
+  assert.deepEqual(cm2.current, {
+    name: 'Platformatic',
+    props: {
+      foo: 'fighters',
+    },
+  }, 'Now the .env variable has been overrided because disableEnvLoad is not defined (and therefore it is defaulted to the "false" logic)')
+
+  await unlink(file)
+  await unlink(envFile)
+})
