@@ -93,6 +93,29 @@ async function startPrometheusServer (runtime, opts) {
     onRequestHook = promServer.basicAuth
   }
 
+  const readinessEndpoint = opts.readiness?.endpoint ?? DEFAULT_READINESS_ENDPOINT
+  const livenessEndpoint = opts.liveness?.endpoint ?? DEFAULT_LIVENESS_ENDPOINT
+
+  promServer.route({
+    url: '/',
+    method: 'GET',
+    logLevel: 'warn',
+    handler (req, reply) {
+      reply.type('text/plain')
+      let response = `Hello from Platformatic Prometheus Server!\nThe metrics are available at ${metricsEndpoint}.`
+
+      if (opts.readiness !== false) {
+        response += `\nThe readiness endpoint is available at ${readinessEndpoint}.`
+      }
+
+      if (opts.liveness !== false) {
+        response += `\nThe liveness endpoint is available at ${livenessEndpoint}.`
+      }
+
+      return response
+    }
+  })
+
   promServer.route({
     url: metricsEndpoint,
     method: 'GET',
@@ -112,7 +135,7 @@ async function startPrometheusServer (runtime, opts) {
     const failBody = opts.readiness?.fail?.body ?? DEFAULT_READINESS_FAIL_BODY
 
     promServer.route({
-      url: opts.readiness?.endpoint ?? DEFAULT_READINESS_ENDPOINT,
+      url: readinessEndpoint,
       method: 'GET',
       logLevel: 'warn',
       handler: async (req, reply) => {
@@ -151,7 +174,7 @@ async function startPrometheusServer (runtime, opts) {
     const failBody = opts.liveness?.fail?.body ?? DEFAULT_LIVENESS_FAIL_BODY
 
     promServer.route({
-      url: opts.liveness?.endpoint ?? DEFAULT_LIVENESS_ENDPOINT,
+      url: livenessEndpoint,
       method: 'GET',
       logLevel: 'warn',
       handler: async (req, reply) => {
