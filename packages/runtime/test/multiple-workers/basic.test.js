@@ -87,7 +87,7 @@ test('services are started with a single workers when no workers information is 
 })
 
 // Note: this cannot be tested in production mode as watching is always disabled
-test('can detect changes and restart all workers for a service', { only: true }, async t => {
+test('can detect changes and restart all workers for a service', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
 

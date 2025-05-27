@@ -9,8 +9,7 @@
     {
       "id": "node",
       "path": "./node",
-      "config": "platformatic.json",
-      "workers": 5
+      "config": "platformatic.json"
     }
   ],
   "logger": {
