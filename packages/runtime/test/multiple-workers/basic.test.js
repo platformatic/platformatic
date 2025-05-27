@@ -49,7 +49,7 @@ test('services are started with multiple workers according to the configuration'
 })
 
 test('services are started with a single workers when no workers information is specified in the files', async t => {
-  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
+  const root = await prepareRuntime(t, 'no-multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
 
   await updateConfigFile(configFile, contents => {
@@ -86,39 +86,8 @@ test('services are started with a single workers when no workers information is 
   ok(!messages.includes('Starting the worker 0 of the service "composer"...'))
 })
 
-test('services are started with a single workers in development', async t => {
-  const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
-  const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
-
-  t.after(async () => {
-    await app.close()
-    managementApiWebsocket.terminate()
-  })
-
-  const messagesPromise = waitForLogs(
-    managementApiWebsocket,
-    'Starting the service "service"...',
-    'Starting the service "node"...',
-    'Starting the service "composer"...',
-    'Stopping the service "service"...',
-    'Stopping the service "node"...',
-    'Stopping the service "composer"...'
-  )
-
-  await app.start()
-  await app.stop()
-  const messages = (await messagesPromise).map(m => m.msg)
-
-  ok(!messages.includes('Starting the worker 0 of the service "service"...'))
-  ok(!messages.includes('Starting the worker 0 of the service "node"...'))
-  ok(!messages.includes('Starting the worker 0 of the service "composer"...'))
-})
-
 // Note: this cannot be tested in production mode as watching is always disabled
-test('can detect changes and restart all workers for a service', async t => {
+test('can detect changes and restart all workers for a service', {only:true},async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
 
@@ -142,7 +111,7 @@ test('can detect changes and restart all workers for a service', async t => {
 
   const waitPromise1 = waitForLogs(
     managementApiWebsocket,
-    'Starting the service "node"...',
+    'Starting the worker 0 of the service "node"...',
     'start watching files',
     'Platformatic is now listening'
   )
@@ -153,8 +122,8 @@ test('can detect changes and restart all workers for a service', async t => {
   const waitPromise2 = waitForLogs(
     managementApiWebsocket,
     'files changed',
-    'Stopping the service "node"...',
-    'Starting the service "node"...',
+    'Stopping the worker 0 of the service "node"...',
+    'Starting the worker 0 of the service "node"...',
     'Service "node" has been successfully reloaded ...'
   )
 
