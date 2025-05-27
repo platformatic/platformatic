@@ -131,15 +131,18 @@ class Runtime extends EventEmitter {
     this.#isProduction = this.#configManager.args?.production ?? false
     this.#servicesIds = config.services.map(service => service.id)
 
+    const workersConfig = []
     for (const service of config.services) {
       const count = service.workers ?? this.#configManager.current.workers
-      if (service.entrypoint && !features.node.reusePort) {
+      if (count > 1 && service.entrypoint && !features.node.reusePort) {
         this.logger.warn(`entrypoint and reusePort on service "${service.id}" requires a single worker, setting workers to 1 instead of ${count}`)
-        service.workers = 1
+        workersConfig.push({ id: service.id, workers: 1 })
+      } else {
+        workersConfig.push({ id: service.id, workers: count })
       }
     }
 
-    this.#workers.configure(config.services, this.#configManager.current.workers)
+    this.#workers.configure(workersConfig)
 
     if (this.#isProduction) {
       this.#env['PLT_DEV'] = 'false'

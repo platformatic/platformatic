@@ -12,12 +12,11 @@ class RoundRobinMap extends Map {
     return { ...this.#instances }
   }
 
-  configure (services, defaultInstances) {
+  configure (services) {
     this.#instances = {}
 
     for (const service of services) {
-      const count = service.workers ?? defaultInstances
-      this.#instances[service.id] = { next: 0, count }
+      this.#instances[service.id] = { next: 0, count: service.workers }
     }
   }
 
