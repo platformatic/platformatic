@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.66.0.json",
+  "watch": false,
+  "managementApi": true,
+  "metrics": true,
+  "restartOnError": 250,
+  "startTimeout": 1000,
+  "services": [
+    {
+      "id": "node",
+      "path": "./node",
+      "config": "platformatic.json",
+      "workers": 4
+    },
+    {
+      "id": "composer",
+      "path": "./composer",
+      "config": "platformatic.json",
+      "workers": 5
+    }
+  ],
+  "logger": {
+    "level": "trace"
+  }
+}

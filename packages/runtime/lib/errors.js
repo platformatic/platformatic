@@ -38,6 +38,7 @@ module.exports = {
   FailedToUnlinkManagementApiSocket: createError(`${ERROR_PREFIX}_FAILED_TO_UNLINK_MANAGEMENT_API_SOCKET`, 'Failed to unlink management API socket "%s"'),
   LogFileNotFound: createError(`${ERROR_PREFIX}_LOG_FILE_NOT_FOUND`, 'Log file with index %s not found', 404),
   WorkerIsRequired: createError(`${ERROR_PREFIX}_REQUIRED_WORKER`, 'The worker parameter is required'),
+  InvalidArgumentError: createError(`${ERROR_PREFIX}_INVALID_ARGUMENT`, 'Invalid argument: "%s"'),
 
   // TODO: should remove next one as it's not used anymore
   CannotRemoveServiceOnUpdateError: createError(`${ERROR_PREFIX}_CANNOT_REMOVE_SERVICE_ON_UPDATE`, 'Cannot remove service "%s" when updating a Runtime'),
