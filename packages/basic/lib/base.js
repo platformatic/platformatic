@@ -82,7 +82,7 @@ export class BaseStackable extends EventEmitter {
       prometheus: { client, registry: this.metricsRegistry },
       setCustomHealthCheck: this.setCustomHealthCheck.bind(this),
       setCustomReadinessCheck: this.setCustomReadinessCheck.bind(this),
-      notifyConfig: this.#notifyConfig.bind(this),
+      notifyConfig: this.notifyConfig.bind(this),
       logger: this.logger
     })
   }
@@ -257,7 +257,7 @@ export class BaseStackable extends EventEmitter {
 
     this.childManager.on('config', config => {
       this.subprocessConfig = config
-      this.#notifyConfig(config)
+      this.notifyConfig(config)
     })
 
     this.childManager.on('connectionString', connectionString => {
@@ -354,7 +354,7 @@ export class BaseStackable extends EventEmitter {
       isEntrypoint: this.isEntrypoint,
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       wantsAbsoluteUrls: meta.composer?.wantsAbsoluteUrls ?? false,
-      /* c8 ignore next 2 */
+      /* c8 ignore next 2 - Else branches */
       port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
       telemetryConfig: this.telemetryConfig
@@ -384,6 +384,10 @@ export class BaseStackable extends EventEmitter {
     })
 
     return subprocess
+  }
+
+  notifyConfig (config) {
+    this.emit('config', config)
   }
 
   async _collectMetrics () {
@@ -447,10 +451,6 @@ export class BaseStackable extends EventEmitter {
     globalThis.platformatic.onHttpCacheMiss = () => {
       cacheMissMetric.inc()
     }
-  }
-
-  #notifyConfig (config) {
-    this.emit('config', config)
   }
 
   async #invalidateHttpCache (opts = {}) {

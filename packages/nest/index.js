@@ -43,7 +43,6 @@ export class NestStackable extends BaseStackable {
 
     const nestPackage = JSON.parse(await readFile(resolve(dirname(this.#nestjsCore), 'package.json'), 'utf-8'))
 
-    /* c8 ignore next 3 */
     if (!this.isProduction && !satisfies(nestPackage.version, supportedVersions)) {
       throw new errors.UnsupportedVersion('@nestjs/core', nestPackage.version, supportedVersions)
     }
