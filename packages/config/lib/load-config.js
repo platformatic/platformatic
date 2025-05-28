@@ -44,7 +44,7 @@ async function loadConfig (minimistConfig, args, app, overrides = {}, replaceEnv
   const configManager = loaded.configManager
 
   const parsingResult = await configManager.parse(replaceEnv, args, opts)
-  if (!parsingResult) {
+  if (!parsingResult && !opts.allowInvalid) {
     const err = new errors.ConfigurationDoesNotValidateAgainstSchemaError()
     err.validationErrors = configManager.validationErrors
     throw err

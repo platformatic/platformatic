@@ -229,6 +229,21 @@ test('import - should not do anything when the local folder is already a defined
   ok(importProcess.stdout.includes('The path is already defined as a service.'))
 })
 
+test('import - should not do anything when loaded via service file', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+  await safeRemove(resolve(rootDir, 'watt.json'))
+
+  const configurationFile = resolve(rootDir, 'web/main/watt.json')
+  const originalFileContents = await readFile(configurationFile, 'utf-8')
+
+  process.chdir(resolve(rootDir, 'web/main'))
+  const importProcess = await wattpm('import', '.')
+
+  deepStrictEqual(await readFile(configurationFile, 'utf-8'), originalFileContents)
+  ok(importProcess.stdout.includes('The path is already defined as a service.'))
+})
+
 test('import - should raise an error when importing if the service id is already taken', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   t.after(() => safeRemove(rootDir))
@@ -407,6 +422,27 @@ test('import - when launched without arguments, should fix the configuration of 
   }
 
   deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, 'web-2/third/watt.json')), { foo: 'bar' })
+})
+
+test('import - when launched without arguments from a service file, should not do anything', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  await safeRemove(resolve(rootDir, 'watt.json'))
+  await saveConfigurationFile(resolve(rootDir, 'web/main/watt.json'), {
+    $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json'
+  })
+
+  process.chdir(resolve(rootDir, 'web/main'))
+  const importProcess = await wattpm('import')
+
+  deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, 'web/main/package.json')), {
+    dependencies: {
+      '@platformatic/node': '^2.3.1'
+    }
+  })
+
+  ok(!importProcess.stdout.includes('Detected stackable'))
 })
 
 test('import - should find the nearest watt.json', async t => {

@@ -30,7 +30,7 @@ const str = `
                               &&&&&&&&&&&&&
                                   &&&&&&
 
-                          Welcome to ${bold('Watt')}!
+                            Welcome to ${bold('Watt')}!
 `
 
 export const logo = str.replace(/\//g, s => green(s))

@@ -56,6 +56,22 @@ test('resolve - should do nothing when the directory already exists inside the r
   ok(!resolveProcess.stdout.includes('Installing dependencies for the service resolved using npm ...'))
 })
 
+test('resolve - should do nothing when loaded via service file', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const repo = await prepareGitRepository(t, rootDir)
+  t.after(() => safeRemove(rootDir))
+
+  await safeRemove(resolve(rootDir, 'watt.json'))
+  await saveConfigurationFile(resolve(rootDir, 'web/main/watt.json'), {
+    $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json'
+  })
+
+  process.chdir(resolve(rootDir, 'web/main'))
+  const resolveProcess = await wattpm('resolve', resolve(rootDir, 'web/main'))
+  ok(!resolveProcess.stdout.includes(`Cloning ${repo}`))
+  ok(!resolveProcess.stdout.includes('Installing dependencies for the service resolved using npm ...'))
+})
+
 test('resolve - should do nothing when the directory already exists outside the repo', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   const repo = await prepareGitRepository(t, rootDir)

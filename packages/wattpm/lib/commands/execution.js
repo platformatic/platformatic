@@ -4,7 +4,7 @@ import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
 import { watch } from 'node:fs/promises'
-import { findConfigurationFile, getMatchingRuntime, getRoot, logFatalError, parseArgs } from '../utils.js'
+import { findRuntimeConfigurationFile, getMatchingRuntime, getRoot, logFatalError, parseArgs } from '../utils.js'
 
 export async function devCommand (logger, args) {
   const {
@@ -22,7 +22,7 @@ export async function devCommand (logger, args) {
   )
   const root = getRoot(positionals)
 
-  const configurationFile = await findConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
@@ -62,7 +62,7 @@ export async function startCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {

@@ -1,10 +1,7 @@
-import {
-  findConfigurationFile as findRawConfigurationFile,
-  loadConfig as pltConfigLoadConfig,
-  Store
-} from '@platformatic/config'
+import { findConfigurationFile, loadConfig, Store } from '@platformatic/config'
 import { errors } from '@platformatic/control'
-import { platformaticRuntime, buildRuntime as pltBuildRuntime } from '@platformatic/runtime'
+import { platformaticRuntime, buildRuntime as pltBuildRuntime, wrapConfigInRuntimeConfig } from '@platformatic/runtime'
+import { ensureLoggableError } from '@platformatic/utils'
 import { bgGreen, black, bold } from 'colorette'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -156,8 +153,13 @@ export function serviceToEnvVariable (service) {
   return `PLT_SERVICE_${service.toUpperCase().replaceAll(/[^A-Z0-9_]/g, '_')}_PATH`
 }
 
-export async function findConfigurationFile (logger, root, configurationFile, schemas = 'runtime') {
-  const configFile = await findRawConfigurationFile(root, configurationFile, schemas)
+export async function findRuntimeConfigurationFile (logger, root, configurationFile, schemas = 'runtime') {
+  let configFile = await findConfigurationFile(root, configurationFile, schemas)
+
+  // If a runtime was not found, search for service file that we wrap in a runtime
+  if (schemas === 'runtime' && !configFile && !configurationFile) {
+    configFile = await findConfigurationFile(root, configurationFile)
+  }
 
   if (!configFile) {
     return logFatalError(
@@ -171,39 +173,64 @@ export async function findConfigurationFile (logger, root, configurationFile, sc
   return configFile
 }
 
-export async function loadConfigurationFile (logger, configurationFile) {
-  const store = new Store({
-    cwd: process.cwd(),
-    logger
-  })
+export async function loadConfigurationFileAsConfig (logger, configurationFile) {
+  const store = new Store()
   store.add(platformaticRuntime)
 
-  const { configManager } = await store.loadConfig({
-    config: configurationFile,
-    overrides: {
+  const args = ['-c', configurationFile]
+  const options = { allowInvalid: true, transformOnValidationErrors: true }
+  return loadConfig(
+    {},
+    args,
+    store,
+    {
       /* c8 ignore next 3 */
-      onMissingEnv (key) {
+      onMissingEnv () {
         return ''
       }
-    }
-  })
+    },
+    true,
+    logger,
+    options
+  )
+}
 
-  await configManager.parse(true, [], { transformOnValidationErrors: true })
-  return configManager.current
+export async function loadRuntimeConfigurationFile (logger, configurationFile) {
+  const config = await loadConfigurationFileAsConfig(logger, configurationFile)
+  const args = ['-c', configurationFile]
+  const options = { allowInvalid: true, transformOnValidationErrors: true }
+
+  if (config.configType !== 'runtime') {
+    const configManager = await wrapConfigInRuntimeConfig(config, args, options)
+    config.configManager = configManager
+  }
+
+  config.configManager.args = config.args
+
+  return config.configManager.current
 }
 
 export async function buildRuntime (logger, configurationFile) {
   const store = new Store()
   store.add(platformaticRuntime)
 
-  const config = await pltConfigLoadConfig({}, ['-c', configurationFile], store, {}, true, logger)
+  const args = ['-c', configurationFile]
+  const config = await loadConfig({}, args, store, {}, true, logger)
+
+  if (config.configType !== 'runtime') {
+    const configManager = await wrapConfigInRuntimeConfig(config, args)
+    config.configManager = configManager
+  }
+
   config.configManager.args = config.args
 
-  const runtimeConfig = config.configManager
+  let runtime
   try {
-    return await pltBuildRuntime(runtimeConfig)
+    runtime = await pltBuildRuntime(config.configManager)
     /* c8 ignore next 3 - Hard to test */
-  } catch (e) {
-    process.exit(1)
+  } catch (error) {
+    logFatalError(logger, { err: ensureLoggableError(error) }, 'Error creating the runtime')
   }
+
+  return runtime
 }

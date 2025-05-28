@@ -6,12 +6,14 @@ import { wattpm } from './helper.js'
 test('help - should show proper messages', async t => {
   const mainProcess = await wattpm('help')
   const mainViaArgProcess = await wattpm('--help')
+  const mainNoArgs = await wattpm()
   const commandHelpProcess = await wattpm('help', 'inject')
   const commandHelpShortArgProcess = await wattpm('inject', '-h')
   const commandHelpLongArgProcess = await wattpm('inject', '--help')
 
   ok(mainProcess.stdout.startsWith('\nUsage: wattpm [options] [command]'))
   ok(mainViaArgProcess.stdout.startsWith('\nUsage: wattpm [options] [command]'))
+  ok(mainNoArgs.stdout.startsWith('\nUsage: wattpm [options] [command]'))
   ok(commandHelpProcess.stdout.startsWith('\nUsage: wattpm inject'))
   deepStrictEqual(commandHelpProcess.stdout, commandHelpShortArgProcess.stdout)
   deepStrictEqual(commandHelpProcess.stdout, commandHelpLongArgProcess.stdout)

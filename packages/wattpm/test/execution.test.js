@@ -1,3 +1,4 @@
+import { safeRemove } from '@platformatic/utils'
 import { connect } from 'inspector-client'
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { on } from 'node:events'
@@ -18,7 +19,7 @@ test('dev - should start in development mode', async t => {
   })
 
   const startProcess = wattpm('dev', rootDir)
-  const url = await waitForStart(startProcess)
+  const { url, parsed } = await waitForStart(startProcess)
 
   const { statusCode, body } = await request(url)
   deepStrictEqual(statusCode, 200)
@@ -27,6 +28,33 @@ test('dev - should start in development mode', async t => {
     plt_dev: true,
     plt_environment: 'development'
   })
+
+  ok(parsed.some(p => p.msg?.includes('Started the service "main"')))
+  ok(parsed.some(p => p.msg?.includes('Started the service "alternative"')))
+})
+
+test('dev - should start in development mode starting from a service file', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  await safeRemove(resolve(rootDir, 'watt.json'))
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  const startProcess = wattpm('dev', resolve(rootDir, 'web/main'))
+  const { url, parsed } = await waitForStart(startProcess)
+
+  const { statusCode, body } = await request(url)
+  deepStrictEqual(statusCode, 200)
+  deepStrictEqual(await body.json(), {
+    production: false,
+    plt_dev: true,
+    plt_environment: 'development'
+  })
+
+  ok(parsed.some(p => p.msg?.includes('Started the service "main"')))
+  ok(!parsed.some(p => p.msg?.includes('Started the service "alternative"')))
 })
 
 test('dev - should complain if no configuration file is found', async t => {
@@ -52,7 +80,7 @@ test('dev - should restart an application if files are changed', async t => {
   })
 
   const startProcess = wattpm('dev', rootDir)
-  let url = await waitForStart(startProcess)
+  let { url } = await waitForStart(startProcess)
 
   {
     const { statusCode, body } = await request(new URL('/version', url))
@@ -106,7 +134,7 @@ test('dev - should restart an application if the runtime configuration file is c
   })
 
   const startProcess = wattpm('dev', rootDir)
-  let url = await waitForStart(startProcess)
+  let { url } = await waitForStart(startProcess)
 
   {
     const { statusCode, body } = await request(new URL('/version', url))
@@ -157,7 +185,7 @@ test('dev - should restart an application if the service configuration file is c
   })
 
   const startProcess = wattpm('dev', rootDir)
-  let url = await waitForStart(startProcess)
+  let { url } = await waitForStart(startProcess)
 
   {
     const { statusCode, body } = await request(new URL('/version', url))
@@ -207,7 +235,7 @@ test('start - should start in production mode', async t => {
   })
 
   const startProcess = wattpm('start', rootDir)
-  const url = await waitForStart(startProcess)
+  const { url, parsed } = await waitForStart(startProcess)
 
   const { statusCode, body } = await request(url)
   deepStrictEqual(statusCode, 200)
@@ -223,6 +251,40 @@ test('start - should start in production mode', async t => {
   ok(config.watch === false)
   deepStrictEqual(config.services[1].id, 'main')
   ok(config.services[0].watch === false)
+
+  ok(parsed.some(p => p.msg?.includes('Started the service "main"')))
+  ok(parsed.some(p => p.msg?.includes('Started the service "alternative"')))
+})
+
+test('start - should start in production mode starting from a service file', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  await safeRemove(resolve(rootDir, 'watt.json'))
+
+  t.after(() => {
+    startProcess.kill('SIGINT')
+    return startProcess.catch(() => {})
+  })
+
+  const startProcess = wattpm('start', resolve(rootDir, 'web/main'))
+  const { url, parsed } = await waitForStart(startProcess)
+
+  const { statusCode, body } = await request(url)
+  deepStrictEqual(statusCode, 200)
+  deepStrictEqual(await body.json(), {
+    production: true,
+    plt_dev: false,
+    plt_environment: 'production'
+  })
+
+  const configProcess = await wattpm('config', startProcess.pid)
+  const config = JSON.parse(configProcess.stdout)
+
+  ok(config.watch === false)
+  deepStrictEqual(config.services[0].id, 'main')
+  ok(config.services[0].watch === false)
+
+  ok(parsed.some(p => p.msg?.includes('Started the service "main"')))
+  ok(!parsed.some(p => p.msg?.includes('Started the service "alternative"')))
 })
 
 test('start - should start in production mode with the inspector', async t => {
@@ -234,7 +296,7 @@ test('start - should start in production mode with the inspector', async t => {
   })
 
   const startProcess = wattpm('start', rootDir, '--inspect')
-  const url = await waitForStart(startProcess)
+  const { url } = await waitForStart(startProcess)
 
   const { statusCode, body } = await request(url)
   deepStrictEqual(statusCode, 200)

@@ -21,6 +21,24 @@ test('build - should build the application', async t => {
   ok(existsSync(resolve(serviceDir, 'dist/index.js')))
 })
 
+test('build - should build the application from a service file', async t => {
+  const { root: buildDir } = await prepareRuntime(t, 'build', false, 'watt.json')
+  const serviceDir = resolve(buildDir, 'web/main')
+
+  await safeRemove(resolve(buildDir, 'watt.json'))
+  await saveConfigurationFile(resolve(serviceDir, 'watt.json'), {
+    $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json'
+  })
+
+  t.after(async () => {
+    await safeRemove(resolve(serviceDir, 'dist'))
+  })
+
+  await wattpm('build', serviceDir)
+
+  ok(existsSync(resolve(serviceDir, 'dist/index.js')))
+})
+
 test('build - should handle build errors', async t => {
   const { root: buildDir } = await prepareRuntime(t, 'build-error', false, 'watt.json')
   const serviceDir = resolve(buildDir, 'web/main')
@@ -52,6 +70,25 @@ test('install - should install dependencies of autoloaded services', async t => 
 
   ok(installProcess.stdout.includes('Installing dependencies for the application using npm ...'))
   ok(installProcess.stdout.includes('Installing dependencies for the service main using npm ...'))
+  ok(installProcess.stdout.includes('Installing dependencies for the service alternative using npm ...'))
+})
+
+test('install - should install dependencies when loaded via service file', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json', async root => {
+    await safeRemove(resolve(root, 'node_modules'))
+    await safeRemove(resolve(root, 'web/main/node_modules'))
+  })
+
+  await safeRemove(resolve(rootDir, 'watt.json'))
+  await saveConfigurationFile(resolve(rootDir, 'web/main/watt.json'), {
+    $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json'
+  })
+
+  const installProcess = await wattpm('install', resolve(rootDir, 'web/main'))
+
+  ok(installProcess.stdout.includes('Installing dependencies for the application using npm ...'))
+  ok(installProcess.stdout.includes('Installing dependencies for the service main using npm ...'))
+  ok(!installProcess.stdout.includes('Installing dependencies for the service alternative using npm ...'))
 })
 
 test('install - should install dependencies of application and its services using npm by default', async t => {
@@ -168,6 +205,12 @@ test('update - should update version in package.json files', async t => {
   )
 
   ok(
+    !updateProcess.stdout.includes(
+      'Updating dependency @platformatic/node of the service main from ^2.41.0 to ^2.41.0 ...'
+    )
+  )
+
+  ok(
     updateProcess.stdout.includes(
       'Updating dependency @platformatic/service of the service another from ^2.0.0 to ^2.41.0 ...'
     )
@@ -214,6 +257,62 @@ test('update - should work when executed inside a service folder', async t => {
 
   ok(
     updateProcess.stdout.includes(
+      'Updating dependency @platformatic/service of the service another from ^2.0.0 to ^2.41.0 ...'
+    )
+  )
+  ok(updateProcess.stdout.includes('All dependencies have been updated.'))
+})
+
+test('update - should work when loaded from a service file', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'update', false, 'watt.json')
+  const loader = pathToFileURL(resolve(rootDir, 'mock-registry.mjs')).href
+
+  await safeRemove(resolve(rootDir, 'watt.json'))
+  await saveConfigurationFile(resolve(rootDir, 'web/main/watt.json'), {
+    $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json'
+  })
+
+  // Note that web/main folder contains a watt.json which will be considered as the root of the project.
+  const updateProcess = await executeCommand(
+    'node',
+    '--import',
+    loader,
+    cliPath,
+    'update',
+    '-f',
+    resolve(rootDir, 'web/main')
+  )
+
+  const mainPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/main/package.json'))
+  const anotherPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/another/package.json'))
+
+  deepStrictEqual(mainPackageJson.dependencies, {
+    '@platformatic/node': '^2.41.0',
+    '@platformatic/remix': '~2.5.5',
+    '@platformatic/db': '~1.15.1',
+    '@platformatic/vite': '2.41.0'
+  })
+
+  deepStrictEqual(mainPackageJson.devDependencies, {
+    '@platformatic/config': '^2.41.0'
+  })
+
+  // The another service is not updated, because it is not considered as part of the project.
+  deepStrictEqual(anotherPackageJson.dependencies, {
+    '@platformatic/service': '^2.0.0',
+    '@platformatic/db': '^1.0.0',
+    '@platformatic/db-dashboard': '^0.1.0',
+    '@platformatic/composer': '^99.0.0'
+  })
+
+  ok(
+    updateProcess.stdout.includes(
+      'Updating dependency @platformatic/node of the service main from ^2.41.0 to ^2.41.0 ...'
+    )
+  )
+
+  ok(
+    !updateProcess.stdout.includes(
       'Updating dependency @platformatic/service of the service another from ^2.0.0 to ^2.41.0 ...'
     )
   )
