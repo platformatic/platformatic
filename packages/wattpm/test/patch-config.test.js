@@ -1,3 +1,4 @@
+import { saveConfigurationFile } from '@platformatic/config'
 import { safeRemove } from '@platformatic/utils'
 import { deepStrictEqual, ok } from 'node:assert'
 import { readFile } from 'node:fs/promises'
@@ -32,6 +33,47 @@ test('patch-config - should patch requested runtime and services config', async 
   deepStrictEqual(mainServiceConfigPatched, {
     $schema: mainServiceConfigOriginal.$schema,
     application: { basePath: '/' }
+  })
+  deepStrictEqual(alternateServiceConfigPatched, alternateServiceConfigOriginal)
+})
+
+test('patch-config - should work when executed from a service file', async t => {
+  const { root: buildDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  const serviceDir = resolve(buildDir, 'web/main')
+
+  t.after(async () => {
+    await safeRemove(resolve(serviceDir, 'dist'))
+  })
+
+  await safeRemove(resolve(buildDir, 'watt.json'))
+  await saveConfigurationFile(resolve(serviceDir, 'watt.json'), {
+    $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json',
+    runtime: {
+      watch: false,
+      restartOnError: true
+    }
+  })
+
+  const mainServiceConfigOriginal = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
+  const alternateServiceConfigOriginal = JSON.parse(
+    await readFile(resolve(buildDir, 'web/alternative/watt.json'), 'utf-8')
+  )
+
+  await wattpm('patch-config', serviceDir, resolve(fixturesDir, 'patches/patch-1.js'), { stdio: 'inherit' })
+
+  const mainServiceConfigPatched = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
+  const alternateServiceConfigPatched = JSON.parse(
+    await readFile(resolve(buildDir, 'web/alternative/watt.json'), 'utf-8')
+  )
+
+  deepStrictEqual(mainServiceConfigPatched, {
+    $schema: mainServiceConfigOriginal.$schema,
+    application: { basePath: '/' },
+    runtime: {
+      watch: false,
+      restartOnError: true,
+      entrypoint: 'alternate'
+    }
   })
   deepStrictEqual(alternateServiceConfigPatched, alternateServiceConfigOriginal)
 })

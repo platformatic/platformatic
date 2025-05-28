@@ -66,16 +66,21 @@ export async function isDirectory (path) {
 
 export async function waitForStart (startProcess) {
   let url
+  const raw = []
+  const objects = []
 
-  startProcess.stderr.pipe(startProcess.stdout)
+  startProcess.stderr?.pipe(startProcess.stdout)
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     if (process.env.PLT_TESTS_VERBOSE === 'true') {
       process._rawDebug(log.toString())
     }
 
+    raw.push(log)
+
     let parsed
     try {
       parsed = JSON.parse(log.toString())
+      objects.push(parsed)
     } catch (e) {
       continue
     }
@@ -87,7 +92,7 @@ export async function waitForStart (startProcess) {
     }
   }
 
-  return url
+  return { url, raw, parsed: objects }
 }
 
 export function executeCommand (cmd, ...args) {

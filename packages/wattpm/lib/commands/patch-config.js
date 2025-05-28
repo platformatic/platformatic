@@ -1,11 +1,25 @@
-import { ConfigManager, getParser, getStringifier } from '@platformatic/config'
-import { ensureLoggableError, loadModule } from '@platformatic/utils'
+import {
+  ConfigManager,
+  getParser,
+  getStringifier,
+  loadConfigurationFile,
+  saveConfigurationFile
+} from '@platformatic/config'
+import { ensureLoggableError, loadModule, safeRemove } from '@platformatic/utils'
 import jsonPatch from 'fast-json-patch'
 import { existsSync } from 'node:fs'
-import { readFile, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
+import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
-import { buildRuntime, findConfigurationFile, getRoot, logFatalError, parseArgs } from '../utils.js'
+import {
+  buildRuntime,
+  findRuntimeConfigurationFile,
+  getRoot,
+  loadConfigurationFileAsConfig,
+  logFatalError,
+  parseArgs
+} from '../utils.js'
 
 async function patchFile (path, patch) {
   let config = getParser(path)(await readFile(path, 'utf-8'))
@@ -16,7 +30,11 @@ async function patchFile (path, patch) {
 export async function patchConfig (logger, configurationFile, patchPath) {
   let runtime
   try {
-    const patchFunction = await loadModule(createRequire(import.meta.url), patchPath)
+    // Determine if the configuration file is for a service or a runtime
+    const config = await loadConfigurationFileAsConfig(logger, configurationFile)
+    const isService = config.configType !== 'runtime'
+
+    const patchFunction = await loadModule(createRequire(configurationFile), patchPath)
 
     if (typeof patchFunction !== 'function') {
       throw new Error('Patch file must export a function.')
@@ -24,6 +42,11 @@ export async function patchConfig (logger, configurationFile, patchPath) {
 
     // Create the runtime
     runtime = await buildRuntime(logger, configurationFile)
+
+    /* c8 ignore next 3 - Hard to test */
+    if (!runtime) {
+      return
+    }
 
     // Prepare the structure for original and modified configurations files
     const original = {
@@ -64,7 +87,24 @@ export async function patchConfig (logger, configurationFile, patchPath) {
     }
 
     if (Array.isArray(patches.runtime)) {
-      await patchFile(configurationFile, patches.runtime)
+      if (isService) {
+        // Create a temporary file with existing configuration
+        const temporaryDir = await mkdtemp(resolve(tmpdir(), 'wattpm-patch-'))
+        const temporaryFile = resolve(temporaryDir, 'watt.json')
+
+        try {
+          /* c8 ignore next - Else branch */
+          await saveConfigurationFile(temporaryFile, original.runtime.runtime ?? {})
+          await patchFile(temporaryFile, patches.runtime)
+          await patchFile(configurationFile, [
+            { op: 'replace', path: '/runtime', value: await loadConfigurationFile(temporaryFile) }
+          ])
+        } finally {
+          await safeRemove(temporaryDir)
+        }
+      } else {
+        await patchFile(configurationFile, patches.runtime)
+      }
     }
 
     if (typeof patches.services === 'object') {
@@ -77,7 +117,7 @@ export async function patchConfig (logger, configurationFile, patchPath) {
       }
     }
   } finally {
-    await runtime?.close?.(false, true)
+    await runtime?.close?.(true)
   }
 }
 
@@ -113,7 +153,7 @@ export async function patchConfigCommand (logger, args) {
     patch = positionals[1]
   }
 
-  const configurationFile = await findConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
 
   /* c8 ignore next 3 */
   if (!configurationFile) {

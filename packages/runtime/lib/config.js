@@ -251,7 +251,7 @@ platformaticRuntime.configManagerConfig = {
   upgrade
 }
 
-async function wrapConfigInRuntimeConfig ({ configManager, args }) {
+async function wrapConfigInRuntimeConfig ({ configManager, args, opts }) {
   let serviceId = 'main'
   try {
     const packageJson = join(configManager.dirname, 'package.json')
@@ -272,7 +272,7 @@ async function wrapConfigInRuntimeConfig ({ configManager, args }) {
   const wrapperConfig = {
     $schema: schema.$id,
     server,
-    watch: true,
+    watch: !args?.production,
     ...omitProperties(configManager.current.runtime ?? {}, runtimeUnwrappablePropertiesList),
     entrypoint: serviceId,
     services: [
@@ -298,7 +298,7 @@ async function wrapConfigInRuntimeConfig ({ configManager, args }) {
     }
   })
 
-  await cm.parseAndValidate()
+  await cm.parseAndValidate(true, [], opts)
 
   return cm
 }

@@ -9,11 +9,11 @@ import { rsort, satisfies } from 'semver'
 import { packages } from '../packages.js'
 import {
   buildRuntime,
-  findConfigurationFile,
+  findRuntimeConfigurationFile,
   getPackageArgs,
   getPackageManager,
   getRoot,
-  loadConfigurationFile,
+  loadRuntimeConfigurationFile,
   logFatalError,
   parseArgs
 } from '../utils.js'
@@ -40,7 +40,7 @@ async function executeCommand (root, ...args) {
 
 export async function installDependencies (logger, root, services, production, packageManager) {
   if (typeof services === 'string') {
-    const config = await loadConfigurationFile(logger, services)
+    const config = await loadRuntimeConfigurationFile(logger, services)
     services = config.services
   }
 
@@ -158,55 +158,68 @@ async function updateDependencies (logger, latest, availableVersions, path, targ
 }
 
 export async function buildCommand (logger, args) {
-  const {
-    values: { config },
-    positionals
-  } = parseArgs(
-    args,
-    {
-      config: {
-        type: 'string',
-        short: 'c'
-      }
-    },
-    false
-  )
-  const root = getRoot(positionals)
+  let runtime
 
-  const configurationFile = await findConfigurationFile(logger, root, config)
+  try {
+    const {
+      values: { config },
+      positionals
+    } = parseArgs(
+      args,
+      {
+        config: {
+          type: 'string',
+          short: 'c'
+        }
+      },
+      false
+    )
+    const root = getRoot(positionals)
 
-  /* c8 ignore next 3 - Hard to test */
-  if (!configurationFile) {
-    return
-  }
+    const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
 
-  const runtime = await buildRuntime(logger, configurationFile)
-  // Gather informations for all services before starting
-  const { services } = await runtime.getServices()
-
-  for (const { id } of services) {
-    const currentLogger = logger.child({ name: id })
-    currentLogger.debug(`Building service ${bold(id)} ...`)
-
-    try {
-      await runtime.buildService(id)
-    } catch (error) {
-      if (error.code === 'PLT_BASIC_NON_ZERO_EXIT_CODE') {
-        currentLogger.error(`Building service "${id}" has failed with exit code ${error.exitCode}.`)
-        /* c8 ignore next 6 */
-      } else {
-        currentLogger.error(
-          { err: ensureLoggableError(error) },
-          `Building service "${id}" has throw an exception: ${error.message}`
-        )
-      }
-
-      process.exit(1)
+    /* c8 ignore next 3 - Hard to test */
+    if (!configurationFile) {
+      return
     }
-  }
 
-  logger.done('All services have been built.')
-  await runtime.close(true)
+    runtime = await buildRuntime(logger, configurationFile)
+
+    /* c8 ignore next 3 - Hard to test */
+    if (!runtime) {
+      return
+    }
+
+    // Gather informations for all services before starting
+    const { services } = await runtime.getServices()
+
+    for (const { id } of services) {
+      const currentLogger = logger.child({ name: id })
+      currentLogger.debug(`Building service ${bold(id)} ...`)
+
+      try {
+        await runtime.buildService(id)
+      } catch (error) {
+        if (error.code === 'PLT_BASIC_NON_ZERO_EXIT_CODE') {
+          logFatalError(currentLogger, `Building service "${id}" has failed with exit code ${error.exitCode}.`)
+          /* c8 ignore next 6 */
+        } else {
+          logFatalError(
+            currentLogger,
+            { err: ensureLoggableError(error) },
+            `Building service "${id}" has throw an exception: ${error.message}`
+          )
+          /* c8 ignore next 3 - Mistakenly reported as uncovered by C8 */
+        }
+
+        return
+      }
+    }
+
+    logger.done('All services have been built.')
+  } finally {
+    await runtime?.close?.(true)
+  }
 }
 
 export async function installCommand (logger, args) {
@@ -234,7 +247,7 @@ export async function installCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
@@ -268,14 +281,14 @@ export async function updateCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
     return
   }
 
-  const { services } = await loadConfigurationFile(logger, configurationFile)
+  const { services } = await loadRuntimeConfigurationFile(logger, configurationFile)
 
   // First of all, get all version from NPM for the runtime
   const selfInfoResponse = await fetch('https://registry.npmjs.org/@platformatic/runtime')

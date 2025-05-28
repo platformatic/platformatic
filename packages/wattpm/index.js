@@ -11,7 +11,7 @@ import { configCommand, envCommand, psCommand, servicesCommand } from './lib/com
 import { metricsCommand } from './lib/commands/metrics.js'
 import { patchConfigCommand } from './lib/commands/patch-config.js'
 import { version } from './lib/schema.js'
-import { createLogger, parseArgs, setVerbose } from './lib/utils.js'
+import { createLogger, logFatalError, parseArgs, setVerbose } from './lib/utils.js'
 
 export async function main () {
   globalThis.platformatic = { executable: 'watt' }
@@ -52,7 +52,7 @@ export async function main () {
   }
 
   let command
-  switch (unparsed[0]) {
+  switch (unparsed[0] || 'help') {
     case 'build':
       command = buildCommand
       break
@@ -118,12 +118,13 @@ export async function main () {
     case 'admin':
       command = adminCommand
       break
-    /* c8 ignore next 5 */
     default:
-      logger.fatal(
+      logFatalError(
+        logger,
         `Unknown command ${bold(unparsed[0])}. Please run ${bold("'wattpm help'")} to see available commands.`
       )
-      return
+
+      break
   }
 
   await command(logger, unparsed.slice(1))

@@ -9,7 +9,7 @@ test('ps - should show running applications', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
-  const url = await waitForStart(startProcess)
+  const { url } = await waitForStart(startProcess)
 
   t.after(() => {
     startProcess.kill('SIGINT')

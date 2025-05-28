@@ -9,9 +9,9 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { version } from '../schema.js'
 import {
-  findConfigurationFile,
+  findRuntimeConfigurationFile,
   getRoot,
-  loadConfigurationFile,
+  loadRuntimeConfigurationFile,
   logFatalError,
   parseArgs,
   serviceToEnvVariable
@@ -89,20 +89,19 @@ export async function appendEnvVariable (envFile, key, value) {
 }
 
 async function fixConfiguration (logger, root, configOption) {
-  const configurationFile = await findConfigurationFile(logger, root, configOption)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, configOption)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
     return
   }
 
-  const config = await loadConfigurationFile(logger, configurationFile)
+  const config = await loadRuntimeConfigurationFile(logger, configurationFile)
 
   // For each service, if there is no watt.json, create one and fix package dependencies
   for (const { path } of config.services) {
     const wattConfiguration = await findExistingConfiguration(root, path)
 
-    /* c8 ignore next 3 - Hard to test */
     if (wattConfiguration) {
       continue
     }
@@ -124,7 +123,7 @@ async function fixConfiguration (logger, root, configOption) {
 }
 
 async function importService (logger, configurationFile, id, path, url, branch) {
-  const config = await loadConfigurationFile(logger, configurationFile)
+  const config = await loadRuntimeConfigurationFile(logger, configurationFile)
   const rawConfig = await loadRawConfigurationFile(configurationFile)
   const root = dirname(configurationFile)
   const envFile = resolve(root, '.env')
@@ -260,7 +259,7 @@ export async function resolveServices (
   skipDependencies,
   packageManager
 ) {
-  const config = await loadConfigurationFile(logger, configurationFile)
+  const config = await loadRuntimeConfigurationFile(logger, configurationFile)
 
   // The services which might be to be resolved are the one that have a URL and either
   // no path defined (which means no environment variable set) or a non-existing path (which means not resolved yet)
@@ -407,7 +406,7 @@ export async function importCommand (logger, args) {
     rawUrl = positionals[1]
   }
 
-  const configurationFile = await findConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
@@ -462,7 +461,7 @@ export async function resolveCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {

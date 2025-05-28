@@ -3,9 +3,9 @@ import { mkdir, mkdtemp, rm, rmdir, unlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
-import { findConfigurationFile, getPackageArgs, getPackageManager } from '../lib/utils.js'
+import { findRuntimeConfigurationFile, getPackageArgs, getPackageManager } from '../lib/utils.js'
 
-test('utils - findConfigurationFile - should search for configuration file when none is passed', async () => {
+test('utils - findRuntimeConfigurationFile - should search for configuration file when none is passed', async () => {
   let fatalCalled = false
   const logger = {
     fatal: () => {
@@ -27,7 +27,7 @@ test('utils - findConfigurationFile - should search for configuration file when 
       })
     )
 
-    const result = await findConfigurationFile(logger, subDir)
+    const result = await findRuntimeConfigurationFile(logger, subDir)
 
     strictEqual(result, resolve(configFilePath), 'Should find configuration file in parent directory')
     strictEqual(fatalCalled, false, 'Should not call fatal when configuration file is found')
@@ -36,7 +36,7 @@ test('utils - findConfigurationFile - should search for configuration file when 
   }
 })
 
-test('utils - findConfigurationFile - should return resolved path when configuration file is passed', async () => {
+test('utils - findRuntimeConfigurationFile - should return resolved path when configuration file is passed', async () => {
   const logger = {
     fatal: () => {}
   }
@@ -52,7 +52,7 @@ test('utils - findConfigurationFile - should return resolved path when configura
       })
     )
 
-    const result = await findConfigurationFile(logger, tmpDir, configFilePath)
+    const result = await findRuntimeConfigurationFile(logger, tmpDir, configFilePath)
     strictEqual(result, resolve(configFilePath), 'Should return the resolved path of the passed configuration file')
   } finally {
     await rm(tmpDir, { recursive: true, force: true })

@@ -138,7 +138,7 @@ class ConfigManager extends EventEmitter {
     return config
   }
 
-  _transformConfig () { }
+  _transformConfig () {}
 
   async parse (replaceEnv = true, args = [], opts = {}) {
     let valid = true
@@ -323,11 +323,15 @@ class ConfigManager extends EventEmitter {
   }
 
   /* c8 ignore next 8 */
-  async parseAndValidate (replaceEnv = true) {
-    const validationResult = await this.parse(replaceEnv)
+  async parseAndValidate (replaceEnv = true, args, opts = {}) {
+    const validationResult = await this.parse(replaceEnv, args, opts)
     if (!validationResult) {
       throw new errors.ValidationErrors(
-        this.validationErrors.map(err => { return err.message }).join('\n')
+        this.validationErrors
+          .map(err => {
+            return err.message
+          })
+          .join('\n')
       )
     }
   }
@@ -355,16 +359,13 @@ class ConfigManager extends EventEmitter {
     if (!skipTypeless) {
       typeless = [
         ...ConfigManager.knownExtensions.map(ext => `watt.${ext}`),
-        ...ConfigManager.knownExtensions.map(ext => `platformatic.${ext}`),
+        ...ConfigManager.knownExtensions.map(ext => `platformatic.${ext}`)
       ]
     }
 
     if (type) {
       // A config type (service, db, etc.) was explicitly provided.
-      return [
-        ...typeless,
-        ...ConfigManager.knownExtensions.map(ext => `platformatic.${type}.${ext}`),
-      ]
+      return [...typeless, ...ConfigManager.knownExtensions.map(ext => `platformatic.${type}.${ext}`)]
     } else {
       // A config type was not provided. Search for all known types and
       // formats. Unfortunately, this means the ConfigManager needs to be
