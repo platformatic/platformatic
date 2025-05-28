@@ -28,6 +28,7 @@ class ConfigManager extends EventEmitter {
     this._configVersion = opts.configVersion // requested version
     this._version = opts.version
     this.logger = opts.logger || abstractlogger
+    this.disableEnvLoad = opts.disableEnvLoad
 
     if (this._stackableUpgrade && !this._version) {
       throw new errors.VersionMissingError()
@@ -423,7 +424,7 @@ class ConfigManager extends EventEmitter {
       }
     }
     let env = { ...this._originalEnv }
-    if (dotEnvPath) {
+    if (dotEnvPath && this.disableEnvLoad !== true) {
       const data = await readFile(dotEnvPath, 'utf-8')
       const parsed = dotenv.parse(data)
       env = { ...env, ...parsed }

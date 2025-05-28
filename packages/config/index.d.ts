@@ -35,6 +35,7 @@ export interface IConfigManagerOptions {
   allowToWatch?: string[]
   version?: string
   configVersion?: string
+  disableEnvLoad?: boolean
   upgrade?: (config: any, version: string) => Promise<any> | any
 }
 
