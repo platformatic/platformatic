@@ -2,7 +2,7 @@
   "compilerOptions": {
     "module": "commonjs",
     "esModuleInterop": true,
-    "lib": ["es2022"],
+    "lib": ["es2022", "dom"],
     "target": "es2022",
     "sourceMap": true,
     "pretty": true,

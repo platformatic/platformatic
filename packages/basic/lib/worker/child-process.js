@@ -83,13 +83,20 @@ export class ChildProcess extends ITC {
         getMetrics: (...args) => {
           return this.#getMetrics(...args)
         },
-        close (signal) {
-          const handled = globalThis.platformatic.events.emit('close', signal)
+        close: (signal) => {
+          let handled = false
+
+          try {
+            handled = globalThis.platformatic.events.emit('close', signal)
+          } catch (error) {
+            this.#logger.error({ err: ensureLoggableError(error) }, 'Error while handling close event.')
+            process.exitCode = 1
+          }
 
           if (!handled) {
             // No user event, just exit without errors
             setImmediate(() => {
-              process.exit(0)
+              process.exit(process.exitCode ?? 0)
             })
           }
 

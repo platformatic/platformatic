@@ -174,7 +174,7 @@ export class NestStackable extends BaseStackable {
       return this.url
     }
 
-    const outputDirectory = this.configManager.current.nest.outputDirectory
+    const outputDirectory = this.configManager.current.application.outputDirectory
     const { path, name } = this.configManager.current.nest.appModule
     this.verifyOutputDirectory(resolve(this.root, outputDirectory))
 
@@ -244,9 +244,9 @@ export class NestStackable extends BaseStackable {
   }
 
   async #importSetup () {
-    const config = this.configManager.current.nest
+    const config = this.configManager.current
 
-    if (!config.setup.path) {
+    if (!config.nest.setup.path) {
       return undefined
     }
 
@@ -254,13 +254,15 @@ export class NestStackable extends BaseStackable {
     let setup
 
     try {
-      setupModule = await importFile(resolve(this.root, `${config.outputDirectory}/${config.setup.path}.js`))
+      setupModule = await importFile(
+        resolve(this.root, `${config.application.outputDirectory}/${config.nest.setup.path}.js`)
+      )
     } catch (e) {
       throw new Error(`Cannot import the NestJS setup file: ${e.message}.`)
     }
 
     // This is for improved compatibility
-    if (config.setup.name) {
+    if (config.nest.setup.name) {
       setup = setupModule[config.setup.name]
     } else {
       setup = setupModule.default

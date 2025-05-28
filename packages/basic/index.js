@@ -69,10 +69,32 @@ async function importStackablePackage (directory, pkg) {
   }
 }
 
-export async function importStackableAndConfig (root, config) {
-  let moduleName = '@platformatic/node'
-  let autodetectDescription = 'is using a generic Node.js application'
+export function detectStackable (packageJson) {
+  let name = '@platformatic/node'
+  let label = 'Node.js'
 
+  if (hasDependency(packageJson, '@nestjs/core')) {
+    name = '@platformatic/nest'
+    label = 'NestJS'
+  } else if (hasDependency(packageJson, 'next')) {
+    name = '@platformatic/next'
+    label = 'Next.js'
+  } else if (hasDependency(packageJson, '@remix-run/dev')) {
+    name = '@platformatic/remix'
+    label = 'Remix'
+  } else if (hasDependency(packageJson, 'astro')) {
+    name = '@platformatic/astro'
+    label = 'Astro'
+    // Since Vite is often used with other frameworks, we must check for Vite last
+  } else if (hasDependency(packageJson, 'vite')) {
+    name = '@platformatic/vite'
+    label = 'Vite'
+  }
+
+  return { name, label }
+}
+
+export async function importStackableAndConfig (root, config) {
   let rootPackageJson
   try {
     rootPackageJson = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf-8'))
@@ -91,27 +113,16 @@ export async function importStackableAndConfig (root, config) {
     }
   }
 
-  if (hasDependency(rootPackageJson, '@nestjs/core')) {
-    autodetectDescription = 'is using NestJS'
-    moduleName = '@platformatic/nest'
-  } else if (hasDependency(rootPackageJson, 'next')) {
-    autodetectDescription = 'is using Next.js'
-    moduleName = '@platformatic/next'
-  } else if (hasDependency(rootPackageJson, '@remix-run/dev')) {
-    autodetectDescription = 'is using Remix'
-    moduleName = '@platformatic/remix'
-  } else if (hasDependency(rootPackageJson, 'astro')) {
-    autodetectDescription = 'is using Astro'
-    moduleName = '@platformatic/astro'
-    // Since Vite is often used with other frameworks, we must check for Vite last
-  } else if (hasDependency(rootPackageJson, 'vite')) {
-    autodetectDescription = 'is using Vite'
-    moduleName = '@platformatic/vite'
-  }
-
+  const { label, name: moduleName } = detectStackable(rootPackageJson)
   const stackable = await importStackablePackage(root, moduleName)
 
-  return { stackable, config, autodetectDescription, moduleName }
+  return {
+    stackable,
+    config,
+    autodetectDescription:
+      moduleName === '@platformatic/node' ? 'is a generic Node.js application' : `is using ${label}`,
+    moduleName
+  }
 }
 
 async function buildStackable (opts) {
