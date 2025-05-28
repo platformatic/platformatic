@@ -10,7 +10,7 @@ setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('Remix version is checked in development', async t => {
   const { root, config } = await prepareRuntime(t, 'standalone', false, null, async root => {
-    await swapVersion(t)
+    await swapVersion(t, import.meta.dirname, '@remix-run/dev', '..')
     await setLogFile(t, root)
   })
 
@@ -30,7 +30,7 @@ test('Remix version is checked in development', async t => {
 
 test('Remix version is not checked in production', async t => {
   const { root, config } = await prepareRuntime(t, 'standalone', true, null, async root => {
-    await swapVersion(t)
+    await swapVersion(t, import.meta.dirname, '@remix-run/dev', '..')
     await setLogFile(t, root)
   })
 

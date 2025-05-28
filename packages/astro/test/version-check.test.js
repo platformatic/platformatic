@@ -10,7 +10,7 @@ setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('Astro version is checked in development', async t => {
   const { root, config } = await prepareRuntime(t, 'standalone', false, null, async root => {
-    await swapVersion(t)
+    await swapVersion(t, import.meta.dirname, 'astro', '../..')
     await setLogFile(t, root)
   })
 
@@ -30,7 +30,8 @@ test('Astro version is checked in development', async t => {
 
 test('Astro version is not checked in production', async t => {
   const { root, config } = await prepareRuntime(t, 'standalone', true, null, async root => {
-    await swapVersion(t)
+    await swapVersion(t, import.meta.dirname, 'astro', '../..')
+
     await setLogFile(t, root)
   })
 

@@ -9,7 +9,7 @@ setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('NestJS version is checked in development', async t => {
   const { root, config } = await prepareRuntime(t, 'express-standalone', false, null, async root => {
-    await swapVersion(t)
+    await swapVersion(t, import.meta.dirname, '@nestjs/core')
     await setLogFile(t, root)
   })
 
@@ -29,7 +29,7 @@ test('NestJS version is checked in development', async t => {
 
 test('NestJS version is not checked in production', async t => {
   const { root, config } = await prepareRuntime(t, 'express-standalone', true, null, async root => {
-    await swapVersion(t)
+    await swapVersion(t, import.meta.dirname, '@nestjs/core')
     await setLogFile(t, root)
   })
 

@@ -44,7 +44,6 @@ export class RemixStackable extends ViteStackable {
       this.#remix = resolve(dirname(resolvePackage(this.root, '@remix-run/dev')), '..')
       const remixPackage = JSON.parse(await readFile(resolve(this.#remix, 'package.json'), 'utf-8'))
 
-      /* c8 ignore next 3 */
       if (!satisfies(remixPackage.version, supportedVersions)) {
         throw new errors.UnsupportedVersion('@remix-run/dev', remixPackage.version, supportedVersions)
       }

@@ -41,7 +41,6 @@ export class ViteStackable extends BaseStackable {
     this.#vite = dirname(resolvePackage(this.root, 'vite'))
     const vitePackage = JSON.parse(await readFile(resolve(this.#vite, 'package.json'), 'utf-8'))
 
-    /* c8 ignore next 3 */
     if (!satisfies(vitePackage.version, supportedVersions)) {
       throw new errors.UnsupportedVersion('vite', vitePackage.version, supportedVersions)
     }
