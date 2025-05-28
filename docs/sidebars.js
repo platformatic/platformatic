@@ -61,7 +61,7 @@ const sidebars = {
       type: 'category',
       label: 'Platformatic Runtime',
       collapsed: true,
-      items: ['runtime/overview', 'runtime/configuration', 'runtime/programmatic']
+      items: ['runtime/overview', 'runtime/configuration', 'runtime/multithread-architecture', 'runtime/programmatic']
     },
     {
       type: 'category',

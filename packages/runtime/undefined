@@ -1,5 +1,0 @@
-{"level":30,"time":1747909640025,"pid":84550,"hostname":"work","msg":"Starting the service \"service\"..."}
-{"level":30,"time":1747909640055,"pid":84550,"hostname":"work","msg":"Started the service \"service\"..."}
-{"level":30,"time":1747909640055,"pid":84550,"hostname":"work","msg":"Platformatic is now listening at http://127.0.0.1:41619"}
-{"level":30,"time":1747909640066,"pid":84550,"hostname":"work","msg":"Stopping the service \"service\"..."}
-{"level":30,"time":1747909640069,"pid":84550,"hostname":"work","msg":"Stopped the service \"service\"..."}
