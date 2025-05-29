@@ -198,17 +198,7 @@ class Runtime extends EventEmitter {
       await this.closeAndThrow(e)
     }
 
-    const dispatcherOpts = { ...config.undici }
-    const interceptors = [this.#meshInterceptor]
-
-    if (config.httpCache) {
-      this.#sharedHttpCache = await createSharedStore(this.#configManager.dirname, config.httpCache)
-      interceptors.push(
-        undiciInterceptors.cache({ store: this.#sharedHttpCache, methods: config.httpCache.methods ?? ['GET', 'HEAD'] })
-      )
-    }
-
-    this.#dispatcher = new Agent(dispatcherOpts).compose(interceptors)
+    await this.#setDispatcher(config.undici)
 
     if (config.scheduler) {
       this.#scheduler = startScheduler(config.scheduler, this.#dispatcher, logger)
@@ -478,9 +468,12 @@ class Runtime extends EventEmitter {
   }
 
   async updateUndiciConfig (undiciConfig) {
+    this.#configManager.current.undici = undiciConfig
+
     for (const worker of this.#workers.values()) {
       await sendViaITC(worker, 'updateUndiciConfig', undiciConfig)
     }
+    await this.#setDispatcher(undiciConfig)
   }
 
   startCollectingMetrics () {
@@ -1045,6 +1038,24 @@ class Runtime extends EventEmitter {
     }
 
     return super.emit(event, payload)
+  }
+
+  async #setDispatcher (undiciConfig) {
+    const config = this.#configManager.current
+
+    const dispatcherOpts = { ...undiciConfig }
+    const interceptors = [this.#meshInterceptor]
+
+    if (config.httpCache) {
+      this.#sharedHttpCache = await createSharedStore(this.#configManager.dirname, config.httpCache)
+      interceptors.push(
+        undiciInterceptors.cache({
+          store: this.#sharedHttpCache,
+          methods: config.httpCache.methods ?? ['GET', 'HEAD']
+        })
+      )
+    }
+    this.#dispatcher = new Agent(dispatcherOpts).compose(interceptors)
   }
 
   #updateStatus (status, args) {

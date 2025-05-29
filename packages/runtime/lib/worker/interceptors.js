@@ -10,7 +10,6 @@ const { createTelemetryThreadInterceptorHooks } = require('@platformatic/telemet
 const { RemoteCacheStore, httpCacheInterceptor } = require('./http-cache')
 const { kInterceptors } = require('./symbols')
 
-
 async function setDispatcher (config, opts = {}) {
   const dispatcherOpts = await getDespatcherOpts(config.undici)
 

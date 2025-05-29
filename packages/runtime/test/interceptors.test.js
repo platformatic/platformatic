@@ -125,7 +125,7 @@ test('use client interceptors for internal requests', async t => {
   })
 })
 
-test('update undici interceptor config', async t => {
+test.only('update undici interceptor config', async t => {
   const configFile = join(fixturesDir, 'interceptors-4', 'platformatic.runtime.json')
   const app = await buildServer(configFile)
   const entryUrl = await app.start()
@@ -142,13 +142,15 @@ test('update undici interceptor config', async t => {
     })
   }
 
-  // Update the undici interceptor config
-  await app.updateUndiciConfig({
+  const newUndiciConfig = {
     interceptors: [{
       module: './interceptor.js',
       options: { testInterceptedValue: 'updated' }
     }]
-  })
+  }
+
+  // Update the undici interceptor config
+  await app.updateUndiciConfig(newUndiciConfig)
 
   {
     const { statusCode, body } = await request(entryUrl + '/hello')
@@ -159,4 +161,7 @@ test('update undici interceptor config', async t => {
       reqInterceptedValue: 'updated'
     })
   }
+
+  const runtimeConfig = await app.getRuntimeConfig()
+  assert.deepStrictEqual(runtimeConfig.undici, newUndiciConfig)
 })
