@@ -2,7 +2,7 @@ import assert from 'node:assert'
 import path from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { fullSetupRuntime, sleep } from '../../basic/test/helper.js'
+import { fullSetupRuntime } from '../../basic/test/helper.js'
 import { assertMetric, expectedMetrics } from '../../metrics/test/helper.js'
 
 export const cliPath = path.join(import.meta.dirname, '../../cli', 'cli.js')
@@ -19,7 +19,7 @@ const envs = {
 }
 
 for (const [env, options] of Object.entries(envs)) {
-  test(`NestJS service properly collects metrics ${env}`, async t => {
+  test(`NestJS service properly collects metrics - ${env}`, async t => {
     const { url } = await fullSetupRuntime({
       t,
       configRoot: path.resolve(import.meta.dirname, './fixtures/metrics'),
@@ -34,8 +34,6 @@ for (const [env, options] of Object.entries(envs)) {
       assert.ok(body.length > 0)
       assert.strictEqual(res.statusCode, 200)
     }
-
-    await sleep(process.env.CI ? 10000 : 3000)
 
     {
       const hostname = new URL(url).hostname

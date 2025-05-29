@@ -211,7 +211,7 @@ export class NestStackable extends BaseStackable {
       await this.#listen()
     }
 
-    this._collectMetrics()
+    await this._collectMetrics()
     return this.url
   }
 

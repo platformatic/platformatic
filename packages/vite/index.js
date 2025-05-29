@@ -58,7 +58,7 @@ export class ViteStackable extends BaseStackable {
       await this.#startDevelopment(listen)
     }
 
-    this._collectMetrics()
+    await this._collectMetrics()
   }
 
   async stop () {
