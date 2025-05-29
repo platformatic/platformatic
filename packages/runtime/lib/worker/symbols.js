@@ -8,6 +8,7 @@ const kWorkerId = Symbol.for('plt.runtime.worker.id')
 const kITC = Symbol.for('plt.runtime.itc')
 const kHealthCheckTimer = Symbol.for('plt.runtime.worker.healthCheckTimer')
 const kWorkerStatus = Symbol('plt.runtime.worker.status')
+const kInterceptors = Symbol.for('plt.runtime.worker.interceptors')
 
 // This string marker should be safe to use since it belongs to Unicode private area
 const kStderrMarker = '\ue002'
@@ -21,5 +22,6 @@ module.exports = {
   kITC,
   kHealthCheckTimer,
   kWorkerStatus,
-  kStderrMarker
+  kStderrMarker,
+  kInterceptors
 }
