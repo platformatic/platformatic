@@ -35,7 +35,7 @@ for (const [env, options] of Object.entries(envs)) {
       assert.strictEqual(res.statusCode, 200)
     }
 
-    await sleep(1000)
+    await sleep(process.env.CI ? 3000 : 10000)
 
     {
       const hostname = new URL(url).hostname
