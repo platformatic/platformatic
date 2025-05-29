@@ -71,7 +71,7 @@ export class NestStackable extends BaseStackable {
     })
 
     if (command || !this.isProduction) {
-      await this.startWithCommand(command || 'nest start --watch --preserveWatchOutput')
+      await this.startWithCommand(command || `node ${this.#nestjsCli} start --watch --preserveWatchOutput`)
     } else {
       return this.#startProduction(listen)
     }

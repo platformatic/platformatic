@@ -2,14 +2,15 @@
   "compilerOptions": {
     "module": "commonjs",
     "esModuleInterop": true,
-    "lib": ["es2022", "dom"],
+    "lib": ["es2022"],
     "target": "es2022",
     "sourceMap": true,
     "pretty": true,
     "noEmitOnError": true,
     "incremental": true,
     "strict": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "skipLibCheck": true
   },
   "watchOptions": {
     "watchFile": "fixedPollingInterval",
