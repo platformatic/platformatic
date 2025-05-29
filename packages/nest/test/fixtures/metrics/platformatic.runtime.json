@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.56.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.65.0.json",
   "entrypoint": "frontend",
   "services": [
     {
@@ -11,5 +11,6 @@
     "level": "error"
   },
   "metrics": true,
+  "startTimeout": 60000,
   "restartOnError": false
 }

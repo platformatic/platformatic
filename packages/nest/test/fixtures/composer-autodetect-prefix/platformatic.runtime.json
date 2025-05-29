@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.65.0.json",
   "entrypoint": "composer",
   "services": [
     {
@@ -21,5 +21,6 @@
   "logger": {
     "level": "error"
   },
+  "startTimeout": 60000,
   "restartOnError": false
 }
