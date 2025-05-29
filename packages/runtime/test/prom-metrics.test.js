@@ -9,6 +9,88 @@ const { request } = require('undici')
 const { buildServer } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
+test('Hello', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'platformatic.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  const { statusCode, body } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/'
+  })
+  assert.strictEqual(statusCode, 200)
+
+  const responseText = await body.text()
+
+  assert.strictEqual(responseText, `Hello from Platformatic Prometheus Server!
+The metrics are available at /metrics.
+The readiness endpoint is available at /ready.
+The liveness endpoint is available at /status.`)
+})
+
+test('Hello without readiness', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'readiness-disabled.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  const { statusCode, body } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/'
+  })
+  assert.strictEqual(statusCode, 200)
+
+  const responseText = await body.text()
+
+  assert.strictEqual(responseText, `Hello from Platformatic Prometheus Server!
+The metrics are available at /metrics.
+The liveness endpoint is available at /status.`)
+})
+
+test('Hello without liveness', async t => {
+  const projectDir = join(fixturesDir, 'prom-server')
+  const configFile = join(projectDir, 'liveness-disabled.json')
+  const app = await buildServer(configFile)
+
+  await app.start()
+
+  t.after(async () => {
+    await app.close()
+  })
+
+  // Wait for the prometheus server to start
+  await sleep(2000)
+
+  const { statusCode, body } = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/'
+  })
+  assert.strictEqual(statusCode, 200)
+
+  const responseText = await body.text()
+
+  assert.strictEqual(responseText, `Hello from Platformatic Prometheus Server!
+The metrics are available at /metrics.
+The readiness endpoint is available at /ready.`)
+})
+
 test('should start a prometheus server on port 9090', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
