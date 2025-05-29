@@ -54,7 +54,7 @@ describe('runtime update resources', () => {
     })
 
     test(`should increase multiple services workers by ${increase}`, async (t) => {
-      const servicesId = ['node', 'composer']
+      const servicesId = ['node', 'service']
       const appPath = path.join(__dirname, '..', '..', 'fixtures', 'update-service-resources')
       const runtime = await buildServer(path.join(appPath, 'platformatic.json'))
       t.after(async () => {
@@ -150,7 +150,7 @@ describe('runtime update resources', () => {
     })
 
     test(`should decrease multiple services workers by ${decrease}`, async (t) => {
-      const servicesId = ['node', 'composer']
+      const servicesId = ['node', 'service']
       const appPath = path.join(__dirname, '..', '..', 'fixtures', 'update-service-resources')
       const runtime = await buildServer(path.join(appPath, 'platformatic.json'))
       t.after(async () => {
@@ -218,7 +218,7 @@ describe('runtime update resources', () => {
       ])
       assert.fail('Expected error was not thrown')
     } catch (err) {
-      assert.equal(err.message, 'Service non-existent-service not found. Available services are: node, composer')
+      assert.equal(err.message, 'Service non-existent-service not found. Available services are: node, service, composer')
     }
 
     try {

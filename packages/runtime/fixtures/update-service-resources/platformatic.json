@@ -5,6 +5,7 @@
   "metrics": true,
   "restartOnError": 250,
   "startTimeout": 1000,
+  "entrypoint": "composer",
   "services": [
     {
       "id": "node",
@@ -13,10 +14,15 @@
       "workers": 4
     },
     {
-      "id": "composer",
-      "path": "./composer",
+      "id": "service",
+      "path": "./service",
       "config": "platformatic.json",
       "workers": 5
+    },
+    {
+      "id": "composer",
+      "path": "./composer",
+      "config": "platformatic.json"
     }
   ],
   "logger": {

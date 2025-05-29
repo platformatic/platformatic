@@ -8,16 +8,27 @@ const { loadConfig } = require('@platformatic/config')
 const { platformaticService } = require('../../../service')
 const { platformaticRuntime } = require('../..')
 const { setupAndStartRuntime } = require('../../lib/start')
+const { isCIOnWindows } = require('../helpers')
 const { once } = require('node:events')
 const http = require('http')
+
+async function getPort () {
+  if (isCIOnWindows) {
+    const getPort = await import('get-port')
+    return getPort.default({ port: [3000, 3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008, 3009, 3010] })
+  }
+
+  return 0
+}
 
 test('can increase port when starting a runtime with a port allocated', async t => {
   const dummyServer = http.createServer(function (req, res) {
     res.write('test')
     res.end()
   })
+  const port = await getPort()
 
-  dummyServer.listen(0, '127.0.0.1')
+  dummyServer.listen(port, '127.0.0.1')
   await once(dummyServer, 'listening')
   t.after(async () => {
     await new Promise(resolve => dummyServer.close(resolve))
@@ -41,7 +52,9 @@ test('can increase port when starting services without runtime config and port s
     res.end()
   })
 
-  dummyServer.listen(0, '127.0.0.1')
+  const port = await getPort()
+
+  dummyServer.listen(port, '127.0.0.1')
   await once(dummyServer, 'listening')
   t.after(async () => {
     await new Promise(resolve => dummyServer.close(resolve))
@@ -66,7 +79,9 @@ test('can increase port when starting services without runtime config and no por
     res.end()
   })
 
-  dummyServer.listen(0, '127.0.0.1')
+  const port = await getPort()
+
+  dummyServer.listen(port, '127.0.0.1')
   await once(dummyServer, 'listening')
   t.after(async () => {
     await new Promise(resolve => dummyServer.close(resolve))
