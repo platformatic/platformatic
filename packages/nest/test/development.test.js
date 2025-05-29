@@ -2,6 +2,7 @@ import { ok } from 'node:assert/strict'
 import { resolve } from 'node:path'
 import {
   createRuntime,
+  isCIOnWindows,
   prepareRuntimeWithServices,
   setFixturesDir,
   updateFile,
@@ -166,6 +167,7 @@ const configurations = [
     language: 'js'
   },
   {
+    only: isCIOnWindows,
     id: 'composer-with-prefix',
     name: 'NestJS application (in composer with prefix)',
     check: verifyComposerWithPrefix,

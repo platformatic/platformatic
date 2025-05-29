@@ -11,6 +11,5 @@
   "logger": {
     "level": "error"
   },
-  "startTimeout": 60000,
   "restartOnError": false
 }

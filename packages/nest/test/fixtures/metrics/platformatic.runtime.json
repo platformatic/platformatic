@@ -11,6 +11,5 @@
     "level": "error"
   },
   "metrics": true,
-  "startTimeout": 60000,
   "restartOnError": false
 }

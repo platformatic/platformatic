@@ -11,6 +11,5 @@
   "logger": {
     "level": "debug"
   },
-  "startTimeout": 60000,
   "restartOnError": false
 }
