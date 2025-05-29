@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "dev": "nest build && nest start"
+    "dev": "nest start --watch"
   },
   "dependencies": {
     "@nestjs/cli": "^11.0.1",
