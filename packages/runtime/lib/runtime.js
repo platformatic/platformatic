@@ -477,6 +477,12 @@ class Runtime extends EventEmitter {
     }
   }
 
+  async updateUndiciConfig (undiciConfig) {
+    for (const worker of this.#workers.values()) {
+      await sendViaITC(worker, 'updateUndiciConfig', undiciConfig)
+    }
+  }
+
   startCollectingMetrics () {
     this.#metrics = []
     this.#metricsTimeout = setInterval(async () => {

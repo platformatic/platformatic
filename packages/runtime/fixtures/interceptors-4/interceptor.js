@@ -2,7 +2,9 @@
 
 const { DecoratorHandler } = require('undici')
 
-const createTestInterceptor = () => {
+const createTestInterceptor = (interceptorOptions = {}) => {
+  const { testInterceptedValue } = interceptorOptions
+
   return dispatch => {
     class ResultInterceptor extends DecoratorHandler {
       onResponseStart (ac, statusCode, headers) {
@@ -14,7 +16,8 @@ const createTestInterceptor = () => {
     return function InterceptedDispatch (opts, handler) {
       opts.headers = {
         ...opts.headers,
-        'x-req-intercepted': 'true'
+        'x-req-intercepted': 'true',
+        'x-req-intercepted-value': testInterceptedValue
       }
       return dispatch(opts, new ResultInterceptor(handler))
     }

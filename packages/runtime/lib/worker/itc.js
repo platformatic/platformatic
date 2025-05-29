@@ -7,6 +7,7 @@ const { ITC } = require('@platformatic/itc')
 const { Unpromise } = require('@watchable/unpromise')
 
 const errors = require('../errors')
+const { setDispatcher } = require('./interceptors')
 const { kITC, kId, kServiceId, kWorkerId } = require('./symbols')
 
 async function safeHandleInITC (worker, fn) {
@@ -107,6 +108,11 @@ function setupITC (app, service, dispatcher) {
 
       inject (injectParams) {
         return app.stackable.inject(injectParams)
+      },
+
+      async updateUndiciConfig (undiciConfig) {
+        const config = await app.stackable.getConfig()
+        await setDispatcher({ ...config, undici: undiciConfig })
       },
 
       getStatus () {

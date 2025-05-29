@@ -10,10 +10,9 @@ const { createTelemetryThreadInterceptorHooks } = require('@platformatic/telemet
 const { RemoteCacheStore, httpCacheInterceptor } = require('./http-cache')
 const { kInterceptors } = require('./symbols')
 
-const _require = createRequire(join(workerData.dirname, 'package.json'))
 
 async function setDispatcher (config, opts = {}) {
-  const dispatcherOpts = await getDespatcherOpts(config)
+  const dispatcherOpts = await getDespatcherOpts(config.undici)
 
   let interceptors = globalThis[kInterceptors]
   if (!interceptors) {
@@ -36,7 +35,8 @@ async function setDispatcher (config, opts = {}) {
 
   let userInterceptors = []
   if (Array.isArray(config.undici?.interceptors)) {
-    userInterceptors = await loadInterceptors(config.undici.interceptors)
+    const _require = createRequire(join(workerData.dirname, 'package.json'))
+    userInterceptors = await loadInterceptors(_require, config.undici.interceptors)
   }
 
   setGlobalDispatcher(
@@ -52,22 +52,24 @@ async function setDispatcher (config, opts = {}) {
   return interceptors
 }
 
-async function getDespatcherOpts (config) {
-  const dispatcherOpts = { ...config.undici }
+async function getDespatcherOpts (undiciConfig) {
+  const dispatcherOpts = { ...undiciConfig }
 
-  const interceptorsConfigs = config.undici?.interceptors
+  const interceptorsConfigs = undiciConfig?.interceptors
   if (!interceptorsConfigs || Array.isArray(interceptorsConfigs)) {
     return dispatcherOpts
   }
+
+  const _require = createRequire(join(workerData.dirname, 'package.json'))
 
   const clientInterceptors = []
   const poolInterceptors = []
 
   for (const key of ['Agent', 'Pool', 'Client']) {
-    const interceptorConfig = config.undici.interceptors[key]
+    const interceptorConfig = undiciConfig.interceptors[key]
     if (!interceptorConfig) continue
 
-    const interceptors = await loadInterceptors(interceptorConfig)
+    const interceptors = await loadInterceptors(_require, interceptorConfig)
     if (key === 'Agent') {
       clientInterceptors.push(...interceptors)
       poolInterceptors.push(...interceptors)
@@ -123,16 +125,16 @@ function createHttpCacheInterceptor (config) {
   return cacheInterceptor
 }
 
-async function loadInterceptor (module, options) {
+async function loadInterceptor (_require, module, options) {
   const url = pathToFileURL(_require.resolve(module))
   const interceptor = (await import(url)).default
   return interceptor(options)
 }
 
-function loadInterceptors (interceptors) {
+function loadInterceptors (_require, interceptors) {
   return Promise.all(
     interceptors.map(async ({ module, options }) => {
-      return loadInterceptor(module, options)
+      return loadInterceptor(_require, module, options)
     })
   )
 }

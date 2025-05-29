@@ -120,6 +120,43 @@ test('use client interceptors for internal requests', async t => {
   assert.strictEqual(statusCode, 200)
   assert.deepStrictEqual(await body.json(), {
     reqIntercepted: 'true',
-    resIntercepted: 'true'
+    resIntercepted: 'true',
+    reqInterceptedValue: 'initial'
   })
+})
+
+test('update undici interceptor config', async t => {
+  const configFile = join(fixturesDir, 'interceptors-4', 'platformatic.runtime.json')
+  const app = await buildServer(configFile)
+  const entryUrl = await app.start()
+
+  t.after(() => app.close())
+
+  {
+    const { statusCode, body } = await request(entryUrl + '/hello')
+    assert.strictEqual(statusCode, 200)
+    assert.deepStrictEqual(await body.json(), {
+      reqIntercepted: 'true',
+      resIntercepted: 'true',
+      reqInterceptedValue: 'initial'
+    })
+  }
+
+  // Update the undici interceptor config
+  await app.updateUndiciConfig({
+    interceptors: [{
+      module: './interceptor.js',
+      options: { testInterceptedValue: 'updated' }
+    }]
+  })
+
+  {
+    const { statusCode, body } = await request(entryUrl + '/hello')
+    assert.strictEqual(statusCode, 200)
+    assert.deepStrictEqual(await body.json(), {
+      reqIntercepted: 'true',
+      resIntercepted: 'true',
+      reqInterceptedValue: 'updated'
+    })
+  }
 })
