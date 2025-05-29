@@ -37,6 +37,7 @@ export class Generator extends BaseGenerator {
         {
           name: `${this.config.serviceName}`,
           main: 'index.js',
+          type: 'module',
           scripts: {
             start: 'node index.js'
           },
