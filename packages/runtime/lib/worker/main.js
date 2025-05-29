@@ -133,7 +133,7 @@ async function main () {
     Object.assign(process.env, service.env)
   }
 
-  const { threadDispatcher } = await setDispatcher(config, { telemetry: service.telemetry })
+  const { threadDispatcher } = await setDispatcher(config)
 
   // If the service is an entrypoint and runtime server config is defined, use it.
   let serverConfig = null

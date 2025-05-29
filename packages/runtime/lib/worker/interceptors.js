@@ -10,17 +10,17 @@ const { createTelemetryThreadInterceptorHooks } = require('@platformatic/telemet
 const { RemoteCacheStore, httpCacheInterceptor } = require('./http-cache')
 const { kInterceptors } = require('./symbols')
 
-async function setDispatcher (config, opts = {}) {
-  const dispatcherOpts = await getDespatcherOpts(config.undici)
+async function setDispatcher (runtimeConfig) {
+  const dispatcherOpts = await getDespatcherOpts(runtimeConfig.undici)
 
   let interceptors = globalThis[kInterceptors]
   if (!interceptors) {
-    const threadDispatcher = createThreadInterceptor(config, opts)
+    const threadDispatcher = createThreadInterceptor(runtimeConfig)
     const threadInterceptor = threadDispatcher.interceptor
 
     let cacheInterceptor = null
-    if (config.httpCache) {
-      cacheInterceptor = createHttpCacheInterceptor(config)
+    if (runtimeConfig.httpCache) {
+      cacheInterceptor = createHttpCacheInterceptor(runtimeConfig)
     }
 
     interceptors = {
@@ -33,9 +33,9 @@ async function setDispatcher (config, opts = {}) {
   }
 
   let userInterceptors = []
-  if (Array.isArray(config.undici?.interceptors)) {
+  if (Array.isArray(runtimeConfig.undici?.interceptors)) {
     const _require = createRequire(join(workerData.dirname, 'package.json'))
-    userInterceptors = await loadInterceptors(_require, config.undici.interceptors)
+    userInterceptors = await loadInterceptors(_require, runtimeConfig.undici.interceptors)
   }
 
   setGlobalDispatcher(
@@ -90,21 +90,21 @@ async function getDespatcherOpts (undiciConfig) {
   return dispatcherOpts
 }
 
-function createThreadInterceptor (config, opts) {
-  const { telemetry } = opts
+function createThreadInterceptor (runtimeConfig) {
+  const telemetry = runtimeConfig.telemetry
   const hooks = telemetry ? createTelemetryThreadInterceptorHooks() : {}
   const threadDispatcher = wire({
     // Specifying the domain is critical to avoid flooding the DNS
     // with requests for a domain that's never going to exist.
     domain: '.plt.local',
     port: parentPort,
-    timeout: config.serviceTimeout,
+    timeout: runtimeConfig.serviceTimeout,
     ...hooks
   })
   return threadDispatcher
 }
 
-function createHttpCacheInterceptor (config) {
+function createHttpCacheInterceptor (runtimeConfig) {
   const cacheInterceptor = httpCacheInterceptor({
     store: new RemoteCacheStore({
       onRequest: opts => {
@@ -118,7 +118,7 @@ function createHttpCacheInterceptor (config) {
       },
       logger: globalThis.platformatic.logger
     }),
-    methods: config.httpCache.methods ?? ['GET', 'HEAD'],
+    methods: runtimeConfig.httpCache.methods ?? ['GET', 'HEAD'],
     logger: globalThis.platformatic.logger
   })
   return cacheInterceptor
