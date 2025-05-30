@@ -208,6 +208,30 @@ When creating documentation guides, follow this structured approach:
 - Test all code examples and commands before publishing
 - Create a short video demonstration for each guide to complement the written instructions
 
+### Building Documentation Locally
+
+The documentation is built using [Docusaurus 3](https://docusaurus.io/) and requires both the main Platformatic repository and the separate [docs repository](https://github.com/platformatic/docs).
+
+**Setup:**
+1. Create a working directory and clone both repositories:
+```bash
+mkdir /workdir && cd /workdir
+git clone https://github.com/platformatic/platformatic.git
+git clone https://github.com/platformatic/docs.git
+```
+
+2. Install dependencies in both repositories:
+```bash
+cd platformatic && npm install && cd ..
+cd docs && npm install
+```
+
+3. Set up the environment and start the development server:
+```bash
+export DOCS=`realpath $PWD/../platformatic/docs`
+npm run sync-and-start
+```
+
 ### Updating CLI Documentation
 
 The `docs/cli.md` file is automatically generated. To update it:
