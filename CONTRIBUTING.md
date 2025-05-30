@@ -192,6 +192,21 @@ platformatic start
 
 ## Documentation
 
+### Writing Guides
+
+When creating documentation guides, follow this structured approach:
+
+1. **Introduction**: Explain the "why" and "what" - what problem does this solve and what will be accomplished
+2. **Setup Instructions**: Detailed setup steps with prerequisites and environment preparation
+3. **Implementation Steps**: Step-by-step instructions for the demo/tutorial (numbered 3...X)
+4. **Conclusion**: Clear summary of what was accomplished and next steps
+
+**Additional Requirements:**
+- Include architecture diagrams to illustrate the solution
+- Focus on integrating with Express, Fastify, or other third-party services rather than highlighting `@platformatic/service`
+- Prefer using existing project demos and real-world examples over creating artificial examples
+- Test all code examples and commands before publishing
+
 ### Updating CLI Documentation
 
 The `docs/cli.md` file is automatically generated. To update it:
