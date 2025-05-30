@@ -7,8 +7,15 @@ module.exports = async function (fastify) {
     const { headers, body } = await request('http://b.plt.local/hello')
 
     const resIntercepted = headers['x-res-intercepted']
-    const { intercepted: reqIntercepted } = await body.json()
+    const {
+      intercepted: reqIntercepted,
+      interceptedValue: reqInterceptedValue
+    } = await body.json()
 
-    return { reqIntercepted, resIntercepted }
+    return {
+      reqIntercepted,
+      resIntercepted,
+      reqInterceptedValue
+    }
   })
 }

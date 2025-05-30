@@ -2,16 +2,14 @@
 
 const { EventEmitter } = require('node:events')
 const { hostname } = require('node:os')
-const { join, resolve } = require('node:path')
-const { parentPort, workerData, threadId } = require('node:worker_threads')
+const { resolve } = require('node:path')
+const { workerData, threadId } = require('node:worker_threads')
 const { pathToFileURL } = require('node:url')
 const inspector = require('node:inspector')
 const diagnosticChannel = require('node:diagnostics_channel')
 const { ServerResponse } = require('node:http')
 
-const { createTelemetryThreadInterceptorHooks } = require('@platformatic/telemetry')
 const {
-  createRequire,
   disablePinoDirectWrite,
   ensureFlushedWorkerStdio,
   executeWithTimeout,
@@ -22,14 +20,11 @@ const {
 } = require('@platformatic/utils')
 const dotenv = require('dotenv')
 const pino = require('pino')
-const { fetch, setGlobalDispatcher, getGlobalDispatcher, Agent } = require('undici')
-const { wire } = require('undici-thread-interceptor')
-const undici = require('undici')
+const { fetch } = require('undici')
 
-const { RemoteCacheStore, httpCacheInterceptor } = require('./http-cache')
 const { PlatformaticApp } = require('./app')
 const { setupITC } = require('./itc')
-const { loadInterceptors } = require('./interceptors')
+const { setDispatcher } = require('./interceptors')
 const { kId, kITC, kStderrMarker } = require('./symbols')
 
 function handleUnhandled (app, type, err) {
@@ -138,85 +133,7 @@ async function main () {
     Object.assign(process.env, service.env)
   }
 
-  // Setup undici
-  const interceptors = {}
-  const composedInterceptors = []
-
-  if (config.undici?.interceptors) {
-    const _require = createRequire(join(workerData.dirname, 'package.json'))
-    for (const key of ['Agent', 'Pool', 'Client']) {
-      if (config.undici.interceptors[key]) {
-        interceptors[key] = await loadInterceptors(_require, config.undici.interceptors[key])
-      }
-    }
-
-    if (Array.isArray(config.undici.interceptors)) {
-      composedInterceptors.push(...(await loadInterceptors(_require, config.undici.interceptors)))
-    }
-  }
-
-  const dispatcherOpts = { ...config.undici }
-
-  if (Object.keys(interceptors).length > 0) {
-    const clientInterceptors = []
-    const poolInterceptors = []
-
-    if (interceptors.Agent) {
-      clientInterceptors.push(...interceptors.Agent)
-      poolInterceptors.push(...interceptors.Agent)
-    }
-
-    if (interceptors.Pool) {
-      poolInterceptors.push(...interceptors.Pool)
-    }
-
-    if (interceptors.Client) {
-      clientInterceptors.push(...interceptors.Client)
-    }
-
-    dispatcherOpts.factory = (origin, opts) => {
-      return opts && opts.connections === 1
-        ? new undici.Client(origin, opts).compose(clientInterceptors)
-        : new undici.Pool(origin, opts).compose(poolInterceptors)
-    }
-  }
-
-  setGlobalDispatcher(new Agent(dispatcherOpts))
-
-  const { telemetry } = service
-  const hooks = telemetry ? createTelemetryThreadInterceptorHooks() : {}
-  // Setup mesh networker
-  const threadDispatcher = wire({
-    // Specifying the domain is critical to avoid flooding the DNS
-    // with requests for a domain that's never going to exist.
-    domain: '.plt.local',
-    port: parentPort,
-    timeout: config.serviceTimeout,
-    ...hooks
-  })
-
-  if (config.httpCache) {
-    const cacheInterceptor = httpCacheInterceptor({
-      store: new RemoteCacheStore({
-        onRequest: opts => {
-          globalThis.platformatic?.onHttpCacheRequest?.(opts)
-        },
-        onCacheHit: opts => {
-          globalThis.platformatic?.onHttpCacheHit?.(opts)
-        },
-        onCacheMiss: opts => {
-          globalThis.platformatic?.onHttpCacheMiss?.(opts)
-        },
-        logger: globalThis.platformatic.logger
-      }),
-      methods: config.httpCache.methods ?? ['GET', 'HEAD'],
-      logger: globalThis.platformatic.logger
-    })
-    composedInterceptors.push(cacheInterceptor)
-  }
-
-  const globalDispatcher = getGlobalDispatcher()
-  setGlobalDispatcher(globalDispatcher.compose(composedInterceptors))
+  const { threadDispatcher } = await setDispatcher(config)
 
   // If the service is an entrypoint and runtime server config is defined, use it.
   let serverConfig = null

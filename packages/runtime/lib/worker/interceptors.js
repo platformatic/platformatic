@@ -1,6 +1,128 @@
 'use strict'
 
+const { join } = require('node:path')
+const { workerData, parentPort } = require('node:worker_threads')
 const { pathToFileURL } = require('node:url')
+const { createRequire } = require('@platformatic/utils')
+const { setGlobalDispatcher, Client, Pool, Agent } = require('undici')
+const { wire } = require('undici-thread-interceptor')
+const { createTelemetryThreadInterceptorHooks } = require('@platformatic/telemetry')
+const { RemoteCacheStore, httpCacheInterceptor } = require('./http-cache')
+const { kInterceptors } = require('./symbols')
+
+async function setDispatcher (runtimeConfig) {
+  const dispatcherOpts = await getDespatcherOpts(runtimeConfig.undici)
+
+  let interceptors = globalThis[kInterceptors]
+  if (!interceptors) {
+    const threadDispatcher = createThreadInterceptor(runtimeConfig)
+    const threadInterceptor = threadDispatcher.interceptor
+
+    let cacheInterceptor = null
+    if (runtimeConfig.httpCache) {
+      cacheInterceptor = createHttpCacheInterceptor(runtimeConfig)
+    }
+
+    interceptors = {
+      threadDispatcher,
+      threadInterceptor,
+      cacheInterceptor
+    }
+
+    globalThis[kInterceptors] = interceptors
+  }
+
+  let userInterceptors = []
+  if (Array.isArray(runtimeConfig.undici?.interceptors)) {
+    const _require = createRequire(join(workerData.dirname, 'package.json'))
+    userInterceptors = await loadInterceptors(_require, runtimeConfig.undici.interceptors)
+  }
+
+  setGlobalDispatcher(
+    new Agent(dispatcherOpts).compose(
+      [
+        interceptors.threadInterceptor,
+        interceptors.cacheInterceptor,
+        ...userInterceptors
+      ].filter(Boolean)
+    )
+  )
+
+  return interceptors
+}
+
+async function getDespatcherOpts (undiciConfig) {
+  const dispatcherOpts = { ...undiciConfig }
+
+  const interceptorsConfigs = undiciConfig?.interceptors
+  if (!interceptorsConfigs || Array.isArray(interceptorsConfigs)) {
+    return dispatcherOpts
+  }
+
+  const _require = createRequire(join(workerData.dirname, 'package.json'))
+
+  const clientInterceptors = []
+  const poolInterceptors = []
+
+  for (const key of ['Agent', 'Pool', 'Client']) {
+    const interceptorConfig = undiciConfig.interceptors[key]
+    if (!interceptorConfig) continue
+
+    const interceptors = await loadInterceptors(_require, interceptorConfig)
+    if (key === 'Agent') {
+      clientInterceptors.push(...interceptors)
+      poolInterceptors.push(...interceptors)
+    }
+    if (key === 'Pool') {
+      poolInterceptors.push(...interceptors)
+    }
+    if (key === 'Client') {
+      clientInterceptors.push(...interceptors)
+    }
+  }
+
+  dispatcherOpts.factory = (origin, opts) => {
+    return opts && opts.connections === 1
+      ? new Client(origin, opts).compose(clientInterceptors)
+      : new Pool(origin, opts).compose(poolInterceptors)
+  }
+
+  return dispatcherOpts
+}
+
+function createThreadInterceptor (runtimeConfig) {
+  const telemetry = runtimeConfig.telemetry
+  const hooks = telemetry ? createTelemetryThreadInterceptorHooks() : {}
+  const threadDispatcher = wire({
+    // Specifying the domain is critical to avoid flooding the DNS
+    // with requests for a domain that's never going to exist.
+    domain: '.plt.local',
+    port: parentPort,
+    timeout: runtimeConfig.serviceTimeout,
+    ...hooks
+  })
+  return threadDispatcher
+}
+
+function createHttpCacheInterceptor (runtimeConfig) {
+  const cacheInterceptor = httpCacheInterceptor({
+    store: new RemoteCacheStore({
+      onRequest: opts => {
+        globalThis.platformatic?.onHttpCacheRequest?.(opts)
+      },
+      onCacheHit: opts => {
+        globalThis.platformatic?.onHttpCacheHit?.(opts)
+      },
+      onCacheMiss: opts => {
+        globalThis.platformatic?.onHttpCacheMiss?.(opts)
+      },
+      logger: globalThis.platformatic.logger
+    }),
+    methods: runtimeConfig.httpCache.methods ?? ['GET', 'HEAD'],
+    logger: globalThis.platformatic.logger
+  })
+  return cacheInterceptor
+}
 
 async function loadInterceptor (_require, module, options) {
   const url = pathToFileURL(_require.resolve(module))
@@ -16,4 +138,4 @@ function loadInterceptors (_require, interceptors) {
   )
 }
 
-module.exports = { loadInterceptors }
+module.exports = { setDispatcher }

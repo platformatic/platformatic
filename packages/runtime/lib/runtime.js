@@ -198,17 +198,7 @@ class Runtime extends EventEmitter {
       await this.closeAndThrow(e)
     }
 
-    const dispatcherOpts = { ...config.undici }
-    const interceptors = [this.#meshInterceptor]
-
-    if (config.httpCache) {
-      this.#sharedHttpCache = await createSharedStore(this.#configManager.dirname, config.httpCache)
-      interceptors.push(
-        undiciInterceptors.cache({ store: this.#sharedHttpCache, methods: config.httpCache.methods ?? ['GET', 'HEAD'] })
-      )
-    }
-
-    this.#dispatcher = new Agent(dispatcherOpts).compose(interceptors)
+    await this.#setDispatcher(config.undici)
 
     if (config.scheduler) {
       this.#scheduler = startScheduler(config.scheduler, this.#dispatcher, logger)
@@ -474,6 +464,24 @@ class Runtime extends EventEmitter {
       body: responseBody,
       payload: responseBody,
       rawPayload: responsePayload
+    }
+  }
+
+  async updateUndiciConfig (undiciConfig) {
+    this.#configManager.current.undici = undiciConfig
+
+    await this.#setDispatcher(undiciConfig)
+
+    const promises = []
+    for (const worker of this.#workers.values()) {
+      promises.push(sendViaITC(worker, 'updateUndiciConfig', undiciConfig))
+    }
+
+    const results = await Promise.allSettled(promises)
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        throw result.reason
+      }
     }
   }
 
@@ -1039,6 +1047,24 @@ class Runtime extends EventEmitter {
     }
 
     return super.emit(event, payload)
+  }
+
+  async #setDispatcher (undiciConfig) {
+    const config = this.#configManager.current
+
+    const dispatcherOpts = { ...undiciConfig }
+    const interceptors = [this.#meshInterceptor]
+
+    if (config.httpCache) {
+      this.#sharedHttpCache = await createSharedStore(this.#configManager.dirname, config.httpCache)
+      interceptors.push(
+        undiciInterceptors.cache({
+          store: this.#sharedHttpCache,
+          methods: config.httpCache.methods ?? ['GET', 'HEAD']
+        })
+      )
+    }
+    this.#dispatcher = new Agent(dispatcherOpts).compose(interceptors)
   }
 
   #updateStatus (status, args) {
