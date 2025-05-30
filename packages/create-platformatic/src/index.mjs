@@ -1,4 +1,5 @@
 import ConfigManager, { findConfigurationFile, loadConfigurationFile } from '@platformatic/config'
+import { FallbackGenerator } from '@platformatic/generators'
 import { createDirectory, executeWithTimeout, generateDashedName, getPkgManager } from '@platformatic/utils'
 import { execa } from 'execa'
 import { glob } from 'glob'
@@ -7,7 +8,7 @@ import parseArgs from 'minimist'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { basename, dirname, join, resolve } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import ora from 'ora'
 import pino from 'pino'
 import pretty from 'pino-pretty'
@@ -52,6 +53,35 @@ export async function chooseStackable (inquirer, stackables) {
   })
 
   return options.type
+}
+
+async function getPackageVersion (pkg, projectDir) {
+  let main
+  try {
+    main = import.meta.resolve(pkg)
+  } catch {
+    main = resolveModule.sync(pkg, { basedir: projectDir })
+  }
+
+  if (main.startsWith('file:')) {
+    main = fileURLToPath(main)
+  }
+
+  let root = dirname(main)
+
+  while (!existsSync(join(root, 'package.json'))) {
+    const parent = dirname(root)
+
+    if (parent === root) {
+      // We reached the root of the filesystem
+      throw new Error(`Could not find package.json for ${pkg}.`)
+    }
+
+    root = parent
+  }
+
+  const packageJsonPath = JSON.parse(await readFile(join(root, 'package.json'), 'utf-8'))
+  return packageJsonPath.version
 }
 
 async function importOrLocal ({ pkgManager, name, projectDir, pkg }) {
@@ -349,10 +379,17 @@ export async function createApplication (
 
     names.push(serviceName)
 
-    const stackableGenerator = new stackable.Generator({
-      logger,
-      inquirer
-    })
+    const stackableGenerator = stackable.Generator
+      ? new stackable.Generator({
+        logger,
+        inquirer
+      })
+      : new FallbackGenerator({
+        logger,
+        inquirer,
+        module: stackableName,
+        version: await getPackageVersion(stackableName, projectDir)
+      })
 
     stackableGenerator.setConfig({
       ...stackableGenerator.config,
