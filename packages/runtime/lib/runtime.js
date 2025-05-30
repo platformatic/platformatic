@@ -472,15 +472,12 @@ class Runtime extends EventEmitter {
 
     await this.#setDispatcher(undiciConfig)
 
-    const workers = this.#workers.values()
-    console.log('workers---------------------', workers)
+    const promises = []
+    for (const worker of this.#workers.values()) {
+      promises.push(sendViaITC(worker, 'updateUndiciConfig', undiciConfig))
+    }
 
-    const results = await Promise.allSettled(
-      workers.map(
-        worker => sendViaITC(worker, 'updateUndiciConfig', undiciConfig)
-      )
-    )
-
+    const results = await Promise.allSettled(promises)
     for (const result of results) {
       if (result.status === 'rejected') {
         throw result.reason
