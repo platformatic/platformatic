@@ -12,9 +12,8 @@ import {
 } from './helper.mjs'
 
 test('Support services with no generators', async t => {
-  // Get fastify latest version from NPM
-  const response = await fetch('https://registry.npmjs.org/fastify/latest')
-  const fastifyVersion = (await response.json()).version
+  const fastify = import.meta.resolve('fastify')
+  const fastifyVersion = JSON.parse(await readFile(new URL('./package.json', fastify), 'utf8')).version
 
   const version = JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8')).version
 
