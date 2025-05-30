@@ -1,3 +1,5 @@
+import Issues from '../../getting-started/issues.md';
+
 # Programmatic API
 
 In many cases, it's useful to start Platformatic Service using an API instead of the command line, e.g., in tests where we want to start and stop our server programmatically.
@@ -358,3 +360,5 @@ stackable.configManagerConfig = {
   upgrade
 }
 ```
+
+<Issues />
