@@ -306,6 +306,14 @@ ctags --exclude=node_modules --exclude='**/*.test.js' --exclude='**/build' -R *
 
 ## Developer Certificate of Origin
 
+All contributions must include a Developer Certificate of Origin (DCO) sign-off. Use the `-s` flag when committing:
+
+```bash
+git commit -s -m "Your commit message"
+```
+
+This automatically adds your `Signed-off-by` line to the commit message. If working with AI assistance, ensure both contributors are signed off.
+
 ```
 Developer Certificate of Origin
 Version 1.1
