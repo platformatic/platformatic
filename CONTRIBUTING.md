@@ -206,6 +206,7 @@ When creating documentation guides, follow this structured approach:
 - Focus on integrating with Express, Fastify, or other third-party services rather than highlighting `@platformatic/service`
 - Prefer using existing project demos and real-world examples over creating artificial examples
 - Test all code examples and commands before publishing
+- Create a short video demonstration for each guide to complement the written instructions
 
 ### Updating CLI Documentation
 
