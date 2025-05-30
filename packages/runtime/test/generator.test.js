@@ -328,7 +328,7 @@ describe('RuntimeGenerator', () => {
 
       // should list only runtime files
       const runtimeFileList = rg.listFiles()
-      assert.deepEqual(runtimeFileList, ['.env', '.env.sample'])
+      assert.deepEqual(runtimeFileList, ['platformatic.json', '.env', '.env.sample'])
 
       // services have correct target directory
       assert.equal(thirdService.targetDirectory, join(rg.targetDirectory, 'services', thirdService.config.serviceName))
@@ -437,7 +437,7 @@ describe('RuntimeGenerator', () => {
 
       // should list only runtime files
       const runtimeFileList = rg.listFiles()
-      assert.deepEqual(runtimeFileList, ['.env', '.env.sample'])
+      assert.deepEqual(runtimeFileList, ['platformatic.json', '.env', '.env.sample'])
 
       // services have correct target directory
       assert.equal(thirdService.targetDirectory, join(rg.targetDirectory, 'web', thirdService.config.serviceName))

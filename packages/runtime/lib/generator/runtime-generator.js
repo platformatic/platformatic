@@ -150,6 +150,9 @@ class RuntimeGenerator extends BaseGenerator {
       this.config.port = configManager.env.PORT
       this.entryPoint = configManager.current.services.find(svc => svc.entrypoint)
       this.existingServices = configManager.current.services.map(s => s.id)
+
+      this.updateRuntimeConfig(this.existingConfigRaw)
+      this.updateRuntimeEnv(await readFile(join(this.targetDirectory, '.env'), 'utf-8'))
     }
   }
 
@@ -204,11 +207,7 @@ class RuntimeGenerator extends BaseGenerator {
       ...servicesEnv
     })
 
-    this.addFile({
-      path: '',
-      file: '.env',
-      contents: envObjectToString(this.config.env)
-    })
+    this.updateRuntimeEnv(envObjectToString(this.config.env))
 
     this.addFile({
       path: '',
@@ -227,11 +226,20 @@ class RuntimeGenerator extends BaseGenerator {
   }
 
   async writeFiles () {
+    for (const { service } of this.services) {
+      await service._beforeWriteFiles?.(this)
+    }
+
     await super.writeFiles()
+
     if (!this.config.isUpdating) {
       for (const { service } of this.services) {
         await service.writeFiles()
       }
+    }
+
+    for (const { service } of this.services) {
+      await service._afterWriteFiles?.(this)
     }
   }
 
@@ -275,6 +283,7 @@ class RuntimeGenerator extends BaseGenerator {
       } else {
         basePath = join(this.targetDirectory, this.config.autoload || this.servicesFolder)
       }
+      this.servicesBasePath = basePath
       service.setTargetDirectory(join(basePath, service.config.serviceName))
     })
   }
@@ -496,15 +505,58 @@ class RuntimeGenerator extends BaseGenerator {
 
       this.setEntryPoint(newEntrypoint)
       runtimePkgConfigFileData.entrypoint = newEntrypoint
-      this.addFile({
-        path: '',
-        file: this.runtimeConfig,
-        contents: JSON.stringify(runtimePkgConfigFileData, null, 2)
-      })
+      this.updateRuntimeConfig(runtimePkgConfigFileData)
     }
     await this.writeFiles()
     // save new env
     await envTool.save()
+  }
+
+  async generateConfigFile () {
+    this.updateRuntimeConfig(await super.generateConfigFile())
+  }
+
+  async generateEnv () {
+    const serialized = await super.generateEnv()
+
+    if (serialized) {
+      this.updateRuntimeEnv(serialized)
+    }
+  }
+
+  getRuntimeConfigFileObject () {
+    return this.files.find(file => file.tags?.includes('runtime-config')) ?? null
+  }
+
+  getRuntimeEnvFileObject () {
+    return this.files.find(file => file.tags?.includes('runtime-env')) ?? null
+  }
+
+  updateRuntimeConfig (config) {
+    this.addFile({
+      path: '',
+      file: this.runtimeConfig,
+      contents: JSON.stringify(config, null, 2),
+      tags: ['runtime-config']
+    })
+  }
+
+  updateRuntimeEnv (contents) {
+    this.addFile({
+      path: '',
+      file: '.env',
+      contents,
+      tags: ['runtime-env']
+    })
+  }
+
+  updateConfigEntryPoint (entrypoint) {
+    // This can return null if the generator was not supposed to modify the config
+    const configObject = this.getRuntimeConfigFileObject()
+    const config = JSON.parse(configObject.contents)
+    config.entrypoint = entrypoint
+
+    this.updateRuntimeConfig(config)
   }
 }
 
