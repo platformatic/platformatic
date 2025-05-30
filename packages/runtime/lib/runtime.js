@@ -470,10 +470,20 @@ class Runtime extends EventEmitter {
   async updateUndiciConfig (undiciConfig) {
     this.#configManager.current.undici = undiciConfig
 
-    for (const worker of this.#workers.values()) {
-      await sendViaITC(worker, 'updateUndiciConfig', undiciConfig)
-    }
     await this.#setDispatcher(undiciConfig)
+
+    const workers = this.#workers.values()
+    const results = await Promise.allSettled(
+      workers.map(
+        worker => sendViaITC(worker, 'updateUndiciConfig', undiciConfig)
+      )
+    )
+
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        throw result.reason
+      }
+    }
   }
 
   startCollectingMetrics () {
