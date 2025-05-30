@@ -125,7 +125,7 @@ test('use client interceptors for internal requests', async t => {
   })
 })
 
-test.only('update undici interceptor config', async t => {
+test('update undici interceptor config', async t => {
   const configFile = join(fixturesDir, 'interceptors-4', 'platformatic.runtime.json')
   const app = await buildServer(configFile)
   const entryUrl = await app.start()
@@ -150,7 +150,7 @@ test.only('update undici interceptor config', async t => {
   }
 
   // Update the undici interceptor config
-  await app.updateUndiciConfig(newUndiciConfig)
+  await app.updateUndiciInterceptors(newUndiciConfig)
 
   {
     const { statusCode, body } = await request(entryUrl + '/hello')

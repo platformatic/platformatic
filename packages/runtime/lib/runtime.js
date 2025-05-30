@@ -467,14 +467,12 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async updateUndiciConfig (undiciConfig) {
+  async updateUndiciInterceptors (undiciConfig) {
     this.#configManager.current.undici = undiciConfig
-
-    await this.#setDispatcher(undiciConfig)
 
     const promises = []
     for (const worker of this.#workers.values()) {
-      promises.push(sendViaITC(worker, 'updateUndiciConfig', undiciConfig))
+      promises.push(sendViaITC(worker, 'updateUndiciInterceptors', undiciConfig))
     }
 
     const results = await Promise.allSettled(promises)

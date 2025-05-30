@@ -1,10 +1,16 @@
 'use strict'
 
-const { request } = require('undici')
+const { request, getGlobalDispatcher } = require('undici')
 
 module.exports = async function (fastify) {
+  // Explicitly set a dispatcher to a variable to check that it
+  // will be swapped
+  const dispatcher = getGlobalDispatcher()
+
   fastify.get('/hello', async (req, reply) => {
-    const { headers, body } = await request('http://b.plt.local/hello')
+    const { headers, body } = await request('http://b.plt.local/hello', {
+      dispatcher
+    })
 
     const resIntercepted = headers['x-res-intercepted']
     const {
