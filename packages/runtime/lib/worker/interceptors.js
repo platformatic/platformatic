@@ -11,47 +11,131 @@ const { RemoteCacheStore, httpCacheInterceptor } = require('./http-cache')
 const { kInterceptors } = require('./symbols')
 
 async function setDispatcher (runtimeConfig) {
-  const dispatcherOpts = await getDespatcherOpts(runtimeConfig.undici)
-
-  let interceptors = globalThis[kInterceptors]
-  if (!interceptors) {
-    const threadDispatcher = createThreadInterceptor(runtimeConfig)
-    const threadInterceptor = threadDispatcher.interceptor
-
-    let cacheInterceptor = null
-    if (runtimeConfig.httpCache) {
-      cacheInterceptor = createHttpCacheInterceptor(runtimeConfig)
-    }
-
-    interceptors = {
-      threadDispatcher,
-      threadInterceptor,
-      cacheInterceptor
-    }
-
-    globalThis[kInterceptors] = interceptors
+  globalThis[kInterceptors] = {
+    threadDispatcher: null,
+    threadInterceptor: null,
+    cacheInterceptor: null,
+    updatableInterceptors: {}
   }
 
-  let userInterceptors = []
+  const undiciCtx = globalThis[kInterceptors]
+
+  undiciCtx.threadDispatcher = createThreadInterceptor(runtimeConfig)
+  undiciCtx.threadInterceptor = undiciCtx.threadDispatcher.interceptor
+
+  if (runtimeConfig.httpCache) {
+    undiciCtx.cacheInterceptor = createHttpCacheInterceptor(runtimeConfig)
+  }
+
+  let updatableInterceptors = []
   if (Array.isArray(runtimeConfig.undici?.interceptors)) {
     const _require = createRequire(join(workerData.dirname, 'package.json'))
-    userInterceptors = await loadInterceptors(_require, runtimeConfig.undici.interceptors)
+    updatableInterceptors = await loadInterceptors(_require, runtimeConfig.undici.interceptors)
   }
+
+  const dispatcherOpts = await getDispatcherOpts(runtimeConfig.undici)
 
   setGlobalDispatcher(
     new Agent(dispatcherOpts).compose(
       [
-        interceptors.threadInterceptor,
-        interceptors.cacheInterceptor,
-        ...userInterceptors
+        undiciCtx.threadInterceptor,
+        undiciCtx.cacheInterceptor,
+        ...updatableInterceptors
       ].filter(Boolean)
     )
   )
 
-  return interceptors
+  return undiciCtx
 }
 
-async function getDespatcherOpts (undiciConfig) {
+async function updateUndiciInterceptors (undiciConfig) {
+  const { updatableInterceptors } = globalThis[kInterceptors]
+
+  if (Array.isArray(undiciConfig?.interceptors)) {
+    for (const interceptorConfig of undiciConfig.interceptors) {
+      const { module, options } = interceptorConfig
+
+      const interceptorCtx = updatableInterceptors[module]
+      if (!interceptorCtx) continue
+
+      const { createInterceptor, updateInterceptor } = interceptorCtx
+      updateInterceptor(createInterceptor(options))
+    }
+  } else {
+    for (const key of ['Agent', 'Pool', 'Client']) {
+      const interceptorConfigs = undiciConfig.interceptors[key]
+      if (!interceptorConfigs) continue
+
+      for (const interceptorConfig of interceptorConfigs) {
+        const { module, options } = interceptorConfig
+
+        const interceptorCtx = updatableInterceptors[key][module]
+        if (!interceptorCtx) continue
+
+        const { createInterceptor, updateInterceptor } = interceptorCtx
+        updateInterceptor(createInterceptor(options))
+      }
+    }
+  }
+}
+
+function createUpdatableInterceptor (originInterceptor) {
+  let originalDispatcher = null
+  let originalDispatch = null
+
+  function updatableInterceptor (dispatch) {
+    originalDispatch = dispatch
+    originalDispatcher = originInterceptor(dispatch)
+
+    return function dispatcher (opts, handler) {
+      return originalDispatcher(opts, handler)
+    }
+  }
+
+  function updateInterceptor (newInterceptor) {
+    originalDispatcher = newInterceptor(originalDispatch)
+  }
+
+  return { updatableInterceptor, updateInterceptor }
+}
+
+async function loadInterceptors (_require, interceptorsConfigs, key) {
+  return Promise.all(
+    interceptorsConfigs.map(async (interceptorConfig) => {
+      return loadInterceptor(_require, interceptorConfig, key)
+    })
+  )
+}
+
+async function loadInterceptor (_require, interceptorConfig, key) {
+  const undiciCtx = globalThis[kInterceptors]
+
+  const { module, options } = interceptorConfig
+
+  const url = pathToFileURL(_require.resolve(module))
+  const createInterceptor = (await import(url)).default
+  const interceptor = createInterceptor(options)
+
+  const {
+    updatableInterceptor,
+    updateInterceptor
+  } = createUpdatableInterceptor(interceptor)
+
+  const interceptorCtx = { createInterceptor, updateInterceptor }
+
+  if (key !== undefined) {
+    if (!undiciCtx.updatableInterceptors[key]) {
+      undiciCtx.updatableInterceptors[key] = {}
+    }
+    undiciCtx.updatableInterceptors[key][module] = interceptorCtx
+  } else {
+    undiciCtx.updatableInterceptors[module] = interceptorCtx
+  }
+
+  return updatableInterceptor
+}
+
+async function getDispatcherOpts (undiciConfig) {
   const dispatcherOpts = { ...undiciConfig }
 
   const interceptorsConfigs = undiciConfig?.interceptors
@@ -68,7 +152,7 @@ async function getDespatcherOpts (undiciConfig) {
     const interceptorConfig = undiciConfig.interceptors[key]
     if (!interceptorConfig) continue
 
-    const interceptors = await loadInterceptors(_require, interceptorConfig)
+    const interceptors = await loadInterceptors(_require, interceptorConfig, key)
     if (key === 'Agent') {
       clientInterceptors.push(...interceptors)
       poolInterceptors.push(...interceptors)
@@ -124,18 +208,4 @@ function createHttpCacheInterceptor (runtimeConfig) {
   return cacheInterceptor
 }
 
-async function loadInterceptor (_require, module, options) {
-  const url = pathToFileURL(_require.resolve(module))
-  const interceptor = (await import(url)).default
-  return interceptor(options)
-}
-
-function loadInterceptors (_require, interceptors) {
-  return Promise.all(
-    interceptors.map(async ({ module, options }) => {
-      return loadInterceptor(_require, module, options)
-    })
-  )
-}
-
-module.exports = { setDispatcher }
+module.exports = { setDispatcher, updateUndiciInterceptors }
