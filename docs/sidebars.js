@@ -17,6 +17,16 @@ const sidebars = {
     'Overview',
     {
       type: 'category',
+      label: 'wattpm',
+      collapsed: true,
+      items: [
+        'packages/watt/overview',
+        'packages/watt/configuration',
+        'packages/watt/reference'
+      ]
+    },
+    {
+      type: 'category',
       label: 'platformatic (cli)',
       collapsed: true,
       items: [
@@ -73,16 +83,6 @@ const sidebars = {
         'packages/runtime/configuration',
         'packages/runtime/multithread-architecture',
         'packages/runtime/programmatic'
-      ]
-    },
-    {
-      type: 'category',
-      label: 'wattpm',
-      collapsed: true,
-      items: [
-        'packages/watt/overview',
-        'packages/watt/configuration',
-        'packages/watt/reference'
       ]
     },
     {
