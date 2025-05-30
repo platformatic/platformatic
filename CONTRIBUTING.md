@@ -1,295 +1,318 @@
-# Platformatic
+# Contributing to Platformatic
 
-## Running and Developing DB
+Welcome to the Platformatic development guide! This document will help you set up your development environment and contribute to the project.
 
-### Introduction 
+## Project Overview
 
-Welcome to the Platformatic development guide. This document will help you set up your development environment, run the [Platformatic DB](https://docs.platformatic.dev/docs/db/overview), and contribute to the project. Follow the steps below to get started.
+Platformatic is an open-source Node.js application platform for building APIs with auto-generated GraphQL/REST endpoints, database integration, and microservice orchestration. This is a pnpm workspace monorepo with 36 packages.
 
-### Preparation
+## Prerequisites
 
-1. **Clone the repository**: Clone this repository and navigate to the platformatic directory.
+- **Node.js**: Version 20.16 or higher
+- **pnpm**: Package manager (follow the [pnpm installation guide](https://pnpm.io/installation))
+- **Docker** (optional): Only required for running Platformatic DB tests with PostgreSQL, MySQL, and MariaDB ([Docker Desktop](https://www.docker.com/products/docker-desktop) or [Colima](https://github.com/abiosoft/colima))
 
-```sh
+## Getting Started
+
+### 1. Clone and Setup
+
+```bash
 git clone https://github.com/platformatic/platformatic.git
 cd platformatic
 ```
 
-2. **Install pnpm**: Install pnpm: Follow the official [pnpm installation guide](https://pnpm.io/installation) to install pnpm globally on your machine.
+### 2. Install Dependencies
 
-3. **Setup pnpm**: Run the setup script to configure the local path and restart your terminal.
-
-```sh
-pnpm setup 
-```
-
-4. **Install dependencies**: Install the dependencies for platformatic.
-
-```sh
-pnpm install 
-```
-
-5. **Install Docker**: Install Docker using [Docker desktop](https://www.docker.com/products/docker-desktop) or [Colima](https://github.com/abiosoft/colima)
-
-6. **Run Docker Compose**: Depending on your system, use the appropriate Docker Compose file to set up your environment.
-
-- On Intel Macs:
-
-```sh 
-docker compose -f docker-compose-mac.yml up
-```
-
-- On Apple Silicon Macs:
-
-```sh 
-docker compose -f docker-compose-apple-silicon.yml up
-```
-
-- On Windows:
-
-```sh 
-docker-compose up 
-```
-
-## Link Platformatic Globally 
-
-To ensure your global installation of `platformatic` and `wattpm` resolve to your local copy, add a script in the root project to handle linking. This will allow you to use `platformatic` and `plt` commands globally.
-
-From the root folder of the project, run:
-
-```sh
-pnpm run global-links
-```
-
-You might receive a `pnpm` warning, but everything should be set up correctly. Verify by running:
-
-```sh
-platformatic 
-wattpm
-```
-
-## Running Platformatic locally 
-
-To create a new Platformatic app using your local version, follow these steps:
-
-1. **Link Platformatic and create-platformatic Globally**:
-From the root folder of the project, run:
-
-```sh
-pnpm run global-links
-```
-
-2. **Create a new directory for your app**:
-
-```sh
-mkdir platformatic-app
-cd platformatic-app
-```
-
-3. **Initialize a new Platformatic app using the create-platformatic** command:
-
-```sh 
-npx create-platformatic
-```
-
-4. **Follow the prompts** to configure your new app. You'll be asked to provide some information like the project name and template. Choose the options that best suit your needs
-
-5. **Navigate into your newly created app's directory**:
-
-```sh 
-cd platformatic-app
-```
-
-6. **Run the Platformatic app** to verify everything is set up correctly:
-
-```sh 
-platformatic start
-```
-
-You should see output indicating that your Platformatic app is running on `http://localhost:3042`
-
-<details>
-  <summary><b>Troubleshooting</b></summary>
-
-### SQLite module CPU arch incompatibility
-If you encounter errors related to the SQLite module CPU architecture, follow these steps:
-
-1. Ensure `pnpm` was not installed with `volta`. If so, reinstall it using another method.
-2. Remove the `node_modules` directory and clear the pnpm store.
-
-```sh 
-rm -rf ./node_modules
-pnpm store prune
-pnpm store path
-rm -fr /path/from/the/above/command
-```
-3. Reinstall the dependencies.
-   
-```sh 
+```bash
 pnpm install
 ```
-**env: node: No such file or directory**
-If you encounter this error when using pnpm, try the following:
 
-1. Remove the `pnpm` installation.
-```sh 
-which pnpm 
-```
-2. Ensure the correct Node.js version is in use.
-3. Reinstall `pnpm` 
-```sh 
-npm install  -g pnpm 
-```
-</details>
-<br>
+### 3. Link CLI Tools Globally
 
+To use `platformatic`, `plt`, and `watt` commands globally during development:
 
-### Starting Platformatic DB 
-
-Refer to the [quick start guide](https://github.com/platformatic/platformatic/blo) for thorough documentation, or follow these steps to quickly create and start a [Platformatic DB](https://docs.platformatic.dev/docs/db/overview) server:
-
-1. **Create Working Directories:**
-
-```sh 
-mkdir -p my-demo 
-cd my-demo 
+```bash
+pnpm run global-links
 ```
 
-2. **Initialize a package.json**: Create a package.json file.
+Verify the setup:
 
-```sh 
-npm init --yes
+```bash
+platformatic --version
+watt --version
 ```
 
-1. **Create a migrations directory**: Create a directory for your database migration files.
+### 4. Setup Docker Environment (Optional)
 
-```sh 
-mkdir migrations
-touch migrations/001.do.sql
+This step is only required if you plan to run Platformatic DB tests with PostgreSQL, MySQL, and MariaDB. Choose the appropriate Docker Compose file for your system:
+
+**Intel Macs:**
+```bash
+docker compose -f docker-compose-mac.yml up -d
 ```
 
-Add the following SQL query to `001.do.sql`:
-
-```sql 
-CREATE TABLE pages (
-  id INTEGER PRIMARY KEY,
-  title VARCHAR(255) NOT NULL
-)
+**Apple Silicon Macs:**
+```bash
+docker compose -f docker-compose-apple-silicon.yml up -d
 ```
 
-4. **Create Platformatic Configuration File**: Create and configure `platformatic.json`.
-
-```sh 
-touch platformatic.db.json
+**Windows/Linux:**
+```bash
+docker compose up -d
 ```
 
-Add the following configuration:
+## Development Workflow
 
-```json 
-{
-  "server": {
-    "hostname": "127.0.0.1",
-    "port": "3042"
-  },
-  "db": {
-    "connectionString": "sqlite://./pages.db"
-  },
-  "migrations": {
-    "dir": "./migrations",
-    "autoApply": true
-  }
-}
+### Essential Commands
+
+```bash
+# Development workflow
+pnpm test              # Run all tests (uses Docker for databases)
+pnpm run build         # Build all packages
+pnpm run lint          # Lint all packages
+pnpm run gen-schema    # Generate JSON schemas
+pnpm run gen-types     # Generate TypeScript types
+
+# Cleanup commands
+pnpm clean             # Clean node_modules in all packages
+pnpm cleanall          # Clean everything including lockfile
+
+# Testing individual packages
+cd packages/<package-name>
+npm test               # Run tests for specific package
+
+# Version management
+./scripts/sync-version.sh  # Sync versions across all packages
 ```
-
-5. **Start API Server:** Use the Platformatic CLI to start your API server.
-
-```sh
-platformatic start
-```
-
-6.**Interact with the API**
-
 
 ### Testing
 
-1. **Run Tests**: Execute tests using pnpm.
+Tests require Docker for database setup. The test script automatically selects the appropriate Docker Compose file based on your OS.
 
-```sh 
+```bash
 pnpm test
 ```
 
-To update schemas, run `pnpm run gen-schema` in the package directory or `pnpm run build` in the root directory.
+**Test Configuration:**
+- Tests run with concurrency=1 and extended timeouts (300000ms)
+- Pre-commit hooks enforce linting
+- All tests must pass before opening a pull request
 
-If you encounter issues with failing tests without code changes, try:
+**Troubleshooting Tests:**
 
-1. Clean the environment.
+If tests fail without code changes:
 
-```sh
+1. Clean the environment:
+```bash
 pnpm cleanall
 ```
 
-2. Clear `pnpm` store and reinstall packages.
-
-```sh
+2. Clear pnpm store and reinstall:
+```bash
 pnpm store path
 rm -rf /path/from/previous/command
 pnpm install
 ```
 
-Please ensure all tests pass before opening a pull request.
+### Working with Individual Packages
 
-### Updating the CLI docs
+To work on a specific package:
 
-The `cli.md` file is automatically generated and should not be manually edited. To update the CLI docs:
+```bash
+cd packages/<package-name>
+npm test                    # Run package tests
+npm run build              # Build package
+```
 
-1. Update or add the text helpers
-2. Generate the docs.
+## Architecture Overview
 
-```sh 
+### Core Components (packages/)
+- **cli**: Main Platformatic CLI (`platformatic`/`plt` commands)
+- **wattpm**: Node.js application server (`watt` command) 
+- **db**: Database service with auto-generated APIs
+- **service**: HTTP service based on Fastify
+- **composer**: API gateway for aggregating services
+- **runtime**: Microservice orchestration environment
+
+### Stackables (Frontend Framework Integration)
+- **next**, **astro**, **vite**, **remix**: Framework-specific integrations
+- **node**: Generic Node.js stackable
+
+### SQL Components
+- **sql-mapper**: Data mapping layer
+- **sql-graphql**: GraphQL schema generation from SQL
+- **sql-openapi**: REST API generation from SQL
+- **db-authorization**: Database authorization system
+
+## Development Guidelines
+
+### Workspace Dependencies
+- Use `workspace:*` for internal package dependencies
+- All packages share the same version
+- Dependencies are replaced by precise versions during publish by pnpm
+
+### Configuration
+- JSON Schema validation for all configuration files
+- Supports JSON, YAML, and TOML config formats
+- Uses neostandard ESLint configuration
+
+### Database Support
+Supports PostgreSQL, MySQL, MariaDB, and SQLite. The codebase is database-agnostic with automatic schema introspection and API generation.
+
+### Package Structure Patterns
+- Each package has its own `package.json` with consistent scripts
+- TypeScript definitions are auto-generated
+- Fastify-based HTTP services follow consistent plugin patterns
+- Configuration schemas are defined in each package's `lib/schema.js`
+
+## Creating a New Platformatic App
+
+To test your local changes with a new app:
+
+1. Ensure CLI tools are linked globally:
+```bash
+pnpm run global-links
+```
+
+2. Create a new directory:
+```bash
+mkdir my-platformatic-app
+cd my-platformatic-app
+```
+
+3. Initialize a new app:
+```bash
+wattpm create
+```
+
+4. Follow the prompts and start the app:
+```bash
+platformatic start
+```
+
+## Documentation
+
+### Writing Guides
+
+When creating documentation guides, follow this structured approach:
+
+1. **Introduction**: Explain the "why" and "what" - what problem does this solve and what will be accomplished
+2. **Setup Instructions**: Detailed setup steps with prerequisites and environment preparation
+3. **Implementation Steps**: Step-by-step instructions for the demo/tutorial (numbered 3...X)
+4. **Conclusion**: Clear summary of what was accomplished and next steps
+
+**Additional Requirements:**
+- Include architecture diagrams to illustrate the solution
+- Focus on integrating with Express, Fastify, or other third-party services rather than highlighting `@platformatic/service`
+- Prefer using existing project demos and real-world examples over creating artificial examples
+- Test all code examples and commands before publishing
+- Create a short video demonstration for each guide to complement the written instructions
+
+### Building Documentation Locally
+
+The documentation is built using [Docusaurus 3](https://docusaurus.io/) and requires both the main Platformatic repository and the separate [docs repository](https://github.com/platformatic/docs).
+
+**Setup:**
+1. Create a working directory and clone both repositories:
+```bash
+mkdir /workdir && cd /workdir
+git clone https://github.com/platformatic/platformatic.git
+git clone https://github.com/platformatic/docs.git
+```
+
+2. Install dependencies in both repositories:
+```bash
+cd platformatic && npm install && cd ..
+cd docs && npm install
+```
+
+3. Set up the environment and start the development server:
+```bash
+export DOCS=`realpath $PWD/../platformatic/docs`
+npm run sync-and-start
+```
+
+### Updating CLI Documentation
+
+The `docs/cli.md` file is automatically generated. To update it:
+
+1. Update the text helpers in the CLI code
+2. Generate the docs:
+```bash
 node scripts/gen-cli-doc.mjs
 ```
 
-### Releasing
+## Pull Request Process
 
-Platformatic modules share the same release number and are released in a single process. Dependencies use `workspace:*` replaced by precise versions during publish by `pnpm`.
+### Before Submitting
 
-1. Update the version in the root `package.json`.
+1. Ensure all tests pass: `pnpm test`
+2. Run linting: `pnpm run lint`
+3. Build all packages: `pnpm run build`
 
-2. Sync the version.
+### Creating a Pull Request
 
-```sh
-./scripts/sync-version.sh
+1. If your PR fixes a GitHub issue, add this at the top of the PR description:
+```
+fixes #<issue-number>
 ```
 
-3. Publish the release.
+2. Ensure all checks pass and get approval
+3. Merge using "squash and merge" option
 
-```sh 
+## Release Process
+
+Platformatic modules share the same release number and are released together.
+
+1. Update version in root `package.json`
+2. Sync versions across packages:
+```bash
+./scripts/sync-version.sh
+```
+3. Publish the release:
+```bash
 pnpm -r publish --access=public
 ```
 
-### Creating and Merging a PR
+## Troubleshooting
 
-When creating a pull request:
+### SQLite Module CPU Architecture Issues
 
-1. If it fixes a GitHub issue, add the following at the top of the PR description:
+If you encounter SQLite-related errors:
 
-```sh 
-fixes #issue number 
+1. Ensure pnpm was not installed with volta
+2. Clean and reinstall:
+```bash
+rm -rf ./node_modules
+pnpm store prune
+pnpm store path
+rm -rf /path/from/the/above/command
+pnpm install
 ```
 
-2. Ensure all checks pass and the changes are approved.
-3. Merge the PR using the "squash and merge" option.
+### "env: node: No such file or directory"
 
-### Navigating the project via ctags
+1. Check pnpm installation: `which pnpm`
+2. Ensure correct Node.js version is active
+3. Reinstall pnpm: `npm install -g pnpm`
 
-You can navigate the project using [universal ctags](https://github.com/universal-ctags/ctags). Generate a `tags` file with:
+## Navigation Tools
 
-```
+Generate a `tags` file for code navigation:
+
+```bash
 ctags --exclude=node_modules --exclude='**/*.test.js' --exclude='**/build' -R *
 ```
 
+## Developer Certificate of Origin
 
-## Developer Contribution of Origin
+All contributions must include a Developer Certificate of Origin (DCO) sign-off. Use the `-s` flag when committing:
+
+```bash
+git commit -s -m "Your commit message"
+```
+
+This automatically adds your `Signed-off-by` line to the commit message. If working with AI assistance, ensure both contributors are signed off.
 
 ```
 Developer Certificate of Origin
@@ -333,3 +356,11 @@ By making a contribution to this project, I certify that:
 
 If you want to know how to retroactively add the DCO to your commits,
 check out [this guide](https://github.com/src-d/guide/blob/master/developer-community/fix-DCO.md).
+
+## Getting Help
+
+- Check the [documentation](https://docs.platformatic.dev/)
+- Join our [Discord community](https://discord.gg/platformatic) for real-time help and discussions
+- Open an issue on GitHub
+
+Thank you for contributing to Platformatic! 🚀
