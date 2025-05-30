@@ -473,6 +473,8 @@ class Runtime extends EventEmitter {
     await this.#setDispatcher(undiciConfig)
 
     const workers = this.#workers.values()
+    console.log('workers---------------------', workers)
+
     const results = await Promise.allSettled(
       workers.map(
         worker => sendViaITC(worker, 'updateUndiciConfig', undiciConfig)
