@@ -17,6 +17,8 @@ You are all set, you can now start your runtime as usual via `wattpm dev` or `wa
 
 ## Example configuration file
 
+Create a `watt.json` in the root folder of your service with the following contents:
+
 ```json
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/astro/2.0.0.json",

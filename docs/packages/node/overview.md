@@ -23,6 +23,8 @@ npm install @platformatic/node
 
 ## Example configuration file
 
+Create a `watt.json` in the root folder of your service with the following contents:
+
 ```json
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.0.0.json",

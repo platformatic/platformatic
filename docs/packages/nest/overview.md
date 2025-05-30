@@ -23,6 +23,8 @@ npm install @platformatic/nest
 
 ## Example configuration file
 
+Create a `watt.json` in the root folder of your service with the following contents:
+
 ```json
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/nest/2.66.0.json",
