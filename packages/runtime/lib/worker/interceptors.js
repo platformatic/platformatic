@@ -11,26 +11,18 @@ const { RemoteCacheStore, httpCacheInterceptor } = require('./http-cache')
 const { kInterceptors } = require('./symbols')
 
 async function setDispatcher (runtimeConfig) {
-  globalThis[kInterceptors] = {
-    threadDispatcher: null,
-    threadInterceptor: null,
-    cacheInterceptor: null,
-    updatableInterceptors: {}
-  }
+  const threadDispatcher = createThreadInterceptor(runtimeConfig)
+  const threadInterceptor = threadDispatcher.interceptor
 
-  const undiciCtx = globalThis[kInterceptors]
-
-  undiciCtx.threadDispatcher = createThreadInterceptor(runtimeConfig)
-  undiciCtx.threadInterceptor = undiciCtx.threadDispatcher.interceptor
-
+  let cacheInterceptor = null
   if (runtimeConfig.httpCache) {
-    undiciCtx.cacheInterceptor = createHttpCacheInterceptor(runtimeConfig)
+    cacheInterceptor = createHttpCacheInterceptor(runtimeConfig)
   }
 
-  let updatableInterceptors = []
+  let userInterceptors = []
   if (Array.isArray(runtimeConfig.undici?.interceptors)) {
     const _require = createRequire(join(workerData.dirname, 'package.json'))
-    updatableInterceptors = await loadInterceptors(_require, runtimeConfig.undici.interceptors)
+    userInterceptors = await loadInterceptors(_require, runtimeConfig.undici.interceptors)
   }
 
   const dispatcherOpts = await getDispatcherOpts(runtimeConfig.undici)
@@ -38,18 +30,19 @@ async function setDispatcher (runtimeConfig) {
   setGlobalDispatcher(
     new Agent(dispatcherOpts).compose(
       [
-        undiciCtx.threadInterceptor,
-        undiciCtx.cacheInterceptor,
-        ...updatableInterceptors
+        threadInterceptor,
+        cacheInterceptor,
+        ...userInterceptors
       ].filter(Boolean)
     )
   )
 
-  return undiciCtx
+  return { threadDispatcher }
 }
 
 async function updateUndiciInterceptors (undiciConfig) {
-  const { updatableInterceptors } = globalThis[kInterceptors]
+  const updatableInterceptors = globalThis[kInterceptors]
+  if (!updatableInterceptors) return
 
   if (Array.isArray(undiciConfig?.interceptors)) {
     for (const interceptorConfig of undiciConfig.interceptors) {
@@ -108,7 +101,11 @@ async function loadInterceptors (_require, interceptorsConfigs, key) {
 }
 
 async function loadInterceptor (_require, interceptorConfig, key) {
-  const undiciCtx = globalThis[kInterceptors]
+  let updatableInterceptors = globalThis[kInterceptors]
+  if (!updatableInterceptors) {
+    updatableInterceptors = {}
+    globalThis[kInterceptors] = updatableInterceptors
+  }
 
   const { module, options } = interceptorConfig
 
@@ -124,12 +121,12 @@ async function loadInterceptor (_require, interceptorConfig, key) {
   const interceptorCtx = { createInterceptor, updateInterceptor }
 
   if (key !== undefined) {
-    if (!undiciCtx.updatableInterceptors[key]) {
-      undiciCtx.updatableInterceptors[key] = {}
+    if (!updatableInterceptors[key]) {
+      updatableInterceptors[key] = {}
     }
-    undiciCtx.updatableInterceptors[key][module] = interceptorCtx
+    updatableInterceptors[key][module] = interceptorCtx
   } else {
-    undiciCtx.updatableInterceptors[module] = interceptorCtx
+    updatableInterceptors[module] = interceptorCtx
   }
 
   return updatableInterceptor
