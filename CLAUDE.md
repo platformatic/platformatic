@@ -76,3 +76,12 @@ Supports PostgreSQL, MySQL, MariaDB, and SQLite. The codebase is database-agnost
 - TypeScript definitions are auto-generated
 - Fastify-based HTTP services follow consistent plugin patterns
 - Configuration schemas are defined in each package's `lib/schema.js`
+
+## Git Commit Guidelines
+
+All commits must include a DCO (Developer Certificate of Origin) sign-off. When creating commits, always include both:
+
+- `Co-Authored-By: Claude <noreply@anthropic.com>`
+- `Signed-off-by: Claude <noreply@anthropic.com>`
+
+This ensures compliance with the project's DCO requirements.
