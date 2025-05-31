@@ -15,162 +15,186 @@
 const sidebars = {
   docs: [
     'Overview',
-    'cli',
     {
       type: 'category',
-      label: 'Platformatic Composer',
+      label: 'wattpm',
       collapsed: true,
       items: [
-        'composer/overview',
-        'composer/configuration',
-        'composer/programmatic',
-        'composer/api-modification',
-        'composer/plugin'
+        'packages/watt/overview',
+        'packages/watt/configuration',
+        'packages/watt/reference'
       ]
     },
     {
       type: 'category',
-      label: 'Platformatic DB',
+      label: 'platformatic (cli)',
       collapsed: true,
       items: [
-        'db/overview',
-        'db/configuration',
-        'db/migrations',
+        'packages/platformatic/cli'
+      ]
+    },
+    {
+      type: 'category',
+      label: '@platformatic/composer',
+      collapsed: true,
+      items: [
+        'packages/composer/overview',
+        'packages/composer/configuration',
+        'packages/composer/programmatic',
+        'packages/composer/api-modification',
+        'packages/composer/plugin'
+      ]
+    },
+    {
+      type: 'category',
+      label: '@platformatic/db',
+      collapsed: true,
+      items: [
+        'packages/db/overview',
+        'packages/db/configuration',
+        'packages/db/migrations',
         {
           type: 'category',
           label: 'Authorization',
           collapsed: true,
           items: [
-            'db/authorization/overview',
-            'db/authorization/strategies',
-            'db/authorization/user-roles-metadata',
-            'db/authorization/rules'
+            'packages/db/authorization/overview',
+            'packages/db/authorization/strategies',
+            'packages/db/authorization/user-roles-metadata',
+            'packages/db/authorization/rules'
           ]
         },
-        'db/plugin',
-        'db/logging',
-        'db/programmatic',
-        'db/schema-support',
-        'db/seed',
-        "db/securing-platformatic-db",
-        "db/jwt-auth0",
-        "db/jwt-keycloak",
+        'packages/db/plugin',
+        'packages/db/logging',
+        'packages/db/programmatic',
+        'packages/db/schema-support',
+        'packages/db/seed',
+        "packages/db/securing-platformatic-db",
+        "packages/db/jwt-auth0",
+        "packages/db/jwt-keycloak",
       ]
     },
     {
       type: 'category',
-      label: 'Platformatic Runtime',
-      collapsed: true,
-      items: ['runtime/overview', 'runtime/configuration', 'runtime/multithread-architecture', 'runtime/programmatic']
-    },
-    {
-      type: 'category',
-      label: 'Watt',
-      collapsed: true,
-      items: ['watt/overview', 'watt/configuration', 'watt/reference']
-    },
-    {
-      type: 'category',
-      label: 'Platformatic Service',
-      collapsed: true,
-      items: ['service/overview', 'service/configuration', 'service/plugin', 'service/programmatic']
-    },
-    {
-      type: 'category',
-      label: 'Client',
-      collapsed: true,
-      items: ['client/overview', 'client/programmatic', 'client/frontend']
-    },
-    {
-      type: 'category',
-      label: 'Packages',
+      label: '@platformatic/runtime',
       collapsed: true,
       items: [
+        'packages/runtime/overview',
+        'packages/runtime/configuration',
+        'packages/runtime/multithread-architecture',
+        'packages/runtime/programmatic'
+      ]
+    },
+    {
+      type: 'category',
+      label: '@platformatic/service',
+      collapsed: true,
+      items: [
+        'packages/service/overview',
+        'packages/service/configuration',
+        'packages/service/plugin',
+        'packages/service/programmatic'
+      ]
+    },
+    {
+      type: 'category',
+      label: '@platformatic/client',
+      collapsed: true,
+      items: [
+        'packages/client/overview',
+        'packages/client/programmatic',
+        'packages/client/frontend'
+      ]
+    },
+    {
+      type: 'category',
+      label: '@platformatic/node',
+      collapsed: true,
+      items: [
+        'packages/node/overview',
+        'packages/node/configuration'
+      ]
+    },
+    {
+      type: 'category',
+      label: '@platformatic/astro',
+      collapsed: true,
+      items: [
+        'packages/astro/overview',
+        'packages/astro/configuration',
+        'packages/astro/caching'
+      ]
+    },
+    {
+      type: 'category',
+      label: '@platformatic/next',
+      collapsed: true,
+      items: ['packages/next/overview', 'packages/next/configuration']
+    },
+    {
+      type: 'category',
+      label: '@platformatic/remix',
+      collapsed: true,
+      items: ['packages/remix/overview', 'packages/remix/configuration']
+    },
+    {
+      type: 'category',
+      label: '@platformatic/vite',
+      collapsed: true,
+      items: ['packages/vite/overview', 'packages/vite/configuration']
+    },
+    {
+      type: 'category',
+      label: '@platformatic/sql-openapi',
+      collapsed: true,
+      items: [
+        'packages/sql-openapi/overview',
+        'packages/sql-openapi/api',
+        'packages/sql-openapi/ignore',
+        'packages/sql-openapi/explicit-include'
+      ]
+    },
+    {
+      type: 'category',
+      label: '@platformatic/sql-graphql',
+      collapsed: true,
+      items: [
+        'packages/sql-graphql/overview',
+        'packages/sql-graphql/queries',
+        'packages/sql-graphql/mutations',
+        'packages/sql-graphql/many-to-many',
+        'packages/sql-graphql/ignore'
+      ]
+    },
+    {
+      type: 'category',
+      label: '@platformatic/sql-mapper',
+      collapsed: true,
+      items: [
+        'packages/sql-mapper/overview',
+        'packages/sql-mapper/fastify-plugin',
         {
           type: 'category',
-          label: 'Node',
-          collapsed: true,
-          items: ['packages/node/overview', 'packages/node/configuration']
-        },
-        {
-          type: 'category',
-          label: 'Astro',
-          collapsed: true,
-          items: ['packages/astro/overview', 'packages/astro/configuration', 'packages/astro/caching']
-        },
-        {
-          type: 'category',
-          label: 'Next',
-          collapsed: true,
-          items: ['packages/next/overview', 'packages/next/configuration']
-        },
-        {
-          type: 'category',
-          label: 'Remix',
-          collapsed: true,
-          items: ['packages/remix/overview', 'packages/remix/configuration']
-        },
-        {
-          type: 'category',
-          label: 'Vite',
-          collapsed: true,
-          items: ['packages/vite/overview', 'packages/vite/configuration']
-        },
-        {
-          type: 'category',
-          label: 'SQL-to-OpenAPI',
+          label: 'Entities',
           collapsed: true,
           items: [
-            'packages/sql-openapi/overview',
-            'packages/sql-openapi/api',
-            'packages/sql-openapi/ignore',
-            'packages/sql-openapi/explicit-include'
+            'packages/sql-mapper/entities/overview',
+            'packages/sql-mapper/entities/fields',
+            'packages/sql-mapper/entities/api',
+            'packages/sql-mapper/entities/example',
+            'packages/sql-mapper/entities/hooks',
+            'packages/sql-mapper/entities/relations',
+            'packages/sql-mapper/entities/transactions'
           ]
-        },
-        {
-          type: 'category',
-          label: 'SQL-to-GraphQL',
-          collapsed: true,
-          items: [
-            'packages/sql-graphql/overview',
-            'packages/sql-graphql/queries',
-            'packages/sql-graphql/mutations',
-            'packages/sql-graphql/many-to-many',
-            'packages/sql-graphql/ignore'
-          ]
-        },
-        {
-          type: 'category',
-          label: 'SQL-Mapper',
-          collapsed: true,
-          items: [
-            'packages/sql-mapper/overview',
-            'packages/sql-mapper/fastify-plugin',
-            {
-              type: 'category',
-              label: 'Entities',
-              collapsed: true,
-              items: [
-                'packages/sql-mapper/entities/overview',
-                'packages/sql-mapper/entities/fields',
-                'packages/sql-mapper/entities/api',
-                'packages/sql-mapper/entities/example',
-                'packages/sql-mapper/entities/hooks',
-                'packages/sql-mapper/entities/relations',
-                'packages/sql-mapper/entities/transactions'
-              ]
-            }
-          ]
-        },
-        {
-          type: 'category',
-          label: 'SQL-Events',
-          collapsed: true,
-          items: ['packages/sql-events/overview', 'packages/sql-events/fastify-plugin']
         }
       ]
     },
-
+    {
+      type: 'category',
+      label: '@platformatic/sql-events',
+      collapsed: true,
+      items: ['packages/sql-events/overview', 'packages/sql-events/fastify-plugin']
+    },
     'FAQs'
   ],
   Learn: [

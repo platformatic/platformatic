@@ -1,3 +1,5 @@
+import Issues from '../../getting-started/issues.md';
+
 # Plugin
 
 To add more features to a Platformatic service, you will need to register a plugin, which will be in the form of a standard [Fastify](https://fastify.io) plugin.
@@ -108,4 +110,4 @@ This setup supports pre-compiled sources to reduce cold start time during deploy
 }
 ```
 
-
+<Issues />

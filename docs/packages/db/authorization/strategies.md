@@ -3,7 +3,7 @@ title: Strategies
 label: Authorization
 ---
 
-import Issues from "../../getting-started/issues.md"
+import Issues from "../../../getting-started/issues.md"
 
 # Authorization Strategies
 

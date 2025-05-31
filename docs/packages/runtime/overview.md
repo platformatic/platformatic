@@ -3,7 +3,7 @@ title: Overview
 label: Platformatic Runtime
 ---
 
-import Issues from '../getting-started/issues.md';
+import Issues from '../../getting-started/issues.md';
 
 # Platformatic Runtime
 
