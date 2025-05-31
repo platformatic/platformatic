@@ -497,8 +497,8 @@ importers:
         specifier: workspace:^
         version: link:../utils
       '@scalar/fastify-api-reference':
-        specifier: 1.29.3
-        version: 1.29.3
+        specifier: 1.31.2
+        version: 1.31.2
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -1952,8 +1952,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@scalar/fastify-api-reference':
-        specifier: 1.29.3
-        version: 1.29.3
+        specifier: 1.31.2
+        version: 1.31.2
       '@types/ws':
         specifier: ^8.5.10
         version: 8.18.1
@@ -2335,8 +2335,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@scalar/fastify-api-reference':
-        specifier: 1.29.3
-        version: 1.29.3
+        specifier: 1.31.2
+        version: 1.31.2
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -4472,12 +4472,12 @@ packages:
     resolution: {integrity: sha512-k5TsihZcSdVnqE6JrRFdsvePDTe2RxjE+1wHdcnyFdIPief+ZdPn2fxCTlN0ozLoe08xlY3N9DHzDaneMpX58Q==}
     engines: {node: '>=20'}
 
-  '@scalar/fastify-api-reference@1.29.3':
-    resolution: {integrity: sha512-2hp8AQIkeU0yczYroMH76IdsMV7xOH3wv92odO5ZmRNwigGNHi/9kM9PJBi8jRTTjiPO1RZeAO1/xR7PN0ECfg==}
+  '@scalar/fastify-api-reference@1.31.2':
+    resolution: {integrity: sha512-dolYlao65i+/FNWa41Eqjr1ODftiZFxKSD2dnFm4UmeXVxDFhImMecobLOw9Gfrc8z0TO2NNkiNJ9f0HMJl2pQ==}
     engines: {node: '>=20'}
 
-  '@scalar/openapi-parser@0.11.1':
-    resolution: {integrity: sha512-OO+LqmCX2X7M0wdhWLVQgF2FvUu1VpDIsdjOrcLnkZoAWyzQGlIsdaICztuwOahM/O5Rgib+B5/6vdV0EsE3gg==}
+  '@scalar/openapi-parser@0.13.0':
+    resolution: {integrity: sha512-tSENPcbFP0ljxHiFfc241Ov/0OI6W8Ce1pJCfn7CDKvfcU1brU+IJgyd4w2oOi/jhFN3YnmMsUoBMFfVPubSjA==}
     engines: {node: '>=20'}
 
   '@scalar/openapi-types@0.3.1':
@@ -11908,16 +11908,16 @@ snapshots:
     dependencies:
       '@scalar/types': 0.2.1
 
-  '@scalar/fastify-api-reference@1.29.3':
+  '@scalar/fastify-api-reference@1.31.2':
     dependencies:
       '@scalar/core': 0.3.1
-      '@scalar/openapi-parser': 0.11.1
+      '@scalar/openapi-parser': 0.13.0
       '@scalar/openapi-types': 0.3.1
       '@scalar/types': 0.2.1
       fastify-plugin: 4.5.1
       github-slugger: 2.0.0
 
-  '@scalar/openapi-parser@0.11.1':
+  '@scalar/openapi-parser@0.13.0':
     dependencies:
       ajv: 8.17.1
       ajv-draft-04: 1.0.0(ajv@8.17.1)
