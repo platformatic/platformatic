@@ -2,9 +2,11 @@
   "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.6.0.json",
   "watch": false,
   "managementApi": true,
-  "metrics": false,
-  "startTimeout": 500,
+  "metrics": true,
   "restartOnError": 500,
+  "autoload": {
+    "path": "."
+  },
   "services": [
     {
       "id": "node",
