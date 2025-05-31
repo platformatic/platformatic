@@ -729,6 +729,8 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
       async t => {
         let args
         const { root, config } = await prepareRuntime(t, id, true, null, async (root, config, _args) => {
+          t.after(() => safeRemove(root))
+
           for (const type of ['backend', 'composer']) {
             await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
               recursive: true
@@ -772,7 +774,7 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
         }
 
         // Start the runtime
-        const { url } = await startRuntime(t, root, config, pauseTimeout)
+        const { runtime, url } = await startRuntime(t, root, config, pauseTimeout)
 
         if (runtimeHost) {
           const actualHost = new URL(url).hostname
@@ -786,7 +788,7 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
 
         // Make sure all checks work properly
         for (const check of checks) {
-          await check(t, url, check)
+          await check(t, url, runtime)
         }
       }
     )
@@ -844,7 +846,15 @@ export async function verifyReusePort (t, configuration, integrityCheck) {
 }
 
 // helper to create a runtime
-export async function fullSetupRuntime ({ t, port, configRoot, build = false, production = false, configFile = 'platformatic.runtime.json' }) {
+export async function fullSetupRuntime ({
+  t,
+  port,
+  configRoot,
+  build = false,
+  production = false,
+  configFile = 'platformatic.runtime.json',
+  additionalSetup = null
+}) {
   if (!port) {
     const getPort = await import('get-port')
     port = await getPort.default()
@@ -870,6 +880,10 @@ export async function fullSetupRuntime ({ t, port, configRoot, build = false, pr
 
   // Ensure the dependencies
   await ensureDependencies(config)
+
+  if (additionalSetup) {
+    await additionalSetup?.(root, config, args)
+  }
 
   config.configManager.current.server = { port }
 

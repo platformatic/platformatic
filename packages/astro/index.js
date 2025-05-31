@@ -41,7 +41,6 @@ export class AstroStackable extends BaseStackable {
     this.#astro = resolve(dirname(resolvePackage(this.root, 'astro')), '../..')
     const astroPackage = JSON.parse(await readFile(resolve(this.#astro, 'package.json'), 'utf-8'))
 
-    /* c8 ignore next 3 */
     if (!satisfies(astroPackage.version, supportedVersions)) {
       throw new errors.UnsupportedVersion('astro', astroPackage.version, supportedVersions)
     }
@@ -59,7 +58,7 @@ export class AstroStackable extends BaseStackable {
       await this.#startDevelopment(listen)
     }
 
-    this._collectMetrics()
+    await this._collectMetrics()
   }
 
   async stop () {

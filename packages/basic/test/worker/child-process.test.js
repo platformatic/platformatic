@@ -50,7 +50,7 @@ test('ChildProcess - the process will close upon request', async t => {
   const childManager = await getChildManager(stackable)
 
   const [, socket] = await once(childManager, 'ready')
-  await childManager.notify(socket, 'close')
+  await childManager.send(socket, 'close')
   await rejects(() => promise, /Process exited with non zero exit code/)
 })
 

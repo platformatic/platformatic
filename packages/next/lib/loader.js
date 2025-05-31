@@ -42,11 +42,8 @@ function parseSingleExpression (expr) {
       __pltOriginalNextConfig.cacheMaxMemorySize = 0
     }
 
-    // This is to send the configuraion when Next is executed in a child process (development)
-    globalThis[Symbol.for('plt.children.itc')]?.notify('config', __pltOriginalNextConfig)
-
-    // This is to send the configuraion when Next is executed in the same process (production)
-    process.emit('plt:next:config', __pltOriginalNextConfig)
+    // This is to send the configuraion when Next is executed in a child process
+    globalThis.platformatic.notifyConfig(__pltOriginalNextConfig)
 
     return __pltOriginalNextConfig;
   }
@@ -87,8 +84,7 @@ function createEvaluatorWrapperFunction (original) {
               }
             `)
           : undefined,
-        parseSingleExpression(`globalThis[Symbol.for('plt.children.itc')]?.notify('config', ${originalId})`),
-        parseSingleExpression(`process.emit('plt:next:config', ${originalId})`),
+        parseSingleExpression(`globalThis.platformatic.notifyConfig(${originalId})`),
         returnStatement(identifier(originalId))
       ].filter(e => e)
     ),

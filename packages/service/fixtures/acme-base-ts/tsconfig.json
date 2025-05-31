@@ -9,6 +9,7 @@
     "pretty": true,
     "strictNullChecks": true,
     "strict": true,
+    "skipLibCheck": true,
     "outDir": "dist"
   },
   "watchOptions": {
@@ -16,9 +17,6 @@
     "watchDirectory": "fixedPollingInterval",
     "fallbackPolling": "dynamicPriority",
     "synchronousWatchDirectory": true,
-    "excludeDirectories": [
-      "**/node_modules",
-      "dist"
-    ]
+    "excludeDirectories": ["**/node_modules", "dist"]
   }
 }

@@ -28,6 +28,10 @@ export const configCandidates = [
   'watt.tml'
 ]
 
+function hasDependency (packageJson, dependency) {
+  return packageJson.dependencies?.[dependency] || packageJson.devDependencies?.[dependency]
+}
+
 function isImportFailedError (error, pkg) {
   if (error.code !== 'ERR_MODULE_NOT_FOUND' && error.code !== 'MODULE_NOT_FOUND') {
     return false
@@ -60,15 +64,37 @@ async function importStackablePackage (directory, pkg) {
 
     const serviceDirectory = workerData ? relative(workerData.dirname, directory) : directory
     throw new Error(
-      `Unable to import package '${pkg}'. Please add it as a dependency  in the package.json file in the folder ${serviceDirectory}.`
+      `Unable to import package '${pkg}'. Please add it as a dependency in the package.json file in the folder ${serviceDirectory}.`
     )
   }
 }
 
-export async function importStackableAndConfig (root, config) {
-  let moduleName = '@platformatic/node'
-  let autodetectDescription = 'is using a generic Node.js application'
+export function detectStackable (packageJson) {
+  let name = '@platformatic/node'
+  let label = 'Node.js'
 
+  if (hasDependency(packageJson, '@nestjs/core')) {
+    name = '@platformatic/nest'
+    label = 'NestJS'
+  } else if (hasDependency(packageJson, 'next')) {
+    name = '@platformatic/next'
+    label = 'Next.js'
+  } else if (hasDependency(packageJson, '@remix-run/dev')) {
+    name = '@platformatic/remix'
+    label = 'Remix'
+  } else if (hasDependency(packageJson, 'astro')) {
+    name = '@platformatic/astro'
+    label = 'Astro'
+    // Since Vite is often used with other frameworks, we must check for Vite last
+  } else if (hasDependency(packageJson, 'vite')) {
+    name = '@platformatic/vite'
+    label = 'Vite'
+  }
+
+  return { name, label }
+}
+
+export async function importStackableAndConfig (root, config) {
   let rootPackageJson
   try {
     rootPackageJson = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf-8'))
@@ -87,25 +113,16 @@ export async function importStackableAndConfig (root, config) {
     }
   }
 
-  const { dependencies, devDependencies } = rootPackageJson
-
-  if (dependencies?.next || devDependencies?.next) {
-    autodetectDescription = 'is using Next.js'
-    moduleName = '@platformatic/next'
-  } else if (dependencies?.['@remix-run/dev'] || devDependencies?.['@remix-run/dev']) {
-    autodetectDescription = 'is using Remix'
-    moduleName = '@platformatic/remix'
-  } else if (dependencies?.astro || devDependencies?.astro) {
-    autodetectDescription = 'is using Astro'
-    moduleName = '@platformatic/astro'
-  } else if (dependencies?.vite || devDependencies?.vite) {
-    autodetectDescription = 'is using Vite'
-    moduleName = '@platformatic/vite'
-  }
-
+  const { label, name: moduleName } = detectStackable(rootPackageJson)
   const stackable = await importStackablePackage(root, moduleName)
 
-  return { stackable, config, autodetectDescription, moduleName }
+  return {
+    stackable,
+    config,
+    autodetectDescription:
+      moduleName === '@platformatic/node' ? 'is a generic Node.js application' : `is using ${label}`,
+    moduleName
+  }
 }
 
 async function buildStackable (opts) {

@@ -27,6 +27,7 @@ const defaultTypesWithAliases = {
   basic: 'application',
   node: 'application',
   vite: 'application',
+  nest: 'application',
   next: 'application',
   astro: 'application',
   remix: 'application'

@@ -1,0 +1,6 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/nest/2.56.0.json",
+  "nest": {
+    "adapter": "fastify"
+  }
+}
