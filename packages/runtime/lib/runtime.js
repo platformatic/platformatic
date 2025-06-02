@@ -135,7 +135,7 @@ class Runtime extends EventEmitter {
     for (const service of config.services) {
       const count = service.workers ?? this.#configManager.current.workers
       if (count > 1 && service.entrypoint && !features.node.reusePort) {
-        this.logger.warn(`entrypoint and reusePort on service "${service.id}" requires a single worker, setting workers to 1 instead of ${count}`)
+        this.logger.warn(`"${service.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${count}`)
         workersConfig.push({ id: service.id, workers: 1 })
       } else {
         workersConfig.push({ id: service.id, workers: count })
