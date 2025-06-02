@@ -46,140 +46,73 @@ cd demo
 npm install
 ```
 
-### 2. Install Required Dependencies
+### 2. Use `wattpm create`
 
-Then, install the required dependencies for Watt:
+Use `wattpm create` to wrap your application inside Watt.
 
 ```bash
-npm install --save wattpm @platformatic/node
+$ pnpx wattpm create
+Hello User, welcome to Watt 2.66.1!
+? This folder seems to already contain a Node.js application. Do you want to wrap into Watt? yes
+? What port do you want to use? 3042
+[15:59:20.315] INFO (53128): /home/user/work/demo/.env written!
+[15:59:20.319] INFO (53128): /home/user/work/demo/.env.sample written!
+[15:59:20.319] INFO (53128): /home/user/work/demo/package.json written!
+[15:59:20.320] INFO (53128): /home/user/work/demo/watt.json written!
+[15:59:20.320] INFO (53128): Installing dependencies for the application using pnpm ...
+[15:59:37.237] INFO (53128): You are all set! Run `pnpm start` to start your project.
 ```
 
-Where [`wattpm`](/docs/watt/overview) is the Watt CLI and [`@platformatic/node`](/docs/packages/node/overview) is the generic adapter for "bare" Node.js applications,
-if yours is a Next.js, Astro, or Remix application you might want to use the respective packages:
-[`@platformatic/next`](/packages/next/overview),
-[`@platformatic/remix`](/packages/remix/overview),
-[`@platformatic/astro`](/packages/astro/overview).
+### 3. Setup application commands (optional)
 
-### 3. Create Configuration Files
-
-Create a `watt.json` in your project root:
+If your application is using custom commands to start, you must set them in your `watt.json`. Modify the `application.commands` property like in the example below:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.65.0.json",
-  "node": {
-    "main": "path/to/your/server/entry-point.js"
+  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.67.0.json",
+  "application": {
+    "commands": {
+      "development": "npm run dev",
+      "build": "npm run build",
+      "start": "npm run start"
+    }
   },
   "runtime": {
+    "logger": {
+      "level": "{PLT_SERVER_LOGGER_LEVEL}"
+    },
     "server": {
-      "hostname": "{HOSTNAME}",
+      "hostname": "{PLT_SERVER_HOSTNAME}",
       "port": "{PORT}"
     },
-    "logger": {
-      "level": "info"
-    }
+    "managementApi": "{PLT_MANAGEMENT_API}"
   }
-}
-```
-
-Replace `node.main` with the path to your compiled server entry point (e.g., `"dist/server.js"` for TypeScript projects).
-
-### 3. Update Environment Variables
-
-Add these variables to your `.env` file or `.env.example`:
-
-```
-# Watt
-HOSTNAME=127.0.0.1
-PORT=3000  # Choose your preferred port
-```
-
-You'll need to set `HOSTNAME` to `0.0.0.0` inside docker containers to allow external access.
-
-### 4. Add an NPM Script
-
-Add a script to your package.json:
-
-```json
-"scripts": {
-  "watt-start": "wattpm start"
 }
 ```
 
 ## Starting Your Application
 
-Once everything is set up, you can start your application with:
+Once everything is set up, you can start your application in development mode with:
 
 ```bash
-npm run watt-start
+wattpm dev
 ```
 
-Or directly with:
+or, you can build and start your application in production mode:
 
 ```bash
-npx wattpm start
+wattpm build
+wattpm start
 ```
 
 ## Common Issues and Solutions
 
 - **Port conflicts**: If the specified port is already in use, Watt will try the next one.
-- **Missing entry point**: Verify that the path in `watt-svc.json` points to your actual server entry file.
-- **Build step**: For TypeScript projects, ensure you've built your project before running Watt. You can use `npx wattpm build` to compile your TypeScript files.
-- **Environment variables**: Confirm that all required environment variables are available.
-
-## Next-step: add more services
-
-In case you want to divide your application into multiple services, you can do so by creating multiple `watt.json` files, one for each service.
-Then you can add them to the `watt.json` file like this:
-
-```json
-  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.65.0.json",
-  "server": {
-    "hostname": "{HOSTNAME}",
-    "port": "{PORT}"
-  },
-  "logger": {
-    "level": "info"
-  },
-  "services": [
-    {
-      "id": "service1",
-      "config": "./service1/watt.json",
-      "path": "./service1"
-    },
-    {
-      "id": "service2",
-      "config": "./service2/watt.json",
-      "path": "./service2"
-    }
-  ]
-}
-```
-
-In this case you are better served in using the [`autoload`](/docs/reference/watt/configuration#autoload) feature.
-
-Each of the `watt.json` in the subfolders should look like this one:
-
-```json
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.65.0.json",
-  "node": {
-    "main": "path/to/your/server/entry-point.js"
-  }
-}
-```
-
-Note that if you need to expose multiple services, you'd need to add a [Composer](/docs/composer/overview).
-
-## Common Issues and Solutions
-
-- **Port conflicts**: If the specified port is already in use, Watt will try the next one.
-- **Missing entry point**: Verify that the path in `watt.json` points to your actual server entry file.
-- **Build step**: For TypeScript projects, ensure you've built your project before running Watt. You can use `npx wattpm build` to compile your TypeScript files.
+- **Missing scripts**: If you use a custom start script, insert into the `watt.json` file in the section `application.commands.start`. See the step 3 above for more informations.
+- **Build step**: For TypeScript projects, ensure you've built your project before running Watt. You can use `wattpm build` to compile your TypeScript files.
 - **Environment variables**: Confirm that all required environment variables are available.
 
 ## Learn More
 
 - [Watt Quick Start](/docs/getting-started/quick-start-watt/)
-- [@platformatic/node documentation](/docs/packages/node/overview)
 - [Full Stack Guide](/docs/getting-started/quick-start-guide)
