@@ -1,6 +1,7 @@
 'use strict'
 
 import { BaseGenerator } from '@platformatic/generators'
+import { basename, dirname, sep } from 'node:path'
 
 const indexFile = `
 import { createServer } from 'node:http'
@@ -26,9 +27,18 @@ export class Generator extends BaseGenerator {
       return
     }
 
+    const main = this.config.main || 'index.js'
+    let indexPath = ''
+    let indexName = main
+
+    if (main.indexOf(sep) !== -1) {
+      indexPath = dirname(main)
+      indexName = basename(main)
+    }
+
     await this.getPlatformaticVersion()
 
-    this.addFile({ path: '', file: 'index.js', contents: indexFile.trim() + '\n' })
+    this.addFile({ path: indexPath, file: indexName, contents: indexFile.trim() + '\n' })
 
     this.addFile({
       path: '',
@@ -36,9 +46,10 @@ export class Generator extends BaseGenerator {
       contents: JSON.stringify(
         {
           name: `${this.config.serviceName}`,
-          main: 'index.js',
+          main,
+          type: 'module',
           scripts: {
-            start: 'node index.js'
+            start: 'start-platformatic-node'
           },
           dependencies: {
             '@platformatic/node': `^${this.platformaticVersion}`

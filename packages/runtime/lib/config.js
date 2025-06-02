@@ -140,14 +140,14 @@ async function _transformConfig (configManager, args) {
       const basic = await import('@platformatic/basic')
       service.isPLTService = false
       try {
-        const imported = await basic.importStackableAndConfig(service.path)
-        service.type = imported.stackable.default.configType
+        const { stackable } = await basic.importStackableAndConfig(service.path)
+        service.type = stackable.default.configType
         const _require = createRequire(service.path)
         // This is needed to work around Rust bug on dylibs:
         // https://github.com/rust-lang/rust/issues/91979
         // https://github.com/rollup/rollup/issues/5761
         // TODO(mcollina): we should expose this inside every stackable configuration.
-        imported.stackable.default.modulesToLoad?.forEach(m => {
+        stackable.default.modulesToLoad?.forEach(m => {
           const toLoad = _require.resolve(m)
           loadModule(_require, toLoad).catch(() => {})
         })

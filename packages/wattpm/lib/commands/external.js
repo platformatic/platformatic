@@ -1,4 +1,4 @@
-import { configCandidates } from '@platformatic/basic'
+import { configCandidates, detectStackable } from '@platformatic/basic'
 import { loadConfigurationFile as loadRawConfigurationFile, saveConfigurationFile } from '@platformatic/config'
 import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
@@ -44,22 +44,9 @@ async function parseLocalFolder (path) {
   }
 
   // Check which stackable we should use
-  const { dependencies, devDependencies } = packageJson
+  const { name: stackable, label } = await detectStackable(path, packageJson)
 
-  /* c8 ignore next 11 */
-  let stackable = '@platformatic/node'
-
-  if (dependencies?.next || devDependencies?.next) {
-    stackable = '@platformatic/next'
-  } else if (dependencies?.['@remix-run/dev'] || devDependencies?.['@remix-run/dev']) {
-    stackable = '@platformatic/remix'
-  } else if (dependencies?.vite || devDependencies?.vite) {
-    stackable = '@platformatic/vite'
-  } else if (dependencies?.astro || devDependencies?.astro) {
-    stackable = '@platformatic/astro'
-  }
-
-  return { id: packageJson.name ?? basename(path), url, packageJson, stackable }
+  return { id: packageJson.name ?? basename(path), url, packageJson, stackable, label }
 }
 
 async function findExistingConfiguration (root, path) {
@@ -88,7 +75,7 @@ export async function appendEnvVariable (envFile, key, value) {
   return writeFile(envFile, contents, 'utf-8')
 }
 
-async function fixConfiguration (logger, root, configOption) {
+async function fixConfiguration (logger, root, configOption, skipDependencies, packageManager) {
   const configurationFile = await findRuntimeConfigurationFile(logger, root, configOption)
 
   /* c8 ignore next 3 - Hard to test */
@@ -106,7 +93,7 @@ async function fixConfiguration (logger, root, configOption) {
       continue
     }
 
-    const { id, packageJson, stackable } = await parseLocalFolder(resolve(root, path))
+    const { id, packageJson, stackable, label } = await parseLocalFolder(resolve(root, path))
 
     packageJson.dependencies ??= {}
     packageJson.dependencies[stackable] = `^${version}`
@@ -115,10 +102,22 @@ async function fixConfiguration (logger, root, configOption) {
       $schema: `https://schemas.platformatic.dev/${stackable}/${version}.json`
     }
 
-    logger.info(`Detected stackable ${bold(stackable)} for service ${bold(id)}, adding to the service dependencies.`)
+    if (stackable === '@platformatic/node') {
+      logger.info(
+        `Service ${bold(id)} is a ${bold('generic Node.js application')}. Adding ${bold(stackable)} to its package.json dependencies.`
+      )
+    } else {
+      logger.info(
+        `Service ${bold(id)} is using ${bold(label)}. Adding ${bold(stackable)} to its package.json dependencies.`
+      )
+    }
 
     await saveConfigurationFile(resolve(path, 'package.json'), packageJson)
     await saveConfigurationFile(resolve(path, 'watt.json'), wattJson)
+  }
+
+  if (!skipDependencies) {
+    return await installDependencies(logger, root, config.services, false, packageManager)
   }
 }
 
@@ -363,7 +362,7 @@ export async function resolveServices (
 
 export async function importCommand (logger, args) {
   const {
-    values: { config, id, http, branch },
+    values: { config, id, http, branch, 'skip-dependencies': skipDependencies, 'package-manager': packageManager },
     positionals
   } = parseArgs(
     args,
@@ -383,6 +382,15 @@ export async function importCommand (logger, args) {
       branch: {
         type: 'string',
         short: 'b'
+      },
+      'skip-dependencies': {
+        type: 'boolean',
+        short: 's',
+        default: false
+      },
+      'package-manager': {
+        type: 'string',
+        short: 'P'
       }
     },
     false
@@ -397,7 +405,7 @@ export async function importCommand (logger, args) {
     Two arguments = root and URL
   */
   if (positionals.length === 0) {
-    return fixConfiguration(logger, '', config)
+    return fixConfiguration(logger, '', config, skipDependencies, packageManager)
   } else if (positionals.length === 1) {
     root = getRoot()
     rawUrl = positionals[0]
@@ -513,6 +521,14 @@ export const help = {
       {
         usage: '-b, --branch <branch>',
         description: 'The branch to clone (the default is main)'
+      },
+      {
+        usage: '-s, --skip-dependencies',
+        description: 'Do not install services dependencies'
+      },
+      {
+        usage: 'P, --package-manager <executable>',
+        description: 'Use an alternative package manager (the default is to autodetect it)'
       }
     ]
   },

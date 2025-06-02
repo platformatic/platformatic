@@ -154,7 +154,7 @@ class ServiceStackable {
 
     return {
       enabled,
-      path: dirname(this.configManager.fullPath),
+      path: this.configManager.dirname ?? dirname(this.configManager.fullPath),
       allow: config.watch?.allow,
       ignore: config.watch?.ignore
     }

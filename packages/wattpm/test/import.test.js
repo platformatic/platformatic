@@ -405,7 +405,7 @@ test('import - when launched without arguments, should fix the configuration of 
   const originalFileContents = await loadRawConfigurationFile(configurationFile)
 
   process.chdir(rootDir)
-  await wattpm('import')
+  const importProcess = await wattpm('import')
 
   deepStrictEqual(await loadRawConfigurationFile(configurationFile), originalFileContents)
 
@@ -422,6 +422,85 @@ test('import - when launched without arguments, should fix the configuration of 
   }
 
   deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, 'web-2/third/watt.json')), { foo: 'bar' })
+
+  ok(
+    importProcess.stdout.includes(
+      'Service first is a generic Node.js application. Adding @platformatic/node to its package.json dependencies.'
+    )
+  )
+  ok(
+    importProcess.stdout.includes(
+      'Service second is a generic Node.js application. Adding @platformatic/node to its package.json dependencies.'
+    )
+  )
+  ok(
+    importProcess.stdout.includes(
+      'Service fourth is using Vite. Adding @platformatic/vite to its package.json dependencies.'
+    )
+  )
+  ok(
+    !importProcess.stdout.includes(
+      'Service thid is a generic Node.js application. Adding @platformatic/node to its package.json dependencies.'
+    )
+  )
+  ok(importProcess.stdout.includes('Installing dependencies for the application using npm ...'))
+  ok(importProcess.stdout.includes('Installing dependencies for the service first using npm ...'))
+  ok(importProcess.stdout.includes('Installing dependencies for the service second using npm ...'))
+  ok(importProcess.stdout.includes('Installing dependencies for the service fourth using npm ...'))
+  ok(importProcess.stdout.includes('Installing dependencies for the service third using npm ...'))
+})
+
+test('import - when launched without arguments, should fix the configuration of all known services without installing dependencies', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'no-dependencies', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const configurationFile = resolve(rootDir, 'watt.json')
+  const originalFileContents = await loadRawConfigurationFile(configurationFile)
+
+  process.chdir(rootDir)
+  const importProcess = await wattpm('import', '-s')
+
+  deepStrictEqual(await loadRawConfigurationFile(configurationFile), originalFileContents)
+
+  for (const servicePath of ['web-1/first', 'web-1/second']) {
+    deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, servicePath, 'package.json')), {
+      dependencies: {
+        '@platformatic/node': `^${version}`
+      }
+    })
+
+    deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, servicePath, 'watt.json')), {
+      $schema: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`
+    })
+  }
+
+  deepStrictEqual(await loadRawConfigurationFile(resolve(rootDir, 'web-2/third/watt.json')), { foo: 'bar' })
+
+  ok(
+    importProcess.stdout.includes(
+      'Service first is a generic Node.js application. Adding @platformatic/node to its package.json dependencies.'
+    )
+  )
+  ok(
+    importProcess.stdout.includes(
+      'Service second is a generic Node.js application. Adding @platformatic/node to its package.json dependencies.'
+    )
+  )
+  ok(
+    importProcess.stdout.includes(
+      'Service fourth is using Vite. Adding @platformatic/vite to its package.json dependencies.'
+    )
+  )
+  ok(
+    !importProcess.stdout.includes(
+      'Service thid is a generic Node.js application. Adding @platformatic/node to its package.json dependencies.'
+    )
+  )
+  ok(!importProcess.stdout.includes('Installing dependencies for the application using npm ...'))
+  ok(!importProcess.stdout.includes('Installing dependencies for the service first using npm ...'))
+  ok(!importProcess.stdout.includes('Installing dependencies for the service second using npm ...'))
+  ok(!importProcess.stdout.includes('Installing dependencies for the service fourth using npm ...'))
+  ok(!importProcess.stdout.includes('Installing dependencies for the service third using npm ...'))
 })
 
 test('import - when launched without arguments from a service file, should not do anything', async t => {

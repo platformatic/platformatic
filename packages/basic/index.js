@@ -1,5 +1,7 @@
+import { ConfigManager } from '@platformatic/config'
 import { createRequire } from '@platformatic/utils'
 import jsonPatch from 'fast-json-patch'
+import { glob } from 'glob'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { relative, resolve } from 'node:path'
@@ -27,6 +29,10 @@ export const configCandidates = [
   'platformatic.tml',
   'watt.tml'
 ]
+
+function hasDependency (packageJson, dependency) {
+  return packageJson.dependencies?.[dependency] || packageJson.devDependencies?.[dependency]
+}
 
 function isImportFailedError (error, pkg) {
   if (error.code !== 'ERR_MODULE_NOT_FOUND' && error.code !== 'MODULE_NOT_FOUND') {
@@ -60,21 +66,45 @@ async function importStackablePackage (directory, pkg) {
 
     const serviceDirectory = workerData ? relative(workerData.dirname, directory) : directory
     throw new Error(
-      `Unable to import package '${pkg}'. Please add it as a dependency  in the package.json file in the folder ${serviceDirectory}.`
+      `Unable to import package '${pkg}'. Please add it as a dependency in the package.json file in the folder ${serviceDirectory}.`
     )
   }
 }
 
-export async function importStackableAndConfig (root, config) {
-  let moduleName = '@platformatic/node'
-  let autodetectDescription = 'is using a generic Node.js application'
+export async function detectStackable (root, packageJson) {
+  let name = '@platformatic/node'
+  let label = 'Node.js'
 
+  if (hasDependency(packageJson, '@nestjs/core')) {
+    name = '@platformatic/nest'
+    label = 'NestJS'
+  } else if (hasDependency(packageJson, 'next')) {
+    name = '@platformatic/next'
+    label = 'Next.js'
+  } else if (hasDependency(packageJson, '@remix-run/dev')) {
+    name = '@platformatic/remix'
+    label = 'Remix'
+  } else if (hasDependency(packageJson, 'astro')) {
+    name = '@platformatic/astro'
+    label = 'Astro'
+    // Since Vite is often used with other frameworks, we must check for Vite last
+  } else if (hasDependency(packageJson, 'vite')) {
+    name = '@platformatic/vite'
+    label = 'Vite'
+  }
+
+  return { name, label }
+}
+
+export async function importStackableAndConfig (root, config, context) {
   let rootPackageJson
   try {
     rootPackageJson = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf-8'))
   } catch {
     rootPackageJson = {}
   }
+
+  const hadConfig = !!config
 
   if (!config) {
     for (const candidate of configCandidates) {
@@ -87,53 +117,44 @@ export async function importStackableAndConfig (root, config) {
     }
   }
 
-  const { dependencies, devDependencies } = rootPackageJson
+  const { label, name: moduleName } = await detectStackable(root, rootPackageJson)
 
-  if (dependencies?.next || devDependencies?.next) {
-    autodetectDescription = 'is using Next.js'
-    moduleName = '@platformatic/next'
-  } else if (dependencies?.['@remix-run/dev'] || devDependencies?.['@remix-run/dev']) {
-    autodetectDescription = 'is using Remix'
-    moduleName = '@platformatic/remix'
-  } else if (dependencies?.astro || devDependencies?.astro) {
-    autodetectDescription = 'is using Astro'
-    moduleName = '@platformatic/astro'
-  } else if (dependencies?.vite || devDependencies?.vite) {
-    autodetectDescription = 'is using Vite'
-    moduleName = '@platformatic/vite'
+  if (context) {
+    const serviceRoot = relative(process.cwd(), root)
+
+    if (!hadConfig && context.serviceId && !(await ConfigManager.findConfigFile(root)) && context.worker?.index === 0) {
+      const autodetectDescription =
+        moduleName === '@platformatic/node' ? 'is a generic Node.js application' : `is using ${label}`
+
+      const logger = pino({ level: context.serverConfig?.logger?.level ?? 'warn', name: context.serviceId })
+
+      logger.warn(`We have auto-detected that service "${context.serviceId}" ${autodetectDescription}.`)
+      logger.warn(
+        `We suggest you create a watt.json or a platformatic.json file in the folder ${serviceRoot} with the "$schema" property set to "https://schemas.platformatic.dev/${moduleName}/${packageJson.version}.json".`
+      )
+      logger.warn(`Also don't forget to add "${moduleName}" to the service dependencies.`)
+      logger.warn('You can also run "wattpm import" to do this automatically.\n')
+    }
   }
 
   const stackable = await importStackablePackage(root, moduleName)
 
-  return { stackable, config, autodetectDescription, moduleName }
+  return {
+    stackable,
+    config,
+    autodetectDescription:
+      moduleName === '@platformatic/node' ? 'is a generic Node.js application' : `is using ${label}`,
+    moduleName
+  }
 }
 
 async function buildStackable (opts) {
   const hadConfig = !!opts.config
-  const { stackable, config, autodetectDescription, moduleName } = await importStackableAndConfig(
-    opts.context.directory,
-    opts.config
-  )
+  const { stackable, config } = await importStackableAndConfig(opts.context.directory, opts.config, opts.context)
   opts.config = config
 
-  const serviceRoot = relative(process.cwd(), opts.context.directory)
-  if (
-    !hadConfig &&
-    !existsSync(resolve(serviceRoot, 'platformatic.json') || existsSync(resolve(serviceRoot, 'watt.json'))) &&
-    opts.context.worker?.count > 1
-  ) {
-    const logger = pino({
-      level: opts.context.serverConfig?.logger?.level ?? 'warn',
-      name: opts.context.serviceId
-    })
-
-    logger.warn(
-      [
-        `Platformatic has auto-detected that service "${opts.context.serviceId}" ${autodetectDescription}.\n`,
-        `We suggest you create a platformatic.json or watt.json file in the folder ${serviceRoot} with the "$schema" `,
-        `property set to "https://schemas.platformatic.dev/${moduleName}/${packageJson.version}.json".`
-      ].join('')
-    )
+  if (!hadConfig && typeof stackable.createDefaultConfig === 'function') {
+    opts.config = await stackable.createDefaultConfig?.(opts)
   }
 
   return stackable.buildStackable(opts)

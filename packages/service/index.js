@@ -147,6 +147,11 @@ function _buildServer (options, app, context) {
   return buildServer(options, app || module.exports, context)
 }
 
+// No-op for now, inserted for future compatibility
+async function createDefaultConfig (opts) {
+  return {}
+}
+
 async function buildStackable (options, app = platformaticService, Stackable = ServiceStackable) {
   let configManager = options.configManager
 
@@ -202,6 +207,7 @@ module.exports.app = platformaticService
 module.exports.schema = schema
 module.exports.buildServer = _buildServer
 module.exports.buildStackable = buildStackable
+module.exports.createDefaultConfig = createDefaultConfig
 module.exports.schemas = require('./lib/schema')
 module.exports.platformaticService = platformaticService
 module.exports.addLoggerToTheConfig = addLoggerToTheConfig

@@ -142,6 +142,9 @@ importers:
       json-schema-to-typescript:
         specifier: ^15.0.0
         version: 15.0.4
+      minimatch:
+        specifier: ^10.0.1
+        version: 10.0.1
       neostandard:
         specifier: ^0.12.0
         version: 0.12.1(@typescript-eslint/utils@8.33.1(eslint@9.28.0)(typescript@5.8.3))(eslint@9.28.0)(typescript@5.8.3)
