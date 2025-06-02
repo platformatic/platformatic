@@ -1,7 +1,7 @@
 'use strict'
 
 const { ITC } = require('@platformatic/itc')
-const { ensureLoggableError, executeWithTimeout, deepmerge } = require('@platformatic/utils')
+const { features, ensureLoggableError, executeWithTimeout, deepmerge } = require('@platformatic/utils')
 const { once, EventEmitter } = require('node:events')
 const { createReadStream, watch, existsSync } = require('node:fs')
 const { readdir, readFile, stat, access } = require('node:fs/promises')
@@ -50,6 +50,7 @@ const COLLECT_METRICS_TIMEOUT = 1000
 
 const MAX_BOOTSTRAP_ATTEMPTS = 5
 const IMMEDIATE_RESTART_MAX_THRESHOLD = 10
+const MAX_WORKERS = 100
 
 const telemetryPath = require.resolve('@platformatic/telemetry')
 const openTelemetrySetupPath = join(telemetryPath, '..', 'lib', 'node-telemetry.js')
@@ -129,7 +130,19 @@ class Runtime extends EventEmitter {
 
     this.#isProduction = this.#configManager.args?.production ?? false
     this.#servicesIds = config.services.map(service => service.id)
-    this.#workers.configure(config.services, this.#configManager.current.workers, this.#isProduction)
+
+    const workersConfig = []
+    for (const service of config.services) {
+      const count = service.workers ?? this.#configManager.current.workers
+      if (count > 1 && service.entrypoint && !features.node.reusePort) {
+        this.logger.warn(`"${service.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${count}`)
+        workersConfig.push({ id: service.id, workers: 1 })
+      } else {
+        workersConfig.push({ id: service.id, workers: count })
+      }
+    }
+
+    this.#workers.configure(workersConfig)
 
     if (this.#isProduction) {
       this.#env['PLT_DEV'] = 'false'
@@ -1303,7 +1316,7 @@ class Runtime extends EventEmitter {
     }
 
     // This must be done here as the dependencies are filled above
-    worker[kConfig] = { ...serviceConfig, health }
+    worker[kConfig] = { ...serviceConfig, health, workers: workersCount }
     worker[kWorkerStatus] = 'init'
     this.emit('service:worker:init', eventPayload)
 
@@ -1831,6 +1844,86 @@ class Runtime extends EventEmitter {
   async #avoidOutOfOrderThreadLogs () {
     for (let i = 0; i < 2; i++) {
       await immediate()
+    }
+  }
+
+  async getServiceResourcesInfo (id) {
+    const workers = this.#workers.getCount(id)
+    return { workers }
+  }
+
+  async #updateWorkerCount (serviceId, workers) {
+    this.#configManager.current.services.find(s => s.id === serviceId).workers = workers
+    const service = await this.#getServiceById(serviceId)
+    this.#workers.setCount(serviceId, workers)
+    service[kConfig].workers = workers
+
+    const promises = []
+    for (const [workerId, worker] of this.#workers.entries()) {
+      if (workerId.startsWith(`${serviceId}:`)) {
+        promises.push(sendViaITC(worker, 'updateWorkersCount', { serviceId, workers }))
+      }
+    }
+
+    const results = await Promise.allSettled(promises)
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        throw result.reason
+      }
+    }
+  }
+
+  async updateServicesResources (updates) {
+    if (this.#status === 'stopping' || this.#status === 'closed') return
+
+    if (!Array.isArray(updates)) {
+      throw new errors.InvalidArgumentError('updates', 'must be an array')
+    }
+    if (updates.length === 0) {
+      throw new errors.InvalidArgumentError('updates', 'must have at least one element')
+    }
+
+    const config = this.#configManager.current
+
+    for (const update of updates) {
+      const { service: serviceId, workers } = update
+
+      if (typeof workers !== 'number') {
+        throw new errors.InvalidArgumentError('workers', 'must be a number')
+      }
+      if (!serviceId) {
+        throw new errors.InvalidArgumentError('service', 'must be a string')
+      }
+      if (workers <= 0) {
+        throw new errors.InvalidArgumentError('workers', 'must be greater than 0')
+      }
+      if (workers > MAX_WORKERS) {
+        throw new errors.InvalidArgumentError('workers', `must be less than ${MAX_WORKERS}`)
+      }
+      const serviceConfig = config.services.find(s => s.id === serviceId)
+      if (!serviceConfig) {
+        throw new errors.ServiceNotFoundError(serviceId, Array.from(this.#servicesIds).join(', '))
+      }
+
+      const { workers: currentWorkers } = await this.getServiceResourcesInfo(serviceId)
+      if (currentWorkers === workers) {
+        this.logger.warn({ serviceId, workers }, 'No change in the number of workers for service')
+        continue
+      }
+
+      if (currentWorkers < workers) {
+        await this.#updateWorkerCount(serviceId, workers)
+        for (let i = currentWorkers; i < workers; i++) {
+          await this.#setupWorker(config, serviceConfig, workers, serviceId, i)
+          await this.#startWorker(config, serviceConfig, workers, serviceId, i, false, 0)
+        }
+      } else {
+        for (let i = currentWorkers - 1; i >= workers; i--) {
+          // keep the current workers count until the workers are stopped
+          await this.#stopWorker(currentWorkers, serviceId, i, false)
+        }
+        await this.#updateWorkerCount(serviceId, workers)
+      }
     }
   }
 }

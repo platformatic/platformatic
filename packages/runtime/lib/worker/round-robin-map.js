@@ -1,7 +1,5 @@
 'use strict'
 
-const { features } = require('@platformatic/utils')
-
 class RoundRobinMap extends Map {
   #instances
 
@@ -14,23 +12,20 @@ class RoundRobinMap extends Map {
     return { ...this.#instances }
   }
 
-  // In development or for the entrypoint always use 1 worker
-  configure (services, defaultInstances, production) {
+  configure (services) {
     this.#instances = {}
 
     for (const service of services) {
-      let count = service.workers ?? defaultInstances
-
-      if (!production || (service.entrypoint && !features.node.reusePort)) {
-        count = 1
-      }
-
-      this.#instances[service.id] = { next: 0, count }
+      this.#instances[service.id] = { next: 0, count: service.workers }
     }
   }
 
   getCount (service) {
     return this.#instances[service].count
+  }
+
+  setCount (service, count) {
+    this.#instances[service].count = count
   }
 
   next (service) {
