@@ -1318,7 +1318,7 @@ class Runtime extends EventEmitter {
     }
 
     // This must be done here as the dependencies are filled above
-    worker[kConfig] = { ...serviceConfig, health }
+    worker[kConfig] = { ...serviceConfig, health, workers: workersCount }
     worker[kWorkerStatus] = 'init'
     this.emit('service:worker:init', eventPayload)
 
@@ -1854,11 +1854,25 @@ class Runtime extends EventEmitter {
     return { workers }
   }
 
-  async updateWorkerCount (serviceId, workers) {
+  async #updateWorkerCount (serviceId, workers) {
     this.#configManager.current.services.find(s => s.id === serviceId).workers = workers
     const service = await this.#getServiceById(serviceId)
     this.#workers.setCount(serviceId, workers)
     service[kConfig].workers = workers
+
+    const promises = []
+    for (const [workerId, worker] of this.#workers.entries()) {
+      if (workerId.startsWith(`${serviceId}:`)) {
+        promises.push(sendViaITC(worker, 'updateWorkersCount', { serviceId, workers }))
+      }
+    }
+
+    const results = await Promise.allSettled(promises)
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        throw result.reason
+      }
+    }
   }
 
   async updateServicesResources (updates) {
@@ -1900,7 +1914,7 @@ class Runtime extends EventEmitter {
       }
 
       if (currentWorkers < workers) {
-        await this.updateWorkerCount(serviceId, workers)
+        await this.#updateWorkerCount(serviceId, workers)
         for (let i = currentWorkers; i < workers; i++) {
           await this.#setupWorker(config, serviceConfig, workers, serviceId, i)
           await this.#startWorker(config, serviceConfig, workers, serviceId, i, false, 0)
@@ -1910,7 +1924,7 @@ class Runtime extends EventEmitter {
           // keep the current workers count until the workers are stopped
           await this.#stopWorker(currentWorkers, serviceId, i, false)
         }
-        await this.updateWorkerCount(serviceId, workers)
+        await this.#updateWorkerCount(serviceId, workers)
       }
     }
   }

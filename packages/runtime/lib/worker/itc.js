@@ -1,7 +1,7 @@
 'use strict'
 
 const { once } = require('node:events')
-const { parentPort } = require('node:worker_threads')
+const { parentPort, workerData } = require('node:worker_threads')
 
 const { ITC } = require('@platformatic/itc')
 const { Unpromise } = require('@watchable/unpromise')
@@ -113,6 +113,14 @@ function setupITC (app, service, dispatcher) {
       async updateUndiciConfig (undiciConfig) {
         const config = await app.stackable.getConfig()
         await setDispatcher({ ...config, undici: undiciConfig })
+      },
+
+      async updateWorkersCount (data) {
+        const { serviceId, workers } = data
+        const w = workerData.config.serviceMap.get(serviceId)
+        if (w) { w.workers = workers }
+        workerData.serviceConfig.workers = workers
+        workerData.worker.count = workers
       },
 
       getStatus () {
