@@ -31,8 +31,8 @@ async function setDispatcher (runtimeConfig) {
     new Agent(dispatcherOpts).compose(
       [
         threadInterceptor,
-        cacheInterceptor,
-        ...userInterceptors
+        ...userInterceptors,
+        cacheInterceptor
       ].filter(Boolean)
     )
   )
