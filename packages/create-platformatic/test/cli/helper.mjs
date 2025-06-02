@@ -72,7 +72,12 @@ export async function executeCreatePlatformatic (dir, options = {}) {
 
   const child = execa(
     'node',
-    [pltCreatePath, `--install=${pkgMgrInstall.toString()}`, `--marketplace-host=${marketplaceHost}`],
+    [
+      pltCreatePath,
+      `--install=${pkgMgrInstall.toString()}`,
+      `--marketplace-host=${marketplaceHost}`,
+      ...(options.args ?? [])
+    ],
     execaOptions
   )
 
