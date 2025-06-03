@@ -1,65 +1,78 @@
 'use strict'
 
-const FileWatcher = require('./lib/file-watcher')
-const findNearestString = require('./lib/find-nearest-string')
-const deepmerge = require('./lib/deepmerge')
-const isKeyEnabled = require('./lib/is-key-enabled')
-const createServerConfig = require('./lib/create-server-config')
-const { ensureFlushedWorkerStdio, disablePinoDirectWrite } = require('./lib/logging')
-const isFileAccessible = require('./lib/is-file-accessible')
-const packages = require('./lib/packages')
-const { executeWithTimeout } = require('./lib/execute')
-const errors = require('./lib/errors')
-const features = require('./lib/features')
-const getPkgManager = require('./lib/get-pkg-manager')
-const match = require('./lib/match')
-const { overridableValue, removeDefaults, omitProperties, ...schemaComponents } = require('./lib/schema')
-const { createDirectory, safeRemove, generateDashedName } = require('./lib/directory')
-const { withResolvers } = require('./lib/promises')
 const { checkNodeVersionForServices } = require('./lib/check-node-version')
-const { createRequire, loadModule } = require('./lib/modules')
-const { getPrivateSymbol } = require('./lib/symbols')
+const { createServerConfig } = require('./lib/create-server-config')
+const { deepmerge } = require('./lib/deepmerge')
+const { createDirectory, createTemporaryDirectory, generateDashedName, safeRemove } = require('./lib/directory')
+const { PathOptionRequiredError, ensureLoggableError } = require('./lib/errors')
+const { executeWithTimeout } = require('./lib/execute')
+const { features } = require('./lib/features')
+const { FileWatcher } = require('./lib/file-watcher')
+const { findNearestString } = require('./lib/find-nearest-string')
+const { getPkgManager } = require('./lib/get-pkg-manager')
+const { isFileAccessible } = require('./lib/is-file-accessible')
+const { isKeyEnabled } = require('./lib/is-key-enabled')
 const {
-  buildPinoOptions,
   buildPinoFormatters,
+  buildPinoOptions,
   buildPinoTimestamp,
   setPinoFormatters,
   setPinoTimestamp
 } = require('./lib/logger')
+const { disablePinoDirectWrite, ensureFlushedWorkerStdio } = require('./lib/logging')
+const { escapeRegexp, match } = require('./lib/match')
+const { createRequire, kFailedImport, loadModule } = require('./lib/modules')
+const {
+  checkForDependencies,
+  detectApplicationType,
+  getDependencyVersion,
+  getLatestNpmVersion,
+  getPlatformaticVersion,
+  hasDependency,
+  searchJavascriptFiles
+} = require('./lib/packages')
+const { withResolvers } = require('./lib/promises')
+const { omitProperties, overridableValue, removeDefaults, ...schemaComponents } = require('./lib/schema')
+const { getPrivateSymbol } = require('./lib/symbols')
 
+module.exports.buildPinoFormatters = buildPinoFormatters
+module.exports.buildPinoOptions = buildPinoOptions
+module.exports.buildPinoTimestamp = buildPinoTimestamp
+module.exports.checkForDependencies = checkForDependencies
+module.exports.checkNodeVersionForServices = checkNodeVersionForServices
+module.exports.createDirectory = createDirectory
+module.exports.createTemporaryDirectory = createTemporaryDirectory
+module.exports.createRequire = createRequire
+module.exports.createServerConfig = createServerConfig
+module.exports.deepmerge = deepmerge
+module.exports.detectApplicationType = detectApplicationType
+module.exports.disablePinoDirectWrite = disablePinoDirectWrite
+module.exports.ensureFlushedWorkerStdio = ensureFlushedWorkerStdio
+module.exports.ensureLoggableError = ensureLoggableError
+module.exports.errors = { PathOptionRequiredError }
+module.exports.escapeRegexp = escapeRegexp
+module.exports.executeWithTimeout = executeWithTimeout
+module.exports.features = features
 module.exports.FileWatcher = FileWatcher
 module.exports.findNearestString = findNearestString
-module.exports.deepmerge = deepmerge
-module.exports.isKeyEnabled = isKeyEnabled
-module.exports.isFileAccessible = isFileAccessible
-module.exports.createServerConfig = createServerConfig
-module.exports.hasDependency = packages.hasDependency
-module.exports.getDependencyVersion = packages.getDependencyVersion
-module.exports.getPlatformaticVersion = packages.getPlatformaticVersion
-module.exports.checkForDependencies = packages.checkForDependencies
-module.exports.getLatestNpmVersion = packages.getLatestNpmVersion
+module.exports.generateDashedName = generateDashedName
+module.exports.getDependencyVersion = getDependencyVersion
+module.exports.getLatestNpmVersion = getLatestNpmVersion
 module.exports.getPkgManager = getPkgManager
-module.exports.executeWithTimeout = executeWithTimeout
-module.exports.errors = errors
-module.exports.ensureLoggableError = errors.ensureLoggableError
-module.exports.features = features
+module.exports.getPlatformaticVersion = getPlatformaticVersion
+module.exports.getPrivateSymbol = getPrivateSymbol
+module.exports.hasDependency = hasDependency
+module.exports.isFileAccessible = isFileAccessible
+module.exports.isKeyEnabled = isKeyEnabled
+module.exports.kFailedImport = kFailedImport
+module.exports.loadModule = loadModule
 module.exports.match = match
+module.exports.omitProperties = omitProperties
 module.exports.overridableValue = overridableValue
 module.exports.removeDefaults = removeDefaults
-module.exports.omitProperties = omitProperties
-module.exports.schemaComponents = schemaComponents
-module.exports.createDirectory = createDirectory
 module.exports.safeRemove = safeRemove
-module.exports.generateDashedName = generateDashedName
-module.exports.withResolvers = withResolvers
-module.exports.checkNodeVersionForServices = checkNodeVersionForServices
-module.exports.createRequire = createRequire
-module.exports.loadModule = loadModule
-module.exports.getPrivateSymbol = getPrivateSymbol
-module.exports.ensureFlushedWorkerStdio = ensureFlushedWorkerStdio
-module.exports.disablePinoDirectWrite = disablePinoDirectWrite
-module.exports.buildPinoOptions = buildPinoOptions
+module.exports.schemaComponents = schemaComponents
+module.exports.searchJavascriptFiles = searchJavascriptFiles
 module.exports.setPinoFormatters = setPinoFormatters
 module.exports.setPinoTimestamp = setPinoTimestamp
-module.exports.buildPinoFormatters = buildPinoFormatters
-module.exports.buildPinoTimestamp = buildPinoTimestamp
+module.exports.withResolvers = withResolvers

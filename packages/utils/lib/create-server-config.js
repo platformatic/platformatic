@@ -8,4 +8,4 @@ function createServerConfig (config) {
   return serverConfig
 }
 
-module.exports = createServerConfig
+module.exports = { createServerConfig }

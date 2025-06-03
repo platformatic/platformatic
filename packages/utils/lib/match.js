@@ -2,7 +2,10 @@
 
 function match (actual, expected) {
   if (typeof actual === 'string' && typeof expected === 'string') {
-    const patterns = expected.trim().split(/\r?\n/).map(s => s.trim())
+    const patterns = expected
+      .trim()
+      .split(/\r?\n/)
+      .map(s => s.trim())
 
     let lastIndex = -1
     for (const pattern of patterns) {
@@ -34,4 +37,9 @@ function match (actual, expected) {
   return true
 }
 
-module.exports = match
+// Once we drop Node < 24, remove this in favor of Regexp.escape which is more accurate
+function escapeRegexp (raw) {
+  return raw.replaceAll(/([!$()*+./:=?[\\\]^{|}])/g, '\\$1')
+}
+
+module.exports = { match, escapeRegexp }

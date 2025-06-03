@@ -1,6 +1,6 @@
 'use strict'
 
-const { createRequire } = require('@platformatic/utils')
+const { createRequire } = require('node:module')
 const { dirname, join } = require('node:path')
 const { isatty } = require('node:tty')
 const { pathToFileURL } = require('node:url')

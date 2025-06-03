@@ -1,10 +1,8 @@
 'use strict'
 
 const { join } = require('node:path')
-
+const { createRequire } = require('node:module')
 const ConfigManager = require('@platformatic/config')
-const { createRequire } = require('@platformatic/utils')
-
 const { platformaticRuntime } = require('./config')
 const { buildRuntime } = require('./start')
 const { loadConfig } = require('./utils')

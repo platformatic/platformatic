@@ -1,8 +1,8 @@
 import { ConfigManager } from '@platformatic/config'
-import { createRequire } from '@platformatic/utils'
+import { detectApplicationType } from '@platformatic/utils'
 import jsonPatch from 'fast-json-patch'
-import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import { relative, resolve } from 'node:path'
 import { workerData } from 'node:worker_threads'
 import pino from 'pino'
@@ -10,28 +10,6 @@ import { packageJson, schema } from './lib/schema.js'
 import { importFile } from './lib/utils.js'
 
 const importStackablePackageMarker = '__pltImportStackablePackage.js'
-
-export const configCandidates = [
-  'platformatic.application.json',
-  'platformatic.json',
-  'watt.json',
-  'platformatic.application.yaml',
-  'platformatic.yaml',
-  'watt.yaml',
-  'platformatic.application.yml',
-  'platformatic.yml',
-  'watt.yml',
-  'platformatic.application.toml',
-  'platformatic.toml',
-  'watt.toml',
-  'platformatic.application.tml',
-  'platformatic.tml',
-  'watt.tml'
-]
-
-function hasDependency (packageJson, dependency) {
-  return packageJson.dependencies?.[dependency] || packageJson.devDependencies?.[dependency]
-}
 
 function isImportFailedError (error, pkg) {
   if (error.code !== 'ERR_MODULE_NOT_FOUND' && error.code !== 'MODULE_NOT_FOUND') {
@@ -70,31 +48,6 @@ async function importStackablePackage (directory, pkg) {
   }
 }
 
-export async function detectStackable (root, packageJson) {
-  let name = '@platformatic/node'
-  let label = 'Node.js'
-
-  if (hasDependency(packageJson, '@nestjs/core')) {
-    name = '@platformatic/nest'
-    label = 'NestJS'
-  } else if (hasDependency(packageJson, 'next')) {
-    name = '@platformatic/next'
-    label = 'Next.js'
-  } else if (hasDependency(packageJson, '@remix-run/dev')) {
-    name = '@platformatic/remix'
-    label = 'Remix'
-  } else if (hasDependency(packageJson, 'astro')) {
-    name = '@platformatic/astro'
-    label = 'Astro'
-    // Since Vite is often used with other frameworks, we must check for Vite last
-  } else if (hasDependency(packageJson, 'vite')) {
-    name = '@platformatic/vite'
-    label = 'Vite'
-  }
-
-  return { name, label }
-}
-
 export async function importStackableAndConfig (root, config, context) {
   let rootPackageJson
   try {
@@ -106,17 +59,10 @@ export async function importStackableAndConfig (root, config, context) {
   const hadConfig = !!config
 
   if (!config) {
-    for (const candidate of configCandidates) {
-      const candidatePath = resolve(root, candidate)
-
-      if (existsSync(candidatePath)) {
-        config = candidatePath
-        break
-      }
-    }
+    config = await ConfigManager.findConfigFile(root, 'application')
   }
 
-  const { label, name: moduleName } = await detectStackable(root, rootPackageJson)
+  const { label, name: moduleName } = await detectApplicationType(root, rootPackageJson)
 
   if (context) {
     const serviceRoot = relative(process.cwd(), root)

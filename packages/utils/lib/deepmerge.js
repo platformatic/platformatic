@@ -22,4 +22,4 @@ function deepmergeArray (options) {
 
 const deepmerge = require('@fastify/deepmerge')({ all: true, mergeArray: deepmergeArray })
 
-module.exports = deepmerge
+module.exports = { deepmerge }

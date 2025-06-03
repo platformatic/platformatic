@@ -32,6 +32,12 @@ export async function patchConfig (logger, configurationFile, patchPath) {
   try {
     // Determine if the configuration file is for a service or a runtime
     const config = await loadConfigurationFileAsConfig(logger, configurationFile)
+
+    /* c8 ignore next 3 - Hard to test */
+    if (!config) {
+      return false
+    }
+
     const isService = config.configType !== 'runtime'
 
     const patchFunction = await loadModule(createRequire(configurationFile), patchPath)
@@ -45,7 +51,7 @@ export async function patchConfig (logger, configurationFile, patchPath) {
 
     /* c8 ignore next 3 - Hard to test */
     if (!runtime) {
-      return
+      return false
     }
 
     // Prepare the structure for original and modified configurations files
@@ -93,7 +99,7 @@ export async function patchConfig (logger, configurationFile, patchPath) {
         const temporaryFile = resolve(temporaryDir, 'watt.json')
 
         try {
-          /* c8 ignore next - Else branch */
+          /* c8 ignore next - else */
           await saveConfigurationFile(temporaryFile, original.runtime.runtime ?? {})
           await patchFile(temporaryFile, patches.runtime)
           await patchFile(configurationFile, [
@@ -116,6 +122,8 @@ export async function patchConfig (logger, configurationFile, patchPath) {
         }
       }
     }
+
+    return true
   } finally {
     await runtime?.close?.(true)
   }
@@ -153,7 +161,7 @@ export async function patchConfigCommand (logger, args) {
     patch = positionals[1]
   }
 
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config, true)
 
   /* c8 ignore next 3 */
   if (!configurationFile) {
@@ -161,7 +169,11 @@ export async function patchConfigCommand (logger, args) {
   }
 
   try {
-    await patchConfig(logger, configurationFile, patch)
+    const result = await patchConfig(logger, configurationFile, patch)
+
+    if (result) {
+      logger.done('Patch executed correctly.')
+    }
   } catch (error) {
     return logFatalError(
       logger,
@@ -169,8 +181,6 @@ export async function patchConfigCommand (logger, args) {
       `Patching configuration has throw an exception: ${error.message}`
     )
   }
-
-  logger.done('Patch executed correctly.')
 }
 
 export const help = {

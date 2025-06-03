@@ -1,8 +1,9 @@
 'use strict'
 
+const { glob } = require('glob')
 const { join, dirname, resolve } = require('node:path')
 const { readFile } = require('node:fs/promises')
-const isFileAccessible = require('./is-file-accessible')
+const { isFileAccessible } = require('./is-file-accessible')
 const { request } = require('undici')
 
 async function getDependencyVersion (require, dependencyName) {
@@ -27,12 +28,8 @@ async function _getPlatformaticVersion () {
   return platformaticPackageVersion
 }
 
-function hasDependency (packageJson, dependencyName) {
-  const dependencies = packageJson.dependencies || {}
-  const devDependencies = packageJson.devDependencies || {}
-
-  return dependencies[dependencyName] !== undefined ||
-    devDependencies[dependencyName] !== undefined
+function hasDependency (packageJson, dependency) {
+  return packageJson.dependencies?.[dependency] || packageJson.devDependencies?.[dependency]
 }
 
 async function checkForDependencies (logger, args, require, config, modules) {
@@ -89,10 +86,49 @@ async function getLatestNpmVersion (pkg) {
   return null
 }
 
+async function searchJavascriptFiles (projectDir) {
+  return glob('**/*.{js,mjs,cjs,ts,mts,cts}', { cwd: projectDir })
+}
+
+async function detectApplicationType (root, packageJson) {
+  if (!packageJson) {
+    try {
+      packageJson = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf-8'))
+    } catch {
+      packageJson = {}
+    }
+  }
+
+  let name = '@platformatic/node'
+  let label = 'Node.js'
+
+  if (hasDependency(packageJson, '@nestjs/core')) {
+    name = '@platformatic/nest'
+    label = 'NestJS'
+  } else if (hasDependency(packageJson, 'next')) {
+    name = '@platformatic/next'
+    label = 'Next.js'
+  } else if (hasDependency(packageJson, '@remix-run/dev')) {
+    name = '@platformatic/remix'
+    label = 'Remix'
+  } else if (hasDependency(packageJson, 'astro')) {
+    name = '@platformatic/astro'
+    label = 'Astro'
+    // Since Vite is often used with other frameworks, we must check for Vite last
+  } else if (hasDependency(packageJson, 'vite')) {
+    name = '@platformatic/vite'
+    label = 'Vite'
+  }
+
+  return { name, label }
+}
+
 module.exports = {
   getDependencyVersion,
   getPlatformaticVersion,
   hasDependency,
   checkForDependencies,
   getLatestNpmVersion,
+  searchJavascriptFiles,
+  detectApplicationType
 }

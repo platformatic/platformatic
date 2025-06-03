@@ -1,8 +1,14 @@
 import ConfigManager, { findConfigurationFile, loadConfigurationFile } from '@platformatic/config'
 import { ImportGenerator } from '@platformatic/generators'
-import { createDirectory, executeWithTimeout, generateDashedName, getPkgManager } from '@platformatic/utils'
+import {
+  createDirectory,
+  detectApplicationType,
+  executeWithTimeout,
+  generateDashedName,
+  getPkgManager,
+  searchJavascriptFiles
+} from '@platformatic/utils'
 import { execa } from 'execa'
-import { glob } from 'glob'
 import defaultInquirer from 'inquirer'
 import parseArgs from 'minimist'
 import { existsSync } from 'node:fs'
@@ -129,36 +135,13 @@ async function findApplicationRoot (projectDir) {
     return projectDir
   }
 
-  const files = await glob('**/*.{js,mjs,cjs,ts,mts,cts}', { cwd: projectDir })
+  const files = await searchJavascriptFiles(projectDir)
 
   if (files.length > 0) {
     return dirname(resolve(projectDir, files[0]))
   }
 
   return null
-}
-
-export async function determineApplicationType (projectDir) {
-  let rootPackageJson
-  try {
-    rootPackageJson = JSON.parse(await readFile(resolve(projectDir, 'package.json'), 'utf-8'))
-  } catch {
-    rootPackageJson = {}
-  }
-
-  const { dependencies, devDependencies } = rootPackageJson
-
-  if (dependencies?.next || devDependencies?.next) {
-    return ['@platformatic/next', 'Next.js']
-  } else if (dependencies?.['@remix-run/dev'] || devDependencies?.['@remix-run/dev']) {
-    return ['@platformatic/remix', 'Remix']
-  } else if (dependencies?.astro || devDependencies?.astro) {
-    return ['@platformatic/astro', 'Astro']
-  } else if (dependencies?.vite || devDependencies?.vite) {
-    return ['@platformatic/vite', 'Vite']
-  }
-
-  return ['@platformatic/node', 'Node.js']
 }
 
 export async function wrapApplication (
@@ -258,7 +241,7 @@ export async function createApplication (
     const applicationRoot = await findApplicationRoot(projectDir)
 
     if (applicationRoot) {
-      const [module, label] = await determineApplicationType(projectDir)
+      const { name: module, label } = await detectApplicationType(projectDir)
 
       // Check if the file belongs to a Watt application, this can happen for instance if we executed watt create
       // in the services folder

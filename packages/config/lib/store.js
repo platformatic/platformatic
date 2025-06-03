@@ -2,16 +2,18 @@
 
 const { isFileAccessible, splitModuleFromVersion } = require('./utils')
 const { join } = require('node:path')
-const { createRequire, loadModule } = require('@platformatic/utils')
+const { loadModule } = require('@platformatic/utils')
 const { ConfigManager } = require('./manager')
 const { readFile } = require('node:fs/promises')
 const { readFileSync } = require('node:fs')
+const { createRequire } = require('node:module')
 const { getParser } = require('./formats')
 const errors = require('./errors')
 const abstractLogger = require('./logger')
 
 const pltVersion = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8')).version
 
+// Important: do not put $ in any RegExp since we might use the querystring to deliver additional information
 const knownSchemas = [
   [/^https:\/\/platformatic.dev\/schemas\/(.*)\/(.*)/, match => match[2]],
   [/^https:\/\/schemas.platformatic.dev\/@platformatic\/(.*)\/(.*)\.json/, match => match[1]],

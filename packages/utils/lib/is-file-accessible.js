@@ -13,4 +13,4 @@ async function isFileAccessible (filename, directory) {
   }
 }
 
-module.exports = isFileAccessible
+module.exports = { isFileAccessible }

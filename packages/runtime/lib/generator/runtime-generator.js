@@ -12,7 +12,8 @@ const { getServiceTemplateFromSchemaUrl } = require('@platformatic/generators/li
 const { DotEnvTool } = require('dotenv-tool')
 const { getArrayDifference } = require('../utils')
 const { pathToFileURL } = require('node:url')
-const { createRequire, safeRemove, generateDashedName } = require('@platformatic/utils')
+const { safeRemove, generateDashedName } = require('@platformatic/utils')
+const { createRequire } = require('node:module')
 
 const wrappableProperties = {
   logger: {

@@ -1,7 +1,7 @@
-import { createRequire } from '@platformatic/utils'
 import { execa } from 'execa'
 import { on, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import os from 'node:os'
 import { setTimeout as sleep } from 'node:timers/promises'
 import split from 'split2'
