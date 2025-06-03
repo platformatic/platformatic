@@ -25,3 +25,4 @@ dist-ssr
 
 src/platformatic-generated-code
 playwright-report
+test-results

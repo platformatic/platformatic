@@ -29,8 +29,8 @@
     "@platformatic/utils": "workspace:*",
     "@platformatic/vite": "workspace:*",
     "@remix-run/express": "^2.11.2",
-    "light-my-request": "^6.0.0",
     "express": "^4.19.2",
+    "light-my-request": "^6.0.0",
     "pino-http": "^10.2.0",
     "semver": "^7.6.3"
   },
@@ -46,8 +46,8 @@
     "isbot": "^5.1.17",
     "json-schema-to-typescript": "^15.0.1",
     "neostandard": "^0.12.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "typescript": "^5.5.4",
     "vite": "^5.4.2",
     "ws": "^8.18.0"
