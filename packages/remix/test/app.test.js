@@ -9,21 +9,21 @@ export const cliPath = path.join(import.meta.dirname, '../../cli', 'cli.js')
 const envs = {
   production: {
     build: true,
-    production: true,
+    production: true
   },
   dev: {
     build: false,
-    production: false,
+    production: false
   }
 }
 
 for (const [env, options] of Object.entries(envs)) {
-  test(`remix service properly response with correct headers | ${env}`, async t => {
+  test(`remix service properly response with correct headers - ${env}`, async t => {
     const { url } = await fullSetupRuntime({
       t,
       configRoot: path.resolve(import.meta.dirname, './fixtures/standalone'),
       build: options.build,
-      production: options.production,
+      production: options.production
     })
 
     {

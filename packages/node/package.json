@@ -4,6 +4,10 @@
   "description": "Platformatic Node.js Stackable",
   "main": "index.js",
   "type": "module",
+  "bin": {
+    "create-platformatic-node": "./bin/create.js",
+    "start-platformatic-node": "./bin/start.js"
+  },
   "scripts": {
     "test": "pnpm run lint && borp --concurrency=1 --no-timeout",
     "coverage": "pnpm run lint && borp -C -X test -X test/fixtures --concurrency=1 --no-timeout",

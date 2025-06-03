@@ -143,7 +143,7 @@ export class NodeStackable extends BaseStackable {
       this.url = getServerUrl(this.#server)
     }
 
-    this._collectMetrics()
+    await this._collectMetrics()
     return this.url
   }
 

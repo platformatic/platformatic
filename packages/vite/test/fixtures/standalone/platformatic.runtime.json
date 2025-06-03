@@ -10,5 +10,6 @@
   "logger": {
     "level": "error"
   },
-  "managementApi": true
+  "managementApi": true,
+  "restartOnError": false
 }

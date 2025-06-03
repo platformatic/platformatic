@@ -176,7 +176,7 @@ async function verifyMissingConfigurationMessage (runtime) {
 const configurations = [
   {
     id: 'node-no-configuration-standalone',
-    name: 'Node.js application with (with no configuration files in development mode when standalone)',
+    name: 'Node.js application (with no configuration files in development mode when standalone)',
     async check (...args) {
       await verifyStandalone(...args, verifyMissingConfigurationMessage)
     },
@@ -184,7 +184,7 @@ const configurations = [
   },
   {
     id: 'node-no-configuration-composer-with-prefix',
-    name: 'Node.js application with (with no configuration files in development mode when exposed in a composer with a prefix)',
+    name: 'Node.js application (with no configuration files in development mode when exposed in a composer with a prefix)',
     async check (...args) {
       await verifyComposerWithPrefix(...args, false, verifyMissingConfigurationMessage)
     },
@@ -192,7 +192,7 @@ const configurations = [
   },
   {
     id: 'node-no-configuration-composer-without-prefix',
-    name: 'Node.js application with (with no configuration files in development mode when exposed in a composer without a prefix)',
+    name: 'Node.js application (with no configuration files in development mode when exposed in a composer without a prefix)',
     async check (...args) {
       await verifyComposerWithoutPrefix(...args, verifyMissingConfigurationMessage)
     },
@@ -200,7 +200,7 @@ const configurations = [
   },
   {
     id: 'node-no-configuration-composer-autodetect-prefix',
-    name: 'Node.js application with (with no configuration files in development mode when exposed in a composer by autodetecting the prefix)',
+    name: 'Node.js application (with no configuration files in development mode when exposed in a composer by autodetecting the prefix)',
     async check (...args) {
       await verifyComposerAutodetectPrefix(...args, false, verifyMissingConfigurationMessage)
     },
@@ -208,7 +208,7 @@ const configurations = [
   },
   {
     id: 'node-no-configuration-composer-no-services',
-    name: 'Node.js application with (with no configuration files in development mode when exposed in a composer which defines no services)',
+    name: 'Node.js application (with no configuration files in development mode when exposed in a composer which defines no services)',
     async check (...args) {
       await verifyComposerWithoutPrefix(...args, verifyMissingConfigurationMessage)
     },
@@ -216,193 +216,193 @@ const configurations = [
   },
   {
     id: 'node-no-build-standalone',
-    name: 'Node.js application with (with no build function in development mode when standalone)',
+    name: 'Node.js application (with no build function in development mode when standalone)',
     check: verifyStandalone,
     language: 'js'
   },
   {
     id: 'node-no-build-composer-with-prefix',
-    name: 'Node.js application with (with no build function in development mode when exposed in a composer with a prefix)',
+    name: 'Node.js application (with no build function in development mode when exposed in a composer with a prefix)',
     check: verifyComposerWithPrefix,
     language: 'js'
   },
   {
     id: 'node-no-build-composer-without-prefix',
-    name: 'Node.js application with (with no build function in development mode when exposed in a composer without a prefix)',
+    name: 'Node.js application (with no build function in development mode when exposed in a composer without a prefix)',
     check: verifyComposerWithoutPrefix,
     language: 'js'
   },
   {
     id: 'node-no-build-composer-autodetect-prefix',
-    name: 'Node.js application with (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
+    name: 'Node.js application (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
     check: verifyComposerAutodetectPrefix,
     language: 'js'
   },
   {
     id: 'node-with-build-standalone',
-    name: 'Node.js application with (with a build function in development mode when standalone)',
+    name: 'Node.js application (with a build function in development mode when standalone)',
     check: verifyStandalone,
     language: 'js'
   },
   {
     id: 'node-with-build-composer-with-prefix',
-    name: 'Node.js application with (with a build function in development mode when exposed in a composer with a prefix)',
+    name: 'Node.js application (with a build function in development mode when exposed in a composer with a prefix)',
     check: verifyComposerWithPrefix,
     language: 'js'
   },
   {
     id: 'node-with-build-composer-without-prefix',
-    name: 'Node.js application with (with a build function in development mode when exposed in a composer without a prefix)',
+    name: 'Node.js application (with a build function in development mode when exposed in a composer without a prefix)',
     check: verifyComposerWithoutPrefix,
     language: 'js'
   },
   {
     id: 'node-with-build-composer-autodetect-prefix',
-    name: 'Node.js application with (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
+    name: 'Node.js application (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
     check: verifyComposerAutodetectPrefix,
     language: 'js'
   },
   {
     id: 'express-no-build-standalone',
-    name: 'Express with (with no build function in development mode when standalone)',
+    name: 'Express (with no build function in development mode when standalone)',
     check: verifyStandalone,
     language: 'js'
   },
   {
     id: 'express-no-build-composer-with-prefix',
-    name: 'Express with (with no build function in development mode when exposed in a composer with a prefix)',
+    name: 'Express (with no build function in development mode when exposed in a composer with a prefix)',
     check: verifyComposerWithPrefix,
     language: 'js'
   },
   {
     id: 'express-no-build-composer-without-prefix',
-    name: 'Express with (with no build function in development mode when exposed in a composer without a prefix)',
+    name: 'Express (with no build function in development mode when exposed in a composer without a prefix)',
     check: verifyComposerWithoutPrefix,
     language: 'js'
   },
   {
     id: 'express-no-build-composer-autodetect-prefix',
-    name: 'Express with (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
+    name: 'Express (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
     check: verifyComposerAutodetectPrefix,
     language: 'js'
   },
   {
     id: 'express-with-build-standalone',
-    name: 'Express with (with a build function in development mode when standalone)',
+    name: 'Express (with a build function in development mode when standalone)',
     check: verifyStandalone,
     language: 'js'
   },
   {
     id: 'express-with-build-composer-with-prefix',
-    name: 'Express with (with a build function in development mode when exposed in a composer with a prefix)',
+    name: 'Express (with a build function in development mode when exposed in a composer with a prefix)',
     check: verifyComposerWithPrefix,
     language: 'js'
   },
   {
     id: 'express-with-build-composer-without-prefix',
-    name: 'Express with (with a build function in development mode when exposed in a composer without a prefix)',
+    name: 'Express (with a build function in development mode when exposed in a composer without a prefix)',
     check: verifyComposerWithoutPrefix,
     language: 'js'
   },
   {
     id: 'express-with-build-composer-autodetect-prefix',
-    name: 'Express with (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
+    name: 'Express (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
     check: verifyComposerAutodetectPrefix,
     language: 'js'
   },
   {
     id: 'fastify-no-build-standalone',
-    name: 'Fastify with (with no build function in development mode when standalone)',
+    name: 'Fastify (with no build function in development mode when standalone)',
     check: verifyStandalone,
     language: 'js'
   },
   {
     id: 'fastify-no-build-composer-with-prefix',
-    name: 'Fastify with (with no build function in development mode when exposed in a composer with a prefix)',
+    name: 'Fastify (with no build function in development mode when exposed in a composer with a prefix)',
     check: verifyComposerWithPrefix,
     language: 'js'
   },
   {
     id: 'fastify-no-build-composer-without-prefix',
-    name: 'Fastify with (with no build function in development mode when exposed in a composer without a prefix)',
+    name: 'Fastify (with no build function in development mode when exposed in a composer without a prefix)',
     check: verifyComposerWithoutPrefix,
     language: 'js'
   },
   {
     id: 'fastify-no-build-composer-autodetect-prefix',
-    name: 'Fastify with (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
+    name: 'Fastify (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
     check: verifyComposerAutodetectPrefix,
     language: 'js'
   },
   {
     id: 'fastify-with-build-standalone',
-    name: 'Fastify with (with a build function in development mode when standalone)',
+    name: 'Fastify (with a build function in development mode when standalone)',
     check: verifyStandalone,
     language: 'js'
   },
   {
     id: 'fastify-with-build-composer-with-prefix',
-    name: 'Fastify with (with a build function in development mode when exposed in a composer with a prefix)',
+    name: 'Fastify (with a build function in development mode when exposed in a composer with a prefix)',
     check: verifyComposerWithPrefix,
     language: 'js'
   },
   {
     id: 'fastify-with-build-composer-without-prefix',
-    name: 'Fastify with (with a build function in development mode when exposed in a composer without a prefix)',
+    name: 'Fastify (with a build function in development mode when exposed in a composer without a prefix)',
     check: verifyComposerWithoutPrefix,
     language: 'js'
   },
   {
     id: 'fastify-with-build-composer-autodetect-prefix',
-    name: 'Fastify with (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
+    name: 'Fastify (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
     check: verifyComposerAutodetectPrefix,
     language: 'js'
   },
   {
     id: 'koa-no-build-standalone',
-    name: 'Koa with (with no build function in development mode when standalone)',
+    name: 'Koa (with no build function in development mode when standalone)',
     check: verifyStandalone,
     language: 'js'
   },
   {
     id: 'koa-no-build-composer-with-prefix',
-    name: 'Koa with (with no build function in development mode when exposed in a composer with a prefix)',
+    name: 'Koa (with no build function in development mode when exposed in a composer with a prefix)',
     check: verifyComposerWithPrefix,
     language: 'js'
   },
   {
     id: 'koa-no-build-composer-without-prefix',
-    name: 'Koa with (with no build function in development mode when exposed in a composer without a prefix)',
+    name: 'Koa (with no build function in development mode when exposed in a composer without a prefix)',
     check: verifyComposerWithoutPrefix,
     language: 'js'
   },
   {
     id: 'koa-no-build-composer-autodetect-prefix',
-    name: 'Koa with (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
+    name: 'Koa (with no build function in development mode when exposed in a composer by autodetecting the prefix)',
     check: verifyComposerAutodetectPrefix,
     language: 'js'
   },
   {
     id: 'koa-with-build-standalone',
-    name: 'Koa with (with a build function in development mode when standalone)',
+    name: 'Koa (with a build function in development mode when standalone)',
     check: verifyStandalone,
     language: 'js'
   },
   {
     id: 'koa-with-build-composer-with-prefix',
-    name: 'Koa with (with a build function in development mode when exposed in a composer with a prefix)',
+    name: 'Koa (with a build function in development mode when exposed in a composer with a prefix)',
     check: verifyComposerWithPrefix,
     language: 'js'
   },
   {
     id: 'koa-with-build-composer-without-prefix',
-    name: 'Koa with (with a build function in development mode when exposed in a composer without a prefix)',
+    name: 'Koa (with a build function in development mode when exposed in a composer without a prefix)',
     check: verifyComposerWithoutPrefix,
     language: 'js'
   },
   {
     id: 'koa-with-build-composer-autodetect-prefix',
-    name: 'Koa with (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
+    name: 'Koa (with a build function in development mode when exposed in a composer by autodetecting the prefix)',
     check: verifyComposerAutodetectPrefix,
     language: 'js'
   }
