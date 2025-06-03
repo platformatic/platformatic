@@ -1,7 +1,6 @@
 import { ConfigManager } from '@platformatic/config'
 import { createRequire } from '@platformatic/utils'
 import jsonPatch from 'fast-json-patch'
-import { glob } from 'glob'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { relative, resolve } from 'node:path'
