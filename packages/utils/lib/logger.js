@@ -58,7 +58,7 @@ function buildPinoTimestamp (timestamp) {
 
 function buildPinoOptions (loggerConfig, serverConfig, serviceId, workerId, serviceOptions, root) {
   const pinoOptions = {
-    level: loggerConfig?.level ?? serverConfig?.level ?? 'trace',
+    level: loggerConfig?.level ?? serverConfig?.level ?? 'trace'
   }
 
   if (serviceId) {
@@ -125,6 +125,11 @@ function buildPinoOptions (loggerConfig, serverConfig, serviceId, workerId, serv
       }
     }
     pinoOptions.customLevels = loggerConfig.customLevels
+  }
+
+  // This is used by standalone CLI like start-platformatic-node in @platformatic/node
+  if (loggerConfig?.pretty) {
+    pinoOptions.transport = { target: 'pino-pretty' }
   }
 
   return pinoOptions

@@ -1,3 +1,4 @@
+import { ConfigManager } from '@platformatic/config'
 import { createRequire } from '@platformatic/utils'
 import jsonPatch from 'fast-json-patch'
 import { existsSync } from 'node:fs'
@@ -69,7 +70,7 @@ async function importStackablePackage (directory, pkg) {
   }
 }
 
-export function detectStackable (packageJson) {
+export async function detectStackable (root, packageJson) {
   let name = '@platformatic/node'
   let label = 'Node.js'
 
@@ -94,13 +95,15 @@ export function detectStackable (packageJson) {
   return { name, label }
 }
 
-export async function importStackableAndConfig (root, config) {
+export async function importStackableAndConfig (root, config, context) {
   let rootPackageJson
   try {
     rootPackageJson = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf-8'))
   } catch {
     rootPackageJson = {}
   }
+
+  const hadConfig = !!config
 
   if (!config) {
     for (const candidate of configCandidates) {
@@ -113,7 +116,26 @@ export async function importStackableAndConfig (root, config) {
     }
   }
 
-  const { label, name: moduleName } = detectStackable(rootPackageJson)
+  const { label, name: moduleName } = await detectStackable(root, rootPackageJson)
+
+  if (context) {
+    const serviceRoot = relative(process.cwd(), root)
+
+    if (!hadConfig && context.serviceId && !(await ConfigManager.findConfigFile(root)) && context.worker?.index === 0) {
+      const autodetectDescription =
+        moduleName === '@platformatic/node' ? 'is a generic Node.js application' : `is using ${label}`
+
+      const logger = pino({ level: context.serverConfig?.logger?.level ?? 'warn', name: context.serviceId })
+
+      logger.warn(`We have auto-detected that service "${context.serviceId}" ${autodetectDescription}.`)
+      logger.warn(
+        `We suggest you create a watt.json or a platformatic.json file in the folder ${serviceRoot} with the "$schema" property set to "https://schemas.platformatic.dev/${moduleName}/${packageJson.version}.json".`
+      )
+      logger.warn(`Also don't forget to add "${moduleName}" to the service dependencies.`)
+      logger.warn('You can also run "wattpm import" to do this automatically.\n')
+    }
+  }
+
   const stackable = await importStackablePackage(root, moduleName)
 
   return {
@@ -127,30 +149,11 @@ export async function importStackableAndConfig (root, config) {
 
 async function buildStackable (opts) {
   const hadConfig = !!opts.config
-  const { stackable, config, autodetectDescription, moduleName } = await importStackableAndConfig(
-    opts.context.directory,
-    opts.config
-  )
+  const { stackable, config } = await importStackableAndConfig(opts.context.directory, opts.config, opts.context)
   opts.config = config
 
-  const serviceRoot = relative(process.cwd(), opts.context.directory)
-  if (
-    !hadConfig &&
-    !existsSync(resolve(serviceRoot, 'platformatic.json') || existsSync(resolve(serviceRoot, 'watt.json'))) &&
-    opts.context.worker?.count > 1
-  ) {
-    const logger = pino({
-      level: opts.context.serverConfig?.logger?.level ?? 'warn',
-      name: opts.context.serviceId
-    })
-
-    logger.warn(
-      [
-        `Platformatic has auto-detected that service "${opts.context.serviceId}" ${autodetectDescription}.\n`,
-        `We suggest you create a platformatic.json or watt.json file in the folder ${serviceRoot} with the "$schema" `,
-        `property set to "https://schemas.platformatic.dev/${moduleName}/${packageJson.version}.json".`
-      ].join('')
-    )
+  if (!hadConfig && typeof stackable.createDefaultConfig === 'function') {
+    opts.config = await stackable.createDefaultConfig?.(opts)
   }
 
   return stackable.buildStackable(opts)

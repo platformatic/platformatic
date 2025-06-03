@@ -52,7 +52,7 @@ test('should prepare a main entrypoint start script', async () => {
   const packageJson = JSON.parse(generator.getFileObject('package.json').contents)
 
   deepStrictEqual(packageJson.main, 'index.js')
-  deepStrictEqual(packageJson.scripts.start, 'node index.js')
+  deepStrictEqual(packageJson.scripts.start, 'start-platformatic-node')
 })
 
 test('should prepare a valid watt.json file', async () => {

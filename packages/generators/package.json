@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/generators",
-  "version": "2.67.0",
+  "version": "2.67.1",
   "description": "Main classes and utils for generators.",
   "main": "index.js",
   "scripts": {
@@ -17,6 +17,7 @@
     "change-case-all": "^2.1.0",
     "execa": "^9.6.0",
     "fastify": "^5.0.0",
+    "glob": "^11.0.2",
     "pino": "^9.0.0",
     "undici": "^7.0.0"
   },

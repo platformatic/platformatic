@@ -166,4 +166,15 @@ Watt supports setting up `npm run ...` commands so you can reuse your existing n
 
 See the [configuration](./configuration.md) page.
 
+## Standalone usage
+
+### Create a New Node Project
+
+```bash
+npx --package=@platformatic/node create-platformatic-onde --dir my-node-app
+cd my-node-app
+npm install
+npm start
+```
+
 <SharedOverview/>
