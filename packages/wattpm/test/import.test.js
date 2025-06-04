@@ -14,6 +14,7 @@ const autodetect = {
   astro: 'astro',
   node: null,
   next: 'next',
+  nest: '@nestjs/core',
   remix: '@remix-run/dev',
   vite: 'vite'
 }
@@ -103,6 +104,7 @@ test('import - should import a local folder with a Git remote', async t => {
   const directory = await createTemporaryDirectory(t, 'local-with-git')
   await executeCommand('git', 'init', { cwd: directory })
   await executeCommand('git', 'remote', 'add', 'origin', 'git@github.com:hello/world.git', { cwd: directory })
+  await writeFile(resolve(directory, 'index.js'), '', 'utf-8')
   const id = basename(directory)
   const envVariable = serviceToEnvVariable(id)
 
@@ -132,6 +134,7 @@ test('import - should import a local folder without a Git remote', async t => {
   const originalFileContents = await loadRawConfigurationFile(configurationFile)
 
   const directory = await createTemporaryDirectory(t, 'local-with-git')
+  await writeFile(resolve(directory, 'index.js'), '', 'utf-8')
   const id = basename(directory)
   const envVariable = serviceToEnvVariable(id)
 
@@ -165,6 +168,8 @@ test('import - should import a local folder within the repository without using 
   const path = join('this', 'is', 'in-a-repo') // This is for Windows compatibility
   const absolute = resolve(rootDir, path)
   await createDirectory(absolute)
+  await writeFile(resolve(absolute, 'index.js'), '', 'utf-8')
+
   await executeCommand('git', 'init', { cwd: absolute })
   await executeCommand('git', 'remote', 'add', 'origin', 'git@github.com:hello/world.git', { cwd: absolute })
 
@@ -214,6 +219,7 @@ test('import - should not do anything when the local folder is already a defined
   contents.web = [{ id: 'main', path: 'main' }]
   await saveConfigurationFile(configurationFile, contents)
   await createDirectory(resolve(rootDir, 'main'))
+  await writeFile(resolve(rootDir, 'main/index.js'), '', 'utf-8')
   await cp(resolve(rootDir, 'web/main/watt.json'), resolve(rootDir, 'main/watt.json'))
 
   const originalFileContents = await readFile(configurationFile, 'utf-8')
@@ -326,6 +332,7 @@ test('import - should not modify existing watt.json files when exporting local f
   const originalFileContents = await loadRawConfigurationFile(configurationFile)
 
   const directory = await createTemporaryDirectory(t, 'local-with-git')
+  await writeFile(resolve(directory, 'index.js'), '', 'utf-8')
   await writeFile(resolve(directory, 'watt.json'), JSON.stringify({ foo: 'bar' }), 'utf-8')
   const id = basename(directory)
   const envVariable = serviceToEnvVariable(id)
@@ -357,6 +364,7 @@ for (const [name, dependency] of Object.entries(autodetect)) {
     const originalFileContents = await loadRawConfigurationFile(configurationFile)
 
     const directory = await createTemporaryDirectory(t, 'local-with-git')
+    await writeFile(resolve(directory, 'index.js'), '', 'utf-8')
     if (dependency) {
       await writeFile(
         resolve(directory, 'package.json'),
@@ -396,6 +404,19 @@ for (const [name, dependency] of Object.entries(autodetect)) {
     })
   })
 }
+
+test('import - should fail when an application type cannot be detected', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const directory = await createTemporaryDirectory(t, 'local-with-git')
+
+  process.chdir(rootDir)
+  const importProcess = await wattpm('import', directory, { reject: false })
+
+  deepStrictEqual(importProcess.exitCode, 1)
+  ok(importProcess.stdout.includes(`The path ${directory} does not contain a supported application.`))
+})
 
 test('import - when launched without arguments, should fix the configuration of all known services', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'no-dependencies', false, 'watt.json')
@@ -535,6 +556,7 @@ test('import - should find the nearest watt.json', async t => {
 
   const directory = resolve(rootDir, 'web/next')
   await createDirectory(directory)
+  await writeFile(resolve(directory, 'index.js'), '', 'utf-8')
 
   process.chdir(resolve(rootDir, 'web/next'))
   await wattpm('import', '.')

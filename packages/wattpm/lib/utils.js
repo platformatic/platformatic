@@ -11,8 +11,8 @@ import {
   detectApplicationType,
   ensureLoggableError,
   escapeRegexp,
-  kFailedImport,
-  searchJavascriptFiles
+  hasJavascriptFiles,
+  kFailedImport
 } from '@platformatic/utils'
 import { bgGreen, black, bold } from 'colorette'
 import { existsSync } from 'node:fs'
@@ -249,9 +249,7 @@ export async function loadRuntimeConfigurationFile (logger, configurationFile) {
 }
 
 export async function fallbackToTemporaryConfigFile (logger, root) {
-  const jsFiles = await searchJavascriptFiles(root)
-
-  if (jsFiles.length > 0) {
+  if (await hasJavascriptFiles(root)) {
     const { name, label } = await detectApplicationType(root)
 
     const autodetectDescription =

@@ -11,5 +11,15 @@
     "skipLibCheck": true,
     "resolveJsonModule": true
   },
-  "exclude": ["node_modules", "tmp", "dist", "**/node_modules", "**/tmp", "**/dist"]
+  "exclude": [
+    "node_modules",
+    "tmp",
+    "dist",
+    "node_modules/**",
+    "tmp/**",
+    "dist/**",
+    "**/node_modules",
+    "**/tmp",
+    "**/dist"
+  ]
 }

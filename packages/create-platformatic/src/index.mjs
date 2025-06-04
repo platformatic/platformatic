@@ -241,6 +241,7 @@ export async function createApplication (
     const applicationRoot = await findApplicationRoot(projectDir)
 
     if (applicationRoot) {
+      // detectApplicationType cannot throw here as findApplicationRoot already checks for the existence of Javascript files
       const { name: module, label } = await detectApplicationType(projectDir)
 
       // Check if the file belongs to a Watt application, this can happen for instance if we executed watt create
