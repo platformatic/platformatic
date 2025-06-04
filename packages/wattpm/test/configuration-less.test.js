@@ -85,10 +85,11 @@ test('import - it should fail with a folder with no recognized files', async t =
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
   t.after(() => safeRemove(rootDir))
 
-  await createDirectory(resolve(rootDir, 'web/empty'))
+  const emptyDir = resolve(rootDir, 'web/empty')
+  await createDirectory(emptyDir)
   process.chdir(rootDir)
   const wattProcess = await wattpm('import', '-P', 'pnpm', { reject: false })
 
   deepStrictEqual(wattProcess.exitCode, 1)
-  ok(wattProcess.stdout.includes(`The path ${rootDir}/web/empty does not contain a supported application.`))
+  ok(wattProcess.stdout.includes(`The path ${emptyDir} does not contain a supported application.`))
 })
