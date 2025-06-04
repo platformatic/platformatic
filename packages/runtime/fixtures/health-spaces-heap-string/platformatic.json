@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.44.0.json",
+  "entrypoint": "service",
+  "services": [
+    {
+      "id": "service",
+      "path": "./service",
+      "config": "platformatic.json",
+      "health": {
+        "maxELU": 0.3
+      }
+    }
+  ],
+  "logger": {
+    "level": "info"
+  },
+  "managementApi": true,
+  "health": {
+    "enabled": true,
+    "gracePeriod": 500,
+    "interval": 1000,
+    "maxUnhealthyChecks": 3,
+    "maxHeapTotal": "256 MB",
+    "maxYoungGeneration": 67108864
+  },
+  "restartOnError": 1000
+}

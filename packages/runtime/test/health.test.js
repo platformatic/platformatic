@@ -148,3 +148,27 @@ test('set the spaces memory correctly', async t => {
     strictEqual(resourceLimits.maxYoungGenerationSizeMb, 64)
   }
 })
+
+test('set the spaces memory correctly when maxHeapTotal is a string', async t => {
+  const configFile = join(fixturesDir, 'health-spaces-heap-string', 'platformatic.json')
+  const config = await loadConfig({}, ['-c', configFile])
+
+  const server = await buildServer({
+    app: config.app,
+    ...config.configManager.current
+  })
+
+  const url = await server.start()
+
+  t.after(() => {
+    return server.close()
+  })
+
+  {
+    const res = await request(url + '/')
+
+    const { resourceLimits } = await res.body.json()
+    strictEqual(resourceLimits.maxOldGenerationSizeMb, 192)
+    strictEqual(resourceLimits.maxYoungGenerationSizeMb, 64)
+  }
+})

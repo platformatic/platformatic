@@ -13,6 +13,7 @@ module.exports = {
   WorkerExitedError: createError(`${ERROR_PREFIX}_SERVICE_EXIT`, 'The worker %s of the service "%s" exited prematurely with error code %d'),
   UnknownRuntimeAPICommandError: createError(`${ERROR_PREFIX}_UNKNOWN_RUNTIME_API_COMMAND`, 'Unknown Runtime API command "%s"'),
   ServiceNotFoundError: createError(`${ERROR_PREFIX}_SERVICE_NOT_FOUND`, 'Service %s not found. Available services are: %s'),
+  ServiceWorkerNotFoundError: createError(`${ERROR_PREFIX}_SERVICE_WORKER_NOT_FOUND`, 'Service %s worker %s not found'),
   ServiceNotStartedError: createError(`${ERROR_PREFIX}_SERVICE_NOT_STARTED`, "Service with id '%s' is not started"),
   ServiceStartTimeoutError: createError(`${ERROR_PREFIX}_SERVICE_START_TIMEOUT`, "Service with id '%s' failed to start in %dms."),
   FailedToRetrieveOpenAPISchemaError: createError(`${ERROR_PREFIX}_FAILED_TO_RETRIEVE_OPENAPI_SCHEMA`, 'Failed to retrieve OpenAPI schema for service with id "%s": %s'),
