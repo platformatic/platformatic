@@ -3,7 +3,7 @@
 const { join } = require('node:path')
 const { workerData, parentPort } = require('node:worker_threads')
 const { pathToFileURL } = require('node:url')
-const { createRequire } = require('@platformatic/utils')
+const { createRequire } = require('node:module')
 const { setGlobalDispatcher, Client, Pool, Agent } = require('undici')
 const { wire } = require('undici-thread-interceptor')
 const { createTelemetryThreadInterceptorHooks } = require('@platformatic/telemetry')
@@ -28,13 +28,7 @@ async function setDispatcher (runtimeConfig) {
   const dispatcherOpts = await getDispatcherOpts(runtimeConfig.undici)
 
   setGlobalDispatcher(
-    new Agent(dispatcherOpts).compose(
-      [
-        threadInterceptor,
-        ...userInterceptors,
-        cacheInterceptor
-      ].filter(Boolean)
-    )
+    new Agent(dispatcherOpts).compose([threadInterceptor, ...userInterceptors, cacheInterceptor].filter(Boolean))
   )
 
   return { threadDispatcher }
@@ -94,7 +88,7 @@ function createUpdatableInterceptor (originInterceptor) {
 
 async function loadInterceptors (_require, interceptorsConfigs, key) {
   return Promise.all(
-    interceptorsConfigs.map(async (interceptorConfig) => {
+    interceptorsConfigs.map(async interceptorConfig => {
       return loadInterceptor(_require, interceptorConfig, key)
     })
   )
@@ -113,10 +107,7 @@ async function loadInterceptor (_require, interceptorConfig, key) {
   const createInterceptor = (await import(url)).default
   const interceptor = createInterceptor(options)
 
-  const {
-    updatableInterceptor,
-    updateInterceptor
-  } = createUpdatableInterceptor(interceptor)
+  const { updatableInterceptor, updateInterceptor } = createUpdatableInterceptor(interceptor)
 
   const interceptorCtx = { createInterceptor, updateInterceptor }
 

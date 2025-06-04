@@ -781,9 +781,6 @@ importers:
       execa:
         specifier: ^9.0.0
         version: 9.6.0
-      glob:
-        specifier: ^11.0.2
-        version: 11.0.2
       help-me:
         specifier: ^5.0.0
         version: 5.0.0
@@ -2590,6 +2587,9 @@ importers:
       boring-name-generator:
         specifier: ^1.0.3
         version: 1.0.3
+      glob:
+        specifier: ^11.0.2
+        version: 11.0.2
       leven:
         specifier: ~3.1.0
         version: 3.1.0
@@ -2691,9 +2691,6 @@ importers:
 
   packages/wattpm:
     dependencies:
-      '@platformatic/basic':
-        specifier: workspace:*
-        version: link:../basic
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config

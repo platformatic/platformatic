@@ -1,9 +1,9 @@
 'use strict'
 
 const { readdir } = require('node:fs/promises')
+const { createRequire } = require('node:module')
 const { join, resolve: pathResolve, isAbsolute } = require('node:path')
 const {
-  createRequire,
   loadModule,
   omitProperties,
   schemaComponents: { runtimeUnwrappablePropertiesList }

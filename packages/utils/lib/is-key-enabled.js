@@ -11,4 +11,4 @@ function isKeyEnabled (key, config) {
   return true
 }
 
-module.exports = isKeyEnabled
+module.exports = { isKeyEnabled }

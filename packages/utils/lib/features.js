@@ -9,4 +9,6 @@ const node = {
   reusePort: satisfies(process.version, '^22.12.0 || ^23.1.0') && !['win32', 'darwin'].includes(currentPlatform)
 }
 
-module.exports = { node }
+module.exports = {
+  features: { node }
+}

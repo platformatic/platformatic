@@ -4,7 +4,14 @@ import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
 import { watch } from 'node:fs/promises'
-import { findRuntimeConfigurationFile, getMatchingRuntime, getRoot, logFatalError, parseArgs } from '../utils.js'
+import {
+  findRuntimeConfigurationFile,
+  getMatchingRuntime,
+  getRoot,
+  handleRuntimeError,
+  logFatalError,
+  parseArgs
+} from '../utils.js'
 
 export async function devCommand (logger, args) {
   const {
@@ -22,14 +29,24 @@ export async function devCommand (logger, args) {
   )
   const root = getRoot(positionals)
 
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config, true)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
     return
   }
 
-  let runtime = await pltStartCommand(['-c', configurationFile], true, true)
+  let runtime
+  try {
+    runtime = await pltStartCommand(['-c', configurationFile], true, true)
+  } catch (error) {
+    if (await handleRuntimeError(logger, configurationFile, error)) {
+      return
+      /* c8 ignore next 4 - Hard to test */
+    }
+
+    throw error
+  }
 
   // Add a watcher on the configurationFile so that we can eventually restart the runtime
   const watcher = watch(configurationFile, { persistent: false })
@@ -62,7 +79,7 @@ export async function startCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config, true)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
@@ -73,7 +90,17 @@ export async function startCommand (logger, args) {
   if (inspect) {
     cmd.push('--inspect')
   }
-  await pltStartCommand(cmd, true)
+
+  try {
+    await pltStartCommand(cmd, true)
+  } catch (error) {
+    if (await handleRuntimeError(logger, configurationFile, error)) {
+      return
+      /* c8 ignore next 4 - Hard to test */
+    }
+
+    throw error
+  }
 }
 
 export async function stopCommand (logger, args) {

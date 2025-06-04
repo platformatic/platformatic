@@ -354,7 +354,7 @@ export class BaseStackable extends EventEmitter {
       isEntrypoint: this.isEntrypoint,
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       wantsAbsoluteUrls: meta.composer?.wantsAbsoluteUrls ?? false,
-      /* c8 ignore next 2 - Else branches */
+      /* c8 ignore next 2 - else */
       port: (this.isEntrypoint ? this.serverConfig?.port || 0 : undefined) ?? true,
       host: (this.isEntrypoint ? this.serverConfig?.hostname : undefined) ?? true,
       telemetryConfig: this.telemetryConfig

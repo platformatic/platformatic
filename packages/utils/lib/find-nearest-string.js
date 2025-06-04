@@ -16,4 +16,4 @@ function findNearestString (strings, target) {
   return nearestString
 }
 
-module.exports = findNearestString
+module.exports = { findNearestString }

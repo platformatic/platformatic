@@ -1,4 +1,4 @@
-import { createRequire } from '@platformatic/utils'
+import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
 import { request } from 'undici'
 
@@ -65,7 +65,7 @@ export function resolvePackage (root, pkg) {
   // We need to add the main module paths to the require.resolve call
   // Note that `require.main` is not defined in `next` if we set sthe instrumentation hook reequired for ESM applications.
   // see: https://github.com/open-telemetry/opentelemetry-js/blob/main/doc/esm-support.md#instrumentation-hook-required-for-esm
-  return require.resolve(pkg, { paths: [root, ...require.main?.paths || []] })
+  return require.resolve(pkg, { paths: [root, ...(require.main?.paths || [])] })
 }
 
 export function cleanBasePath (basePath) {

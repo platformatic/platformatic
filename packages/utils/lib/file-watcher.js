@@ -2,7 +2,7 @@
 
 const { EventEmitter } = require('events')
 const { watch } = require('fs/promises')
-const errors = require('./errors')
+const { PathOptionRequiredError } = require('./errors')
 
 const minimatch = require('minimatch').default
 
@@ -17,7 +17,7 @@ class FileWatcher extends EventEmitter {
     super()
 
     if (typeof opts.path !== 'string') {
-      throw new errors.PathOptionRequiredError()
+      throw new PathOptionRequiredError()
     }
     this.path = opts.path
     this.allowToWatch = opts.allowToWatch?.map(removeDotSlash) || null
@@ -106,4 +106,4 @@ class FileWatcher extends EventEmitter {
   }
 }
 
-module.exports = FileWatcher
+module.exports = { FileWatcher }

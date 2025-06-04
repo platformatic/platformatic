@@ -2,8 +2,8 @@
 
 const fp = require('fastify-plugin')
 const autoload = require('@fastify/autoload')
-const { stat } = require('node:fs').promises
-const { createRequire } = require('@platformatic/utils')
+const { stat } = require('node:fs/promises')
+const { createRequire } = require('node:module')
 const { join } = require('node:path')
 const { pathToFileURL } = require('node:url')
 

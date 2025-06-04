@@ -1,4 +1,6 @@
-module.exports = () => {
+'use strict'
+
+function getPkgManager () {
   const userAgent = process.env.npm_config_user_agent
   if (!userAgent) {
     return 'npm'
@@ -8,3 +10,5 @@ module.exports = () => {
   const name = pmSpec.substring(0, separatorPos)
   return name || 'npm'
 }
+
+module.exports = { getPkgManager }

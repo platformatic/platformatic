@@ -1,8 +1,9 @@
 'use strict'
 
 const { join } = require('node:path')
-const { createRequire, loadModule } = require('@platformatic/utils')
+const { loadModule } = require('@platformatic/utils')
 const MemoryCacheStore = require('@platformatic/undici-cache-memory')
+const { createRequire } = require('node:module')
 
 async function createSharedStore (projectDir, httpCacheConfig = {}) {
   const runtimeRequire = createRequire(join(projectDir, 'file'))

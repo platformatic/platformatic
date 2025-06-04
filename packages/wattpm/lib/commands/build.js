@@ -41,6 +41,11 @@ async function executeCommand (root, ...args) {
 export async function installDependencies (logger, root, services, production, packageManager) {
   if (typeof services === 'string') {
     const config = await loadRuntimeConfigurationFile(logger, services)
+
+    if (!config) {
+      return
+    }
+
     services = config.services
   }
 
@@ -66,20 +71,19 @@ export async function installDependencies (logger, root, services, production, p
     )
   }
 
-  for (const service of services) {
-    /* c8 ignore next */
-    const servicePackageManager = service.packageManager ?? getPackageManager(service.path, packageManager)
+  for (let { id, path, packageManager: servicePackageManager } of services) {
+    servicePackageManager ??= getPackageManager(path, packageManager)
     const servicePackageArgs = getPackageArgs(servicePackageManager, production)
 
     try {
       logger.info(
         `Installing ${production ? 'production ' : ''}dependencies for the service ${bold(
-          service.id
+          id
         )} using ${servicePackageManager} ...`
       )
 
       await executeCommand(root, servicePackageManager, servicePackageArgs, {
-        cwd: resolve(root, service.path),
+        cwd: resolve(root, path),
         stdio: 'inherit'
       })
       /* c8 ignore next 7 */
@@ -87,7 +91,7 @@ export async function installDependencies (logger, root, services, production, p
       return logFatalError(
         logger,
         { error: ensureLoggableError(error) },
-        `Unable to install dependencies of the service ${bold(service.id)}.`
+        `Unable to install dependencies of the service ${bold(id)}.`
       )
     }
   }
@@ -159,6 +163,7 @@ async function updateDependencies (logger, latest, availableVersions, path, targ
 
 export async function buildCommand (logger, args) {
   let runtime
+  let configurationFile
 
   try {
     const {
@@ -176,7 +181,7 @@ export async function buildCommand (logger, args) {
     )
     const root = getRoot(positionals)
 
-    const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
+    configurationFile = await findRuntimeConfigurationFile(logger, root, config, true)
 
     /* c8 ignore next 3 - Hard to test */
     if (!configurationFile) {
@@ -247,7 +252,7 @@ export async function installCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config, true)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
@@ -281,14 +286,20 @@ export async function updateCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config, true)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
     return
   }
 
-  const { services } = await loadRuntimeConfigurationFile(logger, configurationFile)
+  const configuration = await loadRuntimeConfigurationFile(logger, configurationFile)
+
+  if (!configuration) {
+    return
+  }
+
+  const services = configuration.services
 
   // First of all, get all version from NPM for the runtime
   const selfInfoResponse = await fetch('https://registry.npmjs.org/@platformatic/runtime')

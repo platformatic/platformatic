@@ -3,7 +3,10 @@
 const generateName = require('boring-name-generator')
 const { existsSync } = require('node:fs')
 const { rm, mkdir } = require('node:fs/promises')
+const { tmpdir } = require('node:os')
+const { join } = require('node:path')
 const { setTimeout: sleep } = require('node:timers/promises')
+let tmpCount = 0
 
 function generateDashedName () {
   return generateName().dashed.replace(/\s+/g, '')
@@ -15,6 +18,12 @@ async function createDirectory (path, empty = false) {
   }
 
   return mkdir(path, { recursive: true, maxRetries: 10, retryDelay: 1000 })
+}
+
+async function createTemporaryDirectory (prefix) {
+  const directory = join(tmpdir(), `wattpm-${prefix}-${process.pid}-${tmpCount++}`)
+
+  await createDirectory(directory)
 }
 
 async function safeRemove (path) {
@@ -37,6 +46,7 @@ async function safeRemove (path) {
 
 module.exports = {
   createDirectory,
+  createTemporaryDirectory,
   safeRemove,
   generateDashedName
 }

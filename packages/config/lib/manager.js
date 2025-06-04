@@ -1,6 +1,6 @@
 'use strict'
 
-const { createRequire } = require('@platformatic/utils')
+const { createRequire } = require('node:module')
 const { basename, join, resolve, dirname, parse, isAbsolute } = require('node:path')
 const { readFile, access } = require('node:fs/promises')
 const EventEmitter = require('node:events')

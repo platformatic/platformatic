@@ -3,7 +3,7 @@
 const path = require('node:path')
 const { hostname } = require('node:os')
 const pino = require('pino')
-const { createRequire } = require('./modules')
+const { createRequire } = require('node:module')
 
 // Utilities to build pino options from a config object
 // There are many variants to fit better the different use cases

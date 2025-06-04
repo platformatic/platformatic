@@ -1,8 +1,9 @@
 #! /usr/bin/env node
 
 import { loadConfig } from '@platformatic/config'
-import { checkForDependencies, createRequire } from '@platformatic/utils'
+import { checkForDependencies } from '@platformatic/utils'
 import { utimesSync } from 'fs'
+import { createRequire } from 'node:module'
 import pino from 'pino'
 import pretty from 'pino-pretty'
 import { platformaticDB } from '../index.js'
