@@ -300,6 +300,7 @@ export async function createApplication (
 
     projectDir = resolve(process.cwd(), optionsDir.dir)
     await createDirectory(projectDir)
+    process.chdir(projectDir)
   }
 
   const projectName = basename(projectDir)

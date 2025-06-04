@@ -34,7 +34,7 @@
     "boring-name-generator": "^1.0.3",
     "glob": "^11.0.2",
     "leven": "~3.1.0",
-    "minimatch": "^8.0.4",
+    "minimatch": "^10.0.1",
     "semver": "^7.6.3",
     "undici": "7.10.0"
   }
