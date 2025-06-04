@@ -62,7 +62,13 @@ export async function importStackableAndConfig (root, config, context) {
     config = await ConfigManager.findConfigFile(root, 'application')
   }
 
-  const { label, name: moduleName } = await detectApplicationType(root, rootPackageJson)
+  const appType = await detectApplicationType(root, rootPackageJson)
+
+  if (!appType) {
+    throw new Error(`Unable to detect application type in ${root}.`)
+  }
+
+  const { label, name: moduleName } = appType
 
   if (context) {
     const serviceRoot = relative(process.cwd(), root)

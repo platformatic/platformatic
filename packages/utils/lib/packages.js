@@ -86,8 +86,26 @@ async function getLatestNpmVersion (pkg) {
   return null
 }
 
-async function searchJavascriptFiles (projectDir) {
-  return glob('**/*.{js,mjs,cjs,ts,mts,cts}', { cwd: projectDir })
+async function searchFilesWithExtensions (root, extensions, globOptions = {}) {
+  const globSuffix = Array.isArray(extensions) ? `{${extensions.join(',')}}` : extensions
+  return glob(`**/*.${globSuffix}`, { ...globOptions, cwd: root })
+}
+
+async function searchJavascriptFiles (projectDir, globOptions = {}) {
+  return searchFilesWithExtensions(projectDir, ['js', 'mjs', 'cjs', 'ts', 'mts', 'cts'], {
+    ...globOptions,
+    ignore: ['node_modules', '**/node_modules/**']
+  })
+}
+
+async function hasFilesWithExtensions (root, extensions, globOptions = {}) {
+  const files = await searchFilesWithExtensions(root, extensions, globOptions)
+  return files.length > 0
+}
+
+async function hasJavascriptFiles (projectDir, globOptions = {}) {
+  const files = await searchJavascriptFiles(projectDir, globOptions)
+  return files.length > 0
 }
 
 async function detectApplicationType (root, packageJson) {
@@ -99,8 +117,8 @@ async function detectApplicationType (root, packageJson) {
     }
   }
 
-  let name = '@platformatic/node'
-  let label = 'Node.js'
+  let name
+  let label
 
   if (hasDependency(packageJson, '@nestjs/core')) {
     name = '@platformatic/nest'
@@ -118,17 +136,24 @@ async function detectApplicationType (root, packageJson) {
   } else if (hasDependency(packageJson, 'vite')) {
     name = '@platformatic/vite'
     label = 'Vite'
+  } else if (await hasJavascriptFiles(root)) {
+    // If no specific framework is detected, we assume it's a generic Node.js application
+    name = '@platformatic/node'
+    label = 'Node.js'
   }
 
-  return { name, label }
+  return name ? { name, label } : null
 }
 
 module.exports = {
   getDependencyVersion,
   getPlatformaticVersion,
   hasDependency,
+  hasFilesWithExtensions,
+  hasJavascriptFiles,
   checkForDependencies,
   getLatestNpmVersion,
+  searchFilesWithExtensions,
   searchJavascriptFiles,
   detectApplicationType
 }

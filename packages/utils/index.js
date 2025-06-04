@@ -29,6 +29,9 @@ const {
   getLatestNpmVersion,
   getPlatformaticVersion,
   hasDependency,
+  hasFilesWithExtensions,
+  hasJavascriptFiles,
+  searchFilesWithExtensions,
   searchJavascriptFiles
 } = require('./lib/packages')
 const { withResolvers } = require('./lib/promises')
@@ -62,6 +65,8 @@ module.exports.getPkgManager = getPkgManager
 module.exports.getPlatformaticVersion = getPlatformaticVersion
 module.exports.getPrivateSymbol = getPrivateSymbol
 module.exports.hasDependency = hasDependency
+module.exports.hasFilesWithExtensions = hasFilesWithExtensions
+module.exports.hasJavascriptFiles = hasJavascriptFiles
 module.exports.isFileAccessible = isFileAccessible
 module.exports.isKeyEnabled = isKeyEnabled
 module.exports.kFailedImport = kFailedImport
@@ -72,6 +77,7 @@ module.exports.overridableValue = overridableValue
 module.exports.removeDefaults = removeDefaults
 module.exports.safeRemove = safeRemove
 module.exports.schemaComponents = schemaComponents
+module.exports.searchFilesWithExtensions = searchFilesWithExtensions
 module.exports.searchJavascriptFiles = searchJavascriptFiles
 module.exports.setPinoFormatters = setPinoFormatters
 module.exports.setPinoTimestamp = setPinoTimestamp

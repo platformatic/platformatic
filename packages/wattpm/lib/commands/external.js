@@ -47,7 +47,13 @@ async function parseLocalFolder (path) {
   }
 
   // Check which stackable we should use
-  const { name: stackable, label } = await detectApplicationType(path, packageJson)
+  const appType = await detectApplicationType(path, packageJson)
+
+  if (!appType) {
+    return
+  }
+
+  const { name: stackable, label } = appType
 
   return { id: packageJson.name ?? basename(path), url, packageJson, stackable, label }
 }
@@ -106,7 +112,14 @@ async function fixConfiguration (logger, root, configOption, skipDependencies, p
   // For each service, if there is no watt.json, create one and fix package dependencies
   for (const { path } of services) {
     const wattConfiguration = await ConfigManager.findConfigFile(path, 'application')
-    const { id, packageJson, stackable, label } = await parseLocalFolder(resolve(root, path))
+
+    const appType = await parseLocalFolder(resolve(root, path))
+
+    if (!appType) {
+      return logFatalError(logger, `The path ${bold(path)} does not contain a supported application.`)
+    }
+
+    const { id, packageJson, stackable, label } = appType
 
     if (!wattConfiguration) {
       const wattJson = {
@@ -245,7 +258,13 @@ async function importURL (logger, _, configurationFile, rawUrl, id, http, branch
 }
 
 async function importLocal (logger, root, configurationFile, path, overridenId) {
-  const { id, url, packageJson, stackable } = await parseLocalFolder(path)
+  const appType = await parseLocalFolder(resolve(root, path))
+
+  if (!appType) {
+    return logFatalError(logger, `The path ${bold(path)} does not contain a supported application.`)
+  }
+
+  const { id, url, packageJson, stackable } = appType
 
   if (!(await importService(logger, configurationFile, overridenId ?? id, path, url))) {
     return

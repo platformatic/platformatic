@@ -1,8 +1,10 @@
+import { createDirectory, safeRemove } from '@platformatic/utils'
 import { deepStrictEqual, ok } from 'node:assert'
 import { readFile, writeFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
+import { prepareRuntime } from '../../basic/test/helper.js'
 import { version } from '../lib/schema.js'
 import { createTemporaryDirectory, waitForStart, wattpm } from './helper.js'
 
@@ -77,4 +79,17 @@ server.listen(3000)
 
   startProcess.kill('SIGINT')
   await startProcess.catch(() => {})
+})
+
+test('import - it should fail with a folder with no recognized files', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
+  t.after(() => safeRemove(rootDir))
+
+  const emptyDir = resolve(rootDir, 'web/empty')
+  await createDirectory(emptyDir)
+  process.chdir(rootDir)
+  const wattProcess = await wattpm('import', '-P', 'pnpm', { reject: false })
+
+  deepStrictEqual(wattProcess.exitCode, 1)
+  ok(wattProcess.stdout.includes(`The path ${emptyDir} does not contain a supported application.`))
 })
