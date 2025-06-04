@@ -2046,6 +2046,9 @@ class Runtime extends EventEmitter {
         await this.#updateServiceConfigHeap(serviceId, currentHealth.maxHeapTotal)
       } else {
         this.logger.error({ err }, `Cannot update service maxHeapTotal, updated workers: ${updated} out of ${currentWorkers}`)
+        // TODO in this case the value in
+        // this.#configManager.current.services.find(s => s.id === serviceId).health.maxHeapTotal
+        // is not consistent with the value in the workers: some workers have the new value, some have the old value
       }
     }
   }
