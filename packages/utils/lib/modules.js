@@ -3,7 +3,6 @@
 const { createRequire: nodeCreateRequire } = require('node:module')
 const { basename, dirname, resolve: resolvePaths } = require('node:path')
 const { fileURLToPath } = require('node:url')
-const originalRequire = require
 const kFailedImport = Symbol('plt.utils.failedImport')
 
 // TODO@PI: This was needed for https://github.com/nodejs/node/issues/55417. It can be removed in Platformatic v3

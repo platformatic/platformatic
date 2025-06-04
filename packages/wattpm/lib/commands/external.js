@@ -99,6 +99,8 @@ async function fixConfiguration (logger, root, configOption, skipDependencies, p
     if (!config) {
       return
     }
+
+    services = config.services
   }
 
   // For each service, if there is no watt.json, create one and fix package dependencies

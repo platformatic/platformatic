@@ -1,9 +1,9 @@
-import { isWindows, temporaryFolder } from '@platformatic/basic/test/helper.js'
 import { createDirectory, safeRemove } from '@platformatic/utils'
 import { deepStrictEqual } from 'node:assert'
 import { chmod, readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
+import { isWindows, temporaryFolder } from '../../basic/test/helper.js'
 import { wattpm } from './helper.js'
 
 // This test cannot be run in Windows as it's pretty hard to mock the executable.

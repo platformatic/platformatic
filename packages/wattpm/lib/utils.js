@@ -254,8 +254,8 @@ export async function fallbackToTemporaryConfigFile (logger, root) {
   if (jsFiles.length > 0) {
     const { name, label } = await detectApplicationType(root)
 
-    /* c8 ignore next - else */
     const autodetectDescription =
+      /* c8 ignore next - else */
       name === '@platformatic/node' ? 'is a generic Node.js application' : `is using ${label}`
 
     logger.warn(
