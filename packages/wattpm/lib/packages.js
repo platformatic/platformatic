@@ -16,6 +16,7 @@ export const packages = [
   '@platformatic/globals',
   '@platformatic/itc',
   '@platformatic/metrics',
+  '@platformatic/nest',
   '@platformatic/next',
   '@platformatic/node',
   '@platformatic/remix',
