@@ -130,10 +130,14 @@ test('copy - should copy application', async t => {
   // Create test files in source directory
   await writeFile(join(sourceDir, 'package.json'), JSON.stringify({ name: 'test-app' }))
   await writeFile(join(sourceDir, 'index.js'), 'console.log("hello")')
+  await writeFile(join(sourceDir, '.env'), 'A=B')
   await mkdir(join(sourceDir, 'src'))
   await mkdir(join(sourceDir, 'node_modules'))
   await writeFile(join(sourceDir, 'src', 'app.js'), 'module.exports = {}')
   await writeFile(join(sourceDir, 'src', 'fake.js'), 'module.exports = {}')
+  await writeFile(join(sourceDir, 'pnpm-lock.yaml'), '---')
+  await writeFile(join(sourceDir, 'package-lock.json'), '{}')
+  await writeFile(join(sourceDir, 'yarn.lock'), '{}')
 
   const runtime = createMockedRuntimeGenerator()
   const gen = createGenerator(runtime, { targetDirectory: targetDir })
@@ -150,10 +154,16 @@ test('copy - should copy application', async t => {
   const indexJs = await readFile(join(targetDir, 'index.js'), 'utf-8')
   deepStrictEqual(indexJs, 'console.log("hello")')
 
+  const envFile = await readFile(join(targetDir, '.env'), 'utf-8')
+  deepStrictEqual(envFile, 'A=B')
+
   const appJs = await readFile(join(targetDir, 'src', 'app.js'), 'utf-8')
   deepStrictEqual(appJs, 'module.exports = {}')
 
   ok(!existsSync(join(targetDir, 'node_modules', 'fake.js')))
+  ok(!existsSync(join(targetDir, 'pnpm-lock.yaml')))
+  ok(!existsSync(join(targetDir, 'package-lock.json')))
+  ok(!existsSync(join(targetDir, 'yarn.lock')))
 })
 
 test('copy - should generate config file for platformatic module', async t => {

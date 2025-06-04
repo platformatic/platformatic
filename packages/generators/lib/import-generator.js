@@ -203,7 +203,12 @@ class ImportGenerator extends BaseGenerator {
   }
 
   async #copy (root) {
-    const files = await glob('**/*', { cwd: root, dot: true, ignore: ['node_modules/**'], withFileTypes: true })
+    const files = await glob('**/*', {
+      cwd: root,
+      dot: true,
+      ignore: ['node_modules/**', 'package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'],
+      withFileTypes: true
+    })
 
     for (const file of files) {
       if (file.isDirectory()) {
