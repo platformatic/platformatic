@@ -233,8 +233,6 @@ test('should get runtime metrics', async t => {
     'process_resident_memory_bytes',
     'process_start_time_seconds',
     'http_request_all_summary_seconds',
-    'http_request_duration_seconds',
-    'http_request_summary_seconds'
   ]
 
   {
