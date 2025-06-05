@@ -124,15 +124,7 @@ const expectedMetrics = [
   {
     name: 'http_request_all_duration_seconds',
     type: 'histogram'
-  },
-  {
-    name: 'http_request_duration_seconds',
-    type: 'histogram'
-  },
-  {
-    name: 'http_request_summary_seconds',
-    type: 'summary'
-  },
+  }
 ]
 
 function assertMetric (metrics, metric) {
@@ -148,31 +140,31 @@ function assertMetric (metrics, metric) {
 
 function assertSummary (metrics, metric) {
   assert.ok(metrics.includes(`${metric.name}{quantile="0.01"`))
-  assert.ok(metrics.includes('http_request_summary_seconds{quantile="0.01"'))
-  assert.ok(metrics.includes('http_request_summary_seconds{quantile="0.05"'))
-  assert.ok(metrics.includes('http_request_summary_seconds{quantile="0.5"'))
-  assert.ok(metrics.includes('http_request_summary_seconds{quantile="0.9"'))
-  assert.ok(metrics.includes('http_request_summary_seconds{quantile="0.95"'))
-  assert.ok(metrics.includes('http_request_summary_seconds{quantile="0.99"'))
-  assert.ok(metrics.includes('http_request_summary_seconds{quantile="0.999"'))
-  assert.ok(metrics.includes('http_request_summary_seconds_sum{'))
-  assert.ok(metrics.includes('http_request_summary_seconds_count{'))
+  assert.ok(metrics.includes('http_request_all_summary_seconds{quantile="0.01"'))
+  assert.ok(metrics.includes('http_request_all_summary_seconds{quantile="0.05"'))
+  assert.ok(metrics.includes('http_request_all_summary_seconds{quantile="0.5"'))
+  assert.ok(metrics.includes('http_request_all_summary_seconds{quantile="0.9"'))
+  assert.ok(metrics.includes('http_request_all_summary_seconds{quantile="0.95"'))
+  assert.ok(metrics.includes('http_request_all_summary_seconds{quantile="0.99"'))
+  assert.ok(metrics.includes('http_request_all_summary_seconds{quantile="0.999"'))
+  assert.ok(metrics.includes('http_request_all_summary_seconds_sum{'))
+  assert.ok(metrics.includes('http_request_all_summary_seconds_count{'))
 }
 
 function assertHistogram (metrics, metric) {
-  assert.ok(metrics.includes('http_request_duration_seconds_bucket{le="0.005"'))
-  assert.ok(metrics.includes('http_request_duration_seconds_bucket{le="0.01"'))
-  assert.ok(metrics.includes('http_request_duration_seconds_bucket{le="0.025"'))
-  assert.ok(metrics.includes('http_request_duration_seconds_bucket{le="0.05"'))
-  assert.ok(metrics.includes('http_request_duration_seconds_bucket{le="0.1"'))
-  assert.ok(metrics.includes('http_request_duration_seconds_bucket{le="0.25"'))
-  assert.ok(metrics.includes('http_request_duration_seconds_bucket{le="0.5"'))
-  assert.ok(metrics.includes('http_request_duration_seconds_bucket{le="1"'))
-  assert.ok(metrics.includes('http_request_duration_seconds_bucket{le="2.5"'))
-  assert.ok(metrics.includes('http_request_duration_seconds_bucket{le="5"'))
-  assert.ok(metrics.includes('http_request_duration_seconds_bucket{le="10"'))
-  assert.ok(metrics.includes('http_request_duration_seconds_sum{'))
-  assert.ok(metrics.includes('http_request_duration_seconds_count{'))
+  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.005"'))
+  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.01"'))
+  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.025"'))
+  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.05"'))
+  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.1"'))
+  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.25"'))
+  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.5"'))
+  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="1"'))
+  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="2.5"'))
+  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="5"'))
+  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="10"'))
+  assert.ok(metrics.includes('http_request_all_duration_seconds_sum{'))
+  assert.ok(metrics.includes('http_request_all_duration_seconds_count{'))
 }
 
 module.exports = {
