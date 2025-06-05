@@ -70,7 +70,6 @@ export async function injectCommand (logger, args) {
   )
 
   const outputStream = output ? createWriteStream(resolve(process.cwd(), output)) : process.stdout
-
   try {
     const client = new RuntimeApiClient()
     const [runtime, positionals] = await getMatchingRuntime(client, allPositionals)
@@ -115,7 +114,7 @@ export async function injectCommand (logger, args) {
     if (response.statusCode === 500) {
       const json = JSON.parse(responseBody)
 
-      if (json?.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND') {
+      if (json?.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND' || json?.code === 'PLT_RUNTIME_SERVICE_WORKER_NOT_FOUND') {
         const error = new Error('Cannot find a service.')
         error.code = 'PLT_CTR_SERVICE_NOT_FOUND'
         throw error
