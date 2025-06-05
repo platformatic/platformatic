@@ -1,3 +1,5 @@
+'use strict'
+
 const UNITS = ['b', 'kb', 'mb', 'gb']
 const UNITS_FACTOR = 1024
 
