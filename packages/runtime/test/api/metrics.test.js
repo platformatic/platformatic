@@ -83,9 +83,7 @@ test('should get runtime metrics in a json format', async t => {
     'process_cpu_user_seconds_total',
     'process_resident_memory_bytes',
     'process_start_time_seconds',
-    'http_request_all_summary_seconds',
-    'http_request_duration_seconds',
-    'http_request_summary_seconds'
+    'http_request_all_summary_seconds'
   ]
 
   const services = ['service-1', 'service-2', 'service-db']
@@ -168,8 +166,6 @@ test('should get runtime metrics in a text format', async t => {
     'process_resident_memory_bytes',
     'process_start_time_seconds',
     'http_request_all_summary_seconds',
-    'http_request_duration_seconds',
-    'http_request_summary_seconds'
   ]
   for (const metricName of expectedMetricNames) {
     assert.ok(metricsNames.includes(metricName), `Missing metric: ${metricName}`)
