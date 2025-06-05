@@ -6,7 +6,7 @@ const { join } = require('node:path')
 const { buildStackable } = require('../..')
 const { request } = require('undici')
 
-test('collect the http metric', async (t) => {
+test('collect the http metrics', async (t) => {
   const config = {
     server: {
       hostname: '127.0.0.1',
