@@ -7,7 +7,7 @@ const { workerData } = require('node:worker_threads')
 const { printSchema } = require('graphql')
 const pino = require('pino')
 const { client, collectMetrics } = require('@platformatic/metrics')
-const httpMetrics = require('@platformatic/fastify-http-metrics')
+const collectHttpMetrics = require('@platformatic/http-metrics')
 const { extractTypeScriptCompileOptionsFromConfig } = require('./compile')
 const { compile } = require('@platformatic/ts-compiler')
 const { deepmerge, buildPinoFormatters, buildPinoTimestamp } = require('@platformatic/utils')
@@ -225,7 +225,8 @@ class ServiceStackable {
     }
   }
 
-  async getMetrics ({ format }) {
+  async getMetrics (opts) {
+    const format = opts?.format
     return format === 'json' ? await this.metricsRegistry.getMetricsAsJSON() : await this.metricsRegistry.metrics()
   }
 
@@ -277,38 +278,22 @@ class ServiceStackable {
   }
 
   #setHttpMetrics () {
-    this.app.register(httpMetrics, {
-      registry: this.metricsRegistry,
+    collectHttpMetrics(this.metricsRegistry, {
       customLabels: ['telemetry_id'],
       getCustomLabels: req => {
         const telemetryId = req.headers['x-plt-telemetry-id'] ?? 'unknown'
         return { telemetry_id: telemetryId }
       },
-      zeroFill: true
-    })
-
-    this.app.register(httpMetrics, {
-      registry: this.metricsRegistry,
-      customLabels: ['telemetry_id'],
-      getCustomLabels: req => {
-        const telemetryId = req.headers['x-plt-telemetry-id'] ?? 'unknown'
-        return { telemetry_id: telemetryId }
-      },
+      // We need to rename them, these metrics are for all the routes
+      // (hence the `all` in the name)
       histogram: {
         name: 'http_request_all_duration_seconds',
         help: 'request duration in seconds summary for all requests',
-        collect: function () {
-          process.nextTick(() => this.reset())
-        }
       },
       summary: {
         name: 'http_request_all_summary_seconds',
         help: 'request duration in seconds histogram for all requests',
-        collect: function () {
-          process.nextTick(() => this.reset())
-        }
       },
-      zeroFill: true
     })
   }
 
