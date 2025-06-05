@@ -7,7 +7,8 @@ const { workerData } = require('node:worker_threads')
 const { printSchema } = require('graphql')
 const pino = require('pino')
 const { client, collectMetrics } = require('@platformatic/metrics')
-const httpMetrics = require('@platformatic/fastify-http-metrics')
+const { httpMetrics } = require('@platformatic/metrics')
+
 const { extractTypeScriptCompileOptionsFromConfig } = require('./compile')
 const { compile } = require('@platformatic/ts-compiler')
 const { deepmerge, buildPinoFormatters, buildPinoTimestamp } = require('@platformatic/utils')
@@ -283,32 +284,7 @@ class ServiceStackable {
       getCustomLabels: req => {
         const telemetryId = req.headers['x-plt-telemetry-id'] ?? 'unknown'
         return { telemetry_id: telemetryId }
-      },
-      zeroFill: true
-    })
-
-    this.app.register(httpMetrics, {
-      registry: this.metricsRegistry,
-      customLabels: ['telemetry_id'],
-      getCustomLabels: req => {
-        const telemetryId = req.headers['x-plt-telemetry-id'] ?? 'unknown'
-        return { telemetry_id: telemetryId }
-      },
-      histogram: {
-        name: 'http_request_all_duration_seconds',
-        help: 'request duration in seconds summary for all requests',
-        collect: function () {
-          process.nextTick(() => this.reset())
-        }
-      },
-      summary: {
-        name: 'http_request_all_summary_seconds',
-        help: 'request duration in seconds histogram for all requests',
-        collect: function () {
-          process.nextTick(() => this.reset())
-        }
-      },
-      zeroFill: true
+      }
     })
   }
 

@@ -20,6 +20,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
     "@platformatic/http-metrics": "^0.2.1",
+    "fastify-plugin": "^5.0.0",
     "prom-client": "^15.1.2"
   },
   "optionalDependencies": {
@@ -28,6 +29,8 @@
   "devDependencies": {
     "borp": "^0.20.0",
     "eslint": "9",
-    "neostandard": "^0.12.0"
+    "fastify": "^5.0.0",
+    "neostandard": "^0.12.0",
+    "undici": "^7.10.0"
   }
 }

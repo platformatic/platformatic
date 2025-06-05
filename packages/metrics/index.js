@@ -4,6 +4,7 @@ const os = require('node:os')
 const { eventLoopUtilization } = require('node:perf_hooks').performance
 const client = require('prom-client')
 const collectHttpMetrics = require('@platformatic/http-metrics')
+const httpMetrics = require('./http-metrics')
 
 const { Registry, Gauge, Counter, collectDefaultMetrics } = client
 
@@ -189,4 +190,4 @@ function collectEluMetric (register) {
   register.registerMetric(cpuMetric)
 }
 
-module.exports = { collectMetrics, client }
+module.exports = { collectMetrics, client, httpMetrics }
