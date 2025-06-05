@@ -1150,11 +1150,12 @@ class Runtime extends EventEmitter {
     }
 
     const maxHeapTotal = typeof health.maxHeapTotal === 'string' ? parseMemorySize(health.maxHeapTotal) : health.maxHeapTotal
+    const maxYoungGeneration = typeof health.maxYoungGeneration === 'string' ? parseMemorySize(health.maxYoungGeneration) : health.maxYoungGeneration
 
     const maxOldGenerationSizeMb = Math.floor(
-      (health.maxYoungGeneration > 0 ? maxHeapTotal - health.maxYoungGeneration : maxHeapTotal) / (1024 * 1024)
+      (maxYoungGeneration > 0 ? maxHeapTotal - maxYoungGeneration : maxHeapTotal) / (1024 * 1024)
     )
-    const maxYoungGenerationSizeMb = health.maxYoungGeneration ? Math.floor(health.maxYoungGeneration / (1024 * 1024)) : undefined
+    const maxYoungGenerationSizeMb = maxYoungGeneration ? Math.floor(maxYoungGeneration / (1024 * 1024)) : undefined
 
     const worker = new Worker(kWorkerFile, {
       workerData: {
@@ -1904,12 +1905,31 @@ class Runtime extends EventEmitter {
     }
   }
 
-  async #updateServiceConfigHeap (serviceId, maxHeapTotal) {
-    this.logger.info(`Updating service "${serviceId}" config maxHeapTotal to ${maxHeapTotal}`)
+  async #updateServiceConfigHealth (serviceId, health) {
+    this.logger.info(`Updating service "${serviceId}" config health heap to ${JSON.stringify(health)}`)
+    const { maxHeapTotal, maxYoungGeneration } = health
 
-    this.#configManager.current.services.find(s => s.id === serviceId).health.maxHeapTotal = maxHeapTotal
+    const service = this.#configManager.current.services.find(s => s.id === serviceId)
+    if (maxHeapTotal) {
+      service.health.maxHeapTotal = maxHeapTotal
+    }
+    if (maxYoungGeneration) {
+      service.health.maxYoungGeneration = maxYoungGeneration
+    }
   }
 
+  /**
+   * Updates the resources of the services.
+   *
+   * @example
+   * ```js
+   * await runtime.updateServicesResources([
+   *   { service: 'service-1', workers: 2, health: { maxHeapTotal: '1G', maxYoungGeneration: '128 MB' } },
+   *   { service: 'service-2', health: { maxHeapTotal: '1G' } },
+   *   { service: 'service-3', workers: 2 },
+   * ])
+   * ```
+   */
   async updateServicesResources (updates) {
     if (this.#status === 'stopping' || this.#status === 'closed') {
       this.logger.warn('Cannot update service resources when the runtime is stopping or closed')
@@ -1920,12 +1940,12 @@ class Runtime extends EventEmitter {
     const config = this.#configManager.current
 
     for (const update of ups) {
-      const { serviceId, config: serviceConfig, workers, maxHeapTotal, currentWorkers, currentHealth } = update
+      const { serviceId, config: serviceConfig, workers, health, currentWorkers, currentHealth } = update
 
-      if (workers && maxHeapTotal) {
-        await this.#updateServiceWorkersAndHeap(serviceId, config, serviceConfig, workers, maxHeapTotal, currentWorkers, currentHealth)
-      } else if (maxHeapTotal) {
-        await this.#updateServiceHeap(serviceId, config, serviceConfig, currentWorkers, currentHealth, maxHeapTotal)
+      if (workers && health) {
+        await this.#updateServiceWorkersAndHealth(serviceId, config, serviceConfig, workers, health, currentWorkers, currentHealth)
+      } else if (health) {
+        await this.#updateServiceHealth(serviceId, config, serviceConfig, currentWorkers, currentHealth, health)
       } else if (workers) {
         await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
       }
@@ -1955,7 +1975,7 @@ class Runtime extends EventEmitter {
 
       const { workers: currentWorkers, health: currentHealth } = await this.getServiceResourcesInfo(serviceId)
 
-      let updateWorkers
+      let workers
       if (update.workers !== undefined) {
         if (typeof update.workers !== 'number') {
           throw new errors.InvalidArgumentError('workers', 'must be a number')
@@ -1969,86 +1989,107 @@ class Runtime extends EventEmitter {
 
         if (currentWorkers === update.workers) {
           this.logger.warn({ serviceId, workers: update.workers }, 'No change in the number of workers for service')
-          updateWorkers = false
         } else {
-          updateWorkers = true
+          workers = update.workers
         }
       }
 
-      let updateHeap
-      if (update.maxHeapTotal !== undefined) {
-        if (typeof update.maxHeapTotal === 'string') {
-          try {
-            update.maxHeapTotal = parseMemorySize(update.maxHeapTotal)
-          } catch {
-            throw new errors.InvalidArgumentError('maxHeapTotal', 'must be a valid memory size')
+      let maxHeapTotal, maxYoungGeneration
+      if (update.health) {
+        if (update.health.maxHeapTotal !== undefined) {
+          if (typeof update.health.maxHeapTotal === 'string') {
+            try {
+              maxHeapTotal = parseMemorySize(update.health.maxHeapTotal)
+            } catch {
+              throw new errors.InvalidArgumentError('maxHeapTotal', 'must be a valid memory size')
+            }
+          } else if (typeof update.health.maxHeapTotal === 'number') {
+            maxHeapTotal = update.health.maxHeapTotal
+            if (update.health.maxHeapTotal <= 0) {
+              throw new errors.InvalidArgumentError('maxHeapTotal', 'must be greater than 0')
+            }
+          } else {
+            throw new errors.InvalidArgumentError('maxHeapTotal', 'must be a number or a string representing a memory size')
           }
-        } else if (typeof update.maxHeapTotal === 'number') {
-          if (update.maxHeapTotal <= 0) {
-            throw new errors.InvalidArgumentError('maxHeapTotal', 'must be greater than 0')
+
+          if (currentHealth.maxHeapTotal === maxHeapTotal) {
+            this.logger.warn({ serviceId, maxHeapTotal }, 'No change in the max heap total for service')
+            maxHeapTotal = undefined
           }
-        } else {
-          throw new errors.InvalidArgumentError('maxHeapTotal', 'must be a number or a string representing a memory size')
         }
 
-        if (currentHealth.maxHeapTotal === update.maxHeapTotal) {
-          this.logger.warn({ serviceId, maxHeapTotal: update.maxHeapTotal }, 'No change in the max heap total for service')
-          updateHeap = false
-        } else {
-          updateHeap = true
+        if (update.health.maxYoungGeneration !== undefined) {
+          if (typeof update.health.maxYoungGeneration === 'string') {
+            try {
+              maxYoungGeneration = parseMemorySize(update.health.maxYoungGeneration)
+            } catch {
+              throw new errors.InvalidArgumentError('maxYoungGeneration', 'must be a valid memory size')
+            }
+          } else if (typeof update.health.maxYoungGeneration === 'number') {
+            maxYoungGeneration = update.health.maxYoungGeneration
+            if (update.health.maxYoungGeneration <= 0) {
+              throw new errors.InvalidArgumentError('maxYoungGeneration', 'must be greater than 0')
+            }
+          } else {
+            throw new errors.InvalidArgumentError('maxYoungGeneration', 'must be a number or a string representing a memory size')
+          }
+
+          if (currentHealth.maxYoungGeneration && currentHealth.maxYoungGeneration === maxYoungGeneration) {
+            this.logger.warn({ serviceId, maxYoungGeneration }, 'No change in the max young generation for service')
+            maxYoungGeneration = undefined
+          }
         }
       }
 
-      if (updateWorkers || updateHeap) {
-        validatedUpdates.push({ serviceId, config: serviceConfig, workers: update.workers, maxHeapTotal: update.maxHeapTotal, currentWorkers, currentHealth })
+      if (workers || maxHeapTotal || maxYoungGeneration) {
+        const health = maxHeapTotal || maxYoungGeneration ? { maxHeapTotal, maxYoungGeneration } : undefined
+        validatedUpdates.push({ serviceId, config: serviceConfig, workers, health, currentWorkers, currentHealth })
       }
     }
 
     return validatedUpdates
   }
 
-  async #updateServiceWorkersAndHeap (serviceId, config, serviceConfig, workers, maxHeapTotal, currentWorkers, currentHealth) {
+  async #updateServiceWorkersAndHealth (serviceId, config, serviceConfig, workers, health, currentWorkers, currentHealth) {
     if (currentWorkers > workers) {
       // stop workers
       await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
       // update heap for current workers
-      await this.#updateServiceHeap(serviceId, config, serviceConfig, workers, currentHealth, maxHeapTotal)
+      await this.#updateServiceHealth(serviceId, config, serviceConfig, workers, currentHealth, health)
     } else {
       // update service heap
-      await this.#updateServiceConfigHeap(serviceId, maxHeapTotal)
+      await this.#updateServiceConfigHealth(serviceId, health)
       // start new workers with new heap
       await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
       // update heap for current workers
-      await this.#updateServiceHeap(serviceId, config, serviceConfig, currentWorkers, currentHealth, maxHeapTotal, false)
+      await this.#updateServiceHealth(serviceId, config, serviceConfig, currentWorkers, currentHealth, health, false)
     }
   }
 
-  async #updateServiceHeap (serviceId, config, serviceConfig, currentWorkers, currentHealth, maxHeapTotal, updateConfig = true) {
+  async #updateServiceHealth (serviceId, config, serviceConfig, currentWorkers, currentHealth, health, updateConfig = true) {
     let updated = 0
     try {
       if (updateConfig) {
-        await this.#updateServiceConfigHeap(serviceId, maxHeapTotal)
+        await this.#updateServiceConfigHealth(serviceId, health)
       }
 
       for (let i = 0; i < currentWorkers; i++) {
-        this.logger.info({ maxHeapTotal: { current: currentHealth.maxHeapTotal, new: maxHeapTotal } }, `Restarting service "${serviceId}" worker ${i} to update maxHeapTotal...`)
+        this.logger.info({ health: { current: currentHealth, new: health } }, `Restarting service "${serviceId}" worker ${i} to update config health heap...`)
 
         const worker = await this.#getWorkerById(serviceId, i)
-        worker[kConfig].health.maxHeapTotal = maxHeapTotal
+        if (health.maxHeapTotal) { worker[kConfig].health.maxHeapTotal = health.maxHeapTotal }
+        if (health.maxYoungGeneration) { worker[kConfig].health.maxYoungGeneration = health.maxYoungGeneration }
 
         await this.#replaceWorker(config, serviceConfig, currentWorkers, serviceId, i, worker)
         updated++
-        this.logger.info({ maxHeapTotal: { current: currentHealth.maxHeapTotal, new: maxHeapTotal } }, `Restarted service "${serviceId}" worker ${i}`)
+        this.logger.info({ health: { current: currentHealth, new: health } }, `Restarted service "${serviceId}" worker ${i}`)
       }
     } catch (err) {
       if (updated < 1) {
-        this.logger.error({ err }, 'Cannot update service maxHeapTotal, no worker updated')
-        await this.#updateServiceConfigHeap(serviceId, currentHealth.maxHeapTotal)
+        this.logger.error({ err }, 'Cannot update service health heap, no worker updated')
+        await this.#updateServiceConfigHealth(serviceId, currentHealth)
       } else {
-        this.logger.error({ err }, `Cannot update service maxHeapTotal, updated workers: ${updated} out of ${currentWorkers}`)
-        // TODO in this case the value in
-        // this.#configManager.current.services.find(s => s.id === serviceId).health.maxHeapTotal
-        // is not consistent with the value in the workers: some workers have the new value, some have the old value
+        this.logger.error({ err }, `Cannot update service health heap, updated workers: ${updated} out of ${currentWorkers}`)
       }
     }
   }

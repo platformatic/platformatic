@@ -1,3 +1,5 @@
+'use strict'
+
 const { describe, test } = require('node:test')
 const { strict: assert } = require('node:assert')
 const { parseMemorySize } = require('../')
