@@ -76,6 +76,7 @@
               },
               "health": {
                 "type": "object",
+                "default": {},
                 "properties": {
                   "enabled": {
                     "anyOf": [
@@ -251,6 +252,7 @@
           },
           "health": {
             "type": "object",
+            "default": {},
             "properties": {
               "enabled": {
                 "anyOf": [
@@ -491,6 +493,7 @@
           },
           "health": {
             "type": "object",
+            "default": {},
             "properties": {
               "enabled": {
                 "anyOf": [

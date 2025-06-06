@@ -690,7 +690,7 @@ const services = {
         type: 'boolean'
       },
       workers,
-      health: { ...healthWithoutDefaults, default: undefined },
+      health: { ...healthWithoutDefaults },
       arguments: {
         type: 'array',
         items: {
@@ -802,7 +802,7 @@ const runtimeProperties = {
               type: 'boolean'
             },
             workers,
-            health: { ...healthWithoutDefaults, default: undefined },
+            health: { ...healthWithoutDefaults },
             preload,
             arguments: {
               type: 'array',
