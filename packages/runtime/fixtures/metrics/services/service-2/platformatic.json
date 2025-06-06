@@ -1,12 +1,9 @@
 {
   "$schema": "https://schemas.platformatic.dev/@platformatic/service/1.52.0.json",
+  "service": {
+    "openapi": true
+  },
   "plugins": {
     "paths": ["plugin.js"]
-  },
-  "watch": true,
-  "server": {
-    "logger": {
-      "level": "trace"
-    }
   }
 }

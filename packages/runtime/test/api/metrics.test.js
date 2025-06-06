@@ -22,7 +22,7 @@ function findPrometheusLinesForMetric (metric, output) {
 }
 
 test('should get runtime metrics in a json format', async t => {
-  const projectDir = join(fixturesDir, 'management-api')
+  const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
@@ -113,7 +113,7 @@ test('should get runtime metrics in a json format', async t => {
 })
 
 test('should get runtime metrics in a text format', async t => {
-  const projectDir = join(fixturesDir, 'management-api')
+  const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
@@ -248,7 +248,7 @@ test('should get json runtime metrics with custom labels', async t => {
 })
 
 test('should get formatted runtime metrics', async t => {
-  const projectDir = join(fixturesDir, 'management-api')
+  const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
@@ -285,7 +285,7 @@ test('should get formatted runtime metrics', async t => {
 })
 
 test('should get cached formatted runtime metrics', async t => {
-  const projectDir = join(fixturesDir, 'management-api')
+  const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
@@ -332,7 +332,7 @@ test('should get cached formatted runtime metrics', async t => {
 })
 
 test('should get metrics after reloading one of the services', async t => {
-  const projectDir = join(fixturesDir, 'management-api')
+  const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
@@ -375,7 +375,7 @@ test('should get metrics after reloading one of the services', async t => {
 })
 
 test('should get runtime metrics in a json format without a service call', async t => {
-  const projectDir = join(fixturesDir, 'management-api')
+  const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
