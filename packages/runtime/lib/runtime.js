@@ -145,6 +145,7 @@ class Runtime extends EventEmitter {
 
     this.#isProduction = this.#configManager.args?.production ?? false
     this.#servicesIds = config.services.map(service => service.id)
+    this.#createWorkersBroadcastChannel()
 
     const workersConfig = []
     for (const service of config.services) {
@@ -242,7 +243,7 @@ class Runtime extends EventEmitter {
       throw new errors.MissingEntrypointError()
     }
     this.#updateStatus('starting')
-    this.#workersBroadcastChannel = new BroadcastChannel(kWorkersBroadcast)
+    this.#createWorkersBroadcastChannel()
 
     // Important: do not use Promise.all here since it won't properly manage dependencies
     try {
@@ -1727,6 +1728,11 @@ class Runtime extends EventEmitter {
     }
 
     return worker
+  }
+
+  async #createWorkersBroadcastChannel () {
+    this.#workersBroadcastChannel?.close()
+    this.#workersBroadcastChannel = new BroadcastChannel(kWorkersBroadcast)
   }
 
   async #broadcastWorkers () {
