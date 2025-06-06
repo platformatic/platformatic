@@ -26,7 +26,7 @@ test('metrics - should return runtime metrics without format opt', async t => {
   const logsProcess = await wattpm('metrics')
 
   ok(logsProcess.stdout.includes('"nodejs_version_info"'))
-  ok(logsProcess.stdout.includes('"http_request_duration_seconds"'))
+  ok(logsProcess.stdout.includes('"http_request_all_duration_seconds"'))
   ok(logsProcess.stdout.includes('"http_cache_hit_count"'))
   ok(logsProcess.stdout.includes('"process_cpu_system_seconds_total"'))
 })
