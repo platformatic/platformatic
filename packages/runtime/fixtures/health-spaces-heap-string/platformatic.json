@@ -21,7 +21,7 @@
     "interval": 1000,
     "maxUnhealthyChecks": 3,
     "maxHeapTotal": "256 MB",
-    "maxYoungGeneration": "128 MB"
+    "maxYoungGeneration": "64 MB"
   },
   "restartOnError": 1000
 }

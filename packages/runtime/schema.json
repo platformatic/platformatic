@@ -156,8 +156,15 @@
                     ]
                   },
                   "maxYoungGeneration": {
-                    "type": "number",
-                    "minimum": 0
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 },
                 "additionalProperties": false
@@ -324,8 +331,15 @@
                 ]
               },
               "maxYoungGeneration": {
-                "type": "number",
-                "minimum": 0
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -557,8 +571,15 @@
                 ]
               },
               "maxYoungGeneration": {
-                "type": "number",
-                "minimum": 0
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -1061,8 +1082,15 @@
           ]
         },
         "maxYoungGeneration": {
-          "type": "number",
-          "minimum": 0
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "string"
+            }
+          ]
         }
       },
       "additionalProperties": false
