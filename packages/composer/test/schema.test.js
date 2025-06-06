@@ -18,5 +18,5 @@ test('root schema file', async (t) => {
   const schemaFile = await readFile(schemaPath, 'utf8')
   const rootSchema = JSON.parse(schemaFile)
 
-  assert.equal(JSON.stringify(rootSchema), JSON.stringify(schema))
+  assert.deepEqual(rootSchema, schema)
 })
