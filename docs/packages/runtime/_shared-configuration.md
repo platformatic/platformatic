@@ -342,6 +342,10 @@ It's important to note that `IDP` stands for Identity Provider, and its token `u
 
 The number of milliseconds to wait when invoking another service using the its `plt.local` before considering the request timed out. Default: `300000` (5 minutes).
 
+### `messagingTimeout`
+
+The number of milliseconds to wait when invoking another service using the its `globalThis.platformatic.messaging.send` before considering the request timed out. Default: `300000` (5 minutes).
+
 ### `metrics`
 
 This configures the Platformatic Runtime Prometheus server. The Prometheus server exposes aggregated metrics from the Platformatic Runtime services.

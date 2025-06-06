@@ -1,5 +1,5 @@
 import { client, collectMetrics } from '@platformatic/metrics'
-import { buildPinoOptions, deepmerge, executeWithTimeout } from '@platformatic/utils'
+import { buildPinoOptions, deepmerge, executeWithTimeout, kTimeout } from '@platformatic/utils'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import EventEmitter, { once } from 'node:events'
@@ -317,12 +317,12 @@ export class BaseStackable extends EventEmitter {
     /* c8 ignore next 10 */
     const res = await executeWithTimeout(exitPromise, exitTimeout)
 
-    if (res === 'timeout') {
+    if (res === kTimeout) {
       this.subprocess.kill(this.subprocessTerminationSignal)
 
       // If the process hasn't exited in X seconds, kill it the hard way
       const res = await executeWithTimeout(exitPromise, exitTimeout)
-      if (res === 'timeout') {
+      if (res === kTimeout) {
         this.subprocess.kill('SIGKILL')
       }
     }

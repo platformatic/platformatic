@@ -104,7 +104,7 @@ test('dev - should restart an application if files are changed', async t => {
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     const parsed = JSON.parse(log.toString())
 
-    if (parsed.msg.startsWith('Service "main" has been successfully reloaded')) {
+    if (parsed.msg.startsWith('The service "main" has been successfully reloaded')) {
       reloaded = true
       continue
     }
@@ -205,7 +205,7 @@ test('dev - should restart an application if the service configuration file is c
   for await (const log of on(startProcess.stdout.pipe(split2()), 'data')) {
     const parsed = JSON.parse(log.toString())
 
-    if (parsed.msg.startsWith('Service "main" has been successfully reloaded')) {
+    if (parsed.msg.startsWith('The service "main" has been successfully reloaded')) {
       reloaded = true
       continue
     }

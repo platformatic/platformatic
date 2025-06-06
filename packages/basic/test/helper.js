@@ -1,4 +1,4 @@
-import { createDirectory, features, safeRemove, withResolvers } from '@platformatic/utils'
+import { createDirectory, features, kTimeout, safeRemove, withResolvers } from '@platformatic/utils'
 import { join } from 'desm'
 import { execa } from 'execa'
 import { minimatch } from 'minimatch'
@@ -425,7 +425,7 @@ export async function verifyHMR (baseUrl, path, protocol, handler) {
   const connection = withResolvers()
   const reload = withResolvers()
   const ac = new AbortController()
-  const timeout = sleep(HMR_TIMEOUT, 'timeout', { signal: ac.signal })
+  const timeout = sleep(HMR_TIMEOUT, kTimeout, { signal: ac.signal })
 
   const url = baseUrl.replace('http:', 'ws:') + path
   const webSocket = new WebSocket(url, protocol)
@@ -443,14 +443,14 @@ export async function verifyHMR (baseUrl, path, protocol, handler) {
   const hmrTriggerFile = resolve(currentWorkingDirectory, hmrTriggerFileRelative)
   const originalContents = await readFile(hmrTriggerFile, 'utf-8')
   try {
-    if ((await Promise.race([connection.promise, timeout])) === 'timeout') {
+    if ((await Promise.race([connection.promise, timeout])) === kTimeout) {
       throw new Error('Timeout while waiting for HMR connection')
     }
 
     await sleep(500)
     await writeFile(hmrTriggerFile, originalContents.replace('const version = 123', 'const version = 456'), 'utf-8')
 
-    if ((await Promise.race([reload.promise, timeout])) === 'timeout') {
+    if ((await Promise.race([reload.promise, timeout])) === kTimeout) {
       throw new Error('Timeout while waiting for HMR reload')
     }
   } finally {

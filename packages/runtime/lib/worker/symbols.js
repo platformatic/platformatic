@@ -14,6 +14,9 @@ const kLastELU = Symbol.for('plt.runtime.worker.lastELU')
 // This string marker should be safe to use since it belongs to Unicode private area
 const kStderrMarker = '\ue002'
 
+// Note that this is used to create a BroadcastChannel so it must be a string
+const kWorkersBroadcast = 'plt.runtime.workers'
+
 module.exports = {
   kConfig,
   kId,
@@ -25,5 +28,6 @@ module.exports = {
   kLastELU,
   kWorkerStatus,
   kStderrMarker,
-  kInterceptors
+  kInterceptors,
+  kWorkersBroadcast
 }

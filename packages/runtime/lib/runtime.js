@@ -1,7 +1,7 @@
 'use strict'
 
 const { ITC } = require('@platformatic/itc')
-const { features, ensureLoggableError, executeWithTimeout, deepmerge, parseMemorySize } = require('@platformatic/utils')
+const { features, ensureLoggableError, executeWithTimeout, deepmerge, parseMemorySize, kTimeout } = require('@platformatic/utils')
 const { once, EventEmitter } = require('node:events')
 const { createReadStream, watch, existsSync } = require('node:fs')
 const { readdir, readFile, stat, access } = require('node:fs/promises')
@@ -34,7 +34,8 @@ const {
   kConfig,
   kWorkerStatus,
   kStderrMarker,
-  kLastELU
+  kLastELU,
+  kWorkersBroadcast
 } = require('./worker/symbols')
 
 const fastify = require('fastify')
@@ -75,6 +76,8 @@ class Runtime extends EventEmitter {
   #prometheusServer
   #inspectorServer
   #workers
+  #workersBroadcastChannel
+  #workerITCHandlers
   #restartingWorkers
   #sharedHttpCache
   servicesConfigsPatches
@@ -107,6 +110,18 @@ class Runtime extends EventEmitter {
         stderr: new SonicBoom({ fd: process.stderr.fd })
       }
     }
+
+    this.#workerITCHandlers = {
+      getServiceMeta: this.getServiceMeta.bind(this),
+      listServices: () => this.#servicesIds,
+      getServices: this.getServices.bind(this),
+      getWorkers: this.getWorkers.bind(this),
+      getWorkerMessagingChannel: this.#getWorkerMessagingChannel.bind(this),
+      getHttpCacheValue: this.#getHttpCacheValue.bind(this),
+      setHttpCacheValue: this.#setHttpCacheValue.bind(this),
+      deleteHttpCacheValue: this.#deleteHttpCacheValue.bind(this),
+      invalidateHttpCache: this.invalidateHttpCache.bind(this)
+    }
   }
 
   async init () {
@@ -131,12 +146,15 @@ class Runtime extends EventEmitter {
 
     this.#isProduction = this.#configManager.args?.production ?? false
     this.#servicesIds = config.services.map(service => service.id)
+    this.#createWorkersBroadcastChannel()
 
     const workersConfig = []
     for (const service of config.services) {
       const count = service.workers ?? this.#configManager.current.workers
       if (count > 1 && service.entrypoint && !features.node.reusePort) {
-        this.logger.warn(`"${service.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${count}`)
+        this.logger.warn(
+          `"${service.id}" is set as the entrypoint, but reusePort is not available in your OS; setting workers to 1 instead of ${count}`
+        )
         workersConfig.push({ id: service.id, workers: 1 })
       } else {
         workersConfig.push({ id: service.id, workers: count })
@@ -226,6 +244,7 @@ class Runtime extends EventEmitter {
       throw new errors.MissingEntrypointError()
     }
     this.#updateStatus('starting')
+    this.#createWorkersBroadcastChannel()
 
     // Important: do not use Promise.all here since it won't properly manage dependencies
     try {
@@ -312,6 +331,7 @@ class Runtime extends EventEmitter {
     }
 
     await this.#meshInterceptor.close()
+    this.#workersBroadcastChannel?.close()
 
     this.#updateStatus('stopped')
   }
@@ -1211,6 +1231,8 @@ class Runtime extends EventEmitter {
       setImmediate(() => {
         if (started && (!config.watch || code !== 0)) {
           this.emit('service:worker:error', { ...eventPayload, code })
+          this.#broadcastWorkers()
+
           this.logger.warn(`The ${errorLabel} unexpectedly exited with code ${code}.`)
         }
 
@@ -1254,14 +1276,7 @@ class Runtime extends EventEmitter {
       name: workerId + '-runtime',
       port: worker,
       handlers: {
-        getServiceMeta: this.getServiceMeta.bind(this),
-        listServices: () => this.#servicesIds,
-        getServices: this.getServices.bind(this),
-        getWorkers: this.getWorkers.bind(this),
-        getHttpCacheValue: this.#getHttpCacheValue.bind(this),
-        setHttpCacheValue: this.#setHttpCacheValue.bind(this),
-        deleteHttpCacheValue: this.#deleteHttpCacheValue.bind(this),
-        invalidateHttpCache: this.invalidateHttpCache.bind(this),
+        ...this.#workerITCHandlers,
         setEventsForwarding (value) {
           worker[kForwardEvents] = value
         }
@@ -1286,7 +1301,7 @@ class Runtime extends EventEmitter {
             await this.startService(serviceId)
           }
 
-          this.logger?.info(`Service "${serviceId}" has been successfully reloaded ...`)
+          this.logger?.info(`The service "${serviceId}" has been successfully reloaded ...`)
 
           if (serviceConfig.entrypoint) {
             this.#showUrl()
@@ -1448,7 +1463,7 @@ class Runtime extends EventEmitter {
       if (config.startTimeout > 0) {
         workerUrl = await executeWithTimeout(sendViaITC(worker, 'start'), config.startTimeout)
 
-        if (workerUrl === 'timeout') {
+        if (workerUrl === kTimeout) {
           this.emit('service:worker:startTimeout', eventPayload)
           this.logger.info(`The ${label} failed to start in ${config.startTimeout}ms. Forcefully killing the thread.`)
           worker.terminate()
@@ -1466,6 +1481,7 @@ class Runtime extends EventEmitter {
 
       worker[kWorkerStatus] = 'started'
       this.emit('service:worker:started', eventPayload)
+      this.#broadcastWorkers()
 
       if (!silent) {
         this.logger?.info(`Started the ${label}...`)
@@ -1569,7 +1585,7 @@ class Runtime extends EventEmitter {
     const res = await executeWithTimeout(exitPromise, exitTimeout)
 
     // If the worker didn't exit in time, kill it
-    if (res === 'timeout') {
+    if (res === kTimeout) {
       this.emit('service:worker:exit:timeout', eventPayload)
       await worker.terminate()
     }
@@ -1578,6 +1594,7 @@ class Runtime extends EventEmitter {
 
     worker[kWorkerStatus] = 'stopped'
     this.emit('service:worker:stopped', eventPayload)
+    this.#broadcastWorkers()
   }
 
   #cleanupWorker (worker) {
@@ -1627,6 +1644,9 @@ class Runtime extends EventEmitter {
           await this.#setupWorker(config, serviceConfig, workersCount, id, index)
           await this.#startWorker(config, serviceConfig, workersCount, id, index, silent, bootstrapAttempt)
 
+          this.logger.info(
+            `The ${this.#workerExtendedLabel(id, index, workersCount)} has been successfully restarted ...`
+          )
           resolve()
         } catch (err) {
           // The runtime was stopped while the restart was happening, ignore any error.
@@ -1710,7 +1730,15 @@ class Runtime extends EventEmitter {
         return null
       }
 
-      throw new errors.ServiceWorkerNotFoundError(serviceId, workerId)
+      if (this.#servicesIds.includes(serviceId)) {
+        const availableWorkers = Array.from(this.#workers.keys())
+          .filter(key => key.startsWith(serviceId + ':'))
+          .map(key => key.split(':')[1])
+          .join(', ')
+        throw new errors.WorkerNotFoundError(workerId, serviceId, availableWorkers)
+      } else {
+        throw new errors.ServiceNotFoundError(serviceId, Array.from(this.#servicesIds).join(', '))
+      }
     }
 
     if (ensureStarted) {
@@ -1722,6 +1750,59 @@ class Runtime extends EventEmitter {
     }
 
     return worker
+  }
+
+  async #createWorkersBroadcastChannel () {
+    this.#workersBroadcastChannel?.close()
+    this.#workersBroadcastChannel = new BroadcastChannel(kWorkersBroadcast)
+  }
+
+  async #broadcastWorkers () {
+    const workers = new Map()
+
+    // Create the list of workers
+    for (const worker of this.#workers.values()) {
+      if (worker[kWorkerStatus] !== 'started') {
+        continue
+      }
+
+      const service = worker[kServiceId]
+      let serviceWorkers = workers.get(service)
+
+      if (!serviceWorkers) {
+        serviceWorkers = []
+        workers.set(service, serviceWorkers)
+      }
+
+      serviceWorkers.push({
+        id: worker[kId],
+        service: worker[kServiceId],
+        worker: worker[kWorkerId],
+        thread: worker.threadId
+      })
+    }
+
+    this.#workersBroadcastChannel.postMessage(workers)
+  }
+
+  async #getWorkerMessagingChannel ({ service, worker }, context) {
+    const target = await this.#getWorkerById(service, worker, true, true)
+
+    const { port1, port2 } = new MessageChannel()
+
+    // Send the first port to the target
+    const response = await executeWithTimeout(
+      sendViaITC(target, 'saveMessagingChannel', port1, [port1]),
+      this.#configManager.current.messagingTimeout
+    )
+
+    if (response === kTimeout) {
+      throw new errors.MessagingError(service, 'Timeout while establishing a communication channel.')
+    }
+
+    context.transferList = [port2]
+    this.emit('service:worker:messagingChannel', { service, worker })
+    return port2
   }
 
   async #getRuntimePackageJson () {
@@ -1829,7 +1910,8 @@ class Runtime extends EventEmitter {
         }
       }
 
-      const pinoLog = typeof message?.level === 'number' && typeof message?.time === 'number' && typeof message?.msg === 'string'
+      const pinoLog =
+        typeof message?.level === 'number' && typeof message?.time === 'number' && typeof message?.msg === 'string'
 
       // Directly write to the Pino destination
       if (pinoLog) {
