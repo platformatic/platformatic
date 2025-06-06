@@ -367,7 +367,6 @@
           "default": {},
           "properties": {
             "enabled": {
-              "default": true,
               "anyOf": [
                 {
                   "type": "boolean"
@@ -375,10 +374,10 @@
                 {
                   "type": "string"
                 }
-              ]
+              ],
+              "default": true
             },
             "interval": {
-              "default": 30000,
               "anyOf": [
                 {
                   "type": "number",
@@ -387,10 +386,10 @@
                 {
                   "type": "string"
                 }
-              ]
+              ],
+              "default": 30000
             },
             "gracePeriod": {
-              "default": 30000,
               "anyOf": [
                 {
                   "type": "number",
@@ -399,10 +398,10 @@
                 {
                   "type": "string"
                 }
-              ]
+              ],
+              "default": 30000
             },
             "maxUnhealthyChecks": {
-              "default": 10,
               "anyOf": [
                 {
                   "type": "number",
@@ -411,10 +410,10 @@
                 {
                   "type": "string"
                 }
-              ]
+              ],
+              "default": 10
             },
             "maxELU": {
-              "default": 0.99,
               "anyOf": [
                 {
                   "type": "number",
@@ -424,10 +423,10 @@
                 {
                   "type": "string"
                 }
-              ]
+              ],
+              "default": 0.99
             },
             "maxHeapUsed": {
-              "default": 0.99,
               "anyOf": [
                 {
                   "type": "number",
@@ -437,10 +436,10 @@
                 {
                   "type": "string"
                 }
-              ]
+              ],
+              "default": 0.99
             },
             "maxHeapTotal": {
-              "default": 4294967296,
               "anyOf": [
                 {
                   "type": "number",
@@ -449,7 +448,8 @@
                 {
                   "type": "string"
                 }
-              ]
+              ],
+              "default": 4294967296
             },
             "maxYoungGeneration": {
               "anyOf": [

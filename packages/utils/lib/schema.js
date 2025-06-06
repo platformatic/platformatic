@@ -1,10 +1,15 @@
 'use strict'
 
 function overridableValue (spec, defaultValue) {
-  return {
-    default: defaultValue,
+  const res = {
     anyOf: [spec, { type: 'string' }]
   }
+
+  if (defaultValue !== undefined) {
+    res.default = defaultValue
+  }
+
+  return res
 }
 
 function removeDefaults (schema) {
