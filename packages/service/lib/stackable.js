@@ -274,26 +274,6 @@ class ServiceStackable {
   async #invalidateHttpCache (opts = {}) {
     await globalThis[kITC].send('invalidateHttpCache', opts)
   }
-  //
-  // #setHttpMetrics () {
-  //   collectHttpMetrics(this.metricsRegistry, {
-  //     customLabels: ['telemetry_id'],
-  //     getCustomLabels: req => {
-  //       const telemetryId = req.headers['x-plt-telemetry-id'] ?? 'unknown'
-  //       return { telemetry_id: telemetryId }
-  //     },
-  //     // We need to rename them, these metrics are for all the routes
-  //     // (hence the `all` in the name)
-  //     histogram: {
-  //       name: 'http_request_all_duration_seconds',
-  //       help: 'request duration in seconds summary for all requests',
-  //     },
-  //     summary: {
-  //       name: 'http_request_all_summary_seconds',
-  //       help: 'request duration in seconds histogram for all requests',
-  //     },
-  //   })
-  // }
 
   #setHttpCacheMetrics () {
     const { client, registry } = globalThis.platformatic.prometheus
