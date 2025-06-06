@@ -414,7 +414,7 @@ test('should get runtime metrics in a json format without a service call', async
     )
   }
 
-  for (const { metricName, labels, value } of histogramValues) {
+  for (const { metricName, labels } of histogramValues) {
     assert.strictEqual(labels.method, 'GET')
     assert.strictEqual(labels.status_code, 200)
 

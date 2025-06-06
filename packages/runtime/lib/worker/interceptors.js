@@ -163,7 +163,6 @@ async function getDispatcherOpts (undiciConfig) {
   return dispatcherOpts
 }
 
-
 // TODO: move this logic into ThreadInterceptor with generic list of hooks
 const chainHooks = (telemetryHooks, metricHooks) => {
   const ret = {}
@@ -190,21 +189,21 @@ const chainHooks = (telemetryHooks, metricHooks) => {
     const hook1 = telemetryHooks.onServerRequest
     const hook2 = metricHooks.onServerRequest
 
-    if (!hook1 && !hook2) { return cb(); }
-    
+    if (!hook1 && !hook2) { return cb() }
+
     if (hook1 && !hook2) {
-        return hook1(request, cb);
+      return hook1(request, cb)
     }
-    
+
     if (!hook1 && hook2) {
-        return hook2(request, cb);
+      return hook2(request, cb)
     }
-    
+
     hook1(request, (err) => {
-        if (err) {
-            return cb(err);
-        }
-        hook2(request, cb);
+      if (err) {
+        return cb(err)
+      }
+      hook2(request, cb)
     })
   }
 
