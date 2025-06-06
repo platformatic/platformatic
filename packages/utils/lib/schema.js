@@ -565,7 +565,7 @@ const health = {
     maxELU: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
     maxHeapUsed: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
     maxHeapTotal: overridableValue({ type: 'number', minimum: 0 }, 4 * Math.pow(1024, 3)),
-    maxYoungGeneration: { type: 'number', minimum: 0 }
+    maxYoungGeneration: overridableValue({ type: 'number', minimum: 0 })
   },
   additionalProperties: false
 }
