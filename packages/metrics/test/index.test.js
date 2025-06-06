@@ -8,8 +8,6 @@ test('returns expected structure', async () => {
   const result = await collectMetrics('test-service', 1, {})
 
   assert.ok(result.registry)
-  assert.equal(typeof result.startHttpTimer, 'function')
-  assert.equal(typeof result.endHttpTimer, 'function')
 })
 
 test('accepts custom registry', async () => {

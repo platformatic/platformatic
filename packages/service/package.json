@@ -58,7 +58,6 @@
     "@platformatic/client": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/generators": "workspace:*",
-    "@platformatic/http-metrics": "^0.2.1",
     "@platformatic/metrics": "workspace:*",
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/telemetry": "workspace:*",

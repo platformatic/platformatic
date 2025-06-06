@@ -1,10 +1,15 @@
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/service/1.52.0.json",
-  "service": {
-    "openapi": true
-  },
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/1.52.0.json",
+
   "plugins": {
     "paths": ["plugin.js"]
+  },
+  "composer": {
+    "services": [
+      {
+        "id": "service-2"
+      }
+    ]
   },
   "watch": true,
   "server": {

@@ -4,6 +4,7 @@ const os = require('node:os')
 const { eventLoopUtilization } = require('node:perf_hooks').performance
 const client = require('prom-client')
 const collectHttpMetrics = require('@platformatic/http-metrics')
+const { createMetricsThreadInterceptorHooks } = require('./metrics-interceptor.js')
 
 const { Registry, Gauge, Counter, collectDefaultMetrics } = client
 
@@ -11,9 +12,6 @@ async function collectMetrics (serviceId, workerId, metricsConfig = {}, registry
   if (!registry) {
     registry = new Registry()
   }
-
-  const httpRequestCallbacks = []
-  const httpResponseCallbacks = []
 
   const labels = { ...metricsConfig.labels, serviceId }
   if (workerId >= 0) {
@@ -28,51 +26,25 @@ async function collectMetrics (serviceId, workerId, metricsConfig = {}, registry
   }
 
   if (metricsConfig.httpMetrics) {
-    {
-      const { startTimer, endTimer } = collectHttpMetrics(registry, {
-        customLabels: ['telemetry_id'],
-        getCustomLabels: req => {
-          const telemetryId = req.headers?.['x-plt-telemetry-id'] ?? 'unknown'
-          return { telemetry_id: telemetryId }
-        }
-      })
-      httpRequestCallbacks.push(startTimer)
-      httpResponseCallbacks.push(endTimer)
-    }
-
-    {
-      // TODO: check if it's a nodejs environment
-      // Needed for the Meraki metrics
-      const { startTimer, endTimer } = collectHttpMetrics(registry, {
-        customLabels: ['telemetry_id'],
-        getCustomLabels: req => {
-          const telemetryId = req.headers?.['x-plt-telemetry-id'] ?? 'unknown'
-          return { telemetry_id: telemetryId }
-        },
-        histogram: {
-          name: 'http_request_all_duration_seconds',
-          help: 'request duration in seconds summary for all requests',
-          collect: function () {
-            process.nextTick(() => this.reset())
-          }
-        },
-        summary: {
-          name: 'http_request_all_summary_seconds',
-          help: 'request duration in seconds histogram for all requests',
-          collect: function () {
-            process.nextTick(() => this.reset())
-          }
-        }
-      })
-      httpRequestCallbacks.push(startTimer)
-      httpResponseCallbacks.push(endTimer)
-    }
+    collectHttpMetrics(registry, {
+      customLabels: ['telemetry_id'],
+      getCustomLabels: req => {
+        const telemetryId = req.headers?.['x-plt-telemetry-id'] ?? 'unknown'
+        return { telemetry_id: telemetryId }
+      },
+      histogram: {
+        name: 'http_request_all_duration_seconds',
+        help: 'request duration in seconds summary for all requests'
+      },
+      summary: {
+        name: 'http_request_all_summary_seconds',
+        help: 'request duration in seconds histogram for all requests'
+      }
+    })
   }
 
   return {
     registry,
-    startHttpTimer: options => httpRequestCallbacks.forEach(cb => cb(options)),
-    endHttpTimer: options => httpResponseCallbacks.forEach(cb => cb(options))
   }
 }
 
@@ -189,4 +161,4 @@ function collectEluMetric (register) {
   register.registerMetric(cpuMetric)
 }
 
-module.exports = { collectMetrics, client }
+module.exports = { collectMetrics, client, createMetricsThreadInterceptorHooks }

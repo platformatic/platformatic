@@ -116,6 +116,7 @@ test('should start a prometheus server on port 9090', async t => {
     .split('\n')
     .filter(line => line && line.startsWith('# TYPE'))
     .map(line => line.split(' ')[2])
+  console.log('@@@@@@@@@@@@@@@@@@@@@@2', JSON.stringify(metricsNames, null, 2))
 
   const expectedMetricNames = [
     'nodejs_active_handles',
@@ -151,8 +152,8 @@ test('should start a prometheus server on port 9090', async t => {
     'thread_cpu_system_seconds_total',
     'thread_cpu_seconds_total',
     'thread_cpu_percent_usage',
-    'http_request_duration_seconds',
-    'http_request_summary_seconds',
+    'http_request_all_duration_seconds',
+    'http_request_all_summary_seconds',
     'http_cache_hit_count',
     'http_cache_miss_count',
   ]

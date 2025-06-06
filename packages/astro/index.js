@@ -140,25 +140,11 @@ export class AstroStackable extends BaseStackable {
 
   // This is only used in non SSR production mode as in other modes a TCP server is started
   async inject (injectParams, onInject) {
-    if (this.startHttpTimer && this.endHttpTimer) {
-      this.startHttpTimer({ request: injectParams })
-
-      if (onInject) {
-        const originalOnInject = onInject
-        onInject = (err, response) => {
-          this.endHttpTimer({ request: injectParams, response })
-          originalOnInject(err, response)
-        }
-      }
-    }
-
     const res = await this.#app.inject(injectParams, onInject)
 
     /* c8 ignore next 3 */
     if (onInject) {
       return
-    } else if (this.endHttpTimer) {
-      this.endHttpTimer({ request: injectParams, response: res })
     }
 
     // Since inject might be called from the main thread directly via ITC, let's clean it up

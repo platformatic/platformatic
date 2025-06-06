@@ -1790,12 +1790,12 @@ importers:
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
-      '@platformatic/http-metrics':
-        specifier: ^0.2.1
-        version: 0.2.1
       '@platformatic/itc':
         specifier: workspace:*
         version: link:../itc
+      '@platformatic/metrics':
+        specifier: workspace:*
+        version: link:../metrics
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
@@ -2003,9 +2003,6 @@ importers:
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
-      '@platformatic/http-metrics':
-        specifier: ^0.2.1
-        version: 0.2.1
       '@platformatic/metrics':
         specifier: workspace:*
         version: link:../metrics

@@ -37,14 +37,10 @@ test('should get runtime metrics in a json format', async t => {
     }),
     app.inject('service-2', {
       method: 'GET',
-      url: '/hello',
+      url: '/service-2/hello',
       headers: { 'x-plt-telemetry-id': 'service-2-client' }
-    }),
-    app.inject('service-db', {
-      method: 'GET',
-      url: '/hello',
-      headers: { 'x-plt-telemetry-id': 'service-db-client' }
     })
+
   ])
 
   t.after(async () => {
@@ -123,7 +119,9 @@ test('should get runtime metrics in a text format', async t => {
   const app = await buildServer(config.configManager.current)
 
   const url = await app.start()
+  // We call service-1 and service-2 (this one indirectly through the entrypoint), so we expect metrics from both
   await request(url + '/hello')
+  await request(url + '/service-2/hello')
 
   t.after(async () => {
     await app.close()
@@ -186,7 +184,9 @@ test('should get runtime metrics in a text format', async t => {
     }, [])
 
   const serviceIds = [...new Set(services)].sort()
-  assert.deepEqual(serviceIds, ['service-1', 'service-2', 'service-db'])
+
+  // We call service-1 and service-2, so we expect metrcis for these
+  assert.deepEqual(serviceIds, ['service-1', 'service-2'])
 })
 
 function getMetricsLines (metrics) {

@@ -7,6 +7,7 @@ const { createRequire } = require('node:module')
 const { setGlobalDispatcher, Client, Pool, Agent } = require('undici')
 const { wire } = require('undici-thread-interceptor')
 const { createTelemetryThreadInterceptorHooks } = require('@platformatic/telemetry')
+const { createMetricsThreadInterceptorHooks } = require('@platformatic/metrics')
 const { RemoteCacheStore, httpCacheInterceptor } = require('./http-cache')
 const { kInterceptors } = require('./symbols')
 
@@ -162,9 +163,35 @@ async function getDispatcherOpts (undiciConfig) {
   return dispatcherOpts
 }
 
+const chainHooks = (hookList) => {
+  const ret = {}
+  const supportedWireHooks = [
+    'onServerRequest',
+    'onServerResponse',
+    'onServerError',
+    'onClientRequest',
+    'onClientResponse',
+    'onClientResponseEnd',
+    'onClientError'
+  ]
+  for (const h of supportedWireHooks) {
+    ret[h] = (...args) => {
+      for (const hooks of hookList) {
+        if (hooks[h]) { hooks[h](...args) }
+      }
+    }
+  }
+  return ret
+}
+
 function createThreadInterceptor (runtimeConfig) {
   const telemetry = runtimeConfig.telemetry
-  const hooks = telemetry ? createTelemetryThreadInterceptorHooks() : {}
+
+  const telemetryHooks = telemetry ? createTelemetryThreadInterceptorHooks() : {}
+  const metricHooks = createMetricsThreadInterceptorHooks()
+
+  const hooks = chainHooks([telemetryHooks, metricHooks])
+
   const threadDispatcher = wire({
     // Specifying the domain is critical to avoid flooding the DNS
     // with requests for a domain that's never going to exist.
