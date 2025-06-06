@@ -1939,17 +1939,33 @@ class Runtime extends EventEmitter {
     const ups = await this.#validateUpdateServiceResources(updates)
     const config = this.#configManager.current
 
+    const report = []
     for (const update of ups) {
       const { serviceId, config: serviceConfig, workers, health, currentWorkers, currentHealth } = update
 
       if (workers && health) {
-        await this.#updateServiceWorkersAndHealth(serviceId, config, serviceConfig, workers, health, currentWorkers, currentHealth)
+        const r = await this.#updateServiceWorkersAndHealth(serviceId, config, serviceConfig, workers, health, currentWorkers, currentHealth)
+        report.push({
+          service: serviceId,
+          workers: r.workers,
+          health: r.health
+        })
       } else if (health) {
-        await this.#updateServiceHealth(serviceId, config, serviceConfig, currentWorkers, currentHealth, health)
+        const r = await this.#updateServiceHealth(serviceId, config, serviceConfig, currentWorkers, currentHealth, health)
+        report.push({
+          service: serviceId,
+          health: r.health
+        })
       } else if (workers) {
-        await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
+        const r = await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
+        report.push({
+          service: serviceId,
+          workers: r.workers
+        })
       }
     }
+
+    return report
   }
 
   async #validateUpdateServiceResources (updates) {
@@ -2042,7 +2058,16 @@ class Runtime extends EventEmitter {
       }
 
       if (workers || maxHeapTotal || maxYoungGeneration) {
-        const health = maxHeapTotal || maxYoungGeneration ? { maxHeapTotal, maxYoungGeneration } : undefined
+        let health
+        if (maxHeapTotal || maxYoungGeneration) {
+          health = { }
+          if (maxHeapTotal) {
+            health.maxHeapTotal = maxHeapTotal
+          }
+          if (maxYoungGeneration) {
+            health.maxYoungGeneration = maxYoungGeneration
+          }
+        }
         validatedUpdates.push({ serviceId, config: serviceConfig, workers, health, currentWorkers, currentHealth })
       }
     }
@@ -2053,21 +2078,29 @@ class Runtime extends EventEmitter {
   async #updateServiceWorkersAndHealth (serviceId, config, serviceConfig, workers, health, currentWorkers, currentHealth) {
     if (currentWorkers > workers) {
       // stop workers
-      await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
+      const reportWorkers = await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
       // update heap for current workers
-      await this.#updateServiceHealth(serviceId, config, serviceConfig, workers, currentHealth, health)
+      const reportHealth = await this.#updateServiceHealth(serviceId, config, serviceConfig, workers, currentHealth, health)
+
+      return { workers: reportWorkers, health: reportHealth }
     } else {
       // update service heap
       await this.#updateServiceConfigHealth(serviceId, health)
       // start new workers with new heap
-      await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
+      const reportWorkers = await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
       // update heap for current workers
-      await this.#updateServiceHealth(serviceId, config, serviceConfig, currentWorkers, currentHealth, health, false)
+      const reportHealth = await this.#updateServiceHealth(serviceId, config, serviceConfig, currentWorkers, currentHealth, health, false)
+
+      return { workers: reportWorkers, health: reportHealth }
     }
   }
 
   async #updateServiceHealth (serviceId, config, serviceConfig, currentWorkers, currentHealth, health, updateConfig = true) {
-    let updated = 0
+    const report = {
+      current: currentHealth,
+      new: health,
+      updated: []
+    }
     try {
       if (updateConfig) {
         await this.#updateServiceConfigHealth(serviceId, health)
@@ -2081,58 +2114,70 @@ class Runtime extends EventEmitter {
         if (health.maxYoungGeneration) { worker[kConfig].health.maxYoungGeneration = health.maxYoungGeneration }
 
         await this.#replaceWorker(config, serviceConfig, currentWorkers, serviceId, i, worker)
-        updated++
+        report.updated.push(i)
         this.logger.info({ health: { current: currentHealth, new: health } }, `Restarted service "${serviceId}" worker ${i}`)
       }
+      report.success = true
     } catch (err) {
-      if (updated < 1) {
+      if (report.updated.length < 1) {
         this.logger.error({ err }, 'Cannot update service health heap, no worker updated')
         await this.#updateServiceConfigHealth(serviceId, currentHealth)
       } else {
-        this.logger.error({ err }, `Cannot update service health heap, updated workers: ${updated} out of ${currentWorkers}`)
+        this.logger.error({ err }, `Cannot update service health heap, updated workers: ${report.updated.length} out of ${currentWorkers}`)
       }
+      report.success = false
     }
+    return report
   }
 
   async #updateServiceWorkers (serviceId, config, serviceConfig, workers, currentWorkers) {
+    const report = {
+      current: currentWorkers,
+      new: workers
+    }
     if (currentWorkers < workers) {
-      let started = 0
+      report.started = []
       try {
         await this.#updateServiceConfigWorkers(serviceId, workers)
         for (let i = currentWorkers; i < workers; i++) {
           await this.#setupWorker(config, serviceConfig, workers, serviceId, i)
           await this.#startWorker(config, serviceConfig, workers, serviceId, i, false, 0)
-          started++
+          report.started.push(i)
         }
+        report.success = true
       } catch (err) {
-        if (started < 1) {
+        if (report.started.length < 1) {
           this.logger.error({ err }, 'Cannot start service workers, no worker started')
           await this.#updateServiceConfigWorkers(serviceId, currentWorkers)
         } else {
-          this.logger.error({ err }, `Cannot start service workers, started workers: ${started} out of ${workers}`)
-          await this.#updateServiceConfigWorkers(serviceId, currentWorkers + started)
+          this.logger.error({ err }, `Cannot start service workers, started workers: ${report.started.length} out of ${workers}`)
+          await this.#updateServiceConfigWorkers(serviceId, currentWorkers + report.started.length)
         }
+        report.success = false
       }
     } else {
       // keep the current workers count until all the service workers are all stopped
-      let stopped = 0
+      report.stopped = []
       try {
         for (let i = currentWorkers - 1; i >= workers; i--) {
           const worker = await this.#getWorkerById(serviceId, i, false, false)
           await sendViaITC(worker, 'removeFromMesh')
           await this.#stopWorker(currentWorkers, serviceId, i, false, worker)
-          stopped++
+          report.stopped.push(i)
         }
         await this.#updateServiceConfigWorkers(serviceId, workers)
+        report.success = true
       } catch (err) {
-        if (stopped < 1) {
+        if (report.stopped.length < 1) {
           this.logger.error({ err }, 'Cannot stop service workers, no worker stopped')
         } else {
-          this.logger.error({ err }, `Cannot stop service workers, stopped workers: ${stopped} out of ${workers}`)
-          await this.#updateServiceConfigWorkers(serviceId, currentWorkers - stopped)
+          this.logger.error({ err }, `Cannot stop service workers, stopped workers: ${report.stopped.length} out of ${workers}`)
+          await this.#updateServiceConfigWorkers(serviceId, currentWorkers - report.stopped)
         }
+        report.success = false
       }
     }
+    return report
   }
 }
 

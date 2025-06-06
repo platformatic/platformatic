@@ -301,14 +301,45 @@ describe('runtime update resources', () => {
             }
           }
         }
+        const expectedReport = servicesId.map(serviceId => {
+          let workerOp, workerValues, updated
 
-        await runtime.updateServicesResources([
+          if (variation > 0) {
+            workerOp = 'started'
+            workerValues = (new Array(variation)).fill(0).map((_, i) => currentResources[serviceId].workers + i )
+            updated = (new Array(currentResources[serviceId].workers)).fill(0).map((_, i) => i)
+          } else {
+            workerOp = 'stopped'
+            workerValues = (new Array(Math.abs(variation))).fill(0).map((_, i) => currentResources[serviceId].workers - i-1)
+            updated = (new Array(updateResources[serviceId].workers)).fill(0).map((_, i) => i)
+          }
+
+          return {
+            service: serviceId,
+            workers: {
+              current: currentResources[serviceId].workers,
+              new: updateResources[serviceId].workers,
+              [workerOp]: workerValues,
+              success: true
+            },
+            health: {
+              current: currentResources[serviceId].health,
+              new: updateResources[serviceId].health,
+              updated,
+              success: true
+            }
+          }
+        })
+
+        const report = await runtime.updateServicesResources([
           ...servicesId.map(serviceId => ({
             service: serviceId,
             workers: updateResources[serviceId].workers,
             health: updateResources[serviceId].health
           }))
         ])
+
+        assert.deepEqual(report, expectedReport, 'Report should be equal to expected report')
 
         const managementApiWebsocketUpdate = await openLogsWebsocket(runtime)
         t.after(() => { managementApiWebsocketUpdate.terminate() })
