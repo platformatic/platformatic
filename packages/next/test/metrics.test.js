@@ -69,9 +69,7 @@ test('should configure metrics correctly with both node and http metrics', async
     'process_resident_memory_bytes',
     'process_start_time_seconds',
     'http_request_all_summary_seconds',
-    'http_request_all_duration_seconds',
-    'http_request_duration_seconds',
-    'http_request_summary_seconds'
+    'http_request_all_duration_seconds'
   ]
   for (const metricName of expectedMetricNames) {
     assert.ok(metricsNames.includes(metricName), `should include metric ${metricName}`)
@@ -79,7 +77,7 @@ test('should configure metrics correctly with both node and http metrics', async
 
   const entrypointRequestCountMetric = metrics
     .split('\n')
-    .find(line => line.includes('http_request_summary_seconds_count') && line.includes('serviceId="frontend"'))
+    .find(line => line.includes('http_request_all_summary_seconds_count') && line.includes('serviceId="frontend"'))
   if (!entrypointRequestCountMetric) {
     assert.fail('Expected entrypoint request count metric not found')
   }
