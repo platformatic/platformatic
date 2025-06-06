@@ -1,4 +1,4 @@
-import { generateRequest } from '@platformatic/itc'
+import { generateRequest, sanitize } from '@platformatic/itc'
 import { ensureLoggableError } from '@platformatic/utils'
 import { once } from 'node:events'
 import { platform } from 'node:os'
@@ -42,7 +42,7 @@ export default async function () {
     return build(
       async function (source) {
         for await (const obj of source) {
-          socket.send(JSON.stringify(generateRequest('log', { logs: [obj] })))
+          socket.send(JSON.stringify(sanitize(generateRequest('log', { logs: [obj] }))))
         }
       },
       {

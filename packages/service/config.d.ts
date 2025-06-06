@@ -625,6 +625,7 @@ export interface PlatformaticService {
       [k: string]: unknown;
     };
     serviceTimeout?: number | string;
+    messagingTimeout?: number | string;
     env?: {
       [k: string]: string;
     };

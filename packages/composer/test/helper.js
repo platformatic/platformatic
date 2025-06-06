@@ -665,7 +665,7 @@ async function waitForRestart (runtime, previousUrl) {
       })
 
       webSocket.on('message', data => {
-        if (data.toString().includes(`Service \\"${id}\\" has been successfully reloaded`)) {
+        if (data.toString().includes(`The service \\"${id}\\" has been successfully reloaded`)) {
           clearTimeout(timeout)
 
           setImmediate(async () => {

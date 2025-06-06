@@ -13,6 +13,9 @@ const kInterceptors = Symbol.for('plt.runtime.worker.interceptors')
 // This string marker should be safe to use since it belongs to Unicode private area
 const kStderrMarker = '\ue002'
 
+// Note that this is used to create a BroadcastChannel so it must be a string
+const kWorkersBroadcast = 'plt.runtime.workers'
+
 module.exports = {
   kConfig,
   kId,
@@ -23,5 +26,6 @@ module.exports = {
   kHealthCheckTimer,
   kWorkerStatus,
   kStderrMarker,
-  kInterceptors
+  kInterceptors,
+  kWorkersBroadcast
 }
