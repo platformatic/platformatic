@@ -1,10 +1,15 @@
 'use strict'
 
 function overridableValue (spec, defaultValue) {
-  return {
-    default: defaultValue,
+  const res = {
     anyOf: [spec, { type: 'string' }]
   }
+
+  if (defaultValue !== undefined) {
+    res.default = defaultValue
+  }
+
+  return res
 }
 
 function removeDefaults (schema) {
@@ -565,7 +570,7 @@ const health = {
     maxELU: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
     maxHeapUsed: overridableValue({ type: 'number', minimum: 0, maximum: 1 }, 0.99),
     maxHeapTotal: overridableValue({ type: 'number', minimum: 0 }, 4 * Math.pow(1024, 3)),
-    maxYoungGeneration: { type: 'number', minimum: 0 }
+    maxYoungGeneration: overridableValue({ type: 'number', minimum: 0 })
   },
   additionalProperties: false
 }
@@ -685,7 +690,7 @@ const services = {
         type: 'boolean'
       },
       workers,
-      health: { ...healthWithoutDefaults, default: undefined },
+      health: { ...healthWithoutDefaults },
       arguments: {
         type: 'array',
         items: {
@@ -797,7 +802,7 @@ const runtimeProperties = {
               type: 'boolean'
             },
             workers,
-            health: { ...healthWithoutDefaults, default: undefined },
+            health: { ...healthWithoutDefaults },
             preload,
             arguments: {
               type: 'array',

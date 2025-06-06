@@ -1,6 +1,5 @@
 'use strict'
 
-const { on } = require('node:events')
 const { readFile, writeFile } = require('node:fs/promises')
 const { platform } = require('node:os')
 const { join } = require('node:path')
@@ -85,34 +84,61 @@ async function openLogsWebsocket (app) {
   return managementApiWebsocket
 }
 
-async function waitForLogs (socket, ...exprs) {
-  const toMatch = new Set(exprs)
-  const messages = []
+const DEFAULT_WAIT_FOR_LOGS_TIMEOUT = 3_000
+function waitForLogs (socket, ...exprs) {
+  return new Promise((resolve, reject) => {
+    const timeout =
+      typeof exprs[exprs.length - 1] === 'number'
+        ? exprs.pop()
+        : DEFAULT_WAIT_FOR_LOGS_TIMEOUT
 
-  for await (const [msg] of on(socket, 'message')) {
-    for (const line of msg.toString().trim().split('\n')) {
-      let message
-      try {
-        message = JSON.parse(line)
-        messages.push(message)
-      } catch (e) {
-        console.error('Ignoring an non JSON line coming from WebSocket: ', line)
-        continue
-      }
+    const toMatch = new Set(exprs)
+    const messages = []
+    let lastMatch
+    let timeoutId
+    let resolved
 
-      for (const expr of toMatch) {
-        const matches = typeof expr === 'string' ? message.msg?.startsWith(expr) : message.msg?.match(expr)
+    socket.on('message', (msg) => {
+      if (resolved) { return }
 
-        if (matches) {
-          toMatch.delete(expr)
+      // throw an error after timeout without receiving any message
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => {
+        if (resolved) { return }
+        timeoutId && clearTimeout(timeoutId)
+        timeoutId = null
 
-          if (toMatch.size === 0) {
-            return messages
+        console.error('Timeout waiting for logs', { lastMatch })
+        console.error('Expected', toMatch)
+        reject(new Error('Timeout waiting for logs'))
+      }, timeout)
+
+      for (const line of msg.toString().trim().split('\n')) {
+        let message
+        try {
+          message = JSON.parse(line)
+          messages.push(message)
+        } catch (e) {
+          console.error('Ignoring an non JSON line coming from WebSocket: ', line)
+          continue
+        }
+
+        for (const expr of toMatch) {
+          const matches = typeof expr === 'string' ? message.msg?.startsWith(expr) : message.msg?.match(expr)
+
+          if (matches) {
+            toMatch.delete(expr)
+            lastMatch = expr
+
+            if (toMatch.size === 0) {
+              resolved = true
+              resolve(messages)
+            }
           }
         }
       }
-    }
-  }
+    })
+  })
 }
 
 function stdioOutputToLogs (data) {

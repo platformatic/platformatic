@@ -124,6 +124,9 @@ Did you mean PLT_%s?
 ### PLT_RUNTIME_SERVICE_NOT_FOUND
 **Message:** Service not found. Available services are: %s 
 
+### PLT_RUNTIME_SERVICE_WORKER_NOT_FOUND
+**Message:** Service %s worker %s not found 
+
 ### PLT_RUNTIME_SERVICE_NOT_STARTED
 **Message:** Service with id '%s' is not started 
 

@@ -287,6 +287,7 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
       dependencies: [],
       entrypoint: true,
       gitBranch: 'main',
+      health: {},
       id: 'main',
       isPLTService: true,
       localServiceEnvVars: new Map(),

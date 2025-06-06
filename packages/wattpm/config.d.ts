@@ -29,7 +29,7 @@ export type HttpsSchemasPlatformaticDevWattpm2690Json = {
           maxELU?: number | string;
           maxHeapUsed?: number | string;
           maxHeapTotal?: number | string;
-          maxYoungGeneration?: number;
+          maxYoungGeneration?: number | string;
         };
         preload?: string | string[];
         arguments?: string[];
@@ -141,7 +141,7 @@ export type HttpsSchemasPlatformaticDevWattpm2690Json = {
     maxELU?: number | string;
     maxHeapUsed?: number | string;
     maxHeapTotal?: number | string;
-    maxYoungGeneration?: number;
+    maxYoungGeneration?: number | string;
   };
   undici?: {
     agentOptions?: {

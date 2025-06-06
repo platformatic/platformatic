@@ -1,0 +1,37 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.66.0.json",
+  "watch": false,
+  "managementApi": true,
+  "metrics": true,
+  "restartOnError": 250,
+  "startTimeout": 1000,
+  "entrypoint": "composer",
+  "services": [
+    {
+      "id": "node",
+      "path": "./node",
+      "config": "platformatic.json",
+      "workers": 3,
+      "health": {
+        "maxHeapTotal": 1073741824
+      }
+    },
+    {
+      "id": "service",
+      "path": "./service",
+      "config": "platformatic.json",
+      "workers": 4,
+      "health": {
+        "maxHeapTotal": 1073741824
+      }
+    },
+    {
+      "id": "composer",
+      "path": "./composer",
+      "config": "platformatic.json"
+    }
+  ],
+  "logger": {
+    "level": "trace"
+  }
+}

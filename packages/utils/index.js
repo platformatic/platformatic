@@ -12,6 +12,7 @@ const { findNearestString } = require('./lib/find-nearest-string')
 const { getPkgManager } = require('./lib/get-pkg-manager')
 const { isFileAccessible } = require('./lib/is-file-accessible')
 const { isKeyEnabled } = require('./lib/is-key-enabled')
+const { parseMemorySize } = require('./lib/parse')
 const {
   buildPinoFormatters,
   buildPinoOptions,
@@ -82,3 +83,4 @@ module.exports.searchJavascriptFiles = searchJavascriptFiles
 module.exports.setPinoFormatters = setPinoFormatters
 module.exports.setPinoTimestamp = setPinoTimestamp
 module.exports.withResolvers = withResolvers
+module.exports.parseMemorySize = parseMemorySize
