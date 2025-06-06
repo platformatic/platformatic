@@ -56,13 +56,16 @@ class MessagingITC extends ITC {
     }
 
     if (!worker.channel) {
+      // Use twice the value here as a fallback measure. The target handler in the main thread is forwarding
+      // the request to the worker, using executeWithTimeout with the user set timeout value.
       const channel = await executeWithTimeout(
         globalThis[kITC].send('getWorkerMessagingChannel', { service: worker.service, worker: worker.worker }),
-        this.#timeout
+        this.#timeout * 2
       )
 
+      /* c8 ignore next 3 - Hard to test */
       if (channel === kTimeout) {
-        throw new errors.MessagingError(service, 'Timeout while establishing a communication channel.')
+        throw new errors.MessagingError(service, 'Timeout while waiting for a communication channel.')
       }
 
       worker.channel = channel

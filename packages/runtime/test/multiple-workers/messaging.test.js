@@ -412,7 +412,7 @@ test('should return an error if the target worker times out while saving the cha
 
     deepStrictEqual(
       error.message,
-      'Cannot send a message to service "second": Timeout while establishing a communication channel.'
+      'Handler failed with error: Cannot send a message to service "second": Timeout while establishing a communication channel.'
     )
   }
 })
