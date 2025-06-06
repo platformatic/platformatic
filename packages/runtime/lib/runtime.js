@@ -1919,16 +1919,49 @@ class Runtime extends EventEmitter {
   }
 
   /**
-   * Updates the resources of the services.
+   * Updates the resources of the services, such as the number of workers and health configurations (e.g., heap memory settings).
+   *
+   * This function handles three update scenarios for each service:
+   *  1. **Updating workers only**: Adjusts the number of workers for the service.
+   *  2. **Updating health configurations only**: Updates health parameters like `maxHeapTotal` or `maxYoungGeneration`.
+   *  3. **Updating both workers and health configurations**: Scales the workers and also applies health settings.
+   *
+   * When updating both workers and health:
+   *  - **Scaling down workers**: Stops extra workers, then restarts the remaining workers with the previous settings.
+   *  - **Scaling up workers**: Starts new workers with the updated heap settings, then restarts the old workers with the updated settings.
+   *
+   * Scaling up new resources (workers and/or heap memory) may fails due to insufficient memory, in this case the operation may fail partially or entirely.
+   * Scaling down is expected to succeed without issues.
+   *
+   * @param {Array<Object>} updates - An array of objects that define the updates for each service.
+   * @param {string} updates[].service - The ID of the service to update.
+   * @param {number} [updates[].workers] - The desired number of workers for the service. If omitted, workers will not be updated.
+   * @param {Object} [updates[].health] - The health configuration to update for the service, which may include:
+   *   @param {string|number} [updates[].health.maxHeapTotal] - The maximum heap memory for the service. Can be a valid memory string (e.g., '1G', '512MB') or a number representing bytes.
+   *   @param {string|number} [updates[].health.maxYoungGeneration] - The maximum young generation memory for the service. Can be a valid memory string (e.g., '128MB') or a number representing bytes.
+   *
+   * @returns {Promise<Array<Object>>} - A promise that resolves to an array of reports for each service, detailing the success or failure of the operations:
+   *   - `service`: The service ID.
+   *   - `workers`: The workers' update report, including the current, new number of workers, started workers, and success status.
+   *   - `health`: The health update report, showing the current and new heap settings, updated workers, and success status.
    *
    * @example
-   * ```js
    * await runtime.updateServicesResources([
    *   { service: 'service-1', workers: 2, health: { maxHeapTotal: '1G', maxYoungGeneration: '128 MB' } },
    *   { service: 'service-2', health: { maxHeapTotal: '1G' } },
    *   { service: 'service-3', workers: 2 },
    * ])
-   * ```
+   *
+   * In this example:
+   * - `service-1` will have 2 workers and updated heap memory configurations.
+   * - `service-2` will have updated heap memory settings (without changing workers).
+   * - `service-3` will have its workers set to 2 but no change in memory settings.
+   *
+   * @throws {InvalidArgumentError} - Throws if any update parameter is invalid, such as:
+   *   - Missing service ID.
+   *   - Invalid worker count (not a positive integer).
+   *   - Invalid memory size format for `maxHeapTotal` or `maxYoungGeneration`.
+   * @throws {ServiceNotFoundError} - Throws if the specified service ID does not exist in the current service configuration.
    */
   async updateServicesResources (updates) {
     if (this.#status === 'stopping' || this.#status === 'closed') {
