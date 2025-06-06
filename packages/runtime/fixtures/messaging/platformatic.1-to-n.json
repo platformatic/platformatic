@@ -23,6 +23,6 @@
       "path": "composer"
     }
   ],
-  "messagingTimeout": 500,
+  "messagingTimeout": 2000,
   "workers": 3
 }

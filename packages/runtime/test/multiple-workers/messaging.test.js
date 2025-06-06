@@ -299,7 +299,7 @@ test('should return an error if the target worker times out', async t => {
       'async thread () {',
       `
         async thread () {
-        await require('node:timers/promises').setTimeout(2000)
+        await require('node:timers/promises').setTimeout(5000)
       `
     )
   })
@@ -395,7 +395,7 @@ test('should return an error if the target worker times out while saving the cha
           const existingHandler = globalThis[Symbol.for('plt.runtime.itc')].getHandler('saveMessagingChannel')
           
           globalThis[Symbol.for('plt.runtime.itc')].handle('saveMessagingChannel', async function (...args) {
-            await require('node:timers/promises').setTimeout(1000)
+            await require('node:timers/promises').setTimeout(5000)
             return existingHandler(...args)            
           })
         \n
