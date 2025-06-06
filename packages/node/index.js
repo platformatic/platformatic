@@ -202,28 +202,12 @@ export class NodeStackable extends BaseStackable {
       this.logger.trace({ injectParams, url: this.url }, 'injecting via request')
       res = await injectViaRequest(this.url, injectParams, onInject)
     } else {
-      if (this.startHttpTimer && this.endHttpTimer) {
-        this.startHttpTimer({ request: injectParams })
-
-        if (onInject) {
-          const originalOnInject = onInject
-          onInject = (err, response) => {
-            this.endHttpTimer({ request: injectParams, response })
-            originalOnInject(err, response)
-          }
-        }
-      }
-
       if (this.#isFastify) {
         this.logger.trace({ injectParams }, 'injecting via fastify')
         res = await this.#app.inject(injectParams, onInject)
       } else {
         this.logger.trace({ injectParams }, 'injecting via light-my-request')
         res = await inject(this.#dispatcher ?? this.#app, injectParams, onInject)
-      }
-
-      if (this.endHttpTimer && !onInject) {
-        this.endHttpTimer({ request: injectParams, response: res })
       }
     }
 

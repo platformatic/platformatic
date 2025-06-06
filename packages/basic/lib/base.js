@@ -46,8 +46,6 @@ export class BaseStackable extends EventEmitter {
     this.#metricsCollected = false
     this.customHealthCheck = null
     this.customReadinessCheck = null
-    this.startHttpTimer = null
-    this.endHttpTimer = null
     this.clientWs = null
     this.runtimeConfig = deepmerge(options.context?.runtimeConfig ?? {}, workerData?.config ?? {})
     this.stdout = standardStreams?.stdout ?? process.stdout
@@ -418,15 +416,12 @@ export class BaseStackable extends EventEmitter {
         return
       }
 
-      const { startHttpTimer, endHttpTimer } = await collectMetrics(
+      await collectMetrics(
         this.serviceId,
         this.workerId,
         metricsConfig,
         this.metricsRegistry
       )
-
-      this.startHttpTimer = startHttpTimer
-      this.endHttpTimer = endHttpTimer
     }
   }
 

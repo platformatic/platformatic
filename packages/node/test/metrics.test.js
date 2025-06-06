@@ -59,9 +59,7 @@ test('should configure metrics correctly with both node and http metrics', async
     'process_resident_memory_bytes',
     'process_start_time_seconds',
     'http_request_all_summary_seconds',
-    'http_request_all_duration_seconds',
-    'http_request_duration_seconds',
-    'http_request_summary_seconds'
+    'http_request_all_duration_seconds'
   ]
   for (const metricName of expectedMetricNames) {
     assert.ok(metricsNames.includes(metricName))
@@ -69,7 +67,7 @@ test('should configure metrics correctly with both node and http metrics', async
 
   const entrypointRequestCountMetric = metrics
     .split('\n')
-    .find(line => line.includes('http_request_summary_seconds_count') && line.includes('serviceId="api"'))
+    .find(line => line.includes('http_request_all_summary_seconds_count') && line.includes('serviceId="api"'))
   if (!entrypointRequestCountMetric) {
     assert.fail('Expected entrypoint request count metric not found')
   }
@@ -78,10 +76,33 @@ test('should configure metrics correctly with both node and http metrics', async
 
   const internalRequestCountMetric = metrics
     .split('\n')
-    .find(line => line.includes('http_request_summary_seconds_count') && line.includes('serviceId="internal"'))
+    .find(line => line.includes('http_request_all_summary_seconds_count') && line.includes('serviceId="internal"'))
   if (!internalRequestCountMetric) {
     assert.fail('Expected internal request count metric not found')
   }
   const internalRequestCount = internalRequestCountMetric.split(' ')[1]
   assert.strictEqual(internalRequestCount, '1')
+
+  const lines = metrics.split('\n')
+
+  const labels = []
+  for (const line of lines) {
+    if (!line || line.startsWith('#')) continue
+    labels.push(line.split('{')[1].split('}')[0].split(','))
+  }
+  const services = labels
+    .flat()
+    .filter(label => label.startsWith('serviceId='))
+    .reduce((acc, label) => {
+      const service = label.split('"')[1]
+      if (service) {
+        acc.push(service)
+      }
+      return acc
+    }, [])
+
+  const serviceIds = [...new Set(services)].sort()
+
+  // We expect to find both entrypoint and internal services in metrics
+  assert.deepEqual(serviceIds, ['api', 'internal'])
 })

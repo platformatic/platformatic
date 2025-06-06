@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.3.1.json",
+  "entrypoint": "service-1",
+  "watch": false,
+  "autoload": {
+    "path": "./services"
+  },
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  },
+  "logger": {
+    "level": "silent"
+  },
+  "managementApi": {
+    "logs": {
+      "maxSize": 6
+    }
+  },
+  "metrics": {
+    "labels": {
+      "custom_label": "custom-value"
+    }
+  }
+}

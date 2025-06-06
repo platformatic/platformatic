@@ -118,17 +118,6 @@ export class NestStackable extends BaseStackable {
   async inject (injectParams, onInject) {
     let res
 
-    if (this.startHttpTimer && this.endHttpTimer) {
-      this.startHttpTimer({ request: injectParams })
-      if (onInject) {
-        const originalOnInject = onInject
-        onInject = (err, response) => {
-          this.endHttpTimer({ request: injectParams, response })
-          originalOnInject(err, response)
-        }
-      }
-    }
-
     if (this.#isFastify) {
       res = await this.#server.inject(injectParams, onInject)
     } else {
@@ -138,8 +127,6 @@ export class NestStackable extends BaseStackable {
     /* c8 ignore next 3 */
     if (onInject) {
       return
-    } else if (this.endHttpTimer) {
-      this.endHttpTimer({ request: injectParams, response: res })
     }
 
     // Since inject might be called from the main thread directly via ITC, let's clean it up

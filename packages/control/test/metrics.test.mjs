@@ -20,7 +20,7 @@ test('should return runtime metrics when passing no format option', async (t) =>
   strictEqual(child.exitCode, 0)
 
   ok(child.stdout.includes('"nodejs_version_info"'))
-  ok(child.stdout.includes('"http_request_duration_seconds"'))
+  ok(child.stdout.includes('"http_request_all_duration_seconds"'))
   ok(child.stdout.includes('"http_cache_hit_count"'))
   ok(child.stdout.includes('"process_cpu_system_seconds_total"'))
 })
