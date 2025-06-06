@@ -1775,7 +1775,7 @@ class Runtime extends EventEmitter {
     )
 
     if (response === kTimeout) {
-      throw new errors.MessagingError(service, 'Timeout while establishing a communication channel')
+      throw new errors.MessagingError(service, 'Timeout while establishing a communication channel.')
     }
 
     context.transferList = [port2]
