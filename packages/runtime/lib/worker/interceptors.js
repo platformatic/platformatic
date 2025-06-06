@@ -163,10 +163,11 @@ async function getDispatcherOpts (undiciConfig) {
   return dispatcherOpts
 }
 
-const chainHooks = (hookList) => {
+
+// TODO: move this logic into ThreadInterceptor with generic list of hooks
+const chainHooks = (telemetryHooks, metricHooks) => {
   const ret = {}
-  const supportedWireHooks = [
-    'onServerRequest',
+  const wireHooks = [
     'onServerResponse',
     'onServerError',
     'onClientRequest',
@@ -174,13 +175,39 @@ const chainHooks = (hookList) => {
     'onClientResponseEnd',
     'onClientError'
   ]
-  for (const h of supportedWireHooks) {
+  for (const h of wireHooks) {
     ret[h] = (...args) => {
-      for (const hooks of hookList) {
-        if (hooks[h]) { hooks[h](...args) }
+      if (telemetryHooks[h]) {
+        telemetryHooks[h](...args)
+      }
+      if (metricHooks[h]) {
+        metricHooks[h](...args)
       }
     }
   }
+  // onServerRequest uses the callback, we need to compose it differently
+  ret.onServerRequest = (request, cb) => {
+    const hook1 = telemetryHooks.onServerRequest
+    const hook2 = metricHooks.onServerRequest
+
+    if (!hook1 && !hook2) { return cb(); }
+    
+    if (hook1 && !hook2) {
+        return hook1(request, cb);
+    }
+    
+    if (!hook1 && hook2) {
+        return hook2(request, cb);
+    }
+    
+    hook1(request, (err) => {
+        if (err) {
+            return cb(err);
+        }
+        hook2(request, cb);
+    })
+  }
+
   return ret
 }
 
@@ -189,8 +216,7 @@ function createThreadInterceptor (runtimeConfig) {
 
   const telemetryHooks = telemetry ? createTelemetryThreadInterceptorHooks() : {}
   const metricHooks = createMetricsThreadInterceptorHooks()
-
-  const hooks = chainHooks([telemetryHooks, metricHooks])
+  const hooks = chainHooks(telemetryHooks, metricHooks)
 
   const threadDispatcher = wire({
     // Specifying the domain is critical to avoid flooding the DNS

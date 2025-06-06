@@ -380,7 +380,10 @@ test('should get runtime metrics in a json format without a service call', async
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
 
-  await app.start()
+  const url = await app.start()
+  // We call service-1 and service-2 (this one indirectly through the entrypoint), so we expect metrics from both
+  await request(url + '/hello')
+  await request(url + '/service-2/hello')
 
   t.after(async () => {
     await app.close()
@@ -389,21 +392,21 @@ test('should get runtime metrics in a json format without a service call', async
   const { metrics } = await app.getMetrics()
 
   const histogramMetric = metrics.find(
-    (metric) => metric.name === 'http_request_duration_seconds'
+    (metric) => metric.name === 'http_request_all_duration_seconds'
   )
 
   const histogramValues = histogramMetric.values
 
   {
     const histogramCount = histogramValues.find(
-      ({ metricName }) => metricName === 'http_request_duration_seconds_count'
+      ({ metricName }) => metricName === 'http_request_all_duration_seconds_count'
     )
-    assert.strictEqual(histogramCount.value, 0)
+    assert.strictEqual(histogramCount.value, 2)
   }
 
   {
     const histogramSum = histogramValues.find(
-      ({ metricName }) => metricName === 'http_request_duration_seconds_sum'
+      ({ metricName }) => metricName === 'http_request_all_duration_seconds_sum'
     )
     const value = histogramSum.value
     assert.ok(
@@ -413,33 +416,30 @@ test('should get runtime metrics in a json format without a service call', async
 
   for (const { metricName, labels, value } of histogramValues) {
     assert.strictEqual(labels.method, 'GET')
-    assert.strictEqual(labels.status_code, 404)
+    assert.strictEqual(labels.status_code, 200)
 
-    if (metricName !== 'http_request_duration_seconds_bucket') continue
-
-    assert.strictEqual(value, 0)
+    if (metricName !== 'http_request_all_duration_seconds_bucket') continue
   }
 
   const summaryMetric = metrics.find(
-    (metric) => metric.name === 'http_request_summary_seconds'
+    (metric) => metric.name === 'http_request_all_summary_seconds'
   )
-  assert.strictEqual(summaryMetric.name, 'http_request_summary_seconds')
+  assert.strictEqual(summaryMetric.name, 'http_request_all_summary_seconds')
   assert.strictEqual(summaryMetric.type, 'summary')
-  assert.strictEqual(summaryMetric.help, 'request duration in seconds summary')
   assert.strictEqual(summaryMetric.aggregator, 'sum')
 
   const summaryValues = summaryMetric.values
 
   {
     const summaryCount = summaryValues.find(
-      ({ metricName }) => metricName === 'http_request_summary_seconds_count'
+      ({ metricName }) => metricName === 'http_request_all_summary_seconds_count'
     )
-    assert.strictEqual(summaryCount.value, 1)
+    assert.strictEqual(summaryCount.value, 2)
   }
 
   {
     const summarySum = summaryValues.find(
-      ({ metricName }) => metricName === 'http_request_summary_seconds_sum'
+      ({ metricName }) => metricName === 'http_request_all_summary_seconds_sum'
     )
     const value = summarySum.value
     assert.ok(
