@@ -314,6 +314,14 @@ describe('runtime update resources', () => {
             updated = (new Array(updateResources[serviceId].workers)).fill(0).map((_, i) => i)
           }
 
+          const expectedHealth = {}
+          if (newHeapTotal) {
+            expectedHealth.maxHeapTotal = expectedNewHeap
+          }
+          if (newYoungGeneration) {
+            expectedHealth.maxYoungGeneration = expectedNewYoungGeneration
+          }
+
           return {
             service: serviceId,
             workers: {
@@ -324,7 +332,7 @@ describe('runtime update resources', () => {
             },
             health: {
               current: currentResources[serviceId].health,
-              new: updateResources[serviceId].health,
+              new: expectedHealth,
               updated,
               success: true
             }
