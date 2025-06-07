@@ -5,7 +5,7 @@ const { basename, dirname, resolve: resolvePaths } = require('node:path')
 const { fileURLToPath } = require('node:url')
 const kFailedImport = Symbol('plt.utils.failedImport')
 
-// TODO@PI: This was needed for https://github.com/nodejs/node/issues/55417. It can be removed in Platformatic v3
+// This was needed for https://github.com/nodejs/node/issues/55417. It can be removed in Platformatic v3
 // IMPORTANT: Do not use inside this codebase.
 function createRequire (originalPath) {
   // Create a new path which includes node_modules to suppress the warning

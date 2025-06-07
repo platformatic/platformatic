@@ -9,6 +9,7 @@ const { Unpromise } = require('@watchable/unpromise')
 const errors = require('../errors')
 const { updateUndiciInterceptors } = require('./interceptors')
 const { kITC, kId, kServiceId, kWorkerId } = require('./symbols')
+const { MessagingITC } = require('./messaging')
 
 async function safeHandleInITC (worker, fn) {
   try {
@@ -47,8 +48,8 @@ async function safeHandleInITC (worker, fn) {
   }
 }
 
-async function sendViaITC (worker, name, message) {
-  return safeHandleInITC(worker, () => worker[kITC].send(name, message))
+async function sendViaITC (worker, name, message, transferList) {
+  return safeHandleInITC(worker, () => worker[kITC].send(name, message, { transferList }))
 }
 
 async function waitEventFromITC (worker, event) {
@@ -56,6 +57,15 @@ async function waitEventFromITC (worker, event) {
 }
 
 function setupITC (app, service, dispatcher) {
+  const messaging = new MessagingITC(app.appConfig.id, workerData.config)
+
+  Object.assign(globalThis.platformatic ?? {}, {
+    messaging: {
+      handle: messaging.handle.bind(messaging),
+      send: messaging.send.bind(messaging)
+    }
+  })
+
   const itc = new ITC({
     name: app.appConfig.id + '-worker',
     port: parentPort,
@@ -96,6 +106,7 @@ function setupITC (app, service, dispatcher) {
 
         await dispatcher.interceptor.close()
         itc.close()
+        messaging.close()
       },
 
       async build () {
@@ -116,8 +127,10 @@ function setupITC (app, service, dispatcher) {
 
       async updateWorkersCount (data) {
         const { serviceId, workers } = data
-        const w = workerData.config.serviceMap.get(serviceId)
-        if (w) { w.workers = workers }
+        const worker = workerData.config.serviceMap.get(serviceId)
+        if (worker) {
+          worker.workers = workers
+        }
         workerData.serviceConfig.workers = workers
         workerData.worker.count = workers
       },
@@ -195,6 +208,10 @@ function setupITC (app, service, dispatcher) {
         } catch (err) {
           throw new errors.FailedToPerformCustomReadinessCheckError(service.id, err.message)
         }
+      },
+
+      saveMessagingChannel (channel) {
+        messaging.addSource(channel)
       }
     }
   })

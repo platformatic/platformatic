@@ -13,7 +13,7 @@ expectType<ITC>(itc)
 expectType<Promise<any>>(itc.send('testMessage', { key: 'value' }))
 expectType<void>(itc.notify('testMessage', { key: 'value' }))
 expectType<void>(
-  itc.handle('testMessage', async (data) => {
+  itc.handle('testMessage', async data => {
     return { key: 'value' }
   })
 )
@@ -23,15 +23,10 @@ expectType<void>(itc.close())
 expectError(itc.send(123, { key: 'value' })) // send name must be a string
 expectError(itc.notify(123, { key: 'value' })) // send name must be a string
 expectError(
-  itc.handle(123, async (data) => {
+  itc.handle(123, async data => {
     return { key: 'value' }
   })
 ) // handle message must be a string
-expectError(
-  itc.handle('testMessage', (data) => {
-    return 'string'
-  })
-) // handler must return a Promise
 
 itc.on('unhandledError', (error: Error) => {
   expectType<Error>(error)

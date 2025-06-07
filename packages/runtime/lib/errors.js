@@ -13,6 +13,7 @@ module.exports = {
   WorkerExitedError: createError(`${ERROR_PREFIX}_SERVICE_EXIT`, 'The worker %s of the service "%s" exited prematurely with error code %d'),
   UnknownRuntimeAPICommandError: createError(`${ERROR_PREFIX}_UNKNOWN_RUNTIME_API_COMMAND`, 'Unknown Runtime API command "%s"'),
   ServiceNotFoundError: createError(`${ERROR_PREFIX}_SERVICE_NOT_FOUND`, 'Service %s not found. Available services are: %s'),
+  WorkerNotFoundError: createError(`${ERROR_PREFIX}_WORKER_NOT_FOUND`, 'Worker %s of service %s not found. Available services are: %s'),
   ServiceNotStartedError: createError(`${ERROR_PREFIX}_SERVICE_NOT_STARTED`, "Service with id '%s' is not started"),
   ServiceStartTimeoutError: createError(`${ERROR_PREFIX}_SERVICE_START_TIMEOUT`, "Service with id '%s' failed to start in %dms."),
   FailedToRetrieveOpenAPISchemaError: createError(`${ERROR_PREFIX}_FAILED_TO_RETRIEVE_OPENAPI_SCHEMA`, 'Failed to retrieve OpenAPI schema for service with id "%s": %s'),
@@ -39,6 +40,7 @@ module.exports = {
   LogFileNotFound: createError(`${ERROR_PREFIX}_LOG_FILE_NOT_FOUND`, 'Log file with index %s not found', 404),
   WorkerIsRequired: createError(`${ERROR_PREFIX}_REQUIRED_WORKER`, 'The worker parameter is required'),
   InvalidArgumentError: createError(`${ERROR_PREFIX}_INVALID_ARGUMENT`, 'Invalid argument: "%s"'),
+  MessagingError: createError(`${ERROR_PREFIX}_MESSAGING_ERROR`, 'Cannot send a message to service "%s": %s'),
 
   // TODO: should remove next one as it's not used anymore
   CannotRemoveServiceOnUpdateError: createError(`${ERROR_PREFIX}_CANNOT_REMOVE_SERVICE_ON_UPDATE`, 'Cannot remove service "%s" when updating a Runtime'),

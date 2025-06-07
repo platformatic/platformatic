@@ -124,7 +124,7 @@ test('can detect changes and restart all workers for a service', async t => {
     'files changed',
     'Stopping the worker 0 of the service "node"...',
     'Starting the worker 0 of the service "node"...',
-    'Service "node" has been successfully reloaded ...'
+    'The service "node" has been successfully reloaded ...'
   )
 
   await updateFile(resolve(root, 'node/index.mjs'), contents => {

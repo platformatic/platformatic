@@ -115,19 +115,29 @@ async function waitForLogs (socket, ...exprs) {
   }
 }
 
+async function waitForStart (socket) {
+  return waitForLogs(socket, /Platformatic is now listening/)
+}
+
 function stdioOutputToLogs (data) {
-  const logs = data.map(line => {
-    try {
-      return JSON.parse(line)
-    } catch {
-      return line.trim().split('\n').map(l => {
-        try {
-          return JSON.parse(l)
-        } catch { }
-        return null
-      }).filter(log => log)
-    }
-  }).filter(log => log)
+  const logs = data
+    .map(line => {
+      try {
+        return JSON.parse(line)
+      } catch {
+        return line
+          .trim()
+          .split('\n')
+          .map(l => {
+            try {
+              return JSON.parse(l)
+            } catch {}
+            return null
+          })
+          .filter(log => log)
+      }
+    })
+    .filter(log => log)
 
   return logs.flat()
 }
@@ -141,13 +151,15 @@ function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = fal
     const result = {
       stdout: [],
       stderr: [],
-      url: null,
+      url: null
     }
     let ready = false
     let teardownCalled = false
 
     async function teardown () {
-      if (teardownCalled) { return }
+      if (teardownCalled) {
+        return
+      }
       teardownCalled = true
 
       timeoutId && clearTimeout(timeoutId)
@@ -156,7 +168,7 @@ function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = fal
         return
       }
       child.kill('SIGKILL')
-      child.catch(() => { })
+      child.catch(() => {})
       child = null
     }
 
@@ -169,7 +181,7 @@ function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = fal
       reject(new Error('Timeout'))
     }, timeout)
 
-    child.stdout.on('data', (message) => {
+    child.stdout.on('data', message => {
       const m = message.toString()
       if (debug) {
         console.log(' >>> stdout', m)
@@ -202,7 +214,7 @@ function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = fal
       }
     })
 
-    child.stderr.on('data', (message) => {
+    child.stderr.on('data', message => {
       const msg = message.toString()
       if (debug) {
         console.log(' >>> stderr', msg)
@@ -220,6 +232,7 @@ module.exports = {
   updateConfigFile,
   openLogsWebsocket,
   waitForLogs,
+  waitForStart,
   execRuntime,
   stdioOutputToLogs
 }
