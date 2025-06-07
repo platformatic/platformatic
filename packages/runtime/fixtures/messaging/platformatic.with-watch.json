@@ -21,7 +21,8 @@
     },
     {
       "id": "composer",
-      "path": "composer"
+      "path": "composer",
+      "workers": 1
     }
   ],
   "logger": {

@@ -20,7 +20,8 @@
     },
     {
       "id": "composer",
-      "path": "composer"
+      "path": "composer",
+      "workers": 1
     }
   ],
   "messagingTimeout": 2000,
