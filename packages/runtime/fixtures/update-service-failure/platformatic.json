@@ -8,7 +8,7 @@
       "id": "node",
       "path": "./node",
       "config": "platformatic.json",
-      "workers": 2,
+      "workers": 1,
       "health": {
         "maxHeapTotal": "256 MB"
       }

@@ -314,6 +314,14 @@ describe('runtime update resources', () => {
             updated = (new Array(updateResources[serviceId].workers)).fill(0).map((_, i) => i)
           }
 
+          const expectedHealth = {}
+          if (newHeapTotal) {
+            expectedHealth.maxHeapTotal = expectedNewHeap
+          }
+          if (newYoungGeneration) {
+            expectedHealth.maxYoungGeneration = expectedNewYoungGeneration
+          }
+
           return {
             service: serviceId,
             workers: {
@@ -324,7 +332,7 @@ describe('runtime update resources', () => {
             },
             health: {
               current: currentResources[serviceId].health,
-              new: updateResources[serviceId].health,
+              new: expectedHealth,
               updated,
               success: true
             }
@@ -443,35 +451,36 @@ describe('runtime update resources', () => {
 
     const report = await runtime.updateServicesResources([{
       service: 'node',
-      workers: 4,
+      workers: 3,
       health: {
         maxHeapTotal: '512MB'
       }
     }])
 
-    assert.deepEqual(report, [
-      {
-        service: 'node',
-        workers: {
-          current: 2,
-          new: 4,
-          started: [2],
-          success: false
+    assert.deepEqual(report, [{
+      service: 'node',
+      workers: {
+        current: 1,
+        new: 3,
+        started: [1],
+        success: false
+      },
+      health: {
+        current: {
+          enabled: true,
+          interval: 30000,
+          gracePeriod: 30000,
+          maxUnhealthyChecks: 10,
+          maxELU: 0.99,
+          maxHeapUsed: 0.99,
+          maxHeapTotal: 536870912
         },
-        health: {
-          current: {
-            enabled: true,
-            interval: 30000,
-            gracePeriod: 30000,
-            maxUnhealthyChecks: 10,
-            maxELU: 0.99,
-            maxHeapUsed: 0.99,
-            maxHeapTotal: 536870912
-          },
-          new: { maxHeapTotal: 536870912 },
-          updated: [0, 1],
-          success: true
-        }
-      }])
+        new: {
+          maxHeapTotal: 536870912
+        },
+        updated: [0],
+        success: true
+      }
+    }])
   })
 })
