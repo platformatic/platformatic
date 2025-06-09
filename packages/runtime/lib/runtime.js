@@ -33,7 +33,8 @@ const {
   kHealthCheckTimer,
   kConfig,
   kWorkerStatus,
-  kStderrMarker
+  kStderrMarker,
+  kLastELU
 } = require('./worker/symbols')
 
 const fastify = require('fastify')
@@ -1326,7 +1327,9 @@ class Runtime extends EventEmitter {
   async #getHealth (worker) {
     if (features.node.worker.getHeapStatistics) {
       const { used_heap_size: heapUsed, total_heap_size: heapTotal } = await worker.getHeapStatistics()
-      const { utilization: elu } = worker.performance.eventLoopUtilization()
+      const currentELU = worker.performance.eventLoopUtilization()
+      const elu = worker.performance.eventLoopUtilization(currentELU, worker[kLastELU]).utilization
+      worker[kLastELU] = currentELU
       return { elu, heapUsed, heapTotal }
     }
 
