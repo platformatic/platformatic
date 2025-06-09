@@ -2,6 +2,7 @@ import { ChildProcess } from "node:child_process";
 import BodyReadable from "undici/types/readable";
 import { FastifyError } from "@fastify/error";
 import { Readable } from "node:stream";
+import { HttpHeader } from 'fastify/types/utils'
 import WebSocket from "ws";
 
 declare namespace control {
@@ -122,7 +123,7 @@ declare namespace control {
         headers: object;
         body: unknown;
       }
-    ): Promise<unknown>;
+    ): Promise<{ headers: Record<string, HttpHeader>, statusCode: number, body: unknown }>;
     close(): Promise<void>;
   }
 
