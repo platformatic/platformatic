@@ -1,7 +1,7 @@
 'use strict'
 
 const { ITC } = require('@platformatic/itc')
-const { features, ensureLoggableError, executeWithTimeout, deepmerge } = require('@platformatic/utils')
+const { features, ensureLoggableError, executeWithTimeout, deepmerge, parseMemorySize } = require('@platformatic/utils')
 const { once, EventEmitter } = require('node:events')
 const { createReadStream, watch, existsSync } = require('node:fs')
 const { readdir, readFile, stat, access } = require('node:fs/promises')
@@ -1149,10 +1149,13 @@ class Runtime extends EventEmitter {
       workerEnv['NODE_OPTIONS'] = `${originalNodeOptions} ${serviceConfig.nodeOptions}`.trim()
     }
 
+    const maxHeapTotal = typeof health.maxHeapTotal === 'string' ? parseMemorySize(health.maxHeapTotal) : health.maxHeapTotal
+    const maxYoungGeneration = typeof health.maxYoungGeneration === 'string' ? parseMemorySize(health.maxYoungGeneration) : health.maxYoungGeneration
+
     const maxOldGenerationSizeMb = Math.floor(
-      (health.maxYoungGeneration > 0 ? health.maxHeapTotal - health.maxYoungGeneration : health.maxHeapTotal) / (1024 * 1024)
+      (maxYoungGeneration > 0 ? maxHeapTotal - maxYoungGeneration : maxHeapTotal) / (1024 * 1024)
     )
-    const maxYoungGenerationSizeMb = health.maxYoungGeneration ? Math.floor(health.maxYoungGeneration / (1024 * 1024)) : undefined
+    const maxYoungGenerationSizeMb = maxYoungGeneration ? Math.floor(maxYoungGeneration / (1024 * 1024)) : undefined
 
     const worker = new Worker(kWorkerFile, {
       workerData: {
@@ -1337,18 +1340,20 @@ class Runtime extends EventEmitter {
     return health
   }
 
-  #setupHealthCheck (config, serviceConfig, workersCount, id, index, workerId, worker, errorLabel) {
+  #setupHealthCheck (config, serviceConfig, workersCount, id, index, worker, errorLabel) {
     // Clear the timeout when exiting
     worker.on('exit', () => clearTimeout(worker[kHealthCheckTimer]))
 
     const { maxELU, maxHeapUsed, maxHeapTotal, maxUnhealthyChecks, interval } = worker[kConfig].health
+    const maxHeapTotalNumber = typeof maxHeapTotal === 'string' ? parseMemorySize(maxHeapTotal) : maxHeapTotal
+
     let unhealthyChecks = 0
 
     worker[kHealthCheckTimer] = setTimeout(async () => {
       let health, unhealthy, memoryUsage
       try {
         health = await this.#getHealth(worker)
-        memoryUsage = health.heapUsed / maxHeapTotal
+        memoryUsage = health.heapUsed / maxHeapTotalNumber
         unhealthy = health.elu > maxELU || memoryUsage > maxHeapUsed
       } catch (err) {
         this.logger.error({ err }, `Failed to get health for ${errorLabel}.`)
@@ -1391,7 +1396,7 @@ class Runtime extends EventEmitter {
             `The ${errorLabel} is unhealthy. Replacing it ...`
           )
 
-          await this.#replaceWorker(config, serviceConfig, workersCount, id, index, workerId, worker)
+          await this.#replaceWorker(config, serviceConfig, workersCount, id, index, worker)
         } catch (e) {
           this.logger.error(
             { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
@@ -1417,7 +1422,6 @@ class Runtime extends EventEmitter {
     worker = undefined,
     disableRestartAttempts = false
   ) {
-    const workerId = `${id}:${index}`
     const label = this.#workerExtendedLabel(id, index, workersCount)
 
     if (!silent) {
@@ -1471,7 +1475,7 @@ class Runtime extends EventEmitter {
       if (enabled && config.restartOnError > 0) {
         worker[kHealthCheckTimer] = setTimeout(
           () => {
-            this.#setupHealthCheck(config, serviceConfig, workersCount, id, index, workerId, worker, label)
+            this.#setupHealthCheck(config, serviceConfig, workersCount, id, index, worker, label)
           },
           gracePeriod > 0 ? gracePeriod : 1
         )
@@ -1645,7 +1649,8 @@ class Runtime extends EventEmitter {
     await restartPromise
   }
 
-  async #replaceWorker (config, serviceConfig, workersCount, serviceId, index, workerId, worker) {
+  async #replaceWorker (config, serviceConfig, workersCount, serviceId, index, worker) {
+    const workerId = `${serviceId}:${index}`
     let newWorker
 
     try {
@@ -1705,7 +1710,7 @@ class Runtime extends EventEmitter {
         return null
       }
 
-      throw new errors.ServiceNotFoundError(serviceId, Array.from(this.#servicesIds).join(', '))
+      throw new errors.ServiceWorkerNotFoundError(serviceId, workerId)
     }
 
     if (ensureStarted) {
@@ -1869,10 +1874,16 @@ class Runtime extends EventEmitter {
 
   async getServiceResourcesInfo (id) {
     const workers = this.#workers.getCount(id)
-    return { workers }
+
+    const worker = await this.#getWorkerById(id, 0, false, false)
+    const health = worker[kConfig].health
+
+    return { workers, health }
   }
 
-  async #updateWorkerCount (serviceId, workers) {
+  async #updateServiceConfigWorkers (serviceId, workers) {
+    this.logger.info(`Updating service "${serviceId}" config workers to ${workers}`)
+
     this.#configManager.current.services.find(s => s.id === serviceId).workers = workers
     const service = await this.#getServiceById(serviceId)
     this.#workers.setCount(serviceId, workers)
@@ -1888,14 +1899,109 @@ class Runtime extends EventEmitter {
     const results = await Promise.allSettled(promises)
     for (const result of results) {
       if (result.status === 'rejected') {
+        this.logger.error({ err: result.reason }, `Cannot update service "${serviceId}" workers`)
         throw result.reason
       }
     }
   }
 
-  async updateServicesResources (updates) {
-    if (this.#status === 'stopping' || this.#status === 'closed') return
+  async #updateServiceConfigHealth (serviceId, health) {
+    this.logger.info(`Updating service "${serviceId}" config health heap to ${JSON.stringify(health)}`)
+    const { maxHeapTotal, maxYoungGeneration } = health
 
+    const service = this.#configManager.current.services.find(s => s.id === serviceId)
+    if (maxHeapTotal) {
+      service.health.maxHeapTotal = maxHeapTotal
+    }
+    if (maxYoungGeneration) {
+      service.health.maxYoungGeneration = maxYoungGeneration
+    }
+  }
+
+  /**
+   * Updates the resources of the services, such as the number of workers and health configurations (e.g., heap memory settings).
+   *
+   * This function handles three update scenarios for each service:
+   *  1. **Updating workers only**: Adjusts the number of workers for the service.
+   *  2. **Updating health configurations only**: Updates health parameters like `maxHeapTotal` or `maxYoungGeneration`.
+   *  3. **Updating both workers and health configurations**: Scales the workers and also applies health settings.
+   *
+   * When updating both workers and health:
+   *  - **Scaling down workers**: Stops extra workers, then restarts the remaining workers with the previous settings.
+   *  - **Scaling up workers**: Starts new workers with the updated heap settings, then restarts the old workers with the updated settings.
+   *
+   * Scaling up new resources (workers and/or heap memory) may fails due to insufficient memory, in this case the operation may fail partially or entirely.
+   * Scaling down is expected to succeed without issues.
+   *
+   * @param {Array<Object>} updates - An array of objects that define the updates for each service.
+   * @param {string} updates[].service - The ID of the service to update.
+   * @param {number} [updates[].workers] - The desired number of workers for the service. If omitted, workers will not be updated.
+   * @param {Object} [updates[].health] - The health configuration to update for the service, which may include:
+   *   @param {string|number} [updates[].health.maxHeapTotal] - The maximum heap memory for the service. Can be a valid memory string (e.g., '1G', '512MB') or a number representing bytes.
+   *   @param {string|number} [updates[].health.maxYoungGeneration] - The maximum young generation memory for the service. Can be a valid memory string (e.g., '128MB') or a number representing bytes.
+   *
+   * @returns {Promise<Array<Object>>} - A promise that resolves to an array of reports for each service, detailing the success or failure of the operations:
+   *   - `service`: The service ID.
+   *   - `workers`: The workers' update report, including the current, new number of workers, started workers, and success status.
+   *   - `health`: The health update report, showing the current and new heap settings, updated workers, and success status.
+   *
+   * @example
+   * await runtime.updateServicesResources([
+   *   { service: 'service-1', workers: 2, health: { maxHeapTotal: '1G', maxYoungGeneration: '128 MB' } },
+   *   { service: 'service-2', health: { maxHeapTotal: '1G' } },
+   *   { service: 'service-3', workers: 2 },
+   * ])
+   *
+   * In this example:
+   * - `service-1` will have 2 workers and updated heap memory configurations.
+   * - `service-2` will have updated heap memory settings (without changing workers).
+   * - `service-3` will have its workers set to 2 but no change in memory settings.
+   *
+   * @throws {InvalidArgumentError} - Throws if any update parameter is invalid, such as:
+   *   - Missing service ID.
+   *   - Invalid worker count (not a positive integer).
+   *   - Invalid memory size format for `maxHeapTotal` or `maxYoungGeneration`.
+   * @throws {ServiceNotFoundError} - Throws if the specified service ID does not exist in the current service configuration.
+   */
+  async updateServicesResources (updates) {
+    if (this.#status === 'stopping' || this.#status === 'closed') {
+      this.logger.warn('Cannot update service resources when the runtime is stopping or closed')
+      return
+    }
+
+    const ups = await this.#validateUpdateServiceResources(updates)
+    const config = this.#configManager.current
+
+    const report = []
+    for (const update of ups) {
+      const { serviceId, config: serviceConfig, workers, health, currentWorkers, currentHealth } = update
+
+      if (workers && health) {
+        const r = await this.#updateServiceWorkersAndHealth(serviceId, config, serviceConfig, workers, health, currentWorkers, currentHealth)
+        report.push({
+          service: serviceId,
+          workers: r.workers,
+          health: r.health
+        })
+      } else if (health) {
+        const r = await this.#updateServiceHealth(serviceId, config, serviceConfig, currentWorkers, currentHealth, health)
+        report.push({
+          service: serviceId,
+          health: r.health
+        })
+      } else if (workers) {
+        const r = await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
+        report.push({
+          service: serviceId,
+          workers: r.workers
+        })
+      }
+    }
+
+    return report
+  }
+
+  async #validateUpdateServiceResources (updates) {
     if (!Array.isArray(updates)) {
       throw new errors.InvalidArgumentError('updates', 'must be an array')
     }
@@ -1904,47 +2010,207 @@ class Runtime extends EventEmitter {
     }
 
     const config = this.#configManager.current
-
+    const validatedUpdates = []
     for (const update of updates) {
-      const { service: serviceId, workers } = update
+      const { service: serviceId } = update
 
-      if (typeof workers !== 'number') {
-        throw new errors.InvalidArgumentError('workers', 'must be a number')
-      }
       if (!serviceId) {
         throw new errors.InvalidArgumentError('service', 'must be a string')
-      }
-      if (workers <= 0) {
-        throw new errors.InvalidArgumentError('workers', 'must be greater than 0')
-      }
-      if (workers > MAX_WORKERS) {
-        throw new errors.InvalidArgumentError('workers', `must be less than ${MAX_WORKERS}`)
       }
       const serviceConfig = config.services.find(s => s.id === serviceId)
       if (!serviceConfig) {
         throw new errors.ServiceNotFoundError(serviceId, Array.from(this.#servicesIds).join(', '))
       }
 
-      const { workers: currentWorkers } = await this.getServiceResourcesInfo(serviceId)
-      if (currentWorkers === workers) {
-        this.logger.warn({ serviceId, workers }, 'No change in the number of workers for service')
-        continue
+      const { workers: currentWorkers, health: currentHealth } = await this.getServiceResourcesInfo(serviceId)
+
+      let workers
+      if (update.workers !== undefined) {
+        if (typeof update.workers !== 'number') {
+          throw new errors.InvalidArgumentError('workers', 'must be a number')
+        }
+        if (update.workers <= 0) {
+          throw new errors.InvalidArgumentError('workers', 'must be greater than 0')
+        }
+        if (update.workers > MAX_WORKERS) {
+          throw new errors.InvalidArgumentError('workers', `must be less than ${MAX_WORKERS}`)
+        }
+
+        if (currentWorkers === update.workers) {
+          this.logger.warn({ serviceId, workers: update.workers }, 'No change in the number of workers for service')
+        } else {
+          workers = update.workers
+        }
       }
 
-      if (currentWorkers < workers) {
-        await this.#updateWorkerCount(serviceId, workers)
+      let maxHeapTotal, maxYoungGeneration
+      if (update.health) {
+        if (update.health.maxHeapTotal !== undefined) {
+          if (typeof update.health.maxHeapTotal === 'string') {
+            try {
+              maxHeapTotal = parseMemorySize(update.health.maxHeapTotal)
+            } catch {
+              throw new errors.InvalidArgumentError('maxHeapTotal', 'must be a valid memory size')
+            }
+          } else if (typeof update.health.maxHeapTotal === 'number') {
+            maxHeapTotal = update.health.maxHeapTotal
+            if (update.health.maxHeapTotal <= 0) {
+              throw new errors.InvalidArgumentError('maxHeapTotal', 'must be greater than 0')
+            }
+          } else {
+            throw new errors.InvalidArgumentError('maxHeapTotal', 'must be a number or a string representing a memory size')
+          }
+
+          if (currentHealth.maxHeapTotal === maxHeapTotal) {
+            this.logger.warn({ serviceId, maxHeapTotal }, 'No change in the max heap total for service')
+            maxHeapTotal = undefined
+          }
+        }
+
+        if (update.health.maxYoungGeneration !== undefined) {
+          if (typeof update.health.maxYoungGeneration === 'string') {
+            try {
+              maxYoungGeneration = parseMemorySize(update.health.maxYoungGeneration)
+            } catch {
+              throw new errors.InvalidArgumentError('maxYoungGeneration', 'must be a valid memory size')
+            }
+          } else if (typeof update.health.maxYoungGeneration === 'number') {
+            maxYoungGeneration = update.health.maxYoungGeneration
+            if (update.health.maxYoungGeneration <= 0) {
+              throw new errors.InvalidArgumentError('maxYoungGeneration', 'must be greater than 0')
+            }
+          } else {
+            throw new errors.InvalidArgumentError('maxYoungGeneration', 'must be a number or a string representing a memory size')
+          }
+
+          if (currentHealth.maxYoungGeneration && currentHealth.maxYoungGeneration === maxYoungGeneration) {
+            this.logger.warn({ serviceId, maxYoungGeneration }, 'No change in the max young generation for service')
+            maxYoungGeneration = undefined
+          }
+        }
+      }
+
+      if (workers || maxHeapTotal || maxYoungGeneration) {
+        let health
+        if (maxHeapTotal || maxYoungGeneration) {
+          health = { }
+          if (maxHeapTotal) {
+            health.maxHeapTotal = maxHeapTotal
+          }
+          if (maxYoungGeneration) {
+            health.maxYoungGeneration = maxYoungGeneration
+          }
+        }
+        validatedUpdates.push({ serviceId, config: serviceConfig, workers, health, currentWorkers, currentHealth })
+      }
+    }
+
+    return validatedUpdates
+  }
+
+  async #updateServiceWorkersAndHealth (serviceId, config, serviceConfig, workers, health, currentWorkers, currentHealth) {
+    if (currentWorkers > workers) {
+      // stop workers
+      const reportWorkers = await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
+      // update heap for current workers
+      const reportHealth = await this.#updateServiceHealth(serviceId, config, serviceConfig, workers, currentHealth, health)
+
+      return { workers: reportWorkers, health: reportHealth }
+    } else {
+      // update service heap
+      await this.#updateServiceConfigHealth(serviceId, health)
+      // start new workers with new heap
+      const reportWorkers = await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
+      // update heap for current workers
+      const reportHealth = await this.#updateServiceHealth(serviceId, config, serviceConfig, currentWorkers, currentHealth, health, false)
+
+      return { workers: reportWorkers, health: reportHealth }
+    }
+  }
+
+  async #updateServiceHealth (serviceId, config, serviceConfig, currentWorkers, currentHealth, health, updateConfig = true) {
+    const report = {
+      current: currentHealth,
+      new: health,
+      updated: []
+    }
+    try {
+      if (updateConfig) {
+        await this.#updateServiceConfigHealth(serviceId, health)
+      }
+
+      for (let i = 0; i < currentWorkers; i++) {
+        this.logger.info({ health: { current: currentHealth, new: health } }, `Restarting service "${serviceId}" worker ${i} to update config health heap...`)
+
+        const worker = await this.#getWorkerById(serviceId, i)
+        if (health.maxHeapTotal) { worker[kConfig].health.maxHeapTotal = health.maxHeapTotal }
+        if (health.maxYoungGeneration) { worker[kConfig].health.maxYoungGeneration = health.maxYoungGeneration }
+
+        await this.#replaceWorker(config, serviceConfig, currentWorkers, serviceId, i, worker)
+        report.updated.push(i)
+        this.logger.info({ health: { current: currentHealth, new: health } }, `Restarted service "${serviceId}" worker ${i}`)
+      }
+      report.success = true
+    } catch (err) {
+      if (report.updated.length < 1) {
+        this.logger.error({ err }, 'Cannot update service health heap, no worker updated')
+        await this.#updateServiceConfigHealth(serviceId, currentHealth)
+      } else {
+        this.logger.error({ err }, `Cannot update service health heap, updated workers: ${report.updated.length} out of ${currentWorkers}`)
+      }
+      report.success = false
+    }
+    return report
+  }
+
+  async #updateServiceWorkers (serviceId, config, serviceConfig, workers, currentWorkers) {
+    const report = {
+      current: currentWorkers,
+      new: workers
+    }
+    if (currentWorkers < workers) {
+      report.started = []
+      try {
+        await this.#updateServiceConfigWorkers(serviceId, workers)
         for (let i = currentWorkers; i < workers; i++) {
           await this.#setupWorker(config, serviceConfig, workers, serviceId, i)
           await this.#startWorker(config, serviceConfig, workers, serviceId, i, false, 0)
+          report.started.push(i)
         }
-      } else {
+        report.success = true
+      } catch (err) {
+        if (report.started.length < 1) {
+          this.logger.error({ err }, 'Cannot start service workers, no worker started')
+          await this.#updateServiceConfigWorkers(serviceId, currentWorkers)
+        } else {
+          this.logger.error({ err }, `Cannot start service workers, started workers: ${report.started.length} out of ${workers}`)
+          await this.#updateServiceConfigWorkers(serviceId, currentWorkers + report.started.length)
+        }
+        report.success = false
+      }
+    } else {
+      // keep the current workers count until all the service workers are all stopped
+      report.stopped = []
+      try {
         for (let i = currentWorkers - 1; i >= workers; i--) {
-          // keep the current workers count until the workers are stopped
-          await this.#stopWorker(currentWorkers, serviceId, i, false)
+          const worker = await this.#getWorkerById(serviceId, i, false, false)
+          await sendViaITC(worker, 'removeFromMesh')
+          await this.#stopWorker(currentWorkers, serviceId, i, false, worker)
+          report.stopped.push(i)
         }
-        await this.#updateWorkerCount(serviceId, workers)
+        await this.#updateServiceConfigWorkers(serviceId, workers)
+        report.success = true
+      } catch (err) {
+        if (report.stopped.length < 1) {
+          this.logger.error({ err }, 'Cannot stop service workers, no worker stopped')
+        } else {
+          this.logger.error({ err }, `Cannot stop service workers, stopped workers: ${report.stopped.length} out of ${workers}`)
+          await this.#updateServiceConfigWorkers(serviceId, currentWorkers - report.stopped)
+        }
+        report.success = false
       }
     }
+    return report
   }
 }
 

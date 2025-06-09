@@ -128,7 +128,7 @@ class RuntimeApiClient {
         // No-op
       }
 
-      if (jsonError?.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND') {
+      if (jsonError?.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND' || jsonError?.code === 'PLT_RUNTIME_SERVICE_WORKER_NOT_FOUND') {
         throw new errors.ServiceNotFound(error)
       }
 
@@ -190,7 +190,7 @@ class RuntimeApiClient {
         // No-op
       }
 
-      if (jsonError?.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND') {
+      if (jsonError?.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND' || jsonError?.code === 'PLT_RUNTIME_SERVICE_WORKER_NOT_FOUND') {
         throw new errors.ServiceNotFound(error)
       }
 

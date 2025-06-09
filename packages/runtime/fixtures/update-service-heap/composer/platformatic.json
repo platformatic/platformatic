@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.66.0.json",
+  "composer": {
+    "services": [
+      {
+        "id": "node",
+        "proxy": {
+          "prefix": "/node"
+        }
+      }
+    ]
+  }
+}

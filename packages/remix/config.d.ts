@@ -211,7 +211,7 @@ export interface PlatformaticRemixStackable {
       maxELU?: number | string;
       maxHeapUsed?: number | string;
       maxHeapTotal?: number | string;
-      maxYoungGeneration?: number;
+      maxYoungGeneration?: number | string;
     };
     undici?: {
       agentOptions?: {
