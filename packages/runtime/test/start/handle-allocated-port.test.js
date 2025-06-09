@@ -15,7 +15,7 @@ const http = require('http')
 async function getPort () {
   if (isCIOnWindows) {
     const getPort = await import('get-port')
-    return getPort.default({ port: [3000, 3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008, 3009, 3010] })
+    return getPort.default({ port: getPort.portNumbers(3000, 3100) })
   }
 
   return 0
