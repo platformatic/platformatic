@@ -1,0 +1,29 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/db/1.52.0.json",
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0
+  },
+  "migrations": {
+    "dir": "migrations",
+    "table": "versions",
+    "autoApply": true
+  },
+  "types": {
+    "autogenerate": false
+  },
+  "db": {
+    "connectionString": "sqlite://db.sqlite",
+    "graphql": true,
+    "ignore": {
+      "versions": true
+    },
+    "events": false
+  },
+  "plugins": {
+    "paths": [
+      "plugin.js"
+    ]
+  },
+  "watch": false
+}

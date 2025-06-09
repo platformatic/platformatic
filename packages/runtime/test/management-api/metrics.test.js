@@ -42,8 +42,8 @@ const expectedMetricNames = [
   'thread_cpu_system_seconds_total',
   'thread_cpu_seconds_total',
   'thread_cpu_percent_usage',
-  'http_request_duration_seconds',
-  'http_request_summary_seconds',
+  'http_request_all_duration_seconds',
+  'http_request_all_summary_seconds',
 ]
 
 test('should get prom metrics from the management api', async t => {
