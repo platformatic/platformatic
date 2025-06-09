@@ -33,7 +33,8 @@ const {
   kHealthCheckTimer,
   kConfig,
   kWorkerStatus,
-  kStderrMarker
+  kStderrMarker,
+  kLastELU
 } = require('./worker/symbols')
 
 const fastify = require('fastify')
@@ -1323,6 +1324,19 @@ class Runtime extends EventEmitter {
     return worker
   }
 
+  async #getHealth (worker) {
+    if (features.node.worker.getHeapStatistics) {
+      const { used_heap_size: heapUsed, total_heap_size: heapTotal } = await worker.getHeapStatistics()
+      const currentELU = worker.performance.eventLoopUtilization()
+      const elu = worker.performance.eventLoopUtilization(currentELU, worker[kLastELU]).utilization
+      worker[kLastELU] = currentELU
+      return { elu, heapUsed, heapTotal }
+    }
+
+    const health = await worker[kITC].send('getHealth')
+    return health
+  }
+
   #setupHealthCheck (config, serviceConfig, workersCount, id, index, workerId, worker, errorLabel) {
     // Clear the timeout when exiting
     worker.on('exit', () => clearTimeout(worker[kHealthCheckTimer]))
@@ -1331,10 +1345,16 @@ class Runtime extends EventEmitter {
     let unhealthyChecks = 0
 
     worker[kHealthCheckTimer] = setTimeout(async () => {
-      const health = await worker[kITC].send('getHealth')
-      const { elu, heapUsed } = health
-      const memoryUsage = heapUsed / maxHeapTotal
-      const unhealthy = elu > maxELU || memoryUsage > maxHeapUsed
+      let health, unhealthy, memoryUsage
+      try {
+        health = await this.#getHealth(worker)
+        memoryUsage = health.heapUsed / maxHeapTotal
+        unhealthy = health.elu > maxELU || memoryUsage > maxHeapUsed
+      } catch (err) {
+        this.logger.error({ err }, `Failed to get health for ${errorLabel}.`)
+        unhealthy = true
+        memoryUsage = 0
+      }
 
       const serviceId = worker[kServiceId]
       this.emit('health', {
@@ -1347,9 +1367,9 @@ class Runtime extends EventEmitter {
       })
 
       if (unhealthy) {
-        if (elu > maxELU) {
+        if (health.elu > maxELU) {
           this.logger.error(
-            `The ${errorLabel} has an ELU of ${(elu * 100).toFixed(2)} %, above the maximum allowed usage of ${(maxELU * 100).toFixed(2)} %.`
+            `The ${errorLabel} has an ELU of ${(health.elu * 100).toFixed(2)} %, above the maximum allowed usage of ${(maxELU * 100).toFixed(2)} %.`
           )
         }
 
@@ -1367,14 +1387,14 @@ class Runtime extends EventEmitter {
       if (unhealthyChecks === maxUnhealthyChecks) {
         try {
           this.logger.error(
-            { elu, maxELU, memoryUsage, maxMemoryUsage: maxHeapUsed },
+            { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
             `The ${errorLabel} is unhealthy. Replacing it ...`
           )
 
           await this.#replaceWorker(config, serviceConfig, workersCount, id, index, workerId, worker)
         } catch (e) {
           this.logger.error(
-            { elu, maxELU, memoryUsage, maxMemoryUsage: maxHeapUsed },
+            { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
             `Cannot replace the ${errorLabel}. Forcefully terminating it ...`
           )
 
