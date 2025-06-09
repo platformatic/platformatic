@@ -6,7 +6,10 @@ const { satisfies } = require('semver')
 const currentPlatform = platform()
 
 const node = {
-  reusePort: satisfies(process.version, '^22.12.0 || ^23.1.0') && !['win32', 'darwin'].includes(currentPlatform)
+  reusePort: satisfies(process.version, '^22.12.0 || ^23.1.0') && !['win32', 'darwin'].includes(currentPlatform),
+  worker: {
+    getHeapStatistics: satisfies(process.version, '^22.16.0')
+  }
 }
 
 module.exports = {
