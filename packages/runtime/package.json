@@ -97,7 +97,7 @@
     "sonic-boom": "^4.2.0",
     "tail-file-stream": "^0.2.0",
     "undici": "^7.0.0",
-    "undici-thread-interceptor": "git+https://github.com/platformatic/undici-thread-interceptor.git#hooks-list",
+    "undici-thread-interceptor": "^0.14.0",
     "ws": "^8.16.0"
   }
 }

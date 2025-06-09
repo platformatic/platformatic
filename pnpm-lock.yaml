@@ -1878,8 +1878,8 @@ importers:
         specifier: ^7.0.0
         version: 7.10.0
       undici-thread-interceptor:
-        specifier: git+https://github.com/platformatic/undici-thread-interceptor.git#hooks-list
-        version: https://codeload.github.com/platformatic/undici-thread-interceptor/tar.gz/c86c9b5a1135497c35240cffd06118281d94158a
+        specifier: ^0.14.0
+        version: 0.14.0
       ws:
         specifier: ^8.16.0
         version: 8.18.2
@@ -10169,9 +10169,8 @@ packages:
   undici-oidc-interceptor@0.5.0:
     resolution: {integrity: sha512-YU6ABaLFxzKZGjBmamrrRTlziIe6/jrEBUEyNEe2ZRtlXULorg6xo+/jsyEPZVizHdrTFFX3ZPEPxrNmO3pOEA==}
 
-  undici-thread-interceptor@https://codeload.github.com/platformatic/undici-thread-interceptor/tar.gz/c86c9b5a1135497c35240cffd06118281d94158a:
-    resolution: {tarball: https://codeload.github.com/platformatic/undici-thread-interceptor/tar.gz/c86c9b5a1135497c35240cffd06118281d94158a}
-    version: 0.13.2
+  undici-thread-interceptor@0.14.0:
+    resolution: {integrity: sha512-ln6lMA/cSbnXgBEib8sy+4TG3Ys6+pHr1E+/XZ22VfhES42QNrmZWcX2niWb4e8Doye1EXK8Lptf4YQvnTq9Pw==}
 
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
@@ -19696,7 +19695,7 @@ snapshots:
       fast-jwt: 4.0.5
       undici: 6.21.3
 
-  undici-thread-interceptor@https://codeload.github.com/platformatic/undici-thread-interceptor/tar.gz/c86c9b5a1135497c35240cffd06118281d94158a:
+  undici-thread-interceptor@0.14.0:
     dependencies:
       hyperid: 3.3.0
       light-my-request: 6.6.0
