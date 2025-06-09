@@ -4,7 +4,6 @@ const os = require('node:os')
 const { eventLoopUtilization } = require('node:perf_hooks').performance
 const client = require('prom-client')
 const collectHttpMetrics = require('@platformatic/http-metrics')
-const { createMetricsThreadInterceptorHooks } = require('./metrics-interceptor.js')
 
 const { Registry, Gauge, Counter, collectDefaultMetrics } = client
 
@@ -161,4 +160,4 @@ function collectEluMetric (register) {
   register.registerMetric(cpuMetric)
 }
 
-module.exports = { collectMetrics, client, createMetricsThreadInterceptorHooks }
+module.exports = { collectMetrics, client }
