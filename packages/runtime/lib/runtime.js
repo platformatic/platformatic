@@ -1340,12 +1340,12 @@ class Runtime extends EventEmitter {
     return health
   }
 
-  #setupHealthCheck (config, serviceConfig, workersCount, id, index, workerId, worker, errorLabel) {
+  #setupHealthCheck (config, serviceConfig, workersCount, id, index, worker, errorLabel) {
     // Clear the timeout when exiting
     worker.on('exit', () => clearTimeout(worker[kHealthCheckTimer]))
 
     const { maxELU, maxHeapUsed, maxHeapTotal, maxUnhealthyChecks, interval } = worker[kConfig].health
-    const maxHeap = typeof maxHeapTotal === 'string' ? parseMemorySize(maxHeapTotal) : maxHeapTotal
+    const maxHeapTotalNumber = typeof maxHeapTotal === 'string' ? parseMemorySize(maxHeapTotal) : maxHeapTotal
 
     let unhealthyChecks = 0
 
@@ -1353,8 +1353,8 @@ class Runtime extends EventEmitter {
       let health, unhealthy, memoryUsage
       try {
         health = await this.#getHealth(worker)
-        memoryUsage = health.heapUsed / maxHeapTotal
-        unhealthy = health.elu > maxELU || memoryUsage > maxHeap
+        memoryUsage = health.heapUsed / maxHeapTotalNumber
+        unhealthy = health.elu > maxELU || memoryUsage > maxHeapUsed
       } catch (err) {
         this.logger.error({ err }, `Failed to get health for ${errorLabel}.`)
         unhealthy = true
@@ -1378,7 +1378,7 @@ class Runtime extends EventEmitter {
           )
         }
 
-        if (memoryUsage > maxHeap) {
+        if (memoryUsage > maxHeapUsed) {
           this.logger.error(
             `The ${errorLabel} is using ${(memoryUsage * 100).toFixed(2)} % of the memory, above the maximum allowed usage of ${(maxHeapUsed * 100).toFixed(2)} %.`
           )
@@ -1392,14 +1392,14 @@ class Runtime extends EventEmitter {
       if (unhealthyChecks === maxUnhealthyChecks) {
         try {
           this.logger.error(
-            { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeap },
+            { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
             `The ${errorLabel} is unhealthy. Replacing it ...`
           )
 
           await this.#replaceWorker(config, serviceConfig, workersCount, id, index, worker)
         } catch (e) {
           this.logger.error(
-            { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeap },
+            { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
             `Cannot replace the ${errorLabel}. Forcefully terminating it ...`
           )
 
