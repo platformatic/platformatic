@@ -6,7 +6,8 @@
     "sourceMap": true,
     "pretty": true,
     "noEmit": true,
-    "noEmitOnError": true
+    "noEmitOnError": true,
+    "skipLibCheck": true
   },
   "watchOptions": {
     "watchFile": "fixedPollingInterval",

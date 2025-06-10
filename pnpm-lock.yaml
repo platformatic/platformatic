@@ -148,21 +148,9 @@ importers:
       neostandard:
         specifier: ^0.12.0
         version: 0.12.1(@typescript-eslint/utils@8.33.1(eslint@9.28.0)(typescript@5.8.3))(eslint@9.28.0)(typescript@5.8.3)
-      next:
-        specifier: ^15.0.0
-        version: 15.3.3(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
-      vite:
-        specifier: ^5.4.0
-        version: 5.4.19(@types/node@22.15.30)(terser@5.41.0)
 
   packages/cli:
     dependencies:
@@ -1213,11 +1201,11 @@ importers:
         specifier: ^1.42.1
         version: 1.52.0
       '@types/react':
-        specifier: ^18.2.66
-        version: 18.3.23
+        specifier: ^19.1.6
+        version: 19.1.6
       '@types/react-dom':
-        specifier: ^18.2.22
-        version: 18.3.7(@types/react@18.3.23)
+        specifier: ^19.1.5
+        version: 19.1.6(@types/react@19.1.6)
       '@vitejs/plugin-react':
         specifier: ^4.0.0
         version: 4.5.1(vite@5.4.19(@types/node@22.15.30)(terser@5.41.0))
@@ -1228,11 +1216,11 @@ importers:
         specifier: ^0.12.0
         version: 0.12.1(@typescript-eslint/utils@8.33.1(eslint@9.28.0)(typescript@5.8.3))(eslint@9.28.0)(typescript@5.8.3)
       react:
-        specifier: ^18.2.0
-        version: 18.3.1
+        specifier: ^19.1.0
+        version: 19.1.0
       react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
+        specifier: ^19.1.0
+        version: 19.1.0(react@19.1.0)
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
@@ -1560,13 +1548,7 @@ importers:
         version: 0.12.1(@typescript-eslint/utils@8.33.1(eslint@9.28.0)(typescript@5.8.3))(eslint@9.28.0)(typescript@5.8.3)
       next:
         specifier: ^15.0.0
-        version: 15.3.3(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
+        version: 15.3.3(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
@@ -1667,13 +1649,13 @@ importers:
         version: link:../service
       '@remix-run/dev':
         specifier: ^2.11.2
-        version: 2.16.8(@remix-run/react@2.16.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3))(@types/node@22.15.30)(terser@5.41.0)(ts-node@10.9.2(@types/node@22.15.30)(typescript@5.8.3))(typescript@5.8.3)(vite@5.4.19(@types/node@22.15.30)(terser@5.41.0))
+        version: 2.16.8(@remix-run/react@2.16.8(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3))(@types/node@22.15.30)(terser@5.41.0)(ts-node@10.9.2(@types/node@22.15.30)(typescript@5.8.3))(typescript@5.8.3)(vite@5.4.19(@types/node@22.15.30)(terser@5.41.0))
       '@remix-run/node':
         specifier: ^2.11.2
         version: 2.16.8(typescript@5.8.3)
       '@remix-run/react':
         specifier: ^2.11.2
-        version: 2.16.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)
+        version: 2.16.8(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
       borp:
         specifier: ^0.20.0
         version: 0.20.0
@@ -1693,11 +1675,11 @@ importers:
         specifier: ^0.12.0
         version: 0.12.1(@typescript-eslint/utils@8.33.1(eslint@9.28.0)(typescript@5.8.3))(eslint@9.28.0)(typescript@5.8.3)
       react:
-        specifier: ^18.3.1
-        version: 18.3.1
+        specifier: ^19.1.0
+        version: 19.1.0
       react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
+        specifier: ^19.1.0
+        version: 19.1.0(react@19.1.0)
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
@@ -2671,11 +2653,11 @@ importers:
         specifier: ^0.12.0
         version: 0.12.1(@typescript-eslint/utils@8.33.1(eslint@9.28.0)(typescript@5.8.3))(eslint@9.28.0)(typescript@5.8.3)
       react:
-        specifier: ^18.3.1
-        version: 18.3.1
+        specifier: ^19.1.0
+        version: 19.1.0
       react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
+        specifier: ^19.1.0
+        version: 19.1.0(react@19.1.0)
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
@@ -4983,16 +4965,13 @@ packages:
   '@types/pg@8.15.1':
     resolution: {integrity: sha512-YKHrkGWBX5+ivzvOQ66I0fdqsQTsvxqM0AGP2i0XrVZ9DP5VA/deEbTf7VuLPGpY7fJB9uGbkZ6KjVhuHcrTkQ==}
 
-  '@types/prop-types@15.7.14':
-    resolution: {integrity: sha512-gNMvNH49DJ7OJYv+KAKn0Xp45p8PLl6zo2YnvDIbTd4J6MER2BmWN49TG7n9LvkyihINxeKW8+3bfS2yDC9dzQ==}
-
-  '@types/react-dom@18.3.7':
-    resolution: {integrity: sha512-MEe3UeoENYVFXzoXEWsvcpg6ZvlrFNlOQ7EOsvhI3CfAXwzPfO8Qwuxd40nepsYKqyyVQnTdEfv68q91yLcKrQ==}
+  '@types/react-dom@19.1.6':
+    resolution: {integrity: sha512-4hOiT/dwO8Ko0gV1m/TJZYk3y0KBnY9vzDh7W+DH17b2HFSOGgdj33dhihPeuy3l0q23+4e+hoXHV6hCC4dCXw==}
     peerDependencies:
-      '@types/react': ^18.0.0
+      '@types/react': ^19.0.0
 
-  '@types/react@18.3.23':
-    resolution: {integrity: sha512-/LDXMQh55EzZQ0uVAZmKKhfENivEvWz6E+EYzh+/MCjMhNsotd+ZHhBGIjFDTi6+fz0OhQQQLbTgdQIxxCsC0w==}
+  '@types/react@19.1.6':
+    resolution: {integrity: sha512-JeG0rEWak0N6Itr6QUx+X60uQmN+5t3j9r/OVDtWzFXKaj6kD1BwJzOksD0FF6iWxZlbE1kB0q9vtnU2ekqa1Q==}
 
   '@types/shimmer@1.2.0':
     resolution: {integrity: sha512-UE7oxhQLLd9gub6JKIAhDq06T0F6FnztwMNRvYgjeQSBeMc1ZG/tA47EwfduvkuQS8apbkM/lpLpWsaCeYsXVg==}
@@ -9158,10 +9137,10 @@ packages:
     resolution: {integrity: sha512-y3bGgqKj3QBdxLbLkomlohkvsA8gdAiUQlSBJnBhfn+BPxg4bc62d8TcBW15wavDfgexCgccckhcZvywyQYPOw==}
     hasBin: true
 
-  react-dom@18.3.1:
-    resolution: {integrity: sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==}
+  react-dom@19.1.0:
+    resolution: {integrity: sha512-Xs1hdnE+DyKgeHJeJznQmYMIBG3TKIHJJT95Q58nHLSrElKlGQqDTR2HQ9fx5CN/Gk6Vh/kupBTDLU11/nDk/g==}
     peerDependencies:
-      react: ^18.3.1
+      react: ^19.1.0
 
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -9190,8 +9169,8 @@ packages:
     peerDependencies:
       react: '>=16.8'
 
-  react@18.3.1:
-    resolution: {integrity: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==}
+  react@19.1.0:
+    resolution: {integrity: sha512-FS+XFBNvn3GTAWq26joslQgWNoFu08F4kl0J4CgdNKADkdSGXQyTCnKteIAJy96Br6YbpEU1LSzV5dYtjMkMDg==}
     engines: {node: '>=0.10.0'}
 
   read-installed@4.0.3:
@@ -9466,11 +9445,11 @@ packages:
   safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
 
-  scheduler@0.23.2:
-    resolution: {integrity: sha512-UOShsPwz7NrMUqhR6t0hWjFduvOzbtv7toDH1/hIrfRNIDBnnBWd0CwJTGvTpngVlmwGCdP9/Zl/tVrDqcuYzQ==}
-
   scheduler@0.25.0:
     resolution: {integrity: sha512-xFVuu11jh+xcO7JOAGJNOXld8/TcEHK/4CituBUeUb5hqxJLj9YuemAEuvm9gQ/+pgXYfbQuqAkiYu+u7YEsNA==}
+
+  scheduler@0.26.0:
+    resolution: {integrity: sha512-NlHwttCI/l5gCPR3D1nNXtWABUmBwvZpEQiD4IXSbIDq8BzLIK/7Ir5gTFSGZDUu37K5cMNp0hFtzO38sC7gWA==}
 
   schema-utils@3.3.0:
     resolution: {integrity: sha512-pN/yOAvcC+5rQ5nERGuwrjLlYvLTbCibnZ1I7B1LaiAz9BRBlE9GMgE/eqV30P7aJQUf7Ddimy/RsbYO/GrVGg==}
@@ -12702,7 +12681,7 @@ snapshots:
 
   '@protobufjs/utf8@1.1.0': {}
 
-  '@remix-run/dev@2.16.8(@remix-run/react@2.16.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3))(@types/node@22.15.30)(terser@5.41.0)(ts-node@10.9.2(@types/node@22.15.30)(typescript@5.8.3))(typescript@5.8.3)(vite@5.4.19(@types/node@22.15.30)(terser@5.41.0))':
+  '@remix-run/dev@2.16.8(@remix-run/react@2.16.8(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3))(@types/node@22.15.30)(terser@5.41.0)(ts-node@10.9.2(@types/node@22.15.30)(typescript@5.8.3))(typescript@5.8.3)(vite@5.4.19(@types/node@22.15.30)(terser@5.41.0))':
     dependencies:
       '@babel/core': 7.27.4
       '@babel/generator': 7.27.5
@@ -12715,7 +12694,7 @@ snapshots:
       '@mdx-js/mdx': 2.3.0
       '@npmcli/package-json': 4.0.1
       '@remix-run/node': 2.16.8(typescript@5.8.3)
-      '@remix-run/react': 2.16.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)
+      '@remix-run/react': 2.16.8(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
       '@remix-run/router': 1.23.0
       '@remix-run/server-runtime': 2.16.8(typescript@5.8.3)
       '@types/mdx': 2.0.13
@@ -12799,14 +12778,14 @@ snapshots:
     optionalDependencies:
       typescript: 5.8.3
 
-  '@remix-run/react@2.16.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)':
+  '@remix-run/react@2.16.8(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)':
     dependencies:
       '@remix-run/router': 1.23.0
       '@remix-run/server-runtime': 2.16.8(typescript@5.8.3)
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      react-router: 6.30.0(react@18.3.1)
-      react-router-dom: 6.30.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
+      react-router: 6.30.0(react@19.1.0)
+      react-router-dom: 6.30.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       turbo-stream: 2.4.1
     optionalDependencies:
       typescript: 5.8.3
@@ -13171,15 +13150,12 @@ snapshots:
       pg-protocol: 1.10.0
       pg-types: 4.0.2
 
-  '@types/prop-types@15.7.14': {}
-
-  '@types/react-dom@18.3.7(@types/react@18.3.23)':
+  '@types/react-dom@19.1.6(@types/react@19.1.6)':
     dependencies:
-      '@types/react': 18.3.23
+      '@types/react': 19.1.6
 
-  '@types/react@18.3.23':
+  '@types/react@19.1.6':
     dependencies:
-      '@types/prop-types': 15.7.14
       csstype: 3.1.3
 
   '@types/shimmer@1.2.0': {}
@@ -17595,7 +17571,7 @@ snapshots:
 
   neotraverse@0.6.18: {}
 
-  next@15.3.3(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  next@15.3.3(@opentelemetry/api@1.9.0)(@playwright/test@1.52.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
       '@next/env': 15.3.3
       '@swc/counter': 0.1.3
@@ -17603,9 +17579,9 @@ snapshots:
       busboy: 1.6.0
       caniuse-lite: 1.0.30001721
       postcss: 8.4.31
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      styled-jsx: 5.1.6(react@18.3.1)
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
+      styled-jsx: 5.1.6(react@19.1.0)
     optionalDependencies:
       '@next/swc-darwin-arm64': 15.3.3
       '@next/swc-darwin-x64': 15.3.3
@@ -18425,11 +18401,10 @@ snapshots:
       minimist: 1.2.8
       strip-json-comments: 2.0.1
 
-  react-dom@18.3.1(react@18.3.1):
+  react-dom@19.1.0(react@19.1.0):
     dependencies:
-      loose-envify: 1.4.0
-      react: 18.3.1
-      scheduler: 0.23.2
+      react: 19.1.0
+      scheduler: 0.26.0
 
   react-is@16.13.1: {}
 
@@ -18439,21 +18414,19 @@ snapshots:
 
   react-refresh@0.17.0: {}
 
-  react-router-dom@6.30.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  react-router-dom@6.30.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
       '@remix-run/router': 1.23.0
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      react-router: 6.30.0(react@18.3.1)
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
+      react-router: 6.30.0(react@19.1.0)
 
-  react-router@6.30.0(react@18.3.1):
+  react-router@6.30.0(react@19.1.0):
     dependencies:
       '@remix-run/router': 1.23.0
-      react: 18.3.1
+      react: 19.1.0
 
-  react@18.3.1:
-    dependencies:
-      loose-envify: 1.4.0
+  react@19.1.0: {}
 
   read-installed@4.0.3:
     dependencies:
@@ -18849,11 +18822,9 @@ snapshots:
 
   safer-buffer@2.1.2: {}
 
-  scheduler@0.23.2:
-    dependencies:
-      loose-envify: 1.4.0
-
   scheduler@0.25.0: {}
+
+  scheduler@0.26.0: {}
 
   schema-utils@3.3.0:
     dependencies:
@@ -19331,10 +19302,10 @@ snapshots:
     dependencies:
       inline-style-parser: 0.1.1
 
-  styled-jsx@5.1.6(react@18.3.1):
+  styled-jsx@5.1.6(react@19.1.0):
     dependencies:
       client-only: 0.0.1
-      react: 18.3.1
+      react: 19.1.0
 
   supports-color@5.5.0:
     dependencies:
