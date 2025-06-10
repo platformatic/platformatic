@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.69.0.json",
+  "watch": true,
+  "managementApi": true,
+  "metrics": false,
+  "restartOnError": 500,
+  "entrypoint": "composer",
+  "services": [
+    {
+      "id": "first",
+      "path": "first",
+      "workers": 1
+    },
+    {
+      "id": "second",
+      "path": "second"
+    },
+    {
+      "id": "third",
+      "path": "third"
+    },
+    {
+      "id": "composer",
+      "path": "composer",
+      "workers": 1
+    }
+  ],
+  "logger": {
+    "level": "info"
+  },
+  "workers": 3
+}

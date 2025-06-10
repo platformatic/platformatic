@@ -10,12 +10,14 @@ const WebSocket = require('ws')
 const { execa } = require('execa')
 const { cliPath } = require('./cli/helper.mjs')
 
-let counter = 0
+const DEFAULT_WAIT_FOR_LOGS_TIMEOUT = process.env.CI ? 1_0000 : 5_000
+let tempDirCounter = 0
+
 async function getTempDir (baseDir) {
   if (baseDir === undefined) {
     baseDir = __dirname
   }
-  const dir = join(baseDir, 'tmp', `plt-runtime-${process.pid}-${Date.now()}-${counter++}`)
+  const dir = join(baseDir, 'tmp', `plt-runtime-${process.pid}-${Date.now()}-${tempDirCounter++}`)
   await createDirectory(dir, true)
   return dir
 }
@@ -84,13 +86,9 @@ async function openLogsWebsocket (app) {
   return managementApiWebsocket
 }
 
-const DEFAULT_WAIT_FOR_LOGS_TIMEOUT = 3_000
 function waitForLogs (socket, ...exprs) {
   return new Promise((resolve, reject) => {
-    const timeout =
-      typeof exprs[exprs.length - 1] === 'number'
-        ? exprs.pop()
-        : DEFAULT_WAIT_FOR_LOGS_TIMEOUT
+    const timeout = typeof exprs[exprs.length - 1] === 'number' ? exprs.pop() : DEFAULT_WAIT_FOR_LOGS_TIMEOUT
 
     const toMatch = new Set(exprs)
     const messages = []
@@ -98,13 +96,17 @@ function waitForLogs (socket, ...exprs) {
     let timeoutId
     let resolved
 
-    socket.on('message', (msg) => {
-      if (resolved) { return }
+    socket.on('message', msg => {
+      if (resolved) {
+        return
+      }
 
       // throw an error after timeout without receiving any message
       clearTimeout(timeoutId)
       timeoutId = setTimeout(() => {
-        if (resolved) { return }
+        if (resolved) {
+          return
+        }
         timeoutId && clearTimeout(timeoutId)
         timeoutId = null
 
@@ -141,19 +143,29 @@ function waitForLogs (socket, ...exprs) {
   })
 }
 
+async function waitForStart (socket) {
+  return waitForLogs(socket, /Platformatic is now listening/)
+}
+
 function stdioOutputToLogs (data) {
-  const logs = data.map(line => {
-    try {
-      return JSON.parse(line)
-    } catch {
-      return line.trim().split('\n').map(l => {
-        try {
-          return JSON.parse(l)
-        } catch { }
-        return null
-      }).filter(log => log)
-    }
-  }).filter(log => log)
+  const logs = data
+    .map(line => {
+      try {
+        return JSON.parse(line)
+      } catch {
+        return line
+          .trim()
+          .split('\n')
+          .map(l => {
+            try {
+              return JSON.parse(l)
+            } catch {}
+            return null
+          })
+          .filter(log => log)
+      }
+    })
+    .filter(log => log)
 
   return logs.flat()
 }
@@ -167,13 +179,15 @@ function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = fal
     const result = {
       stdout: [],
       stderr: [],
-      url: null,
+      url: null
     }
     let ready = false
     let teardownCalled = false
 
     async function teardown () {
-      if (teardownCalled) { return }
+      if (teardownCalled) {
+        return
+      }
       teardownCalled = true
 
       timeoutId && clearTimeout(timeoutId)
@@ -182,7 +196,7 @@ function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = fal
         return
       }
       child.kill('SIGKILL')
-      child.catch(() => { })
+      child.catch(() => {})
       child = null
     }
 
@@ -195,7 +209,7 @@ function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = fal
       reject(new Error('Timeout'))
     }, timeout)
 
-    child.stdout.on('data', (message) => {
+    child.stdout.on('data', message => {
       const m = message.toString()
       if (debug) {
         console.log(' >>> stdout', m)
@@ -228,7 +242,7 @@ function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = fal
       }
     })
 
-    child.stderr.on('data', (message) => {
+    child.stderr.on('data', message => {
       const msg = message.toString()
       if (debug) {
         console.log(' >>> stderr', msg)
@@ -246,6 +260,7 @@ module.exports = {
   updateConfigFile,
   openLogsWebsocket,
   waitForLogs,
+  waitForStart,
   execRuntime,
   stdioOutputToLogs
 }

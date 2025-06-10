@@ -401,6 +401,7 @@ export interface PlatformaticRemixStackable {
       [k: string]: unknown;
     };
     serviceTimeout?: number | string;
+    messagingTimeout?: number | string;
     env?: {
       [k: string]: string;
     };

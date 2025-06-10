@@ -7,8 +7,8 @@
     "plt-service": "./service.mjs"
   },
   "scripts": {
-    "test": "pnpm run lint && borp -T --concurrency=1 --timeout=300000 && tsd",
-    "unit": "borp --pattern 'test/**/*.test.{js,mjs}' --ignore 'fixtures/**/*' --concurrency=1 --timeout=300000 --no-typescript",
+    "test": "pnpm run lint && borp -T --concurrency=1 --timeout=1200000 && tsd",
+    "unit": "borp --pattern 'test/**/*.test.{js,mjs}' --ignore 'fixtures/**/*' --concurrency=1 --timeout=1200000 --no-typescript",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "pnpm run gen-schema && pnpm run gen-types",

@@ -195,6 +195,7 @@ test('config - should list configuration for an application', async t => {
     sourceMaps: false,
     restartOnError: 2,
     startTimeout: 30000,
+    messagingTimeout: 30000,
     managementApi: true,
     serviceMap: {},
     services: [

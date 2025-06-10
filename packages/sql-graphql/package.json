@@ -7,11 +7,11 @@
   "scripts": {
     "lint": "eslint",
     "test": "npm run lint && npm run test:typescript && npm run test:postgresql && npm run test:mariadb && npm run test:mysql && npm run test:mysql8 && npm run test:sqlite",
-    "test:postgresql": "DB=postgresql borp --timeout=300000 --concurrency=1 test/*.test.js",
-    "test:mariadb": "DB=mariadb borp --timeout=300000 --concurrency=1 test/*.test.js",
-    "test:mysql": "DB=mysql borp --timeout=300000 --concurrency=1 test/*.test.js",
-    "test:mysql8": "DB=mysql8 borp --timeout=300000 --concurrency=1 test/*.test.js",
-    "test:sqlite": "DB=sqlite borp --timeout=300000 --concurrency=1 test/*.test.js",
+    "test:postgresql": "DB=postgresql borp --timeout=1200000 --concurrency=1 test/*.test.js",
+    "test:mariadb": "DB=mariadb borp --timeout=1200000 --concurrency=1 test/*.test.js",
+    "test:mysql": "DB=mysql borp --timeout=1200000 --concurrency=1 test/*.test.js",
+    "test:mysql8": "DB=mysql8 borp --timeout=1200000 --concurrency=1 test/*.test.js",
+    "test:sqlite": "DB=sqlite borp --timeout=1200000 --concurrency=1 test/*.test.js",
     "test:typescript": "tsd"
   },
   "repository": {

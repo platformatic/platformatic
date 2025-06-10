@@ -331,6 +331,7 @@ export type HttpsSchemasPlatformaticDevWattpm2700Json = {
     [k: string]: unknown;
   };
   serviceTimeout?: number | string;
+  messagingTimeout?: number | string;
   resolvedServicesBasePath?: string;
   env?: {
     [k: string]: string;

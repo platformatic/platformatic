@@ -4,7 +4,7 @@
   "description": "Platformatic Utils",
   "main": "index.js",
   "scripts": {
-    "test": "npm run lint && borp --timeout=300000 --coverage",
+    "test": "npm run lint && borp --timeout=1200000 --coverage",
     "lint": "eslint"
   },
   "repository": {

@@ -1093,6 +1093,16 @@ const runtimeProperties = {
     ],
     default: 300000 // 5 minutes
   },
+  messagingTimeout: {
+    anyOf: [
+      {
+        type: 'number',
+        minimum: 1
+      },
+      { type: 'string' }
+    ],
+    default: 30000 // 5 minutes
+  },
   resolvedServicesBasePath: {
     type: 'string',
     default: 'external'

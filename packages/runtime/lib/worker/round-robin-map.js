@@ -16,7 +16,7 @@ class RoundRobinMap extends Map {
     this.#instances = {}
 
     for (const service of services) {
-      this.#instances[service.id] = { next: 0, count: service.workers }
+      this.#instances[service.id] = { next: service.next ?? 0, count: service.workers }
     }
   }
 

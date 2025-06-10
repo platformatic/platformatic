@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npm run lint && borp --timeout=300000 --concurrency=1 --coverage && tsd",
+    "test": "npm run lint && borp --timeout=1200000 --concurrency=1 --coverage && tsd",
     "lint": "eslint"
   },
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",

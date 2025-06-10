@@ -1292,6 +1292,18 @@
           ],
           "default": 300000
         },
+        "messagingTimeout": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 1
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": 30000
+        },
         "env": {
           "type": "object",
           "additionalProperties": {

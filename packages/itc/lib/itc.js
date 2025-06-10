@@ -47,7 +47,7 @@ function generateRequest (name, data) {
     version: PLT_ITC_VERSION,
     reqId: randomUUID(),
     name,
-    data: sanitize(data)
+    data
   }
 }
 
@@ -58,7 +58,7 @@ function generateResponse (request, error, data) {
     reqId: request.reqId,
     name: request.name,
     error,
-    data: sanitize(data)
+    data
   }
 }
 
@@ -67,7 +67,7 @@ function generateNotification (name, data) {
     type: PLT_ITC_NOTIFICATION_TYPE,
     version: PLT_ITC_VERSION,
     name,
-    data: sanitize(data)
+    data
   }
 }
 
@@ -80,8 +80,8 @@ function generateUnhandledErrorResponse (error) {
   }
 }
 
-function sanitize (data) {
-  if (!data || typeof data !== 'object') {
+function sanitize (data, transferList) {
+  if (!data || typeof data !== 'object' || transferList?.includes(data) || data instanceof Error) {
     return data
   }
 
@@ -101,7 +101,7 @@ function sanitize (data) {
         continue
       }
 
-      sanitized.push(value && typeof value === 'object' ? sanitize(value) : value)
+      sanitized.push(value && typeof value === 'object' ? sanitize(value, transferList) : value)
     }
   } else {
     sanitized = {}
@@ -113,7 +113,7 @@ function sanitize (data) {
         continue
       }
 
-      sanitized[key] = value && typeof value === 'object' ? sanitize(value) : value
+      sanitized[key] = value && typeof value === 'object' ? sanitize(value, transferList) : value
     }
   }
 
@@ -176,7 +176,11 @@ class ITC extends EventEmitter {
     }
   }
 
-  async send (name, message) {
+  getHandler (message) {
+    return this.#handlers.get(message)
+  }
+
+  async send (name, message, options) {
     if (!this.#listening) {
       throw new errors.SendBeforeListen()
     }
@@ -185,8 +189,7 @@ class ITC extends EventEmitter {
       this._enableKeepAlive()
 
       const request = generateRequest(name, message)
-
-      this._send(request)
+      this._send(request, options)
 
       const responsePromise = once(this.#requestEmitter, request.reqId).then(([response]) => response)
 
@@ -199,8 +202,8 @@ class ITC extends EventEmitter {
     }
   }
 
-  async notify (name, message) {
-    this._send(generateNotification(name, message))
+  async notify (name, message, options) {
+    this._send(generateNotification(name, message), options)
   }
 
   handle (message, handler) {
@@ -213,14 +216,16 @@ class ITC extends EventEmitter {
     }
     this.#listening = true
 
-    this._setupListener(message => {
+    this._setupListener((message, context) => {
+      context ??= {}
+
       const messageType = message.type
       if (messageType === PLT_ITC_REQUEST_TYPE) {
-        this.#handleRequest(message)
+        this.#handleRequest(message, context)
         return
       }
       if (messageType === PLT_ITC_RESPONSE_TYPE) {
-        this.#handleResponse(message)
+        this.#handleResponse(message, context)
         return
       }
       if (messageType === PLT_ITC_NOTIFICATION_TYPE) {
@@ -253,8 +258,9 @@ class ITC extends EventEmitter {
     this.port.on('message', listener)
   }
 
-  _send (request) {
-    this.port.postMessage(request)
+  _send (request, options) {
+    const transferList = options?.transferList || []
+    this.port.postMessage(sanitize(request, transferList), transferList)
   }
 
   _createClosePromise () {
@@ -266,7 +272,7 @@ class ITC extends EventEmitter {
     this.port?.close?.()
   }
 
-  async #handleRequest (raw) {
+  async #handleRequest (raw, context) {
     let request = null
     let handler = null
     let response = null
@@ -278,7 +284,7 @@ class ITC extends EventEmitter {
       handler = this.#handlers.get(request.name)
 
       if (handler) {
-        const result = await handler(request.data)
+        const result = await handler(request.data, context)
         response = generateResponse(request, null, result)
       } else {
         if (this.#throwOnMissingHandler) {
@@ -304,24 +310,27 @@ class ITC extends EventEmitter {
       this.#handling = false
     }
 
-    this._send(response)
+    this._send(response, context)
 
     if (this.#closeAfterCurrentRequest) {
       this.close()
     }
   }
 
-  #handleResponse (response) {
+  #handleResponse (response, context) {
     try {
       response = parseResponse(response)
     } catch (error) {
       response = generateUnhandledErrorResponse(error)
-      this._send(response)
+      this._send(response, context)
       return
     }
 
-    const reqId = response.reqId
-    this.#requestEmitter.emit(reqId, response)
+    this._emitResponse(response)
+  }
+
+  _emitResponse (response) {
+    this.#requestEmitter.emit(response.reqId, response)
   }
 
   _enableKeepAlive () {

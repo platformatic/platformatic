@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.platformatic.dev/@platformatic/runtime/2.69.0.json",
+  "watch": true,
+  "managementApi": true,
+  "metrics": false,
+  "restartOnError": 500,
+  "entrypoint": "first",
+  "services": [
+    {
+      "id": "first",
+      "path": "first",
+      "workers": 1
+    }
+  ],
+  "logger": {
+    "level": "info"
+  },
+  "workers": 3
+}
