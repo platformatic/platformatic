@@ -1365,6 +1365,10 @@ class Runtime extends EventEmitter {
     let unhealthyChecks = 0
 
     worker[kHealthCheckTimer] = setTimeout(async () => {
+      if (worker[kWorkerStatus] !== 'started') {
+        return
+      }
+
       let health, unhealthy, memoryUsage
       try {
         health = await this.#getHealth(worker)

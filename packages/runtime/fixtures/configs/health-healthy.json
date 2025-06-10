@@ -30,7 +30,7 @@
   },
   "health": {
     "enabled": true,
-    "gracePeriod": 100,
+    "gracePeriod": 50,
     "interval": 500
   },
   "metrics": true
