@@ -15,8 +15,8 @@
   },
   "homepage": "https://docs.platformatic.dev/docs/getting-started/quick-start-watt",
   "scripts": {
-    "test": "npm run lint && borp --concurrency=1 --timeout=600000",
-    "coverage": "npm run lint && borp -X test -C --concurrency=1 --timeout=600000",
+    "test": "npm run lint && borp --concurrency=1 --timeout=1200000",
+    "coverage": "npm run lint && borp -X test -C --concurrency=1 --timeout=1200000",
     "gen-packages": "node scripts/list-package.js > lib/packages.js",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",

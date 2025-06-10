@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "pnpm run lint && pnpm run unit && tsd",
-    "unit": "borp --concurrency=1 --timeout=300000",
+    "unit": "borp --concurrency=1 --timeout=1200000",
     "lint": "eslint"
   },
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",

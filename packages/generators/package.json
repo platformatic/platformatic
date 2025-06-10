@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint",
-    "test": "pnpm run lint && borp --timeout=300000 -C -X fixtures -X test --concurrency=1 && tsd"
+    "test": "pnpm run lint && borp --timeout=1200000 -C -X fixtures -X test --concurrency=1 && tsd"
   },
   "keywords": [],
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",

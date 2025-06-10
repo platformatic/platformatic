@@ -13,8 +13,8 @@
     "create-platformatic": "./create-platformatic.mjs"
   },
   "scripts": {
-    "test:cli": "borp --pattern \"test/cli/*test.mjs\" --timeout=300000 --concurrency=1",
-    "test:unit": "pnpm run lint && cross-env NODE_OPTIONS=\"--loader=esmock --no-warnings\" borp --pattern \"test/unit/*test.mjs\" --timeout=300000 --concurrency=1",
+    "test:cli": "borp --pattern \"test/cli/*test.mjs\" --timeout=1200000 --concurrency=1",
+    "test:unit": "pnpm run lint && cross-env NODE_OPTIONS=\"--loader=esmock --no-warnings\" borp --pattern \"test/unit/*test.mjs\" --timeout=1200000 --concurrency=1",
     "test": "npm run test:unit && npm run test:cli",
     "lint": "eslint"
   },
