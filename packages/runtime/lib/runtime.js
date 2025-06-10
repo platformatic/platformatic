@@ -1355,7 +1355,7 @@ class Runtime extends EventEmitter {
     return health
   }
 
-  #setupHealthCheck (config, serviceConfig, workersCount, id, index, worker, errorLabel) {
+  #setupHealthCheck (config, serviceConfig, workersCount, id, index, worker, errorLabel, timeout) {
     // Clear the timeout when exiting
     worker.on('exit', () => clearTimeout(worker[kHealthCheckTimer]))
 
@@ -1373,7 +1373,8 @@ class Runtime extends EventEmitter {
       } catch (err) {
         this.logger.error({ err }, `Failed to get health for ${errorLabel}.`)
         unhealthy = true
-        memoryUsage = 0
+        memoryUsage = -1
+        health = { elu: -1, heapUsed: -1, heapTotal: -1 }
       }
 
       const serviceId = worker[kServiceId]
@@ -1423,7 +1424,7 @@ class Runtime extends EventEmitter {
       } else {
         worker[kHealthCheckTimer].refresh()
       }
-    }, interval)
+    }, timeout ?? interval)
   }
 
   async #startWorker (
@@ -1489,12 +1490,7 @@ class Runtime extends EventEmitter {
 
       const { enabled, gracePeriod } = worker[kConfig].health
       if (enabled && config.restartOnError > 0) {
-        worker[kHealthCheckTimer] = setTimeout(
-          () => {
-            this.#setupHealthCheck(config, serviceConfig, workersCount, id, index, worker, label)
-          },
-          gracePeriod > 0 ? gracePeriod : 1
-        )
+        this.#setupHealthCheck(config, serviceConfig, workersCount, id, index, worker, label, gracePeriod > 0 ? gracePeriod : 1)
       }
     } catch (error) {
       // TODO: handle port allocation error here
