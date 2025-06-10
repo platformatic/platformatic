@@ -1,4 +1,4 @@
-import { expectError, expectType } from 'tsd'
+import { expectAssignable, expectError, expectType } from 'tsd'
 import { errors, Metric, Runtime, RuntimeApiClient, RuntimeServices } from '.'
 import { FastifyError } from '@fastify/error'
 
@@ -13,6 +13,15 @@ expectType<Promise<Metric[]>>(api.getRuntimeMetrics(runtime.pid, {}))
 expectType<Promise<Metric[]>>(api.getRuntimeMetrics(runtime.pid, { format: 'json' }))
 expectType<Promise<string>>(api.getRuntimeMetrics(runtime.pid, { format: 'text' }))
 expectType<Promise<Runtime[]>>(api.getRuntimes())
+
+async () => {
+  const result = await api.injectRuntime(0, '', { body: {}, headers: {}, method: 'PUT', url: '/foo' })
+
+  expectType<unknown>(result.body)
+  expectType<number>(result.statusCode)
+  expectAssignable<Record<string, unknown>>(result.headers)
+  return result
+}
 
 const [service1] = service.services
 expectType<Promise<unknown>>(api.getRuntimeOpenapi(runtime.pid, service1.id))
