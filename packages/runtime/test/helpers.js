@@ -10,12 +10,14 @@ const WebSocket = require('ws')
 const { execa } = require('execa')
 const { cliPath } = require('./cli/helper.mjs')
 
-let counter = 0
+const DEFAULT_WAIT_FOR_LOGS_TIMEOUT = process.env.CI ? 1_0000 : 5_000
+let tempDirCounter = 0
+
 async function getTempDir (baseDir) {
   if (baseDir === undefined) {
     baseDir = __dirname
   }
-  const dir = join(baseDir, 'tmp', `plt-runtime-${process.pid}-${Date.now()}-${counter++}`)
+  const dir = join(baseDir, 'tmp', `plt-runtime-${process.pid}-${Date.now()}-${tempDirCounter++}`)
   await createDirectory(dir, true)
   return dir
 }
@@ -84,13 +86,9 @@ async function openLogsWebsocket (app) {
   return managementApiWebsocket
 }
 
-const DEFAULT_WAIT_FOR_LOGS_TIMEOUT = 3_000
 function waitForLogs (socket, ...exprs) {
   return new Promise((resolve, reject) => {
-    const timeout =
-      typeof exprs[exprs.length - 1] === 'number'
-        ? exprs.pop()
-        : DEFAULT_WAIT_FOR_LOGS_TIMEOUT
+    const timeout = typeof exprs[exprs.length - 1] === 'number' ? exprs.pop() : DEFAULT_WAIT_FOR_LOGS_TIMEOUT
 
     const toMatch = new Set(exprs)
     const messages = []
@@ -98,13 +96,17 @@ function waitForLogs (socket, ...exprs) {
     let timeoutId
     let resolved
 
-    socket.on('message', (msg) => {
-      if (resolved) { return }
+    socket.on('message', msg => {
+      if (resolved) {
+        return
+      }
 
       // throw an error after timeout without receiving any message
       clearTimeout(timeoutId)
       timeoutId = setTimeout(() => {
-        if (resolved) { return }
+        if (resolved) {
+          return
+        }
         timeoutId && clearTimeout(timeoutId)
         timeoutId = null
 
