@@ -6,7 +6,8 @@
     "sourceMap": true,
     "pretty": true,
     "noEmitOnError": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "skipLibCheck": true
   },
   "watchOptions": {
     "watchFile": "fixedPollingInterval",
