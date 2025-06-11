@@ -21,7 +21,7 @@ test('should get meta for db services in runtime schema', async t => {
   const database = join(fixturesDir, 'monorepo', 'dbApp', 'db.sqlite')
   assert.deepStrictEqual(dbMeta, {
     composer: {
-      needsRootRedirect: false,
+      needsRootTrailingSlash: false,
       prefix: 'db-app',
       wantsAbsoluteUrls: false,
       tcp: false,

@@ -115,7 +115,7 @@ test('configure telemetry correctly with a composer + node app', async t => {
   const spanComposerClient = spans.find(span => {
     if (span.kind === SpanKind.CLIENT) {
       return span.resource._attributes['service.name'] === 'test-runtime-composer' &&
-        span.attributes['url.full'] === 'http://node.plt.local/node/'
+        span.attributes['url.full'] === 'http://node.plt.local/node'
     }
     return false
   })

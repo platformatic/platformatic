@@ -29,7 +29,7 @@ const server = createServer((req, res) => {
     res.end(JSON.stringify({ from: 'node' }))
   } else if (req.url === '/headers') {
     res.writeHead(200, {
-      'content-type': 'application/json',
+      'content-type': 'application/json'
     })
     res.end(JSON.stringify({ headers: req.headers }))
   } else {
@@ -37,7 +37,7 @@ const server = createServer((req, res) => {
       'content-type': 'application/json',
       connection: 'close'
     })
-    res.end(JSON.stringify({ ok: false }))
+    res.end(JSON.stringify({ ok: false, url: req.url }))
   }
 })
 
