@@ -1346,9 +1346,11 @@ class Runtime extends EventEmitter {
     if (features.node.worker.getHeapStatistics) {
       const { used_heap_size: heapUsed, total_heap_size: heapTotal } = await worker.getHeapStatistics()
       const currentELU = worker.performance.eventLoopUtilization()
-      const elu = worker.performance.eventLoopUtilization(currentELU, worker[kLastELU]).utilization
+      const elu = worker[kLastELU]
+        ? worker.performance.eventLoopUtilization(currentELU, worker[kLastELU])
+        : currentELU
       worker[kLastELU] = currentELU
-      return { elu, heapUsed, heapTotal }
+      return { elu: elu.utilization, heapUsed, heapTotal }
     }
 
     const health = await worker[kITC].send('getHealth')
@@ -1494,6 +1496,8 @@ class Runtime extends EventEmitter {
 
       const { enabled, gracePeriod } = worker[kConfig].health
       if (enabled && config.restartOnError > 0) {
+        // if gracePeriod is 0, it will be set to 1 to start health checks immediately
+        // however, the health event will start when the worker is started
         this.#setupHealthCheck(config, serviceConfig, workersCount, id, index, worker, label, gracePeriod > 0 ? gracePeriod : 1)
       }
     } catch (error) {
