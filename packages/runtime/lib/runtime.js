@@ -1346,16 +1346,18 @@ class Runtime extends EventEmitter {
     if (features.node.worker.getHeapStatistics) {
       const { used_heap_size: heapUsed, total_heap_size: heapTotal } = await worker.getHeapStatistics()
       const currentELU = worker.performance.eventLoopUtilization()
-      const elu = worker.performance.eventLoopUtilization(currentELU, worker[kLastELU]).utilization
+      const elu = worker[kLastELU]
+        ? worker.performance.eventLoopUtilization(currentELU, worker[kLastELU])
+        : currentELU
       worker[kLastELU] = currentELU
-      return { elu, heapUsed, heapTotal }
+      return { elu: elu.utilization, heapUsed, heapTotal }
     }
 
     const health = await worker[kITC].send('getHealth')
     return health
   }
 
-  #setupHealthCheck (config, serviceConfig, workersCount, id, index, worker, errorLabel) {
+  #setupHealthCheck (config, serviceConfig, workersCount, id, index, worker, errorLabel, timeout) {
     // Clear the timeout when exiting
     worker.on('exit', () => clearTimeout(worker[kHealthCheckTimer]))
 
@@ -1365,6 +1367,10 @@ class Runtime extends EventEmitter {
     let unhealthyChecks = 0
 
     worker[kHealthCheckTimer] = setTimeout(async () => {
+      if (worker[kWorkerStatus] !== 'started') {
+        return
+      }
+
       let health, unhealthy, memoryUsage
       try {
         health = await this.#getHealth(worker)
@@ -1373,7 +1379,8 @@ class Runtime extends EventEmitter {
       } catch (err) {
         this.logger.error({ err }, `Failed to get health for ${errorLabel}.`)
         unhealthy = true
-        memoryUsage = 0
+        memoryUsage = -1
+        health = { elu: -1, heapUsed: -1, heapTotal: -1 }
       }
 
       const serviceId = worker[kServiceId]
@@ -1423,7 +1430,7 @@ class Runtime extends EventEmitter {
       } else {
         worker[kHealthCheckTimer].refresh()
       }
-    }, interval)
+    }, timeout ?? interval)
   }
 
   async #startWorker (
@@ -1489,12 +1496,9 @@ class Runtime extends EventEmitter {
 
       const { enabled, gracePeriod } = worker[kConfig].health
       if (enabled && config.restartOnError > 0) {
-        worker[kHealthCheckTimer] = setTimeout(
-          () => {
-            this.#setupHealthCheck(config, serviceConfig, workersCount, id, index, worker, label)
-          },
-          gracePeriod > 0 ? gracePeriod : 1
-        )
+        // if gracePeriod is 0, it will be set to 1 to start health checks immediately
+        // however, the health event will start when the worker is started
+        this.#setupHealthCheck(config, serviceConfig, workersCount, id, index, worker, label, gracePeriod > 0 ? gracePeriod : 1)
       }
     } catch (error) {
       // TODO: handle port allocation error here

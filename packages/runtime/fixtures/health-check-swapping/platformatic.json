@@ -26,8 +26,8 @@
   "health": {
     "enabled": true,
     "gracePeriod": 500,
-    "interval": 1000,
+    "interval": 500,
     "maxUnhealthyChecks": 3
   },
-  "restartOnError": 1000
+  "restartOnError": 500
 }

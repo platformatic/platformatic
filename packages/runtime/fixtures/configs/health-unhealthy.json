@@ -23,17 +23,20 @@
   "logger": {
     "level": "trace"
   },
-  "restartOnError": 1000,
+  "restartOnError": 500,
   "gracefulShutdown": {
-    "runtime": 1000,
-    "service": 1000
+    "runtime": 500,
+    "service": 500
   },
   "health": {
+    "maxUnhealthyChecks": 1,
     "enabled": true,
     "gracePeriod": 100,
-    "interval": 500,
+    "interval": 200,
     "maxELU": 0.001,
-    "maxHeapUsed": 0.001
+    "maxHeapUsed": 0.001,
+    "maxHeapTotal": "256Mb",
+    "maxYoungGeneration": "128Mb"
   },
   "metrics": true
 }
