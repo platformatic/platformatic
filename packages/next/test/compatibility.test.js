@@ -2,11 +2,10 @@ import { deepStrictEqual } from 'node:assert'
 import { createDirectory, safeRemove } from '@platformatic/utils'
 import { execa } from 'execa'
 import { symlink, writeFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { before } from 'node:test'
 import { request } from 'undici'
 import {
-  isCIOnWindows,
   setFixturesDir,
   temporaryFolder,
   createRuntime,
@@ -43,12 +42,21 @@ async function verifyDevelopmentMiddlewareContext (t, configuration) {
 const hmrTriggerFile = 'services/frontend/src/app/page.js'
 const files = ['services/frontend/.next/server/app/index.html']
 
-const versions = {
-  '14.0': '14.0.0',
-  14.1: '14.1.4',
-  14.2: '14.2.18',
-  15.0: '15.0.3',
-  15.1: '15.1.3'
+const NEXT_VERSION_14_0 = '14.0.0'
+const NEXT_VERSION_14_1 = '14.1.4'
+const NEXT_VERSION_14_2 = '14.2.18'
+const NEXT_VERSION_15_0 = '15.0.3'
+const NEXT_VERSION_15_1 = '15.1.3'
+
+const REACT_VERSION_18_0 = '18.0.0'
+const REACT_VERSION_19_1 = '19.1.0'
+
+const reactVersions = {
+  [NEXT_VERSION_14_0]: [REACT_VERSION_18_0],
+  [NEXT_VERSION_14_1]: [REACT_VERSION_18_0],
+  [NEXT_VERSION_14_2]: [REACT_VERSION_18_0],
+  [NEXT_VERSION_15_0]: [REACT_VERSION_18_0, REACT_VERSION_19_1],
+  [NEXT_VERSION_15_1]: [REACT_VERSION_18_0, REACT_VERSION_19_1],
 }
 
 function websocketHMRHandler (message, resolveConnection, resolveReload) {
@@ -61,262 +69,87 @@ function websocketHMRHandler (message, resolveConnection, resolveReload) {
   }
 }
 
-async function linkNext (version, root) {
+async function linkNext (nextVersion, reactVersion, root) {
   for (const mod of ['next', 'react', 'react-dom']) {
     const modulesFolder = resolve(root, `services/frontend/node_modules/${mod}`)
 
     await safeRemove(modulesFolder)
-    await symlink(resolve(temporaryFolder, `next-${version}/node_modules/${mod}`), modulesFolder, 'dir')
+    await symlink(resolve(temporaryFolder, `next-${nextVersion}-${reactVersion}/node_modules/${mod}`), modulesFolder, 'dir')
   }
 }
 
-function boundLinkNext (version) {
-  const fn = linkNext.bind(null, version)
+async function boundLinkNext (nextVersion, reactVersion) {
+  await installDependencies(nextVersion, reactVersion)
+  const fn = linkNext.bind(null, nextVersion, reactVersion)
   fn.runAfterPrepare = true
   return fn
 }
 
-before(async () => {
-  for (const [tag, version] of Object.entries(versions)) {
-    const base = resolve(temporaryFolder, `next-${tag}`)
-    await safeRemove(base)
-    await createDirectory(base)
-    await writeFile(resolve(base, 'pnpm-workspace.yaml'), '')
-    await execa('pnpm', ['add', '-D', '--ignore-workspace', `next@${version}`, 'react', 'react-dom'], { cwd: base })
+async function installDependencies (nextVersion, reactVersion) {
+  const base = resolve(temporaryFolder, `next-${nextVersion}-${reactVersion}`)
+  if (existsSync(base)) {
+    return
   }
-})
+  await createDirectory(base)
+  await writeFile(resolve(base, 'pnpm-workspace.yaml'), '')
+  console.log('installing dependencies', base)
+  await execa('pnpm', ['add', '-D', '--ignore-workspace', `next@${nextVersion}`, `react@${reactVersion}`, `react-dom@${reactVersion}`], { cwd: base })
+}
 
-const developmentConfigurations = [
-  {
-    id: 'compatibility',
-    skip: isCIOnWindows,
-    tag: '14.0.x',
-    name: 'Next.js 14.0.x',
-    check: verifyDevelopmentFrontendWithPrefix,
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    hmrTriggerFile,
-    language: 'js',
-    additionalSetup: boundLinkNext('14.0')
-  },
-  {
-    id: 'compatibility',
-    skip: isCIOnWindows,
-    tag: '14.1.x',
-    name: 'Next.js 14.1.x',
-    check: verifyDevelopmentFrontendWithPrefix,
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    hmrTriggerFile,
-    language: 'js',
-    additionalSetup: boundLinkNext('14.1')
-  },
-  {
-    id: 'compatibility',
-    skip: isCIOnWindows,
-    tag: '14.2.x',
-    name: 'Next.js 14.2.x',
-    check: verifyDevelopmentFrontendWithPrefix,
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    hmrTriggerFile,
-    language: 'js',
-    additionalSetup: boundLinkNext('14.2')
-  },
-  {
-    only: isCIOnWindows,
-    skip: isCIOnWindows,
-    id: 'compatibility',
-    tag: '15.0.x',
-    name: 'Next.js 15.0.x',
-    check: verifyDevelopmentFrontendWithPrefix,
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    hmrTriggerFile,
-    language: 'js',
-    additionalSetup: boundLinkNext('15.0')
-  },
-  {
-    id: 'middleware',
-    skip: isCIOnWindows,
-    tag: '14.2.x',
-    name: 'Next.js 14.2.x',
-    files,
-    check: verifyDevelopmentMiddlewareContext,
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    language: 'js',
-    additionalSetup: boundLinkNext('14.2')
-  },
-  {
-    id: 'middleware',
-    skip: isCIOnWindows,
-    tag: '15.0.x',
-    name: 'Next.js 15.0.x',
-    files,
-    check: verifyDevelopmentMiddlewareContext,
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    language: 'js',
-    additionalSetup: boundLinkNext('15.0')
-  },
-  {
-    id: 'middleware',
-    skip: isCIOnWindows,
-    tag: '15.1.x',
-    name: 'Next.js 15.1.x',
-    files,
-    check: verifyDevelopmentMiddlewareContext,
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    language: 'js',
-    additionalSetup: boundLinkNext('15.1')
-  },
-  {
-    id: 'middleware-child-process',
-    skip: isCIOnWindows,
-    tag: '14.2.x',
-    name: 'Next.js 14.2.x',
-    files,
-    check: verifyDevelopmentMiddlewareContext,
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    language: 'js',
-    additionalSetup: boundLinkNext('14.2')
-  },
-  {
-    id: 'middleware-child-process',
-    skip: isCIOnWindows,
-    tag: '15.0.x',
-    name: 'Next.js 15.0.x',
-    files,
-    check: verifyDevelopmentMiddlewareContext,
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    language: 'js',
-    additionalSetup: boundLinkNext('15.0')
-  },
-  {
-    id: 'middleware-child-process',
-    skip: isCIOnWindows,
-    tag: '15.1.x',
-    name: 'Next.js 15.1.x',
-    files,
-    check: verifyDevelopmentMiddlewareContext,
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    language: 'js',
-    additionalSetup: boundLinkNext('15.1')
+async function combine (nextVersions, configuration) {
+  const configurations = []
+  for (const nextVersion of nextVersions) {
+    for (const reactVersion of reactVersions[nextVersion]) {
+      configurations.push({
+        ...configuration,
+        tag: `next@${nextVersion} react@${reactVersion}`,
+        name: `Next.js ${nextVersion} React ${reactVersion}`,
+        additionalSetup: await boundLinkNext(nextVersion, reactVersion)
+      })
+    }
   }
-]
+  return configurations
+}
 
-const productionConfigurations = [
-  {
-    id: 'compatibility',
-    skip: isCIOnWindows,
-    tag: '14.0.x',
-    name: 'Next.js 14.0.x',
-    prefix: '/frontend',
-    files,
-    checks: [verifyFrontendOnPrefix],
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    language: 'js',
-    additionalSetup: boundLinkNext('14.0')
-  },
-  {
-    id: 'compatibility',
-    skip: isCIOnWindows,
-    tag: '14.1.x',
-    name: 'Next.js 14.1.x',
-    prefix: '/frontend',
-    files,
-    checks: [verifyFrontendOnPrefix],
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    language: 'js',
-    additionalSetup: boundLinkNext('14.1')
-  },
-  {
-    id: 'compatibility',
-    skip: isCIOnWindows,
-    tag: '14.2.x',
-    name: 'Next.js 14.2.x',
-    prefix: '/frontend',
-    files,
-    checks: [verifyFrontendOnPrefix],
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    language: 'js',
-    additionalSetup: boundLinkNext('14.2')
-  },
-  {
-    id: 'compatibility',
-    skip: isCIOnWindows,
-    tag: '15.0.x',
-    name: 'Next.js 15.0.x',
-    prefix: '/frontend',
-    files,
-    checks: [verifyFrontendOnPrefix],
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    language: 'js',
-    additionalSetup: boundLinkNext('15.0')
-  },
-  {
-    id: 'middleware',
-    skip: isCIOnWindows,
-    tag: '14.2.x',
-    name: 'Next.js 14.2.x',
-    files,
-    checks: [verifyMiddlewareContext],
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    language: 'js',
-    additionalSetup: boundLinkNext('14.2')
-  },
-  {
-    id: 'middleware',
-    skip: isCIOnWindows,
-    tag: '15.0.x',
-    name: 'Next.js 15.0.x',
-    files,
-    checks: [verifyMiddlewareContext],
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    language: 'js',
-    additionalSetup: boundLinkNext('15.0')
-  },
-  {
-    id: 'middleware',
-    skip: isCIOnWindows,
-    tag: '15.1.x',
-    name: 'Next.js 15.1.x',
-    files,
-    checks: [verifyMiddlewareContext],
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    language: 'js',
-    additionalSetup: boundLinkNext('15.1')
-  },
-  {
-    id: 'middleware-child-process',
-    skip: isCIOnWindows,
-    tag: '14.2.x',
-    name: 'Next.js 14.2.x',
-    files,
-    checks: [verifyMiddlewareContext],
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    language: 'js',
-    additionalSetup: boundLinkNext('14.2')
-  },
-  {
-    id: 'middleware-child-process',
-    skip: isCIOnWindows,
-    tag: '15.0.x',
-    name: 'Next.js 15.0.x',
-    files,
-    checks: [verifyMiddlewareContext],
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    language: 'js',
-    additionalSetup: boundLinkNext('15.0')
-  },
-  {
-    id: 'middleware-child-process',
-    skip: isCIOnWindows,
-    tag: '15.1.x',
-    name: 'Next.js 15.1.x',
-    files,
-    checks: [verifyMiddlewareContext],
-    htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
-    language: 'js',
-    additionalSetup: boundLinkNext('15.1')
-  }
-]
+async function run () {
+  const developmentConfigurations = [
+    ...await combine([NEXT_VERSION_14_0, NEXT_VERSION_14_1, NEXT_VERSION_14_2, NEXT_VERSION_15_0, NEXT_VERSION_15_1], {
+      id: 'compatibility',
+      check: verifyDevelopmentFrontendWithPrefix,
+      htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
+      hmrTriggerFile,
+      language: 'js',
+    }),
+    ...await combine([NEXT_VERSION_14_2, NEXT_VERSION_15_0, NEXT_VERSION_15_1], {
+      id: 'middleware',
+      files,
+      check: verifyDevelopmentMiddlewareContext,
+      htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
+      language: 'js',
+    })
+  ]
 
-verifyDevelopmentMode(developmentConfigurations, '_next/webpack-hmr', undefined, websocketHMRHandler)
+  verifyDevelopmentMode(developmentConfigurations, '_next/webpack-hmr', undefined, websocketHMRHandler)
 
-verifyBuildAndProductionMode(productionConfigurations)
+  const productionConfigurations = [
+    ...await combine([NEXT_VERSION_14_0, NEXT_VERSION_14_1, NEXT_VERSION_14_2, NEXT_VERSION_15_0, NEXT_VERSION_15_1], {
+      id: 'compatibility',
+      prefix: '/frontend',
+      files,
+      checks: [verifyFrontendOnPrefix],
+      htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
+      language: 'js',
+    }),
+    ...await combine([NEXT_VERSION_14_2, NEXT_VERSION_15_0, NEXT_VERSION_15_1], {
+      id: 'middleware',
+      files,
+      checks: [verifyMiddlewareContext],
+      htmlContents: ['<script src="/frontend/_next/static/chunks/main-app.js'],
+      language: 'js',
+    })
+  ]
+
+  verifyBuildAndProductionMode(productionConfigurations)
+}
+
+run()
