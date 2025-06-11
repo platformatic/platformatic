@@ -131,7 +131,7 @@ export class AstroStackable extends BaseStackable {
       url: this.url,
       prefix: this.basePath ?? config?.base ?? this.#basePath,
       wantsAbsoluteUrls: true,
-      needsRootRedirect: true,
+      needsRootTrailingSlash: true,
       needsRefererBasedRedirect: !this.isProduction
     }
 

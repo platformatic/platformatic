@@ -1,15 +1,15 @@
 import {
-  BaseStackable,
-  transformConfig as basicTransformConfig,
-  ChildManager,
-  cleanBasePath,
-  createChildProcessListener,
-  createServerListener,
-  errors,
-  getServerUrl,
-  importFile,
-  resolvePackage,
-  schemaOptions
+    BaseStackable,
+    transformConfig as basicTransformConfig,
+    ChildManager,
+    cleanBasePath,
+    createChildProcessListener,
+    createServerListener,
+    errors,
+    getServerUrl,
+    importFile,
+    resolvePackage,
+    schemaOptions
 } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
 import { ChildProcess } from 'node:child_process'
@@ -133,7 +133,7 @@ export class NextStackable extends BaseStackable {
   }
 
   getMeta () {
-    const composer = { prefix: this.basePath ?? this.#basePath, wantsAbsoluteUrls: true, needsRootRedirect: false }
+    const composer = { prefix: this.basePath ?? this.#basePath, wantsAbsoluteUrls: true, needsRootTrailingSlash: false }
 
     if (this.url) {
       composer.tcp = true

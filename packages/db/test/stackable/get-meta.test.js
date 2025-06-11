@@ -41,7 +41,7 @@ test('get meta info via stackable api', async t => {
   const meta = await stackable.getMeta()
   const expected = {
     composer: {
-      needsRootRedirect: false,
+      needsRootTrailingSlash: false,
       prefix: undefined,
       wantsAbsoluteUrls: false,
       tcp: true,
