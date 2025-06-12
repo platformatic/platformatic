@@ -99,6 +99,8 @@ If the service uses the `commands` property then it's always responsible to star
 
 In all cases, Platformatic runtime will modify the server port replacing it with a random port and then it will integrate the external service in the runtime.
 
+If your application entrypoint exports a `hasServer` variable set to `false`, then Platformatic Node will treat the service as a background service which doesn't expose any HTTP port.
+
 ## Example services entrypoints
 
 ### Fastify with build function
@@ -135,6 +137,14 @@ app.get(`${prefix}/env`, (req, res) => {
 })
 
 app.listen(3000)
+```
+
+### Background only service
+
+```js
+export const hasServer = false
+
+globalThis.platformatic.messaging.handle('ping', () => 'pong')
 ```
 
 ### Typescript
