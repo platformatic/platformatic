@@ -115,32 +115,34 @@ export class NodeStackable extends BaseStackable {
     // Deal with application
     const factory = ['build', 'create'].find(f => typeof this.#module[f] === 'function')
 
-    if (factory) {
-      // We have build function, this Stackable will not use HTTP unless it is the entrypoint
-      serverPromise.cancel()
+    if (this.#module.hasServer !== false) {
+      if (factory) {
+        // We have build function, this Stackable will not use HTTP unless it is the entrypoint
+        serverPromise.cancel()
 
-      this.#app = await this.#module[factory]()
-      this.#isFastify = isFastify(this.#app)
-      this.#isKoa = isKoa(this.#app)
+        this.#app = await this.#module[factory]()
+        this.#isFastify = isFastify(this.#app)
+        this.#isKoa = isKoa(this.#app)
 
-      if (this.#isFastify) {
-        await this.#app.ready()
-      } else if (this.#isKoa) {
-        this.#dispatcher = this.#app.callback()
-      } else if (this.#app instanceof Server) {
-        this.#server = this.#app
+        if (this.#isFastify) {
+          await this.#app.ready()
+        } else if (this.#isKoa) {
+          this.#dispatcher = this.#app.callback()
+        } else if (this.#app instanceof Server) {
+          this.#server = this.#app
+          this.#dispatcher = this.#server.listeners('request')[0]
+        }
+
+        if (listen) {
+          await this._listen()
+        }
+      } else {
+        // User blackbox function, we wait for it to listen on a port
+        this.#server = await serverPromise
         this.#dispatcher = this.#server.listeners('request')[0]
-      }
 
-      if (listen) {
-        await this._listen()
+        this.url = getServerUrl(this.#server)
       }
-    } else {
-      // User blackbox function, we wait for it to listen on a port
-      this.#server = await serverPromise
-      this.#dispatcher = this.#server.listeners('request')[0]
-
-      this.url = getServerUrl(this.#server)
     }
 
     await this._collectMetrics()

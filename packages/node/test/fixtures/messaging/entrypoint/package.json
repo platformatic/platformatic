@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "type": "module",
+  "main": "index.js",
+  "dependencies": {
+    "@platformatic/basic": "^2.70.0",
+    "@platformatic/node": "^2.70.0"
+  }
+}
