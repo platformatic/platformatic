@@ -170,7 +170,10 @@ async function entityPlugin (app, opts) {
             querystring: {
               type: 'object',
               properties: {
+                limit: { type: 'integer', description: 'Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown' },
+                offset: { type: 'integer' },
                 fields: getFieldsForEntity(targetEntity, ignore),
+                totalCount: { type: 'boolean', default: false },
               },
             },
             response: {
@@ -184,6 +187,7 @@ async function entityPlugin (app, opts) {
             200: entityLinks,
           },
         }, async function (request, reply) {
+          const { limit, offset, fields } = request.query
           const ctx = { app: this, reply }
           // IF we want to have HTTP/404 in case the entity does not exist
           // we need to do 2 queries. One to check if the entity exists. the other to get the related entities
@@ -202,19 +206,34 @@ async function entityPlugin (app, opts) {
             return reply.callNotFound()
           }
 
+          const where = {
+            [targetForeignKeyCamelcase]: {
+              eq: request.params[primaryKeyCamelcase],
+            },
+          }
+
           // get the related entities
           const res = await targetEntity.find({
             ctx,
-            where: {
-              [targetForeignKeyCamelcase]: {
-                eq: request.params[primaryKeyCamelcase],
-              },
-            },
-            fields: request.query.fields,
-
+            where,
+            fields,
+            limit,
+            offset
           })
+
+          // X-Total-Count header
+          if (request.query.totalCount) {
+            let totalCount
+            if ((((offset ?? 0) === 0) || (res.length > 0)) && ((limit !== undefined) && (res.length < limit))) {
+              totalCount = (offset ?? 0) + res.length
+            } else {
+              totalCount = await targetEntity.count({ where, ctx })
+            }
+            reply.header('X-Total-Count', totalCount)
+          }
+
           if (res.length === 0) {
-          // This is a query on a FK, so
+            // This is a query on a FK, so
             return []
           }
           return res
