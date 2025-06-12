@@ -10,8 +10,8 @@ This guide will help you set up and run an application composed of the following
 
 :::note
 
-In this guide, we will use `Next.js` as our frontend framework, but you can also use [Astro](https://astro.build/),
-or [Remix](https://remix.run/). We plan to expand the list of supported frameworks in the future.
+In this guide, we will use `Next.js` as our frontend framework, but you can also use [Astro](https://astro.build/), or [Remix](https://remix.run/).  
+We plan to expand the list of supported frameworks in the future.
 
 :::
 
@@ -26,66 +26,74 @@ Before starting, ensure you have the following installed:
 ## Set up Watt
 
 ```bash
-mkdir my-app
-cd my-app
 npx wattpm@latest init
 ```
 
-Which will output:
+Which will output and start the interactive setup:
 
 ```
 Need to install the following packages:
-wattpm@2.0.0
+wattpm@2.70.0
 Ok to proceed? (y) y
-
-[15:48:14.722] DONE (40803): Created a wattpm application in /Users/matteo/tmp/my-app.
 ```
 
-Then, run `npm install` to install all the dependencies.
+![wattpm init](./images/quick-start-wattpm-init.png)
 
-## Add your first Node.js application to Watt
+It creates a new directory called `my-app` with the following structure:
 
-Inside `my-app`, create a new directory and add a simple Node.js app:
-
-```bash
-mkdir web/node
+```
+my-app/
+├── web/
+│   └── node/
+│       ├── package.json
+│       ├── watt.json
+│       └── index.js
+├── .gitignore
+├── .env
+├── .env.sample
+├── package.json
+├── package-lock.json
+├── README.md
+├── tsconfig.json
+└── watt.json
 ```
 
-Then add a `package.json` like the following:
+The dependencies are installed, so you can start working on your project right away.
+
+In `web/node`, add a `package.json` like the following:
 
 ```json
 {
-  "main": "server.js",
+  "name": "node",
+  "main": "index.js",
   "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
-    "@platformatic/node": "^2.0.0"
+    "@platformatic/node": "^2.70.0"
   }
 }
 ```
 
-Then, create a `web/node/server.js` file with the following content:
+The `web/node/index.js` file has the following content:
 
 ```js
-import { createServer } from 'node:http';
+import { createServer } from 'node:http'
 
-export function build () {
-  let count = 0
-
-  const server = createServer((req, res) => {
-    console.log('received request', req.url)
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ content: `from node:http createServer: ${count++}!` }));
+export function create() {
+  return createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'application/json', connection: 'close' })
+    res.end(JSON.stringify({ hello: 'world' }))
   })
-
-  return server
 }
 ```
 
 :::note
 
-In this example, we are using the built-in `node:http` module to
+The default template uses the built-in `node:http` module to
 create a simple HTTP server that responds with a JSON object containing a counter.
-You can see that we are returning a `build` function that creates the server.
+You can see that we are returning a `create` function that creates the server.
 This server will be run by Watt when the application starts in its
 own worker thread.
 
@@ -94,25 +102,12 @@ or any other Node.js framework.
 
 :::
 
-
-Then, we need to add the `watt.json` config file by running:
-
-```bash
-wattpm import web/node
-```
-
-Let's install the dependencies in the root of the project with 
-
-
-```bash
-npm install
-```
-
 ### Start your Watt server
 
-Run the following command in your project directory to start your Watt server:
+Run the following command in the `my-app` directory to start your Watt server:
 
 ```bash
+cd my-app
 npm start
 ```
 
@@ -134,7 +129,7 @@ curl http://localhost:3042
 
 ## Add a Platformatic Composer to run multiple apps
 
-Inside `my-app`, let's create a new Platformatic Composer
+Inside the `my-app` directory, let's create a new Platformatic Composer:
 
 ```bash
 npx wattpm create
@@ -142,26 +137,8 @@ npx wattpm create
 
 This will output:
 
-```
-Hello Matteo Collina, welcome to Platformatic 2.64.0
-Using existing configuration ...
-? Which kind of service do you want to create? @platformatic/composer
-? What is the name of the service? composer
-? Do you want to create another service? no
-? Which service should be exposed? composer
-? Do you want to use TypeScript? no
-[16:06:50] INFO: /Users/matteo/tmp/my-app/.env written!
-[16:06:50] INFO: /Users/matteo/tmp/my-app/.env.sample written!
-[16:06:50] INFO: /Users/matteo/tmp/my-app/web/composer/package.json written!
-[16:06:50] INFO: /Users/matteo/tmp/my-app/web/composer/platformatic.json written!
-[16:06:50] INFO: /Users/matteo/tmp/my-app/web/composer/.gitignore written!
-[16:06:50] INFO: /Users/matteo/tmp/my-app/web/composer/global.d.ts written!
-[16:06:50] INFO: /Users/matteo/tmp/my-app/web/composer/README.md written!
-[16:06:50] INFO: Installing dependencies for the application using npm ...
-[16:06:50] INFO: Installing dependencies for the service composer using npm ...
-[16:06:52] INFO: Project created successfully, executing post-install actions...
-[16:06:52] INFO: You are all set! Run `npm start` to start your project.
-```
+![wattpm create composer](./images/quick-start-wattpm-create-composer.png)
+
 
 Start your Watt server again:
 
@@ -178,11 +155,11 @@ curl http://localhost:3042/node
 :::note
 
 You can customize how the various services are expsed by changing `web/composer/platformatic.json`.
-Here is the equivalent of the default configuration when exposing a Node.js application: 
+Here is the equivalent of the default configuration when exposing a **Node.js** application: 
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/composer/2.70.0.json",
   "composer": {
     "services": [{
       "id": "node",
@@ -201,7 +178,7 @@ Here is the equivalent of the default configuration when exposing a Node.js appl
 
 ## Add a Next.js application to Watt
 
-Inside `my-app`, let's create a new Next.js app:
+Inside the `my-app` directory, let's create a new Next.js app:
 
 ```bash
 npx create-next-app@latest web/next
@@ -210,17 +187,22 @@ npx create-next-app@latest web/next
 Which will output:
 
 ```
-✔ Would you like to use TypeScript? … No
+Need to install the following packages:
+create-next-app@15.3.2
+Ok to proceed? (y) 
+
+✔ Would you like to use TypeScript? … Yes
 ✔ Would you like to use ESLint? … No
 ✔ Would you like to use Tailwind CSS? … No
-✔ Would you like to use `src/` directory? … Yes
-✔ Would you like to use App Router? (recommended) … Yes
-✔ Would you like to customize the default import alias (@/*)? … No
-Creating a new Next.js app in /Users/matteo/tmp/my-app/web/next.
+✔ Would you like your code inside a `src/` directory? … Yes
+✔ Would you like to use App Router? (recommended) … No
+✔ Would you like to use Turbopack for `next dev`? … No
+✔ Would you like to customize the import alias (`@/*` by default)? … No
+reating a new Next.js app in /tmp/my-app/web/next.
 
 Using npm.
 
-Initializing project with template: app
+Initializing project with template: default 
 
 
 Installing dependencies:
@@ -228,66 +210,123 @@ Installing dependencies:
 - react-dom
 - next
 
+Installing devDependencies:
+- typescript
+- @types/node
+- @types/react
+- @types/react-dom
 
-added 18 packages in 4s
 
-195 packages are looking for funding
-  run `npm fund` for details
-Success! Created next at /Users/matteo/tmp/my-app/web/next
+added 6 packages, and audited 575 packages in 4s
+
+Success! Created next at /tmp/my-app/web/next
 ```
 
 Then, let's import it to our watt server:
 
 ```bash
-wattpm import web/next
+npx wattpm import web/next
 ```
 
 We should also install the additional dependencies with:
 
 ```bash
-npm i
+cd web/next
+npm i @platformatic/next
 ```
 
-Then, we need to tell Watt to expose our `next` server on `/next` by modifying `web/next/watt.json`:
+Then, we need to tell Watt to expose our `next` server on `/next` by creating a `web/next/watt.json` file:
 
 ```json
 {
-  "$schema": "https://schemas.platformatic.dev/@platformatic/next/2.0.0.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/next/2.70.0.json",
   "application": {
     "basePath": "/next"
   }
 }
 ```
 
-You can run `npm run dev` to start your Watt server in dev/watch mode, which in turn will start Next.js
-in development mode.
+Now you can run `npm run dev` from the `my-app` directory to start your Watt server in dev/watch mode, which in turn will start Next.js in development mode.
+
+```
+cd my-app
+npm run dev
+```
 
 Then, you can test it by opening your browser at [`http://localhost:3042/next`](http://localhost:3042/next).
 
 :::note
 
 In this example, we are exposing the Next.js app at `/next` and the Node.js app at `/node`.
-You can change the paths to suit your needs. Make sure to alter the `basePath` in `web/next/watt.json`
-and the `prefix` in `web/composer/platformatic.json` accordingly if you customize it.
+You can change the paths to suit your needs. Make sure to alter the `basePath` in `web/next/watt.json` and the `prefix` in `web/composer/platformatic.json` accordingly if you customize it.
 
 :::
 
 
 ## `fetch` the data from the Node.js app in the Next.js app
 
-Replace `web/next/src/app/page.js`, with the following code:
+To allow the Next.js app to fetch the data from the Node.js app, we need to enable CORS: let's update the `node` service to enable any origin (for demo purposes).
+
+`web/node/index.js` should be updated to:
 
 ```js
-import styles from "./page.module.css";
+import { createServer } from 'node:http'
 
-export default async function Home() {
-  const { content } = await (await fetch("http://node.plt.local", { cache: 'no-store' })).json();
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+}
+
+export function create() {
+  return createServer((req, res) => {
+    
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, corsHeaders)
+      res.end()
+      return
+    }
+    
+    res.writeHead(200, { 
+      'content-type': 'application/json', 
+      'connection': 'close',
+      ...corsHeaders
+    })
+    res.end(JSON.stringify({ hello: 'world' }))
+  })
+}
+```
+
+Let's update `web/next/src/pages/index.tsx`, with the following code:
+
+```js
+import { useState, useEffect } from "react";
+
+export default function Home() {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await fetch('http://127.0.0.1:3042/node');
+      const result = await response.json();
+      setData(result);
+    };
+
+    fetchData();
+  }, []);
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        ${content}
-      </main>
-    </div>
+    <>
+      <div>
+        <main>
+          <div>
+            <pre>
+              {JSON.stringify(data, null, 2)}
+            </pre>
+          </div>
+        </main>
+      </div>
+    </>
   );
 }
 ```
@@ -295,6 +334,8 @@ export default async function Home() {
 This will fetch the data from the Node.js app and display it in the Next.js app.
 Note that it uses the `node.plt.local` hostname, which is the _internal_ hostname for the `node` service.
 This domain name would not work outside of a Watt or Platformatic environment.
+
+ *** WIP ***
 
 :::note
 
