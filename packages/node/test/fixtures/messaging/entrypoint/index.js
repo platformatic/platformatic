@@ -1,6 +1,6 @@
 import { createServer } from 'node:http'
 
-function invokeIPC(service, req, res) {
+function invokeIPC (service, req, res) {
   globalThis.platformatic.messaging
     .send(service, 'request', req.url)
     .then(url => {
@@ -13,7 +13,7 @@ function invokeIPC(service, req, res) {
     })
 }
 
-export function build() {
+export function build () {
   return createServer((req, res) => {
     if (req.url === '/esm') {
       invokeIPC('ipc-esm', req, res)
