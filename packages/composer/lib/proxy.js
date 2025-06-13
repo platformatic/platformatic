@@ -89,7 +89,7 @@ module.exports = fp(async function (app, opts) {
         }
 
         const { url, options } = reply.fromParameters(req.url + '/', req.params, prefix)
-        reply.from(url, options)
+        reply.from(url.replace(/\/+$/, '/'), options)
       })
     }
 
