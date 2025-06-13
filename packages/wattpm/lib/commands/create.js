@@ -1,6 +1,7 @@
+import { getPackageManager } from '@platformatic/utils'
 import { createApplication, getUsername, getVersion, say } from 'create-platformatic'
 import { resolve } from 'node:path'
-import { getPackageManager, parseArgs } from '../utils.js'
+import { parseArgs } from '../utils.js'
 import { installDependencies } from './build.js'
 
 export async function createCommand (logger, args) {
@@ -45,7 +46,7 @@ export async function createCommand (logger, args) {
   )
 
   if (!packageManager) {
-    packageManager = getPackageManager(process.cwd())
+    packageManager = getPackageManager(process.cwd(), null)
   }
 
   const username = await getUsername()

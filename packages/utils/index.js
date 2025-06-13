@@ -33,7 +33,9 @@ const {
   hasFilesWithExtensions,
   hasJavascriptFiles,
   searchFilesWithExtensions,
-  searchJavascriptFiles
+  searchJavascriptFiles,
+  getPackageManager,
+  DEFAULT_PACKAGE_MANAGER
 } = require('./lib/packages')
 const { withResolvers } = require('./lib/promises')
 const { omitProperties, overridableValue, removeDefaults, ...schemaComponents } = require('./lib/schema')
@@ -85,3 +87,5 @@ module.exports.setPinoFormatters = setPinoFormatters
 module.exports.setPinoTimestamp = setPinoTimestamp
 module.exports.withResolvers = withResolvers
 module.exports.parseMemorySize = parseMemorySize
+module.exports.getPackageManager = getPackageManager
+module.exports.DEFAULT_PACKAGE_MANAGER = DEFAULT_PACKAGE_MANAGER
