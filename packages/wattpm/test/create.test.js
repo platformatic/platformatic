@@ -11,6 +11,7 @@ test('create - should create a new project using watt.json by default', async t 
 
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
+    { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
@@ -44,6 +45,7 @@ test('create - should create a new project with two services', async t => {
 
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
+    { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'yes' },
@@ -82,6 +84,7 @@ test('create - should not install @platformatic/runtime as it is already availab
 
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
+    { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
@@ -103,6 +106,7 @@ test('create - should use a custom configuration file', async t => {
 
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
+    { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
@@ -139,6 +143,7 @@ test('create - should correctly set the chosen user entrypoint', async t => {
 
   const userInputHandler1 = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
+    { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
@@ -210,6 +215,7 @@ test('create - should support providing stackable via command line', async t => 
 
   const userInputHandler = await setupUserInputHandler(t, [
     { type: 'input', question: 'Where would you like to create your project?', reply: 'root' },
+    { type: 'list', question: 'Which package manager do you want to use?', reply: 'npm' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
@@ -439,3 +445,6 @@ test('create - should wrap existing frontend applications into Watt', async t =>
     }
   })
 })
+
+// TODO should get package manager from root package.json
+// TODO choose pnpm: no workspaces on package.json, packageManager entry in the package.json
