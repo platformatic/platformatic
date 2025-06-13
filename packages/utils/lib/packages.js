@@ -3,8 +3,11 @@
 const { glob } = require('glob')
 const { join, dirname, resolve } = require('node:path')
 const { readFile } = require('node:fs/promises')
+const { existsSync, readFileSync, readdirSync } = require('node:fs')
 const { isFileAccessible } = require('./is-file-accessible')
 const { request } = require('undici')
+
+const DEFAULT_PACKAGE_MANAGER = 'npm'
 
 async function getDependencyVersion (require, dependencyName) {
   const pathToPackageJson = join(dirname(require.resolve(dependencyName)), 'package.json')
@@ -145,6 +148,46 @@ async function detectApplicationType (root, packageJson) {
   return name ? { name, label } : null
 }
 
+/**
+ * Get the package manager used in the project by:
+ * - "packageManager" entry in package.json file
+ * - looking at the lock file
+ *
+ * if `search` is true, will search for the package manager in a nested directory
+ */
+function getPackageManager (root, defaultManager = DEFAULT_PACKAGE_MANAGER, search = false) {
+  let packageJson
+  try {
+    packageJson = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf-8'))
+    return packageJson.packageManager.split('@')[0]
+  } catch { }
+
+  if (existsSync(resolve(root, 'pnpm-lock.yaml'))) {
+    return 'pnpm'
+  }
+
+  if (existsSync(resolve(root, 'yarn.lock'))) {
+    return 'yarn'
+  }
+
+  if (existsSync(resolve(root, 'package-lock.json'))) {
+    return 'npm'
+  }
+
+  // search for the package manager in a nested directory
+  if (search) {
+    // if we have a package.json, we already are in the right directory and can return the default manager
+    if (packageJson) { return defaultManager }
+    // look in the first level nested directory
+    for (const dir of readdirSync(root)) {
+      const p = getPackageManager(resolve(root, dir), null)
+      if (p) { return p }
+    }
+  }
+
+  return defaultManager
+}
+
 module.exports = {
   getDependencyVersion,
   getPlatformaticVersion,
@@ -155,5 +198,8 @@ module.exports = {
   getLatestNpmVersion,
   searchFilesWithExtensions,
   searchJavascriptFiles,
-  detectApplicationType
+  detectApplicationType,
+  getPackageManager,
+
+  DEFAULT_PACKAGE_MANAGER
 }

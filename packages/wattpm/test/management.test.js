@@ -25,11 +25,11 @@ test('ps - should show running applications', async t => {
   )
 
   deepStrictEqual(lines[2], ['PID', 'Name', 'Version', 'Uptime', 'URL', 'Directory'])
-  deepStrictEqual(lines[4][0], startProcess.pid.toString())
-  deepStrictEqual(lines[4][1], 'main')
-  deepStrictEqual(lines[4][2], version)
-  ok(lines[4][3].match(/now|(\d+s)/))
-  deepStrictEqual(lines[4][4], url)
+
+  const main = lines.find(l => l[1] === 'main' && l[4] === url)
+  deepStrictEqual(main[0], startProcess.pid.toString())
+  deepStrictEqual(main[2], version)
+  ok(main[3].match(/now|(\d+s)/))
 })
 
 test('ps - should warn when no runtimes are available', async t => {
