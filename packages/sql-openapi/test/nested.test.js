@@ -318,107 +318,107 @@ test('nested routes', async (t) => {
   }
 })
 
-// test('nested routes with recursive FK', async (t) => {
-//   const app = fastify()
-//   app.register(sqlMapper, {
-//     ...connInfo,
-//     async onDatabaseLoad (db, sql) {
-//       pass('onDatabaseLoad called')
+test('nested routes with recursive FK', async (t) => {
+  const app = fastify()
+  app.register(sqlMapper, {
+    ...connInfo,
+    async onDatabaseLoad (db, sql) {
+      pass('onDatabaseLoad called')
 
-//       await clear(db, sql)
+      await clear(db, sql)
 
-//       if (isMysql) {
-//         await db.query(sql`
-//           CREATE TABLE people (
-//             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-//             name VARCHAR(255) NOT NULL,
-//             parent_id INT UNSIGNED,
-//             FOREIGN KEY (parent_id) REFERENCES people(id)
-//           );
-//         `)
-//       } else if (isSQLite) {
-//         await db.query(sql`
-//           CREATE TABLE people (
-//             id INTEGER PRIMARY KEY,
-//             name VARCHAR(255) NOT NULL,
-//             parent_id INTEGER UNSIGNED,
-//             FOREIGN KEY (parent_id) REFERENCES people(id)
-//           );
-//         `)
-//       } else {
-//         await db.query(sql`
-//           CREATE TABLE people (
-//             id SERIAL PRIMARY KEY,
-//             name VARCHAR(255) NOT NULL,
-//             parent_id INTEGER REFERENCES people(id)
-//           );
-//         `)
-//       }
-//     },
-//   })
-//   app.register(sqlOpenAPI)
-//   t.after(() => app.close())
+      if (isMysql) {
+        await db.query(sql`
+          CREATE TABLE people (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            parent_id INT UNSIGNED,
+            FOREIGN KEY (parent_id) REFERENCES people(id)
+          );
+        `)
+      } else if (isSQLite) {
+        await db.query(sql`
+          CREATE TABLE people (
+            id INTEGER PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            parent_id INTEGER UNSIGNED,
+            FOREIGN KEY (parent_id) REFERENCES people(id)
+          );
+        `)
+      } else {
+        await db.query(sql`
+          CREATE TABLE people (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            parent_id INTEGER REFERENCES people(id)
+          );
+        `)
+      }
+    },
+  })
+  app.register(sqlOpenAPI)
+  t.after(() => app.close())
 
-//   await app.ready()
+  await app.ready()
 
-//   {
-//     const res = await app.inject({
-//       method: 'GET',
-//       url: '/documentation/json',
-//     })
-//     const openapi = res.json()
-//     const snapshot = await snap(openapi)
-//     same(openapi, snapshot)
-//   }
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/documentation/json',
+    })
+    const openapi = res.json()
+    const snapshot = await snap(openapi)
+    same(openapi, snapshot)
+  }
 
-//   const res = await app.inject({
-//     method: 'POST',
-//     url: '/people',
-//     body: {
-//       name: 'Dad',
-//     },
-//   })
-//   equal(res.statusCode, 200, 'POST /people status code')
-//   const dad = res.json()
+  const res = await app.inject({
+    method: 'POST',
+    url: '/people',
+    body: {
+      name: 'Dad',
+    },
+  })
+  equal(res.statusCode, 200, 'POST /people status code')
+  const dad = res.json()
 
-//   const res2 = await app.inject({
-//     method: 'POST',
-//     url: '/people',
-//     body: {
-//       name: 'Child',
-//       parentId: dad.id,
-//     },
-//   })
-//   equal(res.statusCode, 200, 'POST /people status code')
-//   const child = res2.json()
+  const res2 = await app.inject({
+    method: 'POST',
+    url: '/people',
+    body: {
+      name: 'Child',
+      parentId: dad.id,
+    },
+  })
+  equal(res.statusCode, 200, 'POST /people status code')
+  const child = res2.json()
 
-//   {
-//     const res = await app.inject({
-//       method: 'GET',
-//       url: '/people',
-//     })
-//     equal(res.statusCode, 200, 'GET /people status code')
-//     same(res.json(), [{
-//       id: 1,
-//       name: 'Dad',
-//       parentId: null,
-//     }, {
-//       id: 2,
-//       name: 'Child',
-//       parentId: 1,
-//     }], 'GET /people response')
-//   }
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/people',
+    })
+    equal(res.statusCode, 200, 'GET /people status code')
+    same(res.json(), [{
+      id: 1,
+      name: 'Dad',
+      parentId: null,
+    }, {
+      id: 2,
+      name: 'Child',
+      parentId: 1,
+    }], 'GET /people response')
+  }
 
-//   {
-//     const res = await app.inject({
-//       method: 'GET',
-//       url: `/people/${child.id}/parent`,
-//     })
-//     equal(res.statusCode, 200, 'GET /people/:id/parent status code')
-//     same(res.json(), {
-//       id: 1,
-//       name: 'Dad',
-//       parentId: null,
-//     }, 'GET /people/:id/parent response')
-//   }
-// })
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/people/${child.id}/parent`,
+    })
+    equal(res.statusCode, 200, 'GET /people/:id/parent status code')
+    same(res.json(), {
+      id: 1,
+      name: 'Dad',
+      parentId: null,
+    }, 'GET /people/:id/parent response')
+  }
+})
