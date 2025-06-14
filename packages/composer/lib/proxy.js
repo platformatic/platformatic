@@ -45,7 +45,7 @@ async function resolveServiceProxyParameters (service) {
     prefix,
     rewritePrefix,
     internalRewriteLocationHeader,
-    needsRootRedirect: meta.needsRootRedirect,
+    needsRootTrailingSlash: meta.needsRootTrailingSlash,
     needsRefererBasedRedirect: meta.needsRefererBasedRedirect,
     upstream: service.proxy?.upstream,
     ws: service.proxy?.ws
@@ -72,7 +72,7 @@ module.exports = fp(async function (app, opts) {
       url,
       rewritePrefix,
       internalRewriteLocationHeader,
-      needsRootRedirect,
+      needsRootTrailingSlash,
       needsRefererBasedRedirect,
       ws
     } = parameters
@@ -81,33 +81,15 @@ module.exports = fp(async function (app, opts) {
     const basePath = `/${prefix ?? ''}`.replaceAll(/\/+/g, '/').replace(/\/$/, '')
     const dispatcher = getGlobalDispatcher()
 
-    if (needsRootRedirect) {
-      app.addHook('preHandler', (req, reply, done) => {
-        if (req.url === basePath) {
-          app.inject(
-            {
-              method: req.method,
-              url: `${basePath}/`,
-              headers: req.headers,
-              payload: req.body
-            },
-            (err, result) => {
-              if (err) {
-                done(err)
-                return
-              }
-
-              const replyHeaders = result.headers
-              delete replyHeaders['content-length']
-              delete replyHeaders['transfer-encoding']
-
-              reply.code(result.statusCode).headers(replyHeaders).send(result.rawPayload)
-              done()
-            }
-          )
-        } else {
+    if (needsRootTrailingSlash) {
+      app.addHook('preHandler', function rootTrailingSlashPreHandler (req, reply, done) {
+        if (req.url !== basePath) {
           done()
+          return
         }
+
+        const { url, options } = reply.fromParameters(req.url + '/', req.params, prefix)
+        reply.from(url.replace(/\/+$/, '/'), options)
       })
     }
 
@@ -118,7 +100,7 @@ module.exports = fp(async function (app, opts) {
       from the Referer header.
     */
     if (needsRefererBasedRedirect) {
-      app.addHook('preHandler', (req, reply, done) => {
+      app.addHook('preHandler', function refererBasedRedirectPreHandler (req, reply, done) {
         // If the URL is already targeted to the service, do nothing
         if (req.url.startsWith(basePath)) {
           done()
@@ -164,11 +146,11 @@ module.exports = fp(async function (app, opts) {
       : null
 
     const proxyOptions = {
-      websocket: true,
       prefix,
       rewritePrefix,
       upstream: service.proxy?.upstream ?? origin,
 
+      websocket: true,
       wsUpstream: ws?.upstream ?? url ?? origin,
       wsReconnect: ws?.reconnect,
       wsHooks: {
@@ -185,6 +167,7 @@ module.exports = fp(async function (app, opts) {
       config: {
         [kProxyRoute]: true
       },
+
       internalRewriteLocationHeader: false,
       replyOptions: {
         rewriteHeaders: headers => {

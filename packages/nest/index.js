@@ -143,7 +143,7 @@ export class NestStackable extends BaseStackable {
         url: this.url,
         prefix: this.basePath ?? this.#basePath,
         wantsAbsoluteUrls: !!hasBasePath,
-        needsRootRedirect: false
+        needsRootTrailingSlash: false
       }
     }
   }
