@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process'
-import { getPackageManager, parseArgs } from '../utils.js'
+import { parseArgs } from '../utils.js'
+import { getPackageManager } from '@platformatic/utils'
 
 export function adminCommand (logger, args) {
   let {

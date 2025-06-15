@@ -1,6 +1,7 @@
 import ConfigManager, { findConfigurationFile, loadConfigurationFile } from '@platformatic/config'
 import { ImportGenerator } from '@platformatic/generators'
 import {
+  getPackageManager, DEFAULT_PACKAGE_MANAGER,
   createDirectory,
   detectApplicationType,
   executeWithTimeout,
@@ -8,6 +9,7 @@ import {
   getPkgManager,
   searchJavascriptFiles
 } from '@platformatic/utils'
+
 import { execa } from 'execa'
 import defaultInquirer from 'inquirer'
 import parseArgs from 'minimist'
@@ -22,6 +24,7 @@ import resolveModule from 'resolve'
 import { request } from 'undici'
 import { createGitRepository } from './create-git-repository.mjs'
 import { getUsername, getVersion, say } from './utils.mjs'
+
 const MARKETPLACE_HOST = 'https://marketplace.platformatic.dev'
 const defaultStackables = ['@platformatic/service', '@platformatic/composer', '@platformatic/db']
 
@@ -273,6 +276,10 @@ export async function createApplication (
         })
 
         if (shouldWrap) {
+          if (!packageManager) {
+            packageManager = getPackageManager(projectDir, DEFAULT_PACKAGE_MANAGER)
+          }
+
           return wrapApplication(
             logger,
             inquirer,
@@ -306,6 +313,26 @@ export async function createApplication (
 
   const projectName = basename(projectDir)
 
+  if (!packageManager) {
+    packageManager = getPackageManager(projectDir, null, true)
+
+    if (!packageManager) {
+      const p = await inquirer.prompt({
+        type: 'list',
+        name: 'packageManager',
+        message: 'Which package manager do you want to use?',
+        default: DEFAULT_PACKAGE_MANAGER,
+        choices: [
+          { name: 'npm', value: 'npm' },
+          { name: 'pnpm', value: 'pnpm' },
+          { name: 'yarn', value: 'yarn' }
+        ]
+      })
+
+      packageManager = p.packageManager
+    }
+  }
+
   const runtime = await importOrLocal({
     pkgManager: packageManager,
     name: projectName,
@@ -317,6 +344,7 @@ export async function createApplication (
     logger,
     name: projectName,
     inquirer,
+    packageManager,
     ...additionalGeneratorOptions
   })
 
