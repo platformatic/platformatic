@@ -143,7 +143,7 @@ export class ViteStackable extends BaseStackable {
       url: this.url,
       prefix: this.basePath ?? config?.base ?? this.#basePath,
       wantsAbsoluteUrls: true,
-      needsRootRedirect: true
+      needsRootTrailingSlash: true
     }
 
     return { composer }
@@ -393,7 +393,7 @@ export class ViteSSRStackable extends NodeStackable {
       url: this.url,
       prefix: this.basePath ?? applicationBasePath ?? this.#basePath,
       wantsAbsoluteUrls: true,
-      needsRootRedirect: true
+      needsRootTrailingSlash: true
     }
 
     return { composer }

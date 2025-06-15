@@ -1439,10 +1439,65 @@ test('should properly strip runtime basePath from proxied services', async t => 
   assert.equal(remixConfig.composer.prefix, '/base/remix/')
 })
 
+test('should properly handle basePath root for generic services', async t => {
+  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
+
+  await ensureCleanup(t, [nodeModulesRoot])
+
+  // Make sure there is @platformatic/node available in the node service.
+  // We can't simply specify it in the package.json due to circular dependencies.
+  await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
+  await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
+
+  const runtime = await createComposerInRuntime(
+    t,
+    'base-path-no-configuration',
+    {
+      composer: {
+        refreshTimeout: REFRESH_TIMEOUT,
+        services: [
+          {
+            id: 'node'
+          }
+        ]
+      }
+    },
+    [
+      {
+        id: 'node',
+        path: resolve(__dirname, './proxy/fixtures/node'),
+        config: 'platformatic.with-absolute-url.json'
+      }
+    ],
+    null,
+    {
+      basePath: '/base'
+    },
+    true
+  )
+
+  t.after(() => {
+    runtime.close()
+  })
+
+  const address = await runtime.start()
+
+  {
+    const { statusCode, body: rawBody } = await request(address, {
+      method: 'GET',
+      path: '/node'
+    })
+    assert.equal(statusCode, 404)
+
+    const body = await rawBody.json()
+    assert.deepStrictEqual(body, { ok: false, url: '/node/' })
+  }
+})
+
 test('should proxy to a websocket service', async t => {
   const { service, wsServer } = await createWebsocketService(t)
-  wsServer.on('connection', (socket) => {
-    socket.on('message', (message) => {
+  wsServer.on('connection', socket => {
+    socket.on('message', message => {
       socket.send(message)
     })
   })
@@ -1462,13 +1517,12 @@ test('should proxy to a websocket service', async t => {
     }
   }
 
-  const composer = await createComposer(t,
+  const composer = await createComposer(
+    t,
     {
       composer: {
-        services: [
-          proxyConfig
-        ],
-      },
+        services: [proxyConfig]
+      }
     },
     logger
   )
@@ -1476,7 +1530,7 @@ test('should proxy to a websocket service', async t => {
   const composerOrigin = await composer.start()
   const client = new WebSocket(composerOrigin.replace('http://', 'ws://'))
 
-  client.on('message', (message) => {
+  client.on('message', message => {
     logger.info('received: ' + message)
   })
 
@@ -1491,8 +1545,8 @@ test('should proxy to a websocket service', async t => {
 
 test('should proxy to a websocket service with reconnect options', async t => {
   const { service: wsService, wsServer } = await createWebsocketService(t, { autoPong: false })
-  wsServer.on('connection', (socket) => {
-    socket.on('message', (message) => {
+  wsServer.on('connection', socket => {
+    socket.on('message', message => {
       socket.send(message)
     })
   })
@@ -1526,13 +1580,12 @@ test('should proxy to a websocket service with reconnect options', async t => {
     }
   }
 
-  const composer = await createComposer(t,
+  const composer = await createComposer(
+    t,
     {
       composer: {
-        services: [
-          proxyConfig
-        ],
-      },
+        services: [proxyConfig]
+      }
     },
     logger
   )
