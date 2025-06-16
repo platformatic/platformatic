@@ -12,7 +12,7 @@ const { getServiceTemplateFromSchemaUrl } = require('@platformatic/generators/li
 const { DotEnvTool } = require('dotenv-tool')
 const { getArrayDifference } = require('../utils')
 const { pathToFileURL } = require('node:url')
-const { safeRemove, generateDashedName } = require('@platformatic/utils')
+const { safeRemove, generateDashedName, DEFAULT_PACKAGE_MANAGER } = require('@platformatic/utils')
 const { createRequire } = require('node:module')
 
 const wrappableProperties = {
@@ -50,7 +50,7 @@ class RuntimeGenerator extends BaseGenerator {
     this.services = []
     this.existingServices = []
     this.entryPoint = null
-    this.packageManager = opts.packageManager
+    this.packageManager = opts.packageManager ?? DEFAULT_PACKAGE_MANAGER
   }
 
   async addService (service, name) {
