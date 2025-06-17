@@ -142,7 +142,7 @@ export class RemixStackable extends ViteStackable {
         url: this.url,
         prefix: this.basePath ?? this.#basePath,
         wantsAbsoluteUrls: true,
-        needsRootRedirect: true
+        needsRootTrailingSlash: true
       }
     }
   }

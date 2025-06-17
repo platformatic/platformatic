@@ -64,7 +64,7 @@ importers:
         specifier: ^15.0.1
         version: 15.0.4
       minimatch:
-        specifier: ^10.0.1
+        specifier: ^10.0.3
         version: 10.0.3
       neostandard:
         specifier: ^0.12.0
@@ -143,7 +143,7 @@ importers:
         specifier: ^15.0.0
         version: 15.0.4
       minimatch:
-        specifier: ^10.0.1
+        specifier: ^10.0.3
         version: 10.0.3
       neostandard:
         specifier: ^0.12.0
@@ -261,7 +261,7 @@ importers:
         specifier: ^25.0.1
         version: 25.0.1
       minimatch:
-        specifier: ^10.0.1
+        specifier: ^10.0.3
         version: 10.0.3
       mkdirp:
         specifier: ^2.1.6
@@ -449,7 +449,7 @@ importers:
         specifier: ^4.0.0
         version: 4.2.0
       '@fastify/http-proxy':
-        specifier: ^11.1.1
+        specifier: ^11.2.0
         version: 11.2.0
       '@fastify/reply-from':
         specifier: ^12.0.0
@@ -2573,7 +2573,7 @@ importers:
         specifier: ~3.1.0
         version: 3.1.0
       minimatch:
-        specifier: ^10.0.1
+        specifier: ^10.0.3
         version: 10.0.3
       semver:
         specifier: ^7.6.3

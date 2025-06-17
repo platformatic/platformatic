@@ -133,7 +133,7 @@ export class NextStackable extends BaseStackable {
   }
 
   getMeta () {
-    const composer = { prefix: this.basePath ?? this.#basePath, wantsAbsoluteUrls: true, needsRootRedirect: false }
+    const composer = { prefix: this.basePath ?? this.#basePath, wantsAbsoluteUrls: true, needsRootTrailingSlash: false }
 
     if (this.url) {
       composer.tcp = true
