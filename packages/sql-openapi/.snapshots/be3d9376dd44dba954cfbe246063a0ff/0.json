@@ -923,6 +923,23 @@
         "parameters": [
           {
             "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Limit will be applied by default if not passed. If the provided value exceeds the maximum allowed value a validation error will be thrown"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "array",
               "items": {
                 "type": "string",
@@ -937,6 +954,15 @@
             },
             "in": "query",
             "name": "fields",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "in": "query",
+            "name": "totalCount",
             "required": false
           },
           {

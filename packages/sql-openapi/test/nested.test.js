@@ -108,9 +108,45 @@ test('nested routes', async (t) => {
     longText: 'A duck tale',
     counter: 40,
   }, {
-    title: 'Horse',
-    longText: 'A horse tale',
+    title: 'Jellyfish',
+    longText: 'Jelly',
     counter: 50,
+  }, {
+    title: 'Snake',
+    longText: 'Hiss',
+    counter: 60,
+  }, {
+    title: 'Howl',
+    longText: 'Hoot',
+    counter: 70,
+  }, {
+    title: 'Rabbit',
+    longText: 'Squeak',
+    counter: 80,
+  }, {
+    title: 'Whale',
+    longText: 'Sing',
+    counter: 90,
+  }, {
+    title: 'Eagle',
+    longText: 'Scream',
+    counter: 100,
+  }, {
+    title: 'Donkey',
+    longText: 'Bray',
+    counter: 110,
+  }, {
+    title: 'Elephant',
+    longText: 'Trumpet',
+    counter: 120,
+  }, {
+    title: 'Gorilla',
+    longText: 'Gibber',
+    counter: 130,
+  }, {
+    title: 'Pork',
+    longText: 'Oink',
+    counter: 140,
   }]
 
   const ownerIds = []
@@ -130,6 +166,15 @@ test('nested routes', async (t) => {
   posts[2].ownerId = ownerIds[1]
   posts[3].ownerId = ownerIds[1]
   posts[4].ownerId = null
+  posts[5].ownerId = ownerIds[0]
+  posts[6].ownerId = ownerIds[0]
+  posts[7].ownerId = ownerIds[0]
+  posts[8].ownerId = ownerIds[0]
+  posts[9].ownerId = ownerIds[0]
+  posts[10].ownerId = ownerIds[0]
+  posts[11].ownerId = ownerIds[0]
+  posts[12].ownerId = ownerIds[0]
+  posts[13].ownerId = ownerIds[0]
 
   for (const body of posts) {
     const res = await app.inject({
@@ -143,10 +188,72 @@ test('nested routes', async (t) => {
   {
     const res = await app.inject({
       method: 'GET',
-      url: `/owners/${ownerIds[0]}/posts?fields=title,longText,counter,ownerId`,
+      url: `/owners/${ownerIds[0]}/posts?fields=title,longText,counter,ownerId&limit=100`,
     })
     equal(res.statusCode, 200, 'GET /owners/:id/posts status code')
-    same(res.json(), [posts[0], posts[1]], 'GET /owners/:id/posts response')
+    same(res.json(), [
+      posts[0],
+      posts[1],
+      posts[5],
+      posts[6],
+      posts[7],
+      posts[8],
+      posts[9],
+      posts[10],
+      posts[11],
+      posts[12],
+      posts[13],
+    ], 'GET /owners/:id/posts response')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/owners/${ownerIds[0]}/posts?fields=title,longText,counter,ownerId&totalCount=true`,
+    })
+    equal(res.statusCode, 200, 'GET /owners/:id/posts status code')
+    same(res.json(), [
+      posts[0],
+      posts[1],
+      posts[5],
+      posts[6],
+      posts[7],
+      posts[8],
+      posts[9],
+      posts[10],
+      posts[11],
+      posts[12],
+    ], 'GET /owners/:id/posts response')
+
+    equal(res.headers['x-total-count'], '11')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/owners/${ownerIds[0]}/posts?fields=title,longText,counter,ownerId&limit=2&totalCount=true`,
+    })
+    equal(res.statusCode, 200, 'GET /owners/:id/posts status code')
+    same(res.json(), [
+      posts[0],
+      posts[1],
+    ], 'GET /owners/:id/posts response')
+
+    equal(res.headers['x-total-count'], '11')
+  }
+
+  {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/owners/${ownerIds[0]}/posts?fields=title,longText,counter,ownerId&limit=2&offset=2&totalCount=true`,
+    })
+    equal(res.statusCode, 200, 'GET /owners/:id/posts status code')
+    same(res.json(), [
+      posts[5],
+      posts[6],
+    ], 'GET /owners/:id/posts response')
+
+    equal(res.headers['x-total-count'], '11')
   }
 
   {
