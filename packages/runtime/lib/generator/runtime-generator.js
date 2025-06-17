@@ -104,12 +104,8 @@ class RuntimeGenerator extends BaseGenerator {
       engines
     }
 
-    if (this.packageManager) {
-      template.packageManager = this.packageManager
-
-      if (this.packageManager === 'npm' || this.packageManager === 'yarn') {
-        template.workspaces = [this.servicesFolder + '/*']
-      }
+    if (this.packageManager === 'npm' || this.packageManager === 'yarn') {
+      template.workspaces = [this.servicesFolder + '/*']
     }
 
     if (this.config.typescript) {

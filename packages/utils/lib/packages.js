@@ -3,7 +3,7 @@
 const { glob } = require('glob')
 const { join, dirname, resolve } = require('node:path')
 const { readFile } = require('node:fs/promises')
-const { existsSync, readFileSync, readdirSync } = require('node:fs')
+const { existsSync, readdirSync } = require('node:fs')
 const { isFileAccessible } = require('./is-file-accessible')
 const { request } = require('undici')
 
@@ -149,19 +149,11 @@ async function detectApplicationType (root, packageJson) {
 }
 
 /**
- * Get the package manager used in the project by:
- * - "packageManager" entry in package.json file
- * - looking at the lock file
+ * Get the package manager used in the project by looking at the lock file
  *
  * if `search` is true, will search for the package manager in a nested directory
  */
 function getPackageManager (root, defaultManager = DEFAULT_PACKAGE_MANAGER, search = false) {
-  let packageJson
-  try {
-    packageJson = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf-8'))
-    return packageJson.packageManager.split('@')[0]
-  } catch { }
-
   if (existsSync(resolve(root, 'pnpm-lock.yaml'))) {
     return 'pnpm'
   }
@@ -176,8 +168,6 @@ function getPackageManager (root, defaultManager = DEFAULT_PACKAGE_MANAGER, sear
 
   // search for the package manager in a nested directory
   if (search) {
-    // if we have a package.json, we already are in the right directory and can return the default manager
-    if (packageJson) { return defaultManager }
     // look in the first level nested directory
     for (const dir of readdirSync(root)) {
       const p = getPackageManager(resolve(root, dir), null)

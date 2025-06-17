@@ -106,31 +106,26 @@ test('check latest npm version', async (t) => {
 
 test('getPackageManager', async () => {
   const tmpDir = await mkdtemp(join(tmpdir(), 'wattpm-tests-'))
-  equal(getPackageManager('wrong'), 'npm', 'no packageManager entry in package.json nor lock files, default to npm')
-
-  // from package.json
-  await writeFile(join(tmpDir, 'package.json'), JSON.stringify({ packageManager: 'pnpm@1.2.3' }), 'utf-8')
-  equal(getPackageManager(tmpDir), 'pnpm', 'packageManager entry in package.json')
-  await unlink(join(tmpDir, 'package.json'))
+  equal(getPackageManager('wrong'), 'npm', 'default to npm')
 
   // from package-lock.json
-  await writeFile(join(tmpDir, 'package-lock.json'), JSON.stringify({ packageManager: 'yarn' }), 'utf-8')
-  equal(getPackageManager(tmpDir), 'npm', 'no packageManager entry in package.json, but found package-lock.json file')
+  await writeFile(join(tmpDir, 'package-lock.json'), '.', 'utf-8')
+  equal(getPackageManager(tmpDir), 'npm', 'found package-lock.json file')
   await unlink(join(tmpDir, 'package-lock.json'))
 
   // from yarn.lock
   const tmpYarnFile = join(tmpDir, 'yarn.lock')
   await writeFile(tmpYarnFile, '-')
-  equal(getPackageManager(tmpDir), 'yarn', 'no packageManager entry in package.json, but found yarn.lock file')
+  equal(getPackageManager(tmpDir), 'yarn', 'found yarn.lock file')
   await unlink(tmpYarnFile)
 
   // from pnpm-lock.yaml
   const tmpPnpmFile = join(tmpDir, 'pnpm-lock.yaml')
   await writeFile(tmpPnpmFile, '-')
-  equal(getPackageManager(tmpDir), 'pnpm', 'no packageManager entry in package.json, but found pnpm-lock.yaml file')
+  equal(getPackageManager(tmpDir), 'pnpm', 'found pnpm-lock.yaml file')
   await unlink(tmpPnpmFile)
 
-  equal(getPackageManager(tmpDir), 'npm', 'no packageManager entry in package.json, no lock files, default to npm')
+  equal(getPackageManager(tmpDir), 'npm', 'no lock files, default to npm')
 
   await rmdir(tmpDir)
 })

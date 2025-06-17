@@ -445,6 +445,3 @@ test('create - should wrap existing frontend applications into Watt', async t =>
     }
   })
 })
-
-// TODO should get package manager from root package.json
-// TODO choose pnpm: no workspaces on package.json, packageManager entry in the package.json
