@@ -152,7 +152,7 @@ test('create - should correctly set the chosen user entrypoint', async t => {
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
-  await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, USER_INPUT_HANDLER: userInputHandler1 } })
+  await wattpm('create', { cwd: temporaryFolder, env: { NO_COLOR: true, USER_INPUT_HANDLER: userInputHandler1 } })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf-8')), {
     $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
