@@ -5,7 +5,7 @@ This is a generated [Platformatic Composer](https://docs.platformatic.dev/docs/c
 ## Requirements
 
 Platformatic supports macOS, Linux and Windows ([WSL](https://docs.microsoft.com/windows/wsl/) recommended).
-You'll need to have [Node.js](https://nodejs.org/) >= v18.8.0 or >= v20.6.0
+You'll need to have [Node.js](https://nodejs.org/) >= v22.16.0
 
 ## Setup
 

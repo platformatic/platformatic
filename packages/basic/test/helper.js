@@ -1,13 +1,12 @@
 import { createDirectory, features, kTimeout, safeRemove, withResolvers } from '@platformatic/utils'
 import { join } from 'desm'
 import { execa } from 'execa'
-import { minimatch } from 'minimatch'
 import { deepStrictEqual, fail, ok, strictEqual } from 'node:assert'
 import { existsSync } from 'node:fs'
 import { cp, readdir, readFile, symlink, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { platform } from 'node:os'
-import { basename, dirname, resolve } from 'node:path'
+import { basename, dirname, matchesGlob, resolve } from 'node:path'
 import { Writable } from 'node:stream'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -477,7 +476,7 @@ async function ensureExists (path) {
   }
 
   ok(
-    existing.some(e => minimatch(e, pattern)),
+    existing.some(e => matchesGlob(e, pattern)),
     `Pattern ${path} not found.`
   )
 }

@@ -4,8 +4,7 @@ const semver = require('semver')
 
 function checkNodeVersionForServices () {
   const currentVersion = process.version
-  const major = parseInt(process.version.split('.')[0].slice(1))
-  const minimumVersion = major < 21 ? '20.16.0' : '22.3.0'
+  const minimumVersion = '22.16.0'
 
   if (semver.lt(currentVersion, minimumVersion)) {
     throw new Error(

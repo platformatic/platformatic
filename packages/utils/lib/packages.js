@@ -1,8 +1,7 @@
 'use strict'
 
-const { glob } = require('glob')
 const { join, dirname, resolve } = require('node:path')
-const { readFile } = require('node:fs/promises')
+const { readFile, glob } = require('node:fs/promises')
 const { isFileAccessible } = require('./is-file-accessible')
 const { request } = require('undici')
 
@@ -88,7 +87,7 @@ async function getLatestNpmVersion (pkg) {
 
 async function searchFilesWithExtensions (root, extensions, globOptions = {}) {
   const globSuffix = Array.isArray(extensions) ? `{${extensions.join(',')}}` : extensions
-  return glob(`**/*.${globSuffix}`, { ...globOptions, cwd: root })
+  return Array.fromAsync(glob(`**/*.${globSuffix}`, { ...globOptions, cwd: root }))
 }
 
 async function searchJavascriptFiles (projectDir, globOptions = {}) {
