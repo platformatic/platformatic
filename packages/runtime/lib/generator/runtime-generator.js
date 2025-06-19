@@ -12,7 +12,7 @@ const { getServiceTemplateFromSchemaUrl } = require('@platformatic/generators/li
 const { DotEnvTool } = require('dotenv-tool')
 const { getArrayDifference } = require('../utils')
 const { pathToFileURL } = require('node:url')
-const { safeRemove, generateDashedName } = require('@platformatic/utils')
+const { safeRemove, generateDashedName, DEFAULT_PACKAGE_MANAGER } = require('@platformatic/utils')
 const { createRequire } = require('node:module')
 
 const wrappableProperties = {
@@ -50,6 +50,7 @@ class RuntimeGenerator extends BaseGenerator {
     this.services = []
     this.existingServices = []
     this.entryPoint = null
+    this.packageManager = opts.packageManager ?? DEFAULT_PACKAGE_MANAGER
   }
 
   async addService (service, name) {
@@ -85,7 +86,6 @@ class RuntimeGenerator extends BaseGenerator {
   async generatePackageJson () {
     const template = {
       name: `${this.runtimeName}`,
-      workspaces: [this.servicesFolder + '/*'],
       scripts: {
         dev: this.config.devCommand,
         build: this.config.buildCommand,
@@ -103,6 +103,11 @@ class RuntimeGenerator extends BaseGenerator {
       },
       engines
     }
+
+    if (this.packageManager === 'npm' || this.packageManager === 'yarn') {
+      template.workspaces = [this.servicesFolder + '/*']
+    }
+
     if (this.config.typescript) {
       const typescriptVersion = JSON.parse(await readFile(join(__dirname, '..', '..', 'package.json'), 'utf-8'))
         .devDependencies.typescript
