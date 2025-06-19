@@ -1,9 +1,9 @@
 import { deepEqual, strictEqual } from 'node:assert'
-import { mkdir, mkdtemp, rm, rmdir, unlink, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
-import { findRuntimeConfigurationFile, getPackageArgs, getPackageManager } from '../lib/utils.js'
+import { findRuntimeConfigurationFile, getPackageArgs } from '../lib/utils.js'
 
 test('utils - findRuntimeConfigurationFile - should search for configuration file when none is passed', async () => {
   let fatalCalled = false
@@ -64,22 +64,4 @@ test('utils - getPackageArgs - should return the right package args', () => {
   deepEqual(getPackageArgs('yarn'), ['install'], 'yarn passed, no prod')
   deepEqual(getPackageArgs('pnpm', true), ['install', '--prod'], 'pnpm passed, prod mode')
   deepEqual(getPackageArgs('npm', true), ['install', '--omit=dev'], 'npm passed, prod mode')
-})
-
-test('utils - getPackageManager - should return the right package manager, depending on the cases', async () => {
-  const tmpDir = await mkdtemp(join(tmpdir(), 'wattpm-tests-'))
-  strictEqual(getPackageManager('wrong'), 'npm', 'path is wrong, default to npm')
-
-  const tmpYarnFile = join(tmpDir, 'yarn.lock')
-  await writeFile(tmpYarnFile, '-')
-  strictEqual(getPackageManager(tmpDir), 'yarn', 'path is correct, and we identify yarn')
-  await unlink(tmpYarnFile)
-
-  const tmpPnpmFile = join(tmpDir, 'pnpm-lock.yaml')
-  await writeFile(tmpPnpmFile, '-')
-  strictEqual(getPackageManager(tmpDir), 'pnpm', 'path is correct, and we identify pnpm')
-  await unlink(tmpPnpmFile)
-
-  strictEqual(getPackageManager(tmpDir), 'npm', 'path is correct, but no file are found, so we default to npm')
-  await rmdir(tmpDir)
 })
