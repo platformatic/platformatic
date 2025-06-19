@@ -127,7 +127,6 @@ const configurations = [
     id: 'node-with-build-no-main',
     name: 'Node.js application (with a build function in development mode when standalone)',
     files: ['services/frontend/dist/server.js'],
-    only: true,
     checks: [verifyStandalone],
     language: 'ts',
     prefix: ''

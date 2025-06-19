@@ -123,7 +123,7 @@ test('should validate application path', async t => {
   }
 })
 
-test.only('copy - should copy application', async t => {
+test('copy - should copy application', async t => {
   const sourceDir = await createTemporaryDirectory(t)
   const targetDir = await createTemporaryDirectory(t)
 
