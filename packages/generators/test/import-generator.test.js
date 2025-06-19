@@ -133,8 +133,10 @@ test('copy - should copy application', async t => {
   await writeFile(join(sourceDir, '.env'), 'A=B')
   await mkdir(join(sourceDir, 'src'))
   await mkdir(join(sourceDir, 'node_modules'))
-  await writeFile(join(sourceDir, 'src', 'app.js'), 'module.exports = {}')
   await writeFile(join(sourceDir, 'src', 'fake.js'), 'module.exports = {}')
+  await writeFile(join(sourceDir, 'src', 'app.js'), 'module.exports = {}')
+  await writeFile(join(sourceDir, 'src', '.env'), 'C=D')
+  await writeFile(join(sourceDir, 'node_modules', 'fake.js'), 'module.exports = {}')
   await writeFile(join(sourceDir, 'pnpm-lock.yaml'), '---')
   await writeFile(join(sourceDir, 'package-lock.json'), '{}')
   await writeFile(join(sourceDir, 'yarn.lock'), '{}')
@@ -159,6 +161,9 @@ test('copy - should copy application', async t => {
 
   const appJs = await readFile(join(targetDir, 'src', 'app.js'), 'utf-8')
   deepStrictEqual(appJs, 'module.exports = {}')
+
+  const srcEnvFile = await readFile(join(targetDir, 'src/.env'), 'utf-8')
+  deepStrictEqual(srcEnvFile, 'C=D')
 
   ok(!existsSync(join(targetDir, 'node_modules', 'fake.js')))
   ok(!existsSync(join(targetDir, 'pnpm-lock.yaml')))

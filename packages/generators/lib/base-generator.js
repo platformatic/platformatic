@@ -403,7 +403,7 @@ class BaseGenerator extends FileGenerator {
         ...this.config.dependencies
       },
       engines: {
-        node: '^22.14.0 || ^20.6.0'
+        node: '>=22.16.0'
       }
     }
 
