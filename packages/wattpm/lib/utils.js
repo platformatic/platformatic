@@ -10,7 +10,6 @@ import {
   loadConfiguration as utilsLoadConfiguration
 } from '@platformatic/utils'
 import { bgGreen, black, bold } from 'colorette'
-import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { parseArgs as nodeParseArgs } from 'node:util'
 import { pino } from 'pino'
@@ -87,18 +86,6 @@ export function parseArgs (args, options, stopAtFirstPositional = true) {
     unparsed,
     tokens
   }
-}
-
-export function getPackageManager (root, defaultManager = 'npm') {
-  if (existsSync(resolve(root, 'pnpm-lock.yaml'))) {
-    return 'pnpm'
-  }
-
-  if (existsSync(resolve(root, 'yarn.lock'))) {
-    return 'yarn'
-  }
-
-  return defaultManager
 }
 
 export function getPackageArgs (packageManager, production) {

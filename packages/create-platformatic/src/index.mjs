@@ -1,10 +1,12 @@
 import { ImportGenerator } from '@platformatic/generators'
 import {
   createDirectory,
+  defaultPackageManager,
   detectApplicationType,
   executeWithTimeout,
   findConfigurationFileRecursive,
   generateDashedName,
+  getPackageManager,
   getPkgManager,
   loadConfigurationFile,
   searchJavascriptFiles
@@ -274,6 +276,10 @@ export async function createApplication (
         })
 
         if (shouldWrap) {
+          if (!packageManager) {
+            packageManager = await getPackageManager(projectDir, defaultPackageManager)
+          }
+
           return wrapApplication(
             logger,
             inquirer,
@@ -307,6 +313,26 @@ export async function createApplication (
 
   const projectName = basename(projectDir)
 
+  if (!packageManager) {
+    packageManager = await getPackageManager(projectDir, null, true)
+
+    if (!packageManager) {
+      const p = await inquirer.prompt({
+        type: 'list',
+        name: 'packageManager',
+        message: 'Which package manager do you want to use?',
+        default: defaultPackageManager,
+        choices: [
+          { name: 'npm', value: 'npm' },
+          { name: 'pnpm', value: 'pnpm' },
+          { name: 'yarn', value: 'yarn' }
+        ]
+      })
+
+      packageManager = p.packageManager
+    }
+  }
+
   const runtime = await importOrLocal({
     pkgManager: packageManager,
     name: projectName,
@@ -318,6 +344,7 @@ export async function createApplication (
     logger,
     name: projectName,
     inquirer,
+    packageManager,
     ...additionalGeneratorOptions
   })
 

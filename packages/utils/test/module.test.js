@@ -1,5 +1,5 @@
 import { equal, ok, rejects, strictEqual } from 'node:assert'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rmdir, unlink, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -8,6 +8,7 @@ import { MockAgent, setGlobalDispatcher } from 'undici'
 import {
   detectApplicationType,
   getLatestNpmVersion,
+  getPackageManager,
   getPkgManager,
   getPlatformaticVersion,
   hasDependency,
@@ -72,6 +73,32 @@ test('getLatestNpmVersion', async t => {
     const latest = await getLatestNpmVersion('foobar')
     equal(latest, null)
   }
+})
+
+test('getPackageManager', async () => {
+  const tmpDir = await mkdtemp(join(tmpdir(), 'wattpm-tests-'))
+  equal(await getPackageManager('wrong'), 'npm', 'default to npm')
+
+  // from package-lock.json
+  await writeFile(join(tmpDir, 'package-lock.json'), '.', 'utf-8')
+  equal(await getPackageManager(tmpDir), 'npm', 'found package-lock.json file')
+  await unlink(join(tmpDir, 'package-lock.json'))
+
+  // from yarn.lock
+  const tmpYarnFile = join(tmpDir, 'yarn.lock')
+  await writeFile(tmpYarnFile, '-')
+  equal(await getPackageManager(tmpDir), 'yarn', 'found yarn.lock file')
+  await unlink(tmpYarnFile)
+
+  // from pnpm-lock.yaml
+  const tmpPnpmFile = join(tmpDir, 'pnpm-lock.yaml')
+  await writeFile(tmpPnpmFile, '-')
+  equal(await getPackageManager(tmpDir), 'pnpm', 'found pnpm-lock.yaml file')
+  await unlink(tmpPnpmFile)
+
+  equal(await getPackageManager(tmpDir), 'npm', 'no lock files, default to npm')
+
+  await rmdir(tmpDir)
 })
 
 test('getPkgManager - detects npm', async t => {

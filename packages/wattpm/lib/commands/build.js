@@ -1,5 +1,5 @@
 import { loadConfiguration } from '@platformatic/runtime'
-import { ensureLoggableError } from '@platformatic/utils'
+import { ensureLoggableError, getPackageManager } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { parse } from 'dotenv'
 import { execa } from 'execa'
@@ -12,7 +12,6 @@ import {
   buildRuntime,
   findRuntimeConfigurationFile,
   getPackageArgs,
-  getPackageManager,
   getRoot,
   logFatalError,
   parseArgs
