@@ -1,0 +1,6 @@
+{
+  "db": {
+    "connectionString": "{DATABASE_URL}"
+  },
+  "migrations": {}
+}
