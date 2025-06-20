@@ -354,19 +354,19 @@ class ConfigManager extends EventEmitter {
     return configString
   }
 
-  static listConfigFiles (type, skipTypeless = false) {
+  static listConfigFiles (type, skipTypeless = false, extensions = ConfigManager.knownExtensions) {
     let typeless = []
 
     if (!skipTypeless) {
       typeless = [
-        ...ConfigManager.knownExtensions.map(ext => `watt.${ext}`),
-        ...ConfigManager.knownExtensions.map(ext => `platformatic.${ext}`)
+        ...extensions.map(ext => `watt.${ext}`),
+        ...extensions.map(ext => `platformatic.${ext}`)
       ]
     }
 
     if (type) {
       // A config type (service, db, etc.) was explicitly provided.
-      return [...typeless, ...ConfigManager.knownExtensions.map(ext => `platformatic.${type}.${ext}`)]
+      return [...typeless, ...extensions.map(ext => `platformatic.${type}.${ext}`)]
     } else {
       // A config type was not provided. Search for all known types and
       // formats. Unfortunately, this means the ConfigManager needs to be

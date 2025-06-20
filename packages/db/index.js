@@ -113,7 +113,6 @@ async function healthCheck (app) {
 platformaticDB[Symbol.for('skip-override')] = true
 platformaticDB.schema = schema
 platformaticDB.configType = 'db'
-platformaticDB.isPLTService = true
 platformaticDB.configManagerConfig = {
   version,
   schema,

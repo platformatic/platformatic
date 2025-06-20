@@ -411,6 +411,7 @@ export async function buildStackable (opts) {
     context: opts.context
   })
   await configManager.parseAndValidate()
+
   const config = configManager.current
   // We need to update the config with the telemetry so the service name
   // used in telemetry can be retreived using the management API

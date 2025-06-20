@@ -1976,6 +1976,9 @@ importers:
       '@fastify/under-pressure':
         specifier: ^9.0.0
         version: 9.0.3
+      '@platformatic/basic':
+        specifier: workspace:*
+        version: link:../basic
       '@platformatic/client':
         specifier: workspace:*
         version: link:../client
@@ -2124,9 +2127,6 @@ importers:
       strip-ansi:
         specifier: ^7.1.0
         version: 7.1.0
-      tsd:
-        specifier: ^0.32.0
-        version: 0.32.0
       typescript:
         specifier: ^5.5.4
         version: 5.8.3
