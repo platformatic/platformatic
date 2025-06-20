@@ -2,9 +2,9 @@
 
 'use strict'
 
-const packageJson = require('../package.json')
 const telemetry = require('@platformatic/telemetry').schema
 const { fastifyServer: server, cors, watch, wrappedRuntime } = require('@platformatic/utils').schemaComponents
+const packageJson = require('../package.json')
 
 const $defs = {
   info: {

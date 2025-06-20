@@ -81,10 +81,7 @@ test('should respond 200 on root endpoint', async t => {
 })
 
 test('from a config file on disk', async t => {
-  const app = await createStackable(
-    join(__dirname, './fixtures/hello'),
-    join(__dirname, './fixtures/hello/warn-log.service.json')
-  )
+  const app = await createStackable(join(__dirname, './fixtures/hello/warn-log.service.json'))
 
   t.after(async () => {
     await app.stop()

@@ -3,60 +3,56 @@
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { buildConfigManager, getConnectionInfo } = require('../helper')
-const { buildStackable } = require('../..')
+const { createStackableFromConfig, getConnectionInfo } = require('../helper')
 
-test('get service config via stackable api', async (t) => {
+test('get service config via stackable api', async t => {
   const workingDir = join(__dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const config = {
+  const stackable = await createStackableFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
     },
     db: {
-      ...connectionInfo,
+      ...connectionInfo
     },
     plugins: {
-      paths: [join(workingDir, 'routes')],
+      paths: [join(workingDir, 'routes')]
     },
     watch: {
-      enabled: false,
+      enabled: false
     },
-    metrics: false,
-  }
-
-  const configManager = await buildConfigManager(config, workingDir)
-  const stackable = await buildStackable({ configManager })
+    metrics: false
+  })
 
   t.after(async () => {
     await stackable.stop()
     await dropTestDB()
   })
-  await stackable.start()
+  await stackable.start({ listen: true })
 
   const stackableConfig = await stackable.getConfig()
   assert.deepStrictEqual(stackableConfig, {
     db: {
-      ...connectionInfo,
+      ...connectionInfo
     },
     metrics: false,
     plugins: {
-      paths: [join(workingDir, 'routes')],
+      paths: [join(workingDir, 'routes')]
     },
     server: {
       hostname: '127.0.0.1',
       port: 0,
       keepAliveTimeout: 5000,
       logger: {
-        level: 'trace',
+        level: 'fatal'
       },
-      pluginTimeout: 60000,
-      trustProxy: true,
+      pluginTimeout: 60000
     },
     watch: {
-      enabled: false,
-    },
+      enabled: false
+    }
   })
 })

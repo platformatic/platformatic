@@ -1,106 +1,44 @@
 'use strict'
 
 const deepEqual = require('fast-deep-equal')
-const ConfigManager = require('@platformatic/config')
-const { platformaticService, buildServer, buildStackable } = require('@platformatic/service')
+const { findConfigurationFile } = require('@platformatic/basic')
+const { ConfigManager } = require('@platformatic/config')
+const { platformaticService, ServiceStackable, configManagerConfig } = require('@platformatic/service')
 const { isKeyEnabled } = require('@platformatic/utils')
-
-const { schema } = require('./lib/schema')
+const { Generator } = require('./lib/generator.js')
+const { schema, packageJson } = require('./lib/schema')
+const schemaComponents = require('./lib/schema')
 const serviceProxy = require('./lib/proxy')
 const graphql = require('./lib/graphql')
 const composerHook = require('./lib/composer-hook')
 const { openApiGenerator, openApiComposer } = require('./lib/openapi-generator')
 const graphqlGenerator = require('./lib/graphql-generator')
 const { isSameGraphqlSchema, fetchGraphqlSubgraphs } = require('./lib/graphql-fetch')
-const notHostConstraints = require('./lib/proxy/not-host-constraints')
+const notHostConstraints = require('./lib/not-host-constraints')
 const { isFetchable } = require('./lib/utils')
-const { ComposerStackable, ensureServices } = require('./lib/stackable')
 const errors = require('./lib/errors')
-const upgrade = require('./lib/upgrade')
 
+const kITC = Symbol.for('plt.runtime.itc')
 const EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE = 'graphql composer is an experimental feature'
+const { schemaOptions, transformConfig } = configManagerConfig
 
-async function platformaticComposer (app, opts) {
-  const configManager = app.platformatic.configManager
-  const config = configManager.current
-  let hasGraphqlServices, hasOpenapiServices
-
-  // When no services are specified, get the list from the runtime.
-  await ensureServices(opts.context?.stackable?.serviceId, config)
-
-  const { services } = configManager.current.composer
-
-  for (const service of services) {
-    if (!service.origin) {
-      service.origin = `http://${service.id}.plt.local`
-    }
-    if (service.openapi && !hasOpenapiServices) {
-      hasOpenapiServices = true
-    }
-    if (service.graphql && !hasGraphqlServices) {
-      hasGraphqlServices = true
-    }
+async function ensureServices (composerId, config) {
+  if (config.composer?.services?.length) {
+    return
   }
 
-  await app.register(composerHook)
+  composerId ??= globalThis.platformatic?.serviceId
+  config.composer ??= {}
+  config.composer.services ??= []
 
-  let generatedComposedOpenAPI = null
-  if (hasOpenapiServices) {
-    generatedComposedOpenAPI = await openApiGenerator(app, config.composer)
+  // When no services are defined, all services are exposed in the composer
+  const services = await globalThis[kITC]?.send('listServices')
+
+  if (services) {
+    config.composer.services = services
+      .filter(id => id !== composerId) // Remove ourself
+      .map(id => ({ id, proxy: { prefix: `/${id}` } }))
   }
-
-  if (isKeyEnabled('healthCheck', config.server)) {
-    if (typeof config.server.healthCheck !== 'object') {
-      config.server.healthCheck = {}
-    }
-
-    const stackable = opts.context.stackable
-    config.server.healthCheck.fn = stackable.isHealthy.bind(stackable)
-  }
-
-  app.register(serviceProxy, { ...config.composer, context: opts.context })
-  await app.register(platformaticService, { config: { ...config, openapi: false }, context: opts.context })
-
-  if (generatedComposedOpenAPI) {
-    await app.register(openApiComposer, { opts: config.composer, generated: generatedComposedOpenAPI })
-  }
-
-  if (hasGraphqlServices) {
-    app.log.warn(EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE)
-    app.register(graphql, config.composer)
-    await app.register(graphqlGenerator, config.composer)
-  }
-
-  if (!app.hasRoute({ url: '/', method: 'GET' }) && !app.hasRoute({ url: '/*', method: 'GET' })) {
-    await app.register(require('./lib/root-endpoint'), config)
-  }
-
-  if (!opts.context?.isProduction) {
-    await watchServices(app, config)
-  }
-}
-
-platformaticComposer[Symbol.for('skip-override')] = true
-platformaticComposer.schema = schema
-platformaticComposer.configType = 'composer'
-platformaticComposer.configManagerConfig = {
-  version: require('./package.json').version,
-  schema,
-  allowToWatch: ['.env'],
-  schemaOptions: {
-    useDefaults: true,
-    coerceTypes: true,
-    allErrors: true,
-    strict: false
-  },
-  transformConfig: platformaticService.configManagerConfig.transformConfig,
-  upgrade
-}
-
-// TODO review no need to be async
-async function buildComposerServer (options) {
-  // TODO ConfigManager is not been used, it's attached to platformaticComposer, can be removed
-  return buildServer(options, platformaticComposer, ConfigManager)
 }
 
 async function detectServicesUpdate ({ app, services, fetchOpenApiSchema, fetchGraphqlSubgraphs }) {
@@ -195,22 +133,182 @@ async function watchServices (app, opts) {
   })
 }
 
-async function buildComposerStackable (options) {
-  options.context ??= {}
-  options.context.fastifyOptions ??= {
-    constraints: {
-      notHost: notHostConstraints
+async function platformaticComposer (app, stackable) {
+  const config = await stackable.getConfig()
+  let hasGraphqlServices, hasOpenapiServices
+
+  // When no services are specified, get the list from the runtime.
+  await ensureServices(stackable.serviceId, config)
+
+  const { services } = config.composer
+
+  for (const service of services) {
+    if (!service.origin) {
+      service.origin = `http://${service.id}.plt.local`
+    }
+    if (service.openapi && !hasOpenapiServices) {
+      hasOpenapiServices = true
+    }
+    if (service.graphql && !hasGraphqlServices) {
+      hasGraphqlServices = true
     }
   }
 
-  return buildStackable(options, platformaticComposer, ComposerStackable)
+  await app.register(composerHook)
+
+  let generatedComposedOpenAPI = null
+  if (hasOpenapiServices) {
+    generatedComposedOpenAPI = await openApiGenerator(app, config.composer)
+  }
+
+  if (isKeyEnabled('healthCheck', config.server)) {
+    if (typeof config.server.healthCheck !== 'object') {
+      config.server.healthCheck = {}
+    }
+
+    config.server.healthCheck.fn = stackable.isHealthy.bind(stackable)
+  }
+
+  app.register(serviceProxy, { ...config.composer, context: stackable.context })
+
+  await platformaticService(app, stackable)
+
+  if (generatedComposedOpenAPI) {
+    await app.register(openApiComposer, { opts: config.composer, generated: generatedComposedOpenAPI })
+  }
+
+  if (hasGraphqlServices) {
+    app.log.warn(EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE)
+    app.register(graphql, config.composer)
+    await app.register(graphqlGenerator, config.composer)
+  }
+
+  if (!app.hasRoute({ url: '/', method: 'GET' }) && !app.hasRoute({ url: '/*', method: 'GET' })) {
+    await app.register(require('./lib/root'), config)
+  }
+
+  if (!stackable.context?.isProduction) {
+    await watchServices(app, config)
+  }
 }
 
-module.exports = platformaticComposer
-module.exports.schema = schema
-module.exports.platformaticComposer = platformaticComposer
-module.exports.buildServer = buildComposerServer
-module.exports.errors = errors
-module.exports.Generator = require('./lib/generator/composer-generator')
-module.exports.ConfigManager = ConfigManager
-module.exports.buildStackable = buildComposerStackable
+platformaticComposer[Symbol.for('skip-override')] = true
+
+class ComposerStackable extends ServiceStackable {
+  #meta
+  #dependencies
+
+  constructor (options, root, configManager) {
+    super(options, root, configManager)
+    this.type = 'composer'
+    this.version = packageJson.version
+
+    this.applicationFactory = this.context.applicationFactory ?? platformaticComposer
+
+    this.fastifyOptions ??= {}
+    this.fastifyOptions.constraints = { notHost: notHostConstraints }
+  }
+
+  async getBootstrapDependencies () {
+    await ensureServices(this.serviceId, this.configManager.current)
+
+    // We do not call init() on purpose, as we don't want to load the app just yet.
+
+    const composedServices = this.configManager.current.composer?.services
+    const dependencies = []
+
+    if (Array.isArray(composedServices)) {
+      dependencies.push(
+        ...(await Promise.all(
+          composedServices.map(async service => {
+            return this.#parseDependency(service.id, service.origin)
+          })
+        ))
+      )
+    }
+
+    this.#dependencies = dependencies
+    return this.#dependencies
+  }
+
+  registerMeta (meta) {
+    this.#meta = Object.assign(this.#meta ?? {}, meta)
+  }
+
+  async getMeta () {
+    const serviceMeta = super.getMeta()
+    const composerMeta = this.#meta ? { composer: this.#meta } : undefined
+
+    return {
+      ...serviceMeta,
+      ...composerMeta
+    }
+  }
+
+  async isHealthy () {
+    // Still booting, assume healthy
+    if (!this.#dependencies) {
+      return true
+    }
+
+    const composedServices = this.#dependencies.map(dep => dep.id)
+    const workers = await globalThis[kITC].send('getWorkers')
+
+    for (const worker of Object.values(workers)) {
+      if (composedServices.includes(worker.service) && !worker.status.startsWith('start')) {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  async #parseDependency (id, urlString) {
+    let url = `http://${id}.plt.local`
+
+    if (urlString) {
+      const remoteUrl = await this.configManager.replaceEnv(urlString)
+
+      if (remoteUrl) {
+        url = remoteUrl
+      }
+    }
+
+    return { id, url, local: url.endsWith('.plt.local') }
+  }
+}
+
+// This will be replace by createStackable before the release of v3
+async function buildStackable (opts) {
+  return createStackable(opts.context.directory, opts.config, opts.context)
+}
+
+async function createStackable (root, source, opts, context) {
+  source ??= await findConfigurationFile(root, 'composer')
+
+  context ??= {}
+  context.directory = root
+
+  opts ??= { context }
+  opts.context = context
+
+  const configManager = new ConfigManager({ schema, source, schemaOptions, transformConfig, dirname: root, context })
+  await configManager.parseAndValidate()
+
+  return new ComposerStackable(opts, root, configManager)
+}
+
+module.exports = {
+  Generator,
+  ServiceStackable,
+  errors,
+  platformaticComposer,
+  createStackable,
+  // Old exports
+  configType: 'composer',
+  configManagerConfig,
+  buildStackable,
+  schema,
+  schemaComponents,
+  version: packageJson.version
+}

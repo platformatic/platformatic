@@ -1150,6 +1150,7 @@ class Runtime extends EventEmitter {
 
     const execArgv = []
 
+    // TODO@PI: How do avoid double loading on @platformatic/service?
     if (!serviceConfig.isPLTService && config.telemetry && config.telemetry.enabled !== false) {
       // We need the following because otherwise some open telemetry instrumentations won't work with ESM (like express)
       // see: https://github.com/open-telemetry/opentelemetry-js/blob/main/doc/esm-support.md#instrumentation-hook-required-for-esm

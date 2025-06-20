@@ -7,7 +7,7 @@ const {
   getServerUrl,
   ensureTrailingSlash,
   cleanBasePath,
-  findConfigurationFile
+  resolveStackable
 } = require('@platformatic/basic')
 const { ConfigManager } = require('@platformatic/config')
 const { telemetry } = require('@platformatic/telemetry')
@@ -22,6 +22,7 @@ const { join } = require('node:path')
 const pino = require('pino')
 const { Generator } = require('./lib/generator.js')
 const { schema, packageJson } = require('./lib/schema.js')
+const schemaComponents = require('./lib/schema.js')
 const { isDocker } = require('./lib/utils.js')
 const setupCors = require('./lib/plugins/cors.js')
 const setupClients = require('./lib/plugins/clients.js')
@@ -33,7 +34,11 @@ const loadPlugins = require('./lib/plugins/plugins.js')
 const setupRoot = require('./lib/plugins/root.js')
 const setupTsCompiler = require('./lib/plugins/typescript.js')
 
-async function platformaticService (app, stackable) {
+async function registerCriticalPlugins (app, stackable) {
+  if (stackable.context.criticalPluginsRegistered) {
+    return
+  }
+
   const config = await stackable.getConfig()
 
   if (isKeyEnabled('metrics', config)) {
@@ -51,8 +56,15 @@ async function platformaticService (app, stackable) {
     await app.register(telemetry, config.telemetry)
   }
 
-  // This must be done before loading the plugins, so they can be
-  // configured accordingly
+  stackable.context.criticalPluginsRegistered = true
+}
+
+async function platformaticService (app, stackable) {
+  await registerCriticalPlugins(app, stackable)
+
+  const config = await stackable.getConfig()
+
+  // This must be done before loading the plugins, so they can be configured accordingly
   if (isKeyEnabled('clients', config)) {
     await app.register(setupClients, config.clients)
   }
@@ -127,6 +139,12 @@ class ServiceStackable extends BaseStackable {
 
     this.#app.decorate('platformatic', { configManager: this.configManager, config: this.configManager.current })
     await this.#app.register(this.applicationFactory, this)
+
+    if (Array.isArray(this.context.fastifyPlugins)) {
+      for (const plugin of this.context.fastifyPlugins) {
+        await this.#app.register(plugin)
+      }
+    }
 
     if (!this.#app.hasRoute({ url: '/', method: 'GET' }) && !this.#app.hasRoute({ url: '/*', method: 'GET' })) {
       await this.#app.register(setupRoot)
@@ -292,7 +310,9 @@ class ServiceStackable extends BaseStackable {
   }
 
   _initializeLogger () {
-    if (this.configManager.current.server?.loggerInstance) {
+    if (this.context?.logger) {
+      return this.context.logger
+    } else if (this.configManager.current.server?.loggerInstance) {
       return this.configManager.current.server?.loggerInstance
     }
 
@@ -398,25 +418,13 @@ async function transformConfig () {
   }
 }
 
+// This will be replace by createStackable before the release of v3
 async function buildStackable (opts) {
-  const root = opts.context.directory
-
-  const configManager = new ConfigManager({
-    schema,
-    source: opts.config ?? {},
-    schemaOptions,
-    transformConfig,
-    dirname: root,
-    context: opts.context
-  })
-  await configManager.parseAndValidate()
-
-  return new ServiceStackable(opts, root, configManager)
+  return createStackable(opts.context.directory, opts.config, opts.context)
 }
 
-// This will replace buildStackable before the release of v3
-async function createStackable (root, source, opts, context) {
-  source ??= await findConfigurationFile(root, 'service')
+async function createStackable (fileOrDirectory, sourceOrConfig, opts, context) {
+  const { root, source } = await resolveStackable(fileOrDirectory, sourceOrConfig, 'service')
 
   context ??= {}
   context.directory = root
@@ -434,6 +442,7 @@ module.exports = {
   Generator,
   ServiceStackable,
   platformaticService,
+  registerCriticalPlugins,
   createStackable,
   transformConfig,
   // Old exports
@@ -444,5 +453,6 @@ module.exports = {
   },
   buildStackable,
   schema,
+  schemaComponents,
   version: packageJson.version
 }

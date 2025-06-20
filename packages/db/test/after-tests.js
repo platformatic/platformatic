@@ -4,7 +4,7 @@ const { join } = require('path')
 const { readdir } = require('fs/promises')
 const { safeRemove } = require('@platformatic/utils')
 
-const TMP_DIR_PATH = join(__dirname, 'tmp')
+const TMP_DIR_PATH = join(__dirname, '../../../tmp')
 
 async function cleanTmpDir () {
   const filenames = await readdir(TMP_DIR_PATH)

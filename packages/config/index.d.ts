@@ -76,25 +76,6 @@ export interface ConfigManagerConfig<T>
   schema: object
 }
 
-export interface StackableInfo {
-  type: string
-  version: string
-}
-
-export interface BuildStackableArgs {
-  config?: string
-  onMissingEnv?: (envVarName: string) => string
-}
-
-export function buildStackable<ConfigType> (opts: { config: string }, app?: object): Promise<StackableInterface>
-
-export interface Stackable<ConfigType> {
-  configType: string
-  configManagerConfig: ConfigManagerConfig<ConfigType>
-  schema: object
-  transformConfig?: (config: any) => Promise<any>
-}
-
 export default ConfigManager
 
 /**

@@ -1,9 +1,9 @@
 import { ConfigManager, errors } from '@platformatic/config'
 import { detectApplicationType } from '@platformatic/utils'
 import jsonPatch from 'fast-json-patch'
-import { readFile } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import { relative, resolve } from 'node:path'
+import { dirname, relative, resolve } from 'node:path'
 import { workerData } from 'node:worker_threads'
 import pino from 'pino'
 import { packageJson, schema } from './lib/schema.js'
@@ -110,6 +110,33 @@ export async function findConfigurationFile (root, typeOrCandidates) {
   }
 
   return resolve(root, file)
+}
+
+export async function resolveStackable (fileOrDirectory, sourceOrConfig, typeOrCandidates) {
+  if (sourceOrConfig && typeof sourceOrConfig !== 'string') {
+    return {
+      root: fileOrDirectory,
+      source: sourceOrConfig
+    }
+  }
+
+  try {
+    const fileInfo = await stat(fileOrDirectory)
+
+    if (fileInfo.isFile()) {
+      return {
+        root: dirname(fileOrDirectory),
+        source: fileOrDirectory
+      }
+    }
+  } catch (err) {
+    // No-op
+  }
+
+  return {
+    root: fileOrDirectory,
+    source: await findConfigurationFile(fileOrDirectory, typeOrCandidates)
+  }
 }
 
 async function buildStackable (opts) {

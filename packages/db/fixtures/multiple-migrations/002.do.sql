@@ -1,4 +1,0 @@
-CREATE TABLE pages (
-  id SERIAL PRIMARY KEY,
-  name TEXT
-);

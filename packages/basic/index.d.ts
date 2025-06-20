@@ -1,3 +1,6 @@
+import { ConfigManager } from '@platformatic/config'
+import { Options as AjvOptions } from 'ajv'
+
 export interface StartOptions {
   listen?: boolean
 }
@@ -25,7 +28,7 @@ export interface BaseOptions<Context = BaseContext> {
   context: Context
 }
 
-export declare const schemaOptions: typeof Ajv.defaultOptions
+export declare const schemaOptions: Partial<AjvOptions>
 
 export class BaseStackable<Config = Record<string, any>, Options = BaseOptions> {
   basePath: string
@@ -44,7 +47,7 @@ export class BaseStackable<Config = Record<string, any>, Options = BaseOptions> 
   getUrl (): string
   updateContext (context: Partial<BaseContext>): Promise<void>
   getConfig (): Promise<object>
-  getInfo (): Promise<StackableInfo>
+  getInfo (): Promise<{ type: string; version: string }>
   getDispatchFunc (): Promise<Function>
   getDispatchTarget (): Promise<Function | string>
   getOpenapiSchema (): Promise<object>

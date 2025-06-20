@@ -12,7 +12,7 @@ const { safeRemove } = require('@platformatic/utils')
 const projectRoot = join(__dirname, './fixtures/hello')
 
 test('client is loaded', async t => {
-  const app1 = await createStackable(projectRoot, join(projectRoot, 'warn-log.service.json'))
+  const app1 = await createStackable(join(projectRoot, 'warn-log.service.json'))
 
   t.after(async () => {
     await app1.stop()
@@ -21,10 +21,7 @@ test('client is loaded', async t => {
 
   process.env.PLT_CLIENT_URL = app1.url
 
-  const app2 = await createStackable(
-    join(__dirname, './fixtures/hello-client'),
-    join(__dirname, './fixtures/hello-client/platformatic.service.json')
-  )
+  const app2 = await createStackable(join(__dirname, './fixtures/hello-client/platformatic.service.json'))
 
   t.after(async () => {
     await app2.stop()
@@ -38,7 +35,7 @@ test('client is loaded', async t => {
 })
 
 test('client is loaded (ts)', async t => {
-  const app1 = await createStackable(projectRoot, join(projectRoot, 'warn-log.service.json'))
+  const app1 = await createStackable(join(projectRoot, 'warn-log.service.json'))
 
   t.after(async () => {
     await app1.stop()
@@ -71,7 +68,7 @@ test('client is loaded (ts)', async t => {
 })
 
 test('client is loaded dependencyless', async t => {
-  const app1 = await createStackable(projectRoot, join(projectRoot, 'warn-log.service.json'))
+  const app1 = await createStackable(join(projectRoot, 'warn-log.service.json'))
 
   t.after(async () => {
     await app1.stop()
@@ -94,7 +91,7 @@ test('client is loaded dependencyless', async t => {
 })
 
 test('client is loaded before plugins', async t => {
-  const app1 = await createStackable(projectRoot, join(projectRoot, 'warn-log.service.json'))
+  const app1 = await createStackable(join(projectRoot, 'warn-log.service.json'))
 
   t.after(async () => {
     await app1.stop()

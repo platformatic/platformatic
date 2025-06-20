@@ -7,7 +7,7 @@ import { createRequire } from 'node:module'
 import { basename, join, parse, posix, relative, resolve } from 'path'
 import pino from 'pino'
 import pretty from 'pino-pretty'
-import { platformaticDB } from '../index.js'
+import platformaticDatabase from '../index.js'
 import { isFileAccessible, setupDB } from './utils.js'
 
 const checkForDependencies = utils.checkForDependencies
@@ -186,7 +186,7 @@ async function generateTypes (_args) {
     })
   )
 
-  const { configManager, args } = await loadConfig({}, _args, platformaticDB)
+  const { configManager, args } = await loadConfig({}, _args, platformaticDatabase)
 
   await configManager.parseAndValidate()
   const config = configManager.current

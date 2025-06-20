@@ -99,6 +99,9 @@ importers:
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
+      ajv:
+        specifier: ^8.12.0
+        version: 8.17.1
       execa:
         specifier: ^9.3.1
         version: 9.6.0
@@ -463,6 +466,9 @@ importers:
       '@fastify/view':
         specifier: ^10.0.1
         version: 10.0.2
+      '@platformatic/basic':
+        specifier: workspace:*
+        version: link:../basic
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
@@ -875,6 +881,9 @@ importers:
       '@fastify/swagger':
         specifier: ^9.0.0
         version: 9.5.1
+      '@platformatic/basic':
+        specifier: workspace:*
+        version: link:../basic
       '@platformatic/config':
         specifier: workspace:*
         version: link:../config
@@ -993,9 +1002,6 @@ importers:
       '@databases/sql':
         specifier: ^3.3.0
         version: 3.3.0
-      '@matteo.collina/snap':
-        specifier: ^0.3.0
-        version: 0.3.0
       '@opentelemetry/api':
         specifier: ^1.8.0
         version: 1.9.0

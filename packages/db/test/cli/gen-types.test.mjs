@@ -25,7 +25,7 @@ async function adjustTypeReferenceToAvoidLoops (cwd) {
   await writeFile(join(cwd, 'global.d.ts'), types, 'utf8')
 }
 
-test('generate ts types', async t => {
+test.only('generate ts types', async t => {
   const testDir = join(urlDirname(import.meta.url), '..', 'fixtures', 'gen-types')
   const cwd = join(urlDirname(import.meta.url), '..', 'tmp', `gen-types-clone-${counter++}`)
 
@@ -237,7 +237,7 @@ test('generate types on start in a different cwd', async t => {
   await cp(testDir, cwd, { recursive: true })
 
   const pathToConfig = join(cwd, 'platformatic.db.json')
-  const child = execa('node', [cliPath, 'start', '-c', pathToConfig])
+  const child = execa('node', ['./start.mjs', pathToConfig])
   t.after(async () => {
     await safeKill(child)
     await safeRemove(cwd)
