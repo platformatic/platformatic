@@ -1,16 +1,16 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "nodenext",
     "esModuleInterop": true,
-    "lib": ["es2022"],
     "target": "es2022",
-    "sourceMap": true,
-    "pretty": true,
-    "noEmitOnError": true,
+    "moduleResolution": "nodenext",
+    "sourceMap": false,
     "incremental": true,
+    "pretty": true,
+    "strictNullChecks": true,
     "strict": true,
-    "outDir": "dist",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "outDir": "dist"
   },
   "watchOptions": {
     "watchFile": "fixedPollingInterval",

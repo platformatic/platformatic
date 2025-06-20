@@ -4,10 +4,7 @@ const assert = require('node:assert')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const { request } = require('undici')
-const { buildServer } = require('..')
-
-// TODO: check if it's still needed
-// require('./helper')
+const { createStackable } = require('..')
 
 // Make sure we are not mistakenly detecting the tsconfig.json file in the root of the package.
 process.chdir(__dirname)
@@ -17,6 +14,7 @@ test('autoload & filesystem based routing / watch disabled', async (t) => {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
     },
     plugins: {
       paths: [join(__dirname, 'fixtures', 'directories', 'routes')],
@@ -25,11 +23,9 @@ test('autoload & filesystem based routing / watch disabled', async (t) => {
     metrics: false,
   }
 
-  const app = await buildServer(config)
-  t.after(async () => {
-    await app.close()
-  })
-  await app.start()
+  const app = await createStackable(join(__dirname, 'fixtures', 'directories'), config)
+  t.after(() => app.stop())
+  await app.start({ listen: true })
 
   {
     const res = await request(`${app.url}/`)
@@ -58,6 +54,7 @@ test('multiple files / watch false', async (t) => {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
     },
     plugins: {
       paths: [{
@@ -70,11 +67,9 @@ test('multiple files / watch false', async (t) => {
     metrics: false,
   }
 
-  const app = await buildServer(config)
-  t.after(async () => {
-    await app.close()
-  })
-  await app.start()
+  const app = await createStackable(join(__dirname, 'fixtures', 'directories'), config)
+  t.after(() => app.stop())
+  await app.start({ listen: true })
 
   {
     const res = await request(`${app.url}/`)
@@ -110,6 +105,7 @@ test('autoload & filesystem based routing / watch disabled / no object', async (
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
     },
     plugins: {
       paths: [join(__dirname, 'fixtures', 'directories', 'routes')],
@@ -118,11 +114,9 @@ test('autoload & filesystem based routing / watch disabled / no object', async (
     metrics: false,
   }
 
-  const app = await buildServer(config)
-  t.after(async () => {
-    await app.close()
-  })
-  await app.start()
+  const app = await createStackable(join(__dirname, 'fixtures', 'directories'), config)
+  t.after(() => app.stop())
+  await app.start({ listen: true })
 
   {
     const res = await request(`${app.url}/`)
@@ -151,6 +145,7 @@ test('multiple files / watch false / no object', async (t) => {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
     },
     plugins: {
       paths: [
@@ -162,11 +157,9 @@ test('multiple files / watch false / no object', async (t) => {
     metrics: false,
   }
 
-  const app = await buildServer(config)
-  t.after(async () => {
-    await app.close()
-  })
-  await app.start()
+  const app = await createStackable(join(__dirname, 'fixtures', 'directories'), config)
+  t.after(() => app.stop())
+  await app.start({ listen: true })
 
   {
     const res = await request(`${app.url}/`)
@@ -202,6 +195,7 @@ test('nested directories', async (t) => {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' },
       // Windows CI is slow
       pluginTimeout: 60 * 1000,
     },
@@ -220,11 +214,9 @@ test('nested directories', async (t) => {
     },
   }
 
-  const app = await buildServer(config)
-  t.after(async () => {
-    await app.close()
-  })
-  await app.start()
+  const app = await createStackable(join(__dirname, 'fixtures', 'nested-directories'), config)
+  t.after(() => app.stop())
+  await app.start({ listen: true })
 
   {
     const res = await request(`${app.url}/inventory/product/42`)
@@ -260,6 +252,7 @@ test('disable encapsulation for a single file', async (t) => {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' },
       // Windows CI is slow
       pluginTimeout: 60 * 1000,
     },
@@ -281,11 +274,9 @@ test('disable encapsulation for a single file', async (t) => {
     },
   }
 
-  const app = await buildServer(config)
-  t.after(async () => {
-    await app.close()
-  })
-  await app.start()
+  const app = await createStackable(join(__dirname, 'fixtures', 'nested-directories'), config)
+  t.after(() => app.stop())
+  await app.start({ listen: true })
 
   {
     const res = await request(`${app.url}/foo/baz`)
@@ -307,6 +298,7 @@ test('disable encapsulation for a single file / different order', async (t) => {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' },
       // Windows CI is slow
       pluginTimeout: 60 * 1000,
     },
@@ -328,11 +320,9 @@ test('disable encapsulation for a single file / different order', async (t) => {
     },
   }
 
-  const app = await buildServer(config)
-  t.after(async () => {
-    await app.close()
-  })
-  await app.start()
+  const app = await createStackable(join(__dirname, 'fixtures', 'nested-directories'), config)
+  t.after(() => app.stop())
+  await app.start({ listen: true })
 
   {
     const res = await request(`${app.url}/foo/baz`)
@@ -354,6 +344,7 @@ test('autoload with ignorePattern, indexPattern and autoHooksPattern options', a
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
     },
     plugins: {
       paths: [
@@ -377,11 +368,9 @@ test('autoload with ignorePattern, indexPattern and autoHooksPattern options', a
     metrics: false,
   }
 
-  const app = await buildServer(config)
-  t.after(async () => {
-    await app.close()
-  })
-  await app.start()
+  const app = await createStackable(join(__dirname, 'fixtures', 'directories'), config)
+  t.after(() => app.stop())
+  await app.start({ listen: true })
 
   {
     const res = await request(`${app.url}/`)
@@ -415,6 +404,7 @@ test('autoload with INVALID ignorePattern, indexPattern and autoHooksPattern opt
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
     },
     plugins: {
       paths: [
@@ -430,11 +420,9 @@ test('autoload with INVALID ignorePattern, indexPattern and autoHooksPattern opt
     metrics: false,
   }
 
-  const app = await buildServer(config)
-  t.after(async () => {
-    await app.close()
-  })
-  await app.start()
+  const app = await createStackable(join(__dirname, 'fixtures', 'directories'), config)
+  t.after(() => app.stop())
+  await app.start({ listen: true })
 
   {
     const res = await request(`${app.url}/`)
@@ -447,6 +435,7 @@ test('loads encapsulated plugin twice', async (t) => {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' },
       // Windows CI is slow
       pluginTimeout: 60 * 1000,
     },
@@ -464,11 +453,11 @@ test('loads encapsulated plugin twice', async (t) => {
 
   {
     // First time plugin is loaded from file
-    const app = await buildServer(config)
+    const app = await createStackable(join(__dirname, 'fixtures', 'directories'), config)
     t.after(async () => {
-      await app.close()
+      await app.stop()
     })
-    await app.start()
+    await app.start({ listen: true })
 
     const res = await request(`${app.url}/foo/with-decorator`)
     assert.strictEqual(res.statusCode, 200, 'status code')
@@ -478,11 +467,11 @@ test('loads encapsulated plugin twice', async (t) => {
 
   {
     // Second time plugin is loaded from cache
-    const app = await buildServer(config)
+    const app = await createStackable(join(__dirname, 'fixtures', 'directories'), config)
     t.after(async () => {
-      await app.close()
+      await app.stop()
     })
-    await app.start()
+    await app.start({ listen: true })
 
     const res = await request(`${app.url}/foo/with-decorator`)
     assert.strictEqual(res.statusCode, 200, 'status code')

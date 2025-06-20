@@ -7,12 +7,12 @@ const { join, relative } = require('node:path')
 const { mkdtemp, writeFile } = require('node:fs/promises')
 const selfCert = require('self-cert')
 const { Agent, request } = require('undici')
-const { buildServer } = require('..')
 const { buildConfig } = require('./helper')
+const { createStackable } = require('..')
 
 const isNode18 = process.versions.node.startsWith('18')
 
-test('supports http2 options', { skip: isNode18 }, async (t) => {
+test('supports http2 options', { skip: isNode18 }, async t => {
   const { certificate, privateKey } = selfCert({})
   const localDir = tmpdir()
   const tmpDir = await mkdtemp(join(localDir, 'plt-service-https-test-'))
@@ -29,31 +29,35 @@ test('supports http2 options', { skip: isNode18 }, async (t) => {
     keepAliveTimeout: 100,
     keepAliveMaxTimeout: 100,
     connect: {
-      rejectUnauthorized: false,
-    },
+      rejectUnauthorized: false
+    }
   })
 
-  const app = await buildServer(buildConfig({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
-      http2: true,
-      https: {
-        key: privateKey,
-        cert: [{ path: certificateRelativePath }],
-      },
-    },
-  }))
+  const app = await createStackable(
+    tmpDir,
+    buildConfig({
+      server: {
+        hostname: '127.0.0.1',
+        port: 0,
+        logger: { level: 'fatal' },
+        http2: true,
+        https: {
+          key: privateKey,
+          cert: [{ path: certificateRelativePath }]
+        }
+      }
+    })
+  )
 
   t.after(async () => {
     agent.destroy()
-    await app.close()
+    await app.stop()
   })
 
-  await app.start()
+  await app.start({ listen: true })
 
   assert.strictEqual(app.url.startsWith('https://'), true)
-  const res = await (request(`${app.url}/`, { dispatcher: agent }))
+  const res = await request(`${app.url}/`, { dispatcher: agent })
   assert.strictEqual(res.statusCode, 200)
   const body = await res.body.json()
   assert.deepStrictEqual(body, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
@@ -62,7 +66,7 @@ test('supports http2 options', { skip: isNode18 }, async (t) => {
   await assert.rejects(request(`${app.url}/`))
 })
 
-test('supports allowHTTP1 with HTTP/2', { skip: isNode18 }, async (t) => {
+test('supports allowHTTP1 with HTTP/2', { skip: isNode18 }, async t => {
   const { certificate, privateKey } = selfCert({})
   const localDir = tmpdir()
   const tmpDir = await mkdtemp(join(localDir, 'plt-service-https-test-'))
@@ -77,32 +81,36 @@ test('supports allowHTTP1 with HTTP/2', { skip: isNode18 }, async (t) => {
     keepAliveTimeout: 100,
     keepAliveMaxTimeout: 100,
     connect: {
-      rejectUnauthorized: false,
-    },
+      rejectUnauthorized: false
+    }
   })
 
-  const app = await buildServer(buildConfig({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
-      http2: true,
-      https: {
-        allowHTTP1: true,
-        key: privateKey,
-        cert: [{ path: certificateRelativePath }],
-      },
-    },
-  }))
+  const app = await createStackable(
+    tmpDir,
+    buildConfig({
+      server: {
+        hostname: '127.0.0.1',
+        port: 0,
+        logger: { level: 'fatal' },
+        http2: true,
+        https: {
+          allowHTTP1: true,
+          key: privateKey,
+          cert: [{ path: certificateRelativePath }]
+        }
+      }
+    })
+  )
 
   t.after(async () => {
     agent.destroy()
-    await app.close()
+    await app.stop()
   })
 
-  await app.start()
+  await app.start({ listen: true })
 
   assert.strictEqual(app.url.startsWith('https://'), true)
-  const res = await (request(`${app.url}/`, { dispatcher: agent }))
+  const res = await request(`${app.url}/`, { dispatcher: agent })
   assert.strictEqual(res.statusCode, 200)
   const body = await res.body.json()
   assert.deepStrictEqual(body, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })

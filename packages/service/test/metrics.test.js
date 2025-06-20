@@ -7,146 +7,148 @@ const assert = require('node:assert')
 const { test } = require('node:test')
 const { setTimeout } = require('node:timers/promises')
 const { request } = require('undici')
-const { buildServer } = require('..')
+const { createStackableFromConfig } = require('./helper')
 
-test('should auto set server to "parent" if port conflict', async (t) => {
-  const app = await buildServer({
+test('should auto set server to "parent" if port conflict', async t => {
+  const app = await createStackableFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 3042,
+      logger: { level: 'fatal' }
     },
     metrics: {
       server: 'own',
-      port: 3042,
-    },
+      port: 3042
+    }
   })
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
-  const configManager = app.platformatic.configManager
+  const configManager = app.configManager
   const config = configManager.current
   assert.strictEqual(config.metrics.server, 'parent')
 })
 
-test('has /metrics endpoint on default prometheus port', async (t) => {
-  const app = await buildServer({
+test('has /metrics endpoint on default prometheus port', async t => {
+  const app = await createStackableFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
     },
-    metrics: true,
+    metrics: true
   })
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
   // needed to reach 100% code cov, otherwise the ELU check won't run
   await setTimeout(120)
-  const res = await (request('http://127.0.0.1:9090/metrics'))
+  const res = await request('http://127.0.0.1:9090/metrics')
   const body = await res.body.text()
   assert.strictEqual(res.statusCode, 200)
   assert.match(res.headers['content-type'], /^text\/plain/)
   testPrometheusOutput(body)
 })
 
-test('has /metrics endpoint with accept application/json', async (t) => {
-  const app = await buildServer({
+test('has /metrics endpoint with accept application/json', async t => {
+  const app = await createStackableFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
     },
-    metrics: true,
+    metrics: true
   })
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
-  const res = await (request(
-    'http://127.0.0.1:9090/metrics',
-    {
-      headers: {
-        accept: 'application/json',
-      },
+  const res = await request('http://127.0.0.1:9090/metrics', {
+    headers: {
+      accept: 'application/json'
     }
-  ))
+  })
   assert.match(res.headers['content-type'], /^application\/json/)
   const json = await res.body.json()
   assert.strictEqual(res.statusCode, 200)
   testPrometheusJsonOutput(json)
 })
 
-test('has /metrics endpoint on configured port', async (t) => {
-  const app = await buildServer({
+test('has /metrics endpoint on configured port', async t => {
+  const app = await createStackableFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
     },
     metrics: {
-      port: 9999,
-    },
+      port: 9999
+    }
   })
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
-  const res = await (request('http://127.0.0.1:9999/metrics'))
+  const res = await request('http://127.0.0.1:9999/metrics')
   assert.strictEqual(res.statusCode, 200)
   assert.match(res.headers['content-type'], /^text\/plain/)
   const body = await res.body.text()
   testPrometheusOutput(body)
 })
 
-test('support basic auth', async (t) => {
-  const app = await buildServer({
+test('support basic auth', async t => {
+  const app = await createStackableFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
     },
     metrics: {
       auth: {
         username: 'foo',
-        password: 'bar',
-      },
-    },
+        password: 'bar'
+      }
+    }
   })
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
   {
-    const res = await (request('http://127.0.0.1:9090/metrics'))
+    const res = await request('http://127.0.0.1:9090/metrics')
     assert.strictEqual(res.statusCode, 401)
     assert.match(res.headers['content-type'], /^application\/json/)
   }
 
   {
     // wrong credentials
-    const res = await (request('http://127.0.0.1:9090/metrics', {
+    const res = await request('http://127.0.0.1:9090/metrics', {
       headers: {
-        authorization: `Basic ${Buffer.from('bar:foo').toString('base64')}`,
-      },
-    }))
+        authorization: `Basic ${Buffer.from('bar:foo').toString('base64')}`
+      }
+    })
     assert.strictEqual(res.statusCode, 401)
     assert.match(res.headers['content-type'], /^application\/json/)
   }
 
   {
-    const res = await (request('http://127.0.0.1:9090/metrics', {
+    const res = await request('http://127.0.0.1:9090/metrics', {
       headers: {
-        authorization: `Basic ${Buffer.from('foo:bar').toString('base64')}`,
-      },
-    }))
+        authorization: `Basic ${Buffer.from('foo:bar').toString('base64')}`
+      }
+    })
     assert.strictEqual(res.statusCode, 200)
     assert.match(res.headers['content-type'], /^text\/plain/)
     const body = await res.body.text()
@@ -154,72 +156,74 @@ test('support basic auth', async (t) => {
   }
 })
 
-test('has /metrics endpoint on parent server', async (t) => {
-  const app = await buildServer({
+test('has /metrics endpoint on parent server', async t => {
+  const app = await createStackableFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 3042,
+      logger: { level: 'fatal' }
     },
     metrics: {
-      server: 'parent',
-    },
+      server: 'parent'
+    }
   })
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
-  const res = await (request('http://127.0.0.1:3042/metrics'))
+  const res = await request('http://127.0.0.1:3042/metrics')
   assert.strictEqual(res.statusCode, 200)
   assert.match(res.headers['content-type'], /^text\/plain/)
   const body = await res.body.text()
   testPrometheusOutput(body)
 })
 
-test('support basic auth with metrics on parent server', async (t) => {
-  const app = await buildServer({
+test('support basic auth with metrics on parent server', async t => {
+  const app = await createStackableFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 3042,
+      logger: { level: 'fatal' }
     },
     metrics: {
       server: 'parent',
       auth: {
         username: 'foo',
-        password: 'bar',
-      },
-    },
+        password: 'bar'
+      }
+    }
   })
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
   {
-    const res = await (request('http://127.0.0.1:3042/metrics'))
+    const res = await request('http://127.0.0.1:3042/metrics')
     assert.strictEqual(res.statusCode, 401)
     assert.match(res.headers['content-type'], /^application\/json/)
   }
 
   {
     // wrong credentials
-    const res = await (request('http://127.0.0.1:3042/metrics', {
+    const res = await request('http://127.0.0.1:3042/metrics', {
       headers: {
-        authorization: `Basic ${Buffer.from('bar:foo').toString('base64')}`,
-      },
-    }))
+        authorization: `Basic ${Buffer.from('bar:foo').toString('base64')}`
+      }
+    })
     assert.strictEqual(res.statusCode, 401)
     assert.match(res.headers['content-type'], /^application\/json/)
   }
 
   {
-    const res = await (request('http://127.0.0.1:3042/metrics', {
+    const res = await request('http://127.0.0.1:3042/metrics', {
       headers: {
-        authorization: `Basic ${Buffer.from('foo:bar').toString('base64')}`,
-      },
-    }))
+        authorization: `Basic ${Buffer.from('foo:bar').toString('base64')}`
+      }
+    })
     assert.strictEqual(res.statusCode, 200)
     assert.match(res.headers['content-type'], /^text\/plain/)
     const body = await res.body.text()
@@ -227,21 +231,22 @@ test('support basic auth with metrics on parent server', async (t) => {
   }
 })
 
-test('should not expose metrics if server hide is set', async (t) => {
-  const app = await buildServer({
+test('should not expose metrics if server hide is set', async t => {
+  const app = await createStackableFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 3042,
+      logger: { level: 'fatal' }
     },
     metrics: {
-      server: 'hide',
-    },
+      server: 'hide'
+    }
   })
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
   try {
     await request('http://127.0.0.1:9090/metrics')
@@ -306,40 +311,47 @@ function findFirstPrometheusLineForMetric (metric, output) {
 }
 
 function parseLabels (line) {
-  return line.split('{')[1].split('}')[0].split(',').reduce((acc, label) => {
-    const [key, value] = label.split('=')
-    acc[key] = value.replace(/^"(.*)"$/, '$1')
-    return acc
-  }, {})
+  return line
+    .split('{')[1]
+    .split('}')[0]
+    .split(',')
+    .reduce((acc, label) => {
+      const [key, value] = label.split('=')
+      acc[key] = value.replace(/^"(.*)"$/, '$1')
+      return acc
+    }, {})
 }
 
-test('specify custom labels', async (t) => {
-  const app = await buildServer({
+test('specify custom labels', async t => {
+  const app = await createStackableFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 30001,
+      logger: { level: 'fatal' }
     },
     metrics: {
       labels: {
-        foo: 'bar',
-      },
-    },
+        foo: 'bar'
+      }
+    }
   })
 
-  app.get('/test', async (req, reply) => {
+  await app.init()
+
+  app.getApplication().get('/test', async (req, reply) => {
     return { hello: 'world' }
   })
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
   // needed to reach 100% code cov, otherwise the ELU check won't run
   await setTimeout(120)
   // We do a get to trigger the route metrics
   await request('http://127.0.0.1:30001/test')
-  const res = await (request('http://127.0.0.1:9090/metrics'))
+  const res = await request('http://127.0.0.1:9090/metrics')
   const body = await res.body.text()
   assert.strictEqual(res.statusCode, 200)
   assert.match(res.headers['content-type'], /^text\/plain/)
@@ -374,50 +386,52 @@ test('specify custom labels', async (t) => {
   }
 })
 
-test('specify different custom labels on two different services', async (t) => {
-  const app1 = await buildServer({
+test('specify different custom labels on two different services', async t => {
+  const app1 = await createStackableFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 3042,
+      logger: { level: 'fatal' }
     },
     metrics: {
       server: 'own',
       port: 3042,
       labels: {
-        foo: 'bar1',
-      },
-    },
+        foo: 'bar1'
+      }
+    }
   })
 
   t.after(async () => {
-    await app1.close()
+    await app1.stop()
   })
-  await app1.start()
+  await app1.start({ listen: true })
 
-  const app2 = await buildServer({
+  const app2 = await createStackableFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 3043,
+      logger: { level: 'fatal' }
     },
     metrics: {
       server: 'own',
       port: 3043,
       labels: {
-        foo: 'bar2',
-      },
-    },
+        foo: 'bar2'
+      }
+    }
   })
 
   t.after(async () => {
-    await app2.close()
+    await app2.stop()
   })
-  await app2.start()
+  await app2.start({ listen: true })
 
   // needed to reach 100% code cov, otherwise the ELU check won't run
   await setTimeout(120)
 
   {
-    const res = await (request('http://127.0.0.1:3042/metrics'))
+    const res = await request('http://127.0.0.1:3042/metrics')
     const body = await res.body.text()
     assert.strictEqual(res.statusCode, 200)
     assert.match(res.headers['content-type'], /^text\/plain/)
@@ -427,7 +441,7 @@ test('specify different custom labels on two different services', async (t) => {
   }
 
   {
-    const res = await (request('http://127.0.0.1:3043/metrics'))
+    const res = await request('http://127.0.0.1:3043/metrics')
     const body = await res.body.text()
     assert.strictEqual(res.statusCode, 200)
     assert.match(res.headers['content-type'], /^text\/plain/)
