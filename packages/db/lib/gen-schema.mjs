@@ -1,41 +1,25 @@
+import { loadConfig } from '@platformatic/config'
+import { writeFile } from 'fs/promises'
+import graphql from 'graphql'
 import pino from 'pino'
 import pretty from 'pino-pretty'
-import Fastify from 'fastify'
-import graphql from 'graphql'
-import { writeFile } from 'fs/promises'
-import { loadConfig } from '@platformatic/config'
-import { createServerConfig } from '@platformatic/utils'
-import { platformaticDB } from '../index.js'
+import platformaticDB, { createStackable } from '../index.js'
 import { schema as platformaticDBschema } from './schema.js'
 
 async function buildServer (_args, onServer) {
-  const logger = pino(pretty({
-    translateTime: 'SYS:HH:MM:ss',
-    ignore: 'hostname,pid',
-    minimumLevel: 'error',
-  }))
+  const logger = pino(
+    pretty({
+      translateTime: 'SYS:HH:MM:ss',
+      ignore: 'hostname,pid',
+      minimumLevel: 'error'
+    })
+  )
 
   try {
     const { configManager } = await loadConfig({}, _args, platformaticDB)
-
-    await configManager.parseAndValidate()
-    const config = configManager.current
-    delete config.logger
-    config.loggerInstance = logger
-
-    const serverConfig = createServerConfig(config)
-    serverConfig.originalConfig = config
-    serverConfig.configManager = configManager
-    delete serverConfig.logger
-    serverConfig.loggerInstance = logger
-
-    const app = Fastify(serverConfig)
-    app.decorate('platformatic', { configManager, config: configManager.current })
-    app.register(platformaticDB, serverConfig)
-
-    await app.ready()
-
-    await onServer(app)
+    const app = await createStackable(process.cwd(), configManager.fullPath, {}, { logger })
+    await app.start({ listen: true })
+    await onServer(app.getApplication())
     /* c8 ignore next 4 */
   } catch (err) {
     logger.error(err)
@@ -65,4 +49,4 @@ async function generateJsonSchemaConfig () {
   await writeFile(filenameConfigJsonSchema, JSON.stringify(platformaticDBschema, null, 2))
 }
 
-export { printGraphQLSchema, printOpenAPISchema, generateJsonSchemaConfig, filenameConfigJsonSchema }
+export { filenameConfigJsonSchema, generateJsonSchemaConfig, printGraphQLSchema, printOpenAPISchema }

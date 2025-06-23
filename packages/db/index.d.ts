@@ -1,42 +1,64 @@
 /// <reference types="@platformatic/sql-graphql" />
 /// <reference types="@platformatic/sql-openapi" />
-import { FastifyInstance } from 'fastify'
-import { PlatformaticDB } from './config'
+
+import type { BaseOptions, BaseStackable } from '@platformatic/basic'
+import type { ConfigManagerConfig } from '@platformatic/config'
 import ConfigManager from '@platformatic/config'
-import type { ConfigManagerConfig, StackableInterface } from '@platformatic/config'
-import { SQLMapperPluginInterface, Entities } from '@platformatic/sql-mapper'
-import { SQLEventsPluginInterface } from '@platformatic/sql-events'
 import { DBAuthorizationPluginInterface } from '@platformatic/db-authorization'
-import { FastifyError } from '@fastify/error'
+import { BaseGenerator } from '@platformatic/generators'
+import { ServiceContext } from '@platformatic/service'
+import { SQLEventsPluginInterface } from '@platformatic/sql-events'
+import { Entities, SQLMapperPluginInterface } from '@platformatic/sql-mapper'
+import type { JSONSchemaType } from 'ajv'
+import { FastifyInstance, type FastifyError } from 'fastify'
+import { PlatformaticDB as PlatformaticDatabaseConfig } from './config'
 
-export { Entities, EntityHooks, Entity, createConnectionPool } from '@platformatic/sql-mapper'
-export { PlatformaticApp } from '@platformatic/service'
+export function platformaticDatabase (app: FastifyInstance, stackable: BaseStackable): Promise<void>
 
-export type PlatformaticDBMixin<T extends Entities> =
-  SQLMapperPluginInterface<T> &
+export { PlatformaticApplication } from '@platformatic/service'
+export { createConnectionPool, Entities, Entity, EntityHooks } from '@platformatic/sql-mapper'
+export { PlatformaticDB as PlatformaticDatabaseConfig } from './config'
+
+export type PlatformaticDatabaseMixin<T extends Entities> = SQLMapperPluginInterface<T> &
   SQLEventsPluginInterface &
   DBAuthorizationPluginInterface
 
-export type PlatformaticDBConfig = PlatformaticDB
+export class Generator extends BaseGenerator.BaseGenerator {}
 
-export function buildServer (opts: object, app?: object, ConfigManagerContructor?: object): Promise<FastifyInstance>
+export class DatabaseStackable extends BaseStackable<PlatformaticDatabaseConfig, BaseOptions<ServiceContext>> {
+  constructor (opts: BaseOptions, root: string, configManager: ConfigManager<PlatformaticDatabaseConfig>)
+  getApplication (): FastifyInstance
+}
 
-export function buildStackable (opts: object, app?: object): Promise<{
-  configType: string,
-  configManager?: ConfigManager<PlatformaticDBConfig>,
-  configManagerConfig?: ConfigManagerConfig<PlatformaticDBConfig>,
-  schema?: object,
-  stackable?: StackableInterface
-}>
+export function transformConfig (this: ConfigManager): Promise<void>
+
+export function buildStackable (
+  root: string,
+  source: string | PlatformaticDatabaseConfig,
+  opts: BaseOptions
+): Promise<DatabaseStackable>
+
+export function createStackable (
+  root: string,
+  source?: string | PlatformaticDatabaseConfig,
+  opts?: object
+): Promise<DatabaseStackable>
 
 /**
  * All the errors thrown by the plugin.
  */
-export module errors {
-
-  export const MigrateMissingMigrationsError: () => FastifyError
-  export const UnknownDatabaseError: () => FastifyError
-  export const MigrateMissingMigrationsDirError: (dir: string) => FastifyError
-  export const MissingSeedFileError: () => FastifyError
-  export const MigrationsToApplyError: () => FastifyError
+export declare const errors: {
+  MigrateMissingMigrationsError: () => FastifyError
+  UnknownDatabaseError: () => FastifyError
+  MigrateMissingMigrationsDirError: (dir: string) => FastifyError
+  MissingSeedFileError: () => FastifyError
+  MigrationsToApplyError: () => FastifyError
 }
+
+export const schema: JSONSchemaType<PlatformaticDatabaseConfig>
+
+export const configType: 'service'
+
+export const configManagerConfig: ConfigManagerConfig<PlatformaticDatabaseConfig>
+
+export const version: string

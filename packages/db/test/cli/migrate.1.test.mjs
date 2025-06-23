@@ -1,27 +1,24 @@
-import assert from 'node:assert/strict'
-import { test } from 'node:test'
-import { join, dirname } from 'node:path'
-import { readFile, unlink } from 'node:fs/promises'
-import { execa } from 'execa'
-import stripAnsi from 'strip-ansi'
-import split from 'split2'
 import { once } from 'events'
+import { execa } from 'execa'
+import assert from 'node:assert/strict'
+import { readFile, unlink } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
+import { test } from 'node:test'
+import split from 'split2'
+import stripAnsi from 'strip-ansi'
 import { getConnectionInfo } from '../helper.js'
-import { cliPath, connectDB, getFixturesConfigFileLocation, safeKill } from './helper.js'
+import { cliPath, connectDB, getFixturesConfigFileLocation, safeKill, startPath } from './helper.js'
 
-test('migrate on start', async (t) => {
+test('migrate on start', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
   const db = await connectDB(connectionInfo)
 
   let found = false
-  const child = execa(
-    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('auto-apply.json')],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
+  const child = execa('node', [startPath, getFixturesConfigFileLocation('auto-apply.json')], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
     }
-  )
+  })
 
   t.after(async () => {
     await safeKill(child)
@@ -41,25 +38,21 @@ test('migrate on start', async (t) => {
   assert.equal(found, true)
 })
 
-test('validate migration checksums', async (t) => {
+test('validate migration checksums', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
   const db = await connectDB(connectionInfo)
 
   let firstFound = false
 
-  const firstChild = execa(
-    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('validate-migrations-checksums.json')],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
+  const firstChild = execa('node', [startPath, getFixturesConfigFileLocation('validate-migrations-checksums.json')], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
     }
-  )
+  })
 
   const splitter = split()
   firstChild.stdout.pipe(splitter)
   for await (const data of splitter) {
-    console.log(data)
     const sanitized = stripAnsi(data)
     if (sanitized.match(/(.*)running 001\.do\.sql/)) {
       firstFound = true
@@ -69,14 +62,11 @@ test('validate migration checksums', async (t) => {
   assert.equal(firstFound, true)
 
   let secondFound = false
-  const secondChild = execa(
-    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('validate-migrations-checksums.json')],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
+  const secondChild = execa('node', [startPath, getFixturesConfigFileLocation('validate-migrations-checksums.json')], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
     }
-  )
+  })
 
   t.after(async () => {
     await safeKill(secondChild, 'SIGTERM')
@@ -97,32 +87,26 @@ test('validate migration checksums', async (t) => {
   assert.equal(secondFound, true)
 })
 
-test('do not validate migration checksums if not configured', async (t) => {
+test('do not validate migration checksums if not configured', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
   const db = await connectDB(connectionInfo)
 
-  const firstChild = execa(
-    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('auto-apply.json')],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
+  const firstChild = execa('node', [startPath, getFixturesConfigFileLocation('auto-apply.json')], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
     }
-  )
+  })
 
   const splitter = split()
   const firstOutput = firstChild.stdout.pipe(splitter)
   const [message] = await once(firstOutput, 'data')
   assert.match(stripAnsi(message), /(.*)running(.*)(001\.do\.sql)/)
 
-  const secondChild = execa(
-    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('auto-apply.json')],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
+  const secondChild = execa('node', [startPath, getFixturesConfigFileLocation('auto-apply.json')], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
     }
-  )
+  })
   secondChild.stderr.pipe(process.stderr)
 
   t.after(async () => {
@@ -139,41 +123,36 @@ test('do not validate migration checksums if not configured', async (t) => {
   assert.ok(msg.includes('Server listening at http://127.0.0.1:'))
 })
 
-test('throws if migrations directory does not exist', async (t) => {
+test('throws if migrations directory does not exist', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
 
-  const child = execa(
-    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('invalid-migrations-directory.json')],
+  const { stderr } = await execa(
+    'node',
+    [startPath, getFixturesConfigFileLocation('invalid-migrations-directory.json')],
     {
+      reject: false,
       env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
+        DATABASE_URL: connectionInfo.connectionString
+      }
     }
   )
-  child.catch(() => {})
-
-  const output = child.stderr.pipe(split())
-  const [data] = await once(output, 'data')
 
   t.after(async () => {
     await dropTestDB()
   })
 
-  assert.match(data, /Migrations directory (.*) does not exist/)
+  assert.match(stderr, /Migrations directory (.*) does not exist/)
 })
 
-test('do not run migrations by default', async (t) => {
+test('do not run migrations by default', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
   const db = await connectDB(connectionInfo)
 
-  const firstChild = execa(
-    'node', [cliPath, 'start', '-c', getFixturesConfigFileLocation('no-auto-apply.json')],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
+  const firstChild = execa('node', [startPath, getFixturesConfigFileLocation('no-auto-apply.json')], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
     }
-  )
+  })
 
   t.after(async () => {
     await safeKill(firstChild, 'SIGTERM')
@@ -193,22 +172,27 @@ test('do not run migrations by default', async (t) => {
   {
     const [out] = await once(output, 'data')
     const { msg } = JSON.parse(out)
-    assert.equal(msg, 'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/guides/debug-platformatic-db')
+    assert.equal(
+      msg,
+      'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/guides/debug-platformatic-db'
+    )
   }
 
-  const [{ exists }] = await db.query(db.sql(
-    `SELECT EXISTS (
+  const [{ exists }] = await db.query(
+    db.sql(
+      `SELECT EXISTS (
     SELECT FROM
         pg_tables
     WHERE
         schemaname = 'public' AND
         tablename  = 'graphs'
     );`
-  ))
+    )
+  )
   assert.equal(exists, false)
 })
 
-test('migrate creates a schema.lock file', async (t) => {
+test('migrate creates a schema.lock file', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
   const db = await connectDB(connectionInfo)
 
@@ -220,27 +204,21 @@ test('migrate creates a schema.lock file', async (t) => {
     await unlink(expectedFile)
   } catch {}
 
-  await execa(
-    'node', [cliPath, 'migrations', 'apply', '-c', configPath],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
+  await execa('node', [cliPath, 'migrations', 'apply', '-c', configPath], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
     }
-  )
+  })
 
   const data = await readFile(expectedFile, 'utf-8')
   // Let's just validate this is a valid JSON file
   JSON.parse(data)
 
-  const child = execa(
-    'node', [cliPath, 'start', '-c', configPath],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
+  const child = execa('node', [startPath, configPath], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
     }
-  )
+  })
 
   t.after(async () => {
     safeKill(child, 'SIGTERM')

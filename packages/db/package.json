@@ -5,13 +5,10 @@
   "main": "index.js",
   "types": "index.d.ts",
   "bin": {
-    "plt-db": "./db.mjs"
+    "plt-db": "./bin/plt-db.mjs"
   },
   "scripts": {
-    "test": "pnpm run lint && borp -T --concurrency=1 --timeout=1200000 && tsd ",
-    "test:postgresql": "DB=postgresql borp -T --concurrency=1 --timeout=1200000",
-    "test:mariadb": "DB=mariadb borp -T --concurrency=1 --timeout=1200000",
-    "test:mysql": "DB=mysql borp -T --concurrency=1 --timeout=1200000",
+    "test": "pnpm run lint && borp -T --concurrency=1",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "pnpm run gen-schema && pnpm run gen-types",
@@ -32,7 +29,6 @@
     "@databases/pg": "^5.5.0",
     "@databases/sql": "^3.3.0",
     "@opentelemetry/api": "^1.8.0",
-    "@matteo.collina/snap": "^0.3.0",
     "ajv": "^8.12.0",
     "bindings": "^1.5.0",
     "borp": "^0.20.0",
@@ -60,6 +56,7 @@
     "@fastify/error": "^4.0.0",
     "@fastify/static": "^8.0.0",
     "@fastify/swagger": "^9.0.0",
+    "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/db-authorization": "workspace:*",
     "@platformatic/db-core": "workspace:*",

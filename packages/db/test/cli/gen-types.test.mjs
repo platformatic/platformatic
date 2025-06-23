@@ -9,7 +9,7 @@ import { setTimeout } from 'node:timers/promises'
 import split from 'split2'
 import stripAnsi from 'strip-ansi'
 import { urlDirname } from '../../lib/utils.js'
-import { cliPath, safeKill } from './helper.js'
+import { cliPath, safeKill, startPath } from './helper.js'
 
 let counter = 0
 
@@ -195,7 +195,7 @@ test('generate types on start', async t => {
 
   await cp(testDir, cwd, { recursive: true })
 
-  const child = execa('node', [cliPath, 'start'], { cwd })
+  const child = execa('node', [startPath], { cwd })
   t.after(async () => {
     await safeKill(child)
     await safeRemove(cwd)
@@ -237,7 +237,7 @@ test('generate types on start in a different cwd', async t => {
   await cp(testDir, cwd, { recursive: true })
 
   const pathToConfig = join(cwd, 'platformatic.db.json')
-  const child = execa('node', [cliPath, 'start', '-c', pathToConfig])
+  const child = execa('node', [startPath, pathToConfig])
   t.after(async () => {
     await safeKill(child)
     await safeRemove(cwd)
@@ -324,7 +324,7 @@ test('generate types on start while considering types directory', async t => {
   } catch {}
   await cp(testDir, cwd, { recursive: true })
 
-  const child = execa('node', [cliPath, 'start'], { cwd })
+  const child = execa('node', [startPath], { cwd })
   t.after(async () => {
     await safeKill(child)
     await safeRemove(cwd)

@@ -3,18 +3,18 @@
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { buildConfigManager, getConnectionInfo, createBasicPages } = require('../helper')
-const { buildStackable } = require('../..')
+const { createStackableFromConfig, getConnectionInfo, createBasicPages } = require('../helper')
 
 test('get meta info via stackable api', async t => {
   const workingDir = join(__dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
   const { dbname } = connectionInfo
 
-  const config = {
+  const stackable = await createStackableFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
-      port: 3245
+      port: 3245,
+      logger: { level: 'fatal' }
     },
     db: {
       ...connectionInfo,
@@ -27,25 +27,22 @@ test('get meta info via stackable api', async t => {
     },
     watch: false,
     metrics: false
-  }
-
-  const configManager = await buildConfigManager(config, workingDir)
-  const stackable = await buildStackable({ configManager })
+  })
 
   t.after(async () => {
     await stackable.stop()
     await dropTestDB()
   })
-  await stackable.start()
+  await stackable.start({ listen: true })
 
   const meta = await stackable.getMeta()
   const expected = {
     composer: {
       needsRootTrailingSlash: false,
-      prefix: undefined,
+      prefix: '/',
       wantsAbsoluteUrls: false,
       tcp: true,
-      url: 'http://127.0.0.1:3245',
+      url: 'http://127.0.0.1:3245'
     },
     connectionStrings: [`postgres://postgres:postgres@127.0.0.1/${dbname}`]
   }

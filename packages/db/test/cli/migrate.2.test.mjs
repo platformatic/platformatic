@@ -1,14 +1,14 @@
-import assert from 'node:assert/strict'
-import { test } from 'node:test'
-import { join, dirname } from 'node:path'
-import { readFile, writeFile, unlink, stat } from 'node:fs/promises'
 import { execa } from 'execa'
-import stripAnsi from 'strip-ansi'
+import assert from 'node:assert/strict'
+import { readFile, stat, unlink, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
+import { test } from 'node:test'
 import split from 'split2'
+import stripAnsi from 'strip-ansi'
 import { getConnectionInfo } from '../helper.js'
-import { cliPath, connectDB, getFixturesConfigFileLocation } from './helper.js'
+import { cliPath, connectDB, getFixturesConfigFileLocation, startPath } from './helper.js'
 
-test('migrate creates a schema.lock file on a different path', { skip: true }, async (t) => {
+test('migrate creates a schema.lock file on a different path', { skip: true }, async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
   const db = await connectDB(connectionInfo)
 
@@ -19,14 +19,11 @@ test('migrate creates a schema.lock file on a different path', { skip: true }, a
     await unlink(expectedFile)
   } catch {}
 
-  await execa(
-    'node', [cliPath, 'migrations', 'apply', '-c', configPath],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
+  await execa('node', [cliPath, 'migrations', 'apply', '-c', configPath], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
     }
-  )
+  })
 
   t.after(async () => {
     await db.dispose()
@@ -42,7 +39,7 @@ test('migrate creates a schema.lock file on a different path', { skip: true }, a
   JSON.parse(data)
 })
 
-test('start creates schema.lock if it is missing', { skip: true }, async (t) => {
+test('start creates schema.lock if it is missing', { skip: true }, async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
   const db = await connectDB(connectionInfo)
 
@@ -53,23 +50,17 @@ test('start creates schema.lock if it is missing', { skip: true }, async (t) => 
 
   await unlink(expectedFile).catch(() => {})
 
-  await execa(
-    'node', [cliPath, 'migrations', 'apply', '-c', configPathWithoutSchemaLock],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
+  await execa('node', [cliPath, 'migrations', 'apply', '-c', configPathWithoutSchemaLock], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
     }
-  )
+  })
 
-  const child = execa(
-    'node', [cliPath, 'start', '-c', configPath],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
+  const child = execa('node', [startPath, configPath], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
     }
-  )
+  })
 
   t.after(async () => {
     child.catch(() => {})
@@ -95,24 +86,19 @@ test('start creates schema.lock if it is missing', { skip: true }, async (t) => 
   JSON.parse(data)
 })
 
-test('start updates schema.lock with migrations autoApply', async (t) => {
+test('start updates schema.lock with migrations autoApply', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
   const db = await connectDB(connectionInfo)
 
-  const configPath = getFixturesConfigFileLocation(
-    'platformatic.db.json', ['update-schema-lock']
-  )
+  const configPath = getFixturesConfigFileLocation('platformatic.db.json', ['update-schema-lock'])
   const schemaLockPath = join(dirname(configPath), 'schema.lock')
   await writeFile(schemaLockPath, '[]')
 
-  const child = execa(
-    'node', [cliPath, 'start', '-c', configPath],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
+  const child = execa('node', [startPath, configPath], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
     }
-  )
+  })
 
   t.after(async () => {
     child.catch(() => {})
@@ -147,7 +133,7 @@ test('start updates schema.lock with migrations autoApply', async (t) => {
   assert.ok(graphsTableSchema)
 })
 
-test('migrate does not update an existing schemalock file if no migrations have been applied', async (t) => {
+test('migrate does not update an existing schemalock file if no migrations have been applied', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
   const db = await connectDB(connectionInfo)
 
@@ -156,14 +142,11 @@ test('migrate does not update an existing schemalock file if no migrations have 
 
   await unlink(expectedFile).catch(() => {})
 
-  await execa(
-    'node', [cliPath, 'migrations', 'apply', '-c', configPath],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
+  await execa('node', [cliPath, 'migrations', 'apply', '-c', configPath], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
     }
-  )
+  })
 
   t.after(async () => {
     await db.dispose()
@@ -173,16 +156,13 @@ test('migrate does not update an existing schemalock file if no migrations have 
 
   const stats1 = await stat(expectedFile)
 
-  await execa(
-    'node', [cliPath, 'migrations', 'apply', '-c', configPath],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
+  await execa('node', [cliPath, 'migrations', 'apply', '-c', configPath], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
     }
-  )
+  })
 
   const stats2 = await stat(expectedFile)
 
-  assert.deepEqual(stats1, stats2)
+  assert.deepEqual(stats1.mtime, stats2.mtime)
 })

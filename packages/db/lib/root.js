@@ -5,7 +5,7 @@ const userAgentParser = require('my-ua-parser')
 
 module.exports = async (app, opts) => {
   app.register(fastifyStatic, {
-    root: path.join(__dirname, 'public'),
+    root: path.join(__dirname, '../public')
   })
   // root endpoint
   app.route({
@@ -21,6 +21,6 @@ module.exports = async (app, opts) => {
         }
       }
       return { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' }
-    },
+    }
   })
 }

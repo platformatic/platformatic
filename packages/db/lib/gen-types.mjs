@@ -7,13 +7,13 @@ import { createRequire } from 'node:module'
 import { basename, join, parse, posix, relative, resolve } from 'path'
 import pino from 'pino'
 import pretty from 'pino-pretty'
-import { platformaticDB } from '../index.js'
+import platformaticDatabase from '../index.js'
 import { isFileAccessible, setupDB } from './utils.js'
 
 const checkForDependencies = utils.checkForDependencies
 
 const GLOBAL_TYPES_TEMPLATE = `\
-import type { PlatformaticApp, PlatformaticDBMixin, PlatformaticDBConfig, Entity, Entities, EntityHooks } from '@platformatic/db'
+import type { PlatformaticApplication, PlatformaticDatabaseMixin, PlatformaticDatabaseConfig, Entity, Entities, EntityHooks } from '@platformatic/db'
 ENTITIES_IMPORTS_PLACEHOLDER
 
 interface AppEntities extends Entities {
@@ -26,8 +26,8 @@ interface AppEntityHooks {
 
 declare module 'fastify' {
   interface FastifyInstance {
-    platformatic: PlatformaticApp<PlatformaticDBConfig> &
-      PlatformaticDBMixin<AppEntities> &
+    platformatic: PlatformaticApplication<PlatformaticDatabaseConfig> &
+      PlatformaticDatabaseMixin<AppEntities> &
       AppEntityHooks
   }
 }
@@ -186,7 +186,7 @@ async function generateTypes (_args) {
     })
   )
 
-  const { configManager, args } = await loadConfig({}, _args, platformaticDB)
+  const { configManager, args } = await loadConfig({}, _args, platformaticDatabase)
 
   await configManager.parseAndValidate()
   const config = configManager.current

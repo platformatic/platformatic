@@ -1,10 +1,11 @@
 #! /usr/bin/env node
 'use strict'
 
-const { metrics, server, plugins, watch, openApiDefs, openApiBase, clients } = require('@platformatic/service').schemas
+const { metrics, server, plugins, watch, openApiBase, clients, $defs } =
+  require('@platformatic/service').schemaComponents
 const { schemaComponents } = require('@platformatic/utils')
 const telemetry = require('@platformatic/telemetry').schema
-const pkg = require('../package.json')
+const packageJson = require('../package.json')
 
 const db = {
   type: 'object',
@@ -433,8 +434,8 @@ const types = {
   additionalProperties: false
 }
 
-const platformaticDBschema = {
-  $id: `https://schemas.platformatic.dev/@platformatic/db/${pkg.version}.json`,
+const schema = {
+  $id: `https://schemas.platformatic.dev/@platformatic/db/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
   title: 'Platformatic DB',
   type: 'object',
@@ -482,7 +483,7 @@ const platformaticDBschema = {
   additionalProperties: false,
   required: ['db'],
   $defs: {
-    ...openApiDefs,
+    ...$defs,
     'crud-operation-auth': {
       oneOf: [
         {
@@ -534,8 +535,16 @@ const platformaticDBschema = {
   }
 }
 
-module.exports.schema = platformaticDBschema
+module.exports = {
+  packageJson,
+  db,
+  sharedAuthorizationRule,
+  authorization,
+  migrations,
+  types,
+  schema
+}
 
 if (require.main === module) {
-  console.log(JSON.stringify(platformaticDBschema, null, 2))
+  console.log(JSON.stringify(schema, null, 2))
 }

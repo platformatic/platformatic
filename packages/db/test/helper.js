@@ -4,11 +4,13 @@ const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { randomUUID } = require('node:crypto')
 const why = require('why-is-node-running')
+const { ConfigManager } = require('@platformatic/config')
 const { createConnectionPool } = require('@platformatic/sql-mapper')
 const { safeRemove } = require('@platformatic/utils')
 const { Agent, setGlobalDispatcher } = require('undici')
-const { platformaticDB, ConfigManager } = require('..')
+const { createStackable, platformaticDatabase } = require('..')
 
+let tmpCount = 0
 // This file must be required/imported as the first file
 // in the test suite. It sets up the global environment
 // to track the open handles via why-is-node-running.
@@ -20,8 +22,8 @@ const agent = new Agent({
   keepAliveTimeout: 10,
   keepAliveMaxTimeout: 10,
   tls: {
-    rejectUnauthorized: false,
-  },
+    rejectUnauthorized: false
+  }
 })
 setGlobalDispatcher(agent)
 
@@ -38,11 +40,11 @@ async function getConnectionInfo (dbType) {
 
     return {
       connectionInfo: {
-        connectionString,
+        connectionString
       },
       async dropTestDB () {
         return safeRemove(pathToSqlite)
-      },
+      }
     }
   }
 
@@ -62,10 +64,10 @@ async function getConnectionInfo (dbType) {
       debug: () => {},
       info: () => {},
       trace: () => {},
-      error: () => {},
+      error: () => {}
     },
     connectionString: baseConnectionString,
-    poolSize: 1,
+    poolSize: 1
   })
 
   const connectionInfo = {}
@@ -80,11 +82,9 @@ async function getConnectionInfo (dbType) {
     async dropTestDB () {
       await db.query(sql`DROP DATABASE ${sql.ident(testDBName)};`)
       await db.dispose()
-    },
+    }
   }
 }
-
-module.exports.getConnectionInfo = getConnectionInfo
 
 async function createBasicPages (db, sql) {
   if (module.exports.isSQLite) {
@@ -99,12 +99,11 @@ async function createBasicPages (db, sql) {
     );`)
   }
 }
-module.exports.createBasicPages = createBasicPages
 
 async function buildConfigManager (source, dirname) {
   const base = {
     server: {},
-    db: {},
+    db: {}
   }
   source = Object.assign(base, source)
 
@@ -113,16 +112,33 @@ async function buildConfigManager (source, dirname) {
   }
 
   const configManager = new ConfigManager({
-    ...platformaticDB.configManagerConfig,
+    ...platformaticDatabase.configManagerConfig,
     source,
-    dirname,
+    dirname
   })
 
   await configManager.parseAndValidate()
   return configManager
 }
 
-module.exports.buildConfigManager = buildConfigManager
+async function createTemporaryDirectory (t) {
+  const directory = join(__dirname, `../../../tmp/plt-db-${process.pid}-${tmpCount++}`)
+  t.after(() => safeRemove(directory))
+  return directory
+}
+
+async function createStackableFromConfig (t, options, applicationFactory) {
+  const directory = await createTemporaryDirectory(t)
+  return createStackable(directory, options, {}, { applicationFactory, isStandalone: true, isEntrypoint: true })
+}
+
+module.exports = {
+  getConnectionInfo,
+  createBasicPages,
+  buildConfigManager,
+  createTemporaryDirectory,
+  createStackableFromConfig
+}
 
 if (!process.env.DB || process.env.DB === 'postgresql') {
   module.exports.isPg = true

@@ -1,21 +1,38 @@
 'use strict'
 
+const { resolveStackable } = require('@platformatic/basic')
 const core = require('@platformatic/db-core')
 const auth = require('@platformatic/db-authorization')
 const { createConnectionPool } = require('@platformatic/sql-mapper')
-const { platformaticService, buildServer, buildStackable } = require('@platformatic/service')
+const {
+  platformaticService,
+  registerCriticalPlugins,
+  configManagerConfig: serviceConfigManagerConfig,
+  ServiceStackable,
+  transformConfig: serviceTransformConfig
+} = require('@platformatic/service')
 const { isKeyEnabled } = require('@platformatic/utils')
-const { schema } = require('./lib/schema')
-const ConfigManager = require('@platformatic/config')
-const adjustConfig = require('./lib/adjust-config')
+const { Generator } = require('./lib/generator')
+const { schema, packageJson } = require('./lib/schema')
+const schemaComponents = require('./lib/schema')
+const { ConfigManager } = require('@platformatic/config')
 const { locateSchemaLock, updateSchemaLock } = require('./lib/utils')
 const errors = require('./lib/errors')
-const upgrade = require('./lib/upgrade')
-const fs = require('fs/promises')
-const { DbStackable } = require('./lib/stackable')
-const version = require('./package.json').version
+const { readFile, writeFile } = require('node:fs/promises')
+const { resolve } = require('node:path')
 
-async function platformaticDB (app, opts) {
+async function healthCheck (app) {
+  const { db, sql } = app.platformatic
+  try {
+    await db.query(sql`SELECT 1`)
+    return true
+  } catch (err) {
+    app.log.warn({ err }, 'Healthcheck failed')
+    return false
+  }
+}
+
+async function platformaticDatabase (app, stackable) {
   const configManager = app.platformatic.configManager
   const config = configManager.current
 
@@ -27,7 +44,7 @@ async function platformaticDB (app, opts) {
       // ignore errors, this is an optimization
       try {
         const path = locateSchemaLock(configManager)
-        const dbschema = JSON.parse(await fs.readFile(path, 'utf8'))
+        const dbschema = JSON.parse(await readFile(path, 'utf8'))
         config.db.dbschema = dbschema
         app.log.trace({ dbschema }, 'loaded schema lock')
         createSchemaLock = false
@@ -66,81 +83,159 @@ async function platformaticDB (app, opts) {
   if (createSchemaLock) {
     try {
       const path = locateSchemaLock(configManager)
-      await fs.writeFile(path, JSON.stringify(app.platformatic.dbschema, null, 2))
+      await writeFile(path, JSON.stringify(app.platformatic.dbschema, null, 2))
       app.log.info({ path }, 'created schema lock')
     } catch (err) {
       app.log.trace({ err }, 'unable to save schema lock')
     }
   }
 
-  async function toLoad (app) {
-    await app.register(core, config.db)
+  await registerCriticalPlugins(app, stackable)
 
-    if (config.authorization) {
-      await app.register(auth, config.authorization)
-    }
+  await app.register(core, config.db)
 
-    if (Object.keys(app.platformatic.entities).length === 0) {
-      app.log.warn(
-        'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? ' +
-        'This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/guides/debug-platformatic-db'
-      )
-    }
+  if (config.authorization) {
+    await app.register(auth, config.authorization)
   }
-  toLoad[Symbol.for('skip-override')] = true
 
-  await app.register(platformaticService, {
-    ...opts,
-    beforePlugins: [toLoad],
-  })
+  await platformaticService(app, stackable)
+
+  if (Object.keys(app.platformatic.entities).length === 0) {
+    app.log.warn(
+      'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? ' +
+        'This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/guides/debug-platformatic-db'
+    )
+  }
 
   if (!app.hasRoute({ url: '/', method: 'GET' }) && !app.hasRoute({ url: '/*', method: 'GET' })) {
-    app.register(require('./lib/root-endpoint'), config)
+    await app.register(require('./lib/root'), config)
   }
 }
 
-async function healthCheck (app) {
-  const { db, sql } = app.platformatic
-  try {
-    await db.query(sql`SELECT 1`)
-    return true
-  } catch (err) {
-    app.log.warn({ err }, 'Healthcheck failed')
-    return false
+platformaticDatabase[Symbol.for('skip-override')] = true
+
+class DatabaseStackable extends ServiceStackable {
+  constructor (options, root, configManager) {
+    super(options, root, configManager)
+    this.type = 'db'
+    this.version = packageJson.version
+    this.applicationFactory = this.context.applicationFactory ?? platformaticDatabase
+  }
+
+  updateContext (context) {
+    super.updateContext(context)
+
+    const config = this.configManager.current
+    if (this.context.isProduction && config.autogenerate) {
+      config.autogenerate = false
+      this.configManager.update(config)
+    }
+  }
+
+  async getMeta () {
+    const serviceMeta = await super.getMeta()
+
+    const config = this.configManager.current
+
+    const dbConfig = config.db
+    const connectionString = dbConfig?.connectionString
+
+    if (connectionString) {
+      return {
+        ...serviceMeta,
+        connectionStrings: [connectionString]
+      }
+    }
+
+    return serviceMeta
   }
 }
 
-platformaticDB[Symbol.for('skip-override')] = true
-platformaticDB.schema = schema
-platformaticDB.configType = 'db'
-platformaticDB.isPLTService = true
-platformaticDB.configManagerConfig = {
-  version,
+async function transformConfig () {
+  await serviceTransformConfig.call(this)
+
+  const dirOfConfig = this.dirname
+  if (
+    this.current.db &&
+    this.current.db.connectionString.indexOf('sqlite') === 0 &&
+    this.current.db.connectionString !== 'sqlite://:memory:'
+  ) {
+    const originalSqlitePath = this.current.db.connectionString.replace('sqlite://', '')
+    const sqliteFullPath = resolve(dirOfConfig, originalSqlitePath)
+    this.current.db.connectionString = 'sqlite://' + sqliteFullPath
+  }
+
+  /* c8 ignore next 3 */
+  if (this.current.db.graphql?.schemaPath) {
+    this.current.db.graphql.schema = await readFile(this.current.db.graphql.schemaPath, 'utf8')
+  }
+
+  /* c8 ignore next 2 */
+  const arePostgresqlSchemaDefined =
+    this.current.db?.connectionString.indexOf('postgres') === 0 && this.current.db?.schema?.length > 0
+  const migrationsTableName = arePostgresqlSchemaDefined ? 'public.versions' : 'versions'
+
+  // relative-to-absolute migrations path
+  if (this.current.migrations) {
+    this.current.migrations.table = this.current.migrations.table || migrationsTableName
+  }
+
+  if (this.current.migrations && this.current.db) {
+    // TODO remove the ignores
+    /* c8 ignore next 4 */
+    this.current.db.ignore = this.current.db.ignore || {}
+    this.current.db.ignore = Object.assign(
+      {},
+      {
+        [this.current.migrations.table || migrationsTableName]: true
+      },
+      this.current.db.ignore
+    )
+  }
+
+  if (this.current.types?.autogenerate === 'true') {
+    this.current.types.autogenerate = true
+  }
+}
+
+const configManagerConfig = {
+  ...serviceConfigManagerConfig,
+  transformConfig,
+  replaceEnvIgnore: ['$.db.openapi.ignoreRoutes']
+}
+
+// This will be replace by createStackable before the release of v3
+async function buildStackable (opts) {
+  return createStackable(opts.context.directory, opts.config, opts.context)
+}
+
+async function createStackable (fileOrDirectory, sourceOrConfig, opts, context) {
+  const { root, source } = await resolveStackable(fileOrDirectory, sourceOrConfig, 'db')
+  context ??= {}
+  context.directory = root
+
+  opts ??= { context }
+  opts.context = context
+
+  const configManager = new ConfigManager({ schema, source, ...configManagerConfig, dirname: root, context })
+  await configManager.parseAndValidate()
+
+  return new DatabaseStackable(opts, root, configManager)
+}
+
+module.exports = {
+  Generator,
+  DatabaseStackable,
+  errors,
+  createConnectionPool,
+  platformaticDatabase,
+  createStackable,
+  transformConfig,
+  // Old exports
+  configType: 'db',
+  configManagerConfig,
+  buildStackable,
   schema,
-  allowToWatch: ['.env'],
-  schemaOptions: platformaticService.configManagerConfig.schemaOptions,
-  replaceEnvIgnore: ['$.db.openapi.ignoreRoutes'],
-  async transformConfig () {
-    await adjustConfig(this)
-  },
-  upgrade,
+  schemaComponents,
+  version: packageJson.version
 }
-
-function _buildServer (options) {
-  return buildServer(options, platformaticDB)
-}
-
-async function buildDbStackable (options) {
-  return buildStackable(options, platformaticDB, DbStackable)
-}
-
-module.exports = platformaticDB
-module.exports.buildServer = _buildServer
-module.exports.schema = schema
-module.exports.platformaticDB = platformaticDB
-module.exports.ConfigManager = ConfigManager
-module.exports.errors = errors
-module.exports.createConnectionPool = createConnectionPool
-module.exports.Generator = require('./lib/generator/db-generator').Generator
-module.exports.buildStackable = buildDbStackable
-module.exports.DbStackable = DbStackable

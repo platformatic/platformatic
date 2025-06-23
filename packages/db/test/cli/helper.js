@@ -1,6 +1,6 @@
 'use strict'
 
-const { join } = require('node:path')
+const { join, resolve } = require('node:path')
 const { on } = require('node:events')
 const why = require('why-is-node-running')
 const { Agent, setGlobalDispatcher } = require('undici')
@@ -27,7 +27,8 @@ setGlobalDispatcher(
   })
 )
 
-const cliPath = join(__dirname, '..', '..', 'db.mjs')
+const cliPath = resolve(__dirname, '../../bin/plt-db.mjs')
+const startPath = resolve(__dirname, './start.mjs')
 
 async function connectDB (connectionInfo) {
   const { db } = await createConnectionPool({
@@ -53,7 +54,7 @@ function getFixturesConfigFileLocation (filename, subdirectories = []) {
 
 async function start (commandOpts, exacaOpts = {}) {
   const { execa } = await import('execa')
-  const child = execa('node', [cliPath, 'start', ...commandOpts], exacaOpts)
+  const child = execa('node', [startPath, ...commandOpts], exacaOpts)
   child.stderr.pipe(process.stdout)
   const output = child.stdout.pipe(
     split(function (line) {
@@ -112,6 +113,7 @@ async function safeKill (child, signal = 'SIGINT') {
 }
 
 module.exports.cliPath = cliPath
+module.exports.startPath = startPath
 module.exports.connectDB = connectDB
 module.exports.getFixturesConfigFileLocation = getFixturesConfigFileLocation
 module.exports.start = start
