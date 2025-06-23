@@ -3,6 +3,7 @@
   "version": "2.70.1",
   "description": "",
   "main": "index.js",
+  "types": "index.d.ts",
   "type": "module",
   "scripts": {
     "test": "npm run lint && borp --concurrency=1 --no-timeout",

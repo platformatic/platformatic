@@ -1,12 +1,22 @@
 {
   "compilerOptions": {
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "module": "commonjs",
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "target": "es2019",
-    "outDir": "build",
+    "lib": ["es2022"],
+    "target": "es2022",
     "sourceMap": true,
-    "strictNullChecks": true
+    "pretty": true,
+    "noEmitOnError": true,
+    "incremental": true,
+    "strict": true,
+    "outDir": "dist",
+    "skipLibCheck": true
+  },
+  "watchOptions": {
+    "watchFile": "fixedPollingInterval",
+    "watchDirectory": "fixedPollingInterval",
+    "fallbackPolling": "dynamicPriority",
+    "synchronousWatchDirectory": true,
+    "excludeDirectories": ["**/node_modules", "dist"]
   }
 }

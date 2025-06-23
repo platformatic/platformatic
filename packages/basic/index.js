@@ -1,9 +1,9 @@
-import { ConfigManager } from '@platformatic/config'
+import { ConfigManager, errors } from '@platformatic/config'
 import { detectApplicationType } from '@platformatic/utils'
 import jsonPatch from 'fast-json-patch'
-import { readFile } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import { relative, resolve } from 'node:path'
+import { dirname, relative, resolve } from 'node:path'
 import { workerData } from 'node:worker_threads'
 import pino from 'pino'
 import { packageJson, schema } from './lib/schema.js'
@@ -99,13 +99,58 @@ export async function importStackableAndConfig (root, config, context) {
   }
 }
 
+export async function findConfigurationFile (root, typeOrCandidates) {
+  const file = await ConfigManager.findConfigFile(root, typeOrCandidates)
+
+  if (!file) {
+    const err = new errors.NoConfigFileFoundError()
+    err.message = `No config file found in the directory ${root} or its parents. Please create one of the following files: ${ConfigManager.listConfigFiles(typeOrCandidates, false, ['json']).join(', ')}`
+
+    throw err
+  }
+
+  return resolve(root, file)
+}
+
+export async function resolveStackable (fileOrDirectory, sourceOrConfig, typeOrCandidates) {
+  if (sourceOrConfig && typeof sourceOrConfig !== 'string') {
+    return {
+      root: fileOrDirectory,
+      source: sourceOrConfig
+    }
+  } else if (typeof fileOrDirectory === 'string' && typeof sourceOrConfig === 'string') {
+    return {
+      root: fileOrDirectory,
+      source: sourceOrConfig
+    }
+  }
+
+  try {
+    const fileInfo = await stat(fileOrDirectory)
+
+    if (fileInfo.isFile()) {
+      return {
+        root: dirname(fileOrDirectory),
+        source: fileOrDirectory
+      }
+    }
+  } catch (err) {
+    // No-op
+  }
+
+  return {
+    root: fileOrDirectory,
+    source: await findConfigurationFile(fileOrDirectory, typeOrCandidates)
+  }
+}
+
 async function buildStackable (opts) {
   const hadConfig = !!opts.config
   const { stackable, config } = await importStackableAndConfig(opts.context.directory, opts.config, opts.context)
   opts.config = config
 
   if (!hadConfig && typeof stackable.createDefaultConfig === 'function') {
-    opts.config = await stackable.createDefaultConfig?.(opts)
+    opts.config = await stackable.createDefaultConfig(opts)
   }
 
   return stackable.buildStackable(opts)
@@ -117,6 +162,18 @@ export async function transformConfig () {
 
   if (Array.isArray(patch)) {
     this.current = jsonPatch.applyPatch(this.current, patch).newDocument
+  }
+
+  if (!this.current) {
+    return
+  }
+
+  if (this.current.watch === undefined) {
+    this.current.watch = { enabled: false }
+  }
+
+  if (typeof this.current.watch !== 'object') {
+    this.current.watch = { enabled: this.current.watch || false }
   }
 }
 

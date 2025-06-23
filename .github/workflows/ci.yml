@@ -32,7 +32,7 @@ env:
 jobs:
   setup-node_modules:
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -54,7 +54,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'create-platformatic' }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -87,7 +87,7 @@ jobs:
     if: ${{ !inputs.job || inputs.job == 'cli' }}
     runs-on: ${{ matrix.os }}
     # Paolo: This job takes a lot due to build and start command tests.
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -116,7 +116,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'config' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -142,7 +142,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'composer' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -168,7 +168,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'db' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -199,7 +199,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'db-authorization' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -227,7 +227,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'db-core-lint' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -272,7 +272,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'db-core-test' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]
@@ -311,7 +311,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'sql-events' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]
@@ -346,7 +346,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'control' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -372,7 +372,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'runtime-lint' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -394,7 +394,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'runtime' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -421,7 +421,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'service' }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -449,7 +449,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'utils' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -475,7 +475,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'ts-compiler' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -501,7 +501,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'client' }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -528,7 +528,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'metrics' }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -553,7 +553,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'telemetry' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -579,7 +579,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'playwright-e2e' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -600,7 +600,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'rpc' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -628,7 +628,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'generators' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -654,7 +654,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'itc' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -680,7 +680,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'basic' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -706,7 +706,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'node' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -732,7 +732,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'next' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -764,7 +764,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'vite' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -790,7 +790,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'astro' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -816,7 +816,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'remix' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -842,7 +842,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'nest' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -868,7 +868,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'wattpm' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -894,7 +894,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'globals' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]
@@ -920,7 +920,7 @@ jobs:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'dependency-check' }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [22, 24]

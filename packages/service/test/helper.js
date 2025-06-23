@@ -1,14 +1,10 @@
 'use strict'
 
-const why = require('why-is-node-running')
+const { safeRemove } = require('@platformatic/utils')
+const { join } = require('node:path')
+const { createStackable } = require('..')
 
-if (process.env.WHY === 'true') {
-  setInterval(() => {
-    console.log('why is node running?')
-    why()
-  }, 60000).unref()
-}
-
+let tmpCount = 0
 const { Agent, setGlobalDispatcher } = require('undici')
 
 const agent = new Agent({
@@ -29,4 +25,19 @@ function buildConfig (options) {
   return Object.assign(base, options)
 }
 
-module.exports.buildConfig = buildConfig
+async function createTemporaryDirectory (t) {
+  const directory = join(__dirname, `../../../tmp/plt-service-${process.pid}-${tmpCount++}`)
+  t.after(() => safeRemove(directory))
+  return directory
+}
+
+async function createStackableFromConfig (t, options, applicationFactory) {
+  const directory = await createTemporaryDirectory(t)
+  return createStackable(directory, options, {}, { applicationFactory, isStandalone: true, isEntrypoint: true })
+}
+
+module.exports = {
+  buildConfig,
+  createTemporaryDirectory,
+  createStackableFromConfig
+}

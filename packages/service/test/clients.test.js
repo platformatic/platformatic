@@ -6,27 +6,27 @@ const { join } = require('node:path')
 const { request } = require('undici')
 const { compile } = require('@platformatic/ts-compiler')
 const pino = require('pino')
-const { buildServer } = require('..')
+const { createStackable } = require('..')
 const { safeRemove } = require('@platformatic/utils')
 
-// require('./helper')
+const projectRoot = join(__dirname, './fixtures/hello')
 
 test('client is loaded', async t => {
-  const app1 = await buildServer(join(__dirname, '..', 'fixtures', 'hello', 'warn-log.service.json'))
+  const app1 = await createStackable(join(projectRoot, 'warn-log.service.json'))
 
   t.after(async () => {
-    await app1.close()
+    await app1.stop()
   })
-  await app1.start()
+  await app1.start({ listen: true })
 
   process.env.PLT_CLIENT_URL = app1.url
 
-  const app2 = await buildServer(join(__dirname, '..', 'fixtures', 'hello-client', 'platformatic.service.json'))
+  const app2 = await createStackable(join(__dirname, './fixtures/hello-client/platformatic.service.json'))
 
   t.after(async () => {
-    await app2.close()
+    await app2.stop()
   })
-  await app2.start()
+  await app2.start({ listen: true })
 
   const res = await request(`${app2.url}/`)
   assert.strictEqual(res.statusCode, 200, 'status code')
@@ -35,33 +35,31 @@ test('client is loaded', async t => {
 })
 
 test('client is loaded (ts)', async t => {
-  const app1 = await buildServer(join(__dirname, '..', 'fixtures', 'hello', 'warn-log.service.json'))
+  const app1 = await createStackable(join(projectRoot, 'warn-log.service.json'))
 
   t.after(async () => {
-    await app1.close()
+    await app1.stop()
   })
-  await app1.start()
+  await app1.start({ listen: true })
 
   process.env.PLT_CLIENT_URL = app1.url
 
-  const targetDir = join(__dirname, '..', 'fixtures', 'hello-client-ts')
+  const targetDir = join(__dirname, './fixtures/hello-client-ts')
 
   try {
     await safeRemove(join(targetDir, 'dist'))
   } catch {}
 
-  console.time('compile')
   await compile({
     cwd: targetDir,
-    logger: pino({ level: 'warn' }),
+    logger: pino({ level: 'warn' })
   })
-  console.timeEnd('compile')
 
-  const app2 = await buildServer(join(targetDir, 'platformatic.service.json'))
+  const app2 = await createStackable(targetDir)
   t.after(async () => {
-    await app2.close()
+    await app2.stop()
   })
-  await app2.start()
+  await app2.start({ listen: true })
 
   const res = await request(`${app2.url}/`)
   assert.strictEqual(res.statusCode, 200, 'status code')
@@ -70,23 +68,21 @@ test('client is loaded (ts)', async t => {
 })
 
 test('client is loaded dependencyless', async t => {
-  const app1 = await buildServer(join(__dirname, '..', 'fixtures', 'hello', 'warn-log.service.json'))
+  const app1 = await createStackable(join(projectRoot, 'warn-log.service.json'))
 
   t.after(async () => {
-    await app1.close()
+    await app1.stop()
   })
-  await app1.start()
+  await app1.start({ listen: true })
 
   process.env.PLT_CLIENT_URL = app1.url
 
-  const app2 = await buildServer(
-    join(__dirname, '..', 'fixtures', 'hello-client-without-deps', 'platformatic.service.json')
-  )
+  const app2 = await createStackable(join(__dirname, './fixtures/hello-client-without-deps'))
 
   t.after(async () => {
-    await app2.close()
+    await app2.stop()
   })
-  await app2.start()
+  await app2.start({ listen: true })
 
   const res = await request(`${app2.url}/`)
   assert.strictEqual(res.statusCode, 200, 'status code')
@@ -95,23 +91,21 @@ test('client is loaded dependencyless', async t => {
 })
 
 test('client is loaded before plugins', async t => {
-  const app1 = await buildServer(join(__dirname, '..', 'fixtures', 'hello', 'warn-log.service.json'))
+  const app1 = await createStackable(join(projectRoot, 'warn-log.service.json'))
 
   t.after(async () => {
-    await app1.close()
+    await app1.stop()
   })
-  await app1.start()
+  await app1.start({ listen: true })
 
   process.env.PLT_CLIENT_URL = app1.url
 
-  const app2 = await buildServer(
-    join(__dirname, '..', 'fixtures', 'hello-client-from-plugin', 'platformatic.service.json')
-  )
+  const app2 = await createStackable(join(__dirname, './fixtures/hello-client-from-plugin'))
 
   t.after(async () => {
-    await app2.close()
+    await app2.stop()
   })
-  await app2.start()
+  await app2.start({ listen: true })
 
   const res = await request(`${app2.url}/`)
   assert.strictEqual(res.statusCode, 200, 'status code')

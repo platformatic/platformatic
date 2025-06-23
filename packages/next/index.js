@@ -318,14 +318,6 @@ export class NextStackable extends BaseStackable {
 
 /* c8 ignore next 9 */
 function transformConfig () {
-  if (this.current.watch === undefined) {
-    this.current.watch = { enabled: false }
-  }
-
-  if (typeof this.current.watch !== 'object') {
-    this.current.watch = { enabled: this.current.watch || false }
-  }
-
   if (this.current.cache?.adapter === 'redis') {
     this.current.cache.adapter = 'valkey'
   }

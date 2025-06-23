@@ -1,12 +1,12 @@
 import {
-  transformConfig as basicTransformConfig,
   cleanBasePath,
   ensureTrailingSlash,
   errors,
   getServerUrl,
   importFile,
   resolvePackage,
-  schemaOptions
+  schemaOptions,
+  transformConfig
 } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
 import { features } from '@platformatic/utils'
@@ -226,19 +226,6 @@ export class RemixStackable extends ViteStackable {
       })
     })
   }
-}
-
-/* c8 ignore next 9 */
-function transformConfig () {
-  if (this.current.watch === undefined) {
-    this.current.watch = { enabled: false }
-  }
-
-  if (typeof this.current.watch !== 'object') {
-    this.current.watch = { enabled: this.current.watch || false }
-  }
-
-  return basicTransformConfig.call(this)
 }
 
 export async function buildStackable (opts) {
