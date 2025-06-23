@@ -447,6 +447,11 @@ export class BaseStackable extends EventEmitter {
   #setHttpCacheMetrics () {
     const { client, registry } = globalThis.platformatic.prometheus
 
+    // Metrics already registered, no need to register them again
+    if (registry.getSingleMetric('http_cache_hit_count') || registry.getSingleMetric('http_cache_miss_count')) {
+      return
+    }
+
     const cacheHitMetric = new client.Counter({
       name: 'http_cache_hit_count',
       help: 'Number of http cache hits',

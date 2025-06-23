@@ -5,7 +5,7 @@ const { test } = require('node:test')
 const { join } = require('node:path')
 const assert = require('node:assert')
 const { createStackable } = require('../..')
-const { createTemporaryDirectory } = require('../helper')
+const { createTemporaryDirectory } = require('../../../basic/test/helper')
 
 test('compile typescript', async t => {
   const testDir = join(__dirname, '..', 'fixtures', 'typescript-plugin')

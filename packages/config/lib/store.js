@@ -81,7 +81,7 @@ class Store {
     if (app.configManagerConfig === undefined) {
       app.configManagerConfig = {}
     } else {
-      app.configManagerConfig.schema = app.schema
+      app.configManagerConfig = { ...app.configManagerConfig, schema: app.schema }
     }
 
     this.#map.set(app.schema.$id, app)

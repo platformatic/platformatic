@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "pnpm run lint && borp -T --timeout=1200000 -c 1 && tsd",
+    "test": "pnpm run lint && borp -T --no-timeout -c 1",
     "gen-schema": "node lib/schema.js > schema.json",
     "gen-types": "json2ts > config.d.ts < schema.json",
     "build": "pnpm run gen-schema && pnpm run gen-types",
@@ -12,7 +12,7 @@
     "lint": "eslint"
   },
   "bin": {
-    "plt-composer": "./composer.mjs"
+    "plt-composer": "./bin/plt-composer.mjs"
   },
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
@@ -51,6 +51,7 @@
     "@fastify/static": "^8.0.0",
     "@fastify/swagger": "^9.0.0",
     "@fastify/view": "^10.0.1",
+    "@platformatic/basic": "workspace:*",
     "@platformatic/config": "workspace:*",
     "@platformatic/fastify-openapi-glue": "^5.1.0",
     "@platformatic/generators": "workspace:*",

@@ -1,39 +1,31 @@
 #! /usr/bin/env node
 
-import { readFile } from 'fs/promises'
-
-import commist from 'commist'
-import parseArgs from 'minimist'
-import isMain from 'es-main'
-import helpMe from 'help-me'
-import { join } from 'desm'
-import { start } from '@platformatic/service'
 import { printAndExitLoadConfigError } from '@platformatic/config'
+import commist from 'commist'
+import { join } from 'desm'
+import isMain from 'es-main'
+import { readFile } from 'fs/promises'
+import helpMe from 'help-me'
+import parseArgs from 'minimist'
+import { fetchOpenApiSchemas } from '../lib/openapi-fetch-schemas.mjs'
 
-import { fetchOpenApiSchemas } from './lib/openapi-fetch-schemas.mjs'
-import { platformaticComposer } from './index.js'
-import { createComposer } from './lib/create.mjs'
 const help = helpMe({
   dir: join(import.meta.url, 'help'),
   // the default
-  ext: '.txt',
+  ext: '.txt'
 })
 
 const program = commist({ maxDistance: 2 })
 
-program.register('start', (argv) => {
-  start(platformaticComposer, argv).catch(printAndExitLoadConfigError)
-})
-program.register('openapi schemas fetch', (argv) => {
+program.register('openapi schemas fetch', argv => {
   return fetchOpenApiSchemas(argv).catch(printAndExitLoadConfigError)
 })
-program.register('create', createComposer)
 
 export async function runComposer (argv) {
   const args = parseArgs(argv, {
     alias: {
-      v: 'version',
-    },
+      v: 'version'
+    }
   })
 
   if (args.version) {
@@ -45,7 +37,7 @@ export async function runComposer (argv) {
 
   return {
     output,
-    help,
+    help
   }
 }
 

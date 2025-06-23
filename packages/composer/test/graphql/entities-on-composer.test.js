@@ -2,28 +2,33 @@
 
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
-const { graphqlRequest, createComposer, startServices } = require('../helper')
+const { graphqlRequest, createStackableFromConfig, startDatabaseServices } = require('../helper')
 
 function toComposerConfig (services, entities = {}) {
   return {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
     composer: {
       graphql: {
         entities,
-        addEntitiesResolvers: true,
+        addEntitiesResolvers: true
       },
       services: services.map(s => {
         const config = {
           id: s.name,
           origin: s.host,
-          graphql: true,
+          graphql: true
         }
         return config
-      }),
-    },
+      })
+    }
   }
 }
 
-const defaultArgsAdapter = (partialResults) => {
+const defaultArgsAdapter = partialResults => {
   return { where: { id: { in: partialResults.map(r => r?.id) } }, limit: 99 }
 }
 
@@ -41,13 +46,13 @@ const entities = {
         subgraph: 'movies',
         resolver: {
           name: 'movies',
-          argsAdapter: (artistIds) => {
+          argsAdapter: artistIds => {
             return { where: { directorId: { in: artistIds } }, limit: 99 }
           },
-          partialResults: (artists) => {
+          partialResults: artists => {
             return artists.map(r => r.id)
-          },
-        },
+          }
+        }
       },
       {
         type: 'Song',
@@ -57,15 +62,15 @@ const entities = {
         subgraph: 'songs',
         resolver: {
           name: 'songs',
-          argsAdapter: (artistIds) => {
+          argsAdapter: artistIds => {
             return { where: { singerId: { in: artistIds } } }
           },
-          partialResults: (artists) => {
+          partialResults: artists => {
             return artists.map(r => r.id)
-          },
-        },
-      },
-    ],
+          }
+        }
+      }
+    ]
   },
   Movie: {
     subgraph: 'movies',
@@ -80,12 +85,12 @@ const entities = {
         pkey: 'id',
         resolver: {
           name: 'artists',
-          partialResults: (movies) => {
+          partialResults: movies => {
             return movies.map(r => ({ id: r.directorId }))
-          },
-        },
-      },
-    ],
+          }
+        }
+      }
+    ]
   },
   Song: {
     subgraph: 'songs',
@@ -100,21 +105,26 @@ const entities = {
         pkey: 'id',
         resolver: {
           name: 'artists',
-          partialResults: (songs) => {
+          partialResults: songs => {
             return songs.map(r => ({ id: r.singerId }))
-          },
-        },
-      },
-    ],
-  },
+          }
+        }
+      }
+    ]
+  }
 }
 
 test('should use queries and mutations on multiple platformatic db services', async t => {
   const requests = [
     // query multiple services
     {
-      query: '{ songs (orderBy: [{field: title, direction: ASC }], limit: 1) { title, singer { firstName, lastName, profession } } }',
-      expected: { songs: [{ title: 'Every you every me', singer: { firstName: 'Brian', lastName: 'Molko', profession: 'Singer' } }] },
+      query:
+        '{ songs (orderBy: [{field: title, direction: ASC }], limit: 1) { title, singer { firstName, lastName, profession } } }',
+      expected: {
+        songs: [
+          { title: 'Every you every me', singer: { firstName: 'Brian', lastName: 'Molko', profession: 'Singer' } }
+        ]
+      }
     },
 
     // get all songs by singer
@@ -124,17 +134,24 @@ test('should use queries and mutations on multiple platformatic db services', as
         artists: [
           {
             lastName: 'Pavarotti',
-            songs: [{ title: 'Nessun dorma', year: 1992 }],
+            songs: [{ title: 'Nessun dorma', year: 1992 }]
           },
           {
             lastName: 'Molko',
-            songs: [{ title: 'Every you every me', year: 1998 }, { title: 'The bitter end', year: 2003 }],
+            songs: [
+              { title: 'Every you every me', year: 1998 },
+              { title: 'The bitter end', year: 2003 }
+            ]
           },
           {
             lastName: 'Dickinson',
-            songs: [{ title: 'Fear of the dark', year: 1992 }, { title: 'The trooper', year: 1983 }],
-          }],
-      },
+            songs: [
+              { title: 'Fear of the dark', year: 1992 },
+              { title: 'The trooper', year: 1983 }
+            ]
+          }
+        ]
+      }
     },
 
     // query more subgraph on same node
@@ -144,43 +161,93 @@ test('should use queries and mutations on multiple platformatic db services', as
         artists: [
           {
             lastName: 'Nolan',
-            movies: [{ title: 'Following' }, { title: 'Memento' }, { title: 'Insomnia' }, { title: 'Batman Begins' }, { title: 'The Prestige' }, { title: 'The Dark Knight' }, { title: 'Inception' }, { title: 'The Dark Knight Rises' }, { title: 'Interstellar' }, { title: 'Dunkirk' }, { title: 'Tenet' }, { title: 'Oppenheimer' }],
-            songs: [],
+            movies: [
+              { title: 'Following' },
+              { title: 'Memento' },
+              { title: 'Insomnia' },
+              { title: 'Batman Begins' },
+              { title: 'The Prestige' },
+              { title: 'The Dark Knight' },
+              { title: 'Inception' },
+              { title: 'The Dark Knight Rises' },
+              { title: 'Interstellar' },
+              { title: 'Dunkirk' },
+              { title: 'Tenet' },
+              { title: 'Oppenheimer' }
+            ],
+            songs: []
           },
           {
             lastName: 'Benigni',
             movies: [{ title: 'La vita é bella' }],
-            songs: [{ title: 'Vieni via con me' }],
-          },
-        ],
-      },
+            songs: [{ title: 'Vieni via con me' }]
+          }
+        ]
+      }
     },
 
     // double nested
     {
       query: '{ artists (where: { firstName: { eq: "Brian" } }) { songs { title, singer { firstName, lastName } } } }',
-      expected: { artists: [{ songs: [{ title: 'Every you every me', singer: { firstName: 'Brian', lastName: 'Molko' } }, { title: 'The bitter end', singer: { firstName: 'Brian', lastName: 'Molko' } }] }] },
+      expected: {
+        artists: [
+          {
+            songs: [
+              { title: 'Every you every me', singer: { firstName: 'Brian', lastName: 'Molko' } },
+              { title: 'The bitter end', singer: { firstName: 'Brian', lastName: 'Molko' } }
+            ]
+          }
+        ]
+      }
     },
 
     // nested many times
     {
-      query: '{ artists (where: { firstName: { eq: "Brian" } }) { songs { singer { songs { singer { songs { title } }} } } } }',
-      expected: { artists: [{ songs: [{ singer: { songs: [{ singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } }, { singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } }] } }, { singer: { songs: [{ singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } }, { singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } }] } }] }] },
+      query:
+        '{ artists (where: { firstName: { eq: "Brian" } }) { songs { singer { songs { singer { songs { title } }} } } } }',
+      expected: {
+        artists: [
+          {
+            songs: [
+              {
+                singer: {
+                  songs: [
+                    { singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } },
+                    { singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } }
+                  ]
+                }
+              },
+              {
+                singer: {
+                  songs: [
+                    { singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } },
+                    { singer: { songs: [{ title: 'Every you every me' }, { title: 'The bitter end' }] } }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
     },
 
     // mutation: create
     {
       query: 'mutation { saveMovie (input: { id: "a-new-movie", title: "A new movie" }) { id, title } }',
-      expected: { saveMovie: { id: 'a-new-movie', title: 'A new movie' } },
+      expected: { saveMovie: { id: 'a-new-movie', title: 'A new movie' } }
     },
     {
       query: 'mutation createMovie($movie: MovieInput!) { saveMovie(input: $movie) { title } }',
       variables: { movie: { id: 'a-wonderful-movie', title: 'A wonderful movie' } },
-      expected: { saveMovie: { title: 'A wonderful movie' } },
-    },
+      expected: { saveMovie: { title: 'A wonderful movie' } }
+    }
   ]
 
-  const services = await startServices(t, [{ name: 'movies', jsonFile: 'bare-db.json' }, { name: 'songs', jsonFile: 'bare-db.json' }, { name: 'artists', jsonFile: 'bare-db.json' }])
+  const services = await startDatabaseServices(t, [
+    { name: 'movies', jsonFile: 'bare-db.json' },
+    { name: 'songs', jsonFile: 'bare-db.json' },
+    { name: 'artists', jsonFile: 'bare-db.json' }
+  ])
 
   const composerConfig = toComposerConfig(services, entities)
 
@@ -188,12 +255,21 @@ test('should use queries and mutations on multiple platformatic db services', as
   composerConfig.composer.graphql.graphiql = true
   composerConfig.composer.refreshTimeout = 0
 
-  const composer = await createComposer(t, composerConfig)
-  const composerHost = await composer.listen()
+  const composer = await createStackableFromConfig(t, composerConfig)
+  const composerHost = await composer.start({ listen: true })
 
   for (const request of requests) {
     const response = await graphqlRequest({ query: request.query, variables: request.variables, host: composerHost })
 
-    assert.deepStrictEqual(response, request.expected, 'should get expected result from composer service for query\n' + request.query + '\nresponse' + JSON.stringify(response))
+    assert.deepStrictEqual(
+      response,
+      request.expected,
+      'should get expected result from composer service for query\n' +
+        request.query +
+        '\nresponse' +
+        JSON.stringify(response)
+    )
   }
+
+  await composer.stop()
 })

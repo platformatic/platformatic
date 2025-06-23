@@ -169,18 +169,23 @@ test('should setup telemetry if configured', async t => {
 async function setupDBAppWithTelemetry (t, telemetryOpts, plugins) {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
-      logger: { level: 'fatal' }
+  const app = await createStackableFromConfig(
+    t,
+    {
+      server: {
+        hostname: '127.0.0.1',
+        port: 0,
+        logger: { level: 'fatal' }
+      },
+      db: {
+        ...connectionInfo,
+        onDatabaseLoad
+      },
+      telemetry: telemetryOpts
     },
-    db: {
-      ...connectionInfo,
-      onDatabaseLoad
-    },
-    telemetry: telemetryOpts
-  })
+    null,
+    { skipInit: true }
+  )
 
   app.context.fastifyPlugins = plugins
 

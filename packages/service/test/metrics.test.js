@@ -336,8 +336,6 @@ test('specify custom labels', async t => {
     }
   })
 
-  await app.init()
-
   app.getApplication().get('/test', async (req, reply) => {
     return { hello: 'world' }
   })

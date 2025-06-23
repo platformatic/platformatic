@@ -23,7 +23,10 @@ test('config is adjusted to handle custom loggers', async t => {
         debug () {},
         fatal () {},
         warn () {},
-        trace () {}
+        trace () {},
+        child () {
+          return options.loggerInstance
+        }
       }
     }
   }

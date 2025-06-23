@@ -151,23 +151,20 @@ class ServiceStackable extends BaseStackable {
     }
   }
 
-  async start ({ listen }) {
+  async start (startOptions) {
+    // Compatibility with v2 service
+    const { listen } = startOptions ?? { listen: true }
+
     // Make this idempotent
     if (this.url) {
       return this.url
     }
 
-    // Listen if entrypoint
-    if (this.#app && listen) {
-      await this._listen()
-      return this.url
+    // Create the application if needed
+    if (!this.#app) {
+      await this.init()
+      await this.#app.ready()
     }
-
-    await this.init()
-    await this.#app.ready()
-
-    this.openapiSchema = this.#app.swagger ? this.#app.swagger() : null
-    this.graphqlSchema = this.#app.graphql ? printSchema(this.#app.graphql.schema) : null
 
     if (listen) {
       await this._listen()
@@ -191,12 +188,13 @@ class ServiceStackable extends BaseStackable {
   }
 
   async inject (injectParams, onInject) {
-    const { statusCode, statusMessage, headers, body } = await this.#app.inject(injectParams, onInject)
+    const response = await this.#app.inject(injectParams, onInject)
 
     if (onInject) {
       return
     }
 
+    const { statusCode, statusMessage, headers, body } = response
     return { statusCode, statusMessage, headers, body }
   }
 
@@ -245,6 +243,18 @@ class ServiceStackable extends BaseStackable {
       },
       connectionStrings: [this.connectionString]
     }
+  }
+
+  async getOpenapiSchema () {
+    await this.init()
+    await this.#app.ready()
+    return this.#app.swagger ? this.#app.swagger() : null
+  }
+
+  async getGraphqlSchema () {
+    await this.init()
+    await this.#app.ready()
+    return this.#app.graphql ? printSchema(this.#app.graphql.schema) : null
   }
 
   async updateContext (context) {
@@ -427,7 +437,7 @@ const configManagerConfig = { schemaOptions, transformConfig }
 
 // This will be replace by createStackable before the release of v3
 async function buildStackable (opts) {
-  return createStackable(opts.context.directory, opts.config, opts.context)
+  return createStackable(opts.context.directory, opts.config, {}, opts.context)
 }
 
 async function createStackable (fileOrDirectory, sourceOrConfig, opts, context) {

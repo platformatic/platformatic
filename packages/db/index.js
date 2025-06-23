@@ -206,7 +206,7 @@ const configManagerConfig = {
 
 // This will be replace by createStackable before the release of v3
 async function buildStackable (opts) {
-  return createStackable(opts.context.directory, opts.config, opts.context)
+  return createStackable(opts.context.directory, opts.config, {}, opts.context)
 }
 
 async function createStackable (fileOrDirectory, sourceOrConfig, opts, context) {

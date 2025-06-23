@@ -27,7 +27,6 @@ test('should respond 200 on root endpoint', async t => {
     await app.stop()
   })
 
-  await app.init()
   const handler = awsLambdaFastify(app.getApplication())
 
   {

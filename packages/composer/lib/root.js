@@ -6,13 +6,13 @@ const userAgentParser = require('my-ua-parser')
 
 module.exports = async (app, opts) => {
   app.register(fastifyStatic, {
-    root: join(__dirname, 'public'),
+    root: join(__dirname, '../public')
   })
   app.register(require('@fastify/view'), {
     engine: {
       nunjucks: require('nunjucks')
     },
-    root: join(__dirname, 'public')
+    root: join(__dirname, '../public')
   })
   // root endpoint
   app.route({
@@ -44,7 +44,7 @@ module.exports = async (app, opts) => {
             }
           }
 
-          app.platformatic.config.composer.services.forEach((s) => {
+          app.platformatic.config.composer.services.forEach(s => {
             if (s.openapi) {
               hasOpenAPIServices = true
               serviceTypes.openapi.services.push(s)
@@ -70,6 +70,6 @@ module.exports = async (app, opts) => {
       }
       // Load services
       return { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' }
-    },
+    }
   })
 }

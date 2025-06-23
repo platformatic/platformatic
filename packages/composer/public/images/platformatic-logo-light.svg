@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 568.18 568.18">
+  <defs>
+    <style>
+      .cls-1 {
+        stroke: #00050b;
+      }
+
+      .cls-1, .cls-2 {
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 16.73px;
+      }
+
+      .cls-2 {
+        stroke: #00fe84;
+      }
+    </style>
+  </defs>
+  <g>
+    <line class="cls-2" x1="144.97" y1="318.27" x2="144.97" y2="392.48"/>
+    <polyline class="cls-2" points="174.15 303.65 233.49 337.91 322.01 286.8 322.01 184.58 233.49 133.48 144.97 184.58 144.97 273.29"/>
+    <polyline class="cls-2" points="174.15 336.1 174.15 303.66 203.24 285.96"/>
+  </g>
+  <polyline class="cls-1" points="470.56 259.16 506.46 280.38 506.46 301.59 470.56 322.81"/>
+  <polyline class="cls-1" points="101.92 208.8 61.72 232.01 61.72 335.6 101.07 358.32"/>
+  <polyline class="cls-1" points="174.15 379.13 174.15 402.14 233.12 434.7 278.4 408.29 278.03 360.22"/>
+  <polyline class="cls-1" points="322.57 333.23 322.57 358.53 364.96 383.33 426.93 346.35 426.93 245.48 365.94 210.51"/>
+</svg>

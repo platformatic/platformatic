@@ -1,14 +1,12 @@
 'use strict'
 
 const { BaseGenerator } = require('@platformatic/generators')
-const { join } = require('node:path')
-const { readFile } = require('node:fs/promises')
 
-class ComposerGenerator extends BaseGenerator {
+class Generator extends BaseGenerator {
   constructor (opts) {
     super({
       ...opts,
-      module: '@platformatic/composer',
+      module: '@platformatic/composer'
     })
     this.runtime = null
   }
@@ -19,7 +17,7 @@ class ComposerGenerator extends BaseGenerator {
       ...defaultBaseConfig,
       plugin: false,
       routes: false,
-      tests: false,
+      tests: false
     }
   }
 
@@ -32,24 +30,24 @@ class ComposerGenerator extends BaseGenerator {
             id: 'example',
             origin: `{${this.getEnvVarName('PLT_EXAMPLE_ORIGIN')}}`,
             openapi: {
-              url: '/documentation/json',
-            },
-          },
+              url: '/documentation/json'
+            }
+          }
         ],
-        refreshTimeout: 1000,
+        refreshTimeout: 1000
       },
-      watch: true,
+      watch: true
     }
     if (this.runtime !== null) {
       template.composer.services = this.runtime.services
         .filter(serviceMeta => serviceMeta.service.module !== '@platformatic/composer')
-        .map((serviceMeta) => {
+        .map(serviceMeta => {
           return {
             id: serviceMeta.name,
             openapi: {
               url: '/documentation/json',
-              prefix: `/${serviceMeta.name}`,
-            },
+              prefix: `/${serviceMeta.name}`
+            }
           }
         })
     }
@@ -59,11 +57,11 @@ class ComposerGenerator extends BaseGenerator {
         paths: [
           {
             path: './plugins',
-            encapsulate: false,
+            encapsulate: false
           },
-          './routes',
+          './routes'
         ],
-        typescript: `{${this.getEnvVarName('PLT_TYPESCRIPT')}}`,
+        typescript: `{${this.getEnvVarName('PLT_TYPESCRIPT')}}`
       }
     }
 
@@ -72,8 +70,8 @@ class ComposerGenerator extends BaseGenerator {
         hostname: '{PLT_SERVER_HOSTNAME}',
         port: '{PORT}',
         logger: {
-          level: '{PLT_SERVER_LOGGER_LEVEL}',
-        },
+          level: '{PLT_SERVER_LOGGER_LEVEL}'
+        }
       }
     }
 
@@ -83,20 +81,26 @@ class ComposerGenerator extends BaseGenerator {
   async _beforePrepare () {
     if (!this.config.isUpdating) {
       if (!this.config.isRuntimeContext) {
-        this.addEnvVars({
-          PLT_SERVER_HOSTNAME: this.config.hostname,
-          PLT_SERVER_LOGGER_LEVEL: 'info',
-          PORT: 3042,
-        }, { overwrite: false, default: true })
+        this.addEnvVars(
+          {
+            PLT_SERVER_HOSTNAME: this.config.hostname,
+            PLT_SERVER_LOGGER_LEVEL: 'info',
+            PORT: 3042
+          },
+          { overwrite: false, default: true }
+        )
       }
 
-      this.addEnvVars({
-        PLT_TYPESCRIPT: this.config.typescript,
-        PLT_EXAMPLE_ORIGIN: 'http://127.0.0.1:3043',
-      }, { overwrite: false, default: true })
+      this.addEnvVars(
+        {
+          PLT_TYPESCRIPT: this.config.typescript,
+          PLT_EXAMPLE_ORIGIN: 'http://127.0.0.1:3043'
+        },
+        { overwrite: false, default: true }
+      )
 
       this.config.dependencies = {
-        '@platformatic/composer': `^${this.platformaticVersion}`,
+        '@platformatic/composer': `^${this.platformaticVersion}`
       }
     }
   }
@@ -113,8 +117,40 @@ declare module 'fastify' {
   }
 }
 `
+
+      const README = `
+# Platformatic Composer API
+
+This is a generated [Platformatic Composer](https://docs.platformatic.dev/docs/composer/overview) application.
+
+## Requirements
+
+Platformatic supports macOS, Linux and Windows ([WSL](https://docs.microsoft.com/windows/wsl/) recommended).
+You'll need to have [Node.js](https://nodejs.org/) >= v18.8.0 or >= v20.6.0
+
+## Setup
+
+1. Install dependencies:
+
+\`\`\`bash
+npm install
+\`\`\`
+
+## Usage
+
+Run the API with:
+
+\`\`\`bash
+npm start
+\`\`\`
+
+### Explore
+- ⚡ The Platformatic Composer server is running at http://localhost:3042/
+- 📔 View the REST API's Swagger documentation at http://localhost:3042/documentation/      
+`
+
       this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
-      this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md'), 'utf-8') })
+      this.addFile({ path: '', file: 'README.md', contents: README })
     }
   }
 
@@ -123,6 +159,4 @@ declare module 'fastify' {
   }
 }
 
-module.exports = ComposerGenerator
-module.exports.ComposerGenerator = ComposerGenerator
-module.exports.Generator = ComposerGenerator
+module.exports = { Generator }

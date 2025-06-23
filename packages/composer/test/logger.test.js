@@ -7,18 +7,18 @@ const { test } = require('node:test')
 const { setTimeout: wait } = require('node:timers/promises')
 const { tmpdir } = require('node:os')
 
-const { buildServer } = require('..')
+const { createStackable } = require('..')
 
 test('should use logger options - formatters, timestamp, redact', async t => {
   process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
   const file = path.join(process.env.LOG_DIR, 'service.log')
   const serviceRoot = path.join(__dirname, 'logger')
 
-  const app = await buildServer(path.join(serviceRoot, 'platformatic.json'))
+  const app = await createStackable(serviceRoot, path.resolve(serviceRoot, 'platformatic.json'))
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
   // wait for logger flush
   await wait(500)

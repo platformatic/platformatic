@@ -8,9 +8,9 @@ const { ConfigManager } = require('@platformatic/config')
 const { createConnectionPool } = require('@platformatic/sql-mapper')
 const { safeRemove } = require('@platformatic/utils')
 const { Agent, setGlobalDispatcher } = require('undici')
+const { createTemporaryDirectory } = require('../../basic/test/helper')
 const { createStackable, platformaticDatabase } = require('..')
 
-let tmpCount = 0
 // This file must be required/imported as the first file
 // in the test suite. It sets up the global environment
 // to track the open handles via why-is-node-running.
@@ -121,22 +121,28 @@ async function buildConfigManager (source, dirname) {
   return configManager
 }
 
-async function createTemporaryDirectory (t) {
-  const directory = join(__dirname, `../../../tmp/plt-db-${process.pid}-${tmpCount++}`)
-  t.after(() => safeRemove(directory))
-  return directory
-}
-
-async function createStackableFromConfig (t, options, applicationFactory) {
+async function createStackableFromConfig (t, options, applicationFactory, creationOptions = {}) {
   const directory = await createTemporaryDirectory(t)
-  return createStackable(directory, options, {}, { applicationFactory, isStandalone: true, isEntrypoint: true })
+
+  const database = await createStackable(
+    directory,
+    options,
+    {},
+    { applicationFactory, isStandalone: true, isEntrypoint: true }
+  )
+  t.after(() => database.stop())
+
+  if (!creationOptions.skipInit) {
+    await database.init()
+  }
+
+  return database
 }
 
 module.exports = {
   getConnectionInfo,
   createBasicPages,
   buildConfigManager,
-  createTemporaryDirectory,
   createStackableFromConfig
 }
 

@@ -3,32 +3,36 @@
 const assert = require('assert/strict')
 const { test } = require('node:test')
 const { join } = require('node:path')
+const { createGraphqlService, createStackableFromConfig } = require('./helper')
 
-const { createComposer, createGraphqlService } = require('./helper')
-
-test('should resolve openapi services to the origin', async (t) => {
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'service1',
-            openapi: {
-              file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'users.json'),
-            },
-          },
-          {
-            id: 'service2',
-            openapi: {
-              file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'posts.json'),
-            },
-          },
-        ],
-      },
+test('should resolve openapi services to the origin', async t => {
+  const composer = await createStackableFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    composer: {
+      services: [
+        {
+          id: 'service1',
+          openapi: {
+            file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'users.json')
+          }
+        },
+        {
+          id: 'service2',
+          openapi: {
+            file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'posts.json')
+          }
+        }
+      ]
     }
-  )
+  })
 
-  const services = composer.platformatic.config.composer.services
+  await composer.start({ listen: true })
+
+  const services = composer.getApplication().platformatic.config.composer.services
   assert.equal(services.length, 2)
 
   assert.equal(services[0].id, 'service1')
@@ -38,7 +42,7 @@ test('should resolve openapi services to the origin', async (t) => {
   assert.equal(services[1].origin, 'http://service2.plt.local')
 })
 
-test('should resolve graphql services', async (t) => {
+test('should resolve graphql services', async t => {
   const graphql1 = await createGraphqlService(t, {
     schema: `
     type Query {
@@ -48,9 +52,9 @@ test('should resolve graphql services', async (t) => {
       Query: {
         async add (_, { x, y }) {
           return x + y
-        },
-      },
-    },
+        }
+      }
+    }
   })
   const graphql2 = await createGraphqlService(t, {
     schema: `
@@ -61,40 +65,45 @@ test('should resolve graphql services', async (t) => {
       Query: {
         async mul (_, { x, y }) {
           return x * y
-        },
-      },
-    },
+        }
+      }
+    }
   })
 
   const graphql1Host = await graphql1.listen()
   const graphql2Host = await graphql2.listen()
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'graphql1',
-            origin: graphql1Host,
-            graphql: true,
-          },
-          {
-            id: 'graphql2',
-            origin: graphql2Host,
-            graphql: true,
-          },
-        ],
-      },
+  const composer = await createStackableFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    composer: {
+      services: [
+        {
+          id: 'graphql1',
+          origin: graphql1Host,
+          graphql: true
+        },
+        {
+          id: 'graphql2',
+          origin: graphql2Host,
+          graphql: true
+        }
+      ]
     }
-  )
+  })
 
-  const services = composer.platformatic.config.composer.services
+  await composer.start({ listen: true })
+
+  const services = composer.getApplication().platformatic.config.composer.services
   assert.equal(services.length, 2)
   assert.equal(services[0].id, 'graphql1')
   assert.equal(services[1].id, 'graphql2')
 })
 
-test('should resolve different services', async (t) => {
+test('should resolve different services', async t => {
   const graphql1 = await createGraphqlService(t, {
     schema: `
     type Query {
@@ -104,9 +113,9 @@ test('should resolve different services', async (t) => {
       Query: {
         async add (_, { x, y }) {
           return x + y
-        },
-      },
-    },
+        }
+      }
+    }
   })
 
   const graphql2 = await createGraphqlService(t, {
@@ -118,49 +127,54 @@ test('should resolve different services', async (t) => {
       Query: {
         async mul (_, { x, y }) {
           return x * y
-        },
-      },
-    },
+        }
+      }
+    }
   })
 
   const graphql1Host = await graphql1.listen()
   const graphql2Host = await graphql2.listen()
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'graphql',
-            origin: graphql1Host,
-            graphql: true,
+  const composer = await createStackableFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    composer: {
+      services: [
+        {
+          id: 'graphql',
+          origin: graphql1Host,
+          graphql: true
+        },
+        {
+          id: 'openapi',
+          origin: 'http://openapi.plt.local',
+          openapi: {
+            file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'users.json')
+          }
+        },
+        {
+          id: 'openapi-and-graphql',
+          origin: 'http://openapi-and-graphql.plt.local',
+          openapi: {
+            file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'posts.json')
           },
-          {
-            id: 'openapi',
-            origin: 'http://openapi.plt.local',
-            openapi: {
-              file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'users.json'),
-            },
-          },
-          {
-            id: 'openapi-and-graphql',
-            origin: 'http://openapi-and-graphql.plt.local',
-            openapi: {
-              file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'posts.json'),
-            },
-            graphql: {
-              host: graphql2Host,
-            },
-          },
-          {
-            id: 'none',
-          },
-        ],
-      },
+          graphql: {
+            host: graphql2Host
+          }
+        },
+        {
+          id: 'none'
+        }
+      ]
     }
-  )
+  })
 
-  const services = composer.platformatic.config.composer.services
+  await composer.start({ listen: true })
+
+  const services = composer.getApplication().platformatic.config.composer.services
   assert.equal(services.length, 4)
 
   assert.equal(services[0].id, 'graphql')

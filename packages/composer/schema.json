@@ -1151,7 +1151,8 @@
               "type": "object",
               "properties": {
                 "enabled": {
-                  "type": "boolean"
+                  "type": "boolean",
+                  "default": true
                 }
               },
               "required": [

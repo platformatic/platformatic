@@ -2,57 +2,62 @@
 
 const assert = require('node:assert')
 const { test } = require('node:test')
-const { buildStackable } = require('../..')
-const { createOpenApiService } = require('../helper')
+const { createOpenApiService, createStackableFromConfig } = require('../helper')
 
-test('get service openapi schema via stackable api', async (t) => {
+test('get service openapi schema via stackable api', async t => {
   const api = await createOpenApiService(t, ['users'])
   await api.listen({ port: 0 })
 
   const config = {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
     composer: {
       services: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
           openapi: {
-            url: '/documentation/json',
-          },
-        },
-      ],
-    },
+            url: '/documentation/json'
+          }
+        }
+      ]
+    }
   }
 
-  const stackable = await buildStackable({ config })
-
-  t.after(async () => {
-    await stackable.stop()
-  })
-  await stackable.start()
+  const stackable = await createStackableFromConfig(t, config)
+  t.after(() => stackable.stop())
+  await stackable.start({ listen: true })
 
   const openapiSchema = await stackable.getOpenapiSchema()
   assert.strictEqual(openapiSchema.openapi, '3.0.3')
   assert.deepStrictEqual(openapiSchema.info, {
     title: 'Platformatic Composer',
-    version: '1.0.0',
+    version: '1.0.0'
   })
 
   assert.ok(openapiSchema.paths['/users'].get)
   assert.ok(openapiSchema.paths['/users'].post)
 })
 
-test('get null if server does not expose openapi', async (t) => {
+test('get null if server does not expose openapi', async t => {
   const config = {
-    composer: {
-      services: [],
+    server: {
+      logger: {
+        level: 'fatal'
+      }
     },
+
+    composer: {
+      services: []
+    }
   }
 
-  const stackable = await buildStackable({ config })
-  t.after(async () => {
-    await stackable.stop()
-  })
-  await stackable.start()
+  const stackable = await createStackableFromConfig(t, config)
+  t.after(() => stackable.stop())
+  await stackable.start({ listen: true })
 
   const openapiSchema = await stackable.getOpenapiSchema()
   assert.strictEqual(openapiSchema, null)

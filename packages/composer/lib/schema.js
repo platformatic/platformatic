@@ -1,11 +1,12 @@
 #! /usr/bin/env node
 'use strict'
 
-const { metrics, server, plugins, watch, clients, openApiBase, openApiDefs, graphqlBase } =
-  require('@platformatic/service').schemas
+const {
+  schemaComponents: { metrics, server, plugins, watch, clients, openApiBase, graphqlBase, $defs }
+} = require('@platformatic/service')
 const { schemaComponents } = require('@platformatic/utils')
 const telemetry = require('@platformatic/telemetry').schema
-const pkg = require('../package.json')
+const packageJson = require('../package.json')
 
 const openApiService = {
   type: 'object',
@@ -195,8 +196,8 @@ const types = {
   additionalProperties: false
 }
 
-const platformaticComposerSchema = {
-  $id: `https://schemas.platformatic.dev/@platformatic/composer/${pkg.version}.json`,
+const schema = {
+  $id: `https://schemas.platformatic.dev/@platformatic/composer/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
   title: 'Platformatic Composer',
   type: 'object',
@@ -231,12 +232,22 @@ const platformaticComposerSchema = {
     }
   },
   additionalProperties: false,
-  $defs: openApiDefs
+  $defs
 }
 
-module.exports.schema = platformaticComposerSchema
+module.exports = {
+  packageJson,
+  schema,
+  openApiService,
+  entityResolver,
+  entities,
+  graphqlService,
+  graphqlComposerOptions,
+  composer,
+  types
+}
 
 /* c8 ignore next 3 */
 if (require.main === module) {
-  console.log(JSON.stringify(platformaticComposerSchema, null, 2))
+  console.log(JSON.stringify(schema, null, 2))
 }
