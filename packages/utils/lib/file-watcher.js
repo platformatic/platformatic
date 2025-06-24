@@ -65,7 +65,6 @@ class FileWatcher extends EventEmitter {
         const isTrackedFile = this.shouldFileBeWatched(filename)
 
         if (isTimeoutSet && isTrackedEvent && isTrackedFile) {
-          process._rawDebug('MODIFIED', filename, this.path, this.allowToWatch, this.watchIgnore)
           updateTimeout = setTimeout(() => this.emit('update', filename), 100)
           updateTimeout.unref()
         }
@@ -96,7 +95,7 @@ class FileWatcher extends EventEmitter {
 
   isFileIgnored (fileName) {
     // Always ignore the node_modules folder - This can be overriden by the allow list
-    if (matchesGlob(fileName, 'node_modules/*') || matchesGlob(fileName, 'node_modules/**/*')) {
+    if (fileName.startsWith('node_modules')) {
       return true
     }
 
