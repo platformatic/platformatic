@@ -887,6 +887,8 @@ export async function fullSetupRuntime ({
   const root = resolve(temporaryFolder, basename(configRoot) + '-' + Date.now())
   await createDirectory(root)
 
+  setLogFile(t, root)
+
   // Copy the fixtures
   await cp(configRoot, root, { recursive: true })
 
