@@ -1,6 +1,6 @@
-import path, { join } from 'node:path'
-import { readFile } from 'node:fs/promises'
 import json5 from 'json5'
+import { readFile } from 'node:fs/promises'
+import path, { join } from 'node:path'
 
 export async function isServiceBuildable (serviceRoot, config) {
   // skip vite as stackable as it has its own build command
@@ -56,12 +56,13 @@ export function ignoreDirs (outDir, watchOptionsExcludeDirectories) {
   if (outDir) {
     ignore.add(outDir)
     if (!outDir.endsWith('/**')) {
-      ignore.add(`${outDir}/**`)
+      ignore.add(`${outDir}/*`)
+      ignore.add(`${outDir}/**/*`)
     }
   }
 
   if (ignore.size === 0) {
-    return ['dist', 'dist/**']
+    return ['dist', 'dist/*', 'dist/**/*']
   }
 
   return Array.from(ignore)

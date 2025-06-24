@@ -24,6 +24,14 @@ class FileWatcher extends EventEmitter {
     this.handlePromise = null
     this.abortController = null
 
+    if (this.allowToWatch) {
+      this.allowToWatch = Array.from(new Set(this.allowToWatch))
+    }
+
+    if (this.watchIgnore) {
+      this.watchIgnore = Array.from(new Set(this.watchIgnore))
+    }
+
     this.isWatching = false
   }
 
@@ -57,6 +65,7 @@ class FileWatcher extends EventEmitter {
         const isTrackedFile = this.shouldFileBeWatched(filename)
 
         if (isTimeoutSet && isTrackedEvent && isTrackedFile) {
+          process._rawDebug('MODIFIED', filename, this.path, this.allowToWatch, this.watchIgnore)
           updateTimeout = setTimeout(() => this.emit('update', filename), 100)
           updateTimeout.unref()
         }

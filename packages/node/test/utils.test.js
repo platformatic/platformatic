@@ -113,10 +113,11 @@ test('ignoreDirs - should handle both outDir and watchOptionsExcludeDirectories'
   assert.ok(result.includes('dist'))
 
   // Should include outDir/**
-  assert.ok(result.includes('dist/**'))
+  assert.ok(result.includes('dist/*'))
+  assert.ok(result.includes('dist/**/*'))
 
   // Should return correct number of entries
-  assert.equal(result.length, 4)
+  assert.equal(result.length, 5)
 })
 
 test('ignoreDirs - should handle outDir with /** suffix', async () => {
@@ -144,10 +145,11 @@ test('ignoreDirs - should handle outDir-only case', async () => {
   assert.ok(result.includes('dist'))
 
   // Should include outDir/**
-  assert.ok(result.includes('dist/**'))
+  assert.ok(result.includes('dist/*'))
+  assert.ok(result.includes('dist/**/*'))
 
   // Should return correct number of entries
-  assert.equal(result.length, 2)
+  assert.equal(result.length, 3)
 })
 
 test('ignoreDirs - should handle watchOptionsExcludeDirectories-only case', async () => {
@@ -168,7 +170,7 @@ test('ignoreDirs - should handle null arguments', async () => {
   const result = ignoreDirs(null, null)
 
   // Should return empty array when both args are null
-  assert.deepEqual(result, ['dist', 'dist/**'])
+  assert.deepEqual(result, ['dist', 'dist/*', 'dist/**/*'])
 })
 
 test('ignoreDirs - should handle empty watchOptionsExcludeDirectories', async () => {
@@ -178,10 +180,11 @@ test('ignoreDirs - should handle empty watchOptionsExcludeDirectories', async ()
   assert.ok(result.includes('dist'))
 
   // Should include outDir/**
-  assert.ok(result.includes('dist/**'))
+  assert.ok(result.includes('dist/*'))
+  assert.ok(result.includes('dist/**/*'))
 
   // Should return correct number of entries
-  assert.equal(result.length, 2)
+  assert.equal(result.length, 3)
 })
 
 test('ignoreDirs - should deduplicate directories', async () => {
@@ -197,10 +200,11 @@ test('ignoreDirs - should deduplicate directories', async () => {
   assert.ok(result.includes('dist'))
 
   // Should include outDir/** only once
-  assert.ok(result.includes('dist/**'))
+  assert.ok(result.includes('dist/*'))
+  assert.ok(result.includes('dist/**/*'))
 
   // Should return correct number of entries (with duplicates removed)
-  assert.equal(result.length, 3)
+  assert.equal(result.length, 5)
 })
 
 test('ignoreDirs - should work with fixture tsconfig.json values', async () => {
@@ -217,10 +221,11 @@ test('ignoreDirs - should work with fixture tsconfig.json values', async () => {
   assert.ok(result.includes('dist'))
 
   // Should include outDir/**
-  assert.ok(result.includes('dist/**'))
+  assert.ok(result.includes('dist/*'))
+  assert.ok(result.includes('dist/**/*'))
 
   // Should return correct number of entries (with duplicates removed)
-  assert.equal(result.length, 3)
+  assert.equal(result.length, 4)
 })
 
 test('ignoreDirs - should work with actual tsconfig.json fixture file', async () => {
@@ -242,13 +247,10 @@ test('ignoreDirs - should work with actual tsconfig.json fixture file', async ()
   assert.ok(result.includes(outDir))
 
   // Should include outDir/** from the fixture
-  assert.ok(result.includes(`${outDir}/**`))
+  assert.ok(result.includes(`${outDir}/*`))
+  assert.ok(result.includes(`${outDir}/**/*`))
 
   // Should return correct number of entries (with duplicates removed)
   // Since outDir is 'dist' and one of the excludeDirectories is also 'dist'
-  const expectedLength =
-    watchOptionsExcludeDirectories.length +
-    (watchOptionsExcludeDirectories.includes(outDir) ? 1 : 2) -
-    (watchOptionsExcludeDirectories.includes(`${outDir}/**`) ? 1 : 0)
-  assert.equal(result.length, expectedLength)
+  assert.equal(result.length, 4)
 })
