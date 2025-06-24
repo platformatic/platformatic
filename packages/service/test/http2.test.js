@@ -10,9 +10,7 @@ const { Agent, request } = require('undici')
 const { buildServer } = require('..')
 const { buildConfig } = require('./helper')
 
-const isNode18 = process.versions.node.startsWith('18')
-
-test('supports http2 options', { skip: isNode18 }, async (t) => {
+test('supports http2 options', async (t) => {
   const { certificate, privateKey } = selfCert({})
   const localDir = tmpdir()
   const tmpDir = await mkdtemp(join(localDir, 'plt-service-https-test-'))
@@ -62,7 +60,7 @@ test('supports http2 options', { skip: isNode18 }, async (t) => {
   await assert.rejects(request(`${app.url}/`))
 })
 
-test('supports allowHTTP1 with HTTP/2', { skip: isNode18 }, async (t) => {
+test('supports allowHTTP1 with HTTP/2', async (t) => {
   const { certificate, privateKey } = selfCert({})
   const localDir = tmpdir()
   const tmpDir = await mkdtemp(join(localDir, 'plt-service-https-test-'))

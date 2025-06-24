@@ -1,31 +1,31 @@
 import assert from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { createRuntime, setFixturesDir } from '../../basic/test/helper.js'
 import { Client } from 'undici'
+import { createRuntime, setFixturesDir } from '../../basic/test/helper.js'
 
 process.setMaxListeners(100)
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
-test('should set telemtry in config on all the node services', async t => {
+test('should set telemetry in config on all the node services', async t => {
   const { runtime } = await createRuntime(t, 'express-api-with-telemetry')
 
   const client = new Client(
     {
       hostname: 'localhost',
-      protocol: 'http:',
+      protocol: 'http:'
     },
     {
       socketPath: runtime.getManagementApiUrl(),
       keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10,
+      keepAliveMaxTimeout: 10
     }
   )
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/services/api/config',
+    path: '/api/v1/services/api/config'
   })
 
   assert.strictEqual(statusCode, 200)

@@ -561,7 +561,7 @@ describe('WrappedGenerator', () => {
       rest: 'FOO',
       engines: {
         foo: 'bar',
-        node: '^18.8.0 || >=20.6.0'
+        node: '>=22.16.0'
       }
     }
 

@@ -14,16 +14,3 @@ export async function swapVersion (t, root, pkg, packageJsonRelativePath = '.') 
   await writeFile(packageJson, JSON.stringify(newContents))
   t.after(() => writeFile(packageJson, originalContents))
 }
-
-export async function setLogFile (t, root) {
-  const originalEnv = process.env.PLT_RUNTIME_LOGGER_STDOUT
-  process.env.PLT_RUNTIME_LOGGER_STDOUT = resolve(root, 'log.txt')
-
-  t.after(() => {
-    process.env.PLT_RUNTIME_LOGGER_STDOUT = originalEnv
-  })
-}
-
-export async function getLogs (root) {
-  return (await readFile(resolve(root, 'log.txt'), 'utf-8')).split('\n').filter(Boolean).map(JSON.parse)
-}

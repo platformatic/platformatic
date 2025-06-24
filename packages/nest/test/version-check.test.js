@@ -2,8 +2,8 @@ import { safeRemove } from '@platformatic/utils'
 import { ok, rejects } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { getLogs, setLogFile, swapVersion } from '../../basic/test/helper-version.js'
-import { prepareRuntime, setFixturesDir } from '../../basic/test/helper.js'
+import { swapVersion } from '../../basic/test/helper-version.js'
+import { getLogsFromFile, prepareRuntime, setFixturesDir, setLogFile } from '../../basic/test/helper.js'
 import { buildServer } from '../../runtime/index.js'
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
@@ -22,7 +22,7 @@ test('NestJS version is checked in development', async t => {
   })
 
   await rejects(runtime.start())
-  const logs = await getLogs(root)
+  const logs = await getLogsFromFile(root)
 
   ok(logs.some(l => l.msg.includes('@nestjs/core version 1.0.0 is not supported')))
 })
@@ -42,7 +42,7 @@ test('NestJS version is not checked in production', async t => {
   })
 
   await rejects(runtime.start())
-  const logs = await getLogs(root)
+  const logs = await getLogsFromFile(root)
 
   ok(!logs.some(l => l.msg.includes('@nestjs/core version 1.0.0 is not supported')))
 })

@@ -1560,6 +1560,7 @@ class Runtime extends EventEmitter {
     const eventPayload = { service: id, worker: index, workersCount }
 
     worker[kWorkerStatus] = 'stopping'
+    worker[kITC].removeAllListeners('changed')
     this.emit('service:worker:stopping', eventPayload)
 
     const label = this.#workerExtendedLabel(id, index, workersCount)

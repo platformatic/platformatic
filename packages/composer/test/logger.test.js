@@ -9,9 +9,8 @@ const { tmpdir } = require('node:os')
 
 const { buildServer } = require('..')
 
-test('should use logger options - formatters, timestamp, redact', async (t) => {
+test('should use logger options - formatters, timestamp, redact', async t => {
   process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
-  process.env.PLT_RUNTIME_LOGGER_STDOUT = 1
   const file = path.join(process.env.LOG_DIR, 'service.log')
   const serviceRoot = path.join(__dirname, 'logger')
 
@@ -25,10 +24,18 @@ test('should use logger options - formatters, timestamp, redact', async (t) => {
   await wait(500)
 
   const content = readFileSync(file, 'utf8')
-  const logs = content.split('\n').filter(line => line.trim() !== '').map(line => JSON.parse(line))
+  const logs = content
+    .split('\n')
+    .filter(line => line.trim() !== '')
+    .map(line => JSON.parse(line))
 
-  assert.ok(logs.find(log => log.level === 'INFO' &&
-    log.time.length === 24 && // isotime
-    log.name === 'service' &&
-    log.msg.startsWith('Server listening at http://127.0.0.1')))
+  assert.ok(
+    logs.find(
+      log =>
+        log.level === 'INFO' &&
+        log.time.length === 24 && // isotime
+        log.name === 'service' &&
+        log.msg.startsWith('Server listening at http://127.0.0.1')
+    )
+  )
 })

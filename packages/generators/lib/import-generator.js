@@ -2,11 +2,10 @@
 
 const { findConfigurationFile } = require('@platformatic/config')
 const { safeRemove } = require('@platformatic/utils')
-const { glob } = require('glob')
 const { BaseGenerator } = require('./base-generator')
 const { spawnSync } = require('node:child_process')
-const { stat, readFile } = require('node:fs/promises')
-const { join, dirname } = require('node:path')
+const { stat, readFile, readdir } = require('node:fs/promises')
+const { join, dirname, resolve, relative } = require('node:path')
 
 class ImportGenerator extends BaseGenerator {
   constructor (options = {}) {
@@ -203,30 +202,25 @@ class ImportGenerator extends BaseGenerator {
   }
 
   async #copy (root) {
-    const files = await glob('**/*', {
-      cwd: root,
-      dot: true,
-      ignore: ['node_modules/**', 'package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'],
-      withFileTypes: true
-    })
+    const files = await readdir(root, { withFileTypes: true, recursive: true })
 
-    for (const file of files) {
-      if (file.isDirectory()) {
+    for await (const file of files) {
+      const absolutePath = resolve(file.parentPath, file.name)
+      let path = relative(root, dirname(absolutePath))
+
+      if (file.isDirectory() || ['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'].includes(file.name) || path.includes('node_modules')) {
         continue
       }
 
       /* c8 ignore next 6 */
-      let path = dirname(file.relative())
       if (path === '.') {
         path = ''
-      } else if (path.startsWith('./')) {
-        path = path.substring(2)
       }
 
       this.addFile({
         path,
         file: file.name,
-        contents: await readFile(file.fullpath())
+        contents: await readFile(resolve(file.parentPath, file.name))
       })
     }
   }
