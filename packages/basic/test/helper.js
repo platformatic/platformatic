@@ -247,15 +247,8 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   const root = resolve(temporaryFolder, basename(fixturePath) + '-' + Date.now())
   currentWorkingDirectory = root
 
-  setLogFile(t, root)
-
-  if (process.env.PLT_TESTS_VERBOSE === 'true') {
-    const originalEnv = process.env.PLT_RUNTIME_LOGGER_STDOUT
-    process.env.PLT_RUNTIME_LOGGER_STDOUT = resolve(root, 'log.txt')
-
-    t.after(() => {
-      process.env.PLT_RUNTIME_LOGGER_STDOUT = originalEnv
-    })
+  if (process.env.PLT_TESTS_VERBOSE !== 'true') {
+    setLogFile(t, root)
   }
 
   await createDirectory(root)
