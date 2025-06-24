@@ -1,13 +1,12 @@
 import { createDirectory, features, kTimeout, safeRemove, withResolvers } from '@platformatic/utils'
 import { join } from 'desm'
 import { execa } from 'execa'
-import { minimatch } from 'minimatch'
 import { deepStrictEqual, fail, ok, strictEqual } from 'node:assert'
 import { existsSync } from 'node:fs'
 import { cp, readdir, readFile, symlink, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { platform } from 'node:os'
-import { basename, dirname, resolve } from 'node:path'
+import { basename, dirname, matchesGlob, resolve } from 'node:path'
 import { Writable } from 'node:stream'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -248,6 +247,17 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   const root = resolve(temporaryFolder, basename(fixturePath) + '-' + Date.now())
   currentWorkingDirectory = root
 
+  setLogFile(t, root)
+
+  if (process.env.PLT_TESTS_VERBOSE === 'true') {
+    const originalEnv = process.env.PLT_RUNTIME_LOGGER_STDOUT
+    process.env.PLT_RUNTIME_LOGGER_STDOUT = resolve(root, 'log.txt')
+
+    t.after(() => {
+      process.env.PLT_RUNTIME_LOGGER_STDOUT = originalEnv
+    })
+  }
+
   await createDirectory(root)
 
   // Copy the fixtures
@@ -330,6 +340,15 @@ export async function createProductionRuntime (
   return createRuntime(t, fixturePath, pauseAfterCreation, true, configFile)
 }
 
+export function setLogFile (t, root) {
+  const originalEnv = process.env.PLT_RUNTIME_LOGGER_STDOUT
+  process.env.PLT_RUNTIME_LOGGER_STDOUT = resolve(root, 'log.txt')
+
+  t.after(() => {
+    process.env.PLT_RUNTIME_LOGGER_STDOUT = originalEnv
+  })
+}
+
 export async function getLogs (app) {
   const client = new Client(
     {
@@ -360,6 +379,10 @@ export async function getLogs (app) {
     .split('\n')
     .filter(l => l)
     .map(m => JSON.parse(m))
+}
+
+export async function getLogsFromFile (root) {
+  return (await readFile(resolve(root, 'log.txt'), 'utf-8')).split('\n').filter(Boolean).map(JSON.parse)
 }
 
 export async function verifyJSONViaHTTP (baseUrl, path, expectedCode, expectedContent) {
@@ -477,7 +500,7 @@ async function ensureExists (path) {
   }
 
   ok(
-    existing.some(e => minimatch(e, pattern)),
+    existing.some(e => matchesGlob(e, pattern)),
     `Pattern ${path} not found.`
   )
 }

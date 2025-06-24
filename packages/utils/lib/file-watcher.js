@@ -2,8 +2,8 @@
 
 const { EventEmitter } = require('events')
 const { watch } = require('fs/promises')
+const { matchesGlob } = require('path')
 const { PathOptionRequiredError } = require('./errors')
-const { minimatch } = require('minimatch')
 
 const ALLOWED_FS_EVENTS = ['change', 'rename']
 
@@ -57,7 +57,7 @@ class FileWatcher extends EventEmitter {
         const isTrackedFile = this.shouldFileBeWatched(filename)
 
         if (isTimeoutSet && isTrackedEvent && isTrackedFile) {
-          updateTimeout = setTimeout(() => this.emit('update'), 100)
+          updateTimeout = setTimeout(() => this.emit('update', filename), 100)
           updateTimeout.unref()
         }
       }
@@ -82,12 +82,12 @@ class FileWatcher extends EventEmitter {
       return true
     }
 
-    return this.allowToWatch.some(allowedFile => minimatch(fileName, allowedFile))
+    return this.allowToWatch.some(allowedFile => matchesGlob(fileName, allowedFile))
   }
 
   isFileIgnored (fileName) {
     // Always ignore the node_modules folder - This can be overriden by the allow list
-    if (minimatch(fileName, 'node_modules/**/*', { dot: true })) {
+    if (matchesGlob(fileName, 'node_modules/*') || matchesGlob(fileName, 'node_modules/**/*')) {
       return true
     }
 
@@ -96,7 +96,7 @@ class FileWatcher extends EventEmitter {
     }
 
     for (const ignoredFile of this.watchIgnore) {
-      if (minimatch(fileName, ignoredFile)) {
+      if (matchesGlob(fileName, ignoredFile)) {
         return true
       }
     }

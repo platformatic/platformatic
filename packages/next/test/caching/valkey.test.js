@@ -38,8 +38,6 @@ async function prepareRuntimeWithBackend (
   additionalSetup = null
 ) {
   const { root, config } = await prepareRuntime(t, configuration, production, null, async (root, config, args) => {
-    process.env.PLT_RUNTIME_LOGGER_STDOUT = resolve(root, 'test.log')
-
     await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), {
       recursive: true
     })
