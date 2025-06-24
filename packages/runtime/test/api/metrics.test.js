@@ -79,7 +79,8 @@ test('should get runtime metrics in a json format', async t => {
     'process_cpu_user_seconds_total',
     'process_resident_memory_bytes',
     'process_start_time_seconds',
-    'http_request_all_summary_seconds'
+    'http_request_all_summary_seconds',
+    'http_client_stats_free',
   ]
 
   const services = ['service-1', 'service-2', 'service-db']
@@ -164,6 +165,7 @@ test('should get runtime metrics in a text format', async t => {
     'process_resident_memory_bytes',
     'process_start_time_seconds',
     'http_request_all_summary_seconds',
+    'http_client_stats_free',
   ]
   for (const metricName of expectedMetricNames) {
     assert.ok(metricsNames.includes(metricName), `Missing metric: ${metricName}`)
@@ -427,6 +429,13 @@ test('should get runtime metrics in a json format without a service call', async
   assert.strictEqual(summaryMetric.name, 'http_request_all_summary_seconds')
   assert.strictEqual(summaryMetric.type, 'summary')
   assert.strictEqual(summaryMetric.aggregator, 'sum')
+
+  const freeMetric = metrics.find(
+    (metric) => metric.name === 'http_client_stats_free'
+  )
+  assert.strictEqual(freeMetric.name, 'http_client_stats_free')
+  assert.strictEqual(freeMetric.type, 'gauge')
+  assert.strictEqual(freeMetric.aggregator, 'sum')
 
   const summaryValues = summaryMetric.values
 

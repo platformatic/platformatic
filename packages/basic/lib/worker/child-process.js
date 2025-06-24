@@ -223,6 +223,15 @@ export class ChildProcess extends ITC {
     globalThis.platformatic.onHttpCacheMiss = () => {
       cacheMissMetric.inc()
     }
+
+    const httpStatsFreeMetric = new client.Gauge({
+      name: 'http_client_stats_free',
+      help: 'Number of http free requests',
+      registers: [registry]
+    })
+    globalThis.platformatic.onHttpStatsFree = (val) => {
+      httpStatsFreeMetric.set(val)
+    }
   }
 
   async #getMetrics ({ format } = {}) {
