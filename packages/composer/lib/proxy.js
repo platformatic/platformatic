@@ -81,16 +81,16 @@ module.exports = fp(async function (app, opts) {
     const basePath = `/${prefix ?? ''}`.replaceAll(/\/+/g, '/').replace(/\/$/, '')
     const dispatcher = getGlobalDispatcher()
 
+    let preRewrite = null
+
     if (needsRootTrailingSlash) {
-      app.addHook('preHandler', function rootTrailingSlashPreHandler (req, reply, done) {
-        if (req.url !== basePath) {
-          done()
-          return
+      preRewrite = function preRewrite (url) {
+        if (url === basePath) {
+          url += '/'
         }
 
-        const { url, options } = reply.fromParameters(req.url + '/', req.params, prefix)
-        reply.from(url.replace(/\/+$/, '/'), options)
-      })
+        return url
+      }
     }
 
     /*
@@ -149,6 +149,7 @@ module.exports = fp(async function (app, opts) {
       prefix,
       rewritePrefix,
       upstream: service.proxy?.upstream ?? origin,
+      preRewrite,
 
       websocket: true,
       wsUpstream: ws?.upstream ?? url ?? origin,
