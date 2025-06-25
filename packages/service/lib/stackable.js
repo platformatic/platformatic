@@ -299,7 +299,7 @@ class ServiceStackable {
 
     const httpStatsFreeMetric = new client.Gauge({
       name: 'http_client_stats_free',
-      help: 'Number of http free requests',
+      help: 'Number of free (idle) http clients (sockets)',
       registers: [registry]
     })
     globalThis.platformatic.onHttpStatsFree = (val) => {
