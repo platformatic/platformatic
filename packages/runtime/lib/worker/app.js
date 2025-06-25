@@ -207,12 +207,14 @@ class PlatformaticApp extends EventEmitter {
   }
 
   async getMetrics ({ format }) {
-    let free = 0
     const dispatcher = getGlobalDispatcher()
-    for (const key in dispatcher?.stats) {
-      free += dispatcher.stats[key]?.free || 0
+    if (globalThis.platformatic?.onHttpStatsFree && dispatcher?.stats) {
+      let free = 0
+      for (const key in dispatcher.stats) {
+        free += dispatcher.stats[key]?.free || 0
+      }
+      globalThis.platformatic.onHttpStatsFree(free)
     }
-    globalThis.platformatic?.onHttpStatsFree?.(free)
     return this.stackable.getMetrics({ format })
   }
 
