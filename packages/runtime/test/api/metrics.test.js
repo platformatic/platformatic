@@ -436,6 +436,9 @@ test('should get runtime metrics in a json format without a service call', async
   assert.strictEqual(freeMetric.name, 'http_client_stats_free')
   assert.strictEqual(freeMetric.type, 'gauge')
   assert.strictEqual(freeMetric.aggregator, 'sum')
+  const [{ value, labels: { serviceId } }] = freeMetric.values
+  assert.strictEqual(value, 0)
+  assert.strictEqual(serviceId, 'service-1')
 
   const summaryValues = summaryMetric.values
 
