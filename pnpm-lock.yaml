@@ -326,7 +326,7 @@ importers:
         specifier: ^4.0.0
         version: 4.2.0
       '@fastify/http-proxy':
-        specifier: ^11.2.0
+        specifier: ^11.3.0
         version: 11.3.0
       '@fastify/reply-from':
         specifier: ^12.0.0
