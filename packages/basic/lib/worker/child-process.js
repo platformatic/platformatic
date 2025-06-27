@@ -227,61 +227,61 @@ export class ChildProcess extends ITC {
     const httpStatsFreeMetric = new client.Gauge({
       name: 'http_client_stats_free',
       help: 'Number of free (idle) http clients (sockets)',
-      labelNames: ['dispatcher_stats_key'],
+      labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsFree = (key, val) => {
-      httpStatsFreeMetric.set({ dispatcher_stats_key: key }, val)
+    globalThis.platformatic.onHttpStatsFree = (url, val) => {
+      httpStatsFreeMetric.set({ dispatcher_stats_url: url }, val)
     }
 
     const httpStatsConnectedMetric = new client.Gauge({
       name: 'http_client_stats_connected',
       help: 'Number of open socket connections',
-      labelNames: ['dispatcher_stats_key'],
+      labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsConnected = (key, val) => {
-      httpStatsConnectedMetric.set({ dispatcher_stats_key: key }, val)
+    globalThis.platformatic.onHttpStatsConnected = (url, val) => {
+      httpStatsConnectedMetric.set({ dispatcher_stats_url: url }, val)
     }
 
     const httpStatsPendingMetric = new client.Gauge({
       name: 'http_client_stats_pending',
       help: 'Number of pending requests across all clients',
-      labelNames: ['dispatcher_stats_key'],
+      labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsPending = (key, val) => {
-      httpStatsPendingMetric.set({ dispatcher_stats_key: key }, val)
+    globalThis.platformatic.onHttpStatsPending = (url, val) => {
+      httpStatsPendingMetric.set({ dispatcher_stats_url: url }, val)
     }
 
     const httpStatsQueuedMetric = new client.Gauge({
       name: 'http_client_stats_queued',
       help: 'Number of queued requests across all clients',
-      labelNames: ['dispatcher_stats_key'],
+      labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsQueued = (key, val) => {
-      httpStatsQueuedMetric.set({ dispatcher_stats_key: key }, val)
+    globalThis.platformatic.onHttpStatsQueued = (url, val) => {
+      httpStatsQueuedMetric.set({ dispatcher_stats_url: url }, val)
     }
 
     const httpStatsRunningMetric = new client.Gauge({
       name: 'http_client_stats_running',
       help: 'Number of currently active requests across all clients',
-      labelNames: ['dispatcher_stats_key'],
+      labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsRunning = (key, val) => {
-      httpStatsRunningMetric.set({ dispatcher_stats_key: key }, val)
+    globalThis.platformatic.onHttpStatsRunning = (url, val) => {
+      httpStatsRunningMetric.set({ dispatcher_stats_url: url }, val)
     }
 
     const httpStatsSizeMetric = new client.Gauge({
       name: 'http_client_stats_size',
       help: 'Number of active, pending, or queued requests across all clients',
-      labelNames: ['dispatcher_stats_key'],
+      labelNames: ['dispatcher_stats_url'],
       registers: [registry]
     })
-    globalThis.platformatic.onHttpStatsSize = (key, val) => {
-      httpStatsSizeMetric.set({ dispatcher_stats_key: key }, val)
+    globalThis.platformatic.onHttpStatsSize = (url, val) => {
+      httpStatsSizeMetric.set({ dispatcher_stats_url: url }, val)
     }
   }
 
