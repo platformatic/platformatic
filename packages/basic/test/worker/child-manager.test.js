@@ -89,3 +89,122 @@ test('ChildManager - register - can register a local loader', async t => {
 
   ok(loaded)
 })
+
+test('ChildManager - inject - should not include telemetry when enabled is false', async () => {
+  createLogger()
+  const originalNodeOptions = process.env.NODE_OPTIONS
+  delete process.env.NODE_OPTIONS
+
+  const context = {
+    telemetryConfig: {
+      enabled: false,
+      serviceName: 'test-service'
+    }
+  }
+
+  const manager = new ChildManager({
+    loader: new URL('../fixtures/loader.js', import.meta.url),
+    context
+  })
+
+  try {
+    await manager.inject()
+
+    ok(!process.env.NODE_OPTIONS.includes('@platformatic/telemetry'))
+    ok(!process.env.NODE_OPTIONS.includes('node-telemetry.js'))
+
+    ok(process.env.NODE_OPTIONS.includes('child-process.js'))
+
+    await manager.eject()
+  } finally {
+    await manager.close()
+    process.env.NODE_OPTIONS = originalNodeOptions
+  }
+})
+
+test('ChildManager - inject - should include telemetry when enabled is true', async t => {
+  createLogger()
+  const originalNodeOptions = process.env.NODE_OPTIONS
+  delete process.env.NODE_OPTIONS
+
+  const context = {
+    telemetryConfig: {
+      enabled: true,
+      serviceName: 'test-service'
+    }
+  }
+
+  const manager = new ChildManager({
+    loader: new URL('../fixtures/loader.js', import.meta.url),
+    context
+  })
+
+  try {
+    await manager.inject()
+
+    ok(process.env.NODE_OPTIONS.includes('telemetry/lib/node-telemetry.js'))
+    ok(process.env.NODE_OPTIONS.includes('node-telemetry.js'))
+    ok(process.env.NODE_OPTIONS.includes('child-process.js'))
+
+    await manager.eject()
+  } finally {
+    await manager.close()
+    process.env.NODE_OPTIONS = originalNodeOptions
+  }
+})
+
+test('ChildManager - inject - should include telemetry when config exists without enabled property', async t => {
+  createLogger()
+  const originalNodeOptions = process.env.NODE_OPTIONS
+  delete process.env.NODE_OPTIONS
+
+  const context = {
+    telemetryConfig: {
+      serviceName: 'test-service'
+    }
+  }
+
+  const manager = new ChildManager({
+    loader: new URL('../fixtures/loader.js', import.meta.url),
+    context
+  })
+
+  try {
+    await manager.inject()
+
+    ok(process.env.NODE_OPTIONS.includes('telemetry/lib/node-telemetry.js'))
+    ok(process.env.NODE_OPTIONS.includes('node-telemetry.js'))
+    ok(process.env.NODE_OPTIONS.includes('child-process.js'))
+
+    await manager.eject()
+  } finally {
+    await manager.close()
+    process.env.NODE_OPTIONS = originalNodeOptions
+  }
+})
+
+test('ChildManager - inject - should not include telemetry when no config exists', async t => {
+  createLogger()
+  const originalNodeOptions = process.env.NODE_OPTIONS
+  delete process.env.NODE_OPTIONS
+
+  const context = {}
+
+  const manager = new ChildManager({
+    loader: new URL('../fixtures/loader.js', import.meta.url),
+    context
+  })
+
+  try {
+    await manager.inject()
+
+    ok(!process.env.NODE_OPTIONS.includes('@platformatic/telemetry'))
+    ok(!process.env.NODE_OPTIONS.includes('node-telemetry.js'))
+    ok(process.env.NODE_OPTIONS.includes('child-process.js'))
+
+    await manager.eject()
+  } finally {
+    await manager.close()
+    process.env.NODE_OPTIONS = originalNodeOptions
+  }
+})
