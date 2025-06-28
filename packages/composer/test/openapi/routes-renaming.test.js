@@ -6,7 +6,7 @@ const { test } = require('node:test')
 const { join } = require('node:path')
 const { writeFile, mkdtemp } = require('fs/promises')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
-const { createStackableFromConfig, createOpenApiService } = require('../helper')
+const { createFromConfig, createOpenApiService } = require('../helper')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
@@ -26,7 +26,7 @@ test('should rename static route', async t => {
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -88,7 +88,7 @@ test('should rename parametric route', async t => {
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -145,7 +145,7 @@ test('should rename parametric route with prefix', async t => {
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'

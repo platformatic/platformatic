@@ -3,11 +3,11 @@
 const assert = require('node:assert')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { createStackableFromConfig } = require('./helper')
+const { createFromConfig } = require('./helper')
 
 test('healthcheck route enabled with interval', async t => {
   let check = true
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -52,7 +52,7 @@ test('healthcheck route enabled with interval', async t => {
 })
 
 test('healthcheck route enabled without interval', async t => {
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -76,7 +76,7 @@ test('healthcheck route enabled without interval', async t => {
 })
 
 test('healthcheck route disabled', async t => {
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,

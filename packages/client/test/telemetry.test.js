@@ -8,7 +8,7 @@ const { mkdtemp, cp, unlink } = require('node:fs/promises')
 const Fastify = require('fastify')
 const { telemetry } = require('@platformatic/telemetry')
 const { safeRemove } = require('@platformatic/utils')
-const { buildServer } = require('../../db')
+const { create } = require('../../db')
 const client = require('..')
 require('./helper')
 
@@ -37,7 +37,7 @@ test('telemetry correctly propagates from a service client to a server for an Op
     // noop
   }
   // Server app
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
     await safeRemove(tmpDir)
@@ -91,7 +91,7 @@ test('telemetry correctly propagates from a service client to a server for an Op
   const clientSpanId = clientSpan.spanContext().spanId
 
   // Target app, we check that propagation works
-  const httpSpans = getSpansPerType(targetApp.openTelemetry.exporters[0].getFinishedSpans(), 'http')
+  const httpSpans = getSpansPerType(targetApp.getApplication().openTelemetry.exporters[0].getFinishedSpans(), 'http')
   assert.equal(httpSpans.length, 2)
   // The first span is the client call to `/documentation/json`, the second is the server call to `/movies/
   const serverSpan = httpSpans[1]
@@ -114,7 +114,7 @@ test('telemetry correctly propagates from a generic client through a service cli
     // noop
   }
   // Server app
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
     await safeRemove(tmpDir)
@@ -176,7 +176,7 @@ test('telemetry correctly propagates from a generic client through a service cli
 
   // Target app
   // We get the http spans (we also have the DB ones)
-  const httpSpans = getSpansPerType(targetApp.openTelemetry.exporters[0].getFinishedSpans(), 'http')
+  const httpSpans = getSpansPerType(targetApp.getApplication().openTelemetry.exporters[0].getFinishedSpans(), 'http')
   assert.equal(httpSpans.length, 2)
   // The first span is the client call to `/documentation/json`, the second is the server call to `/movies/
   const serverSpan = httpSpans[1]
@@ -199,7 +199,7 @@ test('telemetry correctly propagates from a service client to a server for a Gra
     // noop
   }
   // Server app
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
     await safeRemove(tmpDir)
@@ -261,7 +261,7 @@ test('telemetry correctly propagates from a service client to a server for a Gra
 
   // Target app, we check that propagation works
   // We get the http spans (we also have the DB ones)
-  const httpSpans = getSpansPerType(targetApp.openTelemetry.exporters[0].getFinishedSpans(), 'http')
+  const httpSpans = getSpansPerType(targetApp.getApplication().openTelemetry.exporters[0].getFinishedSpans(), 'http')
   assert.equal(httpSpans.length, 1)
   const serverSpan = httpSpans[0]
   assert.equal(serverSpan.name, 'POST /graphql')
@@ -271,7 +271,10 @@ test('telemetry correctly propagates from a service client to a server for a Gra
   assert.equal(serverParentSpanId, clientSpanId)
   assert.equal(serverTraceId, clientTraceId)
 
-  const graphqlSpan = getSpansPerType(targetApp.openTelemetry.exporters[0].getFinishedSpans(), 'graphql')[0]
+  const graphqlSpan = getSpansPerType(
+    targetApp.getApplication().openTelemetry.exporters[0].getFinishedSpans(),
+    'graphql'
+  )[0]
   assert.equal(graphqlSpan.name, 'mutation saveMovie')
   assert.equal(graphqlSpan.spanContext().traceId, clientTraceId)
   assert.equal(graphqlSpan.parentSpanId, serverSpan.spanContext().spanId)

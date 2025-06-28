@@ -3,14 +3,14 @@
 const assert = require('node:assert')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { buildConfig, createStackableFromConfig } = require('./helper')
+const { buildConfig, createFromConfig } = require('./helper')
 const { features } = require('@platformatic/utils')
 
 test(
   'automatically apply reuse port if isProduction is in the context',
   { skip: !features.node.reusePort },
   async t => {
-    const app1 = await createStackableFromConfig(
+    const app1 = await createFromConfig(
       t,
       buildConfig({
         server: {
@@ -25,7 +25,7 @@ test(
       }
     )
 
-    const app2 = await createStackableFromConfig(
+    const app2 = await createFromConfig(
       t,
       buildConfig({
         server: {

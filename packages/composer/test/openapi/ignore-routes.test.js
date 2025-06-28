@@ -6,7 +6,7 @@ const { test } = require('node:test')
 const { join } = require('node:path')
 const { writeFile, mkdtemp } = require('node:fs/promises')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
-const { createStackableFromConfig, createOpenApiService } = require('../helper')
+const { createFromConfig, createOpenApiService } = require('../helper')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
@@ -26,7 +26,7 @@ test('should ignore static routes', async t => {
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -84,7 +84,7 @@ test('should ignore parametric routes', async t => {
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -157,7 +157,7 @@ test('should ignore routes for only for one service', async t => {
   const openapiConfigFile2 = join(cwd, 'openapi-2.json')
   await writeFile(openapiConfigFile2, JSON.stringify(openapiConfig2))
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -227,7 +227,7 @@ test('should ignore only specified methods', async t => {
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -280,7 +280,7 @@ test('should ignore all routes if methods array is not specified', async t => {
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -340,7 +340,7 @@ test('should skip route if all routes are ignored', async t => {
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'

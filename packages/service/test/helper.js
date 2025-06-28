@@ -1,7 +1,7 @@
 'use strict'
 
 const { createTemporaryDirectory } = require('../../basic/test/helper')
-const { createStackable } = require('..')
+const { create } = require('..')
 const { Agent, setGlobalDispatcher } = require('undici')
 
 const agent = new Agent({
@@ -22,10 +22,10 @@ function buildConfig (options) {
   return Object.assign(base, options)
 }
 
-async function createStackableFromConfig (t, options, applicationFactory, creationOptions = {}) {
+async function createFromConfig (t, options, applicationFactory, creationOptions = {}) {
   const directory = await createTemporaryDirectory(t)
 
-  const service = await createStackable(
+  const service = await create(
     directory,
     options,
     {},
@@ -42,5 +42,5 @@ async function createStackableFromConfig (t, options, applicationFactory, creati
 
 module.exports = {
   buildConfig,
-  createStackableFromConfig
+  createFromConfig
 }

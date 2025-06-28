@@ -3,7 +3,7 @@ import { writeFile } from 'fs/promises'
 import graphql from 'graphql'
 import pino from 'pino'
 import pretty from 'pino-pretty'
-import platformaticDB, { createStackable } from '../index.js'
+import platformaticDB, { create } from '../index.js'
 import { schema as platformaticDBschema } from './schema.js'
 
 async function buildServer (_args, onServer) {
@@ -17,7 +17,7 @@ async function buildServer (_args, onServer) {
 
   try {
     const { configManager } = await loadConfig({}, _args, platformaticDB)
-    const app = await createStackable(process.cwd(), configManager.fullPath, {}, { logger })
+    const app = await create(process.cwd(), configManager.fullPath, {}, { logger })
     await app.start({ listen: true })
     await onServer(app.getApplication())
     /* c8 ignore next 4 */

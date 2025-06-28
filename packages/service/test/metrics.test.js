@@ -7,10 +7,10 @@ const assert = require('node:assert')
 const { test } = require('node:test')
 const { setTimeout } = require('node:timers/promises')
 const { request } = require('undici')
-const { createStackableFromConfig } = require('./helper')
+const { createFromConfig } = require('./helper')
 
 test('should auto set server to "parent" if port conflict', async t => {
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 3042,
@@ -33,7 +33,7 @@ test('should auto set server to "parent" if port conflict', async t => {
 })
 
 test('has /metrics endpoint on default prometheus port', async t => {
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -57,7 +57,7 @@ test('has /metrics endpoint on default prometheus port', async t => {
 })
 
 test('has /metrics endpoint with accept application/json', async t => {
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -83,7 +83,7 @@ test('has /metrics endpoint with accept application/json', async t => {
 })
 
 test('has /metrics endpoint on configured port', async t => {
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -107,7 +107,7 @@ test('has /metrics endpoint on configured port', async t => {
 })
 
 test('support basic auth', async t => {
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -157,7 +157,7 @@ test('support basic auth', async t => {
 })
 
 test('has /metrics endpoint on parent server', async t => {
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 3042,
@@ -181,7 +181,7 @@ test('has /metrics endpoint on parent server', async t => {
 })
 
 test('support basic auth with metrics on parent server', async t => {
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 3042,
@@ -232,7 +232,7 @@ test('support basic auth with metrics on parent server', async t => {
 })
 
 test('should not expose metrics if server hide is set', async t => {
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 3042,
@@ -323,7 +323,7 @@ function parseLabels (line) {
 }
 
 test('specify custom labels', async t => {
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 30001,
@@ -385,7 +385,7 @@ test('specify custom labels', async t => {
 })
 
 test('specify different custom labels on two different services', async t => {
-  const app1 = await createStackableFromConfig(t, {
+  const app1 = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 3042,
@@ -405,7 +405,7 @@ test('specify different custom labels on two different services', async t => {
   })
   await app1.start({ listen: true })
 
-  const app2 = await createStackableFromConfig(t, {
+  const app2 = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 3043,

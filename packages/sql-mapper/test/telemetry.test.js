@@ -4,14 +4,24 @@ const { test } = require('node:test')
 const { deepEqual, equal, match, ok } = require('node:assert')
 const fastify = require('fastify')
 const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
-const { clear, isSQLite, isPg, isMysql, isMariaDB, isMysql8, connInfo, expectedTelemetryPrefix, expectedPort } = require('./helper')
+const {
+  clear,
+  isSQLite,
+  isPg,
+  isMysql,
+  isMariaDB,
+  isMysql8,
+  connInfo,
+  expectedTelemetryPrefix,
+  expectedPort
+} = require('./helper')
 const { telemetry } = require('@platformatic/telemetry')
 const { plugin: mapper } = require('..')
 
 const fakeLogger = {
   trace: () => {},
   error: () => {},
-  warn: () => {},
+  warn: () => {}
 }
 
 async function setupDBAppWithTelemetry (telemetryOpts, onDatabaseLoad, plugins, teardown) {
@@ -21,7 +31,7 @@ async function setupDBAppWithTelemetry (telemetryOpts, onDatabaseLoad, plugins, 
   await app.register(mapper, {
     connectionString,
     log: fakeLogger,
-    onDatabaseLoad,
+    onDatabaseLoad
   })
 
   for (const plugin of plugins) {
@@ -31,7 +41,7 @@ async function setupDBAppWithTelemetry (telemetryOpts, onDatabaseLoad, plugins, 
   teardown(async () => {
     await app.close()
     const { exporters } = app.openTelemetry
-    exporters.forEach((exporter) => {
+    exporters.forEach(exporter => {
       if (exporter.constructor.name === 'InMemorySpanExporter') {
         exporter.reset()
       }
@@ -60,15 +70,11 @@ async function onDatabaseLoad (db, sql) {
 }
 
 test('should trace a request getting DB from the request and running the query manually', async () => {
-  const plugin = async (app) => {
+  const plugin = async app => {
     app.get('/custom-pages', async (request, _reply) => {
-      try {
-        const db = request.getDB()
-        const sql = db.sql
-        return db.query(sql`SELECT id, title FROM pages;`)
-      } catch (err) {
-        console.error(err)
-      }
+      const db = request.getDB()
+      const sql = db.sql
+      return db.query(sql`SELECT id, title FROM pages;`)
     })
   }
   const app = await setupDBAppWithTelemetry(
@@ -76,8 +82,8 @@ test('should trace a request getting DB from the request and running the query m
       serviceName: 'test-service',
       version: '1.0.0',
       exporter: {
-        type: 'memory',
-      },
+        type: 'memory'
+      }
     },
     onDatabaseLoad,
     [plugin],
@@ -89,7 +95,7 @@ test('should trace a request getting DB from the request and running the query m
 
   const res = await app.inject({
     method: 'GET',
-    url: '/custom-pages',
+    url: '/custom-pages'
   })
   equal(res.statusCode, 200, '/custom-pages status code')
 
@@ -104,10 +110,7 @@ test('should trace a request getting DB from the request and running the query m
     const expectedName = `${expectedTelemetryPrefix}.query:`
     const expectedNameRE = new RegExp(`^${expectedName}`)
     match(span.name, expectedNameRE)
-    match(
-      span.attributes['db.statement'],
-      /^SELECT id, title/
-    )
+    match(span.attributes['db.statement'], /^SELECT id, title/)
 
     if (isSQLite) {
       equal(span.attributes['db.system'], 'sqlite')

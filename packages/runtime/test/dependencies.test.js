@@ -9,6 +9,9 @@ const { platformaticRuntime } = require('..')
 const { Runtime } = require('../lib/runtime')
 const { getRuntimeLogsDir } = require('../lib/utils')
 const { Client } = require('undici')
+const { setLogFile } = require('./helpers')
+
+test.beforeEach(setLogFile)
 
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
@@ -77,7 +80,8 @@ test('correct throws on missing dependencies, showing all services', async t => 
 
   await assert.rejects(() => runtime.init(), {
     name: 'FastifyError',
-    message: "Missing dependency: \"service 'main' has unknown dependency: 'service-1'. Did you mean 'service-2'? Known services are: service-2.\""
+    message:
+      "Missing dependency: \"service 'main' has unknown dependency: 'service-1'. Did you mean 'service-2'? Known services are: service-2.\""
   })
 })
 

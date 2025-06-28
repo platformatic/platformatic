@@ -7,7 +7,8 @@ const {
   platformaticService,
   registerCriticalPlugins,
   ServiceStackable,
-  configManagerConfig
+  configManagerConfig,
+  getTypescriptCompilationOptions
 } = require('@platformatic/service')
 const { isKeyEnabled } = require('@platformatic/utils')
 const { Generator } = require('./lib/generator')
@@ -176,7 +177,7 @@ async function platformaticComposer (app, stackable) {
     config.server.healthCheck.fn = stackable.isHealthy.bind(stackable)
   }
 
-  app.register(serviceProxy, { ...config.composer, stackable, context: stackable.context })
+  await app.register(serviceProxy, { ...config.composer, stackable, context: stackable.context })
 
   await platformaticService(app, stackable)
 
@@ -283,12 +284,12 @@ class ComposerStackable extends ServiceStackable {
   }
 }
 
-// This will be replace by createStackable before the release of v3
+// This will be replaced by create before the release of v3
 async function buildStackable (opts) {
-  return createStackable(opts.context.directory, opts.config, {}, opts.context)
+  return create(opts.context.directory, opts.config, {}, opts.context)
 }
 
-async function createStackable (fileOrDirectory, sourceOrConfig, opts, context) {
+async function create (fileOrDirectory, sourceOrConfig, opts, context) {
   const { root, source } = await resolveStackable(fileOrDirectory, sourceOrConfig, 'composer')
   context ??= {}
   context.directory = root
@@ -307,12 +308,14 @@ module.exports = {
   ComposerStackable,
   errors,
   platformaticComposer,
-  createStackable,
-  // Old exports
+  create,
+  skipTelemetryHooks: true,
+  // Old exports - These might be removed in a future PR
   configType: 'composer',
   configManagerConfig,
   buildStackable,
   schema,
   schemaComponents,
-  version: packageJson.version
+  version: packageJson.version,
+  getTypescriptCompilationOptions
 }

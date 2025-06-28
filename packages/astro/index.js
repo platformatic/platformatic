@@ -2,6 +2,7 @@ import middie from '@fastify/middie'
 import fastifyStatic from '@fastify/static'
 import {
   BaseStackable,
+  transformConfig as basicTransformConfig,
   cleanBasePath,
   createServerListener,
   ensureTrailingSlash,
@@ -9,8 +10,7 @@ import {
   getServerUrl,
   importFile,
   resolvePackage,
-  schemaOptions,
-  transformConfig
+  schemaOptions
 } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
 import { features } from '@platformatic/utils'
@@ -34,6 +34,8 @@ export class AstroStackable extends BaseStackable {
   }
 
   async init () {
+    await super.init()
+
     if (this.isProduction) {
       return
     }
@@ -296,6 +298,13 @@ export class AstroStackable extends BaseStackable {
 
     await this.#app.ready()
   }
+}
+
+/* c8 ignore next 5 */
+export function transformConfig () {
+  this.current.watch = { enabled: false }
+
+  return basicTransformConfig.call(this)
 }
 
 export async function buildStackable (opts) {

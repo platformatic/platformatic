@@ -1,33 +1,33 @@
 import { join } from 'desm'
-import { on } from 'events'
 import { execa } from 'execa'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { EOL, tmpdir } from 'node:os'
 import { test } from 'node:test'
-import split from 'split2'
-import { Agent, request, setGlobalDispatcher } from 'undici'
+import { Agent, setGlobalDispatcher } from 'undici'
 import { cliPath } from './helper.js'
 
-setGlobalDispatcher(new Agent({
-  keepAliveTimeout: 10,
-  keepAliveMaxTimeout: 10,
-  tls: {
-    rejectUnauthorized: false,
-  },
-}))
+setGlobalDispatcher(
+  new Agent({
+    keepAliveTimeout: 10,
+    keepAliveMaxTimeout: 10,
+    tls: {
+      rejectUnauthorized: false
+    }
+  })
+)
 
 const version = JSON.parse(await readFile(join(import.meta.url, '..', 'package.json'), 'utf-8')).version
 const help = await readFile(join(import.meta.url, '..', 'help', 'help.txt'), 'utf8')
 
 // This reads a file from packages/db
-const helpDB = await readFile(join(import.meta.url, '..', '..', 'db', 'help', 'help.txt'), 'utf8')
+const helpDB = await readFile(join(import.meta.url, '..', '..', 'db', 'bin', 'help', 'help.txt'), 'utf8')
 
 // This reads a file from packages/runtime
-const helpRuntime = await readFile(join(import.meta.url, '..', '..', 'runtime', 'help', 'help.txt'), 'utf8')
+const helpRuntime = await readFile(join(import.meta.url, '..', '..', 'runtime', 'bin', 'help', 'help.txt'), 'utf8')
 
 // This reads a file from packages/service
-const helpService = await readFile(join(import.meta.url, '..', '..', 'service', 'help', 'help.txt'), 'utf8')
+const helpService = await readFile(join(import.meta.url, '..', '..', 'service', 'bin', 'help', 'help.txt'), 'utf8')
 
 const localTmp = tmpdir()
 
@@ -35,61 +35,12 @@ function matchOutput (actual, expected) {
   assert.equal(actual.replaceAll(EOL, '\n').trim(), expected.replaceAll(EOL, '\n').trim())
 }
 
-async function start (...args) {
-  const controller = new AbortController()
-  const { execa } = await import('execa')
-  const child = execa('node', [cliPath, ...args], { cancelSignal: controller.signal })
-  child.stderr.pipe(process.stdout)
-  const output = child.stdout.pipe(split(function (line) {
-    try {
-      const obj = JSON.parse(line)
-      return obj
-    } catch (err) {
-      console.log(line)
-    }
-  }))
-  child.ndj = output
-
-  const errorTimeout = setTimeout(() => {
-    throw new Error('Couldn\'t start server')
-  }, 10000)
-
-  for await (const messages of on(output, 'data')) {
-    for (const message of messages) {
-      const text = message.msg
-      if (text && text.includes('Server listening at')) {
-        const url = text.match(/Server listening at (.*)/)[1]
-        clearTimeout(errorTimeout)
-        return { child, url, output, cancel: controller.abort.bind(controller) }
-      }
-    }
-  }
-}
-
-test('version', async (t) => {
+test('version', async t => {
   const { stdout } = await execa('node', [cliPath, '--version'])
   assert.ok(stdout.includes('v' + version))
 })
 
-test('db', async (t) => {
-  try {
-    await execa('node', [cliPath, 'db', 'start'])
-    assert.fail('bug')
-  } catch (err) {
-    assert.ok(err.stderr.includes('Missing config file'))
-  }
-})
-
-test('runtime', async (t) => {
-  try {
-    await execa('node', [cliPath, 'runtime', 'start'])
-    assert.fail('bug')
-  } catch (err) {
-    assert.ok(err.stderr.includes('Missing config file'))
-  }
-})
-
-test('command not found', async (t) => {
+test('command not found', async t => {
   try {
     await execa('node', [cliPath, 'foo'])
     assert.fail('bug')
@@ -98,7 +49,7 @@ test('command not found', async (t) => {
   }
 })
 
-test('subcommand not found', async (t) => {
+test('subcommand not found', async t => {
   try {
     await execa('node', [cliPath, 'db', 'subfoo'])
     assert.fail('bug')
@@ -107,16 +58,7 @@ test('subcommand not found', async (t) => {
   }
 })
 
-test('allows for minor typos in commands', async (t) => {
-  try {
-    await execa('node', [cliPath, 'dbx', 'start'])
-    assert.fail('bug')
-  } catch (err) {
-    assert.ok(err.stderr.includes('Missing config file'))
-  }
-})
-
-test('prints the help if command requires a subcommand', async (t) => {
+test('prints the help if command requires a subcommand', async t => {
   try {
     await execa('node', [cliPath, 'db'])
     assert.fail('bug')
@@ -125,69 +67,38 @@ test('prints the help if command requires a subcommand', async (t) => {
   }
 })
 
-test('prints the help with help command', async (t) => {
+test('prints the help with help command', async t => {
   const { stdout } = await execa('node', [cliPath, 'help'])
   matchOutput(stdout, help)
 })
 
-test('prints the help with help flag', async (t) => {
+test('prints the help with help flag', async t => {
   const { stdout } = await execa('node', [cliPath, '--help'])
   matchOutput(stdout, help)
 })
 
-test('prints the help of db', async (t) => {
+test('prints the help of db', async t => {
   const { stdout } = await execa('node', [cliPath, 'help', 'db'])
   matchOutput(stdout, helpDB)
 })
 
-test('prints the help if not commands are specified', async (t) => {
+test('prints the help if not commands are specified', async t => {
   const { stdout } = await execa('node', [cliPath])
   matchOutput(stdout, help)
 })
 
-test('prints the help of runtime', async (t) => {
+test('prints the help of runtime', async t => {
   const { stdout } = await execa('node', [cliPath, 'help', 'runtime'])
   matchOutput(stdout, helpRuntime)
 })
 
-test('prints the help of service', async (t) => {
+test('prints the help of service', async t => {
   const { stdout } = await execa('node', [cliPath, 'help', 'service'])
   matchOutput(stdout, helpService)
 })
 
-test('start the database and do a call', async (t) => {
-  const config = join(import.meta.url, 'fixtures/sqlite/platformatic.db.json')
-  const { child, url, cancel } = await start('db', 'start', '-c', config)
-  t.after(() => {
-    cancel()
-    return child.catch(err => {
-      if (!err.isCanceled) {
-        throw err
-      }
-    })
-  })
-
-  const res = await request(`${url}/graphql`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      query: `
-            mutation {
-              saveGraph(input: { name: "Hello" }) {
-                id
-                name
-              }
-            }
-          `,
-    }),
-  })
-  assert.equal(res.statusCode, 200, 'saveGraph status code')
-  const body = await res.body.json()
-  assert.equal(body.data.saveGraph.name, 'Hello')
-})
-
 for (const type of ['service', 'db', 'composer']) {
-  test('load dependency from folder', async (t) => {
+  test('load dependency from folder', async t => {
     const cwd = process.cwd()
     process.chdir(localTmp)
     t.after(() => {
@@ -197,8 +108,8 @@ for (const type of ['service', 'db', 'composer']) {
       await execa('node', [cliPath, type, 'start'], {
         env: {
           ...process.env,
-          NODE_PATH: '',
-        },
+          NODE_PATH: ''
+        }
       })
       assert.fail('bug')
     } catch (err) {

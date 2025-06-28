@@ -7,8 +7,11 @@ const { test } = require('node:test')
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
 
-test('should fail to start service with a wrong id', async (t) => {
+test.beforeEach(setLogFile)
+
+test('should fail to start service with a wrong id', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
@@ -21,7 +24,9 @@ test('should fail to start service with a wrong id', async (t) => {
     await app.startService('wrong-service-id')
     assert.fail('should have thrown')
   } catch (err) {
-    assert.strictEqual(err.message,
-      'Service wrong-service-id not found. Available services are: db-app, serviceApp, with-logger, multi-plugin-service')
+    assert.strictEqual(
+      err.message,
+      'Service wrong-service-id not found. Available services are: db-app, serviceApp, with-logger, multi-plugin-service'
+    )
   }
 })

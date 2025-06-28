@@ -4,10 +4,10 @@ const assert = require('node:assert')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const { request } = require('undici')
-const { createStackableFromConfig, buildConfig } = require('./helper')
+const { createFromConfig, buildConfig } = require('./helper')
 
 test('should respond 200 on root endpoint', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     buildConfig({
       server: {
@@ -50,7 +50,7 @@ test('should respond 200 on root endpoint', async t => {
 })
 
 test('should not overwrite a plugin which define a root endpoint', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     buildConfig({
       server: {
@@ -80,7 +80,7 @@ test('should not overwrite a plugin which define a root endpoint', async t => {
 })
 
 test('openapi enabled', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     buildConfig({
       server: {
@@ -120,7 +120,7 @@ test('openapi enabled', async t => {
 })
 
 test('openapi config', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     buildConfig({
       server: {
@@ -163,7 +163,7 @@ test('openapi config', async t => {
 })
 
 test('openapi disabled', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     buildConfig({
       server: {
@@ -198,7 +198,7 @@ test('openapi disabled', async t => {
 })
 
 test('openapi disabled by default', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     buildConfig({
       server: {
@@ -231,7 +231,7 @@ test('openapi disabled by default', async t => {
 
 test('request id is a uuid', async t => {
   const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -256,7 +256,7 @@ test('request id is a uuid', async t => {
 })
 
 test('ready in plugin', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     buildConfig({
       server: {

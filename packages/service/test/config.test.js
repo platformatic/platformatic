@@ -5,8 +5,8 @@ const assert = require('node:assert')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const { request } = require('undici')
-const { createStackable } = require('..')
-const { createStackableFromConfig } = require('./helper')
+const { create } = require('..')
+const { createFromConfig } = require('./helper')
 const { setTimeout: sleep } = require('timers/promises')
 const fs = require('fs/promises')
 const { safeRemove } = require('@platformatic/utils')
@@ -31,7 +31,7 @@ test('config is adjusted to handle custom loggers', async t => {
     }
   }
 
-  const app = await createStackableFromConfig(t, options)
+  const app = await createFromConfig(t, options)
   assert.strictEqual(app.logger, options.server.loggerInstance)
 })
 
@@ -43,7 +43,7 @@ test('do not watch typescript outDir', async t => {
     await safeRemove(join(targetDir, 'dist'))
   } catch {}
 
-  const app = await createStackable(targetDir)
+  const app = await create(targetDir)
   t.after(async () => {
     await app.stop()
   })
@@ -55,7 +55,7 @@ test('do not watch typescript outDir', async t => {
 })
 
 test('start without server config', async t => {
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     watch: false,
     metrics: false,
     server: {
@@ -94,7 +94,7 @@ test('transport logger', async t => {
     }
   }
 
-  const server = await createStackableFromConfig(t, options)
+  const server = await createFromConfig(t, options)
   await server.start({ listen: true })
   await server.stop()
 

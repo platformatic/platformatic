@@ -7,7 +7,7 @@ const { tmpdir } = require('node:os')
 const { test, mock } = require('node:test')
 const { join } = require('node:path')
 const { unlink, mkdtemp, cp } = require('node:fs/promises')
-const { buildServer } = require('../../db')
+const { create } = require('../../db')
 const { buildOpenAPIClient } = require('..')
 const { safeRemove } = require('@platformatic/utils')
 require('./helper')
@@ -33,7 +33,7 @@ test('build basic client from url', async t => {
     // noop
   }
 
-  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const app = await create(join(tmpDir, 'platformatic.db.json'))
 
   t.after(async () => {
     await app.close()
@@ -155,7 +155,7 @@ test('build full response client from url', async t => {
   } catch {
     // noop
   }
-  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const app = await create(join(tmpDir, 'platformatic.db.json'))
 
   t.after(async () => {
     await app.close()
@@ -309,7 +309,7 @@ test('properly call query parser', async t => {
   } catch {
     // noop
   }
-  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const app = await create(join(tmpDir, 'platformatic.db.json'))
 
   t.after(async () => {
     await app.close()
@@ -348,7 +348,7 @@ test('properly call undici dispatcher', async t => {
   } catch {
     // noop
   }
-  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const app = await create(join(tmpDir, 'platformatic.db.json'))
 
   t.after(async () => {
     await app.close()
@@ -401,7 +401,7 @@ test('throw on error level response', async t => {
   } catch {
     // noop
   }
-  const app = await buildServer(join(tmpDir, 'platformatic-prefix.db.json'))
+  const app = await create(join(tmpDir, 'platformatic-prefix.db.json'))
 
   t.after(async () => {
     await app.close()
@@ -419,7 +419,7 @@ test('throw on error level response', async t => {
     client.getMovieById({
       id: 100
     }),
-    (err) => {
+    err => {
       assert.ok(err instanceof errors.UnexpectedCallFailureError)
 
       // Persists response properties from Undici error
@@ -447,7 +447,7 @@ test('throw on error level response (modified global dispatcher)', async t => {
   } catch {
     // noop
   }
-  const app = await buildServer(join(tmpDir, 'platformatic-prefix.db.json'))
+  const app = await create(join(tmpDir, 'platformatic-prefix.db.json'))
   const agent = getGlobalDispatcher()
 
   t.after(async () => {
@@ -465,16 +465,22 @@ test('throw on error level response (modified global dispatcher)', async t => {
   const mockPool = mockAgent.get(app.url)
 
   // intercept the request
-  mockPool.intercept({
-    path: '/movies-api/movies/100',
-    method: 'GET'
-  }).reply(404, {
-    error: 'Mocked Error',
-    message: 'Route GET:/movies-api/movies/100 not found',
-    statusCode: 404
-  }, {
-    headers: { 'content-type': 'application/json' }
-  })
+  mockPool
+    .intercept({
+      path: '/movies-api/movies/100',
+      method: 'GET'
+    })
+    .reply(
+      404,
+      {
+        error: 'Mocked Error',
+        message: 'Route GET:/movies-api/movies/100 not found',
+        statusCode: 404
+      },
+      {
+        headers: { 'content-type': 'application/json' }
+      }
+    )
 
   // should use getGlobalDispatcher() internally and hit mock
   const client = await buildOpenAPIClient({
@@ -487,7 +493,7 @@ test('throw on error level response (modified global dispatcher)', async t => {
     client.getMovieById({
       id: 100
     }),
-    (err) => {
+    err => {
       assert.deepEqual(err.body, {
         error: 'Mocked Error',
         message: 'Route GET:/movies-api/movies/100 not found',
@@ -508,7 +514,7 @@ test('throw on error level response (supplied dispatcher)', async t => {
   } catch {
     // noop
   }
-  const app = await buildServer(join(tmpDir, 'platformatic-prefix.db.json'))
+  const app = await create(join(tmpDir, 'platformatic-prefix.db.json'))
 
   t.after(async () => {
     await app.close()
@@ -523,16 +529,22 @@ test('throw on error level response (supplied dispatcher)', async t => {
   const mockPool = mockAgent.get(app.url)
 
   // intercept the request
-  mockPool.intercept({
-    path: '/movies-api/movies/200',
-    method: 'GET'
-  }).reply(404, {
-    error: 'Mocked Error',
-    message: 'Route GET:/movies-api/movies/200 not found',
-    statusCode: 404
-  }, {
-    headers: { 'content-type': 'application/json' }
-  })
+  mockPool
+    .intercept({
+      path: '/movies-api/movies/200',
+      method: 'GET'
+    })
+    .reply(
+      404,
+      {
+        error: 'Mocked Error',
+        message: 'Route GET:/movies-api/movies/200 not found',
+        statusCode: 404
+      },
+      {
+        headers: { 'content-type': 'application/json' }
+      }
+    )
 
   // should use getGlobalDispatcher() internally and hit mock
   const client = await buildOpenAPIClient({
@@ -546,7 +558,7 @@ test('throw on error level response (supplied dispatcher)', async t => {
     client.getMovieById({
       id: 200
     }),
-    (err) => {
+    err => {
       assert.deepEqual(err.body, {
         error: 'Mocked Error',
         message: 'Route GET:/movies-api/movies/200 not found',
@@ -567,7 +579,7 @@ test('build basic client from file', async t => {
   } catch {
     // noop
   }
-  const app = await buildServer(join(tmpDir, 'platformatic-prefix.db.json'))
+  const app = await create(join(tmpDir, 'platformatic-prefix.db.json'))
 
   t.after(async () => {
     await app.close()
@@ -657,7 +669,7 @@ test('build basic client from url with custom headers', async t => {
   } catch {
     // noop
   }
-  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const app = await create(join(tmpDir, 'platformatic.db.json'))
 
   t.after(async () => {
     await app.close()
@@ -749,7 +761,7 @@ test('302', async t => {
   } catch {
     // noop
   }
-  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const app = await create(join(tmpDir, 'platformatic.db.json'))
 
   t.after(async () => {
     await app.close()

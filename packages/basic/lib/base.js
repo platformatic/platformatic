@@ -80,6 +80,10 @@ export class BaseStackable extends EventEmitter {
   }
 
   init () {
+    return this.updateContext()
+  }
+
+  updateContext (context) {
     // No-op
   }
 
@@ -89,6 +93,11 @@ export class BaseStackable extends EventEmitter {
 
   stop () {
     throw new Error('BaseStackable.stop must be overriden by the subclasses')
+  }
+
+  // Alias for stop
+  close () {
+    return this.stop()
   }
 
   inject () {
@@ -133,7 +142,7 @@ export class BaseStackable extends EventEmitter {
   }
 
   async getDispatchTarget () {
-    return this.getUrl() ?? this.getDispatchFunc()
+    return this.getUrl() ?? (await this.getDispatchFunc())
   }
 
   getMeta () {
@@ -418,30 +427,32 @@ export class BaseStackable extends EventEmitter {
     }
 
     this.#metricsCollected = true
+
+    if (this.context.metricsConfig === false) {
+      return
+    }
+
     await this.#collectMetrics()
     this.#setHttpCacheMetrics()
   }
 
   async #collectMetrics () {
-    let metricsConfig = this.context.metricsConfig
-    if (metricsConfig !== false) {
-      metricsConfig = {
-        defaultMetrics: true,
-        httpMetrics: true,
-        ...metricsConfig
-      }
-
-      if (this.childManager && this.clientWs) {
-        await this.childManager.send(this.clientWs, 'collectMetrics', {
-          serviceId: this.serviceId,
-          workerId: this.workerId,
-          metricsConfig
-        })
-        return
-      }
-
-      await collectMetrics(this.serviceId, this.workerId, metricsConfig, this.metricsRegistry)
+    const metricsConfig = {
+      defaultMetrics: true,
+      httpMetrics: true,
+      ...this.context.metricsConfig
     }
+
+    if (this.childManager && this.clientWs) {
+      await this.childManager.send(this.clientWs, 'collectMetrics', {
+        serviceId: this.serviceId,
+        workerId: this.workerId,
+        metricsConfig
+      })
+      return
+    }
+
+    await collectMetrics(this.serviceId, this.workerId, metricsConfig, this.metricsRegistry)
   }
 
   #setHttpCacheMetrics () {

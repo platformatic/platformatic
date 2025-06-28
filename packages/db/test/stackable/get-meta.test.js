@@ -3,14 +3,14 @@
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { createStackableFromConfig, getConnectionInfo, createBasicPages } = require('../helper')
+const { createFromConfig, getConnectionInfo, createBasicPages } = require('../helper')
 
 test('get meta info via stackable api', async t => {
   const workingDir = join(__dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
   const { dbname } = connectionInfo
 
-  const stackable = await createStackableFromConfig(t, {
+  const stackable = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 3245,

@@ -3,13 +3,13 @@
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { createStackableFromConfig, getConnectionInfo } = require('../helper')
+const { createFromConfig, getConnectionInfo } = require('../helper')
 
 test('get service openapi schema via stackable api', async t => {
   const workingDir = join(__dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const stackable = await createStackableFromConfig(t, {
+  const stackable = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -54,7 +54,7 @@ test('get null if server does not expose openapi', async t => {
   const workingDir = join(__dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const stackable = await createStackableFromConfig(t, {
+  const stackable = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,

@@ -15,12 +15,12 @@ const Swagger = require('@fastify/swagger')
 const mercurius = require('mercurius')
 const WebSocket = require('ws')
 const { getIntrospectionQuery } = require('graphql')
-const { createStackable: createDatabaseStackable } = require('@platformatic/db')
+const { create: createDatabaseStackable } = require('@platformatic/db')
 const { createDirectory, safeRemove, executeWithTimeout, kTimeout } = require('@platformatic/utils')
 
 // This is to avoid a circular dependency
 const { createTemporaryDirectory } = require('../../basic/test/helper')
-const { createStackable } = require('../')
+const { create } = require('../')
 const { buildServer: buildRuntime, symbols } = require('../../runtime')
 
 if (process.env.WHY === 'true') {
@@ -399,7 +399,7 @@ async function createWebsocketService (t, wsServerOptions = {}, port) {
   return { service, wsServer }
 }
 
-async function createStackableFromConfig (t, options, applicationFactory, creationOptions = {}) {
+async function createFromConfig (t, options, applicationFactory, creationOptions = {}) {
   const defaultConfig = {
     server: {
       hostname: '127.0.0.1',
@@ -419,7 +419,7 @@ async function createStackableFromConfig (t, options, applicationFactory, creati
 
   const directory = await createTemporaryDirectory(t)
 
-  const composer = await createStackable(
+  const composer = await create(
     directory,
     Object.assign({}, defaultConfig, options),
     {},
@@ -650,7 +650,7 @@ module.exports = {
   createOpenApiService,
   createGraphqlService,
   createWebsocketService,
-  createStackableFromConfig,
+  createFromConfig,
   createComposerInRuntime,
   startDatabaseServices,
   checkSchema,

@@ -10,6 +10,9 @@ const { safeRemove } = require('@platformatic/utils')
 const { platformaticRuntime } = require('..')
 const { buildRuntime } = require('../lib/start')
 const fixturesDir = join(__dirname, '..', 'fixtures')
+const { setLogFile } = require('./helpers')
+
+test.beforeEach(setLogFile)
 
 async function startApplicationWithEntrypoint (t, fixture, entrypoint) {
   const configFile = join(fixturesDir, fixture, 'platformatic-with-entrypoint.json')

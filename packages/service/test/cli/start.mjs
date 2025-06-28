@@ -1,4 +1,4 @@
-import { createStackable } from '../../index.js'
+import { create } from '../../index.js'
 
-const app = await createStackable(process.argv.length > 2 ? process.argv.at(-1) : 'platformatic.service.json')
+const app = await create(process.argv.length > 2 ? process.argv.at(-1) : 'platformatic.service.json')
 await app.start({ listen: true })

@@ -3,12 +3,12 @@
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { createStackableFromConfig, getConnectionInfo } = require('./helper')
+const { createFromConfig, getConnectionInfo } = require('./helper')
 
 test('healthcheck route enabled with interval', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -56,7 +56,7 @@ test('healthcheck route enabled with interval', async t => {
 test('healthcheck route enabled without interval', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -101,7 +101,7 @@ test('healthcheck route enabled without interval', async t => {
 test('healthcheck route disabled', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -128,7 +128,7 @@ test('healthcheck route disabled', async t => {
 test('healthcheck route enabled with interval and maxEventLoopUtilization', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,

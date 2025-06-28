@@ -32,6 +32,7 @@ const setupMetrics = require('./lib/plugins/metrics.js')
 const setupOpenAPI = require('./lib/plugins/openapi.js')
 const loadPlugins = require('./lib/plugins/plugins.js')
 const setupRoot = require('./lib/plugins/root.js')
+const { getTypescriptCompilationOptions } = require('./lib/compile.js')
 const setupTsCompiler = require('./lib/plugins/typescript.js')
 
 async function registerCriticalPlugins (app, stackable) {
@@ -120,11 +121,12 @@ class ServiceStackable extends BaseStackable {
   }
 
   async init () {
+    await super.init()
+
     if (this.#app) {
       return
     }
 
-    await this.updateContext()
     const config = this.configManager.current
     this.#basePath = ensureTrailingSlash(cleanBasePath(config.basePath ?? this.serviceId))
 
@@ -202,11 +204,17 @@ class ServiceStackable extends BaseStackable {
     return this.#app
   }
 
+  async getDispatchFunc () {
+    await this.init()
+    return this.#app
+  }
+
   async getConfig () {
-    const loggerInstance = this.configManager.current.server?.loggerInstance
+    const loggerInstance = this.serverConfig?.loggerInstance
+
     if (loggerInstance) {
       const config = Object.assign({}, this.configManager.current)
-      const { loggerInstance: _, ...serverConfig } = this.serverConfig || {}
+      const { loggerInstance: _, ...serverConfig } = this.serverConfig
       config.server = { ...serverConfig, logger: { level: loggerInstance.level } }
 
       return config
@@ -258,6 +266,8 @@ class ServiceStackable extends BaseStackable {
   }
 
   async updateContext (context) {
+    super.updateContext(context)
+
     this.context = { ...this.context, ...context }
 
     if (!this.context) {
@@ -272,10 +282,11 @@ class ServiceStackable extends BaseStackable {
       hasManagementApi,
       isEntrypoint,
       isStandalone,
-      isProduction
+      isProduction,
+      logger
     } = this.context
 
-    const config = this.configManager.current
+    const config = { ...this.configManager.current }
 
     if (telemetryConfig) {
       config.telemetry = telemetryConfig
@@ -283,9 +294,14 @@ class ServiceStackable extends BaseStackable {
     if (metricsConfig) {
       config.metrics = metricsConfig
     }
+
+    const loggerInstance = logger ?? serverConfig?.loggerInstance ?? this.serverConfig?.loggerInstance
+
     if (serverConfig) {
-      config.server = deepmerge(config.server ?? {}, serverConfig ?? {})
+      config.server = deepmerge(this.serverConfig, serverConfig ?? {})
     }
+
+    config.server ??= {}
 
     if ((hasManagementApi && config.metrics === undefined) || config.metrics) {
       const labels = config.metrics?.labels || {}
@@ -296,24 +312,6 @@ class ServiceStackable extends BaseStackable {
         labels: { serviceId, ...labels }
       }
     }
-
-    if (!isEntrypoint) {
-      config.server = config.server ?? {}
-      config.server.trustProxy = true
-    }
-
-    if (config.server?.https) {
-      config.server.https.key = await this.#sanitizeFileArg(config.server.https.key)
-      config.server.https.cert = await this.#sanitizeFileArg(config.server.https.cert)
-    }
-
-    this.serverConfig = config.server || {}
-
-    if (this.context?.logger) {
-      this.serverConfig.logger = undefined
-      this.serverConfig.loggerInstance = this.context.logger
-    }
-
     if (isProduction) {
       if (config.plugins) {
         config.plugins.typescript = false
@@ -321,6 +319,24 @@ class ServiceStackable extends BaseStackable {
       config.watch = { enabled: false }
     }
 
+    // Adjust server options
+    if (!isEntrypoint) {
+      config.server.trustProxy = true
+    }
+
+    if (config.server.https) {
+      config.server.https.key = await this.#sanitizeFileArg(config.server.https.key)
+      config.server.https.cert = await this.#sanitizeFileArg(config.server.https.cert)
+    }
+
+    // Assign the logger instance if it exists
+    if (loggerInstance) {
+      config.server = { ...config.server }
+      config.server.loggerInstance = loggerInstance
+      delete config.server.logger
+    }
+
+    this.serverConfig = config.server
     this.configManager.update(config)
   }
 
@@ -331,8 +347,8 @@ class ServiceStackable extends BaseStackable {
       return this.configManager.current.server?.loggerInstance
     }
 
-    this.configManager.current.server ??= {}
-    this.loggerConfig = deepmerge(this.context.loggerConfig ?? {}, this.configManager.current.server?.logger ?? {})
+    this.serverConfig ??= {}
+    this.loggerConfig = deepmerge(this.context.loggerConfig ?? {}, this.serverConfig?.logger ?? {})
 
     const pinoOptions = {
       ...(this.loggerConfig ?? {}),
@@ -363,8 +379,8 @@ class ServiceStackable extends BaseStackable {
     const logger = pino(pinoOptions)
 
     // Only one of logger and loggerInstance should be set
-    delete this.configManager.current.server.logger
-    this.configManager.current.server.loggerInstance = logger
+    this.serverConfig.loggerInstance = logger
+    delete this.serverConfig.logger
 
     return logger
   }
@@ -435,12 +451,12 @@ async function transformConfig () {
 
 const configManagerConfig = { schemaOptions, transformConfig }
 
-// This will be replace by createStackable before the release of v3
+// This will be replaced by create before the release of v3
 async function buildStackable (opts) {
-  return createStackable(opts.context.directory, opts.config, {}, opts.context)
+  return create(opts.context.directory, opts.config, {}, opts.context)
 }
 
-async function createStackable (fileOrDirectory, sourceOrConfig, opts, context) {
+async function create (fileOrDirectory, sourceOrConfig, opts, context) {
   const { root, source } = await resolveStackable(fileOrDirectory, sourceOrConfig, 'service')
 
   context ??= {}
@@ -449,7 +465,13 @@ async function createStackable (fileOrDirectory, sourceOrConfig, opts, context) 
   opts ??= { context }
   opts.context = context
 
-  const configManager = new ConfigManager({ schema, source, ...configManagerConfig, dirname: root, context })
+  const configManager = new ConfigManager({
+    schema: opts.context.schema ?? schema,
+    source,
+    ...configManagerConfig,
+    dirname: root,
+    context
+  })
   await configManager.parseAndValidate()
 
   return new ServiceStackable(opts, root, configManager)
@@ -460,13 +482,15 @@ module.exports = {
   ServiceStackable,
   platformaticService,
   registerCriticalPlugins,
-  createStackable,
+  create,
+  skipTelemetryHooks: true,
+  // Old exports - These might be removed in a future PR
   transformConfig,
-  // Old exports
   configType: 'service',
   configManagerConfig,
   buildStackable,
   schema,
   schemaComponents,
-  version: packageJson.version
+  version: packageJson.version,
+  getTypescriptCompilationOptions
 }

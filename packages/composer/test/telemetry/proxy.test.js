@@ -3,7 +3,7 @@
 const assert = require('assert')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { createStackableFromConfig, createOpenApiService, createBasicService } = require('../helper')
+const { createFromConfig, createOpenApiService, createBasicService } = require('../helper')
 
 test('should proxy openapi requests with telemetry span', async t => {
   const service1 = await createOpenApiService(t, ['users'])
@@ -37,7 +37,7 @@ test('should proxy openapi requests with telemetry span', async t => {
     }
   }
 
-  const composer = await createStackableFromConfig(t, config)
+  const composer = await createFromConfig(t, config)
   const composerUrl = await composer.start({ listen: true })
 
   {
@@ -97,7 +97,7 @@ test('should proxy openapi requests with telemetry, managing errors', async t =>
     }
   }
 
-  const composer = await createStackableFromConfig(t, config)
+  const composer = await createFromConfig(t, config)
   const composerUrl = await composer.start({ listen: true })
 
   {

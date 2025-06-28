@@ -2,7 +2,7 @@
 
 const assert = require('node:assert')
 const { test } = require('node:test')
-const { createOpenApiService, createStackableFromConfig } = require('../helper')
+const { createOpenApiService, createFromConfig } = require('../helper')
 
 test('get service openapi schema via stackable api', async t => {
   const api = await createOpenApiService(t, ['users'])
@@ -27,7 +27,7 @@ test('get service openapi schema via stackable api', async t => {
     }
   }
 
-  const stackable = await createStackableFromConfig(t, config)
+  const stackable = await createFromConfig(t, config)
   t.after(() => stackable.stop())
   await stackable.start({ listen: true })
 
@@ -55,7 +55,7 @@ test('get null if server does not expose openapi', async t => {
     }
   }
 
-  const stackable = await createStackableFromConfig(t, config)
+  const stackable = await createFromConfig(t, config)
   t.after(() => stackable.stop())
   await stackable.start({ listen: true })
 

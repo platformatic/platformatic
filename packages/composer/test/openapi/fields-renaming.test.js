@@ -6,7 +6,7 @@ const { test } = require('node:test')
 const { join } = require('node:path')
 const { writeFile, mkdtemp } = require('node:fs/promises')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
-const { createStackableFromConfig, createBasicService, createOpenApiService } = require('../helper')
+const { createFromConfig, createBasicService, createOpenApiService } = require('../helper')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
@@ -36,7 +36,7 @@ test('should rename top level object fields', async t => {
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -116,7 +116,7 @@ test('should rename nested object fields', async t => {
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -194,7 +194,7 @@ test('should rename property in required array', async t => {
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -272,7 +272,7 @@ test('should rename top level object fields in array', async t => {
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'

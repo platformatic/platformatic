@@ -2,7 +2,7 @@
 
 const assert = require('node:assert')
 const { test } = require('node:test')
-const { createGraphqlService, createStackableFromConfig } = require('../helper')
+const { createGraphqlService, createFromConfig } = require('../helper')
 
 test('should start composer with a graphql service', async t => {
   const graphql1 = await createGraphqlService(t, {
@@ -39,7 +39,7 @@ test('should start composer with a graphql service', async t => {
     }
   }
 
-  const stackable = await createStackableFromConfig(t, config)
+  const stackable = await createFromConfig(t, config)
   t.after(() => stackable.stop())
   await stackable.start({ listen: true })
 
@@ -60,7 +60,7 @@ test('get null if server does not expose openapi', async t => {
     }
   }
 
-  const stackable = await createStackableFromConfig(t, config)
+  const stackable = await createFromConfig(t, config)
   t.after(() => stackable.stop())
   await stackable.start({ listen: true })
 

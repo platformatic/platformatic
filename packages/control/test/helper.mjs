@@ -14,7 +14,7 @@ setGlobalDispatcher(
   })
 )
 
-const runtimeCliPath = createRequire(import.meta.url).resolve('@platformatic/runtime/runtime.mjs')
+const startPath = createRequire(import.meta.url).resolve('@platformatic/runtime/test/cli/start.mjs')
 
 export async function getPlatformaticVersion () {
   const packageJsonPath = new URL('../package.json', import.meta.url)
@@ -23,9 +23,7 @@ export async function getPlatformaticVersion () {
 }
 
 export async function startRuntime (configPath, env = {}, additionalArgs = []) {
-  const runtime = execa(process.execPath, [runtimeCliPath, 'start', '-c', configPath, ...additionalArgs], { env })
-  runtime.stdout.pipe(process.stdout)
-  runtime.stderr.pipe(process.stderr)
+  const runtime = execa(process.execPath, [startPath, '-c', configPath, ...additionalArgs], { env })
 
   const output = runtime.stdout.pipe(
     split(function (line) {

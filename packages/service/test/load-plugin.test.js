@@ -8,7 +8,7 @@ const { createGunzip } = require('node:zlib')
 const { readFile } = require('node:fs/promises')
 const { pipeline } = require('node:stream/promises')
 const { request } = require('undici')
-const { createStackableFromConfig } = require('./helper')
+const { createFromConfig } = require('./helper')
 const { platformaticService } = require('..')
 
 async function myApp (app, stackable) {
@@ -17,7 +17,7 @@ async function myApp (app, stackable) {
 }
 
 test('customize service', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     {
       server: {
@@ -41,7 +41,7 @@ test('customize service', async t => {
 })
 
 test('catch errors from the other side', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     {
       server: {
@@ -76,7 +76,7 @@ test('catch errors from the other side', async t => {
 })
 
 test('accept packages', async t => {
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -118,7 +118,7 @@ test('accept packages', async t => {
 })
 
 test('accept packages / string form', async t => {
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -138,7 +138,7 @@ test('accept packages / string form', async t => {
 })
 
 test('accept packages / with typescript on', async t => {
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -159,7 +159,7 @@ test('accept packages / with typescript on', async t => {
 })
 
 test('customize service without toLoad', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     {
       server: {
@@ -183,7 +183,7 @@ test('customize service without toLoad', async t => {
 })
 
 test('customize service with beforePlugins', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     {
       server: {
@@ -207,7 +207,7 @@ test('customize service with beforePlugins', async t => {
 })
 
 test('@fastify/static serving root without wildcards', async t => {
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,

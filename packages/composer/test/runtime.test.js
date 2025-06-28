@@ -3,10 +3,10 @@
 const assert = require('assert/strict')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { createGraphqlService, createStackableFromConfig } = require('./helper')
+const { createGraphqlService, createFromConfig } = require('./helper')
 
 test('should resolve openapi services to the origin', async t => {
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -73,7 +73,7 @@ test('should resolve graphql services', async t => {
   const graphql1Host = await graphql1.listen()
   const graphql2Host = await graphql2.listen()
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -135,7 +135,7 @@ test('should resolve different services', async t => {
   const graphql1Host = await graphql1.listen()
   const graphql2Host = await graphql2.listen()
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'

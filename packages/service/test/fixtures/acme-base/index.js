@@ -69,7 +69,7 @@ async function transformConfig () {
   }
 }
 
-export async function createStackable (root, source, opts, context) {
+export async function create (root, source, opts, context) {
   source ??= await findConfigurationFile(root, 'service')
 
   context ??= {}

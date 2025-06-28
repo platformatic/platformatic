@@ -1,12 +1,12 @@
 import { strictEqual } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { createStackable } from '../lib/index.js'
+import { create } from '../lib/index.js'
 
 const root = resolve(import.meta.dirname, '../')
 
 test('dynamite', async t => {
-  const server = await createStackable(root, {
+  const server = await create(root, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -24,7 +24,7 @@ test('dynamite', async t => {
 })
 
 test('dynamite false', async t => {
-  const server = await createStackable(root, {
+  const server = await create(root, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -41,7 +41,7 @@ test('dynamite false', async t => {
 })
 
 test('openapi', async t => {
-  const server = await createStackable(root, {
+  const server = await create(root, {
     server: {
       hostname: '127.0.0.1',
       port: 0,

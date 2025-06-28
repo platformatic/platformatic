@@ -8,7 +8,7 @@ const { mkdtemp, writeFile } = require('node:fs/promises')
 const selfCert = require('self-cert')
 const { Agent, request } = require('undici')
 const { buildConfig } = require('./helper')
-const { createStackable } = require('..')
+const { create } = require('..')
 
 test('supports http2 options', async t => {
   const { certificate, privateKey } = selfCert({})
@@ -31,7 +31,7 @@ test('supports http2 options', async t => {
     }
   })
 
-  const app = await createStackable(
+  const app = await create(
     tmpDir,
     buildConfig({
       server: {
@@ -83,7 +83,7 @@ test('supports allowHTTP1 with HTTP/2', async t => {
     }
   })
 
-  const app = await createStackable(
+  const app = await create(
     tmpDir,
     buildConfig({
       server: {

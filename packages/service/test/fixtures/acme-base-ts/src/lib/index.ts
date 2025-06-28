@@ -88,7 +88,7 @@ async function transformConfig (this: ConfigManager<AcmeBase & PlatformaticServi
   }
 }
 
-export async function createStackable (
+export async function create (
   root: string,
   source?: string | object,
   opts?: BaseOptions<ServiceContext>,

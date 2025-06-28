@@ -3,10 +3,10 @@
 const assert = require('node:assert')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { createStackable } = require('../..')
+const { create } = require('../..')
 
 test('inject request into service stackable', async t => {
-  const stackable = await createStackable(join(__dirname, '..', 'fixtures', 'directories'))
+  const stackable = await create(join(__dirname, '..', 'fixtures', 'directories'))
   t.after(() => stackable.stop())
   await stackable.start({ listen: true })
 

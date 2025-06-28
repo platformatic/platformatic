@@ -36,6 +36,8 @@ export class NextStackable extends BaseStackable {
   }
 
   async init () {
+    await super.init()
+
     // This is needed to avoid Next.js to throw an error when the lockfile is not correct
     // and the user is using npm but has pnpm in its $PATH.
     //
@@ -321,6 +323,8 @@ function transformConfig () {
   if (this.current.cache?.adapter === 'redis') {
     this.current.cache.adapter = 'valkey'
   }
+
+  this.current.watch = { enabled: false }
 
   return basicTransformConfig.call(this)
 }

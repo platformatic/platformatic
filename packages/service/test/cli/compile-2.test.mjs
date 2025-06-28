@@ -69,16 +69,13 @@ test('should compile typescript plugin with start command with different cwd', a
   child.stdout.pipe(splitter)
   child.stderr.pipe(splitter)
 
-  let output = ''
-
   const timeout = setTimeout(() => {
-    console.log(output)
     assert.fail('should compile typescript plugin with start command')
   }, 30000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
-    output += sanitized
+
     if (sanitized.includes('Typescript plugin loaded')) {
       clearTimeout(timeout)
       return
@@ -113,16 +110,13 @@ test('should compile typescript plugin with start command from a folder', async 
   child.stdout.pipe(splitter)
   child.stderr.pipe(splitter)
 
-  let output = ''
-
   const timeout = setTimeout(() => {
-    console.log(output)
     assert.fail('should compile typescript plugin with start command')
   }, 30000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
-    output += sanitized
+
     if (sanitized.includes('Typescript plugin loaded')) {
       clearTimeout(timeout)
       return
@@ -149,16 +143,13 @@ test(
     child.stdout.pipe(splitter)
     child.stderr.pipe(splitter)
 
-    let output = ''
-
     const timeout = setTimeout(() => {
-      console.log(output)
       assert.fail('should start the service if it was precompiled and typescript is `false`')
     }, 30000)
 
     for await (const data of splitter) {
       const sanitized = stripAnsi(data)
-      output += sanitized
+
       if (sanitized.includes('Typescript plugin loaded')) {
         clearTimeout(timeout)
         return
@@ -184,16 +175,13 @@ test(
     child.stdout.pipe(splitter)
     child.stderr.pipe(splitter)
 
-    let output = ''
-
     const timeout = setTimeout(() => {
-      console.log(output)
       assert.fail('should not start the service if it was not precompiled and typescript is `false`')
     }, 30000)
 
     for await (const data of splitter) {
       const sanitized = stripAnsi(data)
-      output += sanitized
+
       if (sanitized.includes('Unknown file extension ".ts" for')) {
         clearTimeout(timeout)
         return
@@ -216,16 +204,13 @@ test('should compile typescript plugin with string config', async t => {
   child.stdout.pipe(splitter)
   child.stderr.pipe(splitter)
 
-  let output = ''
-
   const timeout = setTimeout(() => {
-    console.log(output)
     assert.fail('should compile typescript plugin with string config')
   }, 30000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
-    output += sanitized
+
     if (sanitized.includes('Typescript compilation completed successfully.')) {
       clearTimeout(timeout)
       const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
@@ -257,16 +242,13 @@ test(
     child.stdout.pipe(splitter)
     child.stderr.pipe(splitter)
 
-    let output = ''
-
     const timeout = setTimeout(() => {
-      console.log(output)
       assert.fail('should not start the service if it was not precompiled and typescript is `"false"`')
     }, 30000)
 
     for await (const data of splitter) {
       const sanitized = stripAnsi(data)
-      output += sanitized
+
       if (sanitized.includes('Unknown file extension ".ts" for')) {
         clearTimeout(timeout)
         return
@@ -289,16 +271,13 @@ test('should compile typescript plugin with start command with custom tsconfig',
   child.stdout.pipe(splitter)
   child.stderr.pipe(splitter)
 
-  let output = ''
-
   const timeout = setTimeout(() => {
-    console.log(output)
     assert.fail('should compile typescript plugin with start command with custom tsconfig')
   }, 30000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
-    output += sanitized
+
     if (sanitized.includes('Typescript plugin loaded')) {
       clearTimeout(timeout)
       return
@@ -323,16 +302,13 @@ test(
     child.stdout.pipe(splitter)
     child.stderr.pipe(splitter)
 
-    let output = ''
-
     const timeout = setTimeout(() => {
-      console.log(output)
       assert.fail('should not start the service if it was not precompiled and typescript is `false`')
     }, 30000)
 
     for await (const data of splitter) {
       const sanitized = stripAnsi(data)
-      output += sanitized
+
       if (sanitized.includes('Unknown file extension ".ts" for')) {
         clearTimeout(timeout)
         return
@@ -355,16 +331,13 @@ test('should start without a tsconfig but with a outDir configuration', async t 
   child.stdout.pipe(splitter)
   child.stderr.pipe(splitter)
 
-  let output = ''
-
   const timeout = setTimeout(() => {
-    console.log(output)
     assert.fail('should start without a tsconfig but with a outDir configuration')
   }, 30000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
-    output += sanitized
+
     if (sanitized.includes('Typescript plugin loaded')) {
       clearTimeout(timeout)
       return
@@ -386,16 +359,12 @@ test('should compile typescript plugin with start command with custom flags', as
   child.stdout.pipe(splitter)
   child.stderr.pipe(splitter)
 
-  let output = ''
-
   const timeout = setTimeout(() => {
-    console.log(output)
     assert.fail('should compile typescript plugin with start command with custom flags')
   }, 30000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
-    output += sanitized
     if (sanitized.includes('Typescript plugin loaded')) {
       clearTimeout(timeout)
       return

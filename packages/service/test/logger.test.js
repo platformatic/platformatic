@@ -7,14 +7,14 @@ const { test } = require('node:test')
 const { setTimeout: wait } = require('node:timers/promises')
 const { request } = require('undici')
 const { tmpdir } = require('node:os')
-const { createStackable } = require('..')
+const { create } = require('..')
 
 test('logger options', async t => {
   process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
   const file = path.join(process.env.LOG_DIR, 'service.log')
   const serviceRoot = path.join(__dirname, 'fixtures', 'logger-options')
 
-  const app = await createStackable(serviceRoot)
+  const app = await create(serviceRoot)
   t.after(async () => {
     await app.stop()
   })

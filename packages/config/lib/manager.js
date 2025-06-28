@@ -358,10 +358,7 @@ class ConfigManager extends EventEmitter {
     let typeless = []
 
     if (!skipTypeless) {
-      typeless = [
-        ...extensions.map(ext => `watt.${ext}`),
-        ...extensions.map(ext => `platformatic.${ext}`)
-      ]
+      typeless = [...extensions.map(ext => `watt.${ext}`), ...extensions.map(ext => `platformatic.${ext}`)]
     }
 
     if (type) {

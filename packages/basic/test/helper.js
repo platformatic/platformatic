@@ -73,7 +73,7 @@ export async function createTemporaryDirectory (t, prefix = 'plt-basic') {
   return directory
 }
 
-export async function createStackable (
+export async function create (
   t,
   context = {},
   config = { current: {} },

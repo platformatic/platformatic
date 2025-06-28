@@ -2,12 +2,12 @@
 
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
-const { createStackableFromConfig, getConnectionInfo } = require('./helper')
+const { createFromConfig, getConnectionInfo } = require('./helper')
 
 test('should set pluginTimeout to 60s by default', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,

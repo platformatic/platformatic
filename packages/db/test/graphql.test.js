@@ -4,7 +4,7 @@ const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const { request } = require('undici')
-const { createStackableFromConfig, getConnectionInfo } = require('./helper')
+const { createFromConfig, getConnectionInfo } = require('./helper')
 
 test('extend schema via config', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
@@ -15,7 +15,7 @@ test('extend schema via config', async t => {
   }
   `
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -71,7 +71,7 @@ test('extend schema via config', async t => {
 test('extend schema via path', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,

@@ -7,6 +7,9 @@ const { test } = require('node:test')
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 const platformaticVersion = require('../../package.json').version
 

@@ -5,12 +5,12 @@ const { test } = require('node:test')
 const { join } = require('node:path')
 const { request } = require('undici')
 const { readFile } = require('node:fs/promises')
-const { createStackableFromConfig, getConnectionInfo } = require('./helper')
+const { createFromConfig, getConnectionInfo } = require('./helper')
 
 test('should respond 200 on root endpoint', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -59,7 +59,7 @@ test('should respond 200 on root endpoint', async t => {
 test('should not overwrite a plugin which define a root endpoint', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -92,7 +92,7 @@ test('should not overwrite a plugin which define a root endpoint', async t => {
 test('should exclude the root endpoint from the openapi documentation', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -121,7 +121,7 @@ test('should exclude the root endpoint from the openapi documentation', async t 
 test('should not overwrite a plugin which uses @fastify/static on root', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,

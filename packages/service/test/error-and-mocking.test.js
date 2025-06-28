@@ -7,7 +7,7 @@ const { join } = require('node:path')
 const { randomUUID } = require('node:crypto')
 const { writeFile } = require('node:fs/promises')
 const { request, setGlobalDispatcher, getGlobalDispatcher, MockAgent } = require('undici')
-const { createStackableFromConfig } = require('./helper')
+const { createFromConfig } = require('./helper')
 
 // set up the undici Agent
 require('./helper')
@@ -25,7 +25,7 @@ test('error', async t => {
     }`
   )
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -70,7 +70,7 @@ test('mock undici is supported', async t => {
       hello: 'world'
     })
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,

@@ -1,15 +1,15 @@
-import { request, moveToTmpdir, safeKill } from './helper.js'
-import { test, after } from 'node:test'
-import { equal } from 'node:assert'
+import { create } from '@platformatic/db'
 import { match } from '@platformatic/utils'
-import { buildServer } from '@platformatic/db'
-import { join } from 'path'
 import * as desm from 'desm'
 import { execa } from 'execa'
-import { promises as fs, existsSync } from 'fs'
-import split from 'split2'
-import graphql from 'graphql'
+import { existsSync, promises as fs } from 'fs'
 import { copy } from 'fs-extra'
+import graphql from 'graphql'
+import { equal } from 'node:assert'
+import { after, test } from 'node:test'
+import { join } from 'path'
+import split from 'split2'
+import { moveToTmpdir, request, safeKill } from './helper.js'
 
 const env = { ...process.env, NODE_V8_COVERAGE: undefined }
 
@@ -30,7 +30,7 @@ test('graphql client generation (javascript)', async (t) => {
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
@@ -98,7 +98,7 @@ test('graphql client generation (typescript)', async (t) => {
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
@@ -179,7 +179,7 @@ test('graphql client generation with relations (typescript)', async (t) => {
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'platformatic.db.json'))
+  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'platformatic.db.json'))
 
   await app.start()
 
@@ -281,7 +281,7 @@ test('graphql client generation (javascript) with slash at the end of the URL', 
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
@@ -339,7 +339,7 @@ test('configureClient (typescript)', async (t) => {
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
@@ -426,13 +426,13 @@ test('graphql client generation (javascript) from a file', async (t) => {
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
   const dir = await moveToTmpdir(after)
 
-  const sdl = graphql.printSchema(app.graphql.schema)
+  const sdl = graphql.printSchema(app.getApplication().graphql.schema)
   const sdlFile = join(dir, 'movies.schema.graphql')
   await fs.writeFile(sdlFile, sdl)
 

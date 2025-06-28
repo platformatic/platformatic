@@ -38,7 +38,7 @@ export function buildStackable (
   opts: BaseOptions
 ): Promise<ServiceStackable>
 
-export function createStackable (
+export function create (
   root: string,
   source?: string | PlatformaticServiceConfig,
   opts?: object

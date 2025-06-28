@@ -4,7 +4,7 @@ const assert = require('node:assert')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const { request } = require('undici')
-const { createStackableFromConfig } = require('./helper')
+const { createFromConfig } = require('./helper')
 
 test('support prefix option', async t => {
   const config = {
@@ -24,7 +24,7 @@ test('support prefix option', async t => {
     metrics: false
   }
 
-  const app = await createStackableFromConfig(t, config)
+  const app = await createFromConfig(t, config)
   t.after(async () => {
     await app.stop()
   })
@@ -73,7 +73,7 @@ test('provide openapi spec from a file', async t => {
     metrics: false
   }
 
-  const app = await createStackableFromConfig(t, config)
+  const app = await createFromConfig(t, config)
   t.after(async () => {
     await app.stop()
   })

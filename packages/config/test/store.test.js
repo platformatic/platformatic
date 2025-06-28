@@ -114,39 +114,6 @@ test('no configManagerConfig', async t => {
   }
 })
 
-test('add schema to configManagerConfig', async t => {
-  function foo () {}
-
-  foo.schema = {
-    $id: 'foo',
-    type: 'object',
-  }
-
-  foo.configType = 'foo'
-  foo.configManagerConfig = {
-    allowToWatch: ['.env'],
-    schemaOptions: {
-      useDefaults: true,
-      coerceTypes: true,
-      allErrors: true,
-      strict: false,
-    },
-    transformConfig () {},
-  }
-
-  const store = new Store()
-  store.add(foo)
-
-  assert.equal(await store.get({ $schema: 'foo' }), foo, 'should have builtin value')
-  try {
-    await store.get({ $schema: 'bar' })
-    assert.fail()
-  } catch (err) {
-    assert.equal(err.message, 'Add a module property to the config or add a known $schema.')
-  }
-  assert.equal((await store.get({ $schema: 'foo' })).configManagerConfig.schema, foo.schema, 'should have schema')
-})
-
 test('schema with no id', async t => {
   function foo () {}
 

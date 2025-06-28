@@ -4,7 +4,7 @@ const assert = require('node:assert/strict')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
-const { createStackableFromConfig, createOpenApiService, testEntityRoutes } = require('../helper')
+const { createFromConfig, createOpenApiService, testEntityRoutes } = require('../helper')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
@@ -12,7 +12,7 @@ test('should add custom composer route to the composed schema', async t => {
   const api = await createOpenApiService(t, ['users'])
   await api.listen({ port: 0 })
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'

@@ -78,12 +78,7 @@ class Store {
     }
     // TODO validate configType being unique
 
-    if (app.configManagerConfig === undefined) {
-      app.configManagerConfig = {}
-    } else {
-      app.configManagerConfig = { ...app.configManagerConfig, schema: app.schema }
-    }
-
+    app.configManagerConfig ??= {}
     this.#map.set(app.schema.$id, app)
   }
 
@@ -276,7 +271,15 @@ class Store {
     // we should probably refactor this to only read the file once
     if (!app) {
       const parser = getParser(configFile)
-      const parsed = parser(await readFile(configFile, 'utf-8'))
+      let parsed
+
+      try {
+        parsed = parser(await readFile(configFile, 'utf-8'))
+      } catch (err) {
+        const newerr = new errors.CannotParseConfigFileError(err.message)
+        newerr.cause = err
+        throw newerr
+      }
 
       const res = await this._get(parsed, opts)
       app = res.app

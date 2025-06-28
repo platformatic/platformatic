@@ -4,10 +4,10 @@ const assert = require('node:assert/strict')
 const { request } = require('undici')
 const { readFile } = require('node:fs/promises')
 const { test } = require('node:test')
-const { createStackableFromConfig, createOpenApiService, createGraphqlService } = require('../helper')
+const { createFromConfig, createOpenApiService, createGraphqlService } = require('../helper')
 
 test('should respond 200 on root endpoint', async t => {
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -63,7 +63,7 @@ test('should not expose a default root endpoint if it is composed', async t => {
 
   await api.listen({ port: 0 })
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -88,7 +88,7 @@ test('should not expose a default root endpoint if it is composed', async t => {
 })
 
 test('should not expose a default root endpoint if there is a plugin exposing @fastify/static', async t => {
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -180,7 +180,7 @@ test('should have links to composed services', async t => {
     }
   }
 
-  const composer = await createStackableFromConfig(t, config)
+  const composer = await createFromConfig(t, config)
   const composerOrigin = await composer.start({ listen: true })
   const url = `${composerOrigin}`
   const { body } = await request(url, {

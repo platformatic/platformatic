@@ -7,7 +7,7 @@ const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
 const {
   getConnectionInfo,
   createBasicPages,
-  createStackableFromConfig,
+  createFromConfig,
   expectedTelemetryPrefix,
   expectedPort,
   isPg,
@@ -34,7 +34,7 @@ const getSpansPerType = (spans, type = 'http') => {
 test('should not configure telemetry if not configured', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -57,7 +57,7 @@ test('should not configure telemetry if not configured', async t => {
 test('should setup telemetry if configured', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -169,7 +169,7 @@ test('should setup telemetry if configured', async t => {
 async function setupDBAppWithTelemetry (t, telemetryOpts, plugins) {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     {
       server: {

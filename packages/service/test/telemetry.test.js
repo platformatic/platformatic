@@ -6,10 +6,10 @@ const { test } = require('node:test')
 const { join } = require('node:path')
 const { writeFile } = require('node:fs/promises')
 const { request } = require('undici')
-const { createStackableFromConfig, buildConfig } = require('./helper')
+const { createFromConfig, buildConfig } = require('./helper')
 
 test('should not configure telemetry if not configured', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     buildConfig({
       server: {
@@ -38,7 +38,7 @@ test('should setup telemetry if configured', async t => {
     }`
   )
 
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     buildConfig({
       server: {

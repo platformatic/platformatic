@@ -6,7 +6,7 @@ const path = require('node:path')
 const { readFileSync } = require('node:fs')
 const { setTimeout: wait } = require('node:timers/promises')
 const { tmpdir } = require('node:os')
-const { createStackable } = require('..')
+const { create } = require('..')
 const { getConnectionInfo } = require('./helper')
 
 const WAIT_LOGS_FLUSH = 3_000
@@ -17,7 +17,7 @@ test('logger options', async t => {
   process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
   const file = path.join(process.env.LOG_DIR, 'service.log')
 
-  const app = await createStackable(path.join(__dirname, 'fixtures', 'logger'))
+  const app = await create(path.join(__dirname, 'fixtures', 'logger'))
 
   t.after(async () => {
     await app.stop()

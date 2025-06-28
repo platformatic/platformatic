@@ -8,6 +8,9 @@ const { isatty } = require('tty')
 
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 test('should get service graphql schema', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')

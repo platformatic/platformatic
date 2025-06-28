@@ -2,7 +2,7 @@
 
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
-const { graphqlRequest, createStackableFromConfig, startDatabaseServices } = require('../helper')
+const { graphqlRequest, createFromConfig, startDatabaseServices } = require('../helper')
 
 function toComposerConfig (services, entities = {}) {
   return {
@@ -255,7 +255,7 @@ test('should use queries and mutations on multiple platformatic db services', as
   composerConfig.composer.graphql.graphiql = true
   composerConfig.composer.refreshTimeout = 0
 
-  const composer = await createStackableFromConfig(t, composerConfig)
+  const composer = await createFromConfig(t, composerConfig)
   const composerHost = await composer.start({ listen: true })
 
   for (const request of requests) {

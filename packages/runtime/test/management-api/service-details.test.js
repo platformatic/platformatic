@@ -7,6 +7,9 @@ const { Client } = require('undici')
 
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 const platformaticVersion = require('../../package.json').version
 

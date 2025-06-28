@@ -4,10 +4,10 @@ const assert = require('assert')
 const { test } = require('node:test')
 const { request } = require('undici')
 const { platformaticService } = require('..')
-const { createStackableFromConfig } = require('./helper')
+const { createFromConfig } = require('./helper')
 
 test('CORS is disabled by default', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     {
       server: {
@@ -40,7 +40,7 @@ test('CORS is disabled by default', async t => {
 })
 
 test('CORS can be enabled', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     {
       server: {
@@ -80,7 +80,7 @@ test('CORS can be enabled', async t => {
 })
 
 test('CORS with a regexp', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     {
       server: {
@@ -148,7 +148,7 @@ test('CORS with a regexp', async t => {
 })
 
 test('CORS with an array of strings', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     {
       server: {
@@ -214,7 +214,7 @@ test('CORS with an array of strings', async t => {
 })
 
 test('CORS with an array and a regexp', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     {
       server: {
@@ -285,7 +285,7 @@ test('CORS with an array and a regexp', async t => {
 })
 
 test('CORS with a string', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     {
       server: {

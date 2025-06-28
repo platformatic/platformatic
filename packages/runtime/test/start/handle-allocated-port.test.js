@@ -5,12 +5,15 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { loadConfig } = require('@platformatic/config')
-const { platformaticService } = require('../../../service')
+const platformaticService = require('../../../service')
 const { platformaticRuntime } = require('../..')
 const { setupAndStartRuntime } = require('../../lib/start')
 const { isCIOnWindows } = require('../helpers')
 const { once } = require('node:events')
 const http = require('http')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 async function getPort () {
   if (isCIOnWindows) {

@@ -5,7 +5,7 @@ const { test } = require('node:test')
 const { join } = require('node:path')
 const { request } = require('undici')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
-const { createStackableFromConfig, createBasicService, createOpenApiService, testEntityRoutes } = require('../helper')
+const { createFromConfig, createBasicService, createOpenApiService, testEntityRoutes } = require('../helper')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
@@ -16,7 +16,7 @@ test('should compose openapi with prefixes', async t => {
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -65,7 +65,7 @@ test('should compose openapi without prefixes', async t => {
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -112,7 +112,7 @@ test('should read schemas from disk and compose openapi', async t => {
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -163,7 +163,7 @@ test('should not proxy request if it is not in a schema file', async t => {
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -220,7 +220,7 @@ test('should automatically compose API with service id as prefix if there is no 
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -273,7 +273,7 @@ test('should allow custom title', async t => {
   await api1.listen({ port: 0 })
   await api2.listen({ port: 0 })
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -322,7 +322,7 @@ test('should parse array querystring', async t => {
   const api1 = await createOpenApiService(t, ['users'])
   await api1.listen({ port: 0 })
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -354,7 +354,7 @@ test('should compose empty responses', async t => {
   const api = await createBasicService(t)
   await api.listen({ port: 0 })
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -433,7 +433,7 @@ test('should compose services with authentication components', async t => {
 
   await api.listen({ port: 0 })
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'

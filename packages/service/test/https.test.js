@@ -7,7 +7,7 @@ const { join, relative } = require('node:path')
 const { mkdtemp, writeFile } = require('node:fs/promises')
 const selfCert = require('self-cert')
 const { Agent, setGlobalDispatcher, request } = require('undici')
-const { buildConfig, createStackableFromConfig } = require('./helper')
+const { buildConfig, createFromConfig } = require('./helper')
 
 test('supports https options', async t => {
   const { certificate, privateKey } = selfCert({})
@@ -28,7 +28,7 @@ test('supports https options', async t => {
     })
   )
 
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     buildConfig({
       server: {

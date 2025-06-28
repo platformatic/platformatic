@@ -3,7 +3,7 @@
 const assert = require('assert/strict')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { createStackableFromConfig, createOpenApiService } = require('../helper')
+const { createFromConfig, createOpenApiService } = require('../helper')
 
 test('should expose x-forwarded-* headers', async t => {
   const service1 = await createOpenApiService(t, ['users'], { addHeadersSchema: true })
@@ -31,7 +31,7 @@ test('should expose x-forwarded-* headers', async t => {
     }
   }
 
-  const composer = await createStackableFromConfig(t, config)
+  const composer = await createFromConfig(t, config)
   const composerOrigin = await composer.start({ listen: true })
   // internal service gets the x-forwarded-for and x-forwarded-host headers
   const { statusCode, body } = await request(composerOrigin, {

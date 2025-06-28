@@ -13,7 +13,6 @@ const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
 const debounce = require('debounce')
 
 const errors = require('../errors')
-const defaultStackable = require('./default-stackable')
 const { getServiceUrl, loadConfig, loadEmptyConfig } = require('../utils')
 
 class PlatformaticApp extends EventEmitter {
@@ -73,12 +72,12 @@ class PlatformaticApp extends EventEmitter {
   async updateContext (context) {
     this.#context = { ...this.#context, ...context }
     if (this.stackable) {
-      this.stackable.updateContext(context)
+      await this.stackable.updateContext(context)
     }
   }
 
   async getBootstrapDependencies () {
-    return this.stackable.getBootstrapDependencies()
+    return this.stackable.getBootstrapDependencies?.() ?? []
   }
 
   async init () {
@@ -123,12 +122,11 @@ class PlatformaticApp extends EventEmitter {
         process.env.NODE_ENV = 'production'
       }
 
-      const stackable = await app.buildStackable({
+      this.stackable = await app.buildStackable({
         onMissingEnv: this.#fetchServiceUrl,
         config: this.appConfig.config,
         context: this.#context
       })
-      this.stackable = this.#wrapStackable(stackable)
 
       this.#updateDispatcher()
     } catch (err) {
@@ -149,13 +147,14 @@ class PlatformaticApp extends EventEmitter {
     this.#starting = true
 
     try {
-      await this.stackable.init()
+      await this.stackable.init?.()
     } catch (err) {
       this.#logAndExit(err)
     }
 
     if (this.#watch) {
       const watchConfig = await this.stackable.getWatchConfig()
+
       if (watchConfig.enabled !== false) {
         /* c8 ignore next 4 */
         this.#debouncedRestart = debounce(() => {
@@ -266,14 +265,6 @@ class PlatformaticApp extends EventEmitter {
   #logAndExit (err) {
     console.error(err)
     process.exit(1)
-  }
-
-  #wrapStackable (stackable) {
-    const newStackable = {}
-    for (const method of Object.keys(defaultStackable)) {
-      newStackable[method] = stackable[method] ? stackable[method].bind(stackable) : defaultStackable[method]
-    }
-    return newStackable
   }
 
   #updateDispatcher () {

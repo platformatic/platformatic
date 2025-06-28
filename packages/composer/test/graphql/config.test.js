@@ -4,7 +4,7 @@ const assert = require('assert/strict')
 const { test } = require('node:test')
 const { request } = require('undici')
 
-const { createStackableFromConfig, createGraphqlService } = require('../helper')
+const { createFromConfig, createGraphqlService } = require('../helper')
 
 function createSampleGraphqlService (t) {
   return createGraphqlService(t, {
@@ -39,7 +39,7 @@ test('should get a warning using graphql services', async t => {
 
   const graphql1Host = await graphql1.listen()
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       loggerInstance: logger
     },
@@ -62,7 +62,7 @@ test('should enable graphiql on composer', async t => {
   const graphql1 = await createSampleGraphqlService(t)
   const graphql1Host = await graphql1.listen()
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -91,7 +91,7 @@ test('graphiql should be disabled on composer by default', async t => {
   const graphql1 = await createSampleGraphqlService(t)
   const graphql1Host = await graphql1.listen()
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'

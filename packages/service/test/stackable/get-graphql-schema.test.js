@@ -3,11 +3,11 @@
 const assert = require('node:assert')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { createStackable } = require('../..')
-const { createStackableFromConfig } = require('../helper')
+const { create } = require('../..')
+const { createFromConfig } = require('../helper')
 
 test('get service openapi schema via stackable api', async t => {
-  const stackable = await createStackableFromConfig(t, {
+  const stackable = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -32,7 +32,7 @@ test('get service openapi schema via stackable api', async t => {
 })
 
 test('get null if server does not expose graphql', async t => {
-  const stackable = await createStackable(join(__dirname, '..', 'fixtures', 'directories'))
+  const stackable = await create(join(__dirname, '..', 'fixtures', 'directories'))
   t.after(() => stackable.stop())
   await stackable.start({ listen: true })
 

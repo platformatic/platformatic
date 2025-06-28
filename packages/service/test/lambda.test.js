@@ -4,11 +4,11 @@ const assert = require('node:assert')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const awsLambdaFastify = require('@fastify/aws-lambda')
-const { buildConfig, createStackableFromConfig } = require('./helper')
-const { createStackable } = require('..')
+const { buildConfig, createFromConfig } = require('./helper')
+const { create } = require('..')
 
 test('should respond 200 on root endpoint', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     buildConfig({
       server: {
@@ -80,7 +80,7 @@ test('should respond 200 on root endpoint', async t => {
 })
 
 test('from a config file on disk', async t => {
-  const app = await createStackable(join(__dirname, './fixtures/hello/warn-log.service.json'))
+  const app = await create(join(__dirname, './fixtures/hello/warn-log.service.json'))
 
   t.after(async () => {
     await app.stop()

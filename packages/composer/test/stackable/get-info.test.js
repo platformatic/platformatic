@@ -3,7 +3,7 @@
 const assert = require('node:assert')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { createStackableFromConfig } = require('../helper')
+const { createFromConfig } = require('../helper')
 
 const pltVersion = require('../../package.json').version
 
@@ -23,7 +23,7 @@ test('get service info via stackable api', async t => {
     }
   }
 
-  const stackable = await createStackableFromConfig(t, config)
+  const stackable = await createFromConfig(t, config)
   t.after(() => stackable.stop())
   await stackable.start({ listen: true })
 

@@ -4,13 +4,13 @@ const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const { request } = require('undici')
-const { createStackableFromConfig, createBasicService, createOpenApiService } = require('../helper')
+const { createFromConfig, createBasicService, createOpenApiService } = require('../helper')
 
 test('should add onSend route hook', async t => {
   const api = await createOpenApiService(t, ['users'])
   await api.listen({ port: 0 })
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -42,7 +42,7 @@ test('should add multiple onRoute hooks for one route', async t => {
   const api = await createOpenApiService(t, ['users'])
   await api.listen({ port: 0 })
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -77,7 +77,7 @@ test('should parse json response payload', async t => {
   const api = await createOpenApiService(t, ['users'])
   await api.listen({ port: 0 })
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -117,7 +117,7 @@ test('should parse text response payload', async t => {
   const api = await createBasicService(t)
   await api.listen({ port: 0 })
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -157,7 +157,7 @@ test('should throw an error if addComposerOnRouteHook called when app is ready',
   const api = await createOpenApiService(t, ['users'])
   await api.listen({ port: 0 })
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -190,7 +190,7 @@ test('should send two different schema objects into different composer hooks', a
   const api = await createOpenApiService(t, ['users'])
   await api.listen({ port: 0 })
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'

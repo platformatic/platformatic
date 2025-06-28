@@ -8,8 +8,10 @@ const { loadConfig } = require('@platformatic/config')
 const { features } = require('@platformatic/utils')
 const { request } = require('undici')
 const { buildServer, platformaticRuntime } = require('../..')
-const { updateConfigFile, openLogsWebsocket, waitForLogs } = require('../helpers')
-const { prepareRuntime } = require('./helper')
+const { updateConfigFile } = require('../helpers')
+const { prepareRuntime, setLogFile, waitForEvents } = require('./helper')
+
+test.beforeEach(setLogFile)
 
 test('services are started with multiple workers even for the entrypoint when Node.js supports reusePort', async t => {
   const getPort = await import('get-port')
@@ -27,34 +29,32 @@ test('services are started with multiple workers even for the entrypoint when No
 
   const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
   const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
   const [workers, startMessages, stopMessages] = features.node.reusePort
     ? [
         5,
         [
-          'Starting the worker 0 of the service "node"...',
-          'Starting the worker 1 of the service "node"...',
-          'Starting the worker 2 of the service "node"...',
-          'Starting the worker 3 of the service "node"...',
-          'Starting the worker 4 of the service "node"...'
+          { event: 'service:worker:started', service: 'node', workerId: 0 },
+          { event: 'service:worker:started', service: 'node', workerId: 1 },
+          { event: 'service:worker:started', service: 'node', workerId: 2 },
+          { event: 'service:worker:started', service: 'node', workerId: 3 },
+          { event: 'service:worker:started', service: 'node', workerId: 4 }
         ],
         [
-          'Stopping the worker 0 of the service "node"...',
-          'Stopping the worker 1 of the service "node"...',
-          'Stopping the worker 2 of the service "node"...',
-          'Stopping the worker 3 of the service "node"...',
-          'Stopping the worker 4 of the service "node"...'
+          { event: 'service:worker:stopped', service: 'node', workerId: 0 },
+          { event: 'service:worker:stopped', service: 'node', workerId: 1 },
+          { event: 'service:worker:stopped', service: 'node', workerId: 2 },
+          { event: 'service:worker:stopped', service: 'node', workerId: 3 },
+          { event: 'service:worker:stopped', service: 'node', workerId: 4 }
         ]
       ]
-    : [1, ['Starting the service "node"...'], ['Stopping the service "node"...']]
+    : [1, [{ event: 'service:started', service: 'node' }], [{ event: 'service:stopped', service: 'node' }]]
 
-  const startMessagesPromise = waitForLogs(managementApiWebsocket, ...startMessages, 'Platformatic is now listening')
+  const startMessagesPromise = waitForEvents(app, startMessages)
 
   const entryUrl = await app.start()
   await startMessagesPromise
@@ -83,7 +83,7 @@ test('services are started with multiple workers even for the entrypoint when No
     ok(usedWorkers.size > 1)
   }
 
-  const stopMessagesPromise = waitForLogs(managementApiWebsocket, ...stopMessages)
+  const stopMessagesPromise = waitForEvents(app, stopMessages)
 
   await app.stop()
   await stopMessagesPromise

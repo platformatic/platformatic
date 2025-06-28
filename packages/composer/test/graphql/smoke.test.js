@@ -3,7 +3,7 @@
 const assert = require('assert/strict')
 const { test } = require('node:test')
 
-const { createStackableFromConfig, createGraphqlService, graphqlRequest } = require('../helper')
+const { createFromConfig, createGraphqlService, graphqlRequest } = require('../helper')
 
 test('should start composer with a graphql service', async t => {
   const graphql1 = await createGraphqlService(t, {
@@ -22,7 +22,7 @@ test('should start composer with a graphql service', async t => {
 
   const graphql1Host = await graphql1.listen()
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -86,7 +86,7 @@ test('should start composer with two graphql services', async t => {
   const graphql1Host = await graphql1.listen()
   const graphql2Host = await graphql2.listen()
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'

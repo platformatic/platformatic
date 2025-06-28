@@ -128,16 +128,13 @@ test('should compile ts app with config', async t => {
   child.stdout.pipe(splitter)
   child.stderr.pipe(splitter)
 
-  let output = ''
-
   const timeout = setTimeout(() => {
-    console.log(output)
     assert.fail('should not start the service if it was not precompiled and typescript is `false`')
   }, 30000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
-    output += sanitized
+
     if (sanitized.includes('Typescript compilation completed successfully.')) {
       clearTimeout(timeout)
       const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
@@ -166,16 +163,13 @@ test('should clean outDir with --clean', async t => {
   child.stdout.pipe(splitter)
   child.stderr.pipe(splitter)
 
-  let output = ''
-
   const timeout = setTimeout(() => {
-    console.log(output)
     assert.fail('should not start the service if it was not precompiled and typescript is `false`')
   }, 30000)
 
   for await (const data of splitter) {
     const sanitized = stripAnsi(data)
-    output += sanitized
+
     if (sanitized.includes('Typescript compilation completed successfully.')) {
       clearTimeout(timeout)
       const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')
@@ -196,16 +190,12 @@ test('should clean outDir with --clean', async t => {
   child2.stdout.pipe(splitter2)
   child2.stderr.pipe(splitter2)
 
-  let output2 = ''
-
   const timeout2 = setTimeout(() => {
-    console.log(output2)
     assert.fail('should not start the service if it was not precompiled and typescript is `false`')
   }, 30000)
 
   for await (const data of splitter2) {
     const sanitized = stripAnsi(data)
-    output2 += sanitized
     if (sanitized.includes('Typescript compilation completed successfully.')) {
       clearTimeout(timeout2)
       const jsPluginPath = path.join(cwd, 'dist', 'plugin.js')

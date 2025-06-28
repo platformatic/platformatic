@@ -4,13 +4,13 @@ const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const { request } = require('undici')
-const { getConnectionInfo, createStackableFromConfig } = require('./helper')
+const { getConnectionInfo, createFromConfig } = require('./helper')
 
 test('autoload & filesystem based routing / watch disabled', async t => {
   const workingDir = join(__dirname, 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -58,7 +58,7 @@ test('autoload & filesystem based routing / watch enabled', async t => {
   const workingDir = join(__dirname, 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -106,7 +106,7 @@ test('multiple files', async t => {
   const workingDir = join(__dirname, 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -168,7 +168,7 @@ test('multiple files / watch false', async t => {
   const workingDir = join(__dirname, 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -230,7 +230,7 @@ test('multiple files as strings', async t => {
   const workingDir = join(__dirname, 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -285,7 +285,7 @@ test('autoload & filesystem based routing / watch disabled / no object', async t
   const workingDir = join(__dirname, 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,

@@ -3,12 +3,12 @@
 const assert = require('node:assert/strict')
 const { join } = require('node:path')
 const { test } = require('node:test')
-const { createStackableFromConfig, getConnectionInfo, createBasicPages } = require('./helper')
+const { createFromConfig, getConnectionInfo, createBasicPages } = require('./helper')
 
 test('configure authorizations works even with empty object', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -78,7 +78,7 @@ test('configure authorizations works even with empty object', async t => {
 test('addCustomRule', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,

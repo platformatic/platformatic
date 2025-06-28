@@ -5,8 +5,10 @@ const { resolve } = require('node:path')
 const { test } = require('node:test')
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
-const { updateFile, updateConfigFile, openLogsWebsocket, waitForLogs } = require('../helpers')
-const { getExpectedMessages, prepareRuntime } = require('./helper')
+const { updateFile, updateConfigFile, setLogFile, readLogs } = require('../helpers')
+const { prepareRuntime } = require('./helper')
+
+test.beforeEach(setLogFile)
 
 for (const env of ['development', 'production']) {
   test(`logging properly works in ${env} mode when using separate processes`, async t => {
@@ -29,21 +31,14 @@ for (const env of ['development', 'production']) {
 
     const app = await buildServer(config.configManager.current, config.args)
 
-    const managementApiWebsocket = await openLogsWebsocket(app)
-
     t.after(async () => {
       await app.close()
-      managementApiWebsocket.terminate()
     })
-
-    const expectedMessages = getExpectedMessages('composer', { composer: 3, service: 3, node: 5 })
-    const waitPromise = waitForLogs(managementApiWebsocket, ...expectedMessages.start, ...expectedMessages.stop)
 
     await app.start()
     await app.stop()
 
-    const messages = await waitPromise
-
+    const messages = await readLogs()
     ok(messages.find(m => m.name === 'composer'))
 
     for (let i = 0; i < 5; i++) {

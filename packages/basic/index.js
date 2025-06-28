@@ -156,6 +156,13 @@ async function buildStackable (opts) {
   return stackable.buildStackable(opts)
 }
 
+export async function create (fileOrDirectory, sourceOrConfig, opts, context) {
+  const { root, source } = await resolveStackable(fileOrDirectory, sourceOrConfig)
+  const { stackable } = await importStackableAndConfig(root, source, context)
+
+  return stackable.create(root, source, opts, context)
+}
+
 /* c8 ignore next 3 */
 export async function transformConfig () {
   const patch = workerData?.serviceConfig?.configPatch
@@ -169,7 +176,7 @@ export async function transformConfig () {
   }
 
   if (this.current.watch === undefined) {
-    this.current.watch = { enabled: false }
+    this.current.watch = { enabled: workerData?.config?.watch ?? false }
   }
 
   if (typeof this.current.watch !== 'object') {

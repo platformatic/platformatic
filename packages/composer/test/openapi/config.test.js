@@ -5,7 +5,7 @@ const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { writeFile, mkdtemp } = require('fs/promises')
-const { createStackableFromConfig, createOpenApiService } = require('../helper')
+const { createFromConfig, createOpenApiService } = require('../helper')
 
 test('should throw an error if can not read openapi config file', async t => {
   const api = await createOpenApiService(t, ['users'])
@@ -15,7 +15,7 @@ test('should throw an error if can not read openapi config file', async t => {
   const openapiConfigFile = join(cwd, 'openapi.json')
 
   try {
-    const stackable = await createStackableFromConfig(t, {
+    const stackable = await createFromConfig(t, {
       server: {
         logger: {
           level: 'fatal'
@@ -55,7 +55,7 @@ test('should throw an error if openapi config is not valid', async t => {
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
   try {
-    const stackable = await createStackableFromConfig(t, {
+    const stackable = await createFromConfig(t, {
       server: {
         logger: {
           level: 'fatal'

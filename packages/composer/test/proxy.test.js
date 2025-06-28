@@ -12,7 +12,7 @@ const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const { Agent, setGlobalDispatcher, getGlobalDispatcher } = require('undici')
 const { WebSocket } = require('ws')
 const {
-  createStackableFromConfig,
+  createFromConfig,
   createOpenApiService,
   testEntityRoutes,
   createComposerInRuntime,
@@ -85,7 +85,7 @@ test('should proxy openapi requests', async t => {
     }
   }
 
-  const composer = await createStackableFromConfig(t, config)
+  const composer = await createFromConfig(t, config)
   const composerOrigin = await composer.start({ listen: true })
 
   const { statusCode, body } = await request(composerOrigin, {
@@ -1348,7 +1348,7 @@ test('should proxy to a websocket service', async t => {
     }
   }
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'
@@ -1411,7 +1411,7 @@ test('should proxy to a websocket service with reconnect options', async t => {
     }
   }
 
-  const composer = await createStackableFromConfig(t, {
+  const composer = await createFromConfig(t, {
     server: {
       logger: {
         level: 'fatal'

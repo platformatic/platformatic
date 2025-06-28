@@ -10,6 +10,9 @@ const { getRuntimeTmpDir, getRuntimeLogsDir } = require('../../lib/utils')
 const { buildServer } = require('../..')
 const { safeRemove } = require('@platformatic/utils')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 test('should clean the logs after reaching a limit', async t => {
   const projectDir = join(fixturesDir, 'management-api')

@@ -9,7 +9,7 @@ const { createConnectionPool } = require('@platformatic/sql-mapper')
 const { safeRemove } = require('@platformatic/utils')
 const { Agent, setGlobalDispatcher } = require('undici')
 const { createTemporaryDirectory } = require('../../basic/test/helper')
-const { createStackable, platformaticDatabase } = require('..')
+const { create, platformaticDatabase } = require('..')
 
 // This file must be required/imported as the first file
 // in the test suite. It sets up the global environment
@@ -121,10 +121,10 @@ async function buildConfigManager (source, dirname) {
   return configManager
 }
 
-async function createStackableFromConfig (t, options, applicationFactory, creationOptions = {}) {
+async function createFromConfig (t, options, applicationFactory, creationOptions = {}) {
   const directory = await createTemporaryDirectory(t)
 
-  const database = await createStackable(
+  const database = await create(
     directory,
     options,
     {},
@@ -143,7 +143,7 @@ module.exports = {
   getConnectionInfo,
   createBasicPages,
   buildConfigManager,
-  createStackableFromConfig
+  createFromConfig
 }
 
 if (!process.env.DB || process.env.DB === 'postgresql') {

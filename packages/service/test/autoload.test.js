@@ -4,7 +4,7 @@ const assert = require('node:assert')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const { request } = require('undici')
-const { createStackable } = require('..')
+const { create } = require('..')
 
 // Make sure we are not mistakenly detecting the tsconfig.json file in the root of the package.
 process.chdir(__dirname)
@@ -23,7 +23,7 @@ test('autoload & filesystem based routing / watch disabled', async (t) => {
     metrics: false,
   }
 
-  const app = await createStackable(join(__dirname, 'fixtures', 'directories'), config)
+  const app = await create(join(__dirname, 'fixtures', 'directories'), config)
   t.after(() => app.stop())
   await app.start({ listen: true })
 
@@ -67,7 +67,7 @@ test('multiple files / watch false', async (t) => {
     metrics: false,
   }
 
-  const app = await createStackable(join(__dirname, 'fixtures', 'directories'), config)
+  const app = await create(join(__dirname, 'fixtures', 'directories'), config)
   t.after(() => app.stop())
   await app.start({ listen: true })
 
@@ -114,7 +114,7 @@ test('autoload & filesystem based routing / watch disabled / no object', async (
     metrics: false,
   }
 
-  const app = await createStackable(join(__dirname, 'fixtures', 'directories'), config)
+  const app = await create(join(__dirname, 'fixtures', 'directories'), config)
   t.after(() => app.stop())
   await app.start({ listen: true })
 
@@ -157,7 +157,7 @@ test('multiple files / watch false / no object', async (t) => {
     metrics: false,
   }
 
-  const app = await createStackable(join(__dirname, 'fixtures', 'directories'), config)
+  const app = await create(join(__dirname, 'fixtures', 'directories'), config)
   t.after(() => app.stop())
   await app.start({ listen: true })
 
@@ -214,7 +214,7 @@ test('nested directories', async (t) => {
     },
   }
 
-  const app = await createStackable(join(__dirname, 'fixtures', 'nested-directories'), config)
+  const app = await create(join(__dirname, 'fixtures', 'nested-directories'), config)
   t.after(() => app.stop())
   await app.start({ listen: true })
 
@@ -274,7 +274,7 @@ test('disable encapsulation for a single file', async (t) => {
     },
   }
 
-  const app = await createStackable(join(__dirname, 'fixtures', 'nested-directories'), config)
+  const app = await create(join(__dirname, 'fixtures', 'nested-directories'), config)
   t.after(() => app.stop())
   await app.start({ listen: true })
 
@@ -320,7 +320,7 @@ test('disable encapsulation for a single file / different order', async (t) => {
     },
   }
 
-  const app = await createStackable(join(__dirname, 'fixtures', 'nested-directories'), config)
+  const app = await create(join(__dirname, 'fixtures', 'nested-directories'), config)
   t.after(() => app.stop())
   await app.start({ listen: true })
 
@@ -368,7 +368,7 @@ test('autoload with ignorePattern, indexPattern and autoHooksPattern options', a
     metrics: false,
   }
 
-  const app = await createStackable(join(__dirname, 'fixtures', 'directories'), config)
+  const app = await create(join(__dirname, 'fixtures', 'directories'), config)
   t.after(() => app.stop())
   await app.start({ listen: true })
 
@@ -420,7 +420,7 @@ test('autoload with INVALID ignorePattern, indexPattern and autoHooksPattern opt
     metrics: false,
   }
 
-  const app = await createStackable(join(__dirname, 'fixtures', 'directories'), config)
+  const app = await create(join(__dirname, 'fixtures', 'directories'), config)
   t.after(() => app.stop())
   await app.start({ listen: true })
 
@@ -453,7 +453,7 @@ test('loads encapsulated plugin twice', async (t) => {
 
   {
     // First time plugin is loaded from file
-    const app = await createStackable(join(__dirname, 'fixtures', 'directories'), config)
+    const app = await create(join(__dirname, 'fixtures', 'directories'), config)
     t.after(async () => {
       await app.stop()
     })
@@ -467,7 +467,7 @@ test('loads encapsulated plugin twice', async (t) => {
 
   {
     // Second time plugin is loaded from cache
-    const app = await createStackable(join(__dirname, 'fixtures', 'directories'), config)
+    const app = await create(join(__dirname, 'fixtures', 'directories'), config)
     t.after(async () => {
       await app.stop()
     })

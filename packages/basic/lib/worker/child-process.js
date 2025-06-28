@@ -83,7 +83,7 @@ export class ChildProcess extends ITC {
         getMetrics: (...args) => {
           return this.#getMetrics(...args)
         },
-        close: (signal) => {
+        close: signal => {
           let handled = false
 
           try {

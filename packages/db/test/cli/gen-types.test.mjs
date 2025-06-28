@@ -48,7 +48,6 @@ test('generate ts types', async t => {
 
     await execa(pathToTSD, { cwd })
   } catch (err) {
-    console.log(err)
     assert.fail('Failed to generate types')
   }
 })
@@ -75,8 +74,6 @@ test('generate ts types twice', async t => {
     await adjustTypeReferenceToAvoidLoops(cwd)
     await execa(pathToTSD, { cwd })
   } catch (err) {
-    console.log(err.stdout)
-    console.log(err.stderr)
     assert.fail(err.stderr)
   }
 })
@@ -171,7 +168,6 @@ test('run migrate command with type generation without plugin in config', async 
 
     await execa(pathToTSD, { cwd })
   } catch (err) {
-    console.log(err)
     assert.fail('Failed to generate types')
   }
 })
@@ -221,7 +217,6 @@ test('generate types on start', async t => {
   try {
     await execa(pathToTSD, { cwd })
   } catch (err) {
-    console.log(err)
     assert.fail('Failed to generate types')
   }
 })
@@ -263,7 +258,6 @@ test('generate types on start in a different cwd', async t => {
   try {
     await execa(pathToTSD, { cwd })
   } catch (err) {
-    console.log(err)
     assert.fail('Failed to generate types')
   }
 })
@@ -285,7 +279,6 @@ test('correctly format entity type names', async t => {
     const child = await execa('node', [cliPath, 'migrations', 'apply'], { cwd })
     assert.equal(child.stdout.includes('Generated type for PltDb entity.'), true)
   } catch (err) {
-    console.log(err)
     assert.fail('Failed to generate types')
   }
 })
@@ -310,7 +303,6 @@ test('use types directory from config as target folder', async t => {
     await adjustTypeReferenceToAvoidLoops(cwd)
     await execa(pathToTSD, { cwd })
   } catch (err) {
-    console.log(err)
     assert.fail('Failed to generate types')
   }
 })
@@ -350,7 +342,6 @@ test('generate types on start while considering types directory', async t => {
   try {
     await execa(pathToTSD, { cwd })
   } catch (err) {
-    console.log(err)
     assert.fail('Failed to generate types')
   }
 })

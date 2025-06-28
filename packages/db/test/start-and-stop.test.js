@@ -4,14 +4,14 @@ const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const { request } = require('undici')
-const { createStackable } = require('..')
-const { createStackableFromConfig, getConnectionInfo, createBasicPages } = require('./helper')
+const { create } = require('..')
+const { createFromConfig, getConnectionInfo, createBasicPages } = require('./helper')
 const { safeRemove } = require('@platformatic/utils')
 
 test('starts, query and stop', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -157,7 +157,7 @@ test('starts, query and stop', async t => {
 test('inject', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -219,7 +219,7 @@ test('ignore and sqlite3', async t => {
     // ignore
   }
 
-  const app = await createStackableFromConfig(t, {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -247,7 +247,7 @@ test('ignore and sqlite3', async t => {
 })
 
 test('starts a config file on disk with auto-apply', async t => {
-  const app = await createStackable(join(__dirname, 'fixtures', 'sqlite', 'no-logger.json'))
+  const app = await create(join(__dirname, 'fixtures', 'sqlite', 'no-logger.json'))
 
   t.after(async () => {
     await app.stop()

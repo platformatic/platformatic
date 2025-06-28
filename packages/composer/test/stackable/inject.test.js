@@ -3,7 +3,7 @@
 const assert = require('node:assert')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { createStackableFromConfig } = require('../helper')
+const { createFromConfig } = require('../helper')
 
 test('inject request into service stackable', async t => {
   const config = {
@@ -21,7 +21,7 @@ test('inject request into service stackable', async t => {
     }
   }
 
-  const stackable = await createStackableFromConfig(t, config)
+  const stackable = await createFromConfig(t, config)
   t.after(() => stackable.stop())
   await stackable.start({ listen: true })
 

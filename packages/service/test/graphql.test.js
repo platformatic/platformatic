@@ -4,10 +4,10 @@ const assert = require('node:assert')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const { request } = require('undici')
-const { buildConfig, createStackableFromConfig } = require('./helper')
+const { buildConfig, createFromConfig } = require('./helper')
 
 test('graphql enabled', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     buildConfig({
       server: {
@@ -68,7 +68,7 @@ test('graphql enabled', async t => {
 
 test('graphql disabled', async t => {
   try {
-    const app = await createStackableFromConfig(
+    const app = await createFromConfig(
       t,
       buildConfig({
         server: {
@@ -102,7 +102,7 @@ test('graphql disabled', async t => {
 })
 
 test('disable graphiql', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     buildConfig({
       server: {
@@ -165,7 +165,7 @@ test('disable graphiql', async t => {
 
 test('graphql disabled by default', async t => {
   try {
-    const app = await createStackableFromConfig(
+    const app = await createFromConfig(
       t,
       buildConfig({
         server: {
@@ -196,7 +196,7 @@ test('graphql disabled by default', async t => {
 })
 
 test('graphql errors are correctly propagated in custom resolvers', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     buildConfig({
       server: {
@@ -268,7 +268,7 @@ test('graphql errors are correctly propagated in custom resolvers', async t => {
 })
 
 test('do not include /graphql in the OpenAPI schema', async t => {
-  const app = await createStackableFromConfig(
+  const app = await createFromConfig(
     t,
     buildConfig({
       server: {
