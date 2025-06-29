@@ -1,21 +1,24 @@
-import { join } from 'path'
+import { loadConfig } from '@platformatic/config'
 import { writeFile } from 'fs/promises'
+import { join } from 'path'
 import pino from 'pino'
 import pretty from 'pino-pretty'
-import { loadConfig } from '@platformatic/config'
-import { Migrator } from './migrator.mjs'
-import { platformaticDB } from '../index.js'
+import platformaticDB from '../index.js'
 import errors from './errors.js'
+import { Migrator } from './migrator.mjs'
 
 async function generateMigration (_args) {
-  const logger = pino(pretty({
-    translateTime: 'SYS:HH:MM:ss',
-    ignore: 'hostname,pid',
-  }))
-
   const { configManager } = await loadConfig({}, _args, platformaticDB)
   await configManager.parseAndValidate()
   const config = configManager.current
+
+  const logger = pino(
+    pretty({
+      translateTime: 'SYS:HH:MM:ss',
+      ignore: 'hostname,pid',
+      minimumLevel: config.server?.logger?.level ?? 'info'
+    })
+  )
 
   let migrator = null
   try {
@@ -35,10 +38,7 @@ async function generateMigration (_args) {
     const doFile = join(migrator.migrationDir, nextDoMigrationName)
     const undoFile = join(migrator.migrationDir, nextUndoMigrationName)
 
-    await Promise.all([
-      writeFile(doFile, ''),
-      writeFile(undoFile, ''),
-    ])
+    await Promise.all([writeFile(doFile, ''), writeFile(undoFile, '')])
 
     logger.info({ do: doFile, undo: undoFile }, 'Created migration files')
   } catch (error) {

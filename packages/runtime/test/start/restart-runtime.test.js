@@ -9,6 +9,9 @@ const { request } = require('undici')
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 test('can restart the runtime apps', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')

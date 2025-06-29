@@ -1,23 +1,23 @@
-import { request, moveToTmpdir } from './helper.js'
-import { test, after } from 'node:test'
-import { equal, deepEqual as same } from 'node:assert'
+import { create } from '@platformatic/db'
+import { create as buildService } from '@platformatic/service'
 import { match } from '@platformatic/utils'
-import { buildServer } from '@platformatic/db'
-import { join } from 'path'
 import * as desm from 'desm'
+import dotenv from 'dotenv'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
 import graphql from 'graphql'
-import dotenv from 'dotenv'
-import { buildServer as buildService } from '@platformatic/service'
+import { equal, deepEqual as same } from 'node:assert'
+import { after, test } from 'node:test'
+import { join } from 'path'
+import { moveToTmpdir, request } from './helper.js'
 
-test('graphql client generation (javascript)', async (t) => {
+test('graphql client generation (javascript)', async t => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
@@ -62,16 +62,23 @@ module.exports = async function (app) {
   const app2 = await buildService('./platformatic.service.json')
   await app2.start()
 
-  t.after(async () => { await app2.close() })
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app2.close()
+  })
+  t.after(async () => {
+    await app.close()
+  })
 
   const res = await request(app2.url, {
     method: 'POST'
   })
   const body = await res.body.json()
-  equal(match(body, {
-    title: 'foo'
-  }), true)
+  equal(
+    match(body, {
+      title: 'foo'
+    }),
+    true
+  )
 
   {
     const envs = dotenv.parse(await fs.readFile(join(dir, '.env'), 'utf-8'))
@@ -88,13 +95,13 @@ module.exports = async function (app) {
   }
 })
 
-test('graphql client generation (typescript)', async (t) => {
+test('graphql client generation (typescript)', async t => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
@@ -131,15 +138,19 @@ export default myPlugin
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
   await fs.writeFile('./plugin.ts', plugin)
 
-  const tsconfig = JSON.stringify({
-    extends: 'fastify-tsconfig',
-    compilerOptions: {
-      outDir: 'build',
-      target: 'es2018',
-      moduleResolution: 'NodeNext',
-      lib: ['es2018']
-    }
-  }, null, 2)
+  const tsconfig = JSON.stringify(
+    {
+      extends: 'fastify-tsconfig',
+      compilerOptions: {
+        outDir: 'build',
+        target: 'es2018',
+        moduleResolution: 'NodeNext',
+        lib: ['es2018']
+      }
+    },
+    null,
+    2
+  )
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
@@ -148,14 +159,21 @@ export default myPlugin
   const app2 = await buildService('./platformatic.service.json')
   await app2.start()
 
-  t.after(async () => { await app2.close() })
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app2.close()
+  })
+  t.after(async () => {
+    await app.close()
+  })
 
   const res = await request(app2.url, {
     method: 'POST'
   })
   const body = await res.body.json()
-  equal(match(body, {
-    title: 'foo'
-  }), true)
+  equal(
+    match(body, {
+      title: 'foo'
+    }),
+    true
+  )
 })

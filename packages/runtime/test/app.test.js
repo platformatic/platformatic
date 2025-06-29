@@ -7,10 +7,13 @@ const { once } = require('node:events')
 const { utimes } = require('node:fs/promises')
 const { PlatformaticApp } = require('../lib/worker/app')
 const fixturesDir = join(__dirname, '..', 'fixtures')
+const { setLogFile } = require('./helpers')
+
+test.beforeEach(setLogFile)
 
 test('errors when starting an already started application', async t => {
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.json')
+  const configFile = join(appPath, 'platformatic.service.no-logging.json')
   const config = {
     id: 'serviceApp',
     config: configFile,
@@ -18,7 +21,7 @@ test('errors when starting an already started application', async t => {
     entrypoint: true,
     watch: true,
     dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
   const app = new PlatformaticApp(config)
   await app.init()
@@ -40,7 +43,7 @@ test('errors when stopping an already stopped application', async t => {
     entrypoint: true,
     watch: true,
     dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
   const app = new PlatformaticApp(config)
   await app.init()
@@ -57,7 +60,7 @@ test('logs errors if an env variable is missing', async t => {
     config: configFile,
     path: fixturesDir,
     entrypoint: true,
-    watch: true,
+    watch: true
   }
   const app = new PlatformaticApp(config)
 
@@ -77,7 +80,10 @@ test('logs errors if an env variable is missing', async t => {
   assert.strictEqual(process.exit.mock.calls.length, 1)
   assert.strictEqual(process.exit.mock.calls[0].arguments[0], 1)
 
-  assert.strictEqual(data.includes("Cannot parse config file. Cannot read properties of undefined (reading 'has')"), true)
+  assert.strictEqual(
+    data.includes("Cannot parse config file. Cannot read properties of undefined (reading 'has')"),
+    true
+  )
 })
 
 test('Uses the server config if passed', async t => {
@@ -90,24 +96,20 @@ test('Uses the server config if passed', async t => {
     entrypoint: true,
     watch: true,
     dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
   const serverConfig = {
     hostname: '127.0.0.1',
     port: '14242',
     logger: {
-      level: 'info',
-    },
+      level: 'info'
+    }
   }
   const app = new PlatformaticApp(config, 0, null, null, serverConfig)
 
   t.after(async function () {
-    try {
-      t.mock.restoreAll()
-      await app.stop()
-    } catch (err) {
-      console.error(err)
-    }
+    t.mock.restoreAll()
+    await app.stop()
   })
 
   const promise = new Promise((resolve, reject) => {
@@ -141,7 +143,7 @@ test('logs errors during startup', async t => {
     config: configFile,
     path: appPath,
     entrypoint: true,
-    watch: true,
+    watch: true
   }
   const app = new PlatformaticApp(config)
 
@@ -166,7 +168,7 @@ test('logs errors during startup', async t => {
 
 test('returns application statuses', async t => {
   const appPath = join(fixturesDir, 'monorepo', 'serviceApp')
-  const configFile = join(appPath, 'platformatic.service.json')
+  const configFile = join(appPath, 'platformatic.service.no-logging.json')
   const config = {
     id: 'serviceApp',
     config: configFile,
@@ -174,7 +176,7 @@ test('returns application statuses', async t => {
     entrypoint: true,
     watch: true,
     dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
   const app = new PlatformaticApp(config)
   await app.init()
@@ -210,19 +212,19 @@ test('supports configuration overrides', async t => {
     entrypoint: true,
     watch: true,
     dependencies: [],
-    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']]),
+    localServiceEnvVars: new Map([['PLT_WITH_LOGGER_URL', ' ']])
   }
 
   const app = new PlatformaticApp(config)
 
+  await app.init()
+
   app.updateContext({
     serverConfig: {
       keepAliveTimeout: 1,
-      port: 2222,
-    },
+      port: 2222
+    }
   })
-
-  await app.init()
 
   const stackableConfig = await app.stackable.getConfig()
   assert.strictEqual(stackableConfig.server.keepAliveTimeout, 1)

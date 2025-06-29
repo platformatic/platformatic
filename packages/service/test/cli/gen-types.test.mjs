@@ -1,8 +1,8 @@
-import assert from 'node:assert'
-import { test } from 'node:test'
-import { readFile, unlink } from 'node:fs/promises'
 import { join } from 'desm'
 import { execa } from 'execa'
+import assert from 'node:assert'
+import { readFile, unlink } from 'node:fs/promises'
+import { test } from 'node:test'
 import { cliPath } from './helper.mjs'
 
 const GLOBAL_TYPES_TEMPLATE = `
@@ -16,13 +16,18 @@ declare module 'fastify' {
 }
 `
 
-test('generate global.d.ts', async (t) => {
-  const fileNameOrThen = join(import.meta.url, '..', '..', 'fixtures', 'hello', 'global.d.ts')
+test('generate global.d.ts', async t => {
+  const fileNameOrThen = join(import.meta.url, '..', 'fixtures', 'hello', 'global.d.ts')
   try {
     await unlink(fileNameOrThen)
   } catch {}
 
-  await execa('node', [cliPath, 'types', '-c', join(import.meta.url, '..', '..', 'fixtures', 'hello', 'platformatic.service.json')])
+  await execa('node', [
+    cliPath,
+    'types',
+    '-c',
+    join(import.meta.url, '..', 'fixtures', 'hello', 'platformatic.service.json')
+  ])
 
   const data = await readFile(fileNameOrThen, 'utf-8')
   await unlink(fileNameOrThen)

@@ -1,20 +1,20 @@
 module.exports = {
   onIncomingMessage: (context, source, target, { data, binary }) => {
-    context.log.info('onIncomingMessage')
+    globalThis.platformatic.events.emit('proxy:onIncomingMessage')
   },
   onOutgoingMessage: (context, source, target, { data, binary }) => {
-    context.log.info('onOutgoingMessage')
+    globalThis.platformatic.events.emit('onOutgoingMessage')
   },
   onConnect: (context, source, target) => {
-    context.log.info('onConnect')
+    globalThis.platformatic.events.emit('onConnect')
   },
   onDisconnect: (context, source) => {
-    context.log.info('onDisconnect')
+    globalThis.platformatic.events.emit('onDisconnect')
   },
   onReconnect: (context, source, target) => {
-    context.log.info('onReconnect')
+    globalThis.platformatic.events.emit('onReconnect')
   },
   onPong: (context, source, target) => {
-    context.log.info('onPong')
+    globalThis.platformatic.events.emit('onPong')
   }
 }

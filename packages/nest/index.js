@@ -1,13 +1,13 @@
 import {
   BaseStackable,
+  transformConfig as basicTransformConfig,
   cleanBasePath,
   ensureTrailingSlash,
   errors,
   getServerUrl,
   importFile,
   resolvePackage,
-  schemaOptions,
-  transformConfig
+  schemaOptions
 } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
 import { features } from '@platformatic/utils'
@@ -35,6 +35,8 @@ export class NestStackable extends BaseStackable {
   }
 
   async init () {
+    await super.init()
+
     const config = this.configManager.current
 
     this.#isFastify = config.nest.adapter === 'fastify'
@@ -279,6 +281,13 @@ export class NestStackable extends BaseStackable {
 
     return setup
   }
+}
+
+/* c8 ignore next 5 */
+export function transformConfig () {
+  this.current.watch = { enabled: false }
+
+  return basicTransformConfig.call(this)
 }
 
 export async function buildStackable (opts) {

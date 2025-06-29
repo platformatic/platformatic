@@ -21,9 +21,9 @@ async function createDirectory (path, empty = false) {
 }
 
 async function createTemporaryDirectory (prefix) {
-  const directory = join(tmpdir(), `wattpm-${prefix}-${process.pid}-${tmpCount++}`)
+  const directory = join(tmpdir(), `plt-utils-${prefix}-${process.pid}-${tmpCount++}`)
 
-  await createDirectory(directory)
+  return createDirectory(directory)
 }
 
 async function safeRemove (path) {

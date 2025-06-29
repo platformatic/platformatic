@@ -10,6 +10,9 @@ const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { setTimeout: sleep } = require('node:timers/promises')
 const tmpdir = os.tmpdir()
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 test('supports logging using a transport', async t => {
   const configFile = join(fixturesDir, 'server', 'logger-transport', 'platformatic.runtime.json')

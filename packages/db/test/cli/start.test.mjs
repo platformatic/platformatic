@@ -1,11 +1,11 @@
+import { join } from 'desm'
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { join } from 'desm'
 import { request } from 'undici'
 import { getConnectionInfo } from '../helper.js'
-import { connectDB, start, safeKill } from './helper.js'
+import { connectDB, safeKill, start } from './helper.js'
 
-test('autostart', async (t) => {
+test('autostart', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
   const db = await connectDB(connectionInfo)
 
@@ -19,14 +19,11 @@ test('autostart', async (t) => {
     await dropTestDB()
   })
 
-  const { child, url } = await start(
-    ['-c', join(import.meta.url, '..', 'fixtures', 'simple.json')],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
+  const { child, url } = await start([join(import.meta.url, '..', 'fixtures', 'simple.json')], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
     }
-  )
+  })
 
   let id
   {
@@ -41,8 +38,8 @@ test('autostart', async (t) => {
                   title
                 }
               }
-            `,
-      }),
+            `
+      })
     })
     assert.equal(res.statusCode, 200, 'savePage status code')
     const body = await res.body.json()
@@ -62,18 +59,22 @@ test('autostart', async (t) => {
                   title
                 }
               }
-            `,
-      }),
+            `
+      })
     })
     assert.equal(res.statusCode, 200, 'pages status code')
-    assert.deepEqual(await res.body.json(), {
-      data: {
-        getPageById: {
-          id,
-          title: 'Hello',
-        },
+    assert.deepEqual(
+      await res.body.json(),
+      {
+        data: {
+          getPageById: {
+            id,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -88,18 +89,22 @@ test('autostart', async (t) => {
                   title
                 }
               }
-            `,
-      }),
+            `
+      })
     })
     assert.equal(res.statusCode, 200, 'savePage status code')
-    assert.deepEqual(await res.body.json(), {
-      data: {
-        savePage: {
-          id,
-          title: 'Hello World',
-        },
+    assert.deepEqual(
+      await res.body.json(),
+      {
+        data: {
+          savePage: {
+            id,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -114,24 +119,28 @@ test('autostart', async (t) => {
                   title
                 }
               }
-            `,
-      }),
+            `
+      })
     })
     assert.equal(res.statusCode, 200, 'pages status code')
-    assert.deepEqual(await res.body.json(), {
-      data: {
-        getPageById: {
-          id,
-          title: 'Hello World',
-        },
+    assert.deepEqual(
+      await res.body.json(),
+      {
+        data: {
+          getPageById: {
+            id,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   await safeKill(child)
 })
 
-test('start command', async (t) => {
+test('start command', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
   const db = await connectDB(connectionInfo)
 
@@ -145,14 +154,11 @@ test('start command', async (t) => {
     await dropTestDB()
   })
 
-  const { child, url } = await start(
-    ['-c', join(import.meta.url, '..', 'fixtures', 'simple.json')],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
+  const { child, url } = await start([join(import.meta.url, '..', 'fixtures', 'simple.json')], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString
     }
-  )
+  })
 
   let id
   {
@@ -167,8 +173,8 @@ test('start command', async (t) => {
                   title
                 }
               }
-            `,
-      }),
+            `
+      })
     })
     assert.equal(res.statusCode, 200, 'savePage status code')
     const body = await res.body.json()
@@ -188,18 +194,22 @@ test('start command', async (t) => {
                   title
                 }
               }
-            `,
-      }),
+            `
+      })
     })
     assert.equal(res.statusCode, 200, 'pages status code')
-    assert.deepEqual(await res.body.json(), {
-      data: {
-        getPageById: {
-          id,
-          title: 'Hello',
-        },
+    assert.deepEqual(
+      await res.body.json(),
+      {
+        data: {
+          getPageById: {
+            id,
+            title: 'Hello'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   {
@@ -214,18 +224,22 @@ test('start command', async (t) => {
                   title
                 }
               }
-            `,
-      }),
+            `
+      })
     })
     assert.equal(res.statusCode, 200, 'savePage status code')
-    assert.deepEqual(await res.body.json(), {
-      data: {
-        savePage: {
-          id,
-          title: 'Hello World',
-        },
+    assert.deepEqual(
+      await res.body.json(),
+      {
+        data: {
+          savePage: {
+            id,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'savePage response')
+      'savePage response'
+    )
   }
 
   {
@@ -240,18 +254,22 @@ test('start command', async (t) => {
                   title
                 }
               }
-            `,
-      }),
+            `
+      })
     })
     assert.equal(res.statusCode, 200, 'pages status code')
-    assert.deepEqual(await res.body.json(), {
-      data: {
-        getPageById: {
-          id,
-          title: 'Hello World',
-        },
+    assert.deepEqual(
+      await res.body.json(),
+      {
+        data: {
+          getPageById: {
+            id,
+            title: 'Hello World'
+          }
+        }
       },
-    }, 'pages response')
+      'pages response'
+    )
   }
 
   await safeKill(child)

@@ -8,12 +8,12 @@ const composeOpenApi = require('../../lib/openapi-composer')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
-test('should merge two basic apis', async (t) => {
+test('should merge two basic apis', async t => {
   const schema1 = {
     openapi: '3.0.0',
     info: {
       title: 'API 1',
-      version: '1.0.0',
+      version: '1.0.0'
     },
     paths: {
       '/books': {
@@ -25,14 +25,14 @@ test('should merge two basic apis', async (t) => {
               content: {
                 'application/json': {
                   schema: {
-                    $ref: '#/components/schemas/Books',
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+                    $ref: '#/components/schemas/Books'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     components: {
       schemas: {
@@ -40,22 +40,22 @@ test('should merge two basic apis', async (t) => {
           type: 'object',
           properties: {
             id: {
-              type: 'string',
+              type: 'string'
             },
             title: {
-              type: 'string',
-            },
-          },
-        },
-      },
-    },
+              type: 'string'
+            }
+          }
+        }
+      }
+    }
   }
 
   const schema2 = {
     openapi: '3.0.0',
     info: {
       title: 'API 2',
-      version: '1.0.0',
+      version: '1.0.0'
     },
     paths: {
       '/films': {
@@ -67,14 +67,14 @@ test('should merge two basic apis', async (t) => {
               content: {
                 'application/json': {
                   schema: {
-                    $ref: '#/components/schemas/Films',
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+                    $ref: '#/components/schemas/Films'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     components: {
       schemas: {
@@ -82,20 +82,20 @@ test('should merge two basic apis', async (t) => {
           type: 'object',
           properties: {
             id: {
-              type: 'string',
+              type: 'string'
             },
             title: {
-              type: 'string',
-            },
-          },
-        },
-      },
-    },
+              type: 'string'
+            }
+          }
+        }
+      }
+    }
   }
 
   const composedSchema = composeOpenApi([
     { id: 'api1', schema: schema1 },
-    { id: 'api2', schema: schema2 },
+    { id: 'api2', schema: schema2 }
   ])
 
   openApiValidator.validate(composedSchema)
@@ -111,25 +111,25 @@ test('should merge two basic apis', async (t) => {
       title: 'Books',
       properties: {
         id: {
-          type: 'string',
+          type: 'string'
         },
         title: {
-          type: 'string',
-        },
-      },
+          type: 'string'
+        }
+      }
     },
     api2_Films: {
       type: 'object',
       title: 'Films',
       properties: {
         id: {
-          type: 'string',
+          type: 'string'
         },
         title: {
-          type: 'string',
-        },
-      },
-    },
+          type: 'string'
+        }
+      }
+    }
   })
 
   assert.deepEqual(composedSchema.paths['/books'], {
@@ -141,13 +141,13 @@ test('should merge two basic apis', async (t) => {
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/api1_Books',
-              },
-            },
-          },
-        },
-      },
-    },
+                $ref: '#/components/schemas/api1_Books'
+              }
+            }
+          }
+        }
+      }
+    }
   })
 
   assert.deepEqual(composedSchema.paths['/films'], {
@@ -159,22 +159,22 @@ test('should merge two basic apis', async (t) => {
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/api2_Films',
-              },
-            },
-          },
-        },
-      },
-    },
+                $ref: '#/components/schemas/api2_Films'
+              }
+            }
+          }
+        }
+      }
+    }
   })
 })
 
-test('should merge two basic apis with path prefixes', async (t) => {
+test('should merge two basic apis with path prefixes', async t => {
   const schema1 = {
     openapi: '3.0.0',
     info: {
       title: 'API 1',
-      version: '1.0.0',
+      version: '1.0.0'
     },
     paths: {
       '/books': {
@@ -186,14 +186,14 @@ test('should merge two basic apis with path prefixes', async (t) => {
               content: {
                 'application/json': {
                   schema: {
-                    $ref: '#/components/schemas/Books',
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+                    $ref: '#/components/schemas/Books'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     components: {
       schemas: {
@@ -201,22 +201,22 @@ test('should merge two basic apis with path prefixes', async (t) => {
           type: 'object',
           properties: {
             id: {
-              type: 'string',
+              type: 'string'
             },
             title: {
-              type: 'string',
-            },
-          },
-        },
-      },
-    },
+              type: 'string'
+            }
+          }
+        }
+      }
+    }
   }
 
   const schema2 = {
     openapi: '3.0.0',
     info: {
       title: 'API 2',
-      version: '1.0.0',
+      version: '1.0.0'
     },
     paths: {
       '/films': {
@@ -228,14 +228,14 @@ test('should merge two basic apis with path prefixes', async (t) => {
               content: {
                 'application/json': {
                   schema: {
-                    $ref: '#/components/schemas/Films',
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+                    $ref: '#/components/schemas/Films'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     components: {
       schemas: {
@@ -243,22 +243,22 @@ test('should merge two basic apis with path prefixes', async (t) => {
           type: 'object',
           properties: {
             id: {
-              type: 'string',
+              type: 'string'
             },
             title: {
-              type: 'string',
-            },
-          },
-        },
-      },
-    },
+              type: 'string'
+            }
+          }
+        }
+      }
+    }
   }
 
   const schema3 = {
     openapi: '3.0.0',
     info: {
       title: 'API 3',
-      version: '1.0.0',
+      version: '1.0.0'
     },
     paths: {
       '/actors': {
@@ -270,14 +270,14 @@ test('should merge two basic apis with path prefixes', async (t) => {
               content: {
                 'application/json': {
                   schema: {
-                    $ref: '#/components/schemas/Actors',
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+                    $ref: '#/components/schemas/Actors'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     components: {
       schemas: {
@@ -285,21 +285,21 @@ test('should merge two basic apis with path prefixes', async (t) => {
           type: 'object',
           properties: {
             id: {
-              type: 'string',
+              type: 'string'
             },
             name: {
-              type: 'string',
-            },
-          },
-        },
-      },
-    },
+              type: 'string'
+            }
+          }
+        }
+      }
+    }
   }
 
   const composedSchema = composeOpenApi([
     { id: 'api1', prefix: '/api1', schema: schema1 },
     { id: 'api-2', prefix: '/api2', schema: schema2 },
-    { id: '-api-3_', prefix: '/api3', schema: schema3 },
+    { id: '-api-3_', prefix: '/api3', schema: schema3 }
   ])
 
   openApiValidator.validate(composedSchema)
@@ -315,37 +315,37 @@ test('should merge two basic apis with path prefixes', async (t) => {
       title: 'Books',
       properties: {
         id: {
-          type: 'string',
+          type: 'string'
         },
         title: {
-          type: 'string',
-        },
-      },
+          type: 'string'
+        }
+      }
     },
     api_2_Films: {
       type: 'object',
       title: 'Films',
       properties: {
         id: {
-          type: 'string',
+          type: 'string'
         },
         title: {
-          type: 'string',
-        },
-      },
+          type: 'string'
+        }
+      }
     },
     api_3_Actors: {
       type: 'object',
       title: 'Actors',
       properties: {
         id: {
-          type: 'string',
+          type: 'string'
         },
         name: {
-          type: 'string',
-        },
-      },
-    },
+          type: 'string'
+        }
+      }
+    }
   })
 
   assert.deepEqual(composedSchema.paths['/api1/books'], {
@@ -357,13 +357,13 @@ test('should merge two basic apis with path prefixes', async (t) => {
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/api1_Books',
-              },
-            },
-          },
-        },
-      },
-    },
+                $ref: '#/components/schemas/api1_Books'
+              }
+            }
+          }
+        }
+      }
+    }
   })
 
   assert.deepEqual(composedSchema.paths['/api2/films'], {
@@ -375,13 +375,13 @@ test('should merge two basic apis with path prefixes', async (t) => {
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/api_2_Films',
-              },
-            },
-          },
-        },
-      },
-    },
+                $ref: '#/components/schemas/api_2_Films'
+              }
+            }
+          }
+        }
+      }
+    }
   })
 
   assert.deepEqual(composedSchema.paths['/api3/actors'], {
@@ -393,22 +393,22 @@ test('should merge two basic apis with path prefixes', async (t) => {
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/api_3_Actors',
-              },
-            },
-          },
-        },
-      },
-    },
+                $ref: '#/components/schemas/api_3_Actors'
+              }
+            }
+          }
+        }
+      }
+    }
   })
 })
 
-test('should not overwrite a schema title if exists', async (t) => {
+test('should not overwrite a schema title if exists', async t => {
   const schema1 = {
     openapi: '3.0.0',
     info: {
       title: 'API 1',
-      version: '1.0.0',
+      version: '1.0.0'
     },
     paths: {
       '/books': {
@@ -420,14 +420,14 @@ test('should not overwrite a schema title if exists', async (t) => {
               content: {
                 'application/json': {
                   schema: {
-                    $ref: '#/components/schemas/Books',
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+                    $ref: '#/components/schemas/Books'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     components: {
       schemas: {
@@ -436,22 +436,22 @@ test('should not overwrite a schema title if exists', async (t) => {
           title: 'My Books',
           properties: {
             id: {
-              type: 'string',
+              type: 'string'
             },
             title: {
-              type: 'string',
-            },
-          },
-        },
-      },
-    },
+              type: 'string'
+            }
+          }
+        }
+      }
+    }
   }
 
   const schema2 = {
     openapi: '3.0.0',
     info: {
       title: 'API 2',
-      version: '1.0.0',
+      version: '1.0.0'
     },
     paths: {
       '/films': {
@@ -463,14 +463,14 @@ test('should not overwrite a schema title if exists', async (t) => {
               content: {
                 'application/json': {
                   schema: {
-                    $ref: '#/components/schemas/Films',
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+                    $ref: '#/components/schemas/Films'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     components: {
       schemas: {
@@ -478,20 +478,20 @@ test('should not overwrite a schema title if exists', async (t) => {
           type: 'object',
           properties: {
             id: {
-              type: 'string',
+              type: 'string'
             },
             title: {
-              type: 'string',
-            },
-          },
-        },
-      },
-    },
+              type: 'string'
+            }
+          }
+        }
+      }
+    }
   }
 
   const composedSchema = composeOpenApi([
     { id: 'api1', prefix: '/api1', schema: schema1 },
-    { id: 'api2', prefix: '/api2', schema: schema2 },
+    { id: 'api2', prefix: '/api2', schema: schema2 }
   ])
 
   openApiValidator.validate(composedSchema)
@@ -507,25 +507,25 @@ test('should not overwrite a schema title if exists', async (t) => {
       title: 'My Books',
       properties: {
         id: {
-          type: 'string',
+          type: 'string'
         },
         title: {
-          type: 'string',
-        },
-      },
+          type: 'string'
+        }
+      }
     },
     api2_Films: {
       type: 'object',
       title: 'Films',
       properties: {
         id: {
-          type: 'string',
+          type: 'string'
         },
         title: {
-          type: 'string',
-        },
-      },
-    },
+          type: 'string'
+        }
+      }
+    }
   })
 
   assert.deepEqual(composedSchema.paths['/api1/books'], {
@@ -537,13 +537,13 @@ test('should not overwrite a schema title if exists', async (t) => {
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/api1_Books',
-              },
-            },
-          },
-        },
-      },
-    },
+                $ref: '#/components/schemas/api1_Books'
+              }
+            }
+          }
+        }
+      }
+    }
   })
 
   assert.deepEqual(composedSchema.paths['/api2/films'], {
@@ -555,53 +555,53 @@ test('should not overwrite a schema title if exists', async (t) => {
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/api2_Films',
-              },
-            },
-          },
-        },
-      },
-    },
+                $ref: '#/components/schemas/api2_Films'
+              }
+            }
+          }
+        }
+      }
+    }
   })
 })
 
-test('should throw an error if there are duplicates paths', async (t) => {
+test('should throw an error if there are duplicates paths', async t => {
   const schema1 = {
     openapi: '3.0.0',
     info: {
       title: 'API 1',
-      version: '1.0.0',
+      version: '1.0.0'
     },
     paths: {
       '/books': {
         get: {
           operationId: 'getBooks',
-          responses: {},
-        },
-      },
-    },
+          responses: {}
+        }
+      }
+    }
   }
 
   const schema2 = {
     openapi: '3.0.0',
     info: {
       title: 'API 1',
-      version: '1.0.0',
+      version: '1.0.0'
     },
     paths: {
       '/books': {
         get: {
           operationId: 'getBooks',
-          responses: {},
-        },
-      },
-    },
+          responses: {}
+        }
+      }
+    }
   }
 
   try {
     composeOpenApi([
       { id: 'api1', schema: schema1 },
-      { id: 'api2', schema: schema2 },
+      { id: 'api2', schema: schema2 }
     ])
     assert.fail('should throw an error')
   } catch (err) {
@@ -609,43 +609,43 @@ test('should throw an error if there are duplicates paths', async (t) => {
   }
 })
 
-test('should throw an error if there are duplicates paths with prefixes', async (t) => {
+test('should throw an error if there are duplicates paths with prefixes', async t => {
   const schema1 = {
     openapi: '3.0.0',
     info: {
       title: 'API 1',
-      version: '1.0.0',
+      version: '1.0.0'
     },
     paths: {
       '/books': {
         get: {
           operationId: 'getBooks',
-          responses: {},
-        },
-      },
-    },
+          responses: {}
+        }
+      }
+    }
   }
 
   const schema2 = {
     openapi: '3.0.0',
     info: {
       title: 'API 1',
-      version: '1.0.0',
+      version: '1.0.0'
     },
     paths: {
       '/api1/books': {
         get: {
           operationId: 'getBooks',
-          responses: {},
-        },
-      },
-    },
+          responses: {}
+        }
+      }
+    }
   }
 
   try {
     composeOpenApi([
       { id: 'api1', prefix: '/api1', schema: schema1 },
-      { id: 'api2', schema: schema2 },
+      { id: 'api2', schema: schema2 }
     ])
     assert.fail('should throw an error')
   } catch (err) {

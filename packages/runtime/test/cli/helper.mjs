@@ -9,15 +9,16 @@ setGlobalDispatcher(
     keepAliveTimeout: 10,
     keepAliveMaxTimeout: 10,
     tls: {
-      rejectUnauthorized: false,
-    },
+      rejectUnauthorized: false
+    }
   })
 )
 
-export const cliPath = join(import.meta.url, '..', '..', 'runtime.mjs')
+export const cliPath = join(import.meta.url, '../../bin/plt-runtime.mjs')
+export const startPath = join(import.meta.url, './start.mjs')
 
 export async function start (...args) {
-  const child = execa(process.execPath, [cliPath, 'start', ...args])
+  const child = execa(process.execPath, [startPath, ...args])
   child.catch(() => {})
   child.stderr.pipe(process.stdout)
 
@@ -29,24 +30,32 @@ export async function start (...args) {
   }, 30000)
 
   child.ndj = child.stdout.pipe(
-    split(function (line) {
-      try {
-        const message = JSON.parse(line)
-        const mo = message.msg?.match(/server listening at (.+)/i)
+    split(
+      function (line) {
+        try {
+          const message = JSON.parse(line)
 
-        if (!serverStarted && mo) {
-          clearTimeout(errorTimeout)
+          if (process.env.PLT_TESTS_VERBOSE === 'true') {
+            process._rawDebug(message)
+          }
 
-          setTimeout(() => {
-            resolve(mo[1])
-          }, 1000)
+          const mo = message.msg?.match(/server listening at (.+)/i)
+
+          if (!serverStarted && mo) {
+            clearTimeout(errorTimeout)
+
+            setTimeout(() => {
+              resolve(mo[1])
+            }, 1000)
+          }
+
+          return message
+        } catch (err) {
+          // No-op
         }
-
-        return message
-      } catch (err) {
-        console.log('>>', line)
-      }
-    })
+      },
+      { highWaterMark: 1000 }
+    )
   )
 
   const url = await promise

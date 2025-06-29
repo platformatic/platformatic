@@ -61,15 +61,11 @@ test('inserted_at updated_at happy path', async () => {
   })
   notEqual(original.insertedAt, null, 'insertedAt')
   notEqual(original.updatedAt, null, 'updatedAt')
-  console.log(`insertedAt: ${original.insertedAt}`)
-  console.log(`updatedAt: ${original.updatedAt}`)
 
   {
     const [data] = await entity.find({ where: { id: { eq: original.id } } })
     deepEqual(data.insertedAt, original.insertedAt, 'insertedAt')
     deepEqual(data.updatedAt, original.updatedAt, 'updatedAt')
-    console.log(`insertedAt: ${data.insertedAt}`)
-    console.log(`updatedAt: ${data.updatedAt}`)
   }
 
   await setTimeout(1000) // await 1s
@@ -82,16 +78,12 @@ test('inserted_at updated_at happy path', async () => {
     deepEqual(data.insertedAt, original.insertedAt, 'insertedAt')
     notDeepEqual(data.updatedAt, original.updatedAt, 'updatedAt')
     updated = data
-    console.log(`insertedAt: ${data.insertedAt}`)
-    console.log(`updatedAt: ${data.updatedAt}`)
   }
 
   {
     const [data] = await entity.find({ where: { id: { eq: original.id } } })
     deepEqual(data.insertedAt, updated.insertedAt, 'insertedAt')
     deepEqual(data.updatedAt, updated.updatedAt, 'updatedAt')
-    console.log(`insertedAt: ${data.insertedAt}`)
-    console.log(`updatedAt: ${data.updatedAt}`)
   }
 })
 

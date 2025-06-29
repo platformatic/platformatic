@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "bin": {
-    "plt-runtime": "./runtime.mjs"
+    "plt-runtime": "./bin/plt-runtime.mjs"
   },
   "scripts": {
     "test": "pnpm run lint && borp --concurrency=1 --timeout=1200000 && tsd",

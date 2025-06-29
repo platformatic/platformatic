@@ -86,7 +86,7 @@ test('should properly report as failed on the health check route when all depend
     null,
     {
       logger: {
-        level: 'trace'
+        level: 'fatal'
       },
       restartOnError: 2000
     },
@@ -99,8 +99,7 @@ test('should properly report as failed on the health check route when all depend
     third: 1
   }
 
-  t.after(async () => {
-    await runtime.close()
+  t.after(() => {
     broadcaster.close()
   })
 

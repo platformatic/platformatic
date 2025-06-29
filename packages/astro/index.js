@@ -34,6 +34,8 @@ export class AstroStackable extends BaseStackable {
   }
 
   async init () {
+    await super.init()
+
     if (this.isProduction) {
       return
     }
@@ -298,15 +300,9 @@ export class AstroStackable extends BaseStackable {
   }
 }
 
-/* c8 ignore next 9 */
-function transformConfig () {
-  if (this.current.watch === undefined) {
-    this.current.watch = { enabled: false }
-  }
-
-  if (typeof this.current.watch !== 'object') {
-    this.current.watch = { enabled: this.current.watch || false }
-  }
+/* c8 ignore next 5 */
+export function transformConfig () {
+  this.current.watch = { enabled: false }
 
   return basicTransformConfig.call(this)
 }

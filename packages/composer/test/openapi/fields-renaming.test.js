@@ -6,15 +6,11 @@ const { test } = require('node:test')
 const { join } = require('node:path')
 const { writeFile, mkdtemp } = require('node:fs/promises')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
-const {
-  createComposer,
-  createBasicService,
-  createOpenApiService,
-} = require('../helper')
+const { createFromConfig, createBasicService, createOpenApiService } = require('../helper')
 
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
-test('should rename top level object fields', async (t) => {
+test('should rename top level object fields', async t => {
   const api = await createOpenApiService(t, ['users'])
   await api.listen({ port: 0 })
 
@@ -27,39 +23,42 @@ test('should rename top level object fields', async (t) => {
               type: 'object',
               properties: {
                 id: { rename: 'user_id' },
-                name: { rename: 'first_name' },
-              },
-            },
-          },
-        },
-      },
-    },
+                name: { rename: 'first_name' }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'api1',
-            origin: 'http://127.0.0.1:' + api.server.address().port,
-            openapi: {
-              url: '/documentation/json',
-              config: openapiConfigFile,
-            },
-          },
-        ],
-      },
+  const composer = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    composer: {
+      services: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            config: openapiConfigFile
+          }
+        }
+      ]
     }
-  )
+  })
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json',
+    url: '/documentation/json'
   })
   assert.equal(statusCode, 200)
 
@@ -74,8 +73,8 @@ test('should rename top level object fields', async (t) => {
     title: 'users',
     properties: {
       user_id: { type: 'number' },
-      first_name: { type: 'string' },
-    },
+      first_name: { type: 'string' }
+    }
   })
 
   {
@@ -87,7 +86,7 @@ test('should rename top level object fields', async (t) => {
   }
 })
 
-test('should rename nested object fields', async (t) => {
+test('should rename nested object fields', async t => {
   const api = await createBasicService(t)
   await api.listen({ port: 0 })
 
@@ -102,41 +101,44 @@ test('should rename nested object fields', async (t) => {
                 nested: {
                   type: 'object',
                   properties: {
-                    text: { rename: 'renamed_text_filed' },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
+                    text: { rename: 'renamed_text_filed' }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'api1',
-            origin: 'http://127.0.0.1:' + api.server.address().port,
-            openapi: {
-              url: '/documentation/json',
-              config: openapiConfigFile,
-            },
-          },
-        ],
-      },
+  const composer = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    composer: {
+      services: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            config: openapiConfigFile
+          }
+        }
+      ]
     }
-  )
+  })
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json',
+    url: '/documentation/json'
   })
   assert.equal(statusCode, 200)
 
@@ -152,10 +154,10 @@ test('should rename nested object fields', async (t) => {
       nested: {
         type: 'object',
         properties: {
-          renamed_text_filed: { type: 'string' },
-        },
-      },
-    },
+          renamed_text_filed: { type: 'string' }
+        }
+      }
+    }
   })
 
   {
@@ -167,7 +169,7 @@ test('should rename nested object fields', async (t) => {
   }
 })
 
-test('should rename property in required array', async (t) => {
+test('should rename property in required array', async t => {
   const api = await createBasicService(t)
   await api.listen({ port: 0 })
 
@@ -179,39 +181,42 @@ test('should rename property in required array', async (t) => {
             200: {
               type: 'object',
               properties: {
-                text: { rename: 'renamed_text_filed' },
-              },
-            },
-          },
-        },
-      },
-    },
+                text: { rename: 'renamed_text_filed' }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'api1',
-            origin: 'http://127.0.0.1:' + api.server.address().port,
-            openapi: {
-              url: '/documentation/json',
-              config: openapiConfigFile,
-            },
-          },
-        ],
-      },
+  const composer = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    composer: {
+      services: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            config: openapiConfigFile
+          }
+        }
+      ]
     }
-  )
+  })
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json',
+    url: '/documentation/json'
   })
   assert.equal(statusCode, 200)
 
@@ -224,9 +229,9 @@ test('should rename property in required array', async (t) => {
   assert.deepEqual(responseSchema, {
     type: 'object',
     properties: {
-      renamed_text_filed: { type: 'string' },
+      renamed_text_filed: { type: 'string' }
     },
-    required: ['renamed_text_filed'],
+    required: ['renamed_text_filed']
   })
 
   {
@@ -238,7 +243,7 @@ test('should rename property in required array', async (t) => {
   }
 })
 
-test('should rename top level object fields in array', async (t) => {
+test('should rename top level object fields in array', async t => {
   const api = await createOpenApiService(t, ['users'])
   await api.listen({ port: 0 })
 
@@ -253,40 +258,43 @@ test('should rename top level object fields in array', async (t) => {
                 type: 'object',
                 properties: {
                   id: { rename: 'user_id' },
-                  name: { rename: 'first_name' },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
+                  name: { rename: 'first_name' }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
   const openapiConfigFile = join(cwd, 'openapi.json')
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'api1',
-            origin: 'http://127.0.0.1:' + api.server.address().port,
-            openapi: {
-              url: '/documentation/json',
-              config: openapiConfigFile,
-            },
-          },
-        ],
-      },
+  const composer = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    composer: {
+      services: [
+        {
+          id: 'api1',
+          origin: 'http://127.0.0.1:' + api.server.address().port,
+          openapi: {
+            url: '/documentation/json',
+            config: openapiConfigFile
+          }
+        }
+      ]
     }
-  )
+  })
 
   const { statusCode, body } = await composer.inject({
     method: 'GET',
-    url: '/documentation/json',
+    url: '/documentation/json'
   })
   assert.equal(statusCode, 200)
 
@@ -303,9 +311,9 @@ test('should rename top level object fields in array', async (t) => {
       type: 'object',
       properties: {
         user_id: { type: 'number' },
-        first_name: { type: 'string' },
-      },
-    },
+        first_name: { type: 'string' }
+      }
+    }
   })
 
   {
@@ -317,7 +325,7 @@ test('should rename top level object fields in array', async (t) => {
       { user_id: 1, first_name: 'test1' },
       { user_id: 2, first_name: 'test2' },
       { user_id: 3, first_name: 'test3' },
-      { user_id: 4, first_name: 'test4' },
+      { user_id: 4, first_name: 'test4' }
     ])
   }
 })

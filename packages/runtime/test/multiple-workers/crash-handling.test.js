@@ -1,24 +1,24 @@
 'use strict'
 
-const { ok, deepStrictEqual } = require('node:assert')
+const { deepStrictEqual, ok } = require('node:assert')
 const { resolve } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
-const { updateFile, openLogsWebsocket, waitForLogs } = require('../helpers')
-const { prepareRuntime } = require('./helper')
+const { updateFile, setLogFile } = require('../helpers')
+const { prepareRuntime, waitForEvents } = require('./helper')
+
+test.beforeEach(setLogFile)
 
 test('can restart only crashed workers when they throw an exception during start', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
   const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
   const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
   await app.start()
@@ -39,31 +39,21 @@ test('can restart only crashed workers when they throw an exception during start
     }
   )
 
-  const waitPromise = waitForLogs(
-    managementApiWebsocket,
-    'Stopping the worker 0 of the service "node"...',
-    'Failed to start worker 0 of the service "node" after 5 attempts.'
-  )
+  const errors = []
+  app.on('service:worker:start:error', payload => {
+    errors.push(payload.error)
+  })
+
+  const eventsPromise = waitForEvents(app, { event: 'service:worker:start:error', service: 'node', worker: 0 })
 
   await client.request({ method: 'POST', path: '/api/v1/services/node/stop' })
   await client.request({ method: 'POST', path: '/api/v1/services/node/start' })
   await client.close()
 
-  const messages = await waitPromise
+  await eventsPromise
 
-  deepStrictEqual(
-    messages.filter(m => m.msg === 'Failed to start worker 0 of the service "node".' && m.err?.message === 'kaboom')
-      .length,
-    6
-  )
-
-  for (let i = 1; i <= 5; i++) {
-    ok(
-      messages.find(m => m.msg === `Performing attempt ${i} of 5 to start the worker 0 of the service "node" again ...`)
-    )
-  }
-
-  managementApiWebsocket.terminate()
+  deepStrictEqual(errors.length, 6)
+  deepStrictEqual(errors[0].message, 'kaboom')
 })
 
 test('can restart only crashed workers when they exit during start', async t => {
@@ -71,11 +61,9 @@ test('can restart only crashed workers when they exit during start', async t => 
   const configFile = resolve(root, './platformatic.json')
   const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
   const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
   await app.start()
@@ -96,34 +84,21 @@ test('can restart only crashed workers when they exit during start', async t => 
     }
   )
 
-  const waitPromise = waitForLogs(
-    managementApiWebsocket,
-    'Stopping the worker 0 of the service "node"...',
-    'Failed to start worker 0 of the service "node" after 5 attempts.'
-  )
+  const errors = []
+  app.on('service:worker:start:error', payload => {
+    errors.push(payload.error)
+  })
+
+  const eventsPromise = waitForEvents(app, { event: 'service:worker:start:error', service: 'node', worker: 0 })
 
   await client.request({ method: 'POST', path: '/api/v1/services/node/stop' })
   await client.request({ method: 'POST', path: '/api/v1/services/node/start' })
-  client.close()
+  await client.close()
 
-  const messages = await waitPromise
+  await eventsPromise
 
-  deepStrictEqual(
-    messages.filter(
-      m =>
-        m.msg === 'Failed to start worker 0 of the service "node".' &&
-        m.err?.message === 'The worker 0 of the service "node" exited prematurely with error code 1'
-    ).length,
-    6
-  )
-
-  for (let i = 1; i <= 5; i++) {
-    ok(
-      messages.find(m => m.msg === `Performing attempt ${i} of 5 to start the worker 0 of the service "node" again ...`)
-    )
-  }
-
-  managementApiWebsocket.terminate()
+  deepStrictEqual(errors.length, 6)
+  deepStrictEqual(errors[0].message, 'The worker 0 of the service "node" exited prematurely with error code 1')
 })
 
 test('can restart only crashed workers when they crash', async t => {
@@ -131,11 +106,9 @@ test('can restart only crashed workers when they crash', async t => {
   const configFile = resolve(root, './platformatic.json')
   const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
   const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
   await app.start()
@@ -159,47 +132,29 @@ test('can restart only crashed workers when they crash', async t => {
     }
   )
 
-  const waitPromise = waitForLogs(
-    managementApiWebsocket,
-    'The worker 0 of the service "node" threw an uncaught exception.',
-    'The worker 2 of the service "node" threw an uncaught exception.',
-    'The worker 4 of the service "node" threw an uncaught exception.',
-    'The worker 0 of the service "node" unexpectedly exited with code 1.',
-    'The worker 2 of the service "node" unexpectedly exited with code 1.',
-    'The worker 4 of the service "node" unexpectedly exited with code 1.',
-    'The worker 0 of the service "node" is being restarted ...',
-    'The worker 2 of the service "node" is being restarted ...',
-    'The worker 4 of the service "node" is being restarted ...'
+  const errors = []
+  app.on('service:worker:error', payload => {
+    errors.push(payload)
+  })
+
+  const eventsPromise = waitForEvents(
+    app,
+    { event: 'service:worker:error', service: 'node', worker: 0 },
+    { event: 'service:worker:error', service: 'node', worker: 2 },
+    { event: 'service:worker:error', service: 'node', worker: 4 }
   )
 
   await client.request({ method: 'POST', path: '/api/v1/services/node/stop' })
   await client.request({ method: 'POST', path: '/api/v1/services/node/start' })
-  client.close()
+  await client.close()
 
-  const messages = await waitPromise
+  await eventsPromise
 
-  ok(
-    messages.find(
-      m => m.msg === 'The worker 0 of the service "node" threw an uncaught exception.' && m.err?.message === 'kaboom'
-    )
-  )
-  ok(
-    messages.find(
-      m => m.msg === 'The worker 2 of the service "node" threw an uncaught exception.' && m.err?.message === 'kaboom'
-    )
-  )
-  ok(
-    messages.find(
-      m => m.msg === 'The worker 4 of the service "node" threw an uncaught exception.' && m.err?.message === 'kaboom'
-    )
-  )
-
-  ok(!messages.find(m => m.msg === 'The worker 1 of the service "node" threw an uncaught exception.'))
-  ok(!messages.find(m => m.msg === 'The worker 3 of the service "node" threw an uncaught exception.'))
-  ok(!messages.find(m => m.msg === 'The worker 1 of the service "node" is being restarted ...'))
-  ok(!messages.find(m => m.msg === 'The worker 3 of the service "node" is being restarted ...'))
-
-  managementApiWebsocket.terminate()
+  ok(errors.find(e => e.service === 'node' && e.worker === 0))
+  ok(errors.find(e => e.service === 'node' && e.worker === 2))
+  ok(errors.find(e => e.service === 'node' && e.worker === 4))
+  ok(!errors.find(e => e.service === 'node' && e.worker === 1))
+  ok(!errors.find(e => e.service === 'node' && e.worker === 3))
 })
 
 test('can restart only crashed workers when they exit', async t => {
@@ -207,11 +162,9 @@ test('can restart only crashed workers when they exit', async t => {
   const configFile = resolve(root, './platformatic.json')
   const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
   const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
   await app.start()
@@ -234,26 +187,27 @@ test('can restart only crashed workers when they exit', async t => {
     }
   )
 
-  const waitPromise = waitForLogs(
-    managementApiWebsocket,
-    'The worker 0 of the service "node" unexpectedly exited with code 1.',
-    'The worker 2 of the service "node" unexpectedly exited with code 1.',
-    'The worker 4 of the service "node" unexpectedly exited with code 1.',
-    'The worker 0 of the service "node" is being restarted ...',
-    'The worker 2 of the service "node" is being restarted ...',
-    'The worker 4 of the service "node" is being restarted ...'
+  const errors = []
+  app.on('service:worker:error', payload => {
+    errors.push(payload)
+  })
+
+  const eventsPromise = waitForEvents(
+    app,
+    { event: 'service:worker:error', service: 'node', worker: 0 },
+    { event: 'service:worker:error', service: 'node', worker: 2 },
+    { event: 'service:worker:error', service: 'node', worker: 4 }
   )
 
   await client.request({ method: 'POST', path: '/api/v1/services/node/stop' })
   await client.request({ method: 'POST', path: '/api/v1/services/node/start' })
-  client.close()
+  await client.close()
 
-  const messages = await waitPromise
+  await eventsPromise
 
-  ok(!messages.find(m => m.msg === 'The worker 1 of the service "node" unexpectedly exited with code 1.'))
-  ok(!messages.find(m => m.msg === 'The worker 3 of the service "node" unexpectedly exited with code 1.'))
-  ok(!messages.find(m => m.msg === 'The worker 1 of the service "node" is being restarted ...'))
-  ok(!messages.find(m => m.msg === 'The worker 3 of the service "node" is being restarted ...'))
-
-  managementApiWebsocket.terminate()
+  ok(errors.find(e => e.service === 'node' && e.worker === 0))
+  ok(errors.find(e => e.service === 'node' && e.worker === 2))
+  ok(errors.find(e => e.service === 'node' && e.worker === 4))
+  ok(!errors.find(e => e.service === 'node' && e.worker === 1))
+  ok(!errors.find(e => e.service === 'node' && e.worker === 3))
 })

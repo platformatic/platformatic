@@ -1,7 +1,7 @@
 {
-  "server":{
+  "server": {
     "logger": {
-      "level": "warn"
+      "level": "fatal"
     }
   },
   "db": {

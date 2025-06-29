@@ -11,6 +11,9 @@ const { loadConfig } = require('@platformatic/config')
 const { safeRemove } = require('@platformatic/utils')
 const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 function hideLogs (t) {
   const originalEnv = process.env.PLT_RUNTIME_LOGGER_STDOUT
@@ -78,6 +81,7 @@ test('logs stdio from the service thread', async t => {
         const { level, pid, hostname, name, msg, payload, stdout } = JSON.parse(l)
         return { level, pid, hostname, name, msg, payload, stdout }
       })
+      .filter(m => m.msg !== 'Runtime event')
 
     deepStrictEqual(messages, [
       {
@@ -186,7 +190,7 @@ test('logs stdio from the service thread', async t => {
         name: 'stdio',
         msg: undefined,
         payload: undefined,
-        stdout: { ts: '123', foo: 'bar' },
+        stdout: { ts: '123', foo: 'bar' }
       },
       {
         level: 30,
@@ -352,9 +356,7 @@ test('isoTime support', async t => {
         return { level, pid, hostname, name, msg, payload, stdout }
       })
 
-    const expected = [
-      { level: 30, name: 'hello', msg: 'Request received' }
-    ]
+    const expected = [{ level: 30, name: 'hello', msg: 'Request received' }]
 
     for (const e of expected) {
       ok(

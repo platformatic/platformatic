@@ -13,11 +13,9 @@ try {
   await createDirectory(base)
 } catch {}
 
-// TODO(mcollina): investigate why this test is failing on Node v20
-test('do not crash on bad config', { skip: true }, async t => {
+test('do not crash on bad config', async t => {
   const tmpDir = await mkdtemp(join(base, 'do-not-crash-'))
   t.after(() => safeRemove(tmpDir))
-  console.log(`using ${tmpDir}`)
   const configFileSrc = join(fixturesDir, 'configs', 'monorepo.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
   const appSrc = join(fixturesDir, 'monorepo')
@@ -27,12 +25,17 @@ test('do not crash on bad config', { skip: true }, async t => {
 
   await Promise.all([cp(configFileSrc, configFileDst), cp(appSrc, appDst, { recursive: true })])
 
-  const original = await readFile(serviceConfigFilePath, 'utf8')
+  const original = JSON.parse(await readFile(serviceConfigFilePath, 'utf8'))
+  original.server.logger.level = 'trace'
+  // Update the config file to enable watching
+  const configFile = JSON.parse(await readFile(configFileDst, 'utf8'))
+  configFile.watch = true
+  await writeFile(configFileDst, JSON.stringify(configFile, null, 2))
 
   const { child } = await start('-c', configFileDst)
   t.after(() => child.kill('SIGKILL'))
 
-  await writeFile(serviceConfigFilePath, '{')
+  await writeFile(serviceConfigFilePath, 'INVALID')
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v2', true))
 
   for await (const log of child.ndj.iterator({ destroyOnReturn: false })) {
@@ -41,7 +44,7 @@ test('do not crash on bad config', { skip: true }, async t => {
     }
   }
 
-  await writeFile(serviceConfigFilePath, original)
+  await writeFile(serviceConfigFilePath, JSON.stringify(original))
 
   for await (const log of child.ndj) {
     if (log.msg === 'RELOADED v2') {

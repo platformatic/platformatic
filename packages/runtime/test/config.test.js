@@ -4,16 +4,19 @@ const assert = require('node:assert')
 const { readFile, writeFile, cp, mkdtemp } = require('node:fs/promises')
 const { join, resolve, dirname } = require('node:path')
 const { test } = require('node:test')
-const { safeRemove, createDirectory } = require('@platformatic/utils')
+const { createDirectory } = require('@platformatic/utils')
 const { loadConfig } = require('@platformatic/config')
 const { platformaticService } = require('@platformatic/service')
-const { platformaticDB } = require('@platformatic/db')
+const platformaticDatabase = require('@platformatic/db')
 const { Runtime } = require('../lib/runtime')
 const { parseInspectorOptions, platformaticRuntime } = require('../lib/config')
 const { wrapConfigInRuntimeConfig } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 const { Store } = require('@platformatic/config')
 const { getRuntimeLogsDir } = require('../lib/utils')
+const { setLogFile } = require('./helpers')
+
+test.beforeEach(setLogFile)
 
 test('throws if no entrypoint is found', async t => {
   const configFile = join(fixturesDir, 'configs', 'invalid-entrypoint.json')
@@ -76,140 +79,138 @@ test('dependencies are resolved if services are not specified manually', async t
   )
 })
 
-test('parseInspectorOptions()', async t => {
-  await t.test('throws if --inspect and --inspect-brk are both used', () => {
+test('parseInspectorOptions - throws if --inspect and --inspect-brk are both used', () => {
+  assert.throws(() => {
+    const cm = {
+      args: { inspect: '', 'inspect-brk': '' },
+      current: {}
+    }
+
+    parseInspectorOptions(cm)
+  }, /--inspect and --inspect-brk cannot be used together/)
+})
+
+test('parseInspectorOptions - --inspect default settings', () => {
+  const cm = {
+    args: { inspect: '' },
+    current: {}
+  }
+
+  parseInspectorOptions(cm)
+  assert.deepStrictEqual(cm.current.inspectorOptions, {
+    host: '127.0.0.1',
+    port: 9229,
+    breakFirstLine: false,
+    watchDisabled: false
+  })
+})
+
+test('parseInspectorOptions - --inspect-brk default settings', () => {
+  const cm = {
+    args: { 'inspect-brk': '' },
+    current: {}
+  }
+
+  parseInspectorOptions(cm)
+  assert.deepStrictEqual(cm.current.inspectorOptions, {
+    host: '127.0.0.1',
+    port: 9229,
+    breakFirstLine: true,
+    watchDisabled: false
+  })
+})
+
+test('parseInspectorOptions - hot reloading is disabled if the inspector is used', () => {
+  const cm1 = {
+    args: { 'inspect-brk': '' },
+    current: { watch: true }
+  }
+
+  parseInspectorOptions(cm1)
+  assert.strictEqual(cm1.current.watch, false)
+
+  const cm2 = {
+    args: {},
+    current: { watch: true }
+  }
+
+  parseInspectorOptions(cm2)
+  assert.strictEqual(cm2.current.watch, true)
+})
+
+test('parseInspectorOptions - sets port to a custom value', () => {
+  const cm = {
+    args: { inspect: '6666' },
+    current: {}
+  }
+
+  parseInspectorOptions(cm)
+  assert.deepStrictEqual(cm.current.inspectorOptions, {
+    host: '127.0.0.1',
+    port: 6666,
+    breakFirstLine: false,
+    watchDisabled: false
+  })
+})
+
+test('parseInspectorOptions - sets host and port to custom values', () => {
+  const cm = {
+    args: { inspect: '0.0.0.0:6666' },
+    current: {}
+  }
+
+  parseInspectorOptions(cm)
+  assert.deepStrictEqual(cm.current.inspectorOptions, {
+    host: '0.0.0.0',
+    port: 6666,
+    breakFirstLine: false,
+    watchDisabled: false
+  })
+})
+
+test('parseInspectorOptions - throws if the host is empty', () => {
+  assert.throws(() => {
+    const cm = {
+      args: { inspect: ':9229' },
+      current: {}
+    }
+
+    parseInspectorOptions(cm)
+  }, /Inspector host cannot be empty/)
+})
+
+test('parseInspectorOptions - differentiates valid and invalid ports', () => {
+  ;['127.0.0.1:', 'foo', '1', '-1', '1023', '65536'].forEach(inspectFlag => {
     assert.throws(() => {
       const cm = {
-        args: { inspect: '', 'inspect-brk': '' },
+        args: { inspect: inspectFlag },
         current: {}
       }
 
       parseInspectorOptions(cm)
-    }, /--inspect and --inspect-brk cannot be used together/)
+    }, /Inspector port must be 0 or in range 1024 to 65535/)
   })
 
-  await t.test('--inspect default settings', () => {
-    const cm = {
-      args: { inspect: '' },
-      current: {}
-    }
+  const cm = {
+    args: {},
+    current: {}
+  }
 
-    parseInspectorOptions(cm)
-    assert.deepStrictEqual(cm.current.inspectorOptions, {
-      host: '127.0.0.1',
-      port: 9229,
-      breakFirstLine: false,
-      watchDisabled: false
-    })
-  })
-
-  await t.test('--inspect-brk default settings', () => {
-    const cm = {
-      args: { 'inspect-brk': '' },
-      current: {}
-    }
-
-    parseInspectorOptions(cm)
-    assert.deepStrictEqual(cm.current.inspectorOptions, {
-      host: '127.0.0.1',
-      port: 9229,
-      breakFirstLine: true,
-      watchDisabled: false
-    })
-  })
-
-  await t.test('hot reloading is disabled if the inspector is used', () => {
-    const cm1 = {
-      args: { 'inspect-brk': '' },
-      current: { watch: true }
-    }
-
-    parseInspectorOptions(cm1)
-    assert.strictEqual(cm1.current.watch, false)
-
-    const cm2 = {
-      args: {},
-      current: { watch: true }
-    }
-
-    parseInspectorOptions(cm2)
-    assert.strictEqual(cm2.current.watch, true)
-  })
-
-  await t.test('sets port to a custom value', () => {
-    const cm = {
-      args: { inspect: '6666' },
-      current: {}
-    }
-
-    parseInspectorOptions(cm)
-    assert.deepStrictEqual(cm.current.inspectorOptions, {
-      host: '127.0.0.1',
-      port: 6666,
-      breakFirstLine: false,
-      watchDisabled: false
-    })
-  })
-
-  await t.test('sets host and port to custom values', () => {
-    const cm = {
-      args: { inspect: '0.0.0.0:6666' },
-      current: {}
-    }
-
-    parseInspectorOptions(cm)
-    assert.deepStrictEqual(cm.current.inspectorOptions, {
-      host: '0.0.0.0',
-      port: 6666,
-      breakFirstLine: false,
-      watchDisabled: false
-    })
-  })
-
-  await t.test('throws if the host is empty', () => {
-    assert.throws(() => {
-      const cm = {
-        args: { inspect: ':9229' },
-        current: {}
-      }
-
-      parseInspectorOptions(cm)
-    }, /Inspector host cannot be empty/)
-  })
-
-  await t.test('differentiates valid and invalid ports', () => {
-    ;['127.0.0.1:', 'foo', '1', '-1', '1023', '65536'].forEach(inspectFlag => {
-      assert.throws(() => {
-        const cm = {
-          args: { inspect: inspectFlag },
-          current: {}
-        }
-
-        parseInspectorOptions(cm)
-      }, /Inspector port must be 0 or in range 1024 to 65535/)
-    })
-
-    const cm = {
-      args: {},
-      current: {}
-    }
-
-    cm.args.inspect = '0'
-    parseInspectorOptions(cm)
-    assert.strictEqual(cm.current.inspectorOptions.port, 0)
-    cm.args.inspect = '1024'
-    parseInspectorOptions(cm)
-    assert.strictEqual(cm.current.inspectorOptions.port, 1024)
-    cm.args.inspect = '1025'
-    parseInspectorOptions(cm)
-    assert.strictEqual(cm.current.inspectorOptions.port, 1025)
-    cm.args.inspect = '65534'
-    parseInspectorOptions(cm)
-    assert.strictEqual(cm.current.inspectorOptions.port, 65534)
-    cm.args.inspect = '65535'
-    parseInspectorOptions(cm)
-    assert.strictEqual(cm.current.inspectorOptions.port, 65535)
-  })
+  cm.args.inspect = '0'
+  parseInspectorOptions(cm)
+  assert.strictEqual(cm.current.inspectorOptions.port, 0)
+  cm.args.inspect = '1024'
+  parseInspectorOptions(cm)
+  assert.strictEqual(cm.current.inspectorOptions.port, 1024)
+  cm.args.inspect = '1025'
+  parseInspectorOptions(cm)
+  assert.strictEqual(cm.current.inspectorOptions.port, 1025)
+  cm.args.inspect = '65534'
+  parseInspectorOptions(cm)
+  assert.strictEqual(cm.current.inspectorOptions.port, 65534)
+  cm.args.inspect = '65535'
+  parseInspectorOptions(cm)
+  assert.strictEqual(cm.current.inspectorOptions.port, 65535)
 })
 
 test('same schemaOptions as platformatic service', async () => {
@@ -232,7 +233,7 @@ test('correctly loads the watch value from a string', async () => {
 
 test('defaults the service name to `main` if there is no package.json', async t => {
   const configFile = join(fixturesDir, 'dbAppNoPackageJson', 'platformatic.db.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticDB)
+  const config = await loadConfig({}, ['-c', configFile], platformaticDatabase)
   const runtimeConfig = await wrapConfigInRuntimeConfig(config)
   const conf = runtimeConfig.current
   assert.strictEqual(conf.services.length, 1)
@@ -241,7 +242,7 @@ test('defaults the service name to `main` if there is no package.json', async t 
 
 test('uses the name in package.json', async t => {
   const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticDB)
+  const config = await loadConfig({}, ['-c', configFile], platformaticDatabase)
   const runtimeConfig = await wrapConfigInRuntimeConfig(config)
   const conf = runtimeConfig.current
   assert.strictEqual(conf.services.length, 1)
@@ -250,7 +251,7 @@ test('uses the name in package.json', async t => {
 
 test('uses the name in package.json, removing the scope', async t => {
   const configFile = join(fixturesDir, 'dbApp', 'platformatic.db.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticDB)
+  const config = await loadConfig({}, ['-c', configFile], platformaticDatabase)
   const runtimeConfig = await wrapConfigInRuntimeConfig(config)
   const conf = runtimeConfig.current
   assert.strictEqual(conf.services.length, 1)
@@ -259,7 +260,7 @@ test('uses the name in package.json, removing the scope', async t => {
 
 test('defaults name to `main` if package.json exists but has no name', async t => {
   const configFile = join(fixturesDir, 'dbAppNoName', 'platformatic.db.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticDB)
+  const config = await loadConfig({}, ['-c', configFile], platformaticDatabase)
   const runtimeConfig = await wrapConfigInRuntimeConfig(config)
   const conf = runtimeConfig.current
   assert.strictEqual(conf.services.length, 1)
@@ -272,7 +273,7 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
   const configFile = join(fixturesDir, 'wrapped-runtime', 'platformatic.json')
 
   // Do not use loadConfig here, as the schema is purposefully invalid
-  const config = await loadConfig({}, ['-c', configFile], platformaticDB, {}, true, null, { validation: false })
+  const config = await loadConfig({}, ['-c', configFile], platformaticDatabase, {}, true, null, { validation: false })
 
   const runtimeConfig = await wrapConfigInRuntimeConfig(config)
   const conf = runtimeConfig.current
@@ -289,13 +290,13 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
       gitBranch: 'main',
       health: {},
       id: 'main',
-      isPLTService: true,
       localServiceEnvVars: new Map(),
       localUrl: 'http://main.plt.local',
       path: dirname(configFile),
       sourceMaps: false,
       type: 'db',
-      watch: false
+      watch: false,
+      skipTelemetryHooks: true
     }
   ])
 })
@@ -322,39 +323,6 @@ test('loads with the store', async t => {
   })
 
   await configManager.parseAndValidate(false)
-})
-
-test('set isPLTService on plt services', async t => {
-  const cwd = process.cwd()
-  process.chdir(join(fixturesDir, 'configs'))
-  t.after(() => {
-    process.chdir(cwd)
-  })
-  const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
-
-  const store = new Store()
-  store.add(platformaticRuntime)
-
-  const { configManager } = await store.loadConfig({
-    config: configFile,
-    overrides: {
-      fixPaths: false,
-      onMissingEnv (key) {
-        return '{' + key + '}'
-      }
-    }
-  })
-
-  await configManager.parseAndValidate(false)
-  const config = configManager.current
-
-  const dbApp = config.serviceMap.get('db-app')
-  const serviceApp = config.serviceMap.get('serviceApp')
-  const nodeApp = config.serviceMap.get('node')
-
-  assert.strictEqual(dbApp.isPLTService, true)
-  assert.strictEqual(serviceApp.isPLTService, true)
-  assert.strictEqual(nodeApp.isPLTService, false)
 })
 
 test('set type on services', async t => {
@@ -570,14 +538,14 @@ for (const { title, transform } of sourceMapTests) {
     process.chdir(tmpDir)
     t.after(async () => {
       process.chdir(prev)
-      await safeRemove(base)
+      // await safeRemove(base)
     })
 
     const folder = join(fixturesDir, 'typescript')
     await cp(folder, tmpDir, { recursive: true })
 
     const { execa } = await import('execa')
-    const cliPath = join(__dirname, '..', 'runtime.mjs')
+    const cliPath = join(__dirname, '../bin/plt-runtime.mjs')
     await execa(cliPath, ['compile'])
 
     const configFile = join(tmpDir, 'platformatic.runtime.json')

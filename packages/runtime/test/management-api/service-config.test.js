@@ -7,8 +7,9 @@ const { Client } = require('undici')
 
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
 
-const platformaticVersion = require('../../package.json').version
+test.beforeEach(setLogFile)
 
 test('should get service config', async t => {
   const projectDir = join(fixturesDir, 'management-api')
@@ -43,7 +44,7 @@ test('should get service config', async t => {
   const serviceConfig = await body.json()
 
   assert.deepStrictEqual(serviceConfig, {
-    $schema: `https://schemas.platformatic.dev/@platformatic/service/${platformaticVersion}.json`,
+    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
       port: 0,

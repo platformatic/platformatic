@@ -4,7 +4,7 @@ import assert from 'node:assert'
 import { on } from 'node:events'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { cliPath, start } from './helper.mjs'
+import { start, startPath } from './helper.mjs'
 
 test('autostart', async () => {
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
@@ -29,14 +29,12 @@ test('start command', async () => {
 test('handles startup errors', async t => {
   const { execa } = await import('execa')
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'service-throws-on-start.json')
-  const child = execa(process.execPath, [cliPath, 'start', '-c', config], { encoding: 'utf8' })
+  const child = execa(process.execPath, [startPath, '-c', config], { encoding: 'utf8' })
   let stdout = ''
   let found = false
 
   for await (const messages of on(child.stdout, 'data')) {
     for (const message of messages) {
-      // Uncomment the following line if you need to debug issues on this test case
-      // console.log('message', message.toString())
       stdout += message
 
       if (/boom/.test(stdout)) {
@@ -62,7 +60,7 @@ test('handles startup errors', async t => {
 test('does not start if node inspector flags are provided', async t => {
   const { execa } = await import('execa')
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
-  const child = execa(process.execPath, [cliPath, 'start', '-c', config], {
+  const child = execa(process.execPath, [startPath, '-c', config], {
     env: { NODE_OPTIONS: '--inspect' },
     encoding: 'utf8'
   })
@@ -96,7 +94,7 @@ test('does not start if node inspector flags are provided', async t => {
 test('does start if node inspector flag is provided by VS Code', async t => {
   const { execa } = await import('execa')
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
-  const child = execa(process.execPath, [cliPath, 'start', '-c', config], {
+  const child = execa(process.execPath, [startPath, '-c', config], {
     env: { NODE_OPTIONS: '--inspect', VSCODE_INSPECTOR_OPTIONS: '{ port: 3042 }' },
     encoding: 'utf8'
   })
@@ -105,8 +103,6 @@ test('does start if node inspector flag is provided by VS Code', async t => {
 
   for await (const messages of on(child.stdout, 'data')) {
     for (const message of messages) {
-      // Uncomment the following line if you need to debug issues on this test case
-      // console.log('message', message.toString())
       stdout += message
 
       if (/Started the service/.test(stdout)) {
@@ -131,7 +127,7 @@ test('does start if node inspector flag is provided by VS Code', async t => {
 test('starts the inspector', async t => {
   const { execa } = await import('execa')
   const config = join(import.meta.url, '..', '..', 'fixtures', 'configs', 'monorepo.json')
-  const child = execa(process.execPath, [cliPath, 'start', '-c', config, '--inspect'], {
+  const child = execa(process.execPath, [startPath, '-c', config, '--inspect'], {
     encoding: 'utf8'
   })
   let stderr = ''
@@ -140,8 +136,6 @@ test('starts the inspector', async t => {
 
   for await (const messages of on(child.stderr, 'data')) {
     for (const message of messages) {
-      // Uncomment the following line if you need to debug issues on this test case
-      // console.log(message.toString())
       stderr += message
 
       if (new RegExp(`Debugger listening on ws://127\\.0\\.0\\.1:${9230 + port}`).test(stderr)) {

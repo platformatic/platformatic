@@ -6,7 +6,7 @@ const { tmpdir } = require('node:os')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const { unlink, mkdtemp, cp, readFile } = require('node:fs/promises')
-const { buildServer: buildService } = require('../../service')
+const { create } = require('../../service')
 const { buildOpenAPIClient } = require('..')
 const Fastify = require('fastify')
 const { safeRemove } = require('@platformatic/utils')
@@ -24,7 +24,7 @@ test('build basic client from file with (endpoint with duplicated parameters)', 
   } catch {
     // noop
   }
-  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+  const app = await create(join(tmpDir, 'platformatic.service.json'))
 
   t.after(async () => {
     await app.close()
@@ -64,7 +64,7 @@ test('build basic client from file (enpoint with no parameters)', async t => {
   } catch {
     // noop
   }
-  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+  const app = await create(join(tmpDir, 'platformatic.service.json'))
 
   t.after(async () => {
     await app.close()
@@ -109,7 +109,7 @@ test('build basic client from file (query array parameter)', async t => {
   } catch {
     // noop
   }
-  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+  const app = await create(join(tmpDir, 'platformatic.service.json'))
 
   t.after(async () => {
     await app.close()
@@ -163,7 +163,7 @@ test('build basic client from file (path parameter)', async t => {
   } catch {
     // noop
   }
-  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+  const app = await create(join(tmpDir, 'platformatic.service.json'))
 
   t.after(async () => {
     await app.close()
@@ -250,7 +250,7 @@ test('validate response', async t => {
   } catch {
     // noop
   }
-  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+  const app = await create(join(tmpDir, 'platformatic.service.json'))
 
   t.after(async () => {
     await app.close()
@@ -430,7 +430,7 @@ test('should not throw when params are not passed', async t => {
   } catch {
     // noop
   }
-  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+  const app = await create(join(tmpDir, 'platformatic.service.json'))
 
   t.after(async () => {
     await app.close()
@@ -460,7 +460,7 @@ test('do not set bodies for methods that should not have them', async t => {
   } catch {
     // noop
   }
-  const app = await buildService(join(tmpDir, 'platformatic.service.json'))
+  const app = await create(join(tmpDir, 'platformatic.service.json'))
 
   t.after(async () => {
     await app.close()
@@ -506,7 +506,7 @@ test('do not set bodies for methods that should not have them', async t => {
 
 test('multipart/form-data', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'sample-service')
-  const app = await buildService(join(fixtureDirPath, 'platformatic.json'))
+  const app = await create(join(fixtureDirPath, 'platformatic.json'))
 
   t.after(async () => {
     await app.close()
@@ -531,7 +531,7 @@ test('multipart/form-data', async t => {
 
 test('multipart/form-data with files', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'sample-service')
-  const app = await buildService(join(fixtureDirPath, 'platformatic.json'))
+  const app = await create(join(fixtureDirPath, 'platformatic.json'))
 
   t.after(async () => {
     await app.close()
@@ -553,7 +553,7 @@ test('multipart/form-data with files', async t => {
 
 test('multipart/form-data without FormData', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'sample-service')
-  const app = await buildService(join(fixtureDirPath, 'platformatic.json'))
+  const app = await create(join(fixtureDirPath, 'platformatic.json'))
 
   t.after(async () => {
     await app.close()
@@ -575,7 +575,7 @@ test('multipart/form-data without FormData', async t => {
 
 test('multipart/form-data with files AND fields', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'sample-service')
-  const app = await buildService(join(fixtureDirPath, 'platformatic.json'))
+  const app = await create(join(fixtureDirPath, 'platformatic.json'))
 
   t.after(async () => {
     await app.close()

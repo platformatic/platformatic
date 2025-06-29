@@ -6,7 +6,7 @@ const { test } = require('node:test')
 const { join } = require('node:path')
 const { mkdtemp, cp, unlink } = require('node:fs/promises')
 const Fastify = require('fastify')
-const { buildServer } = require('../../db')
+const { create } = require('../../db')
 const client = require('..')
 const { safeRemove } = require('@platformatic/utils')
 require('./helper')
@@ -21,7 +21,7 @@ test('app decorator with GraphQL', async t => {
   } catch {
     // noop
   }
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
 
   t.after(async () => {
     await targetApp.close()

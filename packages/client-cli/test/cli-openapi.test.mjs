@@ -1,17 +1,17 @@
-import { request, moveToTmpdir, safeKill } from './helper.js'
-import { test, after } from 'node:test'
-import { ok, equal, deepEqual as same, rejects } from 'node:assert'
-import { match } from '@platformatic/utils'
 import { buildServer } from '@platformatic/runtime'
-import { join } from 'path'
+import { match } from '@platformatic/utils'
 import * as desm from 'desm'
-import { execa } from 'execa'
-import { promises as fs, existsSync } from 'fs'
-import split from 'split2'
-import { copy } from 'fs-extra'
 import dotenv from 'dotenv'
+import { execa } from 'execa'
+import { existsSync, promises as fs } from 'fs'
+import { copy } from 'fs-extra'
 import { readFile } from 'fs/promises'
+import { equal, ok, rejects, deepEqual as same } from 'node:assert'
+import { after, test } from 'node:test'
+import { join } from 'path'
+import split from 'split2'
 import { isFileAccessible } from '../cli.mjs'
+import { moveToTmpdir, request, safeKill } from './helper.js'
 
 const env = { ...process.env, NODE_V8_COVERAGE: undefined }
 
@@ -26,7 +26,7 @@ function findTSCPath () {
   return tscPath
 }
 
-test('openapi client generation (javascript)', async (t) => {
+test('openapi client generation (javascript)', async t => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -58,7 +58,9 @@ app.listen({ port: 0 })
 
   const app2 = execa('node', ['index.js'], { env })
   t.after(() => safeKill(app2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -83,7 +85,7 @@ app.listen({ port: 0 })
   })
 })
 
-test('openapi client generation (typescript)', async (t) => {
+test('openapi client generation (typescript)', async t => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -95,7 +97,12 @@ test('openapi client generation (typescript)', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [
+    desm.join(import.meta.url, '..', 'cli.mjs'),
+    app.url + '/documentation/json',
+    '--name',
+    'movies'
+  ])
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -121,16 +128,20 @@ app.listen({ port: 0 });
 
   await fs.writeFile(join(dir, 'index.ts'), toWrite)
 
-  const tsconfig = JSON.stringify({
-    extends: 'fastify-tsconfig',
-    compilerOptions: {
-      outDir: 'build',
-      target: 'es2018',
-      moduleResolution: 'NodeNext',
-      lib: ['es2018'],
-      esModuleInterop: true
-    }
-  }, null, 2)
+  const tsconfig = JSON.stringify(
+    {
+      extends: 'fastify-tsconfig',
+      compilerOptions: {
+        outDir: 'build',
+        target: 'es2018',
+        moduleResolution: 'NodeNext',
+        lib: ['es2018'],
+        esModuleInterop: true
+      }
+    },
+    null,
+    2
+  )
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
@@ -142,7 +153,9 @@ app.listen({ port: 0 });
 
   const server2 = execa('node', ['build/index.js'], { env })
   t.after(() => safeKill(server2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
   server2.stderr.pipe(process.stderr)
@@ -168,7 +181,7 @@ app.listen({ port: 0 });
   })
 })
 
-test('openapi client generation (javascript) with slash at the end', async (t) => {
+test('openapi client generation (javascript) with slash at the end', async t => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -180,7 +193,12 @@ test('openapi client generation (javascript) with slash at the end', async (t) =
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [
+    desm.join(import.meta.url, '..', 'cli.mjs'),
+    app.url + '/documentation/json',
+    '--name',
+    'movies'
+  ])
 
   const toWrite = `
 'use strict'
@@ -200,7 +218,9 @@ app.listen({ port: 0 })
 
   const server2 = execa('node', ['index.js'], { env })
   t.after(() => safeKill(server2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -225,7 +245,7 @@ app.listen({ port: 0 })
   })
 })
 
-test('no such file', async (t) => {
+test('no such file', async t => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -242,11 +262,11 @@ test('no such file', async (t) => {
   await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), `${app.url}/foo/bar`, '--name', 'movies']))
 })
 
-test('no such file', async (t) => {
+test('no such file', async t => {
   await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs')]))
 })
 
-test('datatypes', async (t) => {
+test('datatypes', async t => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'db.sqlite'))
   } catch {
@@ -258,7 +278,12 @@ test('datatypes', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [
+    desm.join(import.meta.url, '..', 'cli.mjs'),
+    app.url + '/documentation/json',
+    '--name',
+    'movies'
+  ])
 
   const toWrite = `
 'use strict'
@@ -278,7 +303,9 @@ app.listen({ port: 0 })
 
   const server2 = execa('node', ['index.js'], { env })
   t.after(() => safeKill(server2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -297,13 +324,16 @@ app.listen({ port: 0 })
     method: 'POST'
   })
   const body = await res.body.json()
-  equal(match(body, {
-    id: 1,
-    title: 'foo'
-  }), true)
+  equal(
+    match(body, {
+      id: 1,
+      title: 'foo'
+    }),
+    true
+  )
 })
 
-test('configureClient (typescript)', async (t) => {
+test('configureClient (typescript)', async t => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -315,7 +345,12 @@ test('configureClient (typescript)', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [
+    desm.join(import.meta.url, '..', 'cli.mjs'),
+    app.url + '/documentation/json',
+    '--name',
+    'movies'
+  ])
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -344,16 +379,20 @@ app.listen({ port: 0 });
 
   await fs.writeFile(join(dir, 'index.ts'), toWrite)
 
-  const tsconfig = JSON.stringify({
-    extends: 'fastify-tsconfig',
-    compilerOptions: {
-      outDir: 'build',
-      target: 'es2018',
-      moduleResolution: 'NodeNext',
-      lib: ['es2018'],
-      esModuleInterop: true
-    }
-  }, null, 2)
+  const tsconfig = JSON.stringify(
+    {
+      extends: 'fastify-tsconfig',
+      compilerOptions: {
+        outDir: 'build',
+        target: 'es2018',
+        moduleResolution: 'NodeNext',
+        lib: ['es2018'],
+        esModuleInterop: true
+      }
+    },
+    null,
+    2
+  )
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
@@ -365,7 +404,9 @@ app.listen({ port: 0 });
 
   const server2 = execa('node', ['build/index.js'])
   t.after(() => safeKill(server2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
   server2.stderr.pipe(process.stderr)
@@ -391,7 +432,7 @@ app.listen({ port: 0 });
   })
 })
 
-test('dotenv & config support', async (t) => {
+test('dotenv & config support', async t => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -422,7 +463,12 @@ test('dotenv & config support', async (t) => {
   await fs.writeFile(join(dir, '.env'), 'FOO=bar')
   await fs.writeFile(join(dir, '.env.sample'), 'FOO=bar')
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [
+    desm.join(import.meta.url, '..', 'cli.mjs'),
+    app.url + '/documentation/json',
+    '--name',
+    'movies'
+  ])
 
   const url = app.url + '/'
   {
@@ -442,7 +488,7 @@ test('dotenv & config support', async (t) => {
   }
 })
 
-test('full-response option', async (t) => {
+test('full-response option', async t => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -454,7 +500,13 @@ test('full-response option', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--full-response'])
+  await execa('node', [
+    desm.join(import.meta.url, '..', 'cli.mjs'),
+    app.url + '/documentation/json',
+    '--name',
+    'movies',
+    '--full-response'
+  ])
 
   const toWrite = `
 'use strict'
@@ -473,7 +525,9 @@ app.listen({ port: 0 })
   await fs.writeFile(join(dir, 'index.js'), toWrite)
   const app2 = execa('node', ['index.js'])
   t.after(() => safeKill(app2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -496,21 +550,24 @@ app.listen({ port: 0 })
     const matchDate = /[a-z]{3}, \d{2} [a-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT/i
     const matchKeepAlive = /timeout=\d+/
 
-    equal(match(body, {
-      statusCode: 200,
-      headers: {
-        location: '/movies/1',
-        'content-type': 'application/json; charset=utf-8',
-        'content-length': '22',
-        date: matchDate,
-        connection: 'keep-alive',
-        'keep-alive': matchKeepAlive
-      },
-      body: {
-        id: 1,
-        title: 'foo'
-      }
-    }), true)
+    equal(
+      match(body, {
+        statusCode: 200,
+        headers: {
+          location: '/movies/1',
+          'content-type': 'application/json; charset=utf-8',
+          'content-length': '22',
+          date: matchDate,
+          connection: 'keep-alive',
+          'keep-alive': matchKeepAlive
+        },
+        body: {
+          id: 1,
+          title: 'foo'
+        }
+      }),
+      true
+    )
   }
 
   {
@@ -520,7 +577,7 @@ app.listen({ port: 0 })
   }
 })
 
-test('openapi client generation (javascript) from file', async (t) => {
+test('openapi client generation (javascript) from file', async t => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -532,7 +589,7 @@ test('openapi client generation (javascript) from file', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  const openAPI = app.swagger()
+  const openAPI = app.getApplication().swagger()
   const openAPIfile = join(dir, 'movies.schema.json')
   await fs.writeFile(openAPIfile, JSON.stringify(openAPI, null, 2))
 
@@ -556,7 +613,9 @@ app.listen({ port: 0 })
 
   const app2 = execa('node', ['index.js'])
   t.after(() => safeKill(app2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -581,7 +640,7 @@ app.listen({ port: 0 })
   })
 })
 
-test('name with dashes', async (t) => {
+test('name with dashes', async t => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -593,12 +652,12 @@ test('name with dashes', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  try {
-    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny-movies'])
-  } catch (err) {
-    console.log(err.stderr)
-    throw err
-  }
+  await execa('node', [
+    desm.join(import.meta.url, '..', 'cli.mjs'),
+    app.url + '/documentation/json',
+    '--name',
+    'uncanny-movies'
+  ])
 
   {
     const pkg = JSON.parse(await fs.readFile(join(dir, 'uncanny-movies', 'package.json'), 'utf-8'))
@@ -627,7 +686,9 @@ app.listen({ port: 0 })
 
   const app2 = execa('node', ['index.js'])
   t.after(() => safeKill(app2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -652,7 +713,7 @@ app.listen({ port: 0 })
   })
 })
 
-test('no dashes typescript', async (t) => {
+test('no dashes typescript', async t => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -663,7 +724,12 @@ test('no dashes typescript', async (t) => {
   await app.start()
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny-movies'])
+  await execa('node', [
+    desm.join(import.meta.url, '..', 'cli.mjs'),
+    app.url + '/documentation/json',
+    '--name',
+    'uncanny-movies'
+  ])
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -684,16 +750,20 @@ app.listen({ port: 0 });
 
   await fs.writeFile(join(dir, 'index.ts'), toWrite)
 
-  const tsconfig = JSON.stringify({
-    extends: 'fastify-tsconfig',
-    compilerOptions: {
-      outDir: 'build',
-      target: 'es2018',
-      moduleResolution: 'NodeNext',
-      lib: ['es2018'],
-      esModuleInterop: true
-    }
-  }, null, 2)
+  const tsconfig = JSON.stringify(
+    {
+      extends: 'fastify-tsconfig',
+      compilerOptions: {
+        outDir: 'build',
+        target: 'es2018',
+        moduleResolution: 'NodeNext',
+        lib: ['es2018'],
+        esModuleInterop: true
+      }
+    },
+    null,
+    2
+  )
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
@@ -705,7 +775,9 @@ app.listen({ port: 0 });
 
   const server2 = execa('node', ['build/index.js'])
   t.after(() => safeKill(server2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
   server2.stderr.pipe(process.stderr)
@@ -731,7 +803,7 @@ app.listen({ port: 0 });
   })
 })
 
-test('name with tilde', async (t) => {
+test('name with tilde', async t => {
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -743,12 +815,12 @@ test('name with tilde', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  try {
-    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny~movies'])
-  } catch (err) {
-    console.log(err.stderr)
-    throw err
-  }
+  await execa('node', [
+    desm.join(import.meta.url, '..', 'cli.mjs'),
+    app.url + '/documentation/json',
+    '--name',
+    'uncanny~movies'
+  ])
 
   {
     const pkg = JSON.parse(await fs.readFile(join(dir, 'uncanny~movies', 'package.json'), 'utf-8'))
@@ -777,7 +849,9 @@ app.listen({ port: 0 })
 
   const app2 = execa('node', ['index.js'])
   t.after(() => safeKill(app2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
@@ -802,7 +876,7 @@ app.listen({ port: 0 })
   })
 })
 
-test('openapi client generation from YAML file', async (t) => {
+test('openapi client generation from YAML file', async t => {
   const dir = await moveToTmpdir(after)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'openapi.yaml')
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
@@ -820,7 +894,7 @@ test('openapi client generation from YAML file', async (t) => {
   equal(match(typeData, 'getMovies(req: GetMoviesRequest): Promise<GetMoviesResponses>;'), true)
 })
 
-test('nested optional parameters are correctly identified', async (t) => {
+test('nested optional parameters are correctly identified', async t => {
   const dir = await moveToTmpdir(after)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'optional-params-openapi.json')
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
@@ -829,19 +903,23 @@ test('nested optional parameters are correctly identified', async (t) => {
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
 
-  equal(data.includes(`
+  equal(
+    data.includes(`
   export type GetMoviesResponseOK = { 'data'?: { 'foo': string; 'bar'?: string; 'baz'?: { 'nested1'?: string; 'nested2': string } } }
-`), true)
+`),
+    true
+  )
 })
 
-test('request with same parameter name in body/path/header/query', async (t) => {
+test('request with same parameter name in body/path/header/query', async t => {
   const dir = await moveToTmpdir(after)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'same-parameter-name-openapi.json')
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
   // check the type file has the correct implementation for the request
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
-  equal(data.includes(`
+  equal(
+    data.includes(`
   export type GetMoviesRequest = {
     body: {
       'id': string;
@@ -855,24 +933,33 @@ test('request with same parameter name in body/path/header/query', async (t) => 
     headers: {
       'id': string;
     }
-  }`), true)
+  }`),
+    true
+  )
 })
 
-test('openapi client generation (javascript) from file with fullRequest, fullResponse, validateResponse and optionalHeaders', async (t) => {
+test('openapi client generation (javascript) from file with fullRequest, fullResponse, validateResponse and optionalHeaders', async t => {
   const openapi = desm.join(import.meta.url, 'fixtures', 'full-req-res', 'openapi.json')
   const dir = await moveToTmpdir(after)
 
-  const fullOptions = [
-    ['--full-request', '--full-response'],
-    ['--full']
-  ]
+  const fullOptions = [['--full-request', '--full-response'], ['--full']]
   for (const opt of fullOptions) {
-    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', 'full', '--validate-response', '--optional-headers', 'headerId', ...opt])
+    await execa('node', [
+      desm.join(import.meta.url, '..', 'cli.mjs'),
+      openapi,
+      '--name',
+      'full',
+      '--validate-response',
+      '--optional-headers',
+      'headerId',
+      ...opt
+    ])
 
     // check the type file has the correct implementation for the request and the response
     const typeFile = join(dir, 'full', 'full.d.ts')
     const data = await readFile(typeFile, 'utf-8')
-    equal(data.includes(`
+    equal(
+      data.includes(`
   export type PostHelloRequest = {
     body: {
       'bodyId': string;
@@ -884,19 +971,25 @@ test('openapi client generation (javascript) from file with fullRequest, fullRes
       'headerId'?: string;
     }
   }
-`), true)
-    equal(data.includes(`
+`),
+      true
+    )
+    equal(
+      data.includes(`
   export type Full = {
     /**
      * @param req - request parameters object
      * @returns the API response
      */
     postHello(req: PostHelloRequest): Promise<PostHelloResponses>;
-  }`), true)
+  }`),
+      true
+    )
     const implementationFile = join(dir, 'full', 'full.cjs')
     const implementationData = await readFile(implementationFile, 'utf-8')
     // check the implementation instantiate the client with fullRequest and fullResponse
-    equal(implementationData.includes(`
+    equal(
+      implementationData.includes(`
 async function generateFullClientPlugin (app, opts) {
   app.register(pltClient, {
     type: 'openapi',
@@ -910,11 +1003,13 @@ async function generateFullClientPlugin (app, opts) {
     validateResponse: true,
     getHeaders: opts.getHeaders
   })
-}`), true)
+}`),
+      true
+    )
   }
 })
 
-test('do not generate implementation file if in platformatic service', async (t) => {
+test('do not generate implementation file if in platformatic service', async t => {
   const openapi = desm.join(import.meta.url, 'fixtures', 'full-req-res', 'openapi.json')
   const dir = await moveToTmpdir(after)
 
@@ -931,19 +1026,26 @@ test('do not generate implementation file if in platformatic service', async (t)
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
 
-  const fullOptions = [
-    ['--full-request', '--full-response'],
-    ['--full']
-  ]
+  const fullOptions = [['--full-request', '--full-response'], ['--full']]
   for (const opt of fullOptions) {
-    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', 'full', '--validate-response', '--optional-headers', 'headerId', ...opt])
+    await execa('node', [
+      desm.join(import.meta.url, '..', 'cli.mjs'),
+      openapi,
+      '--name',
+      'full',
+      '--validate-response',
+      '--optional-headers',
+      'headerId',
+      ...opt
+    ])
 
     equal(await isFileAccessible(join(dir, 'full', 'full.cjs')), false)
 
     // check the type file has the correct implementation for the request and the response
     const typeFile = join(dir, 'full', 'full.d.ts')
     const data = await readFile(typeFile, 'utf-8')
-    equal(data.includes(`
+    equal(
+      data.includes(`
   export type PostHelloRequest = {
     body: {
       'bodyId': string;
@@ -955,34 +1057,50 @@ test('do not generate implementation file if in platformatic service', async (t)
       'headerId'?: string;
     }
   }
-`), true)
-    equal(data.includes(`
+`),
+      true
+    )
+    equal(
+      data.includes(`
   export type Full = {
     /**
      * @param req - request parameters object
      * @returns the API response
      */
     postHello(req: PostHelloRequest): Promise<PostHelloResponses>;
-  }`), true)
+  }`),
+      true
+    )
   }
 })
 
-test('optional-headers option', async (t) => {
+test('optional-headers option', async t => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'optional-headers-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--optional-headers', 'foobar,authorization', '--types-only'])
+  await execa('node', [
+    desm.join(import.meta.url, '..', 'cli.mjs'),
+    openAPIfile,
+    '--name',
+    'movies',
+    '--optional-headers',
+    'foobar,authorization',
+    '--types-only'
+  ])
 
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
-  equal(data.includes(`
+  equal(
+    data.includes(`
   export type PostHelloRequest = {
     'authorization'?: string;
   }
-`), true)
+`),
+    true
+  )
 })
 
-test('common parameters in paths', async (t) => {
+test('common parameters in paths', async t => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'common-parameters', 'openapi.json')
@@ -990,7 +1108,8 @@ test('common parameters in paths', async (t) => {
 
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
-  equal(data.includes(`
+  equal(
+    data.includes(`
   export type GetPathWithFieldIdRequest = {
     path: {
       /**
@@ -1005,8 +1124,11 @@ test('common parameters in paths', async (t) => {
       'movieId': string;
     }
   }
-`), true)
-  equal(data.includes(`
+`),
+    true
+  )
+  equal(
+    data.includes(`
   export type GetSampleRequest = {
     query: {
       /**
@@ -1015,8 +1137,11 @@ test('common parameters in paths', async (t) => {
       'movieId': string;
     }
   }
-`), true)
-  equal(data.includes(`
+`),
+    true
+  )
+  equal(
+    data.includes(`
   export type PostPathWithFieldIdRequest = {
     path: {
       /**
@@ -1025,18 +1150,28 @@ test('common parameters in paths', async (t) => {
       'fieldId': string;
     }
   }
-`), true)
+`),
+    true
+  )
   // test implementation
   try {
     await fs.unlink(desm.join(import.meta.url, 'fixtures', 'common-parameters', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'common-parameters', 'platformatic.service.json'))
+  const app = await buildServer(
+    desm.join(import.meta.url, 'fixtures', 'common-parameters', 'platformatic.service.json')
+  )
 
   await app.start()
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'commonparams', '--full-request'])
+  await execa('node', [
+    desm.join(import.meta.url, '..', 'cli.mjs'),
+    openAPIfile,
+    '--name',
+    'commonparams',
+    '--full-request'
+  ])
 
   const toWrite = `
 'use strict'
@@ -1066,7 +1201,9 @@ app.listen({ port: 0 })
 
   const server2 = execa('node', ['index.js'])
   t.after(() => safeKill(server2))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
@@ -1097,7 +1234,7 @@ app.listen({ port: 0 })
   }
 })
 
-test('requestbody as array', async (t) => {
+test('requestbody as array', async t => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'requestbody-as-array-openapi.json')
@@ -1105,7 +1242,8 @@ test('requestbody as array', async (t) => {
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
 
-  equal(data.includes(`
+  equal(
+    data.includes(`
   export type Movies = {
     /**
      * @param req - request parameters object
@@ -1113,11 +1251,13 @@ test('requestbody as array', async (t) => {
      */
     postFoobar(req: PostFoobarRequest): Promise<PostFoobarResponses>;
   }
-`), true)
-  equal(data.includes('export type PostFoobarRequest = Array<{ \'id\'?: string; \'title\'?: string }>'), true)
+`),
+    true
+  )
+  equal(data.includes("export type PostFoobarRequest = Array<{ 'id'?: string; 'title'?: string }>"), true)
 })
 
-test('requestBody and params should generate a full request', async (t) => {
+test('requestBody and params should generate a full request', async t => {
   const dir = await moveToTmpdir(after)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'requestbody-and-parameters-openapi.json')
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
@@ -1125,22 +1265,26 @@ test('requestBody and params should generate a full request', async (t) => {
   // check the type file has the correct implementation for the request
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
-  equal(data.includes(`
+  equal(
+    data.includes(`
   export type PutFooRequest = {
     'bar': string;
     body: Array<{ 'codeType': 'customField'; 'externalId': unknown; 'internalId': string; 'kind': 'mapped' } | { 'codeType': 'costCenter'; 'externalId': unknown; 'kind': 'mapped' } | { 'externalId': unknown; 'kind': 'notMapped' }>
   }
-`), true)
+`),
+    true
+  )
 })
 
-test('support formdata', async (t) => {
+test('support formdata', async t => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'multipart-formdata-openapi.json')
   await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies'])
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
-  equal(data.includes(`
+  equal(
+    data.includes(`
   export type Movies = {
     /**
      * @param req - request parameters object
@@ -1148,14 +1292,19 @@ test('support formdata', async (t) => {
      */
     postSample(req: PostSampleRequest): Promise<PostSampleResponses>;
   }
-`), true)
-  equal(data.includes(`
+`),
+    true
+  )
+  equal(
+    data.includes(`
   export type PostSampleRequest = {
     'data': { 'description'?: string; 'endDate': string | Date; 'startDate': string | Date };
-  }`), true)
+  }`),
+    true
+  )
 })
 
-test('export formdata on full request object', async (t) => {
+test('export formdata on full request object', async t => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'multipart-formdata-openapi.json')
@@ -1163,13 +1312,16 @@ test('export formdata on full request object', async (t) => {
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   equal(data.includes("import { type FormData } from 'undici"), true)
-  equal(data.includes(`
+  equal(
+    data.includes(`
   export type PostSampleRequest = {
     body: FormData;
-  }`), true)
+  }`),
+    true
+  )
 })
 
-test('client with watt.json and skipConfigUpdate', async (t) => {
+test('client with watt.json and skipConfigUpdate', async t => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'client-with-config', 'openapi.json')
@@ -1178,17 +1330,21 @@ test('client with watt.json and skipConfigUpdate', async (t) => {
   const data = await readFile(join(dir, 'client', 'client.d.ts'), 'utf-8')
   ok(data.includes("import { type FormData } from 'undici"))
   ok(data.includes('type ClientPlugin = FastifyPluginAsync<NonNullable<client.ClientOptions>>'))
-  ok(data.includes(`
+  ok(
+    data.includes(`
   interface FastifyRequest {
     'client': client.Client;
-  }`))
+  }`)
+  )
 
-  const wattConfig = JSON.parse(await readFile(desm.join(import.meta.url, 'fixtures', 'client-with-config', 'watt.json'), 'utf-8'))
+  const wattConfig = JSON.parse(
+    await readFile(desm.join(import.meta.url, 'fixtures', 'client-with-config', 'watt.json'), 'utf-8')
+  )
   ok('$schema' in wattConfig)
   ok(!('clients' in wattConfig), 'watt.json config has no clients')
 })
 
-test('tsdoc client description', async (t) => {
+test('tsdoc client description', async t => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'tsdoc-openapi.json')
@@ -1197,7 +1353,8 @@ test('tsdoc client description', async (t) => {
   const data = await readFile(join(dir, 'tsdoc', 'tsdoc.d.ts'), 'utf-8')
 
   // Title and description on request client
-  ok(data.includes(`
+  ok(
+    data.includes(`
   interface FastifyRequest {
     /**
      * Movies API
@@ -1205,10 +1362,11 @@ test('tsdoc client description', async (t) => {
      * An API with movies in it
      */
     'tsdoc': tsdoc.Tsdoc;
-  }`))
+  }`)
+  )
 })
 
-test('tsdoc client operation descriptions', async (t) => {
+test('tsdoc client operation descriptions', async t => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'tsdoc-openapi.json')
@@ -1217,7 +1375,8 @@ test('tsdoc client operation descriptions', async (t) => {
   const data = await readFile(join(dir, 'tsdoc', 'tsdoc.d.ts'), 'utf-8')
 
   // Description and summary on method
-  ok(data.includes(`
+  ok(
+    data.includes(`
     /**
      * Create a movie
      *
@@ -1225,38 +1384,45 @@ test('tsdoc client operation descriptions', async (t) => {
      * @param req - request parameters object
      * @returns the API response body
      */
-    createMovie(req: CreateMovieRequest): Promise<CreateMovieResponses>;`))
+    createMovie(req: CreateMovieRequest): Promise<CreateMovieResponses>;`)
+  )
 
   // Summary only on method
-  ok(data.includes(`
+  ok(
+    data.includes(`
     /**
      * Get a movie
      * @param req - request parameters object
      * @returns the API response body
      */
-    getMovieById(req: GetMovieByIdRequest): Promise<GetMovieByIdResponses>;`))
+    getMovieById(req: GetMovieByIdRequest): Promise<GetMovieByIdResponses>;`)
+  )
 
   // Description only on method
-  ok(data.includes(`
+  ok(
+    data.includes(`
     /**
      * Update the details of a movie
      * @param req - request parameters object
      * @returns the API response body
      */
-    updateMovie(req: UpdateMovieRequest): Promise<UpdateMovieResponses>;`))
+    updateMovie(req: UpdateMovieRequest): Promise<UpdateMovieResponses>;`)
+  )
 
   // Deprecated method
-  ok(data.includes(`
+  ok(
+    data.includes(`
     /**
      * Patch a movie
      * @deprecated
      * @param req - request parameters object
      * @returns the API response body
      */
-    patchMovie(req: PatchMovieRequest): Promise<PatchMovieResponses>;`))
+    patchMovie(req: PatchMovieRequest): Promise<PatchMovieResponses>;`)
+  )
 })
 
-test('tsdoc client request option descriptions', async (t) => {
+test('tsdoc client request option descriptions', async t => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'tsdoc-openapi.json')
@@ -1265,26 +1431,31 @@ test('tsdoc client request option descriptions', async (t) => {
   const data = await readFile(join(dir, 'tsdoc', 'tsdoc.d.ts'), 'utf-8')
 
   // Description on title, not on id, built from requestBody scheme #ref
-  ok(data.includes(`
+  ok(
+    data.includes(`
   export type CreateMovieRequest = {
     'id'?: number;
     /**
      * The title of the movie
      */
     'title': string;
-  }`))
+  }`)
+  )
 
   // Description on ID, from parameters
-  ok(data.includes(`
+  ok(
+    data.includes(`
   export type GetMovieByIdRequest = {
     /**
      * The ID of the movie
      */
     'id': number;
-  }`))
+  }`)
+  )
 
   // Descriptions from mixed parameters and requestBody schema #ref
-  ok(data.includes(`
+  ok(
+    data.includes(`
   export type UpdateMovieRequest = {
     'fields'?: Array<'id' | 'title'>;
     /**
@@ -1295,10 +1466,12 @@ test('tsdoc client request option descriptions', async (t) => {
      * The title of the movie
      */
     'title': string;
-  }`))
+  }`)
+  )
 
   // Deprecated fields with and without descriptions
-  ok(data.includes(`
+  ok(
+    data.includes(`
   export type PatchMovieRequest = {
     /**
      * @deprecated
@@ -1313,10 +1486,11 @@ test('tsdoc client request option descriptions', async (t) => {
      * The title of the movie
      */
     'title': string;
-  }`))
+  }`)
+  )
 })
 
-test('tsdoc client request option descriptions (full-request)', async (t) => {
+test('tsdoc client request option descriptions (full-request)', async t => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'tsdoc-openapi.json')
@@ -1325,7 +1499,8 @@ test('tsdoc client request option descriptions (full-request)', async (t) => {
   const data = await readFile(join(dir, 'tsdoc', 'tsdoc.d.ts'), 'utf-8')
 
   // Descriptions from mixed parameters and requestBody schema #ref
-  ok(data.includes(`
+  ok(
+    data.includes(`
   export type UpdateMovieRequest = {
     path: {
       /**
@@ -1342,5 +1517,6 @@ test('tsdoc client request option descriptions (full-request)', async (t) => {
        */
       'title': string;
     }
-  }`))
+  }`)
+  )
 })

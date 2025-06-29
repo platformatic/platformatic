@@ -8,6 +8,9 @@ const { loadConfig } = require('@platformatic/config')
 const { features } = require('@platformatic/utils')
 const { buildServer, platformaticRuntime } = require('../..')
 const { prepareRuntime } = require('./helper')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 test('return workers information in the management API when starting in production mode', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })

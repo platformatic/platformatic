@@ -1,13 +1,13 @@
 'use strict'
-import minimist from 'minimist'
-import { Generator } from '../lib/generator/db-generator.js'
-import { join } from 'node:path'
 import { getPkgManager } from '@platformatic/utils'
-import { execa } from 'execa'
-import ora from 'ora'
 import { Table } from 'console-table-printer'
+import { execa } from 'execa'
+import minimist from 'minimist'
+import { join } from 'node:path'
+import ora from 'ora'
 import pino from 'pino'
 import pinoPretty from 'pino-pretty'
+import { Generator } from './generator.js'
 
 function printAppSummary (args, logger) {
   logger.info('Creating a Platformatic DB app with this config: ')
@@ -18,14 +18,14 @@ function printAppSummary (args, logger) {
     { config: 'Init Git Repository', value: args.git },
     { config: 'Install Dependencies', value: args.install },
     { config: 'Sample Plugin and Tests', value: args.plugin },
-    { config: 'Create Sample Migrations', value: args.migrations },
+    { config: 'Create Sample Migrations', value: args.migrations }
   ]
 
   const p = new Table({
     columns: [
       { name: 'config', alignment: 'right' },
-      { name: 'value', alignment: 'left' },
-    ],
+      { name: 'value', alignment: 'left' }
+    ]
   })
 
   p.addRows(table)
@@ -36,7 +36,7 @@ async function createDB (_args) {
     translateTime: 'SYS:HH:MM:ss',
     ignore: 'hostname,pid',
     minimumLevel: 'debug',
-    sync: true,
+    sync: true
   })
 
   const logger = pino(stream)
@@ -53,9 +53,8 @@ async function createDB (_args) {
       git: false,
       install: true,
       migrations: true,
-      connectionString: 'sqlite://./db.sqlite',
-    },
-
+      connectionString: 'sqlite://./db.sqlite'
+    }
   })
 
   printAppSummary(args, logger)
@@ -68,7 +67,7 @@ async function createDB (_args) {
     tests: args.plugin,
     typescript: args.typescript,
     initGitRepository: args.git,
-    targetDirectory: args.dir,
+    targetDirectory: args.dir
   })
 
   try {

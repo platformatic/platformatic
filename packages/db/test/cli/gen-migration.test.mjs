@@ -18,13 +18,14 @@ test('generates next file correctly with empty dir', async t => {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
     },
     db: {
-      connectionString: 'sqlite://db.sqlite',
+      connectionString: 'sqlite://db.sqlite'
     },
     migrations: {
-      dir: migrationsDirPath,
-    },
+      dir: migrationsDirPath
+    }
   }
 
   await writeFile(configFilePath, JSON.stringify(config))
@@ -47,13 +48,14 @@ test('generates next file correctly with existing files', async t => {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
     },
     db: {
-      connectionString: 'sqlite://db.sqlite',
+      connectionString: 'sqlite://db.sqlite'
     },
     migrations: {
-      dir: migrationsDirPath,
-    },
+      dir: migrationsDirPath
+    }
   }
 
   await writeFile(configFilePath, JSON.stringify(config))
@@ -81,11 +83,11 @@ test('throws if there is no migrations in the config', async t => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0,
+      port: 0
     },
     db: {
-      connectionString: 'sqlite://db.sqlite',
-    },
+      connectionString: 'sqlite://db.sqlite'
+    }
   }
 
   await writeFile(configFilePath, JSON.stringify(config))
@@ -105,14 +107,14 @@ test('throws if migrations directory does not exist', async t => {
   const config = {
     server: {
       hostname: '127.0.0.1',
-      port: 0,
+      port: 0
     },
     db: {
-      connectionString: 'sqlite://db.sqlite',
+      connectionString: 'sqlite://db.sqlite'
     },
     migrations: {
-      dir: migrationsDirPath,
-    },
+      dir: migrationsDirPath
+    }
   }
 
   await writeFile(configFilePath, JSON.stringify(config))

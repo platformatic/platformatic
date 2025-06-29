@@ -16,7 +16,6 @@ try {
 test('watches ESM files', async t => {
   const tmpDir = await mkdtemp(join(base, 'watch-'))
   t.after(() => safeRemove(tmpDir))
-  console.log(`using ${tmpDir}`)
   const configFileSrc = join(fixturesDir, 'configs', 'monorepo-watch.json')
   const configFileDst = join(tmpDir, 'configs', 'monorepo.json')
   const appSrc = join(fixturesDir, 'monorepo')

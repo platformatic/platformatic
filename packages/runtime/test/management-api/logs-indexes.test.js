@@ -11,6 +11,9 @@ const { createDirectory, safeRemove } = require('@platformatic/utils')
 
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 test('should get runtime log indexes', async t => {
   const projectDir = join(fixturesDir, 'management-api')

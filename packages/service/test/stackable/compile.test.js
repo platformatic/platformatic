@@ -1,34 +1,19 @@
 'use strict'
 
-const { createDirectory, safeRemove } = require('@platformatic/utils')
 const { access, cp } = require('node:fs/promises')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const assert = require('node:assert')
-const { buildStackable } = require('../..')
+const { create } = require('../..')
+const { createTemporaryDirectory } = require('../../../basic/test/helper')
 
-let count = 0
-
-async function getCWD (t) {
-  const dir = join(__dirname, '..', 'tmp', `typescript-plugin-clone-1-${count++}`)
-
-  await createDirectory(dir, true)
-
-  t.after(() => safeRemove(dir))
-
-  return dir
-}
-
-test('compile typescript', async (t) => {
+test('compile typescript', async t => {
   const testDir = join(__dirname, '..', 'fixtures', 'typescript-plugin')
-  const cwd = await getCWD(t)
+  const cwd = await createTemporaryDirectory(t)
   await cp(testDir, cwd, { recursive: true })
 
-  const stackable = await buildStackable({
-    config: join(cwd, 'platformatic.service.json'),
-  })
-
-  await stackable.build()
+  const service = await create(join(cwd, 'platformatic.service.no-logging.json'))
+  await service.build()
 
   const jsPluginPath = join(cwd, 'dist', 'plugin.js')
   try {

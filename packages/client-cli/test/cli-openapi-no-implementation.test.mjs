@@ -1,13 +1,13 @@
-import { request, moveToTmpdir } from './helper.js'
-import { test, after } from 'node:test'
-import { equal, deepEqual as same, match, ok } from 'node:assert'
+import { create } from '@platformatic/db'
+import { create as buildService } from '@platformatic/service'
 import { match as matchObj } from '@platformatic/utils'
-import { buildServer } from '@platformatic/db'
-import { buildServer as buildService } from '@platformatic/service'
-import { join, posix } from 'path'
 import * as desm from 'desm'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
+import { equal, match, ok, deepEqual as same } from 'node:assert'
+import { after, test } from 'node:test'
+import { join, posix } from 'path'
+import { moveToTmpdir, request } from './helper.js'
 
 test('generates only types in target folder with --types-only flag', async (t) => {
   const dir = await moveToTmpdir(after)
@@ -44,7 +44,7 @@ test('openapi client generation (javascript)', async (t) => {
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
   t.after(async () => { await app.close() })
 
   await app.start()
@@ -100,7 +100,7 @@ test('openapi client generation (typescript)', async (t) => {
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
@@ -172,7 +172,7 @@ test('config support with folder', async (t) => {
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
   t.after(async () => {
@@ -215,7 +215,7 @@ test('openapi client generation (typescript) with --types-only', async (t) => {
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
@@ -297,7 +297,7 @@ test('openapi client generation (typescript) with --types-only and --folder', as
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
@@ -379,7 +379,7 @@ test('generate client twice', async (t) => {
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
   t.after(async () => {

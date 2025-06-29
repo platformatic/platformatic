@@ -1,7 +1,5 @@
 'use strict'
 
-const { join } = require('node:path')
-const { createRequire } = require('node:module')
 const ConfigManager = require('@platformatic/config')
 const { platformaticRuntime } = require('./config')
 const { buildRuntime } = require('./start')
@@ -45,7 +43,6 @@ async function buildServer (options, args) {
   }
 
   const app = options.app
-
   delete options.app
 
   if (app === platformaticRuntime || !app) {
@@ -56,12 +53,7 @@ async function buildServer (options, args) {
     return app.buildServer(options)
   }
 
-  // App is a stackable. Hopefully we have `@platformatic/service` available.
-  const projectRoot = join(options.configManager.dirname, 'package.json')
-  const require = createRequire(projectRoot)
-  const { buildServer } = require('@platformatic/service')
-
-  return buildServer(options, app)
+  return app.create(options.configManager.dirname, options.configManager.fullPath)
 }
 
 module.exports = { buildServer }

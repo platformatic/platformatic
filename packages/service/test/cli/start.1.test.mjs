@@ -1,13 +1,13 @@
+import { join } from 'desm'
 import assert from 'node:assert'
 import { test } from 'node:test'
-import { join } from 'desm'
 import { request } from 'undici'
-import { start, safeKill } from './helper.mjs'
+import { safeKill, start } from './helper.mjs'
 
 process.setMaxListeners(100)
 
-test('autostart', async (t) => {
-  const { child, url } = await start(['-c', join(import.meta.url, '..', '..', 'fixtures', 'hello', 'platformatic.service.json')])
+test('autostart', async t => {
+  const { child, url } = await start([join(import.meta.url, '..', 'fixtures', 'hello', 'platformatic.service.json')])
   t.after(() => safeKill(child))
 
   const res = await request(`${url}`)
@@ -16,8 +16,8 @@ test('autostart', async (t) => {
   assert.strictEqual(body.hello, 'world')
 })
 
-test('start command', async (t) => {
-  const { child, url } = await start(['-c', join(import.meta.url, '..', '..', 'fixtures', 'hello', 'platformatic.service.json')])
+test('start command', async t => {
+  const { child, url } = await start([join(import.meta.url, '..', 'fixtures', 'hello', 'platformatic.service.json')])
   t.after(() => safeKill(child))
 
   const res = await request(`${url}`)
@@ -26,17 +26,12 @@ test('start command', async (t) => {
   assert.strictEqual(body.hello, 'world')
 })
 
-test('allow custom env properties', async (t) => {
-  const { child, url } = await start(
-    [
-      '-c', join(import.meta.url, '..', 'fixtures', 'custom-port-placeholder.json'),
-    ],
-    {
-      env: {
-        A_CUSTOM_PORT: '11111',
-      },
+test('allow custom env properties', async t => {
+  const { child, url } = await start(['-c', join(import.meta.url, '..', 'fixtures', 'custom-port-placeholder.json')], {
+    env: {
+      A_CUSTOM_PORT: '11111'
     }
-  )
+  })
   t.after(() => {
     safeKill(child)
     delete process.env.A_CUSTOM_PORT

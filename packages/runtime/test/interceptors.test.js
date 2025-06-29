@@ -8,6 +8,9 @@ const { buildServer, platformaticRuntime } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 const idp = require(join(fixturesDir, 'interceptors', 'idp'))
 const external = require(join(fixturesDir, 'interceptors', 'external'))
+const { setLogFile } = require('./helpers')
+
+test.beforeEach(setLogFile)
 
 test('interceptors as undici options', async t => {
   const idpServer = await idp({ port: 0 })
@@ -96,10 +99,7 @@ test('mesh network works from external processes via ChildManager', async t => {
     })
 
     assert.deepStrictEqual(body.responses[2].statusCode, 502)
-    assert.deepStrictEqual(Object.keys(body.responses[2].body).sort(), [
-      'message',
-      'stack'
-    ])
+    assert.deepStrictEqual(Object.keys(body.responses[2].body).sort(), ['message', 'stack'])
 
     assert.deepStrictEqual(body.responses[3], {
       body: `application/octet-stream:123:${'echo'.repeat(10)}`,
@@ -143,10 +143,12 @@ test('update undici interceptor config', async t => {
   }
 
   const newUndiciConfig = {
-    interceptors: [{
-      module: './interceptor.js',
-      options: { testInterceptedValue: 'updated' }
-    }]
+    interceptors: [
+      {
+        module: './interceptor.js',
+        options: { testInterceptedValue: 'updated' }
+      }
+    ]
   }
 
   // Update the undici interceptor config
