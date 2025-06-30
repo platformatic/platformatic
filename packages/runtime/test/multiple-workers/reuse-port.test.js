@@ -38,18 +38,18 @@ test('services are started with multiple workers even for the entrypoint when No
     ? [
         5,
         [
-          { event: 'service:worker:started', service: 'node', workerId: 0 },
-          { event: 'service:worker:started', service: 'node', workerId: 1 },
-          { event: 'service:worker:started', service: 'node', workerId: 2 },
-          { event: 'service:worker:started', service: 'node', workerId: 3 },
-          { event: 'service:worker:started', service: 'node', workerId: 4 }
+          { event: 'service:worker:started', service: 'node', worker: 0 },
+          { event: 'service:worker:started', service: 'node', worker: 1 },
+          { event: 'service:worker:started', service: 'node', worker: 2 },
+          { event: 'service:worker:started', service: 'node', worker: 3 },
+          { event: 'service:worker:started', service: 'node', worker: 4 }
         ],
         [
-          { event: 'service:worker:stopped', service: 'node', workerId: 0 },
-          { event: 'service:worker:stopped', service: 'node', workerId: 1 },
-          { event: 'service:worker:stopped', service: 'node', workerId: 2 },
-          { event: 'service:worker:stopped', service: 'node', workerId: 3 },
-          { event: 'service:worker:stopped', service: 'node', workerId: 4 }
+          { event: 'service:worker:stopped', service: 'node', worker: 0 },
+          { event: 'service:worker:stopped', service: 'node', worker: 1 },
+          { event: 'service:worker:stopped', service: 'node', worker: 2 },
+          { event: 'service:worker:stopped', service: 'node', worker: 3 },
+          { event: 'service:worker:stopped', service: 'node', worker: 4 }
         ]
       ]
     : [1, [{ event: 'service:started', service: 'node' }], [{ event: 'service:stopped', service: 'node' }]]

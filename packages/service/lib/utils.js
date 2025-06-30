@@ -24,7 +24,7 @@ async function isDocker () {
   }
 
   if (_isDocker === undefined) {
-    _isDocker = await hasDockerEnv() || await hasDockerCGroup()
+    _isDocker = (await hasDockerEnv()) || (await hasDockerCGroup())
   }
 
   return _isDocker
@@ -68,4 +68,19 @@ function getJSPluginPath (workingDir, tsPluginPath, compileDir) {
   return join(compileDir, jsPluginRelativePath)
 }
 
-module.exports = { getJSPluginPath, isDocker, isFileAccessible }
+async function sanitizeHTTPSArgument (arg) {
+  if (typeof arg === 'string') {
+    return arg
+  } else if (!Array.isArray(arg)) {
+    return readFile(arg.path)
+  }
+
+  const sanitized = []
+  for (const item of arg) {
+    sanitized.push(typeof item === 'string' ? item : await readFile(item.path))
+  }
+
+  return sanitized
+}
+
+module.exports = { getJSPluginPath, isDocker, isFileAccessible, sanitizeHTTPSArgument }

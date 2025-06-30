@@ -7,6 +7,20 @@ const pino = require('pino')
 const pretty = require('pino-pretty')
 const { buildPinoFormatters, buildPinoTimestamp } = require('@platformatic/utils')
 
+function noop () {}
+
+const abstractLogger = {
+  fatal: noop,
+  error: noop,
+  warn: noop,
+  info: noop,
+  debug: noop,
+  trace: noop,
+  child () {
+    return abstractLogger
+  }
+}
+
 const customPrettifiers = {
   name (name, _, obj) {
     if (typeof obj.worker !== 'undefined') {
@@ -79,4 +93,4 @@ async function createLogger (config, runtimeLogsDir) {
   return [pino(loggerConfig, multiStream), multiStream]
 }
 
-module.exports = { createLogger }
+module.exports = { abstractLogger, createLogger }

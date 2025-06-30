@@ -134,7 +134,7 @@ export async function resolveStackable (fileOrDirectory, sourceOrConfig, typeOrC
         source: fileOrDirectory
       }
     }
-  } catch (err) {
+  } catch {
     // No-op
   }
 
@@ -177,9 +177,7 @@ export async function transformConfig () {
 
   if (this.current.watch === undefined) {
     this.current.watch = { enabled: workerData?.config?.watch ?? false }
-  }
-
-  if (typeof this.current.watch !== 'object') {
+  } else if (typeof this.current.watch !== 'object') {
     this.current.watch = { enabled: this.current.watch || false }
   }
 }

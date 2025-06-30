@@ -19,7 +19,7 @@
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "test:types": "tsc",
-    "test:server": "node ../cli/cli.js db start --config=test/e2e/fixtures/platformatic.e2e.db.json",
+    "test:server": "wattpm start --config platformatic.e2e.db.json test/e2e/fixtures",
     "test:prepare": "node test/prepare.mjs",
     "test:cleanup": "rm -rf src/platformatic-generated-code test/e2e/fixtures/db.sqlite",
     "lint": "eslint",
@@ -38,7 +38,8 @@
     "jsonpointer": "^5.0.1",
     "minimist": "^1.2.8",
     "scheduler": "^0.26.0",
-    "undici": "^7.0.0"
+    "undici": "^7.0.0",
+    "wattpm": "workspace:*"
   },
   "devDependencies": {
     "@platformatic/utils": "workspace:*",

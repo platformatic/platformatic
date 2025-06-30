@@ -128,7 +128,7 @@ async function createFromConfig (t, options, applicationFactory, creationOptions
     directory,
     options,
     {},
-    { applicationFactory, isStandalone: true, isEntrypoint: true }
+    { applicationFactory, isStandalone: true, isEntrypoint: true, isProduction: creationOptions.production }
   )
   t.after(() => database.stop())
 

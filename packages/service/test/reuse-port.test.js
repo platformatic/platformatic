@@ -21,7 +21,7 @@ test(
       }),
       null,
       {
-        isProduction: true
+        production: true
       }
     )
 
@@ -36,7 +36,7 @@ test(
       }),
       null,
       {
-        isProduction: true
+        production: true
       }
     )
 

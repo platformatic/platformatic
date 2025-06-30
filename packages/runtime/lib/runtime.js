@@ -23,7 +23,7 @@ const SonicBoom = require('sonic-boom')
 
 const { checkDependencies, topologicalSort } = require('./dependencies')
 const errors = require('./errors')
-const { createLogger } = require('./logger')
+const { abstractLogger, createLogger } = require('./logger')
 const { startManagementApi } = require('./management-api')
 const { startPrometheusServer } = require('./prom-server')
 const { startScheduler } = require('./scheduler')
@@ -106,6 +106,7 @@ class Runtime extends EventEmitter {
       domain: '.plt.local',
       timeout: this.#configManager.current.serviceTimeout
     })
+    this.logger = abstractLogger // This is replaced by the real logger in init() and eventually removed in close()
     this.#status = undefined
     this.#restartingWorkers = new Map()
     this.#sharedHttpCache = null
@@ -378,9 +379,9 @@ class Runtime extends EventEmitter {
     }
 
     if (this.logger) {
-      this.#loggerDestination.end()
+      this.#loggerDestination?.end()
 
-      this.logger = null
+      this.logger = abstractLogger
       this.#loggerDestination = null
     }
 
@@ -1085,7 +1086,7 @@ class Runtime extends EventEmitter {
       }
     }
 
-    this.logger?.trace({ event, payload }, 'Runtime event')
+    this.logger.trace({ event, payload }, 'Runtime event')
     return super.emit(event, payload)
   }
 
@@ -1314,14 +1315,14 @@ class Runtime extends EventEmitter {
             await this.startService(serviceId)
           }
 
-          this.logger?.info(`The service "${serviceId}" has been successfully reloaded ...`)
+          this.logger.info(`The service "${serviceId}" has been successfully reloaded ...`)
           this.emit('service:worker:reloaded', eventPayload)
 
           if (serviceConfig.entrypoint) {
             this.#showUrl()
           }
         } catch (e) {
-          this.logger?.error(e)
+          this.logger.error(e)
         }
       })
     }
@@ -1460,7 +1461,7 @@ class Runtime extends EventEmitter {
     const label = this.#workerExtendedLabel(id, index, workersCount)
 
     if (!silent) {
-      this.logger?.info(`Starting the ${label}...`)
+      this.logger.info(`Starting the ${label}...`)
     }
 
     if (!worker) {
@@ -1504,7 +1505,7 @@ class Runtime extends EventEmitter {
       this.#broadcastWorkers()
 
       if (!silent) {
-        this.logger?.info(`Started the ${label}...`)
+        this.logger.info(`Started the ${label}...`)
       }
 
       const { enabled, gracePeriod } = worker[kConfig].health
@@ -1588,7 +1589,7 @@ class Runtime extends EventEmitter {
     const label = this.#workerExtendedLabel(id, index, workersCount)
 
     if (!silent) {
-      this.logger?.info(`Stopping the ${label}...`)
+      this.logger.info(`Stopping the ${label}...`)
     }
 
     const exitTimeout = this.#configManager.current.gracefulShutdown.runtime
@@ -1599,13 +1600,13 @@ class Runtime extends EventEmitter {
       await executeWithTimeout(sendViaITC(worker, 'stop'), exitTimeout)
     } catch (error) {
       this.emit('service:worker:stop:timeout', eventPayload)
-      this.logger?.info({ error: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
+      this.logger.info({ error: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
     } finally {
       worker[kITC].close()
     }
 
     if (!silent) {
-      this.logger?.info(`Stopped the ${label}...`)
+      this.logger.info(`Stopped the ${label}...`)
     }
 
     // Wait for the worker thread to finish, we're going to create a new one if the service is ever restarted
