@@ -30,6 +30,10 @@ export interface PlatformaticApplication<T> {
   config: T
 }
 
+export interface ServerInstance<T = PlatformaticServiceConfig> extends FastifyInstance {
+  platformatic: PlatformaticApplication<T>
+}
+
 export function transformConfig (this: ConfigManager): Promise<void>
 
 export function buildStackable (
@@ -52,3 +56,9 @@ export const configType: 'service'
 export const configManagerConfig: ConfigManagerConfig<PlatformaticServiceConfig>
 
 export const version: string
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: PlatformaticApplication<PlatformaticServiceConfig>
+  }
+}
