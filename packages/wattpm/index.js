@@ -1,3 +1,4 @@
+import * as colorette from 'colorette'
 import { bold } from 'colorette'
 import { adminCommand } from './lib/commands/admin.js'
 import { buildCommand, installCommand, updateCommand } from './lib/commands/build.js'
@@ -11,7 +12,7 @@ import { configCommand, envCommand, psCommand, servicesCommand } from './lib/com
 import { metricsCommand } from './lib/commands/metrics.js'
 import { patchConfigCommand } from './lib/commands/patch-config.js'
 import { version } from './lib/schema.js'
-import { createLogger, logFatalError, parseArgs, setVerbose } from './lib/utils.js'
+import { createLogger, loadServicesCommands, logFatalError, parseArgs, setVerbose } from './lib/utils.js'
 
 export async function main () {
   globalThis.platformatic = { executable: 'watt' }
@@ -52,7 +53,9 @@ export async function main () {
   }
 
   let command
-  switch (unparsed[0] || 'help') {
+  const requestedCommand = unparsed[0] || 'help'
+  let serviceCommandContext
+  switch (requestedCommand) {
     case 'build':
       command = buildCommand
       break
@@ -119,15 +122,34 @@ export async function main () {
       command = adminCommand
       break
     default:
-      logFatalError(
-        logger,
-        `Unknown command ${bold(unparsed[0])}. Please run ${bold("'wattpm help'")} to see available commands.`
-      )
+      if (requestedCommand) {
+        const servicesCommands = await loadServicesCommands()
+        const serviceCommand = servicesCommands.commands[requestedCommand]
+
+        if (serviceCommand) {
+          serviceCommandContext = servicesCommands.services[requestedCommand]
+          command = serviceCommand
+        }
+      }
 
       break
   }
 
-  await command(logger, unparsed.slice(1))
+  if (!command) {
+    logFatalError(
+      logger,
+      `Unknown command ${bold(requestedCommand)}. Please run ${bold("'wattpm help'")} to see available commands.`
+    )
+
+    return
+  }
+
+  if (serviceCommandContext) {
+    process.chdir(serviceCommandContext.path)
+    return command(logger, serviceCommandContext.config, unparsed.slice(1), { colorette })
+  } else {
+    await command(logger, unparsed.slice(1))
+  }
 }
 
 export * from './lib/schema.js'

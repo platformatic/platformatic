@@ -3,6 +3,7 @@
 const deepEqual = require('fast-deep-equal')
 const { platformaticService } = require('@platformatic/service')
 const { isKeyEnabled } = require('@platformatic/utils')
+const { fetchOpenApiSchema } = require('./openapi-fetch-schemas.js')
 const serviceProxy = require('./proxy')
 const graphql = require('./graphql')
 const composerHook = require('./composer-hook')
@@ -94,8 +95,6 @@ async function watchServices (app, { config, stackable }) {
     app.log.warn('Watching services is only supported when running within a Platformatic Runtime.')
     return
   }
-
-  const { fetchOpenApiSchema } = await import('./openapi-fetch-schemas.mjs')
 
   stackable.emit('watch:start')
   app.log.info({ services: watching }, 'start watching services')

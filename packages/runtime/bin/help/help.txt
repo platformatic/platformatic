@@ -1,4 +1,0 @@
-Available commands:
-
-* `help` - show this help message.
-* `help <command>` - shows more information about a command.

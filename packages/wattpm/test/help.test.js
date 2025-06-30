@@ -1,5 +1,6 @@
 import { deepStrictEqual, ok } from 'node:assert'
 import { test } from 'node:test'
+import { prepareRuntime } from '../../basic/test/helper.js'
 import { version } from '../lib/schema.js'
 import { wattpm } from './helper.js'
 
@@ -39,5 +40,24 @@ test('help - should complain for invalid commands', async t => {
   )
   ok(
     invalidHelpProcess.stdout.includes("Unknown command whatever. Please run 'wattpm help' to see available commands.")
+  )
+})
+
+test('help - should support service commands', async t => {
+  const { root: rootDir } = await prepareRuntime(t, 'help', false, 'watt.json')
+  const mainProcess = await wattpm('help', { cwd: rootDir })
+  const serviceHelpProcess = await wattpm('help', 'main:fetch-openapi-schemas', { cwd: rootDir })
+
+  ok(mainProcess.stdout.includes('\nService Commands:'))
+  ok(
+    mainProcess.stdout
+      .replaceAll(/ {2,}/g, '@')
+      .includes('main:fetch-openapi-schemas@Fetch OpenAPI schemas from services')
+  )
+
+  ok(
+    serviceHelpProcess.stdout.match(
+      '\nUsage: wattpm main:fetch-openapi-schemas\\s+Fetch OpenAPI schemas from services.'
+    )
   )
 })

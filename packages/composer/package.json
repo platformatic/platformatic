@@ -11,9 +11,6 @@
     "prepublishOnly": "pnpm run build",
     "lint": "eslint"
   },
-  "bin": {
-    "plt-composer": "./bin/plt-composer.mjs"
-  },
   "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
   "repository": {
     "type": "git",

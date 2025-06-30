@@ -30,6 +30,22 @@ export function setVerbose (value) {
   verbose = value
 }
 
+/* c8 ignore start - Nothing to test */
+function noop () {}
+
+export const abstractLogger = {
+  fatal: noop,
+  error: noop,
+  warn: noop,
+  info: noop,
+  debug: noop,
+  trace: noop,
+  child (abstractLogger) {
+    return abstractLogger
+  }
+}
+/* c8 ignore end */
+
 export function createLogger (level) {
   return pino(
     {
@@ -168,7 +184,13 @@ export function serviceToEnvVariable (service) {
   return `PLT_SERVICE_${service.toUpperCase().replaceAll(/[^A-Z0-9_]/g, '_')}_PATH`
 }
 
-export async function findRuntimeConfigurationFile (logger, root, configurationFile, fallback = false) {
+export async function findRuntimeConfigurationFile (
+  logger,
+  root,
+  configurationFile,
+  fallback = false,
+  throwOnError = true
+) {
   let configFile = await findConfigurationFile(root, configurationFile, 'runtime')
 
   // If a runtime was not found, search for service file that we wrap in a runtime
@@ -185,12 +207,14 @@ export async function findRuntimeConfigurationFile (logger, root, configurationF
       }
     }
 
-    return logFatalError(
-      logger,
-      `Cannot find a supported Watt configuration file (like ${bold('watt.json')}, a ${bold('wattpm.json')} or a ${bold(
-        'platformatic.json'
-      )}) in ${bold(resolve(root))}.`
-    )
+    if (throwOnError) {
+      return logFatalError(
+        logger,
+        `Cannot find a supported Watt configuration file (like ${bold('watt.json')}, a ${bold('wattpm.json')} or a ${bold(
+          'platformatic.json'
+        )}) in ${bold(resolve(root))}.`
+      )
+    }
   }
 
   return configFile
@@ -323,4 +347,45 @@ export async function handleRuntimeError (logger, configurationFile, error) {
   }
 
   return false
+}
+
+export async function loadServicesCommands () {
+  const services = {}
+  const commands = {}
+  const help = {}
+
+  try {
+    const file = await findRuntimeConfigurationFile(abstractLogger, process.cwd(), null, false, false)
+
+    /* c8 ignore next 3 - Hard to test */
+    if (!file) {
+      throw new Error('No runtime configuration file found.')
+    }
+
+    const config = await loadRuntimeConfigurationFile(abstractLogger, file)
+
+    /* c8 ignore next 3 - Hard to test */
+    if (!config) {
+      throw new Error('No runtime configuration file found.')
+    }
+
+    for (const service of config.services) {
+      const { app } = await loadConfigurationFileAsConfig(abstractLogger, service.config)
+
+      if (app.createCommands) {
+        const definition = await app.createCommands(service.id)
+
+        for (const command of Object.keys(definition.commands)) {
+          services[command] = service
+        }
+
+        Object.assign(commands, definition.commands)
+        Object.assign(help, definition.help)
+      }
+    }
+
+    return { services, commands, help }
+  } catch (error) {
+    return { services: {}, commands: {}, help: {} }
+  }
 }
