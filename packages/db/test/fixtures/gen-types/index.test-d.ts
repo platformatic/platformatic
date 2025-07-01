@@ -1,8 +1,8 @@
-/// <reference path="./global.d.ts" />
+/// <reference types="./plt-env.d.ts" />
 
+import { fastify, FastifyInstance } from 'fastify'
 import { expectType } from 'tsd'
-import { Graph } from './types/Graph'
-import { FastifyInstance, fastify } from 'fastify'
+import { Graph } from './types/graph'
 
 const app: FastifyInstance = fastify()
 
@@ -18,8 +18,10 @@ app.platformatic.addEntityHooks('graph', {
     expectType<Partial<Graph>[]>(await originalFind())
     expectType<Parameters<typeof app.platformatic.entities.graph.find>[0]>(options)
 
-    return [{
-      id: 42,
-    }]
-  },
+    return [
+      {
+        id: 42
+      }
+    ]
+  }
 })

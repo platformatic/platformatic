@@ -776,7 +776,7 @@ Generate typescript types for your entities from the database.
 
 As a result of executing this command, the Platformatic DB will generate a `types`
 folder with a typescript file for each database entity. It will also generate a
-`global.d.ts` file that injects the types into the Application instance.
+`plt-env.d.ts` file that injects the types into the Application instance.
 
 In order to add type support to your plugins, you need to install some additional
 dependencies. To do this, copy and run an `npm install` command with dependencies
@@ -786,7 +786,6 @@ Here is an example of a Platformatic plugin.js with jsdoc support.
 You can use it to add autocomplete to your code.
 
 ``` javascript
-/// <reference path="./global.d.ts" />
 'use strict'
 
 /** @param {import('fastify').FastifyInstance} app */

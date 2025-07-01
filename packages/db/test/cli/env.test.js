@@ -96,7 +96,7 @@ test('env white list default values', async t => {
 })
 
 test('env white list schema', async t => {
-  const snapshot = require('../fixtures/snapshots/env.test.js')
+  const snapshot = require('../fixtures/snapshots/env.js')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
   const db = await connectDB(connectionInfo)
 

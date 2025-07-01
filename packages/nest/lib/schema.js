@@ -54,7 +54,7 @@ export const schemaComponents = { node: nest }
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/nest/${version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Platformatic NestJS Stackable',
+  title: 'Platformatic NestJS Config',
   type: 'object',
   properties: {
     $schema: {

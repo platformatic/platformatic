@@ -199,7 +199,7 @@ const types = {
 const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/composer/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Platformatic Composer',
+  title: 'Platformatic Composer Config',
   type: 'object',
   properties: {
     basePath: {

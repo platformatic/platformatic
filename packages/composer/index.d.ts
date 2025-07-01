@@ -1,24 +1,33 @@
-import type { ConfigManagerConfig, StackableInterface } from '@platformatic/config'
-import ConfigManager from '@platformatic/config'
+import type { BaseContext, BaseOptions, BaseStackable } from '@platformatic/basic'
+import type { ConfigManagerConfig } from '@platformatic/config'
+import { BaseGenerator } from '@platformatic/generators'
+import { ServerInstance as ServiceInstance, ServiceStackable } from '@platformatic/service'
+import type { JSONSchemaType } from 'ajv'
 import { FastifyInstance } from 'fastify'
-import { PlatformaticComposer } from './config'
-import { ComposerStackable } from './lib/stackable'
+import { PlatformaticComposerConfig } from './config'
 
-export { PlatformaticApp } from '@platformatic/service'
-export type PlatformaticComposerConfig = PlatformaticComposer
+export { PlatformaticApplication } from '@platformatic/service'
+export { PlatformaticComposerConfig } from './config'
 
-export function buildServer (opts: object, app?: object, ConfigManagerContructor?: object): Promise<FastifyInstance>
+export function platformaticComposer (app: FastifyInstance, stackable: BaseStackable): Promise<void>
+
+export interface ComposerContext extends BaseContext {
+  applicationFactory?: typeof platformaticService
+  fastifyPlugins?: Function[]
+  criticalPluginsRegistered?: boolean
+}
+
+export class Generator extends BaseGenerator.BaseGenerator {}
+
+export type ComposerStackable = ServiceStackable<PlatformaticComposerConfig>
+
+export type ServerInstance = ServiceInstance<PlatformaticComposerConfig>
 
 export function buildStackable (
-  opts: object,
-  app?: object
-): Promise<{
-  configType: string
-  configManager?: ConfigManager<PlatformaticComposerConfig>
-  configManagerConfig?: ConfigManagerConfig<PlatformaticComposerConfig>
-  schema?: object
-  stackable?: StackableInterface
-}>
+  root: string,
+  source: string | PlatformaticComposerConfig,
+  opts: BaseOptions
+): Promise<ComposerStackable>
 
 export function create (
   root: string,
@@ -26,3 +35,11 @@ export function create (
   opts?: object,
   context?: object
 ): Promise<ComposerStackable>
+
+export const schema: JSONSchemaType<PlatformaticComposerConfig>
+
+export const configType: 'service'
+
+export const configManagerConfig: ConfigManagerConfig<PlatformaticComposerConfig>
+
+export const version: string

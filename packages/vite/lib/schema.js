@@ -50,7 +50,7 @@ export const schemaComponents = { vite }
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/vite/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Platformatic Vite Stackable',
+  title: 'Platformatic Vite Config',
   type: 'object',
   properties: {
     $schema: {

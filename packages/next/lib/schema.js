@@ -49,7 +49,7 @@ const next = {
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/next/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Platformatic Next.js Stackable',
+  title: 'Platformatic Next.js Config',
   type: 'object',
   properties: {
     $schema: {

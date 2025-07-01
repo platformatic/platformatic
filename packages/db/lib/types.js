@@ -4,39 +4,16 @@ const { mapOpenAPItoTypes, mapSQLEntityToJSONSchema } = require('@platformatic/s
 const { createDirectory } = require('@platformatic/utils')
 const camelcase = require('camelcase')
 const { readFile, readdir, unlink, writeFile } = require('node:fs/promises')
-const { basename, join, parse, posix, relative, resolve } = require('node:path')
+const { basename, join, resolve, relative } = require('node:path')
 const { isFileAccessible, setupDB } = require('./utils.js')
-
-const GLOBAL_TYPES_TEMPLATE = `\
-import type { PlatformaticApplication, PlatformaticDatabaseMixin, PlatformaticDatabaseConfig, Entity, Entities, EntityHooks } from '@platformatic/db'
-ENTITIES_IMPORTS_PLACEHOLDER
-
-interface AppEntities extends Entities {
-  ENTITIES_DEFINITION_PLACEHOLDER
-}
-
-interface AppEntityHooks {
-  HOOKS_DEFINITION_PLACEHOLDER
-}
-
-declare module 'fastify' {
-  interface FastifyInstance {
-    platformatic: PlatformaticApplication<PlatformaticDatabaseConfig> &
-      PlatformaticDatabaseMixin<AppEntities> &
-      AppEntityHooks
-  }
-}
-`
 
 async function removeUnusedTypeFiles (entities, dir) {
   const entityTypes = await readdir(dir)
-  const entityNames = Object.values(entities).map(entity => entity.name)
-  const removedEntityNames = entityTypes.filter(file => !entityNames.includes(basename(file, '.d.ts')))
+  const entityNames = Object.keys(entities)
+  const removedEntityNames = entityTypes.filter(
+    file => file !== 'index.d.ts' && !entityNames.includes(basename(file, '.d.ts'))
+  )
   await Promise.all(removedEntityNames.map(file => unlink(join(dir, file))))
-}
-
-function getTypesFolderPath (cwd, config) {
-  return resolve(cwd, config.types?.dir ?? 'types')
 }
 
 async function generateEntityType (entity) {
@@ -44,130 +21,141 @@ async function generateEntityType (entity) {
   const fieldDefinitions = Object.fromEntries(
     Object.entries(entity.fields).map(([, value]) => [value.camelcase, value])
   )
-  const tsCode = mapOpenAPItoTypes(jsonSchema, fieldDefinitions)
+
+  const tsCode = mapOpenAPItoTypes(jsonSchema, fieldDefinitions, { indentSpaces: 2 })
+
   entity.name = camelcase(entity.name).replace(/^\w/, c => c.toUpperCase())
-  return tsCode + `\nexport { ${entity.name} };\n`
+  return tsCode.replaceAll(/^declare interface/gm, 'export interface')
 }
 
-async function generateEntityGroupExport (entities) {
-  const completeTypesImports = []
-  const interfaceRows = []
-  for (const name of entities) {
-    completeTypesImports.push(`import { ${name} } from './${name}'`)
-    interfaceRows.push(`${name}: ${name}`)
+async function generateIndexTypes (entities) {
+  const allImports = []
+  const allExports = []
+  const entityMembers = []
+  const entityTypesMembers = []
+  const entitiesHooks = []
+  const schemaGetters = []
+
+  const values = Object.entries(entities)
+    .map(([file, entity]) => [file, entity.name])
+    .sort((a, b) => a[0].localeCompare(b[0]))
+
+  for (const [name, type] of values) {
+    allImports.push(`import { ${type} } from './${name}'`)
+    allExports.push(`export { ${type} } from './${name}'`)
+    entityMembers.push(`  ${name}: Entity<${type}>`)
+    entityTypesMembers.push(`  ${name}: ${type}`)
+    entitiesHooks.push(`  addEntityHooks(entityName: '${name}', hooks: EntityHooks<${type}>): any`)
+    schemaGetters.push(`getSchema(schemaId: '${name}'): {
+    '$id': string,
+    title: string,
+    description: string,
+    type: string,
+    properties: { [x in keyof ${type}]: { type: string, nullable?: boolean } },
+    required: string[]
+  }`)
   }
 
-  const content = `${completeTypesImports.join('\n')}
+  const content = `import { Entity, EntityHooks, Entities as DatabaseEntities, PlatformaticDatabaseConfig, PlatformaticDatabaseMixin } from '@platformatic/db'
+import { PlatformaticApplication, PlatformaticServiceConfig } from '@platformatic/service'
+import { FastifyInstance } from 'fastify'
 
-interface EntityTypes  {
-  ${interfaceRows.join('\n    ')}
+${allImports.join('\n')}
+
+${allExports.join('\n')}
+
+export interface Entities extends DatabaseEntities {
+${entityMembers.join('\n')}
 }
 
-export { EntityTypes, ${entities.join(', ')} }`
+export interface EntityTypes {
+${entityTypesMembers.join('\n')}
+}
+
+export interface EntitiesHooks {
+${entitiesHooks.join('\n')}
+}
+
+export interface SchemaGetters {
+  ${schemaGetters.join('\n\n')}
+}
+
+export type ServerInstance<Configuration = PlatformaticDatabaseConfig> = FastifyInstance & {
+  platformatic: PlatformaticApplication<Configuration> & PlatformaticDatabaseMixin<Entities> & EntitiesHooks & SchemaGetters
+}
+`
+
   return content
 }
 
-async function generateGlobalTypes (entities, config) {
-  const globalTypesImports = []
-  const globalTypesInterface = []
-  const globalHooks = []
-  const completeTypesImports = []
+function generateEnvironmentTypes (folder) {
+  return `import { PlatformaticApplication, PlatformaticDatabaseConfig, PlatformaticDatabaseMixin } from "@platformatic/db";
+import { Entities, EntitiesHooks, SchemaGetters } from "./${folder}/index.js";
 
-  let typesRelativePath = relative(process.cwd(), getTypesFolderPath(process.cwd(), config))
-  {
-    const parsedPath = parse(typesRelativePath)
-    typesRelativePath = posix.format(parsedPath)
-  }
-
-  const schemaIdTypes = []
-  const names = []
-  const keys = Object.keys(entities).sort()
-  for (const key of keys) {
-    const { name, singularName } = entities[key]
-    schemaIdTypes.push(name)
-    completeTypesImports.push(`import { ${name} } from './${typesRelativePath}/${name}'`)
-    globalTypesInterface.push(`${key}: Entity<${name}>,`)
-    globalHooks.push(`addEntityHooks(entityName: '${singularName}', hooks: EntityHooks<${name}>): any`)
-    names.push(name)
-  }
-  globalTypesImports.push(`import { EntityTypes, ${names.join(',')} } from './${typesRelativePath}'`)
-
-  const schemaIdType = schemaIdTypes.length === 0 ? 'string' : schemaIdTypes.map(type => `'${type}'`).join(' | ')
-
-  globalTypesImports.push(`
-declare module 'fastify' {
+declare module "fastify" {
   interface FastifyInstance {
-    getSchema<T extends ${schemaIdType}>(schemaId: T): {
-      '$id': string,
-      title: string,
-      description: string,
-      type: string,
-      properties: {
-        [x in keyof EntityTypes[T]]: { type: string, nullable?: boolean }
-      },
-      required: string[]
-    };
+    platformatic: PlatformaticApplication<PlatformaticDatabaseConfig> & PlatformaticDatabaseMixin<Entities> & EntitiesHooks & SchemaGetters;
   }
-}`)
-
-  return GLOBAL_TYPES_TEMPLATE.replace('ENTITIES_IMPORTS_PLACEHOLDER', globalTypesImports.join('\n'))
-    .replace('ENTITIES_DEFINITION_PLACEHOLDER', globalTypesInterface.join('\n    '))
-    .replace('HOOKS_DEFINITION_PLACEHOLDER', globalHooks.join('\n    '))
+}
+`
 }
 
 async function writeFileIfChanged (filename, content) {
   const isFileExists = await isFileAccessible(filename)
+
   if (isFileExists) {
     const fileContent = await readFile(filename, 'utf-8')
-    if (fileContent === content) return false
+    if (fileContent === content) {
+      return false
+    }
   }
+
   await writeFile(filename, content)
   return true
 }
 
-async function execute ({ logger, config, configManager }) {
+async function execute ({ logger, config }) {
   const wrap = await setupDB(logger, config.db)
   const { db, entities } = wrap
-  if (Object.keys(entities).length === 0) {
+
+  const count = Object.keys(entities).length
+  if (count === 0) {
     // do not generate types if no schema is found
     return 0
   }
 
-  const servicePath = configManager.dirname
-  const typesFolderPath = getTypesFolderPath(servicePath, config)
+  const typesFolderPath = resolve(process.cwd(), config.types?.dir ?? 'types')
 
-  const isTypeFolderExists = await isFileAccessible(typesFolderPath)
-  if (isTypeFolderExists) {
+  // Prepare the types folder
+  if (await isFileAccessible(typesFolderPath)) {
     await removeUnusedTypeFiles(entities, typesFolderPath)
   } else {
     await createDirectory(typesFolderPath)
   }
 
-  let count = 0
-  const entitiesValues = Object.values(entities)
-  const entitiesNames = entitiesValues.map(({ name }) => name).sort()
-  for (const entity of entitiesValues) {
-    count++
+  // Generate all entities
+  for (const [name, entity] of Object.entries(entities)) {
     const types = await generateEntityType(entity)
+    const pathToFile = join(typesFolderPath, name + '.d.ts')
 
-    const pathToFile = join(typesFolderPath, entity.name + '.d.ts')
-    const isTypeChanged = await writeFileIfChanged(pathToFile, types)
-
-    if (isTypeChanged) {
+    if (await writeFileIfChanged(pathToFile, types)) {
       logger.info(`Generated type for ${entity.name} entity.`)
     }
   }
-  const pathToFile = join(typesFolderPath, 'index.d.ts')
-  // maybe better to check here for changes
-  const content = await generateEntityGroupExport(entitiesNames)
-  const isTypeChanged = await writeFileIfChanged(pathToFile, content)
-  if (isTypeChanged) {
-    logger.info('Regenerating global.d.ts')
+
+  // Generate index.d.ts
+  const indexFilePath = join(typesFolderPath, 'index.d.ts')
+  const indexTypes = await generateIndexTypes(entities)
+  if (await writeFileIfChanged(indexFilePath, indexTypes)) {
+    logger.info('Regenerated index.d.ts.')
   }
 
-  const globalTypes = await generateGlobalTypes(entities, config)
-  const globalTypesFilePath = join(servicePath, 'global.d.ts')
-  await writeFileIfChanged(globalTypesFilePath, globalTypes)
+  // Generate plt-env.d.ts
+  const environmentPath = join(process.cwd(), 'plt-env.d.ts')
+  const pltEnvironment = await generateEnvironmentTypes(relative(process.cwd(), typesFolderPath))
+  if (await writeFileIfChanged(environmentPath, pltEnvironment)) {
+    logger.info('Regenerated plt-env.d.ts.')
+  }
 
   await db.dispose()
   return count

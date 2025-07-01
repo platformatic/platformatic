@@ -30,6 +30,7 @@ switch (process.argv[2]) {
 
 command(
   pino({
+    level: 'info',
     transport: {
       target: 'pino-pretty'
     }

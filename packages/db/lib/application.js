@@ -54,7 +54,6 @@ async function platformaticDatabase (app, stackable) {
       await loadSchemaLock()
     }
 
-    // TODO@PI: Fix me
     if (config.types && config.types.autogenerate === true) {
       app.log.debug({ types: config.types }, 'generating types')
       await generateTypes({ logger: app.log, config, configManager })

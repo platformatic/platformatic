@@ -65,8 +65,6 @@ test('generates next file correctly with existing files', async t => {
 
   await execa('node', [cliPath, 'createMigrations', configFilePath], { cwd })
   const child = execa('node', [cliPath, 'createMigrations', configFilePath], { cwd })
-  child.stdout.pipe(process.stderr)
-  child.stderr.pipe(process.stderr)
 
   await child
   const newMigrations = await readdir(migrationsDirPath)

@@ -107,13 +107,13 @@ class Generator extends BaseGenerator {
 
   async _afterPrepare () {
     if (!this.config.isUpdating) {
-      const GLOBAL_TYPES_TEMPLATE = `
+      const PLT_ENVIRONMENT_TEMPLATE = `
 import { FastifyInstance } from 'fastify'
-import { PlatformaticApp, PlatformaticComposerConfig } from '@platformatic/composer'
+import { PlatformaticApplication, PlatformaticComposerConfig } from '@platformatic/composer'
 
 declare module 'fastify' {
   interface FastifyInstance {
-    platformatic: PlatformaticApp<PlatformaticComposerConfig>
+    platformatic: PlatformaticApplication<PlatformaticComposerConfig>
   }
 }
 `
@@ -149,7 +149,7 @@ npm start
 - 📔 View the REST API's Swagger documentation at http://localhost:3042/documentation/      
 `
 
-      this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
+      this.addFile({ path: '', file: 'plt-env.d.ts', contents: PLT_ENVIRONMENT_TEMPLATE })
       this.addFile({ path: '', file: 'README.md', contents: README })
     }
   }

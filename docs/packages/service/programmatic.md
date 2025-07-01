@@ -117,7 +117,6 @@ declare module 'fastify' {
 ### Usage Example
 
 ```ts
-/// <reference path="./global.d.ts" />
 import { FastifyInstance } from 'fastify'
 
 export default async function (app: FastifyInstance) {
@@ -127,7 +126,7 @@ export default async function (app: FastifyInstance) {
 }
 ```
 
-You can always generate a file called `global.d.ts` with the above content via the `platformatic service types` command.
+You can always generate a file called `plt-env.d.ts` with the above content via the `platformatic service types` command.
 
 ## Usage with Custom Configuration
 

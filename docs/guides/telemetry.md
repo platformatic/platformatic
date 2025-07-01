@@ -62,7 +62,7 @@ Hello User, welcome to Watt 2.64.0!
 [12:11:45.148] INFO (504): /work/web/main/migrations/001.undo.sql written!
 [12:11:45.148] INFO (504): /work/web/main/README.md written!
 [12:11:45.149] INFO (504): /work/web/main/test/routes/movies.test.js written!
-[12:11:45.149] INFO (504): /work/web/main/global.d.ts written!
+[12:11:45.149] INFO (504): /work/web/main/plt-env.d.ts written!
 ? Do you want to init the git repository? no
 [12:11:46.798] INFO (504): Installing dependencies for the application using npm ...
 [12:11:51.343] INFO (504): Installing dependencies for the service db using npm ...
@@ -124,7 +124,7 @@ Hello User, welcome to Watt 2.64.0!
 [12:14:16.567] INFO (1819): /work/test-service/web/main/test/plugins/example.test.js written!
 [12:14:16.567] INFO (1819): /work/test-service/web/main/test/routes/root.test.js written!
 [12:14:16.567] INFO (1819): /work/test-service/web/main/.gitignore written!
-[12:14:16.568] INFO (1819): /work/test-service/web/main/global.d.ts written!
+[12:14:16.568] INFO (1819): /work/test-service/web/main/plt-env.d.ts written!
 [12:14:16.568] INFO (1819): /work/test-service/web/main/README.md written!
 ? Do you want to init the git repository? no
 [12:14:17.793] INFO (1819): Installing dependencies for the application using npm ...
@@ -209,7 +209,7 @@ Hello User, welcome to Watt 2.64.0!
 [12:19:25.794] INFO (3205): /work/test-composer/web/main/package.json written!
 [12:19:25.795] INFO (3205): /work/test-composer/web/main/platformatic.json written!
 [12:19:25.796] INFO (3205): /work/test-composer/web/main/.gitignore written!
-[12:19:25.797] INFO (3205): /work/test-composer/web/main/global.d.ts written!
+[12:19:25.797] INFO (3205): /work/test-composer/web/main/plt-env.d.ts written!
 [12:19:25.798] INFO (3205): /work/test-composer/web/main/README.md written!
 ? Do you want to init the git repository? no
 [12:19:26.820] INFO (3205): Installing dependencies for the application using npm ...

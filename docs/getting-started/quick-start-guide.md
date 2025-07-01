@@ -107,7 +107,6 @@ ALTER TABLE quotes ADD COLUMN likes INTEGER default 0;
 You will add a Fastify plugin for adding likes to a quote. Create a new file `like-quote.js` in the plugins directory of your DB service. 
 
 ```js
-/// <reference path="../global.d.ts" />
 'use strict'
 
 const S = require("fluent-json-schema");
@@ -170,7 +169,7 @@ Using existing configuration ...
 [16:06:50] INFO: /Users/tmp/my-app/web/composer/package.json written!
 [16:06:50] INFO: /Users/tmp/my-app/web/composer/platformatic.json written!
 [16:06:50] INFO: /Users/tmp/my-app/web/composer/.gitignore written!
-[16:06:50] INFO: /Users/tmp/my-app/web/composer/global.d.ts written!
+[16:06:50] INFO: /Users/tmp/my-app/web/composer/plt-env.d.ts written!
 [16:06:50] INFO: /Users/tmp/my-app/web/composer/README.md written!
 [16:06:50] INFO: Installing dependencies for the application using npm ...
 [16:06:50] INFO: Installing dependencies for the service composer using npm ...

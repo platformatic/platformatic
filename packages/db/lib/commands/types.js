@@ -20,7 +20,7 @@ async function generateTypes (logger, configFile, _args) {
 }
 
 const helpFooter = `
-As a result of executing this command, the Platformatic DB will generate a \`types\` folder with a typescript file for each database entity. It will also generate a \`global.d.ts\` file that injects the types into the Application instance.
+As a result of executing this command, the Platformatic DB will generate a \`types\` folder with a typescript file for each database entity. It will also generate a \`plt-env.d.ts\` file that injects the types into the Application instance.
 
 You can find more details about the configuration format here:
 * [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)

@@ -26,6 +26,6 @@ verifyBuildAndProductionMode(fileURLToPath(new URL('fixtures/internal-build-and-
 
 test.after(async () => {
   await safeRemove(new URL('../types', import.meta.url))
-  await safeRemove(new URL('../global.d.ts', import.meta.url))
+  await safeRemove(new URL('../plt-env.d.ts', import.meta.url))
   await safeRemove(new URL('../schema.lock', import.meta.url))
 })

@@ -1324,7 +1324,7 @@ const clients = {
 const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/service/${packageJson.version}.json`,
   version: packageJson.version,
-  title: 'Platformatic Service',
+  title: 'Platformatic Service Config',
   type: 'object',
   properties: {
     basePath: {

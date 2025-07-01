@@ -26,7 +26,6 @@ module.exports = async function seed ({ entities, db, sql }) {
 For Typescript use the following stub
 
 ```typescript title="seed.ts"
-/// <reference path="./global.d.ts" />
 import { Entities } from '@platformatic/sql-mapper'
 
 const movies: object[] = [

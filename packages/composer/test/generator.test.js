@@ -41,22 +41,22 @@ test('have @platformatic/composer dependency', async t => {
   assert.ok(contents.dependencies['@platformatic/composer'])
 })
 
-test('have global.d.ts file', async t => {
+test('have plt-env.d.ts file', async t => {
   const svc = new Generator()
   await svc.prepare()
 
-  const GLOBAL_TYPES_TEMPLATE = `
+  const ENVIRONMENT_TEMPLATE = `
 import { FastifyInstance } from 'fastify'
-import { PlatformaticApp, PlatformaticComposerConfig } from '@platformatic/composer'
+import { PlatformaticApplication, PlatformaticComposerConfig } from '@platformatic/composer'
 
 declare module 'fastify' {
   interface FastifyInstance {
-    platformatic: PlatformaticApp<PlatformaticComposerConfig>
+    platformatic: PlatformaticApplication<PlatformaticComposerConfig>
   }
 }
 `
-  const globalts = svc.getFileObject('global.d.ts')
-  assert.equal(GLOBAL_TYPES_TEMPLATE, globalts.contents)
+  const environment = svc.getFileObject('plt-env.d.ts')
+  assert.equal(ENVIRONMENT_TEMPLATE, environment.contents)
 })
 
 test('config', async t => {
