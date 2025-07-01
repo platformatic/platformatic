@@ -11,7 +11,7 @@ const fastifyPlugin = require('./plugin')
 const { getParser } = require('./formats')
 const { isFileAccessible, splitModuleFromVersion } = require('./utils')
 const errors = require('./errors')
-const abstractlogger = require('./logger')
+const { abstractLogger } = require('@platformatic/utils')
 
 const PLT_ROOT = 'PLT_ROOT'
 
@@ -27,7 +27,7 @@ class ConfigManager extends EventEmitter {
     this._fixPaths = opts.fixPaths === undefined ? true : opts.fixPaths
     this._configVersion = opts.configVersion // requested version
     this._version = opts.version
-    this.logger = opts.logger || abstractlogger
+    this.logger = opts.logger || abstractLogger
     this.disableEnvLoad = opts.disableEnvLoad
 
     if (this._stackableUpgrade && !this._version) {

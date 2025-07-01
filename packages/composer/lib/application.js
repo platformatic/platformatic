@@ -3,7 +3,7 @@
 const deepEqual = require('fast-deep-equal')
 const { platformaticService } = require('@platformatic/service')
 const { isKeyEnabled } = require('@platformatic/utils')
-const { fetchOpenApiSchema } = require('./openapi-fetch-schemas.js')
+const { fetchOpenApiSchema } = require('./commands/openapi-fetch-schemas.js')
 const serviceProxy = require('./proxy')
 const graphql = require('./graphql')
 const composerHook = require('./composer-hook')

@@ -146,7 +146,7 @@ export async function main () {
 
   if (serviceCommandContext) {
     process.chdir(serviceCommandContext.path)
-    return command(logger, serviceCommandContext.config, unparsed.slice(1), { colorette })
+    return command(logger, serviceCommandContext.config, unparsed.slice(1), { colorette, parseArgs, logFatalError })
   } else {
     await command(logger, unparsed.slice(1))
   }

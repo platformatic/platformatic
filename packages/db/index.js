@@ -16,6 +16,11 @@ const errors = require('./lib/errors')
 const { upgrade } = require('./lib/upgrade')
 const { readFile } = require('node:fs/promises')
 const { resolve } = require('node:path')
+const { createMigrations, helpFooter: createMigrationsFooter } = require('./lib/commands/migrations-create')
+const { applyMigrations, helpFooter: applyMigrationsFooter } = require('./lib/commands/migrations-apply')
+const { seed, helpFooter: seedFooter } = require('./lib/commands/seed')
+const { generateTypes, helpFooter: typesFooter } = require('./lib/commands/types')
+const { printSchema } = require('./lib/commands/print-schema')
 
 async function transformConfig () {
   await serviceTransformConfig.call(this)
@@ -90,21 +95,74 @@ async function create (configFileOrRoot, sourceOrConfig, rawOpts, rawContext) {
   return new DatabaseStackable(opts, root, configManager)
 }
 
-module.exports = {
-  Generator,
-  DatabaseStackable,
-  errors,
-  createConnectionPool,
-  platformaticDatabase,
-  create,
-  skipTelemetryHooks: true,
-  // Old exports - These might be removed in a future PR
-  transformConfig,
-  configType: 'db',
-  configManagerConfig,
-  buildStackable,
-  schema,
-  schemaComponents,
-  version: packageJson.version,
-  getTypescriptCompilationOptions
+function createCommands (id) {
+  return {
+    commands: {
+      [`${id}:migrations:create`]: createMigrations,
+      [`${id}:migrations:apply`]: applyMigrations,
+      [`${id}:seed`]: seed,
+      [`${id}:types`]: generateTypes,
+      [`${id}:schema`]: printSchema
+    },
+    help: {
+      [`${id}:migrations:create`]: {
+        usage: `${id}:migrations:create`,
+        description: 'Create a new migration file',
+        footer: createMigrationsFooter
+      },
+      [`${id}:migrations:apply`]: {
+        usage: `${id}:migrations:apply`,
+        description: 'Apply all configured migrations to the database',
+        footer: applyMigrationsFooter,
+        options: [
+          {
+            usage: '-r, --rollback',
+            description: 'Rollback migrations instead of applying them'
+          },
+          {
+            usage: '-t, --to <version>',
+            description: 'Migrate to a specific version'
+          }
+        ]
+      },
+      [`${id}:seed`]: {
+        usage: `${id}:seed [file]`,
+        description: 'Load a seed into the database.',
+        footer: seedFooter,
+        args: [
+          {
+            name: 'file',
+            description: 'The seed file to load.'
+          }
+        ]
+      },
+      [`${id}:types`]: {
+        usage: `${id}:types`,
+        description: 'Generate typescript types for your entities from the database.',
+        footer: typesFooter
+      },
+      [`${id}:schema`]: {
+        usage: `${id}:schema [openapi|graphql]`,
+        description: 'Prints the OpenAPI or GraphQL schema for the database.'
+      }
+    }
+  }
 }
+
+module.exports.Generator = Generator
+module.exports.DatabaseStackable = DatabaseStackable
+module.exports.errors = errors
+module.exports.createConnectionPool = createConnectionPool
+module.exports.platformaticDatabase = platformaticDatabase
+module.exports.create = create
+module.exports.createCommands = createCommands
+module.exports.skipTelemetryHooks = true
+// Old exports - These might be removed in a future PR
+module.exports.transformConfig = transformConfig
+module.exports.configType = 'db'
+module.exports.configManagerConfig = configManagerConfig
+module.exports.buildStackable = buildStackable
+module.exports.schema = schema
+module.exports.schemaComponents = schemaComponents
+module.exports.version = packageJson.version
+module.exports.getTypescriptCompilationOptions = getTypescriptCompilationOptions

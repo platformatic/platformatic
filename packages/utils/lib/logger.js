@@ -5,6 +5,23 @@ const { hostname } = require('node:os')
 const pino = require('pino')
 const { createRequire } = require('node:module')
 
+/* c8 ignore start - Nothing to test */
+function noop () {}
+
+const abstractLogger = {
+  fatal: noop,
+  error: noop,
+  warn: noop,
+  info: noop,
+  debug: noop,
+  trace: noop,
+  done: noop,
+  child () {
+    return abstractLogger
+  }
+}
+/* c8 ignore end */
+
 // Utilities to build pino options from a config object
 // There are many variants to fit better the different use cases
 
@@ -155,6 +172,7 @@ const stdTimeFunctions = {
 }
 
 module.exports = {
+  abstractLogger,
   buildPinoOptions,
   loadFormatters,
   setPinoFormatters,

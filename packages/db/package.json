@@ -4,9 +4,6 @@
   "description": "",
   "main": "index.js",
   "types": "index.d.ts",
-  "bin": {
-    "plt-db": "./bin/plt-db.mjs"
-  },
   "scripts": {
     "test": "pnpm run lint && borp -T --concurrency=1 --timeout 1200000",
     "gen-schema": "node lib/schema.js > schema.json",

@@ -48,7 +48,7 @@ test('help - should support service commands', async t => {
   const mainProcess = await wattpm('help', { cwd: rootDir })
   const serviceHelpProcess = await wattpm('help', 'main:fetch-openapi-schemas', { cwd: rootDir })
 
-  ok(mainProcess.stdout.includes('\nService Commands:'))
+  ok(mainProcess.stdout.includes('\nServices Commands:'))
   ok(
     mainProcess.stdout
       .replaceAll(/ {2,}/g, '@')

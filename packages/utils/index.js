@@ -14,6 +14,7 @@ const { isFileAccessible } = require('./lib/is-file-accessible')
 const { isKeyEnabled } = require('./lib/is-key-enabled')
 const { parseMemorySize } = require('./lib/parse')
 const {
+  abstractLogger,
   buildPinoFormatters,
   buildPinoOptions,
   buildPinoTimestamp,
@@ -22,9 +23,8 @@ const {
 } = require('./lib/logger')
 const { disablePinoDirectWrite, ensureFlushedWorkerStdio } = require('./lib/logging')
 const { escapeRegexp, match } = require('./lib/match')
-const { createRequire, kFailedImport, loadModule } = require('./lib/modules')
+const { kFailedImport, loadModule } = require('./lib/modules')
 const {
-  checkForDependencies,
   detectApplicationType,
   getDependencyVersion,
   getLatestNpmVersion,
@@ -39,14 +39,13 @@ const { withResolvers } = require('./lib/promises')
 const { omitProperties, overridableValue, removeDefaults, ...schemaComponents } = require('./lib/schema')
 const { getPrivateSymbol } = require('./lib/symbols')
 
+module.exports.abstractLogger = abstractLogger
 module.exports.buildPinoFormatters = buildPinoFormatters
 module.exports.buildPinoOptions = buildPinoOptions
 module.exports.buildPinoTimestamp = buildPinoTimestamp
-module.exports.checkForDependencies = checkForDependencies
 module.exports.checkNodeVersionForServices = checkNodeVersionForServices
 module.exports.createDirectory = createDirectory
 module.exports.createTemporaryDirectory = createTemporaryDirectory
-module.exports.createRequire = createRequire
 module.exports.createServerConfig = createServerConfig
 module.exports.deepmerge = deepmerge
 module.exports.detectApplicationType = detectApplicationType

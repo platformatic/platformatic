@@ -8,6 +8,7 @@ import {
 import { errors } from '@platformatic/control'
 import { platformaticRuntime, buildRuntime as pltBuildRuntime, wrapConfigInRuntimeConfig } from '@platformatic/runtime'
 import {
+  abstractLogger,
   detectApplicationType,
   ensureLoggableError,
   escapeRegexp,
@@ -29,22 +30,6 @@ export let verbose = false
 export function setVerbose (value) {
   verbose = value
 }
-
-/* c8 ignore start - Nothing to test */
-function noop () {}
-
-export const abstractLogger = {
-  fatal: noop,
-  error: noop,
-  warn: noop,
-  info: noop,
-  debug: noop,
-  trace: noop,
-  child (abstractLogger) {
-    return abstractLogger
-  }
-}
-/* c8 ignore end */
 
 export function createLogger (level) {
   return pino(
@@ -354,22 +339,22 @@ export async function loadServicesCommands () {
   const commands = {}
   const help = {}
 
-  try {
-    const file = await findRuntimeConfigurationFile(abstractLogger, process.cwd(), null, false, false)
+  const file = await findRuntimeConfigurationFile(abstractLogger, process.cwd(), null, false, false)
 
-    /* c8 ignore next 3 - Hard to test */
-    if (!file) {
-      throw new Error('No runtime configuration file found.')
-    }
+  /* c8 ignore next 3 - Hard to test */
+  if (!file) {
+    throw new Error('No runtime configuration file found.')
+  }
 
-    const config = await loadRuntimeConfigurationFile(abstractLogger, file)
+  const config = await loadRuntimeConfigurationFile(abstractLogger, file)
 
-    /* c8 ignore next 3 - Hard to test */
-    if (!config) {
-      throw new Error('No runtime configuration file found.')
-    }
+  /* c8 ignore next 3 - Hard to test */
+  if (!config) {
+    throw new Error('No runtime configuration file found.')
+  }
 
-    for (const service of config.services) {
+  for (const service of config.services) {
+    try {
       const { app } = await loadConfigurationFileAsConfig(abstractLogger, service.config)
 
       if (app.createCommands) {
@@ -382,10 +367,11 @@ export async function loadServicesCommands () {
         Object.assign(commands, definition.commands)
         Object.assign(help, definition.help)
       }
+    } catch (error) {
+      process._rawDebug(error)
+      // No-op, ignore the service
     }
-
-    return { services, commands, help }
-  } catch (error) {
-    return { services: {}, commands: {}, help: {} }
   }
+
+  return { services, commands, help }
 }

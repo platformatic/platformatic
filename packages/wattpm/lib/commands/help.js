@@ -66,7 +66,7 @@ async function showGeneralHelp () {
   console.log('')
 
   if (servicesCommands.length) {
-    console.log('Service Commands:\n')
+    console.log('Services Commands:\n')
     for (const { usage, description } of servicesCommands) {
       console.log(`  ${usage.padEnd(maximumLength, ' ')} ${description}`)
     }

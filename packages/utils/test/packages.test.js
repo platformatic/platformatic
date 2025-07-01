@@ -2,9 +2,8 @@
 
 const { test } = require('node:test')
 const { ok, equal } = require('node:assert')
-const { tspl } = require('@matteo.collina/tspl')
 const { version, dependencies } = require('../package.json')
-const { getPlatformaticVersion, hasDependency, getDependencyVersion, checkForDependencies, getLatestNpmVersion } = require('../')
+const { getPlatformaticVersion, hasDependency, getDependencyVersion, getLatestNpmVersion } = require('../')
 const { MockAgent, setGlobalDispatcher } = require('undici')
 const semver = require('semver')
 
@@ -28,60 +27,18 @@ test('getDependencyVersion', async t => {
   equal(semver.satisfies(version, toMatch), true)
 })
 
-test('checkForDependencies missing dep', async t => {
-  const currentPlatformaticVersion = require('../package.json').version
-  const { match, equal } = tspl(t, { plan: 4 })
-
-  mockAgent
-    .get('https://registry.npmjs.org')
-    .intercept({
-      method: 'GET',
-      path: '/fakepackage',
-    })
-    .reply(404, {})
-
-  mockAgent
-    .get('https://registry.npmjs.org')
-    .intercept({
-      method: 'GET',
-      path: '/foobar',
-    })
-    .reply(200, {
-      'dist-tags': {
-        latest: '1.42.0',
-      },
-    })
-
-  const logger = {
-    warn: (msg) => {
-      match(msg, /Please run .+ to install types dependencies./)
-      match(msg, new RegExp(`@platformatic/db@${currentPlatformaticVersion}`))
-      match(msg, /foobar@1.42.0/)
-    },
-    error: (msg) => {
-      equal(msg, 'Cannot find latest version on npm for package fakepackage')
-    },
-  }
-
-  const args = {}
-  const config = {}
-  const modules = ['@platformatic/db', 'fakepackage', 'foobar']
-
-  await checkForDependencies(logger, args, require, config, modules)
-})
-
-test('check latest npm version', async (t) => {
+test('check latest npm version', async t => {
   {
     mockAgent
       .get('https://registry.npmjs.org')
       .intercept({
         method: 'GET',
-        path: '/foobar',
+        path: '/foobar'
       })
       .reply(200, {
         'dist-tags': {
-          latest: '1.2.3',
-        },
+          latest: '1.2.3'
+        }
       })
     const latest = await getLatestNpmVersion('foobar')
     equal(latest, '1.2.3')
@@ -92,7 +49,7 @@ test('check latest npm version', async (t) => {
       .get('https://registry.npmjs.org')
       .intercept({
         method: 'GET',
-        path: '/foobar',
+        path: '/foobar'
       })
       .reply(404, {})
 
