@@ -1,7 +1,7 @@
 'use strict'
 
-const { resolveStackable } = require('@platformatic/basic')
 const { createConnectionPool } = require('@platformatic/sql-mapper')
+const { createConfigManager, resolveStackable, sanitizeCreationArguments } = require('@platformatic/basic')
 const {
   configManagerConfig: serviceConfigManagerConfig,
   transformConfig: serviceTransformConfig,
@@ -12,8 +12,8 @@ const { Generator } = require('./lib/generator')
 const { DatabaseStackable } = require('./lib/stackable')
 const { schema, packageJson } = require('./lib/schema')
 const schemaComponents = require('./lib/schema')
-const { ConfigManager } = require('@platformatic/config')
 const errors = require('./lib/errors')
+const { upgrade } = require('./lib/upgrade')
 const { readFile } = require('node:fs/promises')
 const { resolve } = require('node:path')
 
@@ -75,16 +75,17 @@ async function buildStackable (opts) {
   return create(opts.context.directory, opts.config, {}, opts.context)
 }
 
-async function create (configFileOrRoot, sourceOrConfig, opts, context) {
+async function create (configFileOrRoot, sourceOrConfig, rawOpts, rawContext) {
   const { root, source } = await resolveStackable(configFileOrRoot, sourceOrConfig, 'db')
-  context ??= {}
-  context.directory = root
+  const { opts, context } = await sanitizeCreationArguments(root, rawOpts, rawContext)
 
-  opts ??= { context }
-  opts.context = context
-
-  const configManager = new ConfigManager({ schema, source, ...configManagerConfig, dirname: root, context })
-  await configManager.parseAndValidate()
+  const configManager = await createConfigManager(
+    { schema, upgrade, config: configManagerConfig, version: packageJson.version },
+    root,
+    source,
+    opts,
+    context
+  )
 
   return new DatabaseStackable(opts, root, configManager)
 }

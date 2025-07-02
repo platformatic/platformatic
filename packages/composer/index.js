@@ -1,13 +1,13 @@
 'use strict'
 
-const { resolveStackable } = require('@platformatic/basic')
-const { ConfigManager } = require('@platformatic/config')
+const { createConfigManager, resolveStackable, sanitizeCreationArguments } = require('@platformatic/basic')
 const { configManagerConfig, getTypescriptCompilationOptions } = require('@platformatic/service')
 const { Generator } = require('./lib/generator')
 const { ComposerStackable } = require('./lib/stackable')
 const { platformaticComposer } = require('./lib/application')
 const { schema, packageJson } = require('./lib/schema')
 const schemaComponents = require('./lib/schema')
+const { upgrade } = require('./lib/upgrade')
 const errors = require('./lib/errors')
 
 // This will be replaced by create before the release of v3
@@ -15,16 +15,17 @@ async function buildStackable (opts) {
   return create(opts.context.directory, opts.config, {}, opts.context)
 }
 
-async function create (configFileOrRoot, sourceOrConfig, opts, context) {
+async function create (configFileOrRoot, sourceOrConfig, rawOpts, rawContext) {
   const { root, source } = await resolveStackable(configFileOrRoot, sourceOrConfig, 'composer')
-  context ??= {}
-  context.directory = root
+  const { opts, context } = await sanitizeCreationArguments(root, rawOpts, rawContext)
 
-  opts ??= { context }
-  opts.context = context
-
-  const configManager = new ConfigManager({ schema, source, ...configManagerConfig, dirname: root, context })
-  await configManager.parseAndValidate()
+  const configManager = await createConfigManager(
+    { schema, upgrade, config: configManagerConfig, version: packageJson.version },
+    root,
+    source,
+    opts,
+    context
+  )
 
   return new ComposerStackable(opts, root, configManager)
 }

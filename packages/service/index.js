@@ -1,7 +1,12 @@
 'use strict'
 
-const { schemaOptions, transformConfig: basicTransformConfig, resolveStackable } = require('@platformatic/basic')
-const { ConfigManager } = require('@platformatic/config')
+const {
+  createConfigManager,
+  schemaOptions,
+  transformConfig: basicTransformConfig,
+  sanitizeCreationArguments,
+  resolveStackable
+} = require('@platformatic/basic')
 const { readFile } = require('node:fs/promises')
 const { join } = require('node:path')
 const { platformaticService } = require('./lib/application.js')
@@ -9,6 +14,7 @@ const { Generator } = require('./lib/generator.js')
 const { ServiceStackable } = require('./lib/stackable.js')
 const { schema, packageJson } = require('./lib/schema.js')
 const schemaComponents = require('./lib/schema.js')
+const { upgrade } = require('./lib/upgrade.js')
 const { isDocker } = require('./lib/utils.js')
 const { getTypescriptCompilationOptions } = require('./lib/compile.js')
 
@@ -47,24 +53,17 @@ async function buildStackable (opts) {
   return create(opts.context.directory, opts.config, {}, opts.context)
 }
 
-async function create (configFileOrRoot, sourceOrConfig, opts, context) {
+async function create (configFileOrRoot, sourceOrConfig, rawOpts, rawContext) {
   const { root, source } = await resolveStackable(configFileOrRoot, sourceOrConfig, 'service')
+  const { opts, context } = await sanitizeCreationArguments(root, rawOpts, rawContext)
 
-  context ??= {}
-  context.directory = root
-
-  opts ??= { context }
-  opts.context = context
-
-  const configManager = new ConfigManager({
-    schema: opts.context.schema ?? schema,
+  const configManager = await createConfigManager(
+    { schema, upgrade, config: configManagerConfig, version: packageJson.version },
+    root,
     source,
-    ...configManagerConfig,
-    ...opts.context.configManagerConfig,
-    dirname: root,
+    opts,
     context
-  })
-  await configManager.parseAndValidate()
+  )
 
   return new ServiceStackable(opts, root, configManager)
 }
