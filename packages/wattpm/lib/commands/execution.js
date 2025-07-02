@@ -3,7 +3,6 @@ import { startCommand as pltStartCommand } from '@platformatic/runtime'
 import { ensureLoggableError, FileWatcher } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
-import { watch } from 'node:fs/promises'
 import { on } from 'node:events'
 import {
   findRuntimeConfigurationFile,
@@ -50,7 +49,7 @@ export async function devCommand (logger, args) {
   }
 
   // Add a watcher on the configurationFile so that we can eventually restart the runtime
-  const watcher = new FileWatcher({path: configurationFile })
+  const watcher = new FileWatcher({ path: configurationFile })
   watcher.startWatching()
   // eslint-disable-next-line no-unused-vars
   for await (const _ of on(watcher, 'update')) {
