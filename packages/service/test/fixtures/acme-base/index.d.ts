@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { AcmeBase } from './config'
-export { PlatformaticApp } from '../../../'
+export { PlatformaticApplication } from '../../../index.js'
 
 export type AcmeBaseConfig = AcmeBase
 

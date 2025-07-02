@@ -1,10 +1,23 @@
-import { schemaOptions } from '@platformatic/basic'
-import { ConfigManager, findConfigurationFile } from '@platformatic/config'
 import { lstat } from 'node:fs/promises'
 import { join } from 'node:path'
-import { platformaticService, ServiceStackable, transformConfig as serviceTransformConfig } from '../../../index.js'
+import {
+  create as createService,
+  platformaticService,
+  transformConfig as serviceTransformConfig
+} from '../../../index.js'
 import dynamite from './lib/dynamite.js'
 import { schema } from './lib/schema.js'
+
+export { configManagerConfig } from '../../../index.js'
+export { schema } from './lib/schema.js'
+
+async function isDirectory (path) {
+  try {
+    return (await lstat(path)).isDirectory()
+  } catch {
+    return false
+  }
+}
 
 export default async function acmeBase (app, stackable) {
   if (app.platformatic.config.dynamite) {
@@ -16,17 +29,11 @@ export default async function acmeBase (app, stackable) {
 
 acmeBase[Symbol.for('skip-override')] = true
 
-async function isDirectory (path) {
-  try {
-    return (await lstat(path)).isDirectory()
-  } catch {
-    return false
-  }
-}
+export const configType = 'acmeBase'
 
-async function transformConfig () {
+export async function transformConfig () {
   // Call the transformConfig method from the base stackable
-  await serviceTransformConfig.call(this)
+  serviceTransformConfig.call(this)
 
   // In this method you can alter the configuration before the application
   // is started. It's useful to apply some defaults that cannot be derived
@@ -69,25 +76,11 @@ async function transformConfig () {
   }
 }
 
-export async function create (root, source, opts, context) {
-  source ??= await findConfigurationFile(root, 'service')
-
-  context ??= {}
-  context.directory = root
-
-  opts ??= {}
-  opts.context = context
-  opts.context.applicationFactory = acmeBase
-
-  const configManager = new ConfigManager({
-    schema,
-    source,
-    schemaOptions,
-    transformConfig,
-    dirname: root,
-    context
-  })
-  await configManager.parseAndValidate()
-
-  return new ServiceStackable(opts, root, configManager)
+export async function create (opts) {
+  return createService(
+    process.cwd(),
+    opts,
+    {},
+    { schema, applicationFactory: acmeBase, configManagerConfig: { transformConfig } }
+  )
 }

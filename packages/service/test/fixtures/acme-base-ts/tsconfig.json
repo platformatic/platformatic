@@ -2,7 +2,7 @@
   "compilerOptions": {
     "module": "nodenext",
     "esModuleInterop": true,
-    "target": "es2022",
+    "target": "es2020",
     "moduleResolution": "nodenext",
     "sourceMap": false,
     "incremental": true,

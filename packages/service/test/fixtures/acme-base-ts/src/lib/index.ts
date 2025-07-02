@@ -1,39 +1,28 @@
-import { BaseOptions, BaseStackable, schemaOptions } from '@platformatic/basic'
-import { ConfigManager, findConfigurationFile } from '@platformatic/config'
+import { BaseStackable } from '@platformatic/basic'
+import type { ConfigManager } from '@platformatic/config'
 import { FastifyInstance } from 'fastify'
 import { lstat } from 'node:fs/promises'
-import { join } from 'node:path'
-import { PlatformaticService as PlatformaticServiceConfig } from '../../../../../config.js'
+import { resolve } from 'node:path'
+import { type PlatformaticService as PlatformaticServiceConfig } from '../../../../../config.js'
 import {
+  create as createService,
   platformaticService,
-  ServiceContext,
-  ServiceStackable,
   transformConfig as serviceTransformConfig
 } from '../../../../../index.js'
-import { AcmeBase } from './config.js'
+
+import { type AcmeBaseConfig } from './config.js'
 import dynamite from './dynamite.js'
 import { schema } from './schema.js'
 
+export { configManagerConfig } from '../../../../../index.js'
+export { schema } from './schema.js'
+
 export interface AcmeBaseMixin {
   platformatic: {
-    configManager: ConfigManager<AcmeBase>
-    config: AcmeBase
+    configManager: ConfigManager<AcmeBaseConfig>
+    config: AcmeBaseConfig
   }
 }
-
-export default async function acmeBase (
-  app: FastifyInstance,
-  stackable: BaseStackable<AcmeBase & PlatformaticServiceConfig>
-) {
-  if ((app as FastifyInstance & AcmeBaseMixin).platformatic.config.dynamite) {
-    app.register(dynamite)
-  }
-
-  await platformaticService(app, stackable)
-}
-
-// @ts-ignore
-acmeBase[Symbol.for('skip-override')] = true
 
 async function isDirectory (path: string) {
   try {
@@ -43,9 +32,21 @@ async function isDirectory (path: string) {
   }
 }
 
-async function transformConfig (this: ConfigManager<AcmeBase & PlatformaticServiceConfig>) {
+export default async function acmeBase (app: FastifyInstance & AcmeBaseMixin, stackable: BaseStackable) {
+  if (app.platformatic.config.dynamite) {
+    app.register(dynamite)
+  }
+
+  await platformaticService(app, stackable)
+}
+
+Object.assign(acmeBase, { [Symbol.for('skip-override')]: true })
+
+export const configType = 'acmeBase'
+
+export async function transformConfig (this: ConfigManager<PlatformaticServiceConfig & AcmeBaseConfig>) {
   // Call the transformConfig method from the base stackable
-  await serviceTransformConfig.call(this)
+  serviceTransformConfig.call(this)
 
   // In this method you can alter the configuration before the application
   // is started. It's useful to apply some defaults that cannot be derived
@@ -53,7 +54,7 @@ async function transformConfig (this: ConfigManager<AcmeBase & PlatformaticServi
 
   const paths = []
 
-  const pluginsDir = join(this.dirname, 'plugins')
+  const pluginsDir = resolve(this.dirname, 'plugins')
 
   if (await isDirectory(pluginsDir)) {
     paths.push({
@@ -62,7 +63,7 @@ async function transformConfig (this: ConfigManager<AcmeBase & PlatformaticServi
     })
   }
 
-  const routesDir = join(this.dirname, 'routes')
+  const routesDir = resolve(this.dirname, 'routes')
 
   if (await isDirectory(routesDir)) {
     paths.push({
@@ -88,30 +89,11 @@ async function transformConfig (this: ConfigManager<AcmeBase & PlatformaticServi
   }
 }
 
-export async function create (
-  root: string,
-  source?: string | object,
-  opts?: BaseOptions<ServiceContext>,
-  context?: Partial<ServiceContext>
-) {
-  source ??= await findConfigurationFile(root, 'service')
-
-  context ??= {}
-  context.directory = root
-
-  opts ??= { context }
-  opts.context = context
-  opts.context.applicationFactory = acmeBase
-
-  const configManager = new ConfigManager({
-    schema,
-    source: source as string,
-    schemaOptions,
-    transformConfig,
-    dirname: root,
-    context
-  })
-  await configManager.parseAndValidate()
-
-  return new ServiceStackable(opts, root, configManager)
+export async function create (opts: object) {
+  return createService(
+    process.cwd(),
+    opts,
+    {},
+    { schema, applicationFactory: acmeBase, configManagerConfig: { transformConfig } }
+  )
 }

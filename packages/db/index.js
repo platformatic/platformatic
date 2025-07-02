@@ -75,8 +75,8 @@ async function buildStackable (opts) {
   return create(opts.context.directory, opts.config, {}, opts.context)
 }
 
-async function create (fileOrDirectory, sourceOrConfig, opts, context) {
-  const { root, source } = await resolveStackable(fileOrDirectory, sourceOrConfig, 'db')
+async function create (configFileOrRoot, sourceOrConfig, opts, context) {
+  const { root, source } = await resolveStackable(configFileOrRoot, sourceOrConfig, 'db')
   context ??= {}
   context.directory = root
 

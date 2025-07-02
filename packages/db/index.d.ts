@@ -41,7 +41,8 @@ export function buildStackable (
 export function create (
   root: string,
   source?: string | PlatformaticDatabaseConfig,
-  opts?: object
+  opts?: object,
+  context?: object
 ): Promise<DatabaseStackable>
 
 /**

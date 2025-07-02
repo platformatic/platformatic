@@ -41,7 +41,8 @@ export function buildStackable (
 export function create (
   root: string,
   source?: string | PlatformaticServiceConfig,
-  opts?: object
+  opts?: object,
+  context?: object
 ): Promise<ServiceStackable>
 
 export const schema: JSONSchemaType<PlatformaticServiceConfig>
