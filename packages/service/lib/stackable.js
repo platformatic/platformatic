@@ -2,7 +2,8 @@
 
 const { BaseStackable, getServerUrl, ensureTrailingSlash, cleanBasePath } = require('@platformatic/basic')
 const { compile } = require('@platformatic/ts-compiler')
-const { deepmerge, buildPinoFormatters, buildPinoTimestamp, features } = require('@platformatic/utils')
+const { telemetry } = require('@platformatic/telemetry')
+const { deepmerge, buildPinoFormatters, buildPinoTimestamp, features, isKeyEnabled } = require('@platformatic/utils')
 const fastify = require('fastify')
 const { printSchema } = require('graphql')
 const { randomUUID } = require('node:crypto')
@@ -42,7 +43,14 @@ class ServiceStackable extends BaseStackable {
       }
     })
 
+    // This must be done before loading the plugins, so they can inspect if the
+    // openTelemetry decorator exists and then configure accordingly.
+    if (isKeyEnabled('telemetry', config)) {
+      await this.#app.register(telemetry, config.telemetry)
+    }
+
     this.#app.decorate('platformatic', { configManager: this.configManager, config: this.configManager.current })
+
     await this.#app.register(this.applicationFactory, this)
 
     if (Array.isArray(this.context.fastifyPlugins)) {

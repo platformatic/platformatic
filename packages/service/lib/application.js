@@ -1,6 +1,5 @@
 'use strict'
 
-const { telemetry } = require('@platformatic/telemetry')
 const { isKeyEnabled } = require('@platformatic/utils')
 const setupCors = require('./plugins/cors.js')
 const setupClients = require('./plugins/clients.js')
@@ -12,13 +11,6 @@ const setupTsCompiler = require('./plugins/typescript.js')
 
 async function platformaticService (app, stackable) {
   const config = await stackable.getConfig()
-
-  // This must be done before loading the plugins, so they can inspect if the
-  // openTelemetry decorator exists and then configure accordingly.
-  if (!stackable.context.telemetryRegistered && isKeyEnabled('telemetry', config)) {
-    await app.register(telemetry, config.telemetry)
-    stackable.context.telemetryRegistered = true
-  }
 
   // This must be done before loading the plugins, so they can be configured accordingly
   if (isKeyEnabled('clients', config)) {

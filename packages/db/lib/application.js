@@ -3,7 +3,6 @@
 const core = require('@platformatic/db-core')
 const auth = require('@platformatic/db-authorization')
 const { platformaticService } = require('@platformatic/service')
-const { telemetry } = require('@platformatic/telemetry')
 const { isKeyEnabled } = require('@platformatic/utils')
 const { locateSchemaLock, updateSchemaLock } = require('./utils')
 const { readFile, writeFile } = require('node:fs/promises')
@@ -75,13 +74,6 @@ async function platformaticDatabase (app, stackable) {
     } catch (err) {
       app.log.trace({ err }, 'unable to save schema lock')
     }
-  }
-
-  // This must be done before loading the plugins, so they can inspect if the
-  // openTelemetry decorator exists and then configure accordingly.
-  if (!stackable.context.telemetryRegistered && isKeyEnabled('telemetry', config)) {
-    await app.register(telemetry, config.telemetry)
-    stackable.context.telemetryRegistered = true
   }
 
   await app.register(core, config.db)

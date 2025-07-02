@@ -2,7 +2,6 @@
 
 const deepEqual = require('fast-deep-equal')
 const { platformaticService } = require('@platformatic/service')
-const { telemetry } = require('@platformatic/telemetry')
 const { isKeyEnabled } = require('@platformatic/utils')
 const serviceProxy = require('./proxy')
 const graphql = require('./graphql')
@@ -146,13 +145,6 @@ async function platformaticComposer (app, stackable) {
     if (service.graphql && !hasGraphqlServices) {
       hasGraphqlServices = true
     }
-  }
-
-  // This must be done before loading the plugins, so they can inspect if the
-  // openTelemetry decorator exists and then configure accordingly.
-  if (!stackable.context.telemetryRegistered && isKeyEnabled('telemetry', config)) {
-    await app.register(telemetry, config.telemetry)
-    stackable.context.telemetryRegistered = true
   }
 
   await app.register(composerHook)
