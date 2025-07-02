@@ -8,6 +8,5 @@
   },
   "plugins": {
     "paths": ["./plugin.js"]
-  },
-  "metrics": false
+  }
 }

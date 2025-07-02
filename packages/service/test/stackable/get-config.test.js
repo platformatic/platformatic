@@ -28,7 +28,6 @@ test('get service config via stackable api', async t => {
     },
     watch: {
       enabled: false
-    },
-    metrics: false
+    }
   })
 })

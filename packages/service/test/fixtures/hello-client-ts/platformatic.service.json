@@ -12,10 +12,11 @@
     "paths": ["./plugin.ts"],
     "typescript": true
   },
-  "clients": [{
-    "path": "hello",
-    "url": "{PLT_CLIENT_URL}"
-  }],
-  "metrics": false,
+  "clients": [
+    {
+      "path": "hello",
+      "url": "{PLT_CLIENT_URL}"
+    }
+  ],
   "watch": false
 }

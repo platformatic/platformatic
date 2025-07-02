@@ -8,6 +8,5 @@
   },
   "plugins": {
     "paths": ["./routes"]
-  },
-  "metrics": false
+  }
 }

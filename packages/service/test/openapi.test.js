@@ -20,8 +20,7 @@ test('support prefix option', async t => {
         swaggerPrefix: '/my-prefix'
       }
     },
-    watch: false,
-    metrics: false
+    watch: false
   }
 
   const app = await createFromConfig(t, config)
@@ -69,8 +68,7 @@ test('provide openapi spec from a file', async t => {
         path: join(__dirname, 'fixtures', 'openapi-spec-test.json')
       }
     },
-    watch: false,
-    metrics: false
+    watch: false
   }
 
   const app = await createFromConfig(t, config)

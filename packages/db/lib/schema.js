@@ -1,8 +1,7 @@
 #! /usr/bin/env node
 'use strict'
 
-const { metrics, server, plugins, watch, openApiBase, clients, $defs } =
-  require('@platformatic/service').schemaComponents
+const { server, plugins, watch, openApiBase, clients, $defs } = require('@platformatic/service').schemaComponents
 const { schemaComponents } = require('@platformatic/utils')
 const telemetry = require('@platformatic/telemetry').schema
 const packageJson = require('../package.json')
@@ -456,7 +455,6 @@ const schema = {
     db,
     authorization,
     migrations,
-    metrics,
     types,
     plugins,
     telemetry,

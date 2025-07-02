@@ -185,25 +185,12 @@ class ServiceStackable extends BaseStackable {
       return
     }
 
-    const {
-      serviceId,
-      telemetryConfig,
-      metricsConfig,
-      serverConfig,
-      hasManagementApi,
-      isEntrypoint,
-      isStandalone,
-      isProduction,
-      logger
-    } = this.context
+    const { telemetryConfig, serverConfig, isEntrypoint, isProduction, logger } = this.context
 
     const config = { ...this.configManager.current }
 
     if (telemetryConfig) {
       config.telemetry = telemetryConfig
-    }
-    if (metricsConfig) {
-      config.metrics = metricsConfig
     }
 
     const loggerInstance = logger ?? serverConfig?.loggerInstance ?? this.serverConfig?.loggerInstance
@@ -214,15 +201,6 @@ class ServiceStackable extends BaseStackable {
 
     config.server ??= {}
 
-    if ((hasManagementApi && config.metrics === undefined) || config.metrics) {
-      const labels = config.metrics?.labels || {}
-      config.metrics = {
-        server: isStandalone ? 'own' : 'hide',
-        defaultMetrics: { enabled: isEntrypoint },
-        ...config.metrics,
-        labels: { serviceId, ...labels }
-      }
-    }
     if (isProduction) {
       if (config.plugins) {
         config.plugins.typescript = false

@@ -1137,48 +1137,6 @@ const plugins = {
   ]
 }
 
-const metrics = {
-  anyOf: [
-    { type: 'boolean' },
-    {
-      type: 'object',
-      properties: {
-        port: {
-          anyOf: [{ type: 'integer' }, { type: 'string' }]
-        },
-        hostname: { type: 'string' },
-        endpoint: { type: 'string' },
-        server: {
-          type: 'string',
-          enum: ['own', 'parent', 'hide']
-        },
-        defaultMetrics: {
-          type: 'object',
-          properties: {
-            enabled: { type: 'boolean', default: true }
-          },
-          required: ['enabled'],
-          additionalProperties: false
-        },
-        auth: {
-          type: 'object',
-          properties: {
-            username: { type: 'string' },
-            password: { type: 'string' }
-          },
-          additionalProperties: false,
-          required: ['username', 'password']
-        },
-        labels: {
-          type: 'object',
-          additionalProperties: { type: 'string' }
-        }
-      },
-      additionalProperties: false
-    }
-  ]
-}
-
 const openApiBase = {
   type: 'object',
   properties: {
@@ -1374,7 +1332,6 @@ const schema = {
     },
     server,
     plugins,
-    metrics,
     telemetry,
     watch: {
       anyOf: [
@@ -1404,7 +1361,6 @@ const schema = {
 module.exports = {
   packageJson,
   plugins,
-  metrics,
   cors,
   server,
   watch,

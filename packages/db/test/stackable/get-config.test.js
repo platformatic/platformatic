@@ -23,8 +23,7 @@ test('get service config via stackable api', async t => {
     },
     watch: {
       enabled: false
-    },
-    metrics: false
+    }
   })
 
   t.after(async () => {
@@ -38,7 +37,6 @@ test('get service config via stackable api', async t => {
     db: {
       ...connectionInfo
     },
-    metrics: false,
     plugins: {
       paths: [join(workingDir, 'routes')]
     },

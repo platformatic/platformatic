@@ -21,8 +21,7 @@ test('get service openapi schema via stackable api', async t => {
     plugins: {
       paths: [join(workingDir, 'routes')]
     },
-    watch: false,
-    metrics: false
+    watch: false
   })
 
   t.after(async () => {
@@ -67,8 +66,7 @@ test('get null if server does not expose openapi', async t => {
     plugins: {
       paths: [join(workingDir, 'routes')]
     },
-    watch: false,
-    metrics: false
+    watch: false
   })
 
   t.after(async () => {

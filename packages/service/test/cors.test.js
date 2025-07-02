@@ -14,8 +14,7 @@ test('CORS is disabled by default', async t => {
         hostname: '127.0.0.1',
         port: 0,
         logger: { level: 'fatal' }
-      },
-      metrics: false
+      }
     },
     async function applicationFactory (app, opts) {
       app.register(platformaticService, opts)
@@ -51,8 +50,7 @@ test('CORS can be enabled', async t => {
           origin: true,
           methods: ['GET', 'POST']
         }
-      },
-      metrics: false
+      }
     },
     async function applicationFactory (app, opts) {
       app.register(platformaticService, opts)
@@ -93,8 +91,7 @@ test('CORS with a regexp', async t => {
           },
           methods: ['GET', 'POST']
         }
-      },
-      metrics: false
+      }
     },
     async function applicationFactory (app, opts) {
       app.register(platformaticService, opts)
@@ -159,8 +156,7 @@ test('CORS with an array of strings', async t => {
           origin: ['https://foo.deploy.space', 'https://platformatic.cloud'],
           methods: ['GET', 'POST']
         }
-      },
-      metrics: false
+      }
     },
     async function applicationFactory (app, opts) {
       app.register(platformaticService, opts)
@@ -230,8 +226,7 @@ test('CORS with an array and a regexp', async t => {
           ],
           methods: ['GET', 'POST']
         }
-      },
-      metrics: false
+      }
     },
     async function applicationFactory (app, opts) {
       app.register(platformaticService, opts)
@@ -296,8 +291,7 @@ test('CORS with a string', async t => {
           origin: 'https://platformatic.cloud',
           methods: ['GET', 'POST']
         }
-      },
-      metrics: false
+      }
     },
     async function applicationFactory (app, opts) {
       app.register(platformaticService, opts)

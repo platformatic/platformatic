@@ -13,6 +13,5 @@
   "service": {
     "openapi": true
   },
-  "metrics": false,
   "watch": false
 }

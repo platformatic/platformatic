@@ -12,12 +12,13 @@
     "paths": ["./plugin.ts"],
     "typescript": true
   },
-  "clients": [{
-    "schema": "./hello.openapi.json",
-    "name": "hello",
-    "type": "openapi",
-    "url": "{PLT_CLIENT_URL}"
-  }],
-  "metrics": false,
+  "clients": [
+    {
+      "schema": "./hello.openapi.json",
+      "name": "hello",
+      "type": "openapi",
+      "url": "{PLT_CLIENT_URL}"
+    }
+  ],
   "watch": false
 }

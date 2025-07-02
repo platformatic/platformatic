@@ -18,8 +18,7 @@ test('healthcheck route enabled with interval', async t => {
           return check
         }
       }
-    },
-    metrics: false
+    }
   })
 
   t.after(async () => {
@@ -58,8 +57,7 @@ test('healthcheck route enabled without interval', async t => {
       port: 0,
       logger: { level: 'fatal' },
       healthCheck: true
-    },
-    metrics: false
+    }
   })
 
   t.after(async () => {
@@ -81,8 +79,7 @@ test('healthcheck route disabled', async t => {
       hostname: '127.0.0.1',
       port: 0,
       logger: { level: 'fatal' }
-    },
-    metrics: false
+    }
   })
 
   t.after(async () => {

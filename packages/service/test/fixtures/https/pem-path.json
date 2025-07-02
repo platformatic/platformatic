@@ -15,6 +15,5 @@
   },
   "service": {
     "openapi": true
-  },
-  "metrics": false
+  }
 }

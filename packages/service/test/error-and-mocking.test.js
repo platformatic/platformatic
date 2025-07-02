@@ -34,8 +34,7 @@ test('error', async t => {
     plugins: {
       paths: [file]
     },
-    watch: false,
-    metrics: false
+    watch: false
   })
 
   t.after(async () => {

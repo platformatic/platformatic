@@ -446,7 +446,7 @@ skip fetching the schema.
 Start the Platformatic Composer server with the following command:
 
 ``` bash
- $ platformatic composer start
+ $ platformatic start
  ```
 
 You will need a configuration file. Here is an example to get you started,
@@ -511,7 +511,7 @@ platformatic db <command>
 Compile typescript plugins.
 
 ``` bash
-  $ platformatic db compile
+  $ platformatic service compile
 ```
 
 As a result of executing this command, the Platformatic DB will compile typescript
@@ -720,7 +720,7 @@ You can find more details about the configuration format here:
 Start the Platformatic DB server with the following command:
 
 ``` bash
- $ platformatic db start
+ $ platformatic start
  ```
 
 You will need a  configuration file. Here is an example to get you started,

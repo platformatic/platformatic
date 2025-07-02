@@ -57,7 +57,6 @@ test('do not watch typescript outDir', async t => {
 test('start without server config', async t => {
   const app = await createFromConfig(t, {
     watch: false,
-    metrics: false,
     server: {
       logger: {
         level: 'fatal'

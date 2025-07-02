@@ -6,4 +6,3 @@ plugins:
     - path: './plugin.js'
       options:
         something: 'else'
-metrics: false

@@ -2,7 +2,7 @@
 'use strict'
 
 const {
-  schemaComponents: { metrics, server, plugins, watch, clients, openApiBase, graphqlBase, $defs }
+  schemaComponents: { server, plugins, watch, clients, openApiBase, graphqlBase, $defs }
 } = require('@platformatic/service')
 const { schemaComponents } = require('@platformatic/utils')
 const telemetry = require('@platformatic/telemetry').schema
@@ -207,7 +207,6 @@ const schema = {
     },
     server,
     composer,
-    metrics,
     types,
     plugins,
     clients,

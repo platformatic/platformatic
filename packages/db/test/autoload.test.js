@@ -22,8 +22,7 @@ test('autoload & filesystem based routing / watch disabled', async t => {
     plugins: {
       paths: [join(workingDir, 'routes')]
     },
-    watch: false,
-    metrics: false
+    watch: false
   })
 
   t.after(async () => {
@@ -70,8 +69,7 @@ test('autoload & filesystem based routing / watch enabled', async t => {
     plugins: {
       paths: [join(workingDir, 'routes')]
     },
-    watch: true,
-    metrics: false
+    watch: true
   })
 
   t.after(async () => {
@@ -125,8 +123,7 @@ test('multiple files', async t => {
         }
       ]
     },
-    watch: true,
-    metrics: false
+    watch: true
   })
 
   t.after(async () => {
@@ -187,8 +184,7 @@ test('multiple files / watch false', async t => {
         }
       ]
     },
-    watch: false,
-    metrics: false
+    watch: false
   })
 
   t.after(async () => {
@@ -242,8 +238,7 @@ test('multiple files as strings', async t => {
     plugins: {
       paths: [join(workingDir, 'plugins'), join(workingDir, 'routes')]
     },
-    watch: true,
-    metrics: false
+    watch: true
   })
 
   t.after(async () => {
@@ -297,8 +292,7 @@ test('autoload & filesystem based routing / watch disabled / no object', async t
     plugins: {
       paths: [join(workingDir, 'routes')]
     },
-    watch: false,
-    metrics: false
+    watch: false
   })
 
   t.after(async () => {

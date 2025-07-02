@@ -21,8 +21,7 @@ test('get service openapi schema via stackable api', async t => {
     plugins: {
       paths: [join(__dirname, '..', 'fixtures', 'hello-world-resolver.js')]
     },
-    watch: false,
-    metrics: false
+    watch: false
   })
   t.after(() => stackable.stop())
   await stackable.start({ listen: true })

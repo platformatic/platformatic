@@ -21,8 +21,7 @@ test('get service graphql schema via stackable api', async t => {
     plugins: {
       paths: [join(workingDir, 'routes')]
     },
-    watch: false,
-    metrics: false
+    watch: false
   })
 
   t.after(async () => {
@@ -52,8 +51,7 @@ test('get null if server does not expose graphql', async t => {
     plugins: {
       paths: [join(workingDir, 'routes')]
     },
-    watch: false,
-    metrics: false
+    watch: false
   })
 
   t.after(async () => {

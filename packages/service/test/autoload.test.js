@@ -9,7 +9,7 @@ const { create } = require('..')
 // Make sure we are not mistakenly detecting the tsconfig.json file in the root of the package.
 process.chdir(__dirname)
 
-test('autoload & filesystem based routing / watch disabled', async (t) => {
+test('autoload & filesystem based routing / watch disabled', async t => {
   const config = {
     server: {
       hostname: '127.0.0.1',
@@ -17,10 +17,9 @@ test('autoload & filesystem based routing / watch disabled', async (t) => {
       logger: { level: 'fatal' }
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'directories', 'routes')],
+      paths: [join(__dirname, 'fixtures', 'directories', 'routes')]
     },
-    watch: false,
-    metrics: false,
+    watch: false
   }
 
   const app = await create(join(__dirname, 'fixtures', 'directories'), config)
@@ -49,7 +48,7 @@ test('autoload & filesystem based routing / watch disabled', async (t) => {
   }
 })
 
-test('multiple files / watch false', async (t) => {
+test('multiple files / watch false', async t => {
   const config = {
     server: {
       hostname: '127.0.0.1',
@@ -57,14 +56,16 @@ test('multiple files / watch false', async (t) => {
       logger: { level: 'fatal' }
     },
     plugins: {
-      paths: [{
-        path: join(__dirname, 'fixtures', 'directories', 'plugins'),
-      }, {
-        path: join(__dirname, 'fixtures', 'directories', 'routes'),
-      }],
+      paths: [
+        {
+          path: join(__dirname, 'fixtures', 'directories', 'plugins')
+        },
+        {
+          path: join(__dirname, 'fixtures', 'directories', 'routes')
+        }
+      ]
     },
-    watch: false,
-    metrics: false,
+    watch: false
   }
 
   const app = await create(join(__dirname, 'fixtures', 'directories'), config)
@@ -100,7 +101,7 @@ test('multiple files / watch false', async (t) => {
   }
 })
 
-test('autoload & filesystem based routing / watch disabled / no object', async (t) => {
+test('autoload & filesystem based routing / watch disabled / no object', async t => {
   const config = {
     server: {
       hostname: '127.0.0.1',
@@ -108,10 +109,9 @@ test('autoload & filesystem based routing / watch disabled / no object', async (
       logger: { level: 'fatal' }
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'directories', 'routes')],
+      paths: [join(__dirname, 'fixtures', 'directories', 'routes')]
     },
-    watch: false,
-    metrics: false,
+    watch: false
   }
 
   const app = await create(join(__dirname, 'fixtures', 'directories'), config)
@@ -140,7 +140,7 @@ test('autoload & filesystem based routing / watch disabled / no object', async (
   }
 })
 
-test('multiple files / watch false / no object', async (t) => {
+test('multiple files / watch false / no object', async t => {
   const config = {
     server: {
       hostname: '127.0.0.1',
@@ -150,11 +150,10 @@ test('multiple files / watch false / no object', async (t) => {
     plugins: {
       paths: [
         join(__dirname, 'fixtures', 'directories', 'plugins'),
-        join(__dirname, 'fixtures', 'directories', 'routes'),
-      ],
+        join(__dirname, 'fixtures', 'directories', 'routes')
+      ]
     },
-    watch: false,
-    metrics: false,
+    watch: false
   }
 
   const app = await create(join(__dirname, 'fixtures', 'directories'), config)
@@ -190,28 +189,31 @@ test('multiple files / watch false / no object', async (t) => {
   }
 })
 
-test('nested directories', async (t) => {
+test('nested directories', async t => {
   const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0,
       logger: { level: 'fatal' },
       // Windows CI is slow
-      pluginTimeout: 60 * 1000,
+      pluginTimeout: 60 * 1000
     },
     service: {
-      openapi: true,
+      openapi: true
     },
     plugins: {
-      paths: [{
-        path: join(__dirname, 'fixtures', 'nested-directories', 'plugins'),
-        encapsulate: false,
-      }, {
-        path: join(__dirname, 'fixtures', 'nested-directories', 'modules'),
-        encapsulate: false,
-        maxDepth: 1,
-      }],
-    },
+      paths: [
+        {
+          path: join(__dirname, 'fixtures', 'nested-directories', 'plugins'),
+          encapsulate: false
+        },
+        {
+          path: join(__dirname, 'fixtures', 'nested-directories', 'modules'),
+          encapsulate: false,
+          maxDepth: 1
+        }
+      ]
+    }
   }
 
   const app = await create(join(__dirname, 'fixtures', 'nested-directories'), config)
@@ -229,49 +231,60 @@ test('nested directories', async (t) => {
     const res = await request(`${app.url}/catalogue/products`)
     assert.strictEqual(res.statusCode, 200, 'status code')
     const body = await res.body.json()
-    assert.deepStrictEqual(body, [{ sku: 42, name: 'foo', inStore: 2 }, { sku: 43, name: 'bar', inStore: 0 }], 'body')
+    assert.deepStrictEqual(
+      body,
+      [
+        { sku: 42, name: 'foo', inStore: 2 },
+        { sku: 43, name: 'bar', inStore: 0 }
+      ],
+      'body'
+    )
   }
 
   {
     const res = await request(`${app.url}/foo/baz`)
     assert.strictEqual(res.statusCode, 404, 'status code')
     const body = await res.body.text()
-    assert.strictEqual(body, 'I\'m sorry, I couldn\'t find what you were looking for.')
+    assert.strictEqual(body, "I'm sorry, I couldn't find what you were looking for.")
   }
 
   {
     const res = await request(`${app.url}/catalogue/error`)
     assert.strictEqual(res.statusCode, 500, 'status code')
     const body = await res.body.text()
-    assert.strictEqual(body, 'I\'m sorry, there was an error processing your request.')
+    assert.strictEqual(body, "I'm sorry, there was an error processing your request.")
   }
 })
 
-test('disable encapsulation for a single file', async (t) => {
+test('disable encapsulation for a single file', async t => {
   const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0,
       logger: { level: 'fatal' },
       // Windows CI is slow
-      pluginTimeout: 60 * 1000,
+      pluginTimeout: 60 * 1000
     },
     service: {
-      openapi: true,
+      openapi: true
     },
     plugins: {
-      paths: [{
-        path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'decorator.js'),
-        encapsulate: false,
-      }, {
-        path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'handlers.js'),
-        encapsulate: false,
-      }, {
-        path: join(__dirname, 'fixtures', 'nested-directories', 'modules'),
-        encapsulate: false,
-        maxDepth: 1,
-      }],
-    },
+      paths: [
+        {
+          path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'decorator.js'),
+          encapsulate: false
+        },
+        {
+          path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'handlers.js'),
+          encapsulate: false
+        },
+        {
+          path: join(__dirname, 'fixtures', 'nested-directories', 'modules'),
+          encapsulate: false,
+          maxDepth: 1
+        }
+      ]
+    }
   }
 
   const app = await create(join(__dirname, 'fixtures', 'nested-directories'), config)
@@ -282,7 +295,7 @@ test('disable encapsulation for a single file', async (t) => {
     const res = await request(`${app.url}/foo/baz`)
     assert.strictEqual(res.statusCode, 404, 'status code')
     const body = await res.body.text()
-    assert.strictEqual(body, 'I\'m sorry, I couldn\'t find what you were looking for.')
+    assert.strictEqual(body, "I'm sorry, I couldn't find what you were looking for.")
   }
 
   {
@@ -293,31 +306,35 @@ test('disable encapsulation for a single file', async (t) => {
   }
 })
 
-test('disable encapsulation for a single file / different order', async (t) => {
+test('disable encapsulation for a single file / different order', async t => {
   const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0,
       logger: { level: 'fatal' },
       // Windows CI is slow
-      pluginTimeout: 60 * 1000,
+      pluginTimeout: 60 * 1000
     },
     service: {
-      openapi: true,
+      openapi: true
     },
     plugins: {
-      paths: [{
-        path: join(__dirname, 'fixtures', 'nested-directories', 'modules'),
-        encapsulate: false,
-        maxDepth: 1,
-      }, {
-        path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'decorator.js'),
-        encapsulate: false,
-      }, {
-        path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'handlers.js'),
-        encapsulate: false,
-      }],
-    },
+      paths: [
+        {
+          path: join(__dirname, 'fixtures', 'nested-directories', 'modules'),
+          encapsulate: false,
+          maxDepth: 1
+        },
+        {
+          path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'decorator.js'),
+          encapsulate: false
+        },
+        {
+          path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'handlers.js'),
+          encapsulate: false
+        }
+      ]
+    }
   }
 
   const app = await create(join(__dirname, 'fixtures', 'nested-directories'), config)
@@ -328,7 +345,7 @@ test('disable encapsulation for a single file / different order', async (t) => {
     const res = await request(`${app.url}/foo/baz`)
     assert.strictEqual(res.statusCode, 404, 'status code')
     const body = await res.body.text()
-    assert.strictEqual(body, 'I\'m sorry, I couldn\'t find what you were looking for.')
+    assert.strictEqual(body, "I'm sorry, I couldn't find what you were looking for.")
   }
 
   {
@@ -339,7 +356,7 @@ test('disable encapsulation for a single file / different order', async (t) => {
   }
 })
 
-test('autoload with ignorePattern, indexPattern and autoHooksPattern options', async (t) => {
+test('autoload with ignorePattern, indexPattern and autoHooksPattern options', async t => {
   const config = {
     server: {
       hostname: '127.0.0.1',
@@ -360,12 +377,11 @@ test('autoload with ignorePattern, indexPattern and autoHooksPattern options', a
           // Override default autohooks.js with auto.hooks.js which overrides
           // the response body
           autoHooksPattern: '^auto.hooks.js$',
-          autoHooks: true,
-        },
-      ],
+          autoHooks: true
+        }
+      ]
     },
-    watch: false,
-    metrics: false,
+    watch: false
   }
 
   const app = await create(join(__dirname, 'fixtures', 'directories'), config)
@@ -399,7 +415,7 @@ test('autoload with ignorePattern, indexPattern and autoHooksPattern options', a
   }
 })
 
-test('autoload with INVALID ignorePattern, indexPattern and autoHooksPattern options', async (t) => {
+test('autoload with INVALID ignorePattern, indexPattern and autoHooksPattern options', async t => {
   const config = {
     server: {
       hostname: '127.0.0.1',
@@ -412,12 +428,11 @@ test('autoload with INVALID ignorePattern, indexPattern and autoHooksPattern opt
           path: join(__dirname, 'fixtures', 'directories', 'routes'),
           ignorePattern: '***',
           indexPattern: '***terrible)))_pattern',
-          autoHooksPattern: '',
-        },
-      ],
+          autoHooksPattern: ''
+        }
+      ]
     },
-    watch: false,
-    metrics: false,
+    watch: false
   }
 
   const app = await create(join(__dirname, 'fixtures', 'directories'), config)
@@ -430,25 +445,28 @@ test('autoload with INVALID ignorePattern, indexPattern and autoHooksPattern opt
   }
 })
 
-test('loads encapsulated plugin twice', async (t) => {
+test('loads encapsulated plugin twice', async t => {
   const config = {
     server: {
       hostname: '127.0.0.1',
       port: 0,
       logger: { level: 'fatal' },
       // Windows CI is slow
-      pluginTimeout: 60 * 1000,
+      pluginTimeout: 60 * 1000
     },
     service: {
-      openapi: true,
+      openapi: true
     },
     plugins: {
-      paths: [{
-        path: join(__dirname, 'fixtures', 'directories', 'routes'),
-      }, {
-        path: join(__dirname, 'fixtures', 'directories', 'plugins', 'decorator.js'),
-      }],
-    },
+      paths: [
+        {
+          path: join(__dirname, 'fixtures', 'directories', 'routes')
+        },
+        {
+          path: join(__dirname, 'fixtures', 'directories', 'plugins', 'decorator.js')
+        }
+      ]
+    }
   }
 
   {

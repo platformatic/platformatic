@@ -10,10 +10,11 @@
   "plugins": {
     "paths": ["./plugin.js"]
   },
-  "clients": [{
-    "path": "hello",
-    "url": "{PLT_CLIENT_URL}"
-  }],
-  "metrics": false,
+  "clients": [
+    {
+      "path": "hello",
+      "url": "{PLT_CLIENT_URL}"
+    }
+  ],
   "watch": false
 }
