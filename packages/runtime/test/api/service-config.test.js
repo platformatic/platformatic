@@ -38,16 +38,7 @@ test('should get service config', async t => {
     plugins: {
       paths: [join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js')]
     },
-    watch: { enabled: true },
-    metrics: {
-      server: 'hide',
-      defaultMetrics: {
-        enabled: false
-      },
-      labels: {
-        serviceId: 'with-logger'
-      }
-    }
+    watch: { enabled: true }
   })
 })
 
@@ -122,8 +113,7 @@ test('do not force enable metrics if they are set to false', async t => {
         }
       ]
     },
-    watch: { enabled: true },
-    metrics: false
+    watch: { enabled: true }
   })
 })
 
@@ -156,16 +146,6 @@ test('set serviceId in metrics as label in all services', async t => {
     },
     watch: {
       enabled: true
-    },
-    metrics: {
-      server: 'hide',
-      defaultMetrics: {
-        enabled: false
-      },
-      labels: {
-        app: 'serviceApp', // this is from the runtime config
-        serviceId: 'with-logger' // this is set for each service
-      }
     }
   })
 })

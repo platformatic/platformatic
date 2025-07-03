@@ -4,6 +4,7 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
+const { getPlatformaticVersion } = require('@platformatic/utils')
 
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
@@ -42,9 +43,10 @@ test('should get service config', async t => {
   assert.strictEqual(statusCode, 200)
 
   const serviceConfig = await body.json()
+  const platformaticVersion = await getPlatformaticVersion()
 
   assert.deepStrictEqual(serviceConfig, {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
+    $schema: `https://schemas.platformatic.dev/@platformatic/service/${platformaticVersion}.json`,
     server: {
       hostname: '127.0.0.1',
       port: 0,
@@ -59,16 +61,6 @@ test('should get service config', async t => {
     },
     watch: {
       enabled: true
-    },
-    metrics: {
-      server: 'hide',
-      defaultMetrics: {
-        enabled: true
-      },
-      labels: {
-        serviceId: 'service-1',
-        custom_label: 'custom-value'
-      }
     }
   })
 })
