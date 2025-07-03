@@ -10,6 +10,7 @@ import { execa } from 'execa'
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
+import { getExecutableId } from '../embedding.js'
 import { version } from '../schema.js'
 import {
   findRuntimeConfigurationFile,
@@ -614,11 +615,12 @@ export const help = {
         description: 'Use an alternative package manager (the default is to autodetect it)'
       }
     ],
-    footer: `
-wattpm resolve command resolves runtime services that have the \`url\` in their configuration.
+    footer () {
+      return `
+${getExecutableId()} resolve command resolves runtime services that have the \`url\` in their configuration.
 To change the directory where a service is cloned, you can set the \`path\` property in the service configuration.
 
-After cloning the service, the resolve command will set the relative path to the service in the wattpm configuration file.
+After cloning the service, the resolve command will set the relative path to the service in the Platformatic configuration file.
 
 Example of the runtime \`watt.json\` configuration file:
 
@@ -669,5 +671,6 @@ You can find more details about the configuration format here:
 * [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
 * [Platformatic Service Configuration](https://docs.platformatic.dev/docs/service/configuration)
     `
+    }
   }
 }

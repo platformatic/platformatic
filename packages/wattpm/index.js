@@ -11,8 +11,11 @@ import { logsCommand } from './lib/commands/logs.js'
 import { configCommand, envCommand, psCommand, servicesCommand } from './lib/commands/management.js'
 import { metricsCommand } from './lib/commands/metrics.js'
 import { patchConfigCommand } from './lib/commands/patch-config.js'
+import { getExecutableId } from './lib/embedding.js'
 import { version } from './lib/schema.js'
 import { createLogger, loadServicesCommands, logFatalError, parseArgs, setVerbose } from './lib/utils.js'
+
+export * from './lib/embedding.js'
 
 export async function main () {
   globalThis.platformatic = { executable: 'watt' }
@@ -138,7 +141,7 @@ export async function main () {
   if (!command) {
     logFatalError(
       logger,
-      `Unknown command ${bold(requestedCommand)}. Please run ${bold("'wattpm help'")} to see available commands.`
+      `Unknown command ${bold(requestedCommand)}. Please run ${bold(`"${getExecutableId()} help"`)} to see available commands.`
     )
 
     return

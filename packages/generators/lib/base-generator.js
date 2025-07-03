@@ -470,7 +470,7 @@ class BaseGenerator extends FileGenerator {
 
   async loadFromDir (serviceName, runtimeRootPath) {
     const runtimePkgConfigFileData = JSON.parse(await readFile(join(runtimeRootPath, this.runtimeConfig), 'utf-8'))
-    const servicesPath = runtimePkgConfigFileData.autoload.path
+    const servicesPath = runtimePkgConfigFileData.autoload?.path ?? 'services'
     const servicePkgJsonFileData = JSON.parse(
       await readFile(join(runtimeRootPath, servicesPath, serviceName, 'platformatic.json'), 'utf-8')
     )

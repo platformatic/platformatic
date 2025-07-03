@@ -148,97 +148,13 @@ importers:
 
   packages/cli:
     dependencies:
-      '@fastify/error':
-        specifier: ^4.0.0
-        version: 4.2.0
-      '@platformatic/basic':
-        specifier: workspace:*
-        version: link:../basic
-      '@platformatic/client-cli':
-        specifier: workspace:*
-        version: link:../client-cli
-      '@platformatic/config':
-        specifier: workspace:*
-        version: link:../config
-      '@platformatic/control':
-        specifier: workspace:*
-        version: link:../control
-      '@platformatic/runtime':
-        specifier: workspace:*
-        version: link:../runtime
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
-      colorette:
-        specifier: ^2.0.20
-        version: 2.0.20
-      commist:
-        specifier: ^3.2.0
-        version: 3.2.0
-      create-platformatic:
-        specifier: workspace:*
-        version: link:../create-platformatic
-      desm:
-        specifier: ^1.3.1
-        version: 1.3.1
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.6.1
-      execa:
-        specifier: ^9.3.1
-        version: 9.6.0
-      fast-json-stringify:
-        specifier: ^6.0.0
-        version: 6.0.1
-      help-me:
-        specifier: ^5.0.0
-        version: 5.0.0
-      minimist:
-        specifier: ^1.2.8
-        version: 1.2.8
-      pino:
-        specifier: ^9.4.0
-        version: 9.7.0
-      pino-pretty:
-        specifier: ^13.0.0
-        version: 13.0.0
-      split2:
-        specifier: ^4.2.0
-        version: 4.2.0
-      undici:
-        specifier: ^7.0.0
-        version: 7.10.0
       wattpm:
         specifier: workspace:*
         version: link:../wattpm
     devDependencies:
-      '@platformatic/astro':
-        specifier: workspace:*
-        version: link:../astro
-      '@platformatic/composer':
-        specifier: workspace:*
-        version: link:../composer
-      '@platformatic/db':
-        specifier: workspace:*
-        version: link:../db
-      '@platformatic/next':
-        specifier: workspace:*
-        version: link:../next
-      '@platformatic/node':
-        specifier: workspace:*
-        version: link:../node
-      '@platformatic/remix':
-        specifier: workspace:*
-        version: link:../remix
-      '@platformatic/service':
-        specifier: workspace:*
-        version: link:../service
-      '@platformatic/vite':
-        specifier: workspace:*
-        version: link:../vite
-      add:
-        specifier: ^2.0.6
-        version: 2.0.6
       borp:
         specifier: ^0.20.0
         version: 0.20.0
@@ -248,15 +164,9 @@ importers:
       eslint:
         specifier: '9'
         version: 9.30.0
-      fastify:
-        specifier: ^5.0.0
-        version: 5.4.0
       license-checker:
         specifier: ^25.0.1
         version: 25.0.1
-      mkdirp:
-        specifier: ^2.1.6
-        version: 2.1.6
       neostandard:
         specifier: ^0.12.0
         version: 0.12.1(@typescript-eslint/utils@8.35.0(eslint@9.30.0)(typescript@5.8.3))(eslint@9.30.0)(typescript@5.8.3)
@@ -272,9 +182,6 @@ importers:
       '@fastify/error':
         specifier: ^4.0.0
         version: 4.2.0
-      abstract-logging:
-        specifier: ^2.0.1
-        version: 2.0.1
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -342,9 +249,6 @@ importers:
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
-      abstract-logging:
-        specifier: ^2.0.1
-        version: 2.0.1
       camelcase:
         specifier: ~6.3.0
         version: 6.3.0
@@ -614,9 +518,6 @@ importers:
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
-      abstract-logging:
-        specifier: ^2.0.1
-        version: 2.0.1
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -2462,9 +2363,6 @@ importers:
       '@platformatic/utils':
         specifier: workspace:*
         version: link:../utils
-      abstract-logging:
-        specifier: ^2.0.1
-        version: 2.0.1
       fast-uri:
         specifier: ^3.0.0
         version: 3.0.6
@@ -5260,9 +5158,6 @@ packages:
   acquerello@3.0.1:
     resolution: {integrity: sha512-kCVAPKHhg29sK3fOSCwSjVDcPXQSLVVztcMKbjMRBawA3Bzy/J1xApBwLSa/eYdLHKEYx7/r2H8xGrAunHYyGg==}
     engines: {node: '>= 20.18.0'}
-
-  add@2.0.6:
-    resolution: {integrity: sha512-j5QzrmsokwWWp6kUcJQySpbG+xfOBqqKnup3OIk1pz+kB/80SLorZ9V8zHFLO92Lcd+hbvq8bT+zOGoPkmBV0Q==}
 
   agent-base@7.1.3:
     resolution: {integrity: sha512-jRR5wdylq8CkOe6hei19GGZnxM6rBGwFl3Bg0YItGDimvjGtAvdZk4Pu6Cl4u4Igsws4a1fd1Vq3ezrhn4KmFw==}
@@ -8222,11 +8117,6 @@ packages:
 
   mkdirp@1.0.4:
     resolution: {integrity: sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==}
-    engines: {node: '>=10'}
-    hasBin: true
-
-  mkdirp@2.1.6:
-    resolution: {integrity: sha512-+hEnITedc8LAtIP9u3HJDFIdcLV2vXP33sqLLIzkv1Db1zO/1OxbvYf0Y1OC/S/Qo5dxHXepofhmxL02PsKe+A==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -13531,8 +13421,6 @@ snapshots:
 
   acquerello@3.0.1: {}
 
-  add@2.0.6: {}
-
   agent-base@7.1.3: {}
 
   aggregate-error@3.1.0:
@@ -17452,8 +17340,6 @@ snapshots:
       minimist: 1.2.8
 
   mkdirp@1.0.4: {}
-
-  mkdirp@2.1.6: {}
 
   mlly@1.7.4:
     dependencies:

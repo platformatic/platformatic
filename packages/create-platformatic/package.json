@@ -7,7 +7,7 @@
     "url": "git+https://github.com/platformatic/platformatic.git"
   },
   "exports": {
-    ".": "./create-platformatic.mjs"
+    ".": "./bin/create-platformatic.mjs"
   },
   "bin": {
     "create-platformatic": "./create-platformatic.mjs"

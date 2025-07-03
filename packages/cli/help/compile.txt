@@ -1,7 +1,0 @@
-Compile all typescript plugins.
-
-``` bash
-  $ platformatic compile
-```
-
-This command will compile the TypeScript plugins for each platformatic application.

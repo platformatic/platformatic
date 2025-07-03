@@ -1,6 +1,0 @@
-{
-  "$schema": "https://schemas.platformatic.dev/@platformatic/node/2.3.1.json",
-  "node": {
-    "main": "index.js"
-  }
-}
