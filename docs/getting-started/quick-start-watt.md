@@ -9,10 +9,8 @@ This guide will help you set up and run an application composed of the following
 - [Platformatic Composer](/docs/reference/composer/introduction), to coordinate/expose them all.
 
 :::note
-
 In this guide, we will use `Next.js` as our frontend framework, but you can also use [Astro](https://astro.build/),
 or [Remix](https://remix.run/). We plan to expand the list of supported frameworks in the future.
-
 :::
 
 
@@ -26,58 +24,37 @@ Before starting, ensure you have the following installed:
 ## Set up Watt
 
 ```bash
-mkdir my-app
-cd my-app
 npx wattpm@latest init
 ```
 
 Which will output:
-
 ```
 Need to install the following packages:
 wattpm@2.0.0
 Ok to proceed? (y) y
-
-[15:48:14.722] DONE (40803): Created a wattpm application in /Users/matteo/tmp/my-app.
+Where would you like to create your project? `my-app`
+Which kind of service do you want to create? `@platformatic/node`
+Do you want to create another service? `no`
+Do you want to use TypeScript? `no`
+What port do you want to use? `3042`
 ```
 
-Then, run `npm install` to install all the dependencies.
+Dependencies are going to be installed. Your application is located in `web/my-app`.
+The `watt.json` file is automatically created in the `my-app` folder and the `package.json` file includes `start` script and `@platformatic/node` as a dependency.
 
-## Add your first Node.js application to Watt
+## Add Your first Node.js application to Watt
 
-Inside `my-app`, create a new directory and add a simple Node.js app:
+By choosing the `@platformatic/node` service, you have already created your nodejs app.
 
-```bash
-mkdir web/node
-```
-
-Then add a `package.json` like the following:
-
-```json
-{
-  "main": "server.js",
-  "type": "module",
-  "dependencies": {
-    "@platformatic/node": "^2.0.0"
-  }
-}
-```
-
-Then, create a `web/node/server.js` file with the following content:
-
+This file is created as your nodejs app:
 ```js
-import { createServer } from 'node:http';
+import { createServer } from 'node:http'
 
-export function build () {
-  let count = 0
-
-  const server = createServer((req, res) => {
-    console.log('received request', req.url)
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ content: `from node:http createServer: ${count++}!` }));
+export function create() {
+  return createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'application/json', connection: 'close' })
+    res.end(JSON.stringify({ hello: 'world' }))
   })
-
-  return server
 }
 ```
 
@@ -92,22 +69,6 @@ own worker thread.
 You can also use [Express](https://expressjs.com/), [Fastify](https://fastify.dev), [Koa](https://koajs.com/)
 or any other Node.js framework.
 
-:::
-
-
-Then, we need to add the `watt.json` config file by running:
-
-```bash
-wattpm import web/node
-```
-
-Let's install the dependencies in the root of the project with 
-
-
-```bash
-npm install
-```
-
 ### Start your Watt server
 
 Run the following command in your project directory to start your Watt server:
@@ -118,13 +79,11 @@ npm start
 
 This will internally run `wattpm start` and start your Watt server.
 
-If you want to have have a "watch mode" to automatically restart the server when you make changes, you can run:
+If you want to have a "watch mode" to automatically restart the server when you make changes, you can run:
 
 ```bash
-npm run dev
+wattpm dev
 ```
-
-Which will run `wattpm dev` and start your Watt server in watch mode.
 
 Your first Watt server is now live! 🌟 You can test it with:
 
