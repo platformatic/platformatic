@@ -83,15 +83,6 @@ test('should get runtime service config', async t => {
     plugins: {
       paths: [join(projectDir, 'services', 'service-1', 'plugin.js')]
     },
-    watch: { enabled: true },
-    metrics: {
-      defaultMetrics: {
-        enabled: true
-      },
-      labels: {
-        serviceId: 'service-1'
-      },
-      server: 'hide'
-    }
+    watch: { enabled: true }
   })
 })

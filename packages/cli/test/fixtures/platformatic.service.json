@@ -8,6 +8,5 @@
       "name": "hello server"
     }
   },
-  "metrics": false,
   "watch": false
 }
