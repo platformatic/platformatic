@@ -7,6 +7,9 @@ const { test } = require('node:test')
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 test('should kill the thread even if stop fails', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')

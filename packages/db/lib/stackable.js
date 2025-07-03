@@ -1,32 +1,28 @@
 'use strict'
 
 const { ServiceStackable } = require('@platformatic/service')
+const { platformaticDatabase } = require('./application')
+const { packageJson } = require('./schema')
 
-class DbStackable extends ServiceStackable {
-  constructor (options) {
-    super(options)
-    this.#updateConfig()
+class DatabaseStackable extends ServiceStackable {
+  constructor (options, root, configManager) {
+    super(options, root, configManager)
+    this.type = 'db'
+    this.version = packageJson.version
+    this.applicationFactory = this.context.applicationFactory ?? platformaticDatabase
   }
 
-  #updateConfig () {
-    if (!this.context) return
+  updateContext (context) {
+    super.updateContext(context)
 
-    const { isProduction } = this.context
     const config = this.configManager.current
-
-    if (isProduction) {
-      if (config.autogenerate) {
-        config.autogenerate = false
-      }
+    if (this.context.isProduction && config.autogenerate) {
+      config.autogenerate = false
+      this.configManager.update(config)
     }
-
-    this.configManager.update(config)
   }
 
   async getMeta () {
-    await this.init()
-    await this.app.ready()
-
     const serviceMeta = await super.getMeta()
 
     const config = this.configManager.current
@@ -44,4 +40,5 @@ class DbStackable extends ServiceStackable {
     return serviceMeta
   }
 }
-module.exports = { DbStackable }
+
+module.exports = { DatabaseStackable }

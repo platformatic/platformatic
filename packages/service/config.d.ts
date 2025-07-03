@@ -164,24 +164,6 @@ export interface PlatformaticService {
   plugins?: {
     [k: string]: unknown;
   };
-  metrics?:
-    | boolean
-    | {
-        port?: number | string;
-        hostname?: string;
-        endpoint?: string;
-        server?: "own" | "parent" | "hide";
-        defaultMetrics?: {
-          enabled: boolean;
-        };
-        auth?: {
-          username: string;
-          password: string;
-        };
-        labels?: {
-          [k: string]: string;
-        };
-      };
   telemetry?: {
     enabled?: boolean | string;
     /**

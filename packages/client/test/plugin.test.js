@@ -8,7 +8,7 @@ const { join } = require('node:path')
 const { mkdtemp, cp, unlink } = require('node:fs/promises')
 const Fastify = require('fastify')
 const { MockAgent, setGlobalDispatcher, getGlobalDispatcher } = require('undici')
-const { buildServer } = require('../../db')
+const { create } = require('../../db')
 const { safeRemove } = require('@platformatic/utils')
 const client = require('..')
 require('./helper')
@@ -35,7 +35,7 @@ test('default decorator', async (t) => {
   } catch {
     // noop
   }
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
     await safeRemove(tmpDir)
@@ -93,7 +93,7 @@ test('req decorator with OpenAPI and auth', async (t) => {
   } catch {
     // noop
   }
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
     await safeRemove(tmpDir)
@@ -145,7 +145,7 @@ test('app decorator with OpenAPI', async (t) => {
   } catch {
     // noop
   }
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
     await safeRemove(tmpDir)
@@ -204,7 +204,7 @@ test('req decorator with OpenAPI', async (t) => {
   } catch {
     // noop
   }
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
     await safeRemove(tmpDir)
@@ -270,7 +270,7 @@ test('validate response', async (t) => {
   } catch {
     // noop
   }
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
     await safeRemove(tmpDir)
@@ -326,7 +326,7 @@ test('req decorator with GraphQL and auth', async (t) => {
   } catch {
     // noop
   }
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
     await safeRemove(tmpDir)
@@ -387,7 +387,7 @@ test('configureClient getHeaders', async (t) => {
   } catch {
     // noop
   }
-  const targetApp = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const targetApp = await create(join(tmpDir, 'platformatic.db.json'))
   t.after(async () => {
     await targetApp.close()
     await safeRemove(tmpDir)

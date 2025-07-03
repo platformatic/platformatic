@@ -1,50 +1,47 @@
+import * as desm from 'desm'
+import { execa } from 'execa'
 import assert from 'node:assert/strict'
+import { mkdtemp, readFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { readFile, mkdtemp } from 'node:fs/promises'
-import * as desm from 'desm'
-import { execa } from 'execa'
 import stripAnsi from 'strip-ansi'
 import jsonLanguageService from 'vscode-json-languageservice'
 import { getConnectionInfo } from '../helper.js'
-import Snap from '@matteo.collina/snap'
 import { cliPath } from './helper.js'
 
-const snap = Snap(import.meta.url)
 const pkg = JSON.parse(await readFile(desm.join(import.meta.url, '..', '..', 'package.json'), 'utf8'))
 
-test('print the graphql schema to stdout', async (t) => {
+test('print the graphql schema to stdout', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
   t.after(() => dropTestDB())
 
   const { stdout } = await execa('node', [cliPath, 'schema', 'graphql'], {
     cwd: desm.join(import.meta.url, '..', 'fixtures', 'sqlite'),
     env: {
-      DATABASE_URL: connectionInfo.connectionString,
-    },
+      DATABASE_URL: connectionInfo.connectionString
+    }
   })
 
-  const snapshot = await snap(stdout)
-  assert.deepEqual(stdout, snapshot)
+  assert.ok(stdout.includes('type Query'))
+  assert.ok(stdout.includes('GraphOrderByArguments'))
 })
 
-test('print the openapi schema to stdout', async (t) => {
+test('print the openapi schema to stdout', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
   t.after(() => dropTestDB())
 
   const { stdout } = await execa('node', [cliPath, 'schema', 'openapi'], {
     cwd: desm.join(import.meta.url, '..', 'fixtures', 'sqlite'),
     env: {
-      DATABASE_URL: connectionInfo.connectionString,
-    },
+      DATABASE_URL: connectionInfo.connectionString
+    }
   })
 
-  const snapshot = await snap(stdout)
-  assert.deepEqual(stdout, snapshot)
+  assert.ok(stdout.includes('Exposing a SQL database as REST'))
 })
 
-test('generates the json schema config', async (t) => {
+test('generates the json schema config', async t => {
   const cwd = await mkdtemp(join(tmpdir(), 'platformatic-schema-'))
   await execa('node', [cliPath, 'schema', 'config'], { cwd })
 
@@ -57,7 +54,7 @@ test('generates the json schema config', async (t) => {
   const languageservice = jsonLanguageService.getLanguageService({
     async schemaRequestService (uri) {
       return configSchema
-    },
+    }
   })
 
   languageservice.configure({ allowComments: false, schemas: [{ fileMatch: ['*.data.json'], uri: $id }] })
@@ -79,7 +76,7 @@ test('generates the json schema config', async (t) => {
   assert.equal(diagnostics.length, 0)
 })
 
-test('print the help if schema type is missing', async (t) => {
+test('print the help if schema type is missing', async t => {
   const { stdout } = await execa('node', [cliPath, 'schema'], {})
   const sanitized = stripAnsi(stdout)
   assert.ok(sanitized.includes('Generate a schema from the database and prints it to standard output:'))

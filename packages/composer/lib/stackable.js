@@ -1,36 +1,29 @@
 'use strict'
 
 const { ServiceStackable } = require('@platformatic/service')
+const { ensureServices, platformaticComposer } = require('./application')
+const { packageJson } = require('./schema')
+const notHostConstraints = require('./not-host-constraints')
 
 const kITC = Symbol.for('plt.runtime.itc')
-
-async function ensureServices (composerId, config) {
-  if (config.composer?.services?.length) {
-    return
-  }
-
-  composerId ??= globalThis.platformatic?.serviceId
-  config.composer ??= {}
-  config.composer.services ??= []
-
-  // When no services are defined, all services are exposed in the composer
-  const services = await globalThis[kITC]?.send('listServices')
-
-  if (services) {
-    config.composer.services = services
-      .filter(id => id !== composerId) // Remove ourself
-      .map(id => ({ id, proxy: { prefix: `/${id}` } }))
-  }
-}
 
 class ComposerStackable extends ServiceStackable {
   #meta
   #dependencies
 
+  constructor (options, root, configManager) {
+    super(options, root, configManager)
+    this.type = 'composer'
+    this.version = packageJson.version
+
+    this.applicationFactory = this.context.applicationFactory ?? platformaticComposer
+
+    this.fastifyOptions ??= {}
+    this.fastifyOptions.constraints = { notHost: notHostConstraints }
+  }
+
   async getBootstrapDependencies () {
     await ensureServices(this.serviceId, this.configManager.current)
-
-    // We do not call init() on purpose, as we don't want to load the app just yet.
 
     const composedServices = this.configManager.current.composer?.services
     const dependencies = []
@@ -95,4 +88,5 @@ class ComposerStackable extends ServiceStackable {
     return { id, url, local: url.endsWith('.plt.local') }
   }
 }
-module.exports = { ComposerStackable, ensureServices }
+
+module.exports = { ComposerStackable }

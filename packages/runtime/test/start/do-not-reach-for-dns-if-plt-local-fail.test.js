@@ -6,6 +6,9 @@ const { test } = require('node:test')
 const { request } = require('undici')
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 test('do not reach for dns if plt.local fail to resolve', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')

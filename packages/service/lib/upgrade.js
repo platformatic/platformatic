@@ -2,14 +2,14 @@
 
 const { join } = require('path')
 
-module.exports = async function upgrade (config, version) {
+async function upgrade (config, version) {
   const { semgrator } = await import('semgrator')
 
   const iterator = semgrator({
     version,
     path: join(__dirname, 'versions'),
     input: config,
-    logger: this.logger.child({ name: '@platformatic/service' }),
+    logger: this.logger.child({ name: '@platformatic/service' })
   })
 
   let result
@@ -20,3 +20,5 @@ module.exports = async function upgrade (config, version) {
 
   return result
 }
+
+module.exports = { upgrade }

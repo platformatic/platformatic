@@ -246,5 +246,5 @@ module.exports = fp(async function (app, opts) {
     await app.register(httpProxy, options)
   }
 
-  opts.context?.stackable?.registerMeta(meta)
+  opts.stackable?.registerMeta(meta)
 })

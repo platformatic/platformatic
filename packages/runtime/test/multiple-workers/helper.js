@@ -4,11 +4,12 @@ const { cp, symlink, writeFile } = require('node:fs/promises')
 const { deepStrictEqual } = require('node:assert')
 const { join, resolve, dirname } = require('node:path')
 const { request } = require('undici')
-const { createDirectory, safeRemove, features } = require('@platformatic/utils')
+const { createDirectory, safeRemove, features, withResolvers } = require('@platformatic/utils')
 
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-
 const tmpDir = resolve(__dirname, '../../tmp')
+
+const WAIT_TIMEOUT = process.env.CI ? 20_000 : 5_000
 
 async function prepareRuntime (t, name, dependencies) {
   const root = resolve(tmpDir, `plt-multiple-workers-${Date.now()}`)
@@ -27,9 +28,12 @@ async function prepareRuntime (t, name, dependencies) {
     }
   }
 
-  process.env.PLT_RUNTIME_LOGGER_STDOUT ??= resolve(root, 'log.txt')
-  await createDirectory(dirname(process.env.PLT_RUNTIME_LOGGER_STDOUT))
-  await writeFile(process.env.PLT_RUNTIME_LOGGER_STDOUT, '', 'utf-8')
+  if (!process.env.PLT_TESTS_VERBOSE) {
+    process.env.PLT_RUNTIME_LOGGER_STDOUT ??= resolve(root, 'log.txt')
+    await createDirectory(dirname(process.env.PLT_RUNTIME_LOGGER_STDOUT))
+    await writeFile(process.env.PLT_RUNTIME_LOGGER_STDOUT, '', 'utf-8')
+  }
+
   return root
 }
 
@@ -54,13 +58,19 @@ async function verifyInject (client, service, expectedWorker, additionalChecks) 
   additionalChecks?.(res, json)
 }
 
-function getExpectedMessages (entrypoint, workers) {
+function formatEvent (event) {
+  return Object.entries(event)
+    .map(([key, value]) => `${key}=${value}`)
+    .join(', ')
+}
+
+function getExpectedEvents (entrypoint, workers) {
   const start = []
   const stop = []
 
   if (!features.node.reusePort) {
-    start.push(`Starting the service "${entrypoint}"...`)
-    stop.push(`Stopping the service "${entrypoint}"...`)
+    start.push({ event: 'service:started', service: entrypoint })
+    stop.push({ event: 'service:stopped', service: entrypoint })
   }
 
   for (const [service, count] of Object.entries(workers)) {
@@ -69,14 +79,77 @@ function getExpectedMessages (entrypoint, workers) {
     }
 
     for (let i = 0; i < count; i++) {
-      start.push(`Starting the worker ${i} of the service "${service}"...`)
-      stop.push(`Stopping the worker ${i} of the service "${service}"...`)
+      start.push({ event: 'service:worker:started', service, worker: i })
+      stop.push({ event: 'service:worker:stopped', service, worker: i })
     }
   }
 
-  start.push('Platformatic is now listening')
+  start.push({ event: 'started' })
 
   return { start, stop }
+}
+
+function waitForEvents (app, ...events) {
+  const timeout = typeof events.at(-1) === 'number' ? events.pop() : WAIT_TIMEOUT
+
+  events = events.flat(Number.POSITIVE_INFINITY)
+  const missing = new Set(events.map(formatEvent))
+  const received = new Set()
+
+  const { promise, resolve, reject } = withResolvers()
+  let rejected = false
+
+  const timeoutHandle = setTimeout(() => {
+    rejected = true
+    reject(new Error(`Timeout waiting for events: ${Array.from(missing).join('; ')}`))
+  }, timeout)
+
+  const toListen = new Set(events.map(e => e.event))
+  const listeners = []
+
+  for (const event of toListen) {
+    function listener (payload) {
+      if (rejected) {
+        return
+      }
+
+      if (typeof payload === 'string') {
+        payload = { service: payload }
+      }
+
+      const { service, worker } = payload ?? {}
+      let found = { event }
+
+      if (service) {
+        found.service = service
+      }
+
+      if (worker !== undefined) {
+        found.worker = worker
+      }
+
+      found = formatEvent(found)
+      missing.delete(found)
+      received.add(found)
+
+      if (missing.size === 0) {
+        resolve(received)
+      }
+    }
+
+    app.on(event, listener)
+    listeners.push({ event, listener })
+  }
+
+  promise.finally(() => {
+    clearTimeout(timeoutHandle)
+
+    for (const { event, listener } of listeners) {
+      app.off(event, listener)
+    }
+  })
+
+  return promise
 }
 
 module.exports = {
@@ -85,5 +158,7 @@ module.exports = {
   prepareRuntime,
   verifyResponse,
   verifyInject,
-  getExpectedMessages
+  formatEvent,
+  getExpectedEvents,
+  waitForEvents
 }

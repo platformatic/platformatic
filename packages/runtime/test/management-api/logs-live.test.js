@@ -12,6 +12,9 @@ const WebSocket = require('ws')
 const { buildServer } = require('../..')
 const { safeRemove } = require('@platformatic/utils')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 test('should get runtime logs via management api', async t => {
   const projectDir = join(fixturesDir, 'management-api')

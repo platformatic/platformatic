@@ -5,6 +5,9 @@ const { test } = require('node:test')
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 test('should get meta for db services in runtime schema', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
@@ -22,7 +25,7 @@ test('should get meta for db services in runtime schema', async t => {
   assert.deepStrictEqual(dbMeta, {
     composer: {
       needsRootTrailingSlash: false,
-      prefix: 'db-app',
+      prefix: '/db-app/',
       wantsAbsoluteUrls: false,
       tcp: false,
       url: undefined

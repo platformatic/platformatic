@@ -6,64 +6,76 @@ const { test } = require('node:test')
 const { join } = require('node:path')
 const { writeFile } = require('node:fs/promises')
 const { request } = require('undici')
-const { buildServer } = require('..')
-const { buildConfig } = require('./helper')
+const { createFromConfig, buildConfig } = require('./helper')
 
-test('should not configure telemetry if not configured', async () => {
-  const app = await buildServer(buildConfig({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
-    },
-  }))
+test('should not configure telemetry if not configured', async t => {
+  const app = await createFromConfig(
+    t,
+    buildConfig({
+      server: {
+        hostname: '127.0.0.1',
+        port: 0,
+        logger: { level: 'fatal' }
+      }
+    })
+  )
 
   test.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
   assert.strictEqual(app.openTelemetry, undefined)
 })
 
-test('should setup telemetry if configured', async (t) => {
+test('should setup telemetry if configured', async t => {
   const file = join(os.tmpdir(), `${process.pid}-1.js`)
 
-  await writeFile(file, `
+  await writeFile(
+    file,
+    `
     module.exports = async function (app, options) {
       app.get('/', () => options.message)
-    }`)
+    }`
+  )
 
-  const app = await buildServer(buildConfig({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
-    },
-
-    telemetry: {
-      serviceName: 'test-service',
-      version: '1.0.0',
-      exporter: {
-        type: 'memory',
+  const app = await createFromConfig(
+    t,
+    buildConfig({
+      server: {
+        hostname: '127.0.0.1',
+        port: 0,
+        logger: { level: 'fatal' }
       },
-    },
-    plugins: {
-      paths: [{
-        path: file,
-        options: {
-          message: 'hello',
-        },
-      }],
-    },
-  }))
+
+      telemetry: {
+        serviceName: 'test-service',
+        version: '1.0.0',
+        exporter: {
+          type: 'memory'
+        }
+      },
+      plugins: {
+        paths: [
+          {
+            path: file,
+            options: {
+              message: 'hello'
+            }
+          }
+        ]
+      }
+    })
+  )
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
   const res = await request(`${app.url}/`, {
     method: 'GET',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify({
       query: `
@@ -73,11 +85,11 @@ test('should setup telemetry if configured', async (t) => {
               title
             }
           }
-        `,
-    }),
+        `
+    })
   })
   assert.strictEqual(res.statusCode, 200, 'savePage status code')
-  const { exporters } = app.openTelemetry
+  const { exporters } = app.getApplication().openTelemetry
   const finishedSpans = exporters[0].getFinishedSpans()
   assert.strictEqual(finishedSpans.length, 1)
   const span = finishedSpans[0]

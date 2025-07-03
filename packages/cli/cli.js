@@ -7,7 +7,7 @@ import {
   streamRuntimeLogsCommand
 } from '@platformatic/control/control.js'
 import { startCommand } from '@platformatic/runtime'
-import { compile, run as runRuntime } from '@platformatic/runtime/runtime.mjs'
+import { compile, run as runRuntime } from '@platformatic/runtime/bin/plt-runtime.mjs'
 import { checkNodeVersionForServices } from '@platformatic/utils'
 import { isColorSupported } from 'colorette'
 import commist from 'commist'
@@ -23,7 +23,6 @@ import { build } from './lib/build.js'
 import { install } from './lib/install.js'
 import { patchConfig } from './lib/patch-config.js'
 import { resolve } from './lib/resolve.js'
-import { upgrade } from './lib/upgrade.js'
 
 checkNodeVersionForServices()
 
@@ -54,16 +53,16 @@ const ensureCommand = async ({ output, help }) => {
 }
 
 program.register('db', async args => {
-  const { runDB } = await load('@platformatic/db/db.mjs')
+  const { runDB } = await load('@platformatic/db/bin/plt-db.mjs')
   return ensureCommand(await runDB(args))
 })
 program.register('runtime', async args => ensureCommand(await runRuntime(args)))
 program.register('service', async args => {
-  const { runService } = await load('@platformatic/service/service.mjs')
+  const { runService } = await load('@platformatic/service/bin/plt-service.mjs')
   return ensureCommand(await runService(args))
 })
 program.register('composer', async args => {
-  const { runComposer } = await load('@platformatic/composer/composer.mjs')
+  const { runComposer } = await load('@platformatic/composer/bin/plt-composer.mjs')
   return ensureCommand(await runComposer(args))
 })
 program.register('start', async args => ensureCommand(await startCommand(args)))
@@ -71,7 +70,6 @@ program.register('ctl', async args => ensureCommand(await runControl(args)))
 program.register('ps', async args => getRuntimesCommand(args))
 program.register('inject', async args => injectRuntimeCommand(args))
 program.register('logs', async args => streamRuntimeLogsCommand(args))
-program.register('upgrade', upgrade)
 program.register('resolve', resolve)
 program.register('patch-config', patchConfig)
 program.register('client', client)
@@ -80,13 +78,13 @@ program.register('install', install)
 program.register('compile', async args => ((await compile(args)) ? null : process.exit(1)))
 program.register('help', help.toStdout)
 program.register('help db', async args => {
-  const { runDB } = await load('@platformatic/db/db.mjs')
+  const { runDB } = await load('@platformatic/db/bin/plt-db.mjs')
   return runDB(['help', ...args])
 })
 program.register('help client', () => client([]))
 program.register('help runtime', async args => runRuntime(['help', ...args]))
 program.register('help service', async args => {
-  const { runService } = await load('@platformatic/service/service.mjs')
+  const { runService } = await load('@platformatic/service/bin/plt-service.mjs')
   return runService(['help', ...args])
 })
 

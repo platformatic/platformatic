@@ -1,13 +1,13 @@
+import { join } from 'desm'
 import assert from 'node:assert'
 import { on } from 'node:events'
 import { test } from 'node:test'
-import { join } from 'desm'
-import { cliPath } from '../helper.mjs'
+import { startPath } from '../helper.mjs'
 
-test('handles startup errors', async (t) => {
+test('handles startup errors', async t => {
   const { execa } = await import('execa')
   const config = join(import.meta.url, '..', '..', '..', 'fixtures', 'configs', 'service-throws-on-start.json')
-  const child = execa(process.execPath, [cliPath, 'start', '-c', config], { encoding: 'utf8' })
+  const child = execa(process.execPath, [startPath, '-c', config], { encoding: 'utf8' })
   let stdout = ''
   let found = false
 

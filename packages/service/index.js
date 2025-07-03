@@ -1,218 +1,84 @@
 'use strict'
 
-const { isKeyEnabled } = require('@platformatic/utils')
-const { loadConfig, ConfigManager } = require('@platformatic/config')
+const {
+  createConfigManager,
+  schemaOptions,
+  transformConfig: basicTransformConfig,
+  sanitizeCreationArguments,
+  resolveStackable
+} = require('@platformatic/basic')
 const { readFile } = require('node:fs/promises')
 const { join } = require('node:path')
-const { workerData } = require('node:worker_threads')
-const jsonPatch = require('fast-json-patch')
+const { platformaticService } = require('./lib/application.js')
+const { Generator } = require('./lib/generator.js')
+const { ServiceStackable } = require('./lib/stackable.js')
+const { schema, packageJson } = require('./lib/schema.js')
+const schemaComponents = require('./lib/schema.js')
+const { upgrade } = require('./lib/upgrade.js')
+const { isDocker } = require('./lib/utils.js')
+const { getTypescriptCompilationOptions } = require('./lib/compile.js')
 
-const setupCors = require('./lib/plugins/cors')
-const setupOpenAPI = require('./lib/plugins/openapi.js')
-const setupGraphQL = require('./lib/plugins/graphql.js')
-const setupClients = require('./lib/plugins/clients')
-const setupMetrics = require('./lib/plugins/metrics')
-const setupTsCompiler = require('./lib/plugins/typescript')
-const setupHealthCheck = require('./lib/plugins/health-check')
-const loadPlugins = require('./lib/plugins/plugins')
-const upgrade = require('./lib/upgrade')
-const { telemetry } = require('@platformatic/telemetry')
+async function transformConfig () {
+  await basicTransformConfig.call(this)
 
-const { buildCompileCmd, extractTypeScriptCompileOptionsFromConfig } = require('./lib/compile')
-const { schema } = require('./lib/schema')
-const { addLoggerToTheConfig } = require('./lib/utils')
-const { start, buildServer } = require('./lib/start')
-const ServiceGenerator = require('./lib/generator/service-generator.js')
-const { ServiceStackable } = require('./lib/stackable')
-
-const { version } = require('./package.json')
-
-// TODO(mcollina): arugments[2] is deprecated, remove it in the next major version.
-async function platformaticService (app, opts) {
-  const configManager = app.platformatic.configManager
-  const config = configManager.current
-  const beforePlugins = opts.beforePlugins || arguments[2] || []
-
-  if (isKeyEnabled('metrics', config)) {
-    if (config.metrics.server === 'own' && parseInt(config.server.port) === parseInt(config.metrics.port)) {
-      app.log.warn('In order to serve metrics on the same port as the core applicaton, set metrics.server to "parent".')
-      config.metrics.server = 'parent'
-    }
-
-    app.register(setupMetrics, config.metrics)
+  if (this.current.server && (await isDocker())) {
+    this.current.server.hostname = '0.0.0.0'
   }
 
-  // This must be done before loading the plugins, so they can inspect if the
-  // openTelemetry decorator exists and then configure accordingly.
-  if (isKeyEnabled('telemetry', config)) {
-    await app.register(telemetry, config.telemetry)
-  }
+  const typescript = this.current.plugins?.typescript
 
-  // This must be done before loading the plugins, so they can be
-  // configured accordingly
-  if (isKeyEnabled('clients', config)) {
-    app.register(setupClients, config.clients)
-  }
+  if (typescript) {
+    let { outDir, tsConfigFile } = typescript
+    tsConfigFile ??= 'tsconfig.json'
 
-  if (Array.isArray(beforePlugins)) {
-    for (const plugin of beforePlugins) {
-      app.register(plugin)
-    }
-  }
-
-  const serviceConfig = config.service || {}
-
-  if (isKeyEnabled('openapi', serviceConfig)) {
-    const openapi = serviceConfig.openapi
-    app.register(setupOpenAPI, { openapi })
-  }
-
-  if (isKeyEnabled('graphql', serviceConfig)) {
-    app.register(setupGraphQL, serviceConfig.graphql)
-  }
-
-  if (config.plugins) {
-    let registerTsCompiler = false
-    const typescript = config.plugins.paths && config.plugins.typescript
-    /* c8 ignore next 6 */
-    if (typescript === true) {
-      registerTsCompiler = true
-    } else if (typeof typescript === 'object') {
-      registerTsCompiler = typescript.enabled === true || typescript.enabled === undefined
-    }
-
-    if (registerTsCompiler) {
-      app.register(setupTsCompiler, { context: opts.context })
-    }
-    app.register(loadPlugins, { context: opts.context })
-  }
-
-  if (isKeyEnabled('cors', config.server)) {
-    app.register(setupCors, config.server.cors)
-  }
-
-  if (isKeyEnabled('healthCheck', config.server)) {
-    app.register(setupHealthCheck, config.server.healthCheck)
-  }
-}
-
-platformaticService[Symbol.for('skip-override')] = true
-
-module.exports.configManagerConfig = {
-  version,
-  schema,
-  allowToWatch: ['.env'],
-  schemaOptions: {
-    useDefaults: true,
-    coerceTypes: true,
-    allErrors: true,
-    strict: false
-  },
-  async transformConfig () {
-    // Set watch to true by default. This is not possible
-    // to do in the schema, because it is uses an anyOf.
-    if (this.current.watch === undefined) {
-      this.current.watch = { enabled: false }
-    }
-
-    if (typeof this.current.watch !== 'object') {
-      this.current.watch = { enabled: this.current.watch || false }
-    }
-
-    const typescript = this.current.plugins?.typescript
-    if (typescript) {
-      let outDir = typescript.outDir
-      if (outDir === undefined) {
-        let tsConfigFile = typescript.tsConfigFile || 'tsconfig.json'
-        tsConfigFile = join(this.dirname, tsConfigFile)
-        try {
-          const tsConfig = JSON.parse(await readFile(tsConfigFile, 'utf8'))
-          outDir = tsConfig.compilerOptions.outDir
-        } catch {}
-        outDir ||= 'dist'
+    if (typeof outDir === 'undefined') {
+      try {
+        outDir = JSON.parse(await readFile(join(this.dirname, tsConfigFile), 'utf8')).compilerOptions.outDir
+      } catch {
+        // No-op
       }
 
-      this.current.watch.ignore ||= []
-      this.current.watch.ignore.push(outDir + '/**/*')
+      outDir ||= 'dist'
     }
-  },
-  upgrade
-}
 
-platformaticService.configType = 'service'
-platformaticService.schema = schema
-platformaticService.configManagerConfig = module.exports.configManagerConfig
-
-function _buildServer (options, app, context) {
-  return buildServer(options, app || module.exports, context)
-}
-
-// No-op for now, inserted for future compatibility
-async function createDefaultConfig (opts) {
-  return {}
-}
-
-async function buildStackable (options, app = platformaticService, Stackable = ServiceStackable) {
-  let configManager = options.configManager
-
-  if (configManager === undefined) {
-    if (typeof options.config === 'string') {
-      ;({ configManager } = await loadConfig(
-        {},
-        ['-c', options.config],
-        app,
-        {
-          onMissingEnv: options.onMissingEnv,
-          context: options.context
-        },
-        true
-      ))
-    } else {
-      configManager = new ConfigManager({
-        ...app.configManagerConfig,
-        source: options.config,
-        dirname: options.context?.directory
-      })
-      await configManager.parseAndValidate()
-    }
+    this.current.watch.ignore ??= []
+    this.current.watch.ignore.push(outDir + '/**/*')
   }
-
-  const patch = workerData?.serviceConfig?.configPatch
-
-  if (Array.isArray(patch)) {
-    configManager.current = jsonPatch.applyPatch(configManager.current, patch).newDocument
-  }
-
-  const stackable = new Stackable({
-    init: () =>
-      buildServer(
-        {
-          configManager,
-          ...configManager.current
-        },
-        app,
-        options.context
-      ),
-    stackable: app,
-    configManager,
-    context: options.context
-  })
-
-  return stackable
 }
 
-module.exports.configType = 'service'
-module.exports.isPLTService = true
-module.exports.app = platformaticService
-module.exports.schema = schema
-module.exports.buildServer = _buildServer
-module.exports.buildStackable = buildStackable
-module.exports.createDefaultConfig = createDefaultConfig
-module.exports.schemas = require('./lib/schema')
-module.exports.platformaticService = platformaticService
-module.exports.addLoggerToTheConfig = addLoggerToTheConfig
-module.exports.start = start
-module.exports.Generator = ServiceGenerator
+const configManagerConfig = { schemaOptions, transformConfig }
+
+// This will be replaced by create before the release of v3
+async function buildStackable (opts) {
+  return create(opts.context.directory, opts.config, {}, opts.context)
+}
+
+async function create (configFileOrRoot, sourceOrConfig, rawOpts, rawContext) {
+  const { root, source } = await resolveStackable(configFileOrRoot, sourceOrConfig, 'service')
+  const { opts, context } = await sanitizeCreationArguments(root, rawOpts, rawContext)
+
+  const configManager = await createConfigManager(
+    { schema, upgrade, config: configManagerConfig, version: packageJson.version },
+    root,
+    source,
+    opts,
+    context
+  )
+
+  return new ServiceStackable(opts, root, configManager)
+}
+
+module.exports.Generator = Generator
 module.exports.ServiceStackable = ServiceStackable
-module.exports.buildCompileCmd = buildCompileCmd
-module.exports.extractTypeScriptCompileOptionsFromConfig = extractTypeScriptCompileOptionsFromConfig
+module.exports.platformaticService = platformaticService
+module.exports.create = create
+module.exports.skipTelemetryHooks = true
+// Old exports - These might be removed in a future PR
+module.exports.transformConfig = transformConfig
+module.exports.configType = 'service'
+module.exports.configManagerConfig = configManagerConfig
+module.exports.buildStackable = buildStackable
+module.exports.schema = schema
+module.exports.schemaComponents = schemaComponents
+module.exports.version = packageJson.version
+module.exports.getTypescriptCompilationOptions = getTypescriptCompilationOptions

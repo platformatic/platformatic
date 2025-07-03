@@ -1,7 +1,14 @@
 'use strict'
 
 const { ITC } = require('@platformatic/itc')
-const { features, ensureLoggableError, executeWithTimeout, deepmerge, parseMemorySize, kTimeout } = require('@platformatic/utils')
+const {
+  features,
+  ensureLoggableError,
+  executeWithTimeout,
+  deepmerge,
+  parseMemorySize,
+  kTimeout
+} = require('@platformatic/utils')
 const { once, EventEmitter } = require('node:events')
 const { createReadStream, watch, existsSync } = require('node:fs')
 const { readdir, readFile, stat, access } = require('node:fs/promises')
@@ -16,7 +23,7 @@ const SonicBoom = require('sonic-boom')
 
 const { checkDependencies, topologicalSort } = require('./dependencies')
 const errors = require('./errors')
-const { createLogger } = require('./logger')
+const { abstractLogger, createLogger } = require('./logger')
 const { startManagementApi } = require('./management-api')
 const { startPrometheusServer } = require('./prom-server')
 const { startScheduler } = require('./scheduler')
@@ -99,6 +106,7 @@ class Runtime extends EventEmitter {
       domain: '.plt.local',
       timeout: this.#configManager.current.serviceTimeout
     })
+    this.logger = abstractLogger // This is replaced by the real logger in init() and eventually removed in close()
     this.#status = undefined
     this.#restartingWorkers = new Map()
     this.#sharedHttpCache = null
@@ -371,9 +379,9 @@ class Runtime extends EventEmitter {
     }
 
     if (this.logger) {
-      this.#loggerDestination.end()
+      this.#loggerDestination?.end()
 
-      this.logger = null
+      this.logger = abstractLogger
       this.#loggerDestination = null
     }
 
@@ -1078,6 +1086,7 @@ class Runtime extends EventEmitter {
       }
     }
 
+    this.logger.trace({ event, payload }, 'Runtime event')
     return super.emit(event, payload)
   }
 
@@ -1150,7 +1159,8 @@ class Runtime extends EventEmitter {
 
     const execArgv = []
 
-    if (!serviceConfig.isPLTService && config.telemetry && config.telemetry.enabled !== false) {
+    // TODO@PI: Replace me with the option for 22
+    if (!serviceConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {
       // We need the following because otherwise some open telemetry instrumentations won't work with ESM (like express)
       // see: https://github.com/open-telemetry/opentelemetry-js/blob/main/doc/esm-support.md#instrumentation-hook-required-for-esm
       execArgv.push('--experimental-loader', '@opentelemetry/instrumentation/hook.mjs')
@@ -1169,8 +1179,12 @@ class Runtime extends EventEmitter {
       workerEnv['NODE_OPTIONS'] = `${originalNodeOptions} ${serviceConfig.nodeOptions}`.trim()
     }
 
-    const maxHeapTotal = typeof health.maxHeapTotal === 'string' ? parseMemorySize(health.maxHeapTotal) : health.maxHeapTotal
-    const maxYoungGeneration = typeof health.maxYoungGeneration === 'string' ? parseMemorySize(health.maxYoungGeneration) : health.maxYoungGeneration
+    const maxHeapTotal =
+      typeof health.maxHeapTotal === 'string' ? parseMemorySize(health.maxHeapTotal) : health.maxHeapTotal
+    const maxYoungGeneration =
+      typeof health.maxYoungGeneration === 'string'
+        ? parseMemorySize(health.maxYoungGeneration)
+        : health.maxYoungGeneration
 
     const maxOldGenerationSizeMb = Math.floor(
       (maxYoungGeneration > 0 ? maxHeapTotal - maxYoungGeneration : maxHeapTotal) / (1024 * 1024)
@@ -1301,13 +1315,14 @@ class Runtime extends EventEmitter {
             await this.startService(serviceId)
           }
 
-          this.logger?.info(`The service "${serviceId}" has been successfully reloaded ...`)
+          this.logger.info(`The service "${serviceId}" has been successfully reloaded ...`)
+          this.emit('service:worker:reloaded', eventPayload)
 
           if (serviceConfig.entrypoint) {
             this.#showUrl()
           }
         } catch (e) {
-          this.logger?.error(e)
+          this.logger.error(e)
         }
       })
     }
@@ -1346,9 +1361,7 @@ class Runtime extends EventEmitter {
     if (features.node.worker.getHeapStatistics) {
       const { used_heap_size: heapUsed, total_heap_size: heapTotal } = await worker.getHeapStatistics()
       const currentELU = worker.performance.eventLoopUtilization()
-      const elu = worker[kLastELU]
-        ? worker.performance.eventLoopUtilization(currentELU, worker[kLastELU])
-        : currentELU
+      const elu = worker[kLastELU] ? worker.performance.eventLoopUtilization(currentELU, worker[kLastELU]) : currentELU
       worker[kLastELU] = currentELU
       return { elu: elu.utilization, heapUsed, heapTotal }
     }
@@ -1383,11 +1396,10 @@ class Runtime extends EventEmitter {
         health = { elu: -1, heapUsed: -1, heapTotal: -1 }
       }
 
-      const serviceId = worker[kServiceId]
-      this.emit('health', {
+      this.emit('service:worker:health', {
         id: worker[kId],
-        service: serviceId,
-        worker: worker[kWorkerId],
+        service: id,
+        worker: index,
         currentHealth: health,
         unhealthy,
         healthConfig: worker[kConfig].health
@@ -1413,6 +1425,8 @@ class Runtime extends EventEmitter {
 
       if (unhealthyChecks === maxUnhealthyChecks) {
         try {
+          this.emit('service:worker:unhealthy', { service: id, worker: index })
+
           this.logger.error(
             { elu: health.elu, maxELU, memoryUsage: health.heapUsed, maxMemoryUsage: maxHeapUsed },
             `The ${errorLabel} is unhealthy. Replacing it ...`
@@ -1447,7 +1461,7 @@ class Runtime extends EventEmitter {
     const label = this.#workerExtendedLabel(id, index, workersCount)
 
     if (!silent) {
-      this.logger?.info(`Starting the ${label}...`)
+      this.logger.info(`Starting the ${label}...`)
     }
 
     if (!worker) {
@@ -1491,14 +1505,23 @@ class Runtime extends EventEmitter {
       this.#broadcastWorkers()
 
       if (!silent) {
-        this.logger?.info(`Started the ${label}...`)
+        this.logger.info(`Started the ${label}...`)
       }
 
       const { enabled, gracePeriod } = worker[kConfig].health
       if (enabled && config.restartOnError > 0) {
         // if gracePeriod is 0, it will be set to 1 to start health checks immediately
         // however, the health event will start when the worker is started
-        this.#setupHealthCheck(config, serviceConfig, workersCount, id, index, worker, label, gracePeriod > 0 ? gracePeriod : 1)
+        this.#setupHealthCheck(
+          config,
+          serviceConfig,
+          workersCount,
+          id,
+          index,
+          worker,
+          label,
+          gracePeriod > 0 ? gracePeriod : 1
+        )
       }
     } catch (error) {
       // TODO: handle port allocation error here
@@ -1566,7 +1589,7 @@ class Runtime extends EventEmitter {
     const label = this.#workerExtendedLabel(id, index, workersCount)
 
     if (!silent) {
-      this.logger?.info(`Stopping the ${label}...`)
+      this.logger.info(`Stopping the ${label}...`)
     }
 
     const exitTimeout = this.#configManager.current.gracefulShutdown.runtime
@@ -1577,13 +1600,13 @@ class Runtime extends EventEmitter {
       await executeWithTimeout(sendViaITC(worker, 'stop'), exitTimeout)
     } catch (error) {
       this.emit('service:worker:stop:timeout', eventPayload)
-      this.logger?.info({ error: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
+      this.logger.info({ error: ensureLoggableError(error) }, `Failed to stop ${label}. Killing a worker thread.`)
     } finally {
       worker[kITC].close()
     }
 
     if (!silent) {
-      this.logger?.info(`Stopped the ${label}...`)
+      this.logger.info(`Stopped the ${label}...`)
     }
 
     // Wait for the worker thread to finish, we're going to create a new one if the service is ever restarted
@@ -2064,14 +2087,29 @@ class Runtime extends EventEmitter {
       const { serviceId, config: serviceConfig, workers, health, currentWorkers, currentHealth } = update
 
       if (workers && health) {
-        const r = await this.#updateServiceWorkersAndHealth(serviceId, config, serviceConfig, workers, health, currentWorkers, currentHealth)
+        const r = await this.#updateServiceWorkersAndHealth(
+          serviceId,
+          config,
+          serviceConfig,
+          workers,
+          health,
+          currentWorkers,
+          currentHealth
+        )
         report.push({
           service: serviceId,
           workers: r.workers,
           health: r.health
         })
       } else if (health) {
-        const r = await this.#updateServiceHealth(serviceId, config, serviceConfig, currentWorkers, currentHealth, health)
+        const r = await this.#updateServiceHealth(
+          serviceId,
+          config,
+          serviceConfig,
+          currentWorkers,
+          currentHealth,
+          health
+        )
         report.push({
           service: serviceId,
           health: r.health
@@ -2145,7 +2183,10 @@ class Runtime extends EventEmitter {
               throw new errors.InvalidArgumentError('maxHeapTotal', 'must be greater than 0')
             }
           } else {
-            throw new errors.InvalidArgumentError('maxHeapTotal', 'must be a number or a string representing a memory size')
+            throw new errors.InvalidArgumentError(
+              'maxHeapTotal',
+              'must be a number or a string representing a memory size'
+            )
           }
 
           if (currentHealth.maxHeapTotal === maxHeapTotal) {
@@ -2167,7 +2208,10 @@ class Runtime extends EventEmitter {
               throw new errors.InvalidArgumentError('maxYoungGeneration', 'must be greater than 0')
             }
           } else {
-            throw new errors.InvalidArgumentError('maxYoungGeneration', 'must be a number or a string representing a memory size')
+            throw new errors.InvalidArgumentError(
+              'maxYoungGeneration',
+              'must be a number or a string representing a memory size'
+            )
           }
 
           if (currentHealth.maxYoungGeneration && currentHealth.maxYoungGeneration === maxYoungGeneration) {
@@ -2180,7 +2224,7 @@ class Runtime extends EventEmitter {
       if (workers || maxHeapTotal || maxYoungGeneration) {
         let health
         if (maxHeapTotal || maxYoungGeneration) {
-          health = { }
+          health = {}
           if (maxHeapTotal) {
             health.maxHeapTotal = maxHeapTotal
           }
@@ -2195,12 +2239,27 @@ class Runtime extends EventEmitter {
     return validatedUpdates
   }
 
-  async #updateServiceWorkersAndHealth (serviceId, config, serviceConfig, workers, health, currentWorkers, currentHealth) {
+  async #updateServiceWorkersAndHealth (
+    serviceId,
+    config,
+    serviceConfig,
+    workers,
+    health,
+    currentWorkers,
+    currentHealth
+  ) {
     if (currentWorkers > workers) {
       // stop workers
       const reportWorkers = await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
       // update heap for current workers
-      const reportHealth = await this.#updateServiceHealth(serviceId, config, serviceConfig, workers, currentHealth, health)
+      const reportHealth = await this.#updateServiceHealth(
+        serviceId,
+        config,
+        serviceConfig,
+        workers,
+        currentHealth,
+        health
+      )
 
       return { workers: reportWorkers, health: reportHealth }
     } else {
@@ -2209,13 +2268,29 @@ class Runtime extends EventEmitter {
       // start new workers with new heap
       const reportWorkers = await this.#updateServiceWorkers(serviceId, config, serviceConfig, workers, currentWorkers)
       // update heap for current workers
-      const reportHealth = await this.#updateServiceHealth(serviceId, config, serviceConfig, currentWorkers, currentHealth, health, false)
+      const reportHealth = await this.#updateServiceHealth(
+        serviceId,
+        config,
+        serviceConfig,
+        currentWorkers,
+        currentHealth,
+        health,
+        false
+      )
 
       return { workers: reportWorkers, health: reportHealth }
     }
   }
 
-  async #updateServiceHealth (serviceId, config, serviceConfig, currentWorkers, currentHealth, health, updateConfig = true) {
+  async #updateServiceHealth (
+    serviceId,
+    config,
+    serviceConfig,
+    currentWorkers,
+    currentHealth,
+    health,
+    updateConfig = true
+  ) {
     const report = {
       current: currentHealth,
       new: health,
@@ -2227,15 +2302,25 @@ class Runtime extends EventEmitter {
       }
 
       for (let i = 0; i < currentWorkers; i++) {
-        this.logger.info({ health: { current: currentHealth, new: health } }, `Restarting service "${serviceId}" worker ${i} to update config health heap...`)
+        this.logger.info(
+          { health: { current: currentHealth, new: health } },
+          `Restarting service "${serviceId}" worker ${i} to update config health heap...`
+        )
 
         const worker = await this.#getWorkerById(serviceId, i)
-        if (health.maxHeapTotal) { worker[kConfig].health.maxHeapTotal = health.maxHeapTotal }
-        if (health.maxYoungGeneration) { worker[kConfig].health.maxYoungGeneration = health.maxYoungGeneration }
+        if (health.maxHeapTotal) {
+          worker[kConfig].health.maxHeapTotal = health.maxHeapTotal
+        }
+        if (health.maxYoungGeneration) {
+          worker[kConfig].health.maxYoungGeneration = health.maxYoungGeneration
+        }
 
         await this.#replaceWorker(config, serviceConfig, currentWorkers, serviceId, i, worker)
         report.updated.push(i)
-        this.logger.info({ health: { current: currentHealth, new: health } }, `Restarted service "${serviceId}" worker ${i}`)
+        this.logger.info(
+          { health: { current: currentHealth, new: health } },
+          `Restarted service "${serviceId}" worker ${i}`
+        )
       }
       report.success = true
     } catch (err) {
@@ -2243,7 +2328,10 @@ class Runtime extends EventEmitter {
         this.logger.error({ err }, 'Cannot update service health heap, no worker updated')
         await this.#updateServiceConfigHealth(serviceId, currentHealth)
       } else {
-        this.logger.error({ err }, `Cannot update service health heap, updated workers: ${report.updated.length} out of ${currentWorkers}`)
+        this.logger.error(
+          { err },
+          `Cannot update service health heap, updated workers: ${report.updated.length} out of ${currentWorkers}`
+        )
       }
       report.success = false
     }
@@ -2270,7 +2358,10 @@ class Runtime extends EventEmitter {
           this.logger.error({ err }, 'Cannot start service workers, no worker started')
           await this.#updateServiceConfigWorkers(serviceId, currentWorkers)
         } else {
-          this.logger.error({ err }, `Cannot start service workers, started workers: ${report.started.length} out of ${workers}`)
+          this.logger.error(
+            { err },
+            `Cannot start service workers, started workers: ${report.started.length} out of ${workers}`
+          )
           await this.#updateServiceConfigWorkers(serviceId, currentWorkers + report.started.length)
         }
         report.success = false
@@ -2291,7 +2382,10 @@ class Runtime extends EventEmitter {
         if (report.stopped.length < 1) {
           this.logger.error({ err }, 'Cannot stop service workers, no worker stopped')
         } else {
-          this.logger.error({ err }, `Cannot stop service workers, stopped workers: ${report.stopped.length} out of ${workers}`)
+          this.logger.error(
+            { err },
+            `Cannot stop service workers, stopped workers: ${report.stopped.length} out of ${workers}`
+          )
           await this.#updateServiceConfigWorkers(serviceId, currentWorkers - report.stopped)
         }
         report.success = false

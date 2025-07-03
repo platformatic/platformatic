@@ -25,44 +25,38 @@ export class BaseStackable extends EventEmitter {
   constructor (type, version, options, root, configManager, standardStreams = {}) {
     super()
 
-    options.context.worker ??= { count: 1, index: 0 }
-
     this.type = type
     this.version = version
-    this.serviceId = options.context.serviceId
-    this.workerId = options.context.worker.count > 1 ? options.context.worker.index : undefined
-    this.telemetryConfig = options.context.telemetryConfig
+
+    options.context.worker ??= { count: 1, index: 0 }
     this.options = options
+    this.context = options.context ?? {}
+
+    this.serviceId = this.context.serviceId
+    this.workerId = this.context.worker.count > 1 ? this.context.worker.index : undefined
+    this.telemetryConfig = this.context.telemetryConfig
     this.root = root
     this.configManager = configManager
-    this.serverConfig = deepmerge(options.context.serverConfig ?? {}, configManager.current.server ?? {})
+    this.serverConfig = deepmerge(this.context.serverConfig ?? {}, configManager.current.server ?? {})
     this.openapiSchema = null
     this.graphqlSchema = null
     this.connectionString = null
     this.basePath = null
-    this.isEntrypoint = options.context.isEntrypoint
-    this.isProduction = options.context.isProduction
+    this.isEntrypoint = this.context.isEntrypoint
+    this.isProduction = this.context.isProduction
     this.metricsRegistry = new client.Registry()
     this.#metricsCollected = false
     this.customHealthCheck = null
     this.customReadinessCheck = null
     this.clientWs = null
-    this.runtimeConfig = deepmerge(options.context?.runtimeConfig ?? {}, workerData?.config ?? {})
+    this.runtimeConfig = deepmerge(this.context?.runtimeConfig ?? {}, workerData?.config ?? {})
     this.stdout = standardStreams?.stdout ?? process.stdout
     this.stderr = standardStreams?.stderr ?? process.stderr
     this.subprocessForceClose = false
     this.subprocessTerminationSignal = 'SIGINT'
 
-    const loggerOptions = deepmerge(this.runtimeConfig?.logger ?? {}, this.configManager.current?.logger ?? {})
-    const pinoOptions = buildPinoOptions(
-      loggerOptions,
-      this.serverConfig?.logger,
-      this.serviceId,
-      this.workerId,
-      options,
-      this.root
-    )
-    this.logger = pino(pinoOptions, standardStreams?.stdout)
+    this.standardStreams = standardStreams
+    this.logger = this._initializeLogger(options)
 
     // Setup globals
     this.registerGlobals({
@@ -83,6 +77,31 @@ export class BaseStackable extends EventEmitter {
       notifyConfig: this.notifyConfig.bind(this),
       logger: this.logger
     })
+  }
+
+  init () {
+    return this.updateContext()
+  }
+
+  updateContext (context) {
+    // No-op
+  }
+
+  start () {
+    throw new Error('BaseStackable.start must be overriden by the subclasses')
+  }
+
+  stop () {
+    throw new Error('BaseStackable.stop must be overriden by the subclasses')
+  }
+
+  // Alias for stop
+  close () {
+    return this.stop()
+  }
+
+  inject () {
+    throw new Error('BaseStackable.inject must be overriden by the subclasses')
   }
 
   getUrl () {
@@ -123,7 +142,7 @@ export class BaseStackable extends EventEmitter {
   }
 
   async getDispatchTarget () {
-    return this.getUrl() ?? this.getDispatchFunc()
+    return this.getUrl() ?? (await this.getDispatchFunc())
   }
 
   getMeta () {
@@ -388,45 +407,61 @@ export class BaseStackable extends EventEmitter {
     this.emit('config', config)
   }
 
+  _initializeLogger (options) {
+    const loggerOptions = deepmerge(this.runtimeConfig?.logger ?? {}, this.configManager.current?.logger ?? {})
+    const pinoOptions = buildPinoOptions(
+      loggerOptions,
+      this.serverConfig?.logger,
+      this.serviceId,
+      this.workerId,
+      options,
+      this.root
+    )
+
+    return pino(pinoOptions, this.standardStreams?.stdout)
+  }
+
   async _collectMetrics () {
     if (this.#metricsCollected) {
       return
     }
 
     this.#metricsCollected = true
+
+    if (this.context.metricsConfig === false) {
+      return
+    }
+
     await this.#collectMetrics()
     this.#setHttpCacheMetrics()
   }
 
   async #collectMetrics () {
-    let metricsConfig = this.options.context.metricsConfig
-    if (metricsConfig !== false) {
-      metricsConfig = {
-        defaultMetrics: true,
-        httpMetrics: true,
-        ...metricsConfig
-      }
-
-      if (this.childManager && this.clientWs) {
-        await this.childManager.send(this.clientWs, 'collectMetrics', {
-          serviceId: this.serviceId,
-          workerId: this.workerId,
-          metricsConfig
-        })
-        return
-      }
-
-      await collectMetrics(
-        this.serviceId,
-        this.workerId,
-        metricsConfig,
-        this.metricsRegistry
-      )
+    const metricsConfig = {
+      defaultMetrics: true,
+      httpMetrics: true,
+      ...this.context.metricsConfig
     }
+
+    if (this.childManager && this.clientWs) {
+      await this.childManager.send(this.clientWs, 'collectMetrics', {
+        serviceId: this.serviceId,
+        workerId: this.workerId,
+        metricsConfig
+      })
+      return
+    }
+
+    await collectMetrics(this.serviceId, this.workerId, metricsConfig, this.metricsRegistry)
   }
 
   #setHttpCacheMetrics () {
     const { client, registry } = globalThis.platformatic.prometheus
+
+    // Metrics already registered, no need to register them again
+    if (registry.getSingleMetric('http_cache_hit_count') || registry.getSingleMetric('http_cache_miss_count')) {
+      return
+    }
 
     const cacheHitMetric = new client.Counter({
       name: 'http_cache_hit_count',

@@ -7,8 +7,11 @@ const { test } = require('node:test')
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
 
-test('should get a service openapi schema', async (t) => {
+test.beforeEach(setLogFile)
+
+test('should get a service openapi schema', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
@@ -25,7 +28,7 @@ test('should get a service openapi schema', async (t) => {
     info: {
       title: 'Platformatic',
       description: 'This is a service built on top of Platformatic',
-      version: '1.0.0',
+      version: '1.0.0'
     },
     servers: [{ url: '/' }],
     components: { schemas: {} },
@@ -34,16 +37,16 @@ test('should get a service openapi schema', async (t) => {
         get: {
           responses: {
             200: {
-              description: 'Default Response',
-            },
-          },
-        },
-      },
-    },
+              description: 'Default Response'
+            }
+          }
+        }
+      }
+    }
   })
 })
 
-test('should fail to get a service openapi schema if service does not expose it', async (t) => {
+test('should fail to get a service openapi schema if service does not expose it', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-openapi.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)

@@ -7,8 +7,11 @@ const { test } = require('node:test')
 const { loadConfig } = require('@platformatic/config')
 const { buildServer, platformaticRuntime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
 
-test('should get a service graphql schema', async (t) => {
+test.beforeEach(setLogFile)
+
+test('should get a service graphql schema', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)
@@ -23,7 +26,7 @@ test('should get a service graphql schema', async (t) => {
   assert.deepStrictEqual(graphqlSchema, 'type Query {\n  hello: String\n}')
 })
 
-test('should fail to get a service graphql schema if service does not expose it', async (t) => {
+test('should fail to get a service graphql schema if service does not expose it', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
   const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
   const app = await buildServer(config.configManager.current)

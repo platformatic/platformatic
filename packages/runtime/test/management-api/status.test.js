@@ -7,6 +7,9 @@ const { Client } = require('undici')
 
 const { buildServer } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 test('should get the runtime status', async (t) => {
   const projectDir = join(fixturesDir, 'management-api')

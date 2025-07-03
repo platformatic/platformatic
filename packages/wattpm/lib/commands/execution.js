@@ -1,9 +1,9 @@
 import { RuntimeApiClient } from '@platformatic/control'
 import { startCommand as pltStartCommand } from '@platformatic/runtime'
-import { ensureLoggableError } from '@platformatic/utils'
+import { ensureLoggableError, FileWatcher } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
-import { watch } from 'node:fs/promises'
+import { on } from 'node:events'
 import {
   findRuntimeConfigurationFile,
   getMatchingRuntime,
@@ -49,9 +49,11 @@ export async function devCommand (logger, args) {
   }
 
   // Add a watcher on the configurationFile so that we can eventually restart the runtime
-  const watcher = watch(configurationFile, { persistent: false })
+  const watcher = new FileWatcher({ path: configurationFile })
+  watcher.startWatching()
+
   // eslint-disable-next-line no-unused-vars
-  for await (const _ of watcher) {
+  for await (const _ of on(watcher, 'update')) {
     runtime.logger.info('The configuration file has changed, reloading the application ...')
     await runtime.close()
     runtime = await pltStartCommand(['-c', configurationFile], true, true)

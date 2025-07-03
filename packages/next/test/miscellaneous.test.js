@@ -2,12 +2,27 @@ import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { getLogs, prepareRuntime, setFixturesDir, startRuntime, updateFile } from '../../basic/test/helper.js'
+import {
+  getLogs,
+  prepareRuntime,
+  setFixturesDir,
+  setLogFile,
+  startRuntime,
+  updateFile
+} from '../../basic/test/helper.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('can properly show the headers in the output', async t => {
   const { root, config } = await prepareRuntime(t, 'server-side-standalone', false, null, async root => {
+    await setLogFile(t, root)
+
+    await updateFile(resolve(root, 'platformatic.runtime.json'), contents => {
+      const parsed = JSON.parse(contents)
+      parsed.logger.level = 'info'
+      return JSON.stringify(parsed, null, 2)
+    })
+
     await updateFile(resolve(root, 'services/frontend/src/app/page.js'), contents => {
       return (
         "import { headers } from 'next/headers'\n\n" +

@@ -1,14 +1,7 @@
 'use strict'
 
-const why = require('why-is-node-running')
-
-if (process.env.WHY === 'true') {
-  setInterval(() => {
-    console.log('why is node running?')
-    why()
-  }, 60000).unref()
-}
-
+const { createTemporaryDirectory } = require('../../basic/test/helper')
+const { create } = require('..')
 const { Agent, setGlobalDispatcher } = require('undici')
 
 const agent = new Agent({
@@ -29,4 +22,25 @@ function buildConfig (options) {
   return Object.assign(base, options)
 }
 
-module.exports.buildConfig = buildConfig
+async function createFromConfig (t, options, applicationFactory, creationOptions = {}) {
+  const directory = await createTemporaryDirectory(t)
+
+  const service = await create(
+    directory,
+    options,
+    {},
+    { applicationFactory, isStandalone: true, isEntrypoint: true, isProduction: creationOptions.production }
+  )
+  t.after(() => service.stop())
+
+  if (!creationOptions.skipInit) {
+    await service.init()
+  }
+
+  return service
+}
+
+module.exports = {
+  buildConfig,
+  createFromConfig
+}

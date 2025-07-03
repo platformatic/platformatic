@@ -5,11 +5,14 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { loadConfig } = require('@platformatic/config')
-const { platformaticDB } = require('@platformatic/db')
+const platformaticDB = require('@platformatic/db')
 const { Client } = require('undici')
 const { wrapConfigInRuntimeConfig } = require('../..')
 const { buildRuntime } = require('../../lib/start')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 test('logs errors during db migrations', async t => {
   const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')

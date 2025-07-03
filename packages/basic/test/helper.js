@@ -26,6 +26,7 @@ const htmlHelloMatcher = /Hello from (v(<!-- -->)?\d+)(\s*(t(<!-- -->)?\d+))?/
 let currentWorkingDirectory
 let hmrTriggerFileRelative
 let additionalDependencies
+let temporaryDirectoryCount = 0
 
 export let fixturesDir
 
@@ -66,7 +67,13 @@ export const internalServicesFiles = [
   'services/backend/dist/routes/root.js'
 ]
 
-export async function createStackable (
+export async function createTemporaryDirectory (t, prefix = 'plt-basic') {
+  const directory = resolve(temporaryFolder, `${prefix}-${process.pid}-${temporaryDirectoryCount++}`)
+  t.after(() => safeRemove(directory))
+  return directory
+}
+
+export async function create (
   t,
   context = {},
   config = { current: {} },

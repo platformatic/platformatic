@@ -107,8 +107,8 @@ async function _transformConfig (configManager, args) {
       try {
         const store = new Store({ cwd: service.path })
         const serviceConfig = await store.loadConfig(service)
-        service.isPLTService = !!serviceConfig.app.isPLTService
         service.type = serviceConfig.app.configType
+        service.skipTelemetryHooks = serviceConfig.app.skipTelemetryHooks
         const _require = createRequire(service.path)
         // This is needed to work around Rust bug on dylibs:
         // https://github.com/rust-lang/rust/issues/91979
@@ -126,19 +126,18 @@ async function _transformConfig (configManager, args) {
           const config = manager.current
           const type = config.$schema ? ConfigManager.matchKnownSchema(config.$schema) : undefined
           service.type = type
-          service.isPLTService = !!config.isPLTService
+          service.skipTelemetryHooks = config.skipTelemetryHooks
         } catch (err) {
           // This should not happen, it happens on running some unit tests if we prepare the runtime
           // when not all the services configs are available. Given that we are running this only
           // to ddetermine the type of the service, it's safe to ignore this error and default to unknown
           service.type = 'unknown'
-          service.isPLTService = false
         }
       }
     } else {
       // We need to identify the service type
       const basic = await import('@platformatic/basic')
-      service.isPLTService = false
+
       try {
         const { stackable } = await basic.importStackableAndConfig(service.path)
         service.type = stackable.default.configType

@@ -1,149 +1,137 @@
 'use strict'
 
-const { hostname } = require('node:os')
-const { dirname } = require('node:path')
-const { pathToFileURL } = require('node:url')
-const { workerData } = require('node:worker_threads')
-const { printSchema } = require('graphql')
-const pino = require('pino')
-const { client, collectMetrics } = require('@platformatic/metrics')
-const { extractTypeScriptCompileOptionsFromConfig } = require('./compile')
+const { BaseStackable, getServerUrl, ensureTrailingSlash, cleanBasePath } = require('@platformatic/basic')
 const { compile } = require('@platformatic/ts-compiler')
-const { deepmerge, buildPinoFormatters, buildPinoTimestamp } = require('@platformatic/utils')
+const { telemetry } = require('@platformatic/telemetry')
+const { deepmerge, buildPinoFormatters, buildPinoTimestamp, features, isKeyEnabled } = require('@platformatic/utils')
+const fastify = require('fastify')
+const { printSchema } = require('graphql')
+const { randomUUID } = require('node:crypto')
+const { hostname } = require('node:os')
 
-const kITC = Symbol.for('plt.runtime.itc')
+const pino = require('pino')
+const { platformaticService } = require('./application.js')
+const { packageJson } = require('./schema.js')
+const { sanitizeHTTPSArgument } = require('./utils.js')
+const setupRoot = require('./plugins/root.js')
 
-class ServiceStackable {
-  constructor (options) {
-    this.app = null
-    this._init = options.init
-    this.stackable = options.stackable
-    this.metricsRegistry = new client.Registry()
+class ServiceStackable extends BaseStackable {
+  #app
+  #basePath
 
-    this.configManager = options.configManager
-    this.context = options.context ?? {}
-    this.context.stackable = this
-
-    this.serviceId = this.context.serviceId
-    this.context.worker ??= { count: 1, index: 0 }
-    this.workerId = this.context.worker.count > 1 ? this.context.worker.index : undefined
-
-    this.runtimeConfig = deepmerge(this.context.runtimeConfig ?? {}, workerData?.config ?? {})
-
-    this.customHealthCheck = null
-
-    this.configManager.on('error', err => {
-      /* c8 ignore next */
-      this.stackable.log({
-        message: 'error reloading the configuration' + err,
-        level: 'error'
-      })
-    })
-
-    this.#updateConfig()
-
-    // Setup globals
-    this.registerGlobals({
-      serviceId: this.serviceId,
-      workerId: this.workerId,
-      // Always use URL to avoid serialization problem in Windows
-      root: this.context.directory ? pathToFileURL(this.context.directory).toString() : undefined,
-      setOpenapiSchema: this.setOpenapiSchema.bind(this),
-      setGraphqlSchema: this.setGraphqlSchema.bind(this),
-      setConnectionString: this.setConnectionString.bind(this),
-      setBasePath: this.setBasePath.bind(this),
-      runtimeBasePath: this.runtimeConfig?.basePath ?? null,
-      invalidateHttpCache: this.#invalidateHttpCache.bind(this),
-      prometheus: { client, registry: this.metricsRegistry },
-      setCustomHealthCheck: this.setCustomHealthCheck.bind(this),
-      setCustomReadinessCheck: this.setCustomReadinessCheck.bind(this)
-    })
+  constructor (options, root, configManager) {
+    super('service', packageJson.version, options, root, configManager)
+    this.applicationFactory = this.context.applicationFactory ?? platformaticService
   }
 
   async init () {
-    this.#initLogger()
+    await super.init()
 
-    if (this.app === null) {
-      this.app = await this._init()
-      await this.#collectMetrics()
-    }
-    return this.app
-  }
-
-  async start (options = {}) {
-    await this.init()
-
-    if (options.listen === false) {
-      await this.app.ready()
+    if (this.#app) {
       return
     }
-    await this.app.start()
-  }
 
-  async stop () {
-    if (this.app === null) return
-    await this.app.close()
-  }
+    const config = this.configManager.current
+    this.#basePath = ensureTrailingSlash(cleanBasePath(config.basePath ?? this.serviceId))
 
-  async build () {
-    this.#initLogger()
-    const typeScriptCompileOptions = extractTypeScriptCompileOptionsFromConfig(this.configManager.current)
-    const cwd = dirname(this.configManager.fullPath)
-    const compileOptions = {
-      ...typeScriptCompileOptions,
-      cwd,
-      logger: this.logger
+    // Create the application
+    this.#app = fastify({
+      ...this.serverConfig,
+      ...this.fastifyOptions,
+      genReqId () {
+        return randomUUID()
+      }
+    })
+
+    // This must be done before loading the plugins, so they can inspect if the
+    // openTelemetry decorator exists and then configure accordingly.
+    if (isKeyEnabled('telemetry', config)) {
+      await this.#app.register(telemetry, config.telemetry)
     }
 
-    await compile(compileOptions)
-  }
+    this.#app.decorate('platformatic', { configManager: this.configManager, config: this.configManager.current })
 
-  getUrl () {
-    return this.app !== null ? this.app.url : null
-  }
+    await this.#app.register(this.applicationFactory, this)
 
-  async getInfo () {
-    const type = this.stackable.configType
-    const version = this.stackable.configManagerConfig.version ?? null
-    return { type, version }
-  }
-
-  async getConfig () {
-    const config = Object.assign({}, this.configManager.current)
-    config.server = Object.assign({}, config.server)
-
-    const logger = config.server.loggerInstance
-
-    if (logger) {
-      config.server.logger = {}
-
-      if (logger.level) {
-        config.server.logger.level = logger.level
+    if (Array.isArray(this.context.fastifyPlugins)) {
+      for (const plugin of this.context.fastifyPlugins) {
+        await this.#app.register(plugin)
       }
     }
 
-    delete config.server.loggerInstance
-
-    return config
-  }
-
-  async getEnv () {
-    return this.configManager.env
-  }
-
-  getMeta () {
-    const config = this.configManager.current
-
-    return {
-      composer: {
-        prefix: config.basePath ?? this.basePath ?? this.context?.serviceId,
-        wantsAbsoluteUrls: false,
-        needsRootTrailingSlash: false,
-        tcp: !!this.app?.url,
-        url: this.app?.url
-      },
-      connectionStrings: [this.connectionString]
+    if (!this.#app.hasRoute({ url: '/', method: 'GET' }) && !this.#app.hasRoute({ url: '/*', method: 'GET' })) {
+      await this.#app.register(setupRoot)
     }
+  }
+
+  async start (startOptions) {
+    // Compatibility with v2 service
+    const { listen } = startOptions ?? { listen: true }
+
+    // Make this idempotent
+    if (this.url) {
+      return this.url
+    }
+
+    // Create the application if needed
+    if (!this.#app) {
+      await this.init()
+      await this.#app.ready()
+    }
+
+    if (listen) {
+      await this._listen()
+    }
+
+    await this._collectMetrics()
+    return this.url
+  }
+
+  async stop () {
+    return this.#app?.close()
+  }
+
+  async build () {
+    return compile({
+      tsConfig: this.configManager.current.plugins?.typescript?.tsConfig,
+      flags: this.configManager.current.plugins?.typescript?.flags,
+      cwd: this.root,
+      logger: this.logger
+    })
+  }
+
+  async inject (injectParams, onInject) {
+    const response = await this.#app.inject(injectParams, onInject)
+
+    if (onInject) {
+      return
+    }
+
+    const { statusCode, statusMessage, headers, body } = response
+    return { statusCode, statusMessage, headers, body }
+  }
+
+  getApplication () {
+    return this.#app
+  }
+
+  async getDispatchFunc () {
+    await this.init()
+    return this.#app
+  }
+
+  async getConfig () {
+    const loggerInstance = this.serverConfig?.loggerInstance
+
+    if (loggerInstance) {
+      const config = Object.assign({}, this.configManager.current)
+      const { loggerInstance: _, ...serverConfig } = this.serverConfig
+      config.server = { ...serverConfig, logger: { level: loggerInstance.level } }
+
+      return config
+    }
+
+    return super.getConfig()
   }
 
   async getWatchConfig () {
@@ -151,185 +139,67 @@ class ServiceStackable {
 
     const enabled = config.watch?.enabled !== false && config.plugins !== undefined
 
+    if (!enabled) {
+      return { enabled, path: this.root }
+    }
+
     return {
       enabled,
-      path: this.configManager.dirname ?? dirname(this.configManager.fullPath),
+      path: this.root,
       allow: config.watch?.allow,
       ignore: config.watch?.ignore
     }
   }
 
-  async getDispatchFunc () {
-    await this.init()
-    return this.app
-  }
-
-  async getDispatchTarget () {
-    return this.getUrl() ?? (await this.getDispatchFunc())
+  getMeta () {
+    return {
+      composer: {
+        tcp: typeof this.url !== 'undefined',
+        url: this.url,
+        prefix: this.basePath ?? this.#basePath,
+        wantsAbsoluteUrls: false,
+        needsRootTrailingSlash: false
+      },
+      connectionStrings: [this.connectionString]
+    }
   }
 
   async getOpenapiSchema () {
     await this.init()
-    await this.app.ready()
-    return this.app.swagger ? this.app.swagger() : null
+    await this.#app.ready()
+    return this.#app.swagger ? this.#app.swagger() : null
   }
 
   async getGraphqlSchema () {
     await this.init()
-    await this.app.ready()
-    return this.app.graphql ? printSchema(this.app.graphql.schema) : null
-  }
-
-  setCustomHealthCheck (fn) {
-    this.customHealthCheck = fn
-  }
-
-  async getCustomHealthCheck () {
-    if (!this.customHealthCheck) {
-      return true
-    }
-    return await this.customHealthCheck()
-  }
-
-  setCustomReadinessCheck (fn) {
-    this.customReadinessCheck = fn
-  }
-
-  async getCustomReadinessCheck () {
-    if (!this.customReadinessCheck) {
-      return true
-    }
-    return await this.customReadinessCheck()
-  }
-
-  // This method is not a part of Stackable interface because we need to register
-  // fastify metrics before the server is started.
-  async #collectMetrics () {
-    const metricsConfig = this.context.metricsConfig
-
-    if (metricsConfig !== false) {
-      await collectMetrics(
-        this.serviceId,
-        this.workerId,
-        {
-          defaultMetrics: true,
-          httpMetrics: true,
-          ...metricsConfig
-        },
-        this.metricsRegistry
-      )
-
-      this.#setHttpCacheMetrics()
-    }
-  }
-
-  async getMetrics (opts) {
-    const format = opts?.format
-    return format === 'json' ? await this.metricsRegistry.getMetricsAsJSON() : await this.metricsRegistry.metrics()
-  }
-
-  async inject (injectParams) {
-    await this.init()
-
-    const { statusCode, statusMessage, headers, body } = await this.app.inject(injectParams)
-    return { statusCode, statusMessage, headers, body }
-  }
-
-  async log (options = {}) {
-    await this.init()
-
-    const logLevel = options.level ?? 'info'
-
-    const message = options.message
-    if (!message) return
-
-    this.app.log[logLevel](message)
+    await this.#app.ready()
+    return this.#app.graphql ? printSchema(this.#app.graphql.schema) : null
   }
 
   async updateContext (context) {
+    super.updateContext(context)
+
     this.context = { ...this.context, ...context }
-    this.#updateConfig()
-  }
 
-  setOpenapiSchema (schema) {
-    this.openapiSchema = schema
-  }
-
-  setGraphqlSchema (schema) {
-    this.graphqlSchema = schema
-  }
-
-  setConnectionString (connectionString) {
-    this.connectionString = connectionString
-  }
-
-  setBasePath (basePath) {
-    this.basePath = basePath
-  }
-
-  registerGlobals (globals) {
-    globalThis.platformatic = Object.assign(globalThis.platformatic ?? {}, globals)
-  }
-
-  async #invalidateHttpCache (opts = {}) {
-    await globalThis[kITC].send('invalidateHttpCache', opts)
-  }
-
-  #setHttpCacheMetrics () {
-    const { client, registry } = globalThis.platformatic.prometheus
-
-    const cacheHitMetric = new client.Counter({
-      name: 'http_cache_hit_count',
-      help: 'Number of http cache hits',
-      registers: [registry]
-    })
-
-    const cacheMissMetric = new client.Counter({
-      name: 'http_cache_miss_count',
-      help: 'Number of http cache misses',
-      registers: [registry]
-    })
-
-    globalThis.platformatic.onHttpCacheHit = () => {
-      cacheHitMetric.inc()
+    if (!this.context) {
+      return
     }
-    globalThis.platformatic.onHttpCacheMiss = () => {
-      cacheMissMetric.inc()
-    }
-  }
 
-  #updateConfig () {
-    if (!this.context) return
+    const { telemetryConfig, serverConfig, isEntrypoint, isProduction, logger } = this.context
 
-    const { serviceId, telemetryConfig, metricsConfig, serverConfig, hasManagementApi, isEntrypoint, isProduction } =
-      this.context
-
-    const config = this.configManager.current
+    const config = { ...this.configManager.current }
 
     if (telemetryConfig) {
       config.telemetry = telemetryConfig
     }
-    if (metricsConfig) {
-      config.metrics = metricsConfig
-    }
+
+    const loggerInstance = logger ?? serverConfig?.loggerInstance ?? this.serverConfig?.loggerInstance
+
     if (serverConfig) {
-      config.server = deepmerge(config.server ?? {}, serverConfig ?? {})
+      config.server = deepmerge(this.serverConfig, serverConfig ?? {})
     }
 
-    if ((hasManagementApi && config.metrics === undefined) || config.metrics) {
-      const labels = config.metrics?.labels || {}
-      config.metrics = {
-        server: 'hide',
-        defaultMetrics: { enabled: isEntrypoint },
-        ...config.metrics,
-        labels: { serviceId, ...labels }
-      }
-    }
-
-    if (!isEntrypoint) {
-      config.server = config.server ?? {}
-      config.server.trustProxy = true
-    }
+    config.server ??= {}
 
     if (isProduction) {
       if (config.plugins) {
@@ -338,17 +208,36 @@ class ServiceStackable {
       config.watch = { enabled: false }
     }
 
+    // Adjust server options
+    if (!isEntrypoint) {
+      config.server.trustProxy = true
+    }
+
+    if (config.server.https) {
+      config.server.https.key = await sanitizeHTTPSArgument(config.server.https.key)
+      config.server.https.cert = await sanitizeHTTPSArgument(config.server.https.cert)
+    }
+
+    // Assign the logger instance if it exists
+    if (loggerInstance) {
+      config.server = { ...config.server }
+      config.server.loggerInstance = loggerInstance
+      delete config.server.logger
+    }
+
+    this.serverConfig = config.server
     this.configManager.update(config)
   }
 
-  #initLogger () {
-    if (this.configManager.current.server?.loggerInstance) {
-      this.logger = this.configManager.current.server?.loggerInstance
-      return
+  _initializeLogger () {
+    if (this.context?.logger) {
+      return this.context.logger
+    } else if (this.configManager.current.server?.loggerInstance) {
+      return this.configManager.current.server?.loggerInstance
     }
 
-    this.configManager.current.server ??= {}
-    this.loggerConfig = deepmerge(this.context.loggerConfig ?? {}, this.configManager.current.server?.logger ?? {})
+    this.serverConfig ??= {}
+    this.loggerConfig = deepmerge(this.context.loggerConfig ?? {}, this.serverConfig?.logger ?? {})
 
     const pinoOptions = {
       ...(this.loggerConfig ?? {}),
@@ -376,11 +265,31 @@ class ServiceStackable {
       pinoOptions.timestamp = buildPinoTimestamp(this.loggerConfig?.timestamp)
     }
 
-    this.logger = pino(pinoOptions)
+    const logger = pino(pinoOptions)
 
     // Only one of logger and loggerInstance should be set
-    delete this.configManager.current.server.logger
-    this.configManager.current.server.loggerInstance = this.logger
+    this.serverConfig.loggerInstance = logger
+    delete this.serverConfig.logger
+
+    return logger
+  }
+
+  async _listen () {
+    const serverOptions = this.serverConfig
+    const listenOptions = { host: serverOptions?.hostname || '127.0.0.1', port: serverOptions?.port || 0 }
+
+    if (this.isProduction && features.node.reusePort) {
+      listenOptions.reusePort = true
+    }
+
+    await this.#app.listen(listenOptions)
+    this.url = getServerUrl(this.#app.server)
+
+    if (this.serverConfig.http2 || this.serverConfig.https?.key) {
+      this.url = this.url.replace('http://', 'https://')
+    }
+
+    return this.url
   }
 }
 

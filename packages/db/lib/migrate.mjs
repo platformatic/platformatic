@@ -6,7 +6,7 @@ import { utimesSync } from 'fs'
 import { createRequire } from 'node:module'
 import pino from 'pino'
 import pretty from 'pino-pretty'
-import { platformaticDB } from '../index.js'
+import platformaticDatabase from '../index.js'
 import errors from './errors.js'
 import { execute as generateTypes } from './gen-types.mjs'
 import { Migrator } from './migrator.mjs'
@@ -50,7 +50,7 @@ async function applyMigrations (_args) {
         }
       },
       _args,
-      platformaticDB
+      platformaticDatabase
     )
 
     const config = configManager.current

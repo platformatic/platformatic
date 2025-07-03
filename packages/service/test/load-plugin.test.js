@@ -8,95 +8,102 @@ const { createGunzip } = require('node:zlib')
 const { readFile } = require('node:fs/promises')
 const { pipeline } = require('node:stream/promises')
 const { request } = require('undici')
-const app = require('..')
+const { createFromConfig } = require('./helper')
+const { platformaticService } = require('..')
 
-const { buildServer, platformaticService } = app
+async function myApp (app, stackable) {
+  await platformaticService(app, stackable)
+  app.get('/', () => 'hello world')
+}
 
-test('customize service', async (t) => {
-  async function myApp (app, opts) {
-    await platformaticService(app, opts, [async function (app) {
-      app.get('/', () => 'hello world')
-    }])
-  }
-
-  const app = await buildServer({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
+test('customize service', async t => {
+  const app = await createFromConfig(
+    t,
+    {
+      server: {
+        hostname: '127.0.0.1',
+        port: 0,
+        logger: { level: 'fatal' }
+      }
     },
-  }, { app: myApp })
+    myApp
+  )
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
-  const res = await (request(app.url))
+  const res = await request(app.url)
   const body = await res.body.text()
   assert.strictEqual(res.statusCode, 200)
   assert.strictEqual(body, 'hello world')
 })
 
-test('catch errors from the other side', async (t) => {
-  async function myApp (app, opts) {
-    await platformaticService(app, opts, [async function (app) {
-      app.get('/', () => 'hello world')
-    }])
-  }
-
-  const app = await buildServer({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
+test('catch errors from the other side', async t => {
+  const app = await createFromConfig(
+    t,
+    {
+      server: {
+        hostname: '127.0.0.1',
+        port: 0,
+        logger: { level: 'fatal' }
+      },
+      plugins: {
+        paths: [
+          {
+            path: require.resolve('./fixtures/other-side.js')
+          }
+        ]
+      }
     },
-    plugins: {
-      paths: [{
-        path: require.resolve('./fixtures/other-side.js'),
-      }],
-    },
-  }, { app: myApp })
+    myApp
+  )
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
-  const res = await (request(app.url))
+  const res = await request(app.url)
   const body = await res.body.json()
   assert.strictEqual(res.statusCode, 500)
   assert.deepStrictEqual(body, {
     statusCode: 500,
     error: 'Internal Server Error',
-    message: 'kaboom',
+    message: 'kaboom'
   })
 })
 
-test('accept packages', async (t) => {
-  const app = await buildServer({
+test('accept packages', async t => {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
     },
     plugins: {
-      packages: [{
-        name: '@fastify/compress',
-        options: {
-          threshold: 1, // 1 byte
-        },
-      }],
-    },
+      packages: [
+        {
+          name: '@fastify/compress',
+          options: {
+            threshold: 1 // 1 byte
+          }
+        }
+      ]
+    }
   })
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
-  const res = await (request(app.url, {
+  const res = await request(app.url, {
     headers: {
-      'accept-encoding': 'gzip',
-    },
-  }))
+      'accept-encoding': 'gzip'
+    }
+  })
   assert.strictEqual(res.statusCode, 200)
   let body = ''
   await pipeline(res.body, createGunzip(), async function * (stream) {
@@ -105,119 +112,122 @@ test('accept packages', async (t) => {
       body += chunk
     }
   })
-  assert.deepStrictEqual(JSON.parse(body), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
+  assert.deepStrictEqual(JSON.parse(body), {
+    message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev'
+  })
 })
 
-test('accept packages / string form', async (t) => {
-  const app = await buildServer({
+test('accept packages / string form', async t => {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
+    },
+    plugins: {
+      packages: ['@fastify/compress']
+    }
+  })
+
+  t.after(async () => {
+    await app.stop()
+  })
+  await app.start({ listen: true })
+
+  assert.match(app.getApplication().printPlugins(), /@fastify\/compress/)
+})
+
+test('accept packages / with typescript on', async t => {
+  const app = await createFromConfig(t, {
+    server: {
+      hostname: '127.0.0.1',
+      port: 0,
+      logger: { level: 'fatal' }
     },
     plugins: {
       packages: ['@fastify/compress'],
-    },
+      typescript: true
+    }
   })
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
-  assert.match(app.printPlugins(), /@fastify\/compress/)
+  assert.match(app.getApplication().printPlugins(), /@fastify\/compress/)
 })
 
-test('accept packages / with typescript on', async (t) => {
-  const app = await buildServer({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
+test('customize service without toLoad', async t => {
+  const app = await createFromConfig(
+    t,
+    {
+      server: {
+        hostname: '127.0.0.1',
+        port: 0,
+        logger: { level: 'fatal' }
+      }
     },
-    plugins: {
-      packages: ['@fastify/compress'],
-      typescript: true,
-    },
-  })
+    myApp
+  )
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
-  assert.match(app.printPlugins(), /@fastify\/compress/)
-})
-
-test('customize service without toLoad', async (t) => {
-  async function myApp (app, opts) {
-    await platformaticService(app, opts)
-    app.get('/', () => 'hello world')
-  }
-
-  const app = await buildServer({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
-    },
-  }, { app: myApp })
-
-  t.after(async () => {
-    await app.close()
-  })
-  await app.start()
-
-  const res = await (request(app.url))
+  const res = await request(app.url)
   const body = await res.body.text()
   assert.strictEqual(res.statusCode, 200)
   assert.strictEqual(body, 'hello world')
 })
 
-test('customize service with beforePlugins', async (t) => {
-  async function myApp (app, opts) {
-    await platformaticService(app, {
-      ...opts,
-      beforePlugins: [async function (app) {
-        app.get('/', () => 'hello world')
-      }],
-    })
-  }
-
-  const app = await buildServer({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
+test('customize service with beforePlugins', async t => {
+  const app = await createFromConfig(
+    t,
+    {
+      server: {
+        hostname: '127.0.0.1',
+        port: 0,
+        logger: { level: 'fatal' }
+      }
     },
-  }, { app: myApp })
+    myApp
+  )
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
-  const res = await (request(app.url))
+  const res = await request(app.url)
   const body = await res.body.text()
   assert.strictEqual(res.statusCode, 200)
   assert.strictEqual(body, 'hello world')
 })
 
-test('@fastify/static serving root without wildcards', async (t) => {
-  const app = await buildServer({
+test('@fastify/static serving root without wildcards', async t => {
+  const app = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
     },
     plugins: {
-      paths: [{
-        path: require.resolve('./fixtures/root-static.js'),
-      }],
-    },
+      paths: [
+        {
+          path: require.resolve('./fixtures/root-static.js')
+        }
+      ]
+    }
   })
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
-  const res = await (request(app.url))
+  const res = await request(app.url)
   const body = await res.body.text()
   const expected = await readFile(require.resolve('./fixtures/hello/index.html'), 'utf8')
   assert.strictEqual(res.statusCode, 200)

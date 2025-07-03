@@ -1,12 +1,12 @@
+import { join } from 'desm'
+import { execa } from 'execa'
 import assert from 'node:assert'
 import { test } from 'node:test'
-import { join } from 'desm'
 import { request } from 'undici'
-import { execa } from 'execa'
 import { getConnectionInfo } from '../helper.js'
-import { start, cliPath, connectDB, safeKill } from './helper.js'
+import { cliPath, connectDB, safeKill, start } from './helper.js'
 
-test('env white list', async (t) => {
+test('env white list', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
   const db = await connectDB(connectionInfo)
 
@@ -18,17 +18,12 @@ test('env white list', async (t) => {
     title VARCHAR(42)
   );`)
 
-  const { child, url } = await start(
-    [
-      '--config', join(import.meta.url, '..', 'fixtures', 'env-whitelist.json'),
-    ],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-        HOSTNAME: '127.0.0.1',
-      },
+  const { child, url } = await start([join(import.meta.url, '..', 'fixtures', 'env-whitelist.json')], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString,
+      HOSTNAME: '127.0.0.1'
     }
-  )
+  })
 
   {
     // should connect to db and query it.
@@ -43,8 +38,8 @@ test('env white list', async (t) => {
                   title
                 }
               }
-            `,
-      }),
+            `
+      })
     })
     assert.equal(res.statusCode, 200, 'savePage status code')
     const body = await res.body.json()
@@ -54,7 +49,7 @@ test('env white list', async (t) => {
   await safeKill(child)
 })
 
-test('env white list default values', async (t) => {
+test('env white list default values', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
   const db = await connectDB(connectionInfo)
 
@@ -66,17 +61,12 @@ test('env white list default values', async (t) => {
     title VARCHAR(42)
   );`)
 
-  const { child, url } = await start(
-    [
-      '--config', join(import.meta.url, '..', 'fixtures', 'env-whitelist-default.json'),
-    ],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-        PORT: 10555,
-      },
+  const { child, url } = await start([join(import.meta.url, '..', 'fixtures', 'env-whitelist-default.json')], {
+    env: {
+      DATABASE_URL: connectionInfo.connectionString,
+      PORT: 10555
     }
-  )
+  })
 
   assert.equal(url, 'http://127.0.0.1:10555')
   {
@@ -92,8 +82,8 @@ test('env white list default values', async (t) => {
                   title
                 }
               }
-            `,
-      }),
+            `
+      })
     })
     assert.equal(res.statusCode, 200, 'savePage status code')
     const body = await res.body.json()
@@ -103,7 +93,7 @@ test('env white list default values', async (t) => {
   await safeKill(child)
 })
 
-test('env white list schema', async (t) => {
+test('env white list schema', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
   const db = await connectDB(connectionInfo)
 
@@ -115,19 +105,18 @@ test('env white list schema', async (t) => {
     title VARCHAR(42)
   );`)
 
-  const { stdout } = await execa('node', [
-    cliPath,
-    'schema',
-    'graphql',
-    '--config',
-    join(import.meta.url, '..', 'fixtures', 'env-whitelist.json'),
-  ], {
-    env: {
-      DATABASE_URL: connectionInfo.connectionString,
-      HOSTNAME: '127.0.0.1',
-    },
-  })
+  const { stdout } = await execa(
+    'node',
+    [cliPath, 'schema', 'graphql', '--config', join(import.meta.url, '..', 'fixtures', 'env-whitelist.json')],
+    {
+      env: {
+        DATABASE_URL: connectionInfo.connectionString,
+        HOSTNAME: '127.0.0.1'
+      }
+    }
+  )
 
   const snapshot = await import('../../snapshots/test/cli/env.test.mjs')
+
   assert.equal(stdout, snapshot.default)
 })

@@ -5,6 +5,9 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { request } = require('undici')
+const { setLogFile } = require('./helpers')
+
+test.beforeEach(setLogFile)
 
 const { buildServer } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
@@ -31,10 +34,13 @@ test('Hello', async t => {
 
   const responseText = await body.text()
 
-  assert.strictEqual(responseText, `Hello from Platformatic Prometheus Server!
+  assert.strictEqual(
+    responseText,
+    `Hello from Platformatic Prometheus Server!
 The metrics are available at /metrics.
 The readiness endpoint is available at /ready.
-The liveness endpoint is available at /status.`)
+The liveness endpoint is available at /status.`
+  )
 })
 
 test('Hello without readiness', async t => {
@@ -59,9 +65,12 @@ test('Hello without readiness', async t => {
 
   const responseText = await body.text()
 
-  assert.strictEqual(responseText, `Hello from Platformatic Prometheus Server!
+  assert.strictEqual(
+    responseText,
+    `Hello from Platformatic Prometheus Server!
 The metrics are available at /metrics.
-The liveness endpoint is available at /status.`)
+The liveness endpoint is available at /status.`
+  )
 })
 
 test('Hello without liveness', async t => {
@@ -86,9 +95,12 @@ test('Hello without liveness', async t => {
 
   const responseText = await body.text()
 
-  assert.strictEqual(responseText, `Hello from Platformatic Prometheus Server!
+  assert.strictEqual(
+    responseText,
+    `Hello from Platformatic Prometheus Server!
 The metrics are available at /metrics.
-The readiness endpoint is available at /ready.`)
+The readiness endpoint is available at /ready.`
+  )
 })
 
 test('should start a prometheus server on port 9090', async t => {
@@ -154,7 +166,7 @@ test('should start a prometheus server on port 9090', async t => {
     'http_request_all_duration_seconds',
     'http_request_all_summary_seconds',
     'http_cache_hit_count',
-    'http_cache_miss_count',
+    'http_cache_miss_count'
   ]
 
   for (const metricName of expectedMetricNames) {
@@ -206,7 +218,7 @@ test('should support custom metrics', async t => {
   assert.ok(metrics.includes('custom_external_2{serviceId="external"} 456'))
 })
 
-test('should track http cache hits/misses', async (t) => {
+test('should track http cache hits/misses', async t => {
   const projectDir = join(fixturesDir, 'http-cache')
   const configFile = join(projectDir, 'platformatic.json')
   const app = await buildServer(configFile)
@@ -271,10 +283,12 @@ test('metrics can be disabled', async t => {
   // Wait for the prometheus server to start
   await sleep(2000)
 
-  await t.assert.rejects(request('http://127.0.0.1:9090', {
-    method: 'GET',
-    path: '/metrics'
-  }))
+  await t.assert.rejects(
+    request('http://127.0.0.1:9090', {
+      method: 'GET',
+      path: '/metrics'
+    })
+  )
 })
 
 test('readiness - should get 404 if readiness is not enabled', async t => {

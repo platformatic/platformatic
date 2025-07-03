@@ -92,7 +92,6 @@ async function installDependencies (nextVersion, reactVersion) {
   }
   await createDirectory(base)
   await writeFile(resolve(base, 'pnpm-workspace.yaml'), '')
-  console.log('installing dependencies', base)
   await execa('pnpm', ['add', '-D', '--ignore-workspace', `next@${nextVersion}`, `react@${reactVersion}`, `react-dom@${reactVersion}`], { cwd: base })
 }
 

@@ -4,16 +4,16 @@ import Issues from '../../getting-started/issues.md';
 
 In many cases, it's useful to start Platformatic Service using an API instead of the command line, e.g., in tests where we want to start and stop our server programmatically.
 
-## Using `buildServer` Function
+## Using `create` Function
 
-The `buildServer` function allows starting the Platformatic Service programmatically.
+The `create` function allows starting the Platformatic Service programmatically.
 
-### Basic Example 
+### Basic Example
 
 ```js title="server.js"
-import { buildServer } from '@platformatic/service'
+import { create } from '@platformatic/service'
 
-const app = await buildServer('path/to/platformatic.service.json')
+const app = await create('path/to/platformatic.service.json')
 
 await app.start()
 
@@ -25,14 +25,14 @@ console.log(await res.json())
 await app.close()
 ```
 
-### Custom Configuration 
+### Custom Configuration
 
 It is also possible to customize the configuration:
 
 ```js
-import { buildServer } from '@platformatic/service'
+import { create } from '@platformatic/service'
 
-const app = await buildServer({
+const app = await buildServer('path/to', {
   server: {
     hostname: '127.0.0.1',
     port: 0
@@ -51,50 +51,41 @@ await app.close()
 
 ## Creating a Reusable Application on Top of Platformatic Service
 
-[Platformatic DB](../db/overview.md) is built on top of Platformatic Serivce. If you want to build a similar kind of tool, follow this example:
+[Platformatic DB](../db/overview.md) is built on top of Platformatic Service. If you want to build a similar kind of tool, follow this example:
 
 ```js title="Example Plugin"
-import { buildServer, schema } from '@platformatic/service'
+import { create, schema as serviceSchema } from '@platformatic/service'
 import { readFileSync } from 'node:fs'
 
-async function myPlugin (app, opts) {
+async function myPlugin (app, stackable) {
   // app.platformatic.configManager contains an instance of the ConfigManager
   console.log(app.platformatic.configManager.current)
 
+  await platformaticService(app, stackable)
   await app.register(platformaticService, opts)
 }
 
 // break Fastify encapsulation
 myPlugin[Symbol.for('skip-override')] = true
-myPlugin.configType = 'myPlugin'
 
 // This is the schema for this reusable application configuration file,
 // customize at will but retain the base properties of the schema from
 // @platformatic/service
-myPlugin.schema = schema
+const schema = { ...serviceSchema }
 
-// The configuration of the ConfigManager
-myPlugin.configManagerConfig = {
-  version: JSON.parse(readFileSync(new URL(import.meta.url, 'package.json'), 'utf-8')).version
-  schema: foo.schema,
-  allowToWatch: ['.env'],
-  schemaOptions: {
-    useDefaults: true,
-    coerceTypes: true,
-    allErrors: true,
-    strict: false
-  },
-  async transformConfig () {
-    console.log(this.current) // this is the current config
-
-    // In this method you can alter the configuration before the application
-    // is started. It's useful to apply some defaults that cannot be derived
-    // inside the schema, such as resolving paths.
-  }
+// In this method you can alter the configuration before the application
+// is started. It's useful to apply some defaults that cannot be derived
+// inside the schema, such as resolving paths.
+async function transformConfig () {
+  console.log(this.current) // this is the current config
 }
 
-
-const server = await buildServer('path/to/config.json', myPlugin)
+const server = await create(
+  'path/to/config.json',
+  {},
+  {},
+  { schema, applicationFactory: myPlugin, configManagerConfig: { transformConfig } }
+)
 
 await server.start()
 
@@ -106,27 +97,11 @@ console.log(await res.json())
 await service.close()
 ```
 
-### Using `beforePlugins` Option
-
-If you want to provide functionality _before_ the plugins are loaded, but after metrics and telemetry are in place,
-you can use the `beforePlugins` option:
-
-```js title="Example Plugin"
-async function myPlugin (app, opts) {
-  await app.register(platformaticService, {
-    ...opts,
-    beforePlugins: [async function (app) {
-      app.decorate('myvalue', 42)
-    }]
-  })
-}
-```
-
 ## TypeScript Support
 
 To ensure this module works in a TypeScript setup (outside an application created with `wattpm create`), you need to add the following to your types:
 
-### Type Declarations 
+### Type Declarations
 
 ```ts
 import { FastifyInstance } from 'fastify'
@@ -139,7 +114,7 @@ declare module 'fastify' {
 }
 ```
 
-### Usage Example 
+### Usage Example
 
 ```ts
 /// <reference path="./global.d.ts" />
@@ -156,7 +131,7 @@ You can always generate a file called `global.d.ts` with the above content via t
 
 ## Usage with Custom Configuration
 
-If you are creating a reusable application on top of Platformatic Service, you would need to create the types for your schema, 
+If you are creating a reusable application on top of Platformatic Service, you would need to create the types for your schema,
 using [json-schema-to-typescript](https://www.npmjs.com/package/json-schema-to-typescript) in a `./config.d.ts` file and
 use it like this:
 
@@ -173,6 +148,7 @@ declare module 'fastify' {
   }
 }
 ```
+
 :::note
 You can construct `platformatic` like any other union types, adding other definitions.
 :::
@@ -194,17 +170,20 @@ export const schema = structuredClone(baseSchema)
 schema.$id = 'https://raw.githubusercontent.com/platformatic/acme-base/main/schemas/1.json'
 schema.title = 'Acme Base'
 
-// Needed to specify the extended module 
+// Needed to specify the extended module
 schema.properties.extends = {
   type: 'string'
 }
 
 schema.properties.dynamite = {
-  anyOf: [{
-    type: 'boolean'
-  }, {
-    type: 'string'
-  }],
+  anyOf: [
+    {
+      type: 'boolean'
+    },
+    {
+      type: 'string'
+    }
+  ],
   description: 'Enable /dynamite route'
 }
 
@@ -215,7 +194,7 @@ if (esMain(import.meta)) {
 }
 ```
 
-#### Generate Matching Types 
+#### Generate Matching Types
 
 Use [json-schema-to-typescript](http://npm.im/json-schema-to-typescript) to generate types:
 
@@ -225,17 +204,27 @@ Use [json-schema-to-typescript](http://npm.im/json-schema-to-typescript) to gene
 Finally, you can write the actual reusable application:
 
 ```ts
-import fp from 'fastify-plugin'
-import { platformaticService, buildServer as buildServiceServer, Stackable, PlatformaticServiceConfig } from '@platformatic/service'
-import { schema } from './schema.js'
 import { FastifyInstance } from 'fastify'
+import { lstat } from 'node:fs/promises'
+import { resolve } from 'node:path'
+import { BaseStackable } from '@platformatic/basic'
 import type { ConfigManager } from '@platformatic/config'
-import type { AcmeBase as AcmeBaseConfig } from './config.js'
-import { readFileSync } from 'node:fs'
+import { type PlatformaticService as PlatformaticServiceConfig } from '@platformatic/service'
+import {
+  create as createService,
+  platformaticService,
+  transformConfig as serviceTransformConfig
+} from '@platformatic/service'
+import { type AcmeBaseConfig } from './config.js'
+import dynamite from './dynamite.js'
+import { schema } from './schema.js'
+
+export { configManagerConfig } from '@platformatic/service'
+export { schema } from './schema.js'
 
 export interface AcmeBaseMixin {
   platformatic: {
-    configManager: ConfigManager<AcmeBaseConfig>,
+    configManager: ConfigManager<AcmeBaseConfig>
     config: AcmeBaseConfig
   }
 }
@@ -248,57 +237,70 @@ async function isDirectory (path: string) {
   }
 }
 
-function buildStackable () : Stackable<AcmeBaseConfig> {
-  async function acmeBase (_app: FastifyInstance, opts: object) {
-    // Needed to avoid declaration mergin and be compatibile with the
-    // Fastify types
-    const app = _app as FastifyInstance & AcmeBaseMixin
-
-    await app.register(platformaticService, opts)
+export default async function acmeBase (app: FastifyInstance & AcmeBaseMixin, stackable: BaseStackable) {
+  if (app.platformatic.config.dynamite) {
+    app.register(dynamite)
   }
 
-  // break Fastify encapsulation
-  fp(acmeBase)
-
-  acmeBase.configType = 'acmeBase'
-
-  // This is the schema for this reusable application configuration file,
-  // customize at will but retain the base properties of the schema from
-  // @platformatic/service
-  acmeBase.schema = schema
-
-  // The configuration of the ConfigManager
-  acmeBase.configManagerConfig = {
-    schema,
-    version: require('./package.json').version
-    //// use the following if the file is compiled as ESM:
-    // version: JSON.parse(readFileSync(new URL(import.meta.url, 'package.json'), 'utf-8')).version
-    allowToWatch: ['.env'],
-    schemaOptions: {
-      useDefaults: true,
-      coerceTypes: true,
-      allErrors: true,
-      strict: false
-    },
-    async transformConfig (this: ConfigManager<AcmeBaseConfig & PlatformaticServiceConfig>) {
-      // Call the transformConfig method from the base stackable
-      platformaticService.configManagerConfig.transformConfig.call(this)
-
-      // In this method you can alter the configuration before the application
-      // is started. It's useful to apply some defaults that cannot be derived
-      // inside the schema, such as resolving paths.
-    }
-  }
-
-  return acmeBase
+  await platformaticService(app, stackable)
 }
 
-export const acmeBase = buildStackable()
+Object.assign(acmeBase, { [Symbol.for('skip-override')]: true })
 
-export default acmeBase
+export const configType = 'acmeBase'
 
-export async function buildServer (opts: object) {
-  return buildServiceServer(opts, acmeBase)
+export async function transformConfig (this: ConfigManager<PlatformaticServiceConfig & AcmeBaseConfig>) {
+  // Call the transformConfig method from the base stackable
+  serviceTransformConfig.call(this)
+
+  // In this method you can alter the configuration before the application
+  // is started. It's useful to apply some defaults that cannot be derived
+  // inside the schema, such as resolving paths.
+
+  const paths = []
+
+  const pluginsDir = resolve(this.dirname, 'plugins')
+
+  if (await isDirectory(pluginsDir)) {
+    paths.push({
+      path: pluginsDir,
+      encapsulate: false
+    })
+  }
+
+  const routesDir = resolve(this.dirname, 'routes')
+
+  if (await isDirectory(routesDir)) {
+    paths.push({
+      path: routesDir
+    })
+  }
+
+  this.current.plugins = {
+    paths
+  }
+
+  if (!this.current.service?.openapi) {
+    if (typeof this.current.service !== 'object') {
+      this.current.service = {}
+    }
+    this.current.service.openapi = {
+      info: {
+        title: 'Acme Microservice',
+        description: 'A microservice for Acme Inc.',
+        version: '1.0.0'
+      }
+    }
+  }
+}
+
+export async function create (opts: object) {
+  return createService(
+    process.cwd(),
+    opts,
+    {},
+    { schema, applicationFactory: acmeBase, configManagerConfig: { transformConfig } }
+  )
 }
 ```
 
@@ -354,7 +356,7 @@ async function upgrade (config, version) {
   return result
 }
 
-stackable.configManagerConfig = {
+const configManagerConfig = {
   ...
   version: require('./package.json'),
   upgrade

@@ -1,7 +1,7 @@
 {
-  "server":{
+  "server": {
     "logger": {
-      "level": "warn"
+      "level": "fatal"
     }
   },
   "db": {
@@ -13,8 +13,6 @@
     "autoApply": true
   },
   "plugins": {
-    "paths": [
-      "./extends.js"
-    ]
+    "paths": ["./extends.js"]
   }
 }

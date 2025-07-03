@@ -1,0 +1,6 @@
+Available commands:
+
+* `help` - show this help message.
+* `help <command>` - show more information about a command.
+* `schema config` - generate the schema configuration file.
+* `compile` - compile the typescript files.

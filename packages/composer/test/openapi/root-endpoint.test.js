@@ -4,20 +4,24 @@ const assert = require('node:assert/strict')
 const { request } = require('undici')
 const { readFile } = require('node:fs/promises')
 const { test } = require('node:test')
-const {
-  createComposer,
-  createOpenApiService,
-  createGraphqlService,
-} = require('../helper')
+const { createFromConfig, createOpenApiService, createGraphqlService } = require('../helper')
 
-test('should respond 200 on root endpoint', async (t) => {
-  const composer = await createComposer(t)
+test('should respond 200 on root endpoint', async t => {
+  const composer = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    }
+  })
 
   {
     // No browser (i.e. curl)
     const { statusCode, body } = await composer.inject({ method: 'GET', url: '/' })
     assert.equal(statusCode, 200)
-    assert.deepEqual(JSON.parse(body), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
+    assert.deepEqual(JSON.parse(body), {
+      message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev'
+    })
   }
 
   {
@@ -25,10 +29,12 @@ test('should respond 200 on root endpoint', async (t) => {
     const { statusCode, body } = await composer.inject({
       method: 'GET',
       url: '/',
-      headers: { 'user-agent': '' },
+      headers: { 'user-agent': '' }
     })
     assert.equal(statusCode, 200)
-    assert.deepEqual(JSON.parse(body), { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
+    assert.deepEqual(JSON.parse(body), {
+      message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev'
+    })
   }
 
   {
@@ -37,8 +43,9 @@ test('should respond 200 on root endpoint', async (t) => {
       method: 'GET',
       url: '/',
       headers: {
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36',
-      },
+        'user-agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'
+      }
     })
     assert.equal(statusCode, 200)
     assert.equal(headers['content-type']?.toLowerCase(), 'text/html; charset=UTF-8'.toLowerCase())
@@ -47,7 +54,7 @@ test('should respond 200 on root endpoint', async (t) => {
   }
 })
 
-test('should not expose a default root endpoint if it is composed', async (t) => {
+test('should not expose a default root endpoint if it is composed', async t => {
   const api = await createOpenApiService(t)
 
   api.get('/', async (req, reply) => {
@@ -56,18 +63,23 @@ test('should not expose a default root endpoint if it is composed', async (t) =>
 
   await api.listen({ port: 0 })
 
-  const composer = await createComposer(t, {
+  const composer = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
     composer: {
       services: [
         {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
           openapi: {
-            url: '/documentation/json',
-          },
-        },
-      ],
-    },
+            url: '/documentation/json'
+          }
+        }
+      ]
+    }
   })
 
   const { statusCode, body } = await composer.inject({ method: 'GET', url: '/' })
@@ -75,13 +87,20 @@ test('should not expose a default root endpoint if it is composed', async (t) =>
   assert.deepEqual(JSON.parse(body), { message: 'Hello World!' })
 })
 
-test('should not expose a default root endpoint if there is a plugin exposing @fastify/static', async (t) => {
-  const composer = await createComposer(t, {
-    plugins: {
-      paths: [{
-        path: require.resolve('./fixtures/root-static.js'),
-      }]
+test('should not expose a default root endpoint if there is a plugin exposing @fastify/static', async t => {
+  const composer = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
     },
+    plugins: {
+      paths: [
+        {
+          path: require.resolve('./fixtures/root-static.js')
+        }
+      ]
+    }
   })
 
   const { statusCode, body } = await composer.inject({ method: 'GET', url: '/' })
@@ -90,7 +109,7 @@ test('should not expose a default root endpoint if there is a plugin exposing @f
   assert.deepEqual(body, expected)
 })
 
-test('should have links to composed services', async (t) => {
+test('should have links to composed services', async t => {
   const service1 = await createOpenApiService(t, ['users'], { addHeadersSchema: true })
   const service2 = await createOpenApiService(t, ['posts'])
   const service3 = await createOpenApiService(t, ['comments'])
@@ -103,9 +122,9 @@ test('should have links to composed services', async (t) => {
       Query: {
         async mul (_, { x, y }) {
           return x * y
-        },
-      },
-    },
+        }
+      }
+    }
   })
 
   const origin1 = await service1.listen({ port: 0 })
@@ -114,6 +133,11 @@ test('should have links to composed services', async (t) => {
   const origin4 = await service4.listen({ port: 0 })
 
   const config = {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
     composer: {
       services: [
         {
@@ -156,13 +180,14 @@ test('should have links to composed services', async (t) => {
     }
   }
 
-  const composer = await createComposer(t, config)
-  const composerOrigin = await composer.start()
+  const composer = await createFromConfig(t, config)
+  const composerOrigin = await composer.start({ listen: true })
   const url = `${composerOrigin}`
   const { body } = await request(url, {
     headers: {
-      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36',
-    },
+      'user-agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'
+    }
   })
 
   const content = await body.text()
@@ -175,13 +200,19 @@ test('should have links to composed services', async (t) => {
   assert.ok(content.includes('<div class="service-path">/internal/service2</div>'))
   assert.ok(content.includes('<div class="service-path">/internal/service3</div>'))
 
-  assert.ok(content.includes("document.getElementById('proxy-service1-external-link').href = href + '/internal/service1/'"))
-  assert.ok(content.includes("document.getElementById('proxy-service2-external-link').href = href + '/internal/service2/'"))
-  assert.ok(content.includes("document.getElementById('proxy-service3-external-link').href = href + '/internal/service3/'"))
+  assert.ok(
+    content.includes("document.getElementById('proxy-service1-external-link').href = href + '/internal/service1/'")
+  )
+  assert.ok(
+    content.includes("document.getElementById('proxy-service2-external-link').href = href + '/internal/service2/'")
+  )
+  assert.ok(
+    content.includes("document.getElementById('proxy-service3-external-link').href = href + '/internal/service3/'")
+  )
 
   assert.ok(content.includes('<div class="service-path">/service1</div>'))
   assert.ok(content.includes('<div class="service-path">/service2</div>'))
   assert.ok(content.includes('<div class="service-path">/service3</div>'))
 
-  assert.ok(content.includes('const href = window.location.href.replace(/\\/$/, \'\')'))
+  assert.ok(content.includes("const href = window.location.href.replace(/\\/$/, '')"))
 })

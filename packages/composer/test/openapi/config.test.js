@@ -5,12 +5,9 @@ const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { writeFile, mkdtemp } = require('fs/promises')
-const {
-  createComposer,
-  createOpenApiService,
-} = require('../helper')
+const { createFromConfig, createOpenApiService } = require('../helper')
 
-test('should throw an error if can not read openapi config file', async (t) => {
+test('should throw an error if can not read openapi config file', async t => {
   const api = await createOpenApiService(t, ['users'])
   await api.listen({ port: 0 })
 
@@ -18,34 +15,39 @@ test('should throw an error if can not read openapi config file', async (t) => {
   const openapiConfigFile = join(cwd, 'openapi.json')
 
   try {
-    await createComposer(t,
-      {
-        composer: {
-          services: [
-            {
-              id: 'api1',
-              origin: 'http://127.0.0.1:' + api.server.address().port,
-              openapi: {
-                url: '/documentation/json',
-                config: openapiConfigFile,
-              },
-            },
-          ],
-        },
+    const stackable = await createFromConfig(t, {
+      server: {
+        logger: {
+          level: 'fatal'
+        }
+      },
+      composer: {
+        services: [
+          {
+            id: 'api1',
+            origin: 'http://127.0.0.1:' + api.server.address().port,
+            openapi: {
+              url: '/documentation/json',
+              config: openapiConfigFile
+            }
+          }
+        ]
       }
-    )
+    })
+
+    await stackable.start({ listen: true })
     assert.fail('should throw error')
   } catch (err) {
     assert.equal(err.message, 'Could not read openapi config for "api1" service')
   }
 })
 
-test('should throw an error if openapi config is not valid', async (t) => {
+test('should throw an error if openapi config is not valid', async t => {
   const api = await createOpenApiService(t, ['users'])
   await api.listen({ port: 0 })
 
   const openapiConfig = {
-    wrong: 'config',
+    wrong: 'config'
   }
 
   const cwd = await mkdtemp(join(tmpdir(), 'composer-'))
@@ -53,22 +55,27 @@ test('should throw an error if openapi config is not valid', async (t) => {
   await writeFile(openapiConfigFile, JSON.stringify(openapiConfig))
 
   try {
-    await createComposer(t,
-      {
-        composer: {
-          services: [
-            {
-              id: 'api1',
-              origin: 'http://127.0.0.1:' + api.server.address().port,
-              openapi: {
-                url: '/documentation/json',
-                config: openapiConfigFile,
-              },
-            },
-          ],
-        },
+    const stackable = await createFromConfig(t, {
+      server: {
+        logger: {
+          level: 'fatal'
+        }
+      },
+      composer: {
+        services: [
+          {
+            id: 'api1',
+            origin: 'http://127.0.0.1:' + api.server.address().port,
+            openapi: {
+              url: '/documentation/json',
+              config: openapiConfigFile
+            }
+          }
+        ]
       }
-    )
+    })
+
+    await stackable.start({ listen: true })
     assert.fail('should throw error')
   } catch (err) {
     assert.equal(err.message, 'Could not read openapi config for "api1" service')

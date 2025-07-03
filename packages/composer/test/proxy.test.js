@@ -5,22 +5,19 @@ const selfCert = require('self-cert')
 const { tmpdir } = require('node:os')
 const { resolve, join } = require('node:path')
 const { symlink, mkdtemp, writeFile } = require('node:fs/promises')
-const { once } = require('node:events')
+const { once, EventEmitter } = require('node:events')
 const { test } = require('node:test')
 const { request } = require('undici')
 const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
 const { Agent, setGlobalDispatcher, getGlobalDispatcher } = require('undici')
 const { WebSocket } = require('ws')
-
 const {
-  createComposer,
+  createFromConfig,
   createOpenApiService,
   testEntityRoutes,
   createComposerInRuntime,
   createWebsocketService,
-  REFRESH_TIMEOUT,
-  createLoggerSpy,
-  waitForLogMessage
+  REFRESH_TIMEOUT
 } = require('./helper')
 const { buildServer: buildRuntime } = require('../../runtime')
 const { safeRemove, createDirectory } = require('@platformatic/utils')
@@ -46,119 +43,11 @@ test('should proxy openapi requests', async t => {
   const origin3 = await service3.listen({ port: 0 })
 
   const config = {
-    composer: {
-      services: [
-        {
-          id: 'service1',
-          origin: origin1,
-          openapi: {
-            url: '/documentation/json'
-          },
-          proxy: {
-            prefix: '/internal/service1'
-          }
-        },
-        {
-          id: 'service2',
-          origin: origin2,
-          openapi: {
-            url: '/documentation/json'
-          },
-          proxy: {
-            prefix: '/internal/service2'
-          }
-        },
-        {
-          id: 'service3',
-          origin: origin3,
-          openapi: {
-            url: '/documentation/json'
-          },
-          proxy: {
-            prefix: '/'
-          }
-        }
-      ],
-      refreshTimeout: 1000
-    }
-  }
-
-  const composer = await createComposer(t, config)
-  const composerOrigin = await composer.start()
-
-  const { statusCode, body } = await request(composerOrigin, {
-    method: 'GET',
-    path: '/documentation/json'
-  })
-  assert.equal(statusCode, 200)
-
-  const openApiSchema = await body.json()
-  openApiValidator.validate(openApiSchema)
-
-  for (const path in openApiSchema.paths) {
-    for (const service of config.composer.services) {
-      const proxyPrefix = service.proxy.prefix.at(-1) === '/' ? service.proxy.prefix.slice(0, -1) : service.proxy.prefix
-
-      if (path === proxyPrefix + '/' || path === proxyPrefix + '/*') {
-        assert.fail('proxy routes should be removed from openapi schema')
+    server: {
+      logger: {
+        level: 'fatal'
       }
-    }
-  }
-
-  {
-    const { statusCode, body } = await request(composerOrigin, {
-      method: 'GET',
-      path: '/internal/service1/documentation/json'
-    })
-    assert.equal(statusCode, 200)
-
-    const openApiSchema = await body.json()
-    openApiValidator.validate(openApiSchema)
-
-    await testEntityRoutes(composerOrigin, ['/users'])
-    await testEntityRoutes(composerOrigin, ['/internal/service1/users'])
-  }
-
-  {
-    const { statusCode, body } = await request(composerOrigin, {
-      method: 'GET',
-      path: '/internal/service2/documentation/json'
-    })
-    assert.equal(statusCode, 200)
-
-    const openApiSchema = await body.json()
-    openApiValidator.validate(openApiSchema)
-
-    await testEntityRoutes(composerOrigin, ['/posts'])
-    await testEntityRoutes(composerOrigin, ['/internal/service2/posts'])
-  }
-
-  {
-    const { statusCode, body } = await request(composerOrigin, {
-      method: 'GET',
-      path: '/internal/service1/headers'
-    })
-    assert.equal(statusCode, 200)
-
-    const returnedHeaders = await body.json()
-
-    const expectedForwardedHost = composerOrigin.replace('http://', '')
-    const [expectedForwardedFor] = expectedForwardedHost.split(':')
-    assert.equal(returnedHeaders['x-forwarded-host'], expectedForwardedHost)
-    assert.equal(returnedHeaders['x-forwarded-for'], expectedForwardedFor)
-  }
-})
-
-test('should proxy openapi requests', async t => {
-  const service1 = await createOpenApiService(t, ['users'], { addHeadersSchema: true })
-  const service2 = await createOpenApiService(t, ['posts'])
-  const service3 = await createOpenApiService(t, ['comments'])
-
-  const origin1 = await service1.listen({ port: 0 })
-  const origin2 = await service2.listen({ port: 0 })
-  const origin3 = await service3.listen({ port: 0 })
-
-  const config = {
+    },
     composer: {
       services: [
         {
@@ -196,8 +85,8 @@ test('should proxy openapi requests', async t => {
     }
   }
 
-  const composer = await createComposer(t, config)
-  const composerOrigin = await composer.start()
+  const composer = await createFromConfig(t, config)
+  const composerOrigin = await composer.start({ listen: true })
 
   const { statusCode, body } = await request(composerOrigin, {
     method: 'GET',
@@ -285,10 +174,6 @@ test('should proxy a @platformatic/service to its prefix by default', async t =>
     ]
   )
 
-  t.after(() => {
-    return runtime.close()
-  })
-
   const address = await runtime.start()
 
   {
@@ -342,10 +227,6 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
     ]
   )
 
-  t.after(() => {
-    return runtime.close()
-  })
-
   const address = await runtime.start()
 
   {
@@ -383,10 +264,6 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
       }
     ]
   )
-
-  t.after(() => {
-    runtime.close()
-  })
 
   const address = await runtime.start()
 
@@ -437,10 +314,6 @@ test('should proxy all services if none are defined', async t => {
       }
     ]
   )
-
-  t.after(() => {
-    runtime.close()
-  })
 
   const address = await runtime.start()
 
@@ -520,10 +393,6 @@ test('should fix the path using the referer only if asked to', async t => {
     ]
   )
 
-  t.after(() => {
-    runtime.close()
-  })
-
   const address = await runtime.start()
 
   {
@@ -590,10 +459,6 @@ test('should rewrite Location headers for proxied services', async t => {
     ]
   )
 
-  t.after(() => {
-    return runtime.close()
-  })
-
   const address = await runtime.start()
 
   {
@@ -645,10 +510,6 @@ test('should rewrite Location headers that include full url of the running servi
       }
     ]
   )
-
-  t.after(() => {
-    return runtime.close()
-  })
 
   const address = await runtime.start()
 
@@ -714,10 +575,6 @@ test('should properly configure the frontends on their paths if no composer conf
     [],
     resolve(__dirname, './proxy/fixtures/')
   )
-
-  t.after(() => {
-    runtime.close()
-  })
 
   const address = await runtime.start()
 
@@ -805,10 +662,6 @@ test('should properly match services by their hostname', async t => {
       }
     ]
   )
-
-  t.after(() => {
-    runtime.close()
-  })
 
   const address = await runtime.start()
 
@@ -1022,10 +875,6 @@ test('should properly allow all domains when a service is the only one with a ho
     ]
   )
 
-  t.after(() => {
-    runtime.close()
-  })
-
   const address = await runtime.start()
 
   {
@@ -1146,10 +995,6 @@ test('should properly generate OpenAPI routes when a frontend is exposed on /', 
     ]
   )
 
-  t.after(() => {
-    runtime.close()
-  })
-
   const address = await runtime.start()
 
   {
@@ -1255,10 +1100,6 @@ test('adds x-forwarded-proto', async t => {
     ]
   )
 
-  t.after(() => {
-    return runtime.close()
-  })
-
   const address = await runtime.start()
 
   {
@@ -1340,10 +1181,6 @@ test('should rewrite Location headers for proxied services https', async t => {
       }
     ]
   )
-
-  t.after(() => {
-    return runtime.close()
-  })
 
   const address = await runtime.start()
 
@@ -1476,10 +1313,6 @@ test('should properly handle basePath root for generic services', async t => {
     true
   )
 
-  t.after(() => {
-    runtime.close()
-  })
-
   const address = await runtime.start()
 
   {
@@ -1506,8 +1339,6 @@ test('should proxy to a websocket service', async t => {
   const upstream = `http://127.0.0.1:${port}`
   const wsUpstream = `ws://127.0.0.1:${port}`
 
-  const { logger, loggerSpy } = createLoggerSpy()
-
   const proxyConfig = {
     id: 'to-ws',
     proxy: {
@@ -1517,33 +1348,35 @@ test('should proxy to a websocket service', async t => {
     }
   }
 
-  const composer = await createComposer(
-    t,
-    {
-      composer: {
-        services: [proxyConfig]
+  const composer = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
       }
     },
-    logger
-  )
+    composer: {
+      services: [proxyConfig]
+    }
+  })
 
-  const composerOrigin = await composer.start()
+  const composerOrigin = await composer.start({ listen: true })
   const client = new WebSocket(composerOrigin.replace('http://', 'ws://'))
 
+  const { promise, resolve } = Promise.withResolvers()
   client.on('message', message => {
-    logger.info('received: ' + message)
+    resolve(message.toString())
   })
 
   await once(client, 'open')
   client.send('hello')
 
-  await waitForLogMessage(loggerSpy, { msg: 'received: hello', level: 30 })
+  assert.deepStrictEqual(await promise, 'hello')
 
   client.close()
-  await composer.close()
 })
 
 test('should proxy to a websocket service with reconnect options', async t => {
+  globalThis.foo = new EventEmitter()
   const { service: wsService, wsServer } = await createWebsocketService(t, { autoPong: false })
   wsServer.on('connection', socket => {
     socket.on('message', message => {
@@ -1554,8 +1387,6 @@ test('should proxy to a websocket service with reconnect options', async t => {
 
   const upstream = `http://127.0.0.1:${port}`
   const wsUpstream = `ws://127.0.0.1:${port}`
-
-  const { logger, loggerSpy } = createLoggerSpy()
 
   const proxyConfig = {
     id: 'to-ws',
@@ -1580,25 +1411,28 @@ test('should proxy to a websocket service with reconnect options', async t => {
     }
   }
 
-  const composer = await createComposer(
-    t,
-    {
-      composer: {
-        services: [proxyConfig]
+  const composer = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
       }
     },
-    logger
-  )
+    composer: {
+      services: [proxyConfig]
+    }
+  })
 
-  const composerOrigin = await composer.start()
+  const composerOrigin = await composer.start({ listen: true })
+  globalThis.platformatic.events ??= new EventEmitter()
 
   const client = new WebSocket(composerOrigin.replace('http://', 'ws://'))
   await once(client, 'open')
   client.send('hello')
 
-  await waitForLogMessage(loggerSpy, { msg: 'onIncomingMessage', level: 30 })
-  await waitForLogMessage(loggerSpy, { msg: 'onConnect', level: 30 })
-  await waitForLogMessage(loggerSpy, { msg: 'onOutgoingMessage', level: 30 })
+  await once(globalThis.platformatic.events, 'proxy:onIncomingMessage')
+
+  await once(globalThis.platformatic.events, 'onConnect')
+  await once(globalThis.platformatic.events, 'onOutgoingMessage')
 
   // close the target to cause reconnection
   await wsService.close()
@@ -1606,11 +1440,10 @@ test('should proxy to a websocket service with reconnect options', async t => {
 
   await createWebsocketService(t, {}, port)
 
-  await waitForLogMessage(loggerSpy, { msg: 'onReconnect', level: 30 })
-  await waitForLogMessage(loggerSpy, { msg: 'onPong', level: 30 })
+  await once(globalThis.platformatic.events, 'onReconnect')
+  await once(globalThis.platformatic.events, 'onPong')
 
   client.close()
-  await composer.close()
 
-  await waitForLogMessage(loggerSpy, { msg: 'onDisconnect', level: 30 })
+  await once(globalThis.platformatic.events, 'onDisconnect')
 })

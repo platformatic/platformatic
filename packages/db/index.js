@@ -1,146 +1,110 @@
 'use strict'
 
-const core = require('@platformatic/db-core')
-const auth = require('@platformatic/db-authorization')
 const { createConnectionPool } = require('@platformatic/sql-mapper')
-const { platformaticService, buildServer, buildStackable } = require('@platformatic/service')
-const { isKeyEnabled } = require('@platformatic/utils')
-const { schema } = require('./lib/schema')
-const ConfigManager = require('@platformatic/config')
-const adjustConfig = require('./lib/adjust-config')
-const { locateSchemaLock, updateSchemaLock } = require('./lib/utils')
+const { createConfigManager, resolveStackable, sanitizeCreationArguments } = require('@platformatic/basic')
+const {
+  configManagerConfig: serviceConfigManagerConfig,
+  transformConfig: serviceTransformConfig,
+  getTypescriptCompilationOptions
+} = require('@platformatic/service')
+const { platformaticDatabase } = require('./lib/application')
+const { Generator } = require('./lib/generator')
+const { DatabaseStackable } = require('./lib/stackable')
+const { schema, packageJson } = require('./lib/schema')
+const schemaComponents = require('./lib/schema')
 const errors = require('./lib/errors')
-const upgrade = require('./lib/upgrade')
-const fs = require('fs/promises')
-const { DbStackable } = require('./lib/stackable')
-const version = require('./package.json').version
+const { upgrade } = require('./lib/upgrade')
+const { readFile } = require('node:fs/promises')
+const { resolve } = require('node:path')
 
-async function platformaticDB (app, opts) {
-  const configManager = app.platformatic.configManager
-  const config = configManager.current
+async function transformConfig () {
+  await serviceTransformConfig.call(this)
 
-  let createSchemaLock = false
-  await loadSchemaLock()
-
-  async function loadSchemaLock () {
-    if (config.db.schemalock) {
-      // ignore errors, this is an optimization
-      try {
-        const path = locateSchemaLock(configManager)
-        const dbschema = JSON.parse(await fs.readFile(path, 'utf8'))
-        config.db.dbschema = dbschema
-        app.log.trace({ dbschema }, 'loaded schema lock')
-        createSchemaLock = false
-      } catch (err) {
-        app.log.trace({ err }, 'failed to load schema lock')
-        app.log.info('no schema lock found, will create one')
-        createSchemaLock = true
-      }
-    }
+  const dirOfConfig = this.dirname
+  if (
+    this.current.db &&
+    this.current.db.connectionString.indexOf('sqlite') === 0 &&
+    this.current.db.connectionString !== 'sqlite://:memory:'
+  ) {
+    const originalSqlitePath = this.current.db.connectionString.replace('sqlite://', '')
+    const sqliteFullPath = resolve(dirOfConfig, originalSqlitePath)
+    this.current.db.connectionString = 'sqlite://' + sqliteFullPath
   }
 
-  if (config.migrations && config.migrations.autoApply === true && !app.restarted) {
-    app.log.debug({ migrations: config.migrations }, 'running migrations')
-    const { execute } = await import('./lib/migrate.mjs')
-    const migrationsApplied = await execute({ logger: app.log, config })
-    if (migrationsApplied) {
-      // reload schema lock
-      await updateSchemaLock(app.log, configManager)
-      await loadSchemaLock()
-    }
-
-    if (config.types && config.types.autogenerate === true) {
-      app.log.debug({ types: config.types }, 'generating types')
-      const { execute } = await import('./lib/gen-types.mjs')
-      await execute({ logger: app.log, config, configManager })
-    }
+  /* c8 ignore next 3 */
+  if (this.current.db.graphql?.schemaPath) {
+    this.current.db.graphql.schema = await readFile(this.current.db.graphql.schemaPath, 'utf8')
   }
 
-  if (isKeyEnabled('healthCheck', config.server)) {
-    if (typeof config.server.healthCheck !== 'object') {
-      config.server.healthCheck = {}
-    }
-    config.server.healthCheck.fn = healthCheck
+  /* c8 ignore next 2 */
+  const arePostgresqlSchemaDefined =
+    this.current.db?.connectionString.indexOf('postgres') === 0 && this.current.db?.schema?.length > 0
+  const migrationsTableName = arePostgresqlSchemaDefined ? 'public.versions' : 'versions'
+
+  // relative-to-absolute migrations path
+  if (this.current.migrations) {
+    this.current.migrations.table = this.current.migrations.table || migrationsTableName
   }
 
-  if (createSchemaLock) {
-    try {
-      const path = locateSchemaLock(configManager)
-      await fs.writeFile(path, JSON.stringify(app.platformatic.dbschema, null, 2))
-      app.log.info({ path }, 'created schema lock')
-    } catch (err) {
-      app.log.trace({ err }, 'unable to save schema lock')
-    }
+  if (this.current.migrations && this.current.db) {
+    // TODO remove the ignores
+    /* c8 ignore next 4 */
+    this.current.db.ignore = this.current.db.ignore || {}
+    this.current.db.ignore = Object.assign(
+      {},
+      {
+        [this.current.migrations.table || migrationsTableName]: true
+      },
+      this.current.db.ignore
+    )
   }
 
-  async function toLoad (app) {
-    await app.register(core, config.db)
-
-    if (config.authorization) {
-      await app.register(auth, config.authorization)
-    }
-
-    if (Object.keys(app.platformatic.entities).length === 0) {
-      app.log.warn(
-        'No tables found in the database. Are you connected to the right database? Did you forget to run your migrations? ' +
-        'This guide can help with debugging Platformatic DB: https://docs.platformatic.dev/docs/guides/debug-platformatic-db'
-      )
-    }
-  }
-  toLoad[Symbol.for('skip-override')] = true
-
-  await app.register(platformaticService, {
-    ...opts,
-    beforePlugins: [toLoad],
-  })
-
-  if (!app.hasRoute({ url: '/', method: 'GET' }) && !app.hasRoute({ url: '/*', method: 'GET' })) {
-    app.register(require('./lib/root-endpoint'), config)
+  if (this.current.types?.autogenerate === 'true') {
+    this.current.types.autogenerate = true
   }
 }
 
-async function healthCheck (app) {
-  const { db, sql } = app.platformatic
-  try {
-    await db.query(sql`SELECT 1`)
-    return true
-  } catch (err) {
-    app.log.warn({ err }, 'Healthcheck failed')
-    return false
-  }
+const configManagerConfig = {
+  ...serviceConfigManagerConfig,
+  transformConfig,
+  replaceEnvIgnore: ['$.db.openapi.ignoreRoutes']
 }
 
-platformaticDB[Symbol.for('skip-override')] = true
-platformaticDB.schema = schema
-platformaticDB.configType = 'db'
-platformaticDB.isPLTService = true
-platformaticDB.configManagerConfig = {
-  version,
+// This will be replaced by create before the release of v3
+async function buildStackable (opts) {
+  return create(opts.context.directory, opts.config, {}, opts.context)
+}
+
+async function create (configFileOrRoot, sourceOrConfig, rawOpts, rawContext) {
+  const { root, source } = await resolveStackable(configFileOrRoot, sourceOrConfig, 'db')
+  const { opts, context } = await sanitizeCreationArguments(root, rawOpts, rawContext)
+
+  const configManager = await createConfigManager(
+    { schema, upgrade, config: configManagerConfig, version: packageJson.version },
+    root,
+    source,
+    opts,
+    context
+  )
+
+  return new DatabaseStackable(opts, root, configManager)
+}
+
+module.exports = {
+  Generator,
+  DatabaseStackable,
+  errors,
+  createConnectionPool,
+  platformaticDatabase,
+  create,
+  skipTelemetryHooks: true,
+  // Old exports - These might be removed in a future PR
+  transformConfig,
+  configType: 'db',
+  configManagerConfig,
+  buildStackable,
   schema,
-  allowToWatch: ['.env'],
-  schemaOptions: platformaticService.configManagerConfig.schemaOptions,
-  replaceEnvIgnore: ['$.db.openapi.ignoreRoutes'],
-  async transformConfig () {
-    await adjustConfig(this)
-  },
-  upgrade,
+  schemaComponents,
+  version: packageJson.version,
+  getTypescriptCompilationOptions
 }
-
-function _buildServer (options) {
-  return buildServer(options, platformaticDB)
-}
-
-async function buildDbStackable (options) {
-  return buildStackable(options, platformaticDB, DbStackable)
-}
-
-module.exports = platformaticDB
-module.exports.buildServer = _buildServer
-module.exports.schema = schema
-module.exports.platformaticDB = platformaticDB
-module.exports.ConfigManager = ConfigManager
-module.exports.errors = errors
-module.exports.createConnectionPool = createConnectionPool
-module.exports.Generator = require('./lib/generator/db-generator').Generator
-module.exports.buildStackable = buildDbStackable
-module.exports.DbStackable = DbStackable

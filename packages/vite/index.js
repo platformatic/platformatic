@@ -34,6 +34,8 @@ export class ViteStackable extends BaseStackable {
   }
 
   async init () {
+    await super.init()
+
     if (this.isProduction) {
       return
     }
@@ -275,6 +277,8 @@ export class ViteSSRStackable extends NodeStackable {
   }
 
   async init () {
+    await super.init()
+
     const config = this.configManager.current
 
     this.#basePath = config.application?.basePath
@@ -405,16 +409,8 @@ export class ViteSSRStackable extends NodeStackable {
   }
 }
 
-/* c8 ignore next 9 */
+/* c8 ignore next 13 */
 export function transformConfig () {
-  if (this.current.watch === undefined) {
-    this.current.watch = { enabled: false }
-  }
-
-  if (typeof this.current.watch !== 'object') {
-    this.current.watch = { enabled: this.current.watch || false }
-  }
-
   if (this.current.vite.ssr === true) {
     this.current.vite.ssr = {
       enabled: true,
@@ -423,6 +419,8 @@ export function transformConfig () {
       serverDirectory: 'server'
     }
   }
+
+  this.current.watch = { enabled: false }
 
   return basicTransformConfig.call(this)
 }

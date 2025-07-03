@@ -6,7 +6,7 @@ import {
   getServerUrl,
   importFile,
   resolvePackage,
-  schemaOptions
+  schemaOptions,
 } from '@platformatic/basic'
 import { ConfigManager } from '@platformatic/config'
 import { features } from '@platformatic/utils'
@@ -228,15 +228,9 @@ export class RemixStackable extends ViteStackable {
   }
 }
 
-/* c8 ignore next 9 */
-function transformConfig () {
-  if (this.current.watch === undefined) {
-    this.current.watch = { enabled: false }
-  }
-
-  if (typeof this.current.watch !== 'object') {
-    this.current.watch = { enabled: this.current.watch || false }
-  }
+/* c8 ignore next 5 */
+export function transformConfig () {
+  this.current.watch = { enabled: false }
 
   return basicTransformConfig.call(this)
 }

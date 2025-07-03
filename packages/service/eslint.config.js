@@ -9,6 +9,5 @@ module.exports = neostandard({
     'test/tmp/**/*',
     'test/fixtures/*/dist/**/*',
     '**/dist/*',
-    'fixtures/**/*',
   ],
 })

@@ -6,7 +6,7 @@ const { test } = require('node:test')
 const { join } = require('node:path')
 const { mkdtemp, cp, unlink } = require('node:fs/promises')
 const Fastify = require('fastify')
-const { buildServer } = require('../../db')
+const { create } = require('../../db')
 const { buildGraphQLClient } = require('..')
 const { safeRemove } = require('@platformatic/utils')
 require('./helper')
@@ -103,7 +103,7 @@ test('build basic client from url', async t => {
   } catch {
     // noop
   }
-  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const app = await create(join(tmpDir, 'platformatic.db.json'))
 
   t.after(async () => {
     await app.close()
@@ -173,7 +173,7 @@ test('build basic client from url with custom headers', async t => {
   } catch {
     // noop
   }
-  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const app = await create(join(tmpDir, 'platformatic.db.json'))
 
   t.after(async () => {
     await app.close()
@@ -246,7 +246,7 @@ test('bad query', async t => {
   } catch {
     // noop
   }
-  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const app = await create(join(tmpDir, 'platformatic.db.json'))
 
   t.after(async () => {
     await app.close()
@@ -275,7 +275,7 @@ test('error within resolver', async t => {
   } catch {
     // noop
   }
-  const app = await buildServer(join(tmpDir, 'platformatic.db.json'))
+  const app = await create(join(tmpDir, 'platformatic.db.json'))
 
   t.after(async () => {
     await app.close()

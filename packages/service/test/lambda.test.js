@@ -4,26 +4,30 @@ const assert = require('node:assert')
 const { test } = require('node:test')
 const { join } = require('node:path')
 const awsLambdaFastify = require('@fastify/aws-lambda')
-const { buildConfig } = require('./helper')
-const { buildServer } = require('..')
+const { buildConfig, createFromConfig } = require('./helper')
+const { create } = require('..')
 
-test('should respond 200 on root endpoint', async (t) => {
-  const app = await buildServer(buildConfig({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
-      healthCheck: {
-        enabled: true,
-        interval: 2000,
-      },
-    },
-  }))
+test('should respond 200 on root endpoint', async t => {
+  const app = await createFromConfig(
+    t,
+    buildConfig({
+      server: {
+        hostname: '127.0.0.1',
+        port: 0,
+        logger: { level: 'fatal' },
+        healthCheck: {
+          enabled: true,
+          interval: 2000
+        }
+      }
+    })
+  )
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
 
-  const handler = awsLambdaFastify(app)
+  const handler = awsLambdaFastify(app.getApplication())
 
   {
     // No browser (i.e. curl)
@@ -31,15 +35,17 @@ test('should respond 200 on root endpoint', async (t) => {
       version: '2.0',
       httpMethod: 'GET',
       path: '/',
-      headers: {
-      },
+      headers: {},
       cookies: [],
-      queryStringParameters: '',
+      queryStringParameters: ''
     }
 
     const ret = await handler(evt)
 
-    assert.strictEqual(ret.body, JSON.stringify({ message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' }))
+    assert.strictEqual(
+      ret.body,
+      JSON.stringify({ message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
+    )
     assert.strictEqual(ret.isBase64Encoded, false)
     assert.ok(ret.headers)
     assert.strictEqual(ret.headers['content-type'], 'application/json; charset=utf-8')
@@ -55,10 +61,11 @@ test('should respond 200 on root endpoint', async (t) => {
       httpMethod: 'GET',
       path: '/',
       headers: {
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36',
+        'user-agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'
       },
       cookies: [],
-      queryStringParameters: '',
+      queryStringParameters: ''
     }
 
     const ret = await handler(evt)
@@ -72,24 +79,24 @@ test('should respond 200 on root endpoint', async (t) => {
   }
 })
 
-test('from a config file on disk', async (t) => {
-  const app = await buildServer(join(__dirname, '..', 'fixtures', 'hello', 'warn-log.service.json'))
+test('from a config file on disk', async t => {
+  const app = await create(join(__dirname, './fixtures/hello/warn-log.service.json'))
 
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
 
-  const handler = awsLambdaFastify(app)
+  await app.init()
+  const handler = awsLambdaFastify(app.getApplication())
 
   // No browser (i.e. curl)
   const evt = {
     version: '2.0',
     httpMethod: 'GET',
     path: '/',
-    headers: {
-    },
+    headers: {},
     cookies: [],
-    queryStringParameters: '',
+    queryStringParameters: ''
   }
 
   const ret = await handler(evt)
