@@ -70,9 +70,11 @@ test('should get runtime service config', async t => {
 
   assert.strictEqual(child.exitCode, 0)
 
+  const platformaticVersion = await getPlatformaticVersion()
+
   const serviceConfig = JSON.parse(child.stdout)
   assert.deepStrictEqual(serviceConfig, {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
+    $schema: `https://schemas.platformatic.dev/@platformatic/service/${platformaticVersion}.json`,
     server: {
       hostname: '127.0.0.1',
       port: 0,
