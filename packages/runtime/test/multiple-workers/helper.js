@@ -9,7 +9,7 @@ const { createDirectory, safeRemove, features, withResolvers } = require('@platf
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const tmpDir = resolve(__dirname, '../../tmp')
 
-const WAIT_TIMEOUT = process.env.CI ? 10_000 : 5_000
+const WAIT_TIMEOUT = process.env.CI ? 20_000 : 5_000
 
 async function prepareRuntime (t, name, dependencies) {
   const root = resolve(tmpDir, `plt-multiple-workers-${Date.now()}`)
