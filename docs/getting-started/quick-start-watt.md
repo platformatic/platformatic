@@ -40,9 +40,9 @@ What port do you want to use? `3042`
 ```
 
 Dependencies are going to be installed. Your application is located in `web/my-app`.
-The `watt.json` file is automatically created in the `my-app` folder and the `package.json` file includes `start` script and `@platformatic/node` as a dependency.
+The `watt.json` file is automatically created in the `my-app` folder, and the `package.json` file includes a `start` script and `@platformatic/node` as a dependency.
 
-## Add Your first Node.js application to Watt
+## Add your first Node.js application to Watt
 
 By choosing the `@platformatic/node` service, you have already created your nodejs app.
 
