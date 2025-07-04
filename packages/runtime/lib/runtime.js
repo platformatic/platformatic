@@ -1786,7 +1786,11 @@ class Runtime extends EventEmitter {
       })
     }
 
-    this.#workersBroadcastChannel.postMessage(workers)
+    try {
+      this.#workersBroadcastChannel.postMessage(workers)
+    } catch (err) {
+      this.logger.error({ err }, 'Error when broadcasting workers')
+    }
   }
 
   async #getWorkerMessagingChannel ({ service, worker }, context) {
