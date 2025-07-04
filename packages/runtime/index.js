@@ -75,7 +75,7 @@ async function create (configOrRoot, sourceOrConfig, context) {
         await runtime.start()
         break
       } catch (err) {
-        if ((err.code !== 'EADDRINUSE' && err.code !== 'EACCESS') || context?.skipPortInUseHandling) {
+        if ((err.code !== 'EADDRINUSE' && err.code !== 'EACCES') || context?.skipPortInUseHandling) {
           throw err
         }
 
