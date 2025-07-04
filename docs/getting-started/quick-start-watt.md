@@ -29,14 +29,14 @@ npx wattpm@latest init
 
 Which will output:
 ```
-Need to install the following packages:
-wattpm@2.0.0
-Ok to proceed? (y) y
-Where would you like to create your project? `my-app`
-Which kind of service do you want to create? `@platformatic/node`
-Do you want to create another service? `no`
-Do you want to use TypeScript? `no`
-What port do you want to use? `3042`
+Hello YOUR_NAME, welcome to Watt 2.70.1!
+? Where would you like to create your project? .
+? Which kind of service do you want to create? @platformatic/service
+✔ Installing @platformatic/service@^2.70.1 using npm ...
+? What is the name of the service? my-app
+? Do you want to create another service? no
+? Do you want to use TypeScript? no
+? What port do you want to use? 3042
 ```
 
 Dependencies are going to be installed. Your application is located in `web/my-app`.
@@ -59,19 +59,19 @@ export function create() {
 ```
 
 :::note
-
 In this example, we are using the built-in `node:http` module to
 create a simple HTTP server that responds with a JSON object containing a counter.
 You can see that we are returning a `build` function that creates the server.
 This server will be run by Watt when the application starts in its
 own worker thread.
+:::
 
 You can also use [Express](https://expressjs.com/), [Fastify](https://fastify.dev), [Koa](https://koajs.com/)
 or any other Node.js framework.
 
 ### Start your Watt server
 
-Run the following command in your project directory to start your Watt server:
+Run the following command in the root of project to start your Watt server:
 
 ```bash
 npm start
@@ -79,11 +79,17 @@ npm start
 
 This will internally run `wattpm start` and start your Watt server.
 
-If you want to have a "watch mode" to automatically restart the server when you make changes, you can run:
+:::note
+running `npm run start` at the root directory is running the watt server. if you run `npm run start` at the service directory(in this case `web/my-app`) it is running that single service via this command from the service package.json script: `start-platformatic-node`
+:::
+
+If you want to have a "watch mode" to automatically restart the server when you make changes, you can run this command in the root directory:
 
 ```bash
-wattpm dev
+npm run dev
 ```
+Which will run `wattpm dev` and start your Watt server in watch mode.
+
 
 Your first Watt server is now live! 🌟 You can test it with:
 
@@ -145,7 +151,7 @@ curl http://localhost:3042/node
 :::note
 
 You can customize how the various services are exposed by changing `web/composer/platformatic.json`.
-Here is the equivalent of the default configuration when exposing a Node.js application: 
+Here is the equivalent of the default configuration when exposing a Node.js application:
 
 ```json
 {
