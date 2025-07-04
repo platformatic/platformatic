@@ -98,7 +98,7 @@ async function setupAndStartRuntime (config) {
     try {
       address = await runtime.start()
     } catch (err) {
-      if (err.code === 'EADDRINUSE') {
+      if (err.code === 'EADDRINUSE' || err.code === 'EACCESS') {
         // Get the actual port from the error message if original port was 0
         if (!port) {
           const mo = err.message.match(/ address already in use (.+)/)
