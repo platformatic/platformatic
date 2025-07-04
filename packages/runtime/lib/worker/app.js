@@ -205,6 +205,18 @@ class PlatformaticApp extends EventEmitter {
   }
 
   async getMetrics ({ format }) {
+    const dispatcher = getGlobalDispatcher()
+    if (globalThis.platformatic?.onHttpStatsFree && dispatcher?.stats) {
+      for (const url in dispatcher.stats) {
+        const { free, connected, pending, queued, running, size } = dispatcher.stats[url]
+        globalThis.platformatic.onHttpStatsFree(url, free || 0)
+        globalThis.platformatic.onHttpStatsConnected(url, connected || 0)
+        globalThis.platformatic.onHttpStatsPending(url, pending || 0)
+        globalThis.platformatic.onHttpStatsQueued(url, queued || 0)
+        globalThis.platformatic.onHttpStatsRunning(url, running || 0)
+        globalThis.platformatic.onHttpStatsSize(url, size || 0)
+      }
+    }
     return this.stackable.getMetrics({ format })
   }
 
