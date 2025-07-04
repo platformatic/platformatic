@@ -2323,8 +2323,8 @@ importers:
         specifier: ^7.6.3
         version: 7.7.2
       undici:
-        specifier: 7.10.0
-        version: 7.10.0
+        specifier: 7.11.0
+        version: 7.11.0
       yaml:
         specifier: ^2.4.1
         version: 2.8.0
@@ -9968,6 +9968,10 @@ packages:
 
   undici@7.10.0:
     resolution: {integrity: sha512-u5otvFBOBZvmdjWLVW+5DAc9Nkq8f24g0O9oY7qw2JVIF1VocIFoyz9JFkuVOS2j41AufeO0xnlweJ2RLT8nGw==}
+    engines: {node: '>=20.18.1'}
+
+  undici@7.11.0:
+    resolution: {integrity: sha512-heTSIac3iLhsmZhUCjyS3JQEkZELateufzZuBaVM5RHXdSBMb1LPMQf5x+FH7qjsZYDP0ttAc3nnVpUB+wYbOg==}
     engines: {node: '>=20.18.1'}
 
   unicode-properties@1.4.1:
@@ -19520,6 +19524,8 @@ snapshots:
   undici@6.21.3: {}
 
   undici@7.10.0: {}
+
+  undici@7.11.0: {}
 
   unicode-properties@1.4.1:
     dependencies:
