@@ -80,7 +80,9 @@ npm start
 This will internally run `wattpm start` and start your Watt server.
 
 :::note
+
 running `npm run start` at the root directory is running the watt server. if you run `npm run start` at the service directory(in this case `web/my-app`) it is running that single service via this command from the service package.json script: `start-platformatic-node`
+
 :::
 
 If you want to have a "watch mode" to automatically restart the server when you make changes, you can run this command in the root directory:
@@ -130,17 +132,16 @@ Using existing configuration ...
 
 Start your Watt server again:
 
-You can run these commands at the root of your Watt server(my-app):
+You can run these commands in the root directory:
 ```bash
 npm start
 ```
 
-If you want to have a "watch mode" to automatically restart the server when you make changes, you can run this command in the root of Watt Server(my-app):
-```
+If you want to have a "watch mode" to automatically restart the server when you make changes, you can run this command in the root directory:
+```bash
 npm run dev
 ```
 Which will run `wattpm dev` and start your Watt server in watch mode.
-
 
 Then, you can test it with:
 
