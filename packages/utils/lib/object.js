@@ -1,6 +1,4 @@
-'use strict'
-
-function isKeyEnabled (key, config) {
+export function isKeyEnabled (key, config) {
   if (config === undefined) return false
   if (typeof config[key] === 'boolean') {
     return config[key]
@@ -11,4 +9,6 @@ function isKeyEnabled (key, config) {
   return true
 }
 
-module.exports = { isKeyEnabled }
+export function getPrivateSymbol (obj, name) {
+  return Object.getOwnPropertySymbols(obj).find(s => s.description === name)
+}

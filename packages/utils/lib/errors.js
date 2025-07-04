@@ -1,10 +1,8 @@
-'use strict'
+import createError from '@fastify/error'
 
-const createError = require('@fastify/error')
+export const ERROR_PREFIX = 'PLT_UTILS'
 
-const ERROR_PREFIX = 'PLT_SQL_UTILS'
-
-function ensureLoggableError (error) {
+export function ensureLoggableError (error) {
   Reflect.defineProperty(error, 'message', { enumerable: true })
 
   if ('code' in error) {
@@ -18,7 +16,4 @@ function ensureLoggableError (error) {
   return error
 }
 
-module.exports = {
-  ensureLoggableError,
-  PathOptionRequiredError: createError(`${ERROR_PREFIX}_PATH_OPTION_REQUIRED`, 'path option is required')
-}
+export const PathOptionRequiredError = createError(`${ERROR_PREFIX}_PATH_OPTION_REQUIRED`, 'path option is required')
