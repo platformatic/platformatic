@@ -42,6 +42,19 @@ export function hasDependency (packageJson, dependency) {
   return packageJson.dependencies?.[dependency] || packageJson.devDependencies?.[dependency]
 }
 
+export function splitModuleFromVersion (module) {
+  if (!module) {
+    return {}
+  }
+  const versionMatcher = module.match(/(.+)@(\d+.\d+.\d+)/)
+  let version
+  if (versionMatcher) {
+    module = versionMatcher[1]
+    version = versionMatcher[2]
+  }
+  return { module, version }
+}
+
 export async function detectApplicationType (root, packageJson) {
   if (!packageJson) {
     try {

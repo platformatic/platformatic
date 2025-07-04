@@ -2440,12 +2440,24 @@ importers:
       '@fastify/error':
         specifier: ^4.0.0
         version: 4.2.0
+      '@iarna/toml':
+        specifier: ^2.2.5
+        version: 2.2.5
       '@watchable/unpromise':
         specifier: ^1.0.2
         version: 1.0.2
+      ajv:
+        specifier: ^8.12.0
+        version: 8.17.1
       boring-name-generator:
         specifier: ^1.0.3
         version: 1.0.3
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
+      json5:
+        specifier: ^2.2.3
+        version: 2.2.3
       leven:
         specifier: ~3.1.0
         version: 3.1.0
@@ -2455,6 +2467,9 @@ importers:
       undici:
         specifier: 7.10.0
         version: 7.10.0
+      yaml:
+        specifier: ^2.4.1
+        version: 2.8.0
     devDependencies:
       '@matteo.collina/tspl':
         specifier: ^0.2.0

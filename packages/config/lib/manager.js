@@ -354,41 +354,6 @@ class ConfigManager extends EventEmitter {
     return configString
   }
 
-  static listConfigFiles (type, skipTypeless = false, extensions = ConfigManager.knownExtensions) {
-    let typeless = []
-
-    if (!skipTypeless) {
-      typeless = [...extensions.map(ext => `watt.${ext}`), ...extensions.map(ext => `platformatic.${ext}`)]
-    }
-
-    if (type) {
-      // A config type (service, db, etc.) was explicitly provided.
-      return [...typeless, ...extensions.map(ext => `platformatic.${type}.${ext}`)]
-    } else {
-      // A config type was not provided. Search for all known types and
-      // formats. Unfortunately, this means the ConfigManager needs to be
-      // aware of the different application types (but that should be small).
-      return [
-        ...typeless,
-        ...ConfigManager.listConfigFiles('runtime', true),
-        ...ConfigManager.listConfigFiles('service', true),
-        ...ConfigManager.listConfigFiles('application', true),
-        ...ConfigManager.listConfigFiles('db', true),
-        ...ConfigManager.listConfigFiles('composer', true)
-      ]
-    }
-  }
-
-  static async findConfigFile (directory, typeOrCandidates) {
-    directory ??= process.cwd()
-    const configFileNames = Array.isArray(typeOrCandidates) ? typeOrCandidates : this.listConfigFiles(typeOrCandidates)
-    const configFilesAccessibility = await Promise.all(
-      configFileNames.map(fileName => isFileAccessible(fileName, directory))
-    )
-    const accessibleConfigFilename = configFileNames.find((value, index) => configFilesAccessibility[index])
-    return accessibleConfigFilename
-  }
-
   async #loadEnv () {
     let dotEnvPath
     let currentPath = this.fullPath ?? this.dirname
