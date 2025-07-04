@@ -32,16 +32,6 @@ PLT_TYPESCRIPT=true
 
 Older Platformatic applications might not have the same layout, if so you can update your settings to match (after updating your dependencies).
 
-## Compiling for deployment
-
-Compiling for deployment is then as easy as running `plt service compile` in that same folder.
-Remember to set `PLT_TYPESCRIPT=false` in your environment variables in the deployed environments.
-
-## Usage with Runtime
-
-If you are building a [Runtime](/runtime/overview.md)-based application, you will need
-to compile every service independently or use the `plt runtime compile` command.
-
 ## Avoid shipping TypeScript sources
 
 If you want to avoid shipping the TypeScript sources you need to configure Platformatic with the location

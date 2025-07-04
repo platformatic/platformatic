@@ -13,4 +13,12 @@ Platformatic Composer is designed to automatically integrate microservices into 
 - **TypeScript Support:** Benefit from automatic TypeScript compilation to enhance code quality and reliability.
 - **Platformatic Service Integration:** Utilize all the robust features of Platformatic Service to supercharge your API management.
 
+## Command Line usage (CLI)
+
+When using [Watt](../watt/overview.md), `@platformatic/composer` services will make some additional commands available on the terminal.
+
+All the commands will be prefixed by the service id. For instance, if your service id is `main`, then you will have the following commands available:
+
+* `main:fetch-openapi-schemas`: Fetch OpenAPI schemas from remote services.
+
 <Issues />

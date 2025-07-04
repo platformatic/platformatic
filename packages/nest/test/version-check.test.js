@@ -3,14 +3,13 @@ import { ok, rejects } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { swapVersion } from '../../basic/test/helper-version.js'
-import { getLogsFromFile, prepareRuntime, setFixturesDir, setLogFile } from '../../basic/test/helper.js'
+import { getLogsFromFile, prepareRuntime, setFixturesDir } from '../../basic/test/helper.js'
 import { buildServer } from '../../runtime/index.js'
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('NestJS version is checked in development', async t => {
-  const { root, config } = await prepareRuntime(t, 'express-standalone', false, null, async root => {
+  const { root, config } = await prepareRuntime(t, 'express-standalone', false, null, async () => {
     await swapVersion(t, import.meta.dirname, '@nestjs/core')
-    await setLogFile(t, root)
   })
 
   process.chdir(root)
@@ -28,9 +27,8 @@ test('NestJS version is checked in development', async t => {
 })
 
 test('NestJS version is not checked in production', async t => {
-  const { root, config } = await prepareRuntime(t, 'express-standalone', true, null, async root => {
+  const { root, config } = await prepareRuntime(t, 'express-standalone', true, null, async () => {
     await swapVersion(t, import.meta.dirname, '@nestjs/core')
-    await setLogFile(t, root)
   })
 
   process.chdir(root)

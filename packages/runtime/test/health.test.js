@@ -2,11 +2,9 @@
 
 const { ok, deepStrictEqual, strictEqual } = require('node:assert')
 const { once } = require('node:events')
-const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const autocannon = require('autocannon')
-const { safeRemove } = require('@platformatic/utils')
 const { buildServer, loadConfig } = require('..')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 const { waitForEvents } = require('./multiple-workers/helper')
@@ -75,19 +73,6 @@ test('should restart the process if it exceeded maximum threshold', async t => {
 test('should not lose any connection when restarting the process', async t => {
   const configFile = join(fixturesDir, 'health-check-swapping', 'platformatic.json')
   const config = await loadConfig({}, ['-c', configFile])
-
-  const originalEnv = process.env.PLT_RUNTIME_LOGGER_STDOUT
-  process.env.PLT_RUNTIME_LOGGER_STDOUT = join(tmpdir(), `test-runtime-${process.pid}-${Date.now()}-stdout.log`)
-
-  t.after(async () => {
-    await safeRemove(process.env.PLT_RUNTIME_LOGGER_STDOUT)
-
-    if (typeof originalEnv === 'undefined') {
-      delete process.env.PLT_RUNTIME_LOGGER_STDOUT
-    } else {
-      process.env.PLT_RUNTIME_LOGGER_STDOUT = originalEnv
-    }
-  })
 
   const server = await buildServer({
     app: config.app,

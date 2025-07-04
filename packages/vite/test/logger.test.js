@@ -4,13 +4,13 @@ import path from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as wait } from 'node:timers/promises'
 import { request } from 'undici'
-import { fullSetupRuntime, isCIOnWindows } from '../../basic/test/helper.js'
+import { createRuntime, isCIOnWindows } from '../../basic/test/helper.js'
 
 // TODO: fix this test on windows
 test('logger options', { skip: isCIOnWindows }, async t => {
-  const { url } = await fullSetupRuntime({
+  const { url } = await createRuntime({
     t,
-    configRoot: path.resolve(import.meta.dirname, './fixtures/logger'),
+    root: path.resolve(import.meta.dirname, './fixtures/logger'),
     build: true,
     production: true
   })

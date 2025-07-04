@@ -68,7 +68,7 @@ module.exports = async function (app, opts) {
 
   process.chdir(dir)
 
-  const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'cli', 'cli.js'), 'start'])
+  const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'wattpm', 'bin/wattpm.js'), 'dev'])
   t.after(() => safeKill(app2))
 
   const stream = app2.stdout.pipe(split(JSON.parse))
@@ -185,7 +185,7 @@ module.exports = async function (app, opts) {
 
   process.chdir(dir)
 
-  const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'cli', 'cli.js'), 'start'])
+  const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'wattpm', 'bin/wattpm.js'), 'dev'])
   app2.catch(() => {})
   t.after(() => safeKill(app2))
 
@@ -378,7 +378,7 @@ module.exports = async function (app, opts) {
 
   process.chdir(dir)
 
-  const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'cli', 'cli.js'), 'start'])
+  const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'wattpm', 'bin/wattpm.js'), 'dev'])
   t.after(() => safeKill(app2))
 
   const stream = app2.stdout.pipe(split(JSON.parse))
@@ -489,7 +489,7 @@ module.exports = async function (app, opts) {
 
   process.chdir(dir)
 
-  const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'cli', 'cli.js'), 'start'])
+  const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'wattpm', 'bin/wattpm.js'), 'dev'])
   t.after(() => safeKill(app2))
 
   const stream = app2.stdout.pipe(split(JSON.parse))

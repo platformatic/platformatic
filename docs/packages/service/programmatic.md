@@ -126,8 +126,6 @@ export default async function (app: FastifyInstance) {
 }
 ```
 
-You can always generate a file called `plt-env.d.ts` with the above content via the `platformatic service types` command.
-
 ## Usage with Custom Configuration
 
 If you are creating a reusable application on top of Platformatic Service, you would need to create the types for your schema,

@@ -10,7 +10,7 @@
     ".": "./bin/create-platformatic.mjs"
   },
   "bin": {
-    "create-platformatic": "./create-platformatic.mjs"
+    "create-platformatic": "./bin/create-platformatic.mjs"
   },
   "scripts": {
     "test:cli": "borp --pattern \"test/cli/*test.mjs\" --timeout=1200000 --concurrency=1",

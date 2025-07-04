@@ -149,7 +149,7 @@ Open the `web/main/platformatic.json` file and add the following telemetry confi
 We want this service to invoke the DB service, so we need to add a client for `test-db` to it:
 
 ```bash
-npx platformatic client http://127.0.0.1:5042 js --name movies
+npx --package @platformatic/client-cli plt-client http://127.0.0.1:5042 js --name movies
 ```
 
 Check `platformatic.service.json` to see that the client has been added (`PLT_MOVIES_URL` is defined in `.env`):

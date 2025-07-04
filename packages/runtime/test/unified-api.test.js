@@ -20,7 +20,7 @@ test('loadConfig - can explicitly provide config type', async () => {
   assert.strictEqual(config.configManager.schemaOptions.useDefaults, true)
 })
 
-test('loadConfig - can load a platformatic service project', async () => {
+test('loadConfig - can load a @platformatic/service project', async () => {
   const configFile = join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'platformatic.service.json')
   const config = await loadConfig({}, ['-c', configFile])
 
@@ -30,7 +30,7 @@ test('loadConfig - can load a platformatic service project', async () => {
   assert.strictEqual(config.configManager.schemaOptions.useDefaults, true)
 })
 
-test('loadConfig - can load a platformatic db project', async () => {
+test('loadConfig - can load a @platformatic/db project', async () => {
   const configFile = join(fixturesDir, 'dbApp', 'platformatic.db.json')
   const config = await loadConfig({}, ['-c', configFile])
 
@@ -39,7 +39,7 @@ test('loadConfig - can load a platformatic db project', async () => {
   assert.strictEqual(config.configManager.current.db.graphql, true)
 })
 
-test('loadConfig - can load a platformatic composer project', async () => {
+test('loadConfig - can load a @platformatic/composer project', async () => {
   const configFile = join(fixturesDir, 'composerApp', 'platformatic.composer.json')
   const config = await loadConfig({}, ['-c', configFile])
 

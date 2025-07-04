@@ -193,7 +193,7 @@ async function startCommand (args, throwAllErrors = false, returnRuntime = false
 
   ${err.filenames.map(s => ' * ' + s).join('\n')}
 
-  In alternative run "npm create platformatic@latest" to generate a basic plt service config.`)
+  In alternative run "npm create platformatic@latest" to generate a basic @platformatic/service config.`)
       process.exit(1)
     } else if (err.validationErrors) {
       printConfigValidationErrors(err)

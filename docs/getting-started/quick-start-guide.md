@@ -138,10 +138,10 @@ Here, you've created a API endpoint that lets users like a quote in the database
 
 ### Apply Schema Migrations 
 
-In your `web/db` directory, run the command below for database migrations
+Run the command below for database migrations
 
 ```sh
-npx platformatic db migrations apply
+npx wattpm db:migrations:apply
 ```
 
 ## Add a Composer service 
@@ -230,7 +230,7 @@ Done. Now run:
 To kickstart the project, in your `web/frontend/src` directory, run the command to create a [Platformatic frontend client](https://docs.platformatic.dev/docs/client/frontend) for your remote server:
 
 ```sh
-npx platformatic client --frontend http://0.0.0.0:3042 --name next-client web/frontend/src
+npx --package @platformatic/client-cli plt-client --frontend http://0.0.0.0:3042 --name next-client web/frontend/src
 ```
 
 This command will generate a [Platformatic frontend client](https://docs.platformatic.dev/docs/client/frontend) in the specified web/frontend/src folder, which allows a more efficient communication between your frontend and Platformatic DB and composer service.

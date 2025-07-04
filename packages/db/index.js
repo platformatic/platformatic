@@ -127,7 +127,7 @@ function createCommands (id) {
       },
       [`${id}:seed`]: {
         usage: `${id}:seed [file]`,
-        description: 'Load a seed into the database.',
+        description: 'Load a seed into the database',
         footer: seedFooter,
         args: [
           {
@@ -138,12 +138,12 @@ function createCommands (id) {
       },
       [`${id}:types`]: {
         usage: `${id}:types`,
-        description: 'Generate typescript types for your entities from the database.',
+        description: 'Generate TypeScript types for your entities from the database',
         footer: typesFooter
       },
       [`${id}:schema`]: {
         usage: `${id}:schema [openapi|graphql]`,
-        description: 'Prints the OpenAPI or GraphQL schema for the database.'
+        description: 'Prints the OpenAPI or GraphQL schema for the database'
       }
     }
   }

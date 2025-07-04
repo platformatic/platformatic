@@ -1,7 +1,6 @@
 'use strict'
 
 const { buildServer } = require('./lib/build-server')
-const { compile } = require('./lib/compile')
 const errors = require('./lib/errors')
 const { platformaticRuntime, wrapConfigInRuntimeConfig } = require('./lib/config')
 const { RuntimeGenerator, WrappedGenerator } = require('./lib/generator/runtime-generator')
@@ -14,7 +13,6 @@ const platformaticVersion = require('./package.json').version
 
 module.exports.buildServer = buildServer
 module.exports.buildRuntime = buildRuntime
-module.exports.compile = compile
 module.exports.errors = errors
 module.exports.Generator = RuntimeGenerator
 module.exports.WrappedGenerator = WrappedGenerator

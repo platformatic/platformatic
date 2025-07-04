@@ -4,12 +4,6 @@ import Issues from '../../getting-started/issues.md';
 
 Platformatic DB can be configured with a [configuration file](#configuration-file) in the different file formats below. The DB also support the use of environment variables as setting values with [environment variable placeholders](#environment-variable-placeholders). 
 
-## Configuration Files
-
-The Platformatic CLI will automatically detect and load configuration files found in the current working directory with the file names listed [here](../file-formats.md#configuration-files).
-
-Alternatively, a [`--config` option](../cli.md#db) specify a configuration file path for most platformatic db CLI commands. The configuration examples in this reference use the JSON format.
-
 ## Supported File Formats
 
 For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page.

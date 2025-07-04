@@ -39,7 +39,7 @@ function createCommands (id) {
     help: {
       [`${id}:fetch-openapi-schemas`]: {
         usage: `${id}:fetch-openapi-schemas`,
-        description: 'Fetch OpenAPI schemas from services'
+        description: 'Fetch OpenAPI schemas from remote services'
       }
     }
   }

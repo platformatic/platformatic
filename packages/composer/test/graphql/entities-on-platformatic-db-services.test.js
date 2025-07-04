@@ -102,7 +102,7 @@ const entities = {
   }
 }
 
-test('should use queries and mutations on a single platformatic db service', async t => {
+test('should use queries and mutations on a single @platformatic/db service', async t => {
   const requests = [
     {
       query: '{ movies (limit:1) { title, year }}',
@@ -167,7 +167,7 @@ test('should use queries and mutations on a single platformatic db service', asy
   }
 })
 
-test('should use queries and mutations on multiple platformatic db services', async t => {
+test('should use queries and mutations on multiple @platformatic/db services', async t => {
   const requests = [
     // query multiple services
     {

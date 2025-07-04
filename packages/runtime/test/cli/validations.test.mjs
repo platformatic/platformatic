@@ -10,8 +10,7 @@ const version = JSON.parse(await readFile(join(import.meta.url, '..', '..', 'pac
 
 test('version', async () => {
   const { stdout } = await execa(process.execPath, [cliPath, '--version'])
-
-  assert.strictEqual(stdout.trim(), `v${version}`)
+  assert.strictEqual(stdout.trim(), version)
 })
 
 test('missing config', async () => {

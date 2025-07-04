@@ -43,7 +43,7 @@ async function applyMigrations (logger, configFile, args, context) {
       await updateSchemaLock(logger, configManager)
     }
 
-    // touch the platformatic db config to trigger a restart
+    // touch the @platformatic/db config to trigger a restart
     const now = new Date()
 
     const configPath = configManager.fullPath

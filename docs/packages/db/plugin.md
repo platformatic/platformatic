@@ -95,7 +95,7 @@ Multiple plugins can be loaded in parallel by specifying an array:
 
 ## TypeScript and autocompletion
 
-If you want to access any of the types provided by Platformatic DB, generate them using the `platformatic db types` command.
+If you want to access any of the types provided by Platformatic DB, generate them using the Watt's `$db:types` command (where `$db` is the id of your Platformatic DB service).
 This will create a `plt-env.d.ts` file that add Platformatic types to fastify instances. This file is included automatically
 by Typescript, unless you have the `includes` option set in your `tsconfig.json`. In that case you need to add 
 `plt-env.d.ts` to the `include` list manually.

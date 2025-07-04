@@ -344,7 +344,7 @@ Be sure to have a config file with one of the following names:
  * foo
  * bar
 
-In alternative run "npm create platformatic@latest" to generate a basic platformatic service config.`
+In alternative run "npm create platformatic@latest" to generate a basic @platformatic/service config.`
     )
   }
   const processExit = process.exit

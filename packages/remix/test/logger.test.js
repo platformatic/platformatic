@@ -2,12 +2,12 @@ import { strict as assert } from 'node:assert'
 import path from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
-import { fullSetupRuntime, getLogs } from '../../basic/test/helper.js'
+import { createRuntime, getLogs } from '../../basic/test/helper.js'
 
 test('logger options', async t => {
-  const { url, runtime } = await fullSetupRuntime({
+  const { url, runtime } = await createRuntime({
     t,
-    configRoot: path.resolve(import.meta.dirname, './fixtures/logger'),
+    root: path.resolve(import.meta.dirname, './fixtures/logger'),
     build: true,
     production: true
   })

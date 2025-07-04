@@ -1009,7 +1009,7 @@ async function generateFullClientPlugin (app, opts) {
   }
 })
 
-test('do not generate implementation file if in platformatic service', async t => {
+test('do not generate implementation file if in @platformatic/service', async t => {
   const openapi = desm.join(import.meta.url, 'fixtures', 'full-req-res', 'openapi.json')
   const dir = await moveToTmpdir(after)
 
