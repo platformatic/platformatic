@@ -374,7 +374,7 @@ export const help = {
   },
   update: {
     usage: 'update [root]',
-    description: 'Updates all the Platformatic packages to the latest available version.',
+    description: 'Updates all the Platformatic packages to the latest available version',
     args: [
       {
         name: 'root',

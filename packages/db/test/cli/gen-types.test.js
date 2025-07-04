@@ -82,7 +82,7 @@ test('run migrate command with type generation', async t => {
 
   const indexDTs = await readFile(resolve(cwd, 'types', 'index.d.ts'), 'utf8')
   assert.equal(indexDTs.indexOf('AggregateRating') < indexDTs.indexOf('Movie'), true)
-  const aggregateRatingDTs = await readFile(resolve(cwd, 'types', 'AggregateRating.d.ts'), 'utf8')
+  const aggregateRatingDTs = await readFile(resolve(cwd, 'types', 'aggregateRating.d.ts'), 'utf8')
   assert.deepEqual(
     [...aggregateRatingDTs.matchAll(fieldRegex)].map(m => m[1]),
     ['id', 'movieId', 'rating', 'ratingType']

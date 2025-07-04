@@ -19,12 +19,12 @@ test('can show help for services commands', async t => {
   ok(
     mainHelpProcess.stdout
       .replaceAll(/ {2,}/g, '@')
-      .includes('main:fetch-openapi-schemas@Fetch OpenAPI schemas from services')
+      .includes('main:fetch-openapi-schemas@Fetch OpenAPI schemas from remote services')
   )
 
   ok(
     serviceHelpProcess.stdout.match(
-      '\nUsage: wattpm main:fetch-openapi-schemas\\s+Fetch OpenAPI schemas from services.'
+      '\nUsage: wattpm main:fetch-openapi-schemas\\s+Fetch OpenAPI schemas from remote services'
     )
   )
 })
