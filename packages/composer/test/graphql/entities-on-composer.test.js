@@ -114,7 +114,7 @@ const entities = {
   }
 }
 
-test('should use queries and mutations on multiple platformatic db services', async t => {
+test('should use queries and mutations on multiple @platformatic/db services', async t => {
   const requests = [
     // query multiple services
     {

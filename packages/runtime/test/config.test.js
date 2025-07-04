@@ -1,10 +1,8 @@
 'use strict'
 
 const assert = require('node:assert')
-const { readFile, writeFile, cp, mkdtemp } = require('node:fs/promises')
 const { join, resolve, dirname } = require('node:path')
 const { test } = require('node:test')
-const { createDirectory } = require('@platformatic/utils')
 const { loadConfig } = require('@platformatic/config')
 const { platformaticService } = require('@platformatic/service')
 const platformaticDatabase = require('@platformatic/db')
@@ -213,7 +211,7 @@ test('parseInspectorOptions - differentiates valid and invalid ports', () => {
   assert.strictEqual(cm.current.inspectorOptions.port, 65535)
 })
 
-test('same schemaOptions as platformatic service', async () => {
+test('same schemaOptions as @platformatic/service', async () => {
   assert.deepStrictEqual(platformaticRuntime.schemaOptions, platformaticService.schemaOptions)
 })
 
@@ -495,90 +493,3 @@ test('should manage service config patch', async t => {
     assert.deepStrictEqual(data, { alternate: true })
   }
 })
-
-const sourceMapTests = [
-  {
-    title: 'service-level',
-    transform (json) {
-      json.services = [
-        {
-          id: 'movies',
-          path: 'services/movies'
-        },
-        {
-          id: 'titles',
-          path: 'services/titles',
-          sourceMaps: true
-        },
-        {
-          id: 'composer',
-          path: 'services/composer'
-        }
-      ]
-      json.autoload = undefined
-    }
-  },
-  {
-    title: 'top-level',
-    transform (json) {
-      json.sourceMaps = true
-    }
-  }
-]
-
-for (const { title, transform } of sourceMapTests) {
-  test(`supports ${title} sourceMaps configuration`, async t => {
-    const base = join(__dirname, 'tmp')
-    try {
-      await createDirectory(base)
-    } catch {}
-
-    const tmpDir = await mkdtemp(join(base, 'typescript'))
-    const prev = process.cwd()
-    process.chdir(tmpDir)
-    t.after(async () => {
-      process.chdir(prev)
-      // await safeRemove(base)
-    })
-
-    const folder = join(fixturesDir, 'typescript')
-    await cp(folder, tmpDir, { recursive: true })
-
-    const { execa } = await import('execa')
-    const cliPath = join(__dirname, '../bin/plt-runtime.mjs')
-    await execa(cliPath, ['compile'])
-
-    const configFile = join(tmpDir, 'platformatic.runtime.json')
-    await editJSON(configFile, transform)
-    const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-    const dirname = config.configManager.dirname
-    const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-    const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
-
-    t.after(async () => {
-      await runtime.close()
-    })
-
-    await runtime.init()
-    await runtime.start()
-
-    const res = await runtime.inject('composer', {
-      method: 'GET',
-      url: 'source-map-test'
-    })
-
-    // Should contain ts file in the stack trace
-    assert.match(res.body, /root\.ts/)
-  })
-}
-
-async function editJSON (path, transform) {
-  const input = await readFile(path, 'utf8')
-  const data = JSON.parse(input)
-
-  transform(data)
-
-  const output = JSON.stringify(data, null, 2)
-  await writeFile(path, output, 'utf8')
-}

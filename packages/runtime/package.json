@@ -3,9 +3,6 @@
   "version": "2.70.1",
   "description": "",
   "main": "index.js",
-  "bin": {
-    "plt-runtime": "./bin/plt-runtime.mjs"
-  },
   "scripts": {
     "test": "pnpm run lint && borp --concurrency=1 --timeout=1200000 && tsd",
     "test:main": "borp --concurrency=1 --timeout=1200000 test/*.test.js test/*.test.mjs test/versions/*.test.js test/versions/*.test.mjs",

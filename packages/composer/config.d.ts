@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface PlatformaticComposer {
+export interface PlatformaticComposerConfig {
   basePath?: string;
   server?: {
     hostname?: string;

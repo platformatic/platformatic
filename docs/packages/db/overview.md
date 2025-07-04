@@ -13,9 +13,6 @@ For a high level overview of how Platformatic DB works, please reference the
 
 ## Features
 
-### Command Line Interface 
-- Easily manage your databases with the `platformatic db` [CLI](../cli.md#db).
-
 ### Multiple Database Support 
 - Integration with [multiple database systems](#supported-databases)
 - Efficient [Database migrations](./migrations.md)
@@ -43,6 +40,18 @@ For a high level overview of how Platformatic DB works, please reference the
 
 ### Usage
 - Integrate Platformatic DB [programmatically](../db/programmatic.md) into your tests or other applications for more dynamic usage.
+
+### Command Line usage (CLI)
+
+When using [Watt](../watt/overview.md), `@platformatic/db` services will make some additional commands available on the terminal.
+
+All the commands will be prefixed by the service id. For instance, if your service id is `movies`, then you will have the following commands available:
+
+* `movies:migrations:create`: Create a new migration file. See the [migration documentation](./migrations.md) for more informations.
+* `movies:migrations:apply`: Apply all configured migrations to the database. See the [migration documentation](./migrations.md) for more informations.
+* `movies:seed`: Load a seed into the database. See the [seed documentation](./seed.md) for more informations.
+* `movies:types`: Generate TypeScript types for your entities from the database.
+* `movies:schema`: Prints the OpenAPI or GraphQL schema for the database.
 
 :::info
 

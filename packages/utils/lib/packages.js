@@ -2,7 +2,6 @@
 
 const { join, dirname, resolve } = require('node:path')
 const { readFile, glob } = require('node:fs/promises')
-const { isFileAccessible } = require('./is-file-accessible')
 const { request } = require('undici')
 
 async function getDependencyVersion (require, dependencyName) {
@@ -29,51 +28,6 @@ async function _getPlatformaticVersion () {
 
 function hasDependency (packageJson, dependency) {
   return packageJson.dependencies?.[dependency] || packageJson.devDependencies?.[dependency]
-}
-
-async function checkForDependencies (logger, args, require, config, modules) {
-  const requiredDependencies = {}
-  requiredDependencies.fastify = await getDependencyVersion(require, 'fastify')
-  for (const m of modules) {
-    if (m.startsWith('@platformatic')) {
-      requiredDependencies[m] = await getPlatformaticVersion()
-    } else {
-      const externalModuleVersion = await getLatestNpmVersion(m)
-      if (externalModuleVersion === null) {
-        logger.error(`Cannot find latest version on npm for package ${m}`)
-      } else {
-        requiredDependencies[m] = externalModuleVersion
-      }
-    }
-  }
-
-  const packageJsonPath = resolve(process.cwd(), 'package.json')
-  const isPackageJsonExists = await isFileAccessible(packageJsonPath)
-
-  if (isPackageJsonExists) {
-    const packageJsonFile = await readFile(packageJsonPath, 'utf-8')
-    const packageJson = JSON.parse(packageJsonFile)
-
-    let allRequiredDependenciesInstalled = true
-    for (const dependencyName in requiredDependencies) {
-      if (!hasDependency(packageJson, dependencyName)) {
-        allRequiredDependenciesInstalled = false
-        break
-      }
-    }
-    if (allRequiredDependenciesInstalled) return /* c8 ignore next */
-  }
-
-  let command = 'npm i --save'
-
-  /* c8 ignore next 3 */
-  if (config.plugins?.typescript !== undefined) {
-    command += ' @types/node'
-  }
-  for (const [depName, depVersion] of Object.entries(requiredDependencies)) {
-    command += ` ${depName}@${depVersion}`
-  }
-  logger.warn(`Please run \`${command}\` to install types dependencies.`)
 }
 
 async function getLatestNpmVersion (pkg) {
@@ -150,7 +104,6 @@ module.exports = {
   hasDependency,
   hasFilesWithExtensions,
   hasJavascriptFiles,
-  checkForDependencies,
   getLatestNpmVersion,
   searchFilesWithExtensions,
   searchJavascriptFiles,

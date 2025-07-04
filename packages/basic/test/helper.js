@@ -1,6 +1,7 @@
 import { createDirectory, features, kTimeout, safeRemove, withResolvers } from '@platformatic/utils'
 import { join } from 'desm'
 import { execa } from 'execa'
+import * as getPort from 'get-port'
 import { deepStrictEqual, fail, ok, strictEqual } from 'node:assert'
 import { existsSync } from 'node:fs'
 import { cp, readdir, readFile, symlink, writeFile } from 'node:fs/promises'
@@ -32,7 +33,7 @@ export let fixturesDir
 
 export const isWindows = platform() === 'win32'
 export const isCIOnWindows = process.env.CI && isWindows
-export const cliPath = join(import.meta.url, '../../cli', 'cli.js')
+export const cliPath = join(import.meta.url, '../../wattpm', 'bin/wattpm.js')
 export const pltRoot = fileURLToPath(new URL('../../..', import.meta.url))
 export const temporaryFolder = fileURLToPath(new URL('../../../tmp', import.meta.url))
 export const commonFixturesRoot = fileURLToPath(new URL('./fixtures/common', import.meta.url))
@@ -247,21 +248,46 @@ export async function ensureDependencies (configOrPaths) {
   }
 }
 
+export async function buildRuntime (root) {
+  const originalCwd = process.cwd()
+
+  process.chdir(root)
+  await execa('node', [cliPath, 'build'], { cwd: root })
+  process.chdir(originalCwd)
+}
+
 export async function prepareRuntime (t, fixturePath, production, configFile, additionalSetup) {
+  let source
+  let port
+  let build
+
+  if (t.constructor.name !== 'TestContext') {
+    source = t.root
+    port = t.port
+    build = t.build
+    production = t.production ?? production
+    configFile = t.configFile ?? configFile
+    additionalSetup = t.additionalSetup || additionalSetup
+    t = t.t
+  }
+
+  source ??= resolve(fixturesDir, fixturePath)
+  build ??= false
   production ??= false
   configFile ??= 'platformatic.runtime.json'
 
-  const root = resolve(temporaryFolder, basename(fixturePath) + '-' + Date.now())
-  currentWorkingDirectory = root
-
-  if (process.env.PLT_TESTS_VERBOSE !== 'true') {
-    setLogFile(t, root)
+  if (port === 0) {
+    port = await getPort.default()
   }
 
+  const root = resolve(temporaryFolder, basename(source) + '-' + Date.now())
+  currentWorkingDirectory = root
+
   await createDirectory(root)
+  setLogFile(t, root)
 
   // Copy the fixtures
-  await cp(resolve(fixturesDir, fixturePath), root, { recursive: true })
+  await cp(source, root, { recursive: true })
 
   // Init the runtime
   const configFilePath = resolve(root, configFile)
@@ -288,6 +314,16 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
 
   // Ensure the dependencies
   await ensureDependencies(config)
+
+  // Assign the port
+  if (typeof port === 'number') {
+    config.configManager.current.server = { port }
+  }
+
+  // Build the runtime if needed
+  if (build) {
+    await buildRuntime(root)
+  }
 
   return { root, config, args }
 }
@@ -316,7 +352,7 @@ export async function startRuntime (t, root, config, pauseAfterCreation = false,
     await pause(t, url, root, pauseAfterCreation)
   }
 
-  return { runtime, url, root }
+  return { runtime, url: url.replace('[::]', '127.0.0.1'), root }
 }
 
 export async function createRuntime (
@@ -324,9 +360,15 @@ export async function createRuntime (
   fixturePath,
   pauseAfterCreation = false,
   production = false,
-  configFile = 'platformatic.runtime.json'
+  configFile = 'platformatic.runtime.json',
+  additionalSetup = null
 ) {
-  const { root, config } = await prepareRuntime(t, fixturePath, production, configFile)
+  const { root, config } = await prepareRuntime(t, fixturePath, production, configFile, additionalSetup)
+
+  if (t.constructor.name !== 'TestContext') {
+    pauseAfterCreation = t.pauseAfterCreation ?? pauseAfterCreation
+    t = t.t
+  }
 
   return startRuntime(t, root, config, pauseAfterCreation)
 }
@@ -335,16 +377,39 @@ export async function createProductionRuntime (
   t,
   fixturePath,
   pauseAfterCreation = false,
-  configFile = 'platformatic.runtime.json'
+  configFile = 'platformatic.runtime.json',
+  additionalSetup = null
 ) {
-  return createRuntime(t, fixturePath, pauseAfterCreation, true, configFile)
+  return createRuntime(t, fixturePath, pauseAfterCreation, true, configFile, additionalSetup)
 }
 
 export function setLogFile (t, root) {
+  const logFile = resolve(root, 'log.txt')
+  const verbose = process.env.PLT_TESTS_VERBOSE === 'true'
   const originalEnv = process.env.PLT_RUNTIME_LOGGER_STDOUT
-  process.env.PLT_RUNTIME_LOGGER_STDOUT = resolve(root, 'log.txt')
+  process.env.PLT_RUNTIME_LOGGER_STDOUT = logFile
+
+  let tailProcess
+  let terminated = false
+
+  if (verbose && !isWindows) {
+    const waitTimeout = setTimeout(() => {
+      if (terminated) {
+        return
+      }
+
+      if (!existsSync(logFile)) {
+        waitTimeout.refresh()
+        return
+      }
+
+      tailProcess = execa('tail', ['-f', logFile], { stdio: 'inherit', reject: false })
+    }, 100)
+  }
 
   t.after(() => {
+    terminated = true
+    tailProcess?.kill()
     process.env.PLT_RUNTIME_LOGGER_STDOUT = originalEnv
   })
 }
@@ -784,13 +849,10 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
           await additionalSetup?.(root, config, args)
         }
 
-        const { hostname: runtimeHost, port: runtimePort, logger } = config.configManager.current.server ?? {}
+        const { hostname: runtimeHost, port: runtimePort } = config.configManager.current.server ?? {}
 
         // Build
-        await execa('node', [cliPath, 'build'], {
-          cwd: root,
-          stdio: logger?.level !== 'error' ? 'inherit' : undefined
-        })
+        await buildRuntime(root)
 
         // Make sure all file exists
         for (const file of files) {
@@ -820,7 +882,6 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
 }
 
 export async function verifyReusePort (t, configuration, integrityCheck) {
-  const getPort = await import('get-port')
   const port = await getPort.default()
 
   // Create the runtime
@@ -830,13 +891,8 @@ export async function verifyReusePort (t, configuration, integrityCheck) {
     config.configManager.current.preload = fileURLToPath(new URL('./helper-reuse-port.js', import.meta.url))
   })
 
-  const { logger } = config.configManager.current.server ?? {}
-
   // Build
-  await execa('node', [cliPath, 'build'], {
-    cwd: root,
-    stdio: logger?.level !== 'error' ? 'inherit' : undefined
-  })
+  await buildRuntime(root)
 
   // Start the runtime
   const { url } = await startRuntime(t, root, config)
@@ -867,63 +923,4 @@ export async function verifyReusePort (t, configuration, integrityCheck) {
   if (workers > 1) {
     ok(usedWorkers.size > 1)
   }
-}
-
-// helper to create a runtime
-export async function fullSetupRuntime ({
-  t,
-  port,
-  configRoot,
-  build = false,
-  production = false,
-  configFile = 'platformatic.runtime.json',
-  additionalSetup = null
-}) {
-  if (!port) {
-    const getPort = await import('get-port')
-    port = await getPort.default()
-  }
-
-  const root = resolve(temporaryFolder, basename(configRoot) + '-' + Date.now())
-  await createDirectory(root)
-
-  setLogFile(t, root)
-
-  // Copy the fixtures
-  await cp(configRoot, root, { recursive: true })
-
-  // Init the runtime
-  const configFilePath = resolve(root, configFile)
-  const args = ['-c', configFilePath]
-
-  if (production) {
-    args.push('--production')
-  }
-
-  // Ensure the dependencies
-  await ensureDependencies([root])
-  const config = await loadConfig({}, args, platformaticRuntime)
-
-  // Ensure the dependencies
-  await ensureDependencies(config)
-
-  if (additionalSetup) {
-    await additionalSetup?.(root, config, args)
-  }
-
-  config.configManager.current.server = { port }
-
-  const { logger } = config.configManager.current.server ?? {}
-
-  if (build) {
-    await execa('node', [cliPath, 'build'], {
-      cwd: root,
-      stdio: logger?.level !== 'error' ? 'inherit' : undefined
-    })
-  }
-
-  // Start the runtime
-  const { url, runtime } = await startRuntime(t, root, config)
-
-  return { url, runtime, root, config, args }
 }

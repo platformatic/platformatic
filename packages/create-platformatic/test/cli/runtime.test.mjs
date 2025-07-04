@@ -50,14 +50,14 @@ test('Creates a Platformatic Runtime with two Services', async t => {
   equal(await isFileAccessible(join(baseService0Dir, 'README.md')), true)
   equal(await isFileAccessible(join(baseService0Dir, 'routes', 'root.ts')), true)
   equal(await isFileAccessible(join(baseService0Dir, 'plugins', 'example.ts')), true)
-  equal(await isFileAccessible(join(baseService0Dir, 'global.d.ts')), true)
+  equal(await isFileAccessible(join(baseService0Dir, 'plt-env.d.ts')), true)
 
   const baseService1Dir = join(root, 'services', services[1])
   equal(await isFileAccessible(join(baseService1Dir, 'platformatic.json')), true)
   equal(await isFileAccessible(join(baseService1Dir, 'README.md')), true)
   equal(await isFileAccessible(join(baseService1Dir, 'routes', 'root.ts')), true)
   equal(await isFileAccessible(join(baseService1Dir, 'plugins', 'example.ts')), true)
-  equal(await isFileAccessible(join(baseService1Dir, 'global.d.ts')), true)
+  equal(await isFileAccessible(join(baseService1Dir, 'plt-env.d.ts')), true)
 })
 
 test('Add another service to an existing application', async t => {
@@ -95,7 +95,7 @@ test('Add another service to an existing application', async t => {
     equal(await isFileAccessible(join(serviceRoot, 'README.md')), true)
     equal(await isFileAccessible(join(serviceRoot, 'routes', 'root.js')), true)
     equal(await isFileAccessible(join(serviceRoot, 'plugins', 'example.js')), true)
-    equal(await isFileAccessible(join(serviceRoot, 'global.d.ts')), true)
+    equal(await isFileAccessible(join(serviceRoot, 'plt-env.d.ts')), true)
 
     await linkDependencies(root, ['@platformatic/service'])
   }
@@ -121,6 +121,6 @@ test('Add another service to an existing application', async t => {
     equal(await isFileAccessible(join(serviceRoot, 'README.md')), true)
     equal(await isFileAccessible(join(serviceRoot, 'routes', 'root.ts')), true)
     equal(await isFileAccessible(join(serviceRoot, 'plugins', 'example.ts')), true)
-    equal(await isFileAccessible(join(serviceRoot, 'global.d.ts')), true)
+    equal(await isFileAccessible(join(serviceRoot, 'plt-env.d.ts')), true)
   }
 })

@@ -22,7 +22,7 @@ export type CrudOperationAuth =
     }
   | boolean;
 
-export interface PlatformaticDB {
+export interface PlatformaticDatabaseConfig {
   basePath?: string;
   server?: {
     hostname?: string;

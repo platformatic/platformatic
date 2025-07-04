@@ -939,8 +939,8 @@ jobs:
           echo "pnpmoutput<<EOF" >> $GITHUB_OUTPUT
           cat out >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-      - name: CLI must load
-        run: cd packages/cli && node cli.js
+      - name: Watt must load
+        run: cd packages/wattpm && node bin/wattpm.js
       - name: Circular Dependency
         if: contains(steps.install.outputs.pnpmoutput, 'cyclic')
         run: exit 1

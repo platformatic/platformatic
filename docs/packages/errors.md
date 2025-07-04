@@ -93,7 +93,7 @@ Did you mean PLT_%s?
 **Message:** Missing seed file 
 
 ### PLT_DB_MIGRATIONS_TO_APPLY_ERROR
-**Message:** You have migrations to apply. Please run `platformatic db migrations apply` first. 
+**Message:** You have migrations to apply.
 
 ## @platformatic/db-authorization 
 

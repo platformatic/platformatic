@@ -61,6 +61,24 @@ test('have platformatic dependencies', async t => {
   assert.ok(contents.dependencies['@platformatic/service'])
 })
 
+test('have plt-env.d.ts', async t => {
+  const svc = new Generator()
+  await svc.prepare()
+  const environment = svc.getFileObject('plt-env.d.ts')
+
+  const ENVIRONMENT_TEMPLATE = `
+import { FastifyInstance } from 'fastify'
+import { PlatformaticApplication, PlatformaticServiceConfig } from '@platformatic/service'
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: PlatformaticApplication<PlatformaticServiceConfig>
+  }
+}
+`
+  assert.equal(ENVIRONMENT_TEMPLATE, environment.contents)
+})
+
 test('config', async t => {
   const svc = new Generator()
   svc.setConfig({

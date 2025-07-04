@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface PlatformaticViteStackable {
+export interface PlatformaticViteConfig {
   $schema?: string;
   logger?: {
     level: (

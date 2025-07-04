@@ -8,8 +8,6 @@ Platformatic Composer can be configured with a [configuration file](#configurati
 
 Platformatic will automatically detect and load configuration files found in the current working directory with the file names listed [here](../file-formats.md#configuration-files).
 
-To specify a configuration file manually, use the [`--config` option](../cli.md#composer) with any `platformatic composer` CLI command.
-
 ## Supported File Formats
 
 For detailed information on supported file formats and extensions, visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page
@@ -34,13 +32,11 @@ Configure `@platformatic/composer` specific settings such as `services` or `refr
 
 - **`services`** (`array`, default: `[]`) — is an array of objects that defines
   the services managed by the composer. Each service object supports the following settings:
-
   - **`id`** (**required**, `string`) - A unique identifier for the service. Use a Platformatic Runtime service id if the service is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context).
   - **`origin`** (`string`) - A service origin. Skip this option if the service is executing inside [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context). In this case, service `id` will be used instead of origin.
   - **`openapi`** (`object`) - The configuration file used to compose [OpenAPI](#openapi) specification.
   - **`graphql`** (`object`) - The configuration for the [GraphQL](#graphql) service.
   - **`proxy`** (`object` or `false`) - Service proxy configuration. If `false`, the service proxy is disabled.
-
     - `prefix` (`string`) - Service proxy prefix. All service routes will be prefixed with this value.
     - `hostname` (`string`) - An additional domain name this service is reachable at. It will be matched against requests' `Host` header.
 
@@ -58,9 +54,8 @@ Configure `@platformatic/composer` specific settings such as `services` or `refr
 
 - **`openapi`** (`object`) - See the Platformatic Service [openapi](../service/configuration.md#service) option for more details.
 - **`graphql`** (`object`) - Has the Platformatic Service [graphql](../service//configuration.md#service) options, plus
-
   - **`addEntitiesResolvers`** (`boolean`) - Automatically add related entities on GraphQL types, following the services entities configuration. See [graphql-composer entities](https://github.com/platformatic/graphql-composer#composer-entities) for details.
-  - **`defaultArgsAdapter`** (`function` or `string`) - The default `argsAdapter` function for the entities, for example for the platformatic db mapped entities queries.
+  - **`defaultArgsAdapter`** (`function` or `string`) - The default `argsAdapter` function for the entities, for example for the `@platformatic/db` mapped entities queries.
 
   ```js
   graphql: {
@@ -75,7 +70,6 @@ Configure `@platformatic/composer` specific settings such as `services` or `refr
   ```
 
   - **`onSubgraphError`** (`function`) - Hook called when an error occurs getting schema from a subgraph. The arguments are:
-
     - `error` (`error`) - The error message
     - `subgraphName` (`string`) - The erroring subgraph
 

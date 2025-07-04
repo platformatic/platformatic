@@ -114,22 +114,22 @@ test('have @platformatic/db dependency', async t => {
   assert.ok(contents.dependencies['@platformatic/db'])
 })
 
-test('have global.d.ts', async t => {
+test('have plt-env.d.ts', async t => {
   const dbApp = new Generator()
   await dbApp.prepare()
-  const globalts = dbApp.getFileObject('global.d.ts')
+  const environment = dbApp.getFileObject('plt-env.d.ts')
 
-  const GLOBAL_TYPES_TEMPLATE = `
+  const ENVIRONMENT_TEMPLATE = `
 import { FastifyInstance } from 'fastify'
-import { PlatformaticApp, PlatformaticDBConfig, PlatformaticDBMixin, Entities } from '@platformatic/db'
+import { PlatformaticApplication, PlatformaticDatabaseConfig, PlatformaticDatabaseMixin, Entities } from '@platformatic/db'
 
 declare module 'fastify' {
   interface FastifyInstance {
-    platformatic: PlatformaticApp<PlatformaticDBConfig> & PlatformaticDBMixin<Entities>
+    platformatic: PlatformaticApplication<PlatformaticDatabaseConfig> & PlatformaticDatabaseMixin<Entities>
   }
 }
 `
-  assert.equal(GLOBAL_TYPES_TEMPLATE, globalts.contents)
+  assert.equal(ENVIRONMENT_TEMPLATE, environment.contents)
 })
 
 test('config', async t => {

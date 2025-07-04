@@ -22,7 +22,7 @@ export const schemaComponents = { remix }
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/remix/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Platformatic Remix Stackable',
+  title: 'Platformatic Remix Config',
   type: 'object',
   properties: {
     $schema: {

@@ -232,16 +232,6 @@ export DOCS=`realpath $PWD/../platformatic/docs`
 npm run sync-and-start
 ```
 
-### Updating CLI Documentation
-
-The `docs/cli.md` file is automatically generated. To update it:
-
-1. Update the text helpers in the CLI code
-2. Generate the docs:
-```bash
-node scripts/gen-cli-doc.mjs
-```
-
 ## Pull Request Process
 
 ### Before Submitting

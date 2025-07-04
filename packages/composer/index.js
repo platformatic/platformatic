@@ -5,6 +5,7 @@ const { configManagerConfig, getTypescriptCompilationOptions } = require('@platf
 const { Generator } = require('./lib/generator')
 const { ComposerStackable } = require('./lib/stackable')
 const { platformaticComposer } = require('./lib/application')
+const { fetchOpenApiSchemas } = require('./lib/commands/openapi-fetch-schemas')
 const { schema, packageJson } = require('./lib/schema')
 const schemaComponents = require('./lib/schema')
 const { upgrade } = require('./lib/upgrade')
@@ -30,11 +31,26 @@ async function create (configFileOrRoot, sourceOrConfig, rawOpts, rawContext) {
   return new ComposerStackable(opts, root, configManager)
 }
 
+function createCommands (id) {
+  return {
+    commands: {
+      [`${id}:fetch-openapi-schemas`]: fetchOpenApiSchemas
+    },
+    help: {
+      [`${id}:fetch-openapi-schemas`]: {
+        usage: `${id}:fetch-openapi-schemas`,
+        description: 'Fetch OpenAPI schemas from remote services'
+      }
+    }
+  }
+}
+
 module.exports.Generator = Generator
 module.exports.ComposerStackable = ComposerStackable
 module.exports.errors = errors
 module.exports.platformaticComposer = platformaticComposer
 module.exports.create = create
+module.exports.createCommands = createCommands
 module.exports.skipTelemetryHooks = true
 // Old exports - These might be removed in a future PR
 module.exports.configType = 'composer'

@@ -4,8 +4,8 @@ A database is as useful as the data that it contains: a fresh, empty database
 isn't always the best starting point. We can add a few rows from our migrations
 using SQL, but we might need to use JavaScript from time to time.
 
-The [platformatic db seed](/cli.md#seed) command allows us to run a
-script that will populate — or "seed" — our database.
+The the Watt's `$db:seed` command allows us to run a
+script that will populate — or "seed" — our database (where `$db` is the id of your Platformatic DB service).
 
 ## Example
 
@@ -26,7 +26,6 @@ module.exports = async function seed ({ entities, db, sql }) {
 For Typescript use the following stub
 
 ```typescript title="seed.ts"
-/// <reference path="./global.d.ts" />
 import { Entities } from '@platformatic/sql-mapper'
 
 const movies: object[] = [
@@ -50,5 +49,5 @@ Platformatic code will look for a `default` or `seed` function name when importi
 We can then run the seed script with the Platformatic CLI:
 
 ```bash
-npx platformatic db seed seed.js
+npx wattpm db:seed seed.js
 ```

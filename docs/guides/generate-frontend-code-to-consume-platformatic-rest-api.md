@@ -112,7 +112,7 @@ To consume REST APIs in your Platformatic application. run the command to use Pl
 
 ```bash
 cd rest-api-frontend/src
-npx platformatic client http://127.0.0.1:3042 --frontend --name frontend-client
+npx --package @platformatic/client-cli plt-client http://127.0.0.1:3042 --frontend --name frontend-client
 ```
 
 Refer to the [Platformatic CLI frontend command](https://docs.platformatic.dev/docs/reference/cli#frontend) documentation to know about the available options.

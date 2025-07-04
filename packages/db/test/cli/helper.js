@@ -27,8 +27,8 @@ setGlobalDispatcher(
   })
 )
 
-const cliPath = resolve(__dirname, '../../bin/plt-db.mjs')
-const startPath = resolve(__dirname, './start.mjs')
+const cliPath = resolve(__dirname, './executables/cli.js')
+const startPath = resolve(__dirname, './executables/start.js')
 
 async function connectDB (connectionInfo) {
   const { db } = await createConnectionPool({

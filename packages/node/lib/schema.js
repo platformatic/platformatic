@@ -35,7 +35,7 @@ export const schemaComponents = { node }
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/node/${version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Platformatic Node.js Stackable',
+  title: 'Platformatic Node.js Config',
   type: 'object',
   properties: {
     $schema: {

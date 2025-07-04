@@ -14,7 +14,7 @@ setGlobalDispatcher(
   })
 )
 
-export const cliPath = join(import.meta.url, '../../bin/plt-runtime.mjs')
+export const cliPath = join(import.meta.url, '../../../wattpm/bin/wattpm.js')
 export const startPath = join(import.meta.url, './start.mjs')
 
 export async function start (...args) {

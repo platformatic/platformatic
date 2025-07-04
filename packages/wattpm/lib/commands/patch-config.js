@@ -186,7 +186,7 @@ export async function patchConfigCommand (logger, args) {
 export const help = {
   'patch-config': {
     usage: 'patch-config [root] [patch]',
-    description: 'Applies a patch file to the runtime and services configurations.',
+    description: 'Applies a patch file to the runtime and services configurations',
     args: [
       {
         name: 'root',

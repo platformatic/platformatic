@@ -1,11 +1,18 @@
+import { safeRemove } from '@platformatic/utils'
 import { deepEqual, equal, ok } from 'node:assert'
+import { once } from 'node:events'
+import { existsSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { existsSync } from 'node:fs'
-import { once } from 'node:events'
-import { safeRemove } from '@platformatic/utils'
-import { fullSetupRuntime, getLogs, prepareRuntime, setFixturesDir, startRuntime, updateFile } from '../../basic/test/helper.js'
+import {
+  createRuntime,
+  getLogs,
+  prepareRuntime,
+  setFixturesDir,
+  startRuntime,
+  updateFile
+} from '../../basic/test/helper.js'
 import { buildServer } from '../../runtime/index.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
@@ -78,11 +85,11 @@ test('should not inject Platformatic code when building if asked to', async t =>
 })
 
 test('should build the services on start in dev', async t => {
-  const runtime = await fullSetupRuntime({
+  const runtime = await createRuntime({
     t,
-    configRoot: resolve(import.meta.dirname, 'fixtures/dev-ts-build'),
+    root: resolve(import.meta.dirname, 'fixtures/dev-ts-build'),
     build: false,
-    production: false,
+    production: false
   })
 
   ok(existsSync(resolve(runtime.root, 'services/app-no-config/dist/index.js')))

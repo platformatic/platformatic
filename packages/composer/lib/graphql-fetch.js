@@ -3,7 +3,7 @@
 const { compose } = require('@platformatic/graphql-composer')
 
 const placeholderSdl = 'Query { _info: String }'
-const placeholderResolvers = { Query: { _info: 'platformatic composer' } }
+const placeholderResolvers = { Query: { _info: '@platformatic/composer' } }
 
 function createSupergraph ({ sdl = null, resolvers = {} } = {}) {
   // in case of temporary failures of subgraphs on watching, the service can restart if no subgraphs are (tempoary) available

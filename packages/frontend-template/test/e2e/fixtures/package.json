@@ -1,7 +1,4 @@
 {
-  "scripts": {
-    "start": "platformatic db start"
-  },
   "devDependencies": {
     "fastify": "^4.17.0"
   },

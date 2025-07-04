@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface PlatformaticService {
+export interface PlatformaticServiceConfig {
   basePath?: string;
   server?: {
     hostname?: string;

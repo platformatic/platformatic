@@ -76,13 +76,13 @@ class Generator extends BaseGenerator {
   async _afterPrepare () {
     // if we are NOT updating, create env and files, otherwise leave as it is
     if (!this.config.isUpdating) {
-      const GLOBAL_TYPES_TEMPLATE = `
+      const PLT_ENVIRONMENT_TEMPLATE = `
 import { FastifyInstance } from 'fastify'
-import { PlatformaticApp, PlatformaticServiceConfig } from '@platformatic/service'
+import { PlatformaticApplication, PlatformaticServiceConfig } from '@platformatic/service'
 
 declare module 'fastify' {
   interface FastifyInstance {
-    platformatic: PlatformaticApp<PlatformaticServiceConfig>
+    platformatic: PlatformaticApplication<PlatformaticServiceConfig>
   }
 }
 `
@@ -119,7 +119,7 @@ npm start
 - 🔍 Try out the GraphiQL web UI at http://localhost:3042/graphiql
 `
 
-      this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
+      this.addFile({ path: '', file: 'plt-env.d.ts', contents: PLT_ENVIRONMENT_TEMPLATE })
       this.addFile({ path: '', file: 'README.md', contents: README })
     }
   }

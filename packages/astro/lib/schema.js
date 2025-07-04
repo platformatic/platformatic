@@ -20,7 +20,7 @@ export const schemaComponents = { astro }
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/astro/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Platformatic Astro Stackable',
+  title: 'Platformatic Astro Config',
   type: 'object',
   properties: {
     $schema: {

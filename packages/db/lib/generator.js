@@ -169,17 +169,17 @@ class Generator extends BaseGenerator {
         }
       }
 
-      const GLOBAL_TYPES_TEMPLATE = `
+      const ENVIRONMENT_TEMPLATE = `
 import { FastifyInstance } from 'fastify'
-import { PlatformaticApp, PlatformaticDBConfig, PlatformaticDBMixin, Entities } from '@platformatic/db'
+import { PlatformaticApplication, PlatformaticDatabaseConfig, PlatformaticDatabaseMixin, Entities } from '@platformatic/db'
 
 declare module 'fastify' {
   interface FastifyInstance {
-    platformatic: PlatformaticApp<PlatformaticDBConfig> & PlatformaticDBMixin<Entities>
+    platformatic: PlatformaticApplication<PlatformaticDatabaseConfig> & PlatformaticDatabaseMixin<Entities>
   }
 }
 `
-      this.addFile({ path: '', file: 'global.d.ts', contents: GLOBAL_TYPES_TEMPLATE })
+      this.addFile({ path: '', file: 'plt-env.d.ts', contents: ENVIRONMENT_TEMPLATE })
     }
   }
 

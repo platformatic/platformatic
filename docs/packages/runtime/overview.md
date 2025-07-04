@@ -11,7 +11,6 @@ Platformatic Runtime provides a unified environment for running multiple Platfor
 
 ## Features
 
-- **Command-line interface**: [`platformatic runtime`](../cli.md#runtime) provides a powerful and flexible CLI for managing your runtime environment.
 - **Programmatic start**: Start Platformatic Runtime [programmatically](../runtime/programmatic.md) in tests or other applications for enhanced integration.
 - **Monorepo support**: Efficiently manage applications within a monorepo setup.
 - **Interservice communication**: Enable [interservice communication](#interservice-communication) using private message passing to streamline service interactions.
@@ -34,10 +33,6 @@ The following configuration file can be used to start a new Platformatic Runtime
   "entrypoint": "entrypointApp"
 }
 ```
-
-## TypeScript Compilation
-
-Platformatic Runtime streamlines the compilation of all services built on TypeScript with the command `plt runtime compile`. This command integrates seamlessly with Platformatic features, ensuring faster builds and consistent environments. it's important to note that the TypeScript compiler (`tsc`) must be installed separately.
 
 ## Platformatic Runtime context
 

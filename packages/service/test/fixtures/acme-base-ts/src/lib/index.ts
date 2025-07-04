@@ -3,7 +3,7 @@ import type { ConfigManager } from '@platformatic/config'
 import { FastifyInstance } from 'fastify'
 import { lstat } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { type PlatformaticService as PlatformaticServiceConfig } from '../../../../../config.js'
+import { PlatformaticServiceConfig } from '../../../../../config.js'
 import {
   create as createService,
   platformaticService,

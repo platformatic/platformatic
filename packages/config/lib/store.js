@@ -9,7 +9,7 @@ const { readFileSync } = require('node:fs')
 const { createRequire } = require('node:module')
 const { getParser } = require('./formats')
 const errors = require('./errors')
-const abstractLogger = require('./logger')
+const { abstractLogger } = require('@platformatic/utils')
 
 const pltVersion = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8')).version
 

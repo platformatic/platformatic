@@ -6,6 +6,8 @@ const { platformaticService } = require('@platformatic/service')
 const { isKeyEnabled } = require('@platformatic/utils')
 const { locateSchemaLock, updateSchemaLock } = require('./utils')
 const { readFile, writeFile } = require('node:fs/promises')
+const { execute: applyMigrations } = require('./migrator.js')
+const { execute: generateTypes } = require('./types.js')
 
 async function healthCheck (app) {
   const { db, sql } = app.platformatic
@@ -44,8 +46,8 @@ async function platformaticDatabase (app, stackable) {
 
   if (config.migrations && config.migrations.autoApply === true && !app.restarted) {
     app.log.debug({ migrations: config.migrations }, 'running migrations')
-    const { execute } = await import('./migrate.mjs')
-    const migrationsApplied = await execute({ logger: app.log, config })
+
+    const migrationsApplied = await applyMigrations(app.log, config)
     if (migrationsApplied) {
       // reload schema lock
       await updateSchemaLock(app.log, configManager)
@@ -54,8 +56,7 @@ async function platformaticDatabase (app, stackable) {
 
     if (config.types && config.types.autogenerate === true) {
       app.log.debug({ types: config.types }, 'generating types')
-      const { execute } = await import('./gen-types.mjs')
-      await execute({ logger: app.log, config, configManager })
+      await generateTypes({ logger: app.log, config, configManager })
     }
   }
 

@@ -224,7 +224,7 @@ test('configure telemetry correctly with a composer + next', async t => {
   )
 
   // build next
-  const cliPath = join(__dirname, '../../cli', 'cli.js')
+  const cliPath = join(__dirname, '../../wattpm', 'bin/wattpm.js')
   const { execa } = await import('execa')
   await execa('node', [cliPath, 'build'], {
     cwd: root

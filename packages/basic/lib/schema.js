@@ -64,7 +64,7 @@ export const schemaComponents = { application, watch }
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/basic/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Platformatic Stackable',
+  title: 'Platformatic Basic Config',
   type: 'object',
   properties: {
     $schema: {

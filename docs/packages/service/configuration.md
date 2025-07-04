@@ -347,7 +347,7 @@ file or in the current working directory.
 Environment variables can also be set directly on the command line, for example:
 
 ```bash
-PLT_SERVER_LOGGER_LEVEL=debug npx platformatic service
+PLT_SERVER_LOGGER_LEVEL=debug wattpm dev
 ```
 
 ### PLT_ROOT

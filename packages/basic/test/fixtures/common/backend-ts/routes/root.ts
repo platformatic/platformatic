@@ -1,4 +1,3 @@
-/// <reference path="../global.d.ts" />
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
 
 declare module 'fastify' {
@@ -7,7 +6,7 @@ declare module 'fastify' {
   }
 }
 
-export default async function (fastify: FastifyInstance, opts: FastifyPluginOptions) {
+export default async function  (fastify: FastifyInstance, opts: FastifyPluginOptions) {
   fastify.get('/example', async (request, reply) => {
     return { hello: fastify.example }
   })

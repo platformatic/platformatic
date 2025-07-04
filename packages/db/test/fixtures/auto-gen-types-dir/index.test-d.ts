@@ -1,8 +1,8 @@
-/// <reference path="./global.d.ts" />
+/// <reference types="./plt-env.d.ts" />
 
+import { fastify, FastifyInstance } from 'fastify'
 import { expectType } from 'tsd'
-import { Graph } from './src/types/Graph'
-import { FastifyInstance, fastify } from 'fastify'
+import { Graph } from './src/types/graph'
 
 const app: FastifyInstance = fastify()
 

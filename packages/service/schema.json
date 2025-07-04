@@ -1,7 +1,7 @@
 {
   "$id": "https://schemas.platformatic.dev/@platformatic/service/2.70.1.json",
   "version": "2.70.1",
-  "title": "Platformatic Service",
+  "title": "Platformatic Service Config",
   "type": "object",
   "properties": {
     "basePath": {

@@ -1,8 +1,6 @@
-/// <reference path="./global.d.ts" />
-
+import { FastifyInstance, fastify } from 'fastify'
 import { expectType } from 'tsd'
 import { PltDb } from './types/PltDb'
-import { FastifyInstance, fastify } from 'fastify'
 
 const app: FastifyInstance = fastify()
 

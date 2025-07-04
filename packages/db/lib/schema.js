@@ -436,7 +436,7 @@ const types = {
 const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/db/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Platformatic DB',
+  title: 'Platformatic Database Config',
   type: 'object',
   properties: {
     basePath: {
