@@ -4,7 +4,7 @@ const { mapOpenAPItoTypes, mapSQLEntityToJSONSchema } = require('@platformatic/s
 const { createDirectory } = require('@platformatic/utils')
 const camelcase = require('camelcase')
 const { readFile, readdir, unlink, writeFile } = require('node:fs/promises')
-const { basename, join, resolve, relative } = require('node:path')
+const { basename, join, resolve, relative, sep } = require('node:path')
 const { isFileAccessible, setupDB } = require('./utils.js')
 
 async function removeUnusedTypeFiles (entities, dir) {
@@ -90,7 +90,7 @@ export type ServerInstance<Configuration = PlatformaticDatabaseConfig> = Fastify
 
 function generateEnvironmentTypes (folder) {
   return `import { PlatformaticApplication, PlatformaticDatabaseConfig, PlatformaticDatabaseMixin } from "@platformatic/db";
-import { Entities, EntitiesHooks, SchemaGetters } from "./${folder}/index.js";
+import { Entities, EntitiesHooks, SchemaGetters } from "./${folder.replaceAll(sep, '/')}/index.js";
 
 declare module "fastify" {
   interface FastifyInstance {
