@@ -47,6 +47,7 @@ The `watt.json` file is automatically created in the `my-app` folder, and the `p
 By choosing the `@platformatic/node` service, you have already created your nodejs app.
 
 This file is created as your nodejs app:
+
 ```js
 import { createServer } from 'node:http'
 
