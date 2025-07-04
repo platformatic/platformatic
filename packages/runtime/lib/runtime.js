@@ -1789,7 +1789,7 @@ class Runtime extends EventEmitter {
     try {
       this.#workersBroadcastChannel.postMessage(workers)
     } catch (err) {
-      this.logger.error({ err }, 'Error when broadcasting workers')
+      this.logger?.error({ err }, 'Error when broadcasting workers')
     }
   }
 
