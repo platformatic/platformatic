@@ -124,9 +124,17 @@ Using existing configuration ...
 
 Start your Watt server again:
 
+You can run these commands at the root of your Watt server(my-app):
 ```bash
 npm start
 ```
+
+If you want to have a "watch mode" to automatically restart the server when you make changes, you can run this command in the root of Watt Server(my-app):
+```
+npm run dev
+```
+Which will run `wattpm dev` and start your Watt server in watch mode.
+
 
 Then, you can test it with:
 
@@ -136,7 +144,7 @@ curl http://localhost:3042/node
 
 :::note
 
-You can customize how the various services are expsed by changing `web/composer/platformatic.json`.
+You can customize how the various services are exposed by changing `web/composer/platformatic.json`.
 Here is the equivalent of the default configuration when exposing a Node.js application: 
 
 ```json
