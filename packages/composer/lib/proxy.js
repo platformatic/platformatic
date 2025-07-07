@@ -163,11 +163,11 @@ module.exports = fp(async function (app, opts) {
       wsReconnect: ws?.reconnect,
       wsHooks: {
         onConnect: (...args) => {
-          metrics.activeWsConnections.inc()
+          metrics?.activeWsConnections?.inc()
           ws?.hooks?.onConnect(...args)
         },
         onDisconnect: (...args) => {
-          metrics.activeWsConnections.dec()
+          metrics?.activeWsConnections?.dec()
           ws?.hooks?.onDisconnect(...args)
         },
         onReconnect: ws?.hooks?.onReconnect,
