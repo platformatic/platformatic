@@ -5,6 +5,7 @@ const { ensureLoggableError } = require('@platformatic/utils')
 const fp = require('fastify-plugin')
 const { workerData } = require('node:worker_threads')
 const { getGlobalDispatcher } = require('undici')
+const { initMetrics } = require('./metrics')
 
 const kITC = Symbol.for('plt.runtime.itc')
 const kProxyRoute = Symbol('plt.composer.proxy.route')
@@ -51,6 +52,8 @@ async function resolveServiceProxyParameters (service) {
     ws: service.proxy?.ws
   }
 }
+
+let metrics
 
 module.exports = fp(async function (app, opts) {
   const meta = { proxies: {} }
@@ -145,6 +148,10 @@ module.exports = fp(async function (app, opts) {
       )
       : null
 
+    if (!metrics) {
+      metrics = initMetrics(globalThis.platformatic?.prometheus)
+    }
+
     const proxyOptions = {
       prefix,
       rewritePrefix,
@@ -155,8 +162,14 @@ module.exports = fp(async function (app, opts) {
       wsUpstream: ws?.upstream ?? url ?? origin,
       wsReconnect: ws?.reconnect,
       wsHooks: {
-        onConnect: ws?.hooks?.onConnect,
-        onDisconnect: ws?.hooks?.onDisconnect,
+        onConnect: (...args) => {
+          metrics?.activeWsConnections?.inc()
+          ws?.hooks?.onConnect(...args)
+        },
+        onDisconnect: (...args) => {
+          metrics?.activeWsConnections?.dec()
+          ws?.hooks?.onDisconnect(...args)
+        },
         onReconnect: ws?.hooks?.onReconnect,
         onPong: ws?.hooks?.onPong,
         onIncomingMessage: ws?.hooks?.onIncomingMessage,
