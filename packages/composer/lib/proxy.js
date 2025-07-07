@@ -4,6 +4,7 @@ import fp from 'fastify-plugin'
 import { createRequire } from 'node:module'
 import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher } from 'undici'
+import { initMetrics } from './metrics.js'
 
 const kITC = Symbol.for('plt.runtime.itc')
 const kProxyRoute = Symbol('plt.composer.proxy.route')
@@ -50,6 +51,8 @@ async function resolveServiceProxyParameters (service) {
     ws: service.proxy?.ws
   }
 }
+
+let metrics
 
 async function proxyPlugin (app, opts) {
   const meta = { proxies: {} }
@@ -144,6 +147,10 @@ async function proxyPlugin (app, opts) {
       )
       : null
 
+    if (!metrics) {
+      metrics = initMetrics(globalThis.platformatic?.prometheus)
+    }
+
     const proxyOptions = {
       prefix,
       rewritePrefix,
@@ -154,8 +161,14 @@ async function proxyPlugin (app, opts) {
       wsUpstream: ws?.upstream ?? url ?? origin,
       wsReconnect: ws?.reconnect,
       wsHooks: {
-        onConnect: ws?.hooks?.onConnect,
-        onDisconnect: ws?.hooks?.onDisconnect,
+        onConnect: (...args) => {
+          metrics?.activeWsConnections?.inc()
+          ws?.hooks?.onConnect(...args)
+        },
+        onDisconnect: (...args) => {
+          metrics?.activeWsConnections?.dec()
+          ws?.hooks?.onDisconnect(...args)
+        },
         onReconnect: ws?.hooks?.onReconnect,
         onPong: ws?.hooks?.onPong,
         onIncomingMessage: ws?.hooks?.onIncomingMessage,
