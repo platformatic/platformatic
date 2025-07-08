@@ -1,9 +1,9 @@
 ---
 title: Overview
-label: Node.js
+label: Astro
 ---
 
-import SharedOverview from './\_shared-overview.md';
+import SharedOverview from './_shared-overview.md';
 
 # Platformatic Node
 
@@ -11,9 +11,9 @@ The Platformatic Node allows to run a [Fastify](https://fastify.io/), [Express](
 
 ## Getting Started
 
-Create or copy your application inside the `web` or `services` folder. If you are not using [`autoload`](../../runtime/configuration.md#autoload), you also have to explictly add the new service.
+Create or copy your application inside the `web` or `services` folder. If you are not using [`autoload`](../runtime/configuration.md#autoload), you also have to explictly add the new service.
 
-You are all set, you can now start your runtime as usual via `wattpm dev` or `wattpm start`.
+You are all set, you can now start your runtime as usual via `wattpm dev` or `plt start`.
 
 ## Install
 
@@ -22,8 +22,6 @@ npm install @platformatic/node
 ```
 
 ## Example configuration file
-
-Create a `watt.json` in the root folder of your service with the following contents:
 
 ```json
 {
@@ -76,15 +74,17 @@ It's possible to specify if a node service uses a connection string (and which o
 This is useful to map which service uses which database and to potentialy track database changes.
 
 ```javascript
-import { createServer } from 'node:http'
+import { createServer } from "node:http";
 
-globalThis.platformatic.setConnectionString('postgres://dbuser:dbpass@mydbhost/apidb')
+globalThis.platformatic.setConnectionString(
+  "postgres://dbuser:dbpass@mydbhost/apidb",
+);
 
 const server = createServer((_req, res) => {
-  res.end(JSON.stringify({ ok: true }))
-})
+  res.end(JSON.stringify({ ok: true }));
+});
 
-server.listen(1)
+server.listen(1);
 ```
 
 ## Architecture
@@ -99,52 +99,42 @@ If the service uses the `commands` property then it's always responsible to star
 
 In all cases, Platformatic runtime will modify the server port replacing it with a random port and then it will integrate the external service in the runtime.
 
-If your application entrypoint exports a `hasServer` variable set to `false`, then Platformatic Node will treat the service as a background service which doesn't expose any HTTP port.
-
 ## Example services entrypoints
 
 ### Fastify with build function
 
 ```js
-import fastify from 'fastify'
+import fastify from "fastify";
 
 export function create() {
   const app = fastify({
-    logger: { level: globalThis.platformatic?.logLevel ?? 'info' }
-  })
+    logger: { level: globalThis.platformatic?.logLevel ?? "info" },
+  });
 
-  const prefix = globalThis.platformatic?.basePath ?? ''
+  const prefix = globalThis.platformatic?.basePath ?? "";
 
   app.get(`${prefix}/env`, async () => {
-    return { production: process.env.NODE_ENV === 'production' }
-  })
+    return { production: process.env.NODE_ENV === "production" };
+  });
 
-  return app
+  return app;
 }
 ```
 
 ### Express with no build function
 
 ```js
-import express from 'express'
+import express from "express";
 
-const app = express()
+const app = express();
 
-const prefix = globalThis.platformatic?.basePath ?? ''
+const prefix = globalThis.platformatic?.basePath ?? "";
 
 app.get(`${prefix}/env`, (req, res) => {
-  res.send({ production: process.env.NODE_ENV === 'production' })
-})
+  res.send({ production: process.env.NODE_ENV === "production" });
+});
 
-app.listen(3000)
-```
-
-### Background only service
-
-```js
-export const hasServer = false
-
-globalThis.platformatic.messaging.handle('ping', () => 'pong')
+app.listen(3000);
 ```
 
 ### Typescript
@@ -175,16 +165,5 @@ Watt supports setting up `npm run ...` commands so you can reuse your existing n
 ## Configuration
 
 See the [configuration](./configuration.md) page.
-
-## Standalone usage
-
-### Create a New Node Project
-
-```bash
-npx --package=@platformatic/node create-platformatic-onde --dir my-node-app
-cd my-node-app
-npm install
-npm start
-```
 
 <SharedOverview/>

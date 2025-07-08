@@ -200,8 +200,6 @@ Options:
 - `-p, --path <value>`: The path where to import the service (the default is the service id)
 - `-H, --http`: Use HTTP URL when expanding GitHub repositories
 - `-b, --branch <branch>`: The branch to clone (the default is `main`)
-- `-s, --skip-dependencies`: Do not install services dependencies. This is only used when invoked without arguments.
-- `-P, --package-manager <executable>`: Use an alternative package manager (the default is to autodetect it). This is only used when invoked without arguments.
 
 ## `resolve`
 

@@ -23,46 +23,6 @@ The healthcheck function will ensure the readiness of the service, and the readi
   - `statusCode`: an optional HTTP status code
   - `body`: an optional body to return
 
-### Messaging API
-
-Services can talk to each other using a messaging API available in the `globalThis.platformatic.messaging` object.
-
-Once a service adds an handler via `globalThis.platformatic.messaging.handle` API, then any other service can invoke the function using the `globalThis.platformatic.messaging.send` API.
-
-Here it is an example:
-
-```js
-// web/service/index.js
-
-globalThis.platformatic.messaging.handle({
-  async time({ offset }) {
-    return Date.now() + offset
-  }
-})
-```
-
-```js
-// web/entrypoint/index.js
-
-app.get('/time', async req => {
-  const response = await globalThis.platformatic.messaging.send('service', 'time', { offset: 1000 })
-
-  return { thread: response }
-})
-```
-
-Note that messages are exchanged using Node.js [`MessageChannel`](https://nodejs.org/dist/latest/docs/api/worker_threads.html#class-messagechannel) so you must eventually provide a `transferList` as via the `send` options:
-
-```js
-const { port1, port2 } = new MessageChannel()
-const response = await globalThis.platformatic.messaging.send(
-  'service',
-  'connect',
-  { port: port1 },
-  { transferList: [port1] }
-)
-```
-
 ## Custom Metrics
 
 Custom metrics can be registered and exported by accessing the same Prometheus registry that the rest of the Platformatic runtime is using via `globalThis.platformatic.prometheus.registry`.
@@ -117,7 +77,7 @@ Here is an example of how to set a custom health check:
 ```js
 import fastify from 'fastify'
 
-export function create() {
+export function create () {
   const app = fastify()
 
   globalThis.platformatic.setCustomHealthCheck(async () => {
@@ -142,27 +102,27 @@ Setting custom response for the healthcheck endpoint:
 ```js
 import fastify from 'fastify'
 
-export function create() {
+export function create () {
   const app = fastify()
 
   globalThis.platformatic.setCustomHealthCheck(async () => {
-    // Check if the database is reachable
-    if (!app.db.query('SELECT 1')) {
-      return {
-        status: false,
-        statusCode: 500,
-        body: 'Database is unreachable'
+      // Check if the database is reachable
+      if (!app.db.query('SELECT 1')) {
+        return {
+          status: false,
+          statusCode: 500,
+          body: 'Database is unreachable'
+        }
       }
-    }
-    // Check if the external service is reachable
-    const payment = await fetch('https://payment-service.com/status')
-    if (!payment.ok) {
-      return {
-        status: false,
-        statusCode: 500,
-        body: 'Payment service is unreachable'
+      // Check if the external service is reachable
+      const payment = await fetch('https://payment-service.com/status')
+      if (!payment.ok) {
+        return {
+          status: false,
+          statusCode: 500,
+          body: 'Payment service is unreachable'
+        }
       }
-    }
   })
 
   globalThis.platformatic.setCustomReadinessCheck(async () => {
@@ -182,6 +142,7 @@ export function create() {
 }
 ```
 
+
 `platformatic.json`
 
 ```json
@@ -194,17 +155,17 @@ export function create() {
 
 ```json
 {
-  "type": "module",
-  "name": "service-node",
-  "version": "1.0.0",
-  "main": "app.js",
-  "scripts": {
-    "start": "platformatic start"
-  },
-  "dependencies": {
-    "fastify": "^5.0.0",
-    "@platformatic/node": "^2.48.0"
-  }
+    "type": "module",
+    "name": "service-node",
+    "version": "1.0.0",
+    "main": "app.js",
+    "scripts": {
+        "start": "platformatic start"
+    },
+    "dependencies": {
+        "fastify": "^5.0.0",
+        "@platformatic/node": "^2.48.0"
+    }
 }
 ```
 
