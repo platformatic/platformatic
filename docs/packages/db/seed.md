@@ -4,7 +4,7 @@ A database is as useful as the data that it contains: a fresh, empty database
 isn't always the best starting point. We can add a few rows from our migrations
 using SQL, but we might need to use JavaScript from time to time.
 
-The [platformatic db seed](../platformatic/cli.md#seed) command allows us to run a
+The [platformatic db seed](/cli.md#seed) command allows us to run a
 script that will populate — or "seed" — our database.
 
 ## Example

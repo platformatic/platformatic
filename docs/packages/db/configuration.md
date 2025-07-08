@@ -6,13 +6,13 @@ Platformatic DB can be configured with a [configuration file](#configuration-fil
 
 ## Configuration Files
 
-The Platformatic CLI will automatically detect and load configuration files found in the current working directory with the file names listed [here](../../file-formats.md#configuration-files).
+The Platformatic CLI will automatically detect and load configuration files found in the current working directory with the file names listed [here](../file-formats.md#configuration-files).
 
-Alternatively, a [`--config` option](../platformatic/cli.md#db) specify a configuration file path for most platformatic db CLI commands. The configuration examples in this reference use the JSON format.
+Alternatively, a [`--config` option](../cli.md#db) specify a configuration file path for most platformatic db CLI commands. The configuration examples in this reference use the JSON format.
 
 ## Supported File Formats
 
-For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../../file-formats.md#supported-file-formats) page.
+For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page.
 
 ## Configuration Settings
 

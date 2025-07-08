@@ -22,8 +22,8 @@ You should export an async `function` which receives a parameters:
 
 - `app` (`FastifyInstance`) the main Fastify [instance](https://www.fastify.io/docs/latest/Reference/Server/#instance) running Platformatic DB.
 - `opts` all the options specified in the config file after `path`.
-
-You can always access Platformatic [data mapper](../sql-mapper/overview.md) through `app.platformatic` property.
+-
+You can always access Platformatic [data mapper](../packages/sql-mapper/overview.md) through `app.platformatic` property.
 
 
 ## Context Integration in Plugin Operations

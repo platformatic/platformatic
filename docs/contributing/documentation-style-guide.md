@@ -124,7 +124,7 @@ More like this:
 >As an example, the following recommendations should be
 referenced.
 
-To view a live example, refer to the [Decorators](../packages/db/configuration.md)
+To view a live example, refer to the [Decorators](../db/configuration.md)
 reference document.
 
 To recap, **avoid "you" in reference documentation or API documentation.**

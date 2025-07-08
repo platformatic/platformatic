@@ -6,13 +6,13 @@ Platformatic Composer can be configured with a [configuration file](#configurati
 
 ## Configuration Files
 
-Platformatic will automatically detect and load configuration files found in the current working directory with the file names listed [here](../../file-formats.md#configuration-files).
+Platformatic will automatically detect and load configuration files found in the current working directory with the file names listed [here](../file-formats.md#configuration-files).
 
-To specify a configuration file manually, use the [`--config` option](../platformatic/cli.md#composer) with any `platformatic composer` CLI command.
+To specify a configuration file manually, use the [`--config` option](../cli.md#composer) with any `platformatic composer` CLI command.
 
 ## Supported File Formats
 
-For detailed information on supported file formats and extensions, visit our [Supported File Formats and Extensions](../../file-formats.md#supported-file-formats) page
+For detailed information on supported file formats and extensions, visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page
 
 ## Configuration Settings
 
@@ -69,7 +69,7 @@ Configure `@platformatic/composer` specific settings such as `services` or `refr
   }
   ```
 
-  or with the [metaline](https://github.com/platformatic/metaline) syntax, especially in the case of using the [json configuration](../platformatic/cli.md#start).
+  or with the [metaline](https://github.com/platformatic/metaline) syntax, especially in the case of using the [json configuration](/docs/cli.md#start).
 
   ```json
   "defaultArgsAdapter": "where.id.in.$>#id"
