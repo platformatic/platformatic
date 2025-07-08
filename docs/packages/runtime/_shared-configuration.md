@@ -2,7 +2,7 @@ import Issues from '../../getting-started/issues.md';
 
 ## Supported File Formats
 
-For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page.
+For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../../file-formats.md#supported-file-formats) page.
 
 ## Settings
 
@@ -209,12 +209,13 @@ The object supports the following settings:
 
 - `enabled` (`boolean`): If to enable the health check. Default: `true`.
 - `interval` (`number`): The interval between checks in milliseconds. Default: `30000`.
-- `gracePeriod` (`number`): How long after the service started before starting to perform health checks. Default: `30000`.
-- `maxUnhealthyChecks` (`number`): The number of consecutive failed checks before killing the worker. Default: `10`.
-- `maxELU` (`number`): The maximum allowed Event Loop Utilization. The value must be a percentage between `0` and `1`. Default: `0.99`.
-- `maxHeapUsed` (`number`): The maximum allowed memory utilization. The value must be a percentage between `0` and `1`. Default: `0.99`.
-- `maxHeapTotal` (`number` or `string`): The maximum allowed memory allocatable by the process. The value must be an amount in bytes, in bytes or in memory units. Default: `4G`.
-- `maxYoungGeneration`(`number` or `string`): The maximum amount of memory that can be used by the young generation. The value must be an amount in bytes, in bytes or in memory units. The default is calculated from the `maxHeapTotal`.
+- `gracePeriod`: How long after the service started before starting to perform health checks. Default: `30000`.
+- `maxUnhealthyChecks`: The number of consecutive failed checks before killing the worker. Default: `10`.
+- `maxELU`: The maximum allowed Event Loop Utilization. The value must be a percentage between `0` and `1`. Default: `0.99`.
+- `maxHeapUsed`: The maximum allowed memory utilization. The value must be a percentage between `0` and `1`. Default: `0.99`.
+- `maxHeapTotal`: The maximum allowed memory allocatable by the process. The value must be an amount in bytes. Default: `4G`.
+- `maxYoungGeneration`: The maximum amount of memory that can be used by the young generation.
+  The value must be an amount in bytes. The default is calculated from the `maxHeapTotal`.
 
 ### `telemetry`
 
@@ -341,10 +342,6 @@ It's important to note that `IDP` stands for Identity Provider, and its token `u
 ### `serviceTimeout`
 
 The number of milliseconds to wait when invoking another service using the its `plt.local` before considering the request timed out. Default: `300000` (5 minutes).
-
-### `messagingTimeout`
-
-The number of milliseconds to wait when invoking another service using the its `globalThis.platformatic.messaging.send` before considering the request timed out. Default: `300000` (5 minutes).
 
 ### `metrics`
 

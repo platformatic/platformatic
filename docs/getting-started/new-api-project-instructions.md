@@ -31,7 +31,6 @@ This interactive command-line tool will guide you through setting up a new Platf
 
 ```
 - Where would you like to create your project?  => .
-- Which package manager do you want to use?     => npm
 - Which kind of service do you want to create?  => @platformatic/db 
 - What is the name of the service?              => (generated-randomly), e.g. legal-soup
 - What is the connection string?                => sqlite://./db.sqlite
@@ -46,8 +45,6 @@ After completing the wizard, your Platformatic application will be ready in the 
 
 :::note
 
-If the wizard does not handle dependency installation, ensure to run `npm/yarn/pnpm` install command manually.
-
-`wattpm` sets up workspaces for the selected package manager. Running a manual installation with a different package manager may cause issues or trigger warnings.
+If the wizard does not handle dependency installation, ensure to run `npm/yarn/pnpm` install command manually:
 
 :::
