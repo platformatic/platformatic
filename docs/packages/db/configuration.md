@@ -6,7 +6,7 @@ Platformatic DB can be configured with a [configuration file](#configuration-fil
 
 ## Supported File Formats
 
-For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page.
+For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../../file-formats.md#supported-file-formats) page.
 
 ## Configuration Settings
 

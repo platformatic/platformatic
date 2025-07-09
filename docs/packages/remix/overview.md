@@ -11,7 +11,7 @@ The Platformatic Remix allows to run a [Remix](https://remix.run/) application a
 
 ## Getting Started
 
-Create or copy a Remix application inside the `web` or `services` folder. If you are not using [`autoload`](../../runtime/configuration.md#autoload), you also have to explictly add the new service.
+Create or copy a Remix application inside the `web` or `services` folder. If you are not using [`autoload`](../runtime/configuration.md#autoload), you also have to explictly add the new service.
 
 You are all set, you can now start your runtime as usual via `wattpm dev` or `wattpm start`.
 
