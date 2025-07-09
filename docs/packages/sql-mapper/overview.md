@@ -8,7 +8,7 @@ label: Introduction to @platformatic/sql-mapper
 `@platformatic/sql-mapper` is the underlining utility that Platformatic DB uses to create useful utilities to
 manipulate your SQL database using JavaScript.
 
-This module is bundled with [Platformatic DB](/db/overview.md) via [a fastify plugin](./fastify-plugin.md)
+This module is bundled with [Platformatic DB](../db/overview.md) via [a fastify plugin](./fastify-plugin.md)
 The rest of this guide shows how to use this module directly.
 
 ## Install

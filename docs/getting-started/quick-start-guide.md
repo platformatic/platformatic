@@ -6,13 +6,13 @@ import SetupWatt from './setup-watt.md';
 
 # Fullstack Guide
 
-Welcome to your next steps with Platformatic services such as [Platformatic Watt](/docs/watt/overview.md), [Platformatic DB](/docs/db/overview.md) with [SQLite](https://www.sqlite.org/), [Platformatic Client](/docs/client/overview.md) and the [Platformatic Composer](/docs/composer/overview.md). 
+Welcome to your next steps with Platformatic services such as [Platformatic Watt](../packages/watt/overview.md), [Platformatic DB](../packages/db/overview.md) with [SQLite](https://www.sqlite.org/), [Platformatic Client](../packages/client/overview.md) and the [Platformatic Composer](../packages/composer/overview.md). 
 
 In this tutorial, you will build a movie quotes application, where users can add, like and delete quotes from popular movies. This guide will help you setup and run your first full-stack Platformatic application.
 
 :::note
 
-While this guide uses [SQLite](https://www.sqlite.org/), Platformatic DB also supports [PostgreSQL](https://www.postgresql.org/), [MySQL](https://www.mysql.com/), and [MariaDB](https://mariadb.org/). For more details on database compatibility, see the [Platformatic DB documentation](/docs/db/overview.md#supported-databases).
+While this guide uses [SQLite](https://www.sqlite.org/), Platformatic DB also supports [PostgreSQL](https://www.postgresql.org/), [MySQL](https://www.mysql.com/), and [MariaDB](https://mariadb.org/). For more details on database compatibility, see the [Platformatic DB documentation](../packages/db/overview.md#supported-databases).
 
 :::
 
@@ -146,7 +146,7 @@ npx wattpm db:migrations:apply
 
 ## Add a Composer service 
 
-[Platformatic Composer](/docs/composer/overview.md) integrates different microservices into a single API for more efficient management. For the movie quotes application, you will use the Platformatic composer to aggregate the DB service, and your frontend application. 
+[Platformatic Composer](../packages/composer/overview.md) integrates different microservices into a single API for more efficient management. For the movie quotes application, you will use the Platformatic composer to aggregate the DB service, and your frontend application. 
 
 Inside `web` folder, let's create a new Platformatic Composer
 

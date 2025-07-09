@@ -2,7 +2,7 @@ import Issues from '../../getting-started/issues.md';
 
 # Migrations
 
-Platformatic DB uses [Postgrator](https://www.npmjs.com/package/postgrator) to handle database migrations efficiently. 
+Platformatic DB uses [Postgrator](https://www.npmjs.com/package/postgrator) to handle database migrations efficiently.
 
 :::note
 For detailed guidance on writing migration files, please refer to the [Postgrator documentation](https://github.com/rickbergfalk/postgrator).
@@ -39,12 +39,12 @@ You can rollback or apply migrations to a specific version using the the Watt's 
 $ npx wattpm db:migrations:apply --to 002
 ```
 
-This command will execute rollback migrations starting from `004.undo.sql` to `003.undo.sql`. It will execute `003.do.sql` and `004.do.sql` when the server restarts if you keep these files in the migrations directory and `autoApply` is set to true in the config file. You can also manually apply the migration by running the `db migrations apply` command. 
+This command will execute rollback migrations starting from `004.undo.sql` to `003.undo.sql`. It will execute `003.do.sql` and `004.do.sql` when the server restarts if you keep these files in the migrations directory and `autoApply` is set to true in the config file. You can also manually apply the migration by running the `db migrations apply` command.
 
 To roll back a single migration, use the `-r` flag:
 
-```bash 
-$ npx wattpm db:migrations:apply -r 
+```bash
+$ npx wattpm db:migrations:apply -r
 ```
 
 ## Configuring and Running Migrations
@@ -53,11 +53,12 @@ There are two ways to run migrations in Platformatic DB. They can be processed a
 
 In both cases you have to edit your config file to tell Platformatic DB where are your migration files.
 
-
 ### Automatically on server start
+
 To run migrations when Platformatic DB starts,configure the `migrations` property in your project config file.
 
 There are two options in the `"migrations"` property
+
 - `dir` (_required_) the directory where the migration files are located. It will be relative to the config file path.
 - `autoApply` a boolean value that tells Platformatic DB to auto-apply migrations or not (default: `false`)
 

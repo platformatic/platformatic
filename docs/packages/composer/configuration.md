@@ -10,7 +10,7 @@ Platformatic will automatically detect and load configuration files found in the
 
 ## Supported File Formats
 
-For detailed information on supported file formats and extensions, visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page
+For detailed information on supported file formats and extensions, visit our [Supported File Formats and Extensions](../../file-formats.md#supported-file-formats) page
 
 ## Configuration Settings
 
@@ -63,7 +63,7 @@ Configure `@platformatic/composer` specific settings such as `services` or `refr
   }
   ```
 
-  or with the [metaline](https://github.com/platformatic/metaline) syntax, especially in the case of using the [json configuration](/docs/cli.md#start).
+  or with the [metaline](https://github.com/platformatic/metaline) syntax, especially in the case of using the [json configuration](../platformatic/cli.md#start).
 
   ```json
   "defaultArgsAdapter": "where.id.in.$>#id"

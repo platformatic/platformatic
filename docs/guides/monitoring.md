@@ -1,11 +1,11 @@
 # Monitoring with Prometheus and Grafana
 
 [Prometheus](https://prometheus.io/) is open source system and alerting toolkit for monitoring and alerting. It's a time series database that collects metrics from configured targets at given intervals, evaluates rule expressions, displays the results, and can trigger alerts if some condition is observed to be true.
-[Grafana](https://grafana.com/oss/grafana/) is an open source visualization and analytics software. 
+[Grafana](https://grafana.com/oss/grafana/) is an open source visualization and analytics software.
 
 It's a pretty common solution to use Prometheus to collect and store monitoring data, and Grafana to visualize it.
 
-Platformatic can be configured to expose Prometheus metrics: 
+Platformatic can be configured to expose Prometheus metrics:
 
 ```json
 ...
@@ -20,13 +20,13 @@ Platformatic can be configured to expose Prometheus metrics:
 ```
 
 In this case, we are exposing the metrics on port 9091 (defaults to `9090`), and we are using basic authentication to protect the endpoint.
-We can also specify the IP address to bind to (defaults to `0.0.0.0`). 
+We can also specify the IP address to bind to (defaults to `0.0.0.0`).
 Note that the metrics port is not the default in this configuration. This is because if you want to test the integration running both Prometheus and Platformatic on the same host, Prometheus starts on `9090` port too.
 
 All the configuration settings are optional. To use the default settings, set `"metrics": true`. See the [configuration reference](../db/configuration.md#metrics) for more details.md#metrics
 
 :::caution
-Use [environment variable placeholders](../service/configuration.md#environment-variable-placeholders) in your Platformatic DB configuration file to avoid exposing credentials.
+Use [environment variable placeholders](../packages/service/configuration.md#environment-variable-placeholders) in your Platformatic DB configuration file to avoid exposing credentials.
 :::
 
 ## Custom Metrics
@@ -51,6 +51,7 @@ Remember that it is a good practice to register metrics as soon as possible duri
 :::
 
 ## Prometheus Configuration
+
 This is an example of a minimal Prometheus configuration to scrape the metrics from Platformatic:
 
 ```yaml
@@ -75,10 +76,10 @@ scrape_configs:
 We specify a `target` configuring the IP address and the port where Platformatic is running, and we specify the `username` and `password` to use for basic authentication. The `metrics` path is the one used by Platformatic. The `ip` address is not a loopback address so this will work even with Prometheus running in docker on the same host (see below), please change it to your host ip.
 
 To test this configuration, we can run Prometheus locally using [`docker`](https://docs.docker.com/get-docker/) and [`docker-compose`](https://docs.docker.com/compose/install/), so please be sure to have both correctly installed.
-Save the above configuration in a file named `./prometheus/prometheus.yml` and create a `docker-compose.yml`: 
+Save the above configuration in a file named `./prometheus/prometheus.yml` and create a `docker-compose.yml`:
 
 ```yaml
-version: "3.7"
+version: '3.7'
 
 services:
   prometheus:
@@ -93,20 +94,18 @@ services:
 
 volumes:
   prometheus_data: {}
-
 ```
 
 Then run `docker-compose up -d` and open `http://localhost:9090` in your browser. You should see the Prometheus dashboard, and you can also query the metrics, e.g. `{group="platformatic"}`. See [Prometheus docs](https://prometheus.io/docs/introduction/overview/) for more information on querying and metrics.
 
 ## Grafana Configuration
 
-Let's see how we can configure Grafana to chart some Platformatics metrics from Prometheus. 
+Let's see how we can configure Grafana to chart some Platformatics metrics from Prometheus.
 Change the `docker-compose.yml` to add a `grafana` service:
 
 ```yaml
-version: "3.7"
+version: '3.7'
 services:
-
   prometheus:
     image: prom/prometheus:latest
     volumes:
@@ -131,7 +130,6 @@ services:
 volumes:
   prometheus_data: {}
   grafana_data: {}
-
 ```
 
 In Grafana, select `Configuration` -> `Data Sources` -> `Add Data Source`, and select Prometheus.
@@ -140,5 +138,3 @@ In the URL field, specify the URL of the Prometheus server, e.g. `http://prometh
 Now we can create a dashboard and add panels to it. Select the Prometheus data source, and add queries. You should see the metrics exposed by Platformatic.
 
 It's also possible to import pre-configured dashboards, like [this one](https://grafana.com/grafana/dashboards/12230-node-js-dashboard/) from Grafana.com.
-
-

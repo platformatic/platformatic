@@ -11,12 +11,12 @@ Platformatic Service is an HTTP server that provides a developer tools for
 building robust APIs with Node.js.
 
 For a high level overview of how Platformatic Service works, please reference the
-[Overview](../Overview.md) guide.
+[Overview](../../Overview.md) guide.
 
 ## Features
 
 - Add custom functionality in a [Fastify plugin](./plugin.md)
-- Write plugins in JavaScript or [TypeScript](../cli.md#compile)
+- Write plugins in JavaScript or [TypeScript](../platformatic/cli.md#compile)
 - Start Platformatic Service [programmatically](./programmatic.md) in tests or other applications
 - Fully typed
 
