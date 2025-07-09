@@ -2,7 +2,7 @@ import Issues from '../../getting-started/issues.md';
 
 # Logging
 
-Configures the `logger`, see the [runtime](../../runtime/configuration.md#logger) documentation.
+Configures the `logger`, see the [runtime](../runtime/configuration.md#logger) documentation.
 
 ## Log formatting
 

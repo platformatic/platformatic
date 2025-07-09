@@ -33,7 +33,7 @@ Postgrator maintains a table in your database schema to store and track which mi
 
 ### Applying Migrations
 
-You can rollback or apply migrations to a specific version using the Platformatic [CLI](../cli.md):
+You can rollback or apply migrations to a specific version using the Platformatic [CLI](../platformatic/cli.md):
 
 ```bash
 $ platformatic db migrations apply --to 002
@@ -85,6 +85,6 @@ For manual migration management:
 $ npx platformatic db migrations apply --to MIGRATION_NUMBER
 ```
 
-To learn more on using the CLI for migrations, see the [CLI documentation](../cli.md#migrations-apply). 
+To learn more on using the CLI for migrations, see the [CLI documentation](../platformatic/cli.md#migrations-apply). 
 
 <Issues />

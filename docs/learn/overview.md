@@ -16,7 +16,7 @@ Already familiar with Platformatic? Check out our [Getting Started](../getting-s
 New to Platformatic? Start with our [Todo API Tutorial](./beginner/crud-application.md) to get hands-on experience in building a simple API.
 
 ## API References
-For API references, please refer to the Platformatic [documentation](../cli.md).
+For API references, please refer to the Platformatic [documentation](../packages/platformatic/cli.md).
 
 ## Glossary
 Understand key terms and concepts with our [Glossary](./glossary.md).

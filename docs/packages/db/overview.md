@@ -9,25 +9,25 @@ Platformatic DB is an HTTP server that provides a flexible set of tools for
 building robust APIs with Node.js.
 
 For a high level overview of how Platformatic DB works, please reference the
-[Introduction](../Overview.md) guide.
+[Introduction](../../Overview.md) guide.
 
 ## Features
 
 ### Command Line Interface 
-- Easily manage your databases with the `platformatic db` [CLI](../cli.md#db).
+- Easily manage your databases with the `platformatic db` [CLI](../platformatic/cli.md#db).
 
 ### Multiple Database Support 
 - Integration with [multiple database systems](#supported-databases)
 - Efficient [Database migrations](./migrations.md)
   
 ### REST/OpenAPI
-- Automatically generate a [REST API](../packages/sql-openapi/overview.md) from your database schema.
+- Automatically generate a [REST API](../sql-openapi/overview.md) from your database schema.
 - Access interactive documentation via [Scalar](https://docs.scalar.com/swagger-editor).
 - Generate [OpenAPI 3.0](https://swagger.io/resources/open-api/) schema.
 
 ### GraphQL
 
-- Create a [GraphQL API](../packages/sql-graphql/overview.md) directly from your database schema.
+- Create a [GraphQL API](../sql-graphql/overview.md) directly from your database schema.
 - Extend your API with [Apollo Federation](https://www.apollographql.com/docs/federation/).
 - Explore your API with the web-based [GraphiQL IDE](https://github.com/graphql/graphiql).
 
@@ -37,8 +37,8 @@ For a high level overview of how Platformatic DB works, please reference the
 
 ### Complete flexibility
 - Add custom functionality in a [Fastify plugin](../db/plugin.md).
-- Interact with your database via [mapped entities](../packages/sql-mapper/entities/overview.md) or execute [raw SQL queries](../packages/sql-mapper/overview.md).
-- Develop plugins in JavaScript or [TypeScript](../cli.md#compile).
+- Interact with your database via [mapped entities](../sql-mapper/entities/overview.md) or execute [raw SQL queries](../sql-mapper/overview.md).
+- Develop plugins in JavaScript or [TypeScript](../platformatic/cli.md#compile).
 - Automatically generate types based on SQL tables.
 
 ### Usage
@@ -46,7 +46,7 @@ For a high level overview of how Platformatic DB works, please reference the
 
 :::info
 
-Ready to start? Dive into our [Quick Start Guide](../getting-started/quick-start-guide.md) and get your API up and running in just 2 minutes! ⚡
+Ready to start? Dive into our [Quick Start Guide](../../getting-started/quick-start-guide.md) and get your API up and running in just 2 minutes! ⚡
 :::
 
 ## Supported databases

@@ -7,13 +7,13 @@ of environment variables as setting values with [configuration placeholders](#co
 
 ## Configuration Files
 
-The Platformatic CLI automatically detects and loads configuration files found in the current working directory with the file names listed [here](../file-formats.md#configuration-files).
+The Platformatic CLI automatically detects and loads configuration files found in the current working directory with the file names listed [here](../../file-formats.md#configuration-files).
 
 Alternatively, you can specify a configuration file path using the `--config` option for most `platformatic runtime` CLI commands. The configuration examples in this reference use the JSON format.
 
 ### Supported File Formats
 
-For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page.
+For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../../file-formats.md#supported-file-formats) page.
 
 ## Settings
 
@@ -57,7 +57,7 @@ An object with the following settings:
   - `allowHTTP1` (`boolean`) - If `true`, the server will also accept HTTP/1.1 connections when `http2` is enabled. Default: `false`.
   - `key` (**required**, `string`, `object`, or `array`) - If `key` is a string, it specifies the private key to be used. If `key` is an object, it must have a `path` property specifying the private key file. Multiple keys are supported by passing an array of keys.
   - `cert` (**required**, `string`, `object`, or `array`) - If `cert` is a string, it specifies the certificate to be used. If `cert` is an object, it must have a `path` property specifying the certificate file. Multiple certificates are supported by passing an array of keys.
-- **`logger`** (`object`) -- the [logger configuration](../configuration/logger.md).
+- **`logger`** (`object`) -- the [logger configuration](../../guides/logging.md).
 - **`pluginTimeout`** (`integer`) -- the number of milliseconds to wait for a Fastify plugin to load
 - **`bodyLimit`** (`integer`) -- the maximum request body size in bytes
 - **`maxParamLength`** (`integer`) -- the maximum length of a request parameter
@@ -332,9 +332,9 @@ _Example_
 
 ### `clients`
 
-An array of [Platformatic Client](/client/overview.md) configurations that will be loaded by Platformatic Service.
+An array of [Platformatic Client](../client/overview.md) configurations that will be loaded by Platformatic Service.
 
-- **`serviceId`** (`string`) - The ID of Platformatic Service inside the Platformatic Runtime. Used only in [Platformatic Runtime context](/runtime/overview.md#platformatic-runtime-context).
+- **`serviceId`** (`string`) - The ID of Platformatic Service inside the Platformatic Runtime. Used only in [Platformatic Runtime context](../runtime/overview.md#platformatic-runtime-context).
 - **`name`** (`string`) - The name of the client.
 - **`type`** (`string`) - The type of the client. Supported values are `graphql` and `openapi`.
 - **`schema`** (`string`) - Path to the generated client schema file.
