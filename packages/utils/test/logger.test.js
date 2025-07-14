@@ -20,7 +20,7 @@ import {
 const fixturesDir = path.join(import.meta.dirname, 'fixtures', 'logger')
 
 test('buildPinoOptions - default values', t => {
-  const pinoOptions = buildPinoOptions({}, {}, 'test-service', 'worker-1', { context: {} }, import.meta.dirname)
+  const pinoOptions = buildPinoOptions({}, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
 
   deepStrictEqual(pinoOptions, {
     level: 'trace',
@@ -29,14 +29,7 @@ test('buildPinoOptions - default values', t => {
 })
 
 test('buildPinoOptions - server config level fallback', t => {
-  const pinoOptions = buildPinoOptions(
-    {},
-    { level: 'debug' },
-    'test-service',
-    'worker-1',
-    { context: {} },
-    import.meta.dirname
-  )
+  const pinoOptions = buildPinoOptions({}, { level: 'debug' }, 'test-service', 'worker-1', {}, import.meta.dirname)
 
   deepStrictEqual(pinoOptions, {
     level: 'debug',
@@ -50,7 +43,7 @@ test('buildPinoOptions - logger config level takes precedence over server config
     { level: 'debug' },
     'test-service',
     'worker-1',
-    { context: {} },
+    {},
     import.meta.dirname
   )
 
@@ -61,14 +54,7 @@ test('buildPinoOptions - logger config level takes precedence over server config
 })
 
 test('buildPinoOptions - custom level', t => {
-  const pinoOptions = buildPinoOptions(
-    { level: 'info' },
-    {},
-    'test-service',
-    'worker-1',
-    { context: {} },
-    import.meta.dirname
-  )
+  const pinoOptions = buildPinoOptions({ level: 'info' }, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
 
   deepStrictEqual(pinoOptions, {
     level: 'info',
@@ -82,7 +68,7 @@ test('buildPinoOptions - with worker', t => {
     {},
     'test-service',
     'worker-1',
-    { context: { worker: { index: 0 } } },
+    { worker: { index: 0 } },
     import.meta.dirname
   )
 
@@ -121,7 +107,7 @@ test('buildPinoOptions - full custom options', async t => {
     {},
     'test-service',
     'worker-1',
-    { context: {} },
+    {},
     import.meta.dirname
   )
 
@@ -150,14 +136,7 @@ test('buildPinoOptions - with standard timestamp function', t => {
   for (const fnName of timestampFunctions) {
     const loggerConfig = { timestamp: fnName }
 
-    const pinoOptions = buildPinoOptions(
-      loggerConfig,
-      {},
-      'test-service',
-      'worker-1',
-      { context: {} },
-      import.meta.dirname
-    )
+    const pinoOptions = buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
 
     strictEqual(typeof pinoOptions.timestamp, 'function')
   }
@@ -169,14 +148,7 @@ test('buildPinoOptions - with invalid timestamp string', t => {
 
   // The current implementation doesn't throw for invalid timestamp names
   // It just assigns undefined to pinoOptions.timestamp
-  const pinoOptions = buildPinoOptions(
-    loggerConfig,
-    {},
-    'test-service',
-    'worker-1',
-    { context: {} },
-    import.meta.dirname
-  )
+  const pinoOptions = buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
 
   strictEqual(pinoOptions.timestamp, undefined, 'Invalid timestamp function name should result in undefined timestamp')
 })
@@ -184,14 +156,7 @@ test('buildPinoOptions - with invalid timestamp string', t => {
 test('buildPinoOptions - with boolean timestamp false', t => {
   const loggerConfig = { timestamp: false }
 
-  const pinoOptions = buildPinoOptions(
-    loggerConfig,
-    {},
-    'test-service',
-    'worker-1',
-    { context: {} },
-    import.meta.dirname
-  )
+  const pinoOptions = buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
 
   // The implementation sets timestamp to undefined when it's not a valid timestamp name
   strictEqual(pinoOptions.timestamp, undefined)
@@ -202,14 +167,7 @@ test('buildPinoOptions - with timestamp as empty string', t => {
 
   // The current implementation doesn't throw for empty string
   // It just assigns undefined to pinoOptions.timestamp
-  const pinoOptions = buildPinoOptions(
-    loggerConfig,
-    {},
-    'test-service',
-    'worker-1',
-    { context: {} },
-    import.meta.dirname
-  )
+  const pinoOptions = buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
 
   strictEqual(pinoOptions.timestamp, undefined, 'Empty timestamp string should result in undefined timestamp')
 })
@@ -218,14 +176,7 @@ test('buildPinoOptions - with non-string non-object timestamp (boolean)', t => {
   // Test boolean value which should be handled correctly
   const loggerConfig = { timestamp: false }
 
-  const pinoOptions = buildPinoOptions(
-    loggerConfig,
-    {},
-    'test-service',
-    'worker-1',
-    { context: {} },
-    import.meta.dirname
-  )
+  const pinoOptions = buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
 
   strictEqual(pinoOptions.timestamp, undefined, 'Boolean timestamp value gets set to undefined')
 })
@@ -235,14 +186,7 @@ test('buildPinoOptions - with number as timestamp value', t => {
   const loggerConfig = { timestamp: 123 }
 
   // The actual behavior is that numeric timestamps are ignored
-  const pinoOptions = buildPinoOptions(
-    loggerConfig,
-    {},
-    'test-service',
-    'worker-1',
-    { context: {} },
-    import.meta.dirname
-  )
+  const pinoOptions = buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
 
   strictEqual(pinoOptions.timestamp, undefined, 'Numeric timestamp should be set to undefined')
 })
@@ -257,7 +201,7 @@ test('buildPinoOptions - invalid formatters.bindings value', t => {
   // Using real formatters file with non-function bindings
   throws(
     () => {
-      buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', { context: {} }, import.meta.dirname)
+      buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
     },
     err => {
       return err.message === 'logger.formatters.bindings must be a function'
@@ -287,7 +231,7 @@ test('buildPinoOptions - invalid formatters.level value', t => {
 
     throws(
       () => {
-        buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', { context: {} }, import.meta.dirname)
+        buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
       },
       {
         message: 'logger.formatters.level must be a function'
@@ -319,14 +263,7 @@ test('buildPinoOptions - with redact paths and censor', t => {
     }
   }
 
-  const pinoOptions = buildPinoOptions(
-    loggerConfig,
-    {},
-    'test-service',
-    'worker-1',
-    { context: {} },
-    import.meta.dirname
-  )
+  const pinoOptions = buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
 
   deepStrictEqual(pinoOptions.redact, {
     paths: ['password', 'apiKey', 'user.credentials.token'],
@@ -342,14 +279,7 @@ test('buildPinoOptions - with redact paths only', t => {
     }
   }
 
-  const pinoOptions = buildPinoOptions(
-    loggerConfig,
-    {},
-    'test-service',
-    'worker-1',
-    { context: {} },
-    import.meta.dirname
-  )
+  const pinoOptions = buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
 
   // Default behavior allows undefined censor
   deepStrictEqual(pinoOptions.redact, {
@@ -366,14 +296,7 @@ test('buildPinoOptions - with empty redact paths', t => {
     }
   }
 
-  const pinoOptions = buildPinoOptions(
-    loggerConfig,
-    {},
-    'test-service',
-    'worker-1',
-    { context: {} },
-    import.meta.dirname
-  )
+  const pinoOptions = buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
 
   deepStrictEqual(pinoOptions.redact, {
     paths: [],
@@ -389,14 +312,7 @@ test('buildPinoOptions - with nested redact paths', t => {
     }
   }
 
-  const pinoOptions = buildPinoOptions(
-    loggerConfig,
-    {},
-    'test-service',
-    'worker-1',
-    { context: {} },
-    import.meta.dirname
-  )
+  const pinoOptions = buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
 
   deepStrictEqual(pinoOptions.redact, {
     paths: ['user.password', 'deeply.nested.secret.key'],
@@ -413,7 +329,7 @@ test('buildPinoOptions - invalid base', t => {
 
   throws(
     () => {
-      buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', { context: {} }, import.meta.dirname)
+      buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
     },
     err => {
       return err.message === 'logger.base.pid must be a string'
@@ -430,7 +346,7 @@ test('buildPinoOptions - invalid customLevels', t => {
 
   throws(
     () => {
-      buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', { context: {} }, import.meta.dirname)
+      buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
     },
     err => {
       return err.message === 'logger.customLevels.i must be a number'
@@ -568,28 +484,14 @@ test('buildPinoTimestamp - should return undefined for invalid timestamp', t => 
 
 test('buildPinoOptions - with base null', t => {
   const loggerConfig = { base: null }
-  const pinoOptions = buildPinoOptions(
-    loggerConfig,
-    {},
-    'test-service',
-    'worker-1',
-    { context: {} },
-    import.meta.dirname
-  )
+  const pinoOptions = buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
 
   strictEqual(pinoOptions.base, undefined)
 })
 
 test('buildPinoOptions - with messageKey', t => {
   const loggerConfig = { messageKey: 'msg' }
-  const pinoOptions = buildPinoOptions(
-    loggerConfig,
-    {},
-    'test-service',
-    'worker-1',
-    { context: {} },
-    import.meta.dirname
-  )
+  const pinoOptions = buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
 
   strictEqual(pinoOptions.messageKey, 'msg')
 })
@@ -601,14 +503,7 @@ test('buildPinoOptions - with valid customLevels', t => {
       anotherLevel: 45
     }
   }
-  const pinoOptions = buildPinoOptions(
-    loggerConfig,
-    {},
-    'test-service',
-    'worker-1',
-    { context: {} },
-    import.meta.dirname
-  )
+  const pinoOptions = buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
 
   deepStrictEqual(pinoOptions.customLevels, {
     myLevel: 35,
@@ -618,14 +513,7 @@ test('buildPinoOptions - with valid customLevels', t => {
 
 test('buildPinoOptions - with pretty option', t => {
   const loggerConfig = { pretty: true }
-  const pinoOptions = buildPinoOptions(
-    loggerConfig,
-    {},
-    'test-service',
-    'worker-1',
-    { context: {} },
-    import.meta.dirname
-  )
+  const pinoOptions = buildPinoOptions(loggerConfig, {}, 'test-service', 'worker-1', {}, import.meta.dirname)
 
   deepStrictEqual(pinoOptions.transport, { target: 'pino-pretty' })
 })

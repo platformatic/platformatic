@@ -23,6 +23,7 @@ const { parse: parseTOML, stringify: stringifyTOML } = toml
 
 const kReplaceEnvIgnore = Symbol('plt.foundation.replaceEnvIgnore')
 
+export const kEnvironment = Symbol('plt.foundation.environment')
 export const envVariablePattern = /^\{([a-z0-9_]+)\}$/i
 
 export const knownConfigurationFilesExtensions = ['json', 'json5', 'yaml', 'yml', 'toml', 'tml']
@@ -406,14 +407,14 @@ export async function loadConfiguration (source, schema, options = {}) {
     config = await loadConfigurationFile(source)
   }
 
+  if (!root) {
+    throw new RootMissingError()
+  }
+
+  const env = await loadEnv(root)
   config = structuredClone(config)
 
   if (shouldReplaceEnv) {
-    if (!root) {
-      throw new RootMissingError()
-    }
-
-    const env = await loadEnv(root)
     config = replaceEnv(config, env, onMissingEnv, replaceEnvIgnore)
   }
 
@@ -458,6 +459,7 @@ export async function loadConfiguration (source, schema, options = {}) {
     config = await transform(config)
   }
 
+  config[kEnvironment] = env
   return config
 }
 

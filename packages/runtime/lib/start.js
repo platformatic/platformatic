@@ -5,9 +5,7 @@ const { writeFile } = require('node:fs/promises')
 const { join, resolve, dirname } = require('node:path')
 
 const { printConfigValidationErrors } = require('@platformatic/config')
-const {
-  errors: { ensureLoggableError }
-} = require('@platformatic/utils')
+const { ensureLoggableError } = require('@platformatic/utils')
 const closeWithGrace = require('close-with-grace')
 const pino = require('pino')
 const pretty = require('pino-pretty')

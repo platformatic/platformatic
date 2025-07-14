@@ -1,5 +1,3 @@
-import { ConfigManager } from '@platformatic/config'
-
 export interface StartOptions {
   listen?: boolean
 }
@@ -34,8 +32,8 @@ export class BaseStackable<Config = Record<string, any>, Options = BaseOptions> 
   constructor (
     type: string,
     version: string,
-    options: Options,
-    configManager: ConfigManager,
+    root: string,
+    config: object,
     standardStreams?: Record<string, NodeJS.WritableStream>
   )
 

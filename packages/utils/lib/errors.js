@@ -17,6 +17,7 @@ export function ensureLoggableError (error) {
 }
 
 export const PathOptionRequiredError = createError(`${ERROR_PREFIX}_PATH_OPTION_REQUIRED`, 'path option is required')
+export const NoConfigFileFoundError = createError(`${ERROR_PREFIX}_NO_CONFIG_FILE_FOUND`, 'no config file found')
 export const InvalidConfigFileExtensionError = createError(
   `${ERROR_PREFIX}_INVALID_CONFIG_FILE_EXTENSION`,
   'Invalid config file extension. Only yml, yaml, json, json5, toml, tml are supported.'

@@ -1,4 +1,4 @@
-import { createDirectory, features, kTimeout, safeRemove, withResolvers } from '@platformatic/utils'
+import { createDirectory, features, kTimeout, safeRemove } from '@platformatic/utils'
 import { join } from 'desm'
 import { execa } from 'execa'
 import * as getPort from 'get-port'
@@ -74,18 +74,11 @@ export async function createTemporaryDirectory (t, prefix = 'plt-basic') {
   return directory
 }
 
-export async function create (
-  t,
-  context = {},
-  config = { current: {} },
-  name = 'base',
-  version = '1.0.0',
-  base = temporaryFolder
-) {
+export async function create (t, context = {}, config = {}, name = 'base', version = '1.0.0', base = temporaryFolder) {
   await createDirectory(base)
   t.after(() => safeRemove(base))
 
-  return new BaseStackable(name, version, { context }, base, config, {
+  return new BaseStackable(name, version, base, config, context, {
     stdout: new MockedWritable(),
     stderr: new MockedWritable()
   })
@@ -510,8 +503,8 @@ export async function verifyHTMLViaInject (app, serviceId, url, contents) {
 }
 
 export async function verifyHMR (baseUrl, path, protocol, handler) {
-  const connection = withResolvers()
-  const reload = withResolvers()
+  const connection = Promise.withResolvers()
+  const reload = Promise.withResolvers()
   const ac = new AbortController()
   const timeout = sleep(HMR_TIMEOUT, kTimeout, { signal: ac.signal })
 

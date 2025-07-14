@@ -54,7 +54,7 @@ export function buildPinoTimestamp (timestamp) {
   return stdTimeFunctions[timestamp]
 }
 
-export function buildPinoOptions (loggerConfig, serverConfig, serviceId, workerId, serviceOptions, root) {
+export function buildPinoOptions (loggerConfig, serverConfig, serviceId, workerId, context, root) {
   const pinoOptions = {
     level: loggerConfig?.level ?? serverConfig?.level ?? 'trace'
   }
@@ -74,7 +74,7 @@ export function buildPinoOptions (loggerConfig, serverConfig, serviceId, workerI
     pinoOptions.base = undefined
   }
 
-  if (typeof serviceOptions.context.worker?.index !== 'undefined' && loggerConfig?.base !== null) {
+  if (typeof context.worker?.index !== 'undefined' && loggerConfig?.base !== null) {
     pinoOptions.base = {
       ...(pinoOptions.base ?? {}),
       pid: process.pid,

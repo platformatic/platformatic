@@ -1,4 +1,4 @@
-import { safeRemove, withResolvers } from '@platformatic/utils'
+import { safeRemove } from '@platformatic/utils'
 import { join } from 'desm'
 import { execa } from 'execa'
 import split from 'split2'
@@ -22,7 +22,7 @@ export async function start (...args) {
   child.catch(() => {})
   child.stderr.pipe(process.stdout)
 
-  const { promise, resolve, reject } = withResolvers()
+  const { promise, resolve, reject } = Promise.withResolvers()
 
   let serverStarted = false
   const errorTimeout = setTimeout(() => {

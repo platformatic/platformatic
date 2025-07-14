@@ -1,5 +1,4 @@
-import { ConfigManager } from '@platformatic/config'
-import { detectApplicationType } from '@platformatic/utils'
+import { detectApplicationType, findConfigurationFile } from '@platformatic/utils'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { relative, resolve } from 'node:path'
@@ -58,7 +57,7 @@ export async function importStackableAndConfig (root, config, context) {
   const hadConfig = !!config
 
   if (!config) {
-    config = await ConfigManager.findConfigFile(root, 'application')
+    config = await findConfigurationFile(root, 'application')
   }
 
   const appType = await detectApplicationType(root, rootPackageJson)
@@ -72,7 +71,7 @@ export async function importStackableAndConfig (root, config, context) {
   if (context) {
     const serviceRoot = relative(process.cwd(), root)
 
-    if (!hadConfig && context.serviceId && !(await ConfigManager.findConfigFile(root)) && context.worker?.index === 0) {
+    if (!hadConfig && context.serviceId && !(await findConfigurationFile(root)) && context.worker?.index === 0) {
       const autodetectDescription =
         moduleName === '@platformatic/node' ? 'is a generic Node.js application' : `is using ${label}`
 

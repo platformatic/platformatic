@@ -1,7 +1,7 @@
 'use strict'
 
 const Swagger = require('@fastify/swagger')
-const deepmerge = require('@fastify/deepmerge')({ all: true })
+const { deepmerge } = require('@platformatic/utils')
 const { mapSQLEntityToJSONSchema } = require('@platformatic/sql-json-schema-mapper')
 const { findNearestString } = require('@platformatic/utils')
 const entityPlugin = require('./lib/entity-to-routes')
@@ -12,28 +12,31 @@ const errors = require('./lib/errors')
 
 async function setupOpenAPI (app, opts) {
   const prefix = opts.prefix || ''
-  const openapiConfig = deepmerge({
-    exposeRoute: true,
-    info: {
-      title: 'Platformatic DB',
-      description: 'Exposing a SQL database as REST',
-      version: '1.0.0',
+  const openapiConfig = deepmerge(
+    {
+      exposeRoute: true,
+      info: {
+        title: 'Platformatic DB',
+        description: 'Exposing a SQL database as REST',
+        version: '1.0.0'
+      },
+      servers: [{ url: globalThis.platformatic?.runtimeBasePath ?? '/' }]
     },
-    servers: [{ url: globalThis.platformatic?.runtimeBasePath ?? '/' }],
-  }, opts)
+    opts
+  )
   app.log.trace({ openapi: openapiConfig })
   await app.register(Swagger, {
     exposeRoute: openapiConfig.exposeRoute,
     openapi: {
-      ...openapiConfig,
+      ...openapiConfig
     },
     refResolver: {
       buildLocalReference (json, baseUri, fragment, i) {
         // TODO figure out if we need def-${i}
         /* istanbul ignore next */
         return json.$id || `def-${i}`
-      },
-    },
+      }
+    }
   })
 
   const ignore = opts.ignore || []
@@ -54,15 +57,15 @@ async function setupOpenAPI (app, opts) {
     prefix: undefined,
     routePrefix,
     configuration: {
-      customCss: scalarTheme.theme,
-    },
+      customCss: scalarTheme.theme
+    }
   })
 
-  app.addHook('onRoute', (routeOptions) => {
+  app.addHook('onRoute', routeOptions => {
     if (paths[routeOptions.url]) {
       routeOptions.schema = {
         ...routeOptions.schema,
-        ...getSchemaOverrideFromOpenApiPathItem(paths[routeOptions.url], routeOptions.method),
+        ...getSchemaOverrideFromOpenApiPathItem(paths[routeOptions.url], routeOptions.method)
       }
     }
   })
@@ -98,7 +101,7 @@ async function setupOpenAPI (app, opts) {
       const targetEntity = app.platformatic.entities[targetEntityName]
       const reverseRelationship = {
         sourceEntity: relation.entityName,
-        relation,
+        relation
       }
       /* istanbul ignore next */
       targetEntity.reverseRelationships = targetEntity.reverseRelationships || []
@@ -106,8 +109,7 @@ async function setupOpenAPI (app, opts) {
     }
   }
 
-  const entitiesNames = Object.values(app.platformatic.entities)
-    .map(entity => entity.singularName)
+  const entitiesNames = Object.values(app.platformatic.entities).map(entity => entity.singularName)
 
   for (const ignoredEntity of Object.keys(ignore)) {
     if (!entitiesNames.includes(ignoredEntity)) {
@@ -142,7 +144,7 @@ async function setupOpenAPI (app, opts) {
         entity,
         prefix: localPrefix,
         ignore: ignore[entity.singularName] || {},
-        ignoreRoutes,
+        ignoreRoutes
       })
     } else {
       // TODO support ignore
@@ -150,7 +152,7 @@ async function setupOpenAPI (app, opts) {
         entity,
         prefix: localPrefix,
         ignore,
-        ignoreRoutes,
+        ignoreRoutes
       })
     }
   }

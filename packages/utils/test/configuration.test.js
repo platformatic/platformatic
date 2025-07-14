@@ -20,11 +20,11 @@ import {
   matchKnownSchema,
   printValidationErrors,
   replaceEnv,
+  safeRemove,
   saveConfigurationFile,
   stringifyJSON,
   stringifyJSON5
-} from '../lib/configuration.js'
-import { safeRemove } from '../lib/file-system.js'
+} from '../index.js'
 
 test('envVariablePattern - should match environment variable patterns', () => {
   ok(envVariablePattern.test('{FOO}'))

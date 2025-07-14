@@ -1167,3 +1167,23 @@ export const wrappedRuntime = {
   properties: wrappedRuntimeProperties,
   additionalProperties: false
 }
+
+export const schemaComponents = {
+  env,
+  workers,
+  preload,
+  watch,
+  cors,
+  logger,
+  server,
+  fastifyServer,
+  undiciInterceptor,
+  health,
+  healthWithoutDefaults,
+  telemetryExporter,
+  telemetry,
+  services,
+  runtimeProperties,
+  wrappedRuntimeProperties,
+  wrappedRuntime
+}
