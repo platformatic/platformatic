@@ -3,6 +3,7 @@
   "version": "2.70.1",
   "description": "Platformatic Utils",
   "main": "index.js",
+  "types": "index.d.ts",
   "type": "module",
   "scripts": {
     "test": "npm run lint && node --test --test-concurrency=1 --test-timeout=1200000",

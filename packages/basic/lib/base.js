@@ -1,5 +1,13 @@
 import { client, collectMetrics } from '@platformatic/metrics'
-import { buildPinoOptions, deepmerge, executeWithTimeout, kEnvironment, kTimeout } from '@platformatic/utils'
+import {
+  buildPinoOptions,
+  deepmerge,
+  executeWithTimeout,
+  kEnvironment,
+  kPath,
+  kRoot,
+  kTimeout
+} from '@platformatic/utils'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import EventEmitter, { once } from 'node:events'
@@ -106,7 +114,7 @@ export class BaseStackable extends EventEmitter {
   }
 
   async getConfig () {
-    const { [kEnvironment]: _, ...config } = this.config
+    const { [kRoot]: _u1, [kEnvironment]: _u2, [kPath]: _u3, ...config } = this.config
     return config
   }
 

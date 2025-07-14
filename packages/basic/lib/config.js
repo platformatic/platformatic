@@ -69,9 +69,11 @@ export async function transform (config) {
   } else if (typeof config.watch !== 'object') {
     config.watch = { enabled: config.watch || false }
   }
+
+  return config
 }
 
-export const schemaOptions = {
+export const validationOptions = {
   useDefaults: true,
   coerceTypes: true,
   allErrors: true,

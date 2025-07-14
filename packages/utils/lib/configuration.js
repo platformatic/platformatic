@@ -23,16 +23,18 @@ const { parse: parseTOML, stringify: stringifyTOML } = toml
 
 const kReplaceEnvIgnore = Symbol('plt.foundation.replaceEnvIgnore')
 
+export const kPath = Symbol('plt.foundation.path')
+export const kRoot = Symbol('plt.foundation.root')
 export const kEnvironment = Symbol('plt.foundation.environment')
-export const envVariablePattern = /^\{([a-z0-9_]+)\}$/i
+export const envVariablePattern = /\{([a-z0-9_]+)\}/i
 
 export const knownConfigurationFilesExtensions = ['json', 'json5', 'yaml', 'yml', 'toml', 'tml']
 
 // Important: do not put $ in any RegExp since we might use the querystring to deliver additional information
 export const knownConfigurationFilesSchemas = [
-  /^https:\/\/platformatic.dev\/schemas\/(?<version>)\/(?<module>.*)/,
-  /^https:\/\/schemas.platformatic.dev\/@platformatic\/(?<module>.*)\/(?<version>)\.json/,
-  /^https:\/\/schemas.platformatic.dev\/(?<module>wattpm)\/(?<version>)\.json/
+  /^https:\/\/platformatic.dev\/schemas\/(v?)(?<version>[^/]+)\/(?<module>.*)/,
+  /^https:\/\/schemas.platformatic.dev\/@platformatic\/(?<module>.*)\/(v?)(?<version>[^/]+)\.json/,
+  /^https:\/\/schemas.platformatic.dev\/(?<module>wattpm)\/(v?)(?<version>[^/]+)\.json/
 ]
 
 function parseYAML (raw, ...args) {
@@ -163,8 +165,12 @@ export function matchKnownSchema (config, throwOnMissing = false) {
 
   const matching = knownConfigurationFilesSchemas.map(matcher => config.$schema.match(matcher)).find(m => m)
 
-  if (!matching && throwOnMissing) {
-    throw new AddAModulePropertyToTheConfigOrAddAKnownSchemaError()
+  if (!matching) {
+    if (throwOnMissing) {
+      throw new AddAModulePropertyToTheConfigOrAddAKnownSchemaError()
+    }
+
+    return null
   }
 
   const mod = matching.groups.module
@@ -247,7 +253,7 @@ export function saveConfigurationFile (configurationFile, config) {
   return writeFile(configurationFile, stringifer(config), 'utf-8')
 }
 
-export function createValidator (schema, validationOptions, options = {}) {
+export function createValidator (schema, validationOptions, context = {}) {
   const ajv = new Ajv(validationOptions)
 
   ajv.addKeyword({
@@ -260,8 +266,8 @@ export function createValidator (schema, validationOptions, options = {}) {
         return !!parentSchema.allowEmptyPaths
       }
 
-      if (options.fixPaths !== false) {
-        const resolved = resolve(options.root, path)
+      if (context.fixPaths !== false) {
+        const resolved = resolve(context.root, path)
         data.parentData[data.parentDataProperty] = resolved
       }
       return true
@@ -280,11 +286,11 @@ export function createValidator (schema, validationOptions, options = {}) {
         return false
       }
 
-      if (options.fixPaths === false) {
+      if (context.fixPaths === false) {
         return true
       }
 
-      const require = createRequire(resolve(options.root, 'noop.js'))
+      const require = createRequire(resolve(context.root, 'noop.js'))
       try {
         const resolved = require.resolve(path)
         data.parentData[data.parentDataProperty] = resolved
@@ -367,11 +373,15 @@ export function replaceEnv (config, env, onMissingEnv, ignore) {
       config[key] = replaceEnv(config[key], env, onMissingEnv)
     }
   } else if (typeof config === 'string') {
-    const matches = config.match(envVariablePattern)
+    let matches = config.match(envVariablePattern)
 
-    if (matches) {
-      const envKey = matches[1]
-      return env[envKey] ?? onMissingEnv?.(envKey) ?? ''
+    while (matches) {
+      const [template, key] = matches
+
+      const replacement = env[key] ?? onMissingEnv?.(key) ?? ''
+      config = config.replace(template, replacement)
+
+      matches = config.match(envVariablePattern)
     }
   }
 
@@ -386,12 +396,16 @@ export async function loadConfiguration (source, schema, options = {}) {
     upgrade,
     replaceEnv: shouldReplaceEnv,
     replaceEnvIgnore,
-    onMissingEnv
+    onMissingEnv,
+    fixPaths,
+    logger
   } = {
-    validate: true,
+    throwOnMissingSchema: true,
+    validate: !!schema,
     validationOptions: {},
     replaceEnv: true,
     replaceEnvIgnore: [],
+    fixPaths: true,
     ...options
   }
 
@@ -412,7 +426,6 @@ export async function loadConfiguration (source, schema, options = {}) {
   }
 
   const env = await loadEnv(root)
-  config = structuredClone(config)
 
   if (shouldReplaceEnv) {
     config = replaceEnv(config, env, onMissingEnv, replaceEnvIgnore)
@@ -426,7 +439,7 @@ export async function loadConfiguration (source, schema, options = {}) {
     }
 
     if (version) {
-      config = await this.upgrade(config, version)
+      config = await upgrade(logger, config, version)
     }
   }
 
@@ -435,7 +448,7 @@ export async function loadConfiguration (source, schema, options = {}) {
       throw new SourceMissingError()
     }
 
-    const validator = createValidator(schema, validationOptions)
+    const validator = createValidator(schema, validationOptions, { root, fixPaths })
     const valid = validator(config)
 
     if (!valid) {
@@ -455,11 +468,14 @@ export async function loadConfiguration (source, schema, options = {}) {
     }
   }
 
+  config[kRoot] = root
+  config[kEnvironment] = env
+  config[kPath] = typeof source === 'string' ? source : null
+
   if (typeof transform === 'function') {
     config = await transform(config)
   }
 
-  config[kEnvironment] = env
   return config
 }
 

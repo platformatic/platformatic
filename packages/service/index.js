@@ -1,31 +1,20 @@
-'use strict'
+import { transform as basicTransform, resolve, validationOptions } from '@platformatic/basic'
+import { loadConfiguration } from '@platformatic/utils'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { schema } from './lib/schema.js'
+import { ServiceStackable } from './lib/stackable.js'
+import { upgrade } from './lib/upgrade.js'
+import { isDocker } from './lib/utils.js'
 
-const {
-  createConfigManager,
-  schemaOptions,
-  transformConfig: basicTransformConfig,
-  sanitizeCreationArguments,
-  resolveStackable
-} = require('@platformatic/basic')
-const { readFile } = require('node:fs/promises')
-const { join } = require('node:path')
-const { platformaticService } = require('./lib/application.js')
-const { Generator } = require('./lib/generator.js')
-const { ServiceStackable } = require('./lib/stackable.js')
-const { schema, packageJson } = require('./lib/schema.js')
-const schemaComponents = require('./lib/schema.js')
-const { upgrade } = require('./lib/upgrade.js')
-const { isDocker } = require('./lib/utils.js')
-const { getTypescriptCompilationOptions } = require('./lib/compile.js')
+export async function transform (config) {
+  config = await basicTransform(config)
 
-async function transformConfig () {
-  await basicTransformConfig.call(this)
-
-  if (this.current.server && (await isDocker())) {
-    this.current.server.hostname = '0.0.0.0'
+  if (config.server && (await isDocker())) {
+    config.server.hostname = '0.0.0.0'
   }
 
-  const typescript = this.current.plugins?.typescript
+  const typescript = config.plugins?.typescript
 
   if (typescript) {
     let { outDir, tsConfigFile } = typescript
@@ -41,44 +30,30 @@ async function transformConfig () {
       outDir ||= 'dist'
     }
 
-    this.current.watch.ignore ??= []
-    this.current.watch.ignore.push(outDir + '/**/*')
+    config.watch.ignore ??= []
+    config.watch.ignore.push(outDir + '/**/*')
   }
+
+  return config
 }
 
-const configManagerConfig = { schemaOptions, transformConfig }
+export async function create (configFileOrRoot, sourceOrConfig, context) {
+  const { root, source } = await resolve(configFileOrRoot, sourceOrConfig, 'service')
 
-// This will be replaced by create before the release of v3
-async function buildStackable (opts) {
-  return create(opts.context.directory, opts.config, {}, opts.context)
+  const config = await loadConfiguration(source, context?.schema ?? schema, {
+    validationOptions: context?.validationOptions ?? validationOptions,
+    transform: context?.transform ?? transform,
+    upgrade: context?.upgrade ?? upgrade,
+    replaceEnv: true,
+    root
+  })
+
+  return new ServiceStackable(root, config, context)
 }
 
-async function create (configFileOrRoot, sourceOrConfig, rawOpts, rawContext) {
-  const { root, source } = await resolveStackable(configFileOrRoot, sourceOrConfig, 'service')
-  const { opts, context } = await sanitizeCreationArguments(root, rawOpts, rawContext)
+export const skipTelemetryHooks = true
 
-  const configManager = await createConfigManager(
-    { schema, upgrade, config: configManagerConfig, version: packageJson.version },
-    root,
-    source,
-    opts,
-    context
-  )
-
-  return new ServiceStackable(opts, root, configManager)
-}
-
-module.exports.Generator = Generator
-module.exports.ServiceStackable = ServiceStackable
-module.exports.platformaticService = platformaticService
-module.exports.create = create
-module.exports.skipTelemetryHooks = true
-// Old exports - These might be removed in a future PR
-module.exports.transformConfig = transformConfig
-module.exports.configType = 'service'
-module.exports.configManagerConfig = configManagerConfig
-module.exports.buildStackable = buildStackable
-module.exports.schema = schema
-module.exports.schemaComponents = schemaComponents
-module.exports.version = packageJson.version
-module.exports.getTypescriptCompilationOptions = getTypescriptCompilationOptions
+export { platformaticService } from './lib/application.js'
+export { Generator } from './lib/generator.js'
+export { packageJson, schema, schemaComponents, version } from './lib/schema.js'
+export { ServiceStackable } from './lib/stackable.js'
