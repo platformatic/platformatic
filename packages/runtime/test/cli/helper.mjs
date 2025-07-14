@@ -1,6 +1,6 @@
-import { safeRemove, withResolvers } from '@platformatic/utils'
-import { join } from 'desm'
+import { safeRemove } from '@platformatic/utils'
 import { execa } from 'execa'
+import { join } from 'node:path'
 import split from 'split2'
 import { Agent, setGlobalDispatcher } from 'undici'
 
@@ -14,15 +14,15 @@ setGlobalDispatcher(
   })
 )
 
-export const cliPath = join(import.meta.url, '../../../wattpm/bin/wattpm.js')
-export const startPath = join(import.meta.url, './start.mjs')
+export const cliPath = join(import.meta.dirname, '../../../wattpm/bin/wattpm.js')
+export const startPath = join(import.meta.dirname, './start.mjs')
 
 export async function start (...args) {
   const child = execa(process.execPath, [startPath, ...args])
   child.catch(() => {})
   child.stderr.pipe(process.stdout)
 
-  const { promise, resolve, reject } = withResolvers()
+  const { promise, resolve, reject } = Promise.withResolvers()
 
   let serverStarted = false
   const errorTimeout = setTimeout(() => {

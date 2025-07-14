@@ -2,7 +2,6 @@
 
 import { buildServer } from '@platformatic/runtime'
 import { safeRemove } from '@platformatic/utils'
-import * as desm from 'desm'
 import { execa } from 'execa'
 import assert, { deepStrictEqual } from 'node:assert'
 import { readFile } from 'node:fs/promises'
@@ -10,8 +9,8 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 
-const cliPath = desm.join(import.meta.url, '..', 'control.js')
-const fixturesDir = desm.join(import.meta.url, 'fixtures')
+const cliPath = join(import.meta.dirname, '..', 'control.js')
+const fixturesDir = join(import.meta.dirname, 'fixtures')
 
 test('should inject runtime entrypoint by pid', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')

@@ -3,9 +3,7 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
+const { create } = require('../../index.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { setLogFile } = require('../helpers')
 
@@ -13,8 +11,8 @@ test.beforeEach(setLogFile)
 
 test('emits an exhaustive list of events', async t => {
   const configFile = join(fixturesDir, 'configs', 'service-events.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
+  await app.init()
 
   // Patch the runtime event method to being able to intercept ALL events
   const events = []

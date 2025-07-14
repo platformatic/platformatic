@@ -5,7 +5,7 @@ const { once } = require('node:events')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const autocannon = require('autocannon')
-const { buildServer, loadConfig } = require('..')
+const { create } = require('../index.js')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 const { waitForEvents } = require('./multiple-workers/helper')
 const { request } = require('undici')
@@ -15,12 +15,7 @@ test.beforeEach(setLogFile)
 
 test('should continously monitor workers health', async t => {
   const configFile = join(fixturesDir, 'configs', 'health-healthy.json')
-  const config = await loadConfig({}, ['-c', configFile])
-
-  const server = await buildServer({
-    app: config.app,
-    ...config.configManager.current
-  })
+  const server = await create(configFile)
 
   await server.start()
 
@@ -35,12 +30,7 @@ test('should continously monitor workers health', async t => {
 
 test('should restart the process if it exceeded maximum threshold', async t => {
   const configFile = join(fixturesDir, 'configs', 'health-unhealthy.json')
-  const config = await loadConfig({}, ['-c', configFile])
-
-  const server = await buildServer({
-    app: config.app,
-    ...config.configManager.current
-  })
+  const server = await create(configFile)
 
   t.after(async () => {
     await server.close()
@@ -72,12 +62,7 @@ test('should restart the process if it exceeded maximum threshold', async t => {
 
 test('should not lose any connection when restarting the process', async t => {
   const configFile = join(fixturesDir, 'health-check-swapping', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile])
-
-  const server = await buildServer({
-    app: config.app,
-    ...config.configManager.current
-  })
+  const server = await create(configFile)
 
   t.after(async () => {
     await server.close()
@@ -103,12 +88,7 @@ test('should not lose any connection when restarting the process', async t => {
 
 test('set the spaces memory correctly', async t => {
   const configFile = join(fixturesDir, 'health-spaces', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile])
-
-  const server = await buildServer({
-    app: config.app,
-    ...config.configManager.current
-  })
+  const server = await create(configFile)
 
   const url = await server.start()
 
@@ -127,12 +107,7 @@ test('set the spaces memory correctly', async t => {
 
 test('set the spaces memory correctly when maxHeapTotal is a string', async t => {
   const configFile = join(fixturesDir, 'health-spaces-heap-string', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile])
-
-  const server = await buildServer({
-    app: config.app,
-    ...config.configManager.current
-  })
+  const server = await create(configFile)
 
   const url = await server.start()
 

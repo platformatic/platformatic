@@ -1,7 +1,6 @@
 'use strict'
 
-const { findConfigurationFile } = require('@platformatic/config')
-const { safeRemove } = require('@platformatic/utils')
+const { safeRemove, findConfigurationFileRecursive } = require('@platformatic/utils')
 const { BaseGenerator } = require('./base-generator')
 const { spawnSync } = require('node:child_process')
 const { stat, readFile, readdir } = require('node:fs/promises')
@@ -119,7 +118,7 @@ class ImportGenerator extends BaseGenerator {
   async #generateConfigFile (originalPath, updatedPath) {
     // Determine if there is a watt.json file in the application path - If it's missing, insert one
     // For import it means we don't update  the file, for copy it means it was already copied in #copy.
-    const existingConfig = await findConfigurationFile(originalPath)
+    const existingConfig = await findConfigurationFileRecursive(originalPath)
 
     if (existingConfig) {
       return
@@ -208,7 +207,11 @@ class ImportGenerator extends BaseGenerator {
       const absolutePath = resolve(file.parentPath, file.name)
       let path = relative(root, dirname(absolutePath))
 
-      if (file.isDirectory() || ['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'].includes(file.name) || path.includes('node_modules')) {
+      if (
+        file.isDirectory() ||
+        ['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'].includes(file.name) ||
+        path.includes('node_modules')
+      ) {
         continue
       }
 

@@ -35,7 +35,6 @@
     "lib"
   ],
   "dependencies": {
-    "@platformatic/config": "workspace:*",
     "@platformatic/control": "workspace:*",
     "@platformatic/runtime": "workspace:*",
     "@platformatic/utils": "workspace:*",

@@ -1,5 +1,5 @@
 {
-  "$schema": "./platformatic.db.schema.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/db/v0.15.0.json",
   "server": {
     "hostname": "{PLT_SERVER_HOSTNAME}",
     "port": "{PORT}",

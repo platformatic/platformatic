@@ -1,9 +1,40 @@
-'use strict'
+import rfdc from 'rfdc'
+import { PathAlreadyExistsError } from './errors.js'
 
-const clone = require('rfdc')()
-const errors = require('./errors')
+const clone = rfdc()
 
-function composeOpenApi (apis, options = {}) {
+function generateOperationIdApiPrefix (operationId) {
+  return (
+    operationId
+      .trim()
+      .replace(/[^A-Z0-9]+/gi, '_')
+      .replace(/^_+|_+$/g, '') + '_'
+  )
+}
+
+function namespaceSchemaRefs (apiPrefix, schema) {
+  if (schema.$ref && schema.$ref.startsWith('#/components/schemas')) {
+    schema.$ref = schema.$ref.replace('#/components/schemas/', '#/components/schemas/' + apiPrefix)
+  }
+  for (const childSchema of Object.values(schema)) {
+    if (typeof childSchema === 'object') {
+      namespaceSchemaRefs(apiPrefix, childSchema)
+    }
+  }
+}
+
+function namespaceSchemaOperationIds (apiPrefix, schema) {
+  if (schema.operationId) {
+    schema.operationId = apiPrefix + schema.operationId
+  }
+  for (const childSchema of Object.values(schema)) {
+    if (typeof childSchema === 'object') {
+      namespaceSchemaOperationIds(apiPrefix, childSchema)
+    }
+  }
+}
+
+export function composeOpenApi (apis, options = {}) {
   const mergedPaths = {}
   const mergedSchemas = {}
   const mergedSecuritySchemes = {}
@@ -31,7 +62,7 @@ function composeOpenApi (apis, options = {}) {
       const mergedPath = prefix ? prefix + path : path
 
       if (mergedPaths[mergedPath]) {
-        throw new errors.PathAlreadyExistsError(mergedPath)
+        throw new PathAlreadyExistsError(mergedPath)
       }
       mergedPaths[mergedPath] = pathSchema
     }
@@ -59,45 +90,12 @@ function composeOpenApi (apis, options = {}) {
     openapi: '3.0.0',
     info: {
       title: options.title || 'Platformatic Composer',
-      version: options.version || '1.0.0',
+      version: options.version || '1.0.0'
     },
     components: {
       securitySchemes: mergedSecuritySchemes,
-      schemas: mergedSchemas,
+      schemas: mergedSchemas
     },
-    paths: mergedPaths,
+    paths: mergedPaths
   }
 }
-
-function generateOperationIdApiPrefix (operationId) {
-  return operationId.trim()
-    .replace(/[^A-Z0-9]+/ig, '_')
-    .replace(/^_+|_+$/g, '') + '_'
-}
-
-function namespaceSchemaRefs (apiPrefix, schema) {
-  if (schema.$ref && schema.$ref.startsWith('#/components/schemas')) {
-    schema.$ref = schema.$ref.replace(
-      '#/components/schemas/',
-      '#/components/schemas/' + apiPrefix
-    )
-  }
-  for (const childSchema of Object.values(schema)) {
-    if (typeof childSchema === 'object') {
-      namespaceSchemaRefs(apiPrefix, childSchema)
-    }
-  }
-}
-
-function namespaceSchemaOperationIds (apiPrefix, schema) {
-  if (schema.operationId) {
-    schema.operationId = apiPrefix + schema.operationId
-  }
-  for (const childSchema of Object.values(schema)) {
-    if (typeof childSchema === 'object') {
-      namespaceSchemaOperationIds(apiPrefix, childSchema)
-    }
-  }
-}
-
-module.exports = composeOpenApi

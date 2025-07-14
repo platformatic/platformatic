@@ -1,7 +1,7 @@
-import { InjectOptions, LightMyRequestResponse } from 'fastify'
 import { FastifyError } from '@fastify/error'
+import { InjectOptions, LightMyRequestResponse } from 'fastify'
 import { BaseLogger } from 'pino'
-import { RuntimeGenerator } from './lib/generator/runtime-generator'
+import { RuntimeGenerator } from './lib/generator/generator'
 export type pltRuntimeBuildServer = {
   address: string
   port: number

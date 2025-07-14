@@ -1,38 +1,17 @@
-'use strict'
-
-const deepEqual = require('fast-deep-equal')
-const { platformaticService } = require('@platformatic/service')
-const { isKeyEnabled } = require('@platformatic/utils')
-const { fetchOpenApiSchema } = require('./commands/openapi-fetch-schemas.js')
-const serviceProxy = require('./proxy')
-const graphql = require('./graphql')
-const composerHook = require('./composer-hook')
-const { openApiGenerator, openApiComposer } = require('./openapi-generator')
-const graphqlGenerator = require('./graphql-generator')
-const { isSameGraphqlSchema, fetchGraphqlSubgraphs } = require('./graphql-fetch')
-const { isFetchable } = require('./utils')
+import { platformaticService } from '@platformatic/service'
+import { isKeyEnabled } from '@platformatic/utils'
+import deepEqual from 'fast-deep-equal'
+import { fetchOpenApiSchema } from './commands/openapi-fetch-schemas.js'
+import { composerHook } from './composer-hook.js'
+import { fetchGraphqlSubgraphs, isSameGraphqlSchema } from './graphql-fetch.js'
+import { graphqlGenerator } from './graphql-generator.js'
+import { graphql } from './graphql.js'
+import { openApiComposer, openApiGenerator } from './openapi-generator.js'
+import { proxy } from './proxy.js'
+import { isFetchable } from './utils.js'
 
 const kITC = Symbol.for('plt.runtime.itc')
 const EXPERIMENTAL_GRAPHQL_COMPOSER_FEATURE_MESSAGE = 'graphql composer is an experimental feature'
-
-async function ensureServices (composerId, config) {
-  if (config.composer?.services?.length) {
-    return
-  }
-
-  composerId ??= globalThis.platformatic?.serviceId
-  config.composer ??= {}
-  config.composer.services ??= []
-
-  // When no services are defined, all services are exposed in the composer
-  const services = await globalThis[kITC]?.send('listServices')
-
-  if (services) {
-    config.composer.services = services
-      .filter(id => id !== composerId) // Remove ourself
-      .map(id => ({ id, proxy: { prefix: `/${id}` } }))
-  }
-}
 
 async function detectServicesUpdate ({ app, services, fetchOpenApiSchema, fetchGraphqlSubgraphs }) {
   let changed
@@ -125,7 +104,26 @@ async function watchServices (app, { config, stackable }) {
   })
 }
 
-async function platformaticComposer (app, stackable) {
+export async function ensureServices (composerId, config) {
+  if (config.composer?.services?.length) {
+    return
+  }
+
+  composerId ??= globalThis.platformatic?.serviceId
+  config.composer ??= {}
+  config.composer.services ??= []
+
+  // When no services are defined, all services are exposed in the composer
+  const services = await globalThis[kITC]?.send('listServices')
+
+  if (services) {
+    config.composer.services = services
+      .filter(id => id !== composerId) // Remove ourself
+      .map(id => ({ id, proxy: { prefix: `/${id}` } }))
+  }
+}
+
+export async function platformaticComposer (app, stackable) {
   const config = await stackable.getConfig()
   let hasGraphqlServices, hasOpenapiServices
 
@@ -161,7 +159,7 @@ async function platformaticComposer (app, stackable) {
     config.server.healthCheck.fn = stackable.isHealthy.bind(stackable)
   }
 
-  await app.register(serviceProxy, { ...config.composer, stackable, context: stackable.context })
+  await app.register(proxy, { ...config.composer, stackable, context: stackable.context })
 
   await platformaticService(app, stackable)
 
@@ -176,7 +174,8 @@ async function platformaticComposer (app, stackable) {
   }
 
   if (!app.hasRoute({ url: '/', method: 'GET' }) && !app.hasRoute({ url: '/*', method: 'GET' })) {
-    await app.register(require('./root'), config)
+    const rootHandler = await import('./root.js')
+    await app.register(rootHandler.default, config)
   }
 
   if (!stackable.context?.isProduction) {
@@ -185,5 +184,3 @@ async function platformaticComposer (app, stackable) {
 }
 
 platformaticComposer[Symbol.for('skip-override')] = true
-
-module.exports = { ensureServices, platformaticComposer }

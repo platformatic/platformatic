@@ -29,7 +29,6 @@
     "@babel/traverse": "^7.25.3",
     "@babel/types": "^7.25.2",
     "@platformatic/basic": "workspace:*",
-    "@platformatic/config": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "amaro": "^0.3.0",
     "iovalkey": "^0.3.0",

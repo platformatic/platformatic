@@ -1,11 +1,10 @@
-'use strict'
-const path = require('path')
-const fastifyStatic = require('@fastify/static')
-const userAgentParser = require('my-ua-parser')
+import fastifyStatic from '@fastify/static'
+import userAgentParser from 'my-ua-parser'
+import path from 'node:path'
 
-module.exports = async (app, opts) => {
+export async function root (app) {
   app.register(fastifyStatic, {
-    root: path.join(__dirname, '../public')
+    root: path.join(import.meta.dirname, '../public')
   })
   // root endpoint
   app.route({

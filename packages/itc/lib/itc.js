@@ -202,7 +202,7 @@ class ITC extends EventEmitter {
     }
   }
 
-  async notify (name, message, options) {
+  notify (name, message, options) {
     this._send(generateNotification(name, message), options)
   }
 

@@ -60,7 +60,7 @@ function execRuntime ({ configPath, onReady, done, timeout = 30_000, debug = fal
       child = null
     }
 
-    let child = execa(process.execPath, [startPath, '-c', configPath], { encoding: 'utf8' })
+    let child = execa(process.execPath, [startPath, configPath], { encoding: 'utf8' })
 
     const timeoutId = setTimeout(async () => {
       clearTimeout(timeoutId)

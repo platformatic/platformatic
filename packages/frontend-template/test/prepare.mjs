@@ -1,11 +1,10 @@
 import { create } from '@platformatic/db'
 import { createDirectory } from '@platformatic/utils'
 import { execa } from 'execa'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { resolve } from 'node:path'
 
 // Start the DB server
-const root = dirname(fileURLToPath(import.meta.url))
+const root = import.meta.dirname
 const app = await create(resolve(root, 'e2e/fixtures/platformatic.e2e.db.json'))
 await app.start()
 

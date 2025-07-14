@@ -1,8 +1,8 @@
-import { features, withResolvers } from '@platformatic/utils'
+import { features } from '@platformatic/utils'
 import { subscribe, tracingChannel, unsubscribe } from 'node:diagnostics_channel'
 
 export function createServerListener (overridePort = true, overrideHost) {
-  const { promise, resolve, reject } = withResolvers()
+  const { promise, resolve, reject } = Promise.withResolvers()
 
   const subscribers = {
     asyncStart ({ options }) {
@@ -48,7 +48,7 @@ export function createServerListener (overridePort = true, overrideHost) {
 }
 
 export function createChildProcessListener () {
-  const { promise, resolve } = withResolvers()
+  const { promise, resolve } = Promise.withResolvers()
 
   const handler = ({ process: child }) => {
     unsubscribe('child_process', handler)

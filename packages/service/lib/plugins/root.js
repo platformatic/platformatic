@@ -1,13 +1,11 @@
-'use strict'
+import fastifyStatic from '@fastify/static'
+import fp from 'fastify-plugin'
+import userAgentParser from 'my-ua-parser'
+import { join } from 'node:path'
 
-const path = require('path')
-const fastifyStatic = require('@fastify/static')
-const userAgentParser = require('my-ua-parser')
-const fp = require('fastify-plugin')
-
-async function setupRoot (app) {
+async function setupRootPlugin (app) {
   app.register(fastifyStatic, {
-    root: path.join(__dirname, '../../public'),
+    root: join(import.meta.dirname, '../../public')
   })
 
   // root endpoint
@@ -24,8 +22,8 @@ async function setupRoot (app) {
         }
       }
       return { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' }
-    },
+    }
   })
 }
 
-module.exports = fp(setupRoot)
+export const setupRoot = fp(setupRootPlugin)

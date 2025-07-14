@@ -9,7 +9,7 @@ const { setTimeout: sleep } = require('node:timers/promises')
 const { Client } = require('undici')
 const WebSocket = require('ws')
 
-const { buildServer } = require('../..')
+const { create } = require('../..')
 const { safeRemove } = require('@platformatic/utils')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { setLogFile } = require('../helpers')
@@ -19,7 +19,7 @@ test.beforeEach(setLogFile)
 test('should get runtime logs via management api', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -57,7 +57,7 @@ test('should get runtime logs via management api', async t => {
 test('should get runtime logs via management api (with a start index)', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -143,7 +143,7 @@ test('should support custom use transport', async t => {
   const configWithLoggerPath = join(projectDir, 'platformatic-custom-logger.json')
   await writeFile(configWithLoggerPath, JSON.stringify(config, null, 2))
 
-  const app = await buildServer(configWithLoggerPath)
+  const app = await create(configWithLoggerPath)
   await app.start()
 
   t.after(async () => {

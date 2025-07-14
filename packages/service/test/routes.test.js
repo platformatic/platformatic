@@ -1,10 +1,8 @@
-'use strict'
-
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { request } = require('undici')
-const { createFromConfig, buildConfig } = require('./helper')
+import assert from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { buildConfig, createFromConfig } from './helper.js'
 
 test('should respond 200 on root endpoint', async t => {
   const app = await createFromConfig(
@@ -63,7 +61,7 @@ test('should not overwrite a plugin which define a root endpoint', async t => {
         }
       },
       plugins: {
-        paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
+        paths: [join(import.meta.dirname, 'fixtures', 'root-endpoint-plugin.js')]
       }
     })
   )
@@ -96,7 +94,7 @@ test('openapi enabled', async t => {
         openapi: true
       },
       plugins: {
-        paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
+        paths: [join(import.meta.dirname, 'fixtures', 'root-endpoint-plugin.js')]
       }
     })
   )
@@ -138,7 +136,7 @@ test('openapi config', async t => {
         }
       },
       plugins: {
-        paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
+        paths: [join(import.meta.dirname, 'fixtures', 'root-endpoint-plugin.js')]
       }
     })
   )
@@ -179,7 +177,7 @@ test('openapi disabled', async t => {
         openapi: false
       },
       plugins: {
-        paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
+        paths: [join(import.meta.dirname, 'fixtures', 'root-endpoint-plugin.js')]
       }
     })
   )
@@ -211,7 +209,7 @@ test('openapi disabled by default', async t => {
         }
       },
       plugins: {
-        paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
+        paths: [join(import.meta.dirname, 'fixtures', 'root-endpoint-plugin.js')]
       }
     })
   )
@@ -238,7 +236,7 @@ test('request id is a uuid', async t => {
       logger: { level: 'fatal' }
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'request-id.js')]
+      paths: [join(import.meta.dirname, 'fixtures', 'request-id.js')]
     }
   })
 
@@ -271,7 +269,7 @@ test('ready in plugin', async t => {
       plugins: {
         paths: [
           {
-            path: join(__dirname, 'fixtures', 'ready-directory'),
+            path: join(import.meta.dirname, 'fixtures', 'ready-directory'),
             encapsulate: false
           }
         ]

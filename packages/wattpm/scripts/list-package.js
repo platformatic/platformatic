@@ -1,4 +1,4 @@
-import { loadConfigurationFile } from '@platformatic/config'
+import { loadConfigurationFile } from '@platformatic/utils'
 import { existsSync } from 'node:fs'
 import { readdir } from 'node:fs/promises'
 import { resolve } from 'node:path'

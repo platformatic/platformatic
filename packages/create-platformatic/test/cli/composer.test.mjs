@@ -32,7 +32,6 @@ test('Creates a Platformatic Composer', async t => {
   equal(await isFileAccessible(join(baseProjectDir, '.env')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env.sample')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'platformatic.json')), true)
-  equal(await isFileAccessible(join(baseProjectDir, 'README.md')), true)
 
   // Here check the generated service
   const services = await getServices(join(baseProjectDir, 'services'))

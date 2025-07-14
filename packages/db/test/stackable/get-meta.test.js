@@ -1,12 +1,10 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { createFromConfig, getConnectionInfo, createBasicPages } = require('../helper')
+import assert from 'node:assert/strict'
+import { join } from 'node:path'
+import test from 'node:test'
+import { createBasicPages, createFromConfig, getConnectionInfo } from '../helper.js'
 
 test('get meta info via stackable api', async t => {
-  const workingDir = join(__dirname, '..', 'fixtures', 'directories')
+  const workingDir = join(import.meta.dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
   const { dbname } = connectionInfo
 

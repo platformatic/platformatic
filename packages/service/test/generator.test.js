@@ -1,10 +1,7 @@
-'use strict'
-
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { Generator } = require('../lib/generator')
-
-const { MockAgent, setGlobalDispatcher } = require('undici')
+import assert from 'node:assert'
+import { test } from 'node:test'
+import { MockAgent, setGlobalDispatcher } from 'undici'
+import { Generator } from '../lib/generator.js'
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)

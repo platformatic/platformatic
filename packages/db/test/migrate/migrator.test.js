@@ -1,14 +1,12 @@
-'use strict'
-
-const { createDirectory } = require('@platformatic/utils')
-const assert = require('node:assert/strict')
-const { mkdtemp } = require('node:fs/promises')
-const { tmpdir } = require('node:os')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const pino = require('pino')
-const pretty = require('pino-pretty')
-const { Migrator } = require('../../lib/migrator.js')
+import { createDirectory } from '@platformatic/utils'
+import assert from 'node:assert/strict'
+import { mkdtemp } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import pino from 'pino'
+import pretty from 'pino-pretty'
+import { Migrator } from '../../lib/migrator.js'
 
 test('should not throw error if setup migrator twice', async t => {
   const { default: Postgrator } = await import('postgrator')

@@ -1,10 +1,9 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { request } = require('undici')
-const { readFile } = require('node:fs/promises')
-const { test } = require('node:test')
-const { createFromConfig, createOpenApiService, createGraphqlService } = require('../helper')
+import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createFromConfig, createGraphqlService, createOpenApiService } from '../helper.js'
 
 test('should respond 200 on root endpoint', async t => {
   const composer = await createFromConfig(t, {
@@ -97,14 +96,14 @@ test('should not expose a default root endpoint if there is a plugin exposing @f
     plugins: {
       paths: [
         {
-          path: require.resolve('./fixtures/root-static.js')
+          path: resolve(import.meta.dirname, './fixtures/root-static.js')
         }
       ]
     }
   })
 
   const { statusCode, body } = await composer.inject({ method: 'GET', url: '/' })
-  const expected = await readFile(require.resolve('./fixtures/hello/index.html'), 'utf8')
+  const expected = await readFile(resolve(import.meta.dirname, './fixtures/hello/index.html'), 'utf8')
   assert.equal(statusCode, 200)
   assert.deepEqual(body, expected)
 })

@@ -1,9 +1,7 @@
-'use strict'
-
-const assert = require('assert/strict')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { createFromConfig, createOpenApiService } = require('../helper')
+import assert from 'assert/strict'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createFromConfig, createOpenApiService } from '../helper.js'
 
 test('should expose x-forwarded-* headers', async t => {
   const service1 = await createOpenApiService(t, ['users'], { addHeadersSchema: true })

@@ -1,6 +1,6 @@
 'use strict'
 
-module.exports = {
+export default {
   schema: `
     extend type Query {
       hello: String
@@ -8,7 +8,7 @@ module.exports = {
   `,
   resolvers: {
     Query: {
-      hello: () => 'world',
-    },
-  },
+      hello: () => 'world'
+    }
+  }
 }

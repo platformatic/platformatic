@@ -1,15 +1,14 @@
-import { isFileAccessible } from '../cli.mjs'
-import { moveToTmpdir } from './helper.js'
-import { test, after } from 'node:test'
-import { equal } from 'node:assert'
-import { join } from 'path'
-import * as desm from 'desm'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
 import { readFile } from 'fs/promises'
+import { equal } from 'node:assert'
+import { after, test } from 'node:test'
+import { join } from 'path'
+import { isFileAccessible } from '../cli.mjs'
+import { moveToTmpdir } from './helper.js'
 
 test('body-string', async () => {
-  const openapi = desm.join(import.meta.url, 'fixtures', 'body-string', 'openapi.json')
+  const openapi = join(import.meta.dirname, 'fixtures', 'body-string', 'openapi.json')
   const dir = await moveToTmpdir(after)
 
   const pltServiceConfig = {
@@ -25,7 +24,7 @@ test('body-string', async () => {
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', 'full', '--full'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openapi, '--name', 'full', '--full'])
 
   equal(await isFileAccessible(join(dir, 'full', 'full.cjs')), false)
 

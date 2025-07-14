@@ -1,16 +1,14 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const {
-  REFRESH_TIMEOUT,
-  waitForRestart,
-  createGraphqlService,
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { request } from 'undici'
+import {
   createComposerInRuntime,
+  createGraphqlService,
   createOpenApiService,
-  testEntityRoutes
-} = require('./helper')
-const { request } = require('undici')
+  REFRESH_TIMEOUT,
+  testEntityRoutes,
+  waitForRestart
+} from './helper.js'
 
 test('composer should restart when graphql changes', async t => {
   const schema1 = 'type Query {\n  rnd: Int\n}'

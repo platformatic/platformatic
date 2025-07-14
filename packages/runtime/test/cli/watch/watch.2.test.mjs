@@ -1,5 +1,4 @@
 import { createDirectory } from '@platformatic/utils'
-import desm from 'desm'
 import assert from 'node:assert'
 import { on } from 'node:events'
 import { utimes } from 'node:fs/promises'
@@ -8,9 +7,9 @@ import { test } from 'node:test'
 import { request } from 'undici'
 import { start } from '../helper.mjs'
 
-const fixturesDir = join(desm(import.meta.url), '..', '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', '..', 'fixtures')
 
-const base = join(desm(import.meta.url), '..', '..', 'tmp')
+const base = join(import.meta.dirname, '..', '..', 'tmp')
 
 try {
   await createDirectory(base)
@@ -19,7 +18,7 @@ try {
 test('do not hot reload dependencies', async t => {
   process.env.PORT = 0
   const config = join(fixturesDir, 'do-not-reload-dependencies', 'platformatic.service.json')
-  const { child, url } = await start('-c', config)
+  const { child, url } = await start(config)
   t.after(() => child.kill('SIGKILL'))
   t.after(() => delete process.env.PORT)
 

@@ -1,12 +1,11 @@
-'use strict'
+import assert from 'node:assert/strict'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import openAPISchemaValidator from 'openapi-schema-validator'
+import { request } from 'undici'
+import { createBasicService, createFromConfig, createOpenApiService, testEntityRoutes } from '../helper.js'
 
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { request } = require('undici')
-const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
-const { createFromConfig, createBasicService, createOpenApiService, testEntityRoutes } = require('../helper')
-
+const OpenAPISchemaValidator = openAPISchemaValidator.default
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
 test('should compose openapi with prefixes', async t => {
@@ -175,14 +174,14 @@ test('should not proxy request if it is not in a schema file', async t => {
           id: 'api1',
           origin: 'http://127.0.0.1:' + api1.server.address().port,
           openapi: {
-            file: join(__dirname, 'fixtures', 'schemas', 'users.json')
+            file: join(import.meta.dirname, 'fixtures', 'schemas', 'users.json')
           }
         },
         {
           id: 'api2',
           origin: 'http://127.0.0.1:' + api2.server.address().port,
           openapi: {
-            file: join(__dirname, 'fixtures', 'schemas', 'posts.json')
+            file: join(import.meta.dirname, 'fixtures', 'schemas', 'posts.json')
           }
         }
       ]

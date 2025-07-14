@@ -1,57 +1,71 @@
-import { request, moveToTmpdir, safeKill } from './helper.js'
-import { test, after } from 'node:test'
-import { equal, deepEqual as same, fail, ok } from 'node:assert'
-import { match } from '@platformatic/utils'
 import { tspl } from '@matteo.collina/tspl'
-import { join, dirname, posix } from 'path'
-import { fileURLToPath } from 'node:url'
-import * as desm from 'desm'
+import { match } from '@platformatic/utils'
 import { execa } from 'execa'
-import { cp, writeFile, readFile } from 'node:fs/promises'
-import split from 'split2'
+import { equal, fail, ok, deepEqual as same } from 'node:assert'
 import { once } from 'node:events'
+import { cp, readFile, writeFile } from 'node:fs/promises'
+import { after, test } from 'node:test'
+import { join, posix } from 'path'
+import split from 'split2'
+import { moveToTmpdir, request, safeKill } from './helper.js'
 
-test('openapi client generation (javascript) via the runtime', async (t) => {
+test('openapi client generation (javascript) via the runtime', async t => {
   const dir = await moveToTmpdir(after)
 
-  await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
+  await cp(join(import.meta.dirname, 'fixtures', 'runtime'), dir, { recursive: true })
 
-  await writeFile(join(dir, 'services', 'somber-chariot', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'somber-chariot', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3003
 PLT_SERVER_LOGGER_LEVEL=info
 DATABASE_URL=sqlite://./db.sqlite
-`)
+`
+  )
 
-  await writeFile(join(dir, 'services', 'languid-nobleman', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'languid-nobleman', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3004
 PLT_SERVER_LOGGER_LEVEL=info
-`)
+`
+  )
 
-  await writeFile(join(dir, 'services', 'composer', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'composer', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3000
 PLT_SERVER_LOGGER_LEVEL=info
-`)
+`
+  )
 
-  await writeFile(join(dir, 'services', 'sample-service', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'sample-service', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3005
 PLT_SERVER_LOGGER_LEVEL=info
-`)
+`
+  )
 
   process.chdir(join(dir, 'services', 'languid-nobleman'))
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
 
-  const read = JSON.parse(await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8'))
+  const read = JSON.parse(
+    await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8')
+  )
   match(read, {
-    clients: [{
-      serviceId: 'somber-chariot',
-      type: 'openapi',
-      schema: posix.join('movies', 'movies.openapi.json')
-    }]
+    clients: [
+      {
+        serviceId: 'somber-chariot',
+        type: 'openapi',
+        schema: posix.join('movies', 'movies.openapi.json')
+      }
+    ]
   })
 
   const toWrite = `
@@ -68,7 +82,7 @@ module.exports = async function (app, opts) {
 
   process.chdir(dir)
 
-  const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'wattpm', 'bin/wattpm.js'), 'dev'])
+  const app2 = execa('node', [join(import.meta.dirname, '..', '..', 'wattpm', 'bin/wattpm.js'), 'dev'])
   t.after(() => safeKill(app2))
 
   const stream = app2.stdout.pipe(split(JSON.parse))
@@ -95,15 +109,15 @@ module.exports = async function (app, opts) {
   })
 })
 
-test('should return error if in the runtime root', async (t) => {
+test('should return error if in the runtime root', async t => {
   const dir = await moveToTmpdir(after)
 
-  await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
+  await cp(join(import.meta.dirname, 'fixtures', 'runtime'), dir, { recursive: true })
 
   process.chdir(dir)
 
   try {
-    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
+    await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
 
     fail()
   } catch (err) {
@@ -111,35 +125,47 @@ test('should return error if in the runtime root', async (t) => {
   }
 })
 
-test('graphql client generation (javascript) via the runtime', async (t) => {
+test('graphql client generation (javascript) via the runtime', async t => {
   const dir = await moveToTmpdir(after)
 
-  await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
+  await cp(join(import.meta.dirname, 'fixtures', 'runtime'), dir, { recursive: true })
 
-  await writeFile(join(dir, 'services', 'somber-chariot', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'somber-chariot', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3003
 PLT_SERVER_LOGGER_LEVEL=info
 DATABASE_URL=sqlite://./db.sqlite
-`)
+`
+  )
 
-  await writeFile(join(dir, 'services', 'languid-nobleman', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'languid-nobleman', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3004
 PLT_SERVER_LOGGER_LEVEL=info
-`)
+`
+  )
 
-  await writeFile(join(dir, 'services', 'composer', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'composer', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3000
 PLT_SERVER_LOGGER_LEVEL=info
-`)
+`
+  )
 
-  await writeFile(join(dir, 'services', 'sample-service', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'sample-service', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3005
 PLT_SERVER_LOGGER_LEVEL=info
-`)
+`
+  )
 
   process.chdir(join(dir, 'services', 'languid-nobleman'))
 
@@ -149,15 +175,19 @@ PLT_SERVER_LOGGER_LEVEL=info
   scConfig.db.openapi = false
   await writeFile(somberChariotConfigFile, JSON.stringify(scConfig, null, 2))
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
 
-  const read = JSON.parse(await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8'))
+  const read = JSON.parse(
+    await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8')
+  )
   match(read, {
-    clients: [{
-      serviceId: 'somber-chariot',
-      type: 'graphql',
-      schema: posix.join('movies', 'movies.schema.graphql')
-    }]
+    clients: [
+      {
+        serviceId: 'somber-chariot',
+        type: 'graphql',
+        schema: posix.join('movies', 'movies.schema.graphql')
+      }
+    ]
   })
 
   const toWrite = `
@@ -185,7 +215,7 @@ module.exports = async function (app, opts) {
 
   process.chdir(dir)
 
-  const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'wattpm', 'bin/wattpm.js'), 'dev'])
+  const app2 = execa('node', [join(import.meta.dirname, '..', '..', 'wattpm', 'bin/wattpm.js'), 'dev'])
   app2.catch(() => {})
   t.after(() => safeKill(app2))
 
@@ -212,85 +242,122 @@ module.exports = async function (app, opts) {
   })
 })
 
-test('generate client twice', async (t) => {
+test('generate client twice', async t => {
   const dir = await moveToTmpdir(after)
 
-  await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
+  await cp(join(import.meta.dirname, 'fixtures', 'runtime'), dir, { recursive: true })
 
-  await writeFile(join(dir, 'services', 'somber-chariot', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'somber-chariot', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3003
 PLT_SERVER_LOGGER_LEVEL=info
 DATABASE_URL=sqlite://./db.sqlite
-`)
+`
+  )
 
-  await writeFile(join(dir, 'services', 'languid-nobleman', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'languid-nobleman', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3004
 PLT_SERVER_LOGGER_LEVEL=info
-`)
+`
+  )
 
-  await writeFile(join(dir, 'services', 'composer', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'composer', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3000
 PLT_SERVER_LOGGER_LEVEL=info
-`)
-  await writeFile(join(dir, 'services', 'sample-service', '.env'), `
+`
+  )
+  await writeFile(
+    join(dir, 'services', 'sample-service', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3005
 PLT_SERVER_LOGGER_LEVEL=info
-`)
+`
+  )
   process.chdir(join(dir, 'services', 'languid-nobleman'))
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
 
-  const config = JSON.parse(await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8'))
+  const config = JSON.parse(
+    await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8')
+  )
 
-  equal(match(config, {
-    clients: [{
-      schema: 'movies/movies.openapi.json',
-      name: 'movies',
-      type: 'openapi',
-      serviceId: 'somber-chariot'
-    }]
-  }), true)
+  equal(
+    match(config, {
+      clients: [
+        {
+          schema: 'movies/movies.openapi.json',
+          name: 'movies',
+          type: 'openapi',
+          serviceId: 'somber-chariot'
+        }
+      ]
+    }),
+    true
+  )
 })
 
-test('error if a service does not have openapi enabled', async (t) => {
+test('error if a service does not have openapi enabled', async t => {
   const dir = await moveToTmpdir(after)
 
-  await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
+  await cp(join(import.meta.dirname, 'fixtures', 'runtime'), dir, { recursive: true })
 
-  await writeFile(join(dir, 'services', 'somber-chariot', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'somber-chariot', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3003
 PLT_SERVER_LOGGER_LEVEL=info
 DATABASE_URL=sqlite://./db.sqlite
-`)
+`
+  )
 
-  await writeFile(join(dir, 'services', 'languid-nobleman', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'languid-nobleman', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3004
 PLT_SERVER_LOGGER_LEVEL=info
-`)
+`
+  )
 
-  await writeFile(join(dir, 'services', 'composer', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'composer', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3000
 PLT_SERVER_LOGGER_LEVEL=info
-`)
+`
+  )
 
-  await writeFile(join(dir, 'services', 'sample-service', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'sample-service', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3005
 PLT_SERVER_LOGGER_LEVEL=info
-`)
+`
+  )
 
   process.chdir(join(dir, 'services', 'composer'))
 
   try {
-    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'test-client', '--runtime', 'sample-service'])
+    await execa('node', [
+      join(import.meta.dirname, '..', 'cli.mjs'),
+      '--name',
+      'test-client',
+      '--runtime',
+      'sample-service'
+    ])
     fail()
   } catch (err) {
     const split = err.message.split('\n')
@@ -299,13 +366,19 @@ PLT_SERVER_LOGGER_LEVEL=info
   }
 })
 
-test('no platformatic.runtime.json', async (t) => {
+test('no platformatic.runtime.json', async t => {
   const { equal, match } = tspl(t, { plan: 2 })
   const dir = await moveToTmpdir(after)
 
   process.chdir(dir)
 
-  const app = execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
+  const app = execa('node', [
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    '--name',
+    'movies',
+    '--runtime',
+    'somber-chariot'
+  ])
   app.catch(() => {})
   t.after(() => safeKill(app))
   const onExit = once(app, 'exit')
@@ -320,48 +393,70 @@ test('no platformatic.runtime.json', async (t) => {
   equal(code, 1)
 })
 
-test('name with dashes', async (t) => {
+test('name with dashes', async t => {
   const dir = await moveToTmpdir(after)
 
-  await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
+  await cp(join(import.meta.dirname, 'fixtures', 'runtime'), dir, { recursive: true })
 
-  await writeFile(join(dir, 'services', 'somber-chariot', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'somber-chariot', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3003
 PLT_SERVER_LOGGER_LEVEL=info
 DATABASE_URL=sqlite://./db.sqlite
-`)
+`
+  )
 
-  await writeFile(join(dir, 'services', 'languid-nobleman', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'languid-nobleman', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3004
 PLT_SERVER_LOGGER_LEVEL=info
-`)
+`
+  )
 
-  await writeFile(join(dir, 'services', 'composer', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'composer', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3000
 PLT_SERVER_LOGGER_LEVEL=info
-`)
+`
+  )
 
-  await writeFile(join(dir, 'services', 'sample-service', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'sample-service', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3005
 PLT_SERVER_LOGGER_LEVEL=info
-`)
+`
+  )
 
   process.chdir(join(dir, 'services', 'languid-nobleman'))
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'somber-movies', '--runtime', 'somber-chariot'])
+  await execa('node', [
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    '--name',
+    'somber-movies',
+    '--runtime',
+    'somber-chariot'
+  ])
 
-  const read = JSON.parse(await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8'))
+  const read = JSON.parse(
+    await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8')
+  )
   match(read, {
-    clients: [{
-      serviceId: 'somber-chariot',
-      type: 'openapi',
-      name: 'somberMovies',
-      schema: posix.join('movies', 'movies.openapi.json')
-    }]
+    clients: [
+      {
+        serviceId: 'somber-chariot',
+        type: 'openapi',
+        name: 'somberMovies',
+        schema: posix.join('movies', 'movies.openapi.json')
+      }
+    ]
   })
 
   const toWrite = `
@@ -378,7 +473,7 @@ module.exports = async function (app, opts) {
 
   process.chdir(dir)
 
-  const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'wattpm', 'bin/wattpm.js'), 'dev'])
+  const app2 = execa('node', [join(import.meta.dirname, '..', '..', 'wattpm', 'bin/wattpm.js'), 'dev'])
   t.after(() => safeKill(app2))
 
   const stream = app2.stdout.pipe(split(JSON.parse))
@@ -404,50 +499,75 @@ module.exports = async function (app, opts) {
   })
 })
 
-test('support full-request, full-response and validate-response options', async (t) => {
+test('support full-request, full-response and validate-response options', async t => {
   const dir = await moveToTmpdir(after)
 
-  await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'runtime'), dir, { recursive: true })
+  await cp(join(import.meta.dirname, 'fixtures', 'runtime'), dir, { recursive: true })
 
-  await writeFile(join(dir, 'services', 'somber-chariot', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'somber-chariot', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3003
 PLT_SERVER_LOGGER_LEVEL=info
 DATABASE_URL=sqlite://./db.sqlite
-`)
+`
+  )
 
-  await writeFile(join(dir, 'services', 'languid-nobleman', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'languid-nobleman', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3004
 PLT_SERVER_LOGGER_LEVEL=info
-`)
+`
+  )
 
-  await writeFile(join(dir, 'services', 'composer', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'composer', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3000
 PLT_SERVER_LOGGER_LEVEL=info
-`)
+`
+  )
 
-  await writeFile(join(dir, 'services', 'sample-service', '.env'), `
+  await writeFile(
+    join(dir, 'services', 'sample-service', '.env'),
+    `
 PLT_SERVER_HOSTNAME=127.0.0.1
 PORT=3005
 PLT_SERVER_LOGGER_LEVEL=info
-`)
+`
+  )
 
   process.chdir(join(dir, 'services', 'languid-nobleman'))
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot', '--full-request', '--full-response', '--validate-response'])
+  await execa('node', [
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    '--name',
+    'movies',
+    '--runtime',
+    'somber-chariot',
+    '--full-request',
+    '--full-response',
+    '--validate-response'
+  ])
 
-  const read = JSON.parse(await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8'))
+  const read = JSON.parse(
+    await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8')
+  )
   match(read, {
-    clients: [{
-      serviceId: 'somber-chariot',
-      type: 'openapi',
-      schema: posix.join('movies', 'movies.openapi.json'),
-      fullRequest: true,
-      fullResponse: true,
-      validateResponse: true
-    }]
+    clients: [
+      {
+        serviceId: 'somber-chariot',
+        type: 'openapi',
+        schema: posix.join('movies', 'movies.openapi.json'),
+        fullRequest: true,
+        fullResponse: true,
+        validateResponse: true
+      }
+    ]
   })
 
   const toWrite = `
@@ -489,7 +609,7 @@ module.exports = async function (app, opts) {
 
   process.chdir(dir)
 
-  const app2 = execa('node', [desm.join(import.meta.url, '..', '..', 'wattpm', 'bin/wattpm.js'), 'dev'])
+  const app2 = execa('node', [join(import.meta.dirname, '..', '..', 'wattpm', 'bin/wattpm.js'), 'dev'])
   t.after(() => safeKill(app2))
 
   const stream = app2.stdout.pipe(split(JSON.parse))

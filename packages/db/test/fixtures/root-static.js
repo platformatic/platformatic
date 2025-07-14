@@ -1,9 +1,8 @@
-'use strict'
+import fastifyStatic from '@fastify/static'
+import { join } from 'node:path'
 
-const path = require('node:path')
-
-module.exports = async function (app) {
-  app.register(require('@fastify/static'), {
-    root: path.join(__dirname, 'hello')
+export default async function (app) {
+  app.register(fastifyStatic, {
+    root: join(import.meta.dirname, 'hello')
   })
 }

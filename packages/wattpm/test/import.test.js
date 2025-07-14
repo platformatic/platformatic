@@ -1,5 +1,9 @@
-import { loadConfigurationFile as loadRawConfigurationFile, saveConfigurationFile } from '@platformatic/config'
-import { createDirectory, safeRemove } from '@platformatic/utils'
+import {
+  createDirectory,
+  loadConfigurationFile as loadRawConfigurationFile,
+  safeRemove,
+  saveConfigurationFile
+} from '@platformatic/utils'
 import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
 import { appendFile, cp, readFile, writeFile } from 'node:fs/promises'

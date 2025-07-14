@@ -1,11 +1,8 @@
-'use strict'
-
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { createFromConfig } = require('../helper')
-
-const pltVersion = require('../../package.json').version
+import assert from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { version as pltVersion } from '../../lib/schema.js'
+import { createFromConfig } from '../helper.js'
 
 test('get service info via stackable api', async t => {
   const config = {
@@ -19,7 +16,7 @@ test('get service info via stackable api', async t => {
       services: []
     },
     plugins: {
-      paths: [join(__dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')]
+      paths: [join(import.meta.dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')]
     }
   }
 

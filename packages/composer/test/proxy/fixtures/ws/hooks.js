@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   onIncomingMessage: (context, source, target, { data, binary }) => {
     globalThis.platformatic.events.emit('proxy:onIncomingMessage')
   },

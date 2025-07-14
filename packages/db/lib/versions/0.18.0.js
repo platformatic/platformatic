@@ -1,10 +1,8 @@
-'use strict'
-
-module.exports = {
+export default {
   version: '0.18.0',
-  up: function (config) {
+  up (config) {
     config.db = config.core
     delete config.core
     return config
-  },
+  }
 }

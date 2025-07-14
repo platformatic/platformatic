@@ -1,21 +1,19 @@
-'use strict'
-
-const { createDirectory } = require('@platformatic/utils')
-const { execa } = require('execa')
-const assert = require('node:assert/strict')
-const { copyFile, mkdtemp, readdir } = require('node:fs/promises')
-const { tmpdir } = require('node:os')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const rimraf = require('rimraf')
-const { request } = require('undici')
-const { getConnectionInfo } = require('../helper.js')
-const { cliPath, start, safeKill } = require('./helper.js')
+import { createDirectory } from '@platformatic/utils'
+import { execa } from 'execa'
+import assert from 'node:assert/strict'
+import { copyFile, mkdtemp, readdir } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import rimraf from 'rimraf'
+import { request } from 'undici'
+import { getConnectionInfo } from '../helper.js'
+import { cliPath, safeKill, start } from './helper.js'
 
 test('seed and start', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
-  const cwd = join(__dirname, '..', 'fixtures', 'sqlite')
+  const cwd = join(import.meta.dirname, '..', 'fixtures', 'sqlite')
   const configFile = join(cwd, 'platformatic.db.json')
 
   await execa('node', [cliPath, 'applyMigrations', configFile], {
@@ -84,7 +82,7 @@ test('seed and start', async t => {
 test('seed command should throw an error if there are migrations to apply', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
-  const cwd = join(__dirname, '..', 'fixtures', 'sqlite')
+  const cwd = join(import.meta.dirname, '..', 'fixtures', 'sqlite')
   const configFile = join(cwd, 'platformatic.db.json')
 
   t.after(async () => {
@@ -104,7 +102,7 @@ test('seed command should throw an error if there are migrations to apply', asyn
 })
 
 test('valid config files', async t => {
-  const fixturesDir = join(__dirname, '..', 'fixtures')
+  const fixturesDir = join(import.meta.dirname, '..', 'fixtures')
   const validConfigFiles = await readdir(join(fixturesDir, 'valid-config-files'))
 
   for (const configFile of validConfigFiles) {
@@ -116,7 +114,7 @@ test('valid config files', async t => {
     await copyFile(join(fixturesDir, 'valid-config-files', configFile), join(cwd, configFile))
     await createDirectory(join(cwd, 'migrations'))
     await copyFile(join(fixturesDir, 'sqlite', 'migrations', '001.do.sql'), join(cwd, 'migrations', '001.do.sql'))
-    const seed = join(__dirname, '..', 'fixtures', 'sqlite', 'seed.js')
+    const seed = join(import.meta.dirname, '..', 'fixtures', 'sqlite', 'seed.js')
 
     await execa('node', [cliPath, 'applyMigrations', dbConfigFile], {
       cwd,
@@ -142,7 +140,7 @@ test('valid config files', async t => {
 
 test('missing seed file', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
-  const cwd = join(__dirname, '..', 'fixtures', 'sqlite')
+  const cwd = join(import.meta.dirname, '..', 'fixtures', 'sqlite')
   const configFile = join(cwd, 'platformatic.db.json')
 
   t.after(async () => {
@@ -171,7 +169,7 @@ test('missing seed file', async t => {
 test('seed and start from cwd', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
 
-  const cwd = join(__dirname, '..', 'fixtures', 'sqlite')
+  const cwd = join(import.meta.dirname, '..', 'fixtures', 'sqlite')
   const configFile = join(cwd, 'platformatic.db.json')
 
   await execa('node', [cliPath, 'applyMigrations', configFile], {

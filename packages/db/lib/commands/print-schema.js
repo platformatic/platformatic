@@ -1,14 +1,10 @@
-'use strict'
+import { abstractLogger, kMetadata, loadConfiguration } from '@platformatic/utils'
+import { printSchema as printGraphqlSchema } from 'graphql'
+import { create } from '../../index.js'
+import { schema } from '../schema.js'
 
-const { createRequire } = require('node:module')
-const { loadConfig } = require('@platformatic/config')
-const { loadModule, abstractLogger } = require('@platformatic/utils')
-const { printSchema: printGraphqlSchema } = require('graphql')
-
-async function printSchema (logger, configFile, args, { colorette: { bold }, logFatalError }) {
-  const platformaticDB = await loadModule(createRequire(__filename), '../../index.js')
-  const { configManager } = await loadConfig({}, ['-c', configFile], platformaticDB)
-  await configManager.parseAndValidate()
+export async function printSchema (logger, configFile, args, { colorette: { bold }, logFatalError }) {
+  const config = await loadConfiguration(configFile, schema)
 
   const type = args[0]
 
@@ -18,7 +14,7 @@ async function printSchema (logger, configFile, args, { colorette: { bold }, log
     logFatalError(logger, `Invalid schema type ${bold(type)}. Use ${bold('openapi')} or ${bold('graphql')}.`)
   }
 
-  const app = await platformaticDB.create(configManager.dirname, configManager.fullPath, {}, { logger: abstractLogger })
+  const app = await create(config[kMetadata].root, configFile, { logger: abstractLogger })
   await app.init()
 
   let output
@@ -32,5 +28,3 @@ async function printSchema (logger, configFile, args, { colorette: { bold }, log
   console.log(output)
   await app.stop()
 }
-
-module.exports = { printSchema }

@@ -1,6 +1,4 @@
-'use strict'
-
-module.exports = async function (app) {
+export default async function (app) {
   app.graphql.extendSchema(`
     extend type Query {
       hello: String
@@ -10,7 +8,7 @@ module.exports = async function (app) {
     Query: {
       hello: async function (root, args, context) {
         return 'world'
-      },
-    },
+      }
+    }
   })
 }

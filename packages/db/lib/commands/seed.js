@@ -1,20 +1,15 @@
-'use strict'
+import tsCompiler from '@platformatic/ts-compiler'
+import { loadConfiguration, loadModule } from '@platformatic/utils'
+import { access, readFile } from 'fs/promises'
+import { createRequire } from 'node:module'
+import { join, resolve } from 'node:path'
+import { MissingSeedFileError } from '../errors.js'
+import { Migrator } from '../migrator.js'
+import { schema } from '../schema.js'
+import { setupDB } from '../utils.js'
 
-const { loadConfig } = require('@platformatic/config')
-const tsCompiler = require('@platformatic/ts-compiler')
-const { access, readFile } = require('fs/promises')
-const { createRequire } = require('node:module')
-const { join, resolve } = require('node:path')
-const errors = require('../errors.js')
-const { Migrator } = require('../migrator.js')
-const { setupDB } = require('../utils.js')
-const { loadModule } = require('@platformatic/utils')
-
-async function seed (logger, configFile, args, { colorette: { bold }, logFatalError }) {
-  const platformaticDB = await loadModule(createRequire(__filename), '../../index.js')
-  const { configManager } = await loadConfig({}, ['-c', configFile], platformaticDB)
-  await configManager.parseAndValidate()
-  const config = configManager.current
+export async function seed (logger, configFile, args, { colorette: { bold }, logFatalError }) {
+  const config = await loadConfiguration(configFile, schema)
 
   if (config.migrations !== undefined) {
     const migrator = new Migrator(config.migrations, config.db, logger)
@@ -31,7 +26,7 @@ async function seed (logger, configFile, args, { colorette: { bold }, logFatalEr
   }
 
   if (!args.length) {
-    throw new errors.MissingSeedFileError()
+    throw new MissingSeedFileError()
   }
 
   let seedFile = resolve(process.cwd(), args[0])
@@ -41,8 +36,8 @@ async function seed (logger, configFile, args, { colorette: { bold }, logFatalEr
     await tsCompiler.compile({
       cwd: process.cwd(),
       logger,
-      tsConfig: configManager.current.plugins?.typescript?.tsConfig,
-      flags: configManager.current.plugins?.typescript?.flags
+      tsConfig: config.plugins?.typescript?.tsConfig,
+      flags: config.plugins?.typescript?.flags
     })
     const tsConfigPath = config?.plugins?.typescript?.tsConfig || resolve(process.cwd(), 'tsconfig.json')
     const tsConfig = JSON.parse(await readFile(tsConfigPath, 'utf8'))
@@ -74,7 +69,7 @@ async function seed (logger, configFile, args, { colorette: { bold }, logFatalEr
   await db.dispose()
 }
 
-const helpFooter = `
+export const helpFooter = `
 This is a convenience method that loads a JavaScript file and configure @platformatic/sql-mapper to connect to the database specified in the configuration file.
 
 Here is an example of a seed file:
@@ -91,5 +86,3 @@ module.exports = async function ({ entities, db, sql }) {
 You can find more details about the configuration format here:
 * [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
 `
-
-module.exports = { seed, helpFooter }

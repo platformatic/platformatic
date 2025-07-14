@@ -1,21 +1,19 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { SpanStatusCode, SpanKind } = require('@opentelemetry/api')
-const {
-  getConnectionInfo,
+import { SpanKind, SpanStatusCode } from '@opentelemetry/api'
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { request } from 'undici'
+import {
   createBasicPages,
   createFromConfig,
-  expectedTelemetryPrefix,
   expectedPort,
-  isPg,
+  expectedTelemetryPrefix,
+  getConnectionInfo,
+  isMariaDB,
   isMysql,
   isMysql8,
-  isMariaDB,
+  isPg,
   isSQLite
-} = require('./helper')
+} from './helper.js'
 
 const getSpansPerType = (spans, type = 'http') => {
   let attibuteToLookFor

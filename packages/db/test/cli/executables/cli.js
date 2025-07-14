@@ -1,13 +1,10 @@
-'use strict'
-
-const { parseArgs: nodeParseArgs } = require('node:util')
-const { pino } = require('pino')
-
-const { applyMigrations } = require('../../../lib/commands/migrations-apply.js')
-const { createMigrations } = require('../../../lib/commands/migrations-create.js')
-const { printSchema } = require('../../../lib/commands/print-schema.js')
-const { seed } = require('../../../lib/commands/seed.js')
-const { generateTypes } = require('../../../lib/commands/types.js')
+import { parseArgs as nodeParseArgs } from 'node:util'
+import { pino } from 'pino'
+import { applyMigrations } from '../../../lib/commands/migrations-apply.js'
+import { createMigrations } from '../../../lib/commands/migrations-create.js'
+import { printSchema } from '../../../lib/commands/print-schema.js'
+import { seed } from '../../../lib/commands/seed.js'
+import { generateTypes } from '../../../lib/commands/types.js'
 
 let command
 switch (process.argv[2]) {

@@ -1,9 +1,7 @@
-'use strict'
-
-module.exports = {
+export default {
   version: '0.16.0',
   toVersion: '0.17.0',
-  up: function (config) {
+  up (config) {
     let kind = 'service'
     // This file will be reused in platformatic/db
     if (config.core) {
@@ -13,18 +11,18 @@ module.exports = {
     if (config.plugin) {
       if (Array.isArray(config.plugin)) {
         config.plugins = {
-          paths: config.plugin.map((p) => {
+          paths: config.plugin.map(p => {
             if (typeof p === 'string') {
               return p
             } else if (p.options) {
               return {
                 path: p.path,
-                options: p.options,
+                options: p.options
               }
             } else {
               return p.path
             }
-          }),
+          })
         }
 
         if (typeof config.plugin[0] === 'object') {
@@ -41,14 +39,16 @@ module.exports = {
       } else if (typeof config.plugin === 'object') {
         if (config.plugin.options) {
           config.plugins = {
-            paths: [{
-              path: config.plugin.path,
-              options: config.plugin.options,
-            }],
+            paths: [
+              {
+                path: config.plugin.path,
+                options: config.plugin.options
+              }
+            ]
           }
         } else {
           config.plugins = {
-            paths: [config.plugin.path],
+            paths: [config.plugin.path]
           }
         }
 
@@ -66,7 +66,7 @@ module.exports = {
         }
       } else {
         config.plugins = {
-          paths: [config.plugin],
+          paths: [config.plugin]
         }
       }
 
@@ -78,5 +78,5 @@ module.exports = {
     config.$schema = 'https://platformatic.dev/schemas/v0.17.0/' + kind
 
     return config
-  },
+  }
 }

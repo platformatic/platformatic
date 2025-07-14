@@ -1,6 +1,6 @@
-import fp from 'fastify-plugin'
 import autoload from '@fastify/autoload'
-import { join } from 'desm'
+import fp from 'fastify-plugin'
+import { join } from 'node:path'
 
 class Inventory {
   async howManyInStore (sku) {
@@ -19,10 +19,10 @@ async function inventory (fastify, opts) {
 
   // These routes would be created in their own child instances
   fastify.register(autoload, {
-    dir: join(import.meta.url, 'routes'),
+    dir: join(import.meta.dirname, 'routes'),
     options: {
-      prefix: opts.prefix,
-    },
+      prefix: opts.prefix
+    }
   })
 
   fastify.get('/foo', async function (req) {

@@ -1,15 +1,13 @@
-'use strict'
+import { compile } from '@platformatic/ts-compiler'
+import { safeRemove } from '@platformatic/utils'
+import assert from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import pino from 'pino'
+import { request } from 'undici'
+import { create } from '../index.js'
 
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { request } = require('undici')
-const { compile } = require('@platformatic/ts-compiler')
-const pino = require('pino')
-const { create } = require('..')
-const { safeRemove } = require('@platformatic/utils')
-
-const projectRoot = join(__dirname, './fixtures/hello')
+const projectRoot = join(import.meta.dirname, './fixtures/hello')
 
 test('client is loaded', async t => {
   const app1 = await create(join(projectRoot, 'warn-log.service.json'))
@@ -21,7 +19,7 @@ test('client is loaded', async t => {
 
   process.env.PLT_CLIENT_URL = app1.url
 
-  const app2 = await create(join(__dirname, './fixtures/hello-client/platformatic.service.json'))
+  const app2 = await create(join(import.meta.dirname, './fixtures/hello-client/platformatic.service.json'))
 
   t.after(async () => {
     await app2.stop()
@@ -44,7 +42,7 @@ test('client is loaded (ts)', async t => {
 
   process.env.PLT_CLIENT_URL = app1.url
 
-  const targetDir = join(__dirname, './fixtures/hello-client-ts')
+  const targetDir = join(import.meta.dirname, './fixtures/hello-client-ts')
 
   try {
     await safeRemove(join(targetDir, 'dist'))
@@ -77,7 +75,7 @@ test('client is loaded dependencyless', async t => {
 
   process.env.PLT_CLIENT_URL = app1.url
 
-  const app2 = await create(join(__dirname, './fixtures/hello-client-without-deps'))
+  const app2 = await create(join(import.meta.dirname, './fixtures/hello-client-without-deps'))
 
   t.after(async () => {
     await app2.stop()
@@ -100,7 +98,7 @@ test('client is loaded before plugins', async t => {
 
   process.env.PLT_CLIENT_URL = app1.url
 
-  const app2 = await create(join(__dirname, './fixtures/hello-client-from-plugin'))
+  const app2 = await create(join(import.meta.dirname, './fixtures/hello-client-from-plugin'))
 
   t.after(async () => {
     await app2.stop()

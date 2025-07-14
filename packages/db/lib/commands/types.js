@@ -1,17 +1,11 @@
-'use strict'
+import { loadConfiguration } from '@platformatic/utils'
+import { schema } from '../schema.js'
+import { execute } from '../types.js'
 
-const { loadConfig } = require('@platformatic/config')
-const { loadModule } = require('@platformatic/utils')
-const { createRequire } = require('node:module')
-const { execute } = require('../types.js')
+export async function generateTypes (logger, configFile, _args) {
+  const config = await loadConfiguration(configFile, schema)
 
-async function generateTypes (logger, configFile, _args) {
-  const platformaticDB = await loadModule(createRequire(__filename), '../../index.js')
-  const { configManager } = await loadConfig({}, ['-c', configFile], platformaticDB)
-  await configManager.parseAndValidate()
-  const config = configManager.current
-
-  const count = await execute({ logger, config, configManager })
+  const count = await execute({ logger, config })
 
   if (count === 0) {
     logger.warn('No entities found in your schema. Types were NOT generated.')
@@ -19,10 +13,9 @@ async function generateTypes (logger, configFile, _args) {
   }
 }
 
-const helpFooter = `
+export const helpFooter = `
 As a result of executing this command, the Platformatic DB will generate a \`types\` folder with a typescript file for each database entity. It will also generate a \`plt-env.d.ts\` file that injects the types into the Application instance.
 
 You can find more details about the configuration format here:
 * [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
 `
-module.exports = { generateTypes, helpFooter }

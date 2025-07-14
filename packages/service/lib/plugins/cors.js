@@ -1,6 +1,5 @@
-'use strict'
-
-const fp = require('fastify-plugin')
+import fastifyCors from '@fastify/cors'
+import fp from 'fastify-plugin'
 
 function originToRegexp (origin) {
   if (typeof origin === 'object') {
@@ -12,9 +11,7 @@ function originToRegexp (origin) {
   return origin
 }
 
-async function setupClients (app, opts) {
-  const cors = opts
-
+async function setupCorsPlugin (app, cors) {
   let origin = cors.origin
   if (Array.isArray(origin)) {
     origin = origin.map(originToRegexp)
@@ -23,7 +20,7 @@ async function setupClients (app, opts) {
   }
 
   cors.origin = origin
-  app.register(require('@fastify/cors'), cors)
+  app.register(fastifyCors, cors)
 }
 
-module.exports = fp(setupClients)
+export const setupCors = fp(setupCorsPlugin)

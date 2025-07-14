@@ -3,8 +3,7 @@
 const { ok } = require('node:assert')
 const { resolve } = require('node:path')
 const { test } = require('node:test')
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
+const { create } = require('../..')
 const { updateFile, updateConfigFile, setLogFile, readLogs } = require('../helpers')
 const { prepareRuntime } = require('./helper')
 
@@ -14,11 +13,6 @@ for (const env of ['development', 'production']) {
   test(`logging properly works in ${env} mode when using separate processes`, async t => {
     const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
     const configFile = resolve(root, './platformatic.json')
-    const args = ['-c', configFile]
-    if (env === 'production') {
-      args.push('--production')
-    }
-    const config = await loadConfig({}, args, platformaticRuntime)
 
     await updateConfigFile(resolve(root, 'node/platformatic.json'), contents => {
       contents.application = { commands: { production: 'node index.mjs' } }
@@ -29,7 +23,7 @@ for (const env of ['development', 'production']) {
       return contents + '\nmain()'
     })
 
-    const app = await buildServer(config.configManager.current, config.args)
+    const app = await create(configFile, null, { isProduction: env === 'production' })
 
     t.after(async () => {
       await app.close()

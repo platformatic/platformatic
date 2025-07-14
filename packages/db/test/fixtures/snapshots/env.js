@@ -1,6 +1,4 @@
-'use strict'
-
-module.exports = `\
+export const snapshot = `\
 type Query {
   getPageById(id: ID!): Page
   pages(limit: LimitInt, offset: Int, orderBy: [PageOrderByArguments], where: PageWhereArguments): [Page]

@@ -1,24 +1,26 @@
-'use strict'
-
-const mercurius = require('mercurius')
-const deepmerge = require('@fastify/deepmerge')({ all: true })
-const fp = require('fastify-plugin')
+import { deepmerge } from '@platformatic/utils'
+import fp from 'fastify-plugin'
+import mercurius from 'mercurius'
 
 // For some unknown reason, c8 is not detecting any of this
 // despite being covered by test/graphql.test.js
 /* c8 ignore next 12 */
-async function setupGraphQL (app, opts) {
-  if (typeof opts !== 'object') {
-    opts = {}
+async function setupGraphQLPlugin (app, options) {
+  if (typeof options !== 'object') {
+    options = {}
   }
-  const graphqlOptions = deepmerge({
-    graphiql: true,
-    additionalRouteOptions: {
-      schema: { hide: true },
+
+  const graphqlOptions = deepmerge(
+    {
+      graphiql: true,
+      additionalRouteOptions: {
+        schema: { hide: true }
+      }
     },
-  }, opts)
+    options
+  )
 
   app.register(mercurius, graphqlOptions)
 }
 
-module.exports = fp(setupGraphQL)
+export const setupGraphQL = fp(setupGraphQLPlugin)

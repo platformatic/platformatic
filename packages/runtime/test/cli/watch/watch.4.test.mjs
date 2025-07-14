@@ -1,5 +1,4 @@
 import { createDirectory, safeRemove } from '@platformatic/utils'
-import desm from 'desm'
 import assert from 'node:assert'
 import { cp, mkdtemp, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -8,9 +7,9 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import { request } from 'undici'
 import { createCjsLoggingPlugin, start } from '../helper.mjs'
 
-const fixturesDir = join(desm(import.meta.url), '..', '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', '..', 'fixtures')
 
-const base = join(desm(import.meta.url), '..', '..', 'tmp')
+const base = join(import.meta.dirname, '..', '..', 'tmp')
 
 try {
   await createDirectory(base)
@@ -29,7 +28,7 @@ test('should not hot reload files with `--hot-reload false', async t => {
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
 
-  const { child, url } = await start('-c', configFileDst, '--hot-reload', 'false')
+  const { child, url } = await start(configFileDst, '--hot-reload', 'false')
   t.after(() => child.kill('SIGKILL'))
 
   // Need this sleep to await for the CI linux machine to start watching

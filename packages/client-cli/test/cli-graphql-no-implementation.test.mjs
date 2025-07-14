@@ -1,23 +1,22 @@
 import { create } from '@platformatic/db'
-import { create as buildService } from '@platformatic/service'
+import { create as createService } from '@platformatic/service'
 import { match } from '@platformatic/utils'
-import * as desm from 'desm'
 import dotenv from 'dotenv'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
 import graphql from 'graphql'
 import { equal, deepEqual as same } from 'node:assert'
+import { join } from 'node:path'
 import { after, test } from 'node:test'
-import { join } from 'path'
 import { moveToTmpdir, request } from './helper.js'
 
 test('graphql client generation (javascript)', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
@@ -48,7 +47,7 @@ module.exports = async function (app) {
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
   await fs.writeFile('./plugin.js', plugin)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
 
   const readSDL = await fs.readFile(join(dir, 'movies', 'movies.schema.graphql'), 'utf8')
   {
@@ -59,7 +58,7 @@ module.exports = async function (app) {
 
   process.env.PLT_MOVIES_URL = app.url
 
-  const app2 = await buildService('./platformatic.service.json')
+  const app2 = await createService('./platformatic.service.json')
   await app2.start()
 
   t.after(async () => {
@@ -97,11 +96,11 @@ module.exports = async function (app) {
 
 test('graphql client generation (typescript)', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
@@ -154,9 +153,9 @@ export default myPlugin
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
 
-  const app2 = await buildService('./platformatic.service.json')
+  const app2 = await createService('./platformatic.service.json')
   await app2.start()
 
   t.after(async () => {

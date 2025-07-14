@@ -1,13 +1,12 @@
-'use strict'
-
-const core = require('@platformatic/db-core')
-const auth = require('@platformatic/db-authorization')
-const { platformaticService } = require('@platformatic/service')
-const { isKeyEnabled } = require('@platformatic/utils')
-const { locateSchemaLock, updateSchemaLock } = require('./utils')
-const { readFile, writeFile } = require('node:fs/promises')
-const { execute: applyMigrations } = require('./migrator.js')
-const { execute: generateTypes } = require('./types.js')
+import auth from '@platformatic/db-authorization'
+import core from '@platformatic/db-core'
+import { platformaticService } from '@platformatic/service'
+import { isKeyEnabled } from '@platformatic/utils'
+import { readFile, writeFile } from 'node:fs/promises'
+import { execute as applyMigrations } from './migrator.js'
+import { root } from './root.js'
+import { execute as generateTypes } from './types.js'
+import { locateSchemaLock, updateSchemaLock } from './utils.js'
 
 async function healthCheck (app) {
   const { db, sql } = app.platformatic
@@ -20,9 +19,8 @@ async function healthCheck (app) {
   }
 }
 
-async function platformaticDatabase (app, stackable) {
-  const configManager = app.platformatic.configManager
-  const config = configManager.current
+export async function platformaticDatabase (app, stackable) {
+  const config = await stackable.getConfig(true)
 
   let createSchemaLock = false
   await loadSchemaLock()
@@ -31,7 +29,7 @@ async function platformaticDatabase (app, stackable) {
     if (config.db.schemalock) {
       // ignore errors, this is an optimization
       try {
-        const path = locateSchemaLock(configManager)
+        const path = locateSchemaLock(config)
         const dbschema = JSON.parse(await readFile(path, 'utf8'))
         config.db.dbschema = dbschema
         app.log.trace({ dbschema }, 'loaded schema lock')
@@ -50,26 +48,30 @@ async function platformaticDatabase (app, stackable) {
     const migrationsApplied = await applyMigrations(app.log, config)
     if (migrationsApplied) {
       // reload schema lock
-      await updateSchemaLock(app.log, configManager)
+      await updateSchemaLock(app.log, config)
       await loadSchemaLock()
     }
 
     if (config.types && config.types.autogenerate === true) {
       app.log.debug({ types: config.types }, 'generating types')
-      await generateTypes({ logger: app.log, config, configManager })
+      await generateTypes({ logger: app.log, config })
     }
   }
 
   if (isKeyEnabled('healthCheck', config.server)) {
-    if (typeof config.server.healthCheck !== 'object') {
-      config.server.healthCheck = {}
+    const serverConfig = config.server
+
+    if (typeof serverConfig.healthCheck !== 'object') {
+      serverConfig.healthCheck = {}
     }
-    config.server.healthCheck.fn = healthCheck
+
+    serverConfig.healthCheck.fn = healthCheck
+    await stackable.updateContext({ serverConfig })
   }
 
   if (createSchemaLock) {
     try {
-      const path = locateSchemaLock(configManager)
+      const path = locateSchemaLock(config)
       await writeFile(path, JSON.stringify(app.platformatic.dbschema, null, 2))
       app.log.info({ path }, 'created schema lock')
     } catch (err) {
@@ -93,10 +95,8 @@ async function platformaticDatabase (app, stackable) {
   }
 
   if (!app.hasRoute({ url: '/', method: 'GET' }) && !app.hasRoute({ url: '/*', method: 'GET' })) {
-    await app.register(require('./root'), config)
+    await app.register(root, config)
   }
 }
 
 platformaticDatabase[Symbol.for('skip-override')] = true
-
-module.exports = { platformaticDatabase }

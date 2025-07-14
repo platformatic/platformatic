@@ -1,17 +1,16 @@
-import { moveToTmpdir } from './helper.js'
-import { test, after } from 'node:test'
-import { ok } from 'node:assert'
-import { join } from 'path'
-import * as desm from 'desm'
 import { execa } from 'execa'
 import { readFile } from 'fs/promises'
+import { ok } from 'node:assert'
+import { after, test } from 'node:test'
+import { join } from 'path'
+import { moveToTmpdir } from './helper.js'
 
 test('generate types for allOf/anyOf combinations in body', async () => {
   const dir = await moveToTmpdir(after)
 
-  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'allof-anyof-openapi.json')
+  const openAPIfile = join(import.meta.dirname, 'fixtures', 'allof-anyof-openapi.json')
   await execa('node', [
-    desm.join(import.meta.url, '..', 'cli.mjs'),
+    join(import.meta.dirname, '..', 'cli.mjs'),
     openAPIfile,
     '--name',
     'fantozzi-types',

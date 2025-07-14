@@ -1,21 +1,18 @@
-'use strict'
+import { kMetadata } from '@platformatic/utils'
+import fp from 'fastify-plugin'
+import { readFile } from 'node:fs/promises'
+import { join, resolve } from 'node:path'
+import { getJSPluginPath, isFileAccessible } from '../utils.js'
+import { sandboxWrapper } from './sandbox-wrapper.js'
 
-const { join, resolve } = require('path')
-const { readFile } = require('fs/promises')
-const fp = require('fastify-plugin')
-const wrapper = require('./sandbox-wrapper')
-
-const { getJSPluginPath, isFileAccessible } = require('../utils')
-
-async function loadPlugins (app, opts) {
-  const configManager = app.platformatic.configManager
-  const config = configManager.current
+async function loadPluginsPlugin (app, context) {
+  const config = app.platformatic.config
 
   let isOutDirAccessible = false
   let outDir = null
 
-  const workingDir = opts?.context?.directory ?? configManager.dirname
-  const tsConfigPath = configManager.current.plugins.typescript?.tsConfig || join(workingDir, 'tsconfig.json')
+  const workingDir = context?.directory ?? config[kMetadata].root
+  const tsConfigPath = config.plugins.typescript?.tsConfig || join(workingDir, 'tsconfig.json')
 
   // If the tsconfig.json file exists, then we need to adjust the plugin paths
   // to point to the compiled JS files.
@@ -26,14 +23,14 @@ async function loadPlugins (app, opts) {
   }
 
   /* c8 ignore next 3 */
-  if (configManager.current.plugins.typescript?.outDir) {
-    outDir = configManager.current.plugins.typescript.outDir
+  if (config.plugins.typescript?.outDir) {
+    outDir = config.plugins.typescript.outDir
   }
 
   if (outDir) {
     isOutDirAccessible = await isFileAccessible(outDir)
 
-    if (opts.context?.isProduction && !isOutDirAccessible) {
+    if (context?.isProduction && !isOutDirAccessible) {
       throw new Error(
         `Cannot access directory '${outDir}'. Please run the 'build' command before running in production mode.`
       )
@@ -51,7 +48,7 @@ async function loadPlugins (app, opts) {
     })
   }
 
-  await app.register(wrapper, { packages: config.plugins.packages, paths: config.plugins.paths })
+  await app.register(sandboxWrapper, { packages: config.plugins.packages, paths: config.plugins.paths })
 }
 
-module.exports = fp(loadPlugins)
+export const loadPlugins = fp(loadPluginsPlugin)

@@ -1,27 +1,24 @@
-'use strict'
-
-const why = require('why-is-node-running')
-const path = require('path')
-const fs = require('fs')
-const assert = require('node:assert/strict')
-const { mkdtemp, writeFile } = require('node:fs/promises')
-const { once } = require('node:events')
-const { resolve } = require('node:path')
-const { promisify } = require('node:util')
-const { createServer } = require('node:http')
-const { request, setGlobalDispatcher, Agent } = require('undici')
-const fastify = require('fastify')
-const Swagger = require('@fastify/swagger')
-const mercurius = require('mercurius')
-const WebSocket = require('ws')
-const { getIntrospectionQuery } = require('graphql')
-const { create: createDatabaseStackable } = require('@platformatic/db')
-const { createDirectory, safeRemove, executeWithTimeout, kTimeout } = require('@platformatic/utils')
-
-// This is to avoid a circular dependency
-const { createTemporaryDirectory } = require('../../basic/test/helper')
-const { create } = require('../')
-const { buildServer: buildRuntime, symbols } = require('../../runtime')
+import Swagger from '@fastify/swagger'
+import { create as createDatabaseStackable } from '@platformatic/db'
+import { createDirectory, executeWithTimeout, kTimeout, loadModule, safeRemove } from '@platformatic/utils'
+import fastify from 'fastify'
+import fs from 'fs'
+import { getIntrospectionQuery } from 'graphql'
+import mercurius from 'mercurius'
+import assert from 'node:assert/strict'
+import { once } from 'node:events'
+import { mkdtemp, writeFile } from 'node:fs/promises'
+import { createServer } from 'node:http'
+import { createRequire } from 'node:module'
+import { resolve } from 'node:path'
+import { promisify } from 'node:util'
+import path from 'path'
+import { Agent, request, setGlobalDispatcher } from 'undici'
+import why from 'why-is-node-running'
+import WebSocket from 'ws'
+import { createTemporaryDirectory } from '../../basic/test/helper.js'
+import { create as createRuntime, symbols } from '../../runtime/index.js'
+import { create } from '../index.js'
 
 if (process.env.WHY === 'true') {
   setInterval(() => {
@@ -34,13 +31,13 @@ const agent = new Agent({
   keepAliveTimeout: 10
 })
 
-const tmpBaseDir = resolve(__dirname, '../tmp')
-
-const REFRESH_TIMEOUT = 1_000
-
 setGlobalDispatcher(agent)
 
-async function createBasicService (t, options = {}) {
+const tmpBaseDir = resolve(import.meta.dirname, '../tmp')
+
+export const REFRESH_TIMEOUT = 1_000
+
+export async function createBasicService (t, options = {}) {
   const app = fastify({
     logger: false,
     keepAliveTimeout: 10,
@@ -137,15 +134,15 @@ async function createBasicService (t, options = {}) {
   return app
 }
 
-async function createPlatformaticDatabaseService (t, { name, jsonFile }) {
+export async function createPlatformaticDatabaseService (t, { name, jsonFile }) {
   try {
-    fs.unlinkSync(path.join(__dirname, 'graphql', 'fixtures', name, 'db0.sqlite'))
+    fs.unlinkSync(path.join(import.meta.dirname, 'graphql', 'fixtures', name, 'db0.sqlite'))
   } catch {}
   try {
-    fs.unlinkSync(path.join(__dirname, 'graphql', 'fixtures', name, 'db1.sqlite'))
+    fs.unlinkSync(path.join(import.meta.dirname, 'graphql', 'fixtures', name, 'db1.sqlite'))
   } catch {}
 
-  const service = await createDatabaseStackable(path.join(__dirname, 'graphql', 'fixtures', name, jsonFile))
+  const service = await createDatabaseStackable(path.join(import.meta.dirname, 'graphql', 'fixtures', name, jsonFile))
   await service.init()
 
   service.getApplication().get('/.well-known/graphql-composition', async function (req, reply) {
@@ -162,7 +159,7 @@ async function createPlatformaticDatabaseService (t, { name, jsonFile }) {
   return service
 }
 
-async function createOpenApiService (t, entitiesNames = [], options = {}) {
+export async function createOpenApiService (t, entitiesNames = [], options = {}) {
   const app = fastify({
     logger: false,
     keepAliveTimeout: 10,
@@ -347,21 +344,22 @@ async function createOpenApiService (t, entitiesNames = [], options = {}) {
   return app
 }
 
-async function createGraphqlService (t, { schema, resolvers, extend, file, exposeIntrospection = true }) {
+export async function createGraphqlService (t, { schema, resolvers, extend, file, exposeIntrospection = true }) {
   const app = fastify({ logger: false, port: 0 })
   t.after(async () => {
     await app.close()
   })
 
   if (file) {
-    await app.register(mercurius, require(file))
+    const { schema, resolvers } = await loadModule(createRequire(import.meta.dirname), file)
+    await app.register(mercurius, { schema, resolvers })
   } else {
     await app.register(mercurius, { schema, resolvers })
   }
 
   if (extend) {
     if (extend.file) {
-      const { schema, resolvers } = require(extend.file)
+      const { schema, resolvers } = await import(extend.file)
       if (schema) {
         app.graphql.extendSchema(schema)
       }
@@ -386,7 +384,7 @@ async function createGraphqlService (t, { schema, resolvers, extend, file, expos
   return app
 }
 
-async function createWebsocketService (t, wsServerOptions = {}, port) {
+export async function createWebsocketService (t, wsServerOptions = {}, port) {
   const service = createServer()
   const wsServer = new WebSocket.Server({ server: service, ...wsServerOptions })
   await promisify(service.listen.bind(service))({ port, host: '127.0.0.1' })
@@ -399,7 +397,7 @@ async function createWebsocketService (t, wsServerOptions = {}, port) {
   return { service, wsServer }
 }
 
-async function createFromConfig (t, options, applicationFactory, creationOptions = {}) {
+export async function createFromConfig (t, options, applicationFactory, creationOptions = {}) {
   const defaultConfig = {
     server: {
       hostname: '127.0.0.1',
@@ -419,12 +417,12 @@ async function createFromConfig (t, options, applicationFactory, creationOptions
 
   const directory = await createTemporaryDirectory(t)
 
-  const composer = await create(
-    directory,
-    Object.assign({}, defaultConfig, options),
-    {},
-    { applicationFactory, isStandalone: true, isEntrypoint: true, isProduction: creationOptions.production }
-  )
+  const composer = await create(directory, Object.assign({}, defaultConfig, options), {
+    applicationFactory,
+    isStandalone: true,
+    isEntrypoint: true,
+    isProduction: creationOptions.production
+  })
   t.after(() => composer.stop())
 
   if (!creationOptions.skipInit) {
@@ -434,7 +432,7 @@ async function createFromConfig (t, options, applicationFactory, creationOptions
   return composer
 }
 
-async function createComposerInRuntime (
+export async function createComposerInRuntime (
   t,
   prefix,
   composerConfig,
@@ -481,7 +479,7 @@ async function createComposerInRuntime (
   await writeFile(
     composerConfigPath,
     JSON.stringify({
-      module: resolve(__dirname, '../index.js'),
+      module: resolve(import.meta.dirname, '../index.js'),
       plugins: {
         paths: [
           {
@@ -497,7 +495,7 @@ async function createComposerInRuntime (
   await writeFile(
     pluginConfigPath,
     `
-      module.exports = async function (app) {
+      export default async function (app) {
         globalThis[Symbol.for('plt.runtime.itc')].handle('getSchema', () => {
           return app.graphqlSupergraph.sdl
         })
@@ -507,7 +505,9 @@ async function createComposerInRuntime (
   )
 
   await additionalSetup?.(runtimeConfigPath, composerConfigPath)
-  const runtime = await buildRuntime(runtimeConfigPath, { production })
+
+  const runtime = await createRuntime(runtimeConfigPath, null, { isProduction: production })
+  await runtime.init()
 
   t.after(async () => {
     await runtime.close()
@@ -517,7 +517,7 @@ async function createComposerInRuntime (
   return runtime
 }
 
-async function startDatabaseServices (t, names) {
+export async function startDatabaseServices (t, names) {
   return Promise.all(
     names.map(async ({ name, jsonFile }) => {
       const service = await createPlatformaticDatabaseService(t, { name, jsonFile })
@@ -526,7 +526,7 @@ async function startDatabaseServices (t, names) {
   )
 }
 
-async function waitForRestart (runtime) {
+export async function waitForRestart (runtime) {
   const result = await executeWithTimeout(once(runtime, 'service:worker:reloaded'), REFRESH_TIMEOUT * 3)
 
   if (result === kTimeout) {
@@ -537,13 +537,13 @@ async function waitForRestart (runtime) {
   return entrypoint.url
 }
 
-async function checkSchema (runtime, schema) {
+export async function checkSchema (runtime, schema) {
   const composer = await runtime.getService('composer')
   const sdl = await composer[symbols.kITC].send('getSchema')
   return sdl === schema
 }
 
-async function graphqlRequest ({ query, variables, url, host }) {
+export async function graphqlRequest ({ query, variables, url, host }) {
   const { body, statusCode } = await request(url || host + '/graphql', {
     method: 'POST',
     headers: {
@@ -560,7 +560,7 @@ async function graphqlRequest ({ query, variables, url, host }) {
   return content.errors ? content.errors : content.data
 }
 
-async function testEntityRoutes (origin, entitiesRoutes) {
+export async function testEntityRoutes (origin, entitiesRoutes) {
   for (const entityRoute of entitiesRoutes) {
     {
       const { statusCode, body } = await request(origin, {
@@ -641,20 +641,4 @@ async function testEntityRoutes (origin, entitiesRoutes) {
       assert.equal(statusCode, 200)
     }
   }
-}
-
-module.exports = {
-  REFRESH_TIMEOUT,
-  createBasicService,
-  createPlatformaticDatabaseService,
-  createOpenApiService,
-  createGraphqlService,
-  createWebsocketService,
-  createFromConfig,
-  createComposerInRuntime,
-  startDatabaseServices,
-  checkSchema,
-  waitForRestart,
-  graphqlRequest,
-  testEntityRoutes
 }

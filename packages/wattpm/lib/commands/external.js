@@ -1,9 +1,11 @@
+import { loadConfiguration } from '@platformatic/runtime'
 import {
-  ConfigManager,
+  detectApplicationType,
+  ensureLoggableError,
+  findConfigurationFile,
   loadConfigurationFile as loadRawConfigurationFile,
   saveConfigurationFile
-} from '@platformatic/config'
-import { detectApplicationType, ensureLoggableError } from '@platformatic/utils'
+} from '@platformatic/utils'
 import { bold } from 'colorette'
 import { parse } from 'dotenv'
 import { execa } from 'execa'
@@ -12,14 +14,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { getExecutableId } from '../embedding.js'
 import { version } from '../schema.js'
-import {
-  findRuntimeConfigurationFile,
-  getRoot,
-  loadRuntimeConfigurationFile,
-  logFatalError,
-  parseArgs,
-  serviceToEnvVariable
-} from '../utils.js'
+import { findRuntimeConfigurationFile, getRoot, logFatalError, parseArgs, serviceToEnvVariable } from '../utils.js'
 import { installDependencies } from './build.js'
 
 const originCandidates = ['origin', 'upstream']
@@ -76,7 +71,7 @@ export async function appendEnvVariable (envFile, key, value) {
 }
 
 async function fixConfiguration (logger, root, configOption, skipDependencies, packageManager) {
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, configOption, true)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, configOption, true, true, false)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
@@ -100,7 +95,7 @@ async function fixConfiguration (logger, root, configOption, skipDependencies, p
     const path = resolve(root)
     services = [{ path, id: basename(path) }]
   } else {
-    const config = await loadRuntimeConfigurationFile(logger, configurationFile)
+    const config = await loadConfiguration(configurationFile)
 
     /* c8 ignore next 3 - Hard to test */
     if (!config) {
@@ -112,7 +107,7 @@ async function fixConfiguration (logger, root, configOption, skipDependencies, p
 
   // For each service, if there is no watt.json, create one and fix package dependencies
   for (const { path } of services) {
-    const wattConfiguration = await ConfigManager.findConfigFile(path, 'application')
+    const wattConfiguration = await findConfigurationFile(path, 'application')
 
     const appType = await parseLocalFolder(resolve(root, path))
 
@@ -157,7 +152,7 @@ async function fixConfiguration (logger, root, configOption, skipDependencies, p
 }
 
 async function importService (logger, configurationFile, id, path, url, branch) {
-  const config = await loadRuntimeConfigurationFile(logger, configurationFile)
+  const config = await loadConfiguration(configurationFile)
 
   /* c8 ignore next 3 - Hard to test */
   if (!config) {
@@ -272,7 +267,7 @@ async function importLocal (logger, root, configurationFile, path, overridenId) 
   }
 
   // Check if there is any configuration file we recognize. If so, don't do anything
-  const wattConfiguration = await ConfigManager.findConfigFile(path, 'application')
+  const wattConfiguration = await findConfigurationFile(path, 'application')
 
   if (wattConfiguration) {
     /* c8 ignore next */
@@ -306,7 +301,7 @@ export async function resolveServices (
   skipDependencies,
   packageManager
 ) {
-  const config = await loadRuntimeConfigurationFile(logger, configurationFile)
+  const config = await loadConfiguration(configurationFile)
 
   if (!config) {
     return
@@ -466,7 +461,7 @@ export async function importCommand (logger, args) {
     rawUrl = positionals[1]
   }
 
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config, true)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
@@ -521,7 +516,7 @@ export async function resolveCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config, true)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {

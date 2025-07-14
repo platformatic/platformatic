@@ -6,22 +6,24 @@
   },
   "server": {
     "hostname": "127.0.0.1",
-    "port": "{{PORT}}",
-    "logger": {
-      "level": "info"
-    }
+    "port": "{{PORT}}"
+  },
+  "logger": {
+    "level": "info"
   },
   "undici": {
     "interceptors": {
-      "Agent": [{
-        "module": "undici-oidc-interceptor",
-        "options": {
-          "idpTokenUrl": "{{PLT_IDP_TOKEN_URL}}",
-          "refreshToken": "{{PLT_REFRESH_TOKEN}}",
-          "origins": ["{{PLT_EXTERNAL_SERVICE}}"],
-          "clientId": "my-client-id"
+      "Agent": [
+        {
+          "module": "undici-oidc-interceptor",
+          "options": {
+            "idpTokenUrl": "{{PLT_IDP_TOKEN_URL}}",
+            "refreshToken": "{{PLT_REFRESH_TOKEN}}",
+            "origins": ["{{PLT_EXTERNAL_SERVICE}}"],
+            "clientId": "my-client-id"
+          }
         }
-      }]
+      ]
     }
   }
 }

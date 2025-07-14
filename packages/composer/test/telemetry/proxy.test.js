@@ -1,9 +1,7 @@
-'use strict'
-
-const assert = require('assert')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { createFromConfig, createOpenApiService, createBasicService } = require('../helper')
+import assert from 'assert'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createBasicService, createFromConfig, createOpenApiService } from '../helper.js'
 
 test('should proxy openapi requests with telemetry span', async t => {
   const service1 = await createOpenApiService(t, ['users'])

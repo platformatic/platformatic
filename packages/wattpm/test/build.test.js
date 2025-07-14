@@ -1,5 +1,8 @@
-import { loadConfigurationFile as loadRawConfigurationFile, saveConfigurationFile } from '@platformatic/config'
-import { safeRemove } from '@platformatic/utils'
+import {
+  loadConfigurationFile as loadRawConfigurationFile,
+  safeRemove,
+  saveConfigurationFile
+} from '@platformatic/utils'
 import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -186,7 +189,7 @@ test('update - should update version in package.json files', async t => {
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/config': '^2.41.0'
+    '@platformatic/telemetry': '^2.41.0'
   })
 
   const anotherPackageJson = await loadRawConfigurationFile(resolve(rootDir, 'web/another/package.json'))
@@ -245,7 +248,7 @@ test('update - should work when executed inside a service folder', async t => {
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/config': '^2.41.0'
+    '@platformatic/telemetry': '^2.41.0'
   })
 
   deepStrictEqual(anotherPackageJson.dependencies, {
@@ -294,7 +297,7 @@ test('update - should work when loaded from a service file', async t => {
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/config': '^2.41.0'
+    '@platformatic/telemetry': '^2.41.0'
   })
 
   // The another service is not updated, because it is not considered as part of the project.
@@ -344,7 +347,7 @@ test('update - should fail when a dependency cannot be updated', async t => {
   })
 
   deepStrictEqual(mainPackageJson.devDependencies, {
-    '@platformatic/config': '^2.0.0'
+    '@platformatic/telemetry': '^2.0.0'
   })
 
   deepStrictEqual(anotherPackageJson.dependencies, {

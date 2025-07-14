@@ -3,25 +3,16 @@
 const { test } = require('node:test')
 const { equal } = require('node:assert')
 const { join } = require('path')
-const { platformaticRuntime } = require('../../index.js')
-const { ConfigManager } = require('@platformatic/config')
+const { loadConfiguration } = require('@platformatic/utils')
 const { version } = require('../../package.json')
+const { upgrade } = require('../../lib/upgrade.js')
+const { transform } = require('../../lib/config.js')
 
 test('remove the watch config', async () => {
-  const file = join(__dirname, 'fixtures', '1.4.0.json')
-
-  const configManager = new ConfigManager({
-    ...platformaticRuntime.configManagerConfig,
-    source: file,
-    fixPaths: true,
-    onMissingEnv (key) {
-      return ''
-    },
+  const config = await loadConfiguration(join(__dirname, 'fixtures', '1.4.0.json'), null, {
+    transform,
+    upgrade
   })
-
-  await configManager.parse()
-
-  const config = configManager.current
 
   equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`)
   equal(config.watch, true)
