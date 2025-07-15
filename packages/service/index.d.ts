@@ -12,13 +12,13 @@ export interface ServiceContext extends BaseContext {
   fastifyPlugins?: Function[]
 }
 
-export type Configuration<Config extends object> = Config & {
+export type Configuration<Config> = Config & {
   [kRoot]: string
   [kPath]: string
   [kEnvironment]: Record<string, string>
 }
 
-export interface PlatformaticApplication<Config extends object> {
+export interface PlatformaticApplication<Config> {
   config: Configuration<Config>
 }
 
@@ -36,7 +36,7 @@ export declare function create (
 
 export declare const skipTelemetryHooks: boolean
 
-export declare function platformaticService (app: FastifyInstance, stackable: BaseStackable): Promise<void>
+export declare function platformaticService (app: FastifyInstance, stackable: ServiceStackable): Promise<void>
 
 export declare class Generator extends BaseGenerator.BaseGenerator {}
 
@@ -62,6 +62,6 @@ export declare class ServiceStackable<Config = PlatformaticServiceConfig> extend
   Config,
   BaseOptions<ServiceContext>
 > {
-  constructor (opts: BaseOptions, root: string, configManager: ConfigManager<Config>)
+  constructor (root: string, config: Config, context?: object)
   getApplication (): FastifyInstance
 }

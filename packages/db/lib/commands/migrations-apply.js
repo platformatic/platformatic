@@ -1,19 +1,13 @@
-'use strict'
+import { loadConfiguration } from '@platformatic/utils'
+import { utimesSync } from 'node:fs'
+import { execute } from '../migrator.js'
+import { schema } from '../schema.js'
+import { updateSchemaLock } from '../utils.js'
+import { generateTypes } from './types.js'
 
-const { loadConfig } = require('@platformatic/config')
-const { utimesSync } = require('node:fs')
-const { createRequire } = require('node:module')
-const { generateTypes } = require('./types.js')
-const { updateSchemaLock } = require('../utils.js')
-const { loadModule } = require('@platformatic/utils')
-const { execute } = require('../migrator.js')
-
-async function applyMigrations (logger, configFile, args, context) {
+export async function applyMigrations (logger, configFile, args, context) {
   const { parseArgs, logFatalError } = context
-  const platformaticDB = await loadModule(createRequire(__filename), '../../index.js')
-  const { configManager } = await loadConfig({}, ['-c', configFile], platformaticDB)
-  await configManager.parseAndValidate()
-  const config = configManager.current
+  const config = await loadConfiguration(configFile, schema)
 
   const {
     values: { to, rollback }
@@ -40,14 +34,13 @@ async function applyMigrations (logger, configFile, args, context) {
     }
 
     if (appliedMigrations) {
-      await updateSchemaLock(logger, configManager)
+      await updateSchemaLock(logger, config)
     }
 
     // touch the @platformatic/db config to trigger a restart
     const now = new Date()
 
-    const configPath = configManager.fullPath
-    utimesSync(configPath, now, now)
+    utimesSync(configFile, now, now)
   } catch (err) {
     if (err.code === 'PTL_DB_MIGRATE_ERROR') {
       logFatalError(logger, err.message)
@@ -59,7 +52,7 @@ async function applyMigrations (logger, configFile, args, context) {
   }
 }
 
-const helpFooter = `
+export const helpFooter = `
 The migrations will be applied in the order they are specified in the
 folder defined in the configuration file. If you want to apply a specific migration,
 you can use the \`--to\` option (use \`000\` to reset to the initial state).
@@ -67,5 +60,3 @@ you can use the \`--to\` option (use \`000\` to reset to the initial state).
 You can find more details about the configuration format here:
 * [Platformatic DB Configuration](https://docs.platformatic.dev/docs/db/configuration)
 `
-
-module.exports = { applyMigrations, helpFooter }

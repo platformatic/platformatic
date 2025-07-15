@@ -6,10 +6,7 @@ import { schema } from '../lib/schema.js'
 
 test('schema output', async t => {
   const { execa } = await import('execa')
-  const { stdout } = await execa(process.execPath, [
-    join(import.meta.dirname, '../../utils/scripts/schema-generator.js'),
-    'lib/schema.js'
-  ])
+  const { stdout } = await execa(process.execPath, [join(import.meta.dirname, '..', 'lib', 'schema.js')])
 
   assert.deepEqual(stdout, JSON.stringify(schema, null, 2))
 })

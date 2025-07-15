@@ -1,5 +1,3 @@
-import type { BaseOptions, BaseStackable } from '@platformatic/basic'
-import type { ConfigManager, ConfigManagerConfig } from '@platformatic/config'
 import { DBAuthorizationPluginInterface } from '@platformatic/db-authorization'
 import { BaseGenerator } from '@platformatic/generators'
 import { PlatformaticApplication, ServiceStackable } from '@platformatic/service'
@@ -9,8 +7,6 @@ import type { JSONSchemaType } from 'ajv'
 import { FastifyInstance, type FastifyError } from 'fastify'
 import { PlatformaticDatabaseConfig } from './config'
 
-export function platformaticDatabase (app: FastifyInstance, stackable: BaseStackable): Promise<void>
-
 export { PlatformaticApplication } from '@platformatic/service'
 export { createConnectionPool, Entities, Entity, EntityHooks } from '@platformatic/sql-mapper'
 export { PlatformaticDatabaseConfig } from './config'
@@ -19,28 +15,39 @@ export type PlatformaticDatabaseMixin<T extends Entities> = SQLMapperPluginInter
   SQLEventsPluginInterface &
   DBAuthorizationPluginInterface
 
-export class Generator extends BaseGenerator.BaseGenerator {}
-
 export type DatabaseStackable = ServiceStackable<PlatformaticDatabaseConfig>
 
 export type ServerInstance<T = {}> = FastifyInstance & {
   platformatic: PlatformaticApplication<PlatformaticDatabaseConfig> & PlatformaticDatabaseMixin<Entities> & T
 }
 
-export function transformConfig (this: ConfigManager): Promise<void>
-
-export function buildStackable (
-  root: string,
-  source: string | PlatformaticDatabaseConfig,
-  opts: BaseOptions
-): Promise<DatabaseStackable>
+export declare function transform<T extends object> (config: T): Promise<T>
 
 export function create (
   root: string,
   source?: string | PlatformaticDatabaseConfig,
-  opts?: object,
   context?: object
 ): Promise<DatabaseStackable>
+
+export declare const skipTelemetryHooks: boolean
+
+export function platformaticDatabase (app: FastifyInstance, stackable: DatabaseStackable): Promise<void>
+
+export declare class Generator extends BaseGenerator.BaseGenerator {}
+
+export declare const packageJson: Record<string, unknown>
+
+export declare const schema: JSONSchemaType<PlatformaticDatabaseConfig>
+
+export declare const schemaComponents: {
+  db: JSONSchemaType<object>
+  sharedAuthorizationRule: JSONSchemaType<object>
+  authorization: JSONSchemaType<object>
+  migrations: JSONSchemaType<object>
+  types: JSONSchemaType<object>
+}
+
+export const version: string
 
 /**
  * All the errors thrown by the plugin.
@@ -52,11 +59,3 @@ export declare const errors: {
   MissingSeedFileError: () => FastifyError
   MigrationsToApplyError: () => FastifyError
 }
-
-export const schema: JSONSchemaType<PlatformaticDatabaseConfig>
-
-export const configType: 'db'
-
-export const configManagerConfig: ConfigManagerConfig<PlatformaticDatabaseConfig>
-
-export const version: string

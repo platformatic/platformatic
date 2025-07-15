@@ -1,31 +1,29 @@
-'use strict'
-
-const { ServiceStackable } = require('@platformatic/service')
-const { ensureServices, platformaticComposer } = require('./application')
-const { packageJson } = require('./schema')
-const notHostConstraints = require('./not-host-constraints')
+import { ServiceStackable } from '@platformatic/service'
+import { kEnvironment, replaceEnv } from '@platformatic/utils'
+import { ensureServices, platformaticComposer } from './application.js'
+import { notHostConstraints } from './not-host-constraints.js'
+import { packageJson } from './schema.js'
 
 const kITC = Symbol.for('plt.runtime.itc')
 
-class ComposerStackable extends ServiceStackable {
+export class ComposerStackable extends ServiceStackable {
   #meta
   #dependencies
 
-  constructor (options, root, configManager) {
-    super(options, root, configManager)
+  constructor (root, config, context) {
+    super(root, config, context)
     this.type = 'composer'
     this.version = packageJson.version
 
     this.applicationFactory = this.context.applicationFactory ?? platformaticComposer
-
     this.fastifyOptions ??= {}
     this.fastifyOptions.constraints = { notHost: notHostConstraints }
   }
 
   async getBootstrapDependencies () {
-    await ensureServices(this.serviceId, this.configManager.current)
+    await ensureServices(this.serviceId, this.config)
 
-    const composedServices = this.configManager.current.composer?.services
+    const composedServices = this.config.composer?.services
     const dependencies = []
 
     if (Array.isArray(composedServices)) {
@@ -78,7 +76,7 @@ class ComposerStackable extends ServiceStackable {
     let url = `http://${id}.plt.local`
 
     if (urlString) {
-      const remoteUrl = await this.configManager.replaceEnv(urlString)
+      const remoteUrl = await replaceEnv(urlString, this.config[kEnvironment])
 
       if (remoteUrl) {
         url = remoteUrl
@@ -88,5 +86,3 @@ class ComposerStackable extends ServiceStackable {
     return { id, url, local: url.endsWith('.plt.local') }
   }
 }
-
-module.exports = { ComposerStackable }

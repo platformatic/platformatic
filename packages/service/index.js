@@ -45,6 +45,7 @@ export async function create (configFileOrRoot, sourceOrConfig, context) {
     transform: context?.transform ?? transform,
     upgrade: context?.upgrade ?? upgrade,
     replaceEnv: true,
+    onMissingEnv: context?.onMissingEnv,
     root
   })
 

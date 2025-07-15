@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#! /usr/bin/env node
 
 import { schema as telemetrySchema } from '@platformatic/telemetry'
 import { fastifyServer as server, watch, wrappedRuntime } from '@platformatic/utils'
@@ -6,7 +6,6 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
-
 export const version = packageJson.version
 
 export const $defs = {
@@ -1371,4 +1370,9 @@ export const schema = {
   },
   additionalProperties: false,
   $defs
+}
+
+/* c8 ignore next 3 */
+if (process.argv[1] === import.meta.filename) {
+  console.log(JSON.stringify(schema, null, 2))
 }

@@ -1,12 +1,17 @@
 #! /usr/bin/env node
-'use strict'
 
-const { server, plugins, watch, openApiBase, clients, $defs } = require('@platformatic/service').schemaComponents
-const { schemaComponents } = require('@platformatic/utils')
-const telemetry = require('@platformatic/telemetry').schema
-const packageJson = require('../package.json')
+import { schemaComponents as serviceSchemaComponents } from '@platformatic/service'
+import { schema as telemetrySchema } from '@platformatic/telemetry'
+import { fastifyServer as server, watch, wrappedRuntime } from '@platformatic/utils'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
-const db = {
+export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
+export const version = packageJson.version
+
+const { plugins, openApiBase, clients, $defs } = serviceSchemaComponents
+
+export const db = {
   type: 'object',
   properties: {
     connectionString: {
@@ -235,7 +240,7 @@ const db = {
   required: ['connectionString']
 }
 
-const sharedAuthorizationRule = {
+export const sharedAuthorizationRule = {
   role: {
     type: 'string',
     description: 'the role name to match the rule'
@@ -261,7 +266,7 @@ const sharedAuthorizationRule = {
   }
 }
 
-const authorization = {
+export const authorization = {
   type: 'object',
   properties: {
     adminSecret: {
@@ -367,7 +372,7 @@ const authorization = {
   additionalProperties: false
 }
 
-const migrations = {
+export const migrations = {
   type: 'object',
   properties: {
     dir: {
@@ -410,7 +415,7 @@ const migrations = {
   required: ['dir']
 }
 
-const types = {
+export const types = {
   type: 'object',
   properties: {
     autogenerate: {
@@ -433,7 +438,15 @@ const types = {
   additionalProperties: false
 }
 
-const schema = {
+export const schemaComponents = {
+  db,
+  sharedAuthorizationRule,
+  authorization,
+  migrations,
+  types
+}
+
+export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/db/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
   title: 'Platformatic Database Config',
@@ -457,9 +470,9 @@ const schema = {
     migrations,
     types,
     plugins,
-    telemetry,
+    telemetry: telemetrySchema,
     clients,
-    runtime: schemaComponents.wrappedRuntime,
+    runtime: wrappedRuntime,
     watch: {
       anyOf: [
         watch,
@@ -533,16 +546,7 @@ const schema = {
   }
 }
 
-module.exports = {
-  packageJson,
-  db,
-  sharedAuthorizationRule,
-  authorization,
-  migrations,
-  types,
-  schema
-}
-
-if (require.main === module) {
+/* c8 ignore next 3 */
+if (process.argv[1] === import.meta.filename) {
   console.log(JSON.stringify(schema, null, 2))
 }

@@ -1,8 +1,6 @@
-'use strict'
-
-module.exports = {
+export const notHostConstraints = {
   name: 'notHost',
-  storage: () => {
+  storage () {
     const store = []
 
     return {
@@ -23,7 +21,7 @@ module.exports = {
       store
     }
   },
-  deriveConstraint: req => {
+  deriveConstraint (req) {
     return req.headers.host || req.headers[':authority']
   },
   mustMatchWhenDerived: false,

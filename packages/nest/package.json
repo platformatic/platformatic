@@ -25,7 +25,6 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
     "@platformatic/basic": "workspace:*",
-    "@platformatic/config": "workspace:*",
     "@platformatic/generators": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "get-port": "^7.1.0",

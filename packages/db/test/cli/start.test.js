@@ -1,11 +1,9 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { getConnectionInfo } = require('../helper.js')
-const { connectDB, safeKill, start } = require('./helper.js')
+import assert from 'node:assert/strict'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { getConnectionInfo } from '../helper.js'
+import { connectDB, safeKill, start } from './helper.js'
 
 test('autostart', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
@@ -21,7 +19,7 @@ test('autostart', async t => {
     await dropTestDB()
   })
 
-  const { child, url } = await start([join(__dirname, '..', 'fixtures', 'simple.json')], {
+  const { child, url } = await start([join(import.meta.dirname, '..', 'fixtures', 'simple.json')], {
     env: {
       DATABASE_URL: connectionInfo.connectionString
     }
@@ -156,7 +154,7 @@ test('start command', async t => {
     await dropTestDB()
   })
 
-  const { child, url } = await start([join(__dirname, '..', 'fixtures', 'simple.json')], {
+  const { child, url } = await start([join(import.meta.dirname, '..', 'fixtures', 'simple.json')], {
     env: {
       DATABASE_URL: connectionInfo.connectionString
     }

@@ -1,14 +1,17 @@
 #! /usr/bin/env node
-'use strict'
 
-const {
-  schemaComponents: { server, plugins, watch, clients, openApiBase, graphqlBase, $defs }
-} = require('@platformatic/service')
-const { schemaComponents } = require('@platformatic/utils')
-const telemetry = require('@platformatic/telemetry').schema
-const packageJson = require('../package.json')
+import { schemaComponents as serviceSchemaComponents } from '@platformatic/service'
+import { schema as telemetrySchema } from '@platformatic/telemetry'
+import { fastifyServer as server, watch, wrappedRuntime } from '@platformatic/utils'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
-const openApiService = {
+const { $defs, clients, graphqlBase, openApiBase, plugins } = serviceSchemaComponents
+
+export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
+export const version = packageJson.version
+
+export const openApiService = {
   type: 'object',
   properties: {
     url: { type: 'string' },
@@ -20,7 +23,7 @@ const openApiService = {
   additionalProperties: false
 }
 
-const entityResolver = {
+export const entityResolver = {
   type: 'object',
   properties: {
     name: { type: 'string' },
@@ -35,7 +38,7 @@ const entityResolver = {
   additionalProperties: false
 }
 
-const entities = {
+export const entities = {
   type: 'object',
   patternProperties: {
     '^.*$': {
@@ -78,7 +81,7 @@ const entities = {
   }
 }
 
-const graphqlService = {
+export const graphqlService = {
   anyOf: [
     { type: 'boolean' },
     {
@@ -95,7 +98,7 @@ const graphqlService = {
   ]
 }
 
-const graphqlComposerOptions = {
+export const graphqlComposerOptions = {
   type: 'object',
   properties: {
     ...graphqlBase.properties,
@@ -110,7 +113,7 @@ const graphqlComposerOptions = {
   additionalProperties: false
 }
 
-const composer = {
+export const composer = {
   type: 'object',
   properties: {
     services: {
@@ -180,7 +183,7 @@ const composer = {
   additionalProperties: false
 }
 
-const types = {
+export const types = {
   type: 'object',
   properties: {
     autogenerate: {
@@ -196,7 +199,17 @@ const types = {
   additionalProperties: false
 }
 
-const schema = {
+export const schemaComponents = {
+  openApiService,
+  entityResolver,
+  entities,
+  graphqlService,
+  graphqlComposerOptions,
+  composer,
+  types
+}
+
+export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/composer/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
   title: 'Platformatic Composer Config',
@@ -210,8 +223,8 @@ const schema = {
     types,
     plugins,
     clients,
-    runtime: schemaComponents.wrappedRuntime,
-    telemetry,
+    runtime: wrappedRuntime,
+    telemetry: telemetrySchema,
     watch: {
       anyOf: [
         watch,
@@ -234,19 +247,7 @@ const schema = {
   $defs
 }
 
-module.exports = {
-  packageJson,
-  schema,
-  openApiService,
-  entityResolver,
-  entities,
-  graphqlService,
-  graphqlComposerOptions,
-  composer,
-  types
-}
-
 /* c8 ignore next 3 */
-if (require.main === module) {
+if (process.argv[1] === import.meta.filename) {
   console.log(JSON.stringify(schema, null, 2))
 }

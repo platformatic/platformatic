@@ -113,7 +113,11 @@ export class BaseStackable extends EventEmitter {
     return this.url
   }
 
-  async getConfig () {
+  async getConfig (includeMeta = false) {
+    if (includeMeta) {
+      return this.config
+    }
+
     const { [kRoot]: _u1, [kEnvironment]: _u2, [kPath]: _u3, ...config } = this.config
     return config
   }

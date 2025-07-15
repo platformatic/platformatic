@@ -2,7 +2,7 @@
 
 const { readdir } = require('node:fs/promises')
 const { createRequire } = require('node:module')
-const { join, resolve: pathResolve, isAbsolute } = require('node:path')
+const { join, resolve: resolvePath, isAbsolute } = require('node:path')
 const {
   loadModule,
   omitProperties,
@@ -51,7 +51,7 @@ async function _transformConfig (configManager, args) {
     // This is a hack, but it's the only way to not fix the paths for the autoloaded services
     // while we are upgrading the config
     if (configManager._fixPaths) {
-      path = pathResolve(configManager.dirname, path)
+      path = resolvePath(configManager.dirname, path)
     }
 
     const entries = await readdir(path, { withFileTypes: true })
@@ -96,11 +96,11 @@ async function _transformConfig (configManager, args) {
     // We need to have absolute paths here, ot the `loadConfig` will fail
     // Make sure we don't resolve if env var was not replaced
     if (service.path && !isAbsolute(service.path) && !service.path.match(/^\{.*\}$/)) {
-      service.path = pathResolve(configManager.dirname, service.path)
+      service.path = resolvePath(configManager.dirname, service.path)
     }
 
     if (configManager._fixPaths && service.path && service.config) {
-      service.config = pathResolve(service.path, service.config)
+      service.config = resolvePath(service.path, service.config)
     }
 
     if (service.config) {
@@ -121,7 +121,7 @@ async function _transformConfig (configManager, args) {
       } catch (err) {
         // Fallback if for any reason a dependency is not found
         try {
-          const manager = new ConfigManager({ source: pathResolve(service.path, service.config) })
+          const manager = new ConfigManager({ source: resolvePath(service.path, service.config) })
           await manager.parse()
           const config = manager.current
           const type = config.$schema ? ConfigManager.matchKnownSchema(config.$schema) : undefined

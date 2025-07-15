@@ -9,7 +9,7 @@ import { hostname } from 'node:os'
 import pino from 'pino'
 import { platformaticService } from './application.js'
 import { setupRoot } from './plugins/root.js'
-import { packageJson } from './schema.js'
+import { version } from './schema.js'
 import { sanitizeHTTPSArgument } from './utils.js'
 
 export class ServiceStackable extends BaseStackable {
@@ -17,7 +17,7 @@ export class ServiceStackable extends BaseStackable {
   #basePath
 
   constructor (root, config, context) {
-    super('service', packageJson.version, root, config, context)
+    super('service', version, root, config, context)
     this.applicationFactory = this.context.applicationFactory ?? platformaticService
   }
 
@@ -117,8 +117,8 @@ export class ServiceStackable extends BaseStackable {
     return this.#app
   }
 
-  async getConfig () {
-    let config = await super.getConfig()
+  async getConfig (includeMeta = false) {
+    let config = await super.getConfig(includeMeta)
     const loggerInstance = this.serverConfig?.loggerInstance
 
     if (loggerInstance) {

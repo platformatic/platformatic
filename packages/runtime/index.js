@@ -1,5 +1,7 @@
 'use strict'
 
+const { resolve, validationOptions } = require('@platformatic/basic')
+const { loadConfiguration, ensureLoggableError } = require('@platformatic/utils')
 const { buildServer } = require('./lib/build-server')
 const errors = require('./lib/errors')
 const { platformaticRuntime, wrapConfigInRuntimeConfig } = require('./lib/config')
@@ -7,7 +9,41 @@ const { RuntimeGenerator, WrappedGenerator } = require('./lib/generator/runtime-
 const { Runtime } = require('./lib/runtime')
 const { buildRuntime, start, startCommand } = require('./lib/start')
 const symbols = require('./lib/worker/symbols')
+const { schema } = require('./lib/schema')
 const { loadConfig, getRuntimeLogsDir } = require('./lib/utils')
+
+async function restartRuntime (runtime) {
+  runtime.logger.info('Received SIGUSR2, restarting all services ...')
+
+  try {
+    await runtime.restart()
+  } catch (err) {
+    runtime.logger.error({ err: ensureLoggableError(err) }, 'Failed to restart services.')
+  }
+}
+
+async function create (configFileOrRoot, sourceOrConfig, context) {
+  const { root, source } = await resolve(configFileOrRoot, sourceOrConfig, 'runtime')
+
+  const config = await loadConfiguration(source, context?.schema ?? schema, {
+    validationOptions: context?.validationOptions ?? validationOptions,
+    // transform: context?.transform ?? transform,
+    // upgrade: context?.upgrade ?? upgrade,
+    replaceEnv: true,
+    root
+  })
+
+  const runtime = new Runtime(config, context)
+
+  /* c8 ignore next 3 */
+  const restartListener = restartRuntime.bind(null, runtime)
+  process.on('SIGUSR2', restartListener)
+  runtime.on('closed', () => {
+    process.removeListener('SIGUSR2', restartListener)
+  })
+
+  return runtime
+}
 
 const platformaticVersion = require('./package.json').version
 
@@ -26,3 +62,4 @@ module.exports.symbols = symbols
 module.exports.Runtime = Runtime
 module.exports.wrapConfigInRuntimeConfig = wrapConfigInRuntimeConfig
 module.exports.version = platformaticVersion
+module.exports.create = create

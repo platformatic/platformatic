@@ -1,10 +1,8 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { request } = require('undici')
-const { createFromConfig, createBasicService, createOpenApiService } = require('../helper')
+import assert from 'node:assert/strict'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createBasicService, createFromConfig, createOpenApiService } from '../helper.js'
 
 test('should add onSend route hook', async t => {
   const api = await createOpenApiService(t, ['users'])
@@ -28,7 +26,7 @@ test('should add onSend route hook', async t => {
       ]
     },
     plugins: {
-      paths: [join(__dirname, './fixtures/plugins/hook.js')]
+      paths: [join(import.meta.dirname, './fixtures/plugins/hook.js')]
     }
   })
 
@@ -60,7 +58,7 @@ test('should add multiple onRoute hooks for one route', async t => {
       ]
     },
     plugins: {
-      paths: [join(__dirname, './fixtures/plugins/multiple-hooks.js')]
+      paths: [join(import.meta.dirname, './fixtures/plugins/multiple-hooks.js')]
     }
   })
 
@@ -95,7 +93,7 @@ test('should parse json response payload', async t => {
       ]
     },
     plugins: {
-      paths: [join(__dirname, './fixtures/plugins/parse-payload.js')]
+      paths: [join(import.meta.dirname, './fixtures/plugins/parse-payload.js')]
     }
   })
   const composerOrigin = await composer.start({ listen: true })
@@ -135,7 +133,7 @@ test('should parse text response payload', async t => {
       ]
     },
     plugins: {
-      paths: [join(__dirname, './fixtures/plugins/parse-payload.js')]
+      paths: [join(import.meta.dirname, './fixtures/plugins/parse-payload.js')]
     }
   })
   const composerOrigin = await composer.start({ listen: true })
@@ -202,13 +200,13 @@ test('should send two different schema objects into different composer hooks', a
           id: 'api1',
           origin: 'http://127.0.0.1:' + api.server.address().port,
           openapi: {
-            file: join(__dirname, './fixtures/schemas/users-with-refs.json')
+            file: join(import.meta.dirname, './fixtures/schemas/users-with-refs.json')
           }
         }
       ]
     },
     plugins: {
-      paths: [join(__dirname, './fixtures/plugins/hooks-with-refs.js')]
+      paths: [join(import.meta.dirname, './fixtures/plugins/hooks-with-refs.js')]
     }
   })
 

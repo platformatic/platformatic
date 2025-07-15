@@ -29,7 +29,6 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
     "@platformatic/basic": "workspace:*",
-    "@platformatic/config": "workspace:*",
     "@platformatic/generators": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "json5": "^2.2.3",

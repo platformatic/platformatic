@@ -1,8 +1,6 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { createFromConfig, getConnectionInfo } = require('./helper')
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { createFromConfig, getConnectionInfo } from './helper.js'
 
 test('should set pluginTimeout to 60s by default', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
@@ -24,6 +22,6 @@ test('should set pluginTimeout to 60s by default', async t => {
   })
   await app.start({ listen: true })
 
-  const appConfig = app.getApplication().platformatic.configManager.current
+  const appConfig = await app.getConfig()
   assert.equal(appConfig.server.pluginTimeout, 60 * 1000)
 })

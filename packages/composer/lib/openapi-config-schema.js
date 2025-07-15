@@ -1,18 +1,16 @@
-'use strict'
-
 const ignoreSchema = {
   type: 'object',
   properties: {
-    ignore: { type: 'boolean' },
+    ignore: { type: 'boolean' }
   },
-  additionalProperties: false,
+  additionalProperties: false
 }
 
 const aliasSchema = {
   type: 'object',
   properties: {
-    alias: { type: 'string' },
-  },
+    alias: { type: 'string' }
+  }
 }
 
 const jsonSchemaSchema = {
@@ -28,16 +26,16 @@ const jsonSchemaSchema = {
           {
             type: 'object',
             properties: {
-              rename: { type: 'string' },
+              rename: { type: 'string' }
             },
-            additionalProperties: false,
-          },
-        ],
-      },
+            additionalProperties: false
+          }
+        ]
+      }
     },
-    items: { $ref: 'json-schema' },
+    items: { $ref: 'json-schema' }
   },
-  additionalProperties: false,
+  additionalProperties: false
 }
 
 const routeSchema = {
@@ -49,15 +47,15 @@ const routeSchema = {
         responses: {
           type: 'object',
           properties: {
-            200: { $ref: 'json-schema' },
-          },
-        },
-      },
-    },
-  ],
+            200: { $ref: 'json-schema' }
+          }
+        }
+      }
+    }
+  ]
 }
 
-const openApiConfigSchema = {
+export const openApiConfigSchema = {
   type: 'object',
   properties: {
     paths: {
@@ -76,18 +74,16 @@ const openApiConfigSchema = {
               delete: routeSchema,
               options: routeSchema,
               head: routeSchema,
-              trace: routeSchema,
+              trace: routeSchema
             },
-            additionalProperties: false,
-          },
-        ],
-      },
-    },
+            additionalProperties: false
+          }
+        ]
+      }
+    }
   },
   additionalProperties: false,
   definitions: {
-    'json-schema': jsonSchemaSchema,
-  },
+    'json-schema': jsonSchemaSchema
+  }
 }
-
-module.exports = openApiConfigSchema

@@ -1,7 +1,7 @@
-import { BaseStackable } from '@platformatic/basic'
 import { kRoot } from '@platformatic/utils'
 import { FastifyInstance } from 'fastify'
 import { lstat } from 'node:fs/promises'
+// @ts-ignore
 import { resolve } from 'node:path'
 import {
   type Configuration,
@@ -9,6 +9,7 @@ import {
   type PlatformaticApplication,
   platformaticService,
   type PlatformaticServiceConfig as ServiceConfig,
+  ServiceStackable,
   transform as serviceTransform
 } from '../../../../../index.js'
 
@@ -30,7 +31,7 @@ async function isDirectory (path: string) {
   }
 }
 
-export default async function acmeBase (app: FastifyInstance & AcmeBaseMixin, stackable: BaseStackable) {
+export default async function acmeBase (app: FastifyInstance & AcmeBaseMixin, stackable: ServiceStackable) {
   if (app.platformatic.config.dynamite) {
     app.register(dynamite)
   }

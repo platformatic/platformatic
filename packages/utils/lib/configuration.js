@@ -154,7 +154,7 @@ export function listRecognizedConfigurationFiles (suffixes, extensions) {
 
 export function matchKnownSchema (config, throwOnMissing = false) {
   if (typeof config?.module === 'string') {
-    return config.module
+    return { module: config.module }
   } else if (typeof config?.$schema !== 'string') {
     if (throwOnMissing) {
       throw new AddAModulePropertyToTheConfigOrAddAKnownSchemaError()
@@ -356,11 +356,22 @@ export function replaceEnv (config, env, onMissingEnv, ignore) {
     for (let path of ignore) {
       // Migrate JSON Path to JSON Pointer
       if (path.startsWith('$')) {
-        path = '/' + path.slice(2).replace('.', '/')
+        path = '/' + path.slice(2).replaceAll('.', '/')
       }
 
-      const value = jsonPatch.getValueByPointer(config, path)
-      jsonPatch.applyOperation(config, { op: 'add', path, value: { [kReplaceEnvIgnore]: true, originalValue: value } })
+      try {
+        const value = jsonPatch.getValueByPointer(config, path)
+
+        if (typeof value !== 'undefined') {
+          jsonPatch.applyOperation(config, {
+            op: 'add',
+            path,
+            value: { [kReplaceEnvIgnore]: true, originalValue: value }
+          })
+        }
+      } catch {
+        // No-op, the path does not exist
+      }
     }
   }
 
@@ -435,7 +446,7 @@ export async function loadConfiguration (source, schema, options = {}) {
     let version = matchKnownSchema(config)?.version
 
     if (!version && config.module) {
-      version = splitModuleFromVersion(config.module)
+      version = splitModuleFromVersion(config.module).version
     }
 
     if (version) {
@@ -452,17 +463,20 @@ export async function loadConfiguration (source, schema, options = {}) {
     const valid = validator(config)
 
     if (!valid) {
-      const error = new ConfigurationDoesNotValidateAgainstSchemaError()
+      const validationErrors = []
+      let errors = ':'
 
-      Object.defineProperty(error, 'validationErrors', {
-        value: validator.errors.map(err => {
-          return {
-            /* c8 ignore next - else */
-            path: err.instancePath === '' ? '/' : err.instancePath,
-            message: err.message + ' ' + JSON.stringify(err.params)
-          }
-        })
-      })
+      for (const validationError of validator.errors) {
+        /* c8 ignore next - else */
+        const path = validationError.instancePath === '' ? '/' : validationError.instancePath
+
+        validationErrors.push({ path, message: validationError.message, params: validationError.params })
+        errors += `\n  - ${path}: ${validationError.message}`
+      }
+
+      const error = new ConfigurationDoesNotValidateAgainstSchemaError()
+      error.message += errors + '\n'
+      Object.defineProperty(error, 'validationErrors', { value: validationErrors })
 
       throw error
     }
@@ -473,14 +487,15 @@ export async function loadConfiguration (source, schema, options = {}) {
   config[kPath] = typeof source === 'string' ? source : null
 
   if (typeof transform === 'function') {
-    config = await transform(config)
+    config = await transform(config, schema, options)
   }
 
   return config
 }
 
-export function loadCapability (root, config) {
-  const pkg = matchKnownSchema(config, true)
+export function loadCapability (root, config, pkg) {
+  pkg ??= matchKnownSchema(config, true).module
+
   const require = createRequire(resolve(root, 'noop.js'))
   return loadModule(require, pkg)
 }
