@@ -26,7 +26,7 @@ test('should update shared context via runtime API', async (t) => {
     assert.deepStrictEqual(sharedContext, {})
   }
   {
-    const { statusCode, body } = await request(url + '/service-app/shared-context')
+    const { statusCode, body } = await request(url + '/proxy/service-app/shared-context')
     assert.strictEqual(statusCode, 200)
 
     const sharedContext = await body.json()
@@ -42,7 +42,7 @@ test('should update shared context via runtime API', async (t) => {
     assert.deepStrictEqual(sharedContext, contextUpdate1)
   }
   {
-    const { statusCode, body } = await request(url + '/service-app/shared-context')
+    const { statusCode, body } = await request(url + '/proxy/service-app/shared-context')
     assert.strictEqual(statusCode, 200)
 
     const sharedContext = await body.json()
@@ -58,7 +58,7 @@ test('should update shared context via runtime API', async (t) => {
     assert.deepStrictEqual(sharedContext, { ...contextUpdate1, ...contextUpdate2 })
   }
   {
-    const { statusCode, body } = await request(url + '/service-app/shared-context')
+    const { statusCode, body } = await request(url + '/proxy/service-app/shared-context')
     assert.strictEqual(statusCode, 200)
 
     const sharedContext = await body.json()
@@ -74,7 +74,7 @@ test('should update shared context via runtime API', async (t) => {
     assert.deepStrictEqual(sharedContext, contextUpdate3)
   }
   {
-    const { statusCode, body } = await request(url + '/service-app/shared-context')
+    const { statusCode, body } = await request(url + '/proxy/service-app/shared-context')
     assert.strictEqual(statusCode, 200)
 
     const sharedContext = await body.json()
@@ -99,7 +99,7 @@ test('should update shared context from one of the services', async (t) => {
     assert.deepStrictEqual(sharedContext, {})
   }
   {
-    const { statusCode, body } = await request(url + '/service-app/shared-context')
+    const { statusCode, body } = await request(url + '/proxy/service-app/shared-context')
     assert.strictEqual(statusCode, 200)
 
     const sharedContext = await body.json()
@@ -109,7 +109,7 @@ test('should update shared context from one of the services', async (t) => {
   // Update the shared context
   const contextUpdate1 = { foo: 'bar' }
   {
-    const { statusCode } = await request(url + '/service-app/shared-context', {
+    const { statusCode } = await request(url + '/proxy/service-app/shared-context', {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -125,7 +125,7 @@ test('should update shared context from one of the services', async (t) => {
     assert.deepStrictEqual(sharedContext, contextUpdate1)
   }
   {
-    const { statusCode, body } = await request(url + '/with-logger/shared-context')
+    const { statusCode, body } = await request(url + '/proxy/with-logger/shared-context')
     assert.strictEqual(statusCode, 200)
 
     const sharedContext = await body.json()
@@ -135,7 +135,7 @@ test('should update shared context from one of the services', async (t) => {
   // Update shared context
   const contextUpdate2 = { bar: 'baz' }
   {
-    const { statusCode } = await request(url + '/with-logger/shared-context', {
+    const { statusCode } = await request(url + '/proxy/with-logger/shared-context', {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -151,7 +151,7 @@ test('should update shared context from one of the services', async (t) => {
     assert.deepStrictEqual(sharedContext, { ...contextUpdate1, ...contextUpdate2 })
   }
   {
-    const { statusCode, body } = await request(url + '/service-app/shared-context')
+    const { statusCode, body } = await request(url + '/proxy/service-app/shared-context')
     assert.strictEqual(statusCode, 200)
 
     const sharedContext = await body.json()
@@ -161,7 +161,7 @@ test('should update shared context from one of the services', async (t) => {
   // Overwrite shared context
   const contextUpdate3 = { baz: 'qux' }
   {
-    const { statusCode } = await request(url + '/service-app/shared-context', {
+    const { statusCode } = await request(url + '/proxy/service-app/shared-context', {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -177,7 +177,7 @@ test('should update shared context from one of the services', async (t) => {
     assert.deepStrictEqual(sharedContext, contextUpdate3)
   }
   {
-    const { statusCode, body } = await request(url + '/with-logger/shared-context')
+    const { statusCode, body } = await request(url + '/proxy/with-logger/shared-context')
     assert.strictEqual(statusCode, 200)
 
     const sharedContext = await body.json()
