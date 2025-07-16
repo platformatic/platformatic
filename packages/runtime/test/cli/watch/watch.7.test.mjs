@@ -28,7 +28,7 @@ test('should not watch files if watch = false', async t => {
   await Promise.all([cp(configFileSrc, configFileDst), cp(appSrc, appDst, { recursive: true })])
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
-  const { child, url } = await start('-c', configFileDst)
+  const { child, url } = await start(configFileDst)
   t.after(() => child.kill('SIGKILL'))
 
   // Need this sleep to await for the CI linux machine to start watching

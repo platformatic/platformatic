@@ -1,13 +1,12 @@
 import { createDirectory, safeRemove } from '@platformatic/utils'
-import desm from 'desm'
 import { cp, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { createCjsLoggingPlugin, start } from './helper.mjs'
 
-const fixturesDir = join(desm(import.meta.url), '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-const base = join(desm(import.meta.url), '..', 'tmp')
+const base = join(import.meta.dirname, '..', 'tmp')
 
 try {
   await createDirectory(base)
@@ -32,7 +31,7 @@ test('do not crash on bad config', async t => {
   configFile.watch = true
   await writeFile(configFileDst, JSON.stringify(configFile, null, 2))
 
-  const { child } = await start('-c', configFileDst)
+  const { child } = await start(configFileDst)
   t.after(() => child.kill('SIGKILL'))
 
   await writeFile(serviceConfigFilePath, 'INVALID')

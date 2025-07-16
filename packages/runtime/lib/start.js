@@ -16,62 +16,6 @@ const { Runtime } = require('./runtime')
 const errors = require('./errors')
 const { getRuntimeLogsDir, loadConfig } = require('./utils')
 
-async function restartRuntime (runtime) {
-  runtime.logger.info('Received SIGUSR2, restarting all services ...')
-
-  try {
-    await runtime.restart()
-  } catch (err) {
-    runtime.logger.error({ err: ensureLoggableError(err) }, 'Failed to restart services.')
-  }
-}
-
-async function buildRuntime (configManager, env) {
-  env = env || Object.assign({}, process.env, configManager.env)
-
-  if (inspector.url() && !env.VSCODE_INSPECTOR_OPTIONS) {
-    throw new errors.NodeInspectorFlagsNotSupportedError()
-  }
-
-  if (configManager.args) {
-    parseInspectorOptions(configManager)
-  }
-
-  const dirname = configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(configManager, runtimeLogsDir, env)
-
-  /* c8 ignore next 3 */
-  const restartListener = restartRuntime.bind(null, runtime)
-  process.on('SIGUSR2', restartListener)
-  runtime.on('closed', () => {
-    process.removeListener('SIGUSR2', restartListener)
-  })
-
-  try {
-    await runtime.init()
-  } catch (e) {
-    await runtime.close()
-    throw e
-  }
-
-  return runtime
-}
-
-async function start (args) {
-  const config = await loadConfig({}, args)
-
-  if (config.configType !== 'runtime') {
-    const configManager = await wrapConfigInRuntimeConfig(config)
-    config.configManager = configManager
-  }
-
-  const app = await buildRuntime(config.configManager)
-  await app.start()
-  return app
-}
-
 async function setupAndStartRuntime (config) {
   const MAX_PORT = 65535
   let runtimeConfig
@@ -206,4 +150,4 @@ async function startCommand (args, throwAllErrors = false, returnRuntime = false
   }
 }
 
-module.exports = { buildRuntime, start, startCommand, setupAndStartRuntime }
+module.exports = { startCommand, setupAndStartRuntime }

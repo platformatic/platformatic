@@ -1,5 +1,5 @@
 import { transform as basicTransform, resolve, validationOptions } from '@platformatic/basic'
-import { loadConfiguration } from '@platformatic/utils'
+import { kRoot, loadConfiguration as utilsLoadConfiguration } from '@platformatic/utils'
 import { schema } from './lib/schema.js'
 import { ViteSSRStackable, ViteStackable } from './lib/stackable.js'
 
@@ -21,21 +21,24 @@ export async function transform (config) {
   return config
 }
 
-export async function create (configFileOrRoot, sourceOrConfig, context) {
-  const { root, source } = await resolve(configFileOrRoot, sourceOrConfig, 'application')
+export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
+  const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'application')
 
-  const config = await loadConfiguration(source, context?.schema ?? schema, {
-    validationOptions: context?.validationOptions ?? validationOptions,
-    transform: context?.transform ?? transform,
-    upgrade: context?.upgrade,
+  return utilsLoadConfiguration(source, context?.schema ?? schema, {
+    validationOptions,
+    transform,
     replaceEnv: true,
-    onMissingEnv: context?.onMissingEnv,
-    root
+    root,
+    ...context
   })
+}
+
+export async function create (configOrRoot, sourceOrConfig, context) {
+  const config = await loadConfiguration(configOrRoot, sourceOrConfig, context)
 
   // When in SSR mode, we use ViteSSRStackable, which is a subclass of @platformatic/node
   const Stackable = config.vite?.ssr?.enabled ? ViteSSRStackable : ViteStackable
-  return new Stackable(root, config, context)
+  return new Stackable(config[kRoot], config, context)
 }
 
 export { packageJson, schema, schemaComponents, version } from './lib/schema.js'

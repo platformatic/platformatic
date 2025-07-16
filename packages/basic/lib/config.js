@@ -61,7 +61,7 @@ export async function transform (config) {
   }
 
   if (Array.isArray(patch)) {
-    config = jsonPatch.applyPatch(this.current, patch).newDocument
+    config = jsonPatch.applyPatch(config, patch).newDocument
   }
 
   if (config.watch === undefined) {

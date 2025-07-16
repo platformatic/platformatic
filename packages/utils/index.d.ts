@@ -1,7 +1,7 @@
-import { Logger } from 'pino'
-import { EventEmitter } from 'node:events'
 import { FastifyError } from '@fastify/error'
 import { JSONSchemaType } from 'ajv'
+import { EventEmitter } from 'node:events'
+import { Logger } from 'pino'
 
 // Configuration types
 export declare const kPath: unique symbol
@@ -48,7 +48,7 @@ export declare function saveConfigurationFile(configurationFile: string, config:
 export declare function createValidator(schema: any, validationOptions?: object, context?: ConfigurationContext): (data: any) => boolean
 export declare function loadEnv(root: string): Promise<Record<string, string>>
 export declare function replaceEnv(config: any, env: Record<string, string>, onMissingEnv?: (key: string) => string | undefined, ignore?: string[]): any
-export declare function loadConfiguration(source: string | any, schema?: any, options?: LoadConfigurationOptions): Promise<any>
+export declare function utilsLoadConfiguration(source: string | any, schema?: any, options?: LoadConfigurationOptions): Promise<any>
 export declare function loadCapability(root: string, config: any): any
 
 // Error types

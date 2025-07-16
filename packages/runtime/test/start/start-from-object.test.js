@@ -4,8 +4,7 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
+const { loadConfiguration, Runtime } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { setLogFile } = require('../helpers')
 
@@ -13,8 +12,9 @@ test.beforeEach(setLogFile)
 
 test('can start applications programmatically from object', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const config = await loadConfiguration(configFile)
+  const app = new Runtime(config)
+
   const entryUrl = await app.start()
 
   t.after(async () => {

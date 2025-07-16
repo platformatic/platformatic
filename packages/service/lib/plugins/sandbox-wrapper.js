@@ -3,7 +3,7 @@ import { kRoot } from '@platformatic/utils'
 import fp from 'fastify-plugin'
 import { stat } from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import { resolve } from 'node:path'
+import { isAbsolute, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 /**
@@ -65,6 +65,11 @@ async function sandboxWrapperPlugin (app, options) {
     if (typeof plugin === 'string') {
       plugin = { path: plugin, encapsulate: true }
     }
+
+    if (plugin.path && !isAbsolute(plugin.path)) {
+      plugin.path = resolve(app.platformatic.config[kRoot], plugin.path)
+    }
+
     if (plugin.path && (await stat(plugin.path)).isDirectory()) {
       const patternOptions = patternOptionsFromPlugin(plugin)
 

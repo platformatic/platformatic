@@ -20,10 +20,11 @@ export function isImportFailedError (error, pkg) {
 }
 
 export async function importStackablePackage (directory, pkg) {
+  let imported
   try {
     try {
       // Try regular import
-      return await import(pkg)
+      imported = await import(pkg)
     } catch (e) {
       if (!isImportFailedError(e, pkg)) {
         throw e
@@ -31,8 +32,8 @@ export async function importStackablePackage (directory, pkg) {
 
       // Scope to the service
       const require = createRequire(resolve(directory, importStackablePackageMarker))
-      const imported = require.resolve(pkg)
-      return await importFile(imported)
+      const toImport = require.resolve(pkg)
+      imported = await importFile(toImport)
     }
   } catch (e) {
     if (!isImportFailedError(e, pkg)) {
@@ -44,6 +45,8 @@ export async function importStackablePackage (directory, pkg) {
       `Unable to import package '${pkg}'. Please add it as a dependency in the package.json file in the folder ${serviceDirectory}.`
     )
   }
+
+  return imported.default ?? imported
 }
 
 export async function importStackableAndConfig (root, config, context) {

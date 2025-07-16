@@ -1,21 +1,23 @@
 import { resolve, transform, validationOptions } from '@platformatic/basic'
-import { loadConfiguration } from '@platformatic/utils'
+import { kRoot, loadConfiguration as utilsLoadConfiguration } from '@platformatic/utils'
 import { schema } from './lib/schema.js'
 import { NodeStackable } from './lib/stackable.js'
 
-export async function create (configFileOrRoot, sourceOrConfig, context) {
-  const { root, source } = await resolve(configFileOrRoot, sourceOrConfig, 'application')
+export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
+  const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'application')
 
-  const config = await loadConfiguration(source, context?.schema ?? schema, {
-    validationOptions: context?.validationOptions ?? validationOptions,
-    transform: context?.transform ?? transform,
-    upgrade: context?.upgrade,
+  return utilsLoadConfiguration(source, context?.schema ?? schema, {
+    validationOptions,
+    transform,
     replaceEnv: true,
-    onMissingEnv: context?.onMissingEnv,
-    root
+    root,
+    ...context
   })
+}
 
-  return new NodeStackable(root, config, context)
+export async function create (configOrRoot, sourceOrConfig, context) {
+  const config = await loadConfiguration(configOrRoot, sourceOrConfig, context)
+  return new NodeStackable(config[kRoot], config, context)
 }
 
 export { Generator } from './lib/generator.js'

@@ -31,7 +31,7 @@ export function create (
 
 export declare const skipTelemetryHooks: boolean
 
-export function platformaticDatabase (app: FastifyInstance, stackable: DatabaseStackable): Promise<void>
+export declare function platformaticDatabase (app: FastifyInstance, stackable: DatabaseStackable): Promise<void>
 
 export declare class Generator extends BaseGenerator.BaseGenerator {}
 
@@ -47,15 +47,10 @@ export declare const schemaComponents: {
   types: JSONSchemaType<object>
 }
 
-export const version: string
+export declare const version: string
 
-/**
- * All the errors thrown by the plugin.
- */
-export declare const errors: {
-  MigrateMissingMigrationsError: () => FastifyError
-  UnknownDatabaseError: () => FastifyError
-  MigrateMissingMigrationsDirError: (dir: string) => FastifyError
-  MissingSeedFileError: () => FastifyError
-  MigrationsToApplyError: () => FastifyError
-}
+export declare function MigrateMissingMigrationsError (): FastifyError
+export declare function UnknownDatabaseError (): FastifyError
+export declare function MigrateMissingMigrationsDirError (dir: string): FastifyError
+export declare function MissingSeedFileError (): FastifyError
+export declare function MigrationsToApplyError (): FastifyError

@@ -1,18 +1,25 @@
 'use strict'
 
+const createError = require('@fastify/error')
 const { BaseGenerator } = require('@platformatic/generators')
-const { NoEntryPointError, NoServiceNamedError } = require('./errors')
 const { existsSync } = require('node:fs')
 const { join, basename } = require('node:path')
 const { envObjectToString } = require('@platformatic/generators/lib/utils')
 const { readFile, readdir, stat } = require('node:fs/promises')
-const { ConfigManager } = require('@platformatic/config')
-const { platformaticRuntime } = require('../config')
+const { transform } = require('./config')
 const { getServiceTemplateFromSchemaUrl } = require('@platformatic/generators/lib/utils')
 const { DotEnvTool } = require('dotenv-tool')
-const { getArrayDifference } = require('../utils')
+const { getArrayDifference } = require('./utils')
+const { schema } = require('./schema')
 const { pathToFileURL } = require('node:url')
-const { safeRemove, generateDashedName } = require('@platformatic/utils')
+const {
+  safeRemove,
+  generateDashedName,
+  findConfigurationFile,
+  loadConfiguration,
+  loadConfigurationFile,
+  kEnvironment
+} = require('@platformatic/utils')
 const { createRequire } = require('node:module')
 
 const wrappableProperties = {
@@ -29,6 +36,14 @@ const wrappableProperties = {
 const engines = {
   node: '>=22.16.0'
 }
+
+const ERROR_PREFIX = 'PLT_RUNTIME_GEN'
+
+const NoServiceNamedError = createError(
+  `${ERROR_PREFIX}_NO_SERVICE_FOUND`,
+  "No service named '%s' has been added to this runtime."
+)
+const NoEntryPointError = createError(`${ERROR_PREFIX}_NO_ENTRYPOINT`, 'No entrypoint had been defined.')
 
 function getRuntimeBaseEnvVars (config) {
   return {
@@ -104,7 +119,7 @@ class RuntimeGenerator extends BaseGenerator {
       engines
     }
     if (this.config.typescript) {
-      const typescriptVersion = JSON.parse(await readFile(join(__dirname, '..', '..', 'package.json'), 'utf-8'))
+      const typescriptVersion = JSON.parse(await readFile(join(__dirname, '..', 'package.json'), 'utf-8'))
         .devDependencies.typescript
       template.scripts.clean = 'rm -fr ./dist'
       template.scripts.build = 'platformatic compile'
@@ -136,21 +151,18 @@ class RuntimeGenerator extends BaseGenerator {
       return
     }
     this._hasCheckedForExistingConfig = true
-    const existingConfigFile =
-      this.runtimeConfig ?? (await ConfigManager.findConfigFile(this.targetDirectory, 'runtime'))
+    const existingConfigFile = this.runtimeConfig ?? (await findConfigurationFile(this.targetDirectory, 'runtime'))
     if (existingConfigFile && existsSync(join(this.targetDirectory, existingConfigFile))) {
-      const configManager = new ConfigManager({
-        ...platformaticRuntime.configManagerConfig,
-        source: join(this.targetDirectory, existingConfigFile)
+      this.existingConfigRaw = await loadConfigurationFile(join(this.targetDirectory, existingConfigFile))
+      this.existingConfig = await loadConfiguration(join(this.targetDirectory, existingConfigFile), schema, {
+        transform,
+        ignoreProcessEnv: true
       })
-      await configManager.parse()
 
-      this.existingConfig = configManager.current
-      this.existingConfigRaw = configManager.currentRaw
-      this.config.env = configManager.env
-      this.config.port = configManager.env.PORT
-      this.entryPoint = configManager.current.services.find(svc => svc.entrypoint)
-      this.existingServices = configManager.current.services.map(s => s.id)
+      this.config.env = this.existingConfig[kEnvironment]
+      this.config.port = this.config.env.PORT
+      this.entryPoint = this.existingConfig.services.find(svc => svc.entrypoint)
+      this.existingServices = this.existingConfig.services.map(s => s.id)
 
       this.updateRuntimeConfig(this.existingConfigRaw)
       this.updateRuntimeEnv(await readFile(join(this.targetDirectory, '.env'), 'utf-8'))
@@ -215,10 +227,6 @@ class RuntimeGenerator extends BaseGenerator {
       file: '.env.sample',
       contents: envObjectToString(this.config.env)
     })
-
-    if (!this.existingConfig) {
-      this.addFile({ path: '', file: 'README.md', contents: await readFile(join(__dirname, 'README.md'), 'utf-8') })
-    }
 
     return {
       targetDirectory: this.targetDirectory,
@@ -357,7 +365,7 @@ class RuntimeGenerator extends BaseGenerator {
       const dirStat = await stat(currentServicePath)
       if (dirStat.isDirectory()) {
         // load the service config
-        const configFile = await ConfigManager.findConfigFile(currentServicePath)
+        const configFile = await findConfigurationFile(currentServicePath)
         const servicePltJson = JSON.parse(await readFile(join(currentServicePath, configFile), 'utf-8'))
         // get module to load
         const template = servicePltJson.module || getServiceTemplateFromSchemaUrl(servicePltJson.$schema)
@@ -405,7 +413,7 @@ class RuntimeGenerator extends BaseGenerator {
 
         // delete dependencies
         const servicePath = join(this.targetDirectory, this.servicesFolder, s.name)
-        const configFile = await ConfigManager.findConfigFile(servicePath)
+        const configFile = await findConfigurationFile(servicePath)
         const servicePackageJson = JSON.parse(await readFile(join(servicePath, configFile), 'utf-8'))
         if (servicePackageJson.plugins && servicePackageJson.plugins.packages) {
           servicePackageJson.plugins.packages.forEach(p => {

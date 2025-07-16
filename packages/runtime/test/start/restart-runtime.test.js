@@ -6,8 +6,9 @@ const { join } = require('node:path')
 const { tmpdir } = require('node:os')
 const { readFile, rm } = require('node:fs/promises')
 const { request } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
+
+const { create } = require('../..')
+const { transform } = require('../../lib/config')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { setLogFile } = require('../helpers')
 
@@ -15,7 +16,7 @@ test.beforeEach(setLogFile)
 
 test('can restart the runtime apps', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
   let entryUrl = await app.start()
 
   t.after(async () => {
@@ -41,23 +42,27 @@ test('can restart the runtime apps', async t => {
 })
 
 test('do not restart if service is not started', async t => {
-  const configPath = join(fixturesDir, 'crash-on-bootstrap', 'platformatic.runtime.json')
-  const { configManager } = await loadConfig({}, ['-c', configPath], platformaticRuntime)
-
-  const config = configManager.current
-
   const logsPath = join(tmpdir(), 'platformatic-crash-logs.txt')
   await rm(logsPath, { force: true })
 
-  config.logger = {
-    level: 'trace',
-    transport: {
-      target: 'pino/file',
-      options: { destination: logsPath }
-    }
-  }
+  const configPath = join(fixturesDir, 'crash-on-bootstrap', 'platformatic.runtime.json')
 
-  const app = await buildServer(config)
+  const app = await create(configPath, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+
+      config.logger = {
+        ...config.logger,
+        level: 'trace',
+        transport: {
+          target: 'pino/file',
+          options: { destination: logsPath }
+        }
+      }
+
+      return config
+    }
+  })
 
   try {
     await app.start()

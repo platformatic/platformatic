@@ -1,5 +1,5 @@
 import { transform as basicTransform, resolve, validationOptions } from '@platformatic/basic'
-import { loadConfiguration } from '@platformatic/utils'
+import { kRoot, loadConfiguration as utilsLoadConfiguration } from '@platformatic/utils'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { schema } from './lib/schema.js'
@@ -37,19 +37,22 @@ export async function transform (config) {
   return config
 }
 
-export async function create (configFileOrRoot, sourceOrConfig, context) {
-  const { root, source } = await resolve(configFileOrRoot, sourceOrConfig, 'service')
+export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
+  const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'service')
 
-  const config = await loadConfiguration(source, context?.schema ?? schema, {
-    validationOptions: context?.validationOptions ?? validationOptions,
-    transform: context?.transform ?? transform,
-    upgrade: context?.upgrade ?? upgrade,
+  return utilsLoadConfiguration(source, context?.schema ?? schema, {
+    validationOptions,
+    transform,
+    upgrade,
     replaceEnv: true,
-    onMissingEnv: context?.onMissingEnv,
-    root
+    root,
+    ...context
   })
+}
 
-  return new ServiceStackable(root, config, context)
+export async function create (configOrRoot, sourceOrConfig, context) {
+  const config = await loadConfiguration(configOrRoot, sourceOrConfig, context)
+  return new ServiceStackable(config[kRoot], config, context)
 }
 
 export const skipTelemetryHooks = true

@@ -7,18 +7,17 @@ const { test } = require('node:test')
 const { rm } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { request } = require('undici')
-const { loadConfig } = require('@platformatic/config')
 const zlib = require('node:zlib')
-const { buildServer, platformaticRuntime } = require('..')
+const { create } = require('../index.js')
+const { transform } = require('../lib/config.js')
 
 const { parseNDJson } = require('@platformatic/telemetry/test/helper.js')
 
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
-test('should cache http requests', async (t) => {
+test('should cache http requests', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -66,10 +65,9 @@ test('should cache http requests', async (t) => {
   assert.strictEqual(counter, 2)
 })
 
-test('should get response cached by another service', async (t) => {
+test('should get response cached by another service', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -131,22 +129,24 @@ test('should get response cached by another service', async (t) => {
   }
 })
 
-test('should use a custom cache storage', async (t) => {
-  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-
+test('should use a custom cache storage', async t => {
   const cacheStoreOptions = {
     maxCount: 42,
     maxSize: 424242,
     maxEntrySize: 4242
   }
 
-  config.configManager.current.httpCache = {
-    store: join(fixturesDir, 'http-cache', 'custom-cache-store.js'),
-    ...cacheStoreOptions
-  }
-
-  const app = await buildServer(config.configManager.current)
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const app = await create(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.httpCache = {
+        store: join(fixturesDir, 'http-cache', 'custom-cache-store.js'),
+        ...cacheStoreOptions
+      }
+      return config
+    }
+  })
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -181,10 +181,9 @@ test('should use a custom cache storage', async (t) => {
   assert.strictEqual(cacheEntry.key.id, cacheEntryId)
 })
 
-test('should remove a url from an http cache', async (t) => {
+test('should remove a url from an http cache', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -222,11 +221,13 @@ test('should remove a url from an http cache', async (t) => {
   }
 
   await app.invalidateHttpCache({
-    keys: [{
-      origin: 'http://service-1.plt.local',
-      path: '/cached-req-counter?maxAge=100',
-      method: 'GET'
-    }]
+    keys: [
+      {
+        origin: 'http://service-1.plt.local',
+        path: '/cached-req-counter?maxAge=100',
+        method: 'GET'
+      }
+    ]
   })
 
   {
@@ -244,10 +245,9 @@ test('should remove a url from an http cache', async (t) => {
   }
 })
 
-test('should invalidate cache from another service', async (t) => {
+test('should invalidate cache from another service', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -292,11 +292,13 @@ test('should invalidate cache from another service', async (t) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        keys: [{
-          origin: 'http://service-1.plt.local',
-          path: '/cached-req-counter?maxAge=100',
-          method: 'GET',
-        }]
+        keys: [
+          {
+            origin: 'http://service-1.plt.local',
+            path: '/cached-req-counter?maxAge=100',
+            method: 'GET'
+          }
+        ]
       })
     })
     assert.strictEqual(res.statusCode, 200)
@@ -317,15 +319,17 @@ test('should invalidate cache from another service', async (t) => {
   }
 })
 
-test('should invalidate cache by cache tags', async (t) => {
+test('should invalidate cache by cache tags', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-
-  config.configManager.current.httpCache = {
-    cacheTagsHeader: 'Cache-Tags'
-  }
-
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.httpCache = {
+        cacheTagsHeader: 'Cache-Tags'
+      }
+      return config
+    }
+  })
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -359,7 +363,7 @@ test('should invalidate cache by cache tags', async (t) => {
       query: {
         maxAge: cacheTimeoutSec,
         cacheTags: ['tag1', 'tag2']
-      },
+      }
     })
 
     assert.strictEqual(res.statusCode, 200)
@@ -404,24 +408,26 @@ test('should invalidate cache by cache tags', async (t) => {
   }
 })
 
-test('should set an opentelemetry attribute', async (t) => {
-  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const { configManager } = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const config = configManager.current
-
+test('should set an opentelemetry attribute', async t => {
   const telemetryFilePath = join(tmpdir(), 'telemetry.ndjson')
   await rm(telemetryFilePath, { force: true }).catch(() => {})
 
-  config.telemetry = {
-    serviceName: 'test-service',
-    version: '1.0.0',
-    exporter: {
-      type: 'file',
-      options: { path: telemetryFilePath }
-    }
-  }
+  const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
+  const app = await create(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.telemetry = {
+        serviceName: 'test-service',
+        version: '1.0.0',
+        exporter: {
+          type: 'file',
+          options: { path: telemetryFilePath }
+        }
+      }
 
-  const app = await buildServer(config)
+      return config
+    }
+  })
   const entryUrl = await app.start()
 
   t.after(() => app.close())
@@ -513,10 +519,9 @@ test('should set an opentelemetry attribute', async (t) => {
   }
 })
 
-test('should cache http requests gzipped', async (t) => {
+test('should cache http requests gzipped', async t => {
   const configFile = join(fixturesDir, 'http-cache', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
   const entryUrl = await app.start()
 
   t.after(() => app.close())

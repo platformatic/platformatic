@@ -6,7 +6,7 @@ const { test } = require('node:test')
 const { Client } = require('undici')
 const { getPlatformaticVersion } = require('@platformatic/utils')
 
-const { buildServer } = require('../..')
+const { create } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { setLogFile } = require('../helpers')
 
@@ -15,7 +15,7 @@ test.beforeEach(setLogFile)
 test('should get service config', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
 
   await app.start()
 

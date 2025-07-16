@@ -26,7 +26,8 @@ const kReplaceEnvIgnore = Symbol('plt.foundation.replaceEnvIgnore')
 export const kPath = Symbol('plt.foundation.path')
 export const kRoot = Symbol('plt.foundation.root')
 export const kEnvironment = Symbol('plt.foundation.environment')
-export const envVariablePattern = /\{([a-z0-9_]+)\}/i
+export const kModule = Symbol('plt.foundation.module')
+export const envVariablePattern = /(?:\{{1,2})([a-z0-9_]+)(?:\}{1,2})/i
 
 export const knownConfigurationFilesExtensions = ['json', 'json5', 'yaml', 'yml', 'toml', 'tml']
 
@@ -317,7 +318,7 @@ export function createValidator (schema, validationOptions, context = {}) {
   return ajv.compile(schema)
 }
 
-export async function loadEnv (root) {
+export async function loadEnv (root, ignoreProcessEnv = false, additionalEnv = {}) {
   if (!isAbsolute(root)) {
     root = resolve(process.cwd(), root)
   }
@@ -347,7 +348,14 @@ export async function loadEnv (root) {
     }
   }
 
-  return envFile ? { ...process.env, ...parseEnvFile(await readFile(envFile, 'utf-8')) } : process.env
+  const baseEnv = ignoreProcessEnv ? {} : process.env
+  const envFromFile = envFile ? parseEnvFile(await readFile(envFile, 'utf-8')) : {}
+
+  return {
+    ...baseEnv,
+    ...additionalEnv,
+    ...envFromFile
+  }
 }
 
 export function replaceEnv (config, env, onMissingEnv, ignore) {
@@ -389,10 +397,14 @@ export function replaceEnv (config, env, onMissingEnv, ignore) {
     while (matches) {
       const [template, key] = matches
 
-      const replacement = env[key] ?? onMissingEnv?.(key) ?? ''
-      config = config.replace(template, replacement)
+      try {
+        const replacement = env[key] ?? onMissingEnv?.(key) ?? ''
+        config = config.replace(template, replacement)
 
-      matches = config.match(envVariablePattern)
+        matches = config.match(envVariablePattern)
+      } catch (error) {
+        throw new CannotParseConfigFileError(error.message, { cause: error })
+      }
     }
   }
 
@@ -405,15 +417,18 @@ export async function loadConfiguration (source, schema, options = {}) {
     validationOptions,
     transform,
     upgrade,
+    env: additionalEnv,
+    ignoreProcessEnv,
     replaceEnv: shouldReplaceEnv,
     replaceEnvIgnore,
     onMissingEnv,
     fixPaths,
-    logger
+    logger,
+    skipMetadata
   } = {
-    throwOnMissingSchema: true,
     validate: !!schema,
     validationOptions: {},
+    ignoreProcessEnv: false,
     replaceEnv: true,
     replaceEnvIgnore: [],
     fixPaths: true,
@@ -436,11 +451,14 @@ export async function loadConfiguration (source, schema, options = {}) {
     throw new RootMissingError()
   }
 
-  const env = await loadEnv(root)
+  const env = await loadEnv(root, ignoreProcessEnv, additionalEnv)
+  env.PLT_ROOT = root
 
   if (shouldReplaceEnv) {
     config = replaceEnv(config, env, onMissingEnv, replaceEnvIgnore)
   }
+
+  const moduleInfo = matchKnownSchema(config)
 
   if (upgrade) {
     let version = matchKnownSchema(config)?.version
@@ -482,12 +500,19 @@ export async function loadConfiguration (source, schema, options = {}) {
     }
   }
 
-  config[kRoot] = root
-  config[kEnvironment] = env
-  config[kPath] = typeof source === 'string' ? source : null
+  if (!skipMetadata) {
+    config[kRoot] = root
+    config[kEnvironment] = env
+    config[kPath] = typeof source === 'string' ? source : null
+    config[kModule] = moduleInfo
+  }
 
   if (typeof transform === 'function') {
-    config = await transform(config, schema, options)
+    try {
+      config = await transform(config, schema, options)
+    } catch (error) {
+      throw new CannotParseConfigFileError(error.message, { cause: error })
+    }
   }
 
   return config

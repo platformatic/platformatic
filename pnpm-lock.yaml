@@ -1631,9 +1631,6 @@ importers:
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
-      '@platformatic/config':
-        specifier: workspace:*
-        version: link:../config
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators

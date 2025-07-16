@@ -25,7 +25,7 @@ test('watches ESM files', async t => {
   await Promise.all([cp(configFileSrc, configFileDst), cp(appSrc, appDst, { recursive: true })])
 
   await writeFile(esmPluginFilePath, createEsmLoggingPlugin('v1', false))
-  const { child } = await start('-c', configFileDst)
+  const { child } = await start(configFileDst)
   t.after(() => child.kill('SIGKILL'))
   await writeFile(esmPluginFilePath, createEsmLoggingPlugin('v2', true))
 
