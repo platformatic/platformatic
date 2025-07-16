@@ -17,4 +17,14 @@ module.exports = async function (app) {
       throw new Error('Crashing process on purpose')
     }
   })
+
+  app.get('/shared-context', async () => {
+    return globalThis.platformatic.sharedContext.get()
+  })
+
+  app.patch('/shared-context', async (req, res) => {
+    const { context, overwrite } = req.body
+    globalThis.platformatic.sharedContext.update(context, { overwrite })
+    res.status(200).send()
+  })
 }

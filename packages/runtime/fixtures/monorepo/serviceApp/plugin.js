@@ -42,4 +42,14 @@ module.exports = async function (app) {
   app.get('/env', () => {
     return process.env
   })
+
+  app.get('/shared-context', async () => {
+    return globalThis.platformatic.sharedContext.get()
+  })
+
+  app.patch('/shared-context', async (req, res) => {
+    const { context, overwrite } = req.body
+    globalThis.platformatic.sharedContext.update(context, { overwrite })
+    res.status(200).send()
+  })
 }
