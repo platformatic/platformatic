@@ -43,11 +43,11 @@ module.exports = async function (app) {
     return process.env
   })
 
-  app.get('/shared-context', async () => {
+  app.get('/shared-context', { schema: { hide: true } }, async () => {
     return globalThis.platformatic.sharedContext.get()
   })
 
-  app.patch('/shared-context', async (req, res) => {
+  app.patch('/shared-context', { shema: { hide: true } }, async (req, res) => {
     const { context, overwrite } = req.body
     globalThis.platformatic.sharedContext.update(context, { overwrite })
     res.status(200).send()
