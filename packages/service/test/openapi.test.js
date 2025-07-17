@@ -1,10 +1,8 @@
-'use strict'
-
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { request } = require('undici')
-const { createFromConfig } = require('./helper')
+import assert from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createFromConfig } from './helper.js'
 
 test('support prefix option', async t => {
   const config = {
@@ -16,7 +14,7 @@ test('support prefix option', async t => {
     },
     service: {
       openapi: {
-        path: join(__dirname, 'fixtures', 'openapi-spec-test.json'),
+        path: join(import.meta.dirname, 'fixtures', 'openapi-spec-test.json'),
         swaggerPrefix: '/my-prefix'
       }
     },
@@ -65,7 +63,7 @@ test('provide openapi spec from a file', async t => {
     },
     service: {
       openapi: {
-        path: join(__dirname, 'fixtures', 'openapi-spec-test.json')
+        path: join(import.meta.dirname, 'fixtures', 'openapi-spec-test.json')
       }
     },
     watch: false

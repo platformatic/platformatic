@@ -1,9 +1,7 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { createFromConfig, getConnectionInfo } = require('./helper')
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createFromConfig, getConnectionInfo } from './helper.js'
 
 test('healthcheck route enabled with interval', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()

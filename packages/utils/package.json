@@ -3,8 +3,11 @@
   "version": "2.70.1",
   "description": "Platformatic Utils",
   "main": "index.js",
+  "types": "index.d.ts",
+  "type": "module",
   "scripts": {
-    "test": "npm run lint && borp --timeout=1200000 --coverage",
+    "test": "npm run lint && node --test --test-concurrency=1 --test-timeout=1200000",
+    "coverage": "c8 -r html -r text node --test --test-concurrency=1 --test-timeout=1200000 test/*.test.js",
     "lint": "eslint"
   },
   "repository": {
@@ -17,23 +20,28 @@
     "url": "https://github.com/platformatic/platformatic/issues"
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
+  "dependencies": {
+    "@fastify/error": "^4.0.0",
+    "@iarna/toml": "^2.2.5",
+    "@watchable/unpromise": "^1.0.2",
+    "ajv": "^8.12.0",
+    "boring-name-generator": "^1.0.3",
+    "dotenv": "^16.4.5",
+    "fast-json-patch": "^3.1.1",
+    "json5": "^2.2.3",
+    "leven": "~3.1.0",
+    "semver": "^7.6.3",
+    "undici": "7.10.0",
+    "yaml": "^2.4.1"
+  },
   "devDependencies": {
-    "@matteo.collina/tspl": "^0.2.0",
     "borp": "^0.20.0",
+    "c8": "^10.0.0",
     "eslint": "9",
     "fastify": "^5.0.0",
     "neostandard": "^0.12.0",
     "pino": "^9.5.0",
     "pino-test": "^1.0.1",
     "typescript": "^5.5.4"
-  },
-  "dependencies": {
-    "@fastify/deepmerge": "^2.0.0",
-    "@fastify/error": "^4.0.0",
-    "@watchable/unpromise": "^1.0.2",
-    "boring-name-generator": "^1.0.3",
-    "leven": "~3.1.0",
-    "semver": "^7.6.3",
-    "undici": "7.10.0"
   }
 }

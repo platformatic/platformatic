@@ -1,15 +1,13 @@
-'use strict'
+import { appendFileSync } from 'node:fs'
+import { join } from 'node:path'
+import build from 'pino-abstract-transport'
 
-const build = require('pino-abstract-transport')
-const fs = require('fs')
-const path = require('path')
-
-module.exports = function (opts) {
-  const dest = opts.path || path.join(process.cwd(), 'transport.log')
+export default function (opts) {
+  const dest = opts.path || join(process.cwd(), 'transport.log')
   return build(function (source) {
     source.on('data', function (obj) {
       obj.fromTransport = true
-      fs.appendFileSync(dest, JSON.stringify(obj) + '\n')
+      appendFileSync(dest, JSON.stringify(obj) + '\n')
     })
   })
 }

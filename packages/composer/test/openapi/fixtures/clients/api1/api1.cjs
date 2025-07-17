@@ -7,7 +7,7 @@ async function generateApi1ClientPlugin (app, opts) {
   app.register(pltClient, {
     type: 'openapi',
     name: 'api1',
-    path: join(__dirname, 'api1.openapi.json'),
+    path: join(import.meta.dirname, 'api1.openapi.json'),
     url: opts.url,
   })
 }

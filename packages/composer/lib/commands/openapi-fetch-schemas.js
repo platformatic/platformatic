@@ -1,21 +1,18 @@
-'use strict'
+import { loadConfiguration } from '@platformatic/utils'
+import { writeFile } from 'node:fs/promises'
+import { request } from 'undici'
+import { FailedToFetchOpenAPISchemaError } from '../errors.js'
+import { schema } from '../schema.js'
+import { prefixWithSlash } from '../utils.js'
 
-const { writeFile } = require('node:fs/promises')
-const { createRequire } = require('node:module')
-const { request } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const { loadModule } = require('@platformatic/utils')
-const errors = require('../errors.js')
-const { prefixWithSlash } = require('../utils.js')
-
-async function fetchOpenApiSchema (service) {
+export async function fetchOpenApiSchema (service) {
   const { origin, openapi } = service
 
   const openApiUrl = origin + prefixWithSlash(openapi.url)
   const { statusCode, body } = await request(openApiUrl)
 
   if (statusCode !== 200 && statusCode !== 201) {
-    throw new errors.FailedToFetchOpenAPISchemaError(openApiUrl)
+    throw new FailedToFetchOpenAPISchemaError(openApiUrl)
   }
   const schema = await body.json()
 
@@ -26,12 +23,9 @@ async function fetchOpenApiSchema (service) {
   return schema
 }
 
-async function fetchOpenApiSchemas (logger, configFile, _args, { colorette }) {
+export async function fetchOpenApiSchemas (logger, configFile, _args, { colorette }) {
   const { bold } = colorette
-  const platformaticComposer = await loadModule(createRequire(__filename), '../../index.js')
-  const { configManager } = await loadConfig({}, ['-c', configFile], platformaticComposer)
-  await configManager.parseAndValidate()
-  const config = configManager.current
+  const config = await loadConfiguration(configFile, schema)
   const { services } = config.composer
 
   const servicesWithValidOpenApi = services.filter(({ openapi }) => openapi && openapi.url && openapi.file)
@@ -51,5 +45,3 @@ async function fetchOpenApiSchemas (logger, configFile, _args, { colorette }) {
     }
   })
 }
-
-module.exports = { fetchOpenApiSchema, fetchOpenApiSchemas }

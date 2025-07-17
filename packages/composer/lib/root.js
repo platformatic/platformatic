@@ -1,18 +1,18 @@
-'use strict'
+import fastifyStatic from '@fastify/static'
+import fastifyView from '@fastify/view'
+import userAgentParser from 'my-ua-parser'
+import { join } from 'node:path'
+import nunjucks from 'nunjucks'
 
-const { join } = require('node:path')
-const fastifyStatic = require('@fastify/static')
-const userAgentParser = require('my-ua-parser')
-
-module.exports = async (app, opts) => {
+export default function root (app) {
   app.register(fastifyStatic, {
-    root: join(__dirname, '../public')
+    root: join(import.meta.dirname, '../public')
   })
-  app.register(require('@fastify/view'), {
+  app.register(fastifyView, {
     engine: {
-      nunjucks: require('nunjucks')
+      nunjucks
     },
-    root: join(__dirname, '../public')
+    root: join(import.meta.dirname, '../public')
   })
   // root endpoint
   app.route({

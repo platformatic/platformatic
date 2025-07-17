@@ -1,5 +1,3 @@
-'use strict'
-
 const pltClient = require('@platformatic/client')
 const { join } = require('path')
 
@@ -8,12 +6,12 @@ async function generateHelloClientPlugin (app, opts) {
     type: 'openapi',
     name: 'hello',
     path: join(__dirname, 'hello.openapi.json'),
-    url: opts.url,
+    url: opts.url
   })
 }
 
 generateHelloClientPlugin[Symbol.for('plugin-meta')] = {
-  name: 'hello OpenAPI Client',
+  name: 'hello OpenAPI Client'
 }
 generateHelloClientPlugin[Symbol.for('skip-override')] = true
 

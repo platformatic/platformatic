@@ -25,7 +25,6 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
     "@platformatic/basic": "workspace:*",
-    "@platformatic/config": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "@platformatic/vite": "workspace:*",
     "@remix-run/express": "^2.16.8",

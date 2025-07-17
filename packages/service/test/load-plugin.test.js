@@ -1,15 +1,12 @@
-'use strict'
-// setup the undici agent
-require('./helper')
-
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { createGunzip } = require('node:zlib')
-const { readFile } = require('node:fs/promises')
-const { pipeline } = require('node:stream/promises')
-const { request } = require('undici')
-const { createFromConfig } = require('./helper')
-const { platformaticService } = require('..')
+import assert from 'node:assert'
+import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
+import { pipeline } from 'node:stream/promises'
+import { test } from 'node:test'
+import { createGunzip } from 'node:zlib'
+import { request } from 'undici'
+import { platformaticService } from '../index.js'
+import { createFromConfig } from './helper.js'
 
 async function myApp (app, stackable) {
   await platformaticService(app, stackable)
@@ -52,7 +49,7 @@ test('catch errors from the other side', async t => {
       plugins: {
         paths: [
           {
-            path: require.resolve('./fixtures/other-side.js')
+            path: resolve(import.meta.dirname, './fixtures/other-side.js')
           }
         ]
       }
@@ -216,7 +213,7 @@ test('@fastify/static serving root without wildcards', async t => {
     plugins: {
       paths: [
         {
-          path: require.resolve('./fixtures/root-static.js')
+          path: resolve(import.meta.dirname, './fixtures/root-static.js')
         }
       ]
     }
@@ -229,7 +226,7 @@ test('@fastify/static serving root without wildcards', async t => {
 
   const res = await request(app.url)
   const body = await res.body.text()
-  const expected = await readFile(require.resolve('./fixtures/hello/index.html'), 'utf8')
+  const expected = await readFile(resolve(import.meta.dirname, './fixtures/hello/index.html'), 'utf8')
   assert.strictEqual(res.statusCode, 200)
   assert.strictEqual(body, expected)
 })

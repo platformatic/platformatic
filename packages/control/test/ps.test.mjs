@@ -1,7 +1,6 @@
 'use strict'
 
 import { createDirectory, safeRemove } from '@platformatic/utils'
-import * as desm from 'desm'
 import { execa } from 'execa'
 import assert from 'node:assert'
 import { readdir, writeFile } from 'node:fs/promises'
@@ -10,8 +9,8 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { getPlatformaticVersion, kill, startRuntime } from './helper.mjs'
 
-const cliPath = desm.join(import.meta.url, '..', 'control.js')
-const fixturesDir = desm.join(import.meta.url, 'fixtures')
+const cliPath = join(import.meta.dirname, '..', 'control.js')
+const fixturesDir = join(import.meta.dirname, 'fixtures')
 
 const version = await getPlatformaticVersion()
 

@@ -1,13 +1,13 @@
-import { join } from 'desm'
 import assert from 'node:assert'
 import { on } from 'node:events'
+import { join } from 'node:path'
 import { test } from 'node:test'
 import { startPath } from '../helper.mjs'
 
 test('does not start if node inspector flags are provided', async t => {
   const { execa } = await import('execa')
-  const config = join(import.meta.url, '..', '..', '..', 'fixtures', 'configs', 'monorepo.json')
-  const child = execa(process.execPath, [startPath, '-c', config], {
+  const config = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'configs', 'monorepo.json')
+  const child = execa(process.execPath, [startPath, config], {
     env: { NODE_OPTIONS: '--inspect' },
     encoding: 'utf8'
   })

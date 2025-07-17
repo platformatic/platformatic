@@ -1,12 +1,9 @@
-'use strict'
+import { compile } from '@platformatic/ts-compiler'
+import { dirname } from 'node:path'
+import pino from 'pino'
+import pretty from 'pino-pretty'
 
-const { compile } = require('@platformatic/ts-compiler')
-const { loadConfig } = require('@platformatic/config')
-const pino = require('pino')
-const pretty = require('pino-pretty')
-const { dirname } = require('path')
-
-function buildCompileCmd (app) {
+export function buildCompileCmd (app) {
   return async function compileCmd (_args) {
     let fullPath = null
     let config = null
@@ -45,11 +42,9 @@ function buildCompileCmd (app) {
   }
 }
 
-function getTypescriptCompilationOptions (config) {
+export function getTypescriptCompilationOptions (config) {
   return {
     tsConfig: config.plugins?.typescript?.tsConfig,
     flags: config.plugins?.typescript?.flags
   }
 }
-
-module.exports = { buildCompileCmd, getTypescriptCompilationOptions }

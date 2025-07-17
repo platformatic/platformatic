@@ -1,6 +1,4 @@
-'use strict'
-
-function overridableValue (spec, defaultValue) {
+export function overridableValue (spec, defaultValue) {
   const res = {
     anyOf: [spec, { type: 'string' }]
   }
@@ -12,7 +10,7 @@ function overridableValue (spec, defaultValue) {
   return res
 }
 
-function removeDefaults (schema) {
+export function removeDefaults (schema) {
   const cloned = structuredClone(schema)
 
   for (const value of Object.values(cloned.properties)) {
@@ -22,7 +20,7 @@ function removeDefaults (schema) {
   return cloned
 }
 
-function omitProperties (obj, properties) {
+export function omitProperties (obj, properties) {
   if (!Array.isArray(properties)) {
     properties = [properties]
   }
@@ -34,14 +32,14 @@ function omitProperties (obj, properties) {
   return omitted
 }
 
-const env = {
+export const env = {
   type: 'object',
   additionalProperties: {
     type: 'string'
   }
 }
 
-const workers = {
+export const workers = {
   anyOf: [
     {
       type: 'number',
@@ -51,7 +49,7 @@ const workers = {
   ]
 }
 
-const preload = {
+export const preload = {
   anyOf: [
     { type: 'string', resolvePath: true },
     {
@@ -64,7 +62,7 @@ const preload = {
   ]
 }
 
-const watch = {
+export const watch = {
   type: 'object',
   properties: {
     enabled: {
@@ -99,7 +97,7 @@ const watch = {
   additionalProperties: false
 }
 
-const cors = {
+export const cors = {
   type: 'object',
   $comment: 'See https://github.com/fastify/fastify-cors',
   properties: {
@@ -191,7 +189,7 @@ const cors = {
   additionalProperties: false
 }
 
-const logger = {
+export const logger = {
   type: 'object',
   properties: {
     level: {
@@ -310,7 +308,7 @@ const logger = {
   additionalProperties: true
 }
 
-const server = {
+export const server = {
   type: 'object',
   properties: {
     hostname: {
@@ -417,7 +415,7 @@ const server = {
   additionalProperties: false
 }
 
-const fastifyServer = {
+export const fastifyServer = {
   type: 'object',
   properties: {
     // TODO add support for level
@@ -545,7 +543,7 @@ const fastifyServer = {
   additionalProperties: false
 }
 
-const undiciInterceptor = {
+export const undiciInterceptor = {
   type: 'object',
   properties: {
     module: {
@@ -559,7 +557,7 @@ const undiciInterceptor = {
   required: ['module', 'options']
 }
 
-const health = {
+export const health = {
   type: 'object',
   default: {},
   properties: {
@@ -575,9 +573,9 @@ const health = {
   additionalProperties: false
 }
 
-const healthWithoutDefaults = removeDefaults(health)
+export const healthWithoutDefaults = removeDefaults(health)
 
-const telemetryExporter = {
+export const telemetryExporter = {
   type: 'object',
   properties: {
     type: {
@@ -607,7 +605,7 @@ const telemetryExporter = {
   }
 }
 
-const telemetry = {
+export const telemetry = {
   type: 'object',
   properties: {
     enabled: {
@@ -661,7 +659,7 @@ const telemetry = {
   additionalProperties: false
 }
 
-const services = {
+export const services = {
   type: 'array',
   items: {
     type: 'object',
@@ -749,7 +747,7 @@ const services = {
   }
 }
 
-const runtimeUnwrappablePropertiesList = [
+export const runtimeUnwrappablePropertiesList = [
   '$schema',
   'entrypoint',
   'autoload',
@@ -758,7 +756,7 @@ const runtimeUnwrappablePropertiesList = [
   'resolvedServicesBasePath'
 ]
 
-const runtimeProperties = {
+export const runtimeProperties = {
   $schema: {
     type: 'string'
   },
@@ -1162,18 +1160,15 @@ const runtimeProperties = {
   }
 }
 
-const wrappedRuntimeProperties = omitProperties(runtimeProperties, runtimeUnwrappablePropertiesList)
+export const wrappedRuntimeProperties = omitProperties(runtimeProperties, runtimeUnwrappablePropertiesList)
 
-const wrappedRuntime = {
+export const wrappedRuntime = {
   type: 'object',
   properties: wrappedRuntimeProperties,
   additionalProperties: false
 }
 
-module.exports = {
-  overridableValue,
-  removeDefaults,
-  omitProperties,
+export const schemaComponents = {
   env,
   workers,
   preload,
@@ -1183,12 +1178,11 @@ module.exports = {
   server,
   fastifyServer,
   undiciInterceptor,
-  telemetryExporter,
-  telemetry,
   health,
   healthWithoutDefaults,
+  telemetryExporter,
+  telemetry,
   services,
-  runtimeUnwrappablePropertiesList,
   runtimeProperties,
   wrappedRuntimeProperties,
   wrappedRuntime

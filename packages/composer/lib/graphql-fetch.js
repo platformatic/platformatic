@@ -1,49 +1,7 @@
-'use strict'
-
-const { compose } = require('@platformatic/graphql-composer')
+import { compose } from '@platformatic/graphql-composer'
 
 const placeholderSdl = 'Query { _info: String }'
 const placeholderResolvers = { Query: { _info: '@platformatic/composer' } }
-
-function createSupergraph ({ sdl = null, resolvers = {} } = {}) {
-  // in case of temporary failures of subgraphs on watching, the service can restart if no subgraphs are (tempoary) available
-  if (!sdl) {
-    return {
-      sdl: placeholderSdl,
-      resolvers: placeholderResolvers,
-    }
-  }
-  return { sdl, resolvers }
-}
-
-function isSameGraphqlSchema (a, b) {
-  // TODO review
-  return a?.sdl === b?.sdl
-}
-
-function serviceToSubgraphConfig (service) {
-  if (!service.graphql) { return }
-  return {
-    name: service.graphql.name || service.id || service.origin,
-    entities: service.graphql.entities,
-    server: {
-      host: service.graphql.host || service.origin,
-      composeEndpoint: service.graphql.composeEndpoint,
-      graphqlEndpoint: service.graphql.graphqlEndpoint,
-    },
-  }
-}
-
-async function fetchGraphqlSubgraphs (services, options, app) {
-  const subgraphs = services.map(serviceToSubgraphConfig).filter(s => !!s)
-  const composer = await compose({ ...toComposerOptions(options, app), subgraphs })
-
-  return createSupergraph({
-    logger: app.log,
-    sdl: composer.toSdl(),
-    resolvers: composer.resolvers,
-  })
-}
 
 // TODO support subscriptions
 // const defaultSubscriptionsOptions = {
@@ -78,8 +36,48 @@ function toComposerOptions (options, app) {
           app.log.error({ err }, 'running onSubgraphError')
         }
       }
-    },
+    }
   }
 }
 
-module.exports = { fetchGraphqlSubgraphs, createSupergraph, isSameGraphqlSchema, serviceToSubgraphConfig }
+export function createSupergraph ({ sdl = null, resolvers = {} } = {}) {
+  // in case of temporary failures of subgraphs on watching, the service can restart if no subgraphs are (tempoary) available
+  if (!sdl) {
+    return {
+      sdl: placeholderSdl,
+      resolvers: placeholderResolvers
+    }
+  }
+  return { sdl, resolvers }
+}
+
+export function isSameGraphqlSchema (a, b) {
+  // TODO review
+  return a?.sdl === b?.sdl
+}
+
+export function serviceToSubgraphConfig (service) {
+  if (!service.graphql) {
+    return
+  }
+  return {
+    name: service.graphql.name || service.id || service.origin,
+    entities: service.graphql.entities,
+    server: {
+      host: service.graphql.host || service.origin,
+      composeEndpoint: service.graphql.composeEndpoint,
+      graphqlEndpoint: service.graphql.graphqlEndpoint
+    }
+  }
+}
+
+export async function fetchGraphqlSubgraphs (services, options, app) {
+  const subgraphs = services.map(serviceToSubgraphConfig).filter(s => !!s)
+  const composer = await compose({ ...toComposerOptions(options, app), subgraphs })
+
+  return createSupergraph({
+    logger: app.log,
+    sdl: composer.toSdl(),
+    resolvers: composer.resolvers
+  })
+}

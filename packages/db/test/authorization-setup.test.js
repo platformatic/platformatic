@@ -1,9 +1,7 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { createFromConfig, getConnectionInfo, createBasicPages } = require('./helper')
+import assert from 'node:assert/strict'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createBasicPages, createFromConfig, getConnectionInfo } from './helper.js'
 
 test('configure authorizations works even with empty object', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
@@ -92,7 +90,7 @@ test('addCustomRule', async t => {
       }
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'auth-in-code.js')]
+      paths: [join(import.meta.dirname, 'fixtures', 'auth-in-code.js')]
     }
   })
 

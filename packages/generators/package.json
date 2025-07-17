@@ -12,7 +12,6 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@fastify/error": "^4.0.0",
-    "@platformatic/config": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "change-case-all": "^2.1.0",
     "execa": "^9.6.0",

@@ -1,15 +1,13 @@
-'use strict'
-
-const os = require('node:os')
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { request } = require('undici')
-const { create } = require('..')
-const { createFromConfig } = require('./helper')
-const { setTimeout: sleep } = require('timers/promises')
-const fs = require('fs/promises')
-const { safeRemove } = require('@platformatic/utils')
+import { safeRemove } from '@platformatic/utils'
+import fs from 'fs/promises'
+import assert from 'node:assert'
+import os from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as sleep } from 'timers/promises'
+import { request } from 'undici'
+import { create } from '../index.js'
+import { createFromConfig } from './helper.js'
 
 test('config is adjusted to handle custom loggers', async t => {
   const options = {
@@ -37,7 +35,7 @@ test('config is adjusted to handle custom loggers', async t => {
 
 test('do not watch typescript outDir', async t => {
   process.env.PLT_CLIENT_URL = 'http://localhost:3042'
-  const targetDir = join(__dirname, '.', 'fixtures', 'hello-client-ts')
+  const targetDir = join(import.meta.dirname, '.', 'fixtures', 'hello-client-ts')
 
   try {
     await safeRemove(join(targetDir, 'dist'))
@@ -84,7 +82,7 @@ test('transport logger', async t => {
       logger: {
         level: 'info',
         transport: {
-          target: join(__dirname, 'fixtures', 'custom-transport.js'),
+          target: join(import.meta.dirname, 'fixtures', 'custom-transport.js'),
           options: {
             path: file
           }

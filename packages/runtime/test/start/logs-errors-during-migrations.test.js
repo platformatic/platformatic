@@ -4,11 +4,10 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { setTimeout: sleep } = require('node:timers/promises')
-const { loadConfig } = require('@platformatic/config')
-const platformaticDB = require('@platformatic/db')
+const { loadConfiguration } = require('@platformatic/db')
 const { Client } = require('undici')
-const { wrapConfigInRuntimeConfig } = require('../..')
-const { buildRuntime } = require('../../lib/start')
+const { wrapInRuntimeConfig, transform } = require('../../lib/config')
+const { Runtime } = require('../../index')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { setLogFile } = require('../helpers')
 
@@ -16,14 +15,22 @@ test.beforeEach(setLogFile)
 
 test('logs errors during db migrations', async t => {
   const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticDB)
-  const runtimeConfig = await wrapConfigInRuntimeConfig(config)
-  runtimeConfig.current.restartOnError = 1000
+  const config = await loadConfiguration(configFile)
+  const runtimeConfig = await wrapInRuntimeConfig(config, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.restartOnError = 1000
+      return config
+    }
+  })
 
-  const runtime = await buildRuntime(runtimeConfig)
+  const runtime = new Runtime(runtimeConfig)
+
   t.after(async () => {
     await runtime.close()
   })
+
+  await runtime.init()
 
   const startPromise = assert.rejects(async () => {
     await runtime.start()

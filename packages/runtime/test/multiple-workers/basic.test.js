@@ -3,9 +3,8 @@
 const { ok } = require('node:assert')
 const { resolve } = require('node:path')
 const { test } = require('node:test')
-const { loadConfig } = require('@platformatic/config')
 const { features } = require('@platformatic/utils')
-const { buildServer, platformaticRuntime } = require('../..')
+const { create } = require('../..')
 const { updateFile, updateConfigFile, setLogFile } = require('../helpers')
 const { prepareRuntime, getExpectedEvents, waitForEvents } = require('./helper')
 
@@ -14,8 +13,7 @@ test.beforeEach(setLogFile)
 test('services are started with multiple workers according to the configuration', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await create(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()
@@ -44,9 +42,7 @@ test('services are started with a single workers when no workers information is 
     delete contents.services[0].workers
   })
 
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await create(configFile, null, { isProduction: true })
 
   const events = []
   app.on('service:worker:started', payload => {
@@ -77,8 +73,7 @@ test('can detect changes and restart all workers for a service', async t => {
     contents.watch = true
   })
 
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await create(configFile, null)
 
   t.after(async () => {
     await app.close()
@@ -102,9 +97,7 @@ test('can detect changes and restart all workers for a service', async t => {
 test('can collect metrics with worker label', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await create(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()

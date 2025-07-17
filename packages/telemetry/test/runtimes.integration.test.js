@@ -6,31 +6,33 @@ const { test } = require('node:test')
 const { request } = require('undici')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { startOTEL } = require('./otelserver')
+const { setFixturesDir, prepareRuntime, startRuntime } = require('../../basic/test/helper.js')
 
 process.setMaxListeners(100)
+setFixturesDir(resolve(__dirname, './fixtures'))
 
-let runtimeHelper
 let received = []
 let otelServer
 let otelServerURL
 
 test.before(async () => {
-  otelServer = await startOTEL(test, (resourceSpans) => {
+  otelServer = await startOTEL(test, resourceSpans => {
     for (const resourceSpan of resourceSpans) {
       const service = resourceSpan.resource.attributes.find(attr => attr.key === 'service.name')
       const serviceName = service.value.stringValue
 
-      received.push(...resourceSpan.scopeSpans.map(scopeSpan => {
-        return {
-          scope: scopeSpan.scope,
-          spans: scopeSpan.spans.map(span => {
-            return {
-              ...span,
-              serviceName
-            }
-          })
-        }
-      })
+      received.push(
+        ...resourceSpan.scopeSpans.map(scopeSpan => {
+          return {
+            scope: scopeSpan.scope,
+            spans: scopeSpan.spans.map(span => {
+              return {
+                ...span,
+                serviceName
+              }
+            })
+          }
+        })
       )
     }
   })
@@ -42,9 +44,6 @@ test.after(async () => {
 })
 
 test.beforeEach(async () => {
-  runtimeHelper = require('./runtime-helper')
-  const fixturesDir = resolve(__dirname, './fixtures')
-  runtimeHelper.setFixturesDir(fixturesDir)
   received = []
 })
 
@@ -72,22 +71,22 @@ const findSpanWithParentWithId = (spans, startSpan, id) => {
 
 // Changes the telemetry config to point to the otel server
 const setupTelemetryServer = (root, config, args) => {
-  const currentTelemetry = config.configManager.current.telemetry
+  const currentTelemetry = config.telemetry
   const newTelemetry = {
     ...currentTelemetry,
     exporter: {
       type: 'otlp',
       options: {
-        url: `${otelServerURL}/v1/traces`,
+        url: `${otelServerURL}/v1/traces`
       },
       processor: 'simple' // this is used only in tests. Otherwise for OTLP we defaults to batch
     }
   }
-  config.configManager.current.telemetry = newTelemetry
+  config.telemetry = newTelemetry
 }
 
 test('configure telemetry correctly with a node app - integration test', async t => {
-  const { root, config } = await runtimeHelper.prepareRuntime(
+  const { runtime } = await prepareRuntime(
     t,
     'node-api-with-telemetry',
     true, // we are interested in telemetry only in production mode
@@ -95,11 +94,11 @@ test('configure telemetry correctly with a node app - integration test', async t
     setupTelemetryServer
   )
 
-  const { url } = await runtimeHelper.startRuntime(t, root, config)
+  const url = await startRuntime(t, runtime)
 
   // Test request
   const { statusCode } = await request(`${url}`, {
-    method: 'GET',
+    method: 'GET'
   })
 
   await sleep(500)
@@ -121,7 +120,7 @@ test('configure telemetry correctly with a composer + next - integration test', 
   //                  -> node (via http)
   //
   // We need to be in production mode to be in the same runtime
-  const { root, config } = await runtimeHelper.prepareRuntime(
+  const { runtime, root } = await prepareRuntime(
     t,
     'composer-next-node-fastify',
     true,
@@ -132,33 +131,34 @@ test('configure telemetry correctly with a composer + next - integration test', 
   // build next
   const cliPath = join(__dirname, '../../wattpm', 'bin/wattpm.js')
   const { execa } = await import('execa')
-  await execa('node', [cliPath, 'build'], {
-    cwd: root
-  })
+  await execa('node', [cliPath, 'build'], { cwd: root })
 
-  const { url } = await runtimeHelper.startRuntime(t, root, config)
+  const url = await startRuntime(t, runtime)
 
   const { statusCode } = await request(`${url}/next`, {
-    method: 'GET',
+    method: 'GET'
   })
   equal(statusCode, 200)
 
   await sleep(1000)
 
-  const allSpans = received.map(r => r.spans).flat().map(s => {
-    const spanId = s.spanId.toString('hex')
-    const parentSpanId = s.parentSpanId?.toString('hex') || null
-    return {
-      ...s,
-      traceId: s.traceId.toString('hex'),
-      spanId,
-      parentSpanId,
-      attributes: s.attributes.reduce((acc, attr) => {
-        acc[attr.key] = attr.value
-        return acc
-      }, {})
-    }
-  })
+  const allSpans = received
+    .map(r => r.spans)
+    .flat()
+    .map(s => {
+      const spanId = s.spanId.toString('hex')
+      const parentSpanId = s.parentSpanId?.toString('hex') || null
+      return {
+        ...s,
+        traceId: s.traceId.toString('hex'),
+        spanId,
+        parentSpanId,
+        attributes: s.attributes.reduce((acc, attr) => {
+          acc[attr.key] = attr.value
+          return acc
+        }, {})
+      }
+    })
   const allSpanIds = allSpans.map(s => s.spanId.toString())
   const traceId = allSpans[0].traceId
 
@@ -175,16 +175,20 @@ test('configure telemetry correctly with a composer + next - integration test', 
   }
 
   const spanComposerServer = allSpans.find(span => {
-    if (span.kind === 2) { // Server
+    if (span.kind === 2) {
+      // Server
       return span.serviceName === 'test-runtime-composer'
     }
     return false
   })
 
   const spanComposerClient = allSpans.find(span => {
-    if (span.kind === 3) { // Client
-      return span.serviceName === 'test-runtime-composer' &&
+    if (span.kind === 3) {
+      // Client
+      return (
+        span.serviceName === 'test-runtime-composer' &&
         span.attributes['url.full'].stringValue === 'http://next.plt.local/next'
+      )
     }
     return false
   })
@@ -219,7 +223,7 @@ test('configure telemetry correctly with a composer + next - integration test', 
 })
 
 test('configure telemetry correctly with a express app and additional express instrumentation', async t => {
-  const { root, config } = await runtimeHelper.prepareRuntime(
+  const { runtime } = await prepareRuntime(
     t,
     'express-api-with-additional-instrumenters',
     true, // we are interested in telemetry only in production mode
@@ -227,9 +231,9 @@ test('configure telemetry correctly with a express app and additional express in
     setupTelemetryServer
   )
 
-  const { url } = await runtimeHelper.startRuntime(t, root, config)
+  const url = await startRuntime(t, runtime)
   const { statusCode } = await request(`${url}/test`, {
-    method: 'GET',
+    method: 'GET'
   })
   equal(statusCode, 200)
 
@@ -238,21 +242,21 @@ test('configure telemetry correctly with a express app and additional express in
   // We check that we have received spans from the express instrumentation too and all the
   // spans are part of the same trace
   const libraires = [...new Set(received.map(r => r.scope).map(s => s.name))].sort()
-  deepEqual(libraires, [
-    '@opentelemetry/instrumentation-express',
-    '@opentelemetry/instrumentation-http'
-  ])
+  deepEqual(libraires, ['@opentelemetry/instrumentation-express', '@opentelemetry/instrumentation-http'])
 
-  const allSpans = received.map(r => r.spans).flat().map(s => {
-    const spanId = s.spanId.toString('hex')
-    const parentSpanId = s.parentSpanId?.toString('hex') || null
-    return {
-      ...s,
-      traceId: s.traceId.toString('hex'),
-      spanId,
-      parentSpanId,
-    }
-  })
+  const allSpans = received
+    .map(r => r.spans)
+    .flat()
+    .map(s => {
+      const spanId = s.spanId.toString('hex')
+      const parentSpanId = s.parentSpanId?.toString('hex') || null
+      return {
+        ...s,
+        traceId: s.traceId.toString('hex'),
+        spanId,
+        parentSpanId
+      }
+    })
 
   const traceId = allSpans[0].traceId
   // All spans should be part of the same trace

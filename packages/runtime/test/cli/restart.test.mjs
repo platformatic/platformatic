@@ -1,7 +1,7 @@
-import { join } from 'desm'
 import getPort from 'get-port'
 import assert from 'node:assert'
 import { on } from 'node:events'
+import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
 import { start } from './helper.mjs'
@@ -38,8 +38,8 @@ async function waitForMessages (child, last) {
 
 test('restart in case of a crash with a delay in development', async () => {
   process.env.PORT = await getPort()
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'restart-on-crash', 'platformatic.runtime.json')
-  const { child, url } = await start('-c', config)
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'restart-on-crash', 'platformatic.runtime.json')
+  const { child, url } = await start(config)
 
   {
     const res = await request(url + '/crash', {
@@ -68,8 +68,8 @@ test('restart in case of a crash with a delay in development', async () => {
 
 test('restart in case of a crash without any delay in production', async () => {
   process.env.PORT = await getPort()
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'restart-on-crash', 'platformatic.runtime.json')
-  const { child, url } = await start('-c', config, '--production')
+  const config = join(import.meta.dirname, '..', '..', 'fixtures', 'restart-on-crash', 'platformatic.runtime.json')
+  const { child, url } = await start(config, '--production')
 
   {
     const res = await request(url + '/crash', {
@@ -98,8 +98,15 @@ test('restart in case of a crash without any delay in production', async () => {
 
 test("do not restart in case of a crash in case it's so specified in development", async () => {
   process.env.PORT = await getPort()
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'do-not-restart-on-crash', 'platformatic.runtime.json')
-  const { child, url } = await start('-c', config)
+  const config = join(
+    import.meta.dirname,
+    '..',
+    '..',
+    'fixtures',
+    'do-not-restart-on-crash',
+    'platformatic.runtime.json'
+  )
+  const { child, url } = await start(config)
 
   {
     const res = await request(url + '/crash', {
@@ -123,8 +130,15 @@ test("do not restart in case of a crash in case it's so specified in development
 
 test('should restart in production even if restartOnError is false', async () => {
   process.env.PORT = await getPort()
-  const config = join(import.meta.url, '..', '..', 'fixtures', 'do-not-restart-on-crash', 'platformatic.runtime.json')
-  const { child, url } = await start('-c', config, '--production')
+  const config = join(
+    import.meta.dirname,
+    '..',
+    '..',
+    'fixtures',
+    'do-not-restart-on-crash',
+    'platformatic.runtime.json'
+  )
+  const { child, url } = await start(config, '--production')
 
   {
     const res = await request(url + '/crash', {

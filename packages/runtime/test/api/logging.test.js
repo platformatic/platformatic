@@ -7,9 +7,8 @@ const { test } = require('node:test')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { Client } = require('undici')
 
-const { loadConfig } = require('@platformatic/config')
 const { safeRemove } = require('@platformatic/utils')
-const { buildServer, platformaticRuntime } = require('../..')
+const { create } = require('../../index.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { setLogFile } = require('../helpers')
 
@@ -34,8 +33,7 @@ test('logs stdio from the service thread', async t => {
   hideLogs(t)
 
   const configFile = join(fixturesDir, 'configs', 'service-with-stdio.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   const url = await app.start()
   const pid = process.pid
@@ -245,8 +243,7 @@ test('logs with caller info', async t => {
   hideLogs(t)
 
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   t.after(async () => {
     await app.close()
@@ -312,8 +309,7 @@ test('isoTime support', async t => {
   hideLogs(t)
 
   const configFile = join(fixturesDir, 'isotime-logs', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   t.after(async () => {
     await app.close()

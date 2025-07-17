@@ -1,11 +1,9 @@
-'use strict'
-
-const { test } = require('node:test')
-const { equal } = require('node:assert')
-const { configManagerConfig } = require('../../index.js')
-const { upgrade } = require('../../lib/upgrade.js')
-const { ConfigManager } = require('@platformatic/config')
-const { version } = require('../../package.json')
+import { transform } from '@platformatic/service'
+import { loadConfiguration } from '@platformatic/utils'
+import { equal } from 'node:assert'
+import test from 'node:test'
+import { version } from '../../lib/schema.js'
+import { upgrade } from '../../lib/upgrade.js'
 
 test('change $schema location', async () => {
   const source = {
@@ -41,20 +39,11 @@ test('change $schema location', async () => {
     watch: false
   }
 
-  const configManager = new ConfigManager({
-    ...configManagerConfig,
-    upgrade,
-    source,
-    version,
-    fixPaths: false,
-    onMissingEnv (key) {
-      return ''
-    }
+  const config = await loadConfiguration(source, null, {
+    root: import.meta.dirname,
+    transform,
+    upgrade
   })
-
-  await configManager.parse()
-
-  const config = configManager.current
 
   equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/composer/${version}.json`)
 })

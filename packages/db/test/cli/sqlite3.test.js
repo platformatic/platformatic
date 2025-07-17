@@ -1,19 +1,16 @@
-'use strict'
-
-const { execa } = require('execa')
-const assert = require('node:assert/strict')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const split = require('split2')
-const { setTimeout } = require('timers/promises')
-const { request } = require('undici')
-
-const { getConnectionInfo } = require('../helper.js')
-const { cliPath, safeKill, start } = require('./helper.js')
+import { execa } from 'execa'
+import assert from 'node:assert/strict'
+import { join } from 'node:path'
+import test from 'node:test'
+import split from 'split2'
+import { setTimeout } from 'timers/promises'
+import { request } from 'undici'
+import { getConnectionInfo } from '../helper.js'
+import { cliPath, safeKill, start } from './helper.js'
 
 test('migrate and start', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
-  const cwd = join(__dirname, '..', 'fixtures', 'sqlite')
+  const cwd = join(import.meta.dirname, '..', 'fixtures', 'sqlite')
 
   const { stdout } = await execa('node', [cliPath, 'applyMigrations', join(cwd, 'platformatic.db.json')], {
     cwd,
@@ -70,7 +67,7 @@ test('migrate and start', async t => {
 
 test('no cwd', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
-  const config = join(__dirname, '..', 'fixtures', 'sqlite', 'platformatic.db.json')
+  const config = join(import.meta.dirname, '..', 'fixtures', 'sqlite', 'platformatic.db.json')
 
   const { stdout } = await execa('node', [cliPath, 'applyMigrations', config], {
     env: {
@@ -125,7 +122,7 @@ test('no cwd', async t => {
 
 test('do not restart on save', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
-  const cwd = join(__dirname, '..', 'fixtures', 'sqlite')
+  const cwd = join(import.meta.dirname, '..', 'fixtures', 'sqlite')
 
   const { stdout } = await execa('node', [cliPath, 'applyMigrations', join(cwd, 'platformatic.db.json')], {
     cwd,

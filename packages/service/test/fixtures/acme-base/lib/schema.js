@@ -1,7 +1,7 @@
 import esMain from 'es-main'
-import service from '../../../../index.js'
+import { schema as serviceSchema } from '../../../../index.js'
 
-export const schema = structuredClone(service.schema)
+export const schema = structuredClone(serviceSchema)
 
 schema.$id = 'https://raw.githubusercontent.com/platformatic/acme-base/main/schemas/1.json'
 schema.title = 'Acme Base'

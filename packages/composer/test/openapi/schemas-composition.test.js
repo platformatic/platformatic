@@ -1,11 +1,9 @@
-'use strict'
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import openAPISchemaValidator from 'openapi-schema-validator'
+import { composeOpenApi } from '../../lib/openapi-composer.js'
 
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
-
-const composeOpenApi = require('../../lib/openapi-composer')
-
+const OpenAPISchemaValidator = openAPISchemaValidator.default
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
 test('should merge two basic apis', async t => {

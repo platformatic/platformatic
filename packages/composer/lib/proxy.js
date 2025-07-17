@@ -1,10 +1,9 @@
-'use strict'
-
-const httpProxy = require('@fastify/http-proxy')
-const { ensureLoggableError } = require('@platformatic/utils')
-const fp = require('fastify-plugin')
-const { workerData } = require('node:worker_threads')
-const { getGlobalDispatcher } = require('undici')
+import httpProxy from '@fastify/http-proxy'
+import { ensureLoggableError, loadModule } from '@platformatic/utils'
+import fp from 'fastify-plugin'
+import { createRequire } from 'node:module'
+import { workerData } from 'node:worker_threads'
+import { getGlobalDispatcher } from 'undici'
 
 const kITC = Symbol.for('plt.runtime.itc')
 const kProxyRoute = Symbol('plt.composer.proxy.route')
@@ -35,7 +34,7 @@ async function resolveServiceProxyParameters (service) {
   }
 
   if (service.proxy?.ws?.hooks) {
-    const hooks = require(service.proxy.ws.hooks.path)
+    const hooks = await loadModule(createRequire(import.meta.filename), service.proxy.ws.hooks.path)
     service.proxy.ws.hooks = hooks
   }
 
@@ -52,7 +51,7 @@ async function resolveServiceProxyParameters (service) {
   }
 }
 
-module.exports = fp(async function (app, opts) {
+async function proxyPlugin (app, opts) {
   const meta = { proxies: {} }
   const hostnameLessProxies = []
 
@@ -247,4 +246,6 @@ module.exports = fp(async function (app, opts) {
   }
 
   opts.stackable?.registerMeta(meta)
-})
+}
+
+export const proxy = fp(proxyPlugin)

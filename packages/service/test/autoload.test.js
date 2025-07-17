@@ -1,13 +1,11 @@
-'use strict'
-
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { request } = require('undici')
-const { create } = require('..')
+import assert from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { create } from '../index.js'
 
 // Make sure we are not mistakenly detecting the tsconfig.json file in the root of the package.
-process.chdir(__dirname)
+process.chdir(import.meta.dirname)
 
 test('autoload & filesystem based routing / watch disabled', async t => {
   const config = {
@@ -17,12 +15,12 @@ test('autoload & filesystem based routing / watch disabled', async t => {
       logger: { level: 'fatal' }
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'directories', 'routes')]
+      paths: [join(import.meta.dirname, 'fixtures', 'directories', 'routes')]
     },
     watch: false
   }
 
-  const app = await create(join(__dirname, 'fixtures', 'directories'), config)
+  const app = await create(join(import.meta.dirname, 'fixtures', 'directories'), config)
   t.after(() => app.stop())
   await app.start({ listen: true })
 
@@ -58,17 +56,17 @@ test('multiple files / watch false', async t => {
     plugins: {
       paths: [
         {
-          path: join(__dirname, 'fixtures', 'directories', 'plugins')
+          path: join(import.meta.dirname, 'fixtures', 'directories', 'plugins')
         },
         {
-          path: join(__dirname, 'fixtures', 'directories', 'routes')
+          path: join(import.meta.dirname, 'fixtures', 'directories', 'routes')
         }
       ]
     },
     watch: false
   }
 
-  const app = await create(join(__dirname, 'fixtures', 'directories'), config)
+  const app = await create(join(import.meta.dirname, 'fixtures', 'directories'), config)
   t.after(() => app.stop())
   await app.start({ listen: true })
 
@@ -109,12 +107,12 @@ test('autoload & filesystem based routing / watch disabled / no object', async t
       logger: { level: 'fatal' }
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'directories', 'routes')]
+      paths: [join(import.meta.dirname, 'fixtures', 'directories', 'routes')]
     },
     watch: false
   }
 
-  const app = await create(join(__dirname, 'fixtures', 'directories'), config)
+  const app = await create(join(import.meta.dirname, 'fixtures', 'directories'), config)
   t.after(() => app.stop())
   await app.start({ listen: true })
 
@@ -149,14 +147,14 @@ test('multiple files / watch false / no object', async t => {
     },
     plugins: {
       paths: [
-        join(__dirname, 'fixtures', 'directories', 'plugins'),
-        join(__dirname, 'fixtures', 'directories', 'routes')
+        join(import.meta.dirname, 'fixtures', 'directories', 'plugins'),
+        join(import.meta.dirname, 'fixtures', 'directories', 'routes')
       ]
     },
     watch: false
   }
 
-  const app = await create(join(__dirname, 'fixtures', 'directories'), config)
+  const app = await create(join(import.meta.dirname, 'fixtures', 'directories'), config)
   t.after(() => app.stop())
   await app.start({ listen: true })
 
@@ -204,11 +202,11 @@ test('nested directories', async t => {
     plugins: {
       paths: [
         {
-          path: join(__dirname, 'fixtures', 'nested-directories', 'plugins'),
+          path: join(import.meta.dirname, 'fixtures', 'nested-directories', 'plugins'),
           encapsulate: false
         },
         {
-          path: join(__dirname, 'fixtures', 'nested-directories', 'modules'),
+          path: join(import.meta.dirname, 'fixtures', 'nested-directories', 'modules'),
           encapsulate: false,
           maxDepth: 1
         }
@@ -216,7 +214,7 @@ test('nested directories', async t => {
     }
   }
 
-  const app = await create(join(__dirname, 'fixtures', 'nested-directories'), config)
+  const app = await create(join(import.meta.dirname, 'fixtures', 'nested-directories'), config)
   t.after(() => app.stop())
   await app.start({ listen: true })
 
@@ -271,15 +269,15 @@ test('disable encapsulation for a single file', async t => {
     plugins: {
       paths: [
         {
-          path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'decorator.js'),
+          path: join(import.meta.dirname, 'fixtures', 'nested-directories', 'plugins', 'decorator.js'),
           encapsulate: false
         },
         {
-          path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'handlers.js'),
+          path: join(import.meta.dirname, 'fixtures', 'nested-directories', 'plugins', 'handlers.js'),
           encapsulate: false
         },
         {
-          path: join(__dirname, 'fixtures', 'nested-directories', 'modules'),
+          path: join(import.meta.dirname, 'fixtures', 'nested-directories', 'modules'),
           encapsulate: false,
           maxDepth: 1
         }
@@ -287,7 +285,7 @@ test('disable encapsulation for a single file', async t => {
     }
   }
 
-  const app = await create(join(__dirname, 'fixtures', 'nested-directories'), config)
+  const app = await create(join(import.meta.dirname, 'fixtures', 'nested-directories'), config)
   t.after(() => app.stop())
   await app.start({ listen: true })
 
@@ -321,23 +319,23 @@ test('disable encapsulation for a single file / different order', async t => {
     plugins: {
       paths: [
         {
-          path: join(__dirname, 'fixtures', 'nested-directories', 'modules'),
+          path: join(import.meta.dirname, 'fixtures', 'nested-directories', 'modules'),
           encapsulate: false,
           maxDepth: 1
         },
         {
-          path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'decorator.js'),
+          path: join(import.meta.dirname, 'fixtures', 'nested-directories', 'plugins', 'decorator.js'),
           encapsulate: false
         },
         {
-          path: join(__dirname, 'fixtures', 'nested-directories', 'plugins', 'handlers.js'),
+          path: join(import.meta.dirname, 'fixtures', 'nested-directories', 'plugins', 'handlers.js'),
           encapsulate: false
         }
       ]
     }
   }
 
-  const app = await create(join(__dirname, 'fixtures', 'nested-directories'), config)
+  const app = await create(join(import.meta.dirname, 'fixtures', 'nested-directories'), config)
   t.after(() => app.stop())
   await app.start({ listen: true })
 
@@ -366,7 +364,7 @@ test('autoload with ignorePattern, indexPattern and autoHooksPattern options', a
     plugins: {
       paths: [
         {
-          path: join(__dirname, 'fixtures', 'directories', 'routes'),
+          path: join(import.meta.dirname, 'fixtures', 'directories', 'routes'),
 
           // Ignore the bar.js which should return a 404 for requests made to /bar
           ignorePattern: '^.*(?:bar).js$',
@@ -384,7 +382,7 @@ test('autoload with ignorePattern, indexPattern and autoHooksPattern options', a
     watch: false
   }
 
-  const app = await create(join(__dirname, 'fixtures', 'directories'), config)
+  const app = await create(join(import.meta.dirname, 'fixtures', 'directories'), config)
   t.after(() => app.stop())
   await app.start({ listen: true })
 
@@ -425,7 +423,7 @@ test('autoload with INVALID ignorePattern, indexPattern and autoHooksPattern opt
     plugins: {
       paths: [
         {
-          path: join(__dirname, 'fixtures', 'directories', 'routes'),
+          path: join(import.meta.dirname, 'fixtures', 'directories', 'routes'),
           ignorePattern: '***',
           indexPattern: '***terrible)))_pattern',
           autoHooksPattern: ''
@@ -435,7 +433,7 @@ test('autoload with INVALID ignorePattern, indexPattern and autoHooksPattern opt
     watch: false
   }
 
-  const app = await create(join(__dirname, 'fixtures', 'directories'), config)
+  const app = await create(join(import.meta.dirname, 'fixtures', 'directories'), config)
   t.after(() => app.stop())
   await app.start({ listen: true })
 
@@ -460,10 +458,10 @@ test('loads encapsulated plugin twice', async t => {
     plugins: {
       paths: [
         {
-          path: join(__dirname, 'fixtures', 'directories', 'routes')
+          path: join(import.meta.dirname, 'fixtures', 'directories', 'routes')
         },
         {
-          path: join(__dirname, 'fixtures', 'directories', 'plugins', 'decorator.js')
+          path: join(import.meta.dirname, 'fixtures', 'directories', 'plugins', 'decorator.js')
         }
       ]
     }
@@ -471,7 +469,7 @@ test('loads encapsulated plugin twice', async t => {
 
   {
     // First time plugin is loaded from file
-    const app = await create(join(__dirname, 'fixtures', 'directories'), config)
+    const app = await create(join(import.meta.dirname, 'fixtures', 'directories'), config)
     t.after(async () => {
       await app.stop()
     })
@@ -485,7 +483,7 @@ test('loads encapsulated plugin twice', async t => {
 
   {
     // Second time plugin is loaded from cache
-    const app = await create(join(__dirname, 'fixtures', 'directories'), config)
+    const app = await create(join(import.meta.dirname, 'fixtures', 'directories'), config)
     t.after(async () => {
       await app.stop()
     })

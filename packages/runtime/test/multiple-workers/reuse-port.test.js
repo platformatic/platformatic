@@ -4,10 +4,9 @@ const { deepStrictEqual, ok } = require('node:assert')
 const { resolve } = require('node:path')
 const { test } = require('node:test')
 const { setTimeout: sleep } = require('node:timers/promises')
-const { loadConfig } = require('@platformatic/config')
 const { features } = require('@platformatic/utils')
 const { request } = require('undici')
-const { buildServer, platformaticRuntime } = require('../..')
+const { create } = require('../..')
 const { updateConfigFile } = require('../helpers')
 const { prepareRuntime, setLogFile, waitForEvents } = require('./helper')
 
@@ -27,8 +26,7 @@ test('services are started with multiple workers even for the entrypoint when No
     contents.autoload = undefined
   })
 
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await create(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()

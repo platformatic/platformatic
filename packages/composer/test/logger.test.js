@@ -1,18 +1,15 @@
-'use strict'
-
-const assert = require('node:assert')
-const path = require('node:path')
-const { readFileSync } = require('node:fs')
-const { test } = require('node:test')
-const { setTimeout: wait } = require('node:timers/promises')
-const { tmpdir } = require('node:os')
-
-const { create } = require('..')
+import assert from 'node:assert'
+import { readFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as wait } from 'node:timers/promises'
+import { create } from '../index.js'
 
 test('should use logger options - formatters, timestamp, redact', async t => {
   process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
   const file = path.join(process.env.LOG_DIR, 'service.log')
-  const serviceRoot = path.join(__dirname, 'logger')
+  const serviceRoot = path.join(import.meta.dirname, 'logger')
 
   const app = await create(serviceRoot, path.resolve(serviceRoot, 'platformatic.json'))
   t.after(async () => {

@@ -1,10 +1,8 @@
-'use strict'
-
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { request } = require('undici')
-const { buildConfig, createFromConfig } = require('./helper')
+import assert from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { buildConfig, createFromConfig } from './helper.js'
 
 test('graphql enabled', async t => {
   const app = await createFromConfig(
@@ -24,7 +22,7 @@ test('graphql enabled', async t => {
         graphql: true
       },
       plugins: {
-        paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')]
+        paths: [join(import.meta.dirname, 'fixtures', 'hello-world-resolver.js')]
       }
     })
   )
@@ -85,7 +83,7 @@ test('graphql disabled', async t => {
           graphql: false
         },
         plugins: {
-          paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')]
+          paths: [join(import.meta.dirname, 'fixtures', 'hello-world-resolver.js')]
         }
       })
     )
@@ -121,7 +119,7 @@ test('disable graphiql', async t => {
         }
       },
       plugins: {
-        paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')]
+        paths: [join(import.meta.dirname, 'fixtures', 'hello-world-resolver.js')]
       }
     })
   )
@@ -179,7 +177,7 @@ test('graphql disabled by default', async t => {
           }
         },
         plugins: {
-          paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')]
+          paths: [join(import.meta.dirname, 'fixtures', 'hello-world-resolver.js')]
         }
       })
     )
@@ -213,7 +211,7 @@ test('graphql errors are correctly propagated in custom resolvers', async t => {
         graphql: true
       },
       plugins: {
-        paths: [join(__dirname, 'fixtures', 'throw-resolver.js')]
+        paths: [join(import.meta.dirname, 'fixtures', 'throw-resolver.js')]
       }
     })
   )
@@ -286,7 +284,7 @@ test('do not include /graphql in the OpenAPI schema', async t => {
         openapi: true
       },
       plugins: {
-        paths: [join(__dirname, 'fixtures', 'hello-world-resolver.js')]
+        paths: [join(import.meta.dirname, 'fixtures', 'hello-world-resolver.js')]
       }
     })
   )

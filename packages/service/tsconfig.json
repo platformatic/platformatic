@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "esnext",
     "esModuleInterop": true,
     "lib": ["es2022"],
-    "target": "es2022",
+    "target": "esnext",
     "sourceMap": true,
     "pretty": true,
     "noEmitOnError": true,

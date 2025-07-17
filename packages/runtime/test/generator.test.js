@@ -4,7 +4,7 @@ const { test } = require('node:test')
 const assert = require('node:assert')
 const { tmpdir } = require('node:os')
 const { mkdtemp, mkdir, writeFile } = require('node:fs/promises')
-const { RuntimeGenerator, WrappedGenerator } = require('../lib/generator/runtime-generator')
+const { RuntimeGenerator, WrappedGenerator } = require('../lib/generator')
 const { Generator: ServiceGenerator } = require('../../service/lib/generator')
 const { Generator: ComposerGenerator } = require('../../composer/lib/generator')
 const { join, basename } = require('node:path')
@@ -63,14 +63,7 @@ test('RuntimeGenerator - should create a runtime with 2 services', async () => {
 
   // should list only runtime files
   const runtimeFileList = rg.listFiles()
-  assert.deepEqual(runtimeFileList, [
-    'package.json',
-    'platformatic.json',
-    '.env',
-    '.env.sample',
-    '.gitignore',
-    'README.md'
-  ])
+  assert.deepEqual(runtimeFileList, ['package.json', 'platformatic.json', '.env', '.env.sample', '.gitignore'])
 
   // services have correct target directory
   assert.equal(firstService.targetDirectory, join(rg.targetDirectory, 'services', firstService.config.serviceName))
@@ -191,14 +184,7 @@ test('RuntimeGenerator - should create a runtime with 1 service and 1 db', async
 
   // should list only runtime files
   const runtimeFileList = rg.listFiles()
-  assert.deepEqual(runtimeFileList, [
-    'package.json',
-    'platformatic.json',
-    '.env',
-    '.env.sample',
-    '.gitignore',
-    'README.md'
-  ])
+  assert.deepEqual(runtimeFileList, ['package.json', 'platformatic.json', '.env', '.env.sample', '.gitignore'])
 
   // services have correct target directory
   assert.equal(firstService.targetDirectory, join(rg.targetDirectory, 'services', firstService.config.serviceName))
@@ -365,8 +351,7 @@ test('RuntimeGenerator - should create a runtime with 2 services with typescript
     '.env',
     '.env.sample',
     'tsconfig.json',
-    '.gitignore',
-    'README.md'
+    '.gitignore'
   ])
 
   // services have correct typescript value in config

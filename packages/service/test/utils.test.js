@@ -1,9 +1,7 @@
-'use strict'
-
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join, resolve } = require('node:path')
-const { getJSPluginPath, isFileAccessible } = require('../lib/utils')
+import assert from 'node:assert'
+import { join, resolve } from 'node:path'
+import { test } from 'node:test'
+import { getJSPluginPath, isFileAccessible } from '../lib/utils.js'
 
 test('should get the path of a TS plugin', t => {
   const result = getJSPluginPath('/something', '/something/plugin.ts', '/something/dist')
@@ -17,12 +15,12 @@ test('should get the path of a JS plugin', t => {
 })
 
 test('isFileAccessible with dir', async t => {
-  const dir = resolve(join(__dirname, '.', 'fixtures', 'hello'))
+  const dir = resolve(join(import.meta.dirname, '.', 'fixtures', 'hello'))
   assert.strictEqual(await isFileAccessible('platformatic.service.json', dir), true)
 })
 
 test('isFileAccessible no dir', async t => {
-  const file = resolve(join(__dirname, '.', 'fixtures', 'hello', 'platformatic.service.json'))
+  const file = resolve(join(import.meta.dirname, '.', 'fixtures', 'hello', 'platformatic.service.json'))
   assert.strictEqual(await isFileAccessible(file), true)
 })
 

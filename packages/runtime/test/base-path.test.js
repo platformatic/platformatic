@@ -2,13 +2,11 @@
 
 const assert = require('node:assert')
 const { request } = require('undici')
+const { readFile, writeFile } = require('node:fs/promises')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { readFile, writeFile } = require('node:fs/promises')
-const { loadConfig } = require('@platformatic/config')
 const { safeRemove } = require('@platformatic/utils')
-const { platformaticRuntime } = require('..')
-const { buildRuntime } = require('../lib/start')
+const { create } = require('../index.js')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 const { setLogFile } = require('./helpers')
 
@@ -20,14 +18,14 @@ async function startApplicationWithEntrypoint (t, fixture, entrypoint) {
   config.entrypoint = entrypoint
   await writeFile(configFile, JSON.stringify(config, null, 2))
 
-  const appConfig = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(appConfig.configManager)
+  const app = await create(configFile)
 
   t.after(async () => {
     await safeRemove(configFile)
     await app.close()
   })
 
+  await app.init()
   return app.start()
 }
 

@@ -1,11 +1,7 @@
-'use strict'
+import { resolve } from 'node:path'
 
-const { resolve } = require('node:path')
+export const cliPath = resolve(import.meta.dirname, '../cli/executables/cli.js')
 
-const cliPath = resolve(__dirname, '../cli/executables/cli.js')
-
-function getFixturesConfigFileLocation (filename, subdirectories = []) {
-  return resolve(__dirname, '../cli/fixtures', ...subdirectories, filename).replace('file:', '')
+export function getFixturesConfigFileLocation (filename, subdirectories = []) {
+  return resolve(import.meta.dirname, '../cli/fixtures', ...subdirectories, filename).replace('file:', '')
 }
-
-module.exports = { cliPath, getFixturesConfigFileLocation }

@@ -1,13 +1,11 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { request } = require('undici')
-const { getConnectionInfo, createFromConfig } = require('./helper')
+import assert from 'node:assert/strict'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createFromConfig, getConnectionInfo } from './helper.js'
 
 test('autoload & filesystem based routing / watch disabled', async t => {
-  const workingDir = join(__dirname, 'fixtures', 'directories')
+  const workingDir = join(import.meta.dirname, 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
   const app = await createFromConfig(t, {
@@ -54,7 +52,7 @@ test('autoload & filesystem based routing / watch disabled', async t => {
 })
 
 test('autoload & filesystem based routing / watch enabled', async t => {
-  const workingDir = join(__dirname, 'fixtures', 'directories')
+  const workingDir = join(import.meta.dirname, 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
   const app = await createFromConfig(t, {
@@ -101,7 +99,7 @@ test('autoload & filesystem based routing / watch enabled', async t => {
 })
 
 test('multiple files', async t => {
-  const workingDir = join(__dirname, 'fixtures', 'directories')
+  const workingDir = join(import.meta.dirname, 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
   const app = await createFromConfig(t, {
@@ -162,7 +160,7 @@ test('multiple files', async t => {
 })
 
 test('multiple files / watch false', async t => {
-  const workingDir = join(__dirname, 'fixtures', 'directories')
+  const workingDir = join(import.meta.dirname, 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
   const app = await createFromConfig(t, {
@@ -223,7 +221,7 @@ test('multiple files / watch false', async t => {
 })
 
 test('multiple files as strings', async t => {
-  const workingDir = join(__dirname, 'fixtures', 'directories')
+  const workingDir = join(import.meta.dirname, 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
   const app = await createFromConfig(t, {
@@ -277,7 +275,7 @@ test('multiple files as strings', async t => {
 })
 
 test('autoload & filesystem based routing / watch disabled / no object', async t => {
-  const workingDir = join(__dirname, 'fixtures', 'directories')
+  const workingDir = join(import.meta.dirname, 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
   const app = await createFromConfig(t, {

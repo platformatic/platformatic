@@ -1,11 +1,9 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { tmpdir } = require('node:os')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { writeFile, mkdtemp } = require('fs/promises')
-const { createFromConfig, createOpenApiService } = require('../helper')
+import { mkdtemp, writeFile } from 'fs/promises'
+import assert from 'node:assert/strict'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createFromConfig, createOpenApiService } from '../helper.js'
 
 test('should throw an error if can not read openapi config file', async t => {
   const api = await createOpenApiService(t, ['users'])

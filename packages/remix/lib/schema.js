@@ -2,8 +2,10 @@ import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
 import { schemaComponents as utilsSchemaComponents } from '@platformatic/utils'
 import { schemaComponents as viteSchemaComponents } from '@platformatic/vite'
 import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
-export const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'))
+export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
+export const version = packageJson.version
 
 export const remix = {
   type: 'object',

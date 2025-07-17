@@ -1,13 +1,12 @@
 import { createDirectory, safeRemove } from '@platformatic/utils'
-import desm from 'desm'
 import { cp, mkdtemp, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { createEsmLoggingPlugin, start } from '../helper.mjs'
 
-const fixturesDir = join(desm(import.meta.url), '..', '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', '..', 'fixtures')
 
-const base = join(desm(import.meta.url), '..', '..', 'tmp')
+const base = join(import.meta.dirname, '..', '..', 'tmp')
 
 try {
   await createDirectory(base)
@@ -25,7 +24,7 @@ test('watches ESM files', async t => {
   await Promise.all([cp(configFileSrc, configFileDst), cp(appSrc, appDst, { recursive: true })])
 
   await writeFile(esmPluginFilePath, createEsmLoggingPlugin('v1', false))
-  const { child } = await start('-c', configFileDst)
+  const { child } = await start(configFileDst)
   t.after(() => child.kill('SIGKILL'))
   await writeFile(esmPluginFilePath, createEsmLoggingPlugin('v2', true))
 

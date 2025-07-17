@@ -1,5 +1,5 @@
 import { RuntimeApiClient } from '@platformatic/control'
-import { startCommand as pltStartCommand } from '@platformatic/runtime'
+import { create } from '@platformatic/runtime'
 import { ensureLoggableError, FileWatcher } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
@@ -38,7 +38,7 @@ export async function devCommand (logger, args) {
 
   let runtime
   try {
-    runtime = await pltStartCommand(['-c', configurationFile], true, true)
+    runtime = await create(configurationFile, null, { start: true })
   } catch (error) {
     if (await handleRuntimeError(logger, configurationFile, error)) {
       return
@@ -56,7 +56,7 @@ export async function devCommand (logger, args) {
   for await (const _ of on(watcher, 'update')) {
     runtime.logger.info('The configuration file has changed, reloading the application ...')
     await runtime.close()
-    runtime = await pltStartCommand(['-c', configurationFile], true, true)
+    runtime = await create(configurationFile, null, { start: true })
   }
   /* c8 ignore next - Mistakenly reported as uncovered by C8 */
 }
@@ -88,13 +88,8 @@ export async function startCommand (logger, args) {
     return
   }
 
-  const cmd = ['--production', '-c', configurationFile]
-  if (inspect) {
-    cmd.push('--inspect')
-  }
-
   try {
-    await pltStartCommand(cmd, true)
+    await create(configurationFile, { start: true, inspect })
   } catch (error) {
     if (await handleRuntimeError(logger, configurationFile, error)) {
       return

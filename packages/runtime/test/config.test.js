@@ -3,15 +3,10 @@
 const assert = require('node:assert')
 const { join, resolve, dirname } = require('node:path')
 const { test } = require('node:test')
-const { loadConfig } = require('@platformatic/config')
-const { platformaticService } = require('@platformatic/service')
-const platformaticDatabase = require('@platformatic/db')
-const { Runtime } = require('../lib/runtime')
-const { parseInspectorOptions, platformaticRuntime } = require('../lib/config')
-const { wrapConfigInRuntimeConfig } = require('..')
+const { parseInspectorOptions } = require('../lib/config')
+const { create, loadConfiguration, wrapInRuntimeConfig } = require('../index.js')
 const fixturesDir = join(__dirname, '..', 'fixtures')
-const { Store } = require('@platformatic/config')
-const { getRuntimeLogsDir } = require('../lib/utils')
+const { loadConfiguration: databaseLoadConfiguration } = require('@platformatic/db')
 const { setLogFile } = require('./helpers')
 
 test.beforeEach(setLogFile)
@@ -19,10 +14,8 @@ test.beforeEach(setLogFile)
 test('throws if no entrypoint is found', async t => {
   const configFile = join(fixturesDir, 'configs', 'invalid-entrypoint.json')
 
-  platformaticRuntime() // Coverage cheat.
-
   await assert.rejects(async () => {
-    await loadConfig({}, ['-c', configFile], platformaticRuntime)
+    await create(configFile)
   }, /Invalid entrypoint: 'invalid' does not exist/)
 })
 
@@ -30,17 +23,13 @@ test('throws if both web and services are provided', async t => {
   const configFile = join(fixturesDir, 'configs', 'invalid-web-with-services.json')
 
   await assert.rejects(async () => {
-    await loadConfig({}, ['-c', configFile], platformaticRuntime)
+    await create(configFile)
   }, /The "services" property cannot be used when the "web" property is also defined/)
 })
 
 test('dependencies are not considered if services are specified manually', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer-no-autoload.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const runtime = await create(configFile)
 
   t.after(async () => {
     await runtime.close()
@@ -57,11 +46,7 @@ test('dependencies are not considered if services are specified manually', async
 
 test('dependencies are resolved if services are not specified manually', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const runtime = await create(configFile)
 
   await runtime.init()
 
@@ -211,58 +196,53 @@ test('parseInspectorOptions - differentiates valid and invalid ports', () => {
   assert.strictEqual(cm.current.inspectorOptions.port, 65535)
 })
 
-test('same schemaOptions as @platformatic/service', async () => {
-  assert.deepStrictEqual(platformaticRuntime.schemaOptions, platformaticService.schemaOptions)
-})
-
 test('correctly loads the watch value from a string', async () => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env.json')
   process.env.PLT_WATCH = 'true'
-  const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  assert.strictEqual(loaded.configManager.current.watch, true)
+  const runtime = await create(configFile)
+  assert.strictEqual((await runtime.getRuntimeConfig()).watch, true)
 })
 
 test('correctly loads the watch value from a string', async () => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-watch-env.json')
   process.env.PLT_WATCH = 'false'
-  const loaded = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  assert.strictEqual(loaded.configManager.current.watch, false)
+  const runtime = await create(configFile)
+  assert.strictEqual((await runtime.getRuntimeConfig()).watch, false)
 })
 
 test('defaults the service name to `main` if there is no package.json', async t => {
   const configFile = join(fixturesDir, 'dbAppNoPackageJson', 'platformatic.db.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticDatabase)
-  const runtimeConfig = await wrapConfigInRuntimeConfig(config)
-  const conf = runtimeConfig.current
-  assert.strictEqual(conf.services.length, 1)
-  assert.strictEqual(conf.services[0].id, 'main')
+  const config = await databaseLoadConfiguration(configFile)
+  const runtimeConfig = await wrapInRuntimeConfig(config)
+
+  assert.strictEqual(runtimeConfig.services.length, 1)
+  assert.strictEqual(runtimeConfig.services[0].id, 'main')
 })
 
 test('uses the name in package.json', async t => {
   const configFile = join(fixturesDir, 'dbAppWithMigrationError', 'platformatic.db.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticDatabase)
-  const runtimeConfig = await wrapConfigInRuntimeConfig(config)
-  const conf = runtimeConfig.current
-  assert.strictEqual(conf.services.length, 1)
-  assert.strictEqual(conf.services[0].id, 'mysimplename')
+  const config = await databaseLoadConfiguration(configFile)
+  const runtimeConfig = await wrapInRuntimeConfig(config)
+
+  assert.strictEqual(runtimeConfig.services.length, 1)
+  assert.strictEqual(runtimeConfig.services[0].id, 'mysimplename')
 })
 
 test('uses the name in package.json, removing the scope', async t => {
   const configFile = join(fixturesDir, 'dbApp', 'platformatic.db.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticDatabase)
-  const runtimeConfig = await wrapConfigInRuntimeConfig(config)
-  const conf = runtimeConfig.current
-  assert.strictEqual(conf.services.length, 1)
-  assert.strictEqual(conf.services[0].id, 'myname')
+  const config = await databaseLoadConfiguration(configFile)
+  const runtimeConfig = await wrapInRuntimeConfig(config)
+  assert.strictEqual(runtimeConfig.services.length, 1)
+  assert.strictEqual(runtimeConfig.services[0].id, 'myname')
 })
 
 test('defaults name to `main` if package.json exists but has no name', async t => {
   const configFile = join(fixturesDir, 'dbAppNoName', 'platformatic.db.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticDatabase)
-  const runtimeConfig = await wrapConfigInRuntimeConfig(config)
-  const conf = runtimeConfig.current
-  assert.strictEqual(conf.services.length, 1)
-  assert.strictEqual(conf.services[0].id, 'main')
+  const config = await databaseLoadConfiguration(configFile)
+  const runtimeConfig = await wrapInRuntimeConfig(config)
+
+  assert.strictEqual(runtimeConfig.services.length, 1)
+  assert.strictEqual(runtimeConfig.services[0].id, 'main')
 })
 
 // Note, the file's runtime property purposely has invalid properties to make sure
@@ -270,17 +250,14 @@ test('defaults name to `main` if package.json exists but has no name', async t =
 test('uses application runtime configuration, avoiding overriding of sensible properties', async t => {
   const configFile = join(fixturesDir, 'wrapped-runtime', 'platformatic.json')
 
-  // Do not use loadConfig here, as the schema is purposefully invalid
-  const config = await loadConfig({}, ['-c', configFile], platformaticDatabase, {}, true, null, { validation: false })
+  const config = await databaseLoadConfiguration(configFile, null, { validate: false })
+  const runtimeConfig = await wrapInRuntimeConfig(config)
 
-  const runtimeConfig = await wrapConfigInRuntimeConfig(config)
-  const conf = runtimeConfig.current
-
-  assert.ok(typeof conf.web, 'undefined')
-  assert.ok(typeof conf.autoload, 'undefined')
-  assert.ok(conf.watch === false)
-  assert.deepStrictEqual(conf.server, { hostname: '127.0.0.1', port: 1234 })
-  assert.deepStrictEqual(conf.services, [
+  assert.ok(typeof runtimeConfig.web, 'undefined')
+  assert.ok(typeof runtimeConfig.autoload, 'undefined')
+  assert.ok(runtimeConfig.watch === false)
+  assert.deepStrictEqual(runtimeConfig.server, { hostname: '127.0.0.1', port: 1234 })
+  assert.deepStrictEqual(runtimeConfig.services, [
     {
       config: configFile,
       dependencies: [],
@@ -292,35 +269,11 @@ test('uses application runtime configuration, avoiding overriding of sensible pr
       localUrl: 'http://main.plt.local',
       path: dirname(configFile),
       sourceMaps: false,
-      type: 'db',
+      type: '@platformatic/db',
       watch: false,
       skipTelemetryHooks: true
     }
   ])
-})
-
-test('loads with the store', async t => {
-  const cwd = process.cwd()
-  process.chdir(join(fixturesDir, 'configs'))
-  t.after(() => {
-    process.chdir(cwd)
-  })
-  const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-
-  const store = new Store()
-  store.add(platformaticRuntime)
-
-  const { configManager } = await store.loadConfig({
-    config: configFile,
-    overrides: {
-      fixPaths: false,
-      onMissingEnv (key) {
-        return '{' + key + '}'
-      }
-    }
-  })
-
-  await configManager.parseAndValidate(false)
 })
 
 test('set type on services', async t => {
@@ -329,40 +282,22 @@ test('set type on services', async t => {
   t.after(() => {
     process.chdir(cwd)
   })
+
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
-
-  const store = new Store()
-  store.add(platformaticRuntime)
-
-  const { configManager } = await store.loadConfig({
-    config: configFile,
-    overrides: {
-      fixPaths: false,
-      onMissingEnv (key) {
-        return '{' + key + '}'
-      }
-    }
-  })
-
-  await configManager.parseAndValidate(false)
-  const config = configManager.current
+  const config = await loadConfiguration(configFile)
 
   const dbApp = config.serviceMap.get('db-app')
   const serviceApp = config.serviceMap.get('serviceApp')
   const nodeApp = config.serviceMap.get('node')
 
-  assert.strictEqual(dbApp.type, 'db')
-  assert.strictEqual(serviceApp.type, 'service')
-  assert.strictEqual(nodeApp.type, 'nodejs')
+  assert.strictEqual(dbApp.type, '@platformatic/db')
+  assert.strictEqual(serviceApp.type, '@platformatic/service')
+  assert.strictEqual(nodeApp.type, '@platformatic/node')
 })
 
 test('supports configurable envfile location', async t => {
   const configFile = join(fixturesDir, 'env-config', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const runtime = await create(configFile)
 
   t.after(async () => {
     await runtime.close()
@@ -387,11 +322,7 @@ test('supports configurable envfile location', async t => {
 
 test('supports default envfile location', async t => {
   const configFile = join(fixturesDir, 'env-service', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const runtime = await create(configFile)
 
   t.after(async () => {
     await runtime.close()
@@ -416,11 +347,7 @@ test('supports default envfile location', async t => {
 
 test('supports configurable arguments', async t => {
   const configFile = join(fixturesDir, 'custom-argv', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const runtime = await create(configFile)
 
   t.after(async () => {
     await runtime.close()
@@ -455,11 +382,7 @@ test('supports configurable arguments', async t => {
 
 test('should manage service config patch', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const dirname = config.configManager.dirname
-  const runtimeLogsDir = getRuntimeLogsDir(dirname, process.pid)
-
-  const runtime = new Runtime(config.configManager, runtimeLogsDir, process.env)
+  const runtime = await create(configFile)
 
   runtime.setServiceConfigPatch('node', [{ op: 'replace', path: '/node/main', value: 'alternate.mjs' }])
   runtime.setServiceConfigPatch('serviceApp', [{ op: 'replace', path: '/plugins', value: { paths: ['alternate.js'] } }])
@@ -469,6 +392,7 @@ test('should manage service config patch', async t => {
   })
 
   await runtime.init()
+
   await runtime.start()
 
   {
