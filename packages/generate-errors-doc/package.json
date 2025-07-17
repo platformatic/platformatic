@@ -22,7 +22,6 @@
     "@platformatic/client": "workspace:*",
     "@platformatic/client-cli": "workspace:*",
     "@platformatic/composer": "workspace:*",
-    "@platformatic/config": "workspace:*",
     "@platformatic/db": "workspace:*",
     "@platformatic/db-authorization": "workspace:*",
     "@platformatic/db-core": "workspace:*",

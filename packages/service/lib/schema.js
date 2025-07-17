@@ -1,7 +1,11 @@
 #! /usr/bin/env node
 
-import { schema as telemetrySchema } from '@platformatic/telemetry'
-import { fastifyServer as server, watch, wrappedRuntime } from '@platformatic/utils'
+import {
+  fastifyServer as server,
+  schemaComponents as utilsSchemaComponents,
+  watch,
+  wrappedRuntime
+} from '@platformatic/utils'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
@@ -1346,7 +1350,7 @@ export const schema = {
     },
     server,
     plugins,
-    telemetry: telemetrySchema,
+    telemetry: utilsSchemaComponents.telemetry,
     watch: {
       anyOf: [
         watch,

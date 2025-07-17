@@ -4,7 +4,7 @@ const { abstractLogger } = require('@platformatic/utils')
 const { join } = require('node:path')
 const { semgrator } = require('semgrator')
 
-module.exports = async function upgrade (logger, config, version) {
+async function upgrade (logger, config, version) {
   const iterator = semgrator({
     version,
     path: join(__dirname, 'versions'),
@@ -20,3 +20,5 @@ module.exports = async function upgrade (logger, config, version) {
 
   return result
 }
+
+module.exports = { upgrade }

@@ -1,4 +1,3 @@
-import { loadConfig } from '@platformatic/config'
 import { compile } from '@platformatic/ts-compiler'
 import { dirname } from 'node:path'
 import pino from 'pino'

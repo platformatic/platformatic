@@ -10,7 +10,7 @@ const { workerData } = require('node:worker_threads')
 const {
   FileWatcher,
   listRecognizedConfigurationFiles,
-  loadCapability,
+  loadConfigurationModule,
   loadConfiguration
 } = require('@platformatic/utils')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
@@ -118,10 +118,10 @@ class PlatformaticApp extends EventEmitter {
         const unvalidatedConfig = await loadConfiguration(appConfig.config, null, {
           onMissingEnv: this.#context.fetchServiceUrl
         })
-        const pkg = await loadCapability(appConfig.path, unvalidatedConfig)
+        const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)
         this.stackable = await pkg.create(appConfig.path, appConfig.config, this.#context)
       } else {
-        const pkg = await loadCapability(appConfig.path, {}, '@platformatic/basic')
+        const pkg = await loadConfigurationModule(appConfig.path, {}, '@platformatic/basic')
         this.stackable = await pkg.create(appConfig.path, {}, this.#context)
       }
 

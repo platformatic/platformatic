@@ -1,11 +1,10 @@
 'use strict'
 
-const { loadConfig } = require('@platformatic/config')
 const { deepStrictEqual } = require('node:assert')
 const { resolve } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { create, platformaticRuntime } = require('../..')
+const { create } = require('../..')
 const { kWorkersBroadcast } = require('../../lib/worker/symbols')
 const { prepareRuntime, waitForEvents } = require('./helper')
 const { updateFile, setLogFile } = require('../helpers')

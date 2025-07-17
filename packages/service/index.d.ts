@@ -28,7 +28,7 @@ export type ServerInstance<Configuration = PlatformaticServiceConfig> = FastifyI
 
 export declare function transform<T extends object> (config: T): Promise<T>
 
-export declare function create (
+export declare function createDatabase (
   root: string,
   source?: string | PlatformaticServiceConfig,
   context?: object

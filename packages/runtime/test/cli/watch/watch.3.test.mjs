@@ -1,13 +1,12 @@
 import { createDirectory, safeRemove } from '@platformatic/utils'
-import desm from 'desm'
 import { cp, mkdtemp, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { createEsmLoggingPlugin, start } from '../helper.mjs'
 
-const fixturesDir = join(desm(import.meta.url), '..', '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', '..', 'fixtures')
 
-const base = join(desm(import.meta.url), '..', '..', 'tmp')
+const base = join(import.meta.dirname, '..', '..', 'tmp')
 
 try {
   await createDirectory(base)

@@ -6,7 +6,7 @@ const { resolve, validationOptions } = require('@platformatic/basic')
 const {
   loadConfiguration: utilsLoadConfiguration,
   loadConfigurationFile,
-  matchKnownSchema,
+  extractModuleFromSchemaUrl,
   ensureLoggableError
 } = require('@platformatic/utils')
 const { NodeInspectorFlagsNotSupportedError } = require('./lib/errors')
@@ -42,7 +42,7 @@ async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
 
   // First of all, load the configuration without any validation
   const config = await utilsLoadConfiguration(source)
-  const mod = matchKnownSchema(config)
+  const mod = extractModuleFromSchemaUrl(config)
   if (mod?.module !== '@platformatic/runtime') {
     return wrapInRuntimeConfig(config, context)
   }
@@ -69,7 +69,7 @@ async function create (configOrRoot, sourceOrConfig, context) {
 
   // Handle port handling
   if (context?.start) {
-    let port = config.server.port
+    let port = config.server?.port
 
     while (true) {
       try {
@@ -111,3 +111,5 @@ module.exports.wrapInRuntimeConfig = wrapInRuntimeConfig
 module.exports.version = platformaticVersion
 module.exports.loadConfiguration = loadConfiguration
 module.exports.create = create
+module.exports.transform = transform
+module.exports.upgrade = upgrade

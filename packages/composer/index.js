@@ -28,6 +28,7 @@ export const skipTelemetryHooks = true
 export { platformaticComposer } from './lib/application.js'
 export * from './lib/commands/index.js'
 export * from './lib/errors.js'
+export * as errors from './lib/errors.js'
 export { Generator } from './lib/generator.js'
 export { packageJson, schema, schemaComponents, version } from './lib/schema.js'
 export { ComposerStackable } from './lib/stackable.js'

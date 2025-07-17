@@ -1,19 +1,15 @@
-import {
-  findConfigurationFile,
-  loadConfig,
-  loadConfigurationFile,
-  saveConfigurationFile,
-  Store
-} from '@platformatic/config'
 import { errors } from '@platformatic/control'
-import { platformaticRuntime, buildRuntime as pltBuildRuntime, wrapConfigInRuntimeConfig } from '@platformatic/runtime'
+import { create, loadConfiguration } from '@platformatic/runtime'
 import {
   abstractLogger,
   detectApplicationType,
   ensureLoggableError,
   escapeRegexp,
+  findConfigurationFileRecursive,
   hasJavascriptFiles,
-  kFailedImport
+  kFailedImport,
+  loadConfigurationFile,
+  saveConfigurationFile
 } from '@platformatic/utils'
 import { bgGreen, black, bold } from 'colorette'
 import { existsSync } from 'node:fs'
@@ -177,11 +173,11 @@ export async function findRuntimeConfigurationFile (
   fallback = false,
   throwOnError = true
 ) {
-  let configFile = await findConfigurationFile(root, configurationFile, 'runtime')
+  let configFile = await findConfigurationFileRecursive(root, configurationFile, 'runtime')
 
   // If a runtime was not found, search for service file that we wrap in a runtime
   if (!configFile && !configurationFile) {
-    configFile = await findConfigurationFile(root, configurationFile)
+    configFile = await findConfigurationFileRecursive(root, configurationFile)
   }
 
   if (!configFile) {
@@ -207,27 +203,8 @@ export async function findRuntimeConfigurationFile (
 }
 
 export async function loadConfigurationFileAsConfig (logger, configurationFile) {
-  const store = new Store()
-  store.add(platformaticRuntime)
-
-  const args = ['-c', configurationFile]
-  const options = { allowInvalid: true, transformOnValidationErrors: true }
-
   try {
-    return await loadConfig(
-      {},
-      args,
-      store,
-      {
-        /* c8 ignore next 3 */
-        onMissingEnv () {
-          return ''
-        }
-      },
-      true,
-      logger,
-      options
-    )
+    return await loadConfiguration(configurationFile, null, { validate: false })
   } catch (error) {
     if (await handleRuntimeError(logger, configurationFile, error)) {
       return false
@@ -238,24 +215,8 @@ export async function loadConfigurationFileAsConfig (logger, configurationFile) 
   }
 }
 
-export async function loadRuntimeConfigurationFile (logger, configurationFile) {
-  const config = await loadConfigurationFileAsConfig(logger, configurationFile)
-
-  if (!config) {
-    return false
-  }
-
-  const args = ['-c', configurationFile]
-  const options = { allowInvalid: true, transformOnValidationErrors: true }
-
-  if (config.configType !== 'runtime') {
-    const configManager = await wrapConfigInRuntimeConfig(config, args, options)
-    config.configManager = configManager
-  }
-
-  config.configManager.args = config.args
-
-  return config.configManager.current
+export async function loadRuntimeConfigurationFile (_, configurationFile) {
+  return loadConfiguration(configurationFile)
 }
 
 export async function fallbackToTemporaryConfigFile (logger, root) {
@@ -279,34 +240,10 @@ export async function fallbackToTemporaryConfigFile (logger, root) {
 }
 
 export async function buildRuntime (logger, configurationFile) {
-  const store = new Store()
-  store.add(platformaticRuntime)
-
-  const args = ['-c', configurationFile]
-
-  let config
-
-  try {
-    config = await loadConfig({}, args, store, {}, true, logger)
-  } catch (error) {
-    if (await handleRuntimeError(logger, configurationFile, error)) {
-      return false
-      /* c8 ignore next 4 - Hard to test */
-    }
-
-    throw error
-  }
-
-  if (config.configType !== 'runtime') {
-    const configManager = await wrapConfigInRuntimeConfig(config, args)
-    config.configManager = configManager
-  }
-
-  config.configManager.args = config.args
-
   let runtime
   try {
-    runtime = await pltBuildRuntime(config.configManager)
+    runtime = await create(configurationFile)
+    await runtime.init()
     /* c8 ignore next 3 - Hard to test */
   } catch (error) {
     logFatalError(logger, { err: ensureLoggableError(error) }, 'Error creating the runtime')

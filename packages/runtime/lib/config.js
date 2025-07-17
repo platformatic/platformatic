@@ -10,9 +10,9 @@ const {
   loadModule,
   runtimeUnwrappablePropertiesList,
   findConfigurationFile,
-  loadCapability,
+  loadConfigurationModule,
   loadConfiguration,
-  matchKnownSchema,
+  extractModuleFromSchemaUrl,
   kPath
 } = require('@platformatic/utils')
 const {
@@ -193,9 +193,9 @@ async function transform (config, _, context) {
 
       if (service.config) {
         const config = await loadConfiguration(service.config)
-        pkg = await loadCapability(service.path, config)
+        pkg = await loadConfigurationModule(service.path, config)
 
-        service.type = matchKnownSchema(config, true).module
+        service.type = extractModuleFromSchemaUrl(config, true).module
         service.skipTelemetryHooks = pkg.skipTelemetryHooks
       } else {
         const { moduleName, stackable } = await importStackableAndConfig(service.path)

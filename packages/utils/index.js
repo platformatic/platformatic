@@ -1,5 +1,6 @@
 export * from './lib/configuration.js'
 export * from './lib/errors.js'
+export * as errors from './lib/errors.js'
 export * from './lib/execution.js'
 export * from './lib/file-system.js'
 export * from './lib/logger.js'

@@ -1,4 +1,3 @@
-import ConfigManager from '@platformatic/config'
 import { expectType } from 'tsd'
 import { AcmeBaseConfig, buildServer } from '.'
 import { PlatformaticApplication } from '../../../index'

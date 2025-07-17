@@ -1,11 +1,11 @@
-import { join } from 'desm'
 import assert from 'node:assert'
+import { join } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
 import { start } from '../helper.mjs'
 
 test('start command', async () => {
-  const config = join(import.meta.url, '..', '..', '..', 'fixtures', 'configs', 'monorepo.json')
+  const config = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'configs', 'monorepo.json')
   const { child, url } = await start(config)
   const res = await request(url)
 

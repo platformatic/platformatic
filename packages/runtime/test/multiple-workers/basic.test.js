@@ -3,9 +3,8 @@
 const { ok } = require('node:assert')
 const { resolve } = require('node:path')
 const { test } = require('node:test')
-const { loadConfig } = require('@platformatic/config')
 const { features } = require('@platformatic/utils')
-const { create, platformaticRuntime } = require('../..')
+const { create } = require('../..')
 const { updateFile, updateConfigFile, setLogFile } = require('../helpers')
 const { prepareRuntime, getExpectedEvents, waitForEvents } = require('./helper')
 

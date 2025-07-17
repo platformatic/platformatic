@@ -4,15 +4,13 @@
   "watch": true,
   "autoload": {
     "path": "services",
-    "exclude": [
-      "docs"
-    ]
+    "exclude": ["docs"]
   },
   "server": {
     "hostname": "127.0.0.1",
-    "port": "14242",
-    "logger": {
-      "level": "info"
-    }
+    "port": "14242"
+  },
+  "logger": {
+    "level": "info"
   }
 }

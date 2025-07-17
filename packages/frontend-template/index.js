@@ -1,15 +1,15 @@
-import { join } from 'desm'
+import camelcase from 'camelcase'
 import isMain from 'es-main'
+import { readFile, writeFile } from 'fs/promises'
 import helpMe from 'help-me'
 import parseArgs from 'minimist'
-import camelcase from 'camelcase'
+import { join } from 'node:path'
 import { request } from 'undici'
-import { readFile, writeFile } from 'fs/promises'
 import { processOpenAPI } from './lib/gen-openapi.mjs'
 
 async function frontendTemplate ({ source, language, name, fullResponse }) {
   const help = helpMe({
-    dir: join(import.meta.url, 'help'),
+    dir: join(import.meta.dirname, 'help'),
     // the default
     ext: '.txt',
   })
@@ -50,7 +50,7 @@ export async function command (argv) {
     _: [source, language], name, 'full-response': fullResponse,
   } = parseArgs(argv)
   const help = helpMe({
-    dir: join(import.meta.url, 'help'),
+    dir: join(import.meta.dirname, 'help'),
     // the default
     ext: '.txt',
   })

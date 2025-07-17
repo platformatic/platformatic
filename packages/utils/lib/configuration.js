@@ -153,7 +153,7 @@ export function listRecognizedConfigurationFiles (suffixes, extensions) {
   return files
 }
 
-export function matchKnownSchema (config, throwOnMissing = false) {
+export function extractModuleFromSchemaUrl (config, throwOnMissing = false) {
   if (typeof config?.module === 'string') {
     return { module: config.module }
   } else if (typeof config?.$schema !== 'string') {
@@ -212,7 +212,7 @@ export async function findConfigurationFileRecursive (root, configurationFile, s
       const configuration = await loadConfigurationFile(resolve(current, configurationFile))
 
       if (schemas) {
-        const schemaMatch = matchKnownSchema(configuration)
+        const schemaMatch = extractModuleFromSchemaUrl(configuration)
         /* c8 ignore next - else */
         const moduleMatch = typeof schemaMatch === 'string' ? schemaMatch : schemaMatch?.module
         if (!schemas.includes(moduleMatch)) {
@@ -458,10 +458,10 @@ export async function loadConfiguration (source, schema, options = {}) {
     config = replaceEnv(config, env, onMissingEnv, replaceEnvIgnore)
   }
 
-  const moduleInfo = matchKnownSchema(config)
+  const moduleInfo = extractModuleFromSchemaUrl(config)
 
   if (upgrade) {
-    let version = matchKnownSchema(config)?.version
+    let version = moduleInfo?.version
 
     if (!version && config.module) {
       version = splitModuleFromVersion(config.module).version
@@ -518,8 +518,8 @@ export async function loadConfiguration (source, schema, options = {}) {
   return config
 }
 
-export function loadCapability (root, config, pkg) {
-  pkg ??= matchKnownSchema(config, true).module
+export function loadConfigurationModule (root, config, pkg) {
+  pkg ??= extractModuleFromSchemaUrl(config, true).module
 
   const require = createRequire(resolve(root, 'noop.js'))
   return loadModule(require, pkg)

@@ -17,6 +17,7 @@ const { createReadStream, watch, existsSync } = require('node:fs')
 const { readdir, readFile, stat, access } = require('node:fs/promises')
 const { STATUS_CODES } = require('node:http')
 const { join } = require('node:path')
+const { pathToFileURL } = require('node:url')
 const { setTimeout: sleep, setImmediate: immediate } = require('node:timers/promises')
 const { Worker } = require('node:worker_threads')
 const ts = require('tail-file-stream')
@@ -139,6 +140,10 @@ class Runtime extends EventEmitter {
   }
 
   async init () {
+    if (typeof this.#status !== 'undefined') {
+      return
+    }
+
     const config = this.#config
     const autoloadEnabled = config.autoload
 
@@ -1178,10 +1183,11 @@ class Runtime extends EventEmitter {
     const execArgv = []
 
     if (!serviceConfig.skipTelemetryHooks && config.telemetry && config.telemetry.enabled !== false) {
-      execArgv.push('--import', openTelemetrySetupPath)
+      const hookUrl = pathToFileURL(require.resolve('@opentelemetry/instrumentation/hook.mjs'))
       // We need the following because otherwise some open telemetry instrumentations won't work with ESM (like express)
       // see: https://github.com/open-telemetry/opentelemetry-js/blob/main/doc/esm-support.md#instrumentation-hook-required-for-esm
-      execArgv.push('--experimental-loader', '@opentelemetry/instrumentation/hook.mjs')
+      execArgv.push('--import', `data:text/javascript, import { register } from 'node:module'; register('${hookUrl}')`)
+      execArgv.push('--import', openTelemetrySetupPath)
     }
 
     if ((serviceConfig.sourceMaps ?? config.sourceMaps) === true) {

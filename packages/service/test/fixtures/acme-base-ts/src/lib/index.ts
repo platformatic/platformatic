@@ -4,13 +4,13 @@ import { lstat } from 'node:fs/promises'
 // @ts-ignore
 import { resolve } from 'node:path'
 import {
-  type Configuration,
-  create as createService,
-  type PlatformaticApplication,
-  platformaticService,
-  type PlatformaticServiceConfig as ServiceConfig,
-  ServiceStackable,
-  transform as serviceTransform
+    type Configuration,
+    createDatabase as createService,
+    type PlatformaticApplication,
+    platformaticService,
+    type PlatformaticServiceConfig as ServiceConfig,
+    ServiceStackable,
+    transform as serviceTransform
 } from '../../../../../index.js'
 
 import { type AcmeBaseConfig } from './config.js'

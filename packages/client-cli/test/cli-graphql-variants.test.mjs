@@ -1,6 +1,5 @@
 import { create } from '@platformatic/db'
 import { match } from '@platformatic/utils'
-import * as desm from 'desm'
 import { execa } from 'execa'
 import { existsSync, promises as fs } from 'fs'
 import { copy } from 'fs-extra'
@@ -14,11 +13,11 @@ import { moveToTmpdir, request, safeKill } from './helper.js'
 const env = { ...process.env, NODE_V8_COVERAGE: undefined }
 
 function findTSCPath () {
-  let tscPath = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
+  let tscPath = join(import.meta.dirname, '..', 'node_modules', '.bin', 'tsc')
 
   // If the local npm installation should use global tsc in the root
   if (!existsSync(tscPath)) {
-    tscPath = desm.join(import.meta.url, '../../..', 'node_modules', '.bin', 'tsc')
+    tscPath = join(import.meta.dirname, '../../..', 'node_modules', '.bin', 'tsc')
   }
 
   return tscPath
@@ -26,17 +25,17 @@ function findTSCPath () {
 
 test('dashes in name', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'uncanny-movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'uncanny-movies'])
 
   const readSDL = await fs.readFile(join(dir, 'uncanny-movies', 'uncanny-movies.schema.graphql'), 'utf8')
   {
@@ -94,17 +93,17 @@ app.listen({ port: 0 })
 
 test('dashes in name (typescript)', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'uncanny-movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'uncanny-movies'])
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -173,17 +172,17 @@ app.listen({ port: 0 });
 
 test('different folder name', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies', '--folder', 'uncanny'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies', '--folder', 'uncanny'])
 
   const readSDL = await fs.readFile(join(dir, 'uncanny', 'movies.schema.graphql'), 'utf8')
   {
@@ -241,17 +240,17 @@ app.listen({ port: 0 })
 
 test('tilde in name', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'uncanny~movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'uncanny~movies'])
 
   const readSDL = await fs.readFile(join(dir, 'uncanny~movies', 'uncanny~movies.schema.graphql'), 'utf8')
   {

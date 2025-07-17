@@ -30,7 +30,7 @@ export async function resolve (fileOrDirectory, sourceOrConfig, suffixes) {
   } else if (typeof fileOrDirectory === 'string' && typeof sourceOrConfig === 'string') {
     return {
       root: fileOrDirectory,
-      source: sourceOrConfig
+      source: resolvePath(fileOrDirectory, sourceOrConfig)
     }
   }
 

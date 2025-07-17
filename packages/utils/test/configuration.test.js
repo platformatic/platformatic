@@ -6,6 +6,7 @@ import { test } from 'node:test'
 import {
   createValidator,
   envVariablePattern,
+  extractModuleFromSchemaUrl,
   findConfigurationFile,
   findConfigurationFileRecursive,
   getParser,
@@ -13,11 +14,10 @@ import {
   knownConfigurationFilesExtensions,
   knownConfigurationFilesSchemas,
   listRecognizedConfigurationFiles,
-  loadCapability,
   loadConfiguration,
   loadConfigurationFile,
+  loadConfigurationModule,
   loadEnv,
-  matchKnownSchema,
   printValidationErrors,
   replaceEnv,
   safeRemove,
@@ -202,40 +202,40 @@ test('listRecognizedConfigurationFiles - should handle string extensions', () =>
   ok(!files.includes('platformatic.yaml'))
 })
 
-test('matchKnownSchema - should match module property', () => {
+test('extractModuleFromSchemaUrl - should match module property', () => {
   const config = { module: '@platformatic/db' }
-  const result = matchKnownSchema(config)
+  const result = extractModuleFromSchemaUrl(config)
   equal(result, '@platformatic/db')
 })
 
-test('matchKnownSchema - should match schema URL', () => {
+test('extractModuleFromSchemaUrl - should match schema URL', () => {
   const config = { $schema: 'https://schemas.platformatic.dev/@platformatic/db/.json' }
-  const result = matchKnownSchema(config)
+  const result = extractModuleFromSchemaUrl(config)
   deepEqual(result, { module: '@platformatic/db', version: '' })
 })
 
-test('matchKnownSchema - should match wattpm schema', () => {
+test('extractModuleFromSchemaUrl - should match wattpm schema', () => {
   const config = { $schema: 'https://schemas.platformatic.dev/wattpm/.json' }
-  const result = matchKnownSchema(config)
+  const result = extractModuleFromSchemaUrl(config)
   deepEqual(result, { module: '@platformatic/runtime', version: '' })
 })
 
-test('matchKnownSchema - should return null for no match', () => {
+test('extractModuleFromSchemaUrl - should return null for no match', () => {
   const config = { someOtherProperty: 'value' }
-  const result = matchKnownSchema(config)
+  const result = extractModuleFromSchemaUrl(config)
   equal(result, null)
 })
 
-test('matchKnownSchema - should throw when throwOnMissing is true', () => {
+test('extractModuleFromSchemaUrl - should throw when throwOnMissing is true', () => {
   const config = { someOtherProperty: 'value' }
-  throws(() => matchKnownSchema(config, true), {
+  throws(() => extractModuleFromSchemaUrl(config, true), {
     name: 'FastifyError'
   })
 })
 
-test('matchKnownSchema - should throw when throwOnMissing is true and schema does not match', () => {
+test('extractModuleFromSchemaUrl - should throw when throwOnMissing is true and schema does not match', () => {
   const config = { $schema: 'https://example.com/unknown-schema.json' }
-  throws(() => matchKnownSchema(config, true), {
+  throws(() => extractModuleFromSchemaUrl(config, true), {
     name: 'FastifyError'
   })
 })
@@ -978,11 +978,11 @@ test('loadConfiguration - should throw SourceMissingError when schema is undefin
   )
 })
 
-test('loadCapability - should load capability from matched schema', async t => {
+test('loadConfigurationModule - should load capability from matched schema', async t => {
   const config = { module: '@platformatic/db' }
 
   try {
-    const result = await loadCapability(process.cwd(), config)
+    const result = await loadConfigurationModule(process.cwd(), config)
     // If it works, great
     ok(result)
   } catch (error) {
