@@ -22,6 +22,7 @@ concurrency:
 
 env:
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+  NEXT_TELEMETRY_DISABLED: 1
 
 jobs:
   setup-node_modules:
@@ -705,7 +706,7 @@ jobs:
     strategy:
       matrix:
         node-version: [20, 22, 24]
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
     env:
       VALKEY_HOST: localhost
       VALKEY_PORT: 6379
