@@ -55,7 +55,7 @@ describe('RuntimeGenerator', () => {
     assert.deepEqual(output, {
       targetDirectory: '/tmp/runtime',
       env: {
-        PLT_FIRST_SERVICE_FOO: 'foo', 
+        PLT_FIRST_SERVICE_FOO: 'foo',
         PLT_FIRST_SERVICE_TYPESCRIPT: false,
         PLT_SECOND_SERVICE_TYPESCRIPT: false,
         PLT_SERVER_HOSTNAME: '127.0.0.1',
