@@ -35,6 +35,8 @@ describe('RuntimeGenerator', () => {
 
     // adding one service
     const firstService = new ServiceGenerator()
+    firstService.addEnvVar('FOO', 'bar', { overwrite: false, default: true })
+    firstService.addEnvVar('FOO', 'foo', { overwrite: true, default: false })
     rg.addService(firstService, 'first-service')
 
     // adding another service
@@ -53,6 +55,7 @@ describe('RuntimeGenerator', () => {
     assert.deepEqual(output, {
       targetDirectory: '/tmp/runtime',
       env: {
+        PLT_FIRST_SERVICE_FOO: 'foo', 
         PLT_FIRST_SERVICE_TYPESCRIPT: false,
         PLT_SECOND_SERVICE_TYPESCRIPT: false,
         PLT_SERVER_HOSTNAME: '127.0.0.1',
@@ -76,6 +79,12 @@ describe('RuntimeGenerator', () => {
     // services have correct target directory
     assert.equal(firstService.targetDirectory, join(rg.targetDirectory, 'services', firstService.config.serviceName))
     assert.equal(secondService.targetDirectory, join(rg.targetDirectory, 'services', secondService.config.serviceName))
+
+    // Should have correct env variables
+    const env = rg.getFileObject('.env')
+    const envSample = rg.getFileObject('.env.sample')
+
+    assert.notDeepStrictEqual(env.contents.split(/\r?\n/), envSample.contents.split(/\r?\n/))
   })
 
   test('should have a valid package.json', async () => {
@@ -470,6 +479,37 @@ describe('WrappedGenerator', () => {
       'PORT=3042',
       'PLT_SERVER_LOGGER_LEVEL=info',
       'PLT_MANAGEMENT_API=true'
+    ])
+  })
+
+  test('should support adding env variables only to .env and not .env.sample', async t => {
+    const root = await createTemporaryDirectory(t)
+
+    await writeFile(join(root, '.env'), 'A=1', 'utf-8')
+
+    const generator = new WrappedGenerator({ module: '@platformatic/runtime', targetDirectory: root })
+    generator.addEnvVar('FOO', '1', { overwrite: false, default: true })
+    generator.addEnvVar('FOO', 'A', { overwrite: true, default: false })
+    await generator.prepare()
+
+    const env = generator.getFileObject('.env')
+    const envSample = generator.getFileObject('.env.sample')
+
+    assert.deepStrictEqual(env.contents.split(/\r?\n/), [
+      'A=1',
+      'FOO=A',
+      'PLT_SERVER_HOSTNAME=127.0.0.1',
+      'PORT=3042',
+      'PLT_SERVER_LOGGER_LEVEL=info',
+      'PLT_MANAGEMENT_API=true',
+    ])
+
+    assert.deepStrictEqual(envSample.contents.split(/\r?\n/), [
+      'FOO=1',
+      'PLT_SERVER_HOSTNAME=127.0.0.1',
+      'PORT=3042',
+      'PLT_SERVER_LOGGER_LEVEL=info',
+      'PLT_MANAGEMENT_API=true',
     ])
   })
 
