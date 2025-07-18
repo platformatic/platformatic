@@ -77,6 +77,7 @@ async function startPrometheusServer (runtime, opts) {
   const auth = opts.auth ?? null
 
   const promServer = fastify({ name: 'Prometheus server' })
+  promServer.register(require('@fastify/accepts'))
 
   let onRequestHook
   if (auth) {
@@ -122,9 +123,12 @@ async function startPrometheusServer (runtime, opts) {
     logLevel: 'warn',
     onRequest: onRequestHook,
     handler: async (req, reply) => {
-      reply.type('text/plain')
-      const { metrics } = await runtime.getMetrics('text')
-      return metrics
+      const accepts = req.accepts()
+      const reqType = !accepts.type('text/plain') && accepts.type('application/json') ? 'json' : 'text'
+      if (reqType === 'text') {
+        reply.type('text/plain')
+      }
+      return (await runtime.getMetrics(reqType)).metrics
     },
   })
 
