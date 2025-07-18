@@ -83,6 +83,7 @@ class Runtime extends EventEmitter {
   servicesConfigsPatches
   #scheduler
   #stdio
+  #sharedContext
 
   constructor (configManager, runtimeLogsDir, env) {
     super()
@@ -120,8 +121,11 @@ class Runtime extends EventEmitter {
       getHttpCacheValue: this.#getHttpCacheValue.bind(this),
       setHttpCacheValue: this.#setHttpCacheValue.bind(this),
       deleteHttpCacheValue: this.#deleteHttpCacheValue.bind(this),
-      invalidateHttpCache: this.invalidateHttpCache.bind(this)
+      invalidateHttpCache: this.invalidateHttpCache.bind(this),
+      updateSharedContext: this.updateSharedContext.bind(this),
+      getSharedContext: this.getSharedContext.bind(this)
     }
+    this.#sharedContext = {}
   }
 
   async init () {
@@ -1079,6 +1083,35 @@ class Runtime extends EventEmitter {
     }
 
     return super.emit(event, payload)
+  }
+
+  async updateSharedContext (options = {}) {
+    const { context, overwrite = false } = options
+
+    const sharedContext = overwrite ? {} : this.#sharedContext
+    Object.assign(sharedContext, context)
+
+    this.#sharedContext = sharedContext
+
+    const promises = []
+    for (const worker of this.#workers.values()) {
+      promises.push(
+        sendViaITC(worker, 'setSharedContext', sharedContext)
+      )
+    }
+
+    const results = await Promise.allSettled(promises)
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        this.logger.error({ err: result.reason }, 'Cannot update shared context')
+      }
+    }
+
+    return sharedContext
+  }
+
+  getSharedContext () {
+    return this.#sharedContext
   }
 
   async #setDispatcher (undiciConfig) {

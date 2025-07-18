@@ -23,6 +23,13 @@ The healthcheck function will ensure the readiness of the service, and the readi
   - `statusCode`: an optional HTTP status code
   - `body`: an optional body to return
 
+- **`globalThis.platformatic.sharedContext.update(contextUpdate, options)`**: This function can be use to update the shared context. Context is shared between all runtime services.
+  - `contextUpdate`: an object with the context updates
+  - `options`: an optional object with the following properties:
+    - `overwrite`: a boolean value indicating if the context should be overwritten or merged. Default is `false`
+
+- **`globalThis.platformatic.sharedContext.get()`**: This function can be use to get the shared context.
+
 ### Messaging API
 
 Services can talk to each other using a messaging API available in the `globalThis.platformatic.messaging` object.
