@@ -206,7 +206,6 @@ test(
 
     const prefix = await readFile(resolve(root, 'services/frontend/.next/BUILD_ID'), 'utf-8')
     const valkey = new Redis(await getValkeyUrl(resolve(fixturesDir, configuration)))
-    await valkey.flushdb()
     await cleanupCache(valkey)
     const monitor = await valkey.monitor()
     const valkeyCalls = []
