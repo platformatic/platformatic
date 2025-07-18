@@ -301,7 +301,7 @@ export async function startRuntime (t, root, config, pauseAfterCreation = false,
     await runtime.close()
     await safeRemove(root)
     runtime = null
-    if (typeof globalThis.gc === 'funciton') {
+    if (typeof globalThis.gc === 'function') {
       globalThis.gc(true)
     }
   })
