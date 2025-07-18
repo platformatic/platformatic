@@ -286,7 +286,7 @@ export async function startRuntime (t, root, config, pauseAfterCreation = false,
   const originalCwd = process.cwd()
 
   process.chdir(root)
-  const runtime = await buildServer(config.configManager.current, config.args)
+  let runtime = await buildServer(config.configManager.current, config.args)
 
   if (Array.isArray(servicesToBuild)) {
     for (const service of servicesToBuild) {
@@ -300,6 +300,10 @@ export async function startRuntime (t, root, config, pauseAfterCreation = false,
     process.chdir(originalCwd)
     await runtime.close()
     await safeRemove(root)
+    runtime = null
+    if (typeof globalThis.gc === 'funciton') {
+      globalThis.gc(true)
+    }
   })
 
   if (pauseAfterCreation) {
