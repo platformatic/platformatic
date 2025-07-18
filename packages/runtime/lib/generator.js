@@ -232,7 +232,7 @@ class RuntimeGenerator extends BaseGenerator {
     this.addFile({
       path: '',
       file: '.env.sample',
-      contents: envObjectToString(this.config.env)
+      contents: envObjectToString(this.config.defaultEnv)
     })
 
     return {
@@ -596,7 +596,7 @@ class WrappedGenerator extends BaseGenerator {
     this.addFile({
       path: '',
       file: '.env.sample',
-      contents: (await this.#readExistingFile('.env.sample', '', '\n')) + envObjectToString(this.config.env)
+      contents: (await this.#readExistingFile('.env.sample', '', '\n')) + envObjectToString(this.config.defaultEnv)
     })
   }
 
