@@ -65,7 +65,8 @@ declare namespace control {
       le?: number | string,
       kind?: string,
       serviceId: string,
-      workerId?: number
+      workerId?: number,
+      dispatcher_stats_url?: string
     },
     metricName?: string,
     exemplar?: unknown
