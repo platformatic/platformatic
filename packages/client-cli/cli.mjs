@@ -12,7 +12,7 @@ import parseArgs from 'minimist'
 import { dirname, join, posix, relative, resolve } from 'path'
 import pino from 'pino'
 import pinoPretty from 'pino-pretty'
-import { request, setGlobalDispatcher } from 'undici'
+import { getGlobalDispatcher, interceptors, request, setGlobalDispatcher } from 'undici'
 import YAML from 'yaml'
 import errors from './lib/errors.mjs'
 import { processFrontendOpenAPI } from './lib/frontend-openapi-generator.mjs'
@@ -137,7 +137,8 @@ async function downloadAndWriteOpenAPI (
   urlAuthHeaders,
   typesComment,
   withCredentials,
-  propsOptional
+  propsOptional,
+  retryTimeoutMs
 ) {
   logger.debug(`Trying to download OpenAPI schema from ${url}`)
   let requestOptions
@@ -149,7 +150,8 @@ async function downloadAndWriteOpenAPI (
     }
   }
 
-  const res = await request(url, requestOptions)
+  const dispatcher = retryTimeoutMs ? getGlobalDispatcher().compose([interceptors.retry({ minTimeout: retryTimeoutMs }), interceptors.responseError()]) : undefined
+  const res = await request(url, { ...requestOptions, dispatcher })
   if (res.statusCode === 200) {
     // we are OpenAPI
     const text = await res.body.text()
@@ -276,7 +278,8 @@ async function downloadAndProcess (options) {
     typesComment,
     withCredentials,
     propsOptional,
-    skipConfigUpdate
+    skipConfigUpdate,
+    retryTimeoutMs
   } = options
 
   let generateImplementation = options.generateImplementation
@@ -314,7 +317,8 @@ async function downloadAndProcess (options) {
           urlAuthHeaders,
           typesComment,
           withCredentials,
-          propsOptional
+          propsOptional,
+          retryTimeoutMs
         )
       )
       toTry.push(
@@ -335,7 +339,8 @@ async function downloadAndProcess (options) {
           urlAuthHeaders,
           typesComment,
           withCredentials,
-          propsOptional
+          propsOptional,
+          retryTimeoutMs
         )
       )
     } else if (options.type === 'graphql') {
@@ -363,7 +368,8 @@ async function downloadAndProcess (options) {
           urlAuthHeaders,
           typesComment,
           withCredentials,
-          propsOptional
+          propsOptional,
+          retryTimeoutMs
         )
       )
       toTry.push(
@@ -387,7 +393,8 @@ async function downloadAndProcess (options) {
           urlAuthHeaders,
           typesComment,
           withCredentials,
-          propsOptional
+          propsOptional,
+          retryTimeoutMs
         )
       )
       toTry.push(downloadAndWriteGraphQL.bind(null, logger, url, folder, name, generateImplementation, typesOnly))
@@ -617,6 +624,7 @@ export async function command (argv) {
     options.typesComment = options['types-comment']
     options.withCredentials = options['with-credentials']
     options.skipConfigUpdate = options['skip-config-update']
+    options.retryTimeoutMs = options['retry-timeout-ms']
     await downloadAndProcess({ url, ...options, logger, runtime: options.runtime })
     logger.info(`Client generated successfully into ${options.folder}`)
     logger.info('Check out the docs to know more: https://docs.platformatic.dev/docs/service/overview')
