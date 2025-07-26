@@ -1,11 +1,9 @@
-'use strict'
-
-const { mapOpenAPItoTypes, mapSQLEntityToJSONSchema } = require('@platformatic/sql-json-schema-mapper')
-const { createDirectory } = require('@platformatic/utils')
-const camelcase = require('camelcase')
-const { readFile, readdir, unlink, writeFile } = require('node:fs/promises')
-const { basename, join, resolve, relative, sep } = require('node:path')
-const { isFileAccessible, setupDB } = require('./utils.js')
+import { mapOpenAPItoTypes, mapSQLEntityToJSONSchema } from '@platformatic/sql-json-schema-mapper'
+import { createDirectory, isFileAccessible } from '@platformatic/utils'
+import camelcase from 'camelcase'
+import { readFile, readdir, unlink, writeFile } from 'node:fs/promises'
+import { basename, join, relative, resolve, sep } from 'node:path'
+import { setupDB } from './utils.js'
 
 async function removeUnusedTypeFiles (entities, dir) {
   const entityTypes = await readdir(dir)
@@ -114,7 +112,7 @@ async function writeFileIfChanged (filename, content) {
   return true
 }
 
-async function execute ({ logger, config }) {
+export async function execute ({ logger, config }) {
   const wrap = await setupDB(logger, config.db)
   const { db, entities } = wrap
 
@@ -160,5 +158,3 @@ async function execute ({ logger, config }) {
   await db.dispose()
   return count
 }
-
-module.exports = { execute }

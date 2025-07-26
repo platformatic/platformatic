@@ -1,8 +1,6 @@
-'use strict'
+import { BaseGenerator } from '@platformatic/generators'
 
-const { BaseGenerator } = require('@platformatic/generators')
-
-class Generator extends BaseGenerator {
+export class Generator extends BaseGenerator {
   constructor (opts = {}) {
     super({
       ...opts,
@@ -154,5 +152,3 @@ npm start
     return config
   }
 }
-
-module.exports = { Generator }

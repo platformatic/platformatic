@@ -108,7 +108,7 @@ If your application entrypoint exports a `hasServer` variable set to `false`, th
 ```js
 import fastify from 'fastify'
 
-export function create() {
+export function create () {
   const app = fastify({
     logger: { level: globalThis.platformatic?.logLevel ?? 'info' }
   })
@@ -175,16 +175,5 @@ Watt supports setting up `npm run ...` commands so you can reuse your existing n
 ## Configuration
 
 See the [configuration](./configuration.md) page.
-
-## Standalone usage
-
-### Create a New Node Project
-
-```bash
-npx --package=@platformatic/node create-platformatic-onde --dir my-node-app
-cd my-node-app
-npm install
-npm start
-```
 
 <SharedOverview/>

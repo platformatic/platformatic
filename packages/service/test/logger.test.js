@@ -1,18 +1,16 @@
-'use strict'
-
-const assert = require('node:assert')
-const path = require('node:path')
-const { readFileSync } = require('node:fs')
-const { test } = require('node:test')
-const { setTimeout: wait } = require('node:timers/promises')
-const { request } = require('undici')
-const { tmpdir } = require('node:os')
-const { create } = require('..')
+import assert from 'node:assert'
+import { readFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as wait } from 'node:timers/promises'
+import { request } from 'undici'
+import { create } from '../index.js'
 
 test('logger options', async t => {
   process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
   const file = path.join(process.env.LOG_DIR, 'service.log')
-  const serviceRoot = path.join(__dirname, 'fixtures', 'logger-options')
+  const serviceRoot = path.join(import.meta.dirname, 'fixtures', 'logger-options')
 
   const app = await create(serviceRoot)
   t.after(async () => {

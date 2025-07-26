@@ -1,8 +1,6 @@
-'use strict'
-
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { createGraphqlService, createFromConfig } = require('../helper')
+import assert from 'node:assert'
+import { test } from 'node:test'
+import { createFromConfig, createGraphqlService } from '../helper.js'
 
 test('should start composer with a graphql service', async t => {
   const graphql1 = await createGraphqlService(t, {

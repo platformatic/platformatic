@@ -1,2 +1,1 @@
-'use strict'
-module.exports = async function (app) {}
+export default async function (app) {}

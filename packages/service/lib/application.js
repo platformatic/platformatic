@@ -1,15 +1,13 @@
-'use strict'
+import { isKeyEnabled } from '@platformatic/utils'
+import { setupClients } from './plugins/clients.js'
+import { setupCors } from './plugins/cors.js'
+import { setupGraphQL } from './plugins/graphql.js'
+import { setupHealthCheck } from './plugins/health-check.js'
+import { setupOpenAPI } from './plugins/openapi.js'
+import { loadPlugins } from './plugins/plugins.js'
+import { setupTsCompiler } from './plugins/typescript.js'
 
-const { isKeyEnabled } = require('@platformatic/utils')
-const setupCors = require('./plugins/cors.js')
-const setupClients = require('./plugins/clients.js')
-const setupGraphQL = require('./plugins/graphql.js')
-const setupHealthCheck = require('./plugins/health-check.js')
-const setupOpenAPI = require('./plugins/openapi.js')
-const loadPlugins = require('./plugins/plugins.js')
-const setupTsCompiler = require('./plugins/typescript.js')
-
-async function platformaticService (app, stackable) {
+export async function platformaticService (app, stackable) {
   const config = await stackable.getConfig()
 
   // This must be done before loading the plugins, so they can be configured accordingly
@@ -41,10 +39,10 @@ async function platformaticService (app, stackable) {
     }
 
     if (registerTsCompiler) {
-      await app.register(setupTsCompiler, { context: stackable.context })
+      await app.register(setupTsCompiler, stackable.context)
     }
 
-    await app.register(loadPlugins, { context: stackable.context })
+    await app.register(loadPlugins, stackable.context)
   }
 
   if (isKeyEnabled('cors', config.server)) {
@@ -57,5 +55,3 @@ async function platformaticService (app, stackable) {
 }
 
 platformaticService[Symbol.for('skip-override')] = true
-
-module.exports = { platformaticService }

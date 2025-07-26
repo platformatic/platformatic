@@ -1,9 +1,9 @@
-const { basename } = require('path')
-const { createConnectionPool } = require('@platformatic/sql-mapper')
-const { stat, readdir } = require('fs/promises')
-const errors = require('./errors.js')
+import { createConnectionPool } from '@platformatic/sql-mapper'
+import { readdir, stat } from 'node:fs/promises'
+import { basename } from 'node:path'
+import { MigrateMissingMigrationsDirError, MigrateMissingMigrationsError } from './errors.js'
 
-class Migrator {
+export class Migrator {
   constructor (migrationConfig, coreConfig, logger) {
     this.coreConfig = coreConfig
     this.migrationDir = migrationConfig.dir
@@ -90,7 +90,7 @@ class Migrator {
       await stat(this.migrationDir)
     } catch (err) {
       if (err.code === 'ENOENT') {
-        throw new errors.MigrateMissingMigrationsDirError(this.migrationDir)
+        throw new MigrateMissingMigrationsDirError(this.migrationDir)
       }
     }
   }
@@ -168,7 +168,7 @@ class Migrator {
       }
     } catch (err) {
       if (err.code === 'ENOENT') {
-        throw new errors.MigrateMissingMigrationsDirError(this.migrationDir)
+        throw new MigrateMissingMigrationsDirError(this.migrationDir)
       }
     }
   }
@@ -182,10 +182,10 @@ class Migrator {
   }
 }
 
-async function execute (logger, config, to, rollback) {
+export async function execute (logger, config, to, rollback) {
   const migrationsConfig = config.migrations
   if (migrationsConfig === undefined) {
-    throw new errors.MigrateMissingMigrationsError()
+    throw new MigrateMissingMigrationsError()
   }
 
   const migrator = new Migrator(migrationsConfig, config.db, logger)
@@ -201,5 +201,3 @@ async function execute (logger, config, to, rollback) {
     await migrator.close()
   }
 }
-
-module.exports = { Migrator, execute }

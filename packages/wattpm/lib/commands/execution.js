@@ -1,17 +1,10 @@
 import { RuntimeApiClient } from '@platformatic/control'
-import { startCommand as pltStartCommand } from '@platformatic/runtime'
+import { create } from '@platformatic/runtime'
 import { ensureLoggableError, FileWatcher } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
 import { on } from 'node:events'
-import {
-  findRuntimeConfigurationFile,
-  getMatchingRuntime,
-  getRoot,
-  handleRuntimeError,
-  logFatalError,
-  parseArgs
-} from '../utils.js'
+import { findRuntimeConfigurationFile, getMatchingRuntime, getRoot, logFatalError, parseArgs } from '../utils.js'
 
 export async function devCommand (logger, args) {
   const {
@@ -29,24 +22,14 @@ export async function devCommand (logger, args) {
   )
   const root = getRoot(positionals)
 
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config, true)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
     return
   }
 
-  let runtime
-  try {
-    runtime = await pltStartCommand(['-c', configurationFile], true, true)
-  } catch (error) {
-    if (await handleRuntimeError(logger, configurationFile, error)) {
-      return
-      /* c8 ignore next 4 - Hard to test */
-    }
-
-    throw error
-  }
+  let runtime = await create(root, configurationFile, { start: true })
 
   // Add a watcher on the configurationFile so that we can eventually restart the runtime
   const watcher = new FileWatcher({ path: configurationFile })
@@ -56,7 +39,7 @@ export async function devCommand (logger, args) {
   for await (const _ of on(watcher, 'update')) {
     runtime.logger.info('The configuration file has changed, reloading the application ...')
     await runtime.close()
-    runtime = await pltStartCommand(['-c', configurationFile], true, true)
+    runtime = await create(root, configurationFile, { start: true })
   }
   /* c8 ignore next - Mistakenly reported as uncovered by C8 */
 }
@@ -81,28 +64,14 @@ export async function startCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config, true)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
     return
   }
 
-  const cmd = ['--production', '-c', configurationFile]
-  if (inspect) {
-    cmd.push('--inspect')
-  }
-
-  try {
-    await pltStartCommand(cmd, true)
-  } catch (error) {
-    if (await handleRuntimeError(logger, configurationFile, error)) {
-      return
-      /* c8 ignore next 4 - Hard to test */
-    }
-
-    throw error
-  }
+  await create(root, configurationFile, { start: true, production: true, inspect })
 }
 
 export async function stopCommand (logger, args) {

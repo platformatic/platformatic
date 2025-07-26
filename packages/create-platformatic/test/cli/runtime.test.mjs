@@ -37,7 +37,6 @@ test('Creates a Platformatic Runtime with two Services', async t => {
   equal(await isFileAccessible(join(root, '.env')), true)
   equal(await isFileAccessible(join(root, '.env.sample')), true)
   equal(await isFileAccessible(join(root, 'platformatic.json')), true)
-  equal(await isFileAccessible(join(root, 'README.md')), true)
 
   // using pnpm will create workspace file
   equal(await isFileAccessible(join(root, 'pnpm-workspace.yaml')), true)
@@ -82,7 +81,6 @@ test('Add another service to an existing application', async t => {
     equal(await isFileAccessible(join(root, '.env')), true)
     equal(await isFileAccessible(join(root, '.env.sample')), true)
     equal(await isFileAccessible(join(root, 'platformatic.json')), true)
-    equal(await isFileAccessible(join(root, 'README.md')), true)
 
     // using pnpm will create workspace file
     equal(await isFileAccessible(join(root, 'pnpm-workspace.yaml')), true)

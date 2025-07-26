@@ -4,9 +4,8 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { setTimeout: sleep } = require('node:timers/promises')
-const { loadConfig } = require('@platformatic/config')
 const { request } = require('undici')
-const { buildServer, platformaticRuntime } = require('../..')
+const { create } = require('../../index.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { setLogFile } = require('../helpers')
 
@@ -27,8 +26,7 @@ function findPrometheusLinesForMetric (metric, output) {
 test('should get runtime metrics in a json format', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -117,8 +115,7 @@ test('should get runtime metrics in a json format', async t => {
 test('should get runtime metrics in a text format', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   const url = await app.start()
   // We call service-1 and service-2 (this one indirectly through the entrypoint), so we expect metrics from both
@@ -210,8 +207,7 @@ function parseLabels (line) {
 test('should get runtime metrics in a text format with custom labels', async t => {
   const projectDir = join(fixturesDir, 'management-api-custom-labels')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -231,8 +227,7 @@ test('should get runtime metrics in a text format with custom labels', async t =
 test('should get json runtime metrics with custom labels', async t => {
   const projectDir = join(fixturesDir, 'management-api-custom-labels')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -252,8 +247,7 @@ test('should get json runtime metrics with custom labels', async t => {
 test('should get formatted runtime metrics', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -280,8 +274,7 @@ test('should get formatted runtime metrics', async t => {
 test('should get cached formatted runtime metrics', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   const appUrl = await app.start()
 
@@ -318,8 +311,7 @@ test('should get cached formatted runtime metrics', async t => {
 test('should get metrics after reloading one of the services', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -355,8 +347,7 @@ test('should get metrics after reloading one of the services', async t => {
 test('should get runtime metrics in a json format without a service call', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   const url = await app.start()
   // We call service-1 and service-2 (this one indirectly through the entrypoint), so we expect metrics from both

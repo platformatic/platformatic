@@ -1,10 +1,8 @@
-'use strict'
-
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { buildConfig, createFromConfig } = require('./helper')
-const { features } = require('@platformatic/utils')
+import { features } from '@platformatic/utils'
+import assert from 'node:assert'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { buildConfig, createFromConfig } from './helper.js'
 
 test(
   'automatically apply reuse port if isProduction is in the context',

@@ -1,12 +1,10 @@
-'use strict'
-
-const os = require('node:os')
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { writeFile } = require('node:fs/promises')
-const { request } = require('undici')
-const { createFromConfig, buildConfig } = require('./helper')
+import assert from 'node:assert'
+import { writeFile } from 'node:fs/promises'
+import os from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { buildConfig, createFromConfig } from './helper.js'
 
 test('should not configure telemetry if not configured', async t => {
   const app = await createFromConfig(

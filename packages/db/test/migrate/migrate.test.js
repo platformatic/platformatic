@@ -1,12 +1,9 @@
-'use strict'
-
-const { execa } = require('execa')
-const assert = require('node:assert/strict')
-const { statSync, utimesSync } = require('node:fs')
-const { test } = require('node:test')
-
-const { getConnectionInfo } = require('../helper.js')
-const { cliPath, getFixturesConfigFileLocation } = require('./helper.js')
+import { execa } from 'execa'
+import assert from 'node:assert/strict'
+import { statSync, utimesSync } from 'node:fs'
+import test from 'node:test'
+import { getConnectionInfo } from '../helper.js'
+import { cliPath, getFixturesConfigFileLocation } from './helper.js'
 
 test('migrate up', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')

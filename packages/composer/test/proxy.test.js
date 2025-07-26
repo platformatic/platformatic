@@ -1,27 +1,25 @@
-'use strict'
-
-const assert = require('assert/strict')
-const selfCert = require('self-cert')
-const { tmpdir } = require('node:os')
-const { resolve, join } = require('node:path')
-const { symlink, mkdtemp, writeFile } = require('node:fs/promises')
-const { once, EventEmitter } = require('node:events')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
-const { Agent, setGlobalDispatcher, getGlobalDispatcher } = require('undici')
-const { WebSocket } = require('ws')
-const {
+import { createDirectory, safeRemove } from '@platformatic/utils'
+import assert from 'assert/strict'
+import { EventEmitter, once } from 'node:events'
+import { mkdtemp, symlink, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
+import { test } from 'node:test'
+import openAPISchemaValidator from 'openapi-schema-validator'
+import selfCert from 'self-cert'
+import { Agent, getGlobalDispatcher, request, setGlobalDispatcher } from 'undici'
+import { WebSocket } from 'ws'
+import { create as createRuntime } from '../../runtime/index.js'
+import {
+  createComposerInRuntime,
   createFromConfig,
   createOpenApiService,
-  testEntityRoutes,
-  createComposerInRuntime,
   createWebsocketService,
-  REFRESH_TIMEOUT
-} = require('./helper')
-const { buildServer: buildRuntime } = require('../../runtime')
-const { safeRemove, createDirectory } = require('@platformatic/utils')
+  REFRESH_TIMEOUT,
+  testEntityRoutes
+} from './helper.js'
 
+const OpenAPISchemaValidator = openAPISchemaValidator.default
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
 function ensureCleanup (t, folders) {
@@ -169,7 +167,7 @@ test('should proxy a @platformatic/service to its prefix by default', async t =>
     [
       {
         id: 'main',
-        path: resolve(__dirname, './proxy/fixtures/service')
+        path: resolve(import.meta.dirname, './proxy/fixtures/service')
       }
     ]
   )
@@ -221,7 +219,7 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
     [
       {
         id: 'main',
-        path: resolve(__dirname, './proxy/fixtures/service'),
+        path: resolve(import.meta.dirname, './proxy/fixtures/service'),
         config: 'platformatic-prefix-in-conf.json'
       }
     ]
@@ -259,7 +257,7 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
     [
       {
         id: 'main',
-        path: resolve(__dirname, './proxy/fixtures/service'),
+        path: resolve(import.meta.dirname, './proxy/fixtures/service'),
         config: 'platformatic-prefix-in-code.json'
       }
     ]
@@ -280,14 +278,14 @@ test('should proxy a @platformatic/service to the chosen prefix by the user in t
 })
 
 test('should proxy all services if none are defined', async t => {
-  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
+  const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
 
   await ensureCleanup(t, [nodeModulesRoot])
 
   // Make sure there is @platformatic/node available in the node service.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
-  await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
 
   const runtime = await createComposerInRuntime(
     t,
@@ -300,17 +298,17 @@ test('should proxy all services if none are defined', async t => {
     [
       {
         id: 'first',
-        path: resolve(__dirname, './proxy/fixtures/service'),
+        path: resolve(import.meta.dirname, './proxy/fixtures/service'),
         config: 'platformatic.json'
       },
       {
         id: 'second',
-        path: resolve(__dirname, './proxy/fixtures/service'),
+        path: resolve(import.meta.dirname, './proxy/fixtures/service'),
         config: 'platformatic.json'
       },
       {
         id: 'third',
-        path: resolve(__dirname, './proxy/fixtures/node')
+        path: resolve(import.meta.dirname, './proxy/fixtures/node')
       }
     ]
   )
@@ -352,20 +350,24 @@ test('should proxy all services if none are defined', async t => {
 })
 
 test('should fix the path using the referer only if asked to', async t => {
-  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
-  const astroModulesRoot = resolve(__dirname, './proxy/fixtures/astro/node_modules')
+  const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
+  const astroModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/astro/node_modules')
 
-  await ensureCleanup(t, [nodeModulesRoot, astroModulesRoot, resolve(__dirname, './proxy/fixtures/astro/.astro')])
+  await ensureCleanup(t, [
+    nodeModulesRoot,
+    astroModulesRoot,
+    resolve(import.meta.dirname, './proxy/fixtures/astro/.astro')
+  ])
 
   // Make sure there is @platformatic/node available in the node service.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
-  await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
 
   // Make sure there is @platformatic/astro available in the astro service.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(astroModulesRoot, '@platformatic'))
-  await symlink(resolve(__dirname, '../../astro'), resolve(astroModulesRoot, '@platformatic/astro'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../astro'), resolve(astroModulesRoot, '@platformatic/astro'), 'dir')
 
   const runtime = await createComposerInRuntime(
     t,
@@ -378,17 +380,17 @@ test('should fix the path using the referer only if asked to', async t => {
     [
       {
         id: 'first',
-        path: resolve(__dirname, './proxy/fixtures/service'),
+        path: resolve(import.meta.dirname, './proxy/fixtures/service'),
         config: 'platformatic.json'
       },
       {
         id: 'astro',
-        path: resolve(__dirname, './proxy/fixtures/astro'),
+        path: resolve(import.meta.dirname, './proxy/fixtures/astro'),
         config: 'platformatic.json'
       },
       {
         id: 'third',
-        path: resolve(__dirname, './proxy/fixtures/node')
+        path: resolve(import.meta.dirname, './proxy/fixtures/node')
       }
     ]
   )
@@ -453,7 +455,7 @@ test('should rewrite Location headers for proxied services', async t => {
     [
       {
         id: 'main',
-        path: resolve(__dirname, './proxy/fixtures/service'),
+        path: resolve(import.meta.dirname, './proxy/fixtures/service'),
         config: 'platformatic.json'
       }
     ]
@@ -478,14 +480,14 @@ test('should rewrite Location headers for proxied services', async t => {
 })
 
 test('should rewrite Location headers that include full url of the running service', async t => {
-  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
+  const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
 
   await ensureCleanup(t, [nodeModulesRoot])
 
   // Make sure there is @platformatic/node available in the node service.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
-  await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
 
   const runtime = await createComposerInRuntime(
     t,
@@ -506,7 +508,7 @@ test('should rewrite Location headers that include full url of the running servi
     [
       {
         id: 'main',
-        path: resolve(__dirname, './proxy/fixtures/node')
+        path: resolve(import.meta.dirname, './proxy/fixtures/node')
       }
     ]
   )
@@ -530,39 +532,39 @@ test('should rewrite Location headers that include full url of the running servi
 })
 
 test('should properly configure the frontends on their paths if no composer configuration is present', async t => {
-  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
-  const astroModulesRoot = resolve(__dirname, './proxy/fixtures/astro/node_modules')
-  const nextModulesRoot = resolve(__dirname, './proxy/fixtures/next/node_modules')
-  const remixModulesRoot = resolve(__dirname, './proxy/fixtures/remix/node_modules')
+  const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
+  const astroModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/astro/node_modules')
+  const nextModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/next/node_modules')
+  const remixModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/remix/node_modules')
 
   await ensureCleanup(t, [
     nodeModulesRoot,
     astroModulesRoot,
     nextModulesRoot,
     remixModulesRoot,
-    resolve(__dirname, './proxy/fixtures/astro/.astro'),
-    resolve(__dirname, './proxy/fixtures/next/.next')
+    resolve(import.meta.dirname, './proxy/fixtures/astro/.astro'),
+    resolve(import.meta.dirname, './proxy/fixtures/next/.next')
   ])
 
   // Make sure there is @platformatic/node available in the node service.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
-  await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
 
   // Make sure there is @platformatic/astro available in the astro service.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(astroModulesRoot, '@platformatic'))
-  await symlink(resolve(__dirname, '../../astro'), resolve(astroModulesRoot, '@platformatic/astro'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../astro'), resolve(astroModulesRoot, '@platformatic/astro'), 'dir')
 
   // Make sure there is @platformatic/next available in the next service.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nextModulesRoot, '@platformatic'))
-  await symlink(resolve(__dirname, '../../next'), resolve(nextModulesRoot, '@platformatic/next'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../next'), resolve(nextModulesRoot, '@platformatic/next'), 'dir')
 
   // Make sure there is @platformatic/next available in the next service.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(remixModulesRoot, '@platformatic'))
-  await symlink(resolve(__dirname, '../../remix'), resolve(remixModulesRoot, '@platformatic/remix'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../remix'), resolve(remixModulesRoot, '@platformatic/remix'), 'dir')
 
   const runtime = await createComposerInRuntime(
     t,
@@ -573,7 +575,7 @@ test('should properly configure the frontends on their paths if no composer conf
       }
     },
     [],
-    resolve(__dirname, './proxy/fixtures/')
+    resolve(import.meta.dirname, './proxy/fixtures/')
   )
 
   const address = await runtime.start()
@@ -624,14 +626,14 @@ test('should properly configure the frontends on their paths if no composer conf
 })
 
 test('should properly match services by their hostname', async t => {
-  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
+  const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
 
   await ensureCleanup(t, [nodeModulesRoot])
 
   // Make sure there is @platformatic/node available in the node service.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
-  await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
 
   const runtime = await createComposerInRuntime(
     t,
@@ -654,11 +656,11 @@ test('should properly match services by their hostname', async t => {
     [
       {
         id: 'node',
-        path: resolve(__dirname, './proxy/fixtures/node')
+        path: resolve(import.meta.dirname, './proxy/fixtures/node')
       },
       {
         id: 'service',
-        path: resolve(__dirname, './proxy/fixtures/service')
+        path: resolve(import.meta.dirname, './proxy/fixtures/service')
       }
     ]
   )
@@ -837,14 +839,14 @@ test('should properly match services by their hostname', async t => {
 })
 
 test('should properly allow all domains when a service is the only one with a hostname', async t => {
-  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
+  const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
 
   await ensureCleanup(t, [nodeModulesRoot])
 
   // Make sure there is @platformatic/node available in the node service.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
-  await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
 
   const runtime = await createComposerInRuntime(
     t,
@@ -866,11 +868,11 @@ test('should properly allow all domains when a service is the only one with a ho
     [
       {
         id: 'node',
-        path: resolve(__dirname, './proxy/fixtures/node')
+        path: resolve(import.meta.dirname, './proxy/fixtures/node')
       },
       {
         id: 'service',
-        path: resolve(__dirname, './proxy/fixtures/service')
+        path: resolve(import.meta.dirname, './proxy/fixtures/service')
       }
     ]
   )
@@ -951,14 +953,14 @@ test('should properly allow all domains when a service is the only one with a ho
 })
 
 test('should properly generate OpenAPI routes when a frontend is exposed on /', async t => {
-  const astroModulesRoot = resolve(__dirname, './proxy/fixtures/astro/node_modules')
+  const astroModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/astro/node_modules')
 
-  await ensureCleanup(t, [astroModulesRoot, resolve(__dirname, './proxy/fixtures/astro/.astro')])
+  await ensureCleanup(t, [astroModulesRoot, resolve(import.meta.dirname, './proxy/fixtures/astro/.astro')])
 
   // Make sure there is @platformatic/astro available in the astro service.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(astroModulesRoot, '@platformatic'))
-  await symlink(resolve(__dirname, '../../astro'), resolve(astroModulesRoot, '@platformatic/astro'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../astro'), resolve(astroModulesRoot, '@platformatic/astro'), 'dir')
 
   const runtime = await createComposerInRuntime(
     t,
@@ -986,11 +988,11 @@ test('should properly generate OpenAPI routes when a frontend is exposed on /', 
     [
       {
         id: 'backend',
-        path: resolve(__dirname, './proxy/fixtures/service')
+        path: resolve(import.meta.dirname, './proxy/fixtures/service')
       },
       {
         id: 'frontend',
-        path: resolve(__dirname, './proxy/fixtures/astro')
+        path: resolve(import.meta.dirname, './proxy/fixtures/astro')
       }
     ]
   )
@@ -1057,14 +1059,14 @@ test('adds x-forwarded-proto', async t => {
     })
   }
 
-  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
+  const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
 
   await ensureCleanup(t, [nodeModulesRoot])
 
   // Make sure there is @platformatic/node available in the node service.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
-  await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
 
   const runtime = await createComposerInRuntime(
     t,
@@ -1095,7 +1097,7 @@ test('adds x-forwarded-proto', async t => {
     [
       {
         id: 'main',
-        path: resolve(__dirname, './proxy/fixtures/node')
+        path: resolve(import.meta.dirname, './proxy/fixtures/node')
       }
     ]
   )
@@ -1116,14 +1118,14 @@ test('adds x-forwarded-proto', async t => {
 })
 
 test('should rewrite Location headers for proxied services https', async t => {
-  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
+  const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
 
   await ensureCleanup(t, [nodeModulesRoot])
 
   // Make sure there is @platformatic/node available in the node service.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
-  await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
 
   const { certificate, privateKey } = selfCert({})
   const localDir = tmpdir()
@@ -1177,7 +1179,7 @@ test('should rewrite Location headers for proxied services https', async t => {
     [
       {
         id: 'main',
-        path: resolve(__dirname, './proxy/fixtures/node')
+        path: resolve(import.meta.dirname, './proxy/fixtures/node')
       }
     ]
   )
@@ -1201,14 +1203,14 @@ test('should rewrite Location headers for proxied services https', async t => {
 })
 
 test('should properly strip runtime basePath from proxied services', async t => {
-  const remixModulesRoot = resolve(__dirname, './proxy/fixtures/remix/node_modules')
+  const remixModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/remix/node_modules')
 
-  await ensureCleanup(t, [remixModulesRoot, resolve(__dirname, './proxy/fixtures/remix/build')])
+  await ensureCleanup(t, [remixModulesRoot, resolve(import.meta.dirname, './proxy/fixtures/remix/build')])
 
   // Make sure there is @platformatic/remix available in the node service.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(remixModulesRoot, '@platformatic'))
-  await symlink(resolve(__dirname, '../../remix'), resolve(remixModulesRoot, '@platformatic/remix'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../remix'), resolve(remixModulesRoot, '@platformatic/remix'), 'dir')
 
   const runtime = await createComposerInRuntime(
     t,
@@ -1226,7 +1228,7 @@ test('should properly strip runtime basePath from proxied services', async t => 
     [
       {
         id: 'remix',
-        path: resolve(__dirname, './proxy/fixtures/remix')
+        path: resolve(import.meta.dirname, './proxy/fixtures/remix')
       }
     ],
     null,
@@ -1235,7 +1237,8 @@ test('should properly strip runtime basePath from proxied services', async t => 
     },
     true,
     async runtimeConfigPath => {
-      const devRuntime = await buildRuntime(runtimeConfigPath)
+      const devRuntime = await createRuntime(runtimeConfigPath)
+      await devRuntime.init()
       await devRuntime.buildService('remix')
       await devRuntime.close()
     }
@@ -1277,14 +1280,14 @@ test('should properly strip runtime basePath from proxied services', async t => 
 })
 
 test('should properly handle basePath root for generic services', async t => {
-  const nodeModulesRoot = resolve(__dirname, './proxy/fixtures/node/node_modules')
+  const nodeModulesRoot = resolve(import.meta.dirname, './proxy/fixtures/node/node_modules')
 
   await ensureCleanup(t, [nodeModulesRoot])
 
   // Make sure there is @platformatic/node available in the node service.
   // We can't simply specify it in the package.json due to circular dependencies.
   await createDirectory(resolve(nodeModulesRoot, '@platformatic'))
-  await symlink(resolve(__dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../node'), resolve(nodeModulesRoot, '@platformatic/node'), 'dir')
 
   const runtime = await createComposerInRuntime(
     t,
@@ -1302,7 +1305,7 @@ test('should properly handle basePath root for generic services', async t => {
     [
       {
         id: 'node',
-        path: resolve(__dirname, './proxy/fixtures/node'),
+        path: resolve(import.meta.dirname, './proxy/fixtures/node'),
         config: 'platformatic.with-absolute-url.json'
       }
     ],
@@ -1405,7 +1408,7 @@ test('should proxy to a websocket service with reconnect options', async t => {
           logs: true
         },
         hooks: {
-          path: resolve(__dirname, './proxy/fixtures/ws/hooks.js')
+          path: resolve(import.meta.dirname, './proxy/fixtures/ws/hooks.js')
         }
       }
     }

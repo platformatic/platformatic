@@ -1,15 +1,13 @@
-'use strict'
-
-const { createDirectory } = require('@platformatic/utils')
-const { once } = require('events')
-const { execa } = require('execa')
-const assert = require('node:assert/strict')
-const { mkdtemp, readdir, writeFile } = require('node:fs/promises')
-const { tmpdir } = require('node:os')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const split = require('split2')
-const { cliPath } = require('./helper.js')
+import { createDirectory } from '@platformatic/utils'
+import { once } from 'events'
+import { execa } from 'execa'
+import assert from 'node:assert/strict'
+import { mkdtemp, readdir, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import split from 'split2'
+import { cliPath } from './helper.js'
 
 test('generates next file correctly with empty dir', async t => {
   const cwd = await mkdtemp(join(tmpdir(), 'gen-migration-test-'))

@@ -1,10 +1,8 @@
-'use strict'
+import { BaseGenerator, generateTests } from '@platformatic/generators'
+import { join } from 'node:path'
+import { jsHelperMySQL, jsHelperPostgres, jsHelperSqlite, moviesTestJS, moviesTestTS, README } from './templates.js'
 
-const { BaseGenerator, generateTests } = require('@platformatic/generators')
-const { jsHelperSqlite, jsHelperMySQL, jsHelperPostgres, moviesTestTS, moviesTestJS, README } = require('./templates')
-const { join } = require('node:path')
-
-class Generator extends BaseGenerator {
+export class Generator extends BaseGenerator {
   constructor (opts = {}) {
     super({
       ...opts,
@@ -267,5 +265,3 @@ declare module 'fastify' {
     })
   }
 }
-
-module.exports = { Generator }

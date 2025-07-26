@@ -1,26 +1,24 @@
-'use strict'
-
-const { createDirectory, safeRemove } = require('@platformatic/utils')
-const { execa } = require('execa')
-const assert = require('node:assert/strict')
-const { existsSync } = require('node:fs')
-const { cp, readFile, symlink } = require('node:fs/promises')
-const { resolve } = require('node:path')
-const { test } = require('node:test')
-const { setTimeout } = require('node:timers/promises')
-const split = require('split2')
-const { cliPath, safeKill, startPath } = require('./helper.js')
+import { createDirectory, safeRemove } from '@platformatic/utils'
+import { execa } from 'execa'
+import assert from 'node:assert/strict'
+import { existsSync } from 'node:fs'
+import { cp, readFile, symlink } from 'node:fs/promises'
+import { resolve } from 'node:path'
+import { test } from 'node:test'
+import { setTimeout } from 'node:timers/promises'
+import split from 'split2'
+import { cliPath, safeKill, startPath } from './helper.js'
 
 let counter = 0
 
-let pathToTSD = resolve(__dirname, '../../node_modules/.bin/tsd')
+let pathToTSD = resolve(import.meta.dirname, '../../node_modules/.bin/tsd')
 
 if (!existsSync(pathToTSD)) {
-  pathToTSD = resolve(__dirname, '../../../../node_modules/.bin/tsd')
+  pathToTSD = resolve(import.meta.dirname, '../../../../node_modules/.bin/tsd')
 }
 
 async function prepareTemporaryDirectory (t, testDir) {
-  const cwd = resolve(__dirname, '..', 'tmp', `gen-types-clone-${counter++}`)
+  const cwd = resolve(import.meta.dirname, '..', 'tmp', `gen-types-clone-${counter++}`)
 
   t.after(async () => {
     await safeRemove(cwd)
@@ -36,11 +34,11 @@ async function prepareTemporaryDirectory (t, testDir) {
 
 async function linkDependencies (root) {
   await createDirectory(resolve(root, 'node_modules/@platformatic'))
-  await symlink(resolve(__dirname, '../../'), resolve(root, 'node_modules/@platformatic/db'), 'dir')
+  await symlink(resolve(import.meta.dirname, '../../'), resolve(root, 'node_modules/@platformatic/db'), 'dir')
 }
 
 test('generate ts types', async t => {
-  const testDir = resolve(__dirname, '..', 'fixtures', 'gen-types')
+  const testDir = resolve(import.meta.dirname, '..', 'fixtures', 'gen-types')
   const cwd = await prepareTemporaryDirectory(t, testDir)
 
   await execa('node', [cliPath, 'applyMigrations', resolve(cwd, 'platformatic.db.json')], { cwd })
@@ -50,7 +48,7 @@ test('generate ts types', async t => {
 })
 
 test('generate ts types twice', async t => {
-  const testDir = resolve(__dirname, '..', 'fixtures', 'gen-types')
+  const testDir = resolve(import.meta.dirname, '..', 'fixtures', 'gen-types')
   const cwd = await prepareTemporaryDirectory(t, testDir)
   const configFile = resolve(cwd, 'platformatic.db.json')
 
@@ -61,7 +59,7 @@ test('generate ts types twice', async t => {
 })
 
 test('should show warning if there is no entities', async t => {
-  const testDir = resolve(__dirname, '..', 'fixtures', 'auto-gen-types')
+  const testDir = resolve(import.meta.dirname, '..', 'fixtures', 'auto-gen-types')
   const cwd = await prepareTemporaryDirectory(t, testDir)
   const configFile = resolve(cwd, 'platformatic.db.json')
 
@@ -71,7 +69,7 @@ test('should show warning if there is no entities', async t => {
 })
 
 test('run migrate command with type generation', async t => {
-  const testDir = resolve(__dirname, '..', 'fixtures', 'auto-gen-types')
+  const testDir = resolve(import.meta.dirname, '..', 'fixtures', 'auto-gen-types')
   const cwd = await prepareTemporaryDirectory(t, testDir)
   const configFile = resolve(cwd, 'platformatic.db.json')
 
@@ -97,7 +95,7 @@ test('run migrate command with type generation', async t => {
 })
 
 test('run migrate command with type generation without plugin in config', async t => {
-  const testDir = resolve(__dirname, '..', 'fixtures', 'auto-gen-types-no-plugin')
+  const testDir = resolve(import.meta.dirname, '..', 'fixtures', 'auto-gen-types-no-plugin')
   const cwd = await prepareTemporaryDirectory(t, testDir)
   const configFile = resolve(cwd, 'platformatic.db.json')
 
@@ -108,7 +106,7 @@ test('run migrate command with type generation without plugin in config', async 
 })
 
 test('generate types on start', async t => {
-  const testDir = resolve(__dirname, '..', 'fixtures', 'auto-gen-types')
+  const testDir = resolve(import.meta.dirname, '..', 'fixtures', 'auto-gen-types')
   const cwd = await prepareTemporaryDirectory(t, testDir)
 
   const child = execa('node', [startPath], { cwd })
@@ -134,7 +132,7 @@ test('generate types on start', async t => {
 })
 
 test('generate types on start in a different cwd', async t => {
-  const testDir = resolve(__dirname, '..', 'fixtures', 'auto-gen-types')
+  const testDir = resolve(import.meta.dirname, '..', 'fixtures', 'auto-gen-types')
   const cwd = await prepareTemporaryDirectory(t, testDir)
   const configFile = resolve(cwd, 'platformatic.db.json')
 
@@ -162,7 +160,7 @@ test('generate types on start in a different cwd', async t => {
 })
 
 test('correctly format entity type names', async t => {
-  const testDir = resolve(__dirname, '..', 'fixtures', 'chars-gen-types')
+  const testDir = resolve(import.meta.dirname, '..', 'fixtures', 'chars-gen-types')
   const cwd = await prepareTemporaryDirectory(t, testDir)
   const configFile = resolve(cwd, 'platformatic.db.json')
 
@@ -171,7 +169,7 @@ test('correctly format entity type names', async t => {
 })
 
 test('use types directory from config as target folder', async t => {
-  const testDir = resolve(__dirname, '..', 'fixtures', 'gen-types-dir')
+  const testDir = resolve(import.meta.dirname, '..', 'fixtures', 'gen-types-dir')
   const cwd = await prepareTemporaryDirectory(t, testDir)
   const configFile = resolve(cwd, 'platformatic.db.json')
 
@@ -182,7 +180,7 @@ test('use types directory from config as target folder', async t => {
 })
 
 test('generate types on start while considering types directory', async t => {
-  const testDir = resolve(__dirname, '..', 'fixtures', 'auto-gen-types-dir')
+  const testDir = resolve(import.meta.dirname, '..', 'fixtures', 'auto-gen-types-dir')
   const cwd = await prepareTemporaryDirectory(t, testDir)
   const configFile = resolve(cwd, 'platformatic.db.json')
 

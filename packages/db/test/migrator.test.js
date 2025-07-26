@@ -1,8 +1,6 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { Migrator } = require('../lib/migrator.js')
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { Migrator } from '../lib/migrator.js'
 
 test('throws if connection string is invalid', async t => {
   const migrator = new Migrator(

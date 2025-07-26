@@ -34,7 +34,6 @@ test('Creates a Platformatic Service with no Typescript', async t => {
   equal(await isFileAccessible(join(baseProjectDir, '.env')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env.sample')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'platformatic.json')), true)
-  equal(await isFileAccessible(join(baseProjectDir, 'README.md')), true)
 
   // Here check the generated service
   const services = await getServices(join(baseProjectDir, 'services'))
@@ -68,7 +67,6 @@ test('Creates a Platformatic Service with Typescript', async t => {
   equal(await isFileAccessible(join(baseProjectDir, '.env')), true)
   equal(await isFileAccessible(join(baseProjectDir, '.env.sample')), true)
   equal(await isFileAccessible(join(baseProjectDir, 'platformatic.json')), true)
-  equal(await isFileAccessible(join(baseProjectDir, 'README.md')), true)
 
   // Here check the generated service
   const services = await getServices(join(baseProjectDir, 'services'))
@@ -116,7 +114,6 @@ test('Creates a Platformatic Service in a non empty directory', async t => {
   equal(await isFileAccessible(join(root, '.env')), true)
   equal(await isFileAccessible(join(root, '.env.sample')), true)
   equal(await isFileAccessible(join(root, 'platformatic.json')), true)
-  equal(await isFileAccessible(join(root, 'README.md')), true)
   equal(await isFileAccessible(join(root, 'services/foo/routes/root.js')), true)
   equal(await isFileAccessible(join(root, 'services/foo/routes/sample.js')), true)
   equal(await isFileAccessible(join(root, 'services/foo/plugins/example.js')), true)

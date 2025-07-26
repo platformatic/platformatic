@@ -1,7 +1,6 @@
 import { create } from '@platformatic/db'
 import { create as buildService } from '@platformatic/service'
 import { match as matchObj } from '@platformatic/utils'
-import * as desm from 'desm'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
 import { equal, match, ok, deepEqual as same } from 'node:assert'
@@ -11,7 +10,7 @@ import { moveToTmpdir, request } from './helper.js'
 
 test('generates only types in target folder with --types-only flag', async (t) => {
   const dir = await moveToTmpdir(after)
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), desm.join(import.meta.url, 'fixtures', 'movies', 'openapi.json'), '--name', 'movies', '-f', dir, '--types-only'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), join(import.meta.dirname, 'fixtures', 'movies', 'openapi.json'), '--name', 'movies', '-f', dir, '--types-only'])
   const files = await fs.readdir(dir)
   same(files.length, 1)
   same(files[0], 'movies.d.ts')
@@ -32,7 +31,7 @@ test('generates only types in target folder with --types-only flag', async (t) =
 
 test('add an initial comment with --types-comment flag', async (t) => {
   const dir = await moveToTmpdir(after)
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), desm.join(import.meta.url, 'fixtures', 'movies', 'openapi.json'), '--name', 'movies', '-f', dir, '--types-only', '--types-comment', 'this is an auto-generated file'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), join(import.meta.dirname, 'fixtures', 'movies', 'openapi.json'), '--name', 'movies', '-f', dir, '--types-only', '--types-comment', 'this is an auto-generated file'])
 
   const fileContents = await fs.readFile(join(dir, 'movies.d.ts'), 'utf-8')
   ok(fileContents.startsWith('// this is an auto-generated file'))
@@ -40,11 +39,11 @@ test('add an initial comment with --types-comment flag', async (t) => {
 
 test('openapi client generation (javascript)', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
   t.after(async () => { await app.close() })
 
   await app.start()
@@ -74,7 +73,7 @@ module.exports = async function (app) {
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
   await fs.writeFile('./plugin.js', plugin)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   process.env.PLT_MOVIES_URL = app.url
 
@@ -96,11 +95,11 @@ module.exports = async function (app) {
 
 test('openapi client generation (typescript)', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
@@ -135,7 +134,7 @@ export default myPlugin
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
   await fs.writeFile('./plugin.ts', plugin)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const tsconfig = JSON.stringify({
     extends: 'fastify-tsconfig',
@@ -168,11 +167,11 @@ export default myPlugin
 
 test('config support with folder', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
   t.after(async () => {
@@ -194,7 +193,7 @@ test('config support with folder', async (t) => {
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--folder', 'uncanny'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--folder', 'uncanny'])
 
   {
     const config = JSON.parse(await fs.readFile('./platformatic.service.json', 'utf-8'))
@@ -211,11 +210,11 @@ test('config support with folder', async (t) => {
 
 test('openapi client generation (typescript) with --types-only', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
@@ -260,7 +259,7 @@ export default myPlugin
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
   await fs.writeFile('./plugin.ts', plugin)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--types-only'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--types-only'])
 
   const tsconfig = JSON.stringify({
     extends: 'fastify-tsconfig',
@@ -293,11 +292,11 @@ export default myPlugin
 
 test('openapi client generation (typescript) with --types-only and --folder', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
@@ -342,7 +341,7 @@ export default myPlugin
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
   await fs.writeFile('./plugin.ts', plugin)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--folder', 'uncanny', '--types-only'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--folder', 'uncanny', '--types-only'])
 
   const tsconfig = JSON.stringify({
     extends: 'fastify-tsconfig',
@@ -375,11 +374,11 @@ export default myPlugin
 
 test('generate client twice', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await create(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
   t.after(async () => {
@@ -411,15 +410,15 @@ module.exports = async function (app) {
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
   await fs.writeFile('./plugin.js', plugin)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
   const envFile = await fs.readFile(join(dir, '.env'), 'utf8')
   equal(envFile.match(/PLT_MOVIES_URL/g).length, 1)
 })
 
 test('openapi client generation (javascript) from file', async (t) => {
-  const openapi = desm.join(import.meta.url, 'fixtures', 'movies', 'openapi.json')
+  const openapi = join(import.meta.dirname, 'fixtures', 'movies', 'openapi.json')
 
   await moveToTmpdir(after)
 
@@ -436,5 +435,5 @@ test('openapi client generation (javascript) from file', async (t) => {
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', 'movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openapi, '--name', 'movies'])
 })

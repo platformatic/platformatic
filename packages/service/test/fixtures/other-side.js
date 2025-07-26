@@ -1,9 +1,9 @@
-'use strict'
-
-module.exports = async function (app) {
+async function otherSide (app) {
   app.addHook('onRequest', async () => {
     throw new TypeError('kaboom')
   })
 }
 
-module.exports[Symbol.for('skip-override')] = true
+otherSide[Symbol.for('skip-override')] = true
+
+export default otherSide

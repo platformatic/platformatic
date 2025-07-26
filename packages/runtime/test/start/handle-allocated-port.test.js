@@ -4,10 +4,7 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
-const { loadConfig } = require('@platformatic/config')
-const platformaticService = require('../../../service')
-const { platformaticRuntime } = require('../..')
-const { setupAndStartRuntime } = require('../../lib/start')
+const { create } = require('../..')
 const { isCIOnWindows } = require('../helpers')
 const { once } = require('node:events')
 const http = require('http')
@@ -22,6 +19,13 @@ async function getPort () {
   }
 
   return 0
+}
+
+async function setupAndStartRuntime (configFile) {
+  const runtime = await create(configFile, null, { start: true })
+  const address = await runtime.getUrl()
+
+  return { address, runtime }
 }
 
 test('can increase port when starting a runtime with a port allocated', async t => {
@@ -39,10 +43,9 @@ test('can increase port when starting a runtime with a port allocated', async t 
 
   const dummyPort = dummyServer.address().port
   process.env.PORT = dummyPort
-  const configFile = join(fixturesDir, 'configs', 'service-with-env-port.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
 
-  const { address, runtime } = await setupAndStartRuntime(config)
+  const configFile = join(fixturesDir, 'configs', 'service-with-env-port.json')
+  const { address, runtime } = await setupAndStartRuntime(configFile)
 
   const url = new URL(address)
   assert.strictEqual(Number(url.port), dummyPort + 1)
@@ -65,10 +68,9 @@ test('can increase port when starting services without runtime config and port s
 
   const dummyPort = dummyServer.address().port
   process.env.PORT = dummyPort
-  const configFile = join(fixturesDir, 'configs', 'service-only-with-env-port.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticService)
 
-  const { address, runtime } = await setupAndStartRuntime(config)
+  const configFile = join(fixturesDir, 'configs', 'service-only-with-env-port.json')
+  const { address, runtime } = await setupAndStartRuntime(configFile)
 
   const url = new URL(address)
   assert.strictEqual(Number(url.port), dummyPort + 1)
@@ -94,9 +96,7 @@ test('can increase port when starting services without runtime config and no por
   process.env.DUMMY_PORT = dummyPort
 
   const configFile = join(fixturesDir, 'configs', 'service-only-with-no-port.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticService)
-
-  const { address, runtime } = await setupAndStartRuntime(config)
+  const { address, runtime } = await setupAndStartRuntime(configFile)
 
   const url = new URL(address)
   assert.strictEqual(Number(url.port), dummyPort + 1)

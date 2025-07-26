@@ -1,5 +1,4 @@
 import { createDirectory, safeRemove } from '@platformatic/utils'
-import desm from 'desm'
 import assert from 'node:assert'
 import { cp, mkdtemp, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -7,9 +6,9 @@ import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { createCjsLoggingPlugin, start } from '../helper.mjs'
 
-const fixturesDir = join(desm(import.meta.url), '..', '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', '..', 'fixtures')
 
-const base = join(desm(import.meta.url), '..', '..', 'tmp')
+const base = join(import.meta.dirname, '..', '..', 'tmp')
 
 try {
   await createDirectory(base)
@@ -26,7 +25,7 @@ test('watches CommonJS files with watch on a single service', async t => {
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v1', false))
 
-  const { child } = await start('-c', join(appDst, 'platformatic.service.json'))
+  const { child } = await start(join(appDst, 'platformatic.service.json'))
 
   // Need this sleep to await for the CI linux machine to start watching
   await sleep(2000)

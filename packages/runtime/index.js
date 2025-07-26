@@ -1,28 +1,114 @@
 'use strict'
 
-const { buildServer } = require('./lib/build-server')
-const errors = require('./lib/errors')
-const { platformaticRuntime, wrapConfigInRuntimeConfig } = require('./lib/config')
-const { RuntimeGenerator, WrappedGenerator } = require('./lib/generator/runtime-generator')
+const inspector = require('node:inspector')
+const { kMetadata } = require('@platformatic/utils')
+const { resolve, validationOptions } = require('@platformatic/basic')
+const {
+  loadConfiguration: utilsLoadConfiguration,
+  extractModuleFromSchemaUrl,
+  ensureLoggableError
+} = require('@platformatic/utils')
+const { NodeInspectorFlagsNotSupportedError } = require('./lib/errors')
+const { wrapInRuntimeConfig, transform } = require('./lib/config')
+const { RuntimeGenerator, WrappedGenerator } = require('./lib/generator')
 const { Runtime } = require('./lib/runtime')
-const { buildRuntime, start, startCommand } = require('./lib/start')
 const symbols = require('./lib/worker/symbols')
+const { schema } = require('./lib/schema')
+const { upgrade } = require('./lib/upgrade')
 const { loadConfig, getRuntimeLogsDir } = require('./lib/utils')
+
+async function restartRuntime (runtime) {
+  runtime.logger.info('Received SIGUSR2, restarting all services ...')
+
+  try {
+    await runtime.restart()
+  } catch (err) {
+    runtime.logger.error({ err: ensureLoggableError(err) }, 'Failed to restart services.')
+  }
+}
+
+function handleSignal (runtime) {
+  /* c8 ignore next 3 */
+  const restartListener = restartRuntime.bind(null, runtime)
+  process.on('SIGUSR2', restartListener)
+  runtime.on('closed', () => {
+    process.removeListener('SIGUSR2', restartListener)
+  })
+}
+
+async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
+  const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'runtime')
+
+  // First of all, load the configuration without any validation
+  const config = await utilsLoadConfiguration(source)
+  const mod = extractModuleFromSchemaUrl(config)
+  if (mod?.module !== '@platformatic/runtime') {
+    return wrapInRuntimeConfig(config, context)
+  }
+
+  return utilsLoadConfiguration(source, context?.schema ?? schema, {
+    validationOptions,
+    transform,
+    upgrade,
+    replaceEnv: true,
+    root,
+    ...context
+  })
+}
+
+async function create (configOrRoot, sourceOrConfig, context) {
+  const config = await loadConfiguration(configOrRoot, sourceOrConfig, context)
+
+  if (inspector.url() && !config[kMetadata].env.VSCODE_INSPECTOR_OPTIONS) {
+    throw new NodeInspectorFlagsNotSupportedError()
+  }
+
+  let runtime = new Runtime(config, context)
+  handleSignal(runtime)
+
+  // Handle port handling
+  if (context?.start) {
+    let port = config.server?.port
+
+    while (true) {
+      try {
+        await runtime.start()
+        break
+      } catch (err) {
+        if (err.code !== 'EADDRINUSE' || context?.skipPortInUseHandling) {
+          throw err
+        }
+
+        // Get the actual port from the error message if original port was 0
+        if (!port) {
+          const mo = err.message.match(/ address already in use (.+)/)
+          const url = new URL(`http://${mo[1]}`)
+          port = Number(url.port)
+        }
+
+        config.server.port = ++port
+        runtime = new Runtime(config, context)
+        handleSignal(runtime)
+      }
+    }
+  }
+
+  return runtime
+}
 
 const platformaticVersion = require('./package.json').version
 
-module.exports.buildServer = buildServer
-module.exports.buildRuntime = buildRuntime
-module.exports.errors = errors
+module.exports.errors = require('./lib/errors')
 module.exports.Generator = RuntimeGenerator
 module.exports.WrappedGenerator = WrappedGenerator
 module.exports.getRuntimeLogsDir = getRuntimeLogsDir
 module.exports.loadConfig = loadConfig
-module.exports.platformaticRuntime = platformaticRuntime
-module.exports.schema = platformaticRuntime.schema
-module.exports.start = start
-module.exports.startCommand = startCommand
+module.exports.schema = schema
 module.exports.symbols = symbols
 module.exports.Runtime = Runtime
-module.exports.wrapConfigInRuntimeConfig = wrapConfigInRuntimeConfig
+module.exports.wrapInRuntimeConfig = wrapInRuntimeConfig
 module.exports.version = platformaticVersion
+module.exports.loadConfiguration = loadConfiguration
+module.exports.create = create
+module.exports.transform = transform
+module.exports.upgrade = upgrade

@@ -1,9 +1,7 @@
-'use strict'
-
-const assert = require('assert/strict')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { createGraphqlService, createFromConfig } = require('./helper')
+import assert from 'assert/strict'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createFromConfig, createGraphqlService } from './helper.js'
 
 test('should resolve openapi services to the origin', async t => {
   const composer = await createFromConfig(t, {
@@ -17,13 +15,13 @@ test('should resolve openapi services to the origin', async t => {
         {
           id: 'service1',
           openapi: {
-            file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'users.json')
+            file: join(import.meta.dirname, 'openapi', 'fixtures', 'schemas', 'users.json')
           }
         },
         {
           id: 'service2',
           openapi: {
-            file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'posts.json')
+            file: join(import.meta.dirname, 'openapi', 'fixtures', 'schemas', 'posts.json')
           }
         }
       ]
@@ -152,14 +150,14 @@ test('should resolve different services', async t => {
           id: 'openapi',
           origin: 'http://openapi.plt.local',
           openapi: {
-            file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'users.json')
+            file: join(import.meta.dirname, 'openapi', 'fixtures', 'schemas', 'users.json')
           }
         },
         {
           id: 'openapi-and-graphql',
           origin: 'http://openapi-and-graphql.plt.local',
           openapi: {
-            file: join(__dirname, 'openapi', 'fixtures', 'schemas', 'posts.json')
+            file: join(import.meta.dirname, 'openapi', 'fixtures', 'schemas', 'posts.json')
           },
           graphql: {
             host: graphql2Host

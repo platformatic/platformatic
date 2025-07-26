@@ -1,5 +1,4 @@
-import { ConfigManager } from '@platformatic/config'
-import { detectApplicationType } from '@platformatic/utils'
+import { detectApplicationType, findConfigurationFile } from '@platformatic/utils'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { relative, resolve } from 'node:path'
@@ -21,10 +20,11 @@ export function isImportFailedError (error, pkg) {
 }
 
 export async function importStackablePackage (directory, pkg) {
+  let imported
   try {
     try {
       // Try regular import
-      return await import(pkg)
+      imported = await import(pkg)
     } catch (e) {
       if (!isImportFailedError(e, pkg)) {
         throw e
@@ -32,8 +32,8 @@ export async function importStackablePackage (directory, pkg) {
 
       // Scope to the service
       const require = createRequire(resolve(directory, importStackablePackageMarker))
-      const imported = require.resolve(pkg)
-      return await importFile(imported)
+      const toImport = require.resolve(pkg)
+      imported = await importFile(toImport)
     }
   } catch (e) {
     if (!isImportFailedError(e, pkg)) {
@@ -45,6 +45,8 @@ export async function importStackablePackage (directory, pkg) {
       `Unable to import package '${pkg}'. Please add it as a dependency in the package.json file in the folder ${serviceDirectory}.`
     )
   }
+
+  return imported.default ?? imported
 }
 
 export async function importStackableAndConfig (root, config, context) {
@@ -58,7 +60,7 @@ export async function importStackableAndConfig (root, config, context) {
   const hadConfig = !!config
 
   if (!config) {
-    config = await ConfigManager.findConfigFile(root, 'application')
+    config = await findConfigurationFile(root, 'application')
   }
 
   const appType = await detectApplicationType(root, rootPackageJson)
@@ -72,7 +74,7 @@ export async function importStackableAndConfig (root, config, context) {
   if (context) {
     const serviceRoot = relative(process.cwd(), root)
 
-    if (!hadConfig && context.serviceId && !(await ConfigManager.findConfigFile(root)) && context.worker?.index === 0) {
+    if (!hadConfig && context.serviceId && !(await findConfigurationFile(root)) && context.worker?.index === 0) {
       const autodetectDescription =
         moduleName === '@platformatic/node' ? 'is a generic Node.js application' : `is using ${label}`
 

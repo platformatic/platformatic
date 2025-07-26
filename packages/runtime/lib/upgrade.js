@@ -1,15 +1,15 @@
 'use strict'
 
+const { abstractLogger } = require('@platformatic/utils')
 const { join } = require('node:path')
+const { semgrator } = require('semgrator')
 
-module.exports = async function upgrade (config, version) {
-  const { semgrator } = await import('semgrator')
-
+async function upgrade (logger, config, version) {
   const iterator = semgrator({
     version,
     path: join(__dirname, 'versions'),
     input: config,
-    logger: this.logger.child({ name: '@platformatic/runtime' }),
+    logger: logger?.child({ name: '@platformatic/runtime' }) ?? abstractLogger
   })
 
   let result
@@ -20,3 +20,5 @@ module.exports = async function upgrade (config, version) {
 
   return result
 }
+
+module.exports = { upgrade }

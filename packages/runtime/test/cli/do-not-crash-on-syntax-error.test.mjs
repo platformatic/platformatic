@@ -1,13 +1,12 @@
 import { createDirectory, safeRemove } from '@platformatic/utils'
-import desm from 'desm'
 import { cp, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { createCjsLoggingPlugin, start } from './helper.mjs'
 
-const fixturesDir = join(desm(import.meta.url), '..', '..', 'fixtures')
+const fixturesDir = join(import.meta.dirname, '..', '..', 'fixtures')
 
-const base = join(desm(import.meta.url), '..', 'tmp')
+const base = join(import.meta.dirname, '..', 'tmp')
 
 try {
   await createDirectory(base)
@@ -51,7 +50,7 @@ test('do not crash on syntax error', async t => {
   await writeFile(serviceConfigFilePath, JSON.stringify(original, null, 2))
 
   await writeFile(cjsPluginFilePath, createCjsLoggingPlugin('v0', true))
-  const { child } = await start('-c', configFileDst)
+  const { child } = await start(configFileDst)
 
   await waitForMessageAndWatch(child, 'RELOADED v0')
 

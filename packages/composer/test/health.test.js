@@ -1,14 +1,11 @@
-'use strict'
-
-const assert = require('assert/strict')
-const { resolve: pathResolve } = require('node:path')
-const { symlink } = require('node:fs/promises')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { test } = require('node:test')
-const { request } = require('undici')
-
-const { createComposerInRuntime, REFRESH_TIMEOUT } = require('./helper')
-const { safeRemove, createDirectory, withResolvers } = require('@platformatic/utils')
+import { createDirectory, safeRemove } from '@platformatic/utils'
+import assert from 'assert/strict'
+import { once } from 'node:events'
+import { symlink } from 'node:fs/promises'
+import { resolve as resolvePath } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createComposerInRuntime, REFRESH_TIMEOUT } from './helper.js'
 
 function ensureCleanup (t, folders) {
   function cleanup () {
@@ -28,7 +25,7 @@ function waitEventOnAllServices (runtime, services, event) {
     }
   }
 
-  const { promise, resolve } = withResolvers()
+  const { promise, resolve } = Promise.withResolvers()
 
   function listener ({ service, worker }) {
     pending.delete(`${service}:${worker}`)
@@ -44,14 +41,18 @@ function waitEventOnAllServices (runtime, services, event) {
 }
 
 test('should properly report as failed on the health check route when all dependent services crash', async t => {
-  const nodeModulesRoot = pathResolve(__dirname, './health-check/fixtures/node-with-failure/node_modules')
+  const nodeModulesRoot = resolvePath(import.meta.dirname, './health-check/fixtures/node-with-failure/node_modules')
 
   await ensureCleanup(t, [nodeModulesRoot])
 
   // Make sure there is @platformatic/node available in the node service.
   // We can't simply specify it in the package.json due to circular dependencies.
-  await createDirectory(pathResolve(nodeModulesRoot, '@platformatic'))
-  await symlink(pathResolve(__dirname, '../../node'), pathResolve(nodeModulesRoot, '@platformatic/node'), 'dir')
+  await createDirectory(resolvePath(nodeModulesRoot, '@platformatic'))
+  await symlink(
+    resolvePath(import.meta.dirname, '../../node'),
+    resolvePath(nodeModulesRoot, '@platformatic/node'),
+    'dir'
+  )
 
   const broadcaster = new BroadcastChannel('plt.runtime.events')
   const runtime = await createComposerInRuntime(
@@ -63,24 +64,24 @@ test('should properly report as failed on the health check route when all depend
       },
       server: {
         healthCheck: {
-          interval: 500
+          interval: 100
         }
       }
     },
     [
       {
         id: 'first',
-        path: pathResolve(__dirname, './health-check/fixtures/node-with-failure'),
+        path: resolvePath(import.meta.dirname, './health-check/fixtures/node-with-failure'),
         workers: 2
       },
       {
         id: 'second',
-        path: pathResolve(__dirname, './health-check/fixtures/node-with-failure'),
+        path: resolvePath(import.meta.dirname, './health-check/fixtures/node-with-failure'),
         workers: 3
       },
       {
         id: 'third',
-        path: pathResolve(__dirname, './health-check/fixtures/node-with-failure')
+        path: resolvePath(import.meta.dirname, './health-check/fixtures/node-with-failure')
       }
     ],
     null,
@@ -122,7 +123,7 @@ test('should properly report as failed on the health check route when all depend
 
   // Wait for all processes to crash and then for the health check to report the failure.
   await waitEventOnAllServices(runtime, services, 'service:worker:error')
-  await sleep(1000)
+  await once(runtime, 'service:worker:event:unhealthy')
 
   // Verify health check
   {
@@ -132,7 +133,7 @@ test('should properly report as failed on the health check route when all depend
 
   // Wait for services to restart and the health check to report the success.
   await waitEventOnAllServices(runtime, services, 'service:worker:started')
-  await sleep(1000)
+  await once(runtime, 'service:worker:event:healthy')
 
   // Verify health check
   {

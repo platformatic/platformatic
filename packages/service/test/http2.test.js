@@ -1,14 +1,12 @@
-'use strict'
-
-const assert = require('node:assert')
-const { tmpdir } = require('node:os')
-const { test } = require('node:test')
-const { join, relative } = require('node:path')
-const { mkdtemp, writeFile } = require('node:fs/promises')
-const selfCert = require('self-cert')
-const { Agent, request } = require('undici')
-const { buildConfig } = require('./helper')
-const { create } = require('..')
+import assert from 'node:assert'
+import { mkdtemp, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join, relative } from 'node:path'
+import { test } from 'node:test'
+import selfCert from 'self-cert'
+import { Agent, request } from 'undici'
+import { create } from '../index.js'
+import { buildConfig } from './helper.js'
 
 test('supports http2 options', async t => {
   const { certificate, privateKey } = selfCert({})

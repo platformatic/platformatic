@@ -1,10 +1,8 @@
-'use strict'
-
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { create } = require('../..')
-const { createFromConfig } = require('../helper')
+import assert from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { create } from '../../index.js'
+import { createFromConfig } from '../helper.js'
 
 test('get service openapi schema via stackable api', async t => {
   const stackable = await createFromConfig(t, {
@@ -19,7 +17,7 @@ test('get service openapi schema via stackable api', async t => {
       openapi: true
     },
     plugins: {
-      paths: [join(__dirname, '..', 'fixtures', 'directories', 'routes')]
+      paths: [join(import.meta.dirname, '..', 'fixtures', 'directories', 'routes')]
     },
     watch: false
   })
@@ -46,7 +44,7 @@ test('get service openapi schema via stackable api', async t => {
 })
 
 test('get null if server does not expose openapi', async t => {
-  const stackable = await create(join(__dirname, '..', 'fixtures', 'directories'))
+  const stackable = await create(join(import.meta.dirname, '..', 'fixtures', 'directories'))
   t.after(() => stackable.stop())
   await stackable.start({ listen: true })
 

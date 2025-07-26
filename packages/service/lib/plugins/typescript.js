@@ -1,20 +1,17 @@
-'use strict'
+import compiler from '@platformatic/ts-compiler'
+import { kMetadata } from '@platformatic/utils'
+import fp from 'fastify-plugin'
 
-const fp = require('fastify-plugin')
-const compiler = require('@platformatic/ts-compiler')
-
-async function setupTsCompiler (app, opts) {
-  const configManager = app.platformatic.configManager
-  const config = configManager.current
-  const workingDir = opts?.context?.directory ?? configManager.dirname
+async function setupTsCompilerPlugin (app, context) {
+  const config = app.platformatic.config
 
   await compiler.compile({
     tsConfig: config.plugins?.typescript?.tsConfig,
     flags: config.plugins?.typescript?.flags,
-    cwd: workingDir,
+    cwd: context?.directory ?? config[kMetadata].root,
     clean: false,
-    logger: app.log,
+    logger: app.log
   })
 }
 
-module.exports = fp(setupTsCompiler)
+export const setupTsCompiler = fp(setupTsCompilerPlugin)

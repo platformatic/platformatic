@@ -1,33 +1,16 @@
-import type { BaseContext, BaseOptions, BaseStackable } from '@platformatic/basic'
-import type { ConfigManagerConfig } from '@platformatic/config'
+import { BaseStackable } from '@platformatic/basic'
 import { BaseGenerator } from '@platformatic/generators'
 import { ServerInstance as ServiceInstance, ServiceStackable } from '@platformatic/service'
-import type { JSONSchemaType } from 'ajv'
-import { FastifyInstance } from 'fastify'
+import { JSONSchemaType } from 'ajv'
+import { FastifyError, FastifyInstance } from 'fastify'
 import { PlatformaticComposerConfig } from './config'
 
 export { PlatformaticApplication } from '@platformatic/service'
 export { PlatformaticComposerConfig } from './config'
 
-export function platformaticComposer (app: FastifyInstance, stackable: BaseStackable): Promise<void>
-
-export interface ComposerContext extends BaseContext {
-  applicationFactory?: typeof platformaticService
-  fastifyPlugins?: Function[]
-  criticalPluginsRegistered?: boolean
-}
-
-export class Generator extends BaseGenerator.BaseGenerator {}
-
 export type ComposerStackable = ServiceStackable<PlatformaticComposerConfig>
 
 export type ServerInstance = ServiceInstance<PlatformaticComposerConfig>
-
-export function buildStackable (
-  root: string,
-  source: string | PlatformaticComposerConfig,
-  opts: BaseOptions
-): Promise<ComposerStackable>
 
 export function create (
   root: string,
@@ -36,10 +19,28 @@ export function create (
   context?: object
 ): Promise<ComposerStackable>
 
-export const schema: JSONSchemaType<PlatformaticComposerConfig>
+export declare function platformaticComposer (app: FastifyInstance, stackable: BaseStackable): Promise<void>
 
-export const configType: 'service'
+export class Generator extends BaseGenerator.BaseGenerator {}
 
-export const configManagerConfig: ConfigManagerConfig<PlatformaticComposerConfig>
+export declare const packageJson: Record<string, unknown>
 
-export const version: string
+export declare const schema: JSONSchemaType<PlatformaticComposerConfig>
+
+export declare const schemaComponents: {
+  openApiService: JSONSchemaType<object>
+  entityResolver: JSONSchemaType<object>
+  entities: JSONSchemaType<object>
+  graphqlService: JSONSchemaType<object>
+  graphqlComposerOptions: JSONSchemaType<object>
+  composer: JSONSchemaType<object>
+  types: JSONSchemaType<object>
+}
+
+export declare const version: string
+
+export function FastifyInstanceIsAlreadyListeningError (): FastifyError
+export function FailedToFetchOpenAPISchemaError (): FastifyError
+export function ValidationErrors (): FastifyError
+export function PathAlreadyExistsError (): FastifyError
+export function CouldNotReadOpenAPIConfigError (): FastifyError

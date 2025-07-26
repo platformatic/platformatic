@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "types": "index.d.ts",
+  "type": "module",
   "scripts": {
     "test": "pnpm run lint && borp -T --concurrency=1 --timeout 1200000",
     "gen-schema": "node lib/schema.js > schema.json",
@@ -54,7 +55,6 @@
     "@fastify/static": "^8.0.0",
     "@fastify/swagger": "^9.0.0",
     "@platformatic/basic": "workspace:*",
-    "@platformatic/config": "workspace:*",
     "@platformatic/db-authorization": "workspace:*",
     "@platformatic/db-core": "workspace:*",
     "@platformatic/generators": "workspace:*",
@@ -72,7 +72,6 @@
     "code-block-writer": "^13.0.1",
     "commist": "^3.2.0",
     "console-table-printer": "^2.12.0",
-    "desm": "^1.3.1",
     "env-schema": "^6.0.0",
     "es-main": "^1.3.0",
     "execa": "^9.0.0",

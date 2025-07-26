@@ -7,7 +7,6 @@
     "build": "wattpm build"
   },
   "dependencies": {
-    "@platformatic/config": "^2.18.0",
     "@platformatic/node": "^2.18.0",
     "@platformatic/runtime": "^2.18.0",
     "@opentelemetry/instrumentation-pg": "^0.50.0",

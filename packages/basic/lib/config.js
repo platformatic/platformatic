@@ -1,23 +1,27 @@
-import { ConfigManager, errors } from '@platformatic/config'
+import {
+  listRecognizedConfigurationFiles,
+  NoConfigFileFoundError,
+  findConfigurationFile as utilsFindConfigurationFile
+} from '@platformatic/utils'
 import jsonPatch from 'fast-json-patch'
 import { stat } from 'node:fs/promises'
-import { dirname, resolve } from 'node:path'
+import { dirname, resolve as resolvePath } from 'node:path'
 import { workerData } from 'node:worker_threads'
 
-export async function findConfigurationFile (root, typeOrCandidates) {
-  const file = await ConfigManager.findConfigFile(root, typeOrCandidates)
+export async function findConfigurationFile (root, suffixes) {
+  const file = await utilsFindConfigurationFile(root, suffixes)
 
   if (!file) {
-    const err = new errors.NoConfigFileFoundError()
-    err.message = `No config file found in the directory ${root} or its parents. Please create one of the following files: ${ConfigManager.listConfigFiles(typeOrCandidates, false, ['json']).join(', ')}`
+    const err = new NoConfigFileFoundError()
+    err.message = `No config file found in the directory ${root}. Please create one of the following files: ${listRecognizedConfigurationFiles(suffixes, ['json']).join(', ')}`
 
     throw err
   }
 
-  return resolve(root, file)
+  return resolvePath(root, file)
 }
 
-export async function resolveStackable (fileOrDirectory, sourceOrConfig, typeOrCandidates) {
+export async function resolve (fileOrDirectory, sourceOrConfig, suffixes) {
   if (sourceOrConfig && typeof sourceOrConfig !== 'string') {
     return {
       root: fileOrDirectory,
@@ -26,7 +30,7 @@ export async function resolveStackable (fileOrDirectory, sourceOrConfig, typeOrC
   } else if (typeof fileOrDirectory === 'string' && typeof sourceOrConfig === 'string') {
     return {
       root: fileOrDirectory,
-      source: sourceOrConfig
+      source: resolvePath(fileOrDirectory, sourceOrConfig)
     }
   }
 
@@ -45,47 +49,31 @@ export async function resolveStackable (fileOrDirectory, sourceOrConfig, typeOrC
 
   return {
     root: fileOrDirectory,
-    source: await findConfigurationFile(fileOrDirectory, typeOrCandidates)
+    source: await findConfigurationFile(fileOrDirectory, suffixes)
   }
 }
 
-export async function createConfigManager (configuration, root, source, opts, context) {
-  const { schema, upgrade, config, version } = configuration
-
-  const configManager = new ConfigManager({
-    schema: opts.context.schema ?? schema,
-    source,
-    upgrade,
-    version,
-    ...config,
-    ...opts.context.configManagerConfig,
-    dirname: root,
-    context
-  })
-
-  await configManager.parseAndValidate()
-  return configManager
-}
-
-export async function transformConfig () {
+export async function transform (config) {
   const patch = workerData?.serviceConfig?.configPatch
 
+  if (!config) {
+    return config
+  }
+
   if (Array.isArray(patch)) {
-    this.current = jsonPatch.applyPatch(this.current, patch).newDocument
+    config = jsonPatch.applyPatch(config, patch).newDocument
   }
 
-  if (!this.current) {
-    return
+  if (config.watch === undefined) {
+    config.watch = { enabled: workerData?.config?.watch ?? false }
+  } else if (typeof config.watch !== 'object') {
+    config.watch = { enabled: config.watch || false }
   }
 
-  if (this.current.watch === undefined) {
-    this.current.watch = { enabled: workerData?.config?.watch ?? false }
-  } else if (typeof this.current.watch !== 'object') {
-    this.current.watch = { enabled: this.current.watch || false }
-  }
+  return config
 }
 
-export const schemaOptions = {
+export const validationOptions = {
   useDefaults: true,
   coerceTypes: true,
   allErrors: true,

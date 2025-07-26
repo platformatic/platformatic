@@ -1,5 +1,5 @@
 import { client, collectMetrics } from '@platformatic/metrics'
-import { buildPinoOptions, deepmerge, executeWithTimeout, kTimeout } from '@platformatic/utils'
+import { buildPinoOptions, deepmerge, executeWithTimeout, kMetadata, kTimeout } from '@platformatic/utils'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import EventEmitter, { once } from 'node:events'
@@ -11,7 +11,6 @@ import pino from 'pino'
 import { NonZeroExitCode } from './errors.js'
 import { cleanBasePath } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
-
 const kITC = Symbol.for('plt.runtime.itc')
 
 export class BaseStackable extends EventEmitter {
@@ -22,22 +21,21 @@ export class BaseStackable extends EventEmitter {
   #subprocessStarted
   #metricsCollected
 
-  constructor (type, version, options, root, configManager, standardStreams = {}) {
+  constructor (type, version, root, config, context, standardStreams = {}) {
     super()
 
     this.type = type
     this.version = version
-
-    options.context.worker ??= { count: 1, index: 0 }
-    this.options = options
-    this.context = options.context ?? {}
+    this.root = root
+    this.config = config
+    this.context = context ?? {}
+    this.context.worker ??= { count: 1, index: 0 }
+    this.standardStreams = standardStreams
 
     this.serviceId = this.context.serviceId
     this.workerId = this.context.worker.count > 1 ? this.context.worker.index : undefined
     this.telemetryConfig = this.context.telemetryConfig
-    this.root = root
-    this.configManager = configManager
-    this.serverConfig = deepmerge(this.context.serverConfig ?? {}, configManager.current.server ?? {})
+    this.serverConfig = deepmerge(this.context.serverConfig ?? {}, config.server ?? {})
     this.openapiSchema = null
     this.graphqlSchema = null
     this.connectionString = null
@@ -55,8 +53,7 @@ export class BaseStackable extends EventEmitter {
     this.subprocessForceClose = false
     this.subprocessTerminationSignal = 'SIGINT'
 
-    this.standardStreams = standardStreams
-    this.logger = this._initializeLogger(options)
+    this.logger = this._initializeLogger()
 
     // Setup globals
     this.registerGlobals({
@@ -108,16 +105,21 @@ export class BaseStackable extends EventEmitter {
     return this.url
   }
 
-  async getConfig () {
-    return this.configManager.current
+  async getConfig (includeMeta = false) {
+    if (includeMeta) {
+      return this.config
+    }
+
+    const { [kMetadata]: _, ...config } = this.config
+    return config
   }
 
   async getEnv () {
-    return this.configManager.env
+    return this.config[kMetadata].env
   }
 
   async getWatchConfig () {
-    const config = this.configManager.current
+    const config = this.config
 
     const enabled = config.watch?.enabled !== false
 
@@ -261,7 +263,7 @@ export class BaseStackable extends EventEmitter {
   }
 
   async startWithCommand (command, loader, scripts) {
-    const config = this.configManager.current
+    const config = this.config
     const basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
 
     const context = await this.getChildManagerContext(basePath)
@@ -361,7 +363,7 @@ export class BaseStackable extends EventEmitter {
 
     return {
       id: this.id,
-      config: this.configManager.current,
+      config: this.config,
       serviceId: this.serviceId,
       workerId: this.workerId,
       // Always use URL to avoid serialization problem in Windows
@@ -407,14 +409,14 @@ export class BaseStackable extends EventEmitter {
     this.emit('config', config)
   }
 
-  _initializeLogger (options) {
-    const loggerOptions = deepmerge(this.runtimeConfig?.logger ?? {}, this.configManager.current?.logger ?? {})
+  _initializeLogger () {
+    const loggerOptions = deepmerge(this.runtimeConfig?.logger ?? {}, this.config?.logger ?? {})
     const pinoOptions = buildPinoOptions(
       loggerOptions,
       this.serverConfig?.logger,
       this.serviceId,
       this.workerId,
-      options,
+      this.context,
       this.root
     )
 

@@ -1,9 +1,7 @@
-'use strict'
-
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { createFromConfig } = require('../helper')
+import assert from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createFromConfig } from '../helper.js'
 
 test('get service config via stackable api', async t => {
   const config = {
@@ -16,7 +14,7 @@ test('get service config via stackable api', async t => {
       services: []
     },
     plugins: {
-      paths: [join(__dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')]
+      paths: [join(import.meta.dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')]
     }
   }
 
@@ -32,7 +30,7 @@ test('get service config via stackable api', async t => {
       addEmptySchema: false
     },
     plugins: {
-      paths: [join(__dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')]
+      paths: [join(import.meta.dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')]
     },
     server: {
       keepAliveTimeout: 5000,

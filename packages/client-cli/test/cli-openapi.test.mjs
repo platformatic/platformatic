@@ -1,6 +1,6 @@
-import { buildServer } from '@platformatic/runtime'
+import { create as createDatabase } from '@platformatic/db'
+import { create } from '@platformatic/runtime'
 import { match } from '@platformatic/utils'
-import * as desm from 'desm'
 import dotenv from 'dotenv'
 import { execa } from 'execa'
 import { existsSync, promises as fs } from 'fs'
@@ -16,11 +16,11 @@ import { moveToTmpdir, request, safeKill } from './helper.js'
 const env = { ...process.env, NODE_V8_COVERAGE: undefined }
 
 function findTSCPath () {
-  let tscPath = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
+  let tscPath = join(import.meta.dirname, '..', 'node_modules', '.bin', 'tsc')
 
   // If the local npm installation should use global tsc in the root
   if (!existsSync(tscPath)) {
-    tscPath = desm.join(import.meta.url, '../../..', 'node_modules', '.bin', 'tsc')
+    tscPath = join(import.meta.dirname, '../../..', 'node_modules', '.bin', 'tsc')
   }
 
   return tscPath
@@ -28,17 +28,17 @@ function findTSCPath () {
 
 test('openapi client generation (javascript)', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
-  await app.start()
+  const runtimeUrl = await app.start()
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url, '--name', 'movies', '--type', 'openapi'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), runtimeUrl, '--name', 'movies', '--type', 'openapi'])
 
   const toWrite = `
 'use strict'
@@ -47,7 +47,7 @@ const Fastify = require('fastify')
 const movies = require('./movies')
 const app = Fastify({ logger: true })
 
-app.register(movies, { url: '${app.url}' })
+app.register(movies, { url: '${runtimeUrl}' })
 app.post('/', async (request, reply) => {
   const res = await request.movies.createMovie({ title: 'foo' })
   return res
@@ -87,19 +87,19 @@ app.listen({ port: 0 })
 
 test('openapi client generation (typescript)', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
-  await app.start()
+  const runtimeUrl = await app.start()
 
   const dir = await moveToTmpdir(after)
 
   await execa('node', [
-    desm.join(import.meta.url, '..', 'cli.mjs'),
-    app.url + '/documentation/json',
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    runtimeUrl + '/documentation/json',
     '--name',
     'movies'
   ])
@@ -110,7 +110,7 @@ import movies from './movies';
 
 const app = Fastify({ logger: true });
 app.register(movies, {
-  url: '${app.url}'
+  url: '${runtimeUrl}'
 });
 
 app.get('/', async (req) => {
@@ -183,19 +183,19 @@ app.listen({ port: 0 });
 
 test('openapi client generation (javascript) with slash at the end', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
-  await app.start()
+  const runtimeUrl = await app.start()
 
   const dir = await moveToTmpdir(after)
 
   await execa('node', [
-    desm.join(import.meta.url, '..', 'cli.mjs'),
-    app.url + '/documentation/json',
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    runtimeUrl + '/documentation/json',
     '--name',
     'movies'
   ])
@@ -207,7 +207,7 @@ const Fastify = require('fastify')
 const movies = require('./movies')
 const app = Fastify({ logger: true })
 
-app.register(movies, { url: '${app.url}/' })
+app.register(movies, { url: '${runtimeUrl}/' })
 app.post('/', async (request, reply) => {
   const res = await request.movies.createMovie({ title: 'foo' })
   return res
@@ -247,40 +247,42 @@ app.listen({ port: 0 })
 
 test('no such file', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
-  await app.start()
+  const runtimeUrl = await app.start()
   t.after(async () => {
     await app.close()
   })
 
   await moveToTmpdir(after)
-  await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), `${app.url}/foo/bar`, '--name', 'movies']))
+  await rejects(
+    execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), `${runtimeUrl}/foo/bar`, '--name', 'movies'])
+  )
 })
 
 test('no such file', async t => {
-  await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs')]))
+  await rejects(execa('node', [join(import.meta.dirname, '..', 'cli.mjs')]))
 })
 
 test('datatypes', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies-quotes', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'platformatic.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies-quotes', 'platformatic.db.json'))
 
-  await app.start()
+  const runtimeUrl = await app.start()
 
   const dir = await moveToTmpdir(after)
 
   await execa('node', [
-    desm.join(import.meta.url, '..', 'cli.mjs'),
-    app.url + '/documentation/json',
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    runtimeUrl + '/documentation/json',
     '--name',
     'movies'
   ])
@@ -292,7 +294,7 @@ const Fastify = require('fastify')
 const movies = require('./movies')
 const app = Fastify({ logger: true })
 
-app.register(movies, { url: '${app.url}' })
+app.register(movies, { url: '${runtimeUrl}' })
 app.post('/', async (request, reply) => {
   const res = await request.movies.createMovie({ title: 'foo' })
   return res
@@ -335,19 +337,19 @@ app.listen({ port: 0 })
 
 test('configureClient (typescript)', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
-  await app.start()
+  const runtimeUrl = await app.start()
 
   const dir = await moveToTmpdir(after)
 
   await execa('node', [
-    desm.join(import.meta.url, '..', 'cli.mjs'),
-    app.url + '/documentation/json',
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    runtimeUrl + '/documentation/json',
     '--name',
     'movies'
   ])
@@ -358,7 +360,7 @@ import movies from './movies';
 
 const app = Fastify({ logger: true });
 app.register(movies, {
-  url: '${app.url}'
+  url: '${runtimeUrl}'
 });
 
 app.register(async function (app) {
@@ -434,13 +436,13 @@ app.listen({ port: 0 });
 
 test('dotenv & config support', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
-  await app.start()
+  const runtimeUrl = await app.start()
   t.after(async () => {
     await app.close()
   })
@@ -464,13 +466,13 @@ test('dotenv & config support', async t => {
   await fs.writeFile(join(dir, '.env.sample'), 'FOO=bar')
 
   await execa('node', [
-    desm.join(import.meta.url, '..', 'cli.mjs'),
-    app.url + '/documentation/json',
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    runtimeUrl + '/documentation/json',
     '--name',
     'movies'
   ])
 
-  const url = app.url + '/'
+  const url = runtimeUrl + '/'
   {
     const envs = dotenv.parse(await fs.readFile(join(dir, '.env'), 'utf-8'))
     same(envs, {
@@ -490,19 +492,19 @@ test('dotenv & config support', async t => {
 
 test('full-response option', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
-  await app.start()
+  const runtimeUrl = await app.start()
 
   const dir = await moveToTmpdir(after)
 
   await execa('node', [
-    desm.join(import.meta.url, '..', 'cli.mjs'),
-    app.url + '/documentation/json',
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    runtimeUrl + '/documentation/json',
     '--name',
     'movies',
     '--full-response'
@@ -515,7 +517,7 @@ const Fastify = require('fastify')
 const movies = require('./movies')
 const app = Fastify({ logger: true })
 
-app.register(movies, { url: '${app.url}' })
+app.register(movies, { url: '${runtimeUrl}' })
 app.post('/', async (request, reply) => {
   const res = await request.movies.createMovie({ title: 'foo' })
   return res
@@ -571,7 +573,7 @@ app.listen({ port: 0 })
   }
 
   {
-    const res = await request(`${app.url}/redirect-me`)
+    const res = await request(`${runtimeUrl}/redirect-me`)
     equal(match(res.statusCode, 302), true)
     equal(match(res.headers.location, 'https://google.com'), true)
   }
@@ -579,13 +581,13 @@ app.listen({ port: 0 })
 
 test('openapi client generation (javascript) from file', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await createDatabase(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
-  await app.start()
+  const runtimeUrl = await app.start()
 
   const dir = await moveToTmpdir(after)
 
@@ -593,7 +595,7 @@ test('openapi client generation (javascript) from file', async t => {
   const openAPIfile = join(dir, 'movies.schema.json')
   await fs.writeFile(openAPIfile, JSON.stringify(openAPI, null, 2))
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies'])
 
   const toWrite = `
 'use strict'
@@ -602,7 +604,7 @@ const Fastify = require('fastify')
 const movies = require('./movies')
 const app = Fastify({ logger: true })
 
-app.register(movies, { url: '${app.url}' })
+app.register(movies, { url: '${runtimeUrl}' })
 app.post('/', async (request, reply) => {
   const res = await request.movies.createMovie({ title: 'foo' })
   return res
@@ -642,19 +644,19 @@ app.listen({ port: 0 })
 
 test('name with dashes', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
-  await app.start()
+  const runtimeUrl = await app.start()
 
   const dir = await moveToTmpdir(after)
 
   await execa('node', [
-    desm.join(import.meta.url, '..', 'cli.mjs'),
-    app.url + '/documentation/json',
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    runtimeUrl + '/documentation/json',
     '--name',
     'uncanny-movies'
   ])
@@ -675,7 +677,7 @@ const Fastify = require('fastify')
 const movies = require('./uncanny-movies')
 const app = Fastify({ logger: true })
 
-app.register(movies, { url: '${app.url}' })
+app.register(movies, { url: '${runtimeUrl}' })
 app.post('/', async (request, reply) => {
   const res = await request.uncannyMovies.createMovie({ title: 'foo' })
   return res
@@ -715,18 +717,18 @@ app.listen({ port: 0 })
 
 test('no dashes typescript', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
-  await app.start()
+  const runtimeUrl = await app.start()
   const dir = await moveToTmpdir(after)
 
   await execa('node', [
-    desm.join(import.meta.url, '..', 'cli.mjs'),
-    app.url + '/documentation/json',
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    runtimeUrl + '/documentation/json',
     '--name',
     'uncanny-movies'
   ])
@@ -737,7 +739,7 @@ import movies from './uncanny-movies';
 
 const app = Fastify({ logger: true });
 app.register(movies, {
-  url: '${app.url}'
+  url: '${runtimeUrl}'
 });
 
 app.post('/', async (req) => {
@@ -805,19 +807,19 @@ app.listen({ port: 0 });
 
 test('name with tilde', async t => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
-  await app.start()
+  const runtimeUrl = await app.start()
 
   const dir = await moveToTmpdir(after)
 
   await execa('node', [
-    desm.join(import.meta.url, '..', 'cli.mjs'),
-    app.url + '/documentation/json',
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    runtimeUrl + '/documentation/json',
     '--name',
     'uncanny~movies'
   ])
@@ -838,7 +840,7 @@ const Fastify = require('fastify')
 const movies = require('./uncanny~movies')
 const app = Fastify({ logger: true })
 
-app.register(movies, { url: '${app.url}' })
+app.register(movies, { url: '${runtimeUrl}' })
 app.post('/', async (request, reply) => {
   const res = await request.uncannyMovies.createMovie({ title: 'foo' })
   return res
@@ -878,8 +880,8 @@ app.listen({ port: 0 })
 
 test('openapi client generation from YAML file', async t => {
   const dir = await moveToTmpdir(after)
-  const openapiFile = desm.join(import.meta.url, 'fixtures', 'openapi.yaml')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
+  const openapiFile = join(import.meta.dirname, 'fixtures', 'openapi.yaml')
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
 
   // check openapi json file has been created
   const jsonFile = join(dir, 'movies', 'movies.openapi.json')
@@ -896,8 +898,8 @@ test('openapi client generation from YAML file', async t => {
 
 test('nested optional parameters are correctly identified', async t => {
   const dir = await moveToTmpdir(after)
-  const openapiFile = desm.join(import.meta.url, 'fixtures', 'optional-params-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
+  const openapiFile = join(import.meta.dirname, 'fixtures', 'optional-params-openapi.json')
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
 
   // check the type file has the correct implementation for the request
   const typeFile = join(dir, 'movies', 'movies.d.ts')
@@ -913,8 +915,8 @@ test('nested optional parameters are correctly identified', async t => {
 
 test('request with same parameter name in body/path/header/query', async t => {
   const dir = await moveToTmpdir(after)
-  const openapiFile = desm.join(import.meta.url, 'fixtures', 'same-parameter-name-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
+  const openapiFile = join(import.meta.dirname, 'fixtures', 'same-parameter-name-openapi.json')
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
   // check the type file has the correct implementation for the request
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
@@ -939,13 +941,13 @@ test('request with same parameter name in body/path/header/query', async t => {
 })
 
 test('openapi client generation (javascript) from file with fullRequest, fullResponse, validateResponse and optionalHeaders', async t => {
-  const openapi = desm.join(import.meta.url, 'fixtures', 'full-req-res', 'openapi.json')
+  const openapi = join(import.meta.dirname, 'fixtures', 'full-req-res', 'openapi.json')
   const dir = await moveToTmpdir(after)
 
   const fullOptions = [['--full-request', '--full-response'], ['--full']]
   for (const opt of fullOptions) {
     await execa('node', [
-      desm.join(import.meta.url, '..', 'cli.mjs'),
+      join(import.meta.dirname, '..', 'cli.mjs'),
       openapi,
       '--name',
       'full',
@@ -1010,7 +1012,7 @@ async function generateFullClientPlugin (app, opts) {
 })
 
 test('do not generate implementation file if in @platformatic/service', async t => {
-  const openapi = desm.join(import.meta.url, 'fixtures', 'full-req-res', 'openapi.json')
+  const openapi = join(import.meta.dirname, 'fixtures', 'full-req-res', 'openapi.json')
   const dir = await moveToTmpdir(after)
 
   const pltServiceConfig = {
@@ -1029,7 +1031,7 @@ test('do not generate implementation file if in @platformatic/service', async t 
   const fullOptions = [['--full-request', '--full-response'], ['--full']]
   for (const opt of fullOptions) {
     await execa('node', [
-      desm.join(import.meta.url, '..', 'cli.mjs'),
+      join(import.meta.dirname, '..', 'cli.mjs'),
       openapi,
       '--name',
       'full',
@@ -1077,9 +1079,9 @@ test('do not generate implementation file if in @platformatic/service', async t 
 test('optional-headers option', async t => {
   const dir = await moveToTmpdir(after)
 
-  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'optional-headers-openapi.json')
+  const openAPIfile = join(import.meta.dirname, 'fixtures', 'optional-headers-openapi.json')
   await execa('node', [
-    desm.join(import.meta.url, '..', 'cli.mjs'),
+    join(import.meta.dirname, '..', 'cli.mjs'),
     openAPIfile,
     '--name',
     'movies',
@@ -1103,8 +1105,8 @@ test('optional-headers option', async t => {
 test('common parameters in paths', async t => {
   const dir = await moveToTmpdir(after)
 
-  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'common-parameters', 'openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--full-request'])
+  const openAPIfile = join(import.meta.dirname, 'fixtures', 'common-parameters', 'openapi.json')
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--full-request'])
 
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
@@ -1155,18 +1157,16 @@ test('common parameters in paths', async t => {
   )
   // test implementation
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'common-parameters', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'common-parameters', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(
-    desm.join(import.meta.url, 'fixtures', 'common-parameters', 'platformatic.service.json')
-  )
+  const app = await create(join(import.meta.dirname, 'fixtures', 'common-parameters', 'platformatic.service.json'))
 
-  await app.start()
+  const runtimeUrl = await app.start()
 
   await execa('node', [
-    desm.join(import.meta.url, '..', 'cli.mjs'),
+    join(import.meta.dirname, '..', 'cli.mjs'),
     openAPIfile,
     '--name',
     'commonparams',
@@ -1180,7 +1180,7 @@ const Fastify = require('fastify')
 const commonparams = require('./commonparams')
 const app = Fastify({ logger: true })
 
-app.register(commonparams, { url: '${app.url}' })
+app.register(commonparams, { url: '${runtimeUrl}' })
 app.get('/', async (request, reply) => {
   const res = await request.commonparams.getPathWithFieldId({
     path: { fieldId: 'foo' },
@@ -1237,8 +1237,8 @@ app.listen({ port: 0 })
 test('requestbody as array', async t => {
   const dir = await moveToTmpdir(after)
 
-  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'requestbody-as-array-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies'])
+  const openAPIfile = join(import.meta.dirname, 'fixtures', 'requestbody-as-array-openapi.json')
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies'])
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
 
@@ -1259,8 +1259,8 @@ test('requestbody as array', async t => {
 
 test('requestBody and params should generate a full request', async t => {
   const dir = await moveToTmpdir(after)
-  const openapiFile = desm.join(import.meta.url, 'fixtures', 'requestbody-and-parameters-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
+  const openapiFile = join(import.meta.dirname, 'fixtures', 'requestbody-and-parameters-openapi.json')
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
 
   // check the type file has the correct implementation for the request
   const typeFile = join(dir, 'movies', 'movies.d.ts')
@@ -1279,8 +1279,8 @@ test('requestBody and params should generate a full request', async t => {
 test('support formdata', async t => {
   const dir = await moveToTmpdir(after)
 
-  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'multipart-formdata-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies'])
+  const openAPIfile = join(import.meta.dirname, 'fixtures', 'multipart-formdata-openapi.json')
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies'])
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   equal(
@@ -1307,8 +1307,8 @@ test('support formdata', async t => {
 test('export formdata on full request object', async t => {
   const dir = await moveToTmpdir(after)
 
-  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'multipart-formdata-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--full-request'])
+  const openAPIfile = join(import.meta.dirname, 'fixtures', 'multipart-formdata-openapi.json')
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--full-request'])
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   equal(data.includes("import { type FormData } from 'undici"), true)
@@ -1324,8 +1324,8 @@ test('export formdata on full request object', async t => {
 test('client with watt.json and skipConfigUpdate', async t => {
   const dir = await moveToTmpdir(after)
 
-  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'client-with-config', 'openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'client', '--full-request'])
+  const openAPIfile = join(import.meta.dirname, 'fixtures', 'client-with-config', 'openapi.json')
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'client', '--full-request'])
 
   const data = await readFile(join(dir, 'client', 'client.d.ts'), 'utf-8')
   ok(data.includes("import { type FormData } from 'undici"))
@@ -1338,7 +1338,7 @@ test('client with watt.json and skipConfigUpdate', async t => {
   )
 
   const wattConfig = JSON.parse(
-    await readFile(desm.join(import.meta.url, 'fixtures', 'client-with-config', 'watt.json'), 'utf-8')
+    await readFile(join(import.meta.dirname, 'fixtures', 'client-with-config', 'watt.json'), 'utf-8')
   )
   ok('$schema' in wattConfig)
   ok(!('clients' in wattConfig), 'watt.json config has no clients')
@@ -1347,8 +1347,8 @@ test('client with watt.json and skipConfigUpdate', async t => {
 test('tsdoc client description', async t => {
   const dir = await moveToTmpdir(after)
 
-  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'tsdoc-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc'])
+  const openAPIfile = join(import.meta.dirname, 'fixtures', 'tsdoc-openapi.json')
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc'])
 
   const data = await readFile(join(dir, 'tsdoc', 'tsdoc.d.ts'), 'utf-8')
 
@@ -1369,8 +1369,8 @@ test('tsdoc client description', async t => {
 test('tsdoc client operation descriptions', async t => {
   const dir = await moveToTmpdir(after)
 
-  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'tsdoc-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc'])
+  const openAPIfile = join(import.meta.dirname, 'fixtures', 'tsdoc-openapi.json')
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc'])
 
   const data = await readFile(join(dir, 'tsdoc', 'tsdoc.d.ts'), 'utf-8')
 
@@ -1425,8 +1425,8 @@ test('tsdoc client operation descriptions', async t => {
 test('tsdoc client request option descriptions', async t => {
   const dir = await moveToTmpdir(after)
 
-  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'tsdoc-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc'])
+  const openAPIfile = join(import.meta.dirname, 'fixtures', 'tsdoc-openapi.json')
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc'])
 
   const data = await readFile(join(dir, 'tsdoc', 'tsdoc.d.ts'), 'utf-8')
 
@@ -1493,8 +1493,8 @@ test('tsdoc client request option descriptions', async t => {
 test('tsdoc client request option descriptions (full-request)', async t => {
   const dir = await moveToTmpdir(after)
 
-  const openAPIfile = desm.join(import.meta.url, 'fixtures', 'tsdoc-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc', '--full-request'])
+  const openAPIfile = join(import.meta.dirname, 'fixtures', 'tsdoc-openapi.json')
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc', '--full-request'])
 
   const data = await readFile(join(dir, 'tsdoc', 'tsdoc.d.ts'), 'utf-8')
 

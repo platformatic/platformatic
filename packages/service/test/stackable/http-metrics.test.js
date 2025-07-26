@@ -1,13 +1,11 @@
-'use strict'
-
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { create } = require('../..')
-const { request } = require('undici')
+import assert from 'node:assert'
+import { join } from 'node:path'
+import test from 'node:test'
+import { request } from 'undici'
+import { create } from '../../index.js'
 
 test('collect the http metrics', async t => {
-  const stackable = await create(join(__dirname, '..', 'fixtures', 'directories'))
+  const stackable = await create(join(import.meta.dirname, '..', 'fixtures', 'directories'))
   t.after(() => stackable.stop())
   await stackable.start({ listen: true })
 

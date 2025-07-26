@@ -1,12 +1,10 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { createFromConfig, getConnectionInfo } = require('../helper')
+import assert from 'node:assert/strict'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createFromConfig, getConnectionInfo } from '../helper.js'
 
 test('get service openapi schema via stackable api', async t => {
-  const workingDir = join(__dirname, '..', 'fixtures', 'directories')
+  const workingDir = join(import.meta.dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
   const stackable = await createFromConfig(t, {
@@ -50,7 +48,7 @@ test('get service openapi schema via stackable api', async t => {
 })
 
 test('get null if server does not expose openapi', async t => {
-  const workingDir = join(__dirname, '..', 'fixtures', 'directories')
+  const workingDir = join(import.meta.dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
   const stackable = await createFromConfig(t, {

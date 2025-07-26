@@ -1,25 +1,21 @@
 import {
-  ConfigManager,
+  ensureLoggableError,
+  extractModuleFromSchemaUrl,
   getParser,
   getStringifier,
+  listRecognizedConfigurationFiles,
   loadConfigurationFile,
+  loadModule,
+  safeRemove,
   saveConfigurationFile
-} from '@platformatic/config'
-import { ensureLoggableError, loadModule, safeRemove } from '@platformatic/utils'
+} from '@platformatic/utils'
 import jsonPatch from 'fast-json-patch'
 import { existsSync } from 'node:fs'
 import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
-import {
-  buildRuntime,
-  findRuntimeConfigurationFile,
-  getRoot,
-  loadConfigurationFileAsConfig,
-  logFatalError,
-  parseArgs
-} from '../utils.js'
+import { buildRuntime, findRuntimeConfigurationFile, getRoot, logFatalError, parseArgs } from '../utils.js'
 
 async function patchFile (path, patch) {
   let config = getParser(path)(await readFile(path, 'utf-8'))
@@ -31,14 +27,15 @@ export async function patchConfig (logger, configurationFile, patchPath) {
   let runtime
   try {
     // Determine if the configuration file is for a service or a runtime
-    const config = await loadConfigurationFileAsConfig(logger, configurationFile)
+    const config = await loadConfigurationFile(configurationFile)
 
     /* c8 ignore next 3 - Hard to test */
     if (!config) {
       return false
     }
 
-    const isService = config.configType !== 'runtime'
+    const mod = extractModuleFromSchemaUrl(config)
+    const isService = mod.module !== '@platformatic/runtime'
 
     const patchFunction = await loadModule(createRequire(configurationFile), patchPath)
 
@@ -55,8 +52,9 @@ export async function patchConfig (logger, configurationFile, patchPath) {
     }
 
     // Prepare the structure for original and modified configurations files
+    const parser = getParser(configurationFile)
     const original = {
-      runtime: getParser(configurationFile)(await readFile(configurationFile, 'utf-8')),
+      runtime: parser(await readFile(configurationFile, 'utf-8')),
       services: {}
     }
 
@@ -70,7 +68,7 @@ export async function patchConfig (logger, configurationFile, patchPath) {
     // Load configuration for all services
     for (const service of loaded.runtime.services) {
       if (!service.config) {
-        const candidate = ConfigManager.listConfigFiles().find(f => existsSync(resolve(service.path, f)))
+        const candidate = listRecognizedConfigurationFiles().find(f => existsSync(resolve(service.path, f)))
 
         if (candidate) {
           service.config = resolve(service.path, candidate)
@@ -161,7 +159,7 @@ export async function patchConfigCommand (logger, args) {
     patch = positionals[1]
   }
 
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config, true)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
 
   /* c8 ignore next 3 */
   if (!configurationFile) {

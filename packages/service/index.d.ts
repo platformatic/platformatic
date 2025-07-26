@@ -1,57 +1,70 @@
-import type { BaseContext, BaseOptions, BaseStackable } from '@platformatic/basic'
-import type { ConfigManager, ConfigManagerConfig } from '@platformatic/config'
+import { BaseContext, BaseOptions, BaseStackable } from '@platformatic/basic'
 import { BaseGenerator } from '@platformatic/generators'
-import type { JSONSchemaType } from 'ajv'
+import { kMetadata } from '@platformatic/utils'
+import { JSONSchemaType } from 'ajv'
 import { FastifyInstance } from 'fastify'
 import { PlatformaticServiceConfig } from './config'
 
 export { PlatformaticServiceConfig } from './config'
-
-export function platformaticService (app: FastifyInstance, stackable: BaseStackable): Promise<void>
 
 export interface ServiceContext extends BaseContext {
   applicationFactory?: typeof platformaticService
   fastifyPlugins?: Function[]
 }
 
-export interface PlatformaticApplication<Config> {
-  configManager: ConfigManager<Config>
-  config: Config
+export type Configuration<Config> = Config & {
+  [kMetadata]: {
+    root: string
+    path: string | null
+    env: Record<string, string>
+    module: { module: string; version: string } | null
+  }
 }
 
-export class Generator extends BaseGenerator.BaseGenerator {}
-
-export class ServiceStackable<Config = PlatformaticServiceConfig> extends BaseStackable<
-  Config,
-  BaseOptions<ServiceContext>
-> {
-  constructor (opts: BaseOptions, root: string, configManager: ConfigManager<Config>)
-  getApplication (): FastifyInstance
+export interface PlatformaticApplication<Config> {
+  config: Configuration<Config>
 }
 
 export type ServerInstance<Configuration = PlatformaticServiceConfig> = FastifyInstance & {
   platformatic: PlatformaticApplication<Configuration>
 }
 
-export function transformConfig (this: ConfigManager): Promise<void>
+export declare function transform<T extends object> (config: T): Promise<T>
 
-export function buildStackable (
-  root: string,
-  source: string | PlatformaticServiceConfig,
-  opts: BaseOptions
-): Promise<ServiceStackable>
-
-export function create (
+export declare function create (
   root: string,
   source?: string | PlatformaticServiceConfig,
-  opts?: object,
   context?: object
 ): Promise<ServiceStackable>
 
-export const schema: JSONSchemaType<PlatformaticServiceConfig>
+export declare const skipTelemetryHooks: boolean
 
-export const configType: 'service'
+export declare function platformaticService (app: FastifyInstance, stackable: ServiceStackable): Promise<void>
 
-export const configManagerConfig: ConfigManagerConfig<PlatformaticServiceConfig>
+export declare class Generator extends BaseGenerator.BaseGenerator {}
 
-export const version: string
+export declare const packageJson: Record<string, unknown>
+
+export declare const schema: JSONSchemaType<PlatformaticServiceConfig>
+
+export declare const schemaComponents: {
+  $defs: JSONSchemaType<object>
+  plugins: JSONSchemaType<object>
+  openApiBase: JSONSchemaType<object>
+  openapi: JSONSchemaType<object>
+  proxy: JSONSchemaType<object>
+  graphqlBase: JSONSchemaType<object>
+  graphql: JSONSchemaType<object>
+  service: JSONSchemaType<object>
+  client: JSONSchemaType<object>
+}
+
+export declare const version: string
+
+export declare class ServiceStackable<Config = PlatformaticServiceConfig> extends BaseStackable<
+  Config,
+  BaseOptions<ServiceContext>
+> {
+  constructor (root: string, config: Config, context?: object)
+  getApplication (): FastifyInstance
+}

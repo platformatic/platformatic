@@ -1,5 +1,4 @@
-import { ConfigManager } from '@platformatic/config'
-import { safeRemove } from '@platformatic/utils'
+import { loadConfiguration, safeRemove, saveConfigurationFile } from '@platformatic/utils'
 import Redis from 'iovalkey'
 import { unpack } from 'msgpackr'
 import { deepStrictEqual, notDeepStrictEqual, ok } from 'node:assert'
@@ -37,7 +36,7 @@ async function prepareRuntimeWithBackend (
   servicesToBuild = false,
   additionalSetup = null
 ) {
-  const { root, config } = await prepareRuntime(t, configuration, production, null, async (root, config, args) => {
+  const { runtime, root } = await prepareRuntime(t, configuration, production, null, async (root, config, args) => {
     await cp(resolve(commonFixturesRoot, 'backend-js'), resolve(root, 'services/backend'), {
       recursive: true
     })
@@ -45,7 +44,9 @@ async function prepareRuntimeWithBackend (
     await additionalSetup?.(root, config, args)
   })
 
-  return startRuntime(t, root, config, pauseAfterCreation, servicesToBuild)
+  const url = await startRuntime(t, runtime, pauseAfterCreation, servicesToBuild)
+
+  return { runtime, url, root }
 }
 
 async function cleanupCache (valkey, valkeyUser) {
@@ -60,20 +61,16 @@ async function cleanupCache (valkey, valkeyUser) {
 }
 
 async function getCacheSettings (root) {
-  const configManager = new ConfigManager({
-    source: resolve(root, 'services/frontend/platformatic.json')
+  const config = await loadConfiguration(resolve(root, 'services/frontend/platformatic.json'), null, {
+    skipMetadata: true
   })
-  await configManager.parse()
-  return configManager.current.cache
+  return config.cache
 }
 
 async function setCacheSettings (root, settings) {
-  const configManager = new ConfigManager({
-    source: resolve(root, 'services/frontend/platformatic.json')
+  const config = await loadConfiguration(resolve(root, 'services/frontend/platformatic.json'), null, {
+    skipMetadata: true
   })
-  await configManager.parse()
-
-  const config = configManager.current
 
   if (typeof settings === 'function') {
     settings(config.cache)
@@ -81,7 +78,7 @@ async function setCacheSettings (root, settings) {
     Object.assign(config.cache, settings)
   }
 
-  await writeFile(resolve(root, 'services/frontend/platformatic.json'), JSON.stringify(config))
+  await saveConfigurationFile(resolve(root, 'services/frontend/platformatic.json'), config)
 }
 
 async function getValkeyUrl (root) {
@@ -311,7 +308,7 @@ test(
 
     {
       const {
-        value: { kind, html, headers, status },
+        value: { kind, html, headers },
         revalidate,
         maxTTL,
         serviceId
@@ -330,7 +327,6 @@ test(
 
       ok(html.includes(`<div>Hello from v<!-- -->${version}<!-- --> t<!-- -->${time}</div>`))
 
-      deepStrictEqual(status, 200)
       deepStrictEqual(revalidate, 120)
       deepStrictEqual(maxTTL, 86400 * 7)
       deepStrictEqual(serviceId, 'frontend')
@@ -517,7 +513,7 @@ test(
 
     {
       const {
-        value: { kind, body, headers, status },
+        value: { kind, body, headers },
         revalidate,
         maxTTL,
         serviceId
@@ -538,7 +534,6 @@ test(
       }
 
       deepStrictEqual({ ...JSON.parse(body), delay: 0 }, { delay: 0, version, time })
-      deepStrictEqual(status, 200)
       deepStrictEqual(revalidate, 120)
       deepStrictEqual(maxTTL, 86400 * 7)
       deepStrictEqual(serviceId, 'frontend')
