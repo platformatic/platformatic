@@ -51,7 +51,7 @@ export declare const schema: JSONSchemaType<PlatformaticRuntimeConfig>
 
 export declare class Runtime {}
 
-export function wrapConfigInRuntimeConfig (
+export function wrapInRuntimeConfig (
   config: Configuration<unknown>,
   context?: ConfigurationOptions
 ): Promise<RuntimeConfiguration>

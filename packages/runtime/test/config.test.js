@@ -64,23 +64,15 @@ test('dependencies are resolved if services are not specified manually', async t
 
 test('parseInspectorOptions - throws if --inspect and --inspect-brk are both used', () => {
   assert.throws(() => {
-    const cm = {
-      args: { inspect: '', 'inspect-brk': '' },
-      current: {}
-    }
-
-    parseInspectorOptions(cm)
+    parseInspectorOptions({}, 'true', 'true')
   }, /--inspect and --inspect-brk cannot be used together/)
 })
 
 test('parseInspectorOptions - --inspect default settings', () => {
-  const cm = {
-    args: { inspect: '' },
-    current: {}
-  }
+  const cm = {}
 
-  parseInspectorOptions(cm)
-  assert.deepStrictEqual(cm.current.inspectorOptions, {
+  parseInspectorOptions(cm, true)
+  assert.deepStrictEqual(cm.inspectorOptions, {
     host: '127.0.0.1',
     port: 9229,
     breakFirstLine: false,
@@ -89,13 +81,10 @@ test('parseInspectorOptions - --inspect default settings', () => {
 })
 
 test('parseInspectorOptions - --inspect-brk default settings', () => {
-  const cm = {
-    args: { 'inspect-brk': '' },
-    current: {}
-  }
+  const cm = {}
 
-  parseInspectorOptions(cm)
-  assert.deepStrictEqual(cm.current.inspectorOptions, {
+  parseInspectorOptions(cm, undefined, true)
+  assert.deepStrictEqual(cm.inspectorOptions, {
     host: '127.0.0.1',
     port: 9229,
     breakFirstLine: true,
@@ -109,26 +98,22 @@ test('parseInspectorOptions - hot reloading is disabled if the inspector is used
     current: { watch: true }
   }
 
-  parseInspectorOptions(cm1)
-  assert.strictEqual(cm1.current.watch, false)
+  parseInspectorOptions(cm1, undefined, '9229')
+  assert.strictEqual(cm1.watch, false)
 
   const cm2 = {
-    args: {},
-    current: { watch: true }
+    watch: true
   }
 
   parseInspectorOptions(cm2)
-  assert.strictEqual(cm2.current.watch, true)
+  assert.strictEqual(cm2.watch, true)
 })
 
 test('parseInspectorOptions - sets port to a custom value', () => {
-  const cm = {
-    args: { inspect: '6666' },
-    current: {}
-  }
+  const cm = {}
 
-  parseInspectorOptions(cm)
-  assert.deepStrictEqual(cm.current.inspectorOptions, {
+  parseInspectorOptions(cm, '6666')
+  assert.deepStrictEqual(cm.inspectorOptions, {
     host: '127.0.0.1',
     port: 6666,
     breakFirstLine: false,
@@ -137,13 +122,10 @@ test('parseInspectorOptions - sets port to a custom value', () => {
 })
 
 test('parseInspectorOptions - sets host and port to custom values', () => {
-  const cm = {
-    args: { inspect: '0.0.0.0:6666' },
-    current: {}
-  }
+  const cm = {}
 
-  parseInspectorOptions(cm)
-  assert.deepStrictEqual(cm.current.inspectorOptions, {
+  parseInspectorOptions(cm, '0.0.0.0:6666')
+  assert.deepStrictEqual(cm.inspectorOptions, {
     host: '0.0.0.0',
     port: 6666,
     breakFirstLine: false,
@@ -153,47 +135,33 @@ test('parseInspectorOptions - sets host and port to custom values', () => {
 
 test('parseInspectorOptions - throws if the host is empty', () => {
   assert.throws(() => {
-    const cm = {
-      args: { inspect: ':9229' },
-      current: {}
-    }
-
-    parseInspectorOptions(cm)
+    parseInspectorOptions({}, ':9229')
   }, /Inspector host cannot be empty/)
 })
 
 test('parseInspectorOptions - differentiates valid and invalid ports', () => {
-  ;['127.0.0.1:', 'foo', '1', '-1', '1023', '65536'].forEach(inspectFlag => {
+  for (const inspectFlag of ['127.0.0.1:', 'foo', '1', '-1', '1023', '65536']) {
     assert.throws(() => {
-      const cm = {
-        args: { inspect: inspectFlag },
-        current: {}
-      }
-
-      parseInspectorOptions(cm)
+      parseInspectorOptions({}, inspectFlag)
     }, /Inspector port must be 0 or in range 1024 to 65535/)
-  })
-
-  const cm = {
-    args: {},
-    current: {}
   }
 
-  cm.args.inspect = '0'
-  parseInspectorOptions(cm)
-  assert.strictEqual(cm.current.inspectorOptions.port, 0)
-  cm.args.inspect = '1024'
-  parseInspectorOptions(cm)
-  assert.strictEqual(cm.current.inspectorOptions.port, 1024)
-  cm.args.inspect = '1025'
-  parseInspectorOptions(cm)
-  assert.strictEqual(cm.current.inspectorOptions.port, 1025)
-  cm.args.inspect = '65534'
-  parseInspectorOptions(cm)
-  assert.strictEqual(cm.current.inspectorOptions.port, 65534)
-  cm.args.inspect = '65535'
-  parseInspectorOptions(cm)
-  assert.strictEqual(cm.current.inspectorOptions.port, 65535)
+  const cm = {}
+
+  parseInspectorOptions(cm, '0')
+  assert.strictEqual(cm.inspectorOptions.port, 0)
+
+  parseInspectorOptions(cm, '1024')
+  assert.strictEqual(cm.inspectorOptions.port, 1024)
+
+  parseInspectorOptions(cm, '1025')
+  assert.strictEqual(cm.inspectorOptions.port, 1025)
+
+  parseInspectorOptions(cm, '65534')
+  assert.strictEqual(cm.inspectorOptions.port, 65534)
+
+  parseInspectorOptions(cm, '65535')
+  assert.strictEqual(cm.inspectorOptions.port, 65535)
 })
 
 test('correctly loads the watch value from a string', async () => {

@@ -71,8 +71,8 @@ async function wrapInRuntimeConfig (config, context) {
 }
 
 function parseInspectorOptions (config, inspect, inspectBreak) {
-  const hasInspect = typeof inspect !== 'undefined'
-  const hasInspectBrk = typeof inspectBreak !== 'undefined'
+  const hasInspect = inspect != null
+  const hasInspectBrk = inspectBreak != null
 
   if (hasInspect && hasInspectBrk) {
     throw new InspectAndInspectBrkError()
