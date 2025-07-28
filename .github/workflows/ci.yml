@@ -112,32 +112,6 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: cd packages/cli && pnpm run license
 
-  ci-config:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'config' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22, 24]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run test suite config manager
-        run: cd packages/config && pnpm test
-
   ci-composer:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'composer' }}
@@ -399,7 +373,7 @@ jobs:
       matrix:
         node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
-        suite: [main, api, cli, start, types, multiple-workers]
+        suite: [main, api, cli, start, multiple-workers]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.1.0

@@ -3,6 +3,7 @@ import { BaseGenerator } from '@platformatic/generators'
 import { PlatformaticApplication, ServiceStackable } from '@platformatic/service'
 import { SQLEventsPluginInterface } from '@platformatic/sql-events'
 import { Entities, SQLMapperPluginInterface } from '@platformatic/sql-mapper'
+import { Configuration } from '@platformatic/utils'
 import { JSONSchemaType } from 'ajv'
 import { FastifyError, FastifyInstance } from 'fastify'
 import { PlatformaticDatabaseConfig } from './config'
@@ -21,13 +22,23 @@ export type ServerInstance<T = {}> = FastifyInstance & {
   platformatic: PlatformaticApplication<PlatformaticDatabaseConfig> & PlatformaticDatabaseMixin<Entities> & T
 }
 
-export declare function transform<T extends object> (config: T): Promise<T>
+export type DatabaseConfiguration = Configuration<PlatformaticDatabaseConfig>
 
-export function create (
+export declare function transform (
+  config: DatabaseConfiguration
+): Promise<DatabaseConfiguration> | DatabaseConfiguration
+
+export declare function loadConfiguration (
   root: string,
   source?: string | PlatformaticDatabaseConfig,
-  context?: object
-): Promise<DatabaseStackable>
+  context?: ConfigurationOptions
+): Promise<DatabaseConfiguration>
+
+export declare function create (
+  root: string,
+  source?: string | PlatformaticDatabaseConfig,
+  context?: ConfigurationOptions
+): Promise<ServiceStackable>
 
 export declare const skipTelemetryHooks: boolean
 

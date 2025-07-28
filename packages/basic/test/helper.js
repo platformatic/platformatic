@@ -281,7 +281,7 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   // Copy the fixtures
   await cp(source, root, { recursive: true })
 
-  const rawConfig = await loadConfiguration(root, configFile, { production })
+  const rawConfig = await loadConfiguration(root, configFile, { production, allowMissingEntrypoint: true })
 
   await ensureDependencies([root])
   await ensureDependencies(rawConfig)
@@ -315,7 +315,6 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
 
   // Build the runtime if needed
   if (build) {
-    await runtime.init()
     await buildRuntime(root)
   }
 
@@ -630,7 +629,11 @@ export async function prepareRuntimeWithServices (
   additionalSetup
 ) {
   let args
-  const { root, config } = await prepareRuntime(t, configuration, production, null, async (root, config, _args) => {
+  const { runtime, root, config } = await prepareRuntime(t, configuration, production, null, async (
+    root,
+    config,
+    _args
+  ) => {
     for (const type of ['backend', 'composer']) {
       await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
         recursive: true
@@ -652,7 +655,8 @@ export async function prepareRuntimeWithServices (
     await additionalSetup?.(root, config, args)
   }
 
-  return await startRuntime(t, root, config, pauseTimeout)
+  const url = await startRuntime(t, runtime, pauseTimeout)
+  return { runtime, root, config, url }
 }
 
 export async function verifyDevelopmentFrontendStandalone (
@@ -804,7 +808,7 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
       { todo },
       async t => {
         let args
-        const { root, config } = await prepareRuntime(t, id, true, null, async (root, config, _args) => {
+        const { runtime, root, config } = await prepareRuntime(t, id, true, null, async (root, config, _args) => {
           t.after(() => safeRemove(root))
 
           for (const type of ['backend', 'composer']) {
@@ -847,7 +851,7 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
         }
 
         // Start the runtime
-        const { runtime, url } = await startRuntime(t, root, config, pauseTimeout)
+        const url = await startRuntime(t, runtime, pauseTimeout)
 
         if (runtimeHost) {
           const actualHost = new URL(url).hostname
@@ -872,7 +876,7 @@ export async function verifyReusePort (t, configuration, integrityCheck) {
   const port = await getPort.default()
 
   // Create the runtime
-  const { root, config } = await prepareRuntime(t, configuration, true, null, (_, config) => {
+  const { runtime, root } = await prepareRuntime(t, configuration, true, null, (_, config) => {
     config.server = { port }
     config.services[0].workers = 5
     config.preload = fileURLToPath(new URL('./helper-reuse-port.js', import.meta.url))
@@ -882,7 +886,7 @@ export async function verifyReusePort (t, configuration, integrityCheck) {
   await buildRuntime(root)
 
   // Start the runtime
-  const { url } = await startRuntime(t, root, config)
+  const url = await startRuntime(t, runtime)
 
   deepStrictEqual(url, `http://127.0.0.1:${port}`)
 

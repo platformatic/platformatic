@@ -122,7 +122,7 @@ export class NextStackable extends BaseStackable {
 
     // This is need to avoid Next.js 15.4+ to throw an error as process.cwd() is not the root of the Next.js application
     if (
-      config.cache.adapter &&
+      config.cache?.adapter &&
       (this.#nextVersion.major > 15 || (this.#nextVersion.major === 15 && this.#nextVersion.minor >= 4))
     ) {
       const distDir = resolvePath(this.root, '.next')

@@ -4,8 +4,8 @@ import { schema } from './lib/schema.js'
 import { AstroStackable } from './lib/stackable.js'
 
 /* c8 ignore next 5 */
-export async function transform (config) {
-  config = await basicTransform(config)
+export async function transform (config, schema, options) {
+  config = await basicTransform(config, schema, options)
   config.watch = { enabled: false }
   return config
 }

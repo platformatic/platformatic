@@ -1,7 +1,14 @@
-import { resolve, transform, validationOptions } from '@platformatic/basic'
+import { transform as basicTransform, resolve, validationOptions } from '@platformatic/basic'
 import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/utils'
 import { schema } from './lib/schema.js'
 import { NodeStackable } from './lib/stackable.js'
+
+export async function transform (config, _schema, options) {
+  config = await basicTransform(config, schema, options)
+  config.telemetry = { ...options.telemetryConfig, ...config.telemetry }
+
+  return config
+}
 
 export async function loadConfiguration (configOrRoot, sourceOrConfig, context) {
   const { root, source } = await resolve(configOrRoot, sourceOrConfig, 'application')

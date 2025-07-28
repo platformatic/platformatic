@@ -266,7 +266,7 @@ async function transform (config, _, context) {
     }
   }
 
-  if (!hasValidEntrypoint) {
+  if (!hasValidEntrypoint && !context.allowMissingEntrypoint) {
     if (config.entrypoint) {
       throw new InvalidEntrypointError(config.entrypoint)
     } else if (services.length >= 1) {

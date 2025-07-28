@@ -1,6 +1,6 @@
 import { BaseContext, BaseOptions, BaseStackable } from '@platformatic/basic'
 import { BaseGenerator } from '@platformatic/generators'
-import { kMetadata } from '@platformatic/utils'
+import { Configuration } from '@platformatic/utils'
 import { JSONSchemaType } from 'ajv'
 import { FastifyInstance } from 'fastify'
 import { PlatformaticServiceConfig } from './config'
@@ -12,15 +12,6 @@ export interface ServiceContext extends BaseContext {
   fastifyPlugins?: Function[]
 }
 
-export type Configuration<Config> = Config & {
-  [kMetadata]: {
-    root: string
-    path: string | null
-    env: Record<string, string>
-    module: { module: string; version: string } | null
-  }
-}
-
 export interface PlatformaticApplication<Config> {
   config: Configuration<Config>
 }
@@ -29,12 +20,20 @@ export type ServerInstance<Configuration = PlatformaticServiceConfig> = FastifyI
   platformatic: PlatformaticApplication<Configuration>
 }
 
-export declare function transform<T extends object> (config: T): Promise<T>
+export type ServiceConfiguration = Promise<Configuration<PlatformaticServiceConfig>>
+
+export declare function transform (config: ServiceConfiguration): Promise<ServiceConfiguration> | ServiceConfiguration
+
+export declare function loadConfiguration (
+  root: string,
+  source?: string | PlatformaticServiceConfig,
+  context?: ConfigurationOptions
+): Promise<Configuration<PlatformaticServiceConfig>>
 
 export declare function create (
   root: string,
   source?: string | PlatformaticServiceConfig,
-  context?: object
+  context?: ConfigurationOptions
 ): Promise<ServiceStackable>
 
 export declare const skipTelemetryHooks: boolean

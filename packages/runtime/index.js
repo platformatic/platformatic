@@ -15,7 +15,7 @@ const { Runtime } = require('./lib/runtime')
 const symbols = require('./lib/worker/symbols')
 const { schema } = require('./lib/schema')
 const { upgrade } = require('./lib/upgrade')
-const { loadConfig, getRuntimeLogsDir } = require('./lib/utils')
+const { getRuntimeLogsDir } = require('./lib/utils')
 
 async function restartRuntime (runtime) {
   runtime.logger.info('Received SIGUSR2, restarting all services ...')
@@ -102,7 +102,6 @@ module.exports.errors = require('./lib/errors')
 module.exports.Generator = RuntimeGenerator
 module.exports.WrappedGenerator = WrappedGenerator
 module.exports.getRuntimeLogsDir = getRuntimeLogsDir
-module.exports.loadConfig = loadConfig
 module.exports.schema = schema
 module.exports.symbols = symbols
 module.exports.Runtime = Runtime
@@ -111,4 +110,3 @@ module.exports.version = platformaticVersion
 module.exports.loadConfiguration = loadConfiguration
 module.exports.create = create
 module.exports.transform = transform
-module.exports.upgrade = upgrade

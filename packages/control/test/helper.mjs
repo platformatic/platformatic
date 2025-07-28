@@ -23,7 +23,7 @@ export async function getPlatformaticVersion () {
 }
 
 export async function startRuntime (configPath, env = {}, additionalArgs = []) {
-  const runtime = execa(process.execPath, [startPath, '-c', configPath, ...additionalArgs], { env })
+  const runtime = execa(process.execPath, [startPath, configPath, ...additionalArgs], { env })
 
   const output = runtime.stdout.pipe(
     split(function (line) {

@@ -7,8 +7,8 @@ import { ServiceStackable } from './lib/stackable.js'
 import { upgrade } from './lib/upgrade.js'
 import { isDocker } from './lib/utils.js'
 
-export async function transform (config) {
-  config = await basicTransform(config)
+export async function transform (config, schema, options) {
+  config = await basicTransform(config, schema, options)
 
   if (config.server && (await isDocker())) {
     config.server.hostname = '0.0.0.0'

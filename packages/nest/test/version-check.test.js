@@ -1,23 +1,14 @@
-import { safeRemove } from '@platformatic/utils'
 import { ok, rejects } from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { swapVersion } from '../../basic/test/helper-version.js'
 import { getLogsFromFile, prepareRuntime, setFixturesDir } from '../../basic/test/helper.js'
-import { buildServer } from '../../runtime/index.js'
+
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('NestJS version is checked in development', async t => {
-  const { root, config } = await prepareRuntime(t, 'express-standalone', false, null, async () => {
+  const { runtime, root } = await prepareRuntime(t, 'express-standalone', false, null, async () => {
     await swapVersion(t, import.meta.dirname, '@nestjs/core')
-  })
-
-  process.chdir(root)
-  const runtime = await buildServer(config.configManager.current, config.args)
-
-  t.after(async () => {
-    await runtime.close()
-    await safeRemove(root)
   })
 
   await rejects(runtime.start())
@@ -27,16 +18,8 @@ test('NestJS version is checked in development', async t => {
 })
 
 test('NestJS version is not checked in production', async t => {
-  const { root, config } = await prepareRuntime(t, 'express-standalone', true, null, async () => {
+  const { runtime, root } = await prepareRuntime(t, 'express-standalone', true, null, async () => {
     await swapVersion(t, import.meta.dirname, '@nestjs/core')
-  })
-
-  process.chdir(root)
-  const runtime = await buildServer(config.configManager.current, config.args)
-
-  t.after(async () => {
-    await runtime.close()
-    await safeRemove(root)
   })
 
   await rejects(runtime.start())

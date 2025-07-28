@@ -1,4 +1,3 @@
-import { safeRemove } from '@platformatic/utils'
 import { deepEqual, equal, ok } from 'node:assert'
 import { once } from 'node:events'
 import { existsSync } from 'node:fs'
@@ -13,12 +12,11 @@ import {
   startRuntime,
   updateFile
 } from '../../basic/test/helper.js'
-import { buildServer } from '../../runtime/index.js'
 
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('should inject Platformatic code by default when building', async t => {
-  const { root, config } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
+  const { runtime } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
     await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
       const json = JSON.parse(contents)
       json.application = { commands: { build: 'node build.js' } }
@@ -34,16 +32,7 @@ test('should inject Platformatic code by default when building', async t => {
     )
   })
 
-  const originalCwd = process.cwd()
-  process.chdir(root)
-  const runtime = await buildServer(config.configManager.current, config.args)
-
-  t.after(async () => {
-    process.chdir(originalCwd)
-    await runtime.close()
-    await safeRemove(root)
-  })
-
+  await runtime.init()
   await runtime.buildService('frontend')
 
   const logs = await getLogs(runtime)
@@ -51,7 +40,7 @@ test('should inject Platformatic code by default when building', async t => {
 })
 
 test('should not inject Platformatic code when building if asked to', async t => {
-  const { root, config } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
+  const { runtime } = await prepareRuntime(t, 'fastify-with-build-standalone', false, null, async root => {
     await updateFile(resolve(root, 'services/frontend/platformatic.application.json'), contents => {
       const json = JSON.parse(contents)
       json.application = { commands: { build: 'node build.js' } }
@@ -68,16 +57,7 @@ test('should not inject Platformatic code when building if asked to', async t =>
     )
   })
 
-  const originalCwd = process.cwd()
-  process.chdir(root)
-  const runtime = await buildServer(config.configManager.current, config.args)
-
-  t.after(async () => {
-    process.chdir(originalCwd)
-    await runtime.close()
-    await safeRemove(root)
-  })
-
+  await runtime.init()
   await runtime.buildService('frontend')
 
   const logs = await getLogs(runtime)
@@ -98,8 +78,8 @@ test('should build the services on start in dev', async t => {
 
 for (const service of ['app-no-config', 'app-with-config']) {
   test(`should rebuild the services on reload in dev, service ${service}`, async t => {
-    const { root, config } = await prepareRuntime(t, 'dev-ts-build', false)
-    const { runtime } = await startRuntime(t, root, config)
+    const { runtime, root } = await prepareRuntime(t, 'dev-ts-build', false)
+    await startRuntime(t, runtime)
 
     // write the file to trigger a reload
     await writeFile(resolve(root, `services/${service}/reload.ts`), '// reload', 'utf-8')

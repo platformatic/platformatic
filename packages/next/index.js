@@ -4,8 +4,8 @@ import { schema } from './lib/schema.js'
 import { NextStackable } from './lib/stackable.js'
 
 /* c8 ignore next 9 */
-export async function transform (config) {
-  config = await basicTransform(config)
+export async function transform (config, schema, options) {
+  config = await basicTransform(config, schema, options)
   config.watch = { enabled: false }
 
   if (config.cache?.adapter === 'redis') {

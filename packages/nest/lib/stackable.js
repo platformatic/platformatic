@@ -34,7 +34,7 @@ export class NestStackable extends BaseStackable {
   async init () {
     await super.init()
 
-    const config = this.configManager.current
+    const config = this.config
 
     this.#isFastify = config.nest.adapter === 'fastify'
     this.#nestjsCore = resolve(resolvePackage(this.root, '@nestjs/core'))
@@ -62,7 +62,7 @@ export class NestStackable extends BaseStackable {
       return this.url
     }
 
-    const config = this.configManager.current
+    const config = this.config
     const command = config.application.commands[this.isProduction ? 'production' : 'development']
 
     // In development mode, we use the Nest CLI in a children thread - Using build then start would result in a bad DX
@@ -108,7 +108,7 @@ export class NestStackable extends BaseStackable {
       await this.init()
     }
 
-    const config = this.configManager.current
+    const config = this.config
     this.#basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
 
     return this.buildWithCommand(config.application.commands.build ?? `node ${this.#nestjsCli} build`, this.#basePath)
@@ -173,8 +173,8 @@ export class NestStackable extends BaseStackable {
       return this.url
     }
 
-    const outputDirectory = this.configManager.current.application.outputDirectory
-    const { path, name } = this.configManager.current.nest.appModule
+    const outputDirectory = this.config.application.outputDirectory
+    const { path, name } = this.config.nest.appModule
     this.verifyOutputDirectory(resolve(this.root, outputDirectory))
 
     // Import all the necessary modules
@@ -230,7 +230,7 @@ export class NestStackable extends BaseStackable {
 
   async #importAdapter () {
     let adapter
-    const toImport = `@nestjs/platform-${this.configManager.current.nest.adapter}`
+    const toImport = `@nestjs/platform-${this.config.nest.adapter}`
 
     this.logger.debug(`Using NestJS adapter ${toImport}.`)
 
@@ -243,7 +243,7 @@ export class NestStackable extends BaseStackable {
   }
 
   async #importSetup () {
-    const config = this.configManager.current
+    const config = this.config
 
     if (!config.nest.setup.path) {
       return undefined

@@ -9,16 +9,18 @@ export declare const envVariablePattern: RegExp
 export declare const knownConfigurationFilesExtensions: string[]
 export declare const knownConfigurationFilesSchemas: RegExp[]
 
-export interface ConfigurationContext {
-  root: string
-  fixPaths?: boolean
+export type RawConfiguration = Record<string, unknown>
+
+export interface ValidationError {
+  path: string
+  message: string
 }
 
-export type LoadConfigurationOptions = Partial<{
+export type ConfigurationOptions = Partial<{
   validate: boolean
   validationOptions: object
-  transform: (config: any) => Promise<any> | any
-  upgrade: (logger: Logger, config: any, version: string) => Promise<any> | any
+  transform: (config: RawConfiguration) => Promise<RawConfiguration> | RawConfiguration
+  upgrade: (logger: Logger, config: RawConfiguration, version: string) => Promise<RawConfiguration> | RawConfiguration
   env: Record<string, string>
   ignoreProcessEnv: boolean
   replaceEnv: boolean
@@ -29,23 +31,36 @@ export type LoadConfigurationOptions = Partial<{
   root: string
   skipMetadata: boolean
 }> &
-  Record<string, unknown>
+  RawConfiguration
 
-export interface SchemaMatch {
+export interface ModuleWithVersion {
   module: string
   version?: string
+}
+
+export type Configuration<Config> = Config & {
+  [kMetadata]: {
+    root: string
+    path: string | null
+    env: Record<string, string>
+    module: { module: string; version: string } | null
+  }
 }
 
 export declare function getParser (path: string): (raw: string, ...args: any[]) => any
 export declare function getStringifier (path: string): (data: any) => string
 export declare function stringifyJSON (data: any): string
 export declare function stringifyJSON5 (data: any): string
-export declare function printValidationErrors (err: { validation: Array<{ path: string; message: string }> }): void
+
+export declare function printValidationErrors (err: { validation: Array<ValidationError> }): void
 export declare function listRecognizedConfigurationFiles (
   suffixes?: string | string[] | null,
   extensions?: string | string[]
 ): string[]
-export declare function extractModuleFromSchemaUrl (config: any, throwOnMissing?: boolean): string | SchemaMatch | null
+export declare function extractModuleFromSchemaUrl (
+  config: RawConfiguration | ModuleWithVersion,
+  throwOnMissing?: boolean
+): ModuleWithVersion | null
 export declare function findConfigurationFile (
   root: string,
   suffixes?: string | string[],
@@ -59,25 +74,25 @@ export declare function findConfigurationFileRecursive (
   suffixes?: string | string[]
 ): Promise<string | null>
 export declare function loadConfigurationFile (configurationFile: string): Promise<any>
-export declare function saveConfigurationFile (configurationFile: string, config: any): Promise<void>
+export declare function saveConfigurationFile (configurationFile: string, config: RawConfiguration): Promise<void>
 export declare function createValidator (
-  schema: any,
+  schema: JSONSchemaType<any>,
   validationOptions?: object,
-  context?: ConfigurationContext
+  context?: ConfigurationOptions
 ): (data: any) => boolean
 export declare function loadEnv (root: string): Promise<Record<string, string>>
 export declare function replaceEnv (
-  config: any,
+  config: RawConfiguration,
   env: Record<string, string>,
   onMissingEnv?: (key: string) => string | undefined,
   ignore?: string[]
-): any
+): RawConfiguration
 export declare function loadConfiguration (
   source: string | any,
   schema?: any,
-  options?: LoadConfigurationOptions
-): Promise<any>
-export declare function loadConfigurationModule (root: string, config: any): any
+  options?: ConfigurationOptions
+): Promise<RawConfiguration>
+export declare function loadConfigurationModule (root: string, config: RawConfiguration | ModuleWithVersion): any
 
 // Error types
 export declare const ERROR_PREFIX: string
