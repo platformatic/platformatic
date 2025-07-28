@@ -1,6 +1,11 @@
 import { BaseStackable } from '@platformatic/basic'
 import { BaseGenerator } from '@platformatic/generators'
-import { Configuration, ServerInstance as ServiceInstance, ServiceStackable } from '@platformatic/service'
+import {
+  Configuration,
+  ConfigurationOptions,
+  ServerInstance as ServiceInstance,
+  ServiceStackable
+} from '@platformatic/service'
 import { JSONSchemaType } from 'ajv'
 import { FastifyError, FastifyInstance } from 'fastify'
 import { PlatformaticComposerConfig } from './config'

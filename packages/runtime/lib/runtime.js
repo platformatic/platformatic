@@ -1185,7 +1185,7 @@ class Runtime extends EventEmitter {
       // We need the following because otherwise some open telemetry instrumentations won't work with ESM (like express)
       // see: https://github.com/open-telemetry/opentelemetry-js/blob/main/doc/esm-support.md#instrumentation-hook-required-for-esm
       execArgv.push('--import', `data:text/javascript, import { register } from 'node:module'; register('${hookUrl}')`)
-      execArgv.push('--import', openTelemetrySetupPath)
+      execArgv.push('--import', pathToFileURL(openTelemetrySetupPath))
     }
 
     if ((serviceConfig.sourceMaps ?? config.sourceMaps) === true) {

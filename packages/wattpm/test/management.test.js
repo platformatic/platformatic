@@ -274,7 +274,8 @@ test('config - should list configuration for a service', async t => {
     },
     watch: {
       enabled: false
-    }
+    },
+    telemetry: {}
   })
 })
 

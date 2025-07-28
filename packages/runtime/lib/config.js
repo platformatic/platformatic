@@ -55,7 +55,7 @@ async function wrapInRuntimeConfig (config, context) {
       {
         id: serviceId,
         path: config[kMetadata].root,
-        config: config[kMetadata].basePath
+        config: config[kMetadata].path
       }
     ]
   }

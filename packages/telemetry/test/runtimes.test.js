@@ -12,7 +12,8 @@ const { setFixturesDir, createRuntime, prepareRuntime, startRuntime } = require(
 
 process.setMaxListeners(100)
 setFixturesDir(resolve(__dirname, './fixtures'))
-const getSpans = async spanPaths => {
+
+async function getSpans (spanPaths) {
   const spans = await parseNDJson(spanPaths)
   return spans
 }

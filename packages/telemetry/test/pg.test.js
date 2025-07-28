@@ -5,21 +5,15 @@ const { resolve, join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
 const { parseNDJson, createPGDataBase } = require('./helper.js')
+const { setFixturesDir, createRuntime } = require('../../basic/test/helper.js')
 
 process.setMaxListeners(100)
+setFixturesDir(resolve(__dirname, './fixtures'))
 
-let basicHelper
-
-const getSpans = async (spanPaths) => {
+async function getSpans (spanPaths) {
   const spans = await parseNDJson(spanPaths)
   return spans
 }
-
-test.beforeEach(async () => {
-  basicHelper = await import('../../basic/test/helper.js')
-  const fixturesDir = resolve(__dirname, './fixtures')
-  basicHelper.setFixturesDir(fixturesDir)
-})
 
 test('configure telemetry correctly with a express app using pg', async t => {
   const { dropTestDB } = await createPGDataBase()
@@ -27,18 +21,13 @@ test('configure telemetry correctly with a express app using pg', async t => {
   t.after(async () => {
     await dropTestDB()
   })
-  const app = await basicHelper.createRuntime(t,
-    'express-api-pg',
-    false,
-    false,
-    'platformatic.json'
-  )
-  const { url, root } = app
+
+  const { url, root } = await createRuntime(t, 'express-api-pg', false, false, 'platformatic.json')
   const spansPath = join(root, 'spans.log')
 
   // Test request to add http metrics
   const { statusCode } = await request(`${url}/express/users`, {
-    method: 'GET',
+    method: 'GET'
   })
   equal(statusCode, 200)
   const spans = await getSpans(spansPath)
