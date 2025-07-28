@@ -1,7 +1,7 @@
 import { deepEqual, equal, ok, rejects, throws } from 'node:assert'
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
 import os from 'node:os'
-import { join } from 'node:path'
+import { isAbsolute, join } from 'node:path'
 import { test } from 'node:test'
 import {
   createValidator,
@@ -498,7 +498,7 @@ test('createValidator - should handle resolvePath keyword', () => {
   const data = { path: 'relative/path' }
 
   ok(validator(data))
-  ok(data.path.startsWith('/'))
+  ok(isAbsolute(data.path))
 })
 
 test('createValidator - should handle resolveModule keyword', () => {

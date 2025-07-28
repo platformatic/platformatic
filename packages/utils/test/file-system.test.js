@@ -2,7 +2,7 @@ import { deepEqual, equal, match, ok, throws } from 'node:assert'
 import { existsSync } from 'node:fs'
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
 import os from 'node:os'
-import { basename, join } from 'node:path'
+import { basename, join, sep } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import {
@@ -234,13 +234,13 @@ test('searchFilesWithExtensions - should find files with given extensions', asyn
   const jsFiles = await searchFilesWithExtensions(tmpDir, 'js')
   equal(jsFiles.length, 2)
   ok(jsFiles.includes('test.js'))
-  ok(jsFiles.includes('subdir/nested.js'))
+  ok(jsFiles.includes(`subdir${sep}nested.js`))
 
   const multipleExt = await searchFilesWithExtensions(tmpDir, ['js', 'ts'])
   equal(multipleExt.length, 3)
   ok(multipleExt.includes('test.js'))
   ok(multipleExt.includes('test.ts'))
-  ok(multipleExt.includes('subdir/nested.js'))
+  ok(multipleExt.includes(`subdir${sep}nested.js`))
 })
 
 test('searchJavascriptFiles - should find JavaScript and TypeScript files', async t => {
