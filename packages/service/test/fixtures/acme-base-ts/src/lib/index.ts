@@ -4,7 +4,6 @@ import { lstat } from 'node:fs/promises'
 import { kMetadata } from '@platformatic/utils'
 import { resolve } from 'node:path'
 import {
-  type Configuration,
   create as createService,
   type PlatformaticApplication,
   platformaticService,
@@ -41,7 +40,7 @@ export default async function acmeBase (app: FastifyInstance & AcmeBaseMixin, st
 
 Object.assign(acmeBase, { [Symbol.for('skip-override')]: true })
 
-export async function transform (config: Configuration<ServiceConfig & AcmeBaseConfig>) {
+export async function transform (config: ServiceConfig & AcmeBaseConfig): ServiceConfig & AcmeBaseConfig {
   // Call the transformConfig method from the base stackable
   config = await serviceTransform(config)
 
