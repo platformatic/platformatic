@@ -1,14 +1,12 @@
-'use strict'
-
-const { access, cp } = require('node:fs/promises')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const assert = require('node:assert')
-const { create } = require('../..')
-const { createTemporaryDirectory } = require('../../../basic/test/helper')
+import assert from 'node:assert'
+import { access, cp } from 'node:fs/promises'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createTemporaryDirectory } from '../../../basic/test/helper.js'
+import { create } from '../../index.js'
 
 test('compile typescript', async t => {
-  const testDir = join(__dirname, '..', 'fixtures', 'typescript-plugin')
+  const testDir = join(import.meta.dirname, '..', 'fixtures', 'typescript-plugin')
   const cwd = await createTemporaryDirectory(t)
   await cp(testDir, cwd, { recursive: true })
 

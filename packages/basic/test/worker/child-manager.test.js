@@ -1,4 +1,3 @@
-import { withResolvers } from '@platformatic/utils'
 import { deepStrictEqual, ok } from 'node:assert'
 import { platform } from 'node:os'
 import { test } from 'node:test'
@@ -52,7 +51,7 @@ test('ChildManager - listen - should log when receiving invalid messages', async
     socket.send('NO-WAY')
   })
 
-  const { promise, resolve } = withResolvers()
+  const { promise, resolve } = Promise.withResolvers()
   t.mock.method(process, 'exit', code => {
     resolve(code)
   })

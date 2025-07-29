@@ -1,10 +1,8 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { getConnectionInfo } = require('../helper.js')
-const { startPath } = require('./helper.js')
+import assert from 'node:assert/strict'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { getConnectionInfo } from '../helper.js'
+import { startPath } from './helper.js'
 
 test('missing config', async t => {
   const { execa } = await import('execa')
@@ -19,7 +17,7 @@ test('print validation errors', async t => {
   })
 
   try {
-    await execa('node', [startPath, join(__dirname, '..', 'fixtures', 'missing-required-values.json')], {
+    await execa('node', [startPath, join(import.meta.dirname, '..', 'fixtures', 'missing-required-values.json')], {
       env: {
         DATABASE_URL: connectionInfo.connectionString
       }
@@ -27,6 +25,6 @@ test('print validation errors', async t => {
     assert.fail('should have thrown')
   } catch (err) {
     assert.equal(err.exitCode, 1)
-    assert.equal(err.stderr.includes('must have required property \'dir\' {"missingProperty":"dir"}'), true)
+    assert.equal(err.stderr.includes("must have required property 'dir'"), true)
   }
 })

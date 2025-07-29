@@ -1,18 +1,3 @@
-import { schemaOptions, transformConfig } from './lib/config.js'
-import { buildStackable } from './lib/creation.js'
-import { packageJson, schema } from './lib/schema.js'
-
-export default {
-  configType: 'nodejs',
-  configManagerConfig: {
-    schemaOptions,
-    transformConfig
-  },
-  buildStackable,
-  schema,
-  version: packageJson.version
-}
-
 export * from './lib/base.js'
 export * from './lib/config.js'
 export * from './lib/creation.js'

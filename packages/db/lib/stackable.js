@@ -1,34 +1,27 @@
-'use strict'
+import { ServiceStackable } from '@platformatic/service'
+import { platformaticDatabase } from './application.js'
+import { packageJson } from './schema.js'
 
-const { ServiceStackable } = require('@platformatic/service')
-const { platformaticDatabase } = require('./application')
-const { packageJson } = require('./schema')
-
-class DatabaseStackable extends ServiceStackable {
-  constructor (options, root, configManager) {
-    super(options, root, configManager)
+export class DatabaseStackable extends ServiceStackable {
+  constructor (root, config, context) {
+    super(root, config, context)
     this.type = 'db'
     this.version = packageJson.version
+
     this.applicationFactory = this.context.applicationFactory ?? platformaticDatabase
   }
 
   updateContext (context) {
     super.updateContext(context)
 
-    const config = this.configManager.current
-    if (this.context.isProduction && config.autogenerate) {
-      config.autogenerate = false
-      this.configManager.update(config)
+    if (this.context.isProduction && this.config.autogenerate) {
+      this.config.autogenerate = false
     }
   }
 
   async getMeta () {
     const serviceMeta = await super.getMeta()
-
-    const config = this.configManager.current
-
-    const dbConfig = config.db
-    const connectionString = dbConfig?.connectionString
+    const connectionString = this.config.db?.connectionString
 
     if (connectionString) {
       return {
@@ -40,5 +33,3 @@ class DatabaseStackable extends ServiceStackable {
     return serviceMeta
   }
 }
-
-module.exports = { DatabaseStackable }

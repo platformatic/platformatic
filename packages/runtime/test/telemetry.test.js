@@ -4,9 +4,7 @@ const assert = require('node:assert')
 const { request } = require('undici')
 const { test } = require('node:test')
 const { join } = require('node:path')
-const { loadConfig } = require('@platformatic/config')
-const { platformaticRuntime } = require('..')
-const { buildRuntime } = require('../lib/start')
+const { create } = require('../index.js')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 const { setLogFile } = require('./helpers')
 
@@ -14,8 +12,7 @@ test.beforeEach(setLogFile)
 
 test('propagate the traceId correctly to runtime services', async t => {
   const configFile = join(fixturesDir, 'telemetry', 'platformatic.runtime.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager)
+  const app = await create(configFile)
 
   t.after(async () => {
     await app.close()
@@ -41,8 +38,7 @@ test('propagate the traceId correctly to runtime services', async t => {
 
 test('attach x-plt-telemetry-id header', async t => {
   const configFile = join(fixturesDir, 'telemetry', 'platformatic.runtime.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager)
+  const app = await create(configFile)
 
   t.after(async () => {
     await app.close()
@@ -65,8 +61,7 @@ test('attach x-plt-telemetry-id header', async t => {
 
 test('disabled telemetry', async t => {
   const configFile = join(fixturesDir, 'telemetry', 'disabled-telemetry.runtime.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildRuntime(config.configManager)
+  const app = await create(configFile)
 
   t.after(async () => {
     await app.close()

@@ -1,12 +1,10 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { request } = require('undici')
-const { create } = require('..')
-const { createFromConfig, getConnectionInfo, createBasicPages } = require('./helper')
-const { safeRemove } = require('@platformatic/utils')
+import { safeRemove } from '@platformatic/utils'
+import assert from 'node:assert/strict'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { create } from '../index.js'
+import { createBasicPages, createFromConfig, getConnectionInfo } from './helper.js'
 
 test('starts, query and stop', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
@@ -210,8 +208,8 @@ test('inject', async t => {
 })
 
 test('ignore and sqlite3', async t => {
-  const dbLocation = join(__dirname, 'fixtures', 'sqlite', 'db-ignore-and-sqlite3')
-  const migrations = join(__dirname, 'fixtures', 'sqlite', 'migrations')
+  const dbLocation = join(import.meta.dirname, 'fixtures', 'sqlite', 'db-ignore-and-sqlite3')
+  const migrations = join(import.meta.dirname, 'fixtures', 'sqlite', 'migrations')
 
   try {
     await safeRemove(dbLocation)
@@ -247,11 +245,11 @@ test('ignore and sqlite3', async t => {
 })
 
 test('starts a config file on disk with auto-apply', async t => {
-  const app = await create(join(__dirname, 'fixtures', 'sqlite', 'no-logger.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'sqlite', 'no-logger.json'))
 
   t.after(async () => {
     await app.stop()
-    await safeRemove(join(__dirname, 'fixtures', 'sqlite', 'db-no-logger'))
+    await safeRemove(join(import.meta.dirname, 'fixtures', 'sqlite', 'db-no-logger'))
   })
   await app.start({ listen: true })
 

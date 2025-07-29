@@ -1,57 +1,60 @@
-'use strict'
+import { execa } from 'execa'
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { getConnectionInfo } from '../helper.js'
+import { cliPath, getFixturesConfigFileLocation } from './helper.js'
 
-const { execa } = require('execa')
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { getConnectionInfo } = require('../helper.js')
-const { cliPath, getFixturesConfigFileLocation } = require('./helper.js')
-
-test('missing config', async (t) => {
+test('missing config', async t => {
   await assert.rejects(execa('node', [cliPath, 'migrations', 'apply']))
 })
 
-test('missing connectionString', async (t) => {
-  await assert.rejects(execa('node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('no-connectionString.json')]))
+test('missing connectionString', async t => {
+  await assert.rejects(
+    execa('node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('no-connectionString.json')])
+  )
 })
 
-test('missing migrations', async (t) => {
+test('missing migrations', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
-  t.after(async () => { await dropTestDB() })
+  t.after(async () => {
+    await dropTestDB()
+  })
 
-  await assert.rejects(execa(
-    'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('no-migrations.json')],
-    {
+  await assert.rejects(
+    execa('node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('no-migrations.json')], {
       env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
-    }
-  ))
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    })
+  )
 })
 
-test('missing migrations.dir', async (t) => {
+test('missing migrations.dir', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
-  t.after(async () => { await dropTestDB() })
+  t.after(async () => {
+    await dropTestDB()
+  })
 
-  await assert.rejects(execa(
-    'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('no-migrations-dir.json')],
-    {
+  await assert.rejects(
+    execa('node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('no-migrations-dir.json')], {
       env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
-    }
-  ))
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    })
+  )
 })
 
-test('not applied migrations', async (t) => {
+test('not applied migrations', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
-  t.after(async () => { await dropTestDB() })
+  t.after(async () => {
+    await dropTestDB()
+  })
 
-  await assert.rejects(execa(
-    'node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('bad-migrations.json')],
-    {
+  await assert.rejects(
+    execa('node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('bad-migrations.json')], {
       env: {
-        DATABASE_URL: connectionInfo.connectionString,
-      },
-    }
-  ))
+        DATABASE_URL: connectionInfo.connectionString
+      }
+    })
+  )
 })

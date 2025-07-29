@@ -1,14 +1,12 @@
-'use strict'
-
-const { once } = require('events')
-const { execa } = require('execa')
-const assert = require('node:assert/strict')
-const { readFile, unlink } = require('node:fs/promises')
-const { dirname, join } = require('node:path')
-const { test } = require('node:test')
-const split = require('split2')
-const { getConnectionInfo } = require('../helper.js')
-const { cliPath, connectDB, getFixturesConfigFileLocation, safeKill, startPath } = require('./helper.js')
+import { once } from 'events'
+import { execa } from 'execa'
+import assert from 'node:assert/strict'
+import { readFile, unlink } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
+import { test } from 'node:test'
+import split from 'split2'
+import { getConnectionInfo } from '../helper.js'
+import { cliPath, connectDB, getFixturesConfigFileLocation, safeKill, startPath } from './helper.js'
 
 test('migrate on start', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')

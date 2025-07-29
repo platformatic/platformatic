@@ -1,9 +1,7 @@
-'use strict'
-
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { createFromConfig } = require('./helper')
+import assert from 'node:assert'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createFromConfig } from './helper.js'
 
 test('healthcheck route enabled with interval', async t => {
   let check = true

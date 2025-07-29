@@ -1,12 +1,10 @@
-'use strict'
-
-const { test } = require('node:test')
-const { equal, deepEqual } = require('node:assert')
-const { join } = require('path')
-const { configManagerConfig } = require('../../index.js')
-const { upgrade } = require('../../lib/upgrade.js')
-const { ConfigManager } = require('@platformatic/config')
-const { version } = require('../../package.json')
+import { loadConfiguration } from '@platformatic/utils'
+import { deepEqual, equal } from 'node:assert'
+import { resolve } from 'node:path'
+import test from 'node:test'
+import { transform } from '../../index.js'
+import { version } from '../../lib/schema.js'
+import { upgrade } from '../../lib/upgrade.js'
 
 test('remove hotReload', async () => {
   const env = {
@@ -15,20 +13,17 @@ test('remove hotReload', async () => {
     PLT_SERVER_LOGGER_LEVEL: 'info'
   }
 
-  const configManager = new ConfigManager({
-    ...configManagerConfig,
-    upgrade,
-    source: join(__dirname, '..', 'fixtures', 'versions', 'v0.27.0', 'service.json'),
-    version,
-    fixPaths: false,
-    onMissingEnv (key) {
-      return env[key]
+  const config = await loadConfiguration(
+    resolve(import.meta.dirname, '..', 'fixtures', 'versions', 'v0.27.0', 'service.json'),
+    null,
+    {
+      transform,
+      upgrade,
+      onMissingEnv (key) {
+        return env[key]
+      }
     }
-  })
-
-  await configManager.parse()
-
-  const config = configManager.current
+  )
 
   equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/service/${version}.json`)
 

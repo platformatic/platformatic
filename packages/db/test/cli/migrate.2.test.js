@@ -1,13 +1,11 @@
-'use strict'
-
-const { execa } = require('execa')
-const assert = require('node:assert/strict')
-const { readFile, stat, unlink, writeFile } = require('node:fs/promises')
-const { dirname, join } = require('node:path')
-const { test } = require('node:test')
-const split = require('split2')
-const { getConnectionInfo } = require('../helper.js')
-const { cliPath, connectDB, getFixturesConfigFileLocation, startPath } = require('./helper.js')
+import { execa } from 'execa'
+import assert from 'node:assert/strict'
+import { readFile, stat, unlink, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
+import { test } from 'node:test'
+import split from 'split2'
+import { getConnectionInfo } from '../helper.js'
+import { cliPath, connectDB, getFixturesConfigFileLocation, startPath } from './helper.js'
 
 test('migrate creates a schema.lock file on a different path', { skip: true }, async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')

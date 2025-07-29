@@ -4,7 +4,7 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { buildServer } = require('../..')
+const { create } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { setLogFile } = require('../helpers')
 
@@ -12,7 +12,7 @@ test.beforeEach(setLogFile)
 
 test('do not reach for dns if plt.local fail to resolve', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
   const entryUrl = await app.start()
 
   t.after(async () => {

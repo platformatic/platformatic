@@ -1,26 +1,23 @@
-'use strict'
+import { BaseStackable, cleanBasePath, ensureTrailingSlash, getServerUrl } from '@platformatic/basic'
+import { telemetry } from '@platformatic/telemetry'
+import { compile } from '@platformatic/ts-compiler'
+import { buildPinoFormatters, buildPinoTimestamp, deepmerge, features, isKeyEnabled } from '@platformatic/utils'
+import fastify from 'fastify'
+import { printSchema } from 'graphql'
+import { randomUUID } from 'node:crypto'
+import { hostname } from 'node:os'
+import pino from 'pino'
+import { platformaticService } from './application.js'
+import { setupRoot } from './plugins/root.js'
+import { version } from './schema.js'
+import { sanitizeHTTPSArgument } from './utils.js'
 
-const { BaseStackable, getServerUrl, ensureTrailingSlash, cleanBasePath } = require('@platformatic/basic')
-const { compile } = require('@platformatic/ts-compiler')
-const { telemetry } = require('@platformatic/telemetry')
-const { deepmerge, buildPinoFormatters, buildPinoTimestamp, features, isKeyEnabled } = require('@platformatic/utils')
-const fastify = require('fastify')
-const { printSchema } = require('graphql')
-const { randomUUID } = require('node:crypto')
-const { hostname } = require('node:os')
-
-const pino = require('pino')
-const { platformaticService } = require('./application.js')
-const { packageJson } = require('./schema.js')
-const { sanitizeHTTPSArgument } = require('./utils.js')
-const setupRoot = require('./plugins/root.js')
-
-class ServiceStackable extends BaseStackable {
+export class ServiceStackable extends BaseStackable {
   #app
   #basePath
 
-  constructor (options, root, configManager) {
-    super('service', packageJson.version, options, root, configManager)
+  constructor (root, config, context) {
+    super('service', version, root, config, context)
     this.applicationFactory = this.context.applicationFactory ?? platformaticService
   }
 
@@ -31,7 +28,7 @@ class ServiceStackable extends BaseStackable {
       return
     }
 
-    const config = this.configManager.current
+    const config = this.config
     this.#basePath = ensureTrailingSlash(cleanBasePath(config.basePath ?? this.serviceId))
 
     // Create the application
@@ -49,7 +46,7 @@ class ServiceStackable extends BaseStackable {
       await this.#app.register(telemetry, config.telemetry)
     }
 
-    this.#app.decorate('platformatic', { configManager: this.configManager, config: this.configManager.current })
+    this.#app.decorate('platformatic', { config: this.config })
 
     await this.#app.register(this.applicationFactory, this)
 
@@ -93,8 +90,8 @@ class ServiceStackable extends BaseStackable {
 
   async build () {
     return compile({
-      tsConfig: this.configManager.current.plugins?.typescript?.tsConfig,
-      flags: this.configManager.current.plugins?.typescript?.flags,
+      tsConfig: this.config.plugins?.typescript?.tsConfig,
+      flags: this.config.plugins?.typescript?.flags,
       cwd: this.root,
       logger: this.logger
     })
@@ -120,22 +117,21 @@ class ServiceStackable extends BaseStackable {
     return this.#app
   }
 
-  async getConfig () {
+  async getConfig (includeMeta = false) {
+    let config = await super.getConfig(includeMeta)
     const loggerInstance = this.serverConfig?.loggerInstance
 
     if (loggerInstance) {
-      const config = Object.assign({}, this.configManager.current)
+      config = Object.assign({}, config)
       const { loggerInstance: _, ...serverConfig } = this.serverConfig
       config.server = { ...serverConfig, logger: { level: loggerInstance.level } }
-
-      return config
     }
 
-    return super.getConfig()
+    return config
   }
 
   async getWatchConfig () {
-    const config = this.configManager.current
+    const config = this.config
 
     const enabled = config.watch?.enabled !== false && config.plugins !== undefined
 
@@ -187,7 +183,7 @@ class ServiceStackable extends BaseStackable {
 
     const { telemetryConfig, serverConfig, isEntrypoint, isProduction, logger } = this.context
 
-    const config = { ...this.configManager.current }
+    const config = { ...this.config }
 
     if (telemetryConfig) {
       config.telemetry = telemetryConfig
@@ -226,14 +222,14 @@ class ServiceStackable extends BaseStackable {
     }
 
     this.serverConfig = config.server
-    this.configManager.update(config)
+    this.config = config
   }
 
   _initializeLogger () {
     if (this.context?.logger) {
       return this.context.logger
-    } else if (this.configManager.current.server?.loggerInstance) {
-      return this.configManager.current.server?.loggerInstance
+    } else if (this.config.server?.loggerInstance) {
+      return this.config.server?.loggerInstance
     }
 
     this.serverConfig ??= {}
@@ -292,5 +288,3 @@ class ServiceStackable extends BaseStackable {
     return this.url
   }
 }
-
-module.exports = { ServiceStackable }

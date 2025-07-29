@@ -4,8 +4,7 @@ const { deepStrictEqual, ok } = require('node:assert')
 const { resolve } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
+const { create } = require('../..')
 const { updateFile, setLogFile } = require('../helpers')
 const { prepareRuntime, waitForEvents } = require('./helper')
 
@@ -14,8 +13,7 @@ test.beforeEach(setLogFile)
 test('can restart only crashed workers when they throw an exception during start', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await create(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()
@@ -59,8 +57,7 @@ test('can restart only crashed workers when they throw an exception during start
 test('can restart only crashed workers when they exit during start', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await create(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()
@@ -104,8 +101,7 @@ test('can restart only crashed workers when they exit during start', async t => 
 test('can restart only crashed workers when they crash', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await create(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()
@@ -160,8 +156,7 @@ test('can restart only crashed workers when they crash', async t => {
 test('can restart only crashed workers when they exit', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await create(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()

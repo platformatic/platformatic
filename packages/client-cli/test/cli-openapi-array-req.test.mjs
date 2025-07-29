@@ -1,16 +1,15 @@
-import { isFileAccessible } from '../cli.mjs'
-import { moveToTmpdir } from './helper.js'
-import { test, after } from 'node:test'
-import { equal } from 'node:assert'
-import { join } from 'path'
-import * as desm from 'desm'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
 import { readFile } from 'fs/promises'
+import { equal } from 'node:assert'
+import { after, test } from 'node:test'
+import { join } from 'path'
+import { isFileAccessible } from '../cli.mjs'
+import { moveToTmpdir } from './helper.js'
 
 const name = 'array-req'
 test(`${name} with full option`, async () => {
-  const openapi = desm.join(import.meta.url, 'fixtures', name, 'openapi.json')
+  const openapi = join(import.meta.dirname, 'fixtures', name, 'openapi.json')
   const dir = await moveToTmpdir(after)
 
   const pltServiceConfig = {
@@ -26,7 +25,7 @@ test(`${name} with full option`, async () => {
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', name, '--full'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openapi, '--name', name, '--full'])
   equal(await isFileAccessible(join(dir, name, `${name}.cjs`)), false)
   const typeFile = join(dir, name, `${name}.d.ts`)
   const data = await readFile(typeFile, 'utf-8')
@@ -54,7 +53,7 @@ test(`${name} with full option`, async () => {
 })
 
 test(`${name} without full option`, async () => {
-  const openapi = desm.join(import.meta.url, 'fixtures', name, 'openapi.json')
+  const openapi = join(import.meta.dirname, 'fixtures', name, 'openapi.json')
   const dir = await moveToTmpdir(after)
 
   const pltServiceConfig = {
@@ -70,7 +69,7 @@ test(`${name} without full option`, async () => {
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', name])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openapi, '--name', name])
   equal(await isFileAccessible(join(dir, name, `${name}.cjs`)), false)
   const typeFile = join(dir, name, `${name}.d.ts`)
   const data = await readFile(typeFile, 'utf-8')

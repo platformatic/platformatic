@@ -1,11 +1,9 @@
-'use strict'
-
-const { join, relative, dirname, basename, resolve } = require('node:path')
-const { readFile, stat, access } = require('node:fs/promises')
+import { access, readFile, stat } from 'node:fs/promises'
+import { basename, dirname, join, relative, resolve } from 'node:path'
 
 let _isDocker
 
-async function isDocker () {
+export async function isDocker () {
   async function hasDockerEnv () {
     try {
       await stat('/.dockerenv')
@@ -30,7 +28,7 @@ async function isDocker () {
   return _isDocker
 }
 
-async function isFileAccessible (filename, directory) {
+export async function isFileAccessible (filename, directory) {
   try {
     const filePath = directory ? resolve(directory, filename) : filename
     await access(filePath)
@@ -40,7 +38,7 @@ async function isFileAccessible (filename, directory) {
   }
 }
 
-function getJSPluginPath (workingDir, tsPluginPath, compileDir) {
+export function getJSPluginPath (workingDir, tsPluginPath, compileDir) {
   if (tsPluginPath.endsWith('js')) {
     return tsPluginPath
   }
@@ -68,7 +66,7 @@ function getJSPluginPath (workingDir, tsPluginPath, compileDir) {
   return join(compileDir, jsPluginRelativePath)
 }
 
-async function sanitizeHTTPSArgument (arg) {
+export async function sanitizeHTTPSArgument (arg) {
   if (typeof arg === 'string') {
     return arg
   } else if (!Array.isArray(arg)) {
@@ -82,5 +80,3 @@ async function sanitizeHTTPSArgument (arg) {
 
   return sanitized
 }
-
-module.exports = { getJSPluginPath, isDocker, isFileAccessible, sanitizeHTTPSArgument }

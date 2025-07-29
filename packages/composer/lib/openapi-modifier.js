@@ -1,10 +1,11 @@
-'use strict'
+import traverse from 'json-schema-traverse'
+import rfdc from 'rfdc'
 
-const traverse = require('json-schema-traverse')
-const clone = require('rfdc')()
+const clone = rfdc()
 
-const originPathSymbol = Symbol('originPath')
 const MODIFICATION_KEYWORDS = ['rename']
+
+export const originPathSymbol = Symbol('originPath')
 
 function findDataBySchemaPointer (schemaPointer, schema, data, parentData, callback) {
   const schemaPointerParts = schemaPointer.split('/').slice(1)
@@ -34,9 +35,7 @@ function getModificationRules (modificationSchema) {
 
   function getModificationRules (schema, jsonPointer) {
     const schemaKeys = Object.keys(schema)
-    const modificationKeys = schemaKeys.filter(
-      key => MODIFICATION_KEYWORDS.includes(key)
-    )
+    const modificationKeys = schemaKeys.filter(key => MODIFICATION_KEYWORDS.includes(key))
 
     if (modificationKeys.length === 0) return
     modificationRules[jsonPointer] = schema
@@ -70,22 +69,16 @@ function modifyPayload (payload, originSchema, modificationRules) {
   for (const schemaJsonPointer in modificationRules) {
     const rule = modificationRules[schemaJsonPointer]
 
-    findDataBySchemaPointer(
-      schemaJsonPointer,
-      originSchema,
-      payload,
-      null,
-      (data, parentData) => {
-        if (rule.rename) {
-          parentData[rule.rename] = data
-          delete parentData[schemaJsonPointer.split('/').pop()]
-        }
+    findDataBySchemaPointer(schemaJsonPointer, originSchema, payload, null, (data, parentData) => {
+      if (rule.rename) {
+        parentData[rule.rename] = data
+        delete parentData[schemaJsonPointer.split('/').pop()]
       }
-    )
+    })
   }
 }
 
-function modifyOpenApiSchema (app, schema, config) {
+export function modifyOpenApiSchema (app, schema, config) {
   const newSchemaPaths = {}
   const { paths } = clone(schema)
 
@@ -133,5 +126,3 @@ function modifyOpenApiSchema (app, schema, config) {
 
   return { ...schema, paths: newSchemaPaths }
 }
-
-module.exports = { modifyOpenApiSchema, originPathSymbol }

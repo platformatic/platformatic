@@ -7,7 +7,7 @@ import { getLogs, prepareRuntime, setFixturesDir, startRuntime, updateFile } fro
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('can properly show the headers in the output', async t => {
-  const { root, config } = await prepareRuntime(t, 'server-side-standalone', false, null, async root => {
+  const { runtime } = await prepareRuntime(t, 'server-side-standalone', false, null, async root => {
     await updateFile(resolve(root, 'platformatic.runtime.json'), contents => {
       const parsed = JSON.parse(contents)
       parsed.logger.level = 'info'
@@ -22,7 +22,7 @@ test('can properly show the headers in the output', async t => {
     })
   })
 
-  const { runtime, url } = await startRuntime(t, root, config)
+  const url = await startRuntime(t, runtime)
 
   {
     const { statusCode } = await request(url, { headers: { 'x-test': 'test' } })
@@ -36,8 +36,8 @@ test('can properly show the headers in the output', async t => {
 })
 
 test('can access Platformatic globals in production mode', async t => {
-  const { root, config } = await prepareRuntime(t, 'basepath-production', true, null)
-  const { url } = await startRuntime(t, root, config, null, ['frontend'])
+  const { runtime } = await prepareRuntime(t, 'basepath-production', true, null)
+  const url = await startRuntime(t, runtime, null, ['frontend'])
 
   {
     const { statusCode, body } = await request(url + '/frontend')

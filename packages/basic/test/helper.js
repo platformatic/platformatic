@@ -1,5 +1,4 @@
-import { createDirectory, features, kTimeout, safeRemove, withResolvers } from '@platformatic/utils'
-import { join } from 'desm'
+import { createDirectory, features, kMetadata, kTimeout, safeRemove } from '@platformatic/utils'
 import { execa } from 'execa'
 import * as getPort from 'get-port'
 import { deepStrictEqual, fail, ok, strictEqual } from 'node:assert'
@@ -7,15 +6,14 @@ import { existsSync } from 'node:fs'
 import { cp, readdir, readFile, symlink, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { platform } from 'node:os'
-import { basename, dirname, matchesGlob, resolve } from 'node:path'
+import { basename, dirname, join, matchesGlob, resolve } from 'node:path'
 import { Writable } from 'node:stream'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
 import { Agent, Client, interceptors, request } from 'undici'
 import WebSocket from 'ws'
-import { loadConfig } from '../../config/index.js'
-import { buildServer, platformaticRuntime } from '../../runtime/index.js'
+import { create as createPlaformaticRuntime, loadConfiguration, transform } from '../../runtime/index.js'
 import { BaseStackable } from '../lib/base.js'
 
 export { setTimeout as sleep } from 'node:timers/promises'
@@ -33,7 +31,7 @@ export let fixturesDir
 
 export const isWindows = platform() === 'win32'
 export const isCIOnWindows = process.env.CI && isWindows
-export const cliPath = join(import.meta.url, '../../wattpm', 'bin/wattpm.js')
+export const cliPath = join(import.meta.dirname, '../../wattpm', 'bin/wattpm.js')
 export const pltRoot = fileURLToPath(new URL('../../..', import.meta.url))
 export const temporaryFolder = fileURLToPath(new URL('../../../tmp', import.meta.url))
 export const commonFixturesRoot = fileURLToPath(new URL('./fixtures/common', import.meta.url))
@@ -74,18 +72,11 @@ export async function createTemporaryDirectory (t, prefix = 'plt-basic') {
   return directory
 }
 
-export async function create (
-  t,
-  context = {},
-  config = { current: {} },
-  name = 'base',
-  version = '1.0.0',
-  base = temporaryFolder
-) {
+export async function create (t, context = {}, config = {}, name = 'base', version = '1.0.0', base = temporaryFolder) {
   await createDirectory(base)
   t.after(() => safeRemove(base))
 
-  return new BaseStackable(name, version, { context }, base, config, {
+  return new BaseStackable(name, version, base, config, context, {
     stdout: new MockedWritable(),
     stderr: new MockedWritable()
   })
@@ -109,13 +100,13 @@ export function setAdditionalDependencies (dependencies) {
 }
 
 // This is used to debug tests
-export function pause (t, url, root, timeout) {
+export function pause (t, url, timeout) {
   if (timeout && typeof timeout !== 'number') {
     timeout = DEFAULT_PAUSE_TIMEOUT
   }
 
   console.log(
-    `--- Pausing on test "${t.name}" - Server is listening at ${url.replace('[::]', '127.0.0.1')}/ (located at ${root}). Press any key to resume ...`
+    `--- Pausing on test "${t.name}" - Server is listening at ${url.replace('[::]', '127.0.0.1')}/. Press any key to resume ...`
   )
 
   return new Promise(resolve => {
@@ -141,7 +132,7 @@ export async function updateFile (path, update) {
 export async function ensureDependencies (configOrPaths) {
   const paths = Array.isArray(configOrPaths)
     ? configOrPaths
-    : [configOrPaths.configManager.dirname, ...configOrPaths.configManager.current.services.map(s => s.path)]
+    : [configOrPaths[kMetadata].root, ...configOrPaths.services.map(s => s.path)]
   const require = createRequire(import.meta.url)
 
   // Make sure dependencies are symlinked
@@ -280,6 +271,7 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
     port = await getPort.default()
   }
 
+  const originalCwd = process.cwd()
   const root = resolve(temporaryFolder, basename(source) + '-' + Date.now())
   currentWorkingDirectory = root
 
@@ -289,58 +281,31 @@ export async function prepareRuntime (t, fixturePath, production, configFile, ad
   // Copy the fixtures
   await cp(source, root, { recursive: true })
 
-  // Init the runtime
-  const configFilePath = resolve(root, configFile)
-  const args = ['-c', configFilePath]
+  const rawConfig = await loadConfiguration(root, configFile, { production, allowMissingEntrypoint: true })
 
-  if (production) {
-    args.push('--production')
-  }
-
-  // Ensure the dependencies
   await ensureDependencies([root])
-
-  let config = await loadConfig({}, args, platformaticRuntime)
-
-  if (additionalSetup) {
-    const oldContents = await readFile(configFilePath, 'utf-8')
-    await additionalSetup(root, config, args)
-    const newContents = await readFile(configFilePath, 'utf-8')
-
-    if (newContents !== oldContents) {
-      config = await loadConfig({}, args, platformaticRuntime)
-    }
-  }
-
-  // Ensure the dependencies
-  await ensureDependencies(config)
-
-  // Assign the port
-  if (typeof port === 'number') {
-    config.configManager.current.server = { port }
-  }
-
-  // Build the runtime if needed
-  if (build) {
-    await buildRuntime(root)
-  }
-
-  return { root, config, args }
-}
-
-export async function startRuntime (t, root, config, pauseAfterCreation = false, servicesToBuild = false) {
-  const originalCwd = process.cwd()
+  await ensureDependencies(rawConfig)
 
   process.chdir(root)
-  const runtime = await buildServer(config.configManager.current, config.args)
+  const runtime = await createPlaformaticRuntime(root, configFile, {
+    production,
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      // Assign the port
+      if (typeof port === 'number') {
+        config.server = { port }
+      }
 
-  if (Array.isArray(servicesToBuild)) {
-    for (const service of servicesToBuild) {
-      await runtime.buildService(service)
+      return config
     }
-  }
+  })
 
-  const url = await runtime.start()
+  const config = await runtime.getRuntimeConfig(true)
+  await additionalSetup?.(root, config)
+
+  // Ensure dependencies again for updated config
+  await ensureDependencies(config)
+  process.chdir(originalCwd)
 
   t.after(async () => {
     process.chdir(originalCwd)
@@ -348,11 +313,30 @@ export async function startRuntime (t, root, config, pauseAfterCreation = false,
     await safeRemove(root)
   })
 
-  if (pauseAfterCreation) {
-    await pause(t, url, root, pauseAfterCreation)
+  // Build the runtime if needed
+  if (build) {
+    await buildRuntime(root)
   }
 
-  return { runtime, url: url.replace('[::]', '127.0.0.1'), root }
+  return { runtime, root, config }
+}
+
+export async function startRuntime (t, runtime, pauseAfterCreation = false, servicesToBuild = false) {
+  if (Array.isArray(servicesToBuild)) {
+    await runtime.init()
+
+    for (const service of servicesToBuild) {
+      await runtime.buildService(service)
+    }
+  }
+
+  const url = await runtime.start()
+
+  if (pauseAfterCreation) {
+    await pause(t, url, pauseAfterCreation)
+  }
+
+  return url.replace('[::]', '127.0.0.1')
 }
 
 export async function createRuntime (
@@ -363,14 +347,16 @@ export async function createRuntime (
   configFile = 'platformatic.runtime.json',
   additionalSetup = null
 ) {
-  const { root, config } = await prepareRuntime(t, fixturePath, production, configFile, additionalSetup)
+  const { runtime, root, config } = await prepareRuntime(t, fixturePath, production, configFile, additionalSetup)
 
   if (t.constructor.name !== 'TestContext') {
     pauseAfterCreation = t.pauseAfterCreation ?? pauseAfterCreation
     t = t.t
   }
 
-  return startRuntime(t, root, config, pauseAfterCreation)
+  const url = await startRuntime(t, runtime, pauseAfterCreation)
+
+  return { runtime, root, config, url }
 }
 
 export async function createProductionRuntime (
@@ -510,8 +496,8 @@ export async function verifyHTMLViaInject (app, serviceId, url, contents) {
 }
 
 export async function verifyHMR (baseUrl, path, protocol, handler) {
-  const connection = withResolvers()
-  const reload = withResolvers()
+  const connection = Promise.withResolvers()
+  const reload = Promise.withResolvers()
   const ac = new AbortController()
   const timeout = sleep(HMR_TIMEOUT, kTimeout, { signal: ac.signal })
 
@@ -643,7 +629,11 @@ export async function prepareRuntimeWithServices (
   additionalSetup
 ) {
   let args
-  const { root, config } = await prepareRuntime(t, configuration, production, null, async (root, config, _args) => {
+  const { runtime, root, config } = await prepareRuntime(t, configuration, production, null, async (
+    root,
+    config,
+    _args
+  ) => {
     for (const type of ['backend', 'composer']) {
       await cp(resolve(commonFixturesRoot, `${type}-${language}`), resolve(root, `services/${type}`), {
         recursive: true
@@ -665,7 +655,8 @@ export async function prepareRuntimeWithServices (
     await additionalSetup?.(root, config, args)
   }
 
-  return await startRuntime(t, root, config, pauseTimeout)
+  const url = await startRuntime(t, runtime, pauseTimeout)
+  return { runtime, root, config, url }
 }
 
 export async function verifyDevelopmentFrontendStandalone (
@@ -817,7 +808,7 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
       { todo },
       async t => {
         let args
-        const { root, config } = await prepareRuntime(t, id, true, null, async (root, config, _args) => {
+        const { runtime, root, config } = await prepareRuntime(t, id, true, null, async (root, config, _args) => {
           t.after(() => safeRemove(root))
 
           for (const type of ['backend', 'composer']) {
@@ -849,7 +840,7 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
           await additionalSetup?.(root, config, args)
         }
 
-        const { hostname: runtimeHost, port: runtimePort } = config.configManager.current.server ?? {}
+        const { hostname: runtimeHost, port: runtimePort } = config.server ?? {}
 
         // Build
         await buildRuntime(root)
@@ -860,7 +851,7 @@ export function verifyBuildAndProductionMode (configurations, pauseTimeout) {
         }
 
         // Start the runtime
-        const { runtime, url } = await startRuntime(t, root, config, pauseTimeout)
+        const url = await startRuntime(t, runtime, pauseTimeout)
 
         if (runtimeHost) {
           const actualHost = new URL(url).hostname
@@ -885,17 +876,17 @@ export async function verifyReusePort (t, configuration, integrityCheck) {
   const port = await getPort.default()
 
   // Create the runtime
-  const { root, config } = await prepareRuntime(t, configuration, true, null, (_, config) => {
-    config.configManager.current.server = { port }
-    config.configManager.current.services[0].workers = 5
-    config.configManager.current.preload = fileURLToPath(new URL('./helper-reuse-port.js', import.meta.url))
+  const { runtime, root } = await prepareRuntime(t, configuration, true, null, (_, config) => {
+    config.server = { port }
+    config.services[0].workers = 5
+    config.preload = fileURLToPath(new URL('./helper-reuse-port.js', import.meta.url))
   })
 
   // Build
   await buildRuntime(root)
 
   // Start the runtime
-  const { url } = await startRuntime(t, root, config)
+  const url = await startRuntime(t, runtime)
 
   deepStrictEqual(url, `http://127.0.0.1:${port}`)
 

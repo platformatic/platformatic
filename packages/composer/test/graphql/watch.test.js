@@ -1,11 +1,9 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { once } = require('node:events')
-const { test } = require('node:test')
-const path = require('node:path')
-const dedent = require('dedent')
-const { createGraphqlService, createComposerInRuntime, checkSchema, waitForRestart } = require('../helper')
+import dedent from 'dedent'
+import assert from 'node:assert/strict'
+import { once } from 'node:events'
+import path from 'node:path'
+import { test } from 'node:test'
+import { checkSchema, createComposerInRuntime, createGraphqlService, waitForRestart } from '../helper.js'
 
 const REFRESH_TIMEOUT = 1000
 
@@ -67,11 +65,11 @@ test('composer should restart and update schema if one of the services shuts dow
     schema: 'type Query { dice: Int }',
     resolvers: { Query: { dice: () => Math.floor(Math.random() * 6) + 1 } },
     extend: {
-      file: path.join(__dirname, 'fixtures', 'hello.js')
+      file: path.join(import.meta.dirname, 'fixtures', 'hello.js')
     }
   })
   const graphql2 = await createGraphqlService(t, {
-    file: path.join(__dirname, 'fixtures', 'dogs.js')
+    file: path.join(import.meta.dirname, 'fixtures', 'dogs.js')
   })
 
   const supergraph1 = dedent`type Query {
@@ -211,7 +209,7 @@ test('should not watch when refreshTimeout is 0', async t => {
     resolvers: { Query: { cheatingDice: () => 3 } }
   })
   const graphql2 = await createGraphqlService(t, {
-    file: path.join(__dirname, 'fixtures', 'dogs.js')
+    file: path.join(import.meta.dirname, 'fixtures', 'dogs.js')
   })
 
   const supergraph1 = dedent`type Query {

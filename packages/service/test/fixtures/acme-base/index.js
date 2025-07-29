@@ -1,14 +1,10 @@
+import { kMetadata } from '@platformatic/utils'
 import { lstat } from 'node:fs/promises'
 import { join } from 'node:path'
-import {
-  create as createService,
-  platformaticService,
-  transformConfig as serviceTransformConfig
-} from '../../../index.js'
+import { create as createService, platformaticService, transform as serviceTransform } from '../../../index.js'
 import dynamite from './lib/dynamite.js'
 import { schema } from './lib/schema.js'
 
-export { configManagerConfig } from '../../../index.js'
 export { schema } from './lib/schema.js'
 
 async function isDirectory (path) {
@@ -29,11 +25,9 @@ export default async function acmeBase (app, stackable) {
 
 acmeBase[Symbol.for('skip-override')] = true
 
-export const configType = 'acmeBase'
-
-export async function transformConfig () {
+export async function transform (config) {
   // Call the transformConfig method from the base stackable
-  serviceTransformConfig.call(this)
+  config = await serviceTransform(config)
 
   // In this method you can alter the configuration before the application
   // is started. It's useful to apply some defaults that cannot be derived
@@ -41,7 +35,7 @@ export async function transformConfig () {
 
   const paths = []
 
-  const pluginsDir = join(this.dirname, 'plugins')
+  const pluginsDir = join(config[kMetadata].root, 'plugins')
 
   if (await isDirectory(pluginsDir)) {
     paths.push({
@@ -50,7 +44,7 @@ export async function transformConfig () {
     })
   }
 
-  const routesDir = join(this.dirname, 'routes')
+  const routesDir = join(config[kMetadata].root, 'routes')
 
   if (await isDirectory(routesDir)) {
     paths.push({
@@ -58,15 +52,14 @@ export async function transformConfig () {
     })
   }
 
-  this.current.plugins = {
-    paths
-  }
+  config.plugins = { paths }
 
-  if (!this.current.server?.openapi) {
-    if (typeof this.current.service !== 'object') {
-      this.current.service = {}
+  if (!config.server?.openapi) {
+    if (typeof config.service !== 'object') {
+      config.service = {}
     }
-    this.current.service.openapi = {
+
+    config.service.openapi = {
       info: {
         title: 'Acme Microservice',
         description: 'A microservice for Acme Inc.',
@@ -74,13 +67,14 @@ export async function transformConfig () {
       }
     }
   }
+
+  return config
 }
 
 export async function create (opts) {
-  return createService(
-    process.cwd(),
-    opts,
-    {},
-    { schema, applicationFactory: acmeBase, configManagerConfig: { transformConfig } }
-  )
+  return createService(process.cwd(), opts, {
+    schema,
+    applicationFactory: acmeBase,
+    transform
+  })
 }

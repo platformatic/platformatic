@@ -203,7 +203,7 @@ async function managementApiPlugin (app, opts) {
   })
 }
 
-async function startManagementApi (runtime, configManager) {
+async function startManagementApi (runtime, root) {
   const runtimePID = process.pid
 
   try {
@@ -212,7 +212,7 @@ async function startManagementApi (runtime, configManager) {
       await createDirectory(runtimePIDDir, true)
     }
 
-    const runtimeLogsDir = getRuntimeLogsDir(configManager.dirname, process.pid)
+    const runtimeLogsDir = getRuntimeLogsDir(root, process.pid)
     await createDirectory(runtimeLogsDir, true)
 
     let socketPath = null

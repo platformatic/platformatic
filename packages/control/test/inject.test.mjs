@@ -1,8 +1,7 @@
 'use strict'
 
-import { buildServer } from '@platformatic/runtime'
+import { create } from '@platformatic/runtime'
 import { safeRemove } from '@platformatic/utils'
-import * as desm from 'desm'
 import { execa } from 'execa'
 import assert, { deepStrictEqual } from 'node:assert'
 import { readFile } from 'node:fs/promises'
@@ -10,13 +9,13 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { test } from 'node:test'
 
-const cliPath = desm.join(import.meta.url, '..', 'control.js')
-const fixturesDir = desm.join(import.meta.url, 'fixtures')
+const cliPath = join(import.meta.dirname, '..', 'control.js')
+const fixturesDir = join(import.meta.dirname, 'fixtures')
 
 test('should inject runtime entrypoint by pid', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -36,7 +35,7 @@ test('should inject runtime entrypoint by pid', async t => {
 test('should inject runtime service by pid', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -56,7 +55,7 @@ test('should inject runtime service by pid', async t => {
 test('should inject runtime service with headers and body', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -109,7 +108,7 @@ test('should inject runtime service with headers and body', async t => {
 test('should inject runtime service with output to the file', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
   const tmpFilePath = join(tmpdir(), 'plt-control-inject-output')
 
   await app.start()
@@ -169,7 +168,7 @@ test('should inject runtime service with output to the file', async t => {
 test('should inject runtime service with --verbose option', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -229,7 +228,7 @@ test('inject - should use the same shared memory HTTP cache of the runtime', asy
   const projectDir = join(fixturesDir, 'runtime-3')
 
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
 
   await app.start()
 

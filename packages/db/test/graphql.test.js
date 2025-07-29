@@ -1,10 +1,8 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { request } = require('undici')
-const { createFromConfig, getConnectionInfo } = require('./helper')
+import assert from 'node:assert/strict'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createFromConfig, getConnectionInfo } from './helper.js'
 
 test('extend schema via config', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
@@ -28,10 +26,10 @@ test('extend schema via config', async t => {
       }
     },
     migrations: {
-      dir: join(__dirname, 'fixtures', 'migrations')
+      dir: join(import.meta.dirname, 'fixtures', 'migrations')
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'name-resolver.js')]
+      paths: [join(import.meta.dirname, 'fixtures', 'name-resolver.js')]
     }
   })
 
@@ -80,11 +78,11 @@ test('extend schema via path', async t => {
     db: {
       ...connectionInfo,
       graphql: {
-        schemaPath: join(__dirname, 'fixtures', 'names.graphql')
+        schemaPath: join(import.meta.dirname, 'fixtures', 'names.graphql')
       }
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'name-resolver.js')]
+      paths: [join(import.meta.dirname, 'fixtures', 'name-resolver.js')]
     }
   })
 

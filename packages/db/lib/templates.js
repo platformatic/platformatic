@@ -1,6 +1,4 @@
-'use strict'
-
-const jsHelperSqlite = {
+export const jsHelperSqlite = {
   requires: `
 const os = require('node:os')
 const path = require('node:path')
@@ -24,7 +22,7 @@ let counter = 0
 `
 }
 
-function jsHelperPostgres (connectionString) {
+export function jsHelperPostgres (connectionString) {
   return {
     // TODO(mcollina): replace sql-mapper
     requires: `
@@ -66,7 +64,7 @@ let counter = 0
   }
 }
 
-function jsHelperMySQL (connectionString) {
+export function jsHelperMySQL (connectionString) {
   return {
     // TODO(mcollina): replace sql-mapper
     requires: `
@@ -108,7 +106,7 @@ let counter = 0
   }
 }
 
-const moviesTestJS = `\
+export const moviesTestJS = `\
 'use strict'
 
 const test = require('node:test')
@@ -160,7 +158,7 @@ test('movies', async (t) => {
 })
 `
 
-const moviesTestTS = `\
+export const moviesTestTS = `\
 import test from 'node:test'
 import assert from 'node:assert'
 import { getServer } from '../helper'
@@ -210,7 +208,7 @@ test('movies', async (t) => {
 })
 `
 
-const README = `
+export const README = `
 # Platformatic DB API
 
 This is a generated [Platformatic DB](https://docs.platformatic.dev/docs/db/overview) application.
@@ -249,12 +247,3 @@ npm start
 - 🔍 Try out the GraphiQL web UI at http://localhost:3042/graphiql
 
 `
-
-module.exports = {
-  jsHelperMySQL,
-  jsHelperPostgres,
-  jsHelperSqlite,
-  moviesTestJS,
-  moviesTestTS,
-  README
-}

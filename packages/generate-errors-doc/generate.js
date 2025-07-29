@@ -8,7 +8,6 @@ const modules = [
   '@platformatic/client',
   '@platformatic/client-cli',
   '@platformatic/composer',
-  '@platformatic/config',
   '@platformatic/db',
   '@platformatic/db-authorization',
   '@platformatic/db-core',
@@ -20,24 +19,31 @@ const modules = [
   '@platformatic/sql-events',
   '@platformatic/sql-json-schema-mapper',
   '@platformatic/telemetry',
-  '@platformatic/utils',
+  '@platformatic/utils'
 ]
 
-const extractErrors = (module) => {
+function extractErrors (module) {
   const { errors } = module
   const ret = []
   for (const error in errors) {
     const ErrorFunc = errors[error]
-    const err = new ErrorFunc()
-    const code = err.code
-    const fastifyErrorHeader = `FastifyError [${code}]:`
-    const message = err.toString().replace(fastifyErrorHeader, '').trim()
-    ret.push({ code, message })
+
+    try {
+      const err = new ErrorFunc()
+      const code = err.code
+
+      if (!code) {
+        continue
+      }
+      const fastifyErrorHeader = `FastifyError [${code}]:`
+      const message = err.toString().replace(fastifyErrorHeader, '').trim()
+      ret.push({ code, message })
+    } catch (err) {}
   }
   return ret
 }
 
-const createErrorsMD = (errorsByModule) => {
+function createErrorsMD (errorsByModule) {
   const md = []
   md.push('# Platformatic Errors \n')
   for (const module in errorsByModule) {
@@ -56,14 +62,14 @@ const createErrorsMD = (errorsByModule) => {
   return md.join('\n')
 }
 
-const generateErrorsMDFile = async (errorsByModule) => {
+async function generateErrorsMDFile (errorsByModule) {
   const errorsMd = createErrorsMD(errorsByModule)
   const mdPath = join(__dirname, '..', '..', 'docs', 'packages', 'errors.md')
   await writeFile(mdPath, errorsMd)
   console.log(`Errors documentation file generated at ${mdPath}`)
 }
 
-const getErrorsByModule = async (modules) => {
+async function getErrorsByModule (modules) {
   const errorsByModule = {}
   for (const module of modules) {
     let mod
@@ -71,7 +77,7 @@ const getErrorsByModule = async (modules) => {
       mod = require(module)
     } catch (err) {
       if (err.code === 'ERR_REQUIRE_ESM') {
-        mod = await await import(module)
+        mod = await import(module)
       } else {
         throw err
       }
@@ -82,7 +88,7 @@ const getErrorsByModule = async (modules) => {
   return errorsByModule
 }
 
-const generate = async (modules) => {
+async function generate (modules) {
   const errorsByModule = await getErrorsByModule(modules)
   await generateErrorsMDFile(errorsByModule)
 }

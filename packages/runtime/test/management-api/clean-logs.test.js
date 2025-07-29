@@ -7,7 +7,7 @@ const { readdir } = require('node:fs/promises')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { getRuntimeTmpDir, getRuntimeLogsDir } = require('../../lib/utils')
 
-const { buildServer } = require('../..')
+const { create } = require('../..')
 const { safeRemove } = require('@platformatic/utils')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { setLogFile } = require('../helpers')
@@ -21,7 +21,7 @@ test('should clean the logs after reaching a limit', async t => {
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await safeRemove(runtimeTmpDir)
 
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
   await app.start()
 
   t.after(async () => {
@@ -31,7 +31,7 @@ test('should clean the logs after reaching a limit', async t => {
 
   const res = await app.inject('service-1', {
     method: 'GET',
-    url: '/large-logs',
+    url: '/large-logs'
   })
   assert.strictEqual(res.statusCode, 200)
 

@@ -6,12 +6,14 @@
     }
   },
   "plugins": {
-    "paths": [{
-      "path": "plugin.js",
-      "encapsulate": false,
-      "options": {
-        "externalService": "{{PLT_EXTERNAL_SERVICE}}"
+    "paths": [
+      {
+        "path": "plugin.js",
+        "encapsulate": false,
+        "options": {
+          "externalService": "{{PLT_EXTERNAL_SERVICE}}"
+        }
       }
-    }]
+    ]
   }
 }

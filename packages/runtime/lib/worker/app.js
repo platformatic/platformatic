@@ -7,13 +7,27 @@ const {
   performance: { eventLoopUtilization }
 } = require('node:perf_hooks')
 const { workerData } = require('node:worker_threads')
-const { ConfigManager } = require('@platformatic/config')
-const { FileWatcher } = require('@platformatic/utils')
+const {
+  FileWatcher,
+  listRecognizedConfigurationFiles,
+  loadConfigurationModule,
+  loadConfiguration
+} = require('@platformatic/utils')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
 const debounce = require('debounce')
 
 const errors = require('../errors')
-const { getServiceUrl, loadConfig, loadEmptyConfig } = require('../utils')
+const { getServiceUrl } = require('../utils')
+
+function fetchServiceUrl (service, key) {
+  if (service.localServiceEnvVars.has(key)) {
+    return service.localServiceEnvVars.get(key)
+  } else if (!key.endsWith('_URL') || !service.id) {
+    return null
+  }
+
+  return getServiceUrl(service.id)
+}
 
 class PlatformaticApp extends EventEmitter {
   #starting
@@ -59,7 +73,8 @@ class PlatformaticApp extends EventEmitter {
       serverConfig,
       worker: workerData?.worker,
       hasManagementApi: !!hasManagementApi,
-      localServiceEnvVars: this.appConfig.localServiceEnvVars
+      localServiceEnvVars: this.appConfig.localServiceEnvVars,
+      fetchServiceUrl: fetchServiceUrl.bind(null, appConfig)
     }
   }
 
@@ -83,50 +98,33 @@ class PlatformaticApp extends EventEmitter {
   async init () {
     try {
       const appConfig = this.appConfig
-      let loadedConfig
+
+      if (appConfig.isProduction && !process.env.NODE_ENV) {
+        process.env.NODE_ENV = 'production'
+      }
 
       // Before returning the base application, check if there is any file we recognize
       // and the user just forgot to specify in the configuration.
       if (!appConfig.config) {
-        const candidate = ConfigManager.listConfigFiles().find(f => existsSync(resolve(appConfig.path, f)))
+        const candidate = listRecognizedConfigurationFiles().find(f => existsSync(resolve(appConfig.path, f)))
 
         if (candidate) {
           appConfig.config = resolve(appConfig.path, candidate)
         }
       }
 
-      if (!appConfig.config) {
-        loadedConfig = await loadEmptyConfig(
-          appConfig.path,
-          {
-            onMissingEnv: this.#fetchServiceUrl,
-            context: appConfig
-          },
-          true
-        )
+      if (appConfig.config) {
+        // Parse the configuration file the first time to obtain the schema
+        const unvalidatedConfig = await loadConfiguration(appConfig.config, null, {
+          onMissingEnv: this.#context.fetchServiceUrl
+        })
+        const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)
+        this.stackable = await pkg.create(appConfig.path, appConfig.config, this.#context)
+        // We could not find a configuration file, we use the bundle @platformatic/basic with the runtime to load it
       } else {
-        loadedConfig = await loadConfig(
-          {},
-          ['-c', appConfig.config],
-          {
-            onMissingEnv: this.#fetchServiceUrl,
-            context: appConfig
-          },
-          true
-        )
+        const pkg = await loadConfigurationModule(resolve(__dirname, '../..'), {}, '@platformatic/basic')
+        this.stackable = await pkg.create(appConfig.path, {}, this.#context)
       }
-
-      const app = loadedConfig.app
-
-      if (appConfig.isProduction && !process.env.NODE_ENV) {
-        process.env.NODE_ENV = 'production'
-      }
-
-      this.stackable = await app.buildStackable({
-        onMissingEnv: this.#fetchServiceUrl,
-        config: this.appConfig.config,
-        context: this.#context
-      })
 
       this.#updateDispatcher()
     } catch (err) {
@@ -167,6 +165,7 @@ class PlatformaticApp extends EventEmitter {
     }
 
     const listen = !!this.appConfig.useHttp
+
     try {
       await this.stackable.start({ listen })
       this.#listening = listen
@@ -221,16 +220,6 @@ class PlatformaticApp extends EventEmitter {
       heapUsed,
       heapTotal
     }
-  }
-
-  #fetchServiceUrl (key, { parent, context: service }) {
-    if (service.localServiceEnvVars.has(key)) {
-      return service.localServiceEnvVars.get(key)
-    } else if (!key.endsWith('_URL') || !parent.serviceId) {
-      return null
-    }
-
-    return getServiceUrl(parent.serviceId)
   }
 
   #startFileWatching (watch) {

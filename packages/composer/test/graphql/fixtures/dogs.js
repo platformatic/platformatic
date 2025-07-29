@@ -3,10 +3,10 @@
 const dogs = [
   { id: 1, name: 'Buddy' },
   { id: 2, name: 'Duke' },
-  { id: 3, name: 'Bella' },
+  { id: 3, name: 'Bella' }
 ]
 
-module.exports = {
+export default {
   schema: `
   type Query {
     dogs: [Dog]!
@@ -35,7 +35,7 @@ module.exports = {
   resolvers: {
     Query: {
       dog: (_, { id }) => dogs.find(d => d.id === id),
-      dogs: () => dogs,
+      dogs: () => dogs
     },
     Mutation: {
       createDog: (_, { dog }) => {
@@ -54,7 +54,7 @@ module.exports = {
           dogs.splice(i, 1)
         }
         return id
-      },
-    },
-  },
+      }
+    }
+  }
 }

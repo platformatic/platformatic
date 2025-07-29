@@ -1,35 +1,124 @@
 'use strict'
 
+const { join, resolve: resolvePath, isAbsolute } = require('node:path')
 const { readdir } = require('node:fs/promises')
 const { createRequire } = require('node:module')
-const { join, resolve: pathResolve, isAbsolute } = require('node:path')
+const { importStackableAndConfig, validationOptions } = require('@platformatic/basic')
 const {
-  loadModule,
+  kMetadata,
   omitProperties,
-  schemaComponents: { runtimeUnwrappablePropertiesList }
+  loadModule,
+  runtimeUnwrappablePropertiesList,
+  findConfigurationFile,
+  loadConfigurationModule,
+  loadConfiguration,
+  extractModuleFromSchemaUrl
 } = require('@platformatic/utils')
-const ConfigManager = require('@platformatic/config')
-const { Store } = require('@platformatic/config')
-
-const errors = require('./errors')
+const {
+  InspectAndInspectBrkError,
+  InvalidEntrypointError,
+  InvalidServicesWithWebError,
+  MissingEntrypointError,
+  InspectorPortError,
+  InspectorHostError
+} = require('./errors')
 const { schema } = require('./schema')
-const upgrade = require('./upgrade')
-const { parseArgs } = require('node:util')
+const { upgrade } = require('./upgrade')
 
-async function _transformConfig (configManager, args) {
-  const config = configManager.current
+async function wrapInRuntimeConfig (config, context) {
+  let serviceId = 'main'
+  try {
+    const packageJson = join(config[kMetadata].root, 'package.json')
+    serviceId = require(packageJson).name || 'main'
 
-  const { values } = parseArgs({
-    args,
-    strict: false,
-    options: { production: { type: 'boolean', short: 'p', default: false } }
+    if (serviceId.startsWith('@')) {
+      serviceId = serviceId.split('/')[1]
+    }
+  } catch (err) {
+    // on purpose, the package.json might be missing
+  }
+
+  // If the service supports its (so far, only @platformatic/service and descendants)
+  const { hostname, port, http2, https } = config.server ?? {}
+  const server = { hostname, port, http2, https }
+  const production = context?.isProduction ?? context?.production
+
+  // Important: do not change the order of the properties in this object
+  /* c8 ignore next */
+  const wrapped = {
+    $schema: schema.$id,
+    server,
+    watch: !production,
+    ...omitProperties(config.runtime ?? {}, runtimeUnwrappablePropertiesList),
+    entrypoint: serviceId,
+    services: [
+      {
+        id: serviceId,
+        path: config[kMetadata].root,
+        config: config[kMetadata].path
+      }
+    ]
+  }
+
+  return loadConfiguration(wrapped, context?.schema ?? schema, {
+    validationOptions,
+    transform,
+    upgrade,
+    replaceEnv: true,
+    root: config[kMetadata].root,
+    ...context
   })
-  const production = values.production
+}
+
+function parseInspectorOptions (config, inspect, inspectBreak) {
+  const hasInspect = inspect != null
+  const hasInspectBrk = inspectBreak != null
+
+  if (hasInspect && hasInspectBrk) {
+    throw new InspectAndInspectBrkError()
+  }
+
+  const value = inspectBreak ?? inspect
+
+  if (!value) {
+    return
+  }
+
+  let host = '127.0.0.1'
+  let port = 9229
+
+  if (typeof value === 'string' && value.length > 0) {
+    const splitAt = value.lastIndexOf(':')
+
+    if (splitAt === -1) {
+      port = value
+    } else {
+      host = value.substring(0, splitAt)
+      port = value.substring(splitAt + 1)
+    }
+
+    port = Number.parseInt(port, 10)
+
+    if (!(port === 0 || (port >= 1024 && port <= 65535))) {
+      throw new InspectorPortError()
+    }
+
+    if (!host) {
+      throw new InspectorHostError()
+    }
+  }
+
+  config.inspectorOptions = { host, port, breakFirstLine: hasInspectBrk, watchDisabled: !!config.watch }
+  config.watch = false
+}
+
+async function transform (config, _, context) {
+  const production = context?.isProduction ?? context?.production
 
   let services
   if (config.web?.length) {
     if (config.services?.length) {
-      throw new errors.InvalidServicesWithWebError()
+      throw new InvalidServicesWithWebError()
     }
 
     services = config.web
@@ -48,12 +137,7 @@ async function _transformConfig (configManager, args) {
     const { exclude = [], mappings = {} } = config.autoload
     let { path } = config.autoload
 
-    // This is a hack, but it's the only way to not fix the paths for the autoloaded services
-    // while we are upgrading the config
-    if (configManager._fixPaths) {
-      path = pathResolve(configManager.dirname, path)
-    }
-
+    path = resolvePath(config[kMetadata].root, path)
     const entries = await readdir(path, { withFileTypes: true })
 
     for (let i = 0; i < entries.length; ++i) {
@@ -68,7 +152,7 @@ async function _transformConfig (configManager, args) {
       const entryPath = join(path, entry.name)
 
       let config
-      const configFilename = mapping.config ?? (await ConfigManager.findConfigFile(entryPath))
+      const configFilename = mapping.config ?? (await findConfigurationFile(entryPath))
 
       if (typeof configFilename === 'string') {
         config = join(entryPath, configFilename)
@@ -85,8 +169,9 @@ async function _transformConfig (configManager, args) {
     }
   }
 
-  configManager.current.serviceMap = new Map()
-  configManager.current.inspectorOptions = undefined
+  config.serviceMap = new Map()
+  config.inspectorOptions = undefined
+  parseInspectorOptions(config, context?.inspect, context?.inspectBreak)
 
   let hasValidEntrypoint = false
 
@@ -96,63 +181,44 @@ async function _transformConfig (configManager, args) {
     // We need to have absolute paths here, ot the `loadConfig` will fail
     // Make sure we don't resolve if env var was not replaced
     if (service.path && !isAbsolute(service.path) && !service.path.match(/^\{.*\}$/)) {
-      service.path = pathResolve(configManager.dirname, service.path)
+      service.path = resolvePath(config[kMetadata].root, service.path)
     }
 
-    if (configManager._fixPaths && service.path && service.config) {
-      service.config = pathResolve(service.path, service.config)
+    if (service.path && service.config) {
+      service.config = resolvePath(service.path, service.config)
     }
 
-    if (service.config) {
-      try {
-        const store = new Store({ cwd: service.path })
-        const serviceConfig = await store.loadConfig(service)
-        service.type = serviceConfig.app.configType
-        service.skipTelemetryHooks = serviceConfig.app.skipTelemetryHooks
-        const _require = createRequire(service.path)
-        // This is needed to work around Rust bug on dylibs:
-        // https://github.com/rust-lang/rust/issues/91979
-        // https://github.com/rollup/rollup/issues/5761
-        // TODO(mcollina): we should expose this inside every stackable configuration.
-        serviceConfig.app.modulesToLoad?.forEach(m => {
-          const toLoad = _require.resolve(m)
-          loadModule(_require, toLoad).catch(() => {})
-        })
-      } catch (err) {
-        // Fallback if for any reason a dependency is not found
-        try {
-          const manager = new ConfigManager({ source: pathResolve(service.path, service.config) })
-          await manager.parse()
-          const config = manager.current
-          const type = config.$schema ? ConfigManager.matchKnownSchema(config.$schema) : undefined
-          service.type = type
-          service.skipTelemetryHooks = config.skipTelemetryHooks
-        } catch (err) {
-          // This should not happen, it happens on running some unit tests if we prepare the runtime
-          // when not all the services configs are available. Given that we are running this only
-          // to ddetermine the type of the service, it's safe to ignore this error and default to unknown
-          service.type = 'unknown'
-        }
-      }
-    } else {
-      // We need to identify the service type
-      const basic = await import('@platformatic/basic')
+    try {
+      let pkg
 
-      try {
-        const { stackable } = await basic.importStackableAndConfig(service.path)
-        service.type = stackable.default.configType
-        const _require = createRequire(service.path)
-        // This is needed to work around Rust bug on dylibs:
-        // https://github.com/rust-lang/rust/issues/91979
-        // https://github.com/rollup/rollup/issues/5761
-        // TODO(mcollina): we should expose this inside every stackable configuration.
-        stackable.default.modulesToLoad?.forEach(m => {
-          const toLoad = _require.resolve(m)
-          loadModule(_require, toLoad).catch(() => {})
-        })
-      } catch {
-        // Nothing to do here
+      if (service.config) {
+        const config = await loadConfiguration(service.config)
+        pkg = await loadConfigurationModule(service.path, config)
+
+        service.type = extractModuleFromSchemaUrl(config, true).module
+        service.skipTelemetryHooks = pkg.skipTelemetryHooks
+      } else {
+        const { moduleName, stackable } = await importStackableAndConfig(service.path)
+        pkg = stackable
+
+        service.type = moduleName
       }
+
+      service.skipTelemetryHooks = pkg.skipTelemetryHooks
+
+      // This is needed to work around Rust bug on dylibs:
+      // https://github.com/rust-lang/rust/issues/91979
+      // https://github.com/rollup/rollup/issues/5761
+      const _require = createRequire(service.path)
+      for (const m of pkg.modulesToLoad ?? []) {
+        const toLoad = _require.resolve(m)
+        loadModule(_require, toLoad).catch(() => {})
+      }
+    } catch (err) {
+      // This should not happen, it happens on running some unit tests if we prepare the runtime
+      // when not all the services configs are available. Given that we are running this only
+      // to ddetermine the type of the service, it's safe to ignore this error and default to unknown
+      service.type = 'unknown'
     }
 
     service.entrypoint = service.id === config.entrypoint
@@ -168,7 +234,7 @@ async function _transformConfig (configManager, args) {
       hasValidEntrypoint = true
     }
 
-    configManager.current.serviceMap.set(service.id, service)
+    config.serviceMap.set(service.id, service)
   }
 
   // If there is no entrypoint, autodetect one
@@ -187,7 +253,7 @@ async function _transformConfig (configManager, args) {
           continue
         }
 
-        if (service.type === 'composer') {
+        if (service.type === '@platformatic/composer') {
           composers.push(service.id)
         }
       }
@@ -200,162 +266,38 @@ async function _transformConfig (configManager, args) {
     }
   }
 
-  if (!hasValidEntrypoint) {
+  if (!hasValidEntrypoint && !context.allowMissingEntrypoint) {
     if (config.entrypoint) {
-      throw new errors.InvalidEntrypointError(config.entrypoint)
+      throw new InvalidEntrypointError(config.entrypoint)
     } else if (services.length >= 1) {
-      throw new errors.MissingEntrypointError()
+      throw new MissingEntrypointError()
     }
     // If there are no services, and no entrypoint it's an empty app.
     // It won't start, but we should be able to parse and operate on it,
     // like adding other services.
   }
 
-  configManager.current.services = services
-  configManager.current.web = undefined
+  config.services = services
+  config.web = undefined
+  config.logger ??= {}
 
   if (production) {
     // Any value below 10 is considered as "immediate restart" and won't be processed via setTimeout or similar
     // Important: do not use 2 otherwise ajv will convert to boolean `true`
-    configManager.current.restartOnError = 2
+    config.restartOnError = 2
   } else {
-    if (configManager.current.restartOnError === true) {
-      configManager.current.restartOnError = 5000
-    } else if (configManager.current.restartOnError < 0) {
-      configManager.current.restartOnError = 0
+    if (config.restartOnError === true) {
+      config.restartOnError = 5000
+    } else if (config.restartOnError < 0) {
+      config.restartOnError = 0
     }
   }
-}
 
-async function platformaticRuntime () {
-  // No-op. Here for consistency with other app types.
-}
-
-platformaticRuntime[Symbol.for('skip-override')] = true
-platformaticRuntime.schema = schema
-platformaticRuntime.configType = 'runtime'
-platformaticRuntime.configManagerConfig = {
-  version: require('../package.json').version,
-  schema,
-  allowToWatch: ['.env'],
-  schemaOptions: {
-    useDefaults: true,
-    coerceTypes: true,
-    allErrors: true,
-    strict: false
-  },
-  async transformConfig (args) {
-    await _transformConfig(this, args)
-  },
-  upgrade
-}
-
-async function wrapConfigInRuntimeConfig ({ configManager, args, opts }) {
-  let serviceId = 'main'
-  try {
-    const packageJson = join(configManager.dirname, 'package.json')
-    serviceId = require(packageJson).name || 'main'
-    if (serviceId.startsWith('@')) {
-      serviceId = serviceId.split('/')[1]
-    }
-  } catch (err) {
-    // on purpose, the package.json might be missing
-  }
-
-  // If the service supports its (so far, only @platformatic/service and descendants)
-  const { hostname, port, http2, https } = configManager.current.server ?? {}
-  const server = { hostname, port, http2, https }
-
-  // Important: do not change the order of the properties in this object
-  /* c8 ignore next */
-  const wrapperConfig = {
-    $schema: schema.$id,
-    server,
-    watch: !args?.production,
-    ...omitProperties(configManager.current.runtime ?? {}, runtimeUnwrappablePropertiesList),
-    entrypoint: serviceId,
-    services: [
-      {
-        id: serviceId,
-        path: configManager.dirname,
-        config: configManager.fullPath
-      }
-    ]
-  }
-
-  const cm = new ConfigManager({
-    source: wrapperConfig,
-    schema,
-    schemaOptions: {
-      useDefaults: true,
-      coerceTypes: true,
-      allErrors: true,
-      strict: false
-    },
-    transformConfig (args) {
-      return _transformConfig(this, args)
-    }
-  })
-
-  await cm.parseAndValidate(true, [], opts)
-
-  return cm
-}
-
-function parseInspectorOptions (configManager) {
-  const { current, args } = configManager
-  const hasInspect = 'inspect' in args
-  const hasInspectBrk = 'inspect-brk' in args
-  let inspectFlag
-
-  if (hasInspect) {
-    inspectFlag = args.inspect
-
-    if (hasInspectBrk) {
-      throw new errors.InspectAndInspectBrkError()
-    }
-  } else if (hasInspectBrk) {
-    inspectFlag = args['inspect-brk']
-  }
-
-  if (inspectFlag !== undefined) {
-    let host = '127.0.0.1'
-    let port = 9229
-
-    if (typeof inspectFlag === 'string' && inspectFlag.length > 0) {
-      const splitAt = inspectFlag.lastIndexOf(':')
-
-      if (splitAt === -1) {
-        port = inspectFlag
-      } else {
-        host = inspectFlag.substring(0, splitAt)
-        port = inspectFlag.substring(splitAt + 1)
-      }
-
-      port = Number.parseInt(port, 10)
-
-      if (!(port === 0 || (port >= 1024 && port <= 65535))) {
-        throw new errors.InspectorPortError()
-      }
-
-      if (!host) {
-        throw new errors.InspectorHostError()
-      }
-    }
-
-    current.inspectorOptions = {
-      host,
-      port,
-      breakFirstLine: hasInspectBrk,
-      watchDisabled: !!current.watch
-    }
-
-    current.watch = false
-  }
+  return config
 }
 
 module.exports = {
+  wrapInRuntimeConfig,
   parseInspectorOptions,
-  platformaticRuntime,
-  wrapConfigInRuntimeConfig
+  transform
 }

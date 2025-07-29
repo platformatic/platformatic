@@ -6,10 +6,10 @@
   },
   "server": {
     "hostname": "127.0.0.1",
-    "port": "{PORT}",
-    "logger": {
-      "level": "info"
-    }
+    "port": "{PORT}"
+  },
+  "logger": {
+    "level": "info"
   },
   "restartOnError": 1000
 }

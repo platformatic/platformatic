@@ -1,8 +1,6 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { graphqlRequest, createFromConfig, startDatabaseServices } = require('../helper')
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { createFromConfig, graphqlRequest, startDatabaseServices } from '../helper.js'
 
 function toComposerConfig (services, entities = {}) {
   return {

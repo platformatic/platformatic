@@ -1,10 +1,8 @@
-'use strict'
-
-const assert = require('assert')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { platformaticService } = require('..')
-const { createFromConfig } = require('./helper')
+import assert from 'assert'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { platformaticService } from '../index.js'
+import { createFromConfig } from './helper.js'
 
 test('CORS is disabled by default', async t => {
   const app = await createFromConfig(

@@ -5,42 +5,48 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
 
-const { buildServer } = require('../..')
+const { create } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { setLogFile } = require('../helpers')
 
 test.beforeEach(setLogFile)
 
-test('should get the runtime process env', async (t) => {
+test('should get the runtime process env', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
 
   await app.start()
 
-  const client = new Client({
-    hostname: 'localhost',
-    protocol: 'http:',
-  }, {
-    socketPath: app.getManagementApiUrl(),
-    keepAliveTimeout: 10,
-    keepAliveMaxTimeout: 10,
-  })
+  const client = new Client(
+    {
+      hostname: 'localhost',
+      protocol: 'http:'
+    },
+    {
+      socketPath: app.getManagementApiUrl(),
+      keepAliveTimeout: 10,
+      keepAliveMaxTimeout: 10
+    }
+  )
 
   t.after(async () => {
-    await Promise.all([
-      client.close(),
-      app.close(),
-    ])
+    await Promise.all([client.close(), app.close()])
   })
 
   const { statusCode, body } = await client.request({
     method: 'GET',
-    path: '/api/v1/env',
+    path: '/api/v1/env'
   })
 
   assert.strictEqual(statusCode, 200)
 
   const runtimeEnv = await body.json()
-  assert.deepEqual(runtimeEnv, process.env)
+
+  assert.deepEqual(runtimeEnv, {
+    ...process.env,
+    PLT_ROOT: projectDir,
+    PLT_DEV: 'true',
+    PLT_ENVIRONMENT: 'development'
+  })
 })

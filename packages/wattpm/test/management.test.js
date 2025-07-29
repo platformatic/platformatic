@@ -198,7 +198,7 @@ test('config - should list configuration for an application', async t => {
     services: [
       {
         id: 'alternative',
-        type: 'nodejs',
+        type: '@platformatic/node',
         path: alternativeServiceDir,
         config: resolve(alternativeServiceDir, 'watt.json'),
         useHttp: false,
@@ -210,7 +210,7 @@ test('config - should list configuration for an application', async t => {
       },
       {
         id: 'main',
-        type: 'nodejs',
+        type: '@platformatic/node',
         path: mainServiceDir,
         config: resolve(mainServiceDir, 'watt.json'),
         useHttp: false,
@@ -274,7 +274,8 @@ test('config - should list configuration for a service', async t => {
     },
     watch: {
       enabled: false
-    }
+    },
+    telemetry: {}
   })
 })
 

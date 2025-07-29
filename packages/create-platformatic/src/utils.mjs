@@ -1,11 +1,9 @@
-import * as desm from 'desm'
+import { findConfigurationFile } from '@platformatic/utils'
 import { execa } from 'execa'
 import { access, constants, readFile } from 'fs/promises'
 import { createRequire } from 'module'
 import { dirname, join, resolve } from 'path'
 import * as url from 'url'
-
-import ConfigManager from '@platformatic/config'
 
 export const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 export const randomBetween = (min, max) => Math.floor(Math.random() * (max - min + 1) + min)
@@ -16,7 +14,7 @@ const ansiCodes = {
   pltGreen: '\u001B[38;2;33;250;144m',
   bell: '\u0007',
   reset: '\u001b[0m',
-  erasePreviousLine: '\u001b[1K',
+  erasePreviousLine: '\u001b[1K'
 }
 
 export async function isFileAccessible (filename, directory) {
@@ -58,7 +56,7 @@ export const getUsername = async () => {
  */
 /* c8 ignore next 4 */
 export const getVersion = async () => {
-  const data = await readFile(desm.join(import.meta.url, '..', 'package.json'), 'utf8')
+  const data = await readFile(join(import.meta.dirname, '..', 'package.json'), 'utf8')
   return JSON.parse(data).version
 }
 
@@ -71,11 +69,11 @@ export async function isDirectoryWriteable (directory) {
   }
 }
 
-export const findConfigFile = async directory => ConfigManager.findConfigFile(directory)
-export const findDBConfigFile = async directory => ConfigManager.findConfigFile(directory, 'db')
-export const findServiceConfigFile = async directory => ConfigManager.findConfigFile(directory, 'service')
-export const findComposerConfigFile = async directory => ConfigManager.findConfigFile(directory, 'composer')
-export const findRuntimeConfigFile = async directory => ConfigManager.findConfigFile(directory, 'runtime')
+export const findConfigFile = async directory => findConfigurationFile(directory)
+export const findDBConfigFile = async directory => findConfigurationFile(directory, 'db')
+export const findServiceConfigFile = async directory => findConfigurationFile(directory, 'service')
+export const findComposerConfigFile = async directory => findConfigurationFile(directory, 'composer')
+export const findRuntimeConfigFile = async directory => findConfigurationFile(directory, 'runtime')
 
 /**
  * Gets the version of the specified dependency package from package.json

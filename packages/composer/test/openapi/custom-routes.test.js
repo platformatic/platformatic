@@ -1,11 +1,10 @@
-'use strict'
+import assert from 'node:assert/strict'
+import { join } from 'node:path'
+import test from 'node:test'
+import openAPISchemaValidator from 'openapi-schema-validator'
+import { createFromConfig, createOpenApiService, testEntityRoutes } from '../helper.js'
 
-const assert = require('node:assert/strict')
-const { join } = require('node:path')
-const { test } = require('node:test')
-const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
-const { createFromConfig, createOpenApiService, testEntityRoutes } = require('../helper')
-
+const OpenAPISchemaValidator = openAPISchemaValidator.default
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
 test('should add custom composer route to the composed schema', async t => {
@@ -30,7 +29,7 @@ test('should add custom composer route to the composed schema', async t => {
       ]
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'plugins', 'custom.js')]
+      paths: [join(import.meta.dirname, 'fixtures', 'plugins', 'custom.js')]
     }
   })
 

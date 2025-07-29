@@ -1,7 +1,6 @@
 'use strict'
 
 import { createDirectory, safeRemove } from '@platformatic/utils'
-import * as desm from 'desm'
 import assert from 'node:assert'
 import { createHash } from 'node:crypto'
 import { writeFile } from 'node:fs/promises'
@@ -11,9 +10,9 @@ import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import split from 'split2'
 import { RuntimeApiClient } from '../index.js'
-import { startRuntime, kill } from './helper.mjs'
+import { kill, startRuntime } from './helper.mjs'
 
-const fixturesDir = desm.join(import.meta.url, 'fixtures')
+const fixturesDir = join(import.meta.dirname, 'fixtures')
 
 test('should get runtime log indexes', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')

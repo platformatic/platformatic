@@ -3,15 +3,13 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('..')
+const { create } = require('../index.js')
 const fixturesDir = join(__dirname, '..', 'fixtures')
 
 test('preload', async t => {
   process.env.PORT = 0
   const configFile = join(fixturesDir, 'preload', 'platformatic.runtime.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
   const entryUrl = await app.start()
 
   t.after(() => {
@@ -29,8 +27,7 @@ test('preload', async t => {
 test('preload multiple', async t => {
   process.env.PORT = 0
   const configFile = join(fixturesDir, 'preload-multiple', 'platformatic-single-service.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
   const entryUrl = await app.start()
 
   t.after(() => {
@@ -48,8 +45,7 @@ test('preload multiple', async t => {
 test('preload multiple on runtime and preload multiple on services', async t => {
   process.env.PORT = 0
   const configFile = join(fixturesDir, 'preload-multiple', 'platformatic-multiple-service.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
   const entryUrl = await app.start()
 
   t.after(() => {

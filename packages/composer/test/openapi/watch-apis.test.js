@@ -1,15 +1,14 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { tmpdir } = require('node:os')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { writeFile, mkdtemp } = require('node:fs/promises')
-const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
-const { createComposerInRuntime, createOpenApiService, testEntityRoutes, waitForRestart } = require('../helper')
+import assert from 'node:assert/strict'
+import { mkdtemp, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import openAPISchemaValidator from 'openapi-schema-validator'
+import { createComposerInRuntime, createOpenApiService, testEntityRoutes, waitForRestart } from '../helper.js'
 
 const REFRESH_TIMEOUT = 1000
 
+const OpenAPISchemaValidator = openAPISchemaValidator.default
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
 test('should restart composer if api has been changed', async t => {
@@ -114,7 +113,7 @@ test('should watch api only if it has a url', async t => {
           id: 'api2',
           origin: 'http://127.0.0.1:' + api2.server.address().port,
           openapi: {
-            file: join(__dirname, 'fixtures', 'schemas', 'posts.json'),
+            file: join(import.meta.dirname, 'fixtures', 'schemas', 'posts.json'),
             prefix: '/api2'
           }
         }

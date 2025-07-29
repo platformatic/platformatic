@@ -1,6 +1,7 @@
 {
   "$id": "https://schemas.platformatic.dev/@platformatic/runtime/2.70.1.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Platformatic Runtime Config",
   "type": "object",
   "properties": {
     "$schema": {

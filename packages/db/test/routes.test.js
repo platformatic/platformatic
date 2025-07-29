@@ -1,11 +1,9 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { request } = require('undici')
-const { readFile } = require('node:fs/promises')
-const { createFromConfig, getConnectionInfo } = require('./helper')
+import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { createFromConfig, getConnectionInfo } from './helper.js'
 
 test('should respond 200 on root endpoint', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
@@ -73,7 +71,7 @@ test('should not overwrite a plugin which define a root endpoint', async t => {
       ...connectionInfo
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'root-endpoint-plugin.js')]
+      paths: [join(import.meta.dirname, 'fixtures', 'root-endpoint-plugin.js')]
     }
   })
 
@@ -135,7 +133,7 @@ test('should not overwrite a plugin which uses @fastify/static on root', async t
       ...connectionInfo
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'root-static.js')]
+      paths: [join(import.meta.dirname, 'fixtures', 'root-static.js')]
     }
   })
 
@@ -148,6 +146,6 @@ test('should not overwrite a plugin which uses @fastify/static on root', async t
   const res = await request(`${app.url}/`)
   assert.equal(res.statusCode, 200)
   const body = await res.body.text()
-  const expected = await readFile(join(__dirname, 'fixtures', 'hello', 'index.html'), 'utf8')
+  const expected = await readFile(join(import.meta.dirname, 'fixtures', 'hello', 'index.html'), 'utf8')
   assert.equal(body, expected)
 })

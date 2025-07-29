@@ -1,8 +1,6 @@
-'use strict'
-
-module.exports.migration = {
+export default {
   version: '0.28.0',
-  up: function (config) {
+  up (config) {
     if (config.watch !== false) {
       config.watch = typeof config.watch === 'object' ? config.watch : {}
 
@@ -15,5 +13,5 @@ module.exports.migration = {
     delete config.db?.dashboard
 
     return config
-  },
+  }
 }

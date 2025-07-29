@@ -1,43 +1,44 @@
-'use strict'
-
-const Swagger = require('@fastify/swagger')
-const deepmerge = require('@fastify/deepmerge')({ all: true })
-const fp = require('fastify-plugin')
+import Swagger from '@fastify/swagger'
+import { deepmerge } from '@platformatic/utils'
+import fp from 'fastify-plugin'
 
 // For some unknown reason, c8 is not detecting any of this
 // pf
 // despite being covered by test/routes.test.js
 /* c8 ignore next 33 */
-async function setupOpenAPI (app, opts) {
-  const { openapi } = opts
-  const openapiConfig = deepmerge({
-    exposeRoute: true,
-    info: {
-      title: 'Platformatic',
-      description: 'This is a service built on top of Platformatic',
-      version: '1.0.0',
+async function setupOpenAPIPlugin (app, options) {
+  const { openapi } = options
+  const openapiConfig = deepmerge(
+    {
+      exposeRoute: true,
+      info: {
+        title: 'Platformatic',
+        description: 'This is a service built on top of Platformatic',
+        version: '1.0.0'
+      },
+      servers: [{ url: globalThis.platformatic?.runtimeBasePath ?? '/' }]
     },
-    servers: [{ url: globalThis.platformatic?.runtimeBasePath ?? '/' }],
-  }, typeof openapi === 'object' ? openapi : {})
+    typeof openapi === 'object' ? openapi : {}
+  )
   app.log.trace({ openapi: openapiConfig })
   const swaggerOptions = {
     exposeRoute: openapiConfig.exposeRoute,
     openapi: {
-      ...openapiConfig,
+      ...openapiConfig
     },
     refResolver: {
       buildLocalReference (json, baseUri, fragment, i) {
         // TODO figure out if we need def-${i}
         /* istanbul ignore next */
         return json.$id || `def-${i}`
-      },
-    },
+      }
+    }
   }
 
   if (openapi.path) {
     swaggerOptions.mode = 'static'
     swaggerOptions.specification = {
-      path: openapi.path,
+      path: openapi.path
     }
   }
 
@@ -49,24 +50,32 @@ async function setupOpenAPI (app, opts) {
   const routePrefix = openapi.swaggerPrefix || '/documentation'
 
   /** Serve spec file in yaml and json */
-  app.get(`${routePrefix}/json`, {
-    schema: { hide: true },
-    logLevel: 'warn',
-  }, async () => app.swagger())
-  app.get(`${routePrefix}/yaml`, {
-    schema: { hide: true },
-    logLevel: 'warn',
-  }, async () => app.swagger({ yaml: true }))
+  app.get(
+    `${routePrefix}/json`,
+    {
+      schema: { hide: true },
+      logLevel: 'warn'
+    },
+    async () => app.swagger()
+  )
+  app.get(
+    `${routePrefix}/yaml`,
+    {
+      schema: { hide: true },
+      logLevel: 'warn'
+    },
+    async () => app.swagger({ yaml: true })
+  )
 
   app.register(scalarApiReference, {
-    ...opts,
+    ...options,
     ...openapi,
     routePrefix,
     publicPath: './',
     configuration: {
-      customCss: scalarTheme.theme,
-    },
+      customCss: scalarTheme.theme
+    }
   })
 }
 
-module.exports = fp(setupOpenAPI)
+export const setupOpenAPI = fp(setupOpenAPIPlugin)

@@ -16,7 +16,7 @@ import {
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))
 
 test('can properly show the logs the output', async t => {
-  const { root, config } = await prepareRuntime(t, 'composer-with-prefix', true, null, async root => {
+  const { runtime } = await prepareRuntime(t, 'composer-with-prefix', true, null, async root => {
     await updateFile(resolve(root, 'platformatic.runtime.json'), contents => {
       const json = JSON.parse(contents)
       json.workers = 3
@@ -32,7 +32,7 @@ test('can properly show the logs the output', async t => {
     })
   })
 
-  const { runtime, url } = await startRuntime(t, root, config, null, ['frontend'])
+  const url = await startRuntime(t, runtime, null, ['frontend'])
 
   {
     const { statusCode } = await request(url + '/frontend')

@@ -1,5 +1,5 @@
 {
-  "$schema": "./platformatic.db.schema.json",
+  "$schema": "https://schemas.platformatic.dev/@platformatic/db/v0.15.0.json",
   "server": {
     "hostname": "{PLT_SERVER_HOSTNAME}",
     "port": "{PORT}",
@@ -15,19 +15,22 @@
   },
   "authorization": {
     "adminSecret": "{PLT_ADMIN_SECRET}",
-    "rules": [{
-      "role": "anonymous",
-      "entity": "queue",
-      "find": false,
-      "save": false,
-      "delete": false
-    }, {
-      "role": "anonymous",
-      "entity": "message",
-      "find": false,
-      "save": false,
-      "delete": false
-    }]
+    "rules": [
+      {
+        "role": "anonymous",
+        "entity": "queue",
+        "find": false,
+        "save": false,
+        "delete": false
+      },
+      {
+        "role": "anonymous",
+        "entity": "message",
+        "find": false,
+        "save": false,
+        "delete": false
+      }
+    ]
   },
   "migrations": {
     "dir": "migrations"

@@ -1,28 +1,20 @@
-import { BaseStackable } from '@platformatic/basic'
-import type { ConfigManager } from '@platformatic/config'
-import { FastifyInstance } from 'fastify'
+import { kMetadata } from '@platformatic/utils'
 import { lstat } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { PlatformaticServiceConfig } from '../../../../../config.js'
 import {
   create as createService,
   platformaticService,
-  transformConfig as serviceTransformConfig
+  ServerInstance,
+  type PlatformaticServiceConfig as ServiceConfig,
+  ServiceStackable,
+  transform as serviceTransform
 } from '../../../../../index.js'
 
 import { type AcmeBaseConfig } from './config.js'
 import dynamite from './dynamite.js'
 import { schema } from './schema.js'
 
-export { configManagerConfig } from '../../../../../index.js'
 export { schema } from './schema.js'
-
-export interface AcmeBaseMixin {
-  platformatic: {
-    configManager: ConfigManager<AcmeBaseConfig>
-    config: AcmeBaseConfig
-  }
-}
 
 async function isDirectory (path: string) {
   try {
@@ -32,7 +24,10 @@ async function isDirectory (path: string) {
   }
 }
 
-export default async function acmeBase (app: FastifyInstance & AcmeBaseMixin, stackable: BaseStackable) {
+export default async function acmeBase (
+  app: ServerInstance<ServiceConfig & AcmeBaseConfig>,
+  stackable: ServiceStackable
+) {
   if (app.platformatic.config.dynamite) {
     app.register(dynamite)
   }
@@ -42,11 +37,9 @@ export default async function acmeBase (app: FastifyInstance & AcmeBaseMixin, st
 
 Object.assign(acmeBase, { [Symbol.for('skip-override')]: true })
 
-export const configType = 'acmeBase'
-
-export async function transformConfig (this: ConfigManager<PlatformaticServiceConfig & AcmeBaseConfig>) {
+export async function transform (config: ServiceConfig & AcmeBaseConfig): ServiceConfig & AcmeBaseConfig {
   // Call the transformConfig method from the base stackable
-  serviceTransformConfig.call(this)
+  config = await serviceTransform(config)
 
   // In this method you can alter the configuration before the application
   // is started. It's useful to apply some defaults that cannot be derived
@@ -54,7 +47,7 @@ export async function transformConfig (this: ConfigManager<PlatformaticServiceCo
 
   const paths = []
 
-  const pluginsDir = resolve(this.dirname, 'plugins')
+  const pluginsDir = resolve(config[kMetadata].root, 'plugins')
 
   if (await isDirectory(pluginsDir)) {
     paths.push({
@@ -63,7 +56,7 @@ export async function transformConfig (this: ConfigManager<PlatformaticServiceCo
     })
   }
 
-  const routesDir = resolve(this.dirname, 'routes')
+  const routesDir = resolve(config[kMetadata].root, 'routes')
 
   if (await isDirectory(routesDir)) {
     paths.push({
@@ -71,15 +64,13 @@ export async function transformConfig (this: ConfigManager<PlatformaticServiceCo
     })
   }
 
-  this.current.plugins = {
-    paths
-  }
+  config.plugins = { paths }
 
-  if (!this.current.service?.openapi) {
-    if (typeof this.current.service !== 'object') {
-      this.current.service = {}
+  if (!config.service?.openapi) {
+    if (typeof config.service !== 'object') {
+      config.service = {}
     }
-    this.current.service.openapi = {
+    config.service.openapi = {
       info: {
         title: 'Acme Microservice',
         description: 'A microservice for Acme Inc.',
@@ -87,13 +78,10 @@ export async function transformConfig (this: ConfigManager<PlatformaticServiceCo
       }
     }
   }
+
+  return config
 }
 
 export async function create (opts: object) {
-  return createService(
-    process.cwd(),
-    opts,
-    {},
-    { schema, applicationFactory: acmeBase, configManagerConfig: { transformConfig } }
-  )
+  return createService(process.cwd(), opts, { schema, applicationFactory: acmeBase, transform })
 }

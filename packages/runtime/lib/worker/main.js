@@ -11,7 +11,6 @@ const { ServerResponse } = require('node:http')
 
 const {
   disablePinoDirectWrite,
-  ensureFlushedWorkerStdio,
   executeWithTimeout,
   ensureLoggableError,
   getPrivateSymbol,
@@ -44,7 +43,6 @@ function handleUnhandled (app, type, err) {
 
 function patchLogging () {
   disablePinoDirectWrite()
-  ensureFlushedWorkerStdio()
 
   const kFormatForStderr = getPrivateSymbol(console, 'kFormatForStderr')
 

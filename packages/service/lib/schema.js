@@ -1,12 +1,18 @@
-#!/usr/bin/env node
+#! /usr/bin/env node
 
-'use strict'
+import {
+  fastifyServer as server,
+  schemaComponents as utilsSchemaComponents,
+  watch,
+  wrappedRuntime
+} from '@platformatic/utils'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
-const telemetry = require('@platformatic/telemetry').schema
-const { fastifyServer: server, cors, watch, wrappedRuntime } = require('@platformatic/utils').schemaComponents
-const packageJson = require('../package.json')
+export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
+export const version = packageJson.version
 
-const $defs = {
+export const $defs = {
   info: {
     $comment: 'https://spec.openapis.org/oas/v3.1.0#info-object',
     type: 'object',
@@ -996,7 +1002,7 @@ const $defs = {
   }
 }
 
-const plugins = {
+export const plugins = {
   type: 'object',
   properties: {
     packages: {
@@ -1137,7 +1143,7 @@ const plugins = {
   ]
 }
 
-const openApiBase = {
+export const openApiBase = {
   type: 'object',
   properties: {
     info: {
@@ -1198,7 +1204,7 @@ const openApiBase = {
   }
 }
 
-const openapi = {
+export const openapi = {
   anyOf: [
     {
       ...openApiBase,
@@ -1211,7 +1217,7 @@ const openapi = {
 }
 
 // same as composer/proxy
-const proxy = {
+export const proxy = {
   anyOf: [
     { type: 'boolean', const: false },
     {
@@ -1255,7 +1261,7 @@ const proxy = {
   ]
 }
 
-const graphqlBase = {
+export const graphqlBase = {
   type: 'object',
   properties: {
     graphiql: {
@@ -1265,7 +1271,7 @@ const graphqlBase = {
   additionalProperties: false
 }
 
-const graphql = {
+export const graphql = {
   anyOf: [
     {
       ...graphqlBase,
@@ -1277,7 +1283,7 @@ const graphql = {
   ]
 }
 
-const service = {
+export const service = {
   type: 'object',
   properties: {
     openapi,
@@ -1287,7 +1293,7 @@ const service = {
   additionalProperties: false
 }
 
-const clients = {
+export const clients = {
   type: 'array',
   items: {
     type: 'object',
@@ -1321,7 +1327,19 @@ const clients = {
   }
 }
 
-const schema = {
+export const schemaComponents = {
+  $defs,
+  plugins,
+  openApiBase,
+  openapi,
+  proxy,
+  graphqlBase,
+  graphql,
+  service,
+  clients
+}
+
+export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/service/${packageJson.version}.json`,
   version: packageJson.version,
   title: 'Platformatic Service Config',
@@ -1332,7 +1350,7 @@ const schema = {
     },
     server,
     plugins,
-    telemetry,
+    telemetry: utilsSchemaComponents.telemetry,
     watch: {
       anyOf: [
         watch,
@@ -1358,22 +1376,7 @@ const schema = {
   $defs
 }
 
-module.exports = {
-  packageJson,
-  plugins,
-  cors,
-  server,
-  watch,
-  openApiBase,
-  graphqlBase,
-  graphql,
-  proxy,
-  service,
-  clients,
-  schema,
-  $defs
-}
-
-if (require.main === module) {
+/* c8 ignore next 3 */
+if (process.argv[1] === import.meta.filename) {
   console.log(JSON.stringify(schema, null, 2))
 }

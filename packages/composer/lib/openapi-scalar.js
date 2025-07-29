@@ -1,8 +1,6 @@
-'use strict'
+import fp from 'fastify-plugin'
 
-const fp = require('fastify-plugin')
-
-async function openApiScalar (app, opts) {
+async function openApiScalarPlugin (app, opts) {
   const { default: scalarTheme } = await import('@platformatic/scalar-theme')
   const { default: scalarApiReference } = await import('@scalar/fastify-api-reference')
 
@@ -21,4 +19,4 @@ async function openApiScalar (app, opts) {
   })
 }
 
-module.exports = fp(openApiScalar)
+export const openApiScalar = fp(openApiScalarPlugin)

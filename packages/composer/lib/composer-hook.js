@@ -1,13 +1,13 @@
-'use strict'
+import fp from 'fastify-plugin'
+import rfdc from 'rfdc'
+import { FastifyInstanceIsAlreadyListeningError } from './errors.js'
 
-const deepClone = require('rfdc')()
-const fp = require('fastify-plugin')
-const errors = require('./errors')
+const deepClone = rfdc()
 
-async function composeOpenAPI (app) {
+async function composerHookPlugin (app) {
   const onRoutesHooks = {}
 
-  app.addHook('onRoute', (routeOptions) => {
+  app.addHook('onRoute', routeOptions => {
     if (routeOptions.schema) {
       routeOptions.schema = deepClone(routeOptions.schema)
     }
@@ -31,7 +31,7 @@ async function composeOpenAPI (app) {
   function addComposerOnRouteHook (openApiPath, methods, hook) {
     /* c8 ignore next 5 */
     if (isApplicationReady) {
-      throw new errors.FastifyInstanceIsAlreadyListeningError()
+      throw new FastifyInstanceIsAlreadyListeningError()
     }
 
     if (onRoutesHooks[openApiPath] === undefined) {
@@ -53,8 +53,8 @@ async function composeOpenAPI (app) {
   Object.defineProperty(app.platformatic, 'addComposerOnRouteHook', {
     value: addComposerOnRouteHook,
     writable: false,
-    configurable: false,
+    configurable: false
   })
 }
 
-module.exports = fp(composeOpenAPI)
+export const composerHook = fp(composerHookPlugin)

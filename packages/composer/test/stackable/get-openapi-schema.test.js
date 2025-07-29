@@ -1,8 +1,6 @@
-'use strict'
-
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { createOpenApiService, createFromConfig } = require('../helper')
+import assert from 'node:assert'
+import { test } from 'node:test'
+import { createFromConfig, createOpenApiService } from '../helper.js'
 
 test('get service openapi schema via stackable api', async t => {
   const api = await createOpenApiService(t, ['users'])

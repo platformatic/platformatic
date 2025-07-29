@@ -17,8 +17,8 @@ const envs = {
 
 for (const env of Object.keys(envs)) {
   test(`logger options, ${env}`, async t => {
-    const { root, config } = await prepareRuntime(t, 'logger', envs[env].production, 'platformatic.json')
-    const { runtime, url } = await startRuntime(t, root, config, null, envs[env].build)
+    const { runtime } = await prepareRuntime(t, 'logger', envs[env].production, 'platformatic.json')
+    const url = await startRuntime(t, runtime, null, envs[env].build)
 
     await request(url + '/next')
     await request(url + '/next')

@@ -1,13 +1,12 @@
-'use strict'
+import assert from 'node:assert/strict'
+import { mkdtemp, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import openAPISchemaValidator from 'openapi-schema-validator'
+import { createFromConfig, createOpenApiService } from '../helper.js'
 
-const assert = require('node:assert/strict')
-const { tmpdir } = require('node:os')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { writeFile, mkdtemp } = require('node:fs/promises')
-const { default: OpenAPISchemaValidator } = require('openapi-schema-validator')
-const { createFromConfig, createOpenApiService } = require('../helper')
-
+const OpenAPISchemaValidator = openAPISchemaValidator.default
 const openApiValidator = new OpenAPISchemaValidator({ version: 3 })
 
 test('should ignore static routes', async t => {

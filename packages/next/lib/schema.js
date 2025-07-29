@@ -1,8 +1,10 @@
-import { schemaComponents } from '@platformatic/basic'
+import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
 import { schemaComponents as utilsSchemaComponents } from '@platformatic/utils'
 import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
-export const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'))
+export const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf8'))
+export const version = packageJson.version
 
 export const cache = {
   type: 'object',
@@ -46,6 +48,8 @@ const next = {
   additionalProperties: false
 }
 
+export const schemaComponents = { next }
+
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/next/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
@@ -57,8 +61,8 @@ export const schema = {
     },
     logger: utilsSchemaComponents.logger,
     server: utilsSchemaComponents.server,
-    watch: schemaComponents.watch,
-    application: schemaComponents.application,
+    watch: basicSchemaComponents.watch,
+    application: basicSchemaComponents.application,
     runtime: utilsSchemaComponents.wrappedRuntime,
     next,
     cache

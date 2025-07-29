@@ -1,3 +1,4 @@
+import { loadConfiguration } from '@platformatic/runtime'
 import { ensureLoggableError } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { parse } from 'dotenv'
@@ -13,7 +14,6 @@ import {
   getPackageArgs,
   getPackageManager,
   getRoot,
-  loadRuntimeConfigurationFile,
   logFatalError,
   parseArgs
 } from '../utils.js'
@@ -40,7 +40,7 @@ async function executeCommand (root, ...args) {
 
 export async function installDependencies (logger, root, services, production, packageManager) {
   if (typeof services === 'string') {
-    const config = await loadRuntimeConfigurationFile(logger, services)
+    const config = await loadConfiguration(services, null, { validate: false })
 
     if (!config) {
       return
@@ -181,7 +181,7 @@ export async function buildCommand (logger, args) {
     )
     const root = getRoot(positionals)
 
-    configurationFile = await findRuntimeConfigurationFile(logger, root, config, true)
+    configurationFile = await findRuntimeConfigurationFile(logger, root, config)
 
     /* c8 ignore next 3 - Hard to test */
     if (!configurationFile) {
@@ -252,7 +252,7 @@ export async function installCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config, true)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
@@ -286,14 +286,14 @@ export async function updateCommand (logger, args) {
   )
 
   const root = getRoot(positionals)
-  const configurationFile = await findRuntimeConfigurationFile(logger, root, config, true)
+  const configurationFile = await findRuntimeConfigurationFile(logger, root, config)
 
   /* c8 ignore next 3 - Hard to test */
   if (!configurationFile) {
     return
   }
 
-  const configuration = await loadRuntimeConfigurationFile(logger, configurationFile)
+  const configuration = await loadConfiguration(configurationFile)
 
   if (!configuration) {
     return

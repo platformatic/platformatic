@@ -1,26 +1,21 @@
-import { moveToTmpdir } from './helper.js'
-import { test, after } from 'node:test'
-import { equal } from 'node:assert'
-import { join } from 'path'
-import * as desm from 'desm'
 import { execa } from 'execa'
 import { readFile } from 'fs/promises'
+import { equal } from 'node:assert'
+import { after, test } from 'node:test'
+import { join } from 'path'
+import { moveToTmpdir } from './helper.js'
 
-test('generate types with nullable properties', async (t) => {
+test('generate types with nullable properties', async t => {
   const dir = await moveToTmpdir(after)
 
-  const openAPIfile = desm.join(
-    import.meta.url,
-    'fixtures',
-    'nullable-properties-openapi.json'
-  )
+  const openAPIfile = join(import.meta.dirname, 'fixtures', 'nullable-properties-openapi.json')
   await execa('node', [
-    desm.join(import.meta.url, '..', 'cli.mjs'),
+    join(import.meta.dirname, '..', 'cli.mjs'),
     openAPIfile,
     '--name',
     'nullable-props',
     '--full-request',
-    '--full-response',
+    '--full-response'
   ])
   const typeFile = join(dir, 'nullable-props', 'nullable-props.d.ts')
   const data = await readFile(typeFile, 'utf-8')

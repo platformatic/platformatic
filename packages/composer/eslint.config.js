@@ -1,3 +1,12 @@
-'use strict'
+import neostandard from 'neostandard'
 
-module.exports = require('neostandard')({})
+export default neostandard({
+  ts: true,
+  ignores: [
+    ...neostandard.resolveIgnoresFromGitignore(),
+    'test/tmp/**/*',
+    'test/fixtures/*/dist/**/*',
+    '**/dist/*',
+    'tmp/**/*'
+  ]
+})

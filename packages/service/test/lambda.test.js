@@ -1,11 +1,9 @@
-'use strict'
-
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const awsLambdaFastify = require('@fastify/aws-lambda')
-const { buildConfig, createFromConfig } = require('./helper')
-const { create } = require('..')
+import awsLambdaFastify from '@fastify/aws-lambda'
+import assert from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { create } from '../index.js'
+import { buildConfig, createFromConfig } from './helper.js'
 
 test('should respond 200 on root endpoint', async t => {
   const app = await createFromConfig(
@@ -80,7 +78,7 @@ test('should respond 200 on root endpoint', async t => {
 })
 
 test('from a config file on disk', async t => {
-  const app = await create(join(__dirname, './fixtures/hello/warn-log.service.json'))
+  const app = await create(join(import.meta.dirname, './fixtures/hello/warn-log.service.json'))
 
   t.after(async () => {
     await app.stop()

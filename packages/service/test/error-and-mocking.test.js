@@ -1,16 +1,11 @@
-'use strict'
-
-const os = require('node:os')
-const assert = require('assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { randomUUID } = require('node:crypto')
-const { writeFile } = require('node:fs/promises')
-const { request, setGlobalDispatcher, getGlobalDispatcher, MockAgent } = require('undici')
-const { createFromConfig } = require('./helper')
-
-// set up the undici Agent
-require('./helper')
+import assert from 'assert'
+import { randomUUID } from 'node:crypto'
+import { writeFile } from 'node:fs/promises'
+import os from 'node:os'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { getGlobalDispatcher, MockAgent, request, setGlobalDispatcher } from 'undici'
+import { createFromConfig } from './helper.js'
 
 test('error', async t => {
   const file = join(os.tmpdir(), `some-plugin-${randomUUID()}.js`)
@@ -76,7 +71,7 @@ test('mock undici is supported', async t => {
       logger: { level: 'fatal' }
     },
     plugins: {
-      paths: [join(__dirname, 'fixtures', 'undici-plugin.js')]
+      paths: [join(import.meta.dirname, 'fixtures', 'undici-plugin.js')]
     }
   })
 

@@ -1,31 +1,12 @@
-'use strict'
-
-const path = require('node:path')
-const { hostname } = require('node:os')
-const pino = require('pino')
-const { createRequire } = require('node:module')
-
-/* c8 ignore start - Nothing to test */
-function noop () {}
-
-const abstractLogger = {
-  fatal: noop,
-  error: noop,
-  warn: noop,
-  info: noop,
-  debug: noop,
-  trace: noop,
-  done: noop,
-  child () {
-    return abstractLogger
-  }
-}
-/* c8 ignore end */
+import { createRequire } from 'node:module'
+import { hostname } from 'node:os'
+import path from 'node:path'
+import pino from 'pino'
 
 // Utilities to build pino options from a config object
 // There are many variants to fit better the different use cases
 
-function setPinoFormatters (options) {
+export function setPinoFormatters (options) {
   const r = createRequire(path.dirname(options.formatters.path))
   const formatters = loadFormatters(r, options.formatters.path)
   if (formatters.bindings) {
@@ -44,7 +25,7 @@ function setPinoFormatters (options) {
   }
 }
 
-function buildPinoFormatters (formatters) {
+export function buildPinoFormatters (formatters) {
   const r = createRequire(path.dirname(formatters.path))
   const f = loadFormatters(r, formatters.path)
   const pinoFormatters = {}
@@ -65,15 +46,15 @@ function buildPinoFormatters (formatters) {
   return pinoFormatters
 }
 
-function setPinoTimestamp (options) {
+export function setPinoTimestamp (options) {
   options.timestamp = stdTimeFunctions[options.timestamp]
 }
 
-function buildPinoTimestamp (timestamp) {
+export function buildPinoTimestamp (timestamp) {
   return stdTimeFunctions[timestamp]
 }
 
-function buildPinoOptions (loggerConfig, serverConfig, serviceId, workerId, serviceOptions, root) {
+export function buildPinoOptions (loggerConfig, serverConfig, serviceId, workerId, context, root) {
   const pinoOptions = {
     level: loggerConfig?.level ?? serverConfig?.level ?? 'trace'
   }
@@ -88,11 +69,12 @@ function buildPinoOptions (loggerConfig, serverConfig, serviceId, workerId, serv
         throw new Error(`logger.base.${key} must be a string`)
       }
     }
+    /* c8 ignore next - else */
   } else if (loggerConfig?.base === null) {
     pinoOptions.base = undefined
   }
 
-  if (typeof serviceOptions.context.worker?.index !== 'undefined' && loggerConfig?.base !== null) {
+  if (typeof context.worker?.index !== 'undefined' && loggerConfig?.base !== null) {
     pinoOptions.base = {
       ...(pinoOptions.base ?? {}),
       pid: process.pid,
@@ -152,31 +134,47 @@ function buildPinoOptions (loggerConfig, serverConfig, serviceId, workerId, serv
   return pinoOptions
 }
 
-function loadFormatters (require, file) {
+export function loadFormatters (require, file) {
   try {
     // Check if the file is a valid path
     const resolvedPath = require.resolve(file)
 
     // Load the module
-    return require(resolvedPath)
+    const loaded = require(resolvedPath)
+
+    return loaded?.default ?? loaded
   } catch (error) {
     throw new Error(`Failed to load function from ${file}: ${error.message}`)
   }
 }
 
-const stdTimeFunctions = {
+// This is needed so that pino detects a tampered stdout and avoid writing directly to the FD.
+// Writing directly to the FD would bypass worker.stdout, which is currently piped in the parent process.
+// See: https://github.com/pinojs/pino/blob/ad864b7ae02b314b9a548614f705a437e0db78c3/lib/tools.js#L330
+export function disablePinoDirectWrite () {
+  process.stdout.write = process.stdout.write.bind(process.stdout)
+}
+
+/* c8 ignore start - Nothing to test */
+export function noop () {}
+
+export const abstractLogger = {
+  fatal: noop,
+  error: noop,
+  warn: noop,
+  info: noop,
+  debug: noop,
+  trace: noop,
+  done: noop,
+  child () {
+    return abstractLogger
+  }
+}
+/* c8 ignore end */
+
+export const stdTimeFunctions = {
   epochTime: pino.stdTimeFunctions.epochTime,
   unixTime: pino.stdTimeFunctions.unixTime,
   nullTime: pino.stdTimeFunctions.nullTime,
   isoTime: pino.stdTimeFunctions.isoTime
-}
-
-module.exports = {
-  abstractLogger,
-  buildPinoOptions,
-  loadFormatters,
-  setPinoFormatters,
-  setPinoTimestamp,
-  buildPinoFormatters,
-  buildPinoTimestamp
 }

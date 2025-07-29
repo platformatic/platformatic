@@ -1,13 +1,11 @@
-'use strict'
-
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const path = require('node:path')
-const { readFileSync } = require('node:fs')
-const { setTimeout: wait } = require('node:timers/promises')
-const { tmpdir } = require('node:os')
-const { create } = require('..')
-const { getConnectionInfo } = require('./helper')
+import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as wait } from 'node:timers/promises'
+import { create } from '../index.js'
+import { getConnectionInfo } from './helper.js'
 
 const WAIT_LOGS_FLUSH = 3_000
 
@@ -17,7 +15,7 @@ test('logger options', async t => {
   process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
   const file = path.join(process.env.LOG_DIR, 'service.log')
 
-  const app = await create(path.join(__dirname, 'fixtures', 'logger'))
+  const app = await create(path.join(import.meta.dirname, 'fixtures', 'logger'))
 
   t.after(async () => {
     await app.stop()

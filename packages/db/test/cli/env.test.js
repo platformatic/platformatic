@@ -1,12 +1,11 @@
-'use strict'
-
-const { execa } = require('execa')
-const assert = require('node:assert')
-const { resolve } = require('node:path')
-const { test } = require('node:test')
-const { request } = require('undici')
-const { getConnectionInfo } = require('../helper.js')
-const { cliPath, connectDB, safeKill, start } = require('./helper.js')
+import { execa } from 'execa'
+import assert from 'node:assert'
+import { resolve } from 'node:path'
+import { test } from 'node:test'
+import { request } from 'undici'
+import { snapshot } from '../fixtures/snapshots/env.js'
+import { getConnectionInfo } from '../helper.js'
+import { cliPath, connectDB, safeKill, start } from './helper.js'
 
 test('env white list', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
@@ -20,7 +19,7 @@ test('env white list', async t => {
     title VARCHAR(42)
   );`)
 
-  const { child, url } = await start([resolve(__dirname, '..', 'fixtures', 'env-whitelist.json')], {
+  const { child, url } = await start([resolve(import.meta.dirname, '..', 'fixtures', 'env-whitelist.json')], {
     env: {
       DATABASE_URL: connectionInfo.connectionString,
       HOSTNAME: '127.0.0.1'
@@ -63,7 +62,7 @@ test('env white list default values', async t => {
     title VARCHAR(42)
   );`)
 
-  const { child, url } = await start([resolve(__dirname, '..', 'fixtures', 'env-whitelist-default.json')], {
+  const { child, url } = await start([resolve(import.meta.dirname, '..', 'fixtures', 'env-whitelist-default.json')], {
     env: {
       DATABASE_URL: connectionInfo.connectionString,
       PORT: 10555
@@ -96,7 +95,6 @@ test('env white list default values', async t => {
 })
 
 test('env white list schema', async t => {
-  const snapshot = require('../fixtures/snapshots/env.js')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
   const db = await connectDB(connectionInfo)
 
@@ -110,7 +108,7 @@ test('env white list schema', async t => {
 
   const { stdout } = await execa(
     'node',
-    [cliPath, 'printSchema', resolve(__dirname, '..', 'fixtures', 'env-whitelist.json'), 'graphql'],
+    [cliPath, 'printSchema', resolve(import.meta.dirname, '..', 'fixtures', 'env-whitelist.json'), 'graphql'],
     {
       env: {
         DATABASE_URL: connectionInfo.connectionString,
