@@ -73,7 +73,7 @@ export class NodeStackable extends BaseStackable {
     const config = this.configManager.current
 
     if (!this.isProduction && (await isServiceBuildable(this.root, config))) {
-      this.logger.info(`Building service "${this.serviceId}" before starting in devevelopment mode ...`)
+      this.logger.info(`Building service "${this.serviceId}" before starting in development mode ...`)
       try {
         await this.build()
         this.childManager = null
