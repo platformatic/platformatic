@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type HttpsSchemasPlatformaticDevWattpm2701Json = {
+export type PlatformaticRuntimeConfig = {
   [k: string]: unknown;
 } & {
   $schema?: string;

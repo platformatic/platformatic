@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/frontend-template",
-  "version": "2.70.1",
+  "version": "3.0.0-alpha.1",
   "main": "index.js",
   "type": "module",
   "description": "Platformatic Frontend Template",
