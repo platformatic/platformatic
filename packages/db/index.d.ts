@@ -29,7 +29,7 @@ export declare function transform (
 ): Promise<DatabaseConfiguration> | DatabaseConfiguration
 
 export declare function loadConfiguration (
-  root: string,
+  root: string | PlatformaticDatabaseConfig,
   source?: string | PlatformaticDatabaseConfig,
   context?: ConfigurationOptions
 ): Promise<DatabaseConfiguration>

@@ -38,7 +38,7 @@ export interface ModuleWithVersion {
   version?: string
 }
 
-export type Configuration<Config> = Config & {
+export type Configuration<Config = {}> = Config & {
   [kMetadata]: {
     root: string
     path: string | null
@@ -73,7 +73,7 @@ export declare function findConfigurationFileRecursive (
   schemas?: string | string[],
   suffixes?: string | string[]
 ): Promise<string | null>
-export declare function loadConfigurationFile (configurationFile: string): Promise<any>
+export declare function loadConfigurationFile (configurationFile: string): Promise<RawConfiguration>
 export declare function saveConfigurationFile (configurationFile: string, config: RawConfiguration): Promise<void>
 export declare function createValidator (
   schema: JSONSchemaType<any>,
@@ -88,10 +88,10 @@ export declare function replaceEnv (
   ignore?: string[]
 ): RawConfiguration
 export declare function loadConfiguration (
-  source: string | any,
+  source: string | RawConfiguration,
   schema?: any,
   options?: ConfigurationOptions
-): Promise<RawConfiguration>
+): Promise<Configuration>
 export declare function loadConfigurationModule (root: string, config: RawConfiguration | ModuleWithVersion): any
 
 // Error types

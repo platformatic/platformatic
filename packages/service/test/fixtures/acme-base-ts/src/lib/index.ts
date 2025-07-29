@@ -1,12 +1,10 @@
-import { FastifyInstance } from 'fastify'
-import { lstat } from 'node:fs/promises'
-// @ts-ignore
 import { kMetadata } from '@platformatic/utils'
+import { lstat } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import {
   create as createService,
-  type PlatformaticApplication,
   platformaticService,
+  ServerInstance,
   type PlatformaticServiceConfig as ServiceConfig,
   ServiceStackable,
   transform as serviceTransform
@@ -18,10 +16,6 @@ import { schema } from './schema.js'
 
 export { schema } from './schema.js'
 
-export interface AcmeBaseMixin {
-  platformatic: PlatformaticApplication<ServiceConfig & AcmeBaseConfig>
-}
-
 async function isDirectory (path: string) {
   try {
     return (await lstat(path)).isDirectory()
@@ -30,7 +24,10 @@ async function isDirectory (path: string) {
   }
 }
 
-export default async function acmeBase (app: FastifyInstance & AcmeBaseMixin, stackable: ServiceStackable) {
+export default async function acmeBase (
+  app: ServerInstance<ServiceConfig & AcmeBaseConfig>,
+  stackable: ServiceStackable
+) {
   if (app.platformatic.config.dynamite) {
     app.register(dynamite)
   }

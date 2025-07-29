@@ -20,7 +20,7 @@ export type ServerInstance = ServiceInstance<PlatformaticComposerConfig>
 type ComposerConfiguration = Configuration<PlatformaticComposerConfig>
 
 export declare function loadConfiguration (
-  root: string,
+  root: string | PlatformaticServiceConfig,
   source?: string | PlatformaticServiceConfig,
   context?: ConfigurationOptions
 ): Promise<ComposerConfiguration>

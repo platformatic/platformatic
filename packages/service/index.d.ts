@@ -25,13 +25,13 @@ export type ServiceConfiguration<T = {}> = Promise<Configuration<PlatformaticSer
 export declare function transform (config: ServiceConfiguration): Promise<ServiceConfiguration> | ServiceConfiguration
 
 export declare function loadConfiguration (
-  root: string,
+  root: string | PlatformaticServiceConfig,
   source?: string | PlatformaticServiceConfig,
   context?: ConfigurationOptions
 ): Promise<Configuration<PlatformaticServiceConfig>>
 
 export declare function create (
-  root: string,
+  root: string | PlatformaticServiceConfig,
   source?: string | PlatformaticServiceConfig,
   context?: ConfigurationOptions
 ): Promise<ServiceStackable>

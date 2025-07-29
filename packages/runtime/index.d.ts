@@ -59,7 +59,7 @@ export function wrapInRuntimeConfig (
 export declare const version: string
 
 export declare function loadConfiguration (
-  root: string,
+  root: string | PlatformaticRuntimeConfig,
   source?: string | PlatformaticRuntimeConfig,
   context?: ConfigurationOptions
 ): Promise<RuntimeConfiguration>
