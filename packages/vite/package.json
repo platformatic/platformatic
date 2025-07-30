@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/vite",
-  "version": "2.72.0",
+  "version": "2.73.0",
   "description": "Platformatic Vite Stackable",
   "main": "index.js",
   "type": "module",

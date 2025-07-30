@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/rpc-cli",
-  "version": "2.72.0",
+  "version": "2.73.0",
   "description": "A fastify RPC plugin for typescript applications",
   "main": "index.js",
   "bin": {
