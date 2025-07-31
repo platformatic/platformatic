@@ -42,7 +42,6 @@ export class BaseStackable extends EventEmitter {
     this.basePath = null
     this.isEntrypoint = this.context.isEntrypoint
     this.isProduction = this.context.isProduction
-    this.metricsRegistry = new client.Registry()
     this.#metricsCollected = false
     this.customHealthCheck = null
     this.customReadinessCheck = null
@@ -68,12 +67,18 @@ export class BaseStackable extends EventEmitter {
       setBasePath: this.setBasePath.bind(this),
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       invalidateHttpCache: this.#invalidateHttpCache.bind(this),
-      prometheus: { client, registry: this.metricsRegistry },
       setCustomHealthCheck: this.setCustomHealthCheck.bind(this),
       setCustomReadinessCheck: this.setCustomReadinessCheck.bind(this),
       notifyConfig: this.notifyConfig.bind(this),
       logger: this.logger
     })
+
+    if (globalThis.platformatic.prometheus) {
+      this.metricsRegistry = globalThis.platformatic.prometheus.registry
+    } else {
+      this.metricsRegistry = new client.Registry()
+      this.registerGlobals({ prometheus: { client, registry: this.metricsRegistry } })
+    }
   }
 
   init () {

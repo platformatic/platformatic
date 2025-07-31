@@ -46,7 +46,9 @@ test('should increment and decrement activeWsConnections metric', async t => {
   const { service, wsServer } = await createWebsocketService(t)
   wsServer.on('connection', socket => {
     socket.on('message', message => {
-      socket.send(message)
+      setTimeout(() => {
+        socket.send(message)
+      }, 500)
     })
   })
   const port = service.address().port
@@ -54,104 +56,32 @@ test('should increment and decrement activeWsConnections metric', async t => {
   const upstream = `http://127.0.0.1:${port}`
   const wsUpstream = `ws://127.0.0.1:${port}`
 
-  const proxyConfig = {
-    id: 'to-ws',
-    proxy: {
-      prefix: '/',
-      upstream,
-      ws: { upstream: wsUpstream }
-    }
-  }
-
-  const composer = await createComposer(t, {
+  const config = {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
     composer: {
-      services: [proxyConfig]
+      services: [
+        {
+          id: 'to-ws',
+          proxy: {
+            prefix: '/',
+            upstream,
+            ws: { upstream: wsUpstream }
+          }
+        }
+      ]
     }
-  })
+  }
 
-  const composerOrigin = await composer.start()
+  const composer = await createFromConfig(t, config)
+  const composerOrigin = await composer.start({ listen: true })
 
-  const getActiveConnections = async () => {
+  async function getActiveConnections () {
     const metrics = await prometheusRegistry.metrics()
-    const match = metrics.match(/active_ws_composer_connections (\d+)/)
-    return match ? parseInt(match[1]) : 0
-  }
-
-  // Test: Start with 0 connections
-  assert.equal(await getActiveConnections(), 0)
-
-  // Test: Create first connection, should increment to 1
-  const client1 = new WebSocket(composerOrigin.replace('http://', 'ws://'))
-  await once(client1, 'open')
-  client1.send('hello')
-  const [response1] = await once(client1, 'message')
-  assert.equal(response1.toString(), 'hello')
-  assert.equal(await getActiveConnections(), 1)
-
-  // Test: Create second connection, should increment to 2
-  const client2 = new WebSocket(composerOrigin.replace('http://', 'ws://'))
-  await once(client2, 'open')
-  client2.send('hello2')
-  const [response2] = await once(client2, 'message')
-  assert.equal(response2.toString(), 'hello2')
-  assert.equal(await getActiveConnections(), 2)
-
-  // Test: Close first connection, should decrement to 1
-  client1.close()
-  await once(client1, 'close')
-  assert.equal(await getActiveConnections(), 1)
-
-  // Test: Close second connection, should decrement to 0
-  client2.close()
-  await once(client2, 'close')
-  assert.equal(await getActiveConnections(), 0)
-
-  await composer.close()
-  globalThis.platformatic.prometheus = initPromClient
-})
-
-test('should increment and decrement activeWsConnections metric', async t => {
-  const initPromClient = globalThis.platformatic?.prometheus
-  const prometheusRegistry = new promClient.Registry()
-
-  if (!initPromClient) {
-    globalThis.platformatic = {
-      ...globalThis.platformatic,
-      prometheus: { registry: prometheusRegistry, client: promClient }
-    }
-  }
-
-  const { service, wsServer } = await createWebsocketService(t)
-  wsServer.on('connection', socket => {
-    socket.on('message', message => {
-      socket.send(message)
-    })
-  })
-  const port = service.address().port
-
-  const upstream = `http://127.0.0.1:${port}`
-  const wsUpstream = `ws://127.0.0.1:${port}`
-
-  const proxyConfig = {
-    id: 'to-ws',
-    proxy: {
-      prefix: '/',
-      upstream,
-      ws: { upstream: wsUpstream }
-    }
-  }
-
-  const composer = await createComposer(t, {
-    composer: {
-      services: [proxyConfig]
-    }
-  })
-
-  const composerOrigin = await composer.start()
-
-  const getActiveConnections = async () => {
-    const metrics = await prometheusRegistry.metrics()
-    const match = metrics.match(/active_ws_composer_connections (\d+)/)
+    const match = metrics.match(/active_ws_composer_connections.+\s(\d+)$/m)
     return match ? parseInt(match[1]) : 0
   }
 
