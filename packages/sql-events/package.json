@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/sql-events",
-  "version": "2.73.0",
+  "version": "2.73.1",
   "description": "Emit events via MQEmitter",
   "main": "index.js",
   "scripts": {

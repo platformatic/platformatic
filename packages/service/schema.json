@@ -1,6 +1,6 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/service/2.73.0.json",
-  "version": "2.73.0",
+  "$id": "https://schemas.platformatic.dev/@platformatic/service/2.73.1.json",
+  "version": "2.73.1",
   "title": "Platformatic Service",
   "type": "object",
   "properties": {
