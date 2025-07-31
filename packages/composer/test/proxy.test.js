@@ -43,7 +43,9 @@ test('should increment and decrement activeWsConnections metric', async t => {
   const { service, wsServer } = await createWebsocketService(t)
   wsServer.on('connection', socket => {
     socket.on('message', message => {
-      socket.send(message)
+      setTimeout(() => {
+        socket.send(message)
+      }, 500)
     })
   })
   const port = service.address().port
@@ -51,31 +53,32 @@ test('should increment and decrement activeWsConnections metric', async t => {
   const upstream = `http://127.0.0.1:${port}`
   const wsUpstream = `ws://127.0.0.1:${port}`
 
-  const proxyConfig = {
-    id: 'to-ws',
-    proxy: {
-      prefix: '/',
-      upstream,
-      ws: { upstream: wsUpstream }
-    }
-  }
-
-  const composer = await createFromConfig(t, {
+  const config = {
     server: {
       logger: {
         level: 'fatal'
       }
     },
     composer: {
-      services: [proxyConfig]
+      services: [
+        {
+          id: 'to-ws',
+          proxy: {
+            prefix: '/',
+            upstream,
+            ws: { upstream: wsUpstream }
+          }
+        }
+      ]
     }
-  })
+  }
 
-  const composerOrigin = await composer.start()
+  const composer = await createFromConfig(t, config)
+  const composerOrigin = await composer.start({ listen: true })
 
-  const getActiveConnections = async () => {
+  async function getActiveConnections () {
     const metrics = await prometheusRegistry.metrics()
-    const match = metrics.match(/active_ws_composer_connections (\d+)/)
+    const match = metrics.match(/active_ws_composer_connections.+\s(\d+)$/m)
     return match ? parseInt(match[1]) : 0
   }
 
