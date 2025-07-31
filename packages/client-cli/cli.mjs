@@ -150,7 +150,7 @@ async function downloadAndWriteOpenAPI (
     }
   }
 
-  const dispatcher = retryTimeoutMs ? getGlobalDispatcher().compose([interceptors.retry({ minTimeout: retryTimeoutMs }), interceptors.responseError()]) : undefined
+  const dispatcher = retryTimeoutMs ? getGlobalDispatcher().compose([interceptors.retry({ minTimeout: retryTimeoutMs })]) : undefined
   const res = await request(url, { ...requestOptions, dispatcher })
   if (res.statusCode === 200) {
     // we are OpenAPI
