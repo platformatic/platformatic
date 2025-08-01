@@ -10,13 +10,13 @@
   "plugins": {
     "paths": ["./plugin.js"]
   },
-  "clients": [
-    {
-      "schema": "./hello.openapi.json",
-      "name": "hello",
-      "type": "openapi",
-      "url": "{PLT_CLIENT_URL}"
-    }
-  ],
+  "clients": [{
+    "schema": "./hello.openapi.json",
+    "name": "hello",
+    "type": "openapi",
+    "url": "{PLT_CLIENT_URL}",
+    "fullRequest": false,
+    "fullResponse": false
+  }],
   "watch": false
 }

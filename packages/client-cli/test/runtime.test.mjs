@@ -73,7 +73,7 @@ PLT_SERVER_LOGGER_LEVEL=info
 
 module.exports = async function (app, opts) {
   app.post('/', async (request, reply) => {
-    const res = await request.movies.createMovie({ title: 'foo' })
+    const res = await request.movies.createMovie({ body: { title: 'foo' } })
     return res
   })
 }
@@ -88,7 +88,7 @@ module.exports = async function (app, opts) {
   const stream = app2.stdout.pipe(split(JSON.parse))
   app2.stderr.pipe(process.stderr)
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
@@ -102,7 +102,7 @@ module.exports = async function (app, opts) {
   const res = await request(url, {
     method: 'POST'
   })
-  const body = await res.body.json()
+  const { body } = await res.body.json()
   same(body, {
     id: 1,
     title: 'foo'
@@ -221,7 +221,7 @@ module.exports = async function (app, opts) {
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
@@ -464,7 +464,7 @@ PLT_SERVER_LOGGER_LEVEL=info
 
 module.exports = async function (app, opts) {
   app.post('/', async (request, reply) => {
-    const res = await request.somberMovies.createMovie({ title: 'foo' })
+    const res = await request.somberMovies.createMovie({ body: { title: 'foo' } })
     return res
   })
 }
@@ -478,7 +478,7 @@ module.exports = async function (app, opts) {
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
@@ -492,7 +492,7 @@ module.exports = async function (app, opts) {
   const res = await request(url, {
     method: 'POST'
   })
-  const body = await res.body.json()
+  const { body } = await res.body.json()
   same(body, {
     id: 1,
     title: 'foo'
@@ -615,7 +615,7 @@ module.exports = async function (app, opts) {
   const stream = app2.stdout.pipe(split(JSON.parse))
   app2.stderr.pipe(process.stderr)
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {

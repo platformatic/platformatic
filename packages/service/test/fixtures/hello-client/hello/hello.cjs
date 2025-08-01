@@ -6,7 +6,9 @@ async function generateHelloClientPlugin (app, opts) {
     type: 'openapi',
     name: 'hello',
     path: join(__dirname, 'hello.openapi.json'),
-    url: opts.url
+    url: opts.url,
+    fullRequest: false,
+    fullResponse: false,
   })
 }
 
