@@ -34,9 +34,8 @@ test('build basic client from url', async t => {
     name: 'sample',
     language: 'js',
     fullResponse: false,
-    logger,
     fullRequest: false,
-    fullResponse: false
+    logger
   })
 
   // Warning log has been triggered
