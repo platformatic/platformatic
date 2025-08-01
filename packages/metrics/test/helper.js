@@ -1,6 +1,6 @@
-const assert = require('node:assert')
+import { ok } from 'node:assert'
 
-const expectedMetrics = [
+export const expectedMetrics = [
   {
     name: 'nodejs_active_handles',
     type: 'gauge'
@@ -127,47 +127,42 @@ const expectedMetrics = [
   }
 ]
 
-function assertMetric (metrics, metric) {
-  assert.ok(metrics.includes(`# HELP ${metric.name} `), `Metric ${metric.name} not found`)
-  assert.ok(metrics.includes(`# TYPE ${metric.name} ${metric.type}`), `Metric ${metric.name} type ${metric.type} not found`)
+function assertSummary (metrics, metric) {
+  ok(metrics.includes(`${metric.name}{quantile="0.01"`))
+  ok(metrics.includes('http_request_all_summary_seconds{quantile="0.01"'))
+  ok(metrics.includes('http_request_all_summary_seconds{quantile="0.05"'))
+  ok(metrics.includes('http_request_all_summary_seconds{quantile="0.5"'))
+  ok(metrics.includes('http_request_all_summary_seconds{quantile="0.9"'))
+  ok(metrics.includes('http_request_all_summary_seconds{quantile="0.95"'))
+  ok(metrics.includes('http_request_all_summary_seconds{quantile="0.99"'))
+  ok(metrics.includes('http_request_all_summary_seconds{quantile="0.999"'))
+  ok(metrics.includes('http_request_all_summary_seconds_sum{'))
+  ok(metrics.includes('http_request_all_summary_seconds_count{'))
+}
+
+function assertHistogram (metrics, metric) {
+  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.005"'))
+  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.01"'))
+  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.025"'))
+  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.05"'))
+  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.1"'))
+  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.25"'))
+  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.5"'))
+  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="1"'))
+  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="2.5"'))
+  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="5"'))
+  ok(metrics.includes('http_request_all_duration_seconds_bucket{le="10"'))
+  ok(metrics.includes('http_request_all_duration_seconds_sum{'))
+  ok(metrics.includes('http_request_all_duration_seconds_count{'))
+}
+
+export function assertMetric (metrics, metric) {
+  ok(metrics.includes(`# HELP ${metric.name} `), `Metric ${metric.name} not found`)
+  ok(metrics.includes(`# TYPE ${metric.name} ${metric.type}`), `Metric ${metric.name} type ${metric.type} not found`)
 
   if (metric.type === 'summary') {
     assertSummary(metrics, metric)
   } else if (metric.type === 'histogram') {
     assertHistogram(metrics, metric)
   }
-}
-
-function assertSummary (metrics, metric) {
-  assert.ok(metrics.includes(`${metric.name}{quantile="0.01"`))
-  assert.ok(metrics.includes('http_request_all_summary_seconds{quantile="0.01"'))
-  assert.ok(metrics.includes('http_request_all_summary_seconds{quantile="0.05"'))
-  assert.ok(metrics.includes('http_request_all_summary_seconds{quantile="0.5"'))
-  assert.ok(metrics.includes('http_request_all_summary_seconds{quantile="0.9"'))
-  assert.ok(metrics.includes('http_request_all_summary_seconds{quantile="0.95"'))
-  assert.ok(metrics.includes('http_request_all_summary_seconds{quantile="0.99"'))
-  assert.ok(metrics.includes('http_request_all_summary_seconds{quantile="0.999"'))
-  assert.ok(metrics.includes('http_request_all_summary_seconds_sum{'))
-  assert.ok(metrics.includes('http_request_all_summary_seconds_count{'))
-}
-
-function assertHistogram (metrics, metric) {
-  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.005"'))
-  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.01"'))
-  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.025"'))
-  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.05"'))
-  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.1"'))
-  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.25"'))
-  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="0.5"'))
-  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="1"'))
-  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="2.5"'))
-  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="5"'))
-  assert.ok(metrics.includes('http_request_all_duration_seconds_bucket{le="10"'))
-  assert.ok(metrics.includes('http_request_all_duration_seconds_sum{'))
-  assert.ok(metrics.includes('http_request_all_duration_seconds_count{'))
-}
-
-module.exports = {
-  expectedMetrics,
-  assertMetric
 }

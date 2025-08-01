@@ -3,7 +3,7 @@
   "version": "2.73.1",
   "description": "Platformatic Stackable Metrics",
   "main": "index.js",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "test": "npm run lint && borp",
     "lint": "eslint"
