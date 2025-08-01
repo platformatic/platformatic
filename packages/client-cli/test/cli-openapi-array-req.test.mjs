@@ -69,7 +69,7 @@ test(`${name} without full option`, async () => {
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
 
-  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openapi, '--name', name])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openapi, '--name', name, '--full', 'false'])
   equal(await isFileAccessible(join(dir, name, `${name}.cjs`)), false)
   const typeFile = join(dir, name, `${name}.d.ts`)
   const data = await readFile(typeFile, 'utf-8')
