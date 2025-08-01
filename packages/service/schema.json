@@ -1,6 +1,6 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/service/2.70.1.json",
-  "version": "2.70.1",
+  "$id": "https://schemas.platformatic.dev/@platformatic/service/2.73.1.json",
+  "version": "2.73.1",
   "title": "Platformatic Service Config",
   "type": "object",
   "properties": {
@@ -100,15 +100,7 @@
                   "default": "info",
                   "oneOf": [
                     {
-                      "enum": [
-                        "fatal",
-                        "error",
-                        "warn",
-                        "info",
-                        "debug",
-                        "trace",
-                        "silent"
-                      ]
+                      "enum": ["fatal", "error", "warn", "info", "debug", "trace", "silent"]
                     },
                     {
                       "pattern": "^\\{.+\\}$"
@@ -189,18 +181,11 @@
                       "resolvePath": true
                     }
                   },
-                  "required": [
-                    "path"
-                  ],
+                  "required": ["path"],
                   "additionalProperties": false
                 },
                 "timestamp": {
-                  "enum": [
-                    "epochTime",
-                    "unixTime",
-                    "nullTime",
-                    "isoTime"
-                  ]
+                  "enum": ["epochTime", "unixTime", "nullTime", "isoTime"]
                 },
                 "redact": {
                   "type": "object",
@@ -216,9 +201,7 @@
                       "default": "[redacted]"
                     }
                   },
-                  "required": [
-                    "paths"
-                  ],
+                  "required": ["paths"],
                   "additionalProperties": false
                 },
                 "base": {
@@ -240,9 +223,7 @@
                   "additionalProperties": true
                 }
               },
-              "required": [
-                "level"
-              ],
+              "required": ["level"],
               "default": {},
               "additionalProperties": true
             }
@@ -262,12 +243,7 @@
             },
             "rounding": {
               "type": "string",
-              "enum": [
-                "floor",
-                "ceil",
-                "round",
-                "trunc"
-              ],
+              "enum": ["floor", "ceil", "round", "trunc"],
               "default": "trunc"
             },
             "debugMode": {
@@ -275,10 +251,7 @@
             },
             "mode": {
               "type": "string",
-              "enum": [
-                "debug",
-                "standalone"
-              ]
+              "enum": ["debug", "standalone"]
             },
             "largeArraySize": {
               "anyOf": [
@@ -293,10 +266,7 @@
             },
             "largeArrayMechanism": {
               "type": "string",
-              "enum": [
-                "default",
-                "json-stringify"
-              ],
+              "enum": ["default", "json-stringify"],
               "default": "default"
             }
           }
@@ -431,10 +401,7 @@
             }
           },
           "additionalProperties": false,
-          "required": [
-            "key",
-            "cert"
-          ]
+          "required": ["key", "cert"]
         },
         "cors": {
           "type": "object",
@@ -462,9 +429,7 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "regexp"
-                        ]
+                        "required": ["regexp"]
                       }
                     ]
                   }
@@ -476,9 +441,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "regexp"
-                  ]
+                  "required": ["regexp"]
                 }
               ]
             },
@@ -559,9 +522,7 @@
                     "additionalProperties": true
                   }
                 },
-                "required": [
-                  "name"
-                ]
+                "required": ["name"]
               }
             ]
           }
@@ -673,14 +634,10 @@
       "additionalProperties": false,
       "anyOf": [
         {
-          "required": [
-            "paths"
-          ]
+          "required": ["paths"]
         },
         {
-          "required": [
-            "packages"
-          ]
+          "required": ["packages"]
         }
       ]
     },
@@ -718,15 +675,7 @@
               "method": {
                 "description": "HTTP method to skip",
                 "type": "string",
-                "enum": [
-                  "GET",
-                  "POST",
-                  "PUT",
-                  "DELETE",
-                  "PATCH",
-                  "HEAD",
-                  "OPTIONS"
-                ]
+                "enum": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
               }
             }
           }
@@ -740,13 +689,7 @@
                 "properties": {
                   "type": {
                     "type": "string",
-                    "enum": [
-                      "console",
-                      "otlp",
-                      "zipkin",
-                      "memory",
-                      "file"
-                    ],
+                    "enum": ["console", "otlp", "zipkin", "memory", "file"],
                     "default": "console"
                   },
                   "options": {
@@ -776,13 +719,7 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "enum": [
-                    "console",
-                    "otlp",
-                    "zipkin",
-                    "memory",
-                    "file"
-                  ],
+                  "enum": ["console", "otlp", "zipkin", "memory", "file"],
                   "default": "console"
                 },
                 "options": {
@@ -809,9 +746,7 @@
           ]
         }
       },
-      "required": [
-        "serviceName"
-      ],
+      "required": ["serviceName"],
       "additionalProperties": false
     },
     "watch": {
@@ -1007,9 +942,7 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "path"
-                      ],
+                      "required": ["path"],
                       "additionalProperties": false
                     }
                   },
@@ -1038,10 +971,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "openapi",
-              "graphql"
-            ]
+            "enum": ["openapi", "graphql"]
           },
           "path": {
             "type": "string",
@@ -1108,15 +1038,7 @@
               "default": "info",
               "oneOf": [
                 {
-                  "enum": [
-                    "fatal",
-                    "error",
-                    "warn",
-                    "info",
-                    "debug",
-                    "trace",
-                    "silent"
-                  ]
+                  "enum": ["fatal", "error", "warn", "info", "debug", "trace", "silent"]
                 },
                 {
                   "pattern": "^\\{.+\\}$"
@@ -1197,18 +1119,11 @@
                   "resolvePath": true
                 }
               },
-              "required": [
-                "path"
-              ],
+              "required": ["path"],
               "additionalProperties": false
             },
             "timestamp": {
-              "enum": [
-                "epochTime",
-                "unixTime",
-                "nullTime",
-                "isoTime"
-              ]
+              "enum": ["epochTime", "unixTime", "nullTime", "isoTime"]
             },
             "redact": {
               "type": "object",
@@ -1224,9 +1139,7 @@
                   "default": "[redacted]"
                 }
               },
-              "required": [
-                "paths"
-              ],
+              "required": ["paths"],
               "additionalProperties": false
             },
             "base": {
@@ -1248,9 +1161,7 @@
               "additionalProperties": true
             }
           },
-          "required": [
-            "level"
-          ],
+          "required": ["level"],
           "default": {},
           "additionalProperties": true
         },
@@ -1362,10 +1273,7 @@
                 }
               },
               "additionalProperties": false,
-              "required": [
-                "key",
-                "cert"
-              ]
+              "required": ["key", "cert"]
             }
           },
           "additionalProperties": false
@@ -1416,10 +1324,7 @@
             }
           },
           "default": {},
-          "required": [
-            "runtime",
-            "service"
-          ],
+          "required": ["runtime", "service"],
           "additionalProperties": false
         },
         "health": {
@@ -1547,10 +1452,7 @@
                         "additionalProperties": true
                       }
                     },
-                    "required": [
-                      "module",
-                      "options"
-                    ]
+                    "required": ["module", "options"]
                   }
                 },
                 {
@@ -1569,10 +1471,7 @@
                             "additionalProperties": true
                           }
                         },
-                        "required": [
-                          "module",
-                          "options"
-                        ]
+                        "required": ["module", "options"]
                       }
                     },
                     "Pool": {
@@ -1588,10 +1487,7 @@
                             "additionalProperties": true
                           }
                         },
-                        "required": [
-                          "module",
-                          "options"
-                        ]
+                        "required": ["module", "options"]
                       }
                     },
                     "Agent": {
@@ -1607,10 +1503,7 @@
                             "additionalProperties": true
                           }
                         },
-                        "required": [
-                          "module",
-                          "options"
-                        ]
+                        "required": ["module", "options"]
                       }
                     }
                   }
@@ -1635,10 +1528,7 @@
                   "items": {
                     "type": "string"
                   },
-                  "default": [
-                    "GET",
-                    "HEAD"
-                  ],
+                  "default": ["GET", "HEAD"],
                   "minItems": 1
                 },
                 "cacheTagsHeader": {
@@ -1740,10 +1630,7 @@
                     }
                   },
                   "additionalProperties": false,
-                  "required": [
-                    "username",
-                    "password"
-                  ]
+                  "required": ["username", "password"]
                 },
                 "labels": {
                   "type": "object",
@@ -1870,15 +1757,7 @@
                   "method": {
                     "description": "HTTP method to skip",
                     "type": "string",
-                    "enum": [
-                      "GET",
-                      "POST",
-                      "PUT",
-                      "DELETE",
-                      "PATCH",
-                      "HEAD",
-                      "OPTIONS"
-                    ]
+                    "enum": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
                   }
                 }
               }
@@ -1892,13 +1771,7 @@
                     "properties": {
                       "type": {
                         "type": "string",
-                        "enum": [
-                          "console",
-                          "otlp",
-                          "zipkin",
-                          "memory",
-                          "file"
-                        ],
+                        "enum": ["console", "otlp", "zipkin", "memory", "file"],
                         "default": "console"
                       },
                       "options": {
@@ -1928,13 +1801,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "enum": [
-                        "console",
-                        "otlp",
-                        "zipkin",
-                        "memory",
-                        "file"
-                      ],
+                      "enum": ["console", "otlp", "zipkin", "memory", "file"],
                       "default": "console"
                     },
                     "options": {
@@ -1961,9 +1828,7 @@
               ]
             }
           },
-          "required": [
-            "serviceName"
-          ],
+          "required": ["serviceName"],
           "additionalProperties": false
         },
         "inspectorOptions": {
@@ -2044,13 +1909,7 @@
               },
               "method": {
                 "type": "string",
-                "enum": [
-                  "GET",
-                  "POST",
-                  "PUT",
-                  "PATCH",
-                  "DELETE"
-                ],
+                "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"],
                 "default": "GET"
               },
               "headers": {
@@ -2076,11 +1935,7 @@
                 "default": 3
               }
             },
-            "required": [
-              "name",
-              "cron",
-              "callbackUrl"
-            ]
+            "required": ["name", "cron", "callbackUrl"]
           }
         }
       },
@@ -2115,10 +1970,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "title",
-        "version"
-      ],
+      "required": ["title", "version"],
       "$ref": "#/$defs/specification-extensions"
     },
     "contact": {
@@ -2151,9 +2003,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "name"
-      ],
+      "required": ["name"],
       "$ref": "#/$defs/specification-extensions"
     },
     "server": {
@@ -2173,9 +2023,7 @@
           }
         }
       },
-      "required": [
-        "url"
-      ],
+      "required": ["url"],
       "$ref": "#/$defs/specification-extensions"
     },
     "server-variable": {
@@ -2196,9 +2044,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "default"
-      ],
+      "required": ["default"],
       "$ref": "#/$defs/specification-extensions"
     },
     "components": {
@@ -2327,9 +2173,7 @@
     "path-item-or-reference": {
       "if": {
         "type": "object",
-        "required": [
-          "$ref"
-        ]
+        "required": ["$ref"]
       },
       "then": {
         "$ref": "#/$defs/reference"
@@ -2404,9 +2248,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "url"
-      ],
+      "required": ["url"],
       "$ref": "#/$defs/specification-extensions"
     },
     "parameter": {
@@ -2417,12 +2259,7 @@
           "type": "string"
         },
         "in": {
-          "enum": [
-            "query",
-            "header",
-            "path",
-            "cookie"
-          ]
+          "enum": ["query", "header", "path", "cookie"]
         },
         "description": {
           "type": "string"
@@ -2438,20 +2275,13 @@
           "maxProperties": 1
         }
       },
-      "required": [
-        "name",
-        "in"
-      ],
+      "required": ["name", "in"],
       "oneOf": [
         {
-          "required": [
-            "schema"
-          ]
+          "required": ["schema"]
         },
         {
-          "required": [
-            "content"
-          ]
+          "required": ["content"]
         }
       ],
       "if": {
@@ -2461,9 +2291,7 @@
             "const": "query"
           }
         },
-        "required": [
-          "in"
-        ]
+        "required": ["in"]
       },
       "then": {
         "type": "object",
@@ -2479,9 +2307,7 @@
     "parameter-or-reference": {
       "if": {
         "type": "object",
-        "required": [
-          "$ref"
-        ]
+        "required": ["$ref"]
       },
       "then": {
         "$ref": "#/$defs/reference"
@@ -2505,17 +2331,13 @@
           "type": "boolean"
         }
       },
-      "required": [
-        "content"
-      ],
+      "required": ["content"],
       "$ref": "#/$defs/specification-extensions"
     },
     "request-body-or-reference": {
       "if": {
         "type": "object",
-        "required": [
-          "$ref"
-        ]
+        "required": ["$ref"]
       },
       "then": {
         "$ref": "#/$defs/reference"
@@ -2566,12 +2388,7 @@
         },
         "style": {
           "default": "form",
-          "enum": [
-            "form",
-            "spaceDelimited",
-            "pipeDelimited",
-            "deepObject"
-          ]
+          "enum": ["form", "spaceDelimited", "pipeDelimited", "deepObject"]
         },
         "explode": {
           "type": "boolean"
@@ -2598,9 +2415,7 @@
                 "const": "form"
               }
             },
-            "required": [
-              "style"
-            ]
+            "required": ["style"]
           },
           "then": {
             "type": "object",
@@ -2653,17 +2468,13 @@
           }
         }
       },
-      "required": [
-        "description"
-      ],
+      "required": ["description"],
       "$ref": "#/$defs/specification-extensions"
     },
     "response-or-reference": {
       "if": {
         "type": "object",
-        "required": [
-          "$ref"
-        ]
+        "required": ["$ref"]
       },
       "then": {
         "$ref": "#/$defs/reference"
@@ -2683,9 +2494,7 @@
     "callbacks-or-reference": {
       "if": {
         "type": "object",
-        "required": [
-          "$ref"
-        ]
+        "required": ["$ref"]
       },
       "then": {
         "$ref": "#/$defs/reference"
@@ -2710,19 +2519,14 @@
         }
       },
       "not": {
-        "required": [
-          "value",
-          "externalValue"
-        ]
+        "required": ["value", "externalValue"]
       },
       "$ref": "#/$defs/specification-extensions"
     },
     "example-or-reference": {
       "if": {
         "type": "object",
-        "required": [
-          "$ref"
-        ]
+        "required": ["$ref"]
       },
       "then": {
         "$ref": "#/$defs/reference"
@@ -2754,14 +2558,10 @@
       },
       "oneOf": [
         {
-          "required": [
-            "operationRef"
-          ]
+          "required": ["operationRef"]
         },
         {
-          "required": [
-            "operationId"
-          ]
+          "required": ["operationId"]
         }
       ],
       "$ref": "#/$defs/specification-extensions"
@@ -2769,9 +2569,7 @@
     "link-or-reference": {
       "if": {
         "type": "object",
-        "required": [
-          "$ref"
-        ]
+        "required": ["$ref"]
       },
       "then": {
         "$ref": "#/$defs/reference"
@@ -2800,14 +2598,10 @@
       },
       "oneOf": [
         {
-          "required": [
-            "schema"
-          ]
+          "required": ["schema"]
         },
         {
-          "required": [
-            "content"
-          ]
+          "required": ["content"]
         }
       ],
       "$ref": "#/$defs/specification-extensions"
@@ -2815,9 +2609,7 @@
     "header-or-reference": {
       "if": {
         "type": "object",
-        "required": [
-          "$ref"
-        ]
+        "required": ["$ref"]
       },
       "then": {
         "$ref": "#/$defs/reference"
@@ -2840,9 +2632,7 @@
           "$ref": "#/$defs/external-documentation"
         }
       },
-      "required": [
-        "name"
-      ],
+      "required": ["name"],
       "$ref": "#/$defs/specification-extensions"
     },
     "reference": {
@@ -2862,31 +2652,20 @@
     },
     "schema": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#schema-object",
-      "type": [
-        "object",
-        "boolean"
-      ]
+      "type": ["object", "boolean"]
     },
     "security-scheme": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#security-scheme-object",
       "type": "object",
       "properties": {
         "type": {
-          "enum": [
-            "apiKey",
-            "http",
-            "mutualTLS",
-            "oauth2",
-            "openIdConnect"
-          ]
+          "enum": ["apiKey", "http", "mutualTLS", "oauth2", "openIdConnect"]
         },
         "description": {
           "type": "string"
         }
       },
-      "required": [
-        "type"
-      ],
+      "required": ["type"],
       "allOf": [
         {
           "$ref": "#/$defs/specification-extensions"
@@ -2916,9 +2695,7 @@
                 "const": "apiKey"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           },
           "then": {
             "type": "object",
@@ -2927,17 +2704,10 @@
                 "type": "string"
               },
               "in": {
-                "enum": [
-                  "query",
-                  "header",
-                  "cookie"
-                ]
+                "enum": ["query", "header", "cookie"]
               }
             },
-            "required": [
-              "name",
-              "in"
-            ]
+            "required": ["name", "in"]
           }
         },
         "type-http": {
@@ -2948,9 +2718,7 @@
                 "const": "http"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           },
           "then": {
             "type": "object",
@@ -2959,9 +2727,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "scheme"
-            ]
+            "required": ["scheme"]
           }
         },
         "type-http-bearer": {
@@ -2976,10 +2742,7 @@
                 "pattern": "^[Bb][Ee][Aa][Rr][Ee][Rr]$"
               }
             },
-            "required": [
-              "type",
-              "scheme"
-            ]
+            "required": ["type", "scheme"]
           },
           "then": {
             "type": "object",
@@ -2998,9 +2761,7 @@
                 "const": "oauth2"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           },
           "then": {
             "type": "object",
@@ -3009,9 +2770,7 @@
                 "$ref": "#/$defs/oauth-flows"
               }
             },
-            "required": [
-              "flows"
-            ]
+            "required": ["flows"]
           }
         },
         "type-oidc": {
@@ -3022,9 +2781,7 @@
                 "const": "openIdConnect"
               }
             },
-            "required": [
-              "type"
-            ]
+            "required": ["type"]
           },
           "then": {
             "type": "object",
@@ -3033,9 +2790,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "openIdConnectUrl"
-            ]
+            "required": ["openIdConnectUrl"]
           }
         }
       }
@@ -3043,9 +2798,7 @@
     "security-scheme-or-reference": {
       "if": {
         "type": "object",
-        "required": [
-          "$ref"
-        ]
+        "required": ["$ref"]
       },
       "then": {
         "$ref": "#/$defs/reference"
@@ -3085,10 +2838,7 @@
               "$ref": "#/$defs/map-of-strings"
             }
           },
-          "required": [
-            "authorizationUrl",
-            "scopes"
-          ],
+          "required": ["authorizationUrl", "scopes"],
           "$ref": "#/$defs/specification-extensions"
         },
         "password": {
@@ -3104,10 +2854,7 @@
               "$ref": "#/$defs/map-of-strings"
             }
           },
-          "required": [
-            "tokenUrl",
-            "scopes"
-          ],
+          "required": ["tokenUrl", "scopes"],
           "$ref": "#/$defs/specification-extensions"
         },
         "client-credentials": {
@@ -3123,10 +2870,7 @@
               "$ref": "#/$defs/map-of-strings"
             }
           },
-          "required": [
-            "tokenUrl",
-            "scopes"
-          ],
+          "required": ["tokenUrl", "scopes"],
           "$ref": "#/$defs/specification-extensions"
         },
         "authorization-code": {
@@ -3145,11 +2889,7 @@
               "$ref": "#/$defs/map-of-strings"
             }
           },
-          "required": [
-            "authorizationUrl",
-            "tokenUrl",
-            "scopes"
-          ],
+          "required": ["authorizationUrl", "tokenUrl", "scopes"],
           "$ref": "#/$defs/specification-extensions"
         }
       }

@@ -1,12 +1,12 @@
 import Issues from '../../getting-started/issues.md';
 
-# Configuration 
+# Configuration
 
-Platformatic DB can be configured with a [configuration file](#configuration-file) in the different file formats below. The DB also support the use of environment variables as setting values with [environment variable placeholders](#environment-variable-placeholders). 
+Platformatic DB can be configured with a [configuration file](#configuration-file) in the different file formats below. The DB also support the use of environment variables as setting values with [environment variable placeholders](#environment-variable-placeholders).
 
 ## Supported File Formats
 
-For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page.
+For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../../file-formats.md#supported-file-formats) page.
 
 ## Configuration Settings
 
@@ -19,10 +19,9 @@ Configuration file settings are grouped as follows:
 - **`plugins`**: Manages additional functionality through [plugins](../service/configuration.md#plugins).
 - **`telemetry`**: Handles [telemetry data reporting](../service/configuration.md#telemetry).
 - **`watch`**: Observes file changes for [dynamic updates](../service/configuration.md#watch).
-- **`clients`**: Configures [client-specific](../service/configuration.md#clients) settings. 
+- **`clients`**: Configures [client-specific](../service/configuration.md#clients) settings.
 
 Sensitive data within these settings should use [configuration placeholders](#configuration-placeholders) to ensure security.
-
 
 ### `db`
 
@@ -48,7 +47,7 @@ postgres://user:password@my-database:5432/db-name
 
 ```
 
-  - Platformatic DB supports MySQL, MariaDB, PostgreSQL and SQLite.
+- Platformatic DB supports MySQL, MariaDB, PostgreSQL and SQLite.
 - **`graphql`** (`boolean` or `object`, default: `true`) — Controls the GraphQL API interface, with optional GraphQL API interface.
 
   Enables GraphQL support
@@ -194,7 +193,7 @@ postgres://user:password@my-database:5432/db-name
   ```
 
   You can for example add the `security` section, so that Swagger will allow you to add the authentication header to your requests.
-  We're adding a Bearer token in the form of a [JWT](./authorization/strategies.md#json-web-token-jwt) in the code block below: 
+  We're adding a Bearer token in the form of a [JWT](./authorization/strategies.md#json-web-token-jwt) in the code block below:
 
   ```json title="Example Object"
   {
@@ -263,6 +262,7 @@ postgres://user:password@my-database:5432/db-name
     }
   }
   ```
+
 - **`autoTimestamp`** (`boolean` or `object`) - Generate timestamp automatically when inserting/updating records.
 
 - **`allowPrimaryKeysInInput`** (`boolean`) - Allow the user to set the primary keys when creating new entities.
@@ -276,7 +276,6 @@ postgres://user:password@my-database:5432/db-name
 - **`acquireLockTimeoutMilliseconds`** (`number`, default: `60000`) - Number of milliseconds to wait for a lock on a connection/transaction.
 
 - **`limit`** (`object`) - Set the default and max limit for pagination. Default is 10, max is 1000.
-
 
   ```json title="Example Object"
   {
@@ -302,6 +301,7 @@ postgres://user:password@my-database:5432/db-name
     }
   }
   ```
+
 - **`include`** (`object`) — Key/value object that defines which entities should be exposed.
 
   ```json title="Example Object"
@@ -316,7 +316,7 @@ postgres://user:password@my-database:5432/db-name
   ```
 
 - **`events`** (`boolean` or `object`, default: `true`) — Controls the support for events published by the SQL mapping layer.
-  - `enabled`: Set to `true` to activate event publishing, which  support for GraphQL Subscription over WebSocket using an in-process message broker.
+  - `enabled`: Set to `true` to activate event publishing, which support for GraphQL Subscription over WebSocket using an in-process message broker.
   - Custom Broker: To use an external message broker, such as Valkey, provide the connection string as shown in the example below.
 
   ```json title="Example Object"
@@ -348,7 +348,6 @@ postgres://user:password@my-database:5432/db-name
 
   Starting Platformatic DB or running a migration will automatically create the schemalock file.
 
-
 ### `migrations`
 
 Configures [Postgrator](https://github.com/rickbergfalk/postgrator) to run migrations against the database.
@@ -360,16 +359,16 @@ An optional object with the following settings:
 - **`table`** (`string`, default: `versions`): Table created to track schema version
 - **`validateChecksums`** (`boolean`): Validates checksum of existing SQL migration files already run prior to executing migrations. Unused for JS migrations.
 - **`newline`** (`string`): Force line ending on file when generating checksum. Value should be either CRLF (windows) or LF (unix/mac).
-- **`currentSchema`** (`string`): For Postgres and MS SQL Server(will ignore for another DBs). Specifies schema to look to when validating `versions` table columns. For Postgres, run `SET search_path = currentSchema` prior to running queries against db. 
+- **`currentSchema`** (`string`): For Postgres and MS SQL Server(will ignore for another DBs). Specifies schema to look to when validating `versions` table columns. For Postgres, run `SET search_path = currentSchema` prior to running queries against db.
 
 ### `authorization`
 
 An optional object with the following settings:
 
 - `adminSecret` (`string`): A secret that should be sent in an
-`x-platformatic-admin-secret` HTTP header when performing GraphQL/REST API
-calls. Use an [environment variable placeholder](#environment-variable-placeholders)
-to securely provide the value for this setting.
+  `x-platformatic-admin-secret` HTTP header when performing GraphQL/REST API
+  calls. Use an [environment variable placeholder](#environment-variable-placeholders)
+  to securely provide the value for this setting.
 - `roleKey` (`string`, default: `X-PLATFORMATIC-ROLE`): The name of the key in user metadata that is used to store the user's roles. See [Role configuration](../db/authorization/user-roles-metadata.md#role-configuration)
 - `rolePath` (`string`): The name of the dot-separated path in user
   metadata that is used to store the user's roles. See [Role configuration](../db/authorization/user-roles-metadata.md#role-configuration).
@@ -378,15 +377,15 @@ to securely provide the value for this setting.
   Any option accepted by [`@fastify/jwt`](https://github.com/fastify/fastify-jwt)
   can be passed in this object.
   - `secret` (required, `string` or `object`): The secret key that the JWT was signed with.
-  See the [`@fastify/jwt` documentation](https://github.com/fastify/fastify-jwt#secret-required)
-  for accepted string and object values. Use an [environment variable placeholder](#environment-variable-placeholders)
-  to securely provide the value for this setting.
-  - `jwks` (`boolean` or `object`): Configure authorization with JSON Web Key Sets (JWKS). See the [JWKS documentation](../db/authorization/strategies.md#json-web-key-sets-jwks). 
+    See the [`@fastify/jwt` documentation](https://github.com/fastify/fastify-jwt#secret-required)
+    for accepted string and object values. Use an [environment variable placeholder](#environment-variable-placeholders)
+    to securely provide the value for this setting.
+  - `jwks` (`boolean` or `object`): Configure authorization with JSON Web Key Sets (JWKS). See the [JWKS documentation](../db/authorization/strategies.md#json-web-key-sets-jwks).
   - `namespace` (`string`): Configure a [JWT Custom Claim Namespace](../db/authorization/strategies.md#jwt-custom-claim-namespace) to
-    avoid name collisions. 
+    avoid name collisions.
 - `webhook` (`object`): Configuration for the [Webhook authorization strategy](../db/authorization/strategies.md#webhook).
   - `url` (required, `string`): Webhook URL that Platformatic DB will make a
-  POST request to.
+    POST request to.
 - `rules` (`array`): Authorization rules that describe the CRUD actions that
   users are allowed to perform against entities. See [Rules](../db/authorization/rules.md)
   documentation.
@@ -441,4 +440,3 @@ The server is configured to listen on `http://127.0.0.1:3042`:
 ```
 
 <Issues />
- 

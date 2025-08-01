@@ -18,7 +18,8 @@ const {
   findConfigurationFile,
   loadConfiguration,
   loadConfigurationFile,
-  kMetadata
+  kMetadata,
+  defaultPackageManager
 } = require('@platformatic/utils')
 const { createRequire } = require('node:module')
 
@@ -65,6 +66,7 @@ class RuntimeGenerator extends BaseGenerator {
     this.services = []
     this.existingServices = []
     this.entryPoint = null
+    this.packageManager = opts.packageManager ?? defaultPackageManager
   }
 
   async addService (service, name) {
@@ -100,7 +102,6 @@ class RuntimeGenerator extends BaseGenerator {
   async generatePackageJson () {
     const template = {
       name: `${this.runtimeName}`,
-      workspaces: [this.servicesFolder + '/*'],
       scripts: {
         dev: this.config.devCommand,
         build: this.config.buildCommand,
@@ -118,6 +119,11 @@ class RuntimeGenerator extends BaseGenerator {
       },
       engines
     }
+
+    if (this.packageManager === 'npm' || this.packageManager === 'yarn') {
+      template.workspaces = [this.servicesFolder + '/*']
+    }
+
     if (this.config.typescript) {
       const typescriptVersion = JSON.parse(await readFile(join(__dirname, '..', 'package.json'), 'utf-8'))
         .devDependencies.typescript
@@ -226,7 +232,7 @@ class RuntimeGenerator extends BaseGenerator {
     this.addFile({
       path: '',
       file: '.env.sample',
-      contents: envObjectToString(this.config.env)
+      contents: envObjectToString(this.config.defaultEnv)
     })
 
     return {
@@ -590,7 +596,7 @@ class WrappedGenerator extends BaseGenerator {
     this.addFile({
       path: '',
       file: '.env.sample',
-      contents: (await this.#readExistingFile('.env.sample', '', '\n')) + envObjectToString(this.config.env)
+      contents: (await this.#readExistingFile('.env.sample', '', '\n')) + envObjectToString(this.config.defaultEnv)
     })
   }
 

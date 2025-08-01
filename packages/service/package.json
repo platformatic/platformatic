@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/service",
-  "version": "2.70.1",
+  "version": "2.73.1",
   "description": "",
   "main": "index.js",
   "types": "index.d.ts",
@@ -38,7 +38,7 @@
     "split2": "^4.2.0",
     "strip-ansi": "^7.1.0",
     "typescript": "^5.5.4",
-    "undici": "7.10.0",
+    "undici": "7.11.0",
     "vscode-json-languageservice": "^5.3.9",
     "why-is-node-running": "^2.2.2",
     "yaml": "^2.4.1"
@@ -60,7 +60,7 @@
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/ts-compiler": "workspace:*",
     "@platformatic/utils": "workspace:*",
-    "@scalar/fastify-api-reference": "1.31.14",
+    "@scalar/fastify-api-reference": "1.33.0",
     "@types/node": "^22.10.6",
     "@types/ws": "^8.5.10",
     "ajv": "^8.12.0",

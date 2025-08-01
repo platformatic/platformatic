@@ -2,7 +2,7 @@ import Issues from '../../getting-started/issues.md';
 
 ## Supported File Formats
 
-For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../file-formats.md#supported-file-formats) page.
+For detailed information on supported file formats and extensions, please visit our [Supported File Formats and Extensions](../../file-formats.md#supported-file-formats) page.
 
 ## Settings
 

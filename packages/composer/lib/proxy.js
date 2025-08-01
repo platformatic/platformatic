@@ -4,6 +4,7 @@ import fp from 'fastify-plugin'
 import { createRequire } from 'node:module'
 import { workerData } from 'node:worker_threads'
 import { getGlobalDispatcher } from 'undici'
+import { initMetrics } from './metrics.js'
 
 const kITC = Symbol.for('plt.runtime.itc')
 const kProxyRoute = Symbol('plt.composer.proxy.route')
@@ -51,6 +52,8 @@ async function resolveServiceProxyParameters (service) {
   }
 }
 
+let metrics
+
 async function proxyPlugin (app, opts) {
   const meta = { proxies: {} }
   const hostnameLessProxies = []
@@ -80,16 +83,16 @@ async function proxyPlugin (app, opts) {
     const basePath = `/${prefix ?? ''}`.replaceAll(/\/+/g, '/').replace(/\/$/, '')
     const dispatcher = getGlobalDispatcher()
 
+    let preRewrite = null
+
     if (needsRootTrailingSlash) {
-      app.addHook('preHandler', function rootTrailingSlashPreHandler (req, reply, done) {
-        if (req.url !== basePath) {
-          done()
-          return
+      preRewrite = function preRewrite (url) {
+        if (url === basePath) {
+          url += '/'
         }
 
-        const { url, options } = reply.fromParameters(req.url + '/', req.params, prefix)
-        reply.from(url.replace(/\/+$/, '/'), options)
-      })
+        return url
+      }
     }
 
     /*
@@ -137,24 +140,35 @@ async function proxyPlugin (app, opts) {
 
     const toReplace = url
       ? new RegExp(
-        url
-          .replace(/127\.0\.0\.1/, 'localhost')
-          .replace(/\[::\]/, 'localhost')
-          .replace('http://', 'https?://')
-      )
+          url
+            .replace(/127\.0\.0\.1/, 'localhost')
+            .replace(/\[::\]/, 'localhost')
+            .replace('http://', 'https?://')
+        )
       : null
+
+    if (!metrics) {
+      metrics = initMetrics(globalThis.platformatic?.prometheus)
+    }
 
     const proxyOptions = {
       prefix,
       rewritePrefix,
       upstream: service.proxy?.upstream ?? origin,
+      preRewrite,
 
       websocket: true,
       wsUpstream: ws?.upstream ?? url ?? origin,
       wsReconnect: ws?.reconnect,
       wsHooks: {
-        onConnect: ws?.hooks?.onConnect,
-        onDisconnect: ws?.hooks?.onDisconnect,
+        onConnect: (...args) => {
+          metrics?.activeWsConnections?.inc()
+          ws?.hooks?.onConnect(...args)
+        },
+        onDisconnect: (...args) => {
+          metrics?.activeWsConnections?.dec()
+          ws?.hooks?.onDisconnect(...args)
+        },
         onReconnect: ws?.hooks?.onReconnect,
         onPong: ws?.hooks?.onPong,
         onIncomingMessage: ws?.hooks?.onIncomingMessage,

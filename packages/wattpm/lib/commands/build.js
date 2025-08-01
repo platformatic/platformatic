@@ -1,5 +1,5 @@
 import { loadConfiguration } from '@platformatic/runtime'
-import { ensureLoggableError } from '@platformatic/utils'
+import { ensureLoggableError, getPackageManager } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { parse } from 'dotenv'
 import { execa } from 'execa'
@@ -12,7 +12,6 @@ import {
   buildRuntime,
   findRuntimeConfigurationFile,
   getPackageArgs,
-  getPackageManager,
   getRoot,
   logFatalError,
   parseArgs
@@ -50,7 +49,7 @@ export async function installDependencies (logger, root, services, production, p
   }
 
   if (!packageManager) {
-    packageManager = getPackageManager(root)
+    packageManager = await getPackageManager(root)
   }
 
   const args = getPackageArgs(packageManager, production)
@@ -72,7 +71,7 @@ export async function installDependencies (logger, root, services, production, p
   }
 
   for (let { id, path, packageManager: servicePackageManager } of services) {
-    servicePackageManager ??= getPackageManager(path, packageManager)
+    servicePackageManager ??= await getPackageManager(path, packageManager)
     const servicePackageArgs = getPackageArgs(servicePackageManager, production)
 
     try {

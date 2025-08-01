@@ -15,6 +15,9 @@
         "openapi": {
           "url": "/documentation/json",
           "prefix": "/with-logger"
+        },
+        "proxy": {
+          "prefix": "/proxy/with-logger"
         }
       },
       {
@@ -29,6 +32,9 @@
         "openapi": {
           "url": "/documentation/json",
           "prefix": "/service-app"
+        },
+        "proxy": {
+          "prefix": "/proxy/service-app"
         }
       },
       {

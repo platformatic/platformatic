@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/utils",
-  "version": "2.70.1",
+  "version": "2.73.1",
   "description": "Platformatic Utils",
   "main": "index.js",
   "types": "index.d.ts",
@@ -31,7 +31,7 @@
     "json5": "^2.2.3",
     "leven": "~3.1.0",
     "semver": "^7.6.3",
-    "undici": "7.10.0",
+    "undici": "7.11.0",
     "yaml": "^2.4.1"
   },
   "devDependencies": {

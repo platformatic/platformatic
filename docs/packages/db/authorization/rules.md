@@ -52,7 +52,7 @@ For more fine-grained control, use the `checks` field to define conditions under
 }
 ```
 
-Here a user with a `user` role executes a `findPage` operation and can access all the data for `userId` metadata with the value key `X-PLATFORMATIC-USER-ID`. It's possible to specify more complex rules using all the supported [where clause operators](../../packages/sql-mapper/entities/api.md#where-clause).
+Here a user with a `user` role executes a `findPage` operation and can access all the data for `userId` metadata with the value key `X-PLATFORMATIC-USER-ID`. It's possible to specify more complex rules using all the supported [where clause operators](../../sql-mapper/entities/api.md#where-clause).
 
 :::important
 Note that `userId` MUST exist as a field in the database table to use this feature.

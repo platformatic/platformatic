@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/wattpm/2.70.1.json",
+  "$id": "https://schemas.platformatic.dev/wattpm/2.73.1.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {

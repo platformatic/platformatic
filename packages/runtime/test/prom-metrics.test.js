@@ -166,11 +166,29 @@ test('should start a prometheus server on port 9090', async t => {
     'http_request_all_duration_seconds',
     'http_request_all_summary_seconds',
     'http_cache_hit_count',
-    'http_cache_miss_count'
+    'http_cache_miss_count',
+    'http_client_stats_free',
+    'http_client_stats_connected',
+    'http_client_stats_pending',
+    'http_client_stats_queued',
+    'http_client_stats_running',
+    'http_client_stats_size'
   ]
 
   for (const metricName of expectedMetricNames) {
     assert.ok(metricsNames.includes(metricName), `Expected metric ${metricName} to be present`)
+  }
+
+  const jsonRequest = await request('http://127.0.0.1:9090', {
+    method: 'GET',
+    path: '/metrics',
+    headers: { Accept: 'application/json' }
+  })
+  assert.strictEqual(jsonRequest.statusCode, 200, 'should return JSON metrics when required from the headers')
+
+  const jsonMetricNames = (await jsonRequest.body.json()).flatMap(({ name }) => name)
+  for (const metricName of expectedMetricNames) {
+    assert.ok(jsonMetricNames.includes(metricName), `Expected metric ${metricName} to be present on JSON format`)
   }
 })
 

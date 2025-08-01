@@ -178,9 +178,11 @@ export declare const stdTimeFunctions: {
 
 // Module types
 export declare const kFailedImport: unique symbol
+export declare const defaultPackageManager: string
 
 export declare function getLatestNpmVersion (pkg: string): Promise<string | null>
 export declare function getPkgManager (): string
+export declare function getPackageManager (root: string, defaultManager?: string, search?: boolean): Promise<string>
 export declare function getPlatformaticVersion (): Promise<string>
 export declare function hasDependency (packageJson: any, dependency: string): any
 export declare function splitModuleFromVersion (module: string): { module?: string; version?: string }

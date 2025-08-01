@@ -1,4 +1,5 @@
-import { readFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { readFile, readdir } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { request } from 'undici'
@@ -7,6 +8,8 @@ import { hasJavascriptFiles } from './file-system.js'
 let platformaticPackageVersion
 
 export const kFailedImport = Symbol('plt.utils.failedImport')
+
+export const defaultPackageManager = 'npm'
 
 export async function getLatestNpmVersion (pkg) {
   const res = await request(`https://registry.npmjs.org/${pkg}`)
@@ -26,6 +29,38 @@ export function getPkgManager () {
   const separatorPos = pmSpec.lastIndexOf('/')
   const name = pmSpec.substring(0, separatorPos)
   return name || 'npm'
+}
+
+/**
+ * Get the package manager used in the project by looking at the lock file
+ *
+ * if `search` is true, will search for the package manager in a nested directory
+ */
+export async function getPackageManager (root, defaultManager = defaultPackageManager, search = false) {
+  if (existsSync(resolve(root, 'pnpm-lock.yaml'))) {
+    return 'pnpm'
+  }
+
+  if (existsSync(resolve(root, 'yarn.lock'))) {
+    return 'yarn'
+  }
+
+  if (existsSync(resolve(root, 'package-lock.json'))) {
+    return 'npm'
+  }
+
+  // search for the package manager in a nested directory
+  if (search) {
+    // look in the first level nested directory
+    for (const dir of await readdir(root)) {
+      const p = await getPackageManager(resolve(root, dir), null)
+      if (p) {
+        return p
+      }
+    }
+  }
+
+  return defaultManager
 }
 
 export async function getPlatformaticVersion () {

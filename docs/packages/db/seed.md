@@ -28,10 +28,7 @@ For Typescript use the following stub
 ```typescript title="seed.ts"
 import { Entities } from '@platformatic/sql-mapper'
 
-const movies: object[] = [
-  { title: 'Harry Potter' },
-  { title: 'The Matrix' }
-]
+const movies: object[] = [{ title: 'Harry Potter' }, { title: 'The Matrix' }]
 
 export async function seed (opts: { entities: Entities }) {
   for (const movie of movies) {
@@ -43,8 +40,6 @@ export async function seed (opts: { entities: Entities }) {
 :::info
 Platformatic code will look for a `default` or `seed` function name when importing the file. Take a look at the `execute` function [here](https://github.com/platformatic/platformatic/blob/main/packages/db/lib/seed.mjs)
 :::
-
-
 
 We can then run the seed script with the Platformatic CLI:
 

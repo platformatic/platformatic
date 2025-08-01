@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/composer",
-  "version": "2.70.1",
+  "version": "2.73.1",
   "description": "",
   "main": "index.js",
   "types": "index.d.ts",
@@ -34,6 +34,7 @@
     "neostandard": "^0.12.0",
     "openapi-schema-validator": "^12.1.3",
     "pino-test": "^1.0.1",
+    "prom-client": "^15.1.2",
     "self-cert": "^2.0.0",
     "single-user-cache": "^1.0.1",
     "split2": "^4.2.0",
@@ -44,7 +45,7 @@
   },
   "dependencies": {
     "@fastify/error": "^4.0.0",
-    "@fastify/http-proxy": "^11.2.0",
+    "@fastify/http-proxy": "^11.3.0",
     "@fastify/reply-from": "^12.0.0",
     "@fastify/static": "^8.0.0",
     "@fastify/swagger": "^9.0.0",
@@ -57,7 +58,7 @@
     "@platformatic/service": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/utils": "workspace:^",
-    "@scalar/fastify-api-reference": "1.31.14",
+    "@scalar/fastify-api-reference": "1.33.0",
     "ajv": "^8.12.0",
     "commist": "^3.2.0",
     "console-table-printer": "^2.12.0",

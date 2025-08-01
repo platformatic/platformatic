@@ -56,7 +56,7 @@ async function waitEventFromITC (worker, event) {
   return safeHandleInITC(worker, () => once(worker[kITC], event))
 }
 
-function setupITC (app, service, dispatcher) {
+function setupITC (app, service, dispatcher, sharedContext) {
   const messaging = new MessagingITC(app.appConfig.id, workerData.config)
 
   Object.assign(globalThis.platformatic ?? {}, {
@@ -208,6 +208,10 @@ function setupITC (app, service, dispatcher) {
         } catch (err) {
           throw new errors.FailedToPerformCustomReadinessCheckError(service.id, err.message)
         }
+      },
+
+      setSharedContext (context) {
+        sharedContext._set(context)
       },
 
       saveMessagingChannel (channel) {

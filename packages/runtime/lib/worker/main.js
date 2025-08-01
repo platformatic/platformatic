@@ -22,6 +22,7 @@ const pino = require('pino')
 const { fetch } = require('undici')
 
 const { PlatformaticApp } = require('./app')
+const { SharedContext } = require('./shared-context')
 const { setupITC } = require('./itc')
 const { setDispatcher } = require('./interceptors')
 const { kId, kITC, kStderrMarker } = require('./symbols')
@@ -187,8 +188,15 @@ async function main () {
     }
   }
 
+  const sharedContext = new SharedContext()
+  // Limit the amount of methods a user can call
+  globalThis.platformatic.sharedContext = {
+    get: () => sharedContext.get(),
+    update: (...args) => sharedContext.update(...args)
+  }
+
   // Setup interaction with parent port
-  const itc = setupITC(app, service, threadDispatcher)
+  const itc = setupITC(app, service, threadDispatcher, sharedContext)
   globalThis[kITC] = itc
 
   // Get the dependencies
