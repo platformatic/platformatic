@@ -14,7 +14,7 @@ test('should create a client for a service inside a Watt runtime', async t => {
 
   await cp(join(import.meta.dirname, 'fixtures', 'watt'), dir, { recursive: true })
 
-  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), '--name', 'client-1', '--runtime', 'first'], {
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), '--name', 'client-1', '--runtime', 'first', '--skip-config-update', 'false'], {
     cwd: secondDir
   })
 
@@ -48,7 +48,9 @@ test('should create a client for a service inside a Watt runtime and update the 
       '--runtime',
       'first',
       '--config',
-      '../whatever.json'
+      '../whatever.json',
+      '--skip-config-update',
+      'false'
     ],
     { cwd: secondDir }
   )
