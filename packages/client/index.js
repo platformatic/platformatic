@@ -88,7 +88,7 @@ async function buildOpenAPIClient (options, openTelemetry) {
   client[kOperationIdMap] = {}
   client[kHeaders] = options.headers || {}
 
-  let { fullRequest, fullResponse, throwOnError, bodyTimeout, headersTimeout } = options
+  let { fullRequest = true, fullResponse = true, throwOnError, bodyTimeout, headersTimeout } = options
   const generatedOperationIds = []
   for (const path of Object.keys(spec.paths)) {
     const pathMeta = spec.paths[path]

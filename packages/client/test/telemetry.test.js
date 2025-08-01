@@ -58,7 +58,9 @@ test('telemetry correctly propagates from a service client to a server for an Op
   await app.register(client, {
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
-    name: 'movies'
+    name: 'movies',
+    fullRequest: false,
+    fullResponse: false
   })
 
   app.post('/', async req => {
@@ -134,7 +136,9 @@ test('telemetry correctly propagates from a generic client through a service cli
   await app.register(client, {
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
-    name: 'movies'
+    name: 'movies',
+    fullRequest: false,
+    fullResponse: false
   })
 
   app.post('/', async req => {
