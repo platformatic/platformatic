@@ -620,9 +620,7 @@ export async function command (argv) {
 
     options.fullRequest = options['full-request']
     options.fullResponse = options['full-response']
-
-    // TODO: default value to true in the next semver-major (https://github.com/platformatic/platformatic/issues/3737)
-    options.propsOptional = options['props-optional'] ?? false
+    options.propsOptional = options['props-optional'] ?? true
 
     options.optionalHeaders = options['optional-headers']
       ? options['optional-headers'].split(',').map(h => h.trim())
@@ -637,7 +635,7 @@ export async function command (argv) {
     options.urlAuthHeaders = options['url-auth-headers']
     options.typesComment = options['types-comment']
     options.withCredentials = options['with-credentials']
-    options.skipConfigUpdate = options['skip-config-update']
+    options.skipConfigUpdate = options['skip-config-update'] ?? true
     options.retryTimeoutMs = options['retry-timeout-ms']
     await downloadAndProcess({ url, ...options, logger, runtime: options.runtime })
     logger.info(`Client generated successfully into ${options.folder}`)

@@ -81,6 +81,6 @@ Options:
 * `--types-only` - Generate only the type file.
 * `--types-comment` - Add a comment at the beginning of the auto generated `.d.ts` type definition.
 * `--with-credentials` - Adds "credentials: 'include'" to all fetch requests (only for frontend clients).
-* `--props-optional` - If `true`, properties will be defined as optional unless they're part of the `required` array. By default this option is `false`.
-* `--skip-config-update` - If `true`, it will not update the `platformatic|watt` config found in your repo.
+* `--props-optional` - If `true`, properties will be defined as optional unless they're part of the `required` array. By default this option is `true`.
+* `--skip-config-update` - If `true`, it will not update the `platformatic|watt` config found in your repo. By default this option is `true`.
 * `--retry-timeout-ms` - If passed, the HTTP request to get an Open API schema will be retried (reference: https://undici.nodejs.org/#/docs/api/RetryHandler.md)
