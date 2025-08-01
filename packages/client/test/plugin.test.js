@@ -18,6 +18,8 @@ test('wrong type', async (t) => {
 
   await assert.rejects(async () => {
     return await app.register(client, {
+      fullRequest: false,
+      fullResponse: false,
       type: 'foo',
       url: 'http://localhost:3042/documentation/json',
       name: 'client'
@@ -46,7 +48,9 @@ test('default decorator', async (t) => {
 
   await app.register(client, {
     type: 'openapi',
-    url: `${targetApp.url}/documentation/json`
+    url: `${targetApp.url}/documentation/json`,
+    fullRequest: false,
+    fullResponse: false
   })
 
   app.post('/movies', async (req, res) => {
@@ -105,6 +109,8 @@ test('req decorator with OpenAPI and auth', async (t) => {
   await app.register(client, {
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
+    fullRequest: false,
+    fullResponse: false,
     async getHeaders (req) {
       return {
         'x-platformatic-admin-secret': req.headers['x-platformatic-admin-secret']
@@ -155,6 +161,8 @@ test('app decorator with OpenAPI', async (t) => {
   const app = Fastify()
 
   await app.register(client, {
+    fullRequest: false,
+    fullResponse: false,
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
     name: 'client'
@@ -214,6 +222,8 @@ test('req decorator with OpenAPI', async (t) => {
   const app = Fastify()
 
   await app.register(client, {
+    fullRequest: false,
+    fullResponse: false,
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
     name: 'client',
@@ -280,6 +290,8 @@ test('validate response', async (t) => {
   const app = Fastify()
 
   await app.register(client, {
+    fullRequest: false,
+    fullResponse: false,
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
     name: 'movies',
@@ -397,6 +409,8 @@ test('configureClient getHeaders', async (t) => {
   const app = Fastify()
 
   await app.register(client, {
+    fullRequest: false,
+    fullResponse: false,
     type: 'openapi',
     url: `${targetApp.url}/documentation/json`,
     name: 'movies'
@@ -460,6 +474,8 @@ test('serviceId', async (t) => {
   const app = Fastify()
 
   await app.register(client, {
+    fullRequest: false,
+    fullResponse: false,
     type: 'openapi',
     serviceId: 'movies',
     path: join(__dirname, 'fixtures', 'movies', 'openapi.json')

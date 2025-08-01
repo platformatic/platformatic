@@ -14,7 +14,9 @@
     "schema": "./hello.openapi.json",
     "name": "hello",
     "type": "openapi",
-    "url": "{PLT_CLIENT_URL}"
+    "url": "{PLT_CLIENT_URL}",
+    "fullRequest": false,
+    "fullResponse": false
   }],
   "metrics": false,
   "watch": false

@@ -32,7 +32,7 @@ test('url-auth-headers option with valid values', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/docs', '--name', 'authUrlHeaders', '--url-auth-headers', '{"authorization":"42"}'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/docs', '--name', 'authUrlHeaders', '--url-auth-headers', '{"authorization":"42"}', '--full', 'false'])
 
   const toWrite = `
 'use strict'
@@ -56,7 +56,7 @@ app.listen({ port: 0 })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {

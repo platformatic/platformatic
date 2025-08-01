@@ -505,7 +505,8 @@ export async function command (argv) {
     boolean: ['typescript', 'full-response', 'types-only', 'full-request', 'full', 'frontend', 'validate-response', 'props-optional', 'skip-config-update'],
     default: {
       typescript: false,
-      language: 'js'
+      language: 'js',
+      full: true
     },
     alias: {
       n: 'name',

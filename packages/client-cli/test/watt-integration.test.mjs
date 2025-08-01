@@ -15,7 +15,7 @@ test('should create a client for a service inside a Watt runtime', async (t) => 
   const secondDir = join(dir, 'web/second')
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'watt'), dir, { recursive: true, })
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'client-1', '--runtime', 'first'], { cwd: secondDir })
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'client-1', '--runtime', 'first', '--full', 'false'], { cwd: secondDir })
 
   ok(existsSync(join(secondDir, 'client-1/client-1.openapi.json')))
   ok(existsSync(join(secondDir, 'client-1/client-1.d.ts')))
@@ -41,7 +41,7 @@ test('should create a client for a service inside a Watt runtime and update the 
   await cp(join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'watt'), dir, { recursive: true, })
   await cp(join(secondDir, 'watt.json'), join(secondDir, '../whatever.json'))
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'client-1', '--runtime', 'first', '--config', '../whatever.json'], { cwd: secondDir })
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), '--name', 'client-1', '--runtime', 'first', '--config', '../whatever.json', '--full', 'false'], { cwd: secondDir })
 
   ok(existsSync(join(secondDir, 'client-1/client-1.openapi.json')))
   ok(existsSync(join(secondDir, 'client-1/client-1.d.ts')))

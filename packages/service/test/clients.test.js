@@ -9,8 +9,6 @@ const pino = require('pino')
 const { buildServer } = require('..')
 const { safeRemove } = require('@platformatic/utils')
 
-// require('./helper')
-
 test('client is loaded', async t => {
   const app1 = await buildServer(join(__dirname, '..', 'fixtures', 'hello', 'warn-log.service.json'))
 

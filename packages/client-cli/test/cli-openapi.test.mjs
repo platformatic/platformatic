@@ -38,7 +38,7 @@ test('openapi client generation (javascript)', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url, '--name', 'movies', '--type', 'openapi'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url, '--name', 'movies', '--type', 'openapi', '--full', 'false'])
 
   const toWrite = `
 'use strict'
@@ -62,7 +62,7 @@ app.listen({ port: 0 })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
@@ -95,7 +95,7 @@ test('openapi client generation (typescript)', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--full', 'false'])
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -147,7 +147,7 @@ app.listen({ port: 0 });
   const stream = server2.stdout.pipe(split(JSON.parse))
   server2.stderr.pipe(process.stderr)
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
@@ -180,7 +180,7 @@ test('openapi client generation (javascript) with slash at the end', async (t) =
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--full', 'false'])
 
   const toWrite = `
 'use strict'
@@ -204,7 +204,7 @@ app.listen({ port: 0 })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
@@ -239,7 +239,7 @@ test('no such file', async (t) => {
   })
 
   await moveToTmpdir(after)
-  await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), `${app.url}/foo/bar`, '--name', 'movies']))
+  await rejects(execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), `${app.url}/foo/bar`, '--name', 'movies', '--full', 'false']))
 })
 
 test('no such file', async (t) => {
@@ -258,7 +258,7 @@ test('datatypes', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--full', 'false'])
 
   const toWrite = `
 'use strict'
@@ -282,7 +282,7 @@ app.listen({ port: 0 })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
@@ -315,7 +315,7 @@ test('configureClient (typescript)', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--full', 'false'])
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -370,7 +370,7 @@ app.listen({ port: 0 });
   const stream = server2.stdout.pipe(split(JSON.parse))
   server2.stderr.pipe(process.stderr)
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
@@ -422,7 +422,7 @@ test('dotenv & config support', async (t) => {
   await fs.writeFile(join(dir, '.env'), 'FOO=bar')
   await fs.writeFile(join(dir, '.env.sample'), 'FOO=bar')
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--full', 'false'])
 
   const url = app.url + '/'
   {
@@ -454,7 +454,7 @@ test('full-response option', async (t) => {
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--full-response'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--full', 'false', '--full-response'])
 
   const toWrite = `
 'use strict'
@@ -477,7 +477,7 @@ app.listen({ port: 0 })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
@@ -536,7 +536,7 @@ test('openapi client generation (javascript) from file', async (t) => {
   const openAPIfile = join(dir, 'movies.schema.json')
   await fs.writeFile(openAPIfile, JSON.stringify(openAPI, null, 2))
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--full', 'false'])
 
   const toWrite = `
 'use strict'
@@ -594,7 +594,7 @@ test('name with dashes', async (t) => {
   const dir = await moveToTmpdir(after)
 
   try {
-    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny-movies'])
+    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny-movies', '--full', 'false'])
   } catch (err) {
     console.log(err.stderr)
     throw err
@@ -631,7 +631,7 @@ app.listen({ port: 0 })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
@@ -663,7 +663,7 @@ test('no dashes typescript', async (t) => {
   await app.start()
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny-movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny-movies', '--full', 'false'])
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -710,7 +710,7 @@ app.listen({ port: 0 });
   const stream = server2.stdout.pipe(split(JSON.parse))
   server2.stderr.pipe(process.stderr)
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
@@ -744,7 +744,7 @@ test('name with tilde', async (t) => {
   const dir = await moveToTmpdir(after)
 
   try {
-    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny~movies'])
+    await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'uncanny~movies', '--full', 'false'])
   } catch (err) {
     console.log(err.stderr)
     throw err
@@ -781,7 +781,7 @@ app.listen({ port: 0 })
 
   const stream = app2.stdout.pipe(split(JSON.parse))
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
@@ -805,7 +805,7 @@ app.listen({ port: 0 })
 test('openapi client generation from YAML file', async (t) => {
   const dir = await moveToTmpdir(after)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'openapi.yaml')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies', '--full', 'false'])
 
   // check openapi json file has been created
   const jsonFile = join(dir, 'movies', 'movies.openapi.json')
@@ -823,7 +823,7 @@ test('openapi client generation from YAML file', async (t) => {
 test('nested optional parameters are correctly identified', async (t) => {
   const dir = await moveToTmpdir(after)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'optional-params-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies', '--full', 'false'])
 
   // check the type file has the correct implementation for the request
   const typeFile = join(dir, 'movies', 'movies.d.ts')
@@ -837,7 +837,7 @@ test('nested optional parameters are correctly identified', async (t) => {
 test('request with same parameter name in body/path/header/query', async (t) => {
   const dir = await moveToTmpdir(after)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'same-parameter-name-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies', '--full', 'false'])
   // check the type file has the correct implementation for the request
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
@@ -971,7 +971,7 @@ test('optional-headers option', async (t) => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'optional-headers-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--optional-headers', 'foobar,authorization', '--types-only'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--optional-headers', 'foobar,authorization', '--types-only', '--full', 'false'])
 
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
@@ -1036,7 +1036,7 @@ test('common parameters in paths', async (t) => {
 
   await app.start()
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'commonparams', '--full-request'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'commonparams', '--full-request', '--full', 'false'])
 
   const toWrite = `
 'use strict'
@@ -1070,7 +1070,7 @@ app.listen({ port: 0 })
 
   const stream = server2.stdout.pipe(split(JSON.parse))
 
-  // this is unfortuate :(
+  // this is unfortunate :(
   const base = 'Server listening at '
   let url
   for await (const line of stream) {
@@ -1101,7 +1101,7 @@ test('requestbody as array', async (t) => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'requestbody-as-array-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--full', 'false'])
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
 
@@ -1120,7 +1120,7 @@ test('requestbody as array', async (t) => {
 test('requestBody and params should generate a full request', async (t) => {
   const dir = await moveToTmpdir(after)
   const openapiFile = desm.join(import.meta.url, 'fixtures', 'requestbody-and-parameters-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapiFile, '--name', 'movies', '--full', 'false'])
 
   // check the type file has the correct implementation for the request
   const typeFile = join(dir, 'movies', 'movies.d.ts')
@@ -1137,7 +1137,7 @@ test('support formdata', async (t) => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'multipart-formdata-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--full', 'false'])
   const typeFile = join(dir, 'movies', 'movies.d.ts')
   const data = await readFile(typeFile, 'utf-8')
   equal(data.includes(`
@@ -1192,7 +1192,7 @@ test('tsdoc client description', async (t) => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'tsdoc-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc', '--full', 'false'])
 
   const data = await readFile(join(dir, 'tsdoc', 'tsdoc.d.ts'), 'utf-8')
 
@@ -1212,7 +1212,7 @@ test('tsdoc client operation descriptions', async (t) => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'tsdoc-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc', '--full', 'false'])
 
   const data = await readFile(join(dir, 'tsdoc', 'tsdoc.d.ts'), 'utf-8')
 
@@ -1260,7 +1260,7 @@ test('tsdoc client request option descriptions', async (t) => {
   const dir = await moveToTmpdir(after)
 
   const openAPIfile = desm.join(import.meta.url, 'fixtures', 'tsdoc-openapi.json')
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc'])
+  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc', '--full', 'false'])
 
   const data = await readFile(join(dir, 'tsdoc', 'tsdoc.d.ts'), 'utf-8')
 
