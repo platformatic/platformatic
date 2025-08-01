@@ -1,4 +1,4 @@
-import { ok } from 'node:assert'
+import { deepStrictEqual, ok } from 'node:assert'
 import { resolve } from 'node:path'
 import {
   createRuntime,
@@ -174,6 +174,12 @@ async function verifyMissingConfigurationMessage (runtime) {
   ok(logs.map(m => m.msg).includes(missingConfigurationMessage))
 }
 
+async function verifyFilename (runtime) {
+  const { statusCode, body } = await runtime.inject('frontend', { url: '/frontend/filename' })
+  deepStrictEqual(statusCode, 200)
+  ok(body.endsWith('index.ts'))
+}
+
 const configurations = [
   {
     id: 'node-no-configuration-standalone',
@@ -226,6 +232,14 @@ const configurations = [
     name: 'Node.js application (with no build function in development mode when exposed in a composer with a prefix)',
     check: verifyComposerWithPrefix,
     language: 'js'
+  },
+  {
+    id: 'node-no-build-composer-with-prefix-ts',
+    name: 'Node.js application (with no build function in development mode when exposed in a composer with a prefix in TypeScript)',
+    async check (...args) {
+      await verifyComposerWithPrefix(...args, true, verifyFilename)
+    },
+    language: 'ts'
   },
   {
     id: 'node-no-build-composer-without-prefix',

@@ -142,8 +142,7 @@ test('accept packages / with typescript on', async t => {
       logger: { level: 'fatal' }
     },
     plugins: {
-      packages: ['@fastify/compress'],
-      typescript: true
+      packages: ['@fastify/compress']
     }
   })
 

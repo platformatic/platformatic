@@ -56,7 +56,7 @@ async function generateIndexTypes (entities) {
 
   const content = `import { Entity, EntityHooks, Entities as DatabaseEntities, PlatformaticDatabaseConfig, PlatformaticDatabaseMixin } from '@platformatic/db'
 import { PlatformaticApplication, PlatformaticServiceConfig } from '@platformatic/service'
-import { FastifyInstance } from 'fastify'
+import { type FastifyInstance } from 'fastify'
 
 ${allImports.join('\n')}
 

@@ -405,15 +405,13 @@ class BaseGenerator extends FileGenerator {
         ...this.config.dependencies
       },
       engines: {
-        node: '>=22.16.0'
+        node: '>=22.18.0'
       }
     }
 
     if (this.config.typescript) {
       const typescriptVersion = JSON.parse(await readFile(join(__dirname, '..', 'package.json'), 'utf-8'))
         .devDependencies.typescript
-      template.scripts.clean = 'rm -fr ./dist'
-      template.scripts.build = 'platformatic compile'
       template.devDependencies.typescript = typescriptVersion
     }
     return template

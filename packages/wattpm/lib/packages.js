@@ -30,7 +30,6 @@ export const packages = [
   '@platformatic/sql-mapper',
   '@platformatic/sql-openapi',
   '@platformatic/telemetry',
-  '@platformatic/ts-compiler',
   '@platformatic/utils',
   '@platformatic/vite',
   'create-platformatic',

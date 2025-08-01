@@ -85,8 +85,8 @@ export class BaseStackable extends EventEmitter {
     return this.updateContext()
   }
 
-  updateContext (context) {
-    // No-op
+  updateContext (_context) {
+    // No-op by default
   }
 
   start () {
@@ -95,6 +95,10 @@ export class BaseStackable extends EventEmitter {
 
   stop () {
     throw new Error('BaseStackable.stop must be overriden by the subclasses')
+  }
+
+  build () {
+    // No-op by default
   }
 
   // Alias for stop

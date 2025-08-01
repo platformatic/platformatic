@@ -29,13 +29,6 @@ export class Generator extends BaseGenerator {
         )
       }
 
-      this.addEnvVars(
-        {
-          PLT_TYPESCRIPT: this.config.typescript
-        },
-        { overwrite: false, default: true }
-      )
-
       this.config.dependencies = {
         '@platformatic/service': `^${this.platformaticVersion}`
       }
@@ -75,7 +68,7 @@ export class Generator extends BaseGenerator {
     // if we are NOT updating, create env and files, otherwise leave as it is
     if (!this.config.isUpdating) {
       const PLT_ENVIRONMENT_TEMPLATE = `
-import { FastifyInstance } from 'fastify'
+import { type FastifyInstance } from 'fastify'
 import { PlatformaticApplication, PlatformaticServiceConfig } from '@platformatic/service'
 
 declare module 'fastify' {
@@ -134,8 +127,7 @@ npm start
     }
     if (this.config.plugin) {
       config.plugins = {
-        paths: [{ path: './plugins', encapsulate: false }, './routes'],
-        typescript: `{${this.getEnvVarName('PLT_TYPESCRIPT')}}`
+        paths: [{ path: './plugins', encapsulate: false }, './routes']
       }
     }
 

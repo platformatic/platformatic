@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/db",
-  "version": "2.73.1",
+  "version": "3.0.0-alpha.1",
   "description": "",
   "main": "index.js",
   "types": "index.d.ts",
@@ -65,7 +65,6 @@
     "@platformatic/sql-mapper": "workspace:*",
     "@platformatic/sql-openapi": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
-    "@platformatic/ts-compiler": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "camelcase": "^6.3.0",
     "close-with-grace": "^2.0.0",

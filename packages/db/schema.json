@@ -1,5 +1,5 @@
 {
-  "$id": "https://schemas.platformatic.dev/@platformatic/db/2.73.1.json",
+  "$id": "https://schemas.platformatic.dev/@platformatic/db/3.0.0-alpha.1.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Platformatic Database Config",
   "type": "object",
@@ -1151,45 +1151,6 @@
               }
             ]
           }
-        },
-        "typescript": {
-          "anyOf": [
-            {
-              "type": "object",
-              "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "type": "boolean"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
-                "tsConfig": {
-                  "type": "string",
-                  "resolvePath": true
-                },
-                "outDir": {
-                  "type": "string",
-                  "resolvePath": true
-                },
-                "flags": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              }
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "string"
-            }
-          ]
         }
       },
       "additionalProperties": false,

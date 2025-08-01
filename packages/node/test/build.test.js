@@ -73,7 +73,6 @@ test('should build the services on start in dev', async t => {
   })
 
   ok(existsSync(resolve(runtime.root, 'services/app-no-config/dist/index.js')))
-  ok(existsSync(resolve(runtime.root, 'services/app-with-config/dist/tsconfig.tsbuildinfo')))
 })
 
 for (const service of ['app-no-config', 'app-with-config']) {

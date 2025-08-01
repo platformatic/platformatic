@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/service",
-  "version": "2.73.1",
+  "version": "3.0.0-alpha.1",
   "description": "",
   "main": "index.js",
   "types": "index.d.ts",
@@ -58,7 +58,6 @@
     "@platformatic/metrics": "workspace:*",
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
-    "@platformatic/ts-compiler": "workspace:*",
     "@platformatic/utils": "workspace:*",
     "@scalar/fastify-api-reference": "1.33.0",
     "@types/node": "^22.10.6",

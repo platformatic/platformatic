@@ -19,11 +19,7 @@ const sidebars = {
       type: 'category',
       label: 'wattpm',
       collapsed: true,
-      items: [
-        'packages/watt/overview',
-        'packages/watt/configuration',
-        'packages/watt/reference'
-      ]
+      items: ['packages/watt/overview', 'packages/watt/configuration', 'packages/watt/reference']
     },
     {
       type: 'category',
@@ -61,9 +57,9 @@ const sidebars = {
         'packages/db/programmatic',
         'packages/db/schema-support',
         'packages/db/seed',
-        "packages/db/securing-platformatic-db",
-        "packages/db/jwt-auth0",
-        "packages/db/jwt-keycloak",
+        'packages/db/securing-platformatic-db',
+        'packages/db/jwt-auth0',
+        'packages/db/jwt-keycloak'
       ]
     },
     {
@@ -92,30 +88,19 @@ const sidebars = {
       type: 'category',
       label: '@platformatic/client',
       collapsed: true,
-      items: [
-        'packages/client/overview',
-        'packages/client/programmatic',
-        'packages/client/frontend'
-      ]
+      items: ['packages/client/overview', 'packages/client/programmatic', 'packages/client/frontend']
     },
     {
       type: 'category',
       label: '@platformatic/node',
       collapsed: true,
-      items: [
-        'packages/node/overview',
-        'packages/node/configuration'
-      ]
+      items: ['packages/node/overview', 'packages/node/configuration']
     },
     {
       type: 'category',
       label: '@platformatic/astro',
       collapsed: true,
-      items: [
-        'packages/astro/overview',
-        'packages/astro/configuration',
-        'packages/astro/caching'
-      ]
+      items: ['packages/astro/overview', 'packages/astro/configuration', 'packages/astro/caching']
     },
     {
       type: 'category',
@@ -204,11 +189,7 @@ const sidebars = {
       type: 'category',
       label: 'Deployment',
       collapsed: true,
-      items: [
-        'guides/deployment/dockerize-a-watt-app',
-        'guides/deployment/compiling-typescript',
-        'guides/deployment/k8s-readiness-liveness'
-      ]
+      items: ['guides/deployment/dockerize-a-watt-app', 'guides/deployment/k8s-readiness-liveness']
     },
     {
       type: 'category',

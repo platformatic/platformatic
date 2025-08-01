@@ -11,7 +11,7 @@ module.exports = async function (fastify, opts) {
 `
 
 const TS_PLUGIN_WITH_TYPES_SUPPORT = `\
-import { FastifyInstance, FastifyPluginOptions } from 'fastify'
+import { type FastifyInstance, type FastifyPluginOptions } from 'fastify'
 
 export default async function (fastify: FastifyInstance, opts: FastifyPluginOptions) {
   fastify.decorate('example', 'foobar')
@@ -29,7 +29,7 @@ module.exports = async function (fastify, opts) {
 `
 
 const TS_ROUTES_WITH_TYPES_SUPPORT = `\
-import { FastifyInstance, FastifyPluginOptions } from 'fastify'
+import { type FastifyInstance, type FastifyPluginOptions } from 'fastify'
 
 declare module 'fastify' {
   interface FastifyInstance {
