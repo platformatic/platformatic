@@ -1,59 +1,29 @@
-'use strict'
+import collectHttpMetrics from '@platformatic/http-metrics'
+import os from 'node:os'
+import { performance } from 'node:perf_hooks'
+import client from 'prom-client'
 
-const os = require('node:os')
-const { eventLoopUtilization } = require('node:perf_hooks').performance
-const client = require('prom-client')
-const collectHttpMetrics = require('@platformatic/http-metrics')
+export * as client from 'prom-client'
 
+const { eventLoopUtilization } = performance
 const { Registry, Gauge, Counter, collectDefaultMetrics } = client
 
-async function collectMetrics (serviceId, workerId, metricsConfig = {}, registry = undefined) {
-  if (!registry) {
-    registry = new Registry()
-  }
+export const kMetricsGroups = Symbol('plt.metrics.MetricsGroups')
 
-  const labels = { ...metricsConfig.labels, serviceId }
-  if (workerId >= 0) {
-    labels.workerId = workerId
-  }
-  registry.setDefaultLabels(labels)
-
-  if (metricsConfig.defaultMetrics) {
-    collectDefaultMetrics({ register: registry })
-    collectEluMetric(registry)
-    await collectThreadCpuMetrics(registry)
-  }
-
-  if (metricsConfig.httpMetrics) {
-    collectHttpMetrics(registry, {
-      customLabels: ['telemetry_id'],
-      getCustomLabels: req => {
-        const telemetryId = req.headers?.['x-plt-telemetry-id'] ?? 'unknown'
-        return { telemetry_id: telemetryId }
-      },
-      histogram: {
-        name: 'http_request_all_duration_seconds',
-        help: 'request duration in seconds summary for all requests',
-        collect: function () {
-          process.nextTick(() => this.reset())
-        }
-      },
-      summary: {
-        name: 'http_request_all_summary_seconds',
-        help: 'request duration in seconds histogram for all requests',
-        collect: function () {
-          process.nextTick(() => this.reset())
-        }
-      }
-    })
-  }
-
-  return {
-    registry,
-  }
+export function registerMetricsGroup (registry, group) {
+  registry[kMetricsGroups] ??= new Set()
+  registry[kMetricsGroups].add(group)
 }
 
-async function collectThreadCpuMetrics (registry) {
+export function hasMetricsGroup (registry, group) {
+  return registry[kMetricsGroups]?.has(group)
+}
+
+export async function collectThreadCpuMetrics (registry) {
+  if (hasMetricsGroup(registry, 'threadCpuUsage')) {
+    return
+  }
+
   let threadCpuUsage
 
   try {
@@ -115,9 +85,15 @@ async function collectThreadCpuMetrics (registry) {
   registry.registerMetric(threadCpuSystemUsageCounterMetric)
   registry.registerMetric(threadCpuUsageCounterMetric)
   registry.registerMetric(threadCpuPercentUsageGaugeMetric)
+
+  registerMetricsGroup(registry, 'threadCpuUsage')
 }
 
-function collectEluMetric (register) {
+export function collectEluMetric (registry) {
+  if (hasMetricsGroup(registry, 'elu')) {
+    return
+  }
+
   let startELU = eventLoopUtilization()
   const eluMetric = new Gauge({
     name: 'nodejs_eventloop_utilization',
@@ -128,9 +104,9 @@ function collectEluMetric (register) {
       eluMetric.set(result)
       startELU = endELU
     },
-    registers: [register]
+    registers: [registry]
   })
-  register.registerMetric(eluMetric)
+  registry.registerMetric(eluMetric)
 
   let previousIdleTime = 0
   let previousTotalTime = 0
@@ -161,9 +137,61 @@ function collectEluMetric (register) {
       previousIdleTime = idleTime
       previousTotalTime = totalTime
     },
-    registers: [register]
+    registers: [registry]
   })
-  register.registerMetric(cpuMetric)
+  registry.registerMetric(cpuMetric)
+
+  registerMetricsGroup(registry, 'elu')
 }
 
-module.exports = { collectMetrics, client }
+export async function collectMetrics (serviceId, workerId, metricsConfig = {}, registry = undefined) {
+  if (!registry) {
+    registry = new Registry()
+  }
+
+  const labels = { ...metricsConfig.labels, serviceId }
+  if (workerId >= 0) {
+    labels.workerId = workerId
+  }
+  registry.setDefaultLabels(labels)
+
+  if (metricsConfig.defaultMetrics) {
+    if (!hasMetricsGroup(registry, 'default')) {
+      collectDefaultMetrics({ register: registry })
+      registerMetricsGroup(registry, 'default')
+    }
+
+    collectEluMetric(registry)
+    await collectThreadCpuMetrics(registry)
+  }
+
+  if (metricsConfig.httpMetrics && !hasMetricsGroup(registry, 'http')) {
+    collectHttpMetrics(registry, {
+      customLabels: ['telemetry_id'],
+      getCustomLabels: req => {
+        const telemetryId = req.headers?.['x-plt-telemetry-id'] ?? 'unknown'
+        return { telemetry_id: telemetryId }
+      },
+      histogram: {
+        name: 'http_request_all_duration_seconds',
+        help: 'request duration in seconds summary for all requests',
+        collect: function () {
+          process.nextTick(() => this.reset())
+        }
+      },
+      summary: {
+        name: 'http_request_all_summary_seconds',
+        help: 'request duration in seconds histogram for all requests',
+        collect: function () {
+          process.nextTick(() => this.reset())
+        }
+      }
+    })
+
+    registerMetricsGroup(registry, 'http')
+  }
+
+  return {
+    registry
+  }
+}
