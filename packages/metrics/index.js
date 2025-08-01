@@ -19,8 +19,21 @@ export function hasMetricsGroup (registry, group) {
   return registry[kMetricsGroups]?.has(group)
 }
 
+// Use this method when dealing with metrics registration in async functions.
+// This will ensure that the group is registered only once.
+export function ensureMetricsGroup (registry, group) {
+  registry[kMetricsGroups] ??= new Set()
+
+  if (registry[kMetricsGroups]?.has(group)) {
+    return true
+  }
+
+  registry[kMetricsGroups].add(group)
+  return false
+}
+
 export async function collectThreadCpuMetrics (registry) {
-  if (hasMetricsGroup(registry, 'threadCpuUsage')) {
+  if (ensureMetricsGroup(registry, 'threadCpuUsage')) {
     return
   }
 
@@ -85,12 +98,10 @@ export async function collectThreadCpuMetrics (registry) {
   registry.registerMetric(threadCpuSystemUsageCounterMetric)
   registry.registerMetric(threadCpuUsageCounterMetric)
   registry.registerMetric(threadCpuPercentUsageGaugeMetric)
-
-  registerMetricsGroup(registry, 'threadCpuUsage')
 }
 
 export function collectEluMetric (registry) {
-  if (hasMetricsGroup(registry, 'elu')) {
+  if (ensureMetricsGroup(registry, 'elu')) {
     return
   }
 
@@ -140,8 +151,6 @@ export function collectEluMetric (registry) {
     registers: [registry]
   })
   registry.registerMetric(cpuMetric)
-
-  registerMetricsGroup(registry, 'elu')
 }
 
 export async function collectMetrics (serviceId, workerId, metricsConfig = {}, registry = undefined) {
@@ -156,16 +165,15 @@ export async function collectMetrics (serviceId, workerId, metricsConfig = {}, r
   registry.setDefaultLabels(labels)
 
   if (metricsConfig.defaultMetrics) {
-    if (!hasMetricsGroup(registry, 'default')) {
+    if (!ensureMetricsGroup(registry, 'default')) {
       collectDefaultMetrics({ register: registry })
-      registerMetricsGroup(registry, 'default')
     }
 
     collectEluMetric(registry)
     await collectThreadCpuMetrics(registry)
   }
 
-  if (metricsConfig.httpMetrics && !hasMetricsGroup(registry, 'http')) {
+  if (metricsConfig.httpMetrics && !ensureMetricsGroup(registry, 'http')) {
     collectHttpMetrics(registry, {
       customLabels: ['telemetry_id'],
       getCustomLabels: req => {
@@ -187,8 +195,6 @@ export async function collectMetrics (serviceId, workerId, metricsConfig = {}, r
         }
       }
     })
-
-    registerMetricsGroup(registry, 'http')
   }
 
   return {

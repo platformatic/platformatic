@@ -1,8 +1,8 @@
+import { getPackageManager } from '@platformatic/utils'
 import { spawn } from 'node:child_process'
 import { parseArgs } from '../utils.js'
-import { getPackageManager } from '@platformatic/utils'
 
-export function adminCommand (logger, args) {
+export async function adminCommand (logger, args) {
   let {
     values: { latest, 'package-manager': packageManager }
   } = parseArgs(
@@ -21,7 +21,7 @@ export function adminCommand (logger, args) {
   )
 
   if (!packageManager) {
-    packageManager = getPackageManager(process.cwd())
+    packageManager = await getPackageManager(process.cwd())
   }
 
   const modifier = latest ? '@latest' : ''

@@ -47,7 +47,7 @@ export async function createCommand (logger, args) {
   )
 
   if (!packageManager) {
-    packageManager = getPackageManager(process.cwd(), null)
+    packageManager = await getPackageManager(process.cwd(), null)
   }
 
   const username = await getUsername()
