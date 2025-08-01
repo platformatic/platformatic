@@ -1,4 +1,4 @@
-import { client, collectMetrics, hasMetricsGroup, registerMetricsGroup } from '@platformatic/metrics'
+import { client, collectMetrics, ensureMetricsGroup } from '@platformatic/metrics'
 import { buildPinoOptions, deepmerge, executeWithTimeout, kMetadata, kTimeout } from '@platformatic/utils'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
@@ -466,7 +466,7 @@ export class BaseStackable extends EventEmitter {
     const { client, registry } = globalThis.platformatic.prometheus
 
     // Metrics already registered, no need to register them again
-    if (hasMetricsGroup(registry, 'http.cache')) {
+    if (ensureMetricsGroup(registry, 'http.cache')) {
       return
     }
 
@@ -548,8 +548,6 @@ export class BaseStackable extends EventEmitter {
     globalThis.platformatic.onHttpStatsSize = (url, val) => {
       httpStatsSizeMetric.set({ dispatcher_stats_url: url }, val)
     }
-
-    registerMetricsGroup(registry, 'http.cache')
   }
 
   async #invalidateHttpCache (opts = {}) {
