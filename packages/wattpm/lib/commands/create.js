@@ -1,6 +1,7 @@
 import { getPackageManager } from '@platformatic/utils'
 import { createApplication, getUsername, getVersion, say } from 'create-platformatic'
 import { resolve } from 'node:path'
+import { getExecutableName } from '../embedding.js'
 import { parseArgs } from '../utils.js'
 import { installDependencies } from './build.js'
 
@@ -46,15 +47,16 @@ export async function createCommand (logger, args) {
   )
 
   if (!packageManager) {
-    packageManager = getPackageManager(process.cwd(), null)
+    packageManager = await getPackageManager(process.cwd(), null)
   }
 
   const username = await getUsername()
   const version = await getVersion()
 
-  /* c8 ignore next 2 - Ignoring else branches */
+  /* c8 ignore next 3 - Ignoring else branches */
+  const executableName = getExecutableName()
   const greeting = username ? `Hello ${username},` : 'Hello,'
-  await say(`${greeting} welcome to ${version ? `Watt ${version}!` : 'Watt!'}`)
+  await say(`${greeting} welcome to ${version ? `${executableName} ${version}!` : `${executableName}!`}`)
 
   await createApplication(
     logger,
@@ -79,7 +81,9 @@ export async function createCommand (logger, args) {
 }
 
 const createHelp = {
-  description: 'Creates a new Watt project',
+  description () {
+    return `Creates a new ${getExecutableName()} project`
+  },
   options: [
     {
       usage: '-c, --config <config>',

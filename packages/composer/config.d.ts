@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface PlatformaticComposer {
+export interface PlatformaticComposerConfig {
   basePath?: string;
   server?: {
     hostname?: string;
@@ -367,24 +367,6 @@ export interface PlatformaticComposer {
     addEmptySchema?: boolean;
     refreshTimeout?: number;
   };
-  metrics?:
-    | boolean
-    | {
-        port?: number | string;
-        hostname?: string;
-        endpoint?: string;
-        server?: "own" | "parent" | "hide";
-        defaultMetrics?: {
-          enabled: boolean;
-        };
-        auth?: {
-          username: string;
-          password: string;
-        };
-        labels?: {
-          [k: string]: string;
-        };
-      };
   types?: {
     autogenerate?: boolean;
     /**

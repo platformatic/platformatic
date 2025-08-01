@@ -122,7 +122,7 @@ function mapSQLEntityToJSONSchema (entity, ignore = {}, noRequired = false) {
 function mapOpenAPItoTypes (obj, fieldDefinitions, opts = {}) {
   let { writer, addedProps } = opts
   addedProps ??= new Set()
-  writer ??= new CodeBlockWriter()
+  writer ??= new CodeBlockWriter({ indentNumberOfSpaces: opts.indentSpaces ?? 4 })
   const { title, description, properties, required, additionalProperties } = obj
   writer.write('/**').newLine()
   writer.write(` * ${title}`).newLine()

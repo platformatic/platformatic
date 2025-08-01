@@ -9,7 +9,7 @@ const { ATTR_SERVICE_NAME } = require('@opentelemetry/semantic-conventions')
 const { workerData } = require('node:worker_threads')
 const { resolve } = require('node:path')
 const { tmpdir } = require('node:os')
-const logger = require('abstract-logging')
+const { abstractLogger } = require('@platformatic/utils')
 const { statSync, readFileSync } = require('node:fs') // We want to have all this synch
 const util = require('node:util')
 const { getInstrumentations } = require('./pluggable-instrumentations')
@@ -38,7 +38,7 @@ const setupNodeHTTPTelemetry = async (opts, serviceDir) => {
 
   let exporter = opts.exporter
   if (!exporter) {
-    logger.warn('No exporter configured, defaulting to console.')
+    abstractLogger.warn('No exporter configured, defaulting to console.')
     exporter = { type: 'console' }
   }
   const exporters = Array.isArray(exporter) ? exporter : [exporter]
@@ -64,7 +64,7 @@ const setupNodeHTTPTelemetry = async (opts, serviceDir) => {
     } else if (exporter.type === 'file') {
       exporterObj = new FileSpanExporter(exporterOptions)
     } else {
-      logger.warn(
+      abstractLogger.warn(
         `Unknown exporter type: ${exporter.type}, defaulting to console.`
       )
       exporterObj = new ConsoleSpanExporter(exporterOptions)

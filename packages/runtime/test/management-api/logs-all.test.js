@@ -9,8 +9,11 @@ const { Client } = require('undici')
 const { getRuntimeTmpDir, getRuntimeLogsDir } = require('../../lib/utils')
 const { createDirectory, safeRemove } = require('@platformatic/utils')
 
-const { buildServer } = require('../..')
+const { create } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 test('should get all runtime logs', async t => {
   const projectDir = join(fixturesDir, 'management-api')
@@ -19,7 +22,7 @@ test('should get all runtime logs', async t => {
   const runtimeTmpDir = getRuntimeTmpDir(projectDir)
   await safeRemove(runtimeTmpDir)
 
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
   await app.start()
 
   t.after(async () => {
@@ -80,7 +83,7 @@ test('should get previous runtime logs', async t => {
     writeFile(join(prevRuntimeTmpDir, 'logs.5'), 'test-logs-5\n'),
   ])
 
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
   await app.start()
 
   t.after(async () => {

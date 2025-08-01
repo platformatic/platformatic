@@ -1,0 +1,22 @@
+{
+  "server": {
+    "hostname": "127.0.0.1",
+    "port": 0,
+    "logger": {
+      "level": "warn",
+      "name": "hello client"
+    }
+  },
+  "plugins": {
+    "paths": ["./plugin.js"]
+  },
+  "clients": [
+    {
+      "schema": "./hello.openapi.json",
+      "name": "hello",
+      "type": "openapi",
+      "url": "{PLT_CLIENT_URL}"
+    }
+  ],
+  "watch": false
+}

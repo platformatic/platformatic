@@ -1,16 +1,15 @@
-import { isFileAccessible } from '../cli.mjs'
-import { moveToTmpdir } from './helper.js'
-import { test, after } from 'node:test'
-import { equal } from 'node:assert'
-import { join } from 'path'
-import * as desm from 'desm'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
 import { readFile } from 'fs/promises'
+import { equal } from 'node:assert'
+import { after, test } from 'node:test'
+import { join } from 'path'
+import { isFileAccessible } from '../cli.mjs'
+import { moveToTmpdir } from './helper.js'
 
 const testName = 'optional-body'
 test(testName, async (t) => {
-  const openapi = desm.join(import.meta.url, 'fixtures', testName, 'openapi.json')
+  const openapi = join(import.meta.dirname, 'fixtures', testName, 'openapi.json')
   const dir = await moveToTmpdir(after)
 
   const pltServiceConfig = {
@@ -27,7 +26,7 @@ test(testName, async (t) => {
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
 
   // Checking props-optional param
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', testName, '--full', '--props-optional'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openapi, '--name', testName, '--full', '--props-optional'])
   equal(await isFileAccessible(join(dir, testName, `${testName}.cjs`)), false)
 
   const typeFile = join(dir, testName, `${testName}.d.ts`)
@@ -41,7 +40,7 @@ test(testName, async (t) => {
   }`), true, 'properties are optional')
 
   // Checking default behavior
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), openapi, '--name', 'defaulted', '--full'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openapi, '--name', 'defaulted', '--full'])
   equal((await readFile(join(dir, 'defaulted', 'defaulted.d.ts'), 'utf-8')).includes(`
   export type PostHelloRequest = {
     body: {

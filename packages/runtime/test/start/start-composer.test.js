@@ -4,14 +4,15 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
+const { create } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
 
-test('composer', async (t) => {
+test.beforeEach(setLogFile)
+
+test('composer', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   t.after(async () => {
     await app.close()
@@ -36,10 +37,9 @@ test('composer', async (t) => {
   }
 })
 
-test('composer-proxy', async (t) => {
+test('composer-proxy', async t => {
   const configFile = join(fixturesDir, 'composer-proxy', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   t.after(async () => {
     await app.close()

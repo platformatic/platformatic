@@ -1,12 +1,10 @@
-'use strict'
-
-const { join } = require('node:path')
-const { on } = require('node:events')
-const why = require('why-is-node-running')
-const { Agent, setGlobalDispatcher } = require('undici')
-const { createConnectionPool } = require('@platformatic/sql-mapper')
-const split = require('split2')
-const os = require('node:os')
+import { createConnectionPool } from '@platformatic/sql-mapper'
+import { on } from 'node:events'
+import os from 'node:os'
+import { join, resolve } from 'node:path'
+import split from 'split2'
+import { Agent, setGlobalDispatcher } from 'undici'
+import why from 'why-is-node-running'
 
 // This file must be required/imported as the first file
 // in the test suite. It sets up the global environment
@@ -27,9 +25,10 @@ setGlobalDispatcher(
   })
 )
 
-const cliPath = join(__dirname, '..', '..', 'db.mjs')
+export const cliPath = resolve(import.meta.dirname, './executables/cli.js')
+export const startPath = resolve(import.meta.dirname, './executables/start.js')
 
-async function connectDB (connectionInfo) {
+export async function connectDB (connectionInfo) {
   const { db } = await createConnectionPool({
     log: {
       debug: () => {},
@@ -43,17 +42,17 @@ async function connectDB (connectionInfo) {
   return db
 }
 
-function removeFileProtocol (str) {
+export function removeFileProtocol (str) {
   return str.replace('file:', '')
 }
 
-function getFixturesConfigFileLocation (filename, subdirectories = []) {
-  return removeFileProtocol(join(__dirname, '..', 'fixtures', ...subdirectories, filename))
+export function getFixturesConfigFileLocation (filename, subdirectories = []) {
+  return removeFileProtocol(join(import.meta.dirname, '..', 'fixtures', ...subdirectories, filename))
 }
 
-async function start (commandOpts, exacaOpts = {}) {
+export async function start (commandOpts, exacaOpts = {}) {
   const { execa } = await import('execa')
-  const child = execa('node', [cliPath, 'start', ...commandOpts], exacaOpts)
+  const child = execa('node', [startPath, ...commandOpts], exacaOpts)
   child.stderr.pipe(process.stdout)
   const output = child.stdout.pipe(
     split(function (line) {
@@ -83,7 +82,7 @@ async function start (commandOpts, exacaOpts = {}) {
   }
 }
 
-function parseEnv (envFile) {
+export function parseEnv (envFile) {
   const env = {}
   for (const line of envFile.split('\n')) {
     if (line) {
@@ -94,7 +93,7 @@ function parseEnv (envFile) {
   return env
 }
 
-async function safeKill (child, signal = 'SIGINT') {
+export async function safeKill (child, signal = 'SIGINT') {
   const { execa } = await import('execa')
   child.catch(() => {})
   child.kill(signal)
@@ -110,10 +109,3 @@ async function safeKill (child, signal = 'SIGINT') {
     }
   }
 }
-
-module.exports.cliPath = cliPath
-module.exports.connectDB = connectDB
-module.exports.getFixturesConfigFileLocation = getFixturesConfigFileLocation
-module.exports.start = start
-module.exports.parseEnv = parseEnv
-module.exports.safeKill = safeKill

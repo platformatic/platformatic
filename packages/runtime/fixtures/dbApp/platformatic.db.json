@@ -2,7 +2,10 @@
   "$schema": "https://schemas.platformatic.dev/@platformatic/db/1.52.0.json",
   "server": {
     "hostname": "127.0.0.1",
-    "port": 0
+    "port": 0,
+    "logger": {
+      "level": "fatal"
+    }
   },
   "migrations": {
     "dir": "migrations",
@@ -20,9 +23,7 @@
     "events": false
   },
   "plugins": {
-    "paths": [
-      "plugin.js"
-    ]
+    "paths": ["plugin.js"]
   },
   "watch": false
 }

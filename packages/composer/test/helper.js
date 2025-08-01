@@ -1,29 +1,24 @@
-'use strict'
-
-const why = require('why-is-node-running')
-const path = require('path')
-const fs = require('fs')
-const assert = require('node:assert/strict')
-const { mkdtemp, writeFile } = require('node:fs/promises')
-const { setTimeout: sleep } = require('node:timers/promises')
-const { platform } = require('node:os')
-const { resolve } = require('node:path')
-const { promisify } = require('node:util')
-const { createServer } = require('node:http')
-const { request, setGlobalDispatcher, Client, Agent } = require('undici')
-const fastify = require('fastify')
-const Swagger = require('@fastify/swagger')
-const mercurius = require('mercurius')
-const WebSocket = require('ws')
-const { getIntrospectionQuery } = require('graphql')
-const { buildServer: dbBuildServer } = require('@platformatic/db')
-const { createDirectory, safeRemove } = require('@platformatic/utils')
-const pinoTest = require('pino-test')
-const pino = require('pino')
-
-// This is to avoid a circular dependency
-const { buildServer: buildRuntime, symbols } = require('../../runtime')
-const { buildServer } = require('..')
+import Swagger from '@fastify/swagger'
+import { create as createDatabaseStackable } from '@platformatic/db'
+import { createDirectory, executeWithTimeout, kTimeout, loadModule, safeRemove } from '@platformatic/utils'
+import fastify from 'fastify'
+import fs from 'fs'
+import { getIntrospectionQuery } from 'graphql'
+import mercurius from 'mercurius'
+import assert from 'node:assert/strict'
+import { once } from 'node:events'
+import { mkdtemp, writeFile } from 'node:fs/promises'
+import { createServer } from 'node:http'
+import { createRequire } from 'node:module'
+import { resolve } from 'node:path'
+import { promisify } from 'node:util'
+import path from 'path'
+import { Agent, request, setGlobalDispatcher } from 'undici'
+import why from 'why-is-node-running'
+import WebSocket from 'ws'
+import { createTemporaryDirectory } from '../../basic/test/helper.js'
+import { create as createRuntime, symbols } from '../../runtime/index.js'
+import { create } from '../index.js'
 
 if (process.env.WHY === 'true') {
   setInterval(() => {
@@ -36,17 +31,13 @@ const agent = new Agent({
   keepAliveTimeout: 10
 })
 
-const tmpBaseDir = resolve(__dirname, '../tmp')
-
-const REFRESH_TIMEOUT = 1_000
-const REFRESH_TIMEOUT_DELAY_FACTOR = 20
-
-// GitHub actions are REALLY slow.
-const LOGS_WRITE_DELAY = process.env.CI ? 10000 : 3000
-
 setGlobalDispatcher(agent)
 
-async function createBasicService (t, options = {}) {
+const tmpBaseDir = resolve(import.meta.dirname, '../tmp')
+
+export const REFRESH_TIMEOUT = 1_000
+
+export async function createBasicService (t, options = {}) {
   const app = fastify({
     logger: false,
     keepAliveTimeout: 10,
@@ -89,7 +80,7 @@ async function createBasicService (t, options = {}) {
         }
       }
     },
-    async () => { }
+    async () => {}
   )
 
   app.get(
@@ -143,7 +134,32 @@ async function createBasicService (t, options = {}) {
   return app
 }
 
-async function createOpenApiService (t, entitiesNames = [], options = {}) {
+export async function createPlatformaticDatabaseService (t, { name, jsonFile }) {
+  try {
+    fs.unlinkSync(path.join(import.meta.dirname, 'graphql', 'fixtures', name, 'db0.sqlite'))
+  } catch {}
+  try {
+    fs.unlinkSync(path.join(import.meta.dirname, 'graphql', 'fixtures', name, 'db1.sqlite'))
+  } catch {}
+
+  const service = await createDatabaseStackable(path.join(import.meta.dirname, 'graphql', 'fixtures', name, jsonFile))
+  await service.init()
+
+  service.getApplication().get('/.well-known/graphql-composition', async function (req, reply) {
+    const res = await reply.graphql(getIntrospectionQuery())
+    return res
+  })
+
+  t.after(async () => {
+    try {
+      await service.stop()
+    } catch {}
+  })
+
+  return service
+}
+
+export async function createOpenApiService (t, entitiesNames = [], options = {}) {
   const app = fastify({
     logger: false,
     keepAliveTimeout: 10,
@@ -328,21 +344,22 @@ async function createOpenApiService (t, entitiesNames = [], options = {}) {
   return app
 }
 
-async function createGraphqlService (t, { schema, resolvers, extend, file, exposeIntrospection = true }) {
+export async function createGraphqlService (t, { schema, resolvers, extend, file, exposeIntrospection = true }) {
   const app = fastify({ logger: false, port: 0 })
   t.after(async () => {
     await app.close()
   })
 
   if (file) {
-    await app.register(mercurius, require(file))
+    const { schema, resolvers } = await loadModule(createRequire(import.meta.dirname), file)
+    await app.register(mercurius, { schema, resolvers })
   } else {
     await app.register(mercurius, { schema, resolvers })
   }
 
   if (extend) {
     if (extend.file) {
-      const { schema, resolvers } = require(extend.file)
+      const { schema, resolvers } = await import(extend.file)
       if (schema) {
         app.graphql.extendSchema(schema)
       }
@@ -367,7 +384,7 @@ async function createGraphqlService (t, { schema, resolvers, extend, file, expos
   return app
 }
 
-async function createWebsocketService (t, wsServerOptions = {}, port) {
+export async function createWebsocketService (t, wsServerOptions = {}, port) {
   const service = createServer()
   const wsServer = new WebSocket.Server({ server: service, ...wsServerOptions })
   await promisify(service.listen.bind(service))({ port, host: '127.0.0.1' })
@@ -380,14 +397,16 @@ async function createWebsocketService (t, wsServerOptions = {}, port) {
   return { service, wsServer }
 }
 
-async function createComposer (t, composerConfig, loggerInstance = undefined) {
+export async function createFromConfig (t, options, applicationFactory, creationOptions = {}) {
   const defaultConfig = {
     server: {
-      loggerInstance,
       hostname: '127.0.0.1',
       port: 0,
       keepAliveTimeout: 10,
-      forceCloseConnections: true
+      forceCloseConnections: true,
+      logger: {
+        level: 'info'
+      }
     },
     composer: { services: [] },
     plugins: {
@@ -396,17 +415,24 @@ async function createComposer (t, composerConfig, loggerInstance = undefined) {
     watch: false
   }
 
-  const config = Object.assign({}, defaultConfig, composerConfig)
-  const app = await buildServer(config)
+  const directory = await createTemporaryDirectory(t)
 
-  t.after(async () => {
-    await app.close()
+  const composer = await create(directory, Object.assign({}, defaultConfig, options), {
+    applicationFactory,
+    isStandalone: true,
+    isEntrypoint: true,
+    isProduction: creationOptions.production
   })
+  t.after(() => composer.stop())
 
-  return app
+  if (!creationOptions.skipInit) {
+    await composer.init()
+  }
+
+  return composer
 }
 
-async function createComposerInRuntime (
+export async function createComposerInRuntime (
   t,
   prefix,
   composerConfig,
@@ -439,7 +465,11 @@ async function createComposerInRuntime (
       ]),
       autoload: autoload ? { path: autoload } : undefined,
       logger: {
-        level: 'trace'
+        level: 'fatal'
+      },
+      gracefulShutdown: {
+        runtime: 1000,
+        service: 1000
       },
       ...additionalRuntimeConfig
     }),
@@ -449,7 +479,7 @@ async function createComposerInRuntime (
   await writeFile(
     composerConfigPath,
     JSON.stringify({
-      module: resolve(__dirname, '../index.js'),
+      module: resolve(import.meta.dirname, '../index.js'),
       plugins: {
         paths: [
           {
@@ -465,7 +495,7 @@ async function createComposerInRuntime (
   await writeFile(
     pluginConfigPath,
     `
-      module.exports = async function (app) {
+      export default async function (app) {
         globalThis[Symbol.for('plt.runtime.itc')].handle('getSchema', () => {
           return app.graphqlSupergraph.sdl
         })
@@ -475,17 +505,62 @@ async function createComposerInRuntime (
   )
 
   await additionalSetup?.(runtimeConfigPath, composerConfigPath)
-  const runtime = await buildRuntime(runtimeConfigPath, { production })
+
+  const runtime = await createRuntime(runtimeConfigPath, null, { isProduction: production })
+  await runtime.init()
 
   t.after(async () => {
     await runtime.close()
-    await safeRemove(tmpBaseDir)
+    await safeRemove(tmpDir)
   })
 
   return runtime
 }
 
-async function testEntityRoutes (origin, entitiesRoutes) {
+export async function startDatabaseServices (t, names) {
+  return Promise.all(
+    names.map(async ({ name, jsonFile }) => {
+      const service = await createPlatformaticDatabaseService(t, { name, jsonFile })
+      return { name, host: await service.start() }
+    })
+  )
+}
+
+export async function waitForRestart (runtime) {
+  const result = await executeWithTimeout(once(runtime, 'service:worker:reloaded'), REFRESH_TIMEOUT * 3)
+
+  if (result === kTimeout) {
+    return Promise.reject(new Error('Timeout while waiting for service to restart'))
+  }
+
+  const entrypoint = await runtime.getEntrypointDetails()
+  return entrypoint.url
+}
+
+export async function checkSchema (runtime, schema) {
+  const composer = await runtime.getService('composer')
+  const sdl = await composer[symbols.kITC].send('getSchema')
+  return sdl === schema
+}
+
+export async function graphqlRequest ({ query, variables, url, host }) {
+  const { body, statusCode } = await request(url || host + '/graphql', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ query, variables })
+  })
+
+  const content = await body.json()
+  if (statusCode !== 200) {
+    console.log(statusCode, content)
+  }
+
+  return content.errors ? content.errors : content.data
+}
+
+export async function testEntityRoutes (origin, entitiesRoutes) {
   for (const entityRoute of entitiesRoutes) {
     {
       const { statusCode, body } = await request(origin, {
@@ -566,168 +641,4 @@ async function testEntityRoutes (origin, entitiesRoutes) {
       assert.equal(statusCode, 200)
     }
   }
-}
-
-async function graphqlRequest ({ query, variables, url, host }) {
-  const { body, statusCode } = await request(url || host + '/graphql', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ query, variables })
-  })
-
-  const content = await body.json()
-  if (statusCode !== 200) {
-    console.log(statusCode, content)
-  }
-
-  return content.errors ? content.errors : content.data
-}
-
-async function createPlatformaticDbService (t, { name, jsonFile }) {
-  try {
-    fs.unlinkSync(path.join(__dirname, 'graphql', 'fixtures', name, 'db0.sqlite'))
-  } catch { }
-  try {
-    fs.unlinkSync(path.join(__dirname, 'graphql', 'fixtures', name, 'db1.sqlite'))
-  } catch { }
-
-  const service = await dbBuildServer(path.join(__dirname, 'graphql', 'fixtures', name, jsonFile))
-  service.get('/.well-known/graphql-composition', async function (req, reply) {
-    const res = await reply.graphql(getIntrospectionQuery())
-    return res
-  })
-  t.after(async () => {
-    try {
-      await service.close()
-    } catch { }
-  })
-
-  return service
-}
-
-async function startServices (t, names) {
-  return Promise.all(
-    names.map(async ({ name, jsonFile }) => {
-      const service = await createPlatformaticDbService(t, { name, jsonFile })
-      return { name, host: await service.start() }
-    })
-  )
-}
-
-function createLoggerSpy () {
-  const loggerSpy = pinoTest.sink()
-  const logger = pino(loggerSpy)
-
-  return {
-    logger,
-    loggerSpy
-  }
-}
-
-function waitForLogMessage (loggerSpy, message, { max = 100, debug = false } = {}) {
-  return new Promise((resolve, reject) => {
-    let count = 0
-    const fn = (received) => {
-      if (debug) {
-        console.log('received', received)
-      }
-      if (received.msg === message.msg && received.level === message.level) {
-        loggerSpy.off('data', fn)
-        resolve()
-      }
-      count++
-      if (count > max) {
-        loggerSpy.off('data', fn)
-        reject(new Error(`Max message count reached on waitForLogMessage: level ${message.level} msg ${message.msg}`))
-      }
-    }
-    loggerSpy.on('data', fn)
-  })
-}
-
-async function waitForRestart (runtime, previousUrl) {
-  const id = (await runtime.getEntrypointDetails()).id
-  const socketPath = runtime.getManagementApiUrl()
-  const protocol = platform() === 'win32' ? 'ws+unix:' : 'ws+unix://'
-  const webSocket = new WebSocket(protocol + socketPath + ':/api/v1/logs/live')
-
-  try {
-    const url = await new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error(`Service "${id}" has not been restarted`))
-      }, REFRESH_TIMEOUT * REFRESH_TIMEOUT_DELAY_FACTOR)
-
-      webSocket.on('error', err => {
-        clearTimeout(timeout)
-        reject(err)
-      })
-
-      webSocket.on('message', data => {
-        if (data.toString().includes(`The service \\"${id}\\" has been successfully reloaded`)) {
-          clearTimeout(timeout)
-
-          setImmediate(async () => {
-            try {
-              const entrypoint = await runtime.getEntrypointDetails()
-
-              if (previousUrl && entrypoint.url === previousUrl) {
-                return
-              }
-
-              webSocket.terminate()
-              resolve(entrypoint.url)
-            } catch (e) {
-              reject(e)
-            }
-          })
-        }
-      })
-    })
-
-    return url
-  } finally {
-    webSocket.close()
-  }
-}
-
-async function checkSchema (runtime, schema) {
-  const composer = await runtime.getService('composer')
-  const sdl = await composer[symbols.kITC].send('getSchema')
-  return sdl === schema
-}
-
-async function getRuntimeLogs (runtime) {
-  const client = new Client({ hostname: 'localhost', protocol: 'http:' }, { socketPath: runtime.getManagementApiUrl() })
-
-  // Wait for logs to be written
-  await sleep(LOGS_WRITE_DELAY)
-
-  const { statusCode, body } = await client.request({ method: 'GET', path: '/api/v1/logs/all' })
-  assert.strictEqual(statusCode, 200)
-  const messages = (await body.text()).trim().split('\n').map(JSON.parse)
-
-  client.close()
-
-  return messages.map(m => m.payload?.msg ?? m.msg)
-}
-
-module.exports = {
-  REFRESH_TIMEOUT,
-  createComposer,
-  createComposerInRuntime,
-  createOpenApiService,
-  createGraphqlService,
-  createBasicService,
-  createWebsocketService,
-  testEntityRoutes,
-  graphqlRequest,
-  createPlatformaticDbService,
-  startServices,
-  createLoggerSpy,
-  waitForLogMessage,
-  getRuntimeLogs,
-  waitForRestart,
-  checkSchema
 }

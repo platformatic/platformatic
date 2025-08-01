@@ -27,14 +27,6 @@ const sidebars = {
     },
     {
       type: 'category',
-      label: 'platformatic (cli)',
-      collapsed: true,
-      items: [
-        'packages/platformatic/cli'
-      ]
-    },
-    {
-      type: 'category',
       label: '@platformatic/composer',
       collapsed: true,
       items: [

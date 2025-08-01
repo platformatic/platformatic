@@ -27,9 +27,9 @@
   ],
   "server": {
     "hostname": "127.0.0.1",
-    "port": "{{PORT}}",
-    "logger": {
-      "level": "error"
-    }
+    "port": "{{PORT}}"
+  },
+  "logger": {
+    "level": "error"
   }
 }

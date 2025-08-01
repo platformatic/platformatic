@@ -8,7 +8,7 @@ import { join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const isWindows = platform() === 'win32'
-const pltCreatePath = fileURLToPath(new URL('../../create-platformatic.mjs', import.meta.url))
+const pltCreatePath = fileURLToPath(new URL('../../bin/create-platformatic.mjs', import.meta.url))
 const pltRoot = fileURLToPath(new URL('../..', import.meta.url))
 let tmpCount = 0
 

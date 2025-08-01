@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 import { Worker } from 'node:worker_threads'
 import { Agent, Client, setGlobalDispatcher } from 'undici'
 import { createThreadInterceptor } from 'undici-thread-interceptor'
-import { createStackable, getExecutedCommandLogMessage } from '../helper.js'
+import { create, getExecutedCommandLogMessage } from '../helper.js'
 
 function serverHandler (_, res) {
   res.writeHead(200, {
@@ -30,7 +30,7 @@ async function getChildManager (stackable) {
 }
 
 test('ChildProcess - can load a script with additional loader and scripts', async t => {
-  const stackable = await createStackable(t)
+  const stackable = await create(t)
 
   const executablePath = fileURLToPath(new URL('../fixtures/import-non-existing.js', import.meta.url))
   await stackable.buildWithCommand(['node', executablePath], import.meta.dirname, {
@@ -43,7 +43,7 @@ test('ChildProcess - can load a script with additional loader and scripts', asyn
 })
 
 test('ChildProcess - the process will close upon request', async t => {
-  const stackable = await createStackable(t)
+  const stackable = await create(t)
 
   const executablePath = fileURLToPath(new URL('../fixtures/wait-for-close.js', import.meta.url))
   const promise = stackable.buildWithCommand(['node', executablePath])
@@ -55,7 +55,7 @@ test('ChildProcess - the process will close upon request', async t => {
 })
 
 test('ChildProcess - the process exits in case of invalid messages', async t => {
-  const stackable = await createStackable(t)
+  const stackable = await create(t)
 
   const executablePath = fileURLToPath(new URL('../fixtures/wait-for-close.js', import.meta.url))
   const promise = stackable.buildWithCommand(['node', executablePath])
@@ -68,7 +68,7 @@ test('ChildProcess - the process exits in case of invalid messages', async t => 
 })
 
 test('ChildProcess - the process exits in case of errors', async t => {
-  const stackable = await createStackable(t)
+  const stackable = await create(t)
 
   const executablePath = fileURLToPath(new URL('../fixtures/delayed-error.js', import.meta.url))
   const promise = stackable.buildWithCommand(['node', executablePath])
@@ -76,7 +76,7 @@ test('ChildProcess - the process exits in case of errors', async t => {
 })
 
 test('ChildProcess - should not modify HTTP options for UNIX sockets', async t => {
-  const stackable = await createStackable(t)
+  const stackable = await create(t)
 
   const executablePath = fileURLToPath(new URL('../fixtures/unix-socket-server.js', import.meta.url))
   const promise = stackable.buildWithCommand(['node', executablePath])
@@ -107,7 +107,7 @@ test('ChildProcess - should not modify HTTP options for UNIX sockets', async t =
 })
 
 test('ChildProcess - should notify listen error', async t => {
-  const stackable = await createStackable(t, {
+  const stackable = await create(t, {
     isEntrypoint: true,
     serverConfig: {
       hostname: '123.123.123.123',
@@ -140,7 +140,7 @@ test('ChildProcess - should intercept fetch calls', async t => {
   interceptor.route('service', tcpWirer)
   setGlobalDispatcher(new Agent().compose(interceptor))
 
-  const stackable = await createStackable(t, {
+  const stackable = await create(t, {
     isEntrypoint: true,
     serverConfig: {
       hostname: '123.123.123.123',
@@ -174,7 +174,7 @@ test('ChildProcess - should intercept fetch calls', async t => {
 })
 
 test('ChildProcess - should properly setup globals', async t => {
-  const stackable = await createStackable(t)
+  const stackable = await create(t)
 
   const executablePath = fileURLToPath(new URL('../fixtures/import-non-existing.js', import.meta.url))
   await stackable.buildWithCommand(['node', executablePath], import.meta.dirname, {

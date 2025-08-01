@@ -7,10 +7,12 @@ const { test } = require('node:test')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { Client } = require('undici')
 
-const { loadConfig } = require('@platformatic/config')
 const { safeRemove } = require('@platformatic/utils')
-const { buildServer, platformaticRuntime } = require('../..')
+const { create } = require('../../index.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 function hideLogs (t) {
   const originalEnv = process.env.PLT_RUNTIME_LOGGER_STDOUT
@@ -31,8 +33,7 @@ test('logs stdio from the service thread', async t => {
   hideLogs(t)
 
   const configFile = join(fixturesDir, 'configs', 'service-with-stdio.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   const url = await app.start()
   const pid = process.pid
@@ -78,6 +79,7 @@ test('logs stdio from the service thread', async t => {
         const { level, pid, hostname, name, msg, payload, stdout } = JSON.parse(l)
         return { level, pid, hostname, name, msg, payload, stdout }
       })
+      .filter(m => m.msg !== 'Runtime event')
 
     deepStrictEqual(messages, [
       {
@@ -186,7 +188,7 @@ test('logs stdio from the service thread', async t => {
         name: 'stdio',
         msg: undefined,
         payload: undefined,
-        stdout: { ts: '123', foo: 'bar' },
+        stdout: { ts: '123', foo: 'bar' }
       },
       {
         level: 30,
@@ -241,8 +243,7 @@ test('logs with caller info', async t => {
   hideLogs(t)
 
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-node.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   t.after(async () => {
     await app.close()
@@ -308,8 +309,7 @@ test('isoTime support', async t => {
   hideLogs(t)
 
   const configFile = join(fixturesDir, 'isotime-logs', 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   t.after(async () => {
     await app.close()
@@ -352,9 +352,7 @@ test('isoTime support', async t => {
         return { level, pid, hostname, name, msg, payload, stdout }
       })
 
-    const expected = [
-      { level: 30, name: 'hello', msg: 'Request received' }
-    ]
+    const expected = [{ level: 30, name: 'hello', msg: 'Request received' }]
 
     for (const e of expected) {
       ok(

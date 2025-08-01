@@ -95,21 +95,16 @@ Multiple plugins can be loaded in parallel by specifying an array:
 
 ## TypeScript and autocompletion
 
-If you want to access any of the types provided by Platformatic DB, generate them using the `platformatic db types` command.
-This will create a `global.d.ts` file that you can now import everywhere, like so:
-
-```js
-/// <references <types="./global.d.ts" />
-```
-
-Remember to adjust the path to `global.d.ts`.
+If you want to access any of the types provided by Platformatic DB, generate them using the Watt's `$db:types` command (where `$db` is the id of your Platformatic DB service).
+This will create a `plt-env.d.ts` file that add Platformatic types to fastify instances. This file is included automatically
+by Typescript, unless you have the `includes` option set in your `tsconfig.json`. In that case you need to add 
+`plt-env.d.ts` to the `include` list manually.
 
 ### Plugin definition with TypeScript
 
 Here is an example of writing a plugin in TypeScript:
 
 ```ts
-/// <reference types="./global.d.ts" />
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
 
 export default async function (fastify: FastifyInstance, opts: FastifyPluginOptions) {

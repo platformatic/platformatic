@@ -1,62 +1,54 @@
-'use strict'
+import assert from 'node:assert/strict'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createFromConfig, getConnectionInfo } from '../helper.js'
 
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { buildConfigManager, getConnectionInfo } = require('../helper')
-const { buildStackable } = require('../..')
-
-test('get service config via stackable api', async (t) => {
-  const workingDir = join(__dirname, '..', 'fixtures', 'directories')
+test('get service config via stackable api', async t => {
+  const workingDir = join(import.meta.dirname, '..', 'fixtures', 'directories')
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
 
-  const config = {
+  const stackable = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: { level: 'fatal' }
     },
     db: {
-      ...connectionInfo,
+      ...connectionInfo
     },
     plugins: {
-      paths: [join(workingDir, 'routes')],
+      paths: [join(workingDir, 'routes')]
     },
     watch: {
-      enabled: false,
-    },
-    metrics: false,
-  }
-
-  const configManager = await buildConfigManager(config, workingDir)
-  const stackable = await buildStackable({ configManager })
+      enabled: false
+    }
+  })
 
   t.after(async () => {
     await stackable.stop()
     await dropTestDB()
   })
-  await stackable.start()
+  await stackable.start({ listen: true })
 
   const stackableConfig = await stackable.getConfig()
   assert.deepStrictEqual(stackableConfig, {
     db: {
-      ...connectionInfo,
+      ...connectionInfo
     },
-    metrics: false,
     plugins: {
-      paths: [join(workingDir, 'routes')],
+      paths: [join(workingDir, 'routes')]
     },
     server: {
       hostname: '127.0.0.1',
       port: 0,
       keepAliveTimeout: 5000,
       logger: {
-        level: 'trace',
+        level: 'fatal'
       },
-      pluginTimeout: 60000,
-      trustProxy: true,
+      pluginTimeout: 60000
     },
     watch: {
-      enabled: false,
-    },
+      enabled: false
+    }
   })
 })

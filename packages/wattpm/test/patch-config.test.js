@@ -1,5 +1,4 @@
-import { saveConfigurationFile } from '@platformatic/config'
-import { safeRemove } from '@platformatic/utils'
+import { safeRemove, saveConfigurationFile } from '@platformatic/utils'
 import { deepStrictEqual, ok } from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -50,7 +49,10 @@ test('patch-config - should work when executed from a service file', async t => 
     $schema: 'https://schemas.platformatic.dev/@platformatic/node/2.3.1.json',
     runtime: {
       watch: false,
-      restartOnError: true
+      restartOnError: true,
+      logger: {
+        level: 'error'
+      }
     }
   })
 
@@ -59,7 +61,7 @@ test('patch-config - should work when executed from a service file', async t => 
     await readFile(resolve(buildDir, 'web/alternative/watt.json'), 'utf-8')
   )
 
-  await wattpm('patch-config', serviceDir, resolve(fixturesDir, 'patches/patch-1.js'), { stdio: 'inherit' })
+  await wattpm('patch-config', serviceDir, resolve(fixturesDir, 'patches/patch-1.js'))
 
   const mainServiceConfigPatched = JSON.parse(await readFile(resolve(buildDir, 'web/main/watt.json'), 'utf-8'))
   const alternateServiceConfigPatched = JSON.parse(
@@ -72,7 +74,10 @@ test('patch-config - should work when executed from a service file', async t => 
     runtime: {
       watch: false,
       restartOnError: true,
-      entrypoint: 'alternate'
+      entrypoint: 'alternate',
+      logger: {
+        level: 'error'
+      }
     }
   })
   deepStrictEqual(alternateServiceConfigPatched, alternateServiceConfigOriginal)

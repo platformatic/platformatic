@@ -28,6 +28,8 @@ const fakeLogger = {
 }
 /* c8 ignore start */
 
+const DEFAULT_SERVICES_PATH = 'services'
+
 class BaseGenerator extends FileGenerator {
   constructor (opts = {}) {
     super(opts)
@@ -403,7 +405,7 @@ class BaseGenerator extends FileGenerator {
         ...this.config.dependencies
       },
       engines: {
-        node: '^22.14.0 || ^20.6.0'
+        node: '>=22.16.0'
       }
     }
 
@@ -470,7 +472,7 @@ class BaseGenerator extends FileGenerator {
 
   async loadFromDir (serviceName, runtimeRootPath) {
     const runtimePkgConfigFileData = JSON.parse(await readFile(join(runtimeRootPath, this.runtimeConfig), 'utf-8'))
-    const servicesPath = runtimePkgConfigFileData.autoload.path
+    const servicesPath = runtimePkgConfigFileData.autoload?.path ?? DEFAULT_SERVICES_PATH
     const servicePkgJsonFileData = JSON.parse(
       await readFile(join(runtimeRootPath, servicesPath, serviceName, 'platformatic.json'), 'utf-8')
     )

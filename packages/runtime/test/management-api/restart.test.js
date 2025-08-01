@@ -5,13 +5,16 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
 
-const { buildServer } = require('../..')
+const { create } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 test('should restart all services with a management api', async t => {
   const projectDir = join(fixturesDir, 'management-api')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
 
   await app.start()
 

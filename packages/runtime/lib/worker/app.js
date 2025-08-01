@@ -7,14 +7,27 @@ const {
   performance: { eventLoopUtilization }
 } = require('node:perf_hooks')
 const { workerData } = require('node:worker_threads')
-const { ConfigManager } = require('@platformatic/config')
-const { FileWatcher } = require('@platformatic/utils')
+const {
+  FileWatcher,
+  listRecognizedConfigurationFiles,
+  loadConfigurationModule,
+  loadConfiguration
+} = require('@platformatic/utils')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
 const debounce = require('debounce')
 
 const errors = require('../errors')
-const defaultStackable = require('./default-stackable')
-const { getServiceUrl, loadConfig, loadEmptyConfig } = require('../utils')
+const { getServiceUrl } = require('../utils')
+
+function fetchServiceUrl (service, key) {
+  if (service.localServiceEnvVars.has(key)) {
+    return service.localServiceEnvVars.get(key)
+  } else if (!key.endsWith('_URL') || !service.id) {
+    return null
+  }
+
+  return getServiceUrl(service.id)
+}
 
 class PlatformaticApp extends EventEmitter {
   #starting
@@ -60,7 +73,8 @@ class PlatformaticApp extends EventEmitter {
       serverConfig,
       worker: workerData?.worker,
       hasManagementApi: !!hasManagementApi,
-      localServiceEnvVars: this.appConfig.localServiceEnvVars
+      localServiceEnvVars: this.appConfig.localServiceEnvVars,
+      fetchServiceUrl: fetchServiceUrl.bind(null, appConfig)
     }
   }
 
@@ -73,62 +87,44 @@ class PlatformaticApp extends EventEmitter {
   async updateContext (context) {
     this.#context = { ...this.#context, ...context }
     if (this.stackable) {
-      this.stackable.updateContext(context)
+      await this.stackable.updateContext(context)
     }
   }
 
   async getBootstrapDependencies () {
-    return this.stackable.getBootstrapDependencies()
+    return this.stackable.getBootstrapDependencies?.() ?? []
   }
 
   async init () {
     try {
       const appConfig = this.appConfig
-      let loadedConfig
+
+      if (appConfig.isProduction && !process.env.NODE_ENV) {
+        process.env.NODE_ENV = 'production'
+      }
 
       // Before returning the base application, check if there is any file we recognize
       // and the user just forgot to specify in the configuration.
       if (!appConfig.config) {
-        const candidate = ConfigManager.listConfigFiles().find(f => existsSync(resolve(appConfig.path, f)))
+        const candidate = listRecognizedConfigurationFiles().find(f => existsSync(resolve(appConfig.path, f)))
 
         if (candidate) {
           appConfig.config = resolve(appConfig.path, candidate)
         }
       }
 
-      if (!appConfig.config) {
-        loadedConfig = await loadEmptyConfig(
-          appConfig.path,
-          {
-            onMissingEnv: this.#fetchServiceUrl,
-            context: appConfig
-          },
-          true
-        )
+      if (appConfig.config) {
+        // Parse the configuration file the first time to obtain the schema
+        const unvalidatedConfig = await loadConfiguration(appConfig.config, null, {
+          onMissingEnv: this.#context.fetchServiceUrl
+        })
+        const pkg = await loadConfigurationModule(appConfig.path, unvalidatedConfig)
+        this.stackable = await pkg.create(appConfig.path, appConfig.config, this.#context)
+        // We could not find a configuration file, we use the bundle @platformatic/basic with the runtime to load it
       } else {
-        loadedConfig = await loadConfig(
-          {},
-          ['-c', appConfig.config],
-          {
-            onMissingEnv: this.#fetchServiceUrl,
-            context: appConfig
-          },
-          true
-        )
+        const pkg = await loadConfigurationModule(resolve(__dirname, '../..'), {}, '@platformatic/basic')
+        this.stackable = await pkg.create(appConfig.path, {}, this.#context)
       }
-
-      const app = loadedConfig.app
-
-      if (appConfig.isProduction && !process.env.NODE_ENV) {
-        process.env.NODE_ENV = 'production'
-      }
-
-      const stackable = await app.buildStackable({
-        onMissingEnv: this.#fetchServiceUrl,
-        config: this.appConfig.config,
-        context: this.#context
-      })
-      this.stackable = this.#wrapStackable(stackable)
 
       this.#updateDispatcher()
     } catch (err) {
@@ -149,13 +145,14 @@ class PlatformaticApp extends EventEmitter {
     this.#starting = true
 
     try {
-      await this.stackable.init()
+      await this.stackable.init?.()
     } catch (err) {
       this.#logAndExit(err)
     }
 
     if (this.#watch) {
       const watchConfig = await this.stackable.getWatchConfig()
+
       if (watchConfig.enabled !== false) {
         /* c8 ignore next 4 */
         this.#debouncedRestart = debounce(() => {
@@ -168,6 +165,7 @@ class PlatformaticApp extends EventEmitter {
     }
 
     const listen = !!this.appConfig.useHttp
+
     try {
       await this.stackable.start({ listen })
       this.#listening = listen
@@ -236,16 +234,6 @@ class PlatformaticApp extends EventEmitter {
     }
   }
 
-  #fetchServiceUrl (key, { parent, context: service }) {
-    if (service.localServiceEnvVars.has(key)) {
-      return service.localServiceEnvVars.get(key)
-    } else if (!key.endsWith('_URL') || !parent.serviceId) {
-      return null
-    }
-
-    return getServiceUrl(parent.serviceId)
-  }
-
   #startFileWatching (watch) {
     if (this.#fileWatcher) {
       return
@@ -278,14 +266,6 @@ class PlatformaticApp extends EventEmitter {
   #logAndExit (err) {
     console.error(err)
     process.exit(1)
-  }
-
-  #wrapStackable (stackable) {
-    const newStackable = {}
-    for (const method of Object.keys(defaultStackable)) {
-      newStackable[method] = stackable[method] ? stackable[method].bind(stackable) : defaultStackable[method]
-    }
-    return newStackable
   }
 
   #updateDispatcher () {

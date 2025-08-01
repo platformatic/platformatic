@@ -1,20 +1,24 @@
-'use strict'
-
-const fp = require('fastify-plugin')
-const { createSupergraph } = require('./graphql-fetch')
+import fp from 'fastify-plugin'
+import { createSupergraph } from './graphql-fetch.js'
 
 const graphqlSupergraphSymbol = Symbol('graphqlSupergraph')
 
-async function composeGraphql (app, opts) {
+export async function graphqlPlugin (app, opts) {
   app.decorate('graphqlSupergraph', {
-    getter () { return this[graphqlSupergraphSymbol] },
-    setter (v) { this[graphqlSupergraphSymbol] = v },
+    getter () {
+      return this[graphqlSupergraphSymbol]
+    },
+    setter (v) {
+      this[graphqlSupergraphSymbol] = v
+    }
   })
   app.decorate('graphqlComposerOptions', {
-    getter () { return opts },
+    getter () {
+      return opts
+    }
   })
 
   app.graphqlSupergraph = createSupergraph()
 }
 
-module.exports = fp(composeGraphql)
+export const graphql = fp(graphqlPlugin)

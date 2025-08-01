@@ -21,8 +21,7 @@ test('ps - should show running applications', async t => {
     l
       .split('|')
       .map(t => t.trim())
-      .filter(t => t)
-  )
+      .filter(t => t))
 
   deepStrictEqual(lines[2], ['PID', 'Name', 'Version', 'Uptime', 'URL', 'Directory'])
 
@@ -55,8 +54,7 @@ test('services - should list services for an application with no workers informa
     l
       .split('|')
       .map(t => t.trim())
-      .filter(t => t)
-  )
+      .filter(t => t))
 
   deepStrictEqual(lines[2], ['Name', 'Type', 'Entrypoint'])
   deepStrictEqual(lines[4], ['alternative', 'nodejs', 'No'])
@@ -79,8 +77,7 @@ test('services - should list services for an application with workers informatio
     l
       .split('|')
       .map(t => t.trim())
-      .filter(t => t)
-  )
+      .filter(t => t))
 
   deepStrictEqual(lines[2], ['Name', 'Workers', 'Type', 'Entrypoint'])
   deepStrictEqual(lines[4], ['alternative', '1', 'nodejs', 'No'])
@@ -201,8 +198,7 @@ test('config - should list configuration for an application', async t => {
     services: [
       {
         id: 'alternative',
-        isPLTService: false,
-        type: 'nodejs',
+        type: '@platformatic/node',
         path: alternativeServiceDir,
         config: resolve(alternativeServiceDir, 'watt.json'),
         useHttp: false,
@@ -214,8 +210,7 @@ test('config - should list configuration for an application', async t => {
       },
       {
         id: 'main',
-        isPLTService: false,
-        type: 'nodejs',
+        type: '@platformatic/node',
         path: mainServiceDir,
         config: resolve(mainServiceDir, 'watt.json'),
         useHttp: false,
@@ -246,7 +241,7 @@ test('config - should list configuration for an application', async t => {
   })
 })
 
-test('config - should list configuration for an service', async t => {
+test('config - should list configuration for a service', async t => {
   const { root: rootDir } = await prepareRuntime(t, 'main', false, 'watt.json')
 
   const startProcess = wattpm('start', rootDir)
@@ -276,7 +271,11 @@ test('config - should list configuration for an service', async t => {
       main: 'index.js',
       dispatchViaHttp: false,
       disablePlatformaticInBuild: false
-    }
+    },
+    watch: {
+      enabled: false
+    },
+    telemetry: {}
   })
 })
 

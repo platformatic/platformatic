@@ -8,7 +8,7 @@ Platformatic is an open-source Node.js application platform for building APIs wi
 
 ## Prerequisites
 
-- **Node.js**: Version 20.16 or higher
+- **Node.js**: Version 22.16 or higher
 - **pnpm**: Package manager (follow the [pnpm installation guide](https://pnpm.io/installation))
 - **Docker** (optional): Only required for running Platformatic DB tests with PostgreSQL, MySQL, and MariaDB ([Docker Desktop](https://www.docker.com/products/docker-desktop) or [Colima](https://github.com/abiosoft/colima))
 
@@ -230,16 +230,6 @@ cd docs && npm install
 ```bash
 export DOCS=`realpath $PWD/../platformatic/docs`
 npm run sync-and-start
-```
-
-### Updating CLI Documentation
-
-The `docs/cli.md` file is automatically generated. To update it:
-
-1. Update the text helpers in the CLI code
-2. Generate the docs:
-```bash
-node scripts/gen-cli-doc.mjs
 ```
 
 ## Pull Request Process

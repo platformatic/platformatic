@@ -1,34 +1,38 @@
-'use strict'
+import assert from 'node:assert'
+import { readFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { test } from 'node:test'
+import { setTimeout as wait } from 'node:timers/promises'
+import { create } from '../index.js'
 
-const assert = require('node:assert')
-const path = require('node:path')
-const { readFileSync } = require('node:fs')
-const { test } = require('node:test')
-const { setTimeout: wait } = require('node:timers/promises')
-const { tmpdir } = require('node:os')
-
-const { buildServer } = require('..')
-
-test('should use logger options - formatters, timestamp, redact', async (t) => {
+test('should use logger options - formatters, timestamp, redact', async t => {
   process.env.LOG_DIR = path.join(tmpdir(), 'test-logs', Date.now().toString())
-  process.env.PLT_RUNTIME_LOGGER_STDOUT = 1
   const file = path.join(process.env.LOG_DIR, 'service.log')
-  const serviceRoot = path.join(__dirname, 'logger')
+  const serviceRoot = path.join(import.meta.dirname, 'logger')
 
-  const app = await buildServer(path.join(serviceRoot, 'platformatic.json'))
+  const app = await create(serviceRoot, path.resolve(serviceRoot, 'platformatic.json'))
   t.after(async () => {
-    await app.close()
+    await app.stop()
   })
-  await app.start()
+  await app.start({ listen: true })
 
   // wait for logger flush
   await wait(500)
 
   const content = readFileSync(file, 'utf8')
-  const logs = content.split('\n').filter(line => line.trim() !== '').map(line => JSON.parse(line))
+  const logs = content
+    .split('\n')
+    .filter(line => line.trim() !== '')
+    .map(line => JSON.parse(line))
 
-  assert.ok(logs.find(log => log.level === 'INFO' &&
-    log.time.length === 24 && // isotime
-    log.name === 'service' &&
-    log.msg.startsWith('Server listening at http://127.0.0.1')))
+  assert.ok(
+    logs.find(
+      log =>
+        log.level === 'INFO' &&
+        log.time.length === 24 && // isotime
+        log.name === 'service' &&
+        log.msg.startsWith('Server listening at http://127.0.0.1')
+    )
+  )
 })

@@ -4,7 +4,6 @@ import {
   buildPinoFormatters,
   buildPinoTimestamp,
   disablePinoDirectWrite,
-  ensureFlushedWorkerStdio,
   ensureLoggableError,
   features
 } from '@platformatic/utils'
@@ -83,7 +82,7 @@ export class ChildProcess extends ITC {
         getMetrics: (...args) => {
           return this.#getMetrics(...args)
         },
-        close: (signal) => {
+        close: signal => {
           let handled = false
 
           try {
@@ -294,7 +293,6 @@ export class ChildProcess extends ITC {
 
   #setupLogger () {
     disablePinoDirectWrite()
-    ensureFlushedWorkerStdio()
 
     // Since this is executed by user code, make sure we only override this in the main thread
     // The rest will be intercepted by the BaseStackable.

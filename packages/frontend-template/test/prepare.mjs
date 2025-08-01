@@ -1,12 +1,11 @@
-import { buildServer } from '@platformatic/db'
+import { create } from '@platformatic/db'
 import { createDirectory } from '@platformatic/utils'
 import { execa } from 'execa'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { resolve } from 'node:path'
 
 // Start the DB server
-const root = dirname(fileURLToPath(import.meta.url))
-const app = await buildServer(resolve(root, 'e2e/fixtures/platformatic.e2e.db.json'))
+const root = import.meta.dirname
+const app = await create(resolve(root, 'e2e/fixtures/platformatic.e2e.db.json'))
 await app.start()
 
 // Clean the generated code directory
@@ -20,7 +19,7 @@ await execa('node', [
   'http://127.0.0.1:9999',
   '--frontend',
   '--language',
-  'ts',
+  'ts'
 ])
 
 // Stop the server

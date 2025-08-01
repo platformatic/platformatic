@@ -5,7 +5,6 @@ export const packages = [
   '@platformatic/client',
   '@platformatic/client-cli',
   '@platformatic/composer',
-  '@platformatic/config',
   '@platformatic/control',
   '@platformatic/db',
   '@platformatic/db-authorization',

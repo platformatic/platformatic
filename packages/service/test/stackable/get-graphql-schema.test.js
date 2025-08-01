@@ -1,59 +1,37 @@
-'use strict'
+import assert from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { create } from '../../index.js'
+import { createFromConfig } from '../helper.js'
 
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { buildStackable } = require('../..')
-
-test('get service openapi schema via stackable api', async (t) => {
-  const config = {
+test('get service openapi schema via stackable api', async t => {
+  const stackable = await createFromConfig(t, {
     server: {
       hostname: '127.0.0.1',
       port: 0,
+      logger: {
+        level: 'fatal'
+      }
     },
     service: {
-      graphql: true,
+      graphql: true
     },
     plugins: {
-      paths: [join(__dirname, '..', 'fixtures', 'hello-world-resolver.js')],
+      paths: [join(import.meta.dirname, '..', 'fixtures', 'hello-world-resolver.js')]
     },
-    watch: false,
-    metrics: false,
-  }
-
-  const stackable = await buildStackable({ config })
-  t.after(async () => {
-    await stackable.stop()
+    watch: false
   })
-
-  await stackable.init()
-  await stackable.start()
+  t.after(() => stackable.stop())
+  await stackable.start({ listen: true })
 
   const graphqlSchema = await stackable.getGraphqlSchema()
   assert.strictEqual(graphqlSchema, 'type Query {\n  hello: String\n}')
 })
 
-test('get null if server does not expose graphql', async (t) => {
-  const config = {
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
-    },
-    service: {
-      graphql: false,
-    },
-    plugins: {
-      paths: [join(__dirname, '..', 'fixtures', 'directories', 'routes')],
-    },
-    watch: false,
-    metrics: false,
-  }
-
-  const stackable = await buildStackable({ config })
-  t.after(async () => {
-    await stackable.stop()
-  })
-  await stackable.start()
+test('get null if server does not expose graphql', async t => {
+  const stackable = await create(join(import.meta.dirname, '..', 'fixtures', 'directories'))
+  t.after(() => stackable.stop())
+  await stackable.start({ listen: true })
 
   const graphqlSchema = await stackable.getGraphqlSchema()
   assert.strictEqual(graphqlSchema, null)

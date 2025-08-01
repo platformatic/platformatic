@@ -1,12 +1,14 @@
-import ConfigManager, { findConfigurationFile, loadConfigurationFile } from '@platformatic/config'
 import { ImportGenerator } from '@platformatic/generators'
 import {
-  getPackageManager, DEFAULT_PACKAGE_MANAGER,
   createDirectory,
+  defaultPackageManager,
   detectApplicationType,
   executeWithTimeout,
+  findConfigurationFileRecursive,
   generateDashedName,
+  getPackageManager,
   getPkgManager,
+  loadConfigurationFile,
   searchJavascriptFiles
 } from '@platformatic/utils'
 
@@ -23,8 +25,7 @@ import pretty from 'pino-pretty'
 import resolveModule from 'resolve'
 import { request } from 'undici'
 import { createGitRepository } from './create-git-repository.mjs'
-import { getUsername, getVersion, say } from './utils.mjs'
-
+import { findComposerConfigFile, getUsername, getVersion, say } from './utils.mjs'
 const MARKETPLACE_HOST = 'https://marketplace.platformatic.dev'
 const defaultStackables = ['@platformatic/service', '@platformatic/composer', '@platformatic/db']
 
@@ -234,7 +235,7 @@ export async function createApplication (
   // Check in the directory and its parents if there is a config file
   let shouldChooseProjectDir = true
   let projectDir = process.cwd()
-  const runtimeConfigFile = await findConfigurationFile(projectDir, null, 'runtime')
+  const runtimeConfigFile = await findConfigurationFileRecursive(projectDir, null, '@platformatic/runtime')
 
   if (runtimeConfigFile) {
     shouldChooseProjectDir = false
@@ -249,11 +250,11 @@ export async function createApplication (
 
       // Check if the file belongs to a Watt application, this can happen for instance if we executed watt create
       // in the services folder
-      const existingRuntime = await findConfigurationFile(applicationRoot, null, 'runtime')
+      const existingRuntime = await findConfigurationFileRecursive(applicationRoot, null, '@platformatic/runtime')
 
       if (!existingRuntime) {
         // If there is a watt.json file with a runtime property, we assume we already executed watt create and we exit.
-        const existingService = await ConfigManager.findConfigFile(projectDir)
+        const existingService = await findComposerConfigFile(projectDir)
 
         if (existingService) {
           const serviceConfig = await loadConfigurationFile(existingService)
@@ -277,7 +278,7 @@ export async function createApplication (
 
         if (shouldWrap) {
           if (!packageManager) {
-            packageManager = getPackageManager(projectDir, DEFAULT_PACKAGE_MANAGER)
+            packageManager = await getPackageManager(projectDir, defaultPackageManager)
           }
 
           return wrapApplication(
@@ -314,14 +315,14 @@ export async function createApplication (
   const projectName = basename(projectDir)
 
   if (!packageManager) {
-    packageManager = getPackageManager(projectDir, null, true)
+    packageManager = await getPackageManager(projectDir, null, true)
 
     if (!packageManager) {
       const p = await inquirer.prompt({
         type: 'list',
         name: 'packageManager',
         message: 'Which package manager do you want to use?',
-        default: DEFAULT_PACKAGE_MANAGER,
+        default: defaultPackageManager,
         choices: [
           { name: 'npm', value: 'npm' },
           { name: 'pnpm', value: 'pnpm' },

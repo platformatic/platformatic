@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export interface PlatformaticService {
+export interface PlatformaticServiceConfig {
   basePath?: string;
   server?: {
     hostname?: string;
@@ -164,24 +164,6 @@ export interface PlatformaticService {
   plugins?: {
     [k: string]: unknown;
   };
-  metrics?:
-    | boolean
-    | {
-        port?: number | string;
-        hostname?: string;
-        endpoint?: string;
-        server?: "own" | "parent" | "hide";
-        defaultMetrics?: {
-          enabled: boolean;
-        };
-        auth?: {
-          username: string;
-          password: string;
-        };
-        labels?: {
-          [k: string]: string;
-        };
-      };
   telemetry?: {
     enabled?: boolean | string;
     /**

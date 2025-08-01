@@ -1,8 +1,6 @@
-/// <reference path="./global.d.ts" />
-
+import { FastifyInstance, fastify } from 'fastify'
 import { expectType } from 'tsd'
 import { Graph } from './types/Graph'
-import { FastifyInstance, fastify } from 'fastify'
 
 const app: FastifyInstance = fastify()
 

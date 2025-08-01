@@ -1,4 +1,3 @@
-import { withResolvers } from '@platformatic/utils'
 import { deepStrictEqual, rejects } from 'node:assert'
 import { createServer } from 'node:http'
 import { test } from 'node:test'
@@ -66,7 +65,7 @@ test('injectViaRequest - should perform a request (onInject)', async t => {
   await listen(server, { port: 0 })
   const url = getServerUrl(server)
 
-  const { resolve, promise } = withResolvers()
+  const { resolve, promise } = Promise.withResolvers()
 
   await injectViaRequest(url, { url: '/', method: 'POST', body: { ok: true } }, (_, response) => resolve(response))
   const response = await promise
@@ -89,7 +88,7 @@ test('injectViaRequest - should handle errors', async t => {
 })
 
 test('injectViaRequest - should perform a request (onInject)', async t => {
-  const { reject, promise } = withResolvers()
+  const { reject, promise } = Promise.withResolvers()
   await injectViaRequest('INVALID', {}, error => reject(error))
 
   await rejects(promise, /Invalid URL/)

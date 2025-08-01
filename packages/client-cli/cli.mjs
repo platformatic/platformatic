@@ -1,9 +1,7 @@
 #! /usr/bin/env node
 
-import { findConfigurationFile, getParser, getStringifier, loadConfig } from '@platformatic/config'
-import { createDirectory } from '@platformatic/utils'
+import { createDirectory, findConfigurationFileRecursive, getParser, getStringifier } from '@platformatic/utils'
 import camelcase from 'camelcase'
-import * as desm from 'desm'
 import isMain from 'es-main'
 import { access, readFile, writeFile } from 'fs/promises'
 import graphql from 'graphql'
@@ -286,7 +284,11 @@ async function downloadAndProcess (options) {
   let config = options.config
 
   if (!config && !isFrontend) {
-    config = await findConfigurationFile(process.cwd(), null, ['service', 'db', 'composer'])
+    config = await findConfigurationFileRecursive(process.cwd(), null, [
+      '@platformatic/service',
+      '@platformatic/db',
+      '@platformatic/composer'
+    ])
   }
 
   if (config && !isFrontend) {
@@ -500,7 +502,7 @@ function getPackageJSON ({ name, generateImplementation }) {
 
 export async function command (argv) {
   const help = helpMe({
-    dir: desm.join(import.meta.url, 'help'),
+    dir: join(import.meta.dirname, 'help'),
     // the default
     ext: '.txt'
   })
@@ -509,7 +511,17 @@ export async function command (argv) {
     ...options
   } = parseArgs(argv, {
     string: ['name', 'folder', 'runtime', 'optional-headers', 'language', 'type', 'url-auth-headers', 'types-comment'],
-    boolean: ['typescript', 'full-response', 'types-only', 'full-request', 'full', 'frontend', 'validate-response', 'props-optional', 'skip-config-update'],
+    boolean: [
+      'typescript',
+      'full-response',
+      'types-only',
+      'full-request',
+      'full',
+      'frontend',
+      'validate-response',
+      'props-optional',
+      'skip-config-update'
+    ],
     default: {
       typescript: false,
       language: 'js'
@@ -543,7 +555,7 @@ export async function command (argv) {
 
   if (options.runtime) {
     // Find the runtime config file
-    const runtimeConfigFile = await findConfigurationFile(process.cwd(), null, 'runtime')
+    const runtimeConfigFile = await findConfigurationFileRecursive(process.cwd(), null, '@platformatic/runtime')
 
     if (!runtimeConfigFile) {
       logger.error('Could not find a platformatic.json file in any parent directory.')
@@ -567,22 +579,24 @@ export async function command (argv) {
       throw err
     }
 
-    const { Runtime, platformaticRuntime, getRuntimeLogsDir } = runtimeModule
-    const { configManager } = await loadConfig({}, ['-c', runtimeConfigFile], platformaticRuntime)
+    const { create, transform } = runtimeModule
+    runtime = await create(runtimeConfigFile, null, {
+      async transform (config, ...args) {
+        config = await transform(config)
 
-    configManager.current.watch = false
-    configManager.current.logger.level = 'error'
+        config.watch = false
+        config.logger.level = 'error'
 
-    for (const service of configManager.current.services) {
-      service.localServiceEnvVars.set('PLT_SERVER_LOGGER_LEVEL', 'warn')
-      service.entrypoint = false
-      service.watch = false
-    }
+        for (const service of config.services) {
+          service.localServiceEnvVars.set('PLT_SERVER_LOGGER_LEVEL', 'warn')
+          service.entrypoint = false
+          service.watch = false
+        }
 
-    const runtimeLogsDir = getRuntimeLogsDir(configManager.dirname, process.pid)
-    runtime = new Runtime(configManager, runtimeLogsDir, process.env)
-    await runtime.init()
-    await runtime.start()
+        return config
+      },
+      start: true
+    })
 
     // Set interceptors
     setGlobalDispatcher(runtime.getDispatcher())
@@ -606,9 +620,7 @@ export async function command (argv) {
 
     options.fullRequest = options['full-request']
     options.fullResponse = options['full-response']
-
-    // TODO: default value to true in the next semver-major (https://github.com/platformatic/platformatic/issues/3737)
-    options.propsOptional = options['props-optional'] ?? false
+    options.propsOptional = options['props-optional'] ?? true
 
     options.optionalHeaders = options['optional-headers']
       ? options['optional-headers'].split(',').map(h => h.trim())
@@ -623,7 +635,7 @@ export async function command (argv) {
     options.urlAuthHeaders = options['url-auth-headers']
     options.typesComment = options['types-comment']
     options.withCredentials = options['with-credentials']
-    options.skipConfigUpdate = options['skip-config-update']
+    options.skipConfigUpdate = options['skip-config-update'] ?? true
     options.retryTimeoutMs = options['retry-timeout-ms']
     await downloadAndProcess({ url, ...options, logger, runtime: options.runtime })
     logger.info(`Client generated successfully into ${options.folder}`)

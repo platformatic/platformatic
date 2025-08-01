@@ -1,5 +1,5 @@
-import { client, collectMetrics } from '@platformatic/metrics'
-import { buildPinoOptions, deepmerge, executeWithTimeout, kTimeout } from '@platformatic/utils'
+import { client, collectMetrics, ensureMetricsGroup } from '@platformatic/metrics'
+import { buildPinoOptions, deepmerge, executeWithTimeout, kMetadata, kTimeout } from '@platformatic/utils'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import EventEmitter, { once } from 'node:events'
@@ -11,7 +11,6 @@ import pino from 'pino'
 import { NonZeroExitCode } from './errors.js'
 import { cleanBasePath } from './utils.js'
 import { ChildManager } from './worker/child-manager.js'
-
 const kITC = Symbol.for('plt.runtime.itc')
 
 export class BaseStackable extends EventEmitter {
@@ -22,47 +21,38 @@ export class BaseStackable extends EventEmitter {
   #subprocessStarted
   #metricsCollected
 
-  constructor (type, version, options, root, configManager, standardStreams = {}) {
+  constructor (type, version, root, config, context, standardStreams = {}) {
     super()
-
-    options.context.worker ??= { count: 1, index: 0 }
 
     this.type = type
     this.version = version
-    this.serviceId = options.context.serviceId
-    this.workerId = options.context.worker.count > 1 ? options.context.worker.index : undefined
-    this.telemetryConfig = options.context.telemetryConfig
-    this.options = options
     this.root = root
-    this.configManager = configManager
-    this.serverConfig = deepmerge(options.context.serverConfig ?? {}, configManager.current.server ?? {})
+    this.config = config
+    this.context = context ?? {}
+    this.context.worker ??= { count: 1, index: 0 }
+    this.standardStreams = standardStreams
+
+    this.serviceId = this.context.serviceId
+    this.workerId = this.context.worker.count > 1 ? this.context.worker.index : undefined
+    this.telemetryConfig = this.context.telemetryConfig
+    this.serverConfig = deepmerge(this.context.serverConfig ?? {}, config.server ?? {})
     this.openapiSchema = null
     this.graphqlSchema = null
     this.connectionString = null
     this.basePath = null
-    this.isEntrypoint = options.context.isEntrypoint
-    this.isProduction = options.context.isProduction
-    this.metricsRegistry = new client.Registry()
+    this.isEntrypoint = this.context.isEntrypoint
+    this.isProduction = this.context.isProduction
     this.#metricsCollected = false
     this.customHealthCheck = null
     this.customReadinessCheck = null
     this.clientWs = null
-    this.runtimeConfig = deepmerge(options.context?.runtimeConfig ?? {}, workerData?.config ?? {})
+    this.runtimeConfig = deepmerge(this.context?.runtimeConfig ?? {}, workerData?.config ?? {})
     this.stdout = standardStreams?.stdout ?? process.stdout
     this.stderr = standardStreams?.stderr ?? process.stderr
     this.subprocessForceClose = false
     this.subprocessTerminationSignal = 'SIGINT'
 
-    const loggerOptions = deepmerge(this.runtimeConfig?.logger ?? {}, this.configManager.current?.logger ?? {})
-    const pinoOptions = buildPinoOptions(
-      loggerOptions,
-      this.serverConfig?.logger,
-      this.serviceId,
-      this.workerId,
-      options,
-      this.root
-    )
-    this.logger = pino(pinoOptions, standardStreams?.stdout)
+    this.logger = this._initializeLogger()
 
     // Setup globals
     this.registerGlobals({
@@ -77,28 +67,64 @@ export class BaseStackable extends EventEmitter {
       setBasePath: this.setBasePath.bind(this),
       runtimeBasePath: this.runtimeConfig?.basePath ?? null,
       invalidateHttpCache: this.#invalidateHttpCache.bind(this),
-      prometheus: { client, registry: this.metricsRegistry },
       setCustomHealthCheck: this.setCustomHealthCheck.bind(this),
       setCustomReadinessCheck: this.setCustomReadinessCheck.bind(this),
       notifyConfig: this.notifyConfig.bind(this),
       logger: this.logger
     })
+
+    if (globalThis.platformatic.prometheus) {
+      this.metricsRegistry = globalThis.platformatic.prometheus.registry
+    } else {
+      this.metricsRegistry = new client.Registry()
+      this.registerGlobals({ prometheus: { client, registry: this.metricsRegistry } })
+    }
+  }
+
+  init () {
+    return this.updateContext()
+  }
+
+  updateContext (context) {
+    // No-op
+  }
+
+  start () {
+    throw new Error('BaseStackable.start must be overriden by the subclasses')
+  }
+
+  stop () {
+    throw new Error('BaseStackable.stop must be overriden by the subclasses')
+  }
+
+  // Alias for stop
+  close () {
+    return this.stop()
+  }
+
+  inject () {
+    throw new Error('BaseStackable.inject must be overriden by the subclasses')
   }
 
   getUrl () {
     return this.url
   }
 
-  async getConfig () {
-    return this.configManager.current
+  async getConfig (includeMeta = false) {
+    if (includeMeta) {
+      return this.config
+    }
+
+    const { [kMetadata]: _, ...config } = this.config
+    return config
   }
 
   async getEnv () {
-    return this.configManager.env
+    return this.config[kMetadata].env
   }
 
   async getWatchConfig () {
-    const config = this.configManager.current
+    const config = this.config
 
     const enabled = config.watch?.enabled !== false
 
@@ -123,7 +149,7 @@ export class BaseStackable extends EventEmitter {
   }
 
   async getDispatchTarget () {
-    return this.getUrl() ?? this.getDispatchFunc()
+    return this.getUrl() ?? (await this.getDispatchFunc())
   }
 
   getMeta () {
@@ -242,7 +268,7 @@ export class BaseStackable extends EventEmitter {
   }
 
   async startWithCommand (command, loader, scripts) {
-    const config = this.configManager.current
+    const config = this.config
     const basePath = config.application?.basePath ? cleanBasePath(config.application?.basePath) : ''
 
     const context = await this.getChildManagerContext(basePath)
@@ -342,7 +368,7 @@ export class BaseStackable extends EventEmitter {
 
     return {
       id: this.id,
-      config: this.configManager.current,
+      config: this.config,
       serviceId: this.serviceId,
       workerId: this.workerId,
       // Always use URL to avoid serialization problem in Windows
@@ -388,45 +414,61 @@ export class BaseStackable extends EventEmitter {
     this.emit('config', config)
   }
 
+  _initializeLogger () {
+    const loggerOptions = deepmerge(this.runtimeConfig?.logger ?? {}, this.config?.logger ?? {})
+    const pinoOptions = buildPinoOptions(
+      loggerOptions,
+      this.serverConfig?.logger,
+      this.serviceId,
+      this.workerId,
+      this.context,
+      this.root
+    )
+
+    return pino(pinoOptions, this.standardStreams?.stdout)
+  }
+
   async _collectMetrics () {
     if (this.#metricsCollected) {
       return
     }
 
     this.#metricsCollected = true
+
+    if (this.context.metricsConfig === false) {
+      return
+    }
+
     await this.#collectMetrics()
     this.#setHttpCacheMetrics()
   }
 
   async #collectMetrics () {
-    let metricsConfig = this.options.context.metricsConfig
-    if (metricsConfig !== false) {
-      metricsConfig = {
-        defaultMetrics: true,
-        httpMetrics: true,
-        ...metricsConfig
-      }
-
-      if (this.childManager && this.clientWs) {
-        await this.childManager.send(this.clientWs, 'collectMetrics', {
-          serviceId: this.serviceId,
-          workerId: this.workerId,
-          metricsConfig
-        })
-        return
-      }
-
-      await collectMetrics(
-        this.serviceId,
-        this.workerId,
-        metricsConfig,
-        this.metricsRegistry
-      )
+    const metricsConfig = {
+      defaultMetrics: true,
+      httpMetrics: true,
+      ...this.context.metricsConfig
     }
+
+    if (this.childManager && this.clientWs) {
+      await this.childManager.send(this.clientWs, 'collectMetrics', {
+        serviceId: this.serviceId,
+        workerId: this.workerId,
+        metricsConfig
+      })
+      return
+    }
+
+    await collectMetrics(this.serviceId, this.workerId, metricsConfig, this.metricsRegistry)
   }
 
   #setHttpCacheMetrics () {
     const { client, registry } = globalThis.platformatic.prometheus
+
+    // Metrics already registered, no need to register them again
+    if (ensureMetricsGroup(registry, 'http.cache')) {
+      return
+    }
 
     const cacheHitMetric = new client.Counter({
       name: 'http_cache_hit_count',

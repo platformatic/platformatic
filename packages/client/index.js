@@ -6,13 +6,14 @@ const fs = require('fs/promises')
 const kHeaders = Symbol('headers')
 const kGetHeaders = Symbol('getHeaders')
 const kTelemetryContext = Symbol('telemetry-context')
-const abstractLogging = require('abstract-logging')
 const Ajv = require('ajv')
 const $RefParser = require('@apidevtools/json-schema-ref-parser')
 const { createHash } = require('node:crypto')
 const validateFunctionCache = {}
 const errors = require('./errors')
 const camelCase = require('camelcase')
+const { abstractLogger } = require('@platformatic/utils')
+
 const { FormData, errors: { UndiciError } } = require('undici')
 function generateOperationId (path, method, methodMeta, all) {
   let operationId = null
@@ -426,7 +427,7 @@ function wrapGraphQLClient (url, openTelemetry, logger) {
   }
 }
 
-async function buildGraphQLClient (options, openTelemetry, logger = abstractLogging) {
+async function buildGraphQLClient (options, openTelemetry, logger = abstractLogger) {
   options = options || {}
   if (!options.url) {
     throw new Error('options.url is required')

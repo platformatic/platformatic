@@ -2,6 +2,7 @@ import { schemaComponents as utilsSchemaComponents } from '@platformatic/utils'
 import { readFileSync } from 'node:fs'
 
 export const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'))
+export const version = packageJson.version
 
 const application = {
   type: 'object',
@@ -64,7 +65,7 @@ export const schemaComponents = { application, watch }
 export const schema = {
   $id: `https://schemas.platformatic.dev/@platformatic/basic/${packageJson.version}.json`,
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Platformatic Stackable',
+  title: 'Platformatic Basic Config',
   type: 'object',
   properties: {
     $schema: {

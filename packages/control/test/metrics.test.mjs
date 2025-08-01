@@ -1,16 +1,15 @@
 'use strict'
 
-import { test } from 'node:test'
-import { join } from 'node:path'
 import { execa } from 'execa'
-import * as desm from 'desm'
-import { startRuntime, kill } from './helper.mjs'
 import { ok, strictEqual } from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { kill, startRuntime } from './helper.mjs'
 
-const cliPath = desm.join(import.meta.url, '..', 'control.js')
-const fixturesDir = desm.join(import.meta.url, 'fixtures')
+const cliPath = join(import.meta.dirname, '..', 'control.js')
+const fixturesDir = join(import.meta.dirname, 'fixtures')
 
-test('should return runtime metrics when passing no format option', async (t) => {
+test('should return runtime metrics when passing no format option', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
   const { runtime } = await startRuntime(configFile)
@@ -25,7 +24,7 @@ test('should return runtime metrics when passing no format option', async (t) =>
   ok(child.stdout.includes('"process_cpu_system_seconds_total"'))
 })
 
-test('should return runtime metrics when passing text option', async (t) => {
+test('should return runtime metrics when passing text option', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
   const { runtime } = await startRuntime(configFile)

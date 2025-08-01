@@ -4,14 +4,15 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
+const { create } = require('../../index.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
 
-test('should get service config', async (t) => {
+test.beforeEach(setLogFile)
+
+test('should get service config', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -29,31 +30,19 @@ test('should get service config', async (t) => {
       port: 0,
       keepAliveTimeout: 5000,
       trustProxy: true,
-      logger: serviceConfig.server.logger,
+      logger: serviceConfig.server.logger
     },
     service: { openapi: true },
     plugins: {
-      paths: [
-        join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js'),
-      ],
+      paths: [join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js')]
     },
-    watch: { enabled: true },
-    metrics: {
-      server: 'hide',
-      defaultMetrics: {
-        enabled: false,
-      },
-      labels: {
-        serviceId: 'with-logger',
-      },
-    },
+    watch: { enabled: true }
   })
 })
 
-test('do not force enable metrics without the management api', async (t) => {
+test('do not force enable metrics without the management api', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -71,22 +60,19 @@ test('do not force enable metrics without the management api', async (t) => {
       port: 0,
       keepAliveTimeout: 5000,
       trustProxy: true,
-      logger: serviceConfig.server.logger,
+      logger: serviceConfig.server.logger
     },
     service: { openapi: true },
     plugins: {
-      paths: [
-        join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js'),
-      ],
+      paths: [join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js')]
     },
-    watch: { enabled: true },
+    watch: { enabled: true }
   })
 })
 
-test('do not force enable metrics if they are set to false', async (t) => {
+test('do not force enable metrics if they are set to false', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-management-api-without-metrics.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -104,34 +90,32 @@ test('do not force enable metrics if they are set to false', async (t) => {
       port: 0,
       keepAliveTimeout: 5000,
       trustProxy: true,
-      logger: serviceConfig.server.logger,
+      logger: serviceConfig.server.logger
     },
     service: { openapi: true },
     plugins: {
       paths: [
         {
           options: {
-            name: 'plugin1',
+            name: 'plugin1'
           },
-          path: join(fixturesDir, 'monorepo', 'serviceAppWithMultiplePlugins', 'plugin.js'),
+          path: join(fixturesDir, 'monorepo', 'serviceAppWithMultiplePlugins', 'plugin.js')
         },
         {
           options: {
-            name: 'plugin2',
+            name: 'plugin2'
           },
-          path: join(fixturesDir, 'monorepo', 'serviceAppWithMultiplePlugins', 'plugin2.mjs'),
-        },
-      ],
+          path: join(fixturesDir, 'monorepo', 'serviceAppWithMultiplePlugins', 'plugin2.mjs')
+        }
+      ]
     },
-    watch: { enabled: true },
-    metrics: false,
+    watch: { enabled: true }
   })
 })
 
-test('set serviceId in metrics as label in all services', async (t) => {
+test('set serviceId in metrics as label in all services', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-with-metrics.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -149,26 +133,14 @@ test('set serviceId in metrics as label in all services', async (t) => {
       port: 0,
       keepAliveTimeout: 5000,
       trustProxy: true,
-      logger: serviceConfig.server.logger,
+      logger: serviceConfig.server.logger
     },
     service: { openapi: true },
     plugins: {
-      paths: [
-        join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js'),
-      ],
+      paths: [join(fixturesDir, 'monorepo', 'serviceAppWithLogger', 'plugin.js')]
     },
     watch: {
-      enabled: true,
-    },
-    metrics: {
-      server: 'hide',
-      defaultMetrics: {
-        enabled: false,
-      },
-      labels: {
-        app: 'serviceApp', // this is from the runtime config
-        serviceId: 'with-logger', // this is set for each service
-      },
-    },
+      enabled: true
+    }
   })
 })

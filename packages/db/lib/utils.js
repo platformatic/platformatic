@@ -1,45 +1,34 @@
-'use strict'
+import { connect } from '@platformatic/db-core'
+import { kMetadata } from '@platformatic/utils'
+import fs from 'node:fs/promises'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const { connect } = require('@platformatic/db-core')
-const { join, dirname } = require('path')
-const { fileURLToPath } = require('url')
-const fs = require('fs/promises')
-const { isFileAccessible } = require('@platformatic/utils')
-
-async function setupDB (log, config) {
+export async function setupDB (log, config) {
   const { db, sql, entities, dbschema } = await connect({ ...config, log })
 
   return {
     db,
     sql,
     entities,
-    dbschema,
+    dbschema
   }
 }
 
-function urlDirname (url) {
+export function urlDirname (url) {
   return dirname(fileURLToPath(url))
 }
 
-function locateSchemaLock (configManager) {
-  return configManager.current.db.schemalock.path ?? join(configManager.dirname, 'schema.lock')
+export function locateSchemaLock (config) {
+  return config.db.schemalock.path ?? join(config[kMetadata].root, 'schema.lock')
 }
 
-async function updateSchemaLock (logger, configManager) {
-  const config = configManager.current
+export async function updateSchemaLock (logger, config) {
   if (config.db.schemalock) {
     const conn = await setupDB(logger, { ...config.db, dbschema: null })
-    const schemaLockPath = locateSchemaLock(configManager)
+    const schemaLockPath = locateSchemaLock(config)
     await fs.writeFile(schemaLockPath, JSON.stringify(conn.dbschema, null, 2))
 
     await conn.db.dispose()
   }
-}
-
-module.exports = {
-  setupDB,
-  isFileAccessible,
-  urlDirname,
-  updateSchemaLock,
-  locateSchemaLock,
 }

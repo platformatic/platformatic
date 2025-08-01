@@ -3,6 +3,5 @@
   "service": {
     "openapi": true
   },
-  "watch": true,
-  "metrics": false
+  "watch": true
 }

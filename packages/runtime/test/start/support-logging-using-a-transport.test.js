@@ -5,11 +5,14 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const fs = require('fs/promises')
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
+const { create } = require('../..')
+const { transform } = require('../../lib/config')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { setTimeout: sleep } = require('node:timers/promises')
 const tmpdir = os.tmpdir()
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 test('supports logging using a transport', async t => {
   const configFile = join(fixturesDir, 'server', 'logger-transport', 'platformatic.runtime.json')
@@ -20,11 +23,14 @@ test('supports logging using a transport', async t => {
     await app.close()
   })
 
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  config.configManager.current.logger.transport.options = {
-    path: dest
-  }
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile, null, {
+    async transform (config, ...args) {
+      config = await transform(config, ...args)
+      config.logger.transport.options = { path: dest }
+      return config
+    }
+  })
+
   await app.start()
 
   // Wait for logs to be written

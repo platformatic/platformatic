@@ -5,7 +5,7 @@ const { join } = require('node:path')
 const { isatty } = require('node:tty')
 const pino = require('pino')
 const pretty = require('pino-pretty')
-const { buildPinoFormatters, buildPinoTimestamp } = require('@platformatic/utils')
+const { abstractLogger, buildPinoFormatters, buildPinoTimestamp } = require('@platformatic/utils')
 
 const customPrettifiers = {
   name (name, _, obj) {
@@ -79,4 +79,4 @@ async function createLogger (config, runtimeLogsDir) {
   return [pino(loggerConfig, multiStream), multiStream]
 }
 
-module.exports = { createLogger }
+module.exports = { abstractLogger, createLogger }

@@ -1,12 +1,12 @@
 /* globals platformatic */
 
-import { withResolvers } from '@platformatic/utils'
+import { kMetadata } from '@platformatic/utils'
 import { deepStrictEqual, ok, rejects, throws } from 'node:assert'
 import { platform } from 'node:os'
 import { test } from 'node:test'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { request } from 'undici'
-import { createStackable, getExecutedCommandLogMessage, isWindows, temporaryFolder } from './helper.js'
+import { create, getExecutedCommandLogMessage, isWindows, temporaryFolder } from './helper.js'
 
 const expectedLogger = {
   levels: {
@@ -30,20 +30,18 @@ const expectedLogger = {
 }
 
 test('BaseStackable - should properly initialize', async t => {
-  const stackable = await createStackable(t, { serviceId: 'service' })
+  const stackable = await create(t, { serviceId: 'service' })
   deepStrictEqual(stackable.logger.level, 'trace')
 })
 
 test('BaseStackable - should properly setup globals', async t => {
-  const stackable = await createStackable(
+  const stackable = await create(
     t,
     { serverConfig: {} },
     {
-      current: {
-        server: {
-          logger: {
-            level: 'info'
-          }
+      server: {
+        logger: {
+          level: 'info'
         }
       }
     }
@@ -60,12 +58,12 @@ test('BaseStackable - should properly setup globals', async t => {
 })
 
 test('BaseStackable - other getters', async t => {
-  const stackable = await createStackable(
+  const stackable = await create(
     t,
     {},
     {
-      current: { key1: 'value1' },
-      env: { key2: 'value2' }
+      key1: 'value1',
+      [kMetadata]: { env: { key2: 'value2' } }
     }
   )
 
@@ -79,17 +77,13 @@ test('BaseStackable - other getters', async t => {
 })
 
 test('BaseStackable - getWatchConfig - disabled', async t => {
-  const stackable = await createStackable(t, {}, { current: { watch: { enabled: false } } })
+  const stackable = await create(t, {}, { watch: { enabled: false } })
 
   deepStrictEqual(await stackable.getWatchConfig(), { enabled: false, path: temporaryFolder })
 })
 
 test('BaseStackable - getWatchConfig - disabled', async t => {
-  const stackable = await createStackable(
-    t,
-    {},
-    { current: { watch: { enabled: true, allow: ['first'], ignore: ['second'] } } }
-  )
+  const stackable = await create(t, {}, { watch: { enabled: true, allow: ['first'], ignore: ['second'] } })
 
   deepStrictEqual(await stackable.getWatchConfig(), {
     allow: ['first'],
@@ -100,7 +94,7 @@ test('BaseStackable - getWatchConfig - disabled', async t => {
 })
 
 test('BaseStackable - log - should properly log', async t => {
-  const stackable = await createStackable(t)
+  const stackable = await create(t)
 
   await stackable.log({ message: 'MESSAGE 1' })
   await stackable.log({ message: 'MESSAGE 2', level: 'error' })
@@ -111,7 +105,7 @@ test('BaseStackable - log - should properly log', async t => {
 })
 
 test('BaseStackable - verifyOutputDirectory - throw an error', async t => {
-  const stackable = await createStackable(t, { isProduction: true })
+  const stackable = await create(t, { isProduction: true })
 
   throws(
     () => stackable.verifyOutputDirectory('/non/existent'),
@@ -120,19 +114,19 @@ test('BaseStackable - verifyOutputDirectory - throw an error', async t => {
 })
 
 test('BaseStackable - verifyOutputDirectory - do not throw an error in development', async t => {
-  const stackable = await createStackable(t)
+  const stackable = await create(t)
 
   stackable.verifyOutputDirectory('/non/existent')
 })
 
 test('BaseStackable - verifyOutputDirectory - do not throw on existing directories', async t => {
-  const stackable = await createStackable(t, { isProduction: true })
+  const stackable = await create(t, { isProduction: true })
 
   stackable.verifyOutputDirectory(import.meta.dirname)
 })
 
 test('BaseStackable - buildWithCommand - should execute the requested command', async t => {
-  const stackable = await createStackable(t, { isProduction: true })
+  const stackable = await create(t, { isProduction: true })
 
   const executablePath = fileURLToPath(new URL('./fixtures/print-cwd.js', import.meta.url))
   await stackable.buildWithCommand(['node', executablePath], import.meta.dirname)
@@ -142,7 +136,7 @@ test('BaseStackable - buildWithCommand - should execute the requested command', 
 })
 
 test('BaseStackable - buildWithCommand - should handle exceptions', async t => {
-  const stackable = await createStackable(t, {})
+  const stackable = await create(t, {})
 
   const executablePath = fileURLToPath(new URL('./fixtures/invalid.js', import.meta.url))
   await rejects(
@@ -155,7 +149,7 @@ test('BaseStackable - buildWithCommand - should handle exceptions', async t => {
 })
 
 test('BaseStackable - buildWithCommand - should not inject the Platformatic code if asked to', async t => {
-  const stackable = await createStackable(t, {})
+  const stackable = await create(t, {})
 
   const executablePath = fileURLToPath(new URL('./fixtures/build-context.js', import.meta.url))
   await stackable.buildWithCommand(`node ${executablePath}`, import.meta.dirname)
@@ -171,7 +165,7 @@ test(
   'BaseStackable - buildWithCommand - should properly intercept output from non Node.js executables - /usr/bin/env',
   { skip: isWindows },
   async t => {
-    const stackable = await createStackable(t, {})
+    const stackable = await create(t, {})
 
     await stackable.buildWithCommand('/usr/bin/env', import.meta.dirname, { disableChildManager: true })
 
@@ -184,7 +178,7 @@ test(
   'BaseStackable - buildWithCommand - should properly intercept output from non Node.js executables - /bin/bash',
   { skip: isWindows },
   async t => {
-    const stackable = await createStackable(t, {})
+    const stackable = await create(t, {})
 
     const executablePath = fileURLToPath(new URL('./fixtures/build-context.sh', import.meta.url))
     await stackable.buildWithCommand(executablePath, import.meta.dirname, { disableChildManager: true })
@@ -205,7 +199,7 @@ test(
   'BaseStackable - buildWithCommand - should properly change the working directory',
   { skip: isWindows },
   async t => {
-    const stackable = await createStackable(t, {})
+    const stackable = await create(t, {})
 
     const fixturesDir = fileURLToPath(new URL('./fixtures', import.meta.url))
     const executablePath = fileURLToPath(new URL('./fixtures/chdir-and-run.sh', import.meta.url))
@@ -224,7 +218,7 @@ test(
 )
 
 test('BaseStackable - startCommand and stopCommand - should execute the requested command', async t => {
-  const stackable = await createStackable(
+  const stackable = await create(
     t,
     {
       isEntrypoint: true,
@@ -241,10 +235,8 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
       }
     },
     {
-      current: {
-        application: { basePath: '/whatever' },
-        watch: { enabled: true, allow: ['first'], ignore: ['second'] }
-      }
+      application: { basePath: '/whatever' },
+      watch: { enabled: true, allow: ['first'], ignore: ['second'] }
     }
   )
 
@@ -291,7 +283,7 @@ test('BaseStackable - startCommand and stopCommand - should execute the requeste
 })
 
 test('BaseStackable - should import and setup open telemetry HTTP instrumentation', async t => {
-  const stackable = await createStackable(
+  const stackable = await create(
     t,
     {
       serviceId: 'test-service-id',
@@ -317,10 +309,8 @@ test('BaseStackable - should import and setup open telemetry HTTP instrumentatio
       }
     },
     {
-      current: {
-        application: { basePath: '/whatever' },
-        watch: { enabled: true, allow: ['first'], ignore: ['second'] }
-      }
+      application: { basePath: '/whatever' },
+      watch: { enabled: true, allow: ['first'], ignore: ['second'] }
     }
   )
 
@@ -379,7 +369,7 @@ test(
   'BaseStackable - startCommand - should reject for non existing commands',
   { skip: platform() === 'win32' },
   async t => {
-    const stackable = await createStackable(t)
+    const stackable = await create(t)
 
     await rejects(
       () => stackable.startWithCommand('non-existing-command'),
@@ -389,9 +379,9 @@ test(
 )
 
 test('BaseStackable - startCommand - should kill the process on non-zero exit code', async t => {
-  const stackable = await createStackable(t)
+  const stackable = await create(t)
 
-  const { promise, resolve } = withResolvers()
+  const { promise, resolve } = Promise.withResolvers()
   t.mock.method(process, 'exit', code => {
     resolve(code)
   })
@@ -403,7 +393,7 @@ test('BaseStackable - startCommand - should kill the process on non-zero exit co
 })
 
 test('BaseStackable - stopCommand - should forcefully exit the process if it doesnt exit within the allowed timeout', async t => {
-  const stackable = await createStackable(
+  const stackable = await create(
     t,
     {
       isEntrypoint: true,
@@ -420,10 +410,8 @@ test('BaseStackable - stopCommand - should forcefully exit the process if it doe
       }
     },
     {
-      current: {
-        application: { basePath: '/whatever' },
-        watch: { enabled: true, allow: ['first'], ignore: ['second'] }
-      }
+      application: { basePath: '/whatever' },
+      watch: { enabled: true, allow: ['first'], ignore: ['second'] }
     }
   )
 
@@ -472,7 +460,7 @@ test('BaseStackable - stopCommand - should forcefully exit the process if it doe
 })
 
 test('BaseStackable - spawn - should handle chained commands', { skip: isWindows }, async t => {
-  const stackable = await createStackable(t)
+  const stackable = await create(t)
 
   const fs = await import('node:fs/promises')
   const path = await import('node:path')
@@ -480,33 +468,45 @@ test('BaseStackable - spawn - should handle chained commands', { skip: isWindows
   const testFile2 = path.join(temporaryFolder, 'test-file-2.txt')
 
   try {
-    await fs.unlink(testFile1).catch(() => { })
-    await fs.unlink(testFile2).catch(() => { })
+    await fs.unlink(testFile1).catch(() => {})
+    await fs.unlink(testFile2).catch(() => {})
 
     const chainedCommand = `touch ${testFile1} && touch ${testFile2}`
     await stackable.buildWithCommand(chainedCommand, temporaryFolder, { disableChildManager: true })
 
-    const file1Exists = await fs.access(testFile1).then(() => true).catch(() => false)
-    const file2Exists = await fs.access(testFile2).then(() => true).catch(() => false)
+    const file1Exists = await fs
+      .access(testFile1)
+      .then(() => true)
+      .catch(() => false)
+    const file2Exists = await fs
+      .access(testFile2)
+      .then(() => true)
+      .catch(() => false)
 
     ok(stackable.stdout.messages[0].includes(getExecutedCommandLogMessage(chainedCommand)))
     ok(file1Exists, 'First command in chain did not execute')
     ok(file2Exists, 'Second command in chain did not execute')
 
-    await fs.unlink(testFile1).catch(() => { })
-    await fs.unlink(testFile2).catch(() => { })
+    await fs.unlink(testFile1).catch(() => {})
+    await fs.unlink(testFile2).catch(() => {})
 
     const semicolonCommand = `touch ${testFile1}; touch ${testFile2}`
     await stackable.buildWithCommand(semicolonCommand, temporaryFolder, { disableChildManager: true })
 
-    const file1ExistsAgain = await fs.access(testFile1).then(() => true).catch(() => false)
-    const file2ExistsAgain = await fs.access(testFile2).then(() => true).catch(() => false)
+    const file1ExistsAgain = await fs
+      .access(testFile1)
+      .then(() => true)
+      .catch(() => false)
+    const file2ExistsAgain = await fs
+      .access(testFile2)
+      .then(() => true)
+      .catch(() => false)
 
     ok(stackable.stdout.messages.some(msg => msg.includes(getExecutedCommandLogMessage(semicolonCommand))))
     ok(file1ExistsAgain, 'First command with semicolon did not execute')
     ok(file2ExistsAgain, 'Second command with semicolon did not execute')
   } finally {
-    await fs.unlink(testFile1).catch(() => { })
-    await fs.unlink(testFile2).catch(() => { })
+    await fs.unlink(testFile1).catch(() => {})
+    await fs.unlink(testFile2).catch(() => {})
   }
 })

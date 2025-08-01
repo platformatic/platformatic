@@ -5,16 +5,14 @@
     "port": 0,
     "logger": {
       "name": "service-with-logger",
-      "level": "trace"
+      "level": "info"
     }
   },
   "service": {
     "openapi": true
   },
   "plugins": {
-    "paths": [
-      "plugin.js"
-    ]
+    "paths": ["plugin.js"]
   },
   "watch": true
 }

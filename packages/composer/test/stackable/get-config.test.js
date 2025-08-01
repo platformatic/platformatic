@@ -1,45 +1,45 @@
-'use strict'
+import assert from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { createFromConfig } from '../helper.js'
 
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { buildStackable } = require('../..')
-
-test('get service config via stackable api', async (t) => {
+test('get service config via stackable api', async t => {
   const config = {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
     composer: {
-      services: [],
+      services: []
     },
     plugins: {
-      paths: [join(__dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')],
-    },
+      paths: [join(import.meta.dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')]
+    }
   }
 
-  const stackable = await buildStackable({ config })
-  t.after(async () => {
-    await stackable.stop()
-  })
-  await stackable.start()
+  const stackable = await createFromConfig(t, config)
+  t.after(() => stackable.stop())
+  await stackable.start({ listen: true })
 
   const stackableConfig = await stackable.getConfig()
   assert.deepStrictEqual(stackableConfig, {
     composer: {
       services: [],
       refreshTimeout: 1000,
-      addEmptySchema: false,
+      addEmptySchema: false
     },
     plugins: {
-      paths: [join(__dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')],
+      paths: [join(import.meta.dirname, '..', 'openapi', 'fixtures', 'plugins', 'custom.js')]
     },
     server: {
       keepAliveTimeout: 5000,
       logger: {
-        level: 'trace',
-      },
-      trustProxy: true,
+        level: 'fatal'
+      }
     },
     watch: {
-      enabled: false,
-    },
+      enabled: false
+    }
   })
 })

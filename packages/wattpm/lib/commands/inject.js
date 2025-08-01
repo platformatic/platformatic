@@ -114,6 +114,7 @@ export async function injectCommand (logger, args) {
     if (response.statusCode === 500) {
       const json = JSON.parse(responseBody)
 
+      /* c8 ignore next - else */
       if (json?.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND' || json?.code === 'PLT_RUNTIME_SERVICE_WORKER_NOT_FOUND') {
         const error = new Error('Cannot find a service.')
         error.code = 'PLT_CTR_SERVICE_NOT_FOUND'

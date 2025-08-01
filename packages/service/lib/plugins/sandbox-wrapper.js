@@ -1,61 +1,10 @@
-'use strict'
-
-const fp = require('fastify-plugin')
-const autoload = require('@fastify/autoload')
-const { stat } = require('node:fs/promises')
-const { createRequire } = require('node:module')
-const { join } = require('node:path')
-const { pathToFileURL } = require('node:url')
-
-module.exports = fp(async function (app, opts) {
-  // fake require next to the configManager dirname
-  const _require = createRequire(join(app.platformatic.configManager.dirname, 'package.json'))
-  for (const plugin of opts.packages || []) {
-    const name = typeof plugin === 'string' ? plugin : plugin.name
-    const url = pathToFileURL(_require.resolve(name))
-    const loaded = await import(url)
-    await app.register(loaded, plugin.options)
-  }
-
-  for (let plugin of opts.paths || []) {
-    if (typeof plugin === 'string') {
-      plugin = { path: plugin, encapsulate: true }
-    }
-    if (plugin.path && (await stat(plugin.path)).isDirectory()) {
-      const patternOptions = patternOptionsFromPlugin(plugin)
-
-      app.register(autoload, {
-        dir: plugin.path,
-        encapsulate: plugin.encapsulate !== false,
-        maxDepth: plugin.maxDepth,
-        options: plugin.options,
-        autoHooks: plugin.autoHooks,
-        cascadeHooks: plugin.cascadeHooks,
-        overwriteHooks: plugin.overwriteHooks,
-        routeParams: plugin.routeParams,
-        forceESM: plugin.forceESM,
-        ignoreFilter: plugin.ignoreFilter,
-        matchFilter: plugin.matchFilter,
-        ...patternOptions
-      })
-    } else {
-      let loaded = await import(pathToFileURL(plugin.path))
-      /* c8 ignore next 3 */
-      if (loaded.__esModule === true || typeof loaded.default === 'function') {
-        loaded = loaded.default
-      }
-
-      if (plugin.encapsulate === false) {
-        const skipOverride = loaded[Symbol.for('skip-override')]
-        loaded[Symbol.for('skip-override')] = true
-        await app.register(loaded, plugin.options)
-        loaded[Symbol.for('skip-override')] = skipOverride
-      } else {
-        await app.register(loaded, plugin.options)
-      }
-    }
-  }
-})
+import autoload from '@fastify/autoload'
+import { kMetadata } from '@platformatic/utils'
+import fp from 'fastify-plugin'
+import { stat } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import { isAbsolute, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 /**
  * Creates an object for pattern specific options. This ensures that
@@ -100,3 +49,61 @@ function stringPatternToRegExp (stringPattern) {
     return undefined
   }
 }
+
+async function sandboxWrapperPlugin (app, options) {
+  // fake require next to the configManager dirname
+  const require = createRequire(resolve(app.platformatic.config[kMetadata].root, 'noop.js'))
+
+  for (const plugin of options.packages || []) {
+    const name = typeof plugin === 'string' ? plugin : plugin.name
+    const url = pathToFileURL(require.resolve(name))
+    const loaded = await import(url)
+    await app.register(loaded, plugin.options)
+  }
+
+  for (let plugin of options.paths || []) {
+    if (typeof plugin === 'string') {
+      plugin = { path: plugin, encapsulate: true }
+    }
+
+    if (plugin.path && !isAbsolute(plugin.path)) {
+      plugin.path = resolve(app.platformatic.config[kMetadata].root, plugin.path)
+    }
+
+    if (plugin.path && (await stat(plugin.path)).isDirectory()) {
+      const patternOptions = patternOptionsFromPlugin(plugin)
+
+      app.register(autoload, {
+        dir: plugin.path,
+        encapsulate: plugin.encapsulate !== false,
+        maxDepth: plugin.maxDepth,
+        options: plugin.options,
+        autoHooks: plugin.autoHooks,
+        cascadeHooks: plugin.cascadeHooks,
+        overwriteHooks: plugin.overwriteHooks,
+        routeParams: plugin.routeParams,
+        forceESM: plugin.forceESM,
+        ignoreFilter: plugin.ignoreFilter,
+        matchFilter: plugin.matchFilter,
+        ...patternOptions
+      })
+    } else {
+      let loaded = await import(pathToFileURL(plugin.path))
+      /* c8 ignore next 3 */
+      if (loaded.__esModule === true || typeof loaded.default === 'function') {
+        loaded = loaded.default
+      }
+
+      if (plugin.encapsulate === false) {
+        const skipOverride = loaded[Symbol.for('skip-override')]
+        loaded[Symbol.for('skip-override')] = true
+        await app.register(loaded, plugin.options)
+        loaded[Symbol.for('skip-override')] = skipOverride
+      } else {
+        await app.register(loaded, plugin.options)
+      }
+    }
+  }
+}
+
+export const sandboxWrapper = fp(sandboxWrapperPlugin)

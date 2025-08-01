@@ -1,20 +1,18 @@
-'use strict'
+import { execa } from 'execa'
+import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { schema } from '../lib/schema.js'
 
-const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { readFile } = require('node:fs/promises')
-const { schema } = require('../lib/schema')
-
-test('schema output', async (t) => {
-  const { execa } = await import('execa')
-  const { stdout } = await execa(process.execPath, [join(__dirname, '..', 'lib', 'schema.js')])
+test('schema output', async t => {
+  const { stdout } = await execa(process.execPath, [join(import.meta.dirname, '..', 'lib', 'schema.js')])
 
   assert.deepEqual(stdout, JSON.stringify(schema, null, 2))
 })
 
-test('root schema file', async (t) => {
-  const schemaPath = join(__dirname, '..', 'schema.json')
+test('root schema file', async t => {
+  const schemaPath = join(import.meta.dirname, '..', 'schema.json')
   const schemaFile = await readFile(schemaPath, 'utf8')
   const rootSchema = JSON.parse(schemaFile)
 

@@ -1,24 +1,23 @@
-import { request, moveToTmpdir, safeKill } from './helper.js'
-import { test, after } from 'node:test'
-import { equal } from 'node:assert'
+import { create } from '@platformatic/db'
 import { match } from '@platformatic/utils'
-import { buildServer } from '@platformatic/db'
-import { join } from 'path'
-import * as desm from 'desm'
 import { execa } from 'execa'
-import { promises as fs, existsSync } from 'fs'
-import split from 'split2'
-import graphql from 'graphql'
+import { existsSync, promises as fs } from 'fs'
 import { copy } from 'fs-extra'
+import graphql from 'graphql'
+import { equal } from 'node:assert'
+import { after, test } from 'node:test'
+import { join } from 'path'
+import split from 'split2'
+import { moveToTmpdir, request, safeKill } from './helper.js'
 
 const env = { ...process.env, NODE_V8_COVERAGE: undefined }
 
 function findTSCPath () {
-  let tscPath = desm.join(import.meta.url, '..', 'node_modules', '.bin', 'tsc')
+  let tscPath = join(import.meta.dirname, '..', 'node_modules', '.bin', 'tsc')
 
   // If the local npm installation should use global tsc in the root
   if (!existsSync(tscPath)) {
-    tscPath = desm.join(import.meta.url, '../../..', 'node_modules', '.bin', 'tsc')
+    tscPath = join(import.meta.dirname, '../../..', 'node_modules', '.bin', 'tsc')
   }
 
   return tscPath
@@ -26,17 +25,17 @@ function findTSCPath () {
 
 test('graphql client generation (javascript)', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url, '--name', 'movies', '--type', 'graphql'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url, '--name', 'movies', '--type', 'graphql'])
 
   const readSDL = await fs.readFile(join(dir, 'movies', 'movies.schema.graphql'), 'utf8')
   {
@@ -94,17 +93,17 @@ app.listen({ port: 0 })
 
 test('graphql client generation (typescript)', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -175,17 +174,17 @@ app.listen({ port: 0 });
 
 test('graphql client generation with relations (typescript)', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies-quotes', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies-quotes', 'platformatic.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies-quotes', 'platformatic.db.json'))
 
   await app.start()
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -277,17 +276,17 @@ app.listen({ port: 0});
 
 test('graphql client generation (javascript) with slash at the end of the URL', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
 
   const toWrite = `
 'use strict'
@@ -335,17 +334,17 @@ app.listen({ port: 0 })
 
 test('configureClient (typescript)', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
   const dir = await moveToTmpdir(after)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/graphql', '--name', 'movies'])
 
   const toWrite = `
 import Fastify from 'fastify';
@@ -422,21 +421,21 @@ app.listen({ port: 0 });
 
 test('graphql client generation (javascript) from a file', async (t) => {
   try {
-    await fs.unlink(desm.join(import.meta.url, 'fixtures', 'movies', 'db.sqlite'))
+    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
-  const app = await buildServer(desm.join(import.meta.url, 'fixtures', 'movies', 'zero.db.json'))
+  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
 
   await app.start()
 
   const dir = await moveToTmpdir(after)
 
-  const sdl = graphql.printSchema(app.graphql.schema)
+  const sdl = graphql.printSchema(app.getApplication().graphql.schema)
   const sdlFile = join(dir, 'movies.schema.graphql')
   await fs.writeFile(sdlFile, sdl)
 
-  await execa('node', [desm.join(import.meta.url, '..', 'cli.mjs'), sdlFile, '--name', 'movies'])
+  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), sdlFile, '--name', 'movies'])
 
   const readSDL = await fs.readFile(join(dir, 'movies', 'movies.schema.graphql'), 'utf8')
   equal(sdl, readSDL)

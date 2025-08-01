@@ -3,16 +3,17 @@
 const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
-
 const { request } = require('undici')
-const { loadConfig } = require('@platformatic/config')
-const { buildServer, platformaticRuntime } = require('../..')
-const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 
-test('should update shared context via runtime API', async (t) => {
+const { create } = require('../../index.js')
+const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
+
+test('should update shared context via runtime API', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   const url = await app.start()
 
@@ -82,10 +83,9 @@ test('should update shared context via runtime API', async (t) => {
   }
 })
 
-test('should update shared context from one of the services', async (t) => {
+test('should update shared context from one of the services', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo-composer.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   const url = await app.start()
 
@@ -112,7 +112,7 @@ test('should update shared context from one of the services', async (t) => {
     const { statusCode } = await request(url + '/proxy/service-app/shared-context', {
       method: 'PATCH',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ context: contextUpdate1 })
     })
@@ -138,9 +138,9 @@ test('should update shared context from one of the services', async (t) => {
     const { statusCode } = await request(url + '/proxy/with-logger/shared-context', {
       method: 'PATCH',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ context: contextUpdate2 }),
+      body: JSON.stringify({ context: contextUpdate2 })
     })
     assert.strictEqual(statusCode, 200)
   }
@@ -164,9 +164,9 @@ test('should update shared context from one of the services', async (t) => {
     const { statusCode } = await request(url + '/proxy/service-app/shared-context', {
       method: 'PATCH',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ context: contextUpdate3, overwrite: true }),
+      body: JSON.stringify({ context: contextUpdate3, overwrite: true })
     })
     assert.strictEqual(statusCode, 200)
   }

@@ -1,6 +1,6 @@
 'use strict'
 
-const { withResolvers, executeWithTimeout, kTimeout } = require('@platformatic/utils')
+const { executeWithTimeout, kTimeout } = require('@platformatic/utils')
 const { ITC, generateResponse, sanitize } = require('@platformatic/itc')
 const errors = require('../errors')
 const { RoundRobinMap } = require('./round-robin-map')
@@ -112,7 +112,7 @@ class MessagingITC extends ITC {
   }
 
   _createClosePromise () {
-    const { promise, resolve, reject } = withResolvers()
+    const { promise, resolve, reject } = Promise.withResolvers()
     this.#closeResolvers = { resolve, reject }
     return promise
   }

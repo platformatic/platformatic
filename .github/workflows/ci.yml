@@ -14,6 +14,12 @@ on:
       - 'docs/**'
       - '**.md'
       - 'signatures/**'
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Run a single job'
+        required: false
+        default: ''
 
 # This allows a subsequently queued workflow run to interrupt previous runs
 concurrency:
@@ -27,7 +33,7 @@ env:
 jobs:
   setup-node_modules:
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -47,11 +53,12 @@ jobs:
 
   ci-create-platformatic:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'create-platformatic' }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -78,12 +85,13 @@ jobs:
 
   ci-cli:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'cli' }}
     runs-on: ${{ matrix.os }}
     # Paolo: This job takes a lot due to build and start command tests.
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -105,38 +113,14 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: cd packages/cli && pnpm run license
 
-  ci-config:
-    needs: setup-node_modules
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 60
-    strategy:
-      matrix:
-        node-version: [20, 22, 24]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run test suite config manager
-        run: cd packages/config && pnpm test
-
   ci-composer:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'composer' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -157,11 +141,12 @@ jobs:
 
   ci-db:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'db' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -187,11 +172,12 @@ jobs:
 
   ci-db-authorization:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'db-authorization' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -214,8 +200,9 @@ jobs:
 
   ci-db-core-lint:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'db-core-lint' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -258,12 +245,13 @@ jobs:
 
   ci-db-core-test:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'db-core-test' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -296,12 +284,13 @@ jobs:
 
   ci-sql-events:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'sql-events' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -330,11 +319,12 @@ jobs:
 
   ci-control:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'control' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -355,8 +345,9 @@ jobs:
 
   ci-runtime-lint:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'runtime-lint' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -376,13 +367,14 @@ jobs:
 
   ci-runtime:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'runtime' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
-        suite: [main, api, cli, start, types, multiple-workers]
+        suite: [main, api, cli, start, multiple-workers]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -402,11 +394,12 @@ jobs:
 
   ci-service:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'service' }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -429,11 +422,12 @@ jobs:
 
   ci-utils:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'utils' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -454,11 +448,12 @@ jobs:
 
   ci-ts-compiler:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'ts-compiler' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -479,11 +474,12 @@ jobs:
 
   ci-client:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'client' }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -505,11 +501,12 @@ jobs:
 
   ci-metrics:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'metrics' }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -529,11 +526,12 @@ jobs:
 
   ci-telemetry:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'telemetry' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -554,8 +552,9 @@ jobs:
 
   playwright-e2e:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'playwright-e2e' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.1.0
@@ -574,11 +573,12 @@ jobs:
 
   ci-rpc:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'rpc' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -601,11 +601,12 @@ jobs:
 
   ci-generators:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'generators' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -626,11 +627,12 @@ jobs:
 
   ci-itc:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'itc' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -651,11 +653,12 @@ jobs:
 
   ci-basic:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'basic' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -676,11 +679,12 @@ jobs:
 
   ci-node:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'node' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -701,11 +705,12 @@ jobs:
 
   ci-next:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'next' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     env:
       VALKEY_HOST: localhost
@@ -732,11 +737,12 @@ jobs:
 
   ci-vite:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'vite' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -757,11 +763,12 @@ jobs:
 
   ci-astro:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'astro' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -782,11 +789,12 @@ jobs:
 
   ci-remix:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'remix' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -807,11 +815,12 @@ jobs:
 
   ci-nest:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'nest' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -832,11 +841,12 @@ jobs:
 
   ci-wattpm:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'wattpm' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -857,11 +867,12 @@ jobs:
 
   ci-globals:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'globals' }}
     runs-on: ${{matrix.os}}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -882,11 +893,12 @@ jobs:
 
   dependency-check:
     needs: setup-node_modules
+    if: ${{ !inputs.job || inputs.job == 'dependency-check' }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -902,8 +914,8 @@ jobs:
           echo "pnpmoutput<<EOF" >> $GITHUB_OUTPUT
           cat out >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-      - name: CLI must load
-        run: cd packages/cli && node cli.js
+      - name: Watt must load
+        run: cd packages/wattpm && node bin/wattpm.js
       - name: Circular Dependency
         if: contains(steps.install.outputs.pnpmoutput, 'cyclic')
         run: exit 1

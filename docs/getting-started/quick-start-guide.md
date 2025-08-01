@@ -107,7 +107,6 @@ ALTER TABLE quotes ADD COLUMN likes INTEGER default 0;
 You will add a Fastify plugin for adding likes to a quote. Create a new file `like-quote.js` in the plugins directory of your DB service. 
 
 ```js
-/// <reference path="../global.d.ts" />
 'use strict'
 
 const S = require("fluent-json-schema");
@@ -139,10 +138,10 @@ Here, you've created a API endpoint that lets users like a quote in the database
 
 ### Apply Schema Migrations 
 
-In your `web/db` directory, run the command below for database migrations
+Run the command below for database migrations
 
 ```sh
-npx platformatic db migrations apply
+npx wattpm db:migrations:apply
 ```
 
 ## Add a Composer service 
@@ -170,7 +169,7 @@ Using existing configuration ...
 [16:06:50] INFO: /Users/tmp/my-app/web/composer/package.json written!
 [16:06:50] INFO: /Users/tmp/my-app/web/composer/platformatic.json written!
 [16:06:50] INFO: /Users/tmp/my-app/web/composer/.gitignore written!
-[16:06:50] INFO: /Users/tmp/my-app/web/composer/global.d.ts written!
+[16:06:50] INFO: /Users/tmp/my-app/web/composer/plt-env.d.ts written!
 [16:06:50] INFO: /Users/tmp/my-app/web/composer/README.md written!
 [16:06:50] INFO: Installing dependencies for the application using npm ...
 [16:06:50] INFO: Installing dependencies for the service composer using npm ...
@@ -231,7 +230,7 @@ Done. Now run:
 To kickstart the project, in your `web/frontend/src` directory, run the command to create a [Platformatic frontend client](https://docs.platformatic.dev/docs/client/frontend) for your remote server:
 
 ```sh
-npx platformatic client --frontend http://0.0.0.0:3042 --name next-client web/frontend/src
+npx --package @platformatic/client-cli plt-client --frontend http://0.0.0.0:3042 --name next-client web/frontend/src
 ```
 
 This command will generate a [Platformatic frontend client](https://docs.platformatic.dev/docs/client/frontend) in the specified web/frontend/src folder, which allows a more efficient communication between your frontend and Platformatic DB and composer service.

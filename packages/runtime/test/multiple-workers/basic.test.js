@@ -3,49 +3,34 @@
 const { ok } = require('node:assert')
 const { resolve } = require('node:path')
 const { test } = require('node:test')
-const { loadConfig } = require('@platformatic/config')
 const { features } = require('@platformatic/utils')
-const { buildServer, platformaticRuntime } = require('../..')
-const { updateFile, updateConfigFile, openLogsWebsocket, waitForLogs } = require('../helpers')
-const { getExpectedMessages, prepareRuntime } = require('./helper')
+const { create } = require('../..')
+const { updateFile, updateConfigFile, setLogFile } = require('../helpers')
+const { prepareRuntime, getExpectedEvents, waitForEvents } = require('./helper')
+
+test.beforeEach(setLogFile)
 
 test('services are started with multiple workers according to the configuration', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
+  const app = await create(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
-  const expectedMessages = getExpectedMessages('composer', { composer: 3, service: 3, node: 5 })
-  const waitPromise = waitForLogs(managementApiWebsocket, ...expectedMessages.start)
+  const expectedEvents = getExpectedEvents('composer', { composer: 3, service: 3, node: 5 })
+  const startEventsPromise = waitForEvents(app, expectedEvents.start)
 
   await app.start()
+  const startEvents = await startEventsPromise
 
-  const startMessages = (await waitPromise).map(m => m.msg)
+  ok(!startEvents.has('event=service:worker:stopped, service=service, worker=3'))
+  ok(!startEvents.has('event=service:worker:stopped, service=service, worker=4'))
 
-  if (features.node.reusePort) {
-    ok(!startMessages.includes('Starting the service "composer"...'))
-  } else {
-    ok(!startMessages.includes('Starting the worker 0 of the service "composer"...'))
-  }
-
-  ok(!startMessages.includes('Starting the worker 3 of the service "service"...'))
-  ok(!startMessages.includes('Starting the worker 4 of the service "service"...'))
-
-  const stopMessagesPromise = waitForLogs(managementApiWebsocket, ...expectedMessages.stop)
+  const stopEventsPromise = waitForEvents(app, expectedEvents.stop)
   await app.stop()
-  const stopMessages = (await stopMessagesPromise).map(m => m.msg)
-
-  if (features.node.reusePort) {
-    ok(!startMessages.includes('Stopping the service "composer"...'))
-  } else {
-    ok(!stopMessages.includes('Stopping the worker 0 of the service "composer"...'))
-  }
+  await stopEventsPromise
 })
 
 test('services are started with a single workers when no workers information is specified in the files', async t => {
@@ -57,33 +42,21 @@ test('services are started with a single workers when no workers information is 
     delete contents.services[0].workers
   })
 
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
+  const app = await create(configFile, null, { isProduction: true })
 
-  const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
+  const events = []
+  app.on('service:worker:started', payload => {
+    events.push(payload)
+  })
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
-
-  const messagesPromise = waitForLogs(
-    managementApiWebsocket,
-    'Starting the service "service"...',
-    'Starting the service "node"...',
-    'Starting the service "composer"...',
-    'Stopping the service "service"...',
-    'Stopping the service "node"...',
-    'Stopping the service "composer"...'
-  )
 
   await app.start()
   await app.stop()
-  const messages = (await messagesPromise).map(m => m.msg)
 
-  ok(!messages.includes('Starting the worker 0 of the service "service"...'))
-  ok(!messages.includes('Starting the worker 0 of the service "node"...'))
-  ok(!messages.includes('Starting the worker 0 of the service "composer"...'))
+  ok(!events.some(e => e.workersCount > 1))
 })
 
 // Note: this cannot be tested in production mode as watching is always disabled
@@ -100,46 +73,31 @@ test('can detect changes and restart all workers for a service', async t => {
     contents.watch = true
   })
 
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
+  const app = await create(configFile, null)
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
-  const waitPromise1 = waitForLogs(
-    managementApiWebsocket,
-    'Starting the worker 0 of the service "node"...',
-    'start watching files',
-    'Platformatic is now listening'
-  )
-
   await app.start()
-  await waitPromise1
 
-  const waitPromise2 = waitForLogs(
-    managementApiWebsocket,
-    'files changed',
-    'Stopping the worker 0 of the service "node"...',
-    'Starting the worker 0 of the service "node"...',
-    'The service "node" has been successfully reloaded ...'
+  const events = waitForEvents(
+    app,
+    { event: 'service:worker:changed', service: 'node', worker: 0 },
+    { event: 'service:worker:started', service: 'node', worker: 0 }
   )
 
   await updateFile(resolve(root, 'node/index.mjs'), contents => {
     return contents.replace("{ from: 'node' }", "{ from: 'node-after-reload' }")
   })
 
-  await waitPromise2
+  await events
 })
 
 test('can collect metrics with worker label', async t => {
   const root = await prepareRuntime(t, 'multiple-workers', { node: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile, '--production'], platformaticRuntime)
-
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await create(configFile, null, { isProduction: true })
 
   t.after(async () => {
     await app.close()

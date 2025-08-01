@@ -1,9 +1,6 @@
-'use strict'
-
-const assert = require('assert/strict')
-const { test } = require('node:test')
-
-const { createComposer, createGraphqlService, graphqlRequest } = require('../helper')
+import assert from 'assert/strict'
+import { test } from 'node:test'
+import { createFromConfig, createGraphqlService, graphqlRequest } from '../helper.js'
 
 test('should start composer with a graphql service', async t => {
   const graphql1 = await createGraphqlService(t, {
@@ -15,28 +12,31 @@ test('should start composer with a graphql service', async t => {
       Query: {
         async add (_, { x, y }) {
           return x + y
-        },
-      },
-    },
+        }
+      }
+    }
   })
 
   const graphql1Host = await graphql1.listen()
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'graphql1',
-            origin: graphql1Host,
-            graphql: true,
-          },
-        ],
-      },
+  const composer = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    composer: {
+      services: [
+        {
+          id: 'graphql1',
+          origin: graphql1Host,
+          graphql: true
+        }
+      ]
     }
-  )
+  })
 
-  const composerHost = await composer.listen()
+  const composerHost = await composer.start({ listen: true })
 
   const query = '{ add (x: 2, y: 2) }'
 
@@ -61,9 +61,9 @@ test('should start composer with two graphql services', async t => {
       Query: {
         async add (_, { x, y }) {
           return x + y
-        },
-      },
-    },
+        }
+      }
+    }
   })
 
   const graphql2 = await createGraphqlService(t, {
@@ -75,34 +75,37 @@ test('should start composer with two graphql services', async t => {
       Query: {
         async mul (_, { x, y }) {
           return x * y
-        },
-      },
-    },
+        }
+      }
+    }
   })
 
   const graphql1Host = await graphql1.listen()
   const graphql2Host = await graphql2.listen()
 
-  const composer = await createComposer(t,
-    {
-      composer: {
-        services: [
-          {
-            id: 'graphql1',
-            origin: graphql1Host,
-            graphql: true,
-          },
-          {
-            id: 'graphql2',
-            origin: graphql2Host,
-            graphql: true,
-          },
-        ],
-      },
+  const composer = await createFromConfig(t, {
+    server: {
+      logger: {
+        level: 'fatal'
+      }
+    },
+    composer: {
+      services: [
+        {
+          id: 'graphql1',
+          origin: graphql1Host,
+          graphql: true
+        },
+        {
+          id: 'graphql2',
+          origin: graphql2Host,
+          graphql: true
+        }
+      ]
     }
-  )
+  })
 
-  const composerHost = await composer.listen()
+  const composerHost = await composer.start({ listen: true })
 
   {
     const query = '{ add (x: 3, y: 4) }'

@@ -1,14 +1,15 @@
 'use strict'
 
-const { loadConfig } = require('@platformatic/config')
 const { deepStrictEqual } = require('node:assert')
 const { resolve } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { buildServer, platformaticRuntime } = require('../..')
+const { create } = require('../..')
 const { kWorkersBroadcast } = require('../../lib/worker/symbols')
-const { prepareRuntime } = require('./helper')
-const { openLogsWebsocket, waitForLogs, waitForStart, updateFile } = require('../helpers')
+const { prepareRuntime, waitForEvents } = require('./helper')
+const { updateFile, setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 function waitBroadcastedWorkers (t, allowedEmptyEvents = 0, multipleThreads = false) {
   const threads = {}
@@ -49,14 +50,11 @@ function waitBroadcastedWorkers (t, allowedEmptyEvents = 0, multipleThreads = fa
 test('should post updated workers list via broadcast channel', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
+  const app = await create(configFile)
   const eventsPromise = waitBroadcastedWorkers(t)
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
   await app.start()
@@ -111,25 +109,19 @@ test('should post updated workers list via broadcast channel', async t => {
 test('should post updated workers when something crashed', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.first-only.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
+  const app = await create(configFile)
   const eventsPromise = waitBroadcastedWorkers(t, 1, true)
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
   const url = await app.start()
 
-  // Wait for the application to start
-  await waitForStart(managementApiWebsocket)
-
-  const waitPromise = waitForLogs(
-    managementApiWebsocket,
-    'The service "first" unexpectedly exited with code 1.',
-    'Started the service "first"'
+  const waitPromise = waitForEvents(
+    app,
+    { event: 'service:worker:error', service: 'first', worker: 0 },
+    { event: 'service:worker:started', service: 'first', worker: 0 }
   )
 
   // Fetch the entrypoint to induce the crash
@@ -156,19 +148,16 @@ test('should post updated workers when something crashed', async t => {
 test('should post updated workers when the service is updated', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.first-only.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
+  const app = await create(configFile)
   const eventsPromise = waitBroadcastedWorkers(t, 1, true)
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
   await app.start()
 
-  const waitPromise = waitForLogs(managementApiWebsocket, 'The service "first" has been successfully reloaded ...')
+  const waitPromise = waitForEvents(app, { event: 'service:worker:reloaded', service: 'first', worker: 0 })
 
   await updateFile(resolve(root, './first/index.mjs'), contents => {
     contents = contents.replace('function create', 'function main').replace('return app', 'app.listen({ port: 0 })')
@@ -193,8 +182,7 @@ test('should post updated workers when the service is updated', async t => {
 test('should get information from other workers via ITC using a round robin approach', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.1-to-n.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await create(configFile)
 
   const threads = {}
   const broadcast = new BroadcastChannel(kWorkersBroadcast)
@@ -262,8 +250,7 @@ test('should get information from other workers via ITC using a round robin appr
 test('should return an error if the target worker throws an error', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.1-to-n.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await create(configFile)
 
   t.after(async () => {
     await app.close()
@@ -287,8 +274,7 @@ test('should return an error if the target worker throws an error', async t => {
 test('should return an error if the target worker times out', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.1-to-n.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await create(configFile)
 
   t.after(async () => {
     await app.close()
@@ -318,8 +304,7 @@ test('should return an error if the target worker times out', async t => {
 test('should return an error if the target worker exits before returning a response', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.1-to-n.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await create(configFile)
 
   t.after(async () => {
     await app.close()
@@ -346,8 +331,7 @@ test('should return an error if the target worker exits before returning a respo
 test('should return an error if the target worker throws an error while saving the channel', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.1-to-n.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await create(configFile)
 
   t.after(async () => {
     await app.close()
@@ -380,8 +364,7 @@ test('should return an error if the target worker throws an error while saving t
 test('should return an error if the target worker times out while saving the channel', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.1-to-n.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
+  const app = await create(configFile)
 
   t.after(async () => {
     await app.close()
@@ -420,13 +403,10 @@ test('should return an error if the target worker times out while saving the cha
 test('should reuse channels when the worker are restarted', async t => {
   const root = await prepareRuntime(t, 'messaging', { first: ['node'] })
   const configFile = resolve(root, './platformatic.with-watch.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current, config.args)
-  const managementApiWebsocket = await openLogsWebsocket(app)
+  const app = await create(configFile)
 
   t.after(async () => {
     await app.close()
-    managementApiWebsocket.terminate()
   })
 
   let createdChannels = 0
@@ -443,7 +423,7 @@ test('should reuse channels when the worker are restarted', async t => {
   deepStrictEqual(createdChannels, 3)
 
   // Get all the logs so far
-  const waitPromise = waitForLogs(managementApiWebsocket, 'The service "third" has been successfully reloaded ...')
+  const waitPromise = waitForEvents(app, { event: 'service:worker:reloaded', service: 'third', worker: 0 })
 
   // Now restart the third service, it should result in workers configuration being broadcasted
   await updateFile(resolve(root, './third/index.mjs'), contents => {

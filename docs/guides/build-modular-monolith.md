@@ -133,7 +133,7 @@ cd web/people-service
 And apply our migration:
 
 ```bash
-npx platformatic db migrations apply
+npx wattpm people-service:migrations:apply
 ```
 
 ### Populate the People database
@@ -163,16 +163,10 @@ module.exports = async function ({ entities, logger }) {
 }
 ```
 
-Then let's add an npm run script which uses the Platformatic CLI to run the seed script to the `package.json` for our People service:
+Now let's populate the database
 
 ```bash
-npm pkg set scripts.seed="platformatic db seed seed.js"
-```
-
-And then let's run it:
-
-```bash
-npm run seed
+npx wattpm people-service:seed seed.js
 ```
 
 We should see output like this from our seed script:
@@ -278,7 +272,7 @@ cd web/books-service
 And apply our migration:
 
 ```bash
-npx platformatic db migrations apply
+npx wattpm books-service:migrations:apply
 ```
 
 ### Populate the Books database
@@ -317,16 +311,11 @@ module.exports = async function ({ entities, logger }) {
 }
 ```
 
-Then let's add an npm run script which uses the Platformatic CLI to run the seed script to the `package.json` for our Books service:
+
+Now let's populate the database
 
 ```bash
-npm pkg set scripts.seed="platformatic db seed seed.js"
-```
-
-And then let's run it:
-
-```bash
-npm run seed
+npx wattpm books-service:seed seed.js
 ```
 
 We should see output like this from our seed script:
@@ -444,7 +433,7 @@ cd web/movies-service
 And apply our migration:
 
 ```bash
-npx platformatic db migrations apply
+npx wattpm movies-service:migrations:apply
 ```
 
 ### Populate the Movies database
@@ -486,16 +475,11 @@ module.exports = async function ({ entities, logger }) {
 }
 ```
 
-Then let's add an npm run script which uses the Platformatic CLI to run the seed script to the `package.json` for our Movies service:
+
+Now let's populate the database
 
 ```bash
-npm pkg set scripts.seed="platformatic db seed seed.js"
-```
-
-And then let's run it:
-
-```bash
-npm run seed
+npx wattpm movies-service:seed seed.js
 ```
 
 We should see output like this from our script:
@@ -771,7 +755,7 @@ npm install @platformatic/client
 Now we can generate a client for the People service:
 
 ```bash
-npx platformatic client --name people --runtime people-service --folder clients/people/
+npx --package @platformatic/client-cli plt-client --name people --runtime people-service --folder clients/people/
 ```
 
 We'll see that this has generated a new directory, `clients/people/`, which contains a snapshot of the People service's OpenAPI schema and types that we can use when we integrate the client with our Media service. If we open up `platformatic.composer.json`, we'll also see that a `clients` block like this has been added:

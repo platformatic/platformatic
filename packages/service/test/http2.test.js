@@ -1,18 +1,14 @@
-'use strict'
+import assert from 'node:assert'
+import { mkdtemp, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join, relative } from 'node:path'
+import { test } from 'node:test'
+import selfCert from 'self-cert'
+import { Agent, request } from 'undici'
+import { create } from '../index.js'
+import { buildConfig } from './helper.js'
 
-const assert = require('node:assert')
-const { tmpdir } = require('node:os')
-const { test } = require('node:test')
-const { join, relative } = require('node:path')
-const { mkdtemp, writeFile } = require('node:fs/promises')
-const selfCert = require('self-cert')
-const { Agent, request } = require('undici')
-const { buildServer } = require('..')
-const { buildConfig } = require('./helper')
-
-const isNode18 = process.versions.node.startsWith('18')
-
-test('supports http2 options', { skip: isNode18 }, async (t) => {
+test('supports http2 options', async t => {
   const { certificate, privateKey } = selfCert({})
   const localDir = tmpdir()
   const tmpDir = await mkdtemp(join(localDir, 'plt-service-https-test-'))
@@ -29,31 +25,35 @@ test('supports http2 options', { skip: isNode18 }, async (t) => {
     keepAliveTimeout: 100,
     keepAliveMaxTimeout: 100,
     connect: {
-      rejectUnauthorized: false,
-    },
+      rejectUnauthorized: false
+    }
   })
 
-  const app = await buildServer(buildConfig({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
-      http2: true,
-      https: {
-        key: privateKey,
-        cert: [{ path: certificateRelativePath }],
-      },
-    },
-  }))
+  const app = await create(
+    tmpDir,
+    buildConfig({
+      server: {
+        hostname: '127.0.0.1',
+        port: 0,
+        logger: { level: 'fatal' },
+        http2: true,
+        https: {
+          key: privateKey,
+          cert: [{ path: certificateRelativePath }]
+        }
+      }
+    })
+  )
 
   t.after(async () => {
     agent.destroy()
-    await app.close()
+    await app.stop()
   })
 
-  await app.start()
+  await app.start({ listen: true })
 
   assert.strictEqual(app.url.startsWith('https://'), true)
-  const res = await (request(`${app.url}/`, { dispatcher: agent }))
+  const res = await request(`${app.url}/`, { dispatcher: agent })
   assert.strictEqual(res.statusCode, 200)
   const body = await res.body.json()
   assert.deepStrictEqual(body, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })
@@ -62,7 +62,7 @@ test('supports http2 options', { skip: isNode18 }, async (t) => {
   await assert.rejects(request(`${app.url}/`))
 })
 
-test('supports allowHTTP1 with HTTP/2', { skip: isNode18 }, async (t) => {
+test('supports allowHTTP1 with HTTP/2', async t => {
   const { certificate, privateKey } = selfCert({})
   const localDir = tmpdir()
   const tmpDir = await mkdtemp(join(localDir, 'plt-service-https-test-'))
@@ -77,32 +77,36 @@ test('supports allowHTTP1 with HTTP/2', { skip: isNode18 }, async (t) => {
     keepAliveTimeout: 100,
     keepAliveMaxTimeout: 100,
     connect: {
-      rejectUnauthorized: false,
-    },
+      rejectUnauthorized: false
+    }
   })
 
-  const app = await buildServer(buildConfig({
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
-      http2: true,
-      https: {
-        allowHTTP1: true,
-        key: privateKey,
-        cert: [{ path: certificateRelativePath }],
-      },
-    },
-  }))
+  const app = await create(
+    tmpDir,
+    buildConfig({
+      server: {
+        hostname: '127.0.0.1',
+        port: 0,
+        logger: { level: 'fatal' },
+        http2: true,
+        https: {
+          allowHTTP1: true,
+          key: privateKey,
+          cert: [{ path: certificateRelativePath }]
+        }
+      }
+    })
+  )
 
   t.after(async () => {
     agent.destroy()
-    await app.close()
+    await app.stop()
   })
 
-  await app.start()
+  await app.start({ listen: true })
 
   assert.strictEqual(app.url.startsWith('https://'), true)
-  const res = await (request(`${app.url}/`, { dispatcher: agent }))
+  const res = await request(`${app.url}/`, { dispatcher: agent })
   assert.strictEqual(res.statusCode, 200)
   const body = await res.body.json()
   assert.deepStrictEqual(body, { message: 'Welcome to Platformatic! Please visit https://docs.platformatic.dev' })

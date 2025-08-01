@@ -1,6 +1,9 @@
-import { bold, green } from 'colorette'
+import { bold, green, isColorSupported } from 'colorette'
+import { getExecutableName } from './embedding.js'
 
-const str = `
+export function logo () {
+  const executableName = isColorSupported ? bold(getExecutableName()) : getExecutableName()
+  const str = `
 
                                   //////
                                /////////////
@@ -30,7 +33,9 @@ const str = `
                               &&&&&&&&&&&&&
                                   &&&&&&
 
-                            Welcome to ${bold('Watt')}!
+                            Welcome to ${executableName}!
 `
 
-export const logo = str.replace(/\//g, s => green(s))
+  /* c8 ignore next - else */
+  return isColorSupported ? str.replace(/\//g, s => green(s)) : str
+}

@@ -4,12 +4,15 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { request } = require('undici')
-const { buildServer } = require('../..')
+const { create } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
 
-test('can start applications programmatically from string', async (t) => {
+test.beforeEach(setLogFile)
+
+test('can start applications programmatically from string', async t => {
   const configFile = join(fixturesDir, 'configs', 'monorepo.json')
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
   const entryUrl = await app.start()
 
   t.after(async () => {

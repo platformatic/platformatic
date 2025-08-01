@@ -4,10 +4,12 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { setTimeout: sleep } = require('node:timers/promises')
-const { loadConfig } = require('@platformatic/config')
 const { request } = require('undici')
-const { buildServer, platformaticRuntime } = require('../..')
+const { create } = require('../../index.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 function findPrometheusLinesForMetric (metric, output) {
   const ret = []
@@ -24,8 +26,7 @@ function findPrometheusLinesForMetric (metric, output) {
 test('should get runtime metrics in a json format', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -40,7 +41,6 @@ test('should get runtime metrics in a json format', async t => {
       url: '/service-2/hello',
       headers: { 'x-plt-telemetry-id': 'service-2-client' }
     })
-
   ])
 
   t.after(async () => {
@@ -121,8 +121,7 @@ test('should get runtime metrics in a json format', async t => {
 test('should get runtime metrics in a text format', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   const url = await app.start()
   // We call service-1 and service-2 (this one indirectly through the entrypoint), so we expect metrics from both
@@ -220,8 +219,7 @@ function parseLabels (line) {
 test('should get runtime metrics in a text format with custom labels', async t => {
   const projectDir = join(fixturesDir, 'management-api-custom-labels')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -241,8 +239,7 @@ test('should get runtime metrics in a text format with custom labels', async t =
 test('should get json runtime metrics with custom labels', async t => {
   const projectDir = join(fixturesDir, 'management-api-custom-labels')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -262,8 +259,7 @@ test('should get json runtime metrics with custom labels', async t => {
 test('should get formatted runtime metrics', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -273,22 +269,13 @@ test('should get formatted runtime metrics', async t => {
 
   const { services } = await app.getFormattedMetrics()
 
-  assert.deepStrictEqual(
-    Object.keys(services).sort(),
-    ['service-1', 'service-2', 'service-db'].sort()
-  )
+  assert.deepStrictEqual(Object.keys(services).sort(), ['service-1', 'service-2', 'service-db'].sort())
 
   for (const serviceMetrics of Object.values(services)) {
-    assert.deepStrictEqual(Object.keys(serviceMetrics).sort(), [
-      'cpu',
-      'elu',
-      'newSpaceSize',
-      'oldSpaceSize',
-      'rss',
-      'totalHeapSize',
-      'usedHeapSize',
-      'latency',
-    ].sort())
+    assert.deepStrictEqual(
+      Object.keys(serviceMetrics).sort(),
+      ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
+    )
 
     const latencyMetrics = serviceMetrics.latency
     const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
@@ -299,8 +286,7 @@ test('should get formatted runtime metrics', async t => {
 test('should get cached formatted runtime metrics', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   const appUrl = await app.start()
 
@@ -319,22 +305,13 @@ test('should get cached formatted runtime metrics', async t => {
   const metricsHistory = await app.getCachedMetrics()
 
   for (const { services } of metricsHistory) {
-    assert.deepStrictEqual(
-      Object.keys(services).sort(),
-      ['service-1', 'service-2', 'service-db'].sort()
-    )
+    assert.deepStrictEqual(Object.keys(services).sort(), ['service-1', 'service-2', 'service-db'].sort())
 
     for (const serviceMetrics of Object.values(services)) {
-      assert.deepStrictEqual(Object.keys(serviceMetrics).sort(), [
-        'cpu',
-        'elu',
-        'newSpaceSize',
-        'oldSpaceSize',
-        'rss',
-        'totalHeapSize',
-        'usedHeapSize',
-        'latency',
-      ].sort())
+      assert.deepStrictEqual(
+        Object.keys(serviceMetrics).sort(),
+        ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
+      )
 
       const latencyMetrics = serviceMetrics.latency
       const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
@@ -346,8 +323,7 @@ test('should get cached formatted runtime metrics', async t => {
 test('should get metrics after reloading one of the services', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -368,16 +344,10 @@ test('should get metrics after reloading one of the services', async t => {
     assert.ok(servicesNames.includes('service-db'))
 
     for (const serviceMetrics of Object.values(services)) {
-      assert.deepStrictEqual(Object.keys(serviceMetrics).sort(), [
-        'cpu',
-        'elu',
-        'newSpaceSize',
-        'oldSpaceSize',
-        'rss',
-        'totalHeapSize',
-        'usedHeapSize',
-        'latency',
-      ].sort())
+      assert.deepStrictEqual(
+        Object.keys(serviceMetrics).sort(),
+        ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
+      )
 
       const latencyMetrics = serviceMetrics.latency
       const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
@@ -389,8 +359,7 @@ test('should get metrics after reloading one of the services', async t => {
 test('should get runtime metrics in a json format without a service call', async t => {
   const projectDir = join(fixturesDir, 'metrics')
   const configFile = join(projectDir, 'platformatic.json')
-  const config = await loadConfig({}, ['-c', configFile], platformaticRuntime)
-  const app = await buildServer(config.configManager.current)
+  const app = await create(configFile)
 
   const url = await app.start()
   // We call service-1 and service-2 (this one indirectly through the entrypoint), so we expect metrics from both
@@ -403,9 +372,7 @@ test('should get runtime metrics in a json format without a service call', async
 
   const { metrics } = await app.getMetrics()
 
-  const histogramMetric = metrics.find(
-    (metric) => metric.name === 'http_request_all_duration_seconds'
-  )
+  const histogramMetric = metrics.find(metric => metric.name === 'http_request_all_duration_seconds')
 
   const histogramValues = histogramMetric.values
 
@@ -421,9 +388,7 @@ test('should get runtime metrics in a json format without a service call', async
       ({ metricName }) => metricName === 'http_request_all_duration_seconds_sum'
     )
     const value = histogramSum.value
-    assert.ok(
-      value < 0.1
-    )
+    assert.ok(value < 0.1)
   }
 
   for (const { metricName, labels } of histogramValues) {
@@ -433,9 +398,7 @@ test('should get runtime metrics in a json format without a service call', async
     if (metricName !== 'http_request_all_duration_seconds_bucket') continue
   }
 
-  const summaryMetric = metrics.find(
-    (metric) => metric.name === 'http_request_all_summary_seconds'
-  )
+  const summaryMetric = metrics.find(metric => metric.name === 'http_request_all_summary_seconds')
   assert.strictEqual(summaryMetric.name, 'http_request_all_summary_seconds')
   assert.strictEqual(summaryMetric.type, 'summary')
   assert.strictEqual(summaryMetric.aggregator, 'sum')
@@ -473,19 +436,13 @@ test('should get runtime metrics in a json format without a service call', async
   const summaryValues = summaryMetric.values
 
   {
-    const summaryCount = summaryValues.find(
-      ({ metricName }) => metricName === 'http_request_all_summary_seconds_count'
-    )
+    const summaryCount = summaryValues.find(({ metricName }) => metricName === 'http_request_all_summary_seconds_count')
     assert.strictEqual(summaryCount.value, 2)
   }
 
   {
-    const summarySum = summaryValues.find(
-      ({ metricName }) => metricName === 'http_request_all_summary_seconds_sum'
-    )
+    const summarySum = summaryValues.find(({ metricName }) => metricName === 'http_request_all_summary_seconds_sum')
     const value = summarySum.value
-    assert.ok(
-      value < 0.1
-    )
+    assert.ok(value < 0.1)
   }
 })

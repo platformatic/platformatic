@@ -5,8 +5,11 @@ const { join } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
 
-const { buildServer } = require('../..')
+const { create } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
+const { setLogFile } = require('../helpers')
+
+test.beforeEach(setLogFile)
 
 const expectedMetricNames = [
   'nodejs_active_handles',
@@ -55,7 +58,7 @@ const expectedMetricNames = [
 test('should get prom metrics from the management api', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
 
   await app.start()
 
@@ -93,7 +96,7 @@ test('should get prom metrics from the management api', async t => {
 test('should get prom metrics from the management api in the json format', async t => {
   const projectDir = join(fixturesDir, 'prom-server')
   const configFile = join(projectDir, 'platformatic.json')
-  const app = await buildServer(configFile)
+  const app = await create(configFile)
 
   await app.start()
 

@@ -1,28 +1,12 @@
-'use strict'
+import assert from 'node:assert'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { create } from '../../index.js'
 
-const assert = require('node:assert')
-const { test } = require('node:test')
-const { join } = require('node:path')
-const { buildStackable } = require('../..')
-
-test('inject request into service stackable', async (t) => {
-  const config = {
-    server: {
-      hostname: '127.0.0.1',
-      port: 0,
-    },
-    plugins: {
-      paths: [join(__dirname, '..', 'fixtures', 'directories', 'routes')],
-    },
-    watch: false,
-    metrics: false,
-  }
-
-  const stackable = await buildStackable({ config })
-  t.after(async () => {
-    await stackable.stop()
-  })
-  await stackable.start()
+test('inject request into service stackable', async t => {
+  const stackable = await create(join(import.meta.dirname, '..', 'fixtures', 'directories'))
+  t.after(() => stackable.stop())
+  await stackable.start({ listen: true })
 
   {
     const { statusCode, body } = await stackable.inject('/')
