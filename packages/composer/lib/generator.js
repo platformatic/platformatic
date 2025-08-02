@@ -58,8 +58,7 @@ export class Generator extends BaseGenerator {
             encapsulate: false
           },
           './routes'
-        ],
-        typescript: `{${this.getEnvVarName('PLT_TYPESCRIPT')}}`
+        ]
       }
     }
 
@@ -91,7 +90,6 @@ export class Generator extends BaseGenerator {
 
       this.addEnvVars(
         {
-          PLT_TYPESCRIPT: this.config.typescript,
           PLT_EXAMPLE_ORIGIN: 'http://127.0.0.1:3043'
         },
         { overwrite: false, default: true }
@@ -106,7 +104,7 @@ export class Generator extends BaseGenerator {
   async _afterPrepare () {
     if (!this.config.isUpdating) {
       const PLT_ENVIRONMENT_TEMPLATE = `
-import { FastifyInstance } from 'fastify'
+import { type FastifyInstance } from 'fastify'
 import { PlatformaticApplication, PlatformaticComposerConfig } from '@platformatic/composer'
 
 declare module 'fastify' {

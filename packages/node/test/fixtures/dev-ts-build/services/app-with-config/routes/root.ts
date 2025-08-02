@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyPluginOptions } from 'fastify'
+import { type FastifyInstance, type FastifyPluginOptions } from 'fastify'
 
 declare module 'fastify' {
   interface FastifyInstance {

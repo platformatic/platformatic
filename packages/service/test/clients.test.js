@@ -1,9 +1,6 @@
-import { compile } from '@platformatic/ts-compiler'
-import { safeRemove } from '@platformatic/utils'
 import assert from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import pino from 'pino'
 import { request } from 'undici'
 import { create } from '../index.js'
 
@@ -43,15 +40,6 @@ test('client is loaded (ts)', async t => {
   process.env.PLT_CLIENT_URL = app1.url
 
   const targetDir = join(import.meta.dirname, './fixtures/hello-client-ts')
-
-  try {
-    await safeRemove(join(targetDir, 'dist'))
-  } catch {}
-
-  await compile({
-    cwd: targetDir,
-    logger: pino({ level: 'warn' })
-  })
 
   const app2 = await create(targetDir)
   t.after(async () => {

@@ -8,9 +8,17 @@ import { after, test } from 'node:test'
 import { join, posix } from 'path'
 import { moveToTmpdir, request } from './helper.js'
 
-test('generates only types in target folder with --types-only flag', async (t) => {
+test('generates only types in target folder with --types-only flag', async t => {
   const dir = await moveToTmpdir(after)
-  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), join(import.meta.dirname, 'fixtures', 'movies', 'openapi.json'), '--name', 'movies', '-f', dir, '--types-only'])
+  await execa('node', [
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    join(import.meta.dirname, 'fixtures', 'movies', 'openapi.json'),
+    '--name',
+    'movies',
+    '-f',
+    dir,
+    '--types-only'
+  ])
   const files = await fs.readdir(dir)
   same(files.length, 1)
   same(files[0], 'movies.d.ts')
@@ -29,22 +37,34 @@ test('generates only types in target folder with --types-only flag', async (t) =
   match(fileContents, /export type Movies = {/)
 })
 
-test('add an initial comment with --types-comment flag', async (t) => {
+test('add an initial comment with --types-comment flag', async t => {
   const dir = await moveToTmpdir(after)
-  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), join(import.meta.dirname, 'fixtures', 'movies', 'openapi.json'), '--name', 'movies', '-f', dir, '--types-only', '--types-comment', 'this is an auto-generated file'])
+  await execa('node', [
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    join(import.meta.dirname, 'fixtures', 'movies', 'openapi.json'),
+    '--name',
+    'movies',
+    '-f',
+    dir,
+    '--types-only',
+    '--types-comment',
+    'this is an auto-generated file'
+  ])
 
   const fileContents = await fs.readFile(join(dir, 'movies.d.ts'), 'utf-8')
   ok(fileContents.startsWith('// this is an auto-generated file'))
 })
 
-test('openapi client generation (javascript)', async (t) => {
+test('openapi client generation (javascript)', async t => {
   try {
     await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
     // noop
   }
   const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
-  t.after(async () => { await app.close() })
+  t.after(async () => {
+    await app.close()
+  })
 
   await app.start()
 
@@ -93,7 +113,7 @@ module.exports = async function (app) {
   })
 })
 
-test('openapi client generation (typescript)', async (t) => {
+test('openapi client generation (typescript)', async t => {
   try {
     await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -112,8 +132,7 @@ test('openapi client generation (typescript)', async (t) => {
       port: 0
     },
     plugins: {
-      paths: ['./plugin.ts'],
-      typescript: true
+      paths: ['./plugin.ts']
     }
   }
 
@@ -136,15 +155,19 @@ export default myPlugin
 
   await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
 
-  const tsconfig = JSON.stringify({
-    extends: 'fastify-tsconfig',
-    compilerOptions: {
-      outDir: 'build',
-      target: 'es2018',
-      moduleResolution: 'NodeNext',
-      lib: ['es2018']
-    }
-  }, null, 2)
+  const tsconfig = JSON.stringify(
+    {
+      extends: 'fastify-tsconfig',
+      compilerOptions: {
+        outDir: 'build',
+        target: 'es2018',
+        moduleResolution: 'NodeNext',
+        lib: ['es2018']
+      }
+    },
+    null,
+    2
+  )
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
@@ -152,8 +175,12 @@ export default myPlugin
 
   const app2 = await buildService('./platformatic.service.json')
   await app2.start()
-  t.after(async () => { await app.close() })
-  t.after(async () => { await app2.close() })
+  t.after(async () => {
+    await app.close()
+  })
+  t.after(async () => {
+    await app2.close()
+  })
 
   const res = await request(app2.url, {
     method: 'POST'
@@ -165,7 +192,7 @@ export default myPlugin
   })
 })
 
-test('config support with folder', async (t) => {
+test('config support with folder', async t => {
   try {
     await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -193,22 +220,34 @@ test('config support with folder', async (t) => {
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
 
-  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--folder', 'uncanny'])
+  await execa('node', [
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    app.url + '/documentation/json',
+    '--name',
+    'movies',
+    '--folder',
+    'uncanny'
+  ])
 
   {
     const config = JSON.parse(await fs.readFile('./platformatic.service.json', 'utf-8'))
-    equal(matchObj(config, {
-      clients: [{
-        schema: posix.join('uncanny', 'movies.openapi.json'),
-        name: 'movies',
-        type: 'openapi',
-        url: '{PLT_MOVIES_URL}'
-      }]
-    }), true)
+    equal(
+      matchObj(config, {
+        clients: [
+          {
+            schema: posix.join('uncanny', 'movies.openapi.json'),
+            name: 'movies',
+            type: 'openapi',
+            url: '{PLT_MOVIES_URL}'
+          }
+        ]
+      }),
+      true
+    )
   }
 })
 
-test('openapi client generation (typescript) with --types-only', async (t) => {
+test('openapi client generation (typescript) with --types-only', async t => {
   try {
     await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -227,8 +266,7 @@ test('openapi client generation (typescript) with --types-only', async (t) => {
       port: 0
     },
     plugins: {
-      paths: ['./plugin.ts'],
-      typescript: true
+      paths: ['./plugin.ts']
     }
   }
 
@@ -259,17 +297,27 @@ export default myPlugin
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
   await fs.writeFile('./plugin.ts', plugin)
 
-  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--types-only'])
+  await execa('node', [
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    app.url + '/documentation/json',
+    '--name',
+    'movies',
+    '--types-only'
+  ])
 
-  const tsconfig = JSON.stringify({
-    extends: 'fastify-tsconfig',
-    compilerOptions: {
-      outDir: 'build',
-      target: 'es2018',
-      moduleResolution: 'NodeNext',
-      lib: ['es2018']
-    }
-  }, null, 2)
+  const tsconfig = JSON.stringify(
+    {
+      extends: 'fastify-tsconfig',
+      compilerOptions: {
+        outDir: 'build',
+        target: 'es2018',
+        moduleResolution: 'NodeNext',
+        lib: ['es2018']
+      }
+    },
+    null,
+    2
+  )
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
@@ -277,8 +325,12 @@ export default myPlugin
 
   const app2 = await buildService('./platformatic.service.json')
   await app2.start()
-  t.after(async () => { await app.close() })
-  t.after(async () => { await app2.close() })
+  t.after(async () => {
+    await app.close()
+  })
+  t.after(async () => {
+    await app2.close()
+  })
 
   const res = await request(app2.url, {
     method: 'POST'
@@ -290,7 +342,7 @@ export default myPlugin
   })
 })
 
-test('openapi client generation (typescript) with --types-only and --folder', async (t) => {
+test('openapi client generation (typescript) with --types-only and --folder', async t => {
   try {
     await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -309,8 +361,7 @@ test('openapi client generation (typescript) with --types-only and --folder', as
       port: 0
     },
     plugins: {
-      paths: ['./plugin.ts'],
-      typescript: true
+      paths: ['./plugin.ts']
     }
   }
 
@@ -341,17 +392,29 @@ export default myPlugin
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
   await fs.writeFile('./plugin.ts', plugin)
 
-  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies', '--folder', 'uncanny', '--types-only'])
+  await execa('node', [
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    app.url + '/documentation/json',
+    '--name',
+    'movies',
+    '--folder',
+    'uncanny',
+    '--types-only'
+  ])
 
-  const tsconfig = JSON.stringify({
-    extends: 'fastify-tsconfig',
-    compilerOptions: {
-      outDir: 'build',
-      target: 'es2018',
-      moduleResolution: 'NodeNext',
-      lib: ['es2018']
-    }
-  }, null, 2)
+  const tsconfig = JSON.stringify(
+    {
+      extends: 'fastify-tsconfig',
+      compilerOptions: {
+        outDir: 'build',
+        target: 'es2018',
+        moduleResolution: 'NodeNext',
+        lib: ['es2018']
+      }
+    },
+    null,
+    2
+  )
 
   await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
 
@@ -359,8 +422,12 @@ export default myPlugin
 
   const app2 = await buildService('./platformatic.service.json')
   await app2.start()
-  t.after(async () => { await app.close() })
-  t.after(async () => { await app2.close() })
+  t.after(async () => {
+    await app.close()
+  })
+  t.after(async () => {
+    await app2.close()
+  })
 
   const res = await request(app2.url, {
     method: 'POST'
@@ -372,7 +439,7 @@ export default myPlugin
   })
 })
 
-test('generate client twice', async (t) => {
+test('generate client twice', async t => {
   try {
     await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -417,7 +484,7 @@ module.exports = async function (app) {
   equal(envFile.match(/PLT_MOVIES_URL/g).length, 1)
 })
 
-test('openapi client generation (javascript) from file', async (t) => {
+test('openapi client generation (javascript) from file', async t => {
   const openapi = join(import.meta.dirname, 'fixtures', 'movies', 'openapi.json')
 
   await moveToTmpdir(after)

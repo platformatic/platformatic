@@ -1091,45 +1091,6 @@ export const plugins = {
           }
         ]
       }
-    },
-    typescript: {
-      anyOf: [
-        {
-          type: 'object',
-          properties: {
-            enabled: {
-              anyOf: [
-                {
-                  type: 'boolean'
-                },
-                {
-                  type: 'string'
-                }
-              ]
-            },
-            tsConfig: {
-              type: 'string',
-              resolvePath: true
-            },
-            outDir: {
-              type: 'string',
-              resolvePath: true
-            },
-            flags: {
-              type: 'array',
-              items: {
-                type: 'string'
-              }
-            }
-          }
-        },
-        {
-          type: 'boolean'
-        },
-        {
-          type: 'string'
-        }
-      ]
     }
   },
   additionalProperties: false,

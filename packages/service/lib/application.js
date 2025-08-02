@@ -5,7 +5,6 @@ import { setupGraphQL } from './plugins/graphql.js'
 import { setupHealthCheck } from './plugins/health-check.js'
 import { setupOpenAPI } from './plugins/openapi.js'
 import { loadPlugins } from './plugins/plugins.js'
-import { setupTsCompiler } from './plugins/typescript.js'
 
 export async function platformaticService (app, stackable) {
   const config = await stackable.getConfig()
@@ -27,21 +26,6 @@ export async function platformaticService (app, stackable) {
   }
 
   if (config.plugins) {
-    let registerTsCompiler = false
-
-    const typescript = config.plugins.paths && config.plugins.typescript
-
-    /* c8 ignore next 6 */
-    if (typescript === true) {
-      registerTsCompiler = true
-    } else if (typeof typescript === 'object') {
-      registerTsCompiler = typescript.enabled === true || typescript.enabled === undefined
-    }
-
-    if (registerTsCompiler) {
-      await app.register(setupTsCompiler, stackable.context)
-    }
-
     await app.register(loadPlugins, stackable.context)
   }
 

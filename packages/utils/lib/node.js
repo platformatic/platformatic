@@ -5,7 +5,7 @@ const currentPlatform = platform()
 
 export function checkNodeVersionForServices () {
   const currentVersion = process.version
-  const minimumVersion = '22.16.0'
+  const minimumVersion = '22.18.0'
 
   if (lt(currentVersion, minimumVersion)) {
     throw new Error(
@@ -18,7 +18,7 @@ export const features = {
   node: {
     reusePort: satisfies(process.version, '^22.12.0 || ^23.1.0') && !['win32', 'darwin'].includes(currentPlatform),
     worker: {
-      getHeapStatistics: satisfies(process.version, '^22.16.0')
+      getHeapStatistics: satisfies(process.version, '^22.18.0')
     }
   }
 }

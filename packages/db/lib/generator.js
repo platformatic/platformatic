@@ -76,8 +76,7 @@ export class Generator extends BaseGenerator {
           {
             path: './routes'
           }
-        ],
-        typescript: `{${this.getEnvVarName('PLT_TYPESCRIPT')}}`
+        ]
       }
     }
 
@@ -110,7 +109,6 @@ export class Generator extends BaseGenerator {
 
       this.addEnvVars(
         {
-          PLT_TYPESCRIPT: this.config.typescript,
           DATABASE_URL: this.connectionStrings[this.config.database],
           PLT_APPLY_MIGRATIONS: 'true'
         },
@@ -168,7 +166,7 @@ export class Generator extends BaseGenerator {
       }
 
       const ENVIRONMENT_TEMPLATE = `
-import { FastifyInstance } from 'fastify'
+import { type FastifyInstance } from 'fastify'
 import { PlatformaticApplication, PlatformaticDatabaseConfig, PlatformaticDatabaseMixin, Entities } from '@platformatic/db'
 
 declare module 'fastify' {

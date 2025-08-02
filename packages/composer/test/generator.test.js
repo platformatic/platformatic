@@ -23,7 +23,6 @@ test('generate correct .env file', async t => {
         'PLT_SERVER_HOSTNAME=0.0.0.0',
         'PLT_SERVER_LOGGER_LEVEL=info',
         'PORT=3042',
-        'PLT_TYPESCRIPT=false',
         'PLT_EXAMPLE_ORIGIN=http://127.0.0.1:3043',
         ''
       ].join('\n')
@@ -44,7 +43,7 @@ test('have plt-env.d.ts file', async t => {
   await svc.prepare()
 
   const ENVIRONMENT_TEMPLATE = `
-import { FastifyInstance } from 'fastify'
+import { type FastifyInstance } from 'fastify'
 import { PlatformaticApplication, PlatformaticComposerConfig } from '@platformatic/composer'
 
 declare module 'fastify' {
@@ -192,7 +191,6 @@ test('runtime context should have env prefix', async t => {
   assert.deepEqual(svc.config.env, {
     PLT_MY_SERVICE_FOO: 'bar',
     PLT_MY_SERVICE_BAZ: 'baz',
-    PLT_MY_SERVICE_TYPESCRIPT: false,
     PLT_MY_SERVICE_EXAMPLE_ORIGIN: 'http://127.0.0.1:3043'
   })
 })

@@ -140,11 +140,11 @@ async function proxyPlugin (app, opts) {
 
     const toReplace = url
       ? new RegExp(
-          url
-            .replace(/127\.0\.0\.1/, 'localhost')
-            .replace(/\[::\]/, 'localhost')
-            .replace('http://', 'https?://')
-        )
+        url
+          .replace(/127\.0\.0\.1/, 'localhost')
+          .replace(/\[::\]/, 'localhost')
+          .replace('http://', 'https?://')
+      )
       : null
 
     if (!metrics) {

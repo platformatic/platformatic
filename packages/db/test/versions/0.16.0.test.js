@@ -23,24 +23,6 @@ test('upgrade from v0.16.0', async () => {
   })
 })
 
-test('typescript', async () => {
-  const config = await loadConfiguration(
-    join(import.meta.dirname, '..', 'fixtures', 'versions', 'v0.16.0', 'config-ts.json'),
-    null,
-    {
-      transform,
-      upgrade
-    }
-  )
-
-  equal(config.$schema, `https://schemas.platformatic.dev/@platformatic/db/${version}.json`)
-
-  deepEqual(config.plugins, {
-    paths: ['plugin.ts'],
-    typescript: true
-  })
-})
-
 test('no plugin', async () => {
   const config = await loadConfiguration(
     join(import.meta.dirname, '..', 'fixtures', 'versions', 'v0.16.0', 'no-plugin.db.json'),

@@ -1,8 +1,7 @@
-import tsCompiler from '@platformatic/ts-compiler'
 import { loadConfiguration, loadModule } from '@platformatic/utils'
-import { access, readFile } from 'fs/promises'
+import { access } from 'fs/promises'
 import { createRequire } from 'node:module'
-import { join, resolve } from 'node:path'
+import { resolve } from 'node:path'
 import { MissingSeedFileError } from '../errors.js'
 import { Migrator } from '../migrator.js'
 import { schema } from '../schema.js'
@@ -29,22 +28,7 @@ export async function seed (logger, configFile, args, { colorette: { bold }, log
     throw new MissingSeedFileError()
   }
 
-  let seedFile = resolve(process.cwd(), args[0])
-
-  // check if we are in Typescript and, in case, compile it
-  if (seedFile.endsWith('.ts')) {
-    await tsCompiler.compile({
-      cwd: process.cwd(),
-      logger,
-      tsConfig: config.plugins?.typescript?.tsConfig,
-      flags: config.plugins?.typescript?.flags
-    })
-    const tsConfigPath = config?.plugins?.typescript?.tsConfig || resolve(process.cwd(), 'tsconfig.json')
-    const tsConfig = JSON.parse(await readFile(tsConfigPath, 'utf8'))
-    const outDir = tsConfig.compilerOptions.outDir
-    seedFile = join(outDir, seedFile.replace('.ts', '.js'))
-  }
-
+  const seedFile = resolve(process.cwd(), args[0])
   await access(seedFile)
 
   logger.info(`Seeding from ${bold(seedFile)}`)

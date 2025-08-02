@@ -179,7 +179,7 @@ Use [json-schema-to-typescript](http://npm.im/json-schema-to-typescript) to gene
 Finally, you can write the actual reusable application:
 
 ```ts
-import { FastifyInstance } from 'fastify'
+import { type FastifyInstance } from 'fastify'
 import { lstat } from 'node:fs/promises'
 import { kMetadata, RawConfiguration, ConfigurationOptions } from '@platformatic/utils'
 import { resolve } from 'node:path'

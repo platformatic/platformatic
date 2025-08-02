@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify'
+import { type FastifyInstance } from 'fastify'
 /// <reference path="./hello" />
 
 export default async function (app: FastifyInstance) {

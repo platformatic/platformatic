@@ -16,22 +16,9 @@ test('generate correct .env file', async t => {
   await svc.prepare()
   {
     const dotEnvFile = svc.getFileObject('.env')
-    const expectedDotEnvFile =
-      'PLT_SERVER_HOSTNAME=0.0.0.0\n' + 'PLT_SERVER_LOGGER_LEVEL=info\n' + 'PORT=3042\n' + 'PLT_TYPESCRIPT=false\n'
+    const expectedDotEnvFile = 'PLT_SERVER_HOSTNAME=0.0.0.0\n' + 'PLT_SERVER_LOGGER_LEVEL=info\n' + 'PORT=3042\n'
 
     assert.equal(dotEnvFile.contents, expectedDotEnvFile)
-  }
-
-  {
-    svc.setConfig({
-      typescript: true
-    })
-
-    await svc.prepare()
-
-    const configFile = svc.getFileObject('platformatic.json')
-    const configFileJson = JSON.parse(configFile.contents)
-    assert.equal(configFileJson.plugins.typescript, '{PLT_TYPESCRIPT}')
   }
 })
 
@@ -64,7 +51,7 @@ test('have plt-env.d.ts', async t => {
   const environment = svc.getFileObject('plt-env.d.ts')
 
   const ENVIRONMENT_TEMPLATE = `
-import { FastifyInstance } from 'fastify'
+import { type FastifyInstance } from 'fastify'
 import { PlatformaticApplication, PlatformaticServiceConfig } from '@platformatic/service'
 
 declare module 'fastify' {
@@ -95,8 +82,7 @@ test('config', async t => {
   })
 
   assert.deepEqual(contents.plugins, {
-    paths: [{ path: './plugins', encapsulate: false }, './routes'],
-    typescript: '{PLT_TYPESCRIPT}'
+    paths: [{ path: './plugins', encapsulate: false }, './routes']
   })
 })
 
@@ -175,7 +161,7 @@ test('support packages', async t => {
         },
         './routes'
       ],
-      typescript: '{PLT_TYPESCRIPT}',
+
       packages: [
         {
           name: '@fastify/compress',
@@ -276,8 +262,7 @@ test('runtime context should have env prefix', async t => {
   assert.equal(null, svc.getFileObject('.env'))
   assert.deepEqual(svc.config.env, {
     PLT_MY_SERVICE_FOO: 'bar',
-    PLT_MY_SERVICE_BAZ: 'baz',
-    PLT_MY_SERVICE_TYPESCRIPT: false
+    PLT_MY_SERVICE_BAZ: 'baz'
   })
 })
 
