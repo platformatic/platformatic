@@ -105,8 +105,7 @@ test('plugin options (array)', async () => {
         }
       }
     ],
-    stopTimeout: 10000,
-    typescript: true
+    stopTimeout: 10000
   })
   equal(config.plugin, undefined)
 })

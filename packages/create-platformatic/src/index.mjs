@@ -196,7 +196,11 @@ export async function wrapApplication (
 
   if (install) {
     logger.info(`Installing dependencies for the application using ${packageManager} ...`)
-    await execa(packageManager, ['install'], { cwd: projectDir, stdio: 'inherit' })
+    await execa(packageManager, ['install'], {
+      cwd: projectDir,
+      stdio: 'inherit',
+      reject: process.env.PLT_IGNORE_INSTALL_FAILURES !== 'true'
+    })
   }
 
   logger.info(`You are all set! Run \`${packageManager} start\` to start your project.`)

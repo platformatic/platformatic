@@ -164,7 +164,10 @@ test('create - should correctly set the chosen user entrypoint', async t => {
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
-  await wattpm('create', { cwd: temporaryFolder, env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler1 } })
+  await wattpm('create', '-s', {
+    cwd: temporaryFolder,
+    env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler1 }
+  })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf-8')), {
     $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
@@ -191,7 +194,7 @@ test('create - should correctly set the chosen user entrypoint', async t => {
     { type: 'list', question: 'Which service should be exposed?', reply: 'alternate' }
   ])
 
-  await wattpm('create', '-s', {
+  await wattpm('create', '-P', 'pnpm', '-s', {
     cwd: temporaryFolder,
     env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler2 }
   })
@@ -215,14 +218,14 @@ test('create - should create a new project using a different package manager', a
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
-  const createProcess = await wattpm('create', '-P', 'pnpm', {
+  const createProcess = await wattpm('create', '-P', 'fake-npm', {
     cwd: temporaryFolder,
-    env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
+    env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler, PLT_IGNORE_INSTALL_FAILURES: 'true' }
   })
 
-  ok(createProcess.stdout.includes('Installing dependencies for the application using pnpm'))
-  ok(createProcess.stdout.includes('Installing dependencies for the service main using pnpm'))
-  ok(createProcess.stdout.includes('You are all set! Run `pnpm start` to start your project.'))
+  ok(createProcess.stdout.includes('Installing dependencies for the application using fake-npm'))
+  ok(createProcess.stdout.includes('Installing dependencies for the service main using fake-npm'))
+  ok(createProcess.stdout.includes('You are all set! Run `fake-npm start` to start your project.'))
 })
 
 test('create - should support providing stackable via command line', async t => {
