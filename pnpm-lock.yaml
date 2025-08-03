@@ -346,9 +346,6 @@ importers:
       '@platformatic/fastify-openapi-glue':
         specifier: ^5.1.0
         version: 5.1.0
-      '@platformatic/generators':
-        specifier: workspace:*
-        version: link:../generators
       '@platformatic/graphql-composer':
         specifier: ^0.10.0
         version: 0.10.0
