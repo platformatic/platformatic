@@ -6,6 +6,11 @@ import { setupUserInputHandler } from '../../create-platformatic/test/cli/helper
 import { version } from '../lib/schema.js'
 import { createTemporaryDirectory, wattpm } from './helper.js'
 
+const createEnv = {
+  NO_COLOR: 'true',
+  PLT_MODULES_PATHS: JSON.stringify({ '@platformatic/vite': resolve(import.meta.dirname, '../../vite') })
+}
+
 test('create - should create a new project using watt.json by default', async t => {
   const temporaryFolder = await createTemporaryDirectory(t, 'create')
 
@@ -20,7 +25,10 @@ test('create - should create a new project using watt.json by default', async t 
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
-  await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, PLT_USER_INPUT_HANDLER: userInputHandler } })
+  await wattpm('create', '-s', {
+    cwd: temporaryFolder,
+    env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
+  })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf-8')), {
     $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
@@ -59,7 +67,10 @@ test('create - should create a new project with two services', async t => {
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
-  await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, PLT_USER_INPUT_HANDLER: userInputHandler } })
+  await wattpm('create', '-s', {
+    cwd: temporaryFolder,
+    env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
+  })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf-8')), {
     $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
@@ -96,7 +107,7 @@ test('create - should not install @platformatic/runtime as it is already availab
 
   const createProcess = await wattpm('create', '-s', {
     cwd: temporaryFolder,
-    env: { NO_COLOR: true, PLT_USER_INPUT_HANDLER: userInputHandler }
+    env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
   })
 
   ok(!createProcess.stdout.includes('Installing @platformatic/runtime'))
@@ -118,7 +129,7 @@ test('create - should use a custom configuration file', async t => {
 
   await wattpm('create', '-c', 'watt-alternative.json', '-s', {
     cwd: temporaryFolder,
-    env: { NO_COLOR: true, PLT_USER_INPUT_HANDLER: userInputHandler }
+    env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
   })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt-alternative.json'), 'utf-8')), {
@@ -153,7 +164,7 @@ test('create - should correctly set the chosen user entrypoint', async t => {
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
 
-  await wattpm('create', { cwd: temporaryFolder, env: { NO_COLOR: true, PLT_USER_INPUT_HANDLER: userInputHandler1 } })
+  await wattpm('create', { cwd: temporaryFolder, env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler1 } })
 
   deepStrictEqual(JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf-8')), {
     $schema: `https://schemas.platformatic.dev/@platformatic/runtime/${version}.json`,
@@ -180,7 +191,10 @@ test('create - should correctly set the chosen user entrypoint', async t => {
     { type: 'list', question: 'Which service should be exposed?', reply: 'alternate' }
   ])
 
-  await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, PLT_USER_INPUT_HANDLER: userInputHandler2 } })
+  await wattpm('create', '-s', {
+    cwd: temporaryFolder,
+    env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler2 }
+  })
 
   deepStrictEqual(
     JSON.parse(await readFile(resolve(temporaryFolder, 'root/watt.json'), 'utf-8')).entrypoint,
@@ -203,7 +217,7 @@ test('create - should create a new project using a different package manager', a
 
   const createProcess = await wattpm('create', '-P', 'pnpm', {
     cwd: temporaryFolder,
-    env: { NO_COLOR: true, PLT_USER_INPUT_HANDLER: userInputHandler }
+    env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
   })
 
   ok(createProcess.stdout.includes('Installing dependencies for the application using pnpm'))
@@ -227,7 +241,7 @@ test('create - should support providing stackable via command line', async t => 
 
   const createProcess = await wattpm('create', '-M', 'first', '-M', 'second,third', '-M', '  fourth ,fifth  ', '-s', {
     cwd: temporaryFolder,
-    env: { NO_COLOR: true, PLT_USER_INPUT_HANDLER: userInputHandler }
+    env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
   })
 
   ok(
@@ -261,7 +275,10 @@ test('create - should wrap existing Node.js applications into Watt', async t => 
     { type: 'input', question: 'What port do you want to use?', reply: '3042' }
   ])
 
-  await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, PLT_USER_INPUT_HANDLER: userInputHandler } })
+  await wattpm('create', '-s', {
+    cwd: temporaryFolder,
+    env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
+  })
   const envFile = await readFile(resolve(temporaryFolder, '.env'), 'utf-8')
   const envSampleFile = await readFile(resolve(temporaryFolder, '.env.sample'), 'utf-8')
 
@@ -330,12 +347,12 @@ test('create - should not attempt to wrap twice', async t => {
 
   await wattpm('create', '-s', {
     cwd: temporaryFolder,
-    env: { NO_COLOR: true, PLT_USER_INPUT_HANDLER: firstuserInputHandler }
+    env: { ...createEnv, PLT_USER_INPUT_HANDLER: firstuserInputHandler }
   })
 
   const createProcess = await wattpm('create', '-s', {
     cwd: temporaryFolder,
-    env: { NO_COLOR: true, PLT_USER_INPUT_HANDLER: seconduserInputHandler }
+    env: { ...createEnv, PLT_USER_INPUT_HANDLER: seconduserInputHandler }
   })
 
   ok(
@@ -385,7 +402,10 @@ test('create - should wrap existing frontend applications into Watt', async t =>
     { type: 'input', question: 'What port do you want to use?', reply: '3042' }
   ])
 
-  await wattpm('create', '-s', { cwd: temporaryFolder, env: { NO_COLOR: true, PLT_USER_INPUT_HANDLER: userInputHandler } })
+  await wattpm('create', '-s', {
+    cwd: temporaryFolder,
+    env: { ...createEnv, PLT_USER_INPUT_HANDLER: userInputHandler }
+  })
 
   const envFile = await readFile(resolve(temporaryFolder, '.env'), 'utf-8')
   const envSampleFile = await readFile(resolve(temporaryFolder, '.env.sample'), 'utf-8')
