@@ -322,49 +322,6 @@ test('RuntimeGenerator - add services to an existing folder', async t => {
   }
 })
 
-test('RuntimeGenerator - should create a runtime with 2 services with typescript enabled', async () => {
-  const rg = new RuntimeGenerator({
-    targetDirectory: '/tmp/runtime',
-    type: 'runtime'
-  })
-
-  // adding one service
-  const firstService = new ServiceGenerator()
-  rg.addService(firstService, 'first-service')
-
-  // adding another service
-  const secondService = new ServiceGenerator()
-  rg.addService(secondService, 'second-service')
-
-  rg.setEntryPoint('first-service')
-
-  rg.setConfig({
-    port: 3043,
-    typescript: true
-  })
-
-  await rg.prepare()
-
-  // should list only runtime files
-  const runtimeFileList = rg.listFiles()
-  assert.deepEqual(runtimeFileList, [
-    'package.json',
-    'platformatic.json',
-    '.env',
-    '.env.sample',
-    'tsconfig.json',
-    '.gitignore'
-  ])
-
-  // services have correct typescript value in config
-  assert.equal(firstService.config.typescript, rg.config.typescript)
-  assert.equal(secondService.config.typescript, rg.config.typescript)
-
-  // runtime package.json has typescript dependency
-  const packageJson = JSON.parse(rg.getFileObject('package.json').contents)
-  assert.ok(packageJson.devDependencies.typescript)
-})
-
 test('RuntimeGenerator - add services to an existing folder (web/)', async t => {
   const targetDirectory = await mkdtemp(join(tmpdir(), 'platformatic-runtime-generator-'))
   t.after(async () => {

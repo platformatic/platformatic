@@ -86,9 +86,7 @@ class RuntimeGenerator extends BaseGenerator {
       service
     })
 
-    if (typeof service.setRuntime === 'function') {
-      service.setRuntime(this)
-    }
+    service.setRuntime(this)
   }
 
   setEntryPoint (entryPoint) {
@@ -124,11 +122,6 @@ class RuntimeGenerator extends BaseGenerator {
       template.workspaces = [this.servicesFolder + '/*']
     }
 
-    if (this.config.typescript) {
-      const typescriptVersion = JSON.parse(await readFile(join(__dirname, '..', 'package.json'), 'utf-8'))
-        .devDependencies.typescript
-      template.devDependencies.typescript = typescriptVersion
-    }
     return template
   }
 
@@ -195,7 +188,6 @@ class RuntimeGenerator extends BaseGenerator {
         // set default config
         service.setConfig()
       }
-      service.config.typescript = this.config.typescript
     })
   }
 

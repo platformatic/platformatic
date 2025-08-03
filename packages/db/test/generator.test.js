@@ -382,9 +382,7 @@ test('support packages', async t => {
           encapsulate: false,
           path: './plugins'
         },
-        {
-          path: './routes'
-        }
+        './routes'
       ],
       packages: [
         {

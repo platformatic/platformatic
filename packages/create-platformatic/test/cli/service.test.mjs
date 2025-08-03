@@ -21,8 +21,8 @@ test('Creates a Platformatic Service with no Typescript', async t => {
     { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
@@ -54,8 +54,8 @@ test('Creates a Platformatic Service with Typescript', async t => {
     { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'yes' },
+    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
@@ -73,6 +73,7 @@ test('Creates a Platformatic Service with Typescript', async t => {
   equal(services.length, 1)
   const baseServiceDir = join(baseProjectDir, 'services', services[0])
   equal(await isFileAccessible(join(baseServiceDir, 'platformatic.json')), true)
+  equal(await isFileAccessible(join(baseServiceDir, 'tsconfig.json')), true)
   equal(await isFileAccessible(join(baseServiceDir, 'README.md')), true)
   equal(await isFileAccessible(join(baseServiceDir, 'routes', 'root.ts')), true)
   equal(await isFileAccessible(join(baseServiceDir, 'plugins', 'example.ts')), true)
@@ -102,8 +103,8 @@ test('Creates a Platformatic Service in a non empty directory', async t => {
     { type: 'input', question: 'Where would you like to create your project?', reply: '.' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'foo' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])

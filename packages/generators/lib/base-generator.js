@@ -12,7 +12,6 @@ const {
 } = require('./utils')
 const { join } = require('node:path')
 const { FileGenerator } = require('./file-generator')
-const { generateTests, generatePlugins } = require('./create-plugin')
 const { PrepareError, MissingEnvVariable, ModuleNeeded } = require('./errors')
 const { generateGitignore } = require('./create-gitignore')
 const { getServiceTemplateFromSchemaUrl } = require('./utils')
@@ -42,10 +41,15 @@ class BaseGenerator extends FileGenerator {
     this.config = this.getDefaultConfig()
     this.packages = []
     this.module = opts.module
+    this.runtime = null
     this.runtimeConfig = opts.runtimeConfig ?? 'platformatic.json'
     if (!this.module) {
       throw ModuleNeeded()
     }
+  }
+
+  setRuntime (runtime) {
+    this.runtime = runtime
   }
 
   getDefaultConfig () {
@@ -215,24 +219,6 @@ class BaseGenerator extends FileGenerator {
 
         await this.generateEnv()
 
-        if (this.config.typescript) {
-          // create tsconfig.json
-          this.addFile({
-            path: '',
-            file: 'tsconfig.json',
-            contents: JSON.stringify(this.getTsConfig(), null, 2)
-          })
-        }
-
-        if (this.config.plugin) {
-          // create plugin
-          this.files.push(...generatePlugins(this.config.typescript))
-          if (this.config.tests) {
-            // create tests
-            this.files.push(...generateTests(this.config.typescript, this.module))
-          }
-        }
-
         this.files.push(generateGitignore())
 
         await this._afterPrepare()
@@ -274,30 +260,6 @@ class BaseGenerator extends FileGenerator {
     return true
   }
 
-  getTsConfig () {
-    return {
-      compilerOptions: {
-        module: 'commonjs',
-        esModuleInterop: true,
-        target: 'es2020',
-        sourceMap: true,
-        pretty: true,
-        noEmitOnError: true,
-        incremental: true,
-        strict: true,
-        outDir: 'dist',
-        skipLibCheck: true
-      },
-      watchOptions: {
-        watchFile: 'fixedPollingInterval',
-        watchDirectory: 'fixedPollingInterval',
-        fallbackPolling: 'dynamicPriority',
-        synchronousWatchDirectory: true,
-        excludeDirectories: ['**/node_modules', 'dist']
-      }
-    }
-  }
-
   async prepareQuestions () {
     if (!this.config.isRuntimeContext) {
       if (!this.config.targetDirectory) {
@@ -306,19 +268,6 @@ class BaseGenerator extends FileGenerator {
           type: 'input',
           name: 'targetDirectory',
           message: 'Where would you like to create your project?'
-        })
-      }
-
-      if (!this.config.skipTypescript) {
-        this.questions.push({
-          type: 'list',
-          name: 'typescript',
-          message: 'Do you want to use TypeScript?',
-          default: false,
-          choices: [
-            { name: 'yes', value: true },
-            { name: 'no', value: false }
-          ]
         })
       }
 

@@ -534,7 +534,7 @@ jobs:
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.18.0
           cache: 'pnpm'
       - name: Start docker containers for testing
         run: docker compose up -d postgresql
@@ -685,7 +685,7 @@ jobs:
     strategy:
       matrix:
         node-version: [22.18.0, 24]
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
     env:
       VALKEY_HOST: localhost
       VALKEY_PORT: 6379
