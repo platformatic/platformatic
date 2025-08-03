@@ -33,7 +33,7 @@ export async function fetchStackables (marketplaceHost, modules = []) {
   const stackables = new Set([...modules, ...defaultStackables])
 
   // Skip the remote network request if we are running tests
-  if (process.env.MARKETPLACE_TEST) {
+  if (process.env.PLT_MARKETPLACE_TEST) {
     return Array.from(stackables)
   }
 
@@ -65,9 +65,16 @@ export async function chooseStackable (inquirer, stackables) {
   return options.type
 }
 
+// This is used in tests to avoid npm installations
+function applyPackagePathOverride (pkg, root) {
+  const modulesPaths = process.env.PLT_MODULES_PATHS ? JSON.parse(process.env.PLT_MODULES_PATHS) : {}
+  return modulesPaths[pkg] ? resolveModule.sync(modulesPaths[pkg], { basedir: root }) : pkg
+}
+
 async function getPackageVersion (pkg, projectDir) {
   let main
   try {
+    pkg = applyPackagePathOverride(pkg, projectDir)
     main = import.meta.resolve(pkg)
   } catch {
     main = resolveModule.sync(pkg, { basedir: projectDir })
@@ -94,7 +101,9 @@ async function getPackageVersion (pkg, projectDir) {
   return packageJsonPath.version
 }
 
-async function importOrLocal ({ pkgManager, name, projectDir, pkg }) {
+async function importOrLocal ({ pkgManager, projectDir, pkg }) {
+  pkg = applyPackagePathOverride(pkg, projectDir)
+
   try {
     return await import(pkg)
   } catch (err) {
@@ -230,7 +239,9 @@ export async function createApplication (
   additionalGeneratorConfig = {}
 ) {
   // This is only used for testing for now, but might be useful in the future
-  const inquirer = process.env.USER_INPUT_HANDLER ? await import(process.env.USER_INPUT_HANDLER) : defaultInquirer
+  const inquirer = process.env.PLT_USER_INPUT_HANDLER
+    ? await import(process.env.PLT_USER_INPUT_HANDLER)
+    : defaultInquirer
 
   // Check in the directory and its parents if there is a config file
   let shouldChooseProjectDir = true

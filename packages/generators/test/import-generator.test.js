@@ -79,7 +79,7 @@ test('should prepare questions for user input', async t => {
   const gen = createGenerator(runtime)
 
   await gen.prepareQuestions()
-  deepStrictEqual(gen.questions.length, 5)
+  deepStrictEqual(gen.questions.length, 4)
 
   const pathQuestion = gen.questions.at(-2)
   deepStrictEqual(pathQuestion.type, 'input')

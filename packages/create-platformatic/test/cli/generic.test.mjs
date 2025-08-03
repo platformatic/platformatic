@@ -11,19 +11,13 @@ import {
   startMarketplace
 } from './helper.mjs'
 
-async function getLatestPackageVersion (packageName) {
-  const response = await fetch(`https://registry.npmjs.org/${packageName}/latest`)
-  const info = await response.json()
-
-  return info.version
-}
+const version = JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8')).version
 
 test('Support packages without generator via importing (new application)', async t => {
   const external = await createTemporaryDirectory(t, 'external')
   const applicationPath = resolve(external, 'existing-application')
   await cp(new URL('../fixtures/existing-application', import.meta.url), applicationPath, { recursive: true })
 
-  const version = await getLatestPackageVersion('@platformatic/vite')
   const root = await createTemporaryDirectory(t, 'other')
   const marketplaceHost = await startMarketplace(t)
 
@@ -81,7 +75,6 @@ test('Support packages without generator via importing (existing applications)',
   await execa('git', ['init', '.'], { cwd: applicationPath })
   await execa('git', ['remote', 'add', 'origin', 'git@github.com:hello/world.git'], { cwd: applicationPath })
 
-  const version = await getLatestPackageVersion('@platformatic/vite')
   const root = await createTemporaryDirectory(t, 'other')
   const marketplaceHost = await startMarketplace(t)
   const baseProjectDir = join(root, 'platformatic')
@@ -165,7 +158,6 @@ test('Support packages without generator via copy (new application)', async t =>
 
   const originalPackageJson = await readFile(resolve(sourcePath, 'package.json'), 'utf8')
 
-  const version = await getLatestPackageVersion('@platformatic/vite')
   const root = await createTemporaryDirectory(t, 'other')
   const marketplaceHost = await startMarketplace(t)
 
@@ -218,7 +210,6 @@ test('Support packages without generator via copy (existing applications)', asyn
 
   const originalPackageJson = await readFile(resolve(sourcePath, 'package.json'), 'utf8')
 
-  const version = await getLatestPackageVersion('@platformatic/vite')
   const root = await createTemporaryDirectory(t, 'other')
   const marketplaceHost = await startMarketplace(t)
   const baseProjectDir = join(root, 'platformatic')
