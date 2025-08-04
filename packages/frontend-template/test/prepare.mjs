@@ -19,7 +19,9 @@ await execa('node', [
   'http://127.0.0.1:9999',
   '--frontend',
   '--language',
-  'ts'
+  'ts',
+  '--full',
+  'false'
 ])
 
 // Stop the server
