@@ -60,7 +60,6 @@ export declare const schemaComponents: {
   graphqlBase: JSONSchemaType<object>
   graphql: JSONSchemaType<object>
   service: JSONSchemaType<object>
-  client: JSONSchemaType<object>
 }
 
 export declare const version: string

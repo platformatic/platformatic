@@ -306,17 +306,6 @@ export interface PlatformaticServiceConfig {
           };
         };
   };
-  clients?: {
-    serviceId?: string;
-    name?: string;
-    type?: "openapi" | "graphql";
-    path?: string;
-    schema?: string;
-    url?: string;
-    fullResponse?: boolean;
-    fullRequest?: boolean;
-    validateResponse?: boolean;
-  }[];
   runtime?: {
     preload?: string | string[];
     basePath?: string;

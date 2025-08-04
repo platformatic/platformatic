@@ -53,7 +53,6 @@
     "@fastify/swagger": "^9.0.0",
     "@fastify/under-pressure": "^9.0.0",
     "@platformatic/basic": "workspace:*",
-    "@platformatic/client": "workspace:*",
     "@platformatic/generators": "workspace:*",
     "@platformatic/metrics": "workspace:*",
     "@platformatic/scalar-theme": "workspace:*",
