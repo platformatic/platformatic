@@ -5,6 +5,10 @@ export default {
       delete config.plugins.typescript
     }
 
+    if (typeof config.clients !== 'undefined') {
+      delete config.clients
+    }
+
     return config
   }
 }
