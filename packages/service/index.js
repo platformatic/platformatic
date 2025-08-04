@@ -58,6 +58,6 @@ export async function create (configOrRoot, sourceOrConfig, context) {
 export const skipTelemetryHooks = true
 
 export { platformaticService } from './lib/application.js'
-export { Generator } from './lib/generator.js'
+export { applyTestHelperCustomizations, Generator } from './lib/generator.js'
 export { packageJson, schema, schemaComponents, version } from './lib/schema.js'
 export { ServiceStackable } from './lib/stackable.js'

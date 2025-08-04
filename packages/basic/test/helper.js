@@ -60,10 +60,10 @@ class MockedWritable extends Writable {
 export const defaultDependencies = ['fastify', 'typescript']
 
 export const internalServicesFiles = [
-  'services/composer/dist/plugins/example.js',
-  'services/composer/dist/routes/root.js',
-  'services/backend/dist/plugins/example.js',
-  'services/backend/dist/routes/root.js'
+  'services/composer/plugins/example.ts',
+  'services/composer/routes/root.ts',
+  'services/backend/plugins/example.ts',
+  'services/backend/routes/root.ts'
 ]
 
 export async function createTemporaryDirectory (t, prefix = 'plt-basic') {

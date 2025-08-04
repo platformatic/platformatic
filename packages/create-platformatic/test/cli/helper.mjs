@@ -61,8 +61,9 @@ export async function executeCreatePlatformatic (dir, options = {}) {
     cwd: dir,
     env: {
       NO_COLOR: 'true',
-      MARKETPLACE_TEST: 'true',
-      USER_INPUT_HANDLER: options.userInputHandler
+      PLT_MARKETPLACE_TEST: 'true',
+      PLT_MODULES_PATHS: JSON.stringify({ '@platformatic/vite': resolve(pltRoot, '../vite') }),
+      PLT_USER_INPUT_HANDLER: options.userInputHandler
     }
   }
 

@@ -1,4 +1,3 @@
-import { safeRemove } from '@platformatic/utils'
 import fs from 'fs/promises'
 import assert from 'node:assert'
 import os from 'node:os'
@@ -6,7 +5,6 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'timers/promises'
 import { request } from 'undici'
-import { create } from '../index.js'
 import { createFromConfig } from './helper.js'
 
 test('config is adjusted to handle custom loggers', async t => {
@@ -31,25 +29,6 @@ test('config is adjusted to handle custom loggers', async t => {
 
   const app = await createFromConfig(t, options)
   assert.strictEqual(app.logger, options.server.loggerInstance)
-})
-
-test('do not watch typescript outDir', async t => {
-  process.env.PLT_CLIENT_URL = 'http://localhost:3042'
-  const targetDir = join(import.meta.dirname, '.', 'fixtures', 'hello-client-ts')
-
-  try {
-    await safeRemove(join(targetDir, 'dist'))
-  } catch {}
-
-  const app = await create(targetDir)
-  t.after(async () => {
-    await app.stop()
-  })
-
-  assert.deepStrictEqual((await app.getConfig()).watch, {
-    enabled: false,
-    ignore: ['dist/**/*']
-  })
 })
 
 test('start without server config', async t => {

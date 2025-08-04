@@ -55,8 +55,6 @@ test('RuntimeGenerator - should create a runtime with 2 services', async () => {
     targetDirectory: '/tmp/runtime',
     env: {
       PLT_FIRST_SERVICE_FOO: 'foo',
-      PLT_FIRST_SERVICE_TYPESCRIPT: false,
-      PLT_SECOND_SERVICE_TYPESCRIPT: false,
       PLT_SERVER_HOSTNAME: '127.0.0.1',
       PLT_SERVER_LOGGER_LEVEL: 'debug',
       PLT_MANAGEMENT_API: true,
@@ -137,7 +135,6 @@ test('RuntimeGenerator - should have services plugin dependencies in package.jso
   assert.deepEqual(output, {
     targetDirectory: '/tmp/runtime',
     env: {
-      PLT_FIRST_SERVICE_TYPESCRIPT: false,
       PLT_SERVER_HOSTNAME: '127.0.0.1',
       PLT_MANAGEMENT_API: true,
       PLT_SERVER_LOGGER_LEVEL: 'debug',
@@ -181,9 +178,7 @@ test('RuntimeGenerator - should create a runtime with 1 service and 1 db', async
     targetDirectory: '/tmp/runtime',
     env: {
       PLT_FIRST_SERVICE_SERVICE_1: 'foo',
-      PLT_FIRST_SERVICE_TYPESCRIPT: false,
       PLT_SECOND_SERVICE_SERVICE_2: 'foo',
-      PLT_SECOND_SERVICE_TYPESCRIPT: false,
       PLT_SERVER_HOSTNAME: '127.0.0.1',
       PLT_MANAGEMENT_API: true,
       PLT_SERVER_LOGGER_LEVEL: 'info',
@@ -311,8 +306,6 @@ test('RuntimeGenerator - add services to an existing folder', async t => {
     assert.deepEqual(output, {
       targetDirectory,
       env: {
-        PLT_FIRST_SERVICE_TYPESCRIPT: false,
-        PLT_SECOND_SERVICE_TYPESCRIPT: 'false',
         PLT_SERVER_HOSTNAME: '127.0.0.1',
         PLT_SERVER_LOGGER_LEVEL: 'info',
         PLT_MANAGEMENT_API: 'true',
@@ -327,49 +320,6 @@ test('RuntimeGenerator - add services to an existing folder', async t => {
     // services have correct target directory
     assert.equal(thirdService.targetDirectory, join(rg.targetDirectory, 'services', thirdService.config.serviceName))
   }
-})
-
-test('RuntimeGenerator - should create a runtime with 2 services with typescript enabled', async () => {
-  const rg = new RuntimeGenerator({
-    targetDirectory: '/tmp/runtime',
-    type: 'runtime'
-  })
-
-  // adding one service
-  const firstService = new ServiceGenerator()
-  rg.addService(firstService, 'first-service')
-
-  // adding another service
-  const secondService = new ServiceGenerator()
-  rg.addService(secondService, 'second-service')
-
-  rg.setEntryPoint('first-service')
-
-  rg.setConfig({
-    port: 3043,
-    typescript: true
-  })
-
-  await rg.prepare()
-
-  // should list only runtime files
-  const runtimeFileList = rg.listFiles()
-  assert.deepEqual(runtimeFileList, [
-    'package.json',
-    'platformatic.json',
-    '.env',
-    '.env.sample',
-    'tsconfig.json',
-    '.gitignore'
-  ])
-
-  // services have correct typescript value in config
-  assert.equal(firstService.config.typescript, rg.config.typescript)
-  assert.equal(secondService.config.typescript, rg.config.typescript)
-
-  // runtime package.json has typescript dependency
-  const packageJson = JSON.parse(rg.getFileObject('package.json').contents)
-  assert.ok(packageJson.devDependencies.typescript)
 })
 
 test('RuntimeGenerator - add services to an existing folder (web/)', async t => {
@@ -419,8 +369,6 @@ test('RuntimeGenerator - add services to an existing folder (web/)', async t => 
     assert.deepEqual(output, {
       targetDirectory,
       env: {
-        PLT_FIRST_SERVICE_TYPESCRIPT: false,
-        PLT_SECOND_SERVICE_TYPESCRIPT: 'false',
         PLT_SERVER_HOSTNAME: '127.0.0.1',
         PLT_SERVER_LOGGER_LEVEL: 'info',
         PLT_MANAGEMENT_API: 'true',
@@ -583,7 +531,7 @@ test('WrappedGenerator - should create a valid package.json', async t => {
     rest: 'FOO',
     engines: {
       foo: 'bar',
-      node: '>=22.16.0'
+      node: '>=22.18.0'
     }
   }
 

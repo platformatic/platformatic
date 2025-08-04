@@ -247,3 +247,14 @@ npm start
 - 🔍 Try out the GraphiQL web UI at http://localhost:3042/graphiql
 
 `
+
+export const ENVIRONMENT_TEMPLATE = `
+import { type FastifyInstance } from 'fastify'
+import { PlatformaticApplication, PlatformaticDatabaseConfig, PlatformaticDatabaseMixin, Entities } from '@platformatic/db'
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    platformatic: PlatformaticApplication<PlatformaticDatabaseConfig> & PlatformaticDatabaseMixin<Entities>
+  }
+}
+`

@@ -25,7 +25,7 @@ test('checkNodeVersionForServices - should throw for old Node.js version', t => 
   throws(() => checkNodeVersionForServices(), {
     name: 'Error',
     message:
-      /Your current Node\.js version is v18\.0\.0, while the minimum supported version is v22\.16\.0\. Please upgrade Node\.js and try again\./
+      /Your current Node\.js version is v18\.0\.0, while the minimum supported version is v22\.18\.0\. Please upgrade Node\.js and try again\./
   })
 })
 

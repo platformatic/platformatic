@@ -11,6 +11,6 @@
     "@platformatic/service": "^2.0.0"
   },
   "engines": {
-    "node": ">=22.16.0"
+    "node": ">=22.18.0"
   }
 }

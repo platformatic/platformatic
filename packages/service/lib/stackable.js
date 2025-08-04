@@ -1,6 +1,5 @@
 import { BaseStackable, cleanBasePath, ensureTrailingSlash, getServerUrl } from '@platformatic/basic'
 import { telemetry } from '@platformatic/telemetry'
-import { compile } from '@platformatic/ts-compiler'
 import { buildPinoFormatters, buildPinoTimestamp, deepmerge, features, isKeyEnabled } from '@platformatic/utils'
 import fastify from 'fastify'
 import { printSchema } from 'graphql'
@@ -86,15 +85,6 @@ export class ServiceStackable extends BaseStackable {
 
   async stop () {
     return this.#app?.close()
-  }
-
-  async build () {
-    return compile({
-      tsConfig: this.config.plugins?.typescript?.tsConfig,
-      flags: this.config.plugins?.typescript?.flags,
-      cwd: this.root,
-      logger: this.logger
-    })
   }
 
   async inject (injectParams, onInject) {

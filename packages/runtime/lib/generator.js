@@ -35,7 +35,7 @@ const wrappableProperties = {
 }
 
 const engines = {
-  node: '>=22.16.0'
+  node: '>=22.18.0'
 }
 
 const ERROR_PREFIX = 'PLT_RUNTIME_GEN'
@@ -86,9 +86,7 @@ class RuntimeGenerator extends BaseGenerator {
       service
     })
 
-    if (typeof service.setRuntime === 'function') {
-      service.setRuntime(this)
-    }
+    service.setRuntime(this)
   }
 
   setEntryPoint (entryPoint) {
@@ -124,13 +122,6 @@ class RuntimeGenerator extends BaseGenerator {
       template.workspaces = [this.servicesFolder + '/*']
     }
 
-    if (this.config.typescript) {
-      const typescriptVersion = JSON.parse(await readFile(join(__dirname, '..', 'package.json'), 'utf-8'))
-        .devDependencies.typescript
-      template.scripts.clean = 'rm -fr ./dist'
-      template.scripts.build = 'platformatic compile'
-      template.devDependencies.typescript = typescriptVersion
-    }
     return template
   }
 
@@ -197,7 +188,6 @@ class RuntimeGenerator extends BaseGenerator {
         // set default config
         service.setConfig()
       }
-      service.config.typescript = this.config.typescript
     })
   }
 
@@ -262,18 +252,6 @@ class RuntimeGenerator extends BaseGenerator {
   async prepareQuestions () {
     await this.populateFromExistingConfig()
 
-    // typescript
-    this.questions.push({
-      type: 'list',
-      name: 'typescript',
-      message: 'Do you want to use TypeScript?',
-      default: false,
-      choices: [
-        { name: 'yes', value: true },
-        { name: 'no', value: false }
-      ]
-    })
-
     if (this.existingConfig) {
       return
     }
@@ -317,11 +295,6 @@ class RuntimeGenerator extends BaseGenerator {
   async prepareServiceFiles () {
     let servicesEnv = {}
     for (const svc of this.services) {
-      // Propagate TypeScript
-      svc.service.setConfig({
-        ...svc.service.config,
-        typescript: this.config.typescript
-      })
       const svcEnv = await svc.service.prepare()
       servicesEnv = {
         ...servicesEnv,

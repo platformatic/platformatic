@@ -243,16 +243,6 @@ test('should prepare the questions', async t => {
       message: 'Where would you like to create your project?'
     },
     {
-      type: 'list',
-      name: 'typescript',
-      message: 'Do you want to use TypeScript?',
-      default: false,
-      choices: [
-        { name: 'yes', value: true },
-        { name: 'no', value: false }
-      ]
-    },
-    {
       type: 'input',
       name: 'port',
       message: 'What port do you want to use?'
@@ -274,16 +264,6 @@ test('should prepare the questions with a targetDirectory', async t => {
 
   await bg.prepareQuestions()
   assert.deepStrictEqual(bg.questions, [
-    {
-      type: 'list',
-      name: 'typescript',
-      message: 'Do you want to use TypeScript?',
-      default: false,
-      choices: [
-        { name: 'yes', value: true },
-        { name: 'no', value: false }
-      ]
-    },
     {
       type: 'input',
       name: 'port',
@@ -327,63 +307,6 @@ test('should return service metadata', async t => {
       FOO: 'bar'
     }
   })
-})
-
-test('should generate javascript plugin, routes and tests', async t => {
-  const bg = new BaseGenerator({
-    module: '@platformatic/service'
-  })
-  bg.setConfig({
-    plugin: true,
-    tests: true
-  })
-  await bg.prepare()
-  assert.ok(bg.getFileObject('example.js', 'plugins'))
-  assert.ok(bg.getFileObject('root.js', 'routes'))
-
-  assert.ok(bg.getFileObject('root.test.js', join('test', 'routes')))
-  assert.ok(bg.getFileObject('example.test.js', join('test', 'plugins')))
-})
-
-test('should generate tsConfig file and typescript files', async t => {
-  const bg = new BaseGenerator({
-    module: '@platformatic/service'
-  })
-  bg.setConfig({
-    typescript: true,
-    plugin: true,
-    tests: true
-  })
-  const template = {
-    compilerOptions: {
-      module: 'commonjs',
-      esModuleInterop: true,
-      target: 'es2020',
-      sourceMap: true,
-      pretty: true,
-      noEmitOnError: true,
-      incremental: true,
-      strict: true,
-      outDir: 'dist',
-      skipLibCheck: true
-    },
-    watchOptions: {
-      watchFile: 'fixedPollingInterval',
-      watchDirectory: 'fixedPollingInterval',
-      fallbackPolling: 'dynamicPriority',
-      synchronousWatchDirectory: true,
-      excludeDirectories: ['**/node_modules', 'dist']
-    }
-  }
-  await bg.prepare()
-  const tsConfigFile = bg.getFileObject('tsconfig.json')
-  assert.deepEqual(JSON.parse(tsConfigFile.contents), template)
-
-  assert.ok(bg.getFileObject('example.ts', 'plugins'))
-  assert.ok(bg.getFileObject('root.ts', 'routes'))
-
-  assert.ok(bg.getFileObject('root.test.ts', join('test', 'routes')))
-  assert.ok(bg.getFileObject('example.test.ts', join('test', 'plugins')))
 })
 
 test('should throw if prepare fails', async t => {

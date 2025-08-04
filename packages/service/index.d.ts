@@ -41,6 +41,11 @@ export declare const skipTelemetryHooks: boolean
 export declare function platformaticService (app: FastifyInstance, stackable: ServiceStackable): Promise<void>
 
 export declare class Generator extends BaseGenerator.BaseGenerator {}
+export declare function applyTestHelperCustomizations (
+  helper: string,
+  mod: string,
+  customizations: Record<string, string>
+): string
 
 export declare const packageJson: Record<string, unknown>
 

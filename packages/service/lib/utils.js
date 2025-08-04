@@ -1,5 +1,5 @@
 import { access, readFile, stat } from 'node:fs/promises'
-import { basename, dirname, join, relative, resolve } from 'node:path'
+import { resolve } from 'node:path'
 
 let _isDocker
 
@@ -36,34 +36,6 @@ export async function isFileAccessible (filename, directory) {
   } catch (err) {
     return false
   }
-}
-
-export function getJSPluginPath (workingDir, tsPluginPath, compileDir) {
-  if (tsPluginPath.endsWith('js')) {
-    return tsPluginPath
-  }
-
-  if (tsPluginPath.indexOf(compileDir) === 0) {
-    // In this case, we passed through this function before and we have adjusted
-    // the path of the plugin to point to the dist/ folder. Then we restarted.
-    // Therefore, we can just return the path as is.
-    return tsPluginPath
-  }
-
-  const isTs = tsPluginPath.endsWith('ts')
-  let newBaseName
-
-  /* c8 ignore next 5 */
-  if (isTs) {
-    newBaseName = basename(tsPluginPath, '.ts') + '.js'
-  } else {
-    newBaseName = basename(tsPluginPath)
-  }
-
-  const tsPluginRelativePath = relative(workingDir, tsPluginPath)
-  const jsPluginRelativePath = join(dirname(tsPluginRelativePath), newBaseName)
-
-  return join(compileDir, jsPluginRelativePath)
 }
 
 export async function sanitizeHTTPSArgument (arg) {

@@ -3,7 +3,7 @@
   "scripts": {
     "start": "platformatic start",
     "clean": "rm -fr ./dist",
-    "build": "platformatic compile"
+    "build": "tsc -p ."
   },
   "devDependencies": {
     "typescript": "^5.8"

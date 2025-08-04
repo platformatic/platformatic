@@ -1,6 +1,5 @@
 export default {
   version: '0.16.0',
-  toVersion: '0.17.0',
   up (config) {
     let kind = 'service'
     // This file will be reused in platformatic/db

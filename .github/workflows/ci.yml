@@ -42,7 +42,7 @@ jobs:
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.18.0
           cache: 'pnpm'
       - uses: 'nick-fields/retry@v3.0.2'
         with:
@@ -58,7 +58,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -91,7 +91,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -120,7 +120,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -146,7 +146,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -177,7 +177,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -251,7 +251,7 @@ jobs:
     strategy:
       matrix:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -290,7 +290,7 @@ jobs:
     strategy:
       matrix:
         db: [postgresql, mariadb, mysql, mysql8, sqlite]
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -324,7 +324,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -372,7 +372,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
         suite: [main, api, cli, start, multiple-workers]
     steps:
@@ -399,7 +399,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -427,7 +427,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -446,32 +446,6 @@ jobs:
       - name: Run utils package test suite
         run: cd packages/utils && pnpm test
 
-  ci-ts-compiler:
-    needs: setup-node_modules
-    if: ${{ !inputs.job || inputs.job == 'ts-compiler' }}
-    runs-on: ${{matrix.os}}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        node-version: [22, 24]
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: pnpm/action-setup@v4.1.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
-      - name: pnpm install
-        uses: nick-fields/retry@v3.0.2
-        with:
-          max_attempts: 10
-          timeout_minutes: 15
-          retry_on: error
-          command: pnpm install --frozen-lockfile
-      - name: Run ts-compiler package test suite
-        run: cd packages/ts-compiler && pnpm test
-
   ci-client:
     needs: setup-node_modules
     if: ${{ !inputs.job || inputs.job == 'client' }}
@@ -479,7 +453,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -506,7 +480,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -531,7 +505,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -560,7 +534,7 @@ jobs:
       - uses: pnpm/action-setup@v4.1.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.18.0
           cache: 'pnpm'
       - name: Start docker containers for testing
         run: docker compose up -d postgresql
@@ -578,7 +552,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -606,7 +580,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -632,7 +606,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -658,7 +632,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -684,7 +658,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -710,8 +684,8 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
-        os: [ubuntu-latest, windows-latest]
+        node-version: [22.18.0, 24]
+        os: [ubuntu-latest]
     env:
       VALKEY_HOST: localhost
       VALKEY_PORT: 6379
@@ -742,7 +716,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -768,7 +742,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -794,7 +768,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -820,7 +794,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -846,7 +820,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -872,7 +846,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -898,7 +872,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        node-version: [22, 24]
+        node-version: [22.18.0, 24]
         os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4

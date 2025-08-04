@@ -21,8 +21,8 @@ test('Creates a Platformatic DB service with no migrations', async t => {
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
     { type: 'input', question: 'What is the connection string?', reply: 'sqlite://./db.sqlite' },
     { type: 'list', question: 'Do you want to create default migrations?', reply: 'no' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])

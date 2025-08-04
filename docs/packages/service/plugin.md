@@ -85,28 +85,9 @@ Here is an example of writing a plugin in TypeScript:
 
 ```ts
 /// <reference types="@platformatic/service" />
-import { FastifyInstance, FastifyPluginOptions } from 'fastify'
+import { type FastifyInstance, type FastifyPluginOptions } from 'fastify'
 
 export default async function (fastify: FastifyInstance, opts: FastifyPluginOptions) {
-}
-```
-
-Note that you need to add the `"typescript": true` configuration to your `platformatic.service.json`.
-
-### Loading compiled files
-
-Setting `"typescript": false` but including a `tsconfig.json` with an [`outDir`](https://www.typescriptlang.org/tsconfig#outDir)
-option, will instruct Platformatic Service to try loading your plugins from that folder instead.
-This setup supports pre-compiled sources to reduce cold start time during deployment.
-
-```json title="Example Configuration"
-{
-  "typescript": false,
-  "plugins": {
-    "paths": [
-      { "path": "./dist/plugin.js" }
-    ]
-  }
 }
 ```
 

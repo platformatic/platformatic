@@ -64,7 +64,7 @@ Use the client in Typescript application, by calling an OpenAPI endpoint:
 
 
 ```ts
-import { FastifyInstance } from 'fastify'
+import { type FastifyInstance } from 'fastify'
 /// <reference path="./myclient" />
 
 export default async function (app: FastifyInstance) {

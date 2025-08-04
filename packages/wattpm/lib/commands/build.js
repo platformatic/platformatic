@@ -60,7 +60,11 @@ export async function installDependencies (logger, root, services, production, p
       `Installing ${production ? 'production ' : ''}dependencies for the application using ${packageManager} ...`
     )
 
-    await executeCommand(root, packageManager, args, { cwd: root, stdio: 'inherit' })
+    await executeCommand(root, packageManager, args, {
+      cwd: root,
+      stdio: 'inherit',
+      reject: process.env.PLT_IGNORE_INSTALL_FAILURES !== 'true'
+    })
     /* c8 ignore next 7 */
   } catch (error) {
     return logFatalError(
@@ -83,7 +87,8 @@ export async function installDependencies (logger, root, services, production, p
 
       await executeCommand(root, servicePackageManager, servicePackageArgs, {
         cwd: resolve(root, path),
-        stdio: 'inherit'
+        stdio: 'inherit',
+        reject: process.env.PLT_IGNORE_INSTALL_FAILURES !== 'true'
       })
       /* c8 ignore next 7 */
     } catch (error) {

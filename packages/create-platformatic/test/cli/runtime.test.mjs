@@ -20,12 +20,13 @@ test('Creates a Platformatic Runtime with two Services', async t => {
     { type: 'input', question: 'Where would you like to create your project?', reply: '.' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'service1' },
+    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'yes' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'yes' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'service2' },
+    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'yes' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'list', question: 'Which service should be exposed?', reply: 'service1' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'yes' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
@@ -69,8 +70,8 @@ test('Add another service to an existing application', async t => {
       { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
       { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
       { type: 'input', question: 'What is the name of the service?', reply: 'service1' },
-      { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
       { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
+      { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
       { type: 'input', question: 'What port do you want to use?', reply: '3042' },
       { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
     ])
@@ -103,9 +104,9 @@ test('Add another service to an existing application', async t => {
     const userInputHandler = await setupUserInputHandler(t, [
       { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
       { type: 'input', question: 'What is the name of the service?', reply: 'service2' },
+      { type: 'list', question: 'Do you want to use TypeScript?', reply: 'yes' },
       { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
-      { type: 'list', question: 'Which service should be exposed?', reply: 'service1' },
-      { type: 'list', question: 'Do you want to use TypeScript?', reply: 'yes' }
+      { type: 'list', question: 'Which service should be exposed?', reply: 'service1' }
     ])
 
     // The actions must match IN ORDER

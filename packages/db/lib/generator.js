@@ -1,8 +1,16 @@
-import { BaseGenerator, generateTests } from '@platformatic/generators'
+import { Generator as ServiceGenerator } from '@platformatic/service'
 import { join } from 'node:path'
-import { jsHelperMySQL, jsHelperPostgres, jsHelperSqlite, moviesTestJS, moviesTestTS, README } from './templates.js'
+import {
+  ENVIRONMENT_TEMPLATE,
+  jsHelperMySQL,
+  jsHelperPostgres,
+  jsHelperSqlite,
+  moviesTestJS,
+  moviesTestTS,
+  README
+} from './templates.js'
 
-export class Generator extends BaseGenerator {
+export class Generator extends ServiceGenerator {
   constructor (opts = {}) {
     super({
       ...opts,
@@ -16,8 +24,27 @@ export class Generator extends BaseGenerator {
     }
   }
 
+  getConfigFieldsDefinitions () {
+    return [
+      {
+        var: 'DATABASE_URL',
+        label: 'What is the connection string?',
+        default: this.connectionStrings.sqlite,
+        type: 'string',
+        configValue: 'connectionString'
+      },
+      {
+        var: 'PLT_APPLY_MIGRATIONS',
+        label: 'Should migrations be applied automatically on startup?',
+        default: true,
+        type: 'boolean'
+      }
+    ]
+  }
+
   getDefaultConfig () {
     const defaultBaseConfig = super.getDefaultConfig()
+
     return {
       ...defaultBaseConfig,
       database: 'sqlite',
@@ -30,160 +57,29 @@ export class Generator extends BaseGenerator {
     }
   }
 
-  async _getConfigFileContents () {
-    const { isRuntimeContext, migrations, plugin, types } = this.config
-    const version = this.platformaticVersion
-
-    const config = {
-      $schema: `https://schemas.platformatic.dev/@platformatic/db/${version}.json`,
-      db: {
-        connectionString: `{${this.getEnvVarName('DATABASE_URL')}}`,
-        graphql: true,
-        openapi: true,
-        schemalock: true
-      },
-      watch: {
-        ignore: ['*.sqlite', '*.sqlite-journal']
-      }
+  async prepareQuestions () {
+    if (!this.config.connectionString) {
+      const def = this.getConfigFieldsDefinitions().find(q => q.var === 'DATABASE_URL')
+      this.questions.push({
+        type: 'input',
+        name: def.configValue,
+        message: def.label,
+        default: def.default
+      })
     }
 
-    if (!isRuntimeContext) {
-      config.server = {
-        hostname: '{PLT_SERVER_HOSTNAME}',
-        port: '{PORT}',
-        logger: {
-          level: '{PLT_SERVER_LOGGER_LEVEL}'
-        }
-      }
-    }
+    this.questions.push({
+      type: 'list',
+      name: 'createMigrations',
+      message: 'Do you want to create default migrations?',
+      default: true,
+      choices: [
+        { name: 'yes', value: true },
+        { name: 'no', value: false }
+      ]
+    })
 
-    if (migrations) {
-      config.migrations = {
-        dir: migrations,
-        autoApply: `{${this.getEnvVarName('PLT_APPLY_MIGRATIONS')}}`
-      }
-
-      this.addFile({ path: 'migrations', file: '.gitkeep', contents: '' })
-    }
-
-    if (plugin === true) {
-      config.plugins = {
-        paths: [
-          {
-            path: './plugins',
-            encapsulate: false
-          },
-          {
-            path: './routes'
-          }
-        ],
-        typescript: `{${this.getEnvVarName('PLT_TYPESCRIPT')}}`
-      }
-    }
-
-    if (types === true) {
-      config.types = {
-        autogenerate: true
-      }
-    }
-
-    return config
-  }
-
-  async _beforePrepare () {
-    if (!this.config.isUpdating) {
-      this.config.connectionString = this.config.connectionString || this.connectionStrings[this.config.database]
-      this.config.dependencies = {
-        '@platformatic/db': `^${this.platformaticVersion}`
-      }
-
-      if (!this.config.isRuntimeContext) {
-        this.addEnvVars(
-          {
-            PLT_SERVER_HOSTNAME: this.config.hostname,
-            PLT_SERVER_LOGGER_LEVEL: 'info',
-            PORT: 3042
-          },
-          { overwrite: false, default: true }
-        )
-      }
-
-      this.addEnvVars(
-        {
-          PLT_TYPESCRIPT: this.config.typescript,
-          DATABASE_URL: this.connectionStrings[this.config.database],
-          PLT_APPLY_MIGRATIONS: 'true'
-        },
-        { overwrite: false, default: true }
-      )
-    }
-  }
-
-  async _afterPrepare () {
-    if (!this.config.isUpdating) {
-      if (this.config.createMigrations) {
-        this.createMigrationFiles()
-      }
-
-      this.addFile({ path: '', file: 'README.md', contents: README })
-
-      if (this.config.plugin) {
-        let jsHelper = { pre: '', config: '', post: '' }
-        switch (this.config.database) {
-          case 'sqlite':
-            jsHelper = jsHelperSqlite
-            break
-          case 'mysql':
-            jsHelper = jsHelperMySQL(this.config.connectionString)
-            break
-          case 'postgres':
-            jsHelper = jsHelperPostgres(this.config.connectionString)
-            break
-          case 'mariadb':
-            jsHelper = jsHelperMySQL(this.config.connectionString)
-            break
-        }
-
-        if (this.config.createMigrations) {
-          if (this.config.typescript) {
-            this.addFile({ path: join('test', 'routes'), file: 'movies.test.ts', contents: moviesTestTS })
-          } else {
-            this.addFile({ path: join('test', 'routes'), file: 'movies.test.js', contents: moviesTestJS })
-          }
-        }
-
-        // TODO(leorossi): this is unfortunate. We have already generated tests in BaseGenerator
-        // next line will override the test files
-        generateTests(this.config.typescript, '@platformatic/db', jsHelper).forEach(fileObject => {
-          this.addFile(fileObject)
-        })
-
-        if (this.config.isRuntimeContext) {
-          // remove .env file and env variables since they are all for the config.server property
-          const envFile = this.getFileObject('.env')
-          if (envFile) {
-            envFile.contents = ''
-          }
-        }
-      }
-
-      const ENVIRONMENT_TEMPLATE = `
-import { FastifyInstance } from 'fastify'
-import { PlatformaticApplication, PlatformaticDatabaseConfig, PlatformaticDatabaseMixin, Entities } from '@platformatic/db'
-
-declare module 'fastify' {
-  interface FastifyInstance {
-    platformatic: PlatformaticApplication<PlatformaticDatabaseConfig> & PlatformaticDatabaseMixin<Entities>
-  }
-}
-`
-      this.addFile({ path: '', file: 'plt-env.d.ts', contents: ENVIRONMENT_TEMPLATE })
-    }
-  }
-
-  createMigrationFiles () {
-    this.addFile({ path: 'migrations', file: '001.do.sql', contents: this.getMoviesMigrationDo() })
-    this.addFile({ path: 'migrations', file: '001.undo.sql', contents: this.getMoviesMigrationUndo() })
+    await super.prepareQuestions()
   }
 
   getMoviesMigrationDo () {
@@ -223,45 +119,111 @@ declare module 'fastify' {
     return null
   }
 
-  getConfigFieldsDefinitions () {
-    return [
-      {
-        var: 'DATABASE_URL',
-        label: 'What is the connection string?',
-        default: this.connectionStrings.sqlite,
-        type: 'string',
-        configValue: 'connectionString'
-      },
-      {
-        var: 'PLT_APPLY_MIGRATIONS',
-        label: 'Should migrations be applied automatically on startup?',
-        default: true,
-        type: 'boolean'
-      }
-    ]
-  }
-
-  async prepareQuestions () {
-    await super.prepareQuestions()
-    if (!this.config.connectionString) {
-      const def = this.getConfigFieldsDefinitions().find(q => q.var === 'DATABASE_URL')
-      this.questions.push({
-        type: 'input',
-        name: def.configValue,
-        message: def.label,
-        default: def.default
-      })
+  async _beforePrepare () {
+    if (this.config.isUpdating) {
+      return
     }
 
-    this.questions.push({
-      type: 'list',
-      name: 'createMigrations',
-      message: 'Do you want to create default migrations?',
-      default: true,
-      choices: [
-        { name: 'yes', value: true },
-        { name: 'no', value: false }
-      ]
-    })
+    await super._beforePrepare()
+
+    this.config.connectionString = this.config.connectionString || this.connectionStrings[this.config.database]
+    this.config.dependencies = {
+      '@platformatic/db': `^${this.platformaticVersion}`
+    }
+
+    if (!this.config.isRuntimeContext) {
+      this.addEnvVars(
+        {
+          PLT_SERVER_HOSTNAME: this.config.hostname,
+          PLT_SERVER_LOGGER_LEVEL: 'info',
+          PORT: 3042
+        },
+        { overwrite: false, default: true }
+      )
+    }
+
+    this.addEnvVars(
+      {
+        DATABASE_URL: this.connectionStrings[this.config.database],
+        PLT_APPLY_MIGRATIONS: 'true'
+      },
+      { overwrite: false, default: true }
+    )
+  }
+
+  async _afterPrepare () {
+    if (this.config.isUpdating) {
+      return
+    }
+
+    if (this.config.createMigrations) {
+      this.addFile({ path: 'migrations', file: '001.do.sql', contents: this.getMoviesMigrationDo() })
+      this.addFile({ path: 'migrations', file: '001.undo.sql', contents: this.getMoviesMigrationUndo() })
+    }
+
+    this.addFile({ path: '', file: 'README.md', contents: README })
+
+    if (this.config.plugin) {
+      switch (this.config.database) {
+        case 'sqlite':
+          this.testHelperCustomizations = jsHelperSqlite
+          break
+        case 'mysql':
+          this.testHelperCustomizations = jsHelperMySQL(this.config.connectionString)
+          break
+        case 'postgres':
+          this.testHelperCustomizations = jsHelperPostgres(this.config.connectionString)
+          break
+        case 'mariadb':
+          this.testHelperCustomizations = jsHelperMySQL(this.config.connectionString)
+          break
+      }
+
+      if (this.config.createMigrations) {
+        if (this.config.typescript) {
+          this.addFile({ path: join('test', 'routes'), file: 'movies.test.ts', contents: moviesTestTS })
+        } else {
+          this.addFile({ path: join('test', 'routes'), file: 'movies.test.js', contents: moviesTestJS })
+        }
+      }
+    }
+
+    super._afterPrepare()
+
+    this.addFile({ path: '', file: 'plt-env.d.ts', contents: ENVIRONMENT_TEMPLATE })
+  }
+
+  async _getConfigFileContents () {
+    const config = await super._getConfigFileContents()
+    delete config.service
+    config.$schema = `https://schemas.platformatic.dev/@platformatic/db/${this.platformaticVersion}.json`
+
+    config.db = {
+      connectionString: `{${this.getEnvVarName('DATABASE_URL')}}`,
+      graphql: true,
+      openapi: true,
+      schemalock: true
+    }
+
+    config.watch = {
+      ignore: ['*.sqlite', '*.sqlite-journal']
+    }
+
+    if (this.config.migrations) {
+      config.migrations = {
+        dir: this.config.migrations,
+        autoApply: `{${this.getEnvVarName('PLT_APPLY_MIGRATIONS')}}`
+      }
+
+      this.addFile({ path: 'migrations', file: '.gitkeep', contents: '' })
+    }
+
+    if (this.config.types === true) {
+      config.types = {
+        autogenerate: true
+      }
+    }
+
+    return config
   }
 }

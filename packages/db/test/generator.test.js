@@ -33,15 +33,13 @@ test('should have default config', async () => {
       PLT_APPLY_MIGRATIONS: 'true',
       PLT_SERVER_LOGGER_LEVEL: 'info',
       PORT: 3042,
-      DATABASE_URL: 'sqlite://./db.sqlite',
-      PLT_TYPESCRIPT: false
+      DATABASE_URL: 'sqlite://./db.sqlite'
     },
     defaultEnv: {
       DATABASE_URL: 'sqlite://./db.sqlite',
       PLT_APPLY_MIGRATIONS: 'true',
       PLT_SERVER_HOSTNAME: '0.0.0.0',
       PLT_SERVER_LOGGER_LEVEL: 'info',
-      PLT_TYPESCRIPT: false,
       PORT: 3042
     },
     database: 'sqlite',
@@ -64,7 +62,6 @@ test('generate correct .env file', async t => {
         'PLT_SERVER_HOSTNAME=0.0.0.0',
         'PLT_SERVER_LOGGER_LEVEL=info',
         'PORT=3042',
-        'PLT_TYPESCRIPT=false',
         'DATABASE_URL=sqlite://./db.sqlite',
         'PLT_APPLY_MIGRATIONS=true',
         ''
@@ -80,11 +77,7 @@ test('generate correct .env file', async t => {
     await dbApp.prepare()
 
     const configFile = dbApp.getFileObject('platformatic.json')
-    const configFileJson = JSON.parse(configFile.contents)
-    assert.equal(configFileJson.plugins.typescript, '{PLT_TYPESCRIPT}')
-
-    const dotEnvFile = dbApp.getFileObject('.env')
-    assert.ok(dotEnvFile.contents.includes('PLT_TYPESCRIPT=true'))
+    JSON.parse(configFile.contents)
   }
 
   {
@@ -117,7 +110,7 @@ test('have plt-env.d.ts', async t => {
   const environment = dbApp.getFileObject('plt-env.d.ts')
 
   const ENVIRONMENT_TEMPLATE = `
-import { FastifyInstance } from 'fastify'
+import { type FastifyInstance } from 'fastify'
 import { PlatformaticApplication, PlatformaticDatabaseConfig, PlatformaticDatabaseMixin, Entities } from '@platformatic/db'
 
 declare module 'fastify' {
@@ -389,9 +382,7 @@ test('support packages', async t => {
           encapsulate: false,
           path: './plugins'
         },
-        {
-          path: './routes'
-        }
+        './routes'
       ],
       packages: [
         {
@@ -400,8 +391,7 @@ test('support packages', async t => {
             threshold: 1
           }
         }
-      ],
-      typescript: '{PLT_TYPESCRIPT}'
+      ]
     })
   }
 })

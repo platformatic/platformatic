@@ -113,8 +113,7 @@ test('graphql client generation (typescript)', async t => {
       port: 0
     },
     plugins: {
-      paths: ['./plugin.ts'],
-      typescript: true
+      paths: ['./plugin.ts']
     }
   }
 

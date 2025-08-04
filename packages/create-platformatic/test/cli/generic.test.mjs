@@ -11,19 +11,13 @@ import {
   startMarketplace
 } from './helper.mjs'
 
-async function getLatestPackageVersion (packageName) {
-  const response = await fetch(`https://registry.npmjs.org/${packageName}/latest`)
-  const info = await response.json()
-
-  return info.version
-}
+const version = JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8')).version
 
 test('Support packages without generator via importing (new application)', async t => {
   const external = await createTemporaryDirectory(t, 'external')
   const applicationPath = resolve(external, 'existing-application')
   await cp(new URL('../fixtures/existing-application', import.meta.url), applicationPath, { recursive: true })
 
-  const version = await getLatestPackageVersion('@platformatic/vite')
   const root = await createTemporaryDirectory(t, 'other')
   const marketplaceHost = await startMarketplace(t)
 
@@ -35,7 +29,6 @@ test('Support packages without generator via importing (new application)', async
     { type: 'input', question: 'Where is your application located?', reply: applicationPath },
     { type: 'list', question: 'Do you want to import or copy your application?', reply: 'import' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
@@ -82,7 +75,6 @@ test('Support packages without generator via importing (existing applications)',
   await execa('git', ['init', '.'], { cwd: applicationPath })
   await execa('git', ['remote', 'add', 'origin', 'git@github.com:hello/world.git'], { cwd: applicationPath })
 
-  const version = await getLatestPackageVersion('@platformatic/vite')
   const root = await createTemporaryDirectory(t, 'other')
   const marketplaceHost = await startMarketplace(t)
   const baseProjectDir = join(root, 'platformatic')
@@ -92,8 +84,8 @@ test('Support packages without generator via importing (existing applications)',
     { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
@@ -104,8 +96,7 @@ test('Support packages without generator via importing (existing applications)',
     { type: 'input', question: 'Where is your application located?', reply: applicationPath },
     { type: 'list', question: 'Do you want to import or copy your application?', reply: 'import' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
-    { type: 'list', question: 'Which service should be exposed?', reply: 'main' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' }
+    { type: 'list', question: 'Which service should be exposed?', reply: 'main' }
   ])
 
   await executeCreatePlatformatic(root, {
@@ -167,7 +158,6 @@ test('Support packages without generator via copy (new application)', async t =>
 
   const originalPackageJson = await readFile(resolve(sourcePath, 'package.json'), 'utf8')
 
-  const version = await getLatestPackageVersion('@platformatic/vite')
   const root = await createTemporaryDirectory(t, 'other')
   const marketplaceHost = await startMarketplace(t)
 
@@ -179,7 +169,6 @@ test('Support packages without generator via copy (new application)', async t =>
     { type: 'input', question: 'Where is your application located?', reply: sourcePath },
     { type: 'list', question: 'Do you want to import or copy your application?', reply: 'copy' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
@@ -221,7 +210,6 @@ test('Support packages without generator via copy (existing applications)', asyn
 
   const originalPackageJson = await readFile(resolve(sourcePath, 'package.json'), 'utf8')
 
-  const version = await getLatestPackageVersion('@platformatic/vite')
   const root = await createTemporaryDirectory(t, 'other')
   const marketplaceHost = await startMarketplace(t)
   const baseProjectDir = join(root, 'platformatic')
@@ -231,8 +219,8 @@ test('Support packages without generator via copy (existing applications)', asyn
     { type: 'input', question: 'Where would you like to create your project?', reply: 'platformatic' },
     { type: 'list', question: 'Which kind of service do you want to create?', reply: '@platformatic/service' },
     { type: 'input', question: 'What is the name of the service?', reply: 'main' },
-    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' },
+    { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
     { type: 'input', question: 'What port do you want to use?', reply: '3042' },
     { type: 'list', question: 'Do you want to init the git repository?', reply: 'no' }
   ])
@@ -243,8 +231,7 @@ test('Support packages without generator via copy (existing applications)', asyn
     { type: 'input', question: 'Where is your application located?', reply: sourcePath },
     { type: 'list', question: 'Do you want to import or copy your application?', reply: 'copy' },
     { type: 'list', question: 'Do you want to create another service?', reply: 'no' },
-    { type: 'list', question: 'Which service should be exposed?', reply: 'main' },
-    { type: 'list', question: 'Do you want to use TypeScript?', reply: 'no' }
+    { type: 'list', question: 'Which service should be exposed?', reply: 'main' }
   ])
 
   await executeCreatePlatformatic(root, {

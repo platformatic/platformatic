@@ -1,6 +1,6 @@
 {
   "name": "@platformatic/runtime",
-  "version": "2.73.1",
+  "version": "3.0.0-alpha.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -65,7 +65,6 @@
     "@platformatic/metrics": "workspace:*",
     "@platformatic/itc": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
-    "@platformatic/ts-compiler": "workspace:*",
     "@platformatic/undici-cache-memory": "^0.8.1",
     "@platformatic/utils": "workspace:*",
     "@watchable/unpromise": "^1.0.2",

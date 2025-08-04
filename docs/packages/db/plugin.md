@@ -14,6 +14,7 @@ The config file will specify where the plugin file is located as the example bel
   }
 }
 ```
+
 The paths are relative to the config file path.
 
 Once the config file is set up, you can write your plugin to extend Platformatic DB API or write your custom business logic.
@@ -25,10 +26,9 @@ You should export an async `function` which receives a parameters:
 
 You can always access Platformatic [data mapper](../sql-mapper/overview.md) through `app.platformatic` property.
 
-
 ## Context Integration in Plugin Operations
 
-To ensure robust authorization and data management, it's important to pass the `context` object to the `entity mapper`. This `context` includes user-specific data, permissions, and other parameters that influence how data operations are executed. 
+To ensure robust authorization and data management, it's important to pass the `context` object to the `entity mapper`. This `context` includes user-specific data, permissions, and other parameters that influence how data operations are executed.
 
 Here's how you can integrate context into your plugin:
 
@@ -37,7 +37,9 @@ app.post('/', async (req, reply) => {
   const ctx = req.platformaticContext
 
   await app.platformatic.entities.movies.find({
-    where: { /*...*/ },
+    where: {
+      /*...*/
+    },
     ctx
   })
 })
@@ -97,7 +99,7 @@ Multiple plugins can be loaded in parallel by specifying an array:
 
 If you want to access any of the types provided by Platformatic DB, generate them using the Watt's `$db:types` command (where `$db` is the id of your Platformatic DB service).
 This will create a `plt-env.d.ts` file that add Platformatic types to fastify instances. This file is included automatically
-by Typescript, unless you have the `includes` option set in your `tsconfig.json`. In that case you need to add 
+by Typescript, unless you have the `includes` option set in your `tsconfig.json`. In that case you need to add
 `plt-env.d.ts` to the `include` list manually.
 
 ### Plugin definition with TypeScript
@@ -105,12 +107,9 @@ by Typescript, unless you have the `includes` option set in your `tsconfig.json`
 Here is an example of writing a plugin in TypeScript:
 
 ```ts
-import { FastifyInstance, FastifyPluginOptions } from 'fastify'
+import { type FastifyInstance, type FastifyPluginOptions } from 'fastify'
 
-export default async function (fastify: FastifyInstance, opts: FastifyPluginOptions) {
-}
+export default async function  (fastify: FastifyInstance, opts: FastifyPluginOptions) {}
 ```
-
-Note that you need to add the `"plugins": { "typescript": true }` configuration to your `platformatic.json`.
 
 <Issues />
