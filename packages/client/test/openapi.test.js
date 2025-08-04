@@ -42,7 +42,9 @@ test('build basic client from url', async t => {
   await app.start()
 
   const client = await buildOpenAPIClient({
-    url: `${app.url}/documentation/json`
+    url: `${app.url}/documentation/json`,
+    fullRequest: false,
+    fullResponse: false
   })
 
   assert.deepEqual(client[Symbol.for('plt.operationIdMap')], {
@@ -165,7 +167,8 @@ test('build full response client from url', async t => {
 
   const client = await buildOpenAPIClient({
     url: `${app.url}/documentation/json`,
-    fullResponse: true
+    fullResponse: true,
+    fullRequest: false
   })
 
   const matchDate = /[a-z]{3}, \d{2} [a-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT/i
@@ -320,7 +323,8 @@ test('properly call query parser', async t => {
   const mockQueryParser = mock.fn()
   const clientWithoutQueryParser = await buildOpenAPIClient({
     url: `${app.url}/documentation/json`,
-    fullResponse: true
+    fullResponse: true,
+    fullRequest: false
   })
 
   const resultWithoutQueryParser = await clientWithoutQueryParser.getMovies()
@@ -330,6 +334,7 @@ test('properly call query parser', async t => {
   const clientWithQueryParser = await buildOpenAPIClient({
     url: `${app.url}/documentation/json`,
     fullResponse: true,
+    fullRequest: false,
     queryParser: mockQueryParser
   })
 
@@ -358,7 +363,8 @@ test('properly call undici dispatcher', async t => {
 
   const clientWithoutDispatcher = await buildOpenAPIClient({
     url: `${app.url}/documentation/json`,
-    fullResponse: true
+    fullResponse: true,
+    fullRequest: false
   })
 
   const resultWithoutDispatcher = await clientWithoutDispatcher.getMovies()
@@ -368,6 +374,7 @@ test('properly call undici dispatcher', async t => {
   const clientWithDispatcher = await buildOpenAPIClient({
     url: `${app.url}/documentation/json`,
     fullResponse: true,
+    fullRequest: false,
     dispatcher
   })
 
@@ -379,6 +386,7 @@ test('properly call undici dispatcher', async t => {
     const client = await buildOpenAPIClient({
       url: `${app.url}/documentation/json`,
       fullResponse: true,
+      fullRequest: false,
       dispatcher: 'CARLO MARTELLO!'
     })
     await client.getMovies()
@@ -412,7 +420,9 @@ test('throw on error level response', async t => {
   const client = await buildOpenAPIClient({
     url: `${app.url}/movies-api/`,
     path: join(__dirname, 'fixtures', 'movies', 'openapi.json'),
-    throwOnError: true
+    throwOnError: true,
+    fullRequest: false,
+    fullResponse: false
   })
 
   await assert.rejects(
@@ -486,7 +496,9 @@ test('throw on error level response (modified global dispatcher)', async t => {
   const client = await buildOpenAPIClient({
     url: `${app.url}/movies-api`,
     path: join(__dirname, 'fixtures', 'movies', 'openapi.json'),
-    throwOnError: true
+    throwOnError: true,
+    fullRequest: false,
+    fullResponse: false
   })
 
   await assert.rejects(
@@ -551,7 +563,9 @@ test('throw on error level response (supplied dispatcher)', async t => {
     url: `${app.url}/movies-api`,
     path: join(__dirname, 'fixtures', 'movies', 'openapi.json'),
     throwOnError: true,
-    dispatcher: mockAgent
+    dispatcher: mockAgent,
+    fullRequest: false,
+    fullResponse: false
   })
 
   await assert.rejects(
@@ -589,7 +603,9 @@ test('build basic client from file', async t => {
 
   const client = await buildOpenAPIClient({
     url: `${app.url}/movies-api/`,
-    path: join(__dirname, 'fixtures', 'movies', 'openapi.json')
+    path: join(__dirname, 'fixtures', 'movies', 'openapi.json'),
+    fullRequest: false,
+    fullResponse: false
   })
 
   const movie = await client.createMovie({
@@ -681,7 +697,9 @@ test('build basic client from url with custom headers', async t => {
     url: `${app.url}/documentation/json`,
     headers: {
       'x-platformatic-admin-secret': 'changeme'
-    }
+    },
+    fullRequest: false,
+    fullResponse: false
   })
 
   const movie = await client.createMovie({
@@ -771,7 +789,9 @@ test('302', async t => {
 
   const client = await buildOpenAPIClient({
     url: `${app.url}/`,
-    path: join(tmpDir, 'openapi.json')
+    path: join(tmpDir, 'openapi.json'),
+    fullRequest: false,
+    fullResponse: false
   })
   {
     const resp = await client.redirectMe()

@@ -84,7 +84,7 @@ test('openapi client generation (javascript)', async t => {
   const plugin = `
 module.exports = async function (app) {
   app.post('/', async (request, reply) => {
-    const res = await request.movies.createMovie({ title: 'foo' })
+    const res = await request.movies.createMovie({ body: { title: 'foo' } })
     return res
   })
 }
@@ -106,7 +106,7 @@ module.exports = async function (app) {
   const res = await request(app2.url, {
     method: 'POST'
   })
-  const body = await res.body.json()
+  const { body } = await res.body.json()
   same(body, {
     id: 1,
     title: 'foo'
@@ -142,7 +142,7 @@ import { type FastifyPluginAsync } from 'fastify'
 
 const myPlugin: FastifyPluginAsync<{}> = async (app, options) => {
   app.post('/', async (request, reply) => {
-    const res = await request.movies.createMovie({ title: 'foo' })
+    const res = await request.movies.createMovie({ body: { title: 'foo' } })
     return res
   })
 }
@@ -185,7 +185,7 @@ export default myPlugin
   const res = await request(app2.url, {
     method: 'POST'
   })
-  const body = await res.body.json()
+  const { body } = await res.body.json()
   same(body, {
     id: 1,
     title: 'foo'
@@ -302,7 +302,9 @@ export default myPlugin
     app.url + '/documentation/json',
     '--name',
     'movies',
-    '--types-only'
+    '--types-only',
+    '--full',
+    'false'
   ])
 
   const tsconfig = JSON.stringify(
@@ -399,7 +401,9 @@ export default myPlugin
     'movies',
     '--folder',
     'uncanny',
-    '--types-only'
+    '--types-only',
+    '--full',
+    'false'
   ])
 
   const tsconfig = JSON.stringify(

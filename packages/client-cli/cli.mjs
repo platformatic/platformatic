@@ -524,7 +524,8 @@ export async function command (argv) {
     ],
     default: {
       typescript: false,
-      language: 'js'
+      language: 'js',
+      full: true
     },
     alias: {
       n: 'name',
