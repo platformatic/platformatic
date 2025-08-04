@@ -1,8 +1,8 @@
 import { execa } from 'execa'
 import { on, once } from 'node:events'
 import { readFile } from 'node:fs/promises'
-import { createRequire } from 'node:module'
 import os from 'node:os'
+import { resolve } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import split from 'split2'
 import { Agent, setGlobalDispatcher } from 'undici'
@@ -14,7 +14,7 @@ setGlobalDispatcher(
   })
 )
 
-const startPath = createRequire(import.meta.url).resolve('@platformatic/runtime/test/cli/start.mjs')
+const startPath = resolve(import.meta.dirname, 'start.js')
 
 export async function getPlatformaticVersion () {
   const packageJsonPath = new URL('../package.json', import.meta.url)
