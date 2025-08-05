@@ -3,12 +3,21 @@
   "version": "3.0.0-alpha.1",
   "description": "A client for all platformatic backends",
   "main": "cli.mjs",
+  "types": "index.d.ts",
   "bin": {
     "plt-client": "cli.mjs"
   },
   "scripts": {
     "lint": "eslint",
-    "test": "pnpm run lint && borp --concurrency=1 --timeout=1200000 && tsd"
+    "test": "pnpm run lint && borp --concurrency=1 --timeout=1200000 && tsd",
+    "pree2e:test": "npm run e2e:prepare",
+    "e2e:test": "playwright test -c test/e2e/playwright.config.js && cd test/e2e && tsc --noEmit -p .",
+    "e2e:prepare": "node test/e2e/prepare.mjs",
+    "e2e:dev": "vite test/e2e/client",
+    "e2e:server": "wattpm start --config platformatic.e2e.db.json test/e2e/server",
+    "e2e:build": "npm run e2e:prepare && vite build test/e2e/client",
+    "e2e:preview": "vite preview test/e2e/client",
+    "e2e:cleanup": "rm -rf test/e2e/client/dist test/e2e/client/src/generated test/e2e/server/db.sqlite playwright-report test-results"
   },
   "repository": {
     "type": "git",
@@ -20,25 +29,6 @@
     "url": "https://github.com/platformatic/platformatic/issues"
   },
   "homepage": "https://github.com/platformatic/platformatic#readme",
-  "devDependencies": {
-    "@matteo.collina/tspl": "^0.2.0",
-    "@platformatic/composer": "workspace:*",
-    "@platformatic/db": "workspace:*",
-    "@platformatic/runtime": "workspace:*",
-    "@platformatic/service": "workspace:*",
-    "borp": "^0.20.0",
-    "dotenv": "^16.4.5",
-    "eslint": "9",
-    "execa": "^9.0.0",
-    "fastify": "^5.0.0",
-    "fastify-tsconfig": "^3.0.0",
-    "fs-extra": "^11.2.0",
-    "neostandard": "^0.12.0",
-    "split2": "^4.2.0",
-    "tsd": "^0.32.0",
-    "typescript": "^5.4.2",
-    "why-is-node-running": "^2.2.2"
-  },
   "dependencies": {
     "@fastify/error": "^4.0.0",
     "@platformatic/client": "workspace:*",
@@ -54,5 +44,31 @@
     "undici": "^7.0.0",
     "yaml": "^2.4.1"
   },
-  "types": "index.d.ts"
+  "devDependencies": {
+    "@platformatic/composer": "workspace:*",
+    "@platformatic/db": "workspace:*",
+    "@platformatic/runtime": "workspace:*",
+    "@platformatic/service": "workspace:*",
+    "@playwright/test": "^1.42.1",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.5",
+    "@vitejs/plugin-react": "^4.5.2",
+    "borp": "^0.20.0",
+    "dotenv": "^16.4.5",
+    "eslint": "9",
+    "execa": "^9.0.0",
+    "fastify": "^5.0.0",
+    "fastify-tsconfig": "^3.0.0",
+    "fs-extra": "^11.2.0",
+    "neostandard": "^0.12.0",
+    "scheduler": "^0.26.0",
+    "split2": "^4.2.0",
+    "tsd": "^0.32.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "typescript": "^5.5.4",
+    "vite": "^5.1.6",
+    "wattpm": "workspace:*",
+    "why-is-node-running": "^2.2.2"
+  }
 }

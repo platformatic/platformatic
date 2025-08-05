@@ -1,7 +1,6 @@
-import { tspl } from '@matteo.collina/tspl'
 import { match } from '@platformatic/utils'
 import { execa } from 'execa'
-import { fail, ok, deepEqual as same } from 'node:assert'
+import { equal, fail, ok, deepEqual as same } from 'node:assert'
 import { once } from 'node:events'
 import { cp, readFile, writeFile } from 'node:fs/promises'
 import { after, test } from 'node:test'
@@ -352,7 +351,6 @@ PLT_SERVER_LOGGER_LEVEL=info
 })
 
 test('no platformatic.runtime.json', async t => {
-  const { equal, match } = tspl(t, { plan: 2 })
   const dir = await moveToTmpdir(after)
 
   process.chdir(dir)
@@ -371,7 +369,7 @@ test('no platformatic.runtime.json', async t => {
   const stream = app.stdout.pipe(split())
 
   for await (const line of stream) {
-    match(line, /Could not find a platformatic.json file in any parent directory./)
+    ok(match(line, /Could not find a platformatic.json file in any parent directory./))
   }
 
   const [code] = await onExit

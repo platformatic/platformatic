@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 test('The generated Platformatic frontend template works as expected', async ({ page }) => {
   await page.goto('http://localhost:5173/')
