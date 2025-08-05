@@ -4,9 +4,41 @@ import assert from 'node:assert/strict'
 import { readFile, unlink } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { test } from 'node:test'
+import { parseArgs as nodeParseArgs } from 'node:util'
 import split from 'split2'
+import { applyMigrations } from '../../lib/commands/migrations-apply.js'
 import { getConnectionInfo } from '../helper.js'
 import { cliPath, connectDB, getFixturesConfigFileLocation, safeKill, startPath } from './helper.js'
+
+function createTestContext () {
+  return {
+    parseArgs (args, options) {
+      return nodeParseArgs({ args, options, allowPositionals: true, allowNegative: true, strict: false })
+    },
+    colorette: {
+      bold (str) {
+        return str
+      }
+    },
+    logFatalError (logger, ...args) {
+      if (logger.fatal) logger.fatal(...args)
+      return false
+    }
+  }
+}
+
+function createCapturingLogger () {
+  let capturedOutput = ''
+  const logger = {
+    info: (msg) => { capturedOutput += msg + '\n' },
+    warn: (msg) => { capturedOutput += msg + '\n' },
+    debug: () => {},
+    trace: () => {},
+    error: (msg) => { capturedOutput += msg + '\n' }
+  }
+  logger.getCaptured = () => capturedOutput
+  return logger
+}
 
 test('migrate on start', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
@@ -200,11 +232,11 @@ test('migrate creates a schema.lock file', async t => {
     await unlink(expectedFile)
   } catch {}
 
-  await execa('node', [cliPath, 'applyMigrations', configPath], {
-    env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
-  })
+  const logger = createCapturingLogger()
+  const context = createTestContext()
+
+  process.env.DATABASE_URL = connectionInfo.connectionString
+  await applyMigrations(logger, configPath, [], context)
 
   const data = await readFile(expectedFile, 'utf-8')
   // Let's just validate this is a valid JSON file
