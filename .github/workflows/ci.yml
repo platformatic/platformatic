@@ -481,7 +481,7 @@ jobs:
     strategy:
       matrix:
         node-version: [22.18.0, 24]
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: pnpm/action-setup@v4.1.0
