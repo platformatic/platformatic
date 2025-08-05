@@ -496,7 +496,7 @@ jobs:
       - name: Start docker containers for testing
         run: docker compose up -d postgresql
       - name: Install E2E Playwright browsers
-        run: cd packages/frontend-template && pnpm exec playwright install
+        run: cd packages/client-cli && pnpm exec playwright install
       - name: Run utils package test suite
         run: cd packages/client-cli && pnpm test && pnpm e2e:test
 

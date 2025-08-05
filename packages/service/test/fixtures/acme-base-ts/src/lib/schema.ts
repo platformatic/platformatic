@@ -26,6 +26,7 @@ schema.properties.dynamite = {
 
 delete schema.properties.plugins
 
+// @ts-expect-error Types not updated yet
 if (import.meta.main) {
   console.log(JSON.stringify(schema, null, 2))
 }
