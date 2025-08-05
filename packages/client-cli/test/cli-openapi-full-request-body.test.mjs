@@ -4,10 +4,9 @@ import { readFile } from 'fs/promises'
 import { equal } from 'node:assert'
 import { after, test } from 'node:test'
 import { join } from 'path'
-import { isFileAccessible } from '../cli.mjs'
 import { moveToTmpdir } from './helper.js'
 
-test('full-request-body', async (t) => {
+test('full-request-body', async t => {
   const openapi = join(import.meta.dirname, 'fixtures', 'full-req-body', 'openapi.json')
   const dir = await moveToTmpdir(after)
 
@@ -24,16 +23,26 @@ test('full-request-body', async (t) => {
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
 
-  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openapi, '--name', 'full', '--validate-response', '--optional-headers', 'headerId', '--full'])
-
-  equal(await isFileAccessible(join(dir, 'full', 'full.cjs')), false)
+  await execa('node', [
+    join(import.meta.dirname, '..', 'cli.mjs'),
+    openapi,
+    '--name',
+    'full',
+    '--validate-response',
+    '--optional-headers',
+    'headerId',
+    '--full'
+  ])
 
   const typeFile = join(dir, 'full', 'full.d.ts')
   const data = await readFile(typeFile, 'utf-8')
-  equal(data.includes(`
+  equal(
+    data.includes(`
   export type PostHelloRequest = {
     body: {
       'mainData': Array<{ 'surname'?: string; 'name': string }>;
     }
-  }`), true)
+  }`),
+    true
+  )
 })

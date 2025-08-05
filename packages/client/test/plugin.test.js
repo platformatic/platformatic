@@ -8,12 +8,12 @@ const { join } = require('node:path')
 const { mkdtemp, cp, unlink } = require('node:fs/promises')
 const Fastify = require('fastify')
 const { MockAgent, setGlobalDispatcher, getGlobalDispatcher } = require('undici')
-const { create } = require('../../db')
+const { create } = require('@platformatic/db')
 const { safeRemove } = require('@platformatic/utils')
 const client = require('..')
 require('./helper')
 
-test('wrong type', async (t) => {
+test('wrong type', async t => {
   const app = Fastify()
 
   await assert.rejects(async () => {
@@ -27,7 +27,7 @@ test('wrong type', async (t) => {
   }, new errors.WrongOptsTypeError())
 })
 
-test('default decorator', async (t) => {
+test('default decorator', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -87,7 +87,7 @@ test('default decorator', async (t) => {
   ])
 })
 
-test('req decorator with OpenAPI and auth', async (t) => {
+test('req decorator with OpenAPI and auth', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'auth')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -118,7 +118,7 @@ test('req decorator with OpenAPI and auth', async (t) => {
     }
   })
 
-  app.post('/', async (req) => {
+  app.post('/', async req => {
     const movie = await req.client.createMovie({
       title: 'The Matrix'
     })
@@ -141,7 +141,7 @@ test('req decorator with OpenAPI and auth', async (t) => {
   })
 })
 
-test('app decorator with OpenAPI', async (t) => {
+test('app decorator with OpenAPI', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -202,7 +202,7 @@ test('app decorator with OpenAPI', async (t) => {
   ])
 })
 
-test('req decorator with OpenAPI', async (t) => {
+test('req decorator with OpenAPI', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -245,7 +245,7 @@ test('req decorator with OpenAPI', async (t) => {
     }
   })
 
-  app.post('/', async (req) => {
+  app.post('/', async req => {
     const movie = await req.client.createMovie({
       title: 'The Matrix'
     })
@@ -270,7 +270,7 @@ test('req decorator with OpenAPI', async (t) => {
   })
 })
 
-test('validate response', async (t) => {
+test('validate response', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'movies')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -298,7 +298,7 @@ test('validate response', async (t) => {
     validateResponse: true
   })
 
-  app.post('/', async (req) => {
+  app.post('/', async req => {
     const movie = await req.movies.createMovie({
       title: 'The Matrix'
     })
@@ -306,7 +306,7 @@ test('validate response', async (t) => {
     return movie
   })
 
-  app.get('/allMovies', async (req) => {
+  app.get('/allMovies', async req => {
     const movies = await req.movies.getMovies({})
     return movies
   })
@@ -322,13 +322,15 @@ test('validate response', async (t) => {
   })
 
   assert.equal(res.statusCode, 200)
-  assert.deepEqual(res.json(), [{
-    id: 1,
-    title: 'The Matrix'
-  }])
+  assert.deepEqual(res.json(), [
+    {
+      id: 1,
+      title: 'The Matrix'
+    }
+  ])
 })
 
-test('req decorator with GraphQL and auth', async (t) => {
+test('req decorator with GraphQL and auth', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'auth')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -357,7 +359,7 @@ test('req decorator with GraphQL and auth', async (t) => {
     }
   })
 
-  app.post('/', async (req) => {
+  app.post('/', async req => {
     const movie = await req.client.graphql({
       query: `
         mutation createMovie($title: String!) {
@@ -389,7 +391,7 @@ test('req decorator with GraphQL and auth', async (t) => {
   })
 })
 
-test('configureClient getHeaders', async (t) => {
+test('configureClient getHeaders', async t => {
   const fixtureDirPath = join(__dirname, 'fixtures', 'auth')
   const tmpDir = await mkdtemp(join(tmpdir(), 'platformatic-client-'))
   await cp(fixtureDirPath, tmpDir, { recursive: true })
@@ -424,7 +426,7 @@ test('configureClient getHeaders', async (t) => {
     }
   })
 
-  app.post('/', async (req) => {
+  app.post('/', async req => {
     const movie = await req.movies.createMovie({
       title: 'The Matrix'
     })
@@ -447,7 +449,7 @@ test('configureClient getHeaders', async (t) => {
   })
 })
 
-test('serviceId', async (t) => {
+test('serviceId', async t => {
   const agent = getGlobalDispatcher()
   t.after(() => {
     setGlobalDispatcher(agent)
@@ -460,16 +462,18 @@ test('serviceId', async (t) => {
   const mockPool = mockAgent.get('http://movies.plt.local')
 
   // intercept the request
-  mockPool.intercept({
-    path: '/movies/',
-    method: 'POST',
-    body: JSON.stringify({
+  mockPool
+    .intercept({
+      path: '/movies/',
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'The Matrix'
+      })
+    })
+    .reply(200, {
+      id: 1,
       title: 'The Matrix'
     })
-  }).reply(200, {
-    id: 1,
-    title: 'The Matrix'
-  })
 
   const app = Fastify()
 

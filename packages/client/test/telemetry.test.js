@@ -8,7 +8,7 @@ const { mkdtemp, cp, unlink } = require('node:fs/promises')
 const Fastify = require('fastify')
 const { telemetry } = require('@platformatic/telemetry')
 const { safeRemove } = require('@platformatic/utils')
-const { create } = require('../../db')
+const { create } = require('@platformatic/db')
 const client = require('..')
 require('./helper')
 

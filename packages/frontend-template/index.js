@@ -1,5 +1,4 @@
 import camelcase from 'camelcase'
-import isMain from 'es-main'
 import { readFile, writeFile } from 'fs/promises'
 import helpMe from 'help-me'
 import parseArgs from 'minimist'
@@ -11,7 +10,7 @@ async function frontendTemplate ({ source, language, name, fullResponse }) {
   const help = helpMe({
     dir: join(import.meta.dirname, 'help'),
     // the default
-    ext: '.txt',
+    ext: '.txt'
   })
   let schema
   if (source.startsWith('http')) {
@@ -47,12 +46,14 @@ async function frontendTemplate ({ source, language, name, fullResponse }) {
 
 export async function command (argv) {
   let {
-    _: [source, language], name, 'full-response': fullResponse,
+    _: [source, language],
+    name,
+    'full-response': fullResponse
   } = parseArgs(argv)
   const help = helpMe({
     dir: join(import.meta.dirname, 'help'),
     // the default
-    ext: '.txt',
+    ext: '.txt'
   })
   if (!name) {
     name = 'api'
@@ -74,6 +75,6 @@ export async function command (argv) {
   }
 }
 
-if (isMain(import.meta)) {
+if (import.meta.main) {
   command(process.argv.slice(2))
 }

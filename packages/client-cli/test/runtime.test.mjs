@@ -1,7 +1,7 @@
 import { tspl } from '@matteo.collina/tspl'
 import { match } from '@platformatic/utils'
 import { execa } from 'execa'
-import { equal, fail, ok, deepEqual as same } from 'node:assert'
+import { fail, ok, deepEqual as same } from 'node:assert'
 import { once } from 'node:events'
 import { cp, readFile, writeFile } from 'node:fs/promises'
 import { after, test } from 'node:test'
@@ -55,25 +55,20 @@ PLT_SERVER_LOGGER_LEVEL=info
 
   await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
 
-  const read = JSON.parse(
-    await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8')
-  )
-  match(read, {
-    clients: [
-      {
-        serviceId: 'somber-chariot',
-        type: 'openapi',
-        schema: posix.join('movies', 'movies.openapi.json')
-      }
-    ]
-  })
-
   const toWrite = `
 'use strict'
 
+const { resolve } = require('node:path')
+const { buildOpenAPIClient } = require('@platformatic/client')
+
 module.exports = async function (app, opts) {
+  const client = await buildOpenAPIClient({
+    url: 'http://somber-chariot.plt.local',
+    path: resolve(__dirname, '../movies/movies.openapi.json'),
+  })
+
   app.post('/', async (request, reply) => {
-    const res = await request.movies.createMovie({ body: { title: 'foo' } })
+    const res = await client.createMovie({ body: { title: 'foo' } })
     return res
   })
 }
@@ -194,8 +189,16 @@ PLT_SERVER_LOGGER_LEVEL=info
 'use strict'
 
 module.exports = async function (app, opts) {
+  const { resolve } = require('node:path')
+  const { buildGraphQLClient } = require('@platformatic/client')
+
   app.post('/', async (request, reply) => {
-    return await request.movies.graphql({
+    const client = await buildGraphQLClient({
+      url: 'http://somber-chariot.plt.local/graphql',
+      path: resolve(__dirname, '../movies/movies.schema.graphql'),
+    })
+
+    return await client.graphql({
       query: \`
         mutation createMovie($title: String!) {
           saveMovie(input: {title: $title}) {
@@ -286,24 +289,6 @@ PLT_SERVER_LOGGER_LEVEL=info
 
   await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
   await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), '--name', 'movies', '--runtime', 'somber-chariot'])
-
-  const config = JSON.parse(
-    await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8')
-  )
-
-  equal(
-    match(config, {
-      clients: [
-        {
-          schema: 'movies/movies.openapi.json',
-          name: 'movies',
-          type: 'openapi',
-          serviceId: 'somber-chariot'
-        }
-      ]
-    }),
-    true
-  )
 })
 
 test('error if a service does not have openapi enabled', async t => {
@@ -445,26 +430,21 @@ PLT_SERVER_LOGGER_LEVEL=info
     'somber-chariot'
   ])
 
-  const read = JSON.parse(
-    await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8')
-  )
-  match(read, {
-    clients: [
-      {
-        serviceId: 'somber-chariot',
-        type: 'openapi',
-        name: 'somberMovies',
-        schema: posix.join('movies', 'movies.openapi.json')
-      }
-    ]
-  })
-
   const toWrite = `
 'use strict'
 
+const { resolve } = require('node:path')
+const { buildOpenAPIClient } = require('@platformatic/client')
+
 module.exports = async function (app, opts) {
+  const client = await buildOpenAPIClient({
+    url: 'http://somber-chariot.plt.local',
+    path: resolve(__dirname, '../somber-movies/somber-movies.openapi.json'),
+  })
+
+
   app.post('/', async (request, reply) => {
-    const res = await request.somberMovies.createMovie({ body: { title: 'foo' } })
+    const res = await client.createMovie({ body: { title: 'foo' } })
     return res
   })
 }
@@ -554,26 +534,19 @@ PLT_SERVER_LOGGER_LEVEL=info
     '--validate-response'
   ])
 
-  const read = JSON.parse(
-    await readFile(join(dir, 'services', 'languid-nobleman', 'platformatic.service.json'), 'utf8')
-  )
-  match(read, {
-    clients: [
-      {
-        serviceId: 'somber-chariot',
-        type: 'openapi',
-        schema: posix.join('movies', 'movies.openapi.json'),
-        fullRequest: true,
-        fullResponse: true,
-        validateResponse: true
-      }
-    ]
-  })
-
   const toWrite = `
 'use strict'
 
+const { resolve } = require('node:path')
+const { buildOpenAPIClient } = require('@platformatic/client')
+
+
 module.exports = async function (app, opts) {
+  const client = await buildOpenAPIClient({
+    url: 'http://somber-chariot.plt.local',
+    path: resolve(__dirname, '../movies/movies.openapi.json'),
+  })
+
   app.post('/', {
     schema: {
       response: {
@@ -599,7 +572,7 @@ module.exports = async function (app, opts) {
       }
     },
     handler: async (request, reply) => {
-      const res = await request.movies.createMovie({ body: { title: 'foo' } })
+      const res = await client.createMovie({ body: { title: 'foo' } })
       return res
     }
   })

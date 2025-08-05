@@ -1,11 +1,10 @@
 import { create } from '@platformatic/db'
 import { create as buildService } from '@platformatic/service'
-import { match as matchObj } from '@platformatic/utils'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
-import { equal, match, ok, deepEqual as same } from 'node:assert'
+import { match, ok, deepEqual as same } from 'node:assert'
 import { after, test } from 'node:test'
-import { join, posix } from 'path'
+import { join } from 'path'
 import { moveToTmpdir, request } from './helper.js'
 
 test('generates only types in target folder with --types-only flag', async t => {
@@ -82,9 +81,17 @@ test('openapi client generation (javascript)', async t => {
   }
 
   const plugin = `
+const { resolve } = require('node:path')
+const { buildOpenAPIClient } = require('@platformatic/client')
+
 module.exports = async function (app) {
+  const client = await buildOpenAPIClient({
+    url: '${app.url}',
+    path: resolve(__dirname, './movies/movies.openapi.json'),
+  })
+
   app.post('/', async (request, reply) => {
-    const res = await request.movies.createMovie({ body: { title: 'foo' } })
+    const res = await client.createMovie({ body: { title: 'foo' } })
     return res
   })
 }
@@ -139,10 +146,17 @@ test('openapi client generation (typescript)', async t => {
   const plugin = `
 /// <reference types="./movies" />
 import { type FastifyPluginAsync } from 'fastify'
+import { resolve } from 'node:path'
+import { buildOpenAPIClient } from '@platformatic/client'
 
 const myPlugin: FastifyPluginAsync<{}> = async (app, options) => {
+  const client = await buildOpenAPIClient({
+    url: '${app.url}',
+    path: resolve(import.meta.dirname, './movies/movies.openapi.json'),
+  })
+    
   app.post('/', async (request, reply) => {
-    const res = await request.movies.createMovie({ body: { title: 'foo' } })
+    const res = await client.createMovie({ body: { title: 'foo' } })
     return res
   })
 }
@@ -190,61 +204,6 @@ export default myPlugin
     id: 1,
     title: 'foo'
   })
-})
-
-test('config support with folder', async t => {
-  try {
-    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
-  } catch {
-    // noop
-  }
-  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
-
-  await app.start()
-  t.after(async () => {
-    await app.close()
-  })
-
-  await moveToTmpdir(after)
-
-  const pltServiceConfig = {
-    $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
-    server: {
-      hostname: '127.0.0.1',
-      port: 0
-    },
-    plugins: {
-      paths: ['./plugin.js']
-    }
-  }
-
-  await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
-
-  await execa('node', [
-    join(import.meta.dirname, '..', 'cli.mjs'),
-    app.url + '/documentation/json',
-    '--name',
-    'movies',
-    '--folder',
-    'uncanny'
-  ])
-
-  {
-    const config = JSON.parse(await fs.readFile('./platformatic.service.json', 'utf-8'))
-    equal(
-      matchObj(config, {
-        clients: [
-          {
-            schema: posix.join('uncanny', 'movies.openapi.json'),
-            name: 'movies',
-            type: 'openapi',
-            url: '{PLT_MOVIES_URL}'
-          }
-        ]
-      }),
-      true
-    )
-  }
 })
 
 test('openapi client generation (typescript) with --types-only', async t => {
@@ -456,7 +415,7 @@ test('generate client twice', async t => {
     await app.close()
   })
 
-  const dir = await moveToTmpdir(after)
+  await moveToTmpdir(after)
 
   const pltServiceConfig = {
     $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
@@ -483,9 +442,6 @@ module.exports = async function (app) {
 
   await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
   await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), app.url + '/documentation/json', '--name', 'movies'])
-
-  const envFile = await fs.readFile(join(dir, '.env'), 'utf8')
-  equal(envFile.match(/PLT_MOVIES_URL/g).length, 1)
 })
 
 test('openapi client generation (javascript) from file', async t => {
