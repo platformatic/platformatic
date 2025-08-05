@@ -30,7 +30,11 @@ class FileSpanExporter {
   #exportInfo (span) {
     return {
       traceId: span.spanContext().traceId,
-      parentId: span.parentSpanId,
+      // parentId has been removed from otel 2.0, we need to get it from parentSpanContext
+      parentSpanContext: {
+        traceId: span.parentSpanContext?.traceId,
+        spanId: span.parentSpanContext?.spanId
+      },
       traceState: span.spanContext().traceState?.serialize(),
       name: span.name,
       id: span.spanContext().spanId,
@@ -42,7 +46,8 @@ class FileSpanExporter {
       events: span.events,
       links: span.links,
       resource: span.resource,
-      instrumentationLibrary: span.instrumentationLibrary
+      // instrumentationLibrary is deprecated in otel 2.0, we need to use instrumentationScope
+      instrumentationScope: span.instrumentationLibrary || span.instrumentationScope
     }
   }
 }

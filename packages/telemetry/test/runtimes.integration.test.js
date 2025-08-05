@@ -159,6 +159,7 @@ test('configure telemetry correctly with a composer + next - integration test', 
         }, {})
       }
     })
+
   const allSpanIds = allSpans.map(s => s.spanId.toString())
   const traceId = allSpans[0].traceId
 
@@ -218,8 +219,8 @@ test('configure telemetry correctly with a composer + next - integration test', 
   equal(spanNextClientNode.traceId, traceId)
 
   // check the spans chain back from next to composer call
-  equal(spanNextServer.parentId, spanComposerClient.id)
-  equal(spanComposerClient.parentId, spanComposerServer.id)
+  equal(spanNextServer.parentSpanId, spanComposerClient.spanId)
+  equal(spanComposerClient.parentSpanId, spanComposerServer.spanId)
 })
 
 test('configure telemetry correctly with a express app and additional express instrumentation', async t => {
@@ -241,8 +242,8 @@ test('configure telemetry correctly with a express app and additional express in
 
   // We check that we have received spans from the express instrumentation too and all the
   // spans are part of the same trace
-  const libraires = [...new Set(received.map(r => r.scope).map(s => s.name))].sort()
-  deepEqual(libraires, ['@opentelemetry/instrumentation-express', '@opentelemetry/instrumentation-http'])
+  const libraries = [...new Set(received.map(r => r.scope).map(s => s.name))].sort()
+  deepEqual(libraries, ['@opentelemetry/instrumentation-express', '@opentelemetry/instrumentation-http'])
 
   const allSpans = received
     .map(r => r.spans)

@@ -4,7 +4,6 @@ const fastify = require('fastify')
 const telemetryPlugin = require('../lib/telemetry')
 const { createInterface } = require('readline')
 const { createReadStream } = require('node:fs')
-const { SpanKind } = require('@opentelemetry/api')
 const createConnectionPool = require('@databases/pg')
 
 async function setupApp (pluginOpts, routeHandler, teardown) {
@@ -47,32 +46,10 @@ function parseNDJson (filePath) {
   })
 }
 
-// this is useful for debuggging
-const compatSpans = (spans) => {
-  return spans.map(span => {
-    let kind
-    if (span.kind === SpanKind.SERVER) {
-      kind = 'server'
-    } else if (span.kind === SpanKind.CLIENT) {
-      kind = 'client'
-    } else {
-      kind = 'internal'
-    }
-
-    return {
-      id: span.id,
-      traceId: span.traceId,
-      parentId: span.parentId,
-      kind,
-      name: span.name
-    }
-  })
-}
-
 const findParentSpan = (spans, startSpan, type, name) => {
   let currentSpan = startSpan
   while (currentSpan) {
-    const parentSpan = spans.find(span => span.id === currentSpan.parentId)
+    const parentSpan = spans.find(span => span.id === currentSpan.parentSpanContext?.spanId)
     if (parentSpan && parentSpan.kind === type && parentSpan.name === name) {
       return parentSpan
     }
@@ -83,7 +60,7 @@ const findParentSpan = (spans, startSpan, type, name) => {
 const findSpanWithParentWithId = (spans, startSpan, id) => {
   let currentSpan = startSpan
   while (currentSpan) {
-    const parentSpan = spans.find(span => span.id === currentSpan.parentId)
+    const parentSpan = spans.find(span => span.id === currentSpan.parentSpanContext?.spanId)
     if (parentSpan && parentSpan.id === id) {
       return currentSpan
     }
@@ -124,7 +101,6 @@ async function createPGDataBase () {
 module.exports = {
   setupApp,
   parseNDJson,
-  compatSpans,
   findParentSpan,
   findSpanWithParentWithId,
   createPGDataBase
