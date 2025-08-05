@@ -1,25 +1,56 @@
-import { execa } from 'execa'
 import assert from 'node:assert/strict'
 import { join } from 'node:path'
 import test from 'node:test'
+import { parseArgs as nodeParseArgs } from 'node:util'
 import split from 'split2'
 import { setTimeout } from 'timers/promises'
 import { request } from 'undici'
+import { applyMigrations } from '../../lib/commands/migrations-apply.js'
 import { getConnectionInfo } from '../helper.js'
-import { cliPath, safeKill, start } from './helper.js'
+import { safeKill, start } from './helper.js'
+
+function createTestContext () {
+  return {
+    parseArgs (args, options) {
+      return nodeParseArgs({ args, options, allowPositionals: true, allowNegative: true, strict: false })
+    },
+    colorette: {
+      bold (str) {
+        return str
+      }
+    },
+    logFatalError (logger, ...args) {
+      if (logger.fatal) logger.fatal(...args)
+      return false
+    }
+  }
+}
+
+function createCapturingLogger () {
+  let capturedOutput = ''
+  const logger = {
+    info: (msg) => { capturedOutput += msg + '\n' },
+    warn: (msg) => { capturedOutput += msg + '\n' },
+    debug: () => {},
+    trace: () => {},
+    error: (msg) => { capturedOutput += msg + '\n' }
+  }
+  logger.getCaptured = () => capturedOutput
+  return logger
+}
 
 test('migrate and start', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
   const cwd = join(import.meta.dirname, '..', 'fixtures', 'sqlite')
 
-  const { stdout } = await execa('node', [cliPath, 'applyMigrations', join(cwd, 'platformatic.db.json')], {
-    cwd,
-    env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
-  })
+  const logger = createCapturingLogger()
+  const context = createTestContext()
 
-  assert.match(stdout, /001\.do\.sql/)
+  process.env.DATABASE_URL = connectionInfo.connectionString
+  await applyMigrations(logger, join(cwd, 'platformatic.db.json'), [], context)
+
+  const output = logger.getCaptured()
+  assert.match(output, /001\.do\.sql/)
 
   const { child, url } = await start([], {
     cwd,
@@ -69,13 +100,14 @@ test('no cwd', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
   const config = join(import.meta.dirname, '..', 'fixtures', 'sqlite', 'platformatic.db.json')
 
-  const { stdout } = await execa('node', [cliPath, 'applyMigrations', config], {
-    env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
-  })
+  const logger = createCapturingLogger()
+  const context = createTestContext()
 
-  assert.ok(stdout.includes('001.do.sql'))
+  process.env.DATABASE_URL = connectionInfo.connectionString
+  await applyMigrations(logger, config, [], context)
+
+  const output = logger.getCaptured()
+  assert.ok(output.includes('001.do.sql'))
 
   const { child, url } = await start(['-c', config], {
     env: {
@@ -124,14 +156,14 @@ test('do not restart on save', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
   const cwd = join(import.meta.dirname, '..', 'fixtures', 'sqlite')
 
-  const { stdout } = await execa('node', [cliPath, 'applyMigrations', join(cwd, 'platformatic.db.json')], {
-    cwd,
-    env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
-  })
+  const logger = createCapturingLogger()
+  const context = createTestContext()
 
-  assert.match(stdout, /001\.do\.sql/)
+  process.env.DATABASE_URL = connectionInfo.connectionString
+  await applyMigrations(logger, join(cwd, 'platformatic.db.json'), [], context)
+
+  const output = logger.getCaptured()
+  assert.match(output, /001\.do\.sql/)
 
   const { child, url } = await start([], {
     cwd,
