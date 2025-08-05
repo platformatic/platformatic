@@ -25,8 +25,9 @@ setGlobalDispatcher(
   })
 )
 
-export const cliPath = resolve(import.meta.dirname, './executables/cli.js')
-export const startPath = resolve(import.meta.dirname, './executables/start.js')
+// Inline CLI executable implementation for tests that need subprocess execution
+export const cliPath = resolve(import.meta.dirname, './cli-executable.js')
+export const startPath = resolve(import.meta.dirname, './start-executable.js')
 
 export async function connectDB (connectionInfo) {
   const { db } = await createConnectionPool({
