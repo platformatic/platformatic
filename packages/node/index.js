@@ -115,7 +115,7 @@ export class NodeStackable extends BaseStackable {
     // Deal with application
     const factory = ['build', 'create'].find(f => typeof this.#module[f] === 'function')
 
-    if (this.#module.hasServer !== false) {
+    if (config.node.hasServer !== false && this.#module.hasServer !== false) {
       if (factory) {
         // We have build function, this Stackable will not use HTTP unless it is the entrypoint
         serverPromise.cancel()
@@ -177,7 +177,7 @@ export class NodeStackable extends BaseStackable {
 
   async build () {
     const config = this.configManager.current
-    const disableChildManager = config.node?.disablePlatformaticInBuild
+    const disableChildManager = config.node.disablePlatformaticInBuild
     const command = config.application?.commands?.build
 
     if (command) {
