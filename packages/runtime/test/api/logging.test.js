@@ -72,7 +72,10 @@ test('logs stdio from the service thread', async t => {
 
     strictEqual(statusCode, 200)
 
-    const messages = (await body.text())
+    const text = await body.text()
+
+    process._rawDebug(text)
+    const messages = text
       .trim()
       .split('\n')
       .map(l => {
