@@ -84,7 +84,7 @@ test('telemetry correctly propagates from a service client to a server for an Op
   const postSpan = finishedSpans[1]
   // The parent of the client span is the post span
   // and both have the same traceId
-  assert.equal(clientSpan.parentSpanId, postSpan.spanContext().spanId)
+  assert.equal(clientSpan.parentSpanContext.spanId, postSpan.spanContext().spanId)
   assert.equal(clientSpan.spanContext().traceId, postSpan.spanContext().traceId)
   assert.equal(clientSpan.name, `POST ${targetAppUrl}/movies/`)
   assert.equal(clientSpan.attributes['url.full'], `${targetAppUrl}/movies/`)
@@ -99,7 +99,7 @@ test('telemetry correctly propagates from a service client to a server for an Op
   const serverSpan = httpSpans[1]
   assert.equal(serverSpan.name, 'POST /movies/')
   const serverTraceId = serverSpan.spanContext().traceId
-  const serverParentSpanId = serverSpan.parentSpanId
+  const serverParentSpanId = serverSpan.parentSpanContext.spanId
   // The propagation works
   assert.equal(serverParentSpanId, clientSpanId)
   assert.equal(serverTraceId, clientTraceId)
@@ -169,7 +169,7 @@ test('telemetry correctly propagates from a generic client through a service cli
   const postSpan = finishedSpans[1]
   // The parent of the client span is the post span
   // and both have the same traceId
-  assert.equal(clientSpan.parentSpanId, postSpan.spanContext().spanId)
+  assert.equal(clientSpan.parentSpanContext.spanId, postSpan.spanContext().spanId)
   assert.equal(clientSpan.spanContext().traceId, postSpan.spanContext().traceId)
   assert.equal(clientSpan.name, `POST ${targetAppUrl}/movies/`)
   assert.equal(clientSpan.attributes['url.full'], `${targetAppUrl}/movies/`)
@@ -186,7 +186,7 @@ test('telemetry correctly propagates from a generic client through a service cli
   const serverSpan = httpSpans[1]
   assert.equal(serverSpan.name, 'POST /movies/')
   const serverTraceId = serverSpan.spanContext().traceId
-  const serverParentSpanId = serverSpan.parentSpanId
+  const serverParentSpanId = serverSpan.parentSpanContext.spanId
   // The propagation works. Note that the `parentSpan` is changed, but the traceId is the same
   assert.equal(serverParentSpanId, clientSpanId)
   assert.equal(serverTraceId, traceId)
@@ -255,7 +255,7 @@ test('telemetry correctly propagates from a service client to a server for a Gra
   const postSpan = finishedSpans[1]
   // The parent of the client span is the post span
   // and both have the same traceId
-  assert.equal(clientSpan.parentSpanId, postSpan.spanContext().spanId)
+  assert.equal(clientSpan.parentSpanContext.spanId, postSpan.spanContext().spanId)
   assert.equal(clientSpan.spanContext().traceId, postSpan.spanContext().traceId)
   assert.equal(clientSpan.name, `POST ${targetAppUrl}/graphql`)
   assert.equal(clientSpan.attributes['url.full'], `${targetAppUrl}/graphql`)
@@ -270,7 +270,7 @@ test('telemetry correctly propagates from a service client to a server for a Gra
   const serverSpan = httpSpans[0]
   assert.equal(serverSpan.name, 'POST /graphql')
   const serverTraceId = serverSpan.spanContext().traceId
-  const serverParentSpanId = serverSpan.parentSpanId
+  const serverParentSpanId = serverSpan.parentSpanContext.spanId
   // The propagation works
   assert.equal(serverParentSpanId, clientSpanId)
   assert.equal(serverTraceId, clientTraceId)
@@ -281,5 +281,5 @@ test('telemetry correctly propagates from a service client to a server for a Gra
   )[0]
   assert.equal(graphqlSpan.name, 'mutation saveMovie')
   assert.equal(graphqlSpan.spanContext().traceId, clientTraceId)
-  assert.equal(graphqlSpan.parentSpanId, serverSpan.spanContext().spanId)
+  assert.equal(graphqlSpan.parentSpanContext.spanId, serverSpan.spanContext().spanId)
 })

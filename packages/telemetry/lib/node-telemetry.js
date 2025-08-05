@@ -1,9 +1,9 @@
 'use strict'
 
 const process = require('node:process')
+const { resourceFromAttributes } = require('@opentelemetry/resources')
 const { AsyncLocalStorage } = require('node:async_hooks')
 const opentelemetry = require('@opentelemetry/sdk-node')
-const { Resource } = require('@opentelemetry/resources')
 const FileSpanExporter = require('./file-span-exporter')
 const { ATTR_SERVICE_NAME } = require('@opentelemetry/semantic-conventions')
 const { workerData } = require('node:worker_threads')
@@ -99,7 +99,7 @@ const setupNodeHTTPTelemetry = async (opts, serviceDir) => {
       new HttpInstrumentation(),
       ...additionalInstrumentations
     ],
-    resource: new Resource({
+    resource: resourceFromAttributes({
       [ATTR_SERVICE_NAME]: serviceName
     })
   })

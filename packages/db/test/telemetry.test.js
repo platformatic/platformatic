@@ -241,7 +241,7 @@ test('should trace a request in a platformatic DB app', async t => {
     assert.deepEqual(resource.attributes['service.name'], 'test-service')
     assert.deepEqual(resource.attributes['service.version'], '1.0.0')
     dbTraceId = span.spanContext().traceId
-    dbParentSpanId = span.parentSpanId
+    dbParentSpanId = span.parentSpanContext.spanId
   }
   {
     // HTTP request span
@@ -259,7 +259,7 @@ test('should trace a request in a platformatic DB app', async t => {
 
     const spanId = span._spanContext.spanId
     const traceId = span._spanContext.traceId
-    const parentSpanId = span.parentSpanId
+    const parentSpanId = span.parentSpanContext?.spanId
 
     // Check that the traceId is the same and the http span is the parent of the db span
     assert.equal(traceId, dbTraceId)
@@ -315,7 +315,7 @@ test('should trace a request getting DB from the request and running the query m
     assert.deepEqual(resource.attributes['service.name'], 'test-service')
     assert.deepEqual(resource.attributes['service.version'], '1.0.0')
     dbTraceId = span.spanContext().traceId
-    dbParentSpanId = span.parentSpanId
+    dbParentSpanId = span.parentSpanContext.spanId
   }
   {
     // HTTP request span
@@ -333,7 +333,7 @@ test('should trace a request getting DB from the request and running the query m
 
     const spanId = span._spanContext.spanId
     const traceId = span._spanContext.traceId
-    const parentSpanId = span.parentSpanId
+    const parentSpanId = span.parentSpanContext?.spanId
 
     // Check that the traceId is the same and the http span is the parent of the db span
     assert.equal(traceId, dbTraceId)
