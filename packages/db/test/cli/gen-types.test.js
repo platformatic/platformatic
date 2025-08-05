@@ -6,8 +6,42 @@ import { cp, readFile, symlink } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout } from 'node:timers/promises'
+import { parseArgs as nodeParseArgs } from 'node:util'
 import split from 'split2'
-import { cliPath, safeKill, startPath } from './helper.js'
+import { applyMigrations } from '../../lib/commands/migrations-apply.js'
+import { generateTypes } from '../../lib/commands/types.js'
+import { safeKill, startPath } from './helper.js'
+
+function createCapturingLogger () {
+  let capturedOutput = ''
+  const logger = {
+    info: (msg) => { capturedOutput += msg + '\n' },
+    warn: (msg) => { capturedOutput += msg + '\n' },
+    debug: () => {},
+    trace: () => {},
+    error: (msg) => { capturedOutput += msg + '\n' },
+    fatal: (msg) => { capturedOutput += msg + '\n' }
+  }
+  logger.getCaptured = () => capturedOutput
+  return logger
+}
+
+function createTestContext () {
+  return {
+    parseArgs (args, options) {
+      return nodeParseArgs({ args, options, allowPositionals: true, allowNegative: true, strict: false })
+    },
+    colorette: {
+      bold (str) {
+        return str
+      }
+    },
+    logFatalError (logger, ...args) {
+      logger.fatal(...args)
+      return false
+    }
+  }
+}
 
 let counter = 0
 
@@ -41,8 +75,18 @@ test('generate ts types', async t => {
   const testDir = resolve(import.meta.dirname, '..', 'fixtures', 'gen-types')
   const cwd = await prepareTemporaryDirectory(t, testDir)
 
-  await execa('node', [cliPath, 'applyMigrations', resolve(cwd, 'platformatic.db.json')], { cwd })
-  await execa('node', [cliPath, 'types', resolve(cwd, 'platformatic.db.json')], { cwd })
+  const logger = createCapturingLogger()
+  const context = createTestContext()
+  const configFile = resolve(cwd, 'platformatic.db.json')
+
+  const originalCwd = process.cwd()
+  try {
+    process.chdir(cwd)
+    await applyMigrations(logger, configFile, [], context)
+    await generateTypes(logger, configFile, [], context)
+  } finally {
+    process.chdir(originalCwd)
+  }
 
   await execa(pathToTSD, { cwd })
 })
@@ -52,9 +96,18 @@ test('generate ts types twice', async t => {
   const cwd = await prepareTemporaryDirectory(t, testDir)
   const configFile = resolve(cwd, 'platformatic.db.json')
 
-  await execa('node', [cliPath, 'applyMigrations', configFile], { cwd })
-  await execa('node', [cliPath, 'types', configFile], { cwd })
-  await execa('node', [cliPath, 'types', configFile], { cwd })
+  const logger = createCapturingLogger()
+  const context = createTestContext()
+
+  const originalCwd = process.cwd()
+  try {
+    process.chdir(cwd)
+    await applyMigrations(logger, configFile, [], context)
+    await generateTypes(logger, configFile, [], context)
+    await generateTypes(logger, configFile, [], context)
+  } finally {
+    process.chdir(originalCwd)
+  }
   await execa(pathToTSD, { cwd })
 })
 
@@ -63,9 +116,20 @@ test('should show warning if there is no entities', async t => {
   const cwd = await prepareTemporaryDirectory(t, testDir)
   const configFile = resolve(cwd, 'platformatic.db.json')
 
-  const { stdout } = await execa('node', [cliPath, 'types', configFile], { cwd })
-  assert.ok(stdout.includes('No entities found in your schema. Types were NOT generated.'))
-  assert.ok(stdout.includes('Make sure you have applied all the migrations and try again.'))
+  const logger = createCapturingLogger()
+  const context = createTestContext()
+
+  const originalCwd = process.cwd()
+  try {
+    process.chdir(cwd)
+    await generateTypes(logger, configFile, [], context)
+  } finally {
+    process.chdir(originalCwd)
+  }
+
+  const output = logger.getCaptured()
+  assert.ok(output.includes('No entities found in your schema. Types were NOT generated.'))
+  assert.ok(output.includes('Make sure you have applied all the migrations and try again.'))
 })
 
 test('run migrate command with type generation', async t => {
@@ -75,8 +139,19 @@ test('run migrate command with type generation', async t => {
 
   const fieldRegex = /\n\s*(\w+)\??:/g
 
-  const child = await execa('node', [cliPath, 'applyMigrations', configFile], { cwd })
-  assert.equal(child.stdout.includes('Generated type for Movie entity.'), true)
+  const logger = createCapturingLogger()
+  const context = createTestContext()
+
+  const originalCwd = process.cwd()
+  try {
+    process.chdir(cwd)
+    await applyMigrations(logger, configFile, [], context)
+  } finally {
+    process.chdir(originalCwd)
+  }
+
+  const output = logger.getCaptured()
+  assert.equal(output.includes('Generated type for Movie entity.'), true)
 
   const indexDTs = await readFile(resolve(cwd, 'types', 'index.d.ts'), 'utf8')
   assert.equal(indexDTs.indexOf('AggregateRating') < indexDTs.indexOf('Movie'), true)
@@ -99,8 +174,19 @@ test('run migrate command with type generation without plugin in config', async 
   const cwd = await prepareTemporaryDirectory(t, testDir)
   const configFile = resolve(cwd, 'platformatic.db.json')
 
-  const child = await execa('node', [cliPath, 'applyMigrations', configFile], { cwd })
-  assert.equal(child.stdout.includes('Generated type for Graph entity.'), true)
+  const logger = createCapturingLogger()
+  const context = createTestContext()
+
+  const originalCwd = process.cwd()
+  try {
+    process.chdir(cwd)
+    await applyMigrations(logger, configFile, [], context)
+  } finally {
+    process.chdir(originalCwd)
+  }
+
+  const output = logger.getCaptured()
+  assert.equal(output.includes('Generated type for Graph entity.'), true)
 
   await execa(pathToTSD, { cwd })
 })
@@ -164,8 +250,19 @@ test('correctly format entity type names', async t => {
   const cwd = await prepareTemporaryDirectory(t, testDir)
   const configFile = resolve(cwd, 'platformatic.db.json')
 
-  const child = await execa('node', [cliPath, 'applyMigrations', configFile], { cwd })
-  assert.equal(child.stdout.includes('Generated type for PltDb entity.'), true)
+  const logger = createCapturingLogger()
+  const context = createTestContext()
+
+  const originalCwd = process.cwd()
+  try {
+    process.chdir(cwd)
+    await applyMigrations(logger, configFile, [], context)
+  } finally {
+    process.chdir(originalCwd)
+  }
+
+  const output = logger.getCaptured()
+  assert.equal(output.includes('Generated type for PltDb entity.'), true)
 })
 
 test('use types directory from config as target folder', async t => {
@@ -173,8 +270,19 @@ test('use types directory from config as target folder', async t => {
   const cwd = await prepareTemporaryDirectory(t, testDir)
   const configFile = resolve(cwd, 'platformatic.db.json')
 
-  const child = await execa('node', [cliPath, 'applyMigrations', configFile], { cwd })
-  assert.equal(child.stdout.includes('Generated type for Graph entity.'), true)
+  const logger = createCapturingLogger()
+  const context = createTestContext()
+
+  const originalCwd = process.cwd()
+  try {
+    process.chdir(cwd)
+    await applyMigrations(logger, configFile, [], context)
+  } finally {
+    process.chdir(originalCwd)
+  }
+
+  const output = logger.getCaptured()
+  assert.equal(output.includes('Generated type for Graph entity.'), true)
 
   await execa(pathToTSD, { cwd })
 })

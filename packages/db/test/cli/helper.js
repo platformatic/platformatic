@@ -25,8 +25,7 @@ setGlobalDispatcher(
   })
 )
 
-// Inline CLI executable implementation for tests that need subprocess execution
-export const cliPath = resolve(import.meta.dirname, './cli-executable.js')
+// Inline start executable implementation for tests that need subprocess execution
 export const startPath = resolve(import.meta.dirname, './start-executable.js')
 
 export async function connectDB (connectionInfo) {
