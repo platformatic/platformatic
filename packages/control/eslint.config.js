@@ -1,3 +1,3 @@
-'use strict'
+import neostandard from 'neostandard'
 
-module.exports = require('neostandard')({})
+export default neostandard({})

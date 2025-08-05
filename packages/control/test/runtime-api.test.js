@@ -1,5 +1,3 @@
-'use strict'
-
 import { createDirectory, safeRemove } from '@platformatic/utils'
 import assert from 'node:assert'
 import { createHash } from 'node:crypto'
@@ -9,10 +7,21 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { setTimeout as sleep } from 'node:timers/promises'
 import split from 'split2'
-import { RuntimeApiClient } from '../index.js'
-import { kill, startRuntime } from './helper.mjs'
+import { RuntimeApiClient } from '../lib/index.js'
+import { kill, startRuntime } from './helper.js'
 
 const fixturesDir = join(import.meta.dirname, 'fixtures')
+
+function getRuntimeTmpDir (runtimeDir) {
+  const platformaticTmpDir = join(tmpdir(), 'platformatic', 'applications')
+  const runtimeDirHash = createHash('md5').update(runtimeDir).digest('hex')
+  return join(platformaticTmpDir, runtimeDirHash)
+}
+
+function getRuntimeLogsDir (runtimeDir, runtimePID) {
+  const runtimeTmpDir = getRuntimeTmpDir(runtimeDir)
+  return join(runtimeTmpDir, runtimePID.toString(), 'logs')
+}
 
 test('should get runtime log indexes', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
@@ -66,12 +75,12 @@ test('should get all runtime log indexes', async t => {
   assert.deepStrictEqual(logIndexes, [
     {
       pid: prevRuntimePID,
-      indexes: [41],
+      indexes: [41]
     },
     {
       pid: runtime.pid,
-      indexes: [1, 42],
-    },
+      indexes: [1, 42]
+    }
   ])
 })
 
@@ -119,7 +128,7 @@ test('should get runtime history log for prev run', async t => {
 
   const runtimeClient = new RuntimeApiClient()
   const runtimeLogsStream = await runtimeClient.getRuntimeLogsStream(runtime.pid, 41, {
-    runtimePID: prevRuntimePID,
+    runtimePID: prevRuntimePID
   })
   const runtimeLogs = await runtimeLogsStream.text()
   assert.strictEqual(runtimeLogs, prevTestLogs)
@@ -177,7 +186,7 @@ test('should get runtime all logs for prev run', async t => {
 
   const runtimeClient = new RuntimeApiClient()
   const runtimeLogsStream = await runtimeClient.getRuntimeAllLogsStream(runtime.pid, {
-    runtimePID: prevRuntimePID,
+    runtimePID: prevRuntimePID
   })
   const runtimeLogs = await runtimeLogsStream.text()
 
@@ -231,13 +240,11 @@ test('should get runtime metrics', async t => {
     'process_cpu_user_seconds_total',
     'process_resident_memory_bytes',
     'process_start_time_seconds',
-    'http_request_all_summary_seconds',
+    'http_request_all_summary_seconds'
   ]
 
   {
-    const runtimeTextMetrics = await runtimeClient.getRuntimeMetrics(
-      runtime.pid
-    )
+    const runtimeTextMetrics = await runtimeClient.getRuntimeMetrics(runtime.pid)
     const metricsNames = runtimeTextMetrics
       .split('\n')
       .filter(line => line && line.startsWith('# TYPE'))
@@ -249,9 +256,7 @@ test('should get runtime metrics', async t => {
   }
 
   {
-    const runtimeJsonMetrics = await runtimeClient.getRuntimeMetrics(
-      runtime.pid, { format: 'json' }
-    )
+    const runtimeJsonMetrics = await runtimeClient.getRuntimeMetrics(runtime.pid, { format: 'json' })
 
     for (const metricName of expectedMetricNames) {
       const foundMetrics = runtimeJsonMetrics.filter(m => m.name === metricName)
@@ -264,7 +269,9 @@ test('should get runtime live metrics', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
   const { runtime } = await startRuntime(configFile)
-  t.after(async () => { await kill(runtime) })
+  t.after(async () => {
+    await kill(runtime)
+  })
 
   // Wait for the runtime to collect some metrics
   await sleep(5000)
@@ -280,22 +287,13 @@ test('should get runtime live metrics', async t => {
 
         const { services } = JSON.parse(record)
 
-        assert.deepStrictEqual(
-          Object.keys(services).sort(),
-          ['service-1', 'service-2'].sort()
-        )
+        assert.deepStrictEqual(Object.keys(services).sort(), ['service-1', 'service-2'].sort())
 
         for (const serviceMetrics of Object.values(services)) {
-          assert.deepStrictEqual(Object.keys(serviceMetrics).sort(), [
-            'cpu',
-            'elu',
-            'newSpaceSize',
-            'oldSpaceSize',
-            'rss',
-            'totalHeapSize',
-            'usedHeapSize',
-            'latency',
-          ].sort())
+          assert.deepStrictEqual(
+            Object.keys(serviceMetrics).sort(),
+            ['cpu', 'elu', 'newSpaceSize', 'oldSpaceSize', 'rss', 'totalHeapSize', 'usedHeapSize', 'latency'].sort()
+          )
 
           const latencyMetrics = serviceMetrics.latency
           const latencyMetricsKeys = Object.keys(latencyMetrics).sort()
@@ -310,7 +308,9 @@ test('should get matching runtime', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
   const { runtime } = await startRuntime(configFile)
-  t.after(async () => { await kill(runtime) })
+  t.after(async () => {
+    await kill(runtime)
+  })
 
   const runtimeClient = new RuntimeApiClient()
   const { pid, url } = await runtimeClient.getMatchingRuntime()
@@ -322,42 +322,46 @@ test('should get runtime OpenAPI definition', async t => {
   const projectDir = join(fixturesDir, 'runtime-1')
   const configFile = join(projectDir, 'platformatic.json')
   const { runtime } = await startRuntime(configFile)
-  t.after(async () => { await kill(runtime) })
+  t.after(async () => {
+    await kill(runtime)
+  })
 
   const runtimeClient = new RuntimeApiClient()
   const openapi = await runtimeClient.getRuntimeOpenapi(runtime.pid, 'service-1')
-  assert.deepEqual({
-    openapi: '3.0.3',
-    info: {
-      title: 'Platformatic',
-      description: 'This is a service built on top of Platformatic',
-      version: '1.0.0'
-    },
-    components: { schemas: {} },
-    paths: {
-      '/hello': {
-        get: {
-          responses: {
-            200: {
-              description: 'Default Response'
+  assert.deepEqual(
+    {
+      openapi: '3.0.3',
+      info: {
+        title: 'Platformatic',
+        description: 'This is a service built on top of Platformatic',
+        version: '1.0.0'
+      },
+      components: { schemas: {} },
+      paths: {
+        '/hello': {
+          get: {
+            responses: {
+              200: {
+                description: 'Default Response'
+              }
+            }
+          }
+        },
+        '/mirror': {
+          post: {
+            responses: {
+              200: {
+                description: 'Default Response'
+              }
             }
           }
         }
       },
-      '/mirror': {
-        post: {
-          responses: {
-            200: {
-              description: 'Default Response'
-            }
-          }
-        }
-      }
+      servers: [{ url: '/' }]
     },
-    servers: [
-      { url: '/' }
-    ]
-  }, openapi, 'valid service name is passed')
+    openapi,
+    'valid service name is passed'
+  )
 
   let error
   try {
@@ -367,14 +371,3 @@ test('should get runtime OpenAPI definition', async t => {
   }
   assert.strictEqual(error.code, 'PLT_CTR_FAILED_TO_GET_RUNTIME_OPENAPI', 'invalid runtime service name passed')
 })
-
-function getRuntimeTmpDir (runtimeDir) {
-  const platformaticTmpDir = join(tmpdir(), 'platformatic', 'applications')
-  const runtimeDirHash = createHash('md5').update(runtimeDir).digest('hex')
-  return join(platformaticTmpDir, runtimeDirHash)
-}
-
-function getRuntimeLogsDir (runtimeDir, runtimePID) {
-  const runtimeTmpDir = getRuntimeTmpDir(runtimeDir)
-  return join(runtimeTmpDir, runtimePID.toString(), 'logs')
-}

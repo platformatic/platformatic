@@ -1,19 +1,58 @@
-'use strict'
-
-const { tmpdir, platform, EOL } = require('node:os')
-const { join } = require('node:path')
-const { exec, spawn } = require('node:child_process')
-const { readdir, access } = require('node:fs/promises')
-const { Readable } = require('node:stream')
-const { Client } = require('undici')
-const WebSocket = require('ws')
-const errors = require('./errors.js')
-const { safeRemove } = require('@platformatic/utils')
+import { safeRemove } from '@platformatic/utils'
+import { exec, spawn } from 'node:child_process'
+import { access, readdir } from 'node:fs/promises'
+import { EOL, platform, tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { Readable } from 'node:stream'
+import { Client } from 'undici'
+import WebSocket from 'ws'
+import {
+  FailedToGetRuntimeAllLogs,
+  FailedToGetRuntimeConfig,
+  FailedToGetRuntimeEnv,
+  FailedToGetRuntimeHistoryLogs,
+  FailedToGetRuntimeLogIndexes,
+  FailedToGetRuntimeMetadata,
+  FailedToGetRuntimeMetrics,
+  FailedToGetRuntimeOpenapi,
+  FailedToGetRuntimeServiceConfig,
+  FailedToGetRuntimeServiceEnv,
+  FailedToGetRuntimeServices,
+  FailedToReloadRuntime,
+  FailedToStopRuntime,
+  FailedToStreamRuntimeLogs,
+  RuntimeNotFound,
+  ServiceNotFound
+} from './errors.js'
 
 const PLATFORMATIC_TMP_DIR = join(tmpdir(), 'platformatic', 'runtimes')
 const PLATFORMATIC_PIPE_PREFIX = '\\\\.\\pipe\\platformatic-'
 
-class RuntimeApiClient {
+class WebSocketStream extends Readable {
+  constructor (url) {
+    super()
+    this.ws = new WebSocket(url)
+
+    this.ws.on('message', data => {
+      this.push(data)
+    })
+    this.ws.on('close', () => {
+      this.push(null)
+    })
+    this.ws.on('error', err => {
+      this.emit('error', new FailedToStreamRuntimeLogs(err.message))
+    })
+    this.on('close', () => {
+      this.ws.close()
+    })
+  }
+
+  _read () {}
+}
+
+export * from './errors.js'
+
+export class RuntimeApiClient {
   #undiciClients = new Map()
   #webSockets = new Set()
 
@@ -29,15 +68,13 @@ class RuntimeApiClient {
       runtime = runtimes[0]
     }
     if (!runtime) {
-      throw errors.RuntimeNotFound()
+      throw new RuntimeNotFound()
     }
     return runtime
   }
 
   async getRuntimes () {
-    const runtimePIDs = platform() === 'win32'
-      ? await this.#getWindowsRuntimePIDs()
-      : await this.#getUnixRuntimePIDs()
+    const runtimePIDs = platform() === 'win32' ? await this.#getWindowsRuntimePIDs() : await this.#getUnixRuntimePIDs()
 
     const getMetadataRequests = await Promise.allSettled(
       runtimePIDs.map(async runtimePID => {
@@ -65,12 +102,12 @@ class RuntimeApiClient {
     const { statusCode, body } = await client.request({
       path: '/api/v1/metadata',
       method: 'GET',
-      headersTimeout: 10 * 1000,
+      headersTimeout: 10 * 1000
     })
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new errors.FailedToGetRuntimeMetadata(error)
+      throw new FailedToGetRuntimeMetadata(error)
     }
 
     const metadata = await body.json()
@@ -87,7 +124,7 @@ class RuntimeApiClient {
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new errors.FailedToGetRuntimeServices(error)
+      throw new FailedToGetRuntimeServices(error)
     }
 
     const runtimeServices = await body.json()
@@ -104,7 +141,7 @@ class RuntimeApiClient {
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new errors.FailedToGetRuntimeConfig(error)
+      throw new FailedToGetRuntimeConfig(error)
     }
 
     const runtimeConfig = await body.json()
@@ -128,11 +165,14 @@ class RuntimeApiClient {
         // No-op
       }
 
-      if (jsonError?.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND' || jsonError?.code === 'PLT_RUNTIME_SERVICE_WORKER_NOT_FOUND') {
-        throw new errors.ServiceNotFound(error)
+      if (
+        jsonError?.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND' ||
+        jsonError?.code === 'PLT_RUNTIME_SERVICE_WORKER_NOT_FOUND'
+      ) {
+        throw new ServiceNotFound(error)
       }
 
-      throw new errors.FailedToGetRuntimeServiceConfig(error)
+      throw new FailedToGetRuntimeServiceConfig(error)
     }
 
     const serviceConfig = await body.json()
@@ -149,7 +189,7 @@ class RuntimeApiClient {
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new errors.FailedToGetRuntimeEnv(error)
+      throw new FailedToGetRuntimeEnv(error)
     }
 
     const runtimeEnv = await body.json()
@@ -166,7 +206,7 @@ class RuntimeApiClient {
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new errors.FailedToGetRuntimeOpenapi(error)
+      throw new FailedToGetRuntimeOpenapi(error)
     }
 
     const openapi = await body.json()
@@ -190,11 +230,14 @@ class RuntimeApiClient {
         // No-op
       }
 
-      if (jsonError?.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND' || jsonError?.code === 'PLT_RUNTIME_SERVICE_WORKER_NOT_FOUND') {
-        throw new errors.ServiceNotFound(error)
+      if (
+        jsonError?.code === 'PLT_RUNTIME_SERVICE_NOT_FOUND' ||
+        jsonError?.code === 'PLT_RUNTIME_SERVICE_WORKER_NOT_FOUND'
+      ) {
+        throw new ServiceNotFound(error)
       }
 
-      throw new errors.FailedToGetRuntimeServiceEnv(error)
+      throw new FailedToGetRuntimeServiceEnv(error)
     }
 
     const serviceConfig = await body.json()
@@ -228,7 +271,7 @@ class RuntimeApiClient {
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new errors.FailedToReloadRuntime(error)
+      throw new FailedToReloadRuntime(error)
     }
   }
 
@@ -242,7 +285,7 @@ class RuntimeApiClient {
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new errors.FailedToStopRuntime(error)
+      throw new FailedToStopRuntime(error)
     }
   }
 
@@ -266,12 +309,10 @@ class RuntimeApiClient {
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new errors.FailedToGetRuntimeMetrics(error)
+      throw new FailedToGetRuntimeMetrics(error)
     }
 
-    const metrics = format === 'json'
-      ? await body.json()
-      : await body.text()
+    const metrics = format === 'json' ? await body.json() : await body.text()
 
     return metrics
   }
@@ -311,7 +352,7 @@ class RuntimeApiClient {
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new errors.FailedToGetRuntimeHistoryLogs(error)
+      throw new FailedToGetRuntimeHistoryLogs(error)
     }
 
     return body
@@ -329,7 +370,7 @@ class RuntimeApiClient {
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new errors.FailedToGetRuntimeAllLogs(error)
+      throw new FailedToGetRuntimeAllLogs(error)
     }
 
     return body
@@ -347,7 +388,7 @@ class RuntimeApiClient {
 
     if (statusCode !== 200) {
       const error = await body.text()
-      throw new errors.FailedToGetRuntimeLogIndexes(error)
+      throw new FailedToGetRuntimeLogIndexes(error)
     }
 
     const result = await body.json()
@@ -451,27 +492,3 @@ class RuntimeApiClient {
     await safeRemove(runtimeDir)
   }
 }
-
-class WebSocketStream extends Readable {
-  constructor (url) {
-    super()
-    this.ws = new WebSocket(url)
-
-    this.ws.on('message', data => {
-      this.push(data)
-    })
-    this.ws.on('close', () => {
-      this.push(null)
-    })
-    this.ws.on('error', err => {
-      this.emit('error', new errors.FailedToStreamRuntimeLogs(err.message))
-    })
-    this.on('close', () => {
-      this.ws.close()
-    })
-  }
-
-  _read () {}
-}
-
-module.exports = RuntimeApiClient
