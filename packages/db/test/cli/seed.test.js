@@ -1,14 +1,57 @@
 import { createDirectory } from '@platformatic/utils'
-import { execa } from 'execa'
 import assert from 'node:assert/strict'
 import { copyFile, mkdtemp, readdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { parseArgs as nodeParseArgs } from 'node:util'
 import rimraf from 'rimraf'
 import { request } from 'undici'
+import { applyMigrations } from '../../lib/commands/migrations-apply.js'
+import { seed as seedCommand } from '../../lib/commands/seed.js'
 import { getConnectionInfo } from '../helper.js'
-import { cliPath, safeKill, start } from './helper.js'
+import { safeKill, start } from './helper.js'
+
+function createTestContext () {
+  return {
+    parseArgs (args, options) {
+      return nodeParseArgs({ args, options, allowPositionals: true, allowNegative: true, strict: false })
+    },
+    colorette: {
+      bold (str) {
+        return str
+      }
+    },
+    logFatalError (logger, ...args) {
+      if (logger.fatal) logger.fatal(...args)
+      return false
+    }
+  }
+}
+
+function createCapturingLogger () {
+  let capturedOutput = ''
+  const logger = {
+    info: (msg) => { capturedOutput += msg + '\n' },
+    warn: (msg) => { capturedOutput += msg + '\n' },
+    debug: () => {},
+    trace: () => {},
+    error: (msg) => { capturedOutput += msg + '\n' }
+  }
+  logger.getCaptured = () => capturedOutput
+  return logger
+}
+
+function createThrowingLogger () {
+  return {
+    info: () => {},
+    warn: () => {},
+    debug: () => {},
+    trace: () => {},
+    error: (msg) => { throw new Error(msg) },
+    fatal: (msg) => { throw new Error(msg) }
+  }
+}
 
 test('seed and start', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')
@@ -16,22 +59,28 @@ test('seed and start', async t => {
   const cwd = join(import.meta.dirname, '..', 'fixtures', 'sqlite')
   const configFile = join(cwd, 'platformatic.db.json')
 
-  await execa('node', [cliPath, 'applyMigrations', configFile], {
-    cwd,
-    env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
-  })
-  const { stdout } = await execa('node', [cliPath, 'seed', configFile, 'seed.js'], {
-    cwd,
-    env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
-  })
+  const migrationsLogger = createCapturingLogger()
+  const migrationsContext = createTestContext()
 
-  assert.match(stdout, /Seeding from .*seed\.js/)
-  assert.match(stdout, /42/) // custom logger.info line from the seed file
-  assert.match(stdout, /Seeding complete/)
+  process.env.DATABASE_URL = connectionInfo.connectionString
+  await applyMigrations(migrationsLogger, configFile, [], migrationsContext)
+
+  const seedLogger = createCapturingLogger()
+  const seedContext = createTestContext()
+
+  // Change to the test directory so seed can find seed.js
+  const originalCwd = process.cwd()
+  process.chdir(cwd)
+  try {
+    await seedCommand(seedLogger, configFile, ['seed.js'], seedContext)
+  } finally {
+    process.chdir(originalCwd)
+  }
+
+  const seedOutput = seedLogger.getCaptured()
+  assert.match(seedOutput, /Seeding from .*seed\.js/)
+  assert.match(seedOutput, /42/) // custom logger.info line from the seed file
+  assert.match(seedOutput, /Seeding complete/)
 
   const { child, url } = await start([], {
     cwd,
@@ -89,15 +138,21 @@ test('seed command should throw an error if there are migrations to apply', asyn
     await dropTestDB()
   })
 
+  const seedLogger = createThrowingLogger()
+  const seedContext = createTestContext()
+
+  process.env.DATABASE_URL = connectionInfo.connectionString
+
+  // Change to the test directory so seed can find seed.js
+  const originalCwd = process.cwd()
+  process.chdir(cwd)
   try {
-    await execa('node', [cliPath, 'seed', configFile, 'seed.js'], {
-      cwd,
-      env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
-    })
+    await seedCommand(seedLogger, configFile, ['seed.js'], seedContext)
+    assert.fail('Should have thrown an error')
   } catch (err) {
-    assert.match(err.stdout, /You must apply migrations before seeding the database./)
+    assert.match(err.message, /You must apply migrations before seeding the database./)
+  } finally {
+    process.chdir(originalCwd)
   }
 })
 
@@ -116,20 +171,26 @@ test('valid config files', async t => {
     await copyFile(join(fixturesDir, 'sqlite', 'migrations', '001.do.sql'), join(cwd, 'migrations', '001.do.sql'))
     const seed = join(import.meta.dirname, '..', 'fixtures', 'sqlite', 'seed.js')
 
-    await execa('node', [cliPath, 'applyMigrations', dbConfigFile], {
-      cwd,
-      env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
-    })
-    const { stdout } = await execa('node', [cliPath, 'seed', dbConfigFile, seed], {
-      cwd,
-      env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
-    })
+    const migrationsLogger = createCapturingLogger()
+    const migrationsContext = createTestContext()
 
-    assert.match(stdout, /Seeding complete/)
+    process.env.DATABASE_URL = connectionInfo.connectionString
+    await applyMigrations(migrationsLogger, dbConfigFile, [], migrationsContext)
+
+    const seedLogger = createCapturingLogger()
+    const seedContext = createTestContext()
+
+    // Change to the test directory so seed can find the seed file
+    const originalCwd = process.cwd()
+    process.chdir(cwd)
+    try {
+      await seedCommand(seedLogger, dbConfigFile, [seed], seedContext)
+    } finally {
+      process.chdir(originalCwd)
+    }
+
+    const seedOutput = seedLogger.getCaptured()
+    assert.match(seedOutput, /Seeding complete/)
 
     t.after(async () => {
       rimraf.sync(cwd)
@@ -147,22 +208,25 @@ test('missing seed file', async t => {
     await dropTestDB()
   })
 
+  const migrationsLogger = createCapturingLogger()
+  const migrationsContext = createTestContext()
+
+  process.env.DATABASE_URL = connectionInfo.connectionString
+  await applyMigrations(migrationsLogger, configFile, [], migrationsContext)
+
+  const seedLogger = createCapturingLogger()
+  const seedContext = createTestContext()
+
+  // Change to the test directory
+  const originalCwd = process.cwd()
+  process.chdir(cwd)
   try {
-    await execa('node', [cliPath, 'applyMigrations', configFile], {
-      cwd,
-      env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
-    })
-    await execa('node', [cliPath, 'seed', configFile], {
-      cwd,
-      env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
-    })
+    await seedCommand(seedLogger, configFile, [], seedContext)
+    assert.fail('Should have thrown an error')
   } catch (err) {
-    assert.equal(err.exitCode, 1)
-    assert.ok(err.stderr.includes('Missing seed file'))
+    assert.ok(err.message.includes('Missing seed file'))
+  } finally {
+    process.chdir(originalCwd)
   }
 })
 
@@ -172,20 +236,26 @@ test('seed and start from cwd', async t => {
   const cwd = join(import.meta.dirname, '..', 'fixtures', 'sqlite')
   const configFile = join(cwd, 'platformatic.db.json')
 
-  await execa('node', [cliPath, 'applyMigrations', configFile], {
-    cwd,
-    env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
-  })
-  const { stdout } = await execa('node', [cliPath, 'seed', configFile, 'seed.js'], {
-    cwd,
-    env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
-  })
+  const migrationsLogger = createCapturingLogger()
+  const migrationsContext = createTestContext()
 
-  assert.match(stdout, /Seeding from .*seed\.js/)
+  process.env.DATABASE_URL = connectionInfo.connectionString
+  await applyMigrations(migrationsLogger, configFile, [], migrationsContext)
+
+  const seedLogger = createCapturingLogger()
+  const seedContext = createTestContext()
+
+  // Change to the test directory so seed can find seed.js
+  const originalCwd = process.cwd()
+  process.chdir(cwd)
+  try {
+    await seedCommand(seedLogger, configFile, ['seed.js'], seedContext)
+  } finally {
+    process.chdir(originalCwd)
+  }
+
+  const seedOutput = seedLogger.getCaptured()
+  assert.match(seedOutput, /Seeding from .*seed\.js/)
 
   const { child, url } = await start([], {
     cwd,
