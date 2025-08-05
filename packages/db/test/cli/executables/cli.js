@@ -29,7 +29,8 @@ command(
   pino({
     level: 'info',
     transport: {
-      target: 'pino-pretty'
+      target: 'pino-pretty',
+      sync: true
     }
   }),
   process.argv[3],

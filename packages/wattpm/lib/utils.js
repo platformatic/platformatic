@@ -1,4 +1,4 @@
-import { errors } from '@platformatic/control'
+import { RuntimeNotFound } from '@platformatic/control'
 import { create, loadConfiguration } from '@platformatic/runtime'
 import {
   abstractLogger,
@@ -138,7 +138,7 @@ export async function getMatchingRuntime (client, positionals) {
   }
 
   if (!runtime) {
-    throw errors.RuntimeNotFound()
+    throw RuntimeNotFound()
   }
   /* c8 ignore next 2 */
 

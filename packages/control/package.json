@@ -2,12 +2,11 @@
   "name": "@platformatic/control",
   "version": "3.0.0-alpha.1",
   "description": "Platformatic Control",
-  "main": "index.js",
-  "bin": {
-    "plt-ctl": "./control.js"
-  },
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "type": "module",
   "scripts": {
-    "test": "pnpm run lint && pnpm run unit && tsd",
+    "test": "pnpm run lint && pnpm run unit && tsd --files test/index.test-d.ts",
     "unit": "borp --concurrency=1 --timeout=1200000",
     "lint": "eslint"
   },

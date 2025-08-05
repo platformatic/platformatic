@@ -1,6 +1,13 @@
-import { expectAssignable, expectError, expectType } from 'tsd'
-import { errors, Metric, Runtime, RuntimeApiClient, RuntimeServices } from '.'
 import { FastifyError } from '@fastify/error'
+import { expectAssignable, expectError, expectType } from 'tsd'
+import {
+  FailedToGetRuntimeAllLogs,
+  FailedToGetRuntimeConfig,
+  FailedToGetRuntimeEnv,
+  FailedToGetRuntimeHistoryLogs,
+  FailedToGetRuntimeOpenapi
+} from '../lib/errors.js'
+import { Metric, ReadableBody, Runtime, RuntimeApiClient, RuntimeServices } from '../lib/index.js'
 
 // RuntimeApiClient
 let runtime = {} as Runtime
@@ -14,25 +21,27 @@ expectType<Promise<Metric[]>>(api.getRuntimeMetrics(runtime.pid, { format: 'json
 expectType<Promise<string>>(api.getRuntimeMetrics(runtime.pid, { format: 'text' }))
 expectType<Promise<Runtime[]>>(api.getRuntimes())
 
-async () => {
+async function unused () {
   const result = await api.injectRuntime(0, '', { body: {}, headers: {}, method: 'PUT', url: '/foo' })
 
-  expectType<unknown>(result.body)
+  expectType<ReadableBody>(result.body)
   expectType<number>(result.statusCode)
   expectAssignable<Record<string, unknown>>(result.headers)
   return result
 }
 
 const [service1] = service.services
-expectType<Promise<unknown>>(api.getRuntimeOpenapi(runtime.pid, service1.id))
+expectType<Promise<Record<string, unknown>>>(api.getRuntimeOpenapi(runtime.pid, service1.id))
 expectType<string[]>(runtime.argv)
 expectType<number>(runtime.uptimeSeconds)
 expectType<string | null>(runtime.packageVersion)
-expectType<Promise<{
-  entrypoint: string,
-  production: boolean,
-  services: RuntimeServices['services']
-}>>(api.getRuntimeServices(45))
+expectType<
+  Promise<{
+    entrypoint: string
+    production: boolean
+    services: RuntimeServices['services']
+  }>
+>(api.getRuntimeServices(45))
 expectType<string>(service1.id)
 expectType<string>(service1.status)
 
@@ -55,10 +64,10 @@ expectType<unknown | undefined>(metric.values[0].exemplar)
 expectType<Promise<void>>(api.close())
 
 // errors
-expectType<FastifyError>(errors.FailedToGetRuntimeAllLogs)
-expectType<FastifyError>(errors.FailedToGetRuntimeConfig)
-expectType<FastifyError>(errors.FailedToGetRuntimeEnv)
-expectType<FastifyError>(errors.FailedToGetRuntimeOpenapi)
-expectType<FastifyError>(errors.FailedToGetRuntimeHistoryLogs)
-expectError<string>(errors.FailedToGetRuntimeHistoryLogs)
-expectError<number>(errors.FailedToGetRuntimeHistoryLogs)
+expectType<(arg: string) => FastifyError>(FailedToGetRuntimeAllLogs)
+expectType<(arg: string) => FastifyError>(FailedToGetRuntimeConfig)
+expectType<(arg: string) => FastifyError>(FailedToGetRuntimeEnv)
+expectType<(arg: string) => FastifyError>(FailedToGetRuntimeOpenapi)
+expectType<(arg: string) => FastifyError>(FailedToGetRuntimeHistoryLogs)
+expectError<string>(FailedToGetRuntimeHistoryLogs)
+expectError<number>(FailedToGetRuntimeHistoryLogs)
