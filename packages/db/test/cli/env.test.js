@@ -1,43 +1,12 @@
 import assert from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
-import { parseArgs as nodeParseArgs } from 'node:util'
 import { request } from 'undici'
 import { printSchema } from '../../lib/commands/print-schema.js'
 import { snapshot } from '../fixtures/snapshots/env.js'
 import { getConnectionInfo } from '../helper.js'
 import { connectDB, safeKill, start } from './helper.js'
-
-function createCapturingLogger () {
-  let capturedOutput = ''
-  const logger = {
-    info: (msg) => { capturedOutput += msg + '\n' },
-    warn: (msg) => { capturedOutput += msg + '\n' },
-    debug: () => {},
-    trace: () => {},
-    error: (msg) => { capturedOutput += msg + '\n' },
-    fatal: (msg) => { capturedOutput += msg + '\n' }
-  }
-  logger.getCaptured = () => capturedOutput
-  return logger
-}
-
-function createTestContext () {
-  return {
-    parseArgs (args, options) {
-      return nodeParseArgs({ args, options, allowPositionals: true, allowNegative: true, strict: false })
-    },
-    colorette: {
-      bold (str) {
-        return str
-      }
-    },
-    logFatalError (logger, ...args) {
-      logger.fatal(...args)
-      return false
-    }
-  }
-}
+import { createCapturingLogger, createTestContext, withTestEnvironment } from './test-utilities.js'
 
 test('env white list', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
@@ -138,37 +107,18 @@ test('env white list schema', async t => {
     title VARCHAR(42)
   );`)
 
-  const logger = createCapturingLogger()
-  const context = createTestContext()
-
-  // Capture console.log output
-  let capturedOutput = ''
-  const originalConsoleLog = console.log
-  console.log = (msg) => { capturedOutput += msg }
-
-  const originalEnv = {
-    DATABASE_URL: process.env.DATABASE_URL,
-    HOSTNAME: process.env.HOSTNAME
-  }
-
-  try {
-    process.env.DATABASE_URL = connectionInfo.connectionString
-    process.env.HOSTNAME = '127.0.0.1'
+  await withTestEnvironment({
+    envVars: {
+      DATABASE_URL: connectionInfo.connectionString,
+      HOSTNAME: '127.0.0.1'
+    },
+    captureConsole: true
+  }, async (captureObj) => {
+    const logger = createCapturingLogger()
+    const context = createTestContext()
 
     await printSchema(logger, resolve(import.meta.dirname, '..', 'fixtures', 'env-whitelist.json'), ['graphql'], context)
 
-    assert.equal(capturedOutput.trim(), snapshot)
-  } finally {
-    console.log = originalConsoleLog
-    if (originalEnv.DATABASE_URL) {
-      process.env.DATABASE_URL = originalEnv.DATABASE_URL
-    } else {
-      delete process.env.DATABASE_URL
-    }
-    if (originalEnv.HOSTNAME) {
-      process.env.HOSTNAME = originalEnv.HOSTNAME
-    } else {
-      delete process.env.HOSTNAME
-    }
-  }
+    assert.equal(captureObj.get().trim(), snapshot)
+  })()
 })
