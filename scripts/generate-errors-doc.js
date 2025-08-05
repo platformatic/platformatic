@@ -1,26 +1,8 @@
 'use strict'
 
-const { writeFile } = require('fs').promises
-const { join } = require('path')
-
-// Add the modules here. Remember to add the dependency to package.json
-const modules = [
-  '@platformatic/client',
-  '@platformatic/client-cli',
-  '@platformatic/composer',
-  '@platformatic/db',
-  '@platformatic/db-authorization',
-  '@platformatic/db-core',
-  '@platformatic/runtime',
-  '@platformatic/service',
-  '@platformatic/sql-mapper',
-  '@platformatic/sql-openapi',
-  '@platformatic/sql-graphql',
-  '@platformatic/sql-events',
-  '@platformatic/sql-json-schema-mapper',
-  '@platformatic/telemetry',
-  '@platformatic/utils'
-]
+const { writeFile, readdir, readFile } = require('node:fs/promises')
+const { createRequire } = require('node:module')
+const { resolve } = require('node:path')
 
 function extractErrors (module) {
   const { errors } = module
@@ -47,12 +29,14 @@ function createErrorsMD (errorsByModule) {
   const md = []
   md.push('# Platformatic Errors \n')
   for (const module in errorsByModule) {
-    md.push(`## ${module} \n`)
     const errors = errorsByModule[module]
+
     if (errors.length === 0) {
-      md.push('**No errors defined** \n')
       continue
     }
+
+    md.push(`## ${module} \n`)
+
     for (const error of errors) {
       const { code, message } = error
       md.push(`### ${code}`)
@@ -64,33 +48,41 @@ function createErrorsMD (errorsByModule) {
 
 async function generateErrorsMDFile (errorsByModule) {
   const errorsMd = createErrorsMD(errorsByModule)
-  const mdPath = join(__dirname, '..', '..', 'docs', 'packages', 'errors.md')
+  const mdPath = resolve(__dirname, '../docs/packages/errors.md')
   await writeFile(mdPath, errorsMd)
   console.log(`Errors documentation file generated at ${mdPath}`)
 }
 
-async function getErrorsByModule (modules) {
+async function getErrorsByModule () {
+  const allPackages = await readdir(resolve(__dirname, '../packages'))
+  allPackages.sort()
+
   const errorsByModule = {}
-  for (const module of modules) {
-    let mod
+  for (const path of allPackages) {
+    const root = resolve(__dirname, '../packages', path)
+
+    let moduleInfo
     try {
-      mod = require(module)
+      moduleInfo = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'))
     } catch (err) {
-      if (err.code === 'ERR_REQUIRE_ESM') {
-        mod = await import(module)
-      } else {
-        throw err
-      }
+      continue
     }
-    const errors = extractErrors(mod)
-    errorsByModule[module] = errors
+
+    if (!moduleInfo.main) {
+      console.warn(`Skipping ${moduleInfo.name} as it does not have a main entry in package.json`)
+      continue
+    }
+
+    const pkg = await import(resolve(root, moduleInfo.main))
+    const errors = extractErrors(pkg)
+    errorsByModule[moduleInfo.name] = errors
   }
   return errorsByModule
 }
 
-async function generate (modules) {
-  const errorsByModule = await getErrorsByModule(modules)
+async function generate () {
+  const errorsByModule = await getErrorsByModule()
   await generateErrorsMDFile(errorsByModule)
 }
 
-generate(modules)
+generate()

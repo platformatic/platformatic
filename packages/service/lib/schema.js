@@ -1254,40 +1254,6 @@ export const service = {
   additionalProperties: false
 }
 
-export const clients = {
-  type: 'array',
-  items: {
-    type: 'object',
-    properties: {
-      serviceId: {
-        type: 'string'
-      },
-      name: {
-        type: 'string'
-      },
-      type: {
-        type: 'string',
-        enum: ['openapi', 'graphql']
-      },
-      path: {
-        type: 'string',
-        resolvePath: true
-      },
-      schema: {
-        type: 'string',
-        resolvePath: true
-      },
-      url: {
-        type: 'string'
-      },
-      fullResponse: { type: 'boolean' },
-      fullRequest: { type: 'boolean' },
-      validateResponse: { type: 'boolean' }
-    },
-    additionalProperties: false
-  }
-}
-
 export const schemaComponents = {
   $defs,
   plugins,
@@ -1296,8 +1262,7 @@ export const schemaComponents = {
   proxy,
   graphqlBase,
   graphql,
-  service,
-  clients
+  service
 }
 
 export const schema = {
@@ -1330,7 +1295,6 @@ export const schema = {
       type: 'string'
     },
     service,
-    clients,
     runtime: wrappedRuntime
   },
   additionalProperties: false,

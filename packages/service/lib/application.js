@@ -1,5 +1,4 @@
 import { isKeyEnabled } from '@platformatic/utils'
-import { setupClients } from './plugins/clients.js'
 import { setupCors } from './plugins/cors.js'
 import { setupGraphQL } from './plugins/graphql.js'
 import { setupHealthCheck } from './plugins/health-check.js'
@@ -8,11 +7,6 @@ import { loadPlugins } from './plugins/plugins.js'
 
 export async function platformaticService (app, stackable) {
   const config = await stackable.getConfig()
-
-  // This must be done before loading the plugins, so they can be configured accordingly
-  if (isKeyEnabled('clients', config)) {
-    await app.register(setupClients, config.clients)
-  }
 
   const serviceConfig = config.service || {}
 

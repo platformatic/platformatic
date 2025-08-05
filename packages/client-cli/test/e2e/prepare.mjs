@@ -5,17 +5,17 @@ import { resolve } from 'node:path'
 
 // Start the DB server
 const root = import.meta.dirname
-const app = await create(resolve(root, 'e2e/fixtures/platformatic.e2e.db.json'))
+const app = await create(resolve(root, './server/platformatic.e2e.db.json'))
 await app.start()
 
 // Clean the generated code directory
-const generatedCodeRoot = resolve(root, '../src/platformatic-generated-code')
+const generatedCodeRoot = resolve(root, './client/src/generated')
 await createDirectory(generatedCodeRoot, true)
 
 // Generate the new code
 process.chdir(generatedCodeRoot)
 await execa('node', [
-  resolve(root, '../../client-cli/cli.mjs'),
+  resolve(root, '../../cli.mjs'),
   'http://127.0.0.1:9999',
   '--frontend',
   '--language',

@@ -1,4 +1,3 @@
-import esMain from 'es-main'
 import { schema as serviceSchema } from '../../../../../index.js'
 
 const baseSchema = serviceSchema
@@ -27,6 +26,7 @@ schema.properties.dynamite = {
 
 delete schema.properties.plugins
 
-if (esMain(import.meta)) {
+// @ts-expect-error Types not updated yet
+if (import.meta.main) {
   console.log(JSON.stringify(schema, null, 2))
 }

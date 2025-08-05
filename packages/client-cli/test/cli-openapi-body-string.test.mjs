@@ -4,7 +4,6 @@ import { readFile } from 'fs/promises'
 import { equal } from 'node:assert'
 import { after, test } from 'node:test'
 import { join } from 'path'
-import { isFileAccessible } from '../cli.mjs'
 import { moveToTmpdir } from './helper.js'
 
 test('body-string', async () => {
@@ -15,23 +14,24 @@ test('body-string', async () => {
     $schema: 'https://schemas.platformatic.dev/@platformatic/service/1.52.0.json',
     server: {
       hostname: '127.0.0.1',
-      port: 0,
+      port: 0
     },
     plugins: {
-      paths: ['./plugin.js'],
-    },
+      paths: ['./plugin.js']
+    }
   }
 
   await fs.writeFile('./platformatic.service.json', JSON.stringify(pltServiceConfig, null, 2))
 
   await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openapi, '--name', 'full', '--full'])
 
-  equal(await isFileAccessible(join(dir, 'full', 'full.cjs')), false)
-
   const typeFile = join(dir, 'full', 'full.d.ts')
   const data = await readFile(typeFile, 'utf-8')
-  equal(data.includes(`
+  equal(
+    data.includes(`
   export type PostBodyStringRequest = {
     body: string
-  }`), true)
+  }`),
+    true
+  )
 })

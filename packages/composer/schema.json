@@ -1237,48 +1237,6 @@
         }
       ]
     },
-    "clients": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "serviceId": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "openapi",
-              "graphql"
-            ]
-          },
-          "path": {
-            "type": "string",
-            "resolvePath": true
-          },
-          "schema": {
-            "type": "string",
-            "resolvePath": true
-          },
-          "url": {
-            "type": "string"
-          },
-          "fullResponse": {
-            "type": "boolean"
-          },
-          "fullRequest": {
-            "type": "boolean"
-          },
-          "validateResponse": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      }
-    },
     "runtime": {
       "type": "object",
       "properties": {

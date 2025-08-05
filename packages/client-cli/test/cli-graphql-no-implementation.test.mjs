@@ -1,11 +1,10 @@
 import { create } from '@platformatic/db'
 import { create as createService } from '@platformatic/service'
 import { match } from '@platformatic/utils'
-import dotenv from 'dotenv'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
 import graphql from 'graphql'
-import { equal, deepEqual as same } from 'node:assert'
+import { equal } from 'node:assert'
 import { join } from 'node:path'
 import { after, test } from 'node:test'
 import { moveToTmpdir, request } from './helper.js'
@@ -34,9 +33,17 @@ test('graphql client generation (javascript)', async t => {
   }
 
   const plugin = `
+const { resolve } = require('node:path')
+const { buildGraphQLClient } = require('@platformatic/client')
+
 module.exports = async function (app) {
+  const client = await buildGraphQLClient({
+    url: '${app.url}/graphql',
+    path: resolve(__dirname, './movies/movies.schema.graphql'),
+  })
+
   app.post('/', async (request, reply) => {
-    const res = await request.movies.graphql({
+    const res = await client.graphql({
       query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
     })
     return res
@@ -78,20 +85,6 @@ module.exports = async function (app) {
     }),
     true
   )
-
-  {
-    const envs = dotenv.parse(await fs.readFile(join(dir, '.env'), 'utf-8'))
-    same(envs, {
-      PLT_MOVIES_URL: app.url + '/graphql'
-    })
-  }
-
-  {
-    const envs = dotenv.parse(await fs.readFile(join(dir, '.env.sample'), 'utf-8'))
-    same(envs, {
-      PLT_MOVIES_URL: app.url + '/graphql'
-    })
-  }
 })
 
 test('graphql client generation (typescript)', async t => {
@@ -120,10 +113,17 @@ test('graphql client generation (typescript)', async t => {
   const plugin = `
 /// <reference types="./movies" />
 import { type FastifyPluginAsync } from 'fastify'
+import { resolve } from 'node:path'
+import { buildGraphQLClient } from '@platformatic/client'
 
 const myPlugin: FastifyPluginAsync<{}> = async (app, options) => {
+  const client = await buildGraphQLClient({
+    url: '${app.url}/graphql',
+    path: resolve(import.meta.dirname, './movies/movies.schema.graphql'),
+  })
+
   app.post('/', async (request, reply) => {
-    const res = await request.movies.graphql({
+    const res = await client.graphql({
       query: 'mutation { saveMovie(input: { title: "foo" }) { id, title } }'
     })
     return res

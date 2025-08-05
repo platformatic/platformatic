@@ -72,7 +72,8 @@ test('logs stdio from the service thread', async t => {
 
     strictEqual(statusCode, 200)
 
-    const messages = (await body.text())
+    const text = await body.text()
+    const messages = text
       .trim()
       .split('\n')
       .map(l => {
@@ -81,22 +82,16 @@ test('logs stdio from the service thread', async t => {
       })
       .filter(m => m.msg !== 'Runtime event')
 
-    deepStrictEqual(messages, [
+    const serviceMessages = messages.filter(m => m.name === 'stdio')
+    const runtimeMessages = messages.filter(m => m.name === undefined)
+
+    deepStrictEqual(serviceMessages, [
       {
         level: 20,
         pid,
         hostname,
         name: 'stdio',
         msg: 'Loading envfile...',
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: undefined,
-        msg: 'Starting the service "stdio"...',
         payload: undefined,
         stdout: undefined
       },
@@ -133,24 +128,6 @@ test('logs stdio from the service thread', async t => {
         hostname,
         name: 'stdio',
         msg: `Server listening at ${url}`,
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: undefined,
-        msg: 'Started the service "stdio"...',
-        payload: undefined,
-        stdout: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: undefined,
-        msg: `Platformatic is now listening at ${url}`,
         payload: undefined,
         stdout: undefined
       },
@@ -209,6 +186,45 @@ test('logs stdio from the service thread', async t => {
         stdout: undefined
       },
       {
+        level: 30,
+        pid,
+        hostname,
+        name: 'stdio',
+        msg: 'request completed',
+        payload: undefined,
+        stdout: undefined
+      }
+    ])
+
+    deepStrictEqual(runtimeMessages, [
+      {
+        level: 30,
+        pid,
+        hostname,
+        name: undefined,
+        msg: 'Starting the service "stdio"...',
+        payload: undefined,
+        stdout: undefined
+      },
+      {
+        level: 30,
+        pid,
+        hostname,
+        name: undefined,
+        msg: 'Started the service "stdio"...',
+        payload: undefined,
+        stdout: undefined
+      },
+      {
+        level: 30,
+        pid,
+        hostname,
+        name: undefined,
+        msg: `Platformatic is now listening at ${url}`,
+        payload: undefined,
+        stdout: undefined
+      },
+      {
         level: 10,
         pid,
         hostname,
@@ -224,15 +240,6 @@ test('logs stdio from the service thread', async t => {
         name: undefined,
         msg: 'This is a fatal with object',
         payload: { ts: '123', foo: 'bar' },
-        stdout: undefined
-      },
-      {
-        level: 30,
-        pid,
-        hostname,
-        name: 'stdio',
-        msg: 'request completed',
-        payload: undefined,
         stdout: undefined
       }
     ])
