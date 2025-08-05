@@ -1,9 +1,40 @@
-import { execa } from 'execa'
 import assert from 'node:assert/strict'
 import { statSync, utimesSync } from 'node:fs'
 import test from 'node:test'
+import { parseArgs as nodeParseArgs } from 'node:util'
+import { applyMigrations } from '../../lib/commands/migrations-apply.js'
 import { getConnectionInfo } from '../helper.js'
-import { cliPath, getFixturesConfigFileLocation } from './helper.js'
+import { getFixturesConfigFileLocation } from './helper.js'
+
+function createTestContext () {
+  return {
+    parseArgs (args, options) {
+      return nodeParseArgs({ args, options, allowPositionals: true, allowNegative: true, strict: false })
+    },
+    colorette: {
+      bold (str) {
+        return str
+      }
+    },
+    logFatalError (logger, ...args) {
+      if (logger.fatal) logger.fatal(...args)
+      return false
+    }
+  }
+}
+
+function createCapturingLogger () {
+  let capturedOutput = ''
+  const logger = {
+    info: (msg) => { capturedOutput += msg + '\n' },
+    warn: (msg) => { capturedOutput += msg + '\n' },
+    debug: () => {},
+    trace: () => {},
+    error: (msg) => { capturedOutput += msg + '\n' }
+  }
+  logger.getCaptured = () => capturedOutput
+  return logger
+}
 
 test('migrate up', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
@@ -11,13 +42,14 @@ test('migrate up', async t => {
     await dropTestDB()
   })
 
-  const { stdout } = await execa('node', [cliPath, 'applyMigrations', getFixturesConfigFileLocation('simple.json')], {
-    env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
-  })
+  const logger = createCapturingLogger()
+  const context = createTestContext()
 
-  assert.ok(stdout.includes('001.do.sql'))
+  process.env.DATABASE_URL = connectionInfo.connectionString
+  await applyMigrations(logger, getFixturesConfigFileLocation('simple.json'), [], context)
+
+  const output = logger.getCaptured()
+  assert.ok(output.includes('001.do.sql'))
 })
 
 test('migrate up & down specifying a version with "to"', async t => {
@@ -26,28 +58,22 @@ test('migrate up & down specifying a version with "to"', async t => {
     await dropTestDB()
   })
 
-  {
-    const { stdout } = await execa('node', [cliPath, 'applyMigrations', getFixturesConfigFileLocation('simple.json')], {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
-    })
+  process.env.DATABASE_URL = connectionInfo.connectionString
 
-    assert.ok(stdout.includes('001.do.sql'))
+  {
+    const logger = createCapturingLogger()
+    const context = createTestContext()
+    await applyMigrations(logger, getFixturesConfigFileLocation('simple.json'), [], context)
+    const output = logger.getCaptured()
+    assert.ok(output.includes('001.do.sql'))
   }
 
   {
-    const { stdout } = await execa(
-      'node',
-      [cliPath, 'applyMigrations', getFixturesConfigFileLocation('simple.json'), '-t', '000'],
-      {
-        env: {
-          DATABASE_URL: connectionInfo.connectionString
-        }
-      }
-    )
-
-    assert.ok(stdout.includes('001.undo.sql'))
+    const logger = createCapturingLogger()
+    const context = createTestContext()
+    await applyMigrations(logger, getFixturesConfigFileLocation('simple.json'), ['-t', '000'], context)
+    const output = logger.getCaptured()
+    assert.ok(output.includes('001.undo.sql'))
   }
 })
 
@@ -57,13 +83,14 @@ test('ignore versions', async t => {
     await dropTestDB()
   })
 
-  const { stdout } = await execa('node', [cliPath, 'applyMigrations', getFixturesConfigFileLocation('simple.json')], {
-    env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
-  })
+  const logger = createCapturingLogger()
+  const context = createTestContext()
 
-  assert.ok(stdout.includes('001.do.sql'))
+  process.env.DATABASE_URL = connectionInfo.connectionString
+  await applyMigrations(logger, getFixturesConfigFileLocation('simple.json'), [], context)
+
+  const output = logger.getCaptured()
+  assert.ok(output.includes('001.do.sql'))
 })
 
 test('migrations rollback', async t => {
@@ -72,96 +99,68 @@ test('migrations rollback', async t => {
     await dropTestDB()
   })
 
+  process.env.DATABASE_URL = connectionInfo.connectionString
+
   {
     // apply all migrations
-    const { stdout } = await execa(
-      'node',
-      [cliPath, 'applyMigrations', getFixturesConfigFileLocation('multiple-migrations.json')],
-      {
-        env: {
-          DATABASE_URL: connectionInfo.connectionString
-        }
-      }
-    )
+    const logger = createCapturingLogger()
+    const context = createTestContext()
+    await applyMigrations(logger, getFixturesConfigFileLocation('multiple-migrations.json'), [], context)
+    const output = logger.getCaptured()
 
-    assert.ok(stdout.includes('001.do.sql'))
-    assert.ok(stdout.includes('002.do.sql'))
-    assert.ok(stdout.includes('003.do.sql'))
+    assert.ok(output.includes('001.do.sql'))
+    assert.ok(output.includes('002.do.sql'))
+    assert.ok(output.includes('003.do.sql'))
   }
 
   // Down to no migrations applied
   {
-    const { stdout } = await execa(
-      'node',
-      [cliPath, 'applyMigrations', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'],
-      {
-        env: {
-          DATABASE_URL: connectionInfo.connectionString
-        }
-      }
-    )
+    const logger = createCapturingLogger()
+    const context = createTestContext()
+    await applyMigrations(logger, getFixturesConfigFileLocation('multiple-migrations.json'), ['-r'], context)
+    const output = logger.getCaptured()
 
-    assert.ok(stdout.includes('003.undo.sql'))
+    assert.ok(output.includes('003.undo.sql'))
   }
 
   {
-    const { stdout } = await execa(
-      'node',
-      [cliPath, 'applyMigrations', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'],
-      {
-        env: {
-          DATABASE_URL: connectionInfo.connectionString
-        }
-      }
-    )
+    const logger = createCapturingLogger()
+    const context = createTestContext()
+    await applyMigrations(logger, getFixturesConfigFileLocation('multiple-migrations.json'), ['-r'], context)
+    const output = logger.getCaptured()
 
-    assert.ok(stdout.includes('002.undo.sql'))
+    assert.ok(output.includes('002.undo.sql'))
   }
 
   {
-    const { stdout } = await execa(
-      'node',
-      [cliPath, 'applyMigrations', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'],
-      {
-        env: {
-          DATABASE_URL: connectionInfo.connectionString
-        }
-      }
-    )
+    const logger = createCapturingLogger()
+    const context = createTestContext()
+    await applyMigrations(logger, getFixturesConfigFileLocation('multiple-migrations.json'), ['-r'], context)
+    const output = logger.getCaptured()
 
-    assert.ok(stdout.includes('001.undo.sql'))
+    assert.ok(output.includes('001.undo.sql'))
   }
 
   {
-    const { stdout } = await execa(
-      'node',
-      [cliPath, 'applyMigrations', getFixturesConfigFileLocation('multiple-migrations.json'), '-r'],
-      {
-        env: {
-          DATABASE_URL: connectionInfo.connectionString
-        }
-      }
-    )
+    const logger = createCapturingLogger()
+    const context = createTestContext()
+    await applyMigrations(logger, getFixturesConfigFileLocation('multiple-migrations.json'), ['-r'], context)
+    const output = logger.getCaptured()
 
-    assert.ok(stdout.includes('No migrations to rollback'))
+    assert.ok(output.includes('No migrations to rollback'))
   }
 
   // ...and back!
   {
     // apply all migrations
-    const { stdout } = await execa(
-      'node',
-      [cliPath, 'applyMigrations', getFixturesConfigFileLocation('multiple-migrations.json')],
-      {
-        env: {
-          DATABASE_URL: connectionInfo.connectionString
-        }
-      }
-    )
+    const logger = createCapturingLogger()
+    const context = createTestContext()
+    await applyMigrations(logger, getFixturesConfigFileLocation('multiple-migrations.json'), [], context)
+    const output = logger.getCaptured()
 
-    assert.ok(stdout.includes('001.do.sql'))
-    assert.ok(stdout.includes('002.do.sql'))
-    assert.ok(stdout.includes('003.do.sql'))
+    assert.ok(output.includes('001.do.sql'))
+    assert.ok(output.includes('002.do.sql'))
+    assert.ok(output.includes('003.do.sql'))
   }
 })
 
@@ -175,14 +174,16 @@ test('after a migration, platformatic config is touched', async t => {
   d.setFullYear(d.getFullYear() - 1)
   utimesSync(getFixturesConfigFileLocation('simple.json'), d, d)
   const { mtime: mtimePrev } = statSync(getFixturesConfigFileLocation('simple.json'))
-  {
-    const { stdout } = await execa('node', [cliPath, 'applyMigrations', getFixturesConfigFileLocation('simple.json')], {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
-    })
 
-    assert.ok(stdout.includes('001.do.sql'))
+  process.env.DATABASE_URL = connectionInfo.connectionString
+
+  {
+    const logger = createCapturingLogger()
+    const context = createTestContext()
+    await applyMigrations(logger, getFixturesConfigFileLocation('simple.json'), [], context)
+    const output = logger.getCaptured()
+
+    assert.ok(output.includes('001.do.sql'))
 
     const { mtime: mtimeAfter } = statSync(getFixturesConfigFileLocation('simple.json'))
     assert.notDeepEqual(mtimePrev, mtimeAfter)
