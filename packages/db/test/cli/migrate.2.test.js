@@ -7,7 +7,7 @@ import { parseArgs as nodeParseArgs } from 'node:util'
 import split from 'split2'
 import { applyMigrations } from '../../lib/commands/migrations-apply.js'
 import { getConnectionInfo } from '../helper.js'
-import { cliPath, connectDB, getFixturesConfigFileLocation, startPath } from './helper.js'
+import { connectDB, getFixturesConfigFileLocation, startPath } from './helper.js'
 
 function createTestContext () {
   return {
