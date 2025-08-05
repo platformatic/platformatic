@@ -5,35 +5,17 @@ import { parseArgs as nodeParseArgs } from 'node:util'
 import { applyMigrations } from '../../lib/commands/migrations-apply.js'
 import { getConnectionInfo } from '../helper.js'
 import { getFixturesConfigFileLocation } from './helper.js'
+import { createCapturingLogger, createTestContext } from '../cli/test-utilities.js'
 
-function createTestContext () {
+// Helper to create test context with parseArgs for this specific file
+function createTestContextWithParseArgs () {
+  const baseContext = createTestContext()
   return {
+    ...baseContext,
     parseArgs (args, options) {
       return nodeParseArgs({ args, options, allowPositionals: true, allowNegative: true, strict: false })
-    },
-    colorette: {
-      bold (str) {
-        return str
-      }
-    },
-    logFatalError (logger, ...args) {
-      if (logger.fatal) logger.fatal(...args)
-      return false
     }
   }
-}
-
-function createCapturingLogger () {
-  let capturedOutput = ''
-  const logger = {
-    info: (msg) => { capturedOutput += msg + '\n' },
-    warn: (msg) => { capturedOutput += msg + '\n' },
-    debug: () => {},
-    trace: () => {},
-    error: (msg) => { capturedOutput += msg + '\n' }
-  }
-  logger.getCaptured = () => capturedOutput
-  return logger
 }
 
 test('migrate up', async t => {
@@ -43,7 +25,7 @@ test('migrate up', async t => {
   })
 
   const logger = createCapturingLogger()
-  const context = createTestContext()
+  const context = createTestContextWithParseArgs()
 
   process.env.DATABASE_URL = connectionInfo.connectionString
   await applyMigrations(logger, getFixturesConfigFileLocation('simple.json'), [], context)
@@ -62,7 +44,7 @@ test('migrate up & down specifying a version with "to"', async t => {
 
   {
     const logger = createCapturingLogger()
-    const context = createTestContext()
+    const context = createTestContextWithParseArgs()
     await applyMigrations(logger, getFixturesConfigFileLocation('simple.json'), [], context)
     const output = logger.getCaptured()
     assert.ok(output.includes('001.do.sql'))
@@ -70,7 +52,7 @@ test('migrate up & down specifying a version with "to"', async t => {
 
   {
     const logger = createCapturingLogger()
-    const context = createTestContext()
+    const context = createTestContextWithParseArgs()
     await applyMigrations(logger, getFixturesConfigFileLocation('simple.json'), ['-t', '000'], context)
     const output = logger.getCaptured()
     assert.ok(output.includes('001.undo.sql'))
@@ -84,7 +66,7 @@ test('ignore versions', async t => {
   })
 
   const logger = createCapturingLogger()
-  const context = createTestContext()
+  const context = createTestContextWithParseArgs()
 
   process.env.DATABASE_URL = connectionInfo.connectionString
   await applyMigrations(logger, getFixturesConfigFileLocation('simple.json'), [], context)
@@ -104,7 +86,7 @@ test('migrations rollback', async t => {
   {
     // apply all migrations
     const logger = createCapturingLogger()
-    const context = createTestContext()
+    const context = createTestContextWithParseArgs()
     await applyMigrations(logger, getFixturesConfigFileLocation('multiple-migrations.json'), [], context)
     const output = logger.getCaptured()
 
@@ -116,7 +98,7 @@ test('migrations rollback', async t => {
   // Down to no migrations applied
   {
     const logger = createCapturingLogger()
-    const context = createTestContext()
+    const context = createTestContextWithParseArgs()
     await applyMigrations(logger, getFixturesConfigFileLocation('multiple-migrations.json'), ['-r'], context)
     const output = logger.getCaptured()
 
@@ -125,7 +107,7 @@ test('migrations rollback', async t => {
 
   {
     const logger = createCapturingLogger()
-    const context = createTestContext()
+    const context = createTestContextWithParseArgs()
     await applyMigrations(logger, getFixturesConfigFileLocation('multiple-migrations.json'), ['-r'], context)
     const output = logger.getCaptured()
 
@@ -134,7 +116,7 @@ test('migrations rollback', async t => {
 
   {
     const logger = createCapturingLogger()
-    const context = createTestContext()
+    const context = createTestContextWithParseArgs()
     await applyMigrations(logger, getFixturesConfigFileLocation('multiple-migrations.json'), ['-r'], context)
     const output = logger.getCaptured()
 
@@ -143,7 +125,7 @@ test('migrations rollback', async t => {
 
   {
     const logger = createCapturingLogger()
-    const context = createTestContext()
+    const context = createTestContextWithParseArgs()
     await applyMigrations(logger, getFixturesConfigFileLocation('multiple-migrations.json'), ['-r'], context)
     const output = logger.getCaptured()
 
@@ -154,7 +136,7 @@ test('migrations rollback', async t => {
   {
     // apply all migrations
     const logger = createCapturingLogger()
-    const context = createTestContext()
+    const context = createTestContextWithParseArgs()
     await applyMigrations(logger, getFixturesConfigFileLocation('multiple-migrations.json'), [], context)
     const output = logger.getCaptured()
 
@@ -179,7 +161,7 @@ test('after a migration, platformatic config is touched', async t => {
 
   {
     const logger = createCapturingLogger()
-    const context = createTestContext()
+    const context = createTestContextWithParseArgs()
     await applyMigrations(logger, getFixturesConfigFileLocation('simple.json'), [], context)
     const output = logger.getCaptured()
 

@@ -17,12 +17,15 @@ export function createCapturingLogger () {
 
 /**
  * Creates a test context with common utilities
+ *
+ * Note: includes a minimal parseArgs stub since some command functions
+ * (like applyMigrations) expect it, even when called with empty args arrays
  */
 export function createTestContext () {
   return {
-    parseArgs (args, options) {
-      // For direct function calls in tests, we typically don't need to parse args
-      // but the function signature expects it, so return empty values
+    parseArgs () {
+      // Minimal stub for command functions that expect parseArgs in context
+      // Returns empty values since most tests pass empty args arrays
       return { values: {}, positionals: [] }
     },
     colorette: {
