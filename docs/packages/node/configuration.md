@@ -26,6 +26,7 @@ Configures Node. Supported object properties:
 - **`absoluteUrl`**: If set to `true`, then the service will receive the full URL from a Platformatic Composer. The default is `false`.
 - **`dispatchViaHttp`**: If set to `true`, then the service will serve requests coming from the mesh network via a TCP port.
 - **`disablePlatformaticInBuild`**: If set to `true`, then no Platformatic code will be started when running the `build` command.
+- **`hasServer`**: If set to `false`, then Platformatic Node will treat the service as a background service which doesn't expose any HTTP port.
 
 ## `logger`
 

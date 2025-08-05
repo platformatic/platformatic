@@ -21,8 +21,7 @@ test('ps - should show running applications', async t => {
     l
       .split('|')
       .map(t => t.trim())
-      .filter(t => t)
-  )
+      .filter(t => t))
 
   deepStrictEqual(lines[2], ['PID', 'Name', 'Version', 'Uptime', 'URL', 'Directory'])
 
@@ -55,8 +54,7 @@ test('services - should list services for an application with no workers informa
     l
       .split('|')
       .map(t => t.trim())
-      .filter(t => t)
-  )
+      .filter(t => t))
 
   deepStrictEqual(lines[2], ['Name', 'Type', 'Entrypoint'])
   deepStrictEqual(lines[4], ['alternative', 'nodejs', 'No'])
@@ -79,8 +77,7 @@ test('services - should list services for an application with workers informatio
     l
       .split('|')
       .map(t => t.trim())
-      .filter(t => t)
-  )
+      .filter(t => t))
 
   deepStrictEqual(lines[2], ['Name', 'Workers', 'Type', 'Entrypoint'])
   deepStrictEqual(lines[4], ['alternative', '1', 'nodejs', 'No'])
@@ -275,7 +272,8 @@ test('config - should list configuration for an service', async t => {
       absoluteUrl: false,
       main: 'index.js',
       dispatchViaHttp: false,
-      disablePlatformaticInBuild: false
+      disablePlatformaticInBuild: false,
+      hasServer: true
     }
   })
 })
