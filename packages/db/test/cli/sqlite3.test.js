@@ -1,43 +1,13 @@
 import assert from 'node:assert/strict'
 import { join } from 'node:path'
 import test from 'node:test'
-import { parseArgs as nodeParseArgs } from 'node:util'
 import split from 'split2'
 import { setTimeout } from 'timers/promises'
 import { request } from 'undici'
 import { applyMigrations } from '../../lib/commands/migrations-apply.js'
 import { getConnectionInfo } from '../helper.js'
 import { safeKill, start } from './helper.js'
-
-function createTestContext () {
-  return {
-    parseArgs (args, options) {
-      return nodeParseArgs({ args, options, allowPositionals: true, allowNegative: true, strict: false })
-    },
-    colorette: {
-      bold (str) {
-        return str
-      }
-    },
-    logFatalError (logger, ...args) {
-      if (logger.fatal) logger.fatal(...args)
-      return false
-    }
-  }
-}
-
-function createCapturingLogger () {
-  let capturedOutput = ''
-  const logger = {
-    info: (msg) => { capturedOutput += msg + '\n' },
-    warn: (msg) => { capturedOutput += msg + '\n' },
-    debug: () => {},
-    trace: () => {},
-    error: (msg) => { capturedOutput += msg + '\n' }
-  }
-  logger.getCaptured = () => capturedOutput
-  return logger
-}
+import { createCapturingLogger, createTestContext } from './test-utilities.js'
 
 test('migrate and start', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')

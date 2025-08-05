@@ -4,54 +4,13 @@ import { copyFile, mkdtemp, readdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { parseArgs as nodeParseArgs } from 'node:util'
 import rimraf from 'rimraf'
 import { request } from 'undici'
 import { applyMigrations } from '../../lib/commands/migrations-apply.js'
 import { seed as seedCommand } from '../../lib/commands/seed.js'
 import { getConnectionInfo } from '../helper.js'
 import { safeKill, start } from './helper.js'
-
-function createTestContext () {
-  return {
-    parseArgs (args, options) {
-      return nodeParseArgs({ args, options, allowPositionals: true, allowNegative: true, strict: false })
-    },
-    colorette: {
-      bold (str) {
-        return str
-      }
-    },
-    logFatalError (logger, ...args) {
-      if (logger.fatal) logger.fatal(...args)
-      return false
-    }
-  }
-}
-
-function createCapturingLogger () {
-  let capturedOutput = ''
-  const logger = {
-    info: (msg) => { capturedOutput += msg + '\n' },
-    warn: (msg) => { capturedOutput += msg + '\n' },
-    debug: () => {},
-    trace: () => {},
-    error: (msg) => { capturedOutput += msg + '\n' }
-  }
-  logger.getCaptured = () => capturedOutput
-  return logger
-}
-
-function createThrowingLogger () {
-  return {
-    info: () => {},
-    warn: () => {},
-    debug: () => {},
-    trace: () => {},
-    error: (msg) => { throw new Error(msg) },
-    fatal: (msg) => { throw new Error(msg) }
-  }
-}
+import { createCapturingLogger, createTestContext, createThrowingLogger } from './test-utilities.js'
 
 test('seed and start', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('sqlite')

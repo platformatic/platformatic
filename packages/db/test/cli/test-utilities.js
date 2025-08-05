@@ -1,5 +1,3 @@
-import { parseArgs as nodeParseArgs } from 'node:util'
-
 /**
  * Creates a logger that captures all output for testing purposes
  */
@@ -23,7 +21,9 @@ export function createCapturingLogger () {
 export function createTestContext () {
   return {
     parseArgs (args, options) {
-      return nodeParseArgs({ args, options, allowPositionals: true, allowNegative: true, strict: false })
+      // For direct function calls in tests, we typically don't need to parse args
+      // but the function signature expects it, so return empty values
+      return { values: {}, positionals: [] }
     },
     colorette: {
       bold (str) {
@@ -34,6 +34,20 @@ export function createTestContext () {
       if (logger.fatal) logger.fatal(...args)
       return false
     }
+  }
+}
+
+/**
+ * Creates a logger that throws errors on error/fatal messages
+ */
+export function createThrowingLogger () {
+  return {
+    info: () => {},
+    warn: () => {},
+    debug: () => {},
+    trace: () => {},
+    error: (msg) => { throw new Error(msg) },
+    fatal: (msg) => { throw new Error(msg) }
   }
 }
 
