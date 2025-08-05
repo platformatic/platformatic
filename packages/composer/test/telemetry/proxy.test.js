@@ -59,7 +59,7 @@ test('should proxy openapi requests with telemetry span', async t => {
     assert.equal(proxyCallSpan.name, `GET ${origin1}/internal/service1/users`)
     assert.equal(proxyCallSpan.attributes['url.full'], `${origin1}/internal/service1/users`)
     assert.equal(proxyCallSpan.attributes['http.response.status_code'], 200)
-    assert.equal(proxyCallSpan.parentSpanId, composerCallSpan.spanContext().spanId)
+    assert.equal(proxyCallSpan.parentSpanContext.spanId, composerCallSpan.spanContext().spanId)
     assert.equal(proxyCallSpan.traceId, composerCallSpan.traceId)
   }
 })
