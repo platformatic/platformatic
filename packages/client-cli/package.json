@@ -32,7 +32,6 @@
   "dependencies": {
     "@fastify/error": "^4.0.0",
     "@platformatic/client": "workspace:*",
-    "@platformatic/foundation": "workspace:*",
     "camelcase": "~6.3.0",
     "code-block-writer": "^13.0.1",
     "graphql": "^16.8.1",
@@ -47,7 +46,6 @@
   "devDependencies": {
     "@platformatic/composer": "workspace:*",
     "@platformatic/db": "workspace:*",
-    "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@playwright/test": "^1.42.1",
     "@types/react": "^19.1.6",

@@ -1,14 +1,13 @@
 #! /usr/bin/env node
 
-import { createDirectory, findConfigurationFileRecursive } from '@platformatic/foundation'
-import { access, readFile, writeFile } from 'fs/promises'
+import { access, mkdir, readFile, rm, writeFile } from 'fs/promises'
 import graphql from 'graphql'
 import helpMe from 'help-me'
 import parseArgs from 'minimist'
 import { join } from 'path'
 import pino from 'pino'
 import pinoPretty from 'pino-pretty'
-import { getGlobalDispatcher, interceptors, request, setGlobalDispatcher } from 'undici'
+import { getGlobalDispatcher, interceptors, request } from 'undici'
 import YAML from 'yaml'
 import errors from './lib/errors.mjs'
 import { processFrontendOpenAPI } from './lib/frontend-openapi-generator.mjs'
@@ -35,6 +34,14 @@ export async function isFileAccessible (filename) {
   } catch (err) {
     return false
   }
+}
+
+export async function createDirectory (path, empty = false) {
+  if (empty) {
+    await rm(path, { force: true, recursive: true })
+  }
+
+  return mkdir(path, { recursive: true, maxRetries: 10, retryDelay: 1000 })
 }
 
 async function writeOpenAPIClient (
@@ -437,11 +444,11 @@ export async function command (argv) {
     // the default
     ext: '.txt'
   })
-  let {
+  const {
     _: [url],
     ...options
   } = parseArgs(argv, {
-    string: ['name', 'folder', 'runtime', 'optional-headers', 'language', 'type', 'url-auth-headers', 'types-comment'],
+    string: ['name', 'folder', 'optional-headers', 'language', 'type', 'url-auth-headers', 'types-comment'],
     boolean: [
       'typescript',
       'full-response',
@@ -463,7 +470,6 @@ export async function command (argv) {
       f: 'folder',
       t: 'typescript',
       c: 'config',
-      R: 'runtime',
       F: 'full',
       h: 'help'
     }
@@ -482,59 +488,6 @@ export async function command (argv) {
   })
 
   const logger = pino(stream)
-
-  let runtime
-
-  if (options.runtime) {
-    // Find the runtime config file
-    const runtimeConfigFile = await findConfigurationFileRecursive(process.cwd(), null, '@platformatic/runtime')
-
-    if (!runtimeConfigFile) {
-      logger.error('Could not find a platformatic.json file in any parent directory.')
-      process.exit(1)
-    }
-
-    let runtimeModule
-
-    try {
-      runtimeModule = await import('@platformatic/runtime')
-
-      // Ignoring the catch block.
-      // TODO(mcollina): we would need to setup ESM import
-      // mocking.
-      /* c8 ignore next 7 */
-    } catch (err) {
-      if (err.code === 'ERR_MODULE_NOT_FOUND') {
-        logger.error("We couldn't find the @platformatic/runtime package, make sure you have it installed.")
-        process.exit(1)
-      }
-      throw err
-    }
-
-    const { create, transform } = runtimeModule
-    runtime = await create(runtimeConfigFile, null, {
-      async transform (config, ...args) {
-        config = await transform(config)
-
-        config.watch = false
-        config.logger.level = 'error'
-
-        for (const service of config.services) {
-          service.localServiceEnvVars.set('PLT_SERVER_LOGGER_LEVEL', 'warn')
-          service.entrypoint = false
-          service.watch = false
-        }
-
-        return config
-      },
-      start: true
-    })
-
-    // Set interceptors
-    setGlobalDispatcher(runtime.getDispatcher())
-
-    url = `http://${options.runtime}.plt.local`
-  }
 
   if (!url || options.help) {
     await help.toStdout()
@@ -569,12 +522,9 @@ export async function command (argv) {
     options.withCredentials = options['with-credentials']
     options.skipConfigUpdate = options['skip-config-update'] ?? true
     options.retryTimeoutMs = options['retry-timeout-ms']
-    await downloadAndProcess({ url, ...options, logger, runtime: options.runtime })
+    await downloadAndProcess({ url, ...options, logger })
     logger.info(`Client generated successfully into ${options.folder}`)
     logger.info('Check out the docs to know more: https://docs.platformatic.dev/docs/service/overview')
-    if (runtime) {
-      await runtime.close()
-    }
   } catch (err) {
     logger.error(err.message)
     process.exit(1)
