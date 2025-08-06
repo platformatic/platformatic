@@ -47,6 +47,7 @@
     "@platformatic/composer": "workspace:*",
     "@platformatic/db": "workspace:*",
     "@platformatic/foundation": "workspace:*",
+    "@platformatic/runtime": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@playwright/test": "^1.42.1",
     "@types/react": "^19.1.6",

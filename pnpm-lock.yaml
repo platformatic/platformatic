@@ -271,6 +271,9 @@ importers:
       '@platformatic/foundation':
         specifier: workspace:*
         version: link:../foundation
+      '@platformatic/runtime':
+        specifier: workspace:*
+        version: link:../runtime
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
