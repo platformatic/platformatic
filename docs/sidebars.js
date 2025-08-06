@@ -41,7 +41,7 @@ const sidebars = {
             'learn/beginner/crud-application',
             'learn/beginner/environment-variables'
           ]
-        }
+        },
       ]
     },
 
@@ -321,18 +321,6 @@ const sidebars = {
           ]
         },
         'reference/errors'
-      ]
-    },
-
-    // Concepts - Understanding-oriented documentation (Diátaxis: Understanding-oriented)
-    {
-      type: 'category',
-      label: 'Understanding Platformatic',
-      collapsed: true,
-      items: [
-        'learn/overview',
-        'learn/glossary',
-        'FAQs'
       ]
     },
 

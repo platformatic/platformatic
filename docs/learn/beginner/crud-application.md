@@ -92,7 +92,7 @@ DROP TABLE Todos;
 ```
 
 :::note
-See the [Glossary](../glossary.md) for terminologies and definitions used in [Platformatic DB](../../reference/db/overview.md).
+See the [Database Service documentation](../../reference/db/overview.md) for complete technical details about Platformatic DB.
 :::
 
 Now let's apply the migrations we just created by running the command below:
