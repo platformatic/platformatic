@@ -2004,8 +2004,8 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@scalar/fastify-api-reference':
-        specifier: 1.33.0
-        version: 1.33.0
+        specifier: 1.32.1
+        version: 1.32.1
       '@types/ws':
         specifier: ^8.5.10
         version: 8.18.1
@@ -5039,12 +5039,28 @@ packages:
     resolution: {integrity: sha512-4O3mC29k2STz4quBHrpsl6czxi94F3dy8Ej/OPbELS2myKO4GoxromT0BiKSLPAThCnmJ0rqMZ7k9NsgzVjEgA==}
     engines: {node: '>=20'}
 
+  '@scalar/core@0.3.5':
+    resolution: {integrity: sha512-tcLLaGT/otQuEZzTtWUlnBMtcs95gcqwJSQCHqDui2v/+2ctV3FKjGJFoZLutICmQaSGLk0zNt14w39/VAsEqw==}
+    engines: {node: '>=20'}
+
+  '@scalar/fastify-api-reference@1.32.1':
+    resolution: {integrity: sha512-B7fyXF0Wk47LhEIDGl3+yTJ4IlSCclsOlxMlxIaCP+pXnmSVC1q+y84nV8/I5roqVWetP/jvpqQG4f6d3ucnoA==}
+    engines: {node: '>=20'}
+
   '@scalar/fastify-api-reference@1.33.0':
     resolution: {integrity: sha512-iLZsTRnyqrCxwQ6jvs+RbH4AdSDk/XTPfgTAnmag/JzAQoahfMveE1SuLY2qikAVfjkNaALgUpkbY7IjK38o5g==}
     engines: {node: '>=20'}
 
+  '@scalar/openapi-parser@0.18.0':
+    resolution: {integrity: sha512-qAWEfJR5f/LwSFULFeSkD56LHgU9ovyj+e1uqy9XaW9Hb9P0ewIGKi+Gd4wTyxfFkdPLXTFYXApjviP6jV+new==}
+    engines: {node: '>=20'}
+
   '@scalar/openapi-parser@0.18.3':
     resolution: {integrity: sha512-j0OM3Y3JTVx50m7r5ogoADe2pT/ewhAnO7knjkcm7b+vjgKRpgjUMhXsYraBemFkqd2dNa1QfTX/mDVv7wEr9A==}
+    engines: {node: '>=20'}
+
+  '@scalar/openapi-types@0.3.4':
+    resolution: {integrity: sha512-MfHRX1jqLcf6kwDDeXSYENywZXJLZx9Jn8r7DCQApw2QJW/yxb4GnCU0vygCh5KBk1GVJ4x6pyXiWNozb+fGAw==}
     engines: {node: '>=20'}
 
   '@scalar/openapi-types@0.3.7':
@@ -5053,6 +5069,10 @@ packages:
 
   '@scalar/types@0.2.11':
     resolution: {integrity: sha512-SUZzGmoisWsYv33LmmT/ajvSlcl9ZDj9d5RncJ+wB9ZQ2l018xlfpDIH9Kdfo+6KCKQOe3LYLXfH4Lzm891Mag==}
+    engines: {node: '>=20'}
+
+  '@scalar/types@0.2.5':
+    resolution: {integrity: sha512-kXulR6peh+zzP9DFqhncUKtvnV59e6Cf/y3N5Q8RQIa8huRB+901MbXewUEXV4MXYzMMBKJXRgc1LwwbAZUtRA==}
     engines: {node: '>=20'}
 
   '@sec-ant/readable-stream@0.4.1':
@@ -13358,6 +13378,18 @@ snapshots:
     dependencies:
       '@scalar/types': 0.2.11
 
+  '@scalar/core@0.3.5':
+    dependencies:
+      '@scalar/types': 0.2.5
+
+  '@scalar/fastify-api-reference@1.32.1':
+    dependencies:
+      '@scalar/core': 0.3.5
+      '@scalar/openapi-parser': 0.18.0
+      '@scalar/openapi-types': 0.3.4
+      fastify-plugin: 4.5.1
+      github-slugger: 2.0.0
+
   '@scalar/fastify-api-reference@1.33.0':
     dependencies:
       '@scalar/core': 0.3.11
@@ -13365,6 +13397,15 @@ snapshots:
       '@scalar/openapi-types': 0.3.7
       fastify-plugin: 4.5.1
       github-slugger: 2.0.0
+
+  '@scalar/openapi-parser@0.18.0':
+    dependencies:
+      ajv: 8.17.1
+      ajv-draft-04: 1.0.0(ajv@8.17.1)
+      ajv-formats: 3.0.1(ajv@8.17.1)
+      jsonpointer: 5.0.1
+      leven: 4.0.0
+      yaml: 2.8.0
 
   '@scalar/openapi-parser@0.18.3':
     dependencies:
@@ -13376,6 +13417,10 @@ snapshots:
       leven: 4.0.0
       yaml: 2.8.0
 
+  '@scalar/openapi-types@0.3.4':
+    dependencies:
+      zod: 3.24.1
+
   '@scalar/openapi-types@0.3.7':
     dependencies:
       zod: 3.24.1
@@ -13383,6 +13428,12 @@ snapshots:
   '@scalar/types@0.2.11':
     dependencies:
       '@scalar/openapi-types': 0.3.7
+      nanoid: 5.1.5
+      zod: 3.24.1
+
+  '@scalar/types@0.2.5':
+    dependencies:
+      '@scalar/openapi-types': 0.3.4
       nanoid: 5.1.5
       zod: 3.24.1
 
