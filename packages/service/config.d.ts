@@ -253,6 +253,7 @@ export interface PlatformaticServiceConfig {
     | string;
   $schema?: string;
   module?: string;
+  application?: {};
   service?: {
     openapi?:
       | {
