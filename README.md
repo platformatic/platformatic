@@ -46,11 +46,11 @@ Your application will be running at `http://localhost:3042` with auto-generated 
 
 **One Server, Multiple Services** - Watt runs your database APIs, custom services, frontend frameworks, and API gateways all within a single, unified application server.
 
-- **🚀 Auto-Generated APIs** - REST & GraphQL endpoints generated from your database schema
 - **🔋 Built-in Observability** - Logging, metrics, tracing, and health checks out of the box  
-- **🧱 Composable Architecture** - Database services, HTTP services, API composers, and frontend stackables
+- **🧱 Composable Architecture** - HTTP services, API composers, frontend frameworks, and data services
 - **⚡ Framework Integration** - Works with Next.js, Astro, Remix, Vite, and plain Node.js
 - **📦 Production Ready** - Docker deployment, environment configuration, and scaling built-in
+- **🚀 TypeScript First** - Full type safety with auto-generated types and SDK
 
 ## Choose Your Learning Path
 
@@ -86,7 +86,7 @@ Deploy Next.js, Astro, Remix, or Vite applications alongside your APIs with opti
 ### Client SDK
 Auto-generated TypeScript/JavaScript clients for your APIs with full type safety and IDE integration.
 
-### Database Services
+### Data Services
 Auto-generated REST and GraphQL APIs from your database schema with built-in authorization, migrations, and relationships.
 
 ## Documentation Structure
