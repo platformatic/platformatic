@@ -26,9 +26,9 @@ importers:
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
-      '@platformatic/utils':
+      '@platformatic/foundation':
         specifier: workspace:*
-        version: link:../utils
+        version: link:../foundation
       fastify:
         specifier: ^5.0.0
         version: 5.4.0
@@ -75,6 +75,9 @@ importers:
       '@fastify/error':
         specifier: ^4.0.0
         version: 4.2.0
+      '@platformatic/foundation':
+        specifier: workspace:*
+        version: link:../foundation
       '@platformatic/itc':
         specifier: workspace:*
         version: link:../itc
@@ -84,9 +87,6 @@ importers:
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
-      '@platformatic/utils':
-        specifier: workspace:*
-        version: link:../utils
       execa:
         specifier: ^9.3.1
         version: 9.6.0
@@ -139,9 +139,9 @@ importers:
 
   packages/cli:
     dependencies:
-      '@platformatic/utils':
+      '@platformatic/foundation':
         specifier: workspace:*
-        version: link:../utils
+        version: link:../foundation
       wattpm:
         specifier: workspace:*
         version: link:../wattpm
@@ -189,15 +189,15 @@ importers:
       '@platformatic/db':
         specifier: workspace:*
         version: link:../db
+      '@platformatic/foundation':
+        specifier: workspace:*
+        version: link:../foundation
       '@platformatic/service':
         specifier: workspace:*
         version: link:../service
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
-      '@platformatic/utils':
-        specifier: workspace:*
-        version: link:../utils
       borp:
         specifier: ^0.20.0
         version: 0.20.1
@@ -231,9 +231,9 @@ importers:
       '@platformatic/client':
         specifier: workspace:*
         version: link:../client
-      '@platformatic/utils':
+      '@platformatic/foundation':
         specifier: workspace:*
-        version: link:../utils
+        version: link:../foundation
       camelcase:
         specifier: ~6.3.0
         version: 6.3.0
@@ -367,6 +367,9 @@ importers:
       '@platformatic/fastify-openapi-glue':
         specifier: ^5.1.0
         version: 5.1.0
+      '@platformatic/foundation':
+        specifier: workspace:^
+        version: link:../foundation
       '@platformatic/graphql-composer':
         specifier: ^0.10.0
         version: 0.10.0
@@ -379,9 +382,6 @@ importers:
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
-      '@platformatic/utils':
-        specifier: workspace:^
-        version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: 1.33.0
         version: 1.33.0
@@ -506,9 +506,9 @@ importers:
       '@fastify/error':
         specifier: ^4.0.0
         version: 4.2.0
-      '@platformatic/utils':
+      '@platformatic/foundation':
         specifier: workspace:*
-        version: link:../utils
+        version: link:../foundation
       commist:
         specifier: ^3.2.0
         version: 3.2.0
@@ -561,12 +561,12 @@ importers:
 
   packages/create-platformatic:
     dependencies:
+      '@platformatic/foundation':
+        specifier: workspace:*
+        version: link:../foundation
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
-      '@platformatic/utils':
-        specifier: workspace:*
-        version: link:../utils
       columnify:
         specifier: ^1.6.0
         version: 1.6.0
@@ -691,6 +691,9 @@ importers:
       '@platformatic/db-core':
         specifier: workspace:*
         version: link:../db-core
+      '@platformatic/foundation':
+        specifier: workspace:*
+        version: link:../foundation
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
@@ -715,9 +718,6 @@ importers:
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
-      '@platformatic/utils':
-        specifier: workspace:*
-        version: link:../utils
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -950,14 +950,78 @@ importers:
         specifier: ^2.2.2
         version: 2.3.0
 
+  packages/foundation:
+    dependencies:
+      '@fastify/error':
+        specifier: ^4.0.0
+        version: 4.2.0
+      '@iarna/toml':
+        specifier: ^2.2.5
+        version: 2.2.5
+      '@watchable/unpromise':
+        specifier: ^1.0.2
+        version: 1.0.2
+      ajv:
+        specifier: ^8.12.0
+        version: 8.17.1
+      boring-name-generator:
+        specifier: ^1.0.3
+        version: 1.0.3
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
+      fast-json-patch:
+        specifier: ^3.1.1
+        version: 3.1.1
+      json5:
+        specifier: ^2.2.3
+        version: 2.2.3
+      leven:
+        specifier: ~3.1.0
+        version: 3.1.0
+      semver:
+        specifier: ^7.6.3
+        version: 7.7.2
+      undici:
+        specifier: 7.11.0
+        version: 7.11.0
+      yaml:
+        specifier: ^2.4.1
+        version: 2.8.0
+    devDependencies:
+      borp:
+        specifier: ^0.20.0
+        version: 0.20.1
+      c8:
+        specifier: ^10.0.0
+        version: 10.1.3
+      eslint:
+        specifier: '9'
+        version: 9.31.0
+      fastify:
+        specifier: ^5.0.0
+        version: 5.4.0
+      neostandard:
+        specifier: ^0.12.0
+        version: 0.12.2(@typescript-eslint/utils@8.38.0(eslint@9.31.0)(typescript@5.9.2))(eslint@9.31.0)(typescript@5.9.2)
+      pino:
+        specifier: ^9.5.0
+        version: 9.7.0
+      pino-test:
+        specifier: ^1.0.1
+        version: 1.1.0
+      typescript:
+        specifier: ^5.5.4
+        version: 5.9.2
+
   packages/generators:
     dependencies:
       '@fastify/error':
         specifier: ^4.0.0
         version: 4.2.0
-      '@platformatic/utils':
+      '@platformatic/foundation':
         specifier: workspace:*
-        version: link:../utils
+        version: link:../foundation
       change-case-all:
         specifier: ^2.1.0
         version: 2.1.0
@@ -1077,12 +1141,12 @@ importers:
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
+      '@platformatic/foundation':
+        specifier: workspace:*
+        version: link:../foundation
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
-      '@platformatic/utils':
-        specifier: workspace:*
-        version: link:../utils
       get-port:
         specifier: ^7.1.0
         version: 7.1.0
@@ -1147,9 +1211,9 @@ importers:
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
-      '@platformatic/utils':
+      '@platformatic/foundation':
         specifier: workspace:*
-        version: link:../utils
+        version: link:../foundation
       amaro:
         specifier: ^0.3.0
         version: 0.3.2
@@ -1208,12 +1272,12 @@ importers:
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
+      '@platformatic/foundation':
+        specifier: workspace:*
+        version: link:../foundation
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
-      '@platformatic/utils':
-        specifier: workspace:*
-        version: link:../utils
       json5:
         specifier: ^2.2.3
         version: 2.2.3
@@ -1260,9 +1324,9 @@ importers:
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
-      '@platformatic/utils':
+      '@platformatic/foundation':
         specifier: workspace:*
-        version: link:../utils
+        version: link:../foundation
       '@platformatic/vite':
         specifier: workspace:*
         version: link:../vite
@@ -1331,62 +1395,6 @@ importers:
         specifier: ^8.18.0
         version: 8.18.3
 
-  packages/rpc:
-    dependencies:
-      fastify-plugin:
-        specifier: ^5.0.0
-        version: 5.0.1
-    devDependencies:
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
-      eslint:
-        specifier: '9'
-        version: 9.31.0
-      fastify:
-        specifier: ^5.0.0
-        version: 5.4.0
-      neostandard:
-        specifier: ^0.12.0
-        version: 0.12.2(@typescript-eslint/utils@8.38.0(eslint@9.31.0)(typescript@5.9.2))(eslint@9.31.0)(typescript@5.9.2)
-
-  packages/rpc-cli:
-    dependencies:
-      help-me:
-        specifier: ^5.0.0
-        version: 5.0.0
-      typescript:
-        specifier: ~5.8.0
-        version: 5.8.3
-      typescript-json-schema:
-        specifier: ^0.65.0
-        version: 0.65.1
-    devDependencies:
-      '@fastify/autoload':
-        specifier: ^6.0.0
-        version: 6.3.1
-      '@platformatic/rpc':
-        specifier: workspace:*
-        version: link:../rpc
-      '@types/node':
-        specifier: ^22.5.0
-        version: 22.16.5
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
-      eslint:
-        specifier: '9'
-        version: 9.31.0
-      execa:
-        specifier: ^9.0.0
-        version: 9.6.0
-      fastify:
-        specifier: ^5.0.0
-        version: 5.4.0
-      neostandard:
-        specifier: ^0.12.0
-        version: 0.12.2(@typescript-eslint/utils@8.38.0(eslint@9.31.0)(typescript@5.8.3))(eslint@9.31.0)(typescript@5.8.3)
-
   packages/runtime:
     dependencies:
       '@fastify/accepts':
@@ -1407,6 +1415,9 @@ importers:
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
+      '@platformatic/foundation':
+        specifier: workspace:*
+        version: link:../foundation
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
@@ -1422,9 +1433,6 @@ importers:
       '@platformatic/undici-cache-memory':
         specifier: ^0.8.1
         version: 0.8.4
-      '@platformatic/utils':
-        specifier: workspace:*
-        version: link:../utils
       '@watchable/unpromise':
         specifier: ^1.0.2
         version: 1.0.2
@@ -1602,6 +1610,9 @@ importers:
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
+      '@platformatic/foundation':
+        specifier: workspace:*
+        version: link:../foundation
       '@platformatic/generators':
         specifier: workspace:*
         version: link:../generators
@@ -1614,9 +1625,6 @@ importers:
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
-      '@platformatic/utils':
-        specifier: workspace:*
-        version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: 1.33.0
         version: 1.33.0
@@ -1799,9 +1807,9 @@ importers:
       '@mercuriusjs/federation':
         specifier: ^5.0.0
         version: 5.0.0
-      '@platformatic/utils':
+      '@platformatic/foundation':
         specifier: workspace:*
-        version: link:../utils
+        version: link:../foundation
       camelcase:
         specifier: ^6.3.0
         version: 6.3.0
@@ -1924,12 +1932,12 @@ importers:
       '@matteo.collina/sqlite-pool':
         specifier: ^0.6.0
         version: 0.6.0
+      '@platformatic/foundation':
+        specifier: workspace:*
+        version: link:../foundation
       '@platformatic/telemetry':
         specifier: workspace:*
         version: link:../telemetry
-      '@platformatic/utils':
-        specifier: workspace:*
-        version: link:../utils
       async-cache-dedupe:
         specifier: ^2.1.0
         version: 2.2.0
@@ -1979,15 +1987,15 @@ importers:
       '@fastify/swagger':
         specifier: ^9.0.0
         version: 9.5.1
+      '@platformatic/foundation':
+        specifier: workspace:*
+        version: link:../foundation
       '@platformatic/scalar-theme':
         specifier: workspace:*
         version: link:../scalar-theme
       '@platformatic/sql-json-schema-mapper':
         specifier: workspace:*
         version: link:../sql-json-schema-mapper
-      '@platformatic/utils':
-        specifier: workspace:*
-        version: link:../utils
       '@scalar/fastify-api-reference':
         specifier: 1.33.0
         version: 1.33.0
@@ -2076,9 +2084,9 @@ importers:
       '@opentelemetry/semantic-conventions':
         specifier: 1.36.0
         version: 1.36.0
-      '@platformatic/utils':
+      '@platformatic/foundation':
         specifier: workspace:*
-        version: link:../utils
+        version: link:../foundation
       fast-uri:
         specifier: ^3.0.6
         version: 3.0.6
@@ -2114,70 +2122,6 @@ importers:
         specifier: ^5.9.2
         version: 5.9.2
 
-  packages/utils:
-    dependencies:
-      '@fastify/error':
-        specifier: ^4.0.0
-        version: 4.2.0
-      '@iarna/toml':
-        specifier: ^2.2.5
-        version: 2.2.5
-      '@watchable/unpromise':
-        specifier: ^1.0.2
-        version: 1.0.2
-      ajv:
-        specifier: ^8.12.0
-        version: 8.17.1
-      boring-name-generator:
-        specifier: ^1.0.3
-        version: 1.0.3
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.6.1
-      fast-json-patch:
-        specifier: ^3.1.1
-        version: 3.1.1
-      json5:
-        specifier: ^2.2.3
-        version: 2.2.3
-      leven:
-        specifier: ~3.1.0
-        version: 3.1.0
-      semver:
-        specifier: ^7.6.3
-        version: 7.7.2
-      undici:
-        specifier: 7.11.0
-        version: 7.11.0
-      yaml:
-        specifier: ^2.4.1
-        version: 2.8.0
-    devDependencies:
-      borp:
-        specifier: ^0.20.0
-        version: 0.20.1
-      c8:
-        specifier: ^10.0.0
-        version: 10.1.3
-      eslint:
-        specifier: '9'
-        version: 9.31.0
-      fastify:
-        specifier: ^5.0.0
-        version: 5.4.0
-      neostandard:
-        specifier: ^0.12.0
-        version: 0.12.2(@typescript-eslint/utils@8.38.0(eslint@9.31.0)(typescript@5.8.3))(eslint@9.31.0)(typescript@5.8.3)
-      pino:
-        specifier: ^9.5.0
-        version: 9.7.0
-      pino-test:
-        specifier: ^1.0.1
-        version: 1.1.0
-      typescript:
-        specifier: ^5.5.4
-        version: 5.8.3
-
   packages/vite:
     dependencies:
       '@fastify/static':
@@ -2186,12 +2130,12 @@ importers:
       '@platformatic/basic':
         specifier: workspace:*
         version: link:../basic
+      '@platformatic/foundation':
+        specifier: workspace:*
+        version: link:../foundation
       '@platformatic/node':
         specifier: workspace:*
         version: link:../node
-      '@platformatic/utils':
-        specifier: workspace:*
-        version: link:../utils
       fastify:
         specifier: ^5.0.0
         version: 5.4.0
@@ -2241,12 +2185,12 @@ importers:
       '@platformatic/control':
         specifier: workspace:*
         version: link:../control
+      '@platformatic/foundation':
+        specifier: workspace:*
+        version: link:../foundation
       '@platformatic/runtime':
         specifier: workspace:*
         version: link:../runtime
-      '@platformatic/utils':
-        specifier: workspace:*
-        version: link:../utils
       colorette:
         specifier: ^2.0.20
         version: 2.0.20
@@ -4599,9 +4543,6 @@ packages:
 
   '@types/nlcst@2.0.3':
     resolution: {integrity: sha512-vSYNSDe6Ix3q+6Z7ri9lyWqgGhJTmzRjZRqyq15N0Z/1/UnVsno9G/N40NBijoYx2seFDIl0+B2mgAb9mezUCA==}
-
-  '@types/node@18.19.120':
-    resolution: {integrity: sha512-WtCGHFXnVI8WHLxDAt5TbnCM4eSE+nI0QN2NJtwzcgMhht2eNz6V9evJrk+lwC8bCY8OWV5Ym8Jz7ZEyGnKnMA==}
 
   '@types/node@22.16.5':
     resolution: {integrity: sha512-bJFoMATwIGaxxx8VJPeM8TonI8t579oRvgAuT8zFugJsJZgzqv0Fu8Mhp68iecjzG7cnN3mO2dJQ5uUM2EFrgQ==}
@@ -8288,9 +8229,6 @@ packages:
     resolution: {integrity: sha512-CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ==}
     engines: {node: '>= 0.8'}
 
-  path-equal@1.2.5:
-    resolution: {integrity: sha512-i73IctDr3F2W+bsOWDyyVm/lqsXO47aY9nsFZUjTT/aljSbkxHxxCoyZ9UUrM8jK0JVod+An+rl48RCsvWM+9g==}
-
   path-exists@4.0.0:
     resolution: {integrity: sha512-ak9Qy5Q7jYb2Wwcey5Fpvg2KoAc/ZIhLSLOSBmRmygPsGwkVVt0fZa0qrtMz+m6tJTAHfZQ8FnmB4MG4LWy7/w==}
     engines: {node: '>=8'}
@@ -9690,15 +9628,6 @@ packages:
       eslint: ^8.57.0 || ^9.0.0
       typescript: '>=4.8.4 <5.9.0'
 
-  typescript-json-schema@0.65.1:
-    resolution: {integrity: sha512-tuGH7ff2jPaUYi6as3lHyHcKpSmXIqN7/mu50x3HlYn0EHzLpmt3nplZ7EuhUkO0eqDRc9GqWNkfjgBPIS9kxg==}
-    hasBin: true
-
-  typescript@5.5.4:
-    resolution: {integrity: sha512-Mtq29sKDAEYP7aljRgtPOpTvOfbwRWlS6dPRzwjdE+C0R4brX/GUyhHSecbHMFLNBLcJIPt9nl9yG5TZ1weH+Q==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-
   typescript@5.8.3:
     resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
     engines: {node: '>=14.17'}
@@ -9738,9 +9667,6 @@ packages:
 
   undici-thread-interceptor@0.14.1:
     resolution: {integrity: sha512-B8g94/e/OfHCs1h+WsFO/7WghybALiWGWPiIs+vDMhK5Q3z4veEUuOicMwhS/Xi9+IY52PxeNLN86Ta5x2mTqg==}
-
-  undici-types@5.26.5:
-    resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
 
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
@@ -10672,6 +10598,7 @@ snapshots:
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
+    optional: true
 
   '@databases/connection-pool@1.1.0':
     dependencies:
@@ -11655,6 +11582,7 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.4
+    optional: true
 
   '@js-sdsl/ordered-map@4.4.2': {}
 
@@ -12673,13 +12601,17 @@ snapshots:
 
   '@tokenizer/token@0.3.0': {}
 
-  '@tsconfig/node10@1.0.11': {}
+  '@tsconfig/node10@1.0.11':
+    optional: true
 
-  '@tsconfig/node12@1.0.11': {}
+  '@tsconfig/node12@1.0.11':
+    optional: true
 
-  '@tsconfig/node14@1.0.3': {}
+  '@tsconfig/node14@1.0.3':
+    optional: true
 
-  '@tsconfig/node16@1.0.4': {}
+  '@tsconfig/node16@1.0.4':
+    optional: true
 
   '@tsd/typescript@5.8.3': {}
 
@@ -12788,10 +12720,6 @@ snapshots:
   '@types/nlcst@2.0.3':
     dependencies:
       '@types/unist': 3.0.3
-
-  '@types/node@18.19.120':
-    dependencies:
-      undici-types: 5.26.5
 
   '@types/node@22.16.5':
     dependencies:
@@ -13257,6 +13185,7 @@ snapshots:
   acorn-walk@8.3.4:
     dependencies:
       acorn: 8.15.0
+    optional: true
 
   acorn@8.15.0: {}
 
@@ -13341,7 +13270,8 @@ snapshots:
 
   append-field@1.0.0: {}
 
-  arg@4.1.3: {}
+  arg@4.1.3:
+    optional: true
 
   arg@5.0.2: {}
 
@@ -14044,7 +13974,8 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.2
 
-  create-require@1.1.1: {}
+  create-require@1.1.1:
+    optional: true
 
   cron@4.3.3:
     dependencies:
@@ -14212,7 +14143,8 @@ snapshots:
 
   diff-sequences@29.6.3: {}
 
-  diff@4.0.2: {}
+  diff@4.0.2:
+    optional: true
 
   diff@5.2.0: {}
 
@@ -14249,7 +14181,7 @@ snapshots:
       https-proxy-agent: 7.0.6
       js-yaml: 4.1.0
       tslib: 2.8.1
-      typescript: 5.8.3
+      typescript: 5.9.2
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -16309,7 +16241,8 @@ snapshots:
     dependencies:
       semver: 7.7.2
 
-  make-error@1.3.6: {}
+  make-error@1.3.6:
+    optional: true
 
   manage-path@2.0.0: {}
 
@@ -17713,8 +17646,6 @@ snapshots:
       entities: 6.0.1
 
   parseurl@1.3.3: {}
-
-  path-equal@1.2.5: {}
 
   path-exists@4.0.0: {}
 
@@ -19253,24 +19184,6 @@ snapshots:
       picomatch: 4.0.3
       typescript: 5.9.2
 
-  ts-node@10.9.2(@types/node@18.19.120)(typescript@5.5.4):
-    dependencies:
-      '@cspotcode/source-map-support': 0.8.1
-      '@tsconfig/node10': 1.0.11
-      '@tsconfig/node12': 1.0.11
-      '@tsconfig/node14': 1.0.3
-      '@tsconfig/node16': 1.0.4
-      '@types/node': 18.19.120
-      acorn: 8.15.0
-      acorn-walk: 8.3.4
-      arg: 4.1.3
-      create-require: 1.1.1
-      diff: 4.0.2
-      make-error: 1.3.6
-      typescript: 5.5.4
-      v8-compile-cache-lib: 3.0.1
-      yn: 3.1.1
-
   ts-node@10.9.2(@types/node@24.0.15)(typescript@5.8.3):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
@@ -19418,22 +19331,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  typescript-json-schema@0.65.1:
-    dependencies:
-      '@types/json-schema': 7.0.15
-      '@types/node': 18.19.120
-      glob: 7.2.3
-      path-equal: 1.2.5
-      safe-stable-stringify: 2.5.0
-      ts-node: 10.9.2(@types/node@18.19.120)(typescript@5.5.4)
-      typescript: 5.5.4
-      yargs: 17.7.2
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@swc/wasm'
-
-  typescript@5.5.4: {}
-
   typescript@5.8.3: {}
 
   typescript@5.9.2: {}
@@ -19469,8 +19366,6 @@ snapshots:
       hyperid: 3.3.0
       light-my-request: 6.6.0
       undici: 7.11.0
-
-  undici-types@5.26.5: {}
 
   undici-types@6.21.0: {}
 
@@ -19691,7 +19586,8 @@ snapshots:
       kleur: 4.1.5
       sade: 1.8.1
 
-  v8-compile-cache-lib@3.0.1: {}
+  v8-compile-cache-lib@3.0.1:
+    optional: true
 
   v8-to-istanbul@9.3.0:
     dependencies:
@@ -20002,7 +19898,8 @@ snapshots:
 
   ylru@1.4.0: {}
 
-  yn@3.1.1: {}
+  yn@3.1.1:
+    optional: true
 
   yocto-queue@0.1.0: {}
 
