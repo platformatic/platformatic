@@ -1,13 +1,11 @@
 import { createDirectory } from '@platformatic/utils'
-import { once } from 'events'
-import { execa } from 'execa'
 import assert from 'node:assert/strict'
 import { mkdtemp, readdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import split from 'split2'
-import { cliPath } from './helper.js'
+import { pino } from 'pino'
+import { createMigrations } from '../../lib/commands/migrations-create.js'
 
 test('generates next file correctly with empty dir', async t => {
   const cwd = await mkdtemp(join(tmpdir(), 'gen-migration-test-'))
@@ -31,7 +29,8 @@ test('generates next file correctly with empty dir', async t => {
   await writeFile(configFilePath, JSON.stringify(config))
   await createDirectory(migrationsDirPath)
 
-  await execa('node', [cliPath, 'createMigrations', configFilePath], { cwd })
+  const logger = pino({ level: 'fatal' })
+  await createMigrations(logger, configFilePath, [], { colorette: { bold: (str) => str } })
   const newMigrations = await readdir(migrationsDirPath)
 
   assert.equal(newMigrations.length, 2)
@@ -61,10 +60,9 @@ test('generates next file correctly with existing files', async t => {
   await writeFile(configFilePath, JSON.stringify(config))
   await createDirectory(migrationsDirPath)
 
-  await execa('node', [cliPath, 'createMigrations', configFilePath], { cwd })
-  const child = execa('node', [cliPath, 'createMigrations', configFilePath], { cwd })
-
-  await child
+  const logger = pino({ level: 'fatal' })
+  await createMigrations(logger, configFilePath, [], { colorette: { bold: (str) => str } })
+  await createMigrations(logger, configFilePath, [], { colorette: { bold: (str) => str } })
   const newMigrations = await readdir(migrationsDirPath)
 
   assert.equal(newMigrations.length, 4)
@@ -90,11 +88,19 @@ test('throws if there is no migrations in the config', async t => {
 
   await writeFile(configFilePath, JSON.stringify(config))
 
-  const child = execa('node', [cliPath, 'createMigrations', configFilePath], { cwd })
-  child.stderr.pipe(process.stderr)
-  const output = child.stdout.pipe(split())
-  const [data] = await once(output, 'data')
-  assert.match(data, /Missing "migrations" section in config file/)
+  let errorMessage = ''
+  const logger = {
+    info: () => {},
+    warn: () => {},
+    debug: () => {},
+    trace: () => {},
+    error: (msg) => {
+      errorMessage += msg
+    }
+  }
+
+  await createMigrations(logger, configFilePath, [], { colorette: { bold: (str) => str } })
+  assert.match(errorMessage, /Missing "migrations" section in config file/)
 })
 
 test('throws if migrations directory does not exist', async t => {
@@ -117,9 +123,17 @@ test('throws if migrations directory does not exist', async t => {
 
   await writeFile(configFilePath, JSON.stringify(config))
 
-  const child = execa('node', [cliPath, 'createMigrations', configFilePath], { cwd })
-  child.stderr.pipe(process.stderr)
-  const output = child.stdout.pipe(split())
-  const [data] = await once(output, 'data')
-  assert.match(data, /Migrations directory (.*) does not exist/)
+  let errorMessage = ''
+  const logger = {
+    info: () => {},
+    warn: () => {},
+    debug: () => {},
+    trace: () => {},
+    error: (msg) => {
+      errorMessage += msg
+    }
+  }
+
+  await createMigrations(logger, configFilePath, [], { colorette: { bold: (str) => str } })
+  assert.match(errorMessage, /Migrations directory (.*) does not exist/)
 })

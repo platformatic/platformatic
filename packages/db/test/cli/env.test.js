@@ -1,11 +1,12 @@
-import { execa } from 'execa'
 import assert from 'node:assert'
 import { resolve } from 'node:path'
 import { test } from 'node:test'
 import { request } from 'undici'
+import { printSchema } from '../../lib/commands/print-schema.js'
 import { snapshot } from '../fixtures/snapshots/env.js'
 import { getConnectionInfo } from '../helper.js'
-import { cliPath, connectDB, safeKill, start } from './helper.js'
+import { connectDB, safeKill, start } from './helper.js'
+import { createCapturingLogger, createTestContext, withTestEnvironment } from './test-utilities.js'
 
 test('env white list', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo()
@@ -106,16 +107,18 @@ test('env white list schema', async t => {
     title VARCHAR(42)
   );`)
 
-  const { stdout } = await execa(
-    'node',
-    [cliPath, 'printSchema', resolve(import.meta.dirname, '..', 'fixtures', 'env-whitelist.json'), 'graphql'],
-    {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString,
-        HOSTNAME: '127.0.0.1'
-      }
-    }
-  )
+  await withTestEnvironment({
+    envVars: {
+      DATABASE_URL: connectionInfo.connectionString,
+      HOSTNAME: '127.0.0.1'
+    },
+    captureConsole: true
+  }, async (captureObj) => {
+    const logger = createCapturingLogger()
+    const context = createTestContext()
 
-  assert.equal(stdout, snapshot)
+    await printSchema(logger, resolve(import.meta.dirname, '..', 'fixtures', 'env-whitelist.json'), ['graphql'], context)
+
+    assert.equal(captureObj.get().trim(), snapshot)
+  })()
 })

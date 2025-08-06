@@ -5,8 +5,10 @@ import { readFile, unlink } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { test } from 'node:test'
 import split from 'split2'
+import { applyMigrations } from '../../lib/commands/migrations-apply.js'
 import { getConnectionInfo } from '../helper.js'
-import { cliPath, connectDB, getFixturesConfigFileLocation, safeKill, startPath } from './helper.js'
+import { connectDB, getFixturesConfigFileLocation, safeKill, startPath } from './helper.js'
+import { createCapturingLogger, createTestContext } from './test-utilities.js'
 
 test('migrate on start', async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
@@ -200,11 +202,11 @@ test('migrate creates a schema.lock file', async t => {
     await unlink(expectedFile)
   } catch {}
 
-  await execa('node', [cliPath, 'applyMigrations', configPath], {
-    env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
-  })
+  const logger = createCapturingLogger()
+  const context = createTestContext()
+
+  process.env.DATABASE_URL = connectionInfo.connectionString
+  await applyMigrations(logger, configPath, [], context)
 
   const data = await readFile(expectedFile, 'utf-8')
   // Let's just validate this is a valid JSON file

@@ -4,8 +4,10 @@ import { readFile, stat, unlink, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { test } from 'node:test'
 import split from 'split2'
+import { applyMigrations } from '../../lib/commands/migrations-apply.js'
 import { getConnectionInfo } from '../helper.js'
-import { cliPath, connectDB, getFixturesConfigFileLocation, startPath } from './helper.js'
+import { connectDB, getFixturesConfigFileLocation, startPath } from './helper.js'
+import { createCapturingLogger, createTestContext } from './test-utilities.js'
 
 test('migrate creates a schema.lock file on a different path', { skip: true }, async t => {
   const { connectionInfo, dropTestDB } = await getConnectionInfo('postgresql')
@@ -18,11 +20,11 @@ test('migrate creates a schema.lock file on a different path', { skip: true }, a
     await unlink(expectedFile)
   } catch {}
 
-  await execa('node', [cliPath, 'applyMigrations', configPath], {
-    env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
-  })
+  const logger = createCapturingLogger()
+  const context = createTestContext()
+
+  process.env.DATABASE_URL = connectionInfo.connectionString
+  await applyMigrations(logger, configPath, [], context)
 
   t.after(async () => {
     await db.dispose()
@@ -49,11 +51,11 @@ test('start creates schema.lock if it is missing', { skip: true }, async t => {
 
   await unlink(expectedFile).catch(() => {})
 
-  await execa('node', [cliPath, 'applyMigrations', configPathWithoutSchemaLock], {
-    env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
-  })
+  const logger = createCapturingLogger()
+  const context = createTestContext()
+
+  process.env.DATABASE_URL = connectionInfo.connectionString
+  await applyMigrations(logger, configPathWithoutSchemaLock, [], context)
 
   const child = execa('node', [startPath, configPath], {
     env: {
@@ -139,11 +141,11 @@ test('migrate does not update an existing schemalock file if no migrations have 
 
   await unlink(expectedFile).catch(() => {})
 
-  await execa('node', [cliPath, 'applyMigrations', configPath], {
-    env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
-  })
+  const logger1 = createCapturingLogger()
+  const context1 = createTestContext()
+
+  process.env.DATABASE_URL = connectionInfo.connectionString
+  await applyMigrations(logger1, configPath, [], context1)
 
   t.after(async () => {
     await db.dispose()
@@ -153,11 +155,9 @@ test('migrate does not update an existing schemalock file if no migrations have 
 
   const stats1 = await stat(expectedFile)
 
-  await execa('node', [cliPath, 'applyMigrations', configPath], {
-    env: {
-      DATABASE_URL: connectionInfo.connectionString
-    }
-  })
+  const logger2 = createCapturingLogger()
+  const context2 = createTestContext()
+  await applyMigrations(logger2, configPath, [], context2)
 
   const stats2 = await stat(expectedFile)
 

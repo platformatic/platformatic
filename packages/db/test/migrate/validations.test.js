@@ -1,17 +1,26 @@
-import { execa } from 'execa'
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { applyMigrations } from '../../lib/commands/migrations-apply.js'
 import { getConnectionInfo } from '../helper.js'
-import { cliPath, getFixturesConfigFileLocation } from './helper.js'
+import { getFixturesConfigFileLocation } from './helper.js'
+import { createTestContext, createThrowingLogger } from '../cli/test-utilities.js'
 
 test('missing config', async t => {
-  await assert.rejects(execa('node', [cliPath, 'migrations', 'apply']))
+  const logger = createThrowingLogger()
+  const context = createTestContext()
+
+  await assert.rejects(async () => {
+    await applyMigrations(logger, undefined, [], context)
+  })
 })
 
 test('missing connectionString', async t => {
-  await assert.rejects(
-    execa('node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('no-connectionString.json')])
-  )
+  const logger = createThrowingLogger()
+  const context = createTestContext()
+
+  await assert.rejects(async () => {
+    await applyMigrations(logger, getFixturesConfigFileLocation('no-connectionString.json'), [], context)
+  })
 })
 
 test('missing migrations', async t => {
@@ -20,13 +29,13 @@ test('missing migrations', async t => {
     await dropTestDB()
   })
 
-  await assert.rejects(
-    execa('node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('no-migrations.json')], {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
-    })
-  )
+  const logger = createThrowingLogger()
+  const context = createTestContext()
+
+  process.env.DATABASE_URL = connectionInfo.connectionString
+  await assert.rejects(async () => {
+    await applyMigrations(logger, getFixturesConfigFileLocation('no-migrations.json'), [], context)
+  })
 })
 
 test('missing migrations.dir', async t => {
@@ -35,13 +44,13 @@ test('missing migrations.dir', async t => {
     await dropTestDB()
   })
 
-  await assert.rejects(
-    execa('node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('no-migrations-dir.json')], {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
-    })
-  )
+  const logger = createThrowingLogger()
+  const context = createTestContext()
+
+  process.env.DATABASE_URL = connectionInfo.connectionString
+  await assert.rejects(async () => {
+    await applyMigrations(logger, getFixturesConfigFileLocation('no-migrations-dir.json'), [], context)
+  })
 })
 
 test('not applied migrations', async t => {
@@ -50,11 +59,11 @@ test('not applied migrations', async t => {
     await dropTestDB()
   })
 
-  await assert.rejects(
-    execa('node', [cliPath, 'migrations', 'apply', '-c', getFixturesConfigFileLocation('bad-migrations.json')], {
-      env: {
-        DATABASE_URL: connectionInfo.connectionString
-      }
-    })
-  )
+  const logger = createThrowingLogger()
+  const context = createTestContext()
+
+  process.env.DATABASE_URL = connectionInfo.connectionString
+  await assert.rejects(async () => {
+    await applyMigrations(logger, getFixturesConfigFileLocation('bad-migrations.json'), [], context)
+  })
 })
