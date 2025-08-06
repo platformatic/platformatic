@@ -31,6 +31,7 @@ const sidebars = {
       collapsed: false,
       items: [
         'getting-started/quick-start-watt',
+        'getting-started/quick-start-guide',
         'getting-started/port-your-app',
         {
           type: 'category',
@@ -92,6 +93,7 @@ const sidebars = {
       label: 'Reference',
       collapsed: true,
       items: [
+        'reference-overview',
         {
           type: 'category',
           label: 'Watt (Node.js Application Server)',
@@ -188,7 +190,7 @@ const sidebars = {
         },
         {
           type: 'category',
-          label: 'Frontend Integrations (Stackables)',
+          label: 'Framework Integrations (Stackables)',
           collapsed: true,
           items: [
             'reference/node/overview',
@@ -284,47 +286,6 @@ const sidebars = {
         'FAQs'
       ]
     }
-  ],
-  // Legacy sidebar - keeping for backward compatibility during transition
-  Learn: [
-    'learn/overview',
-    'getting-started/quick-start-watt',
-    'getting-started/quick-start-guide',
-    'getting-started/port-your-app',
-    {
-      type: 'category',
-      label: 'Beginner Tutorials',
-      collapsed: false,
-      items: ['learn/beginner/crud-application', 'learn/beginner/environment-variables']
-    },
-    {
-      type: 'category',
-      label: 'How-to Guides',
-      collapsed: true,
-      items: [
-        'guides/build-modular-monolith',
-        'guides/cache-with-platformatic-watt',
-        'guides/generate-frontend-code-to-consume-platformatic-rest-api',
-        'guides/using-watt-with-node-config',
-        'guides/use-watt-multiple-repository',
-        'guides/scheduler'
-      ]
-    },
-    {
-      type: 'category',
-      label: 'Deployment & Operations',
-      collapsed: true,
-      items: [
-        'guides/deployment/dockerize-a-watt-app',
-        'guides/deployment/compiling-typescript',
-        'guides/deployment/k8s-readiness-liveness',
-        'guides/monitoring',
-        'guides/telemetry',
-        'guides/logging-to-elasticsearch'
-      ]
-    },
-    'learn/glossary',
-    'FAQs'
   ]
 }
 
