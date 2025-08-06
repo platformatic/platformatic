@@ -2,7 +2,7 @@
 
 const { platform, tmpdir } = require('node:os')
 const { join } = require('node:path')
-const { createDirectory, safeRemove } = require('@platformatic/utils')
+const { createDirectory, safeRemove } = require('@platformatic/foundation')
 
 const fastify = require('fastify')
 const ws = require('ws')

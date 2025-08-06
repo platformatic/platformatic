@@ -44,7 +44,7 @@
     "@fastify/swagger": "^9.0.0",
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/sql-json-schema-mapper": "workspace:*",
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "@scalar/fastify-api-reference": "1.33.0",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^5.0.0",
@@ -52,5 +52,8 @@
   },
   "tsd": {
     "directory": "test/types"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

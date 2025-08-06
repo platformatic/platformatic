@@ -1,5 +1,5 @@
 import httpProxy from '@fastify/http-proxy'
-import { ensureLoggableError, loadModule } from '@platformatic/utils'
+import { ensureLoggableError, loadModule } from '@platformatic/foundation'
 import fp from 'fastify-plugin'
 import { createRequire } from 'node:module'
 import { workerData } from 'node:worker_threads'

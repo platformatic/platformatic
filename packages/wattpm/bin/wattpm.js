@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { checkNodeVersionForServices } from '@platformatic/utils'
+import { checkNodeVersionForServices } from '@platformatic/foundation'
 
 checkNodeVersionForServices()
 

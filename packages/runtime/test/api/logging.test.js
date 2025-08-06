@@ -7,7 +7,7 @@ const { test } = require('node:test')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { Client } = require('undici')
 
-const { safeRemove } = require('@platformatic/utils')
+const { safeRemove } = require('@platformatic/foundation')
 const { create } = require('../../index.js')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { setLogFile } = require('../helpers')

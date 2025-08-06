@@ -7,7 +7,7 @@ import {
   importFile,
   injectViaRequest
 } from '@platformatic/basic'
-import { features } from '@platformatic/utils'
+import { features } from '@platformatic/foundation'
 import inject from 'light-my-request'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'

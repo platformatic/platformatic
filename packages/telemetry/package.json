@@ -37,8 +37,11 @@
     "@opentelemetry/sdk-node": "^0.203.0",
     "@opentelemetry/sdk-trace-base": "^2.0.1",
     "@opentelemetry/semantic-conventions": "1.36.0",
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "fast-uri": "^3.0.6",
     "fastify-plugin": "^5.0.1"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

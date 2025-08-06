@@ -1,4 +1,3 @@
-import { ImportGenerator } from '@platformatic/generators'
 import {
   createDirectory,
   defaultPackageManager,
@@ -10,7 +9,8 @@ import {
   getPkgManager,
   loadConfigurationFile,
   searchJavascriptFiles
-} from '@platformatic/utils'
+} from '@platformatic/foundation'
+import { ImportGenerator } from '@platformatic/generators'
 
 import { execa } from 'execa'
 import defaultInquirer from 'inquirer'

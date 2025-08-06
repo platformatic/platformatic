@@ -1,5 +1,5 @@
+import { abstractLogger } from '@platformatic/foundation'
 import zeroSixteen from '@platformatic/service/lib/versions/0.16.0.js'
-import { abstractLogger } from '@platformatic/utils'
 import { join } from 'node:path'
 
 export async function upgrade (logger, config, version) {

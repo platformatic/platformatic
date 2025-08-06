@@ -5,7 +5,7 @@ const { join } = require('node:path')
 const { isatty } = require('node:tty')
 const pino = require('pino')
 const pretty = require('pino-pretty')
-const { abstractLogger, buildPinoFormatters, buildPinoTimestamp } = require('@platformatic/utils')
+const { abstractLogger, buildPinoFormatters, buildPinoTimestamp } = require('@platformatic/foundation')
 
 const customPrettifiers = {
   name (name, _, obj) {

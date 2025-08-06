@@ -5,7 +5,7 @@ import {
   schemaComponents as utilsSchemaComponents,
   watch,
   wrappedRuntime
-} from '@platformatic/utils'
+} from '@platformatic/foundation'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 

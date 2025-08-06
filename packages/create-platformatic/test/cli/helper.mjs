@@ -1,4 +1,4 @@
-import { createDirectory, safeRemove } from '@platformatic/utils'
+import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { execa } from 'execa'
 import fastify from 'fastify'
 import { promises as fs } from 'node:fs'

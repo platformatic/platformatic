@@ -8,7 +8,7 @@ const { mkdtemp, cp, unlink } = require('node:fs/promises')
 const Fastify = require('fastify')
 const { create } = require('@platformatic/db')
 const { buildGraphQLClient } = require('..')
-const { safeRemove } = require('@platformatic/utils')
+const { safeRemove } = require('@platformatic/foundation')
 require('./helper')
 
 test('rejects with no url', async t => {

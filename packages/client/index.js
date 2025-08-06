@@ -9,7 +9,7 @@ const { createHash } = require('node:crypto')
 const validateFunctionCache = {}
 const errors = require('./lib/errors')
 const camelCase = require('camelcase')
-const { abstractLogger } = require('@platformatic/utils')
+const { abstractLogger } = require('@platformatic/foundation')
 const { kHeaders, kGetHeaders, kTelemetryContext } = require('./lib/symbols.js')
 
 const {

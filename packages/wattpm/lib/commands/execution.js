@@ -1,6 +1,6 @@
 import { RuntimeApiClient } from '@platformatic/control'
+import { ensureLoggableError, FileWatcher } from '@platformatic/foundation'
 import { create } from '@platformatic/runtime'
-import { ensureLoggableError, FileWatcher } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { spawn } from 'node:child_process'
 import { on } from 'node:events'

@@ -1,4 +1,4 @@
-import { abstractLogger, kMetadata, loadConfiguration } from '@platformatic/utils'
+import { abstractLogger, kMetadata, loadConfiguration } from '@platformatic/foundation'
 import { printSchema as printGraphqlSchema } from 'graphql'
 import { create } from '../../index.js'
 import { schema } from '../schema.js'

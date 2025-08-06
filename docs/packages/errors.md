@@ -345,7 +345,7 @@
 ### PLT_SQL_OPENAPI_PRIMARY_KEY_NOT_INCLUDED_IN_ORDER_BY_IN_CURSOR_PAGINATION
 **Message:** At least one primary key must be included in orderBy clause in case of cursor pagination 
 
-## @platformatic/utils 
+## @platformatic/foundation 
 
 ### PLT_ADD_A_MODULE_PROPERTY_TO_THE_CONFIG_OR_ADD_A_KNOWN_SCHEMA
 **Message:** Add a module property to the config or add a known $schema. 

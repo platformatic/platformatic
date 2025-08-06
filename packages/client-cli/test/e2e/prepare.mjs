@@ -1,5 +1,5 @@
 import { create } from '@platformatic/db'
-import { createDirectory } from '@platformatic/utils'
+import { createDirectory } from '@platformatic/foundation'
 import { execa } from 'execa'
 import { resolve } from 'node:path'
 

@@ -1,4 +1,4 @@
-import { safeRemove } from '@platformatic/utils'
+import { safeRemove } from '@platformatic/foundation'
 import assert from 'node:assert/strict'
 import { join } from 'node:path'
 import { test } from 'node:test'

@@ -1,5 +1,5 @@
 import Swagger from '@fastify/swagger'
-import { deepmerge } from '@platformatic/utils'
+import { deepmerge } from '@platformatic/foundation'
 import fp from 'fastify-plugin'
 
 // For some unknown reason, c8 is not detecting any of this

@@ -1,6 +1,6 @@
 import Swagger from '@fastify/swagger'
 import { create as createDatabaseStackable } from '@platformatic/db'
-import { createDirectory, executeWithTimeout, kTimeout, loadModule, safeRemove } from '@platformatic/utils'
+import { createDirectory, executeWithTimeout, kTimeout, loadModule, safeRemove } from '@platformatic/foundation'
 import fastify from 'fastify'
 import fs from 'fs'
 import { getIntrospectionQuery } from 'graphql'

@@ -1,5 +1,5 @@
 'use strict'
-const { createDirectory } = require('@platformatic/utils')
+const { createDirectory } = require('@platformatic/foundation')
 const { dirname, join, isAbsolute } = require('node:path')
 const { writeFile, readFile } = require('node:fs/promises')
 

@@ -1,9 +1,9 @@
 'use strict'
 
 const Swagger = require('@fastify/swagger')
-const { deepmerge } = require('@platformatic/utils')
+const { deepmerge } = require('@platformatic/foundation')
 const { mapSQLEntityToJSONSchema } = require('@platformatic/sql-json-schema-mapper')
-const { findNearestString } = require('@platformatic/utils')
+const { findNearestString } = require('@platformatic/foundation')
 const entityPlugin = require('./lib/entity-to-routes')
 const manyToMany = require('./lib/many-to-many')
 const { getSchemaOverrideFromOpenApiPathItem } = require('./lib/utils')

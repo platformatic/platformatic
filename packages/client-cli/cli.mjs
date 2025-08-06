@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 
-import { createDirectory, findConfigurationFileRecursive } from '@platformatic/utils'
+import { createDirectory, findConfigurationFileRecursive } from '@platformatic/foundation'
 import { access, readFile, writeFile } from 'fs/promises'
 import graphql from 'graphql'
 import helpMe from 'help-me'

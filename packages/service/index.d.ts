@@ -1,6 +1,6 @@
 import { BaseContext, BaseOptions, BaseStackable } from '@platformatic/basic'
+import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { BaseGenerator } from '@platformatic/generators'
-import { Configuration, ConfigurationOptions } from '@platformatic/utils'
 import { JSONSchemaType } from 'ajv'
 import { FastifyInstance } from 'fastify'
 import { PlatformaticServiceConfig } from './config'

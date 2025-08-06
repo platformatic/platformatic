@@ -181,7 +181,7 @@ Finally, you can write the actual reusable application:
 ```ts
 import { type FastifyInstance } from 'fastify'
 import { lstat } from 'node:fs/promises'
-import { kMetadata, RawConfiguration, ConfigurationOptions } from '@platformatic/utils'
+import { kMetadata, RawConfiguration, ConfigurationOptions } from '@platformatic/foundation'
 import { resolve } from 'node:path'
 import {
   create as createService,
@@ -303,7 +303,7 @@ export const migration = {
 Pass a `upgrade` function to your `create` method.
 
 ```javascript
-import { abstractLogger } from '@platformatic/utils'
+import { abstractLogger } from '@platformatic/foundation'
 import { resolve } from 'node:path'
 import { semgrator } from 'semgrator'
 

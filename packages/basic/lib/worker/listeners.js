@@ -1,4 +1,4 @@
-import { features } from '@platformatic/utils'
+import { features } from '@platformatic/foundation'
 import { subscribe, tracingChannel, unsubscribe } from 'node:diagnostics_channel'
 
 export function createServerListener (overridePort = true, overrideHost) {

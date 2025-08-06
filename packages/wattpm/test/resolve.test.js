@@ -3,7 +3,7 @@ import {
   loadConfigurationFile as loadRawConfigurationFile,
   safeRemove,
   saveConfigurationFile
-} from '@platformatic/utils'
+} from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { relative, resolve, sep } from 'node:path'

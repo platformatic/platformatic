@@ -1,4 +1,4 @@
-import { createDirectory, features, kMetadata, kTimeout, safeRemove } from '@platformatic/utils'
+import { createDirectory, features, kMetadata, kTimeout, safeRemove } from '@platformatic/foundation'
 import { execa } from 'execa'
 import * as getPort from 'get-port'
 import { deepStrictEqual, fail, ok, strictEqual } from 'node:assert'

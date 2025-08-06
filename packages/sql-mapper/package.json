@@ -43,7 +43,7 @@
     "@hapi/topo": "^6.0.2",
     "@matteo.collina/sqlite-pool": "^0.6.0",
     "@platformatic/telemetry": "workspace:*",
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "async-cache-dedupe": "^2.1.0",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^5.0.0",
@@ -51,5 +51,8 @@
   },
   "tsd": {
     "directory": "test/types"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

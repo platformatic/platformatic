@@ -29,7 +29,7 @@
     "@platformatic/itc": "workspace:*",
     "@platformatic/metrics": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "execa": "^9.3.1",
     "fast-json-patch": "^3.1.1",
     "pino": "^9.3.2",
@@ -48,5 +48,8 @@
     "json-schema-to-typescript": "^15.0.0",
     "neostandard": "^0.12.0",
     "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

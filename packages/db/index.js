@@ -1,6 +1,6 @@
 import { resolve, validationOptions } from '@platformatic/basic'
+import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
 import { transform as serviceTransform } from '@platformatic/service'
-import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/utils'
 import { readFile } from 'node:fs/promises'
 import { resolve as resolvePath } from 'node:path'
 import { schema } from './lib/schema.js'

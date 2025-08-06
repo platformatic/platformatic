@@ -1,4 +1,4 @@
-import { loadConfiguration } from '@platformatic/utils'
+import { loadConfiguration } from '@platformatic/foundation'
 import { schema } from '../schema.js'
 import { execute } from '../types.js'
 

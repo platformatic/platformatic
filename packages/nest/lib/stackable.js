@@ -7,7 +7,7 @@ import {
   importFile,
   resolvePackage
 } from '@platformatic/basic'
-import { features } from '@platformatic/utils'
+import { features } from '@platformatic/foundation'
 import getPort from 'get-port'
 import inject from 'light-my-request'
 import { readFile } from 'node:fs/promises'

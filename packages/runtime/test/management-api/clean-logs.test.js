@@ -8,7 +8,7 @@ const { setTimeout: sleep } = require('node:timers/promises')
 const { getRuntimeTmpDir, getRuntimeLogsDir } = require('../../lib/utils')
 
 const { create } = require('../..')
-const { safeRemove } = require('@platformatic/utils')
+const { safeRemove } = require('@platformatic/foundation')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { setLogFile } = require('../helpers')
 

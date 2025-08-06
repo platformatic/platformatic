@@ -1,4 +1,4 @@
-import { getPackageManager } from '@platformatic/utils'
+import { getPackageManager } from '@platformatic/foundation'
 import { spawn } from 'node:child_process'
 import { parseArgs } from '../utils.js'
 

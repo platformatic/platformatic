@@ -8,7 +8,7 @@ import {
   loadModule,
   safeRemove,
   saveConfigurationFile
-} from '@platformatic/utils'
+} from '@platformatic/foundation'
 import jsonPatch from 'fast-json-patch'
 import { existsSync } from 'node:fs'
 import { mkdtemp, readFile, writeFile } from 'node:fs/promises'

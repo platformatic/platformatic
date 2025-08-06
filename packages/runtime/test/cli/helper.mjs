@@ -1,4 +1,4 @@
-import { safeRemove } from '@platformatic/utils'
+import { safeRemove } from '@platformatic/foundation'
 import { execa } from 'execa'
 import { join } from 'node:path'
 import split from 'split2'

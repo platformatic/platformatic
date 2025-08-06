@@ -26,7 +26,7 @@
   "dependencies": {
     "@platformatic/basic": "workspace:*",
     "@platformatic/generators": "workspace:*",
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "get-port": "^7.1.0",
     "light-my-request": "^6.0.0",
     "pino-http": "^10.2.0"
@@ -44,5 +44,8 @@
     "neostandard": "^0.12.0",
     "tsx": "^4.19.0",
     "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

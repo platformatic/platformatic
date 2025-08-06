@@ -29,7 +29,7 @@
     "@babel/traverse": "^7.25.3",
     "@babel/types": "^7.25.2",
     "@platformatic/basic": "workspace:*",
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "amaro": "^0.3.0",
     "iovalkey": "^0.3.0",
     "msgpackr": "^1.11.2",
@@ -49,5 +49,8 @@
     "next": "^15.0.0",
     "typescript": "^5.5.4",
     "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

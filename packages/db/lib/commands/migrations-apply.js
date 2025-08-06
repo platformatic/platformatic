@@ -1,4 +1,4 @@
-import { loadConfiguration } from '@platformatic/utils'
+import { loadConfiguration } from '@platformatic/foundation'
 import { utimesSync } from 'node:fs'
 import { execute } from '../migrator.js'
 import { schema } from '../schema.js'

@@ -4,7 +4,7 @@ import { test } from 'node:test'
 import { tmpdir } from 'os'
 import { join } from 'path'
 
-import { createDirectory } from '@platformatic/utils'
+import { createDirectory } from '@platformatic/foundation'
 import { writeFile } from 'fs/promises'
 import { createGitRepository, GIT_FIRST_COMMIT_MESSAGE, GIT_MAIN_BRANCH } from '../../src/create-git-repository.mjs'
 import { isFileAccessible } from '../../src/utils.mjs'

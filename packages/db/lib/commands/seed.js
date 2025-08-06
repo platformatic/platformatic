@@ -1,4 +1,4 @@
-import { loadConfiguration, loadModule } from '@platformatic/utils'
+import { loadConfiguration, loadModule } from '@platformatic/foundation'
 import { access } from 'fs/promises'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'

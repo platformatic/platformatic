@@ -8,7 +8,7 @@ const { join } = require('node:path')
 const { fakeLogger, getTempDir, moveToTmpdir, mockNpmJsRequestForPkgs, mockAgent } = require('./helpers')
 const { BaseGenerator } = require('../lib/base-generator')
 const { convertServiceNameToPrefix } = require('../lib/utils')
-const { safeRemove } = require('@platformatic/utils')
+const { safeRemove } = require('@platformatic/foundation')
 
 afterEach(async () => {
   try {

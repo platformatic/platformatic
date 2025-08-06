@@ -1,4 +1,4 @@
-import { abstractLogger } from '@platformatic/utils'
+import { abstractLogger } from '@platformatic/foundation'
 import { resolve } from 'node:path'
 import { semgrator } from 'semgrator'
 

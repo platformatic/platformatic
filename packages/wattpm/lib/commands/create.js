@@ -1,4 +1,4 @@
-import { getPackageManager } from '@platformatic/utils'
+import { getPackageManager } from '@platformatic/foundation'
 import { createApplication, getUsername, getVersion, say } from 'create-platformatic'
 import { resolve } from 'node:path'
 import { getExecutableName } from '../embedding.js'

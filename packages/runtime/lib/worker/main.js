@@ -16,7 +16,7 @@ const {
   getPrivateSymbol,
   buildPinoFormatters,
   buildPinoTimestamp
-} = require('@platformatic/utils')
+} = require('@platformatic/foundation')
 const dotenv = require('dotenv')
 const pino = require('pino')
 const { fetch } = require('undici')

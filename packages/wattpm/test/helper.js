@@ -1,4 +1,4 @@
-import { createDirectory, safeRemove } from '@platformatic/utils'
+import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { execa } from 'execa'
 import { on } from 'node:events'
 import { cp, mkdir, stat, writeFile } from 'node:fs/promises'

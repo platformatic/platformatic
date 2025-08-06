@@ -1,7 +1,7 @@
 'use strict'
 
 const { mapSQLTypeToOpenAPIType } = require('@platformatic/sql-json-schema-mapper')
-const { findNearestString } = require('@platformatic/utils')
+const { findNearestString } = require('@platformatic/foundation')
 const camelcase = require('camelcase')
 const { generateArgs, rootEntityRoutes, capitalize, getFieldsForEntity } = require('./shared')
 const errors = require('./errors')

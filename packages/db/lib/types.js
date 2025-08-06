@@ -1,5 +1,5 @@
+import { createDirectory, isFileAccessible } from '@platformatic/foundation'
 import { mapOpenAPItoTypes, mapSQLEntityToJSONSchema } from '@platformatic/sql-json-schema-mapper'
-import { createDirectory, isFileAccessible } from '@platformatic/utils'
 import camelcase from 'camelcase'
 import { readFile, readdir, unlink, writeFile } from 'node:fs/promises'
 import { basename, join, relative, resolve, sep } from 'node:path'

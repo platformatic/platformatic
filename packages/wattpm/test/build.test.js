@@ -2,7 +2,7 @@ import {
   loadConfigurationFile as loadRawConfigurationFile,
   safeRemove,
   saveConfigurationFile
-} from '@platformatic/utils'
+} from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'

@@ -39,7 +39,10 @@
     "typescript": "^5.5.3"
   },
   "dependencies": {
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "wattpm": "workspace:*"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

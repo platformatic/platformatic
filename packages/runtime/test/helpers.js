@@ -3,7 +3,7 @@
 const { readFile, writeFile } = require('node:fs/promises')
 const { join, resolve, dirname } = require('node:path')
 const { setTimeout: sleep } = require('node:timers/promises')
-const { createDirectory, safeRemove } = require('@platformatic/utils')
+const { createDirectory, safeRemove } = require('@platformatic/foundation')
 
 let tempDirCounter = 0
 

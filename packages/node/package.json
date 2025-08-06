@@ -26,7 +26,7 @@
   "dependencies": {
     "@platformatic/basic": "workspace:*",
     "@platformatic/generators": "workspace:*",
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "json5": "^2.2.3",
     "light-my-request": "^6.0.0"
   },
@@ -42,5 +42,8 @@
     "neostandard": "^0.12.0",
     "tsx": "^4.19.0",
     "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

@@ -9,7 +9,7 @@ const { join } = require('node:path')
 const { unlink, mkdtemp, cp } = require('node:fs/promises')
 const { create } = require('@platformatic/db')
 const { buildOpenAPIClient } = require('..')
-const { safeRemove } = require('@platformatic/utils')
+const { safeRemove } = require('@platformatic/foundation')
 require('./helper')
 
 test('rejects with no url', async t => {

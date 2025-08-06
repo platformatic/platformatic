@@ -1,5 +1,5 @@
+import { safeRemove } from '@platformatic/foundation'
 import { createConnectionPool } from '@platformatic/sql-mapper'
-import { safeRemove } from '@platformatic/utils'
 import { randomUUID } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'

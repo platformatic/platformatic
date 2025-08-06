@@ -1,4 +1,4 @@
-import { loadConfiguration } from '@platformatic/utils'
+import { loadConfiguration } from '@platformatic/foundation'
 import { writeFile } from 'node:fs/promises'
 import { request } from 'undici'
 import { FailedToFetchOpenAPISchemaError } from '../errors.js'

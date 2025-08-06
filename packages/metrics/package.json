@@ -29,5 +29,8 @@
     "borp": "^0.20.0",
     "eslint": "9",
     "neostandard": "^0.12.0"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

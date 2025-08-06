@@ -1,6 +1,6 @@
 'use strict'
 
-const { safeRemove, findConfigurationFileRecursive } = require('@platformatic/utils')
+const { safeRemove, findConfigurationFileRecursive } = require('@platformatic/foundation')
 const { BaseGenerator } = require('./base-generator')
 const { spawnSync } = require('node:child_process')
 const { stat, readFile, readdir } = require('node:fs/promises')

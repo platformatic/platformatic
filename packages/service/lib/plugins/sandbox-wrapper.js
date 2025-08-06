@@ -1,5 +1,5 @@
 import autoload from '@fastify/autoload'
-import { kMetadata } from '@platformatic/utils'
+import { kMetadata } from '@platformatic/foundation'
 import fp from 'fastify-plugin'
 import { stat } from 'node:fs/promises'
 import { createRequire } from 'node:module'

@@ -41,5 +41,8 @@
   },
   "tsd": {
     "directory": "test/types"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

@@ -12,7 +12,7 @@ const {
   listRecognizedConfigurationFiles,
   loadConfigurationModule,
   loadConfiguration
-} = require('@platformatic/utils')
+} = require('@platformatic/foundation')
 const { getGlobalDispatcher, setGlobalDispatcher } = require('undici')
 const debounce = require('debounce')
 

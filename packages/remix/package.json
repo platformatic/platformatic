@@ -25,7 +25,7 @@
   "homepage": "https://github.com/platformatic/platformatic#readme",
   "dependencies": {
     "@platformatic/basic": "workspace:*",
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "@platformatic/vite": "workspace:*",
     "@remix-run/express": "^2.16.8",
     "express": "^4.19.2",
@@ -50,5 +50,8 @@
     "typescript": "^5.5.4",
     "vite": "^5.4.2",
     "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

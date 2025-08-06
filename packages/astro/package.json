@@ -27,7 +27,7 @@
     "@fastify/middie": "^9.0.0",
     "@fastify/static": "^8.0.0",
     "@platformatic/basic": "workspace:*",
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "fastify": "^5.0.0",
     "semver": "^7.6.3"
   },
@@ -43,5 +43,8 @@
     "typescript": "^5.5.4",
     "vite": "^5.4.4",
     "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

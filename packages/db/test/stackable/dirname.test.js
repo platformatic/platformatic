@@ -1,4 +1,4 @@
-import { kMetadata } from '@platformatic/utils'
+import { kMetadata } from '@platformatic/foundation'
 import assert from 'node:assert'
 import { join } from 'node:path'
 import { test } from 'node:test'

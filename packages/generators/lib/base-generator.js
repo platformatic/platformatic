@@ -1,6 +1,6 @@
 'use strict'
 
-const { generateDashedName } = require('@platformatic/utils')
+const { generateDashedName } = require('@platformatic/foundation')
 const { readFile } = require('node:fs/promises')
 const {
   convertServiceNameToPrefix,

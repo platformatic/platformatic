@@ -35,5 +35,8 @@
   "dependencies": {
     "code-block-writer": "^13.0.1",
     "safe-identifier": "^0.4.2"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

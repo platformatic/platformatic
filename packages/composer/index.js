@@ -1,6 +1,6 @@
 import { resolve, validationOptions } from '@platformatic/basic'
+import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
 import { transform } from '@platformatic/service'
-import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/utils'
 import { schema } from './lib/schema.js'
 import { ComposerStackable } from './lib/stackable.js'
 import { upgrade } from './lib/upgrade.js'

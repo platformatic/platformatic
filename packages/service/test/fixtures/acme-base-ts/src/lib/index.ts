@@ -1,4 +1,4 @@
-import { kMetadata } from '@platformatic/utils'
+import { kMetadata } from '@platformatic/foundation'
 import { lstat } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import {

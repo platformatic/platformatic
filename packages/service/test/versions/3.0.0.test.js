@@ -1,4 +1,4 @@
-import { loadConfiguration } from '@platformatic/utils'
+import { loadConfiguration } from '@platformatic/foundation'
 import { ok } from 'node:assert'
 import { resolve } from 'node:path'
 import test from 'node:test'

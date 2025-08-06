@@ -1,4 +1,4 @@
-import { detectApplicationType, findConfigurationFile } from '@platformatic/utils'
+import { detectApplicationType, findConfigurationFile } from '@platformatic/foundation'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { relative, resolve } from 'node:path'

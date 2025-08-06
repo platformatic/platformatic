@@ -1,4 +1,4 @@
-import { safeRemove } from '@platformatic/utils'
+import { safeRemove } from '@platformatic/foundation'
 import { connect } from 'inspector-client'
 import { deepStrictEqual, ok, strictEqual } from 'node:assert'
 import { on } from 'node:events'

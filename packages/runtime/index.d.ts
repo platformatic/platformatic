@@ -1,6 +1,6 @@
 import { FastifyError } from '@fastify/error'
+import { Configuration, ConfigurationOptions } from '@platformatic/foundation'
 import { BaseGenerator } from '@platformatic/generators'
-import { Configuration, ConfigurationOptions } from '@platformatic/utils'
 import { JSONSchemaType } from 'ajv'
 import { PlatformaticRuntimeConfig } from './config'
 

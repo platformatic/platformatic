@@ -1,6 +1,6 @@
 import { BaseStackable, cleanBasePath, ensureTrailingSlash, getServerUrl } from '@platformatic/basic'
+import { buildPinoFormatters, buildPinoTimestamp, deepmerge, features, isKeyEnabled } from '@platformatic/foundation'
 import { telemetry } from '@platformatic/telemetry'
-import { buildPinoFormatters, buildPinoTimestamp, deepmerge, features, isKeyEnabled } from '@platformatic/utils'
 import fastify from 'fastify'
 import { printSchema } from 'graphql'
 import { randomUUID } from 'node:crypto'

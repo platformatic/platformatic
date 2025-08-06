@@ -1,6 +1,6 @@
 import { create } from '@platformatic/db'
+import { match } from '@platformatic/foundation'
 import { create as createService } from '@platformatic/service'
-import { match } from '@platformatic/utils'
 import { execa } from 'execa'
 import { promises as fs } from 'fs'
 import graphql from 'graphql'

@@ -1,4 +1,4 @@
-import { kMetadata } from '@platformatic/utils'
+import { kMetadata } from '@platformatic/foundation'
 import { lstat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { create as createService, platformaticService, transform as serviceTransform } from '../../../index.js'

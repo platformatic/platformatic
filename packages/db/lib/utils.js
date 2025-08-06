@@ -1,5 +1,5 @@
 import { connect } from '@platformatic/db-core'
-import { kMetadata } from '@platformatic/utils'
+import { kMetadata } from '@platformatic/foundation'
 import fs from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'

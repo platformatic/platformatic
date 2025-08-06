@@ -1,5 +1,5 @@
 import { transform as basicTransform, resolve, validationOptions } from '@platformatic/basic'
-import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/utils'
+import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
 import { schema } from './lib/schema.js'
 import { AstroStackable } from './lib/stackable.js'
 
