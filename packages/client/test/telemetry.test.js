@@ -9,7 +9,7 @@ const Fastify = require('fastify')
 const { telemetry } = require('@platformatic/telemetry')
 const { safeRemove } = require('@platformatic/utils')
 const { create } = require('@platformatic/db')
-const client = require('..')
+const client = require('../lib/fastify-plugin.js')
 require('./helper')
 
 const getSpansPerType = (spans, type = 'http') => {

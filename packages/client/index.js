@@ -3,18 +3,20 @@
 const { getGlobalDispatcher, request, interceptors } = require('undici')
 const { join } = require('path')
 const fs = require('fs/promises')
-const kHeaders = Symbol('headers')
-const kGetHeaders = Symbol('getHeaders')
-const kTelemetryContext = Symbol('telemetry-context')
 const Ajv = require('ajv')
 const $RefParser = require('@apidevtools/json-schema-ref-parser')
 const { createHash } = require('node:crypto')
 const validateFunctionCache = {}
-const errors = require('./errors')
+const errors = require('./lib/errors')
 const camelCase = require('camelcase')
 const { abstractLogger } = require('@platformatic/utils')
+const { kHeaders, kGetHeaders, kTelemetryContext } = require('./lib/symbols.js')
 
-const { FormData, errors: { UndiciError } } = require('undici')
+const {
+  FormData,
+  errors: { UndiciError }
+} = require('undici')
+
 function generateOperationId (path, method, methodMeta, all) {
   let operationId = null
   // use methodMeta.operationId only if it's present AND it is a valid string that can be
@@ -35,10 +37,11 @@ function generateOperationId (path, method, methodMeta, all) {
       method.toLowerCase() +
       stringToUpdate
         .split(/[/-]+/)
-        .map((token) => {
+        .map(token => {
           const sanitized = token.replace(/[^a-zA-z0-9]/g, '')
           return capitalize(sanitized)
-        }).join('')
+        })
+        .join('')
   } else {
     let count = 0
     let candidate = operationId
@@ -115,7 +118,22 @@ async function buildOpenAPIClient (options, openTelemetry) {
       }
 
       client[kOperationIdMap][operationId] = { path, method }
-      client[operationId] = await buildCallFunction(spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout, dispatcher)
+      client[operationId] = await buildCallFunction(
+        spec,
+        baseUrl,
+        path,
+        method,
+        methodMeta,
+        throwOnError,
+        openTelemetry,
+        fullRequest,
+        fullResponse,
+        validateResponse,
+        queryParser,
+        bodyTimeout,
+        headersTimeout,
+        dispatcher
+      )
     }
   }
   return client
@@ -132,13 +150,28 @@ function hasDuplicatedParameters (methodMeta) {
     return false
   }
   const s = new Set()
-  methodMeta.parameters.forEach((param) => {
+  methodMeta.parameters.forEach(param => {
     s.add(param.name)
   })
   return s.size !== methodMeta.parameters.length
 }
 
-async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throwOnError, openTelemetry, fullRequest, fullResponse, validateResponse, queryParser, bodyTimeout, headersTimeout, dispatcher) {
+async function buildCallFunction (
+  spec,
+  baseUrl,
+  path,
+  method,
+  methodMeta,
+  throwOnError,
+  openTelemetry,
+  fullRequest,
+  fullResponse,
+  validateResponse,
+  queryParser,
+  bodyTimeout,
+  headersTimeout,
+  dispatcher
+) {
   if (validateResponse) {
     await $RefParser.dereference(spec)
   }
@@ -177,7 +210,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       for (const param of queryParams) {
         if (args?.query?.[param.name] !== undefined) {
           if (isArrayQueryParam(param)) {
-            args.query[param.name].forEach((p) => query.append(param.name, p))
+            args.query[param.name].forEach(p => query.append(param.name, p))
           } else {
             query.append(param.name, args.query[param.name])
           }
@@ -196,7 +229,7 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
       for (const param of queryParams) {
         if (body[param.name] !== undefined) {
           if (isArrayQueryParam(param)) {
-            body[param.name].forEach((p) => query.append(param.name, p))
+            body[param.name].forEach(p => query.append(param.name, p))
           } else {
             query.append(param.name, body[param.name])
           }
@@ -215,7 +248,11 @@ async function buildCallFunction (spec, baseUrl, path, method, methodMeta, throw
     urlToCall.search = queryParser ? queryParser(query) : query.toString()
     urlToCall.pathname = pathToCall
 
-    const { span, telemetryHeaders } = openTelemetry?.startHTTPSpanClient(urlToCall.toString(), method, telemetryContext) || { span: null, telemetryHeaders: {} }
+    const { span, telemetryHeaders } = openTelemetry?.startHTTPSpanClient(
+      urlToCall.toString(),
+      method,
+      telemetryContext
+    ) || { span: null, telemetryHeaders: {} }
 
     if (this[kGetHeaders]) {
       const options = { url: urlToCall, method, headers, telemetryHeaders, body }
@@ -340,7 +377,9 @@ function createErrorResponse (message) {
   }
 }
 function sanitizeContentType (contentType) {
-  if (!contentType) { return false }
+  if (!contentType) {
+    return false
+  }
   const split = contentType.split(';')
   return split[0]
 }
@@ -367,7 +406,10 @@ function isArrayQueryParam ({ schema }) {
 
 // TODO: For some unknown reason c8 is not picking up the coverage for this function
 async function graphql (url, log, headers, query, variables, openTelemetry, telemetryContext) {
-  const { span, telemetryHeaders } = openTelemetry?.startHTTPSpanClient(url.toString(), 'POST', telemetryContext) || { span: null, telemetryHeaders: {} }
+  const { span, telemetryHeaders } = openTelemetry?.startHTTPSpanClient(url.toString(), 'POST', telemetryContext) || {
+    span: null,
+    telemetryHeaders: {}
+  }
 
   headers = {
     ...headers,
@@ -439,62 +481,6 @@ async function buildGraphQLClient (options, openTelemetry, logger = abstractLogg
   }
 }
 
-async function plugin (app, opts) {
-  let client = null
-  let getHeaders = null
-
-  if (typeof opts.getHeaders === 'function') {
-    getHeaders = opts.getHeaders
-    opts = { ...opts }
-    opts.getHeaders = undefined
-  }
-
-  if (opts.serviceId && !opts.url) {
-    opts.url = `http://${opts.serviceId}.plt.local`
-  }
-
-  if (opts.type === 'openapi') {
-    client = await buildOpenAPIClient(opts, app.openTelemetry)
-  } else if (opts.type === 'graphql') {
-    if (!opts.url.endsWith('/graphql')) {
-      opts.url += '/graphql'
-    }
-    client = await buildGraphQLClient(opts, app.openTelemetry, app.log)
-  } else {
-    throw new errors.WrongOptsTypeError()
-  }
-
-  let name = opts.name
-  if (!name) {
-    name = 'client'
-  }
-
-  app.decorateRequest(name, null)
-
-  app.decorate('configure' + capitalize(name), function (opts) {
-    getHeaders = opts.getHeaders
-  })
-
-  app.addHook('onRequest', async (req, reply) => {
-    const newClient = Object.create(client)
-
-    if (getHeaders) {
-      newClient[kGetHeaders] = getHeaders.bind(newClient, req, reply)
-    }
-    if (req.span) {
-      newClient[kTelemetryContext] = req.span.context
-    }
-    req[name] = newClient
-  })
-}
-
-plugin[Symbol.for('skip-override')] = true
-plugin[Symbol.for('plugin-meta')] = {
-  name: '@platformatic/client'
-}
-
-module.exports = plugin
-module.exports.default = plugin
 module.exports.buildOpenAPIClient = buildOpenAPIClient
 module.exports.buildGraphQLClient = buildGraphQLClient
 module.exports.generateOperationId = generateOperationId

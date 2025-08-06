@@ -24,9 +24,6 @@ test('generates only types in target folder with --types-only flag', async t => 
 
   // avoid name clash
   const fileContents = await fs.readFile(join(dir, 'movies.d.ts'), 'utf-8')
-  match(fileContents, /declare namespace movies {/)
-  match(fileContents, /type MoviesPlugin = FastifyPluginAsync<NonNullable<movies.MoviesOptions>>/)
-  match(fileContents, /export const movies: MoviesPlugin;/)
   match(fileContents, /export interface FullResponse<T, U extends number> {/)
   match(fileContents, /'statusCode': U;/)
   match(fileContents, /'headers': Record<string, string>;/)
@@ -34,6 +31,8 @@ test('generates only types in target folder with --types-only flag', async t => 
   match(fileContents, /export type GetMoviesRequest = {/)
   match(fileContents, /export type GetMoviesResponseOK = Array/)
   match(fileContents, /export type Movies = {/)
+  match(fileContents, /export function generateMoviesClient\(opts: PlatformaticClientOptions\): Promise<Movies>;/)
+  match(fileContents, /export default generateMoviesClient;/)
 })
 
 test('add an initial comment with --types-comment flag', async t => {
@@ -232,7 +231,7 @@ test('openapi client generation (typescript) with --types-only', async t => {
   const plugin = `
 /// <reference types="${dir}/movies/movies" />
 import { type FastifyPluginAsync } from 'fastify'
-import pltClient from '@platformatic/client'
+import pltClient from '@platformatic/client/lib/fastify-plugin.js'
 
 const myPlugin: FastifyPluginAsync<{}> = async (app, options) => {
   app.register(pltClient, {
@@ -329,7 +328,7 @@ test('openapi client generation (typescript) with --types-only and --folder', as
   const plugin = `
 /// <reference types="./uncanny/movies" />
 import { type FastifyPluginAsync } from 'fastify'
-import pltClient from '@platformatic/client'
+import pltClient from '@platformatic/client/lib/fastify-plugin.js'
 
 const myPlugin: FastifyPluginAsync<{}> = async (app, options) => {
   app.register(pltClient, {

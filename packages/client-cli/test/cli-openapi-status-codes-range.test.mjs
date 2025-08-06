@@ -38,13 +38,13 @@ test('status-codes-range', async () => {
   const data = await readFile(typeFile, 'utf-8')
   ok(
     data.includes(
-      "import { type GetHeadersOptions, type StatusCode1xx, type StatusCode2xx, type StatusCode3xx, type StatusCode4xx, type StatusCode5xx } from '@platformatic/client'"
+      "import { type GetHeadersOptions, type PlatformaticClientOptions, type StatusCode1xx, type StatusCode2xx, type StatusCode3xx, type StatusCode4xx, type StatusCode5xx } from '@platformatic/client'"
     )
   )
   ok(
     data.includes(`
-  export type GetMartello2XXResponse = unknown
-  export type GetMartelloResponses =
-    FullResponse<GetMartello2XXResponse, StatusCode2xx>`)
+export type GetMartello2XXResponse = unknown
+export type GetMartelloResponses =
+  FullResponse<GetMartello2XXResponse, StatusCode2xx>`)
   )
 })

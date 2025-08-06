@@ -1,7 +1,7 @@
 'use strict'
 
 const assert = require('node:assert/strict')
-const errors = require('../errors')
+const errors = require('../lib/errors.js')
 const { tmpdir } = require('node:os')
 const { test } = require('node:test')
 const { join } = require('node:path')
@@ -10,7 +10,7 @@ const Fastify = require('fastify')
 const { MockAgent, setGlobalDispatcher, getGlobalDispatcher } = require('undici')
 const { create } = require('@platformatic/db')
 const { safeRemove } = require('@platformatic/utils')
-const client = require('..')
+const client = require('../lib/fastify-plugin.js')
 require('./helper')
 
 test('wrong type', async t => {

@@ -29,9 +29,9 @@ test('body-string', async () => {
   const data = await readFile(typeFile, 'utf-8')
   equal(
     data.includes(`
-  export type PostBodyStringRequest = {
-    body: string
-  }`),
+export type PostBodyStringRequest = {
+  body: string
+}`),
     true
   )
 })

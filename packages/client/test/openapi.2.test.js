@@ -1,7 +1,7 @@
 'use strict'
 
 const assert = require('node:assert/strict')
-const errors = require('../errors')
+const errors = require('../lib/errors')
 const { tmpdir } = require('node:os')
 const { test } = require('node:test')
 const { join } = require('node:path')

@@ -75,7 +75,7 @@ test('should create a standalone client for a service inside a Watt runtime from
   })
 
   ok(existsSync(join(dir, 'client-1/client-1.openapi.json')))
-  ok(existsSync(join(dir, 'client-1/client-1.cjs')))
+  ok(existsSync(join(dir, 'client-1/client-1.js')))
   ok(existsSync(join(dir, 'client-1/client-1.d.ts')))
   ok(existsSync(join(dir, 'client-1/package.json')))
 
@@ -98,7 +98,7 @@ test('should create a standalone client for a service inside a Watt runtime from
   })
 
   ok(existsSync(join(dir, 'web/client-1/client-1.openapi.json')))
-  ok(existsSync(join(dir, 'web/client-1/client-1.cjs')))
+  ok(existsSync(join(dir, 'web/client-1/client-1.js')))
   ok(existsSync(join(dir, 'web/client-1/client-1.d.ts')))
   ok(existsSync(join(dir, 'web/client-1/package.json')))
 

@@ -27,7 +27,7 @@ test(name, async () => {
 
   await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openapi, '--name', name, '--full', '--frontend', '--language', 'ts'])
 
-  equal(await isFileAccessible(join(dir, name, name + '.cjs')), false)
+  equal(await isFileAccessible(join(dir, name, name + '.js')), false)
 
   const typeDef = join(dir, name, name + '-types.d.ts')
   const def = await readFile(typeDef, 'utf-8')

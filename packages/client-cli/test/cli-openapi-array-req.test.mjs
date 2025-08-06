@@ -28,27 +28,23 @@ test(`${name} with full option`, async () => {
   const typeFile = join(dir, name, `${name}.d.ts`)
   const data = await readFile(typeFile, 'utf-8')
   equal(
-    data.includes(`export type ArrayReq = {
-    /**
-     * @param req - request parameters object
-     * @returns the API response
-     */
-    putArrayReq(req: PutArrayReqRequest): Promise<FullResponse<unknown, 200>>;
-  }
-  export interface ArrayReqOptions {
-    url: string
-  }
-  export const arrayReq: ArrayReqPlugin;
-  export { arrayReq as default };
-  export interface FullResponse<T, U extends number> {
-    'statusCode': U;
-    'headers': Record<string, string>;
-    'body': T;
-  }
+    data.includes(`
+export type ArrayReq = {
+  /**
+   * @param req - request parameters object
+   * @returns the API response
+   */
+  putArrayReq(req: PutArrayReqRequest): Promise<FullResponse<unknown, 200>>;
+}
+export interface FullResponse<T, U extends number> {
+  'statusCode': U;
+  'headers': Record<string, string>;
+  'body': T;
+}
 
-  export type PutArrayReqRequest = {
-    body: Array<string>
-  }`),
+export type PutArrayReqRequest = {
+  body: Array<string>
+}`),
     true
   )
 })
@@ -74,25 +70,21 @@ test(`${name} without full option`, async () => {
   const typeFile = join(dir, name, `${name}.d.ts`)
   const data = await readFile(typeFile, 'utf-8')
   equal(
-    data.includes(`export type ArrayReq = {
-    /**
-     * @param req - request parameters object
-     * @returns the API response body
-     */
-    putArrayReq(req: PutArrayReqRequest): Promise<FullResponse<unknown, 200>>;
-  }
-  export interface ArrayReqOptions {
-    url: string
-  }
-  export const arrayReq: ArrayReqPlugin;
-  export { arrayReq as default };
-  export interface FullResponse<T, U extends number> {
-    'statusCode': U;
-    'headers': Record<string, string>;
-    'body': T;
-  }
+    data.includes(`
+export type ArrayReq = {
+  /**
+   * @param req - request parameters object
+   * @returns the API response body
+   */
+  putArrayReq(req: PutArrayReqRequest): Promise<FullResponse<unknown, 200>>;
+}
+export interface FullResponse<T, U extends number> {
+  'statusCode': U;
+  'headers': Record<string, string>;
+  'body': T;
+}
 
-  export type PutArrayReqRequest = Array<string>`),
+export type PutArrayReqRequest = Array<string>`),
     true
   )
 })

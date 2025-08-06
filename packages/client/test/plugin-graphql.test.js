@@ -7,7 +7,7 @@ const { join } = require('node:path')
 const { mkdtemp, cp, unlink } = require('node:fs/promises')
 const Fastify = require('fastify')
 const { create } = require('@platformatic/db')
-const client = require('..')
+const client = require('../lib/fastify-plugin.js')
 const { safeRemove } = require('@platformatic/utils')
 require('./helper')
 

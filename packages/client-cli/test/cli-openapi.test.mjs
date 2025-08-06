@@ -49,15 +49,14 @@ test('openapi client generation (javascript)', async t => {
   ])
 
   const toWrite = `
-'use strict'
+import Fastify from 'fastify'
+import movies from './movies/movies.js'
 
-const Fastify = require('fastify')
-const movies = require('./movies')
 const app = Fastify({ logger: true })
+const client = await movies({ url: '${runtimeUrl}' })
 
-app.register(movies, { url: '${runtimeUrl}' })
 app.post('/', async (request, reply) => {
-  const res = await request.movies.createMovie({ title: 'foo' })
+  const res = await client.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -116,20 +115,19 @@ test('openapi client generation (typescript)', async t => {
 
   const toWrite = `
 import Fastify from 'fastify';
-import movies from './movies';
+import movies from './movies/movies.js';
 
 const app = Fastify({ logger: true });
-app.register(movies, {
-  url: '${runtimeUrl}'
-});
 
 app.get('/', async (req) => {
-  const res = await req.movies.getMovies({})
+  const client = await movies({ url: '${runtimeUrl}' })
+  const res = await client.getMovies({})
   return res
 })
 
 app.post('/', async (req) => {
-  const res = await req.movies.createMovie({ title: 'foo' })
+  const client = await movies({ url: '${runtimeUrl}' })
+  const res = await client.createMovie({ title: 'foo' })
   return res
 })
 
@@ -213,15 +211,14 @@ test('openapi client generation (javascript) with slash at the end', async t => 
   ])
 
   const toWrite = `
-'use strict'
+import Fastify from 'fastify'
+import movies from './movies/movies.js'
 
-const Fastify = require('fastify')
-const movies = require('./movies')
 const app = Fastify({ logger: true })
 
-app.register(movies, { url: '${runtimeUrl}/' })
+const client = await movies({ url: '${runtimeUrl}' })
 app.post('/', async (request, reply) => {
-  const res = await request.movies.createMovie({ title: 'foo' })
+  const res = await client.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -257,7 +254,7 @@ app.listen({ port: 0 })
   })
 })
 
-test('no such file', async t => {
+test('no such file ', async t => {
   try {
     await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
   } catch {
@@ -283,7 +280,7 @@ test('no such file', async t => {
   )
 })
 
-test('no such file', async t => {
+test('no such file (empty dir)', async t => {
   await rejects(execa('node', [join(import.meta.dirname, '..', 'cli.mjs')]))
 })
 
@@ -309,15 +306,14 @@ test('datatypes', async t => {
   ])
 
   const toWrite = `
-'use strict'
+import Fastify from 'fastify'
+import movies from './movies/movies.js'
 
-const Fastify = require('fastify')
-const movies = require('./movies')
 const app = Fastify({ logger: true })
+const client = await movies({ url: '${runtimeUrl}' })
 
-app.register(movies, { url: '${runtimeUrl}' })
 app.post('/', async (request, reply) => {
-  const res = await request.movies.createMovie({ title: 'foo' })
+  const res = await client.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -354,107 +350,6 @@ app.listen({ port: 0 })
     }),
     true
   )
-})
-
-test('configureClient (typescript)', async t => {
-  try {
-    await fs.unlink(join(import.meta.dirname, 'fixtures', 'movies', 'db.sqlite'))
-  } catch {
-    // noop
-  }
-  const app = await create(join(import.meta.dirname, 'fixtures', 'movies', 'zero.db.json'))
-
-  const runtimeUrl = await app.start()
-
-  const dir = await moveToTmpdir(after)
-
-  await execa('node', [
-    join(import.meta.dirname, '..', 'cli.mjs'),
-    runtimeUrl + '/documentation/json',
-    '--name',
-    'movies',
-    '--full',
-    'false'
-  ])
-
-  const toWrite = `
-import Fastify from 'fastify';
-import movies from './movies';
-
-const app = Fastify({ logger: true });
-app.register(movies, {
-  url: '${runtimeUrl}'
-});
-
-app.register(async function (app) {
-  app.configureMovies({
-    async getHeaders (req, reply) {
-      return { foo: 'bar' }
-    }
-  })
-});
-
-app.post('/', async (req) => {
-  const res = await req.movies.createMovie({ title: 'foo' })
-  return res
-})
-
-app.listen({ port: 0 });
-`
-
-  await fs.writeFile(join(dir, 'index.ts'), toWrite)
-
-  const tsconfig = JSON.stringify(
-    {
-      extends: 'fastify-tsconfig',
-      compilerOptions: {
-        outDir: 'build',
-        target: 'es2018',
-        moduleResolution: 'NodeNext',
-        lib: ['es2018'],
-        esModuleInterop: true
-      }
-    },
-    null,
-    2
-  )
-
-  await fs.writeFile(join(dir, 'tsconfig.json'), tsconfig)
-
-  const tsc = findTSCPath()
-  await execa(tsc, [], { env })
-
-  // TODO how can we avoid this copy?
-  await copy(join(dir, 'movies'), join(dir, 'build', 'movies'))
-
-  const server2 = execa('node', ['build/index.js'])
-  t.after(() => safeKill(server2))
-  t.after(async () => {
-    await app.close()
-  })
-
-  const stream = server2.stdout.pipe(split(JSON.parse))
-  server2.stderr.pipe(process.stderr)
-
-  // this is unfortunate :(
-  const base = 'Server listening at '
-  let url
-  for await (const line of stream) {
-    const msg = line.msg
-    if (msg.indexOf(base) !== 0) {
-      continue
-    }
-    url = msg.slice(base.length)
-    break
-  }
-  const res = await request(url, {
-    method: 'POST'
-  })
-  const body = await res.body.json()
-  same(body, {
-    id: 1,
-    title: 'foo'
-  })
 })
 
 test('dotenv & config support', async t => {
@@ -535,15 +430,14 @@ test('full-response option', async t => {
   ])
 
   const toWrite = `
-'use strict'
+import Fastify from 'fastify'
+import movies from './movies/movies.js'
 
-const Fastify = require('fastify')
-const movies = require('./movies')
 const app = Fastify({ logger: true })
+const client = await movies({ url: '${runtimeUrl}' })
 
-app.register(movies, { url: '${runtimeUrl}' })
 app.post('/', async (request, reply) => {
-  const res = await request.movies.createMovie({ title: 'foo' })
+  const res = await client.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -622,15 +516,14 @@ test('openapi client generation (javascript) from file', async t => {
   await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'movies', '--full', 'false'])
 
   const toWrite = `
-'use strict'
+import Fastify from 'fastify'
+import movies from './movies/movies.js'
 
-const Fastify = require('fastify')
-const movies = require('./movies')
 const app = Fastify({ logger: true })
+const client = await movies({ url: '${runtimeUrl}' })
 
-app.register(movies, { url: '${runtimeUrl}' })
 app.post('/', async (request, reply) => {
-  const res = await request.movies.createMovie({ title: 'foo' })
+  const res = await client.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -691,21 +584,20 @@ test('name with dashes', async t => {
     const pkg = JSON.parse(await fs.readFile(join(dir, 'uncanny-movies', 'package.json'), 'utf-8'))
     same(pkg, {
       name: 'uncanny-movies',
-      main: './uncanny-movies.cjs',
+      main: './uncanny-movies.js',
       types: './uncanny-movies.d.ts'
     })
   }
 
   const toWrite = `
-'use strict'
+import Fastify from 'fastify'
+import uncannyMovies from './uncanny-movies/uncanny-movies.js'
 
-const Fastify = require('fastify')
-const movies = require('./uncanny-movies')
 const app = Fastify({ logger: true })
+const client = await uncannyMovies({ url: '${runtimeUrl}' })
 
-app.register(movies, { url: '${runtimeUrl}' })
 app.post('/', async (request, reply) => {
-  const res = await request.uncannyMovies.createMovie({ title: 'foo' })
+  const res = await client.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -762,16 +654,14 @@ test('no dashes typescript', async t => {
   ])
 
   const toWrite = `
-import Fastify from 'fastify';
-import movies from './uncanny-movies';
+import Fastify from 'fastify'
+import movies from './uncanny-movies/uncanny-movies.js'
 
-const app = Fastify({ logger: true });
-app.register(movies, {
-  url: '${runtimeUrl}'
-});
+const app = Fastify({ logger: true })
 
 app.post('/', async (req) => {
-  const res = await req.uncannyMovies.createMovie({ title: 'foo' })
+  const client = await movies({ url: '${runtimeUrl}' })
+  const res = await client.createMovie({ title: 'foo' })
   return res
 })
 
@@ -858,21 +748,20 @@ test('name with tilde', async t => {
     const pkg = JSON.parse(await fs.readFile(join(dir, 'uncanny~movies', 'package.json'), 'utf-8'))
     same(pkg, {
       name: 'uncanny~movies',
-      main: './uncanny~movies.cjs',
+      main: './uncanny~movies.js',
       types: './uncanny~movies.d.ts'
     })
   }
 
   const toWrite = `
-'use strict'
+import Fastify from 'fastify'
+import movies from './uncanny~movies/uncanny~movies.js'
 
-const Fastify = require('fastify')
-const movies = require('./uncanny~movies')
 const app = Fastify({ logger: true })
+const client = await movies({ url: '${runtimeUrl}' })
 
-app.register(movies, { url: '${runtimeUrl}' })
 app.post('/', async (request, reply) => {
-  const res = await request.uncannyMovies.createMovie({ title: 'foo' })
+  const res = await client.createMovie({ title: 'foo' })
   return res
 })
 app.listen({ port: 0 })
@@ -937,7 +826,7 @@ test('nested optional parameters are correctly identified', async t => {
 
   equal(
     data.includes(`
-  export type GetMoviesResponseOK = { 'data'?: { 'foo': string; 'bar'?: string; 'baz'?: { 'nested1'?: string; 'nested2': string } } }
+export type GetMoviesResponseOK = { 'data'?: { 'foo': string; 'bar'?: string; 'baz'?: { 'nested1'?: string; 'nested2': string } } }
 `),
     true
   )
@@ -952,20 +841,20 @@ test('request with same parameter name in body/path/header/query', async t => {
   const data = await readFile(typeFile, 'utf-8')
   equal(
     data.includes(`
-  export type GetMoviesRequest = {
-    body: {
-      'id': string;
-    }
-    path: {
-      'id': string;
-    }
-    query: {
-      'id': string;
-    }
-    headers: {
-      'id': string;
-    }
-  }`),
+export type GetMoviesRequest = {
+  body: {
+    'id': string;
+  }
+  path: {
+    'id': string;
+  }
+  query: {
+    'id': string;
+  }
+  headers: {
+    'id': string;
+  }
+}`),
     true
   )
 })
@@ -992,38 +881,38 @@ test('openapi client generation (javascript) from file with fullRequest, fullRes
     const data = await readFile(typeFile, 'utf-8')
     equal(
       data.includes(`
-  export type PostHelloRequest = {
-    body: {
-      'bodyId': string;
-    }
-    query: {
-      'queryId': string;
-    }
-    headers?: {
-      'headerId'?: string;
-    }
+export type PostHelloRequest = {
+  body: {
+    'bodyId': string;
   }
+  query: {
+    'queryId': string;
+  }
+  headers?: {
+    'headerId'?: string;
+  }
+}
 `),
       true
     )
     equal(
       data.includes(`
-  export type Full = {
-    /**
-     * @param req - request parameters object
-     * @returns the API response
-     */
-    postHello(req: PostHelloRequest): Promise<PostHelloResponses>;
-  }`),
+export type Full = {
+  /**
+   * @param req - request parameters object
+   * @returns the API response
+   */
+  postHello(req: PostHelloRequest): Promise<PostHelloResponses>;
+}`),
       true
     )
-    const implementationFile = join(dir, 'full', 'full.cjs')
+    const implementationFile = join(dir, 'full', 'full.js')
     const implementationData = await readFile(implementationFile, 'utf-8')
     // check the implementation instantiate the client with fullRequest and fullResponse
     equal(
       implementationData.includes(`
-async function generateFullClientPlugin (app, opts) {
-  app.register(pltClient, {
+async function generateFullClient (opts) {
+  return buildOpenAPIClient({
     type: 'openapi',
     name: 'full',
     path: join(__dirname, 'full.openapi.json'),
@@ -1076,29 +965,29 @@ test('do not generate implementation file if in @platformatic/service', async t 
     const data = await readFile(typeFile, 'utf-8')
     equal(
       data.includes(`
-  export type PostHelloRequest = {
-    body: {
-      'bodyId': string;
-    }
-    query: {
-      'queryId': string;
-    }
-    headers?: {
-      'headerId'?: string;
-    }
+export type PostHelloRequest = {
+  body: {
+    'bodyId': string;
   }
+  query: {
+    'queryId': string;
+  }
+  headers?: {
+    'headerId'?: string;
+  }
+}
 `),
       true
     )
     equal(
       data.includes(`
-  export type Full = {
-    /**
-     * @param req - request parameters object
-     * @returns the API response
-     */
-    postHello(req: PostHelloRequest): Promise<PostHelloResponses>;
-  }`),
+export type Full = {
+  /**
+   * @param req - request parameters object
+   * @returns the API response
+   */
+  postHello(req: PostHelloRequest): Promise<PostHelloResponses>;
+}`),
       true
     )
   }
@@ -1124,9 +1013,9 @@ test('optional-headers option', async t => {
   const data = await readFile(typeFile, 'utf-8')
   equal(
     data.includes(`
-  export type PostHelloRequest = {
-    'authorization'?: string;
-  }
+export type PostHelloRequest = {
+  'authorization'?: string;
+}
 `),
     true
   )
@@ -1142,46 +1031,46 @@ test('common parameters in paths', async t => {
   const data = await readFile(typeFile, 'utf-8')
   equal(
     data.includes(`
-  export type GetPathWithFieldIdRequest = {
-    path: {
-      /**
-       * A field ID
-       */
-      'fieldId': string;
-    }
-    query: {
-      /**
-       * Movie id
-       */
-      'movieId': string;
-    }
+export type GetPathWithFieldIdRequest = {
+  path: {
+    /**
+     * A field ID
+     */
+    'fieldId': string;
   }
+  query: {
+    /**
+     * Movie id
+     */
+    'movieId': string;
+  }
+}
 `),
     true
   )
   equal(
     data.includes(`
-  export type GetSampleRequest = {
-    query: {
-      /**
-       * Movie id
-       */
-      'movieId': string;
-    }
+export type GetSampleRequest = {
+  query: {
+    /**
+     * Movie id
+     */
+    'movieId': string;
   }
+}
 `),
     true
   )
   equal(
     data.includes(`
-  export type PostPathWithFieldIdRequest = {
-    path: {
-      /**
-       * A field ID
-       */
-      'fieldId': string;
-    }
+export type PostPathWithFieldIdRequest = {
+  path: {
+    /**
+     * A field ID
+     */
+    'fieldId': string;
   }
+}
 `),
     true
   )
@@ -1206,15 +1095,14 @@ test('common parameters in paths', async t => {
   ])
 
   const toWrite = `
-'use strict'
+import Fastify from 'fastify'
+import commonparams from './commonparams/commonparams.js'
 
-const Fastify = require('fastify')
-const commonparams = require('./commonparams')
 const app = Fastify({ logger: true })
+const client = await commonparams({ url: '${runtimeUrl}' })
 
-app.register(commonparams, { url: '${runtimeUrl}' })
 app.get('/', async (request, reply) => {
-  const res = await request.commonparams.getPathWithFieldId({
+  const res = await client.getPathWithFieldId({
     path: { fieldId: 'foo' },
     query: { movieId: '123' }
   })
@@ -1222,7 +1110,7 @@ app.get('/', async (request, reply) => {
 })
 
 app.post('/', async (request, reply) => {
-  const res = await request.commonparams.postPathWithFieldId({
+  const res = await client.postPathWithFieldId({
     path: { fieldId: 'foo' }
   })
   return res
@@ -1276,13 +1164,13 @@ test('requestbody as array', async t => {
 
   equal(
     data.includes(`
-  export type Movies = {
-    /**
-     * @param req - request parameters object
-     * @returns the API response body
-     */
-    postFoobar(req: PostFoobarRequest): Promise<PostFoobarResponses>;
-  }
+export type Movies = {
+  /**
+   * @param req - request parameters object
+   * @returns the API response body
+   */
+  postFoobar(req: PostFoobarRequest): Promise<PostFoobarResponses>;
+}
 `),
     true
   )
@@ -1299,10 +1187,10 @@ test('requestBody and params should generate a full request', async t => {
   const data = await readFile(typeFile, 'utf-8')
   equal(
     data.includes(`
-  export type PutFooRequest = {
-    'bar': string;
-    body: Array<{ 'codeType': 'customField'; 'externalId': unknown; 'internalId': string; 'kind': 'mapped' } | { 'codeType': 'costCenter'; 'externalId': unknown; 'kind': 'mapped' } | { 'externalId': unknown; 'kind': 'notMapped' }>
-  }
+export type PutFooRequest = {
+  'bar': string;
+  body: Array<{ 'codeType': 'customField'; 'externalId': unknown; 'internalId': string; 'kind': 'mapped' } | { 'codeType': 'costCenter'; 'externalId': unknown; 'kind': 'mapped' } | { 'externalId': unknown; 'kind': 'notMapped' }>
+}
 `),
     true
   )
@@ -1317,21 +1205,21 @@ test('support formdata', async t => {
   const data = await readFile(typeFile, 'utf-8')
   equal(
     data.includes(`
-  export type Movies = {
-    /**
-     * @param req - request parameters object
-     * @returns the API response body
-     */
-    postSample(req: PostSampleRequest): Promise<PostSampleResponses>;
-  }
+export type Movies = {
+  /**
+   * @param req - request parameters object
+   * @returns the API response body
+   */
+  postSample(req: PostSampleRequest): Promise<PostSampleResponses>;
+}
 `),
     true
   )
   equal(
     data.includes(`
-  export type PostSampleRequest = {
-    'data': { 'description'?: string; 'endDate': string | Date; 'startDate': string | Date };
-  }`),
+export type PostSampleRequest = {
+  'data': { 'description'?: string; 'endDate': string | Date; 'startDate': string | Date };
+}`),
     true
   )
 })
@@ -1346,9 +1234,9 @@ test('export formdata on full request object', async t => {
   equal(data.includes("import { type FormData } from 'undici"), true)
   equal(
     data.includes(`
-  export type PostSampleRequest = {
-    body: FormData;
-  }`),
+export type PostSampleRequest = {
+  body: FormData;
+}`),
     true
   )
 })
@@ -1361,41 +1249,12 @@ test('client with watt.json and skipConfigUpdate', async t => {
 
   const data = await readFile(join(dir, 'client', 'client.d.ts'), 'utf-8')
   ok(data.includes("import { type FormData } from 'undici"))
-  ok(data.includes('type ClientPlugin = FastifyPluginAsync<NonNullable<client.ClientOptions>>'))
-  ok(
-    data.includes(`
-  interface FastifyRequest {
-    'client': client.Client;
-  }`)
-  )
 
   const wattConfig = JSON.parse(
     await readFile(join(import.meta.dirname, 'fixtures', 'client-with-config', 'watt.json'), 'utf-8')
   )
   ok('$schema' in wattConfig)
   ok(!('clients' in wattConfig), 'watt.json config has no clients')
-})
-
-test('tsdoc client description', async t => {
-  const dir = await moveToTmpdir(after)
-
-  const openAPIfile = join(import.meta.dirname, 'fixtures', 'tsdoc-openapi.json')
-  await execa('node', [join(import.meta.dirname, '..', 'cli.mjs'), openAPIfile, '--name', 'tsdoc', '--full', 'false'])
-
-  const data = await readFile(join(dir, 'tsdoc', 'tsdoc.d.ts'), 'utf-8')
-
-  // Title and description on request client
-  ok(
-    data.includes(`
-  interface FastifyRequest {
-    /**
-     * Movies API
-     *
-     * An API with movies in it
-     */
-    'tsdoc': tsdoc.Tsdoc;
-  }`)
-  )
 })
 
 test('tsdoc client operation descriptions', async t => {
@@ -1409,48 +1268,48 @@ test('tsdoc client operation descriptions', async t => {
   // Description and summary on method
   ok(
     data.includes(`
-    /**
-     * Create a movie
-     *
-     * Add a new movie to the movies database
-     * @param req - request parameters object
-     * @returns the API response body
-     */
-    createMovie(req: CreateMovieRequest): Promise<CreateMovieResponses>;`)
+  /**
+   * Create a movie
+   *
+   * Add a new movie to the movies database
+   * @param req - request parameters object
+   * @returns the API response body
+   */
+  createMovie(req: CreateMovieRequest): Promise<CreateMovieResponses>;`)
   )
 
   // Summary only on method
   ok(
     data.includes(`
-    /**
-     * Get a movie
-     * @param req - request parameters object
-     * @returns the API response body
-     */
-    getMovieById(req: GetMovieByIdRequest): Promise<GetMovieByIdResponses>;`)
+  /**
+   * Get a movie
+   * @param req - request parameters object
+   * @returns the API response body
+   */
+  getMovieById(req: GetMovieByIdRequest): Promise<GetMovieByIdResponses>;`)
   )
 
   // Description only on method
   ok(
     data.includes(`
-    /**
-     * Update the details of a movie
-     * @param req - request parameters object
-     * @returns the API response body
-     */
-    updateMovie(req: UpdateMovieRequest): Promise<UpdateMovieResponses>;`)
+  /**
+   * Update the details of a movie
+   * @param req - request parameters object
+   * @returns the API response body
+   */
+  updateMovie(req: UpdateMovieRequest): Promise<UpdateMovieResponses>;`)
   )
 
   // Deprecated method
   ok(
     data.includes(`
-    /**
-     * Patch a movie
-     * @deprecated
-     * @param req - request parameters object
-     * @returns the API response body
-     */
-    patchMovie(req: PatchMovieRequest): Promise<PatchMovieResponses>;`)
+  /**
+   * Patch a movie
+   * @deprecated
+   * @param req - request parameters object
+   * @returns the API response body
+   */
+  patchMovie(req: PatchMovieRequest): Promise<PatchMovieResponses>;`)
   )
 })
 
@@ -1465,60 +1324,60 @@ test('tsdoc client request option descriptions', async t => {
   // Description on title, not on id, built from requestBody scheme #ref
   ok(
     data.includes(`
-  export type CreateMovieRequest = {
-    'id'?: number;
-    /**
-     * The title of the movie
-     */
-    'title': string;
-  }`)
+export type CreateMovieRequest = {
+  'id'?: number;
+  /**
+   * The title of the movie
+   */
+  'title': string;
+}`)
   )
 
   // Description on ID, from parameters
   ok(
     data.includes(`
-  export type GetMovieByIdRequest = {
-    /**
-     * The ID of the movie
-     */
-    'id': number;
-  }`)
+export type GetMovieByIdRequest = {
+  /**
+   * The ID of the movie
+   */
+  'id': number;
+}`)
   )
 
   // Descriptions from mixed parameters and requestBody schema #ref
   ok(
     data.includes(`
-  export type UpdateMovieRequest = {
-    'fields'?: Array<'id' | 'title'>;
-    /**
-     * The ID of the movie
-     */
-    'id': number;
-    /**
-     * The title of the movie
-     */
-    'title': string;
-  }`)
+export type UpdateMovieRequest = {
+  'fields'?: Array<'id' | 'title'>;
+  /**
+   * The ID of the movie
+   */
+  'id': number;
+  /**
+   * The title of the movie
+   */
+  'title': string;
+}`)
   )
 
   // Deprecated fields with and without descriptions
   ok(
     data.includes(`
-  export type PatchMovieRequest = {
-    /**
-     * @deprecated
-     */
-    'fields'?: Array<'id' | 'title'>;
-    /**
-     * The ID of the movie
-     * @deprecated
-     */
-    'id': number;
-    /**
-     * The title of the movie
-     */
-    'title': string;
-  }`)
+export type PatchMovieRequest = {
+  /**
+   * @deprecated
+   */
+  'fields'?: Array<'id' | 'title'>;
+  /**
+   * The ID of the movie
+   * @deprecated
+   */
+  'id': number;
+  /**
+   * The title of the movie
+   */
+  'title': string;
+}`)
   )
 })
 
@@ -1533,22 +1392,22 @@ test('tsdoc client request option descriptions (full-request)', async t => {
   // Descriptions from mixed parameters and requestBody schema #ref
   ok(
     data.includes(`
-  export type UpdateMovieRequest = {
-    path: {
-      /**
-       * The ID of the movie
-       */
-      'id': number;
-    }
-    query?: {
-      'fields'?: Array<'id' | 'title'>;
-    }
-    body: {
-      /**
-       * The title of the movie
-       */
-      'title': string;
-    }
-  }`)
+export type UpdateMovieRequest = {
+  path: {
+    /**
+     * The ID of the movie
+     */
+    'id': number;
+  }
+  query?: {
+    'fields'?: Array<'id' | 'title'>;
+  }
+  body: {
+    /**
+     * The title of the movie
+     */
+    'title': string;
+  }
+}`)
   )
 })

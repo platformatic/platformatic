@@ -52,15 +52,14 @@ test('url-auth-headers option with valid values', async t => {
   ])
 
   const toWrite = `
-'use strict'
+import Fastify from 'fastify'
+import authUrlHeaders from './authUrlHeaders/authUrlHeaders.js'
 
-const Fastify = require('fastify')
-const authUrlHeaders = require('./authUrlHeaders')
 const app = Fastify({ logger: true })
 
-app.register(authUrlHeaders, { url: '${runtimeUrl}' })
+const client = await authUrlHeaders({ url: '${runtimeUrl}' })
 app.post('/', async (request, reply) => {
-  const res = await request.authUrlHeaders.getHello()
+  const res = await client.getHello()
   return res
 })
 app.listen({ port: 0 })
