@@ -66,7 +66,7 @@
     "@platformatic/itc": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
     "@platformatic/undici-cache-memory": "^0.8.1",
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "@watchable/unpromise": "^1.0.2",
     "change-case-all": "^2.1.0",
     "close-with-grace": "^2.0.0",
@@ -90,5 +90,8 @@
     "undici": "^7.0.0",
     "undici-thread-interceptor": "^0.14.0",
     "ws": "^8.16.0"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

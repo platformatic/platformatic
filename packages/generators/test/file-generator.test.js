@@ -6,7 +6,7 @@ const { FileGenerator } = require('../lib/file-generator')
 const { readFile } = require('node:fs/promises')
 const { join } = require('node:path')
 const { tmpdir } = require('node:os')
-const { createDirectory, safeRemove } = require('@platformatic/utils')
+const { createDirectory, safeRemove } = require('@platformatic/foundation')
 
 let dirCount = 0
 describe('FileGenerator', () => {

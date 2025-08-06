@@ -1,4 +1,4 @@
-import { match } from '@platformatic/utils'
+import { match } from '@platformatic/foundation'
 import { execa } from 'execa'
 import { equal, fail, ok, deepEqual as same } from 'node:assert'
 import { once } from 'node:events'

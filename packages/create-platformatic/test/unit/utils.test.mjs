@@ -1,6 +1,6 @@
 'use strict'
 
-import { safeRemove } from '@platformatic/utils'
+import { safeRemove } from '@platformatic/foundation'
 import esmock from 'esmock'
 import { mkdtemp, writeFile } from 'fs/promises'
 import { deepEqual, equal } from 'node:assert'

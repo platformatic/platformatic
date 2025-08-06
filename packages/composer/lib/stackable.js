@@ -1,5 +1,5 @@
+import { kMetadata, replaceEnv } from '@platformatic/foundation'
 import { ServiceStackable } from '@platformatic/service'
-import { kMetadata, replaceEnv } from '@platformatic/utils'
 import { ensureServices, platformaticComposer } from './application.js'
 import { notHostConstraints } from './not-host-constraints.js'
 import { packageJson } from './schema.js'

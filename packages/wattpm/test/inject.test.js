@@ -2,7 +2,7 @@ import {
   createDirectory,
   loadConfigurationFile as loadRawConfigurationFile,
   saveConfigurationFile
-} from '@platformatic/utils'
+} from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
 import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'

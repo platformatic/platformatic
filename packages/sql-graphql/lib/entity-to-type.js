@@ -2,7 +2,7 @@
 
 const graphql = require('graphql')
 const camelcase = require('camelcase')
-const { findNearestString } = require('@platformatic/utils')
+const { findNearestString } = require('@platformatic/foundation')
 const {
   sqlTypeToGraphQL,
   fromSelectionSet,

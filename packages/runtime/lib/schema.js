@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 'use strict'
 
-const { schemaComponents } = require('@platformatic/utils')
+const { schemaComponents } = require('@platformatic/foundation')
 
 const pkg = require('../package.json')
 

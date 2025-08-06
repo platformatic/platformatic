@@ -1,4 +1,4 @@
-import { safeRemove, saveConfigurationFile } from '@platformatic/utils'
+import { safeRemove, saveConfigurationFile } from '@platformatic/foundation'
 import { deepStrictEqual, ok } from 'node:assert'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'

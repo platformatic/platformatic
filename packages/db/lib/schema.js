@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 
+import { fastifyServer as server, schemaComponents as utilsSchemaComponents, watch, wrappedRuntime } from '@platformatic/foundation'
 import { schemaComponents as serviceSchemaComponents } from '@platformatic/service'
-import { fastifyServer as server, schemaComponents as utilsSchemaComponents, watch, wrappedRuntime } from '@platformatic/utils'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 

@@ -1,6 +1,6 @@
 import { create as createDatabase } from '@platformatic/db'
+import { match } from '@platformatic/foundation'
 import { create } from '@platformatic/runtime'
-import { match } from '@platformatic/utils'
 import dotenv from 'dotenv'
 import { execa } from 'execa'
 import { existsSync, promises as fs } from 'fs'

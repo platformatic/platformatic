@@ -1,5 +1,5 @@
+import { ensureLoggableError, getPackageManager } from '@platformatic/foundation'
 import { loadConfiguration } from '@platformatic/runtime'
-import { ensureLoggableError, getPackageManager } from '@platformatic/utils'
 import { bold } from 'colorette'
 import { parse } from 'dotenv'
 import { execa } from 'execa'

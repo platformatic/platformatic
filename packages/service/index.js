@@ -1,5 +1,5 @@
 import { transform as basicTransform, resolve, validationOptions } from '@platformatic/basic'
-import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/utils'
+import { kMetadata, loadConfiguration as utilsLoadConfiguration } from '@platformatic/foundation'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { schema } from './lib/schema.js'

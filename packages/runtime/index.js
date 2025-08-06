@@ -1,13 +1,13 @@
 'use strict'
 
 const inspector = require('node:inspector')
-const { kMetadata } = require('@platformatic/utils')
+const { kMetadata } = require('@platformatic/foundation')
 const { resolve, validationOptions } = require('@platformatic/basic')
 const {
   loadConfiguration: utilsLoadConfiguration,
   extractModuleFromSchemaUrl,
   ensureLoggableError
-} = require('@platformatic/utils')
+} = require('@platformatic/foundation')
 const { NodeInspectorFlagsNotSupportedError } = require('./lib/errors')
 const { wrapInRuntimeConfig, transform } = require('./lib/config')
 const { RuntimeGenerator, WrappedGenerator } = require('./lib/generator')

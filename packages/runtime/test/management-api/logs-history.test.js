@@ -6,7 +6,7 @@ const { test } = require('node:test')
 const { writeFile } = require('node:fs/promises')
 const { Client } = require('undici')
 const { getRuntimeTmpDir, getRuntimeLogsDir } = require('../../lib/utils')
-const { createDirectory, safeRemove } = require('@platformatic/utils')
+const { createDirectory, safeRemove } = require('@platformatic/foundation')
 
 const { create } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')

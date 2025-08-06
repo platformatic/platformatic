@@ -1,5 +1,4 @@
 import { RuntimeNotFound } from '@platformatic/control'
-import { create, loadConfiguration } from '@platformatic/runtime'
 import {
   abstractLogger,
   detectApplicationType,
@@ -8,7 +7,8 @@ import {
   loadConfigurationModule,
   saveConfigurationFile,
   loadConfiguration as utilsLoadConfiguration
-} from '@platformatic/utils'
+} from '@platformatic/foundation'
+import { create, loadConfiguration } from '@platformatic/runtime'
 import { bgGreen, black, bold } from 'colorette'
 import { resolve } from 'node:path'
 import { parseArgs as nodeParseArgs } from 'node:util'

@@ -1,6 +1,6 @@
 /* globals platformatic */
 
-import { kMetadata } from '@platformatic/utils'
+import { kMetadata } from '@platformatic/foundation'
 import { deepStrictEqual, ok, rejects, throws } from 'node:assert'
 import { platform } from 'node:os'
 import { test } from 'node:test'

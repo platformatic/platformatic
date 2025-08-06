@@ -1,4 +1,4 @@
-import { createDirectory } from '@platformatic/utils'
+import { createDirectory } from '@platformatic/foundation'
 import assert from 'node:assert/strict'
 import { copyFile, mkdtemp, readdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'

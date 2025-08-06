@@ -9,7 +9,7 @@ const {
   parseMemorySize,
   kTimeout,
   kMetadata
-} = require('@platformatic/utils')
+} = require('@platformatic/foundation')
 const { once, EventEmitter } = require('node:events')
 const { createReadStream, watch, existsSync } = require('node:fs')
 const { readdir, readFile, stat, access } = require('node:fs/promises')

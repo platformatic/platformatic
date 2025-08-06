@@ -1,6 +1,6 @@
 'use strict'
 
-const { safeRemove } = require('@platformatic/utils')
+const { safeRemove } = require('@platformatic/foundation')
 const { spawnSync } = require('node:child_process')
 const { readFile, writeFile, mkdir } = require('node:fs/promises')
 const { existsSync } = require('node:fs')

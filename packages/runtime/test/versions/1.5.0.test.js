@@ -3,7 +3,7 @@
 const { test } = require('node:test')
 const { equal } = require('node:assert')
 const { join } = require('path')
-const { loadConfiguration } = require('@platformatic/utils')
+const { loadConfiguration } = require('@platformatic/foundation')
 const { version } = require('../../package.json')
 const { upgrade } = require('../../lib/upgrade.js')
 const { transform } = require('../../lib/config.js')

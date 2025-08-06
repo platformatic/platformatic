@@ -1,4 +1,4 @@
-import { createDirectory, safeRemove } from '@platformatic/utils'
+import { createDirectory, safeRemove } from '@platformatic/foundation'
 import assert from 'assert/strict'
 import { once } from 'node:events'
 import { symlink } from 'node:fs/promises'

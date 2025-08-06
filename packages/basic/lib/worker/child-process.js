@@ -1,12 +1,12 @@
-import { ITC } from '@platformatic/itc'
-import { client, collectMetrics } from '@platformatic/metrics'
 import {
   buildPinoFormatters,
   buildPinoTimestamp,
   disablePinoDirectWrite,
   ensureLoggableError,
   features
-} from '@platformatic/utils'
+} from '@platformatic/foundation'
+import { ITC } from '@platformatic/itc'
+import { client, collectMetrics } from '@platformatic/metrics'
 import diagnosticChannel, { tracingChannel } from 'node:diagnostics_channel'
 import { EventEmitter, once } from 'node:events'
 import { readFile } from 'node:fs/promises'

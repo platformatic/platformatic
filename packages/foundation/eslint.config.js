@@ -29,7 +29,7 @@ const noInternalPackages = {
           }
 
           if (pkg) {
-            context.report({ node, message: `@platformatic/utils cannot depend on ${pkg} (${section})` })
+            context.report({ node, message: `@platformatic/foundation cannot depend on ${pkg} (${section})` })
           }
         }
       }

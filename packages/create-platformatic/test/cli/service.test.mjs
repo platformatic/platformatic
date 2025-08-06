@@ -1,4 +1,4 @@
-import { createDirectory } from '@platformatic/utils'
+import { createDirectory } from '@platformatic/foundation'
 import { deepStrictEqual, equal, notEqual } from 'node:assert'
 import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'

@@ -8,7 +8,7 @@ const { mkdtemp, cp, unlink } = require('node:fs/promises')
 const Fastify = require('fastify')
 const { create } = require('@platformatic/db')
 const client = require('../fastify-plugin.js')
-const { safeRemove } = require('@platformatic/utils')
+const { safeRemove } = require('@platformatic/foundation')
 require('./helper')
 
 test('app decorator with GraphQL', async t => {

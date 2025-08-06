@@ -1,7 +1,7 @@
 import auth from '@platformatic/db-authorization'
 import core from '@platformatic/db-core'
+import { isKeyEnabled } from '@platformatic/foundation'
 import { platformaticService } from '@platformatic/service'
-import { isKeyEnabled } from '@platformatic/utils'
 import { readFile, writeFile } from 'node:fs/promises'
 import { execute as applyMigrations } from './migrator.js'
 import { root } from './root.js'

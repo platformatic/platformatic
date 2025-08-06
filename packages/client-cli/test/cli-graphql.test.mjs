@@ -1,5 +1,5 @@
 import { create } from '@platformatic/db'
-import { match } from '@platformatic/utils'
+import { match } from '@platformatic/foundation'
 import { execa } from 'execa'
 import { existsSync, promises as fs } from 'fs'
 import { copy } from 'fs-extra'

@@ -1,6 +1,6 @@
 'use strict'
 
-const { abstractLogger } = require('@platformatic/utils')
+const { abstractLogger } = require('@platformatic/foundation')
 const { join } = require('node:path')
 const { semgrator } = require('semgrator')
 

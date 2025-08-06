@@ -1,6 +1,6 @@
 'use strict'
 
-const { executeWithTimeout, kTimeout } = require('@platformatic/utils')
+const { executeWithTimeout, kTimeout } = require('@platformatic/foundation')
 const { ITC, generateResponse, sanitize } = require('@platformatic/itc')
 const errors = require('../errors')
 const { RoundRobinMap } = require('./round-robin-map')

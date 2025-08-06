@@ -44,7 +44,7 @@
   "dependencies": {
     "@fastify/error": "^4.0.0",
     "@mercuriusjs/federation": "^5.0.0",
-    "@platformatic/utils": "workspace:*",
+    "@platformatic/foundation": "workspace:*",
     "camelcase": "^6.3.0",
     "fastify-plugin": "^5.0.0",
     "graphql": "^16.8.1",
@@ -55,5 +55,8 @@
   },
   "tsd": {
     "directory": "test/types"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

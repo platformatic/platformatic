@@ -20,7 +20,7 @@ const {
   loadConfigurationFile,
   kMetadata,
   defaultPackageManager
-} = require('@platformatic/utils')
+} = require('@platformatic/foundation')
 const { createRequire } = require('node:module')
 
 const wrappableProperties = {

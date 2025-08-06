@@ -1,5 +1,5 @@
 import { RuntimeApiClient } from '@platformatic/control'
-import { ensureLoggableError } from '@platformatic/utils'
+import { ensureLoggableError } from '@platformatic/foundation'
 import { bold, reset } from 'colorette'
 import { sep } from 'node:path'
 import { getBorderCharacters, table } from 'table'

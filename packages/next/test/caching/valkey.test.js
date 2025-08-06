@@ -1,4 +1,4 @@
-import { loadConfiguration, safeRemove, saveConfigurationFile } from '@platformatic/utils'
+import { loadConfiguration, safeRemove, saveConfigurationFile } from '@platformatic/foundation'
 import Redis from 'iovalkey'
 import { unpack } from 'msgpackr'
 import { deepStrictEqual, notDeepStrictEqual, ok } from 'node:assert'

@@ -1,5 +1,5 @@
+import { isKeyEnabled } from '@platformatic/foundation'
 import { platformaticService } from '@platformatic/service'
-import { isKeyEnabled } from '@platformatic/utils'
 import deepEqual from 'fast-deep-equal'
 import { fetchOpenApiSchema } from './commands/openapi-fetch-schemas.js'
 import { composerHook } from './composer-hook.js'

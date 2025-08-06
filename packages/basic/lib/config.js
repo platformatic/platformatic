@@ -2,7 +2,7 @@ import {
   listRecognizedConfigurationFiles,
   NoConfigFileFoundError,
   findConfigurationFile as utilsFindConfigurationFile
-} from '@platformatic/utils'
+} from '@platformatic/foundation'
 import jsonPatch from 'fast-json-patch'
 import { stat } from 'node:fs/promises'
 import { dirname, resolve as resolvePath } from 'node:path'

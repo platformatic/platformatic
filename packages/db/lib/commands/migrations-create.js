@@ -1,4 +1,4 @@
-import { loadConfiguration } from '@platformatic/utils'
+import { loadConfiguration } from '@platformatic/foundation'
 import { writeFile } from 'node:fs/promises'
 import { join, relative } from 'node:path'
 import * as errors from '../errors.js'

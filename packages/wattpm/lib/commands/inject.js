@@ -1,5 +1,5 @@
 import { RuntimeApiClient } from '@platformatic/control'
-import { ensureLoggableError } from '@platformatic/utils'
+import { ensureLoggableError } from '@platformatic/foundation'
 import { createWriteStream } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'

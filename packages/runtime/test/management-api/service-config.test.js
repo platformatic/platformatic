@@ -4,7 +4,7 @@ const assert = require('node:assert')
 const { join } = require('node:path')
 const { test } = require('node:test')
 const { Client } = require('undici')
-const { getPlatformaticVersion } = require('@platformatic/utils')
+const { getPlatformaticVersion } = require('@platformatic/foundation')
 
 const { create } = require('../..')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')

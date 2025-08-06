@@ -1,4 +1,4 @@
-import { deepmerge } from '@platformatic/utils'
+import { deepmerge } from '@platformatic/foundation'
 import fp from 'fastify-plugin'
 import mercurius from 'mercurius'
 

@@ -1,7 +1,7 @@
 const { test } = require('node:test')
 const { equal, ok, deepEqual, throws, ifError } = require('node:assert')
 const { connect } = require('..')
-const { match } = require('@platformatic/utils')
+const { match } = require('@platformatic/foundation')
 
 const { connInfo, isSQLite, isMysql, isMysql8, isPg, clear } = require('./helper')
 

@@ -1,4 +1,4 @@
-import { createDirectory, safeRemove } from '@platformatic/utils'
+import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { cp, mkdtemp, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'

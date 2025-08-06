@@ -28,5 +28,8 @@
   "dependencies": {
     "@fastify/error": "^4.0.0",
     "@watchable/unpromise": "^1.0.2"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

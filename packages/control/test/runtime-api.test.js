@@ -1,4 +1,4 @@
-import { createDirectory, safeRemove } from '@platformatic/utils'
+import { createDirectory, safeRemove } from '@platformatic/foundation'
 import assert from 'node:assert'
 import { createHash } from 'node:crypto'
 import { writeFile } from 'node:fs/promises'

@@ -1,11 +1,11 @@
-import { loadConfiguration } from '@platformatic/runtime'
 import {
   detectApplicationType,
   ensureLoggableError,
   findConfigurationFile,
   loadConfigurationFile as loadRawConfigurationFile,
   saveConfigurationFile
-} from '@platformatic/utils'
+} from '@platformatic/foundation'
+import { loadConfiguration } from '@platformatic/runtime'
 import { bold } from 'colorette'
 import { parse } from 'dotenv'
 import { execa } from 'execa'

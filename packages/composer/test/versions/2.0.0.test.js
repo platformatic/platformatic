@@ -1,5 +1,5 @@
+import { loadConfiguration } from '@platformatic/foundation'
 import { transform } from '@platformatic/service'
-import { loadConfiguration } from '@platformatic/utils'
 import { equal } from 'node:assert'
 import test from 'node:test'
 import { version } from '../../lib/schema.js'

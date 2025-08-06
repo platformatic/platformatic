@@ -6,7 +6,7 @@ import {
   importFile,
   resolvePackage
 } from '@platformatic/basic'
-import { features } from '@platformatic/utils'
+import { features } from '@platformatic/foundation'
 import { ViteStackable } from '@platformatic/vite'
 import { createRequestHandler } from '@remix-run/express'
 import express from 'express'

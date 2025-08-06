@@ -1,7 +1,7 @@
 {
-  "name": "@platformatic/utils",
+  "name": "@platformatic/foundation",
   "version": "3.0.0-alpha.1",
-  "description": "Platformatic Utils",
+  "description": "Platformatic Foundation",
   "main": "index.js",
   "types": "index.d.ts",
   "type": "module",
@@ -43,5 +43,8 @@
     "pino": "^9.5.0",
     "pino-test": "^1.0.1",
     "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

@@ -1,5 +1,5 @@
+import { buildPinoOptions, deepmerge, executeWithTimeout, kMetadata, kTimeout } from '@platformatic/foundation'
 import { client, collectMetrics, ensureMetricsGroup } from '@platformatic/metrics'
-import { buildPinoOptions, deepmerge, executeWithTimeout, kMetadata, kTimeout } from '@platformatic/utils'
 import { parseCommandString } from 'execa'
 import { spawn } from 'node:child_process'
 import EventEmitter, { once } from 'node:events'

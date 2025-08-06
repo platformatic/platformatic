@@ -1,4 +1,4 @@
-import { isKeyEnabled } from '@platformatic/utils'
+import { isKeyEnabled } from '@platformatic/foundation'
 import { setupCors } from './plugins/cors.js'
 import { setupGraphQL } from './plugins/graphql.js'
 import { setupHealthCheck } from './plugins/health-check.js'

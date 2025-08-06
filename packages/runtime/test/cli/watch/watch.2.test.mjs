@@ -1,4 +1,4 @@
-import { createDirectory } from '@platformatic/utils'
+import { createDirectory } from '@platformatic/foundation'
 import assert from 'node:assert'
 import { on } from 'node:events'
 import { utimes } from 'node:fs/promises'

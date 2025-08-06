@@ -1,4 +1,4 @@
-import { safeRemove } from '@platformatic/utils'
+import { safeRemove } from '@platformatic/foundation'
 import { exec, spawn } from 'node:child_process'
 import { access, readdir } from 'node:fs/promises'
 import { EOL, platform, tmpdir } from 'node:os'

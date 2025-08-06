@@ -1,7 +1,7 @@
 'use strict'
 
 const { join } = require('node:path')
-const { loadModule } = require('@platformatic/utils')
+const { loadModule } = require('@platformatic/foundation')
 const MemoryCacheStore = require('@platformatic/undici-cache-memory')
 const { createRequire } = require('node:module')
 

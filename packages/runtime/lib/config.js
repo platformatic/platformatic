@@ -13,7 +13,7 @@ const {
   loadConfigurationModule,
   loadConfiguration,
   extractModuleFromSchemaUrl
-} = require('@platformatic/utils')
+} = require('@platformatic/foundation')
 const {
   InspectAndInspectBrkError,
   InvalidEntrypointError,

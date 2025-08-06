@@ -1,4 +1,4 @@
-import { findConfigurationFile } from '@platformatic/utils'
+import { findConfigurationFile } from '@platformatic/foundation'
 import { execa } from 'execa'
 import { access, constants, readFile } from 'fs/promises'
 import { createRequire } from 'module'

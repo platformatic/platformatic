@@ -56,7 +56,7 @@
     "@platformatic/scalar-theme": "workspace:*",
     "@platformatic/service": "workspace:*",
     "@platformatic/telemetry": "workspace:*",
-    "@platformatic/utils": "workspace:^",
+    "@platformatic/foundation": "workspace:^",
     "@scalar/fastify-api-reference": "1.33.0",
     "ajv": "^8.12.0",
     "commist": "^3.2.0",
@@ -78,5 +78,8 @@
     "rfdc": "^1.3.1",
     "semgrator": "^0.3.0",
     "undici": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

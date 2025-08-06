@@ -2,7 +2,7 @@
 
 const { setGlobalDispatcher, Agent, request } = require('undici')
 const { join } = require('path')
-const { createDirectory, safeRemove } = require('@platformatic/utils')
+const { createDirectory, safeRemove } = require('@platformatic/foundation')
 const os = require('node:os')
 
 setGlobalDispatcher(

@@ -1,4 +1,4 @@
-import { loadConfiguration } from '@platformatic/utils'
+import { loadConfiguration } from '@platformatic/foundation'
 import { deepEqual, equal } from 'node:assert'
 import test from 'node:test'
 import { join } from 'path'

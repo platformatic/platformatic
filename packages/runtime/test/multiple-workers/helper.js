@@ -4,7 +4,7 @@ const { cp, symlink, writeFile } = require('node:fs/promises')
 const { deepStrictEqual } = require('node:assert')
 const { join, resolve, dirname } = require('node:path')
 const { request } = require('undici')
-const { createDirectory, safeRemove, features } = require('@platformatic/utils')
+const { createDirectory, safeRemove, features } = require('@platformatic/foundation')
 
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const tmpDir = resolve(__dirname, '../../tmp')

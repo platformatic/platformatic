@@ -1,5 +1,5 @@
 import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
-import { schemaComponents as utilsSchemaComponents } from '@platformatic/utils'
+import { schemaComponents as utilsSchemaComponents } from '@platformatic/foundation'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 

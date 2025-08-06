@@ -1,7 +1,8 @@
+import { createDirectory, safeRemove } from '@platformatic/foundation'
+import { execa } from 'execa'
+import { symlink, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { before } from 'node:test'
-import { symlink, writeFile } from 'node:fs/promises'
-import { execa } from 'execa'
 import {
   setFixturesDir,
   temporaryFolder,
@@ -10,7 +11,6 @@ import {
   verifyDevelopmentMode,
   verifyFrontendOnRoot
 } from '../../basic/test/helper.js'
-import { createDirectory, safeRemove } from '@platformatic/utils'
 
 process.setMaxListeners(100)
 setFixturesDir(resolve(import.meta.dirname, './fixtures'))

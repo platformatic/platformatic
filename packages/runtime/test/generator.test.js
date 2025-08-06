@@ -9,7 +9,7 @@ const { Generator: ServiceGenerator } = require('../../service/lib/generator')
 const { Generator: ComposerGenerator } = require('../../composer/lib/generator')
 const { join, basename } = require('node:path')
 const { MockAgent, setGlobalDispatcher } = require('undici')
-const { safeRemove, getPlatformaticVersion } = require('@platformatic/utils')
+const { safeRemove, getPlatformaticVersion } = require('@platformatic/foundation')
 
 const mockAgent = new MockAgent()
 setGlobalDispatcher(mockAgent)

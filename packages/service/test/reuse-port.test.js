@@ -1,4 +1,4 @@
-import { features } from '@platformatic/utils'
+import { features } from '@platformatic/foundation'
 import assert from 'node:assert'
 import { test } from 'node:test'
 import { request } from 'undici'

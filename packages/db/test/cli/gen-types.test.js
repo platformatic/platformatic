@@ -1,4 +1,4 @@
-import { createDirectory, safeRemove } from '@platformatic/utils'
+import { createDirectory, safeRemove } from '@platformatic/foundation'
 import { execa } from 'execa'
 import assert from 'node:assert/strict'
 import { existsSync } from 'node:fs'

@@ -10,7 +10,7 @@ const { Client } = require('undici')
 const WebSocket = require('ws')
 
 const { create } = require('../..')
-const { safeRemove } = require('@platformatic/utils')
+const { safeRemove } = require('@platformatic/foundation')
 const fixturesDir = join(__dirname, '..', '..', 'fixtures')
 const { setLogFile } = require('../helpers')
 

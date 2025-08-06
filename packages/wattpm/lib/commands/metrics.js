@@ -1,5 +1,5 @@
 import { RuntimeApiClient } from '@platformatic/control'
-import { ensureLoggableError } from '@platformatic/utils'
+import { ensureLoggableError } from '@platformatic/foundation'
 import { bold } from 'colorette'
 import { getMatchingRuntime, logFatalError, parseArgs } from '../utils.js'
 
