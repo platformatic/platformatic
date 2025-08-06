@@ -18,7 +18,7 @@
 
 <h1 align="center">
   <br/>
-  The Open Source Node.js Application Platform
+  The Open Source Toolkit for Node.js
   <br/>
 </h1>
 
@@ -47,7 +47,7 @@
 **→ [Quick Start Guide](https://docs.platformatic.dev/docs/getting-started/quick-start-watt)** - Create your first application in 5 minutes
 
 ```bash
-npm create platformatic@latest
+npm wattpm@latest create
 ```
 
 ### Looking for inspiration?
