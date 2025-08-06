@@ -1237,6 +1237,13 @@
         }
       ]
     },
+    "application": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false,
+      "required": [],
+      "default": {}
+    },
     "runtime": {
       "type": "object",
       "properties": {

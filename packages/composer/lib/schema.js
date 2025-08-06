@@ -1,5 +1,6 @@
 #! /usr/bin/env node
 
+import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
 import {
   fastifyServer as server,
   schemaComponents as utilsSchemaComponents,
@@ -226,6 +227,7 @@ export const schema = {
     composer,
     types,
     plugins,
+    application: basicSchemaComponents.application,
     runtime: wrappedRuntime,
     telemetry: utilsSchemaComponents.telemetry,
     watch: {

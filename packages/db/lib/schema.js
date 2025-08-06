@@ -1,6 +1,12 @@
 #! /usr/bin/env node
 
-import { fastifyServer as server, schemaComponents as utilsSchemaComponents, watch, wrappedRuntime } from '@platformatic/foundation'
+import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
+import {
+  fastifyServer as server,
+  schemaComponents as utilsSchemaComponents,
+  watch,
+  wrappedRuntime
+} from '@platformatic/foundation'
 import { schemaComponents as serviceSchemaComponents } from '@platformatic/service'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -469,6 +475,7 @@ export const schema = {
     migrations,
     types,
     plugins,
+    application: basicSchemaComponents.application,
     telemetry: utilsSchemaComponents.telemetry,
     runtime: wrappedRuntime,
     watch: {

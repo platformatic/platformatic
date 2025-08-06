@@ -377,6 +377,7 @@ export interface PlatformaticComposerConfig {
   plugins?: {
     [k: string]: unknown;
   };
+  application?: {};
   runtime?: {
     preload?: string | string[];
     basePath?: string;

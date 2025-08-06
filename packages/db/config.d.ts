@@ -400,6 +400,7 @@ export interface PlatformaticDatabaseConfig {
   plugins?: {
     [k: string]: unknown;
   };
+  application?: {};
   telemetry?: {
     enabled?: boolean | string;
     /**

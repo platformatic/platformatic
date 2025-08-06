@@ -32,6 +32,7 @@ test('get service config via stackable api', async t => {
 
   const stackableConfig = await stackable.getConfig()
   assert.deepStrictEqual(stackableConfig, {
+    application: {},
     db: {
       ...connectionInfo
     },

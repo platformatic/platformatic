@@ -55,6 +55,7 @@ test('should get service config', async t => {
         level: 'trace'
       }
     },
+    application: {},
     service: { openapi: true },
     plugins: {
       paths: [join(projectDir, 'services', 'service-1', 'plugin.js')]

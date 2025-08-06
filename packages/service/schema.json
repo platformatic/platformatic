@@ -825,6 +825,13 @@
     "module": {
       "type": "string"
     },
+    "application": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false,
+      "required": [],
+      "default": {}
+    },
     "service": {
       "type": "object",
       "properties": {

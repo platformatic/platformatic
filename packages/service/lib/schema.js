@@ -1,5 +1,6 @@
 #! /usr/bin/env node
 
+import { schemaComponents as basicSchemaComponents } from '@platformatic/basic'
 import {
   fastifyServer as server,
   schemaComponents as utilsSchemaComponents,
@@ -1294,6 +1295,7 @@ export const schema = {
     module: {
       type: 'string'
     },
+    application: basicSchemaComponents.application,
     service,
     runtime: wrappedRuntime
   },
