@@ -119,6 +119,39 @@ const sidebars = {
           items: [
             {
               type: 'category',
+              label: 'HTTP Service',
+              collapsed: true,
+              items: [
+                'reference/service/overview',
+                'reference/service/configuration',
+                'reference/service/plugin',
+                'reference/service/programmatic'
+              ]
+            },
+            {
+              type: 'category',
+              label: 'API Gateway (Composer)',
+              collapsed: true,
+              items: [
+                'reference/composer/overview',
+                'reference/composer/configuration',
+                'reference/composer/api-modification',
+                'reference/composer/plugin',
+                'reference/composer/programmatic'
+              ]
+            },
+            {
+              type: 'category',
+              label: 'Client SDK',
+              collapsed: true,
+              items: [
+                'reference/client/overview',
+                'reference/client/programmatic',
+                'reference/client/frontend'
+              ]
+            },
+            {
+              type: 'category',
               label: 'Database Service',
               collapsed: true,
               items: [
@@ -152,39 +185,6 @@ const sidebars = {
                 'reference/db/logging',
                 'reference/db/programmatic'
               ]
-            },
-            {
-              type: 'category',
-              label: 'HTTP Service',
-              collapsed: true,
-              items: [
-                'reference/service/overview',
-                'reference/service/configuration',
-                'reference/service/plugin',
-                'reference/service/programmatic'
-              ]
-            },
-            {
-              type: 'category',
-              label: 'API Gateway (Composer)',
-              collapsed: true,
-              items: [
-                'reference/composer/overview',
-                'reference/composer/configuration',
-                'reference/composer/api-modification',
-                'reference/composer/plugin',
-                'reference/composer/programmatic'
-              ]
-            },
-            {
-              type: 'category',
-              label: 'Client SDK',
-              collapsed: true,
-              items: [
-                'reference/client/overview',
-                'reference/client/programmatic',
-                'reference/client/frontend'
-              ]
             }
           ]
         },
@@ -193,17 +193,52 @@ const sidebars = {
           label: 'Framework Integrations (Stackables)',
           collapsed: true,
           items: [
-            'reference/node/overview',
-            'reference/node/configuration',
-            'reference/next/overview', 
-            'reference/next/configuration',
-            'reference/astro/overview',
-            'reference/astro/configuration',
-            'reference/astro/caching',
-            'reference/remix/overview', 
-            'reference/remix/configuration',
-            'reference/vite/overview', 
-            'reference/vite/configuration'
+            {
+              type: 'category',
+              label: 'Node.js',
+              collapsed: true,
+              items: [
+                'reference/node/overview',
+                'reference/node/configuration'
+              ]
+            },
+            {
+              type: 'category',
+              label: 'Next.js',
+              collapsed: true,
+              items: [
+                'reference/next/overview', 
+                'reference/next/configuration'
+              ]
+            },
+            {
+              type: 'category',
+              label: 'Astro',
+              collapsed: true,
+              items: [
+                'reference/astro/overview',
+                'reference/astro/configuration',
+                'reference/astro/caching'
+              ]
+            },
+            {
+              type: 'category',
+              label: 'Remix',
+              collapsed: true,
+              items: [
+                'reference/remix/overview', 
+                'reference/remix/configuration'
+              ]
+            },
+            {
+              type: 'category',
+              label: 'Vite',
+              collapsed: true,
+              items: [
+                'reference/vite/overview', 
+                'reference/vite/configuration'
+              ]
+            }
           ]
         },
         {
@@ -222,27 +257,20 @@ const sidebars = {
           label: 'SQL Data Layer',
           collapsed: true,
           items: [
+            'reference/sql-mapper/overview',
+            'reference/sql-mapper/fastify-plugin',
             {
               type: 'category',
-              label: 'SQL Mapper',
+              label: 'SQL Mapper - Entities',
               collapsed: true,
               items: [
-                'reference/sql-mapper/overview',
-                'reference/sql-mapper/fastify-plugin',
-                {
-                  type: 'category',
-                  label: 'Entities',
-                  collapsed: true,
-                  items: [
-                    'reference/sql-mapper/entities/overview',
-                    'reference/sql-mapper/entities/fields',
-                    'reference/sql-mapper/entities/api',
-                    'reference/sql-mapper/entities/example',
-                    'reference/sql-mapper/entities/hooks',
-                    'reference/sql-mapper/entities/relations',
-                    'reference/sql-mapper/entities/transactions'
-                  ]
-                }
+                'reference/sql-mapper/entities/overview',
+                'reference/sql-mapper/entities/fields',
+                'reference/sql-mapper/entities/api',
+                'reference/sql-mapper/entities/example',
+                'reference/sql-mapper/entities/hooks',
+                'reference/sql-mapper/entities/relations',
+                'reference/sql-mapper/entities/transactions'
               ]
             },
             {
@@ -268,8 +296,15 @@ const sidebars = {
                 'reference/sql-openapi/explicit-include'
               ]
             },
-            'reference/sql-events/overview',
-            'reference/sql-events/fastify-plugin'
+            {
+              type: 'category',
+              label: 'SQL Events',
+              collapsed: true,
+              items: [
+                'reference/sql-events/overview',
+                'reference/sql-events/fastify-plugin'
+              ]
+            }
           ]
         }
       ]
